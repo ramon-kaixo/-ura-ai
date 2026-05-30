@@ -1,0 +1,115 @@
+{
+  "version": "1.0",
+  "red": "tailscale",
+  "creado": "2026-05-24T14:35:32.182418",
+  "agentes": [
+    {
+      "id": "Mini-de-RAMON",
+      "hostname": "Mini-de-RAMON",
+      "ip": "100.118.17.96",
+      "os": "macOS",
+      "online": false,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "localhost",
+      "hostname": "localhost",
+      "ip": "100.82.5.47",
+      "os": "iOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "gx10-64c3",
+      "hostname": "gx10-64c3",
+      "ip": "100.127.206.86",
+      "os": "linux",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "Mac mini de KAIXO",
+      "hostname": "Mac mini de KAIXO",
+      "ip": "100.73.155.53",
+      "os": "macOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "MAC MINI SAN GREGORIO",
+      "hostname": "MAC MINI SAN GREGORIO",
+      "ip": "100.90.99.76",
+      "os": "macOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "CAJA0",
+      "hostname": "CAJA0",
+      "ip": "100.127.217.113",
+      "os": "windows",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "MAC MINI BAR SAN GREGORIO",
+      "hostname": "MAC MINI BAR SAN GREGORIO",
+      "ip": "100.109.83.16",
+      "os": "macOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "DESKTOP-0D7S0TC",
+      "hostname": "DESKTOP-0D7S0TC",
+      "ip": "100.88.13.84",
+      "os": "windows",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "ura-shield",
+      "hostname": "ura-shield",
+      "ip": "100.90.84.4",
+      "os": "linux",
+      "online": false,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "localhost",
+      "hostname": "localhost",
+      "ip": "100.91.69.28",
+      "os": "iOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "MacBook Air de KAIXO",
+      "hostname": "MacBook Air de KAIXO",
+      "ip": "100.77.230.38",
+      "os": "macOS",
+      "online": true,
+      "role": "observador",
+      "mac": ""
+    },
+    {
+      "id": "mac-mini-de-ramon",
+      "hostname": "mac-mini-de-ramon",
+      "ip": "100.123.81.101",
+      "os": "macos",
+      "online": true,
+      "role": "supervisor",
+      "mac": ""
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ura-edge-device
+  namespace: edgex
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ura-edge
+  template:
+    metadata:
+      labels:
+        app: ura-edge
+    spec:
+      containers:
+      - name: ura-edge
+        image: ura-edge:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: EDGE_MODE
+          value: "true"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "64Mi"

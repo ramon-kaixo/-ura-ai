@@ -1,0 +1,78 @@
+{
+  "dashboard": {
+    "title": "URA Metrics Dashboard",
+    "panels": [
+      {
+        "title": "CPU Usage",
+        "targets": [
+          {
+            "expr": "ura_cpu_usage_percent"
+          }
+        ],
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "title": "Memory Usage",
+        "targets": [
+          {
+            "expr": "ura_memory_usage_percent"
+          }
+        ],
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "title": "Ollama Requests Rate",
+        "targets": [
+          {
+            "expr": "rate(ura_ollama_requests_total[5m])"
+          }
+        ],
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "title": "Ollama Errors Rate",
+        "targets": [
+          {
+            "expr": "rate(ura_ollama_errors_total[5m])"
+          }
+        ],
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "title": "Security Blocks",
+        "targets": [
+          {
+            "expr": "ura_security_blocks_total"
+          }
+        ],
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 }
+      },
+      {
+        "title": "Ollama Connection Status",
+        "targets": [
+          {
+            "expr": "ura_ollama_connection"
+          }
+        ],
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 }
+      },
+      {
+        "title": "Request Duration",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, ura_request_duration_seconds)"
+          }
+        ],
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      }
+    ],
+    "refresh": "5s"
+  }
+}

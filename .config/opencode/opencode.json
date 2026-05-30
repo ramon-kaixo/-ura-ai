@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai",
+  "plugin": [
+    "opencode-plugin-auto-update"
+  ],
+  "tools": {
+    "bash": true,
+    "write": true
+  },
+  "provider": {
+    "local-server": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ASUS GX10 Local",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      }
+    }
+  },
+  "agents": {
+    "general": { "model": "qwen2.5-coder:32b", "provider": "local-server" },
+    "explore": { "model": "llama3.3:70b", "provider": "local-server", "mcp": ["web-search-local"] },
+    "scout": { "model": "llama3.2-vision:11b", "provider": "local-server" }
+  },
+  "mcp": {
+    "openclaw-sandbox": {
+      "type": "local",
+      "command": ["openshell", "agent", "connect"],
+      "enabled": true
+    },
+    "web-search-local": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-brave-search"],
+      "enabled": true
+    }
+  }
+}

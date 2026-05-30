@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""
+Main Entry Point - Paso 3A
+──────────────────────────
+Punto de entrada principal para la aplicación URA.
+"""
+
+import sys
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def main():
+    """Función principal"""
+    from PyQt5.QtWidgets import QApplication, QMessageBox
+    from main_final import URAMainWindowFinal
+    from config import (
+        SPEECH_RECOGNITION_AVAILABLE,
+        TTS_AVAILABLE,
+        GTTS_AVAILABLE,
+    )
+
+    app = QApplication(sys.argv)
+
+    # Configurar aplicación
+    app.setApplicationName("URA - Asistente Inteligente")
+    app.setApplicationVersion("3.0")
+
+    # Verificar dependencias
+    missing_deps = []
+
+    if not SPEECH_RECOGNITION_AVAILABLE:
+        missing_deps.append("SpeechRecognition + PyAudio")
+
+    if not (TTS_AVAILABLE or GTTS_AVAILABLE):
+        missing_deps.append("pyttsx3 o gTTS")
+
+    if missing_deps:
+        deps_str = " ".join(missing_deps)
+        newline = "\n"
+        QMessageBox.warning(
+            None,
+            "Dependencias Faltantes",
+            f"Las siguientes dependencias no están disponibles:{newline}{newline}"
+            f"{newline.join(missing_deps)}{newline}{newline}"
+            f"Instala con: pip install {deps_str}",
+        )
+
+    # Crear y mostrar ventana principal
+    window = URAMainWindowFinal()
+    window.show()
+    window.raise_()
+    window.activateWindow()
+
+    # Mensaje de bienvenida (azul pastel, estilo URA)
+    window.chat_ura(
+        "URA App iniciada. Interfaz en castellano, seguridad dual activa (Telegram + Face ID)."
+    )
+
+    # Confirmación final en naranja tras aplicar todos los cambios
+    window.chat_info(
+        "Ramón, todos tus cambios están aplicados. Sistema blindado y en castellano.",
+        color="#e67e22",
+    )
+
+    # Ejecutar aplicación
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

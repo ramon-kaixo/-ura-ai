@@ -1,0 +1,45 @@
+{
+  "iva": {
+    "general": 21,
+    "reducido": 10,
+    "superreducido": 4
+  },
+  "modelos": {
+    "303": "IVA trimestral",
+    "130": "IVA mensual",
+    "390": "Resumen anual IVA",
+    "347": "Operaciones con terceros"
+  },
+  "deducciones_navarra": [
+    "Deducción por inversiones en activos fijos",
+    "Deducción por gastos de formación",
+    "Deducción por I+D+I",
+    "Deducción por contratación de trabajadores"
+  ],
+  "software": [
+    {
+      "nombre": "GnuCash",
+      "tipo": "open_source",
+      "recomendado": true,
+      "descripcion": "Software libre de contabilidad personal y de pequeños negocios"
+    },
+    {
+      "nombre": "Ledger",
+      "tipo": "open_source",
+      "recomendado": true,
+      "descripcion": "Sistema de contabilidad por partida doble en línea de comandos"
+    },
+    {
+      "nombre": "Odoo",
+      "tipo": "erp",
+      "recomendado": false,
+      "descripcion": "ERP completo con módulo contabilidad"
+    },
+    {
+      "nombre": "Akaunting",
+      "tipo": "cloud",
+      "recomendado": true,
+      "descripcion": "Software de contabilidad en la nube gratuito"
+    }
+  ]
+}

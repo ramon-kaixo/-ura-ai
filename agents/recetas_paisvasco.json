@@ -1,0 +1,37 @@
+[
+  {
+    "nombre": "Marmitako",
+    "ingredientes": ["bonito", "patata", "pimiento"],
+    "region": "País Vasco",
+    "dificultad": "media",
+    "tiempo": "1h"
+  },
+  {
+    "nombre": "Piperrada",
+    "ingredientes": ["pimiento", "tomate", "cebolla"],
+    "region": "País Vasco",
+    "dificultad": "facil",
+    "tiempo": "30 min"
+  },
+  {
+    "nombre": "Bacalao al pil-pil",
+    "ingredientes": ["bacalao", "ajo", "aceite"],
+    "region": "País Vasco",
+    "dificultad": "dificil",
+    "tiempo": "45 min"
+  },
+  {
+    "nombre": "Pintxos",
+    "ingredientes": ["pan", "jamón", "queso"],
+    "region": "País Vasco",
+    "dificultad": "facil",
+    "tiempo": "20 min"
+  },
+  {
+    "nombre": "Txangurro",
+    "ingredientes": ["centollo", "tomate", "brandy"],
+    "region": "País Vasco",
+    "dificultad": "dificil",
+    "tiempo": "1.5h"
+  }
+]

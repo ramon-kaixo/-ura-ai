@@ -1,0 +1,44 @@
+{
+  "keybindings": [
+    {
+      "key": "ctrl+shift+t",
+      "command": "python.runTests"
+    },
+    {
+      "key": "ctrl+shift+d",
+      "command": "workbench.action.toggleDebug"
+    },
+    {
+      "key": "ctrl+shift+f",
+      "command": "editor.action.formatDocument"
+    },
+    {
+      "key": "ctrl+shift+l",
+      "command": "python.runLinting"
+    },
+    {
+      "key": "ctrl+shift+c",
+      "command": "workbench.action.toggleSidebarVisibility"
+    },
+    {
+      "key": "ctrl+shift+g",
+      "command": "workbench.view.search"
+    },
+    {
+      "key": "ctrl+shift+p",
+      "command": "workbench.action.showCommands"
+    },
+    {
+      "key": "ctrl+`",
+      "command": "workbench.action.terminal.toggle"
+    },
+    {
+      "key": "ctrl+b",
+      "command": "workbench.action.quickOpen"
+    },
+    {
+      "key": "ctrl+shift+e",
+      "command": "workbench.action.quickOpen"
+    }
+  ]
+}

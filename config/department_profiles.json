@@ -1,0 +1,85 @@
+{
+  "departments": {
+    "ventas": {
+      "name": "Ventas",
+      "tools": ["crm", "email", "calendar"],
+      "agents": ["comercial", "soporte"],
+      "max_tokens": 2048
+    },
+    "admin": {
+      "name": "Administración",
+      "tools": ["docs", "spreadsheet", "email"],
+      "agents": ["gestor", "secretaria"],
+      "max_tokens": 1024
+    },
+    "tech": {
+      "name": "Tecnología",
+      "tools": ["code", "terminal", "docker"],
+      "agents": ["developer", "devops"],
+      "max_tokens": 4096
+    },
+    "gestion": {
+      "name": "Gestión",
+      "identity": "Eres URA, asistente del departamento de gestión.",
+      "tool_authorization": "Tienes acceso total a las APIs de WhatsApp y Gmail. Tu deber es consultar estas fuentes antes de responder.",
+      "action_protocol": "Si el usuario pide un presupuesto o análisis, no pidas permiso, ejecuta la búsqueda directamente.",
+      "max_tokens": 2048
+    },
+    "sistema": {
+      "name": "Sistema",
+      "identity": "Eres URA, asistente del departamento de sistema.",
+      "tool_authorization": "Tienes acceso total a las herramientas de sistema. Tu deber es ejecutar comandos técnicos cuando sea necesario.",
+      "action_protocol": "Si el usuario pide una operación técnica, ejecútala directamente sin pedir permiso.",
+      "max_tokens": 4096
+    },
+    "multimedia": {
+      "name": "Multimedia",
+      "identity": "Eres URA, asistente del departamento de multimedia.",
+      "tool_authorization": "Tienes acceso a herramientas de análisis de imágenes y video.",
+      "action_protocol": "Analiza contenido multimedia cuando el usuario lo solicite.",
+      "max_tokens": 4096
+    },
+    "lenguaje": {
+      "name": "Lenguaje",
+      "identity": "Eres URA, asistente del departamento de lenguaje.",
+      "tool_authorization": "Tienes acceso a herramientas de procesamiento de lenguaje natural.",
+      "action_protocol": "Procesa texto y genera contenido cuando sea necesario.",
+      "max_tokens": 2048
+    },
+    "tecnica": {
+      "name": "Técnica",
+      "identity": "Eres URA, asistente del departamento técnico.",
+      "tool_authorization": "Tienes acceso a herramientas de análisis técnico y ejecución de comandos.",
+      "action_protocol": "Ejecuta operaciones técnicas directamente sin pedir permiso.",
+      "max_tokens": 4096
+    },
+    "auditoria": {
+      "name": "Auditoría",
+      "identity": "Eres URA, asistente del departamento de auditoría.",
+      "tool_authorization": "Tienes acceso a herramientas de análisis y verificación.",
+      "action_protocol": "Verifica y audita operaciones cuando sea solicitado.",
+      "max_tokens": 4096
+    },
+    "verificacion": {
+      "name": "Verificación",
+      "identity": "Eres URA, asistente del departamento de verificación.",
+      "tool_authorization": "Tienes acceso a herramientas de validación y testing.",
+      "action_protocol": "Valida resultados y ejecuta pruebas cuando sea necesario.",
+      "max_tokens": 2048
+    }
+  },
+  "model_mapping": {
+    "qwen3:14b": "sistema",
+    "llama3.2:latest": "gestion",
+    "llama3:latest": "sistema",
+    "llama3.2:3b": "gestion",
+    "qwen2.5:3b-instruct": "lenguaje",
+    "llava:latest": "multimedia",
+    "gpt-4": "gestion",
+    "claude-3-opus": "tecnica",
+    "gemini-pro": "auditoria",
+    "mixtral:8x7b": "verificacion"
+  },
+  "default_department": "admin",
+  "version": "2.0.0"
+}

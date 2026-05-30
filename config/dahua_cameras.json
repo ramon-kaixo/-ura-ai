@@ -1,0 +1,129 @@
+{
+  "cameras": [
+    {
+      "name": "barra1",
+      "host": "192.168.1.101",
+      "port": 80,
+      "location": "Bar 1",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "barra2",
+      "host": "192.168.1.102",
+      "port": 80,
+      "location": "Bar 1",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "cocina1",
+      "host": "192.168.1.103",
+      "port": 80,
+      "location": "Bar 1",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "entrada1",
+      "host": "192.168.1.104",
+      "port": 80,
+      "location": "Bar 1",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "terraza1",
+      "host": "192.168.1.105",
+      "port": 80,
+      "location": "Bar 1",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "barra3",
+      "host": "192.168.2.101",
+      "port": 80,
+      "location": "Bar 2",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "barra4",
+      "host": "192.168.2.102",
+      "port": 80,
+      "location": "Bar 2",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "cocina2",
+      "host": "192.168.2.103",
+      "port": 80,
+      "location": "Bar 2",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "entrada2",
+      "host": "192.168.2.104",
+      "port": 80,
+      "location": "Bar 2",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "terraza2",
+      "host": "192.168.2.105",
+      "port": 80,
+      "location": "Bar 2",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "barra5",
+      "host": "192.168.3.101",
+      "port": 80,
+      "location": "Bar 3",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "cocina3",
+      "host": "192.168.3.102",
+      "port": 80,
+      "location": "Bar 3",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "entrada3",
+      "host": "192.168.3.103",
+      "port": 80,
+      "location": "Bar 3",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "almacen",
+      "host": "192.168.3.104",
+      "port": 80,
+      "location": "Bar 3",
+      "username": "admin",
+      "password": "admin"
+    },
+    {
+      "name": "exterior",
+      "host": "192.168.3.105",
+      "port": 80,
+      "location": "Bar 3",
+      "username": "admin",
+      "password": "admin"
+    }
+  ],
+  "mqtt": {
+    "host": "localhost",
+    "port": 1883,
+    "topic_prefix": "ura/camaras"
+  }
+}

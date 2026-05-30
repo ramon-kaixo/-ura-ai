@@ -1,0 +1,2 @@
+{"timestamp": "2026-05-25T20:06:54.416774", "trace_id": "4ca2d7e1-a2c0-48d7-bdd0-674880a73832", "agente": "AgenteCocinaEspanola", "input": {"texto": "dame una receta de paella"}, "tool_used": "ninguna", "output": "", "estado": "inicio", "duracion_ms": 0, "tokens": 0, "coste": 0.0}
+{"timestamp": "2026-05-25T20:06:54.416949", "trace_id": "4ca2d7e1-a2c0-48d7-bdd0-674880a73832", "agente": "AgenteCocinaEspanola", "input": {}, "tool_used": "ninguna", "output": "No module named 'agents.agente_cocina_espanola'", "estado": "error", "duracion_ms": 0, "tokens": 0, "coste": 0.0}

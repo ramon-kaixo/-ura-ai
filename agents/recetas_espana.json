@@ -1,0 +1,37 @@
+[
+  {
+    "nombre": "Paella",
+    "ingredientes": ["arroz", "marisco", "azafrán"],
+    "region": "España",
+    "dificultad": "media",
+    "tiempo": "1h"
+  },
+  {
+    "nombre": "Gazpacho",
+    "ingredientes": ["tomate", "pepino", "ajo"],
+    "region": "España",
+    "dificultad": "facil",
+    "tiempo": "15 min"
+  },
+  {
+    "nombre": "Tortilla española",
+    "ingredientes": ["huevo", "patata", "cebolla"],
+    "region": "España",
+    "dificultad": "facil",
+    "tiempo": "30 min"
+  },
+  {
+    "nombre": "Cocido madrileño",
+    "ingredientes": ["garbanzos", "carne", "verduras"],
+    "region": "España",
+    "dificultad": "media",
+    "tiempo": "3h"
+  },
+  {
+    "nombre": "Fabada",
+    "ingredientes": ["fabes", "lacón", "chorizo"],
+    "region": "España",
+    "dificultad": "media",
+    "tiempo": "4h"
+  }
+]

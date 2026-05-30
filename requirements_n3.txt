@@ -1,0 +1,18 @@
+# Dependencias para sistema de entrenamiento N3 con OpenClaw
+# Entrenamiento masivo en VM UTM con almacenamiento Toshiba
+
+# Async HTTP para comunicación con OpenClaw VM
+aiohttp>=3.9.0
+
+# Validación de datos
+pydantic>=2.5.0
+
+# Base de datos SQLite para cache
+sqlalchemy>=2.0.0
+
+# FastAPI para pruebas de API (opcional)
+fastapi>=0.109.0
+uvicorn>=0.27.0
+
+# Utilidades
+python-dotenv>=1.0.0

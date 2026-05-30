@@ -1,0 +1,21 @@
+services:
+  documentacion:
+    build: .
+    container_name: ura-sandbox-documentacion
+    ports:
+      - "8087:8000"
+    volumes:
+      - ./scripts:/sandbox/scripts:ro
+      - ../../docs:/docs:ro
+      - ../../:/repo:ro
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
