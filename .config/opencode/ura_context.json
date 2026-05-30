@@ -1,0 +1,60 @@
+{
+  "ura_agent": {
+    "name": "Ura",
+    "version": "2.0.0",
+    "description": "Sistema principal de IA agentica del escritorio",
+    "brazo_ejecutor": "OpenCode",
+    "hardware": {
+      "hostname": "gx10-64c3",
+      "soc": "NVIDIA GB10 Grace Blackwell",
+      "cpu": "ARM v9.2-A 20-core",
+      "ram": "128GB LPDDR5x unificada",
+      "gpu": "NVIDIA Blackwell integrada",
+      "os": "NVIDIA DGX OS (Ubuntu Linux)",
+      "storage": "1.8TB NVMe (1.1TB libre)"
+    }
+  },
+  "opencode_agent": {
+    "name": "OpenCode",
+    "role": "Brazo ejecutor tecnico de Ura",
+    "session_inicio": "2026-05-25T12:00:00Z",
+    "ultima_sincronizacion": null,
+    "archivos_modificados": [],
+    "logs_generados": [],
+    "tareas_pendientes": [],
+    "tareas_completadas": []
+  },
+  "modelos": {
+    "programacion": {
+      "modelo": "qwen2.5-coder:32b",
+      "parametros": "32B",
+      "precision": "FP8 nativa",
+      "estado": "listo",
+      "contexto_maximo": 32768,
+      "ocupacion_ram_estimada": "28GB"
+    },
+    "investigacion": {
+      "modelo": "llama3.3:70b",
+      "parametros": "70B",
+      "precision": "Q4_K_M",
+      "estado": "descargando",
+      "contexto_maximo": 32768,
+      "ocupacion_ram_estimada": "42GB"
+    },
+    "vision": {
+      "modelo": "llama3.2-vision:11b",
+      "parametros": "11B",
+      "precision": "Q4_K_M",
+      "estado": "listo",
+      "contexto_maximo": 16384,
+      "ocupacion_ram_estimada": "8GB"
+    }
+  },
+  "comunicacion": {
+    "canal": "~/.config/opencode/ura_context.json",
+    "tipo": "archivo_compartido_bidireccional",
+    "frecuencia_actualizacion": "por_sesion_y_al_finalizar_tareas",
+    "formato": "JSON estructurado con historial"
+  },
+  "historial": []
+}

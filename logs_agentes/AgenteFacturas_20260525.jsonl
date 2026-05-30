@@ -1,0 +1,2 @@
+{"timestamp": "2026-05-25T20:06:54.426767", "trace_id": "a861b296-d0dc-4882-95f7-c1d1bc802820", "agente": "AgenteFacturas", "input": {"texto": "crea una factura para el cliente P\u00e9rez"}, "tool_used": "ninguna", "output": "", "estado": "inicio", "duracion_ms": 0, "tokens": 0, "coste": 0.0}
+{"timestamp": "2026-05-25T20:06:54.426918", "trace_id": "a861b296-d0dc-4882-95f7-c1d1bc802820", "agente": "AgenteFacturas", "input": {}, "tool_used": "ninguna", "output": "No module named 'agents.agente_facturas'", "estado": "error", "duracion_ms": 0, "tokens": 0, "coste": 0.0}

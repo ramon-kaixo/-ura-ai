@@ -1,0 +1,46 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: ura-pod-kill
+  namespace: ura
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    labelSelectors:
+      app: ura
+  scheduler:
+    cron: "@every 10m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: ura-network-delay
+  namespace: ura
+spec:
+  action: delay
+  mode: one
+  selector:
+    labelSelectors:
+      app: ura
+  delay:
+    latency: "100ms"
+    correlation: "25"
+    jitter: "10ms"
+  scheduler:
+    cron: "@every 15m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IoChaos
+metadata:
+  name: ura-disk-fault
+  namespace: ura
+spec:
+  action: disk-loss
+  mode: one
+  selector:
+    labelSelectors:
+      app: ura
+  duration: "30s"
+  scheduler:
+    cron: "@every 1h"

@@ -1,0 +1,4 @@
+export AZURE_CLIENT_ID="${AZURE_CLIENT_ID:-}"
+export AZURE_TENANT_ID="${AZURE_TENANT_ID:-}"
+export AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID:-}"
+[ -z "$AZURE_CLIENT_ID" ] && echo "⚠️  AZURE_CLIENT_ID no configurada"

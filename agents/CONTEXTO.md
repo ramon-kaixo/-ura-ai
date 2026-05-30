@@ -1,0 +1,89 @@
+# CONTEXTO.md — Carpeta: agents
+
+**Propósito:** Conjunto de módulos del sistema URA (agents)
+
+- **agents/agente_administrativo_contable.py**: Agente Administrativo y Contable para Bar - URA System
+- **agents/agente_archivist.py**: The Archivist — Agente de Trazabilidad y Control de Versiones
+- **agents/agente_arquitectura.py**: AGENTE ARQUITECTURA - Diseña sistemas y estructura
+- **agents/agente_asesor.py**: agente_asesor.py — URA Asesor Universal
+- **agents/agente_auditor.py**: AGENTE AUDITOR - Supervisa automatizaciones y detecta desviaciones.
+- **agents/agente_backup.py**: agente_backup.py — Gestiona y verifica backups
+- **agents/agente_banco.py**: agente_banco.py — URA Conciliación Bancaria
+- **agents/agente_biblioteca.py**: AGENTE BIBLIOTECA - Coordinador Central de Documentación
+- **agents/agente_camaras.py**: agente_camaras.py — URA Agente de Videovigilancia Dahua
+- **agents/agente_cocina_espanola.py**: AGENTE COCINA ESPAÑOLA - Recetas tradicionales de España
+- **agents/agente_cocina_italiana.py**: AGENTE COCINA ITALIANA - Recetas tradicionales italianas
+- **agents/agente_cocina_mexicana.py**: AGENTE COCINA MEXICANA - Recetas tradicionales de México
+- **agents/agente_cocina_navarra_temporada.py**: AGENTE COCINA NAVARRA TEMPORADA - Cocina navarra con Soberanía del Producto de Temporada
+- **agents/agente_cocina_peruana.py**: AGENTE COCINA PERUANA - Recetas tradicionales del Perú
+- **agents/agente_conciencia.py**: agente_conciencia.py — URA Conciencia del Sistema
+- **agents/agente_conectividad.py**: Agente de Conectividad — autonomous multi-IP management.
+- **agents/agente_contabilidad.py**: agente_contabilidad.py — URA Agente de Contabilidad y Facturas
+- **agents/agente_conversacion.py**: agente_conversacion.py — URA Agente de Conversaciones Proactivas
+- **agents/agente_critico.py**: AGENTE CRITICO - Cuestiona cada decision antes de ejecutar.
+- **agents/agente_email.py**: agente_email.py — URA Agente de Correo y Documentos
+- **agents/agente_facturas.py**: agente_facturas.py — URA Captura de Facturas
+- **agents/agente_gastronomo_musica.py**: Agente Gastronómico y Musical para Bar - URA System
+- **agents/agente_gobierno.py**: agente_gobierno.py — URA Agente de Servicios Públicos
+- **agents/agente_gui.py**: agente_gui.py — URA Agente de Control GUI
+- **agents/agente_instalador.py**: AGENTE INSTALADOR - Instala y desinstala componentes de URA
+- **agents/agente_investigador_ia.py**: agents/agente_investigador_ia.py - Agente investigador de nuevas herramientas y modelos de IA
+- **agents/agente_juridico.py**: agente_juridico.py — URA Asistente Jurídico y Fiscal
+- **agents/agente_laboral.py**: agente_laboral.py — URA Agente Laboral y Seguridad Social
+- **agents/agente_lenguaje.py**: agente_lenguaje.py — Agente de Lenguaje Unificador de URA
+- **agents/agente_lenguaje_escribiente.py**: AGENTE LENGUAJE / ESCRIBIENTE - Redacta textos, informes y documentación
+- **agents/agente_lenguaje_tecnico.py**: AGENTE LENGUAJE TÉCNICO - Vocabulario técnico mejorado
+- **agents/agente_librarian.py**: The Librarian Prime — Agente de Vocabulario y Semántica
+- **agents/agente_logger.py**: Stub de AgenteLogger para resolver dependencias faltantes
+- **agents/agente_marketing.py**: agente_marketing.py — URA Agente de Marketing
+- **agents/agente_marketing_temporada_navarra.py**: AGENTE MARKETING TEMPORADA NAVARRA - Marketing estacional para productos de Navarra
+- **agents/agente_media_recetas.py**: AGENTE GESTOR DE MEDIA RECETAS
+- **agents/agente_memoria.py**: agente_memoria.py — URA Agente de Memoria a Largo Plazo
+- **agents/agente_modelos.py**: agente_modelos.py — Gestiona modelos Ollama
+- **agents/agente_notificaciones.py**: agente_notificaciones.py — URA Agente de Notificaciones y Alertas
+- **agents/agente_opencode.py**: Agente OpenCode — FASE 4.2
+- **agents/agente_operativo_hardware.py**: Agente Operativo y Hardware para Bar - URA System
+- **agents/agente_orquestador_documentacion.py**: AGENTE ORQUESTADOR DE DOCUMENTACIÓN
+- **agents/agente_orquestador_recetas.py**: AGENTE ORQUESTADOR DE RECETAS - Coordina todas las cocinas y tendencias
+- **agents/agente_policia_v2.py**: Agente Policía conversacional.
+- **agents/agente_programador.py**: AGENTE PROGRAMADOR - Escribe código nuevo
+- **agents/agente_red.py**: agente_red.py — Monitoriza la red y detecta anomalías
+- **agents/agente_red_telefonia.py**: URA — Agente de Red y Telefonía
+- **agents/agente_rendimiento.py**: agente_rendimiento.py — Monitoriza y gestiona CPU y RAM
+- **agents/agente_reparador.py**: agente_reparador.py — Reparador automático de errores del sistema
+- **agents/agente_revisor.py**: AGENTE REVISOR - Revisa código y detecta errores
+- **agents/agente_rrhh.py**: agente_rrhh.py — URA Agente de Recursos Humanos
+- **agents/agente_sandbox_codigo.py**: agente_sandbox_codigo.py — Vigilante del sandbox de codigo URA
+- **agents/agente_scheduler.py**: agente_scheduler.py — URA Agente de Tareas Programadas
+- **agents/agente_sistemas.py**: AGENTE SISTEMAS - Monitorización y administración del sistema local
+- **agents/agente_supervisor.py**: AGENTE SUPERVISOR - Monitoriza TODO lo que pasa en URA
+- **agents/agente_tailscale.py**: agente_tailscale.py — URA Agente Tailscale VPN
+- **agents/agente_telegram_dam.py**: agente_telegram_dam.py — Integración Telegram ↔ DAM
+- **agents/agente_tendencias_pamplona.py**: AGENTE TENDENCIAS PAMPLONA - Rastrea menús de bares de Pamplona y detecta tendencias
+- **agents/agente_verificador.py**: AGENTE VERIFICADOR INSTALACIONES - Verifica que TODO está bien instalado y supervisado
+- **agents/agente_verificador_tareas.py**: Agente Verificador de Tareas - Daemon PM2
+- **agents/agente_video.py**: agente_video.py — Agente de vídeo para URA
+- **agents/agente_vision.py**: agente_vision.py — Agente de visión para URA
+- **agents/agente_vocabulario.py**: Agente de Vocabulario - Análisis con Ollama y generación de .estado.json
+- **agents/agente_vocabulario_bar.py**: AGENTE VOCABULARIO BAR - Términos de hostelería/restaurante
+- **agents/agente_vocabulario_codigo.py**: Agente de Vocabulario de Código - URA App
+- **agents/agente_vocabulario_financiero.py**: AGENTE VOCABULARIO FINANCIERO - Términos de contabilidad y finanzas
+- **agents/agente_vocabulario_gastronomico.py**: VOCABULARIO GASTRONÓMICO - Descripciones bonitas para cartas y menús
+- **agents/agente_vocabulario_legal.py**: AGENTE VOCABULARIO LEGAL - Términos jurídicos y fiscales españoles
+- **agents/agente_vocabulario_tecnico.py**: AGENTE VOCABULARIO TÉCNICO - Términos de informática y tecnología
+- **agents/agentes_busqueda.py**: Sistema de agentes especializados de búsqueda web para URA.
+- **agents/bibliotecario_pasillo.py**: Bibliotecario de Pasillo - Uno por pasillo, con su índice local y asignación de códigos
+- **agents/clasificador.py**: Clasificador - La puerta de entrada al sistema URA
+- **agents/cocina_agent.py**: Agente de Cocina - Fase 4
+- **agents/cocina_internacional_agent.py**: Agente de Cocina Internacional - Fase 4
+- **agents/contabilidad_agent.py**: Agente de Contabilidad - Fase 4
+- **agents/doble_verificacion.py**: Módulo de Doble Verificación (2FA Sovereign)
+- **agents/guardian_residente.py**: Guardian Residente - Vigilante de carpetas con watchdog
+- **agents/leyes_agent.py**: Agente de Leyes - Fase 4
+- **agents/marketing_agent.py**: Agente de Marketing - Fase 4
+- **agents/motor_autorizacion_dual.py**: Motor de Autorización Dual (DAM)
+- **agents/notificador_dam.py**: Sistema de notificaciones reales para DAM
+- **agents/recetas_con_media.py**: RECETAS CON VARIANTES Y MEDIA
+- **agents/registry.py**: Mapear intent a agente
+- **agents/rrhh_camaras_agent.py**: Agente RRHH y Cámaras - Fase 4
+- **agents/servidor_validacion.py**: Servidor web para validación DAM desde el móvil

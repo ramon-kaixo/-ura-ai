@@ -1,0 +1,72 @@
+[
+  {
+    "nombre": "Tacos al pastor",
+    "pais": "México",
+    "ingredientes": ["cerdo", "piña", "cilantro", "tortilla"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Guacamole",
+    "pais": "México",
+    "ingredientes": ["aguacate", "limón", "cilantro", "tomate"],
+    "popular_en_espana": true,
+    "dificultad": "facil"
+  },
+  {
+    "nombre": "Ceviche",
+    "pais": "Perú",
+    "ingredientes": ["pescado", "limón", "cebolla", "cilantro"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Lomo saltado",
+    "pais": "Perú",
+    "ingredientes": ["lomo", "cebolla", "tomate", "soja"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Sushi",
+    "pais": "Japón",
+    "ingredientes": ["arroz", "pescado", "alga nori", "wasabi"],
+    "popular_en_espana": true,
+    "dificultad": "dificil"
+  },
+  {
+    "nombre": "Ramen",
+    "pais": "Japón",
+    "ingredientes": ["fideos", "caldo", "huevo", "cerdo"],
+    "popular_en_espana": true,
+    "dificultad": "dificil"
+  },
+  {
+    "nombre": "Curry",
+    "pais": "India",
+    "ingredientes": ["especias", "pollo", "arroz", "yogur"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Pasta carbonara",
+    "pais": "Italia",
+    "ingredientes": ["pasta", "huevo", "bacon", "queso"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Pizza margarita",
+    "pais": "Italia",
+    "ingredientes": ["masa", "tomate", "mozzarella", "albahaca"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  },
+  {
+    "nombre": "Falafel",
+    "pais": "Líbano",
+    "ingredientes": ["garbanzos", "comino", "pasta de sésamo"],
+    "popular_en_espana": true,
+    "dificultad": "media"
+  }
+]

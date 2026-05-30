@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-04-22T17:08:52.860439",
+  "results": {
+    "Test 1: Sincronizaci\u00f3n": {
+      "Estado": {
+        "value": "\u00c9xito",
+        "unit": ""
+      },
+      "Tiempo recuperaci\u00f3n": {
+        "value": 0.5181529521942139,
+        "unit": "s"
+      }
+    },
+    "Test 2: Flujo Datos": {
+      "Terminal Gateway": {
+        "value": "\u00c9xito",
+        "unit": ""
+      },
+      "Tiempo Terminal": {
+        "value": 0.016299962997436523,
+        "unit": "s"
+      },
+      "Integraci\u00f3n Contexto": {
+        "value": 0.001,
+        "unit": "s"
+      },
+      "Motor Turbo": {
+        "value": 1.815300703048706,
+        "unit": "s"
+      },
+      "Tiempo total": {
+        "value": 0.017299962997436524,
+        "unit": "s"
+      },
+      "Estado": {
+        "value": "\u00c9xito",
+        "unit": ""
+      }
+    },
+    "Test 3: Mantenimiento": {
+      "Tiempo ejecuci\u00f3n": {
+        "value": 0.1497330665588379,
+        "unit": "s"
+      },
+      "maintenance.log": {
+        "value": "Existe",
+        "unit": ""
+      },
+      "maintenance.log tama\u00f1o": {
+        "value": 770,
+        "unit": "bytes"
+      },
+      "performance_history.json": {
+        "value": "Existe",
+        "unit": ""
+      },
+      "Entradas historial": {
+        "value": 2,
+        "unit": ""
+      },
+      "Estado": {
+        "value": "Completado",
+        "unit": ""
+      }
+    },
+    "Test 4: UI Estabilidad": {
+      "Estado": {
+        "value": "\u00c9xito",
+        "unit": ""
+      },
+      "Tiempo ejecuci\u00f3n": {
+        "value": 1.1128480434417725,
+        "unit": "s"
+      },
+      "Aumento memoria": {
+        "value": 0.0,
+        "unit": "MB"
+      },
+      "Latencia renderizado": {
+        "value": 8.5,
+        "unit": "ms"
+      }
+    }
+  }
+}

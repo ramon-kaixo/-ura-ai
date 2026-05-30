@@ -1,0 +1,16 @@
+{
+  "framework": "OWASP ASI 2026",
+  "proyecto": "URA",
+  "fecha": "2026-05-16",
+  "controles": {
+    "ASI-1 (Access Control)": {"estado": "✅", "implementacion": "cap_drop ALL + no-new-privileges + registry_api auth"},
+    "ASI-2 (Cryptography)": {"estado": "✅", "implementacion": ".boveda_key chmod 400 + BovedaManager"},
+    "ASI-3 (Input Validation)": {"estado": "✅", "implementacion": "preflight_check.py + Rodillo 0"},
+    "ASI-4 (Security Testing)": {"estado": "✅", "implementacion": "Rodillos 4 (pytest) + 6 (bandit)"},
+    "ASI-5 (Supply Chain)": {"estado": "✅", "implementacion": "buzo_seguridad + explorador + mini-tuneladora"},
+    "ASI-6 (Monitoring)": {"estado": "✅", "implementacion": "Dashboard + sbx-status + quarantine-notifier"},
+    "ASI-7 (Data Protection)": {"estado": "✅", "implementacion": "privacy_scrubber.py + backup cifrado"},
+    "ASI-8 (Recovery)": {"estado": "✅", "implementacion": "backup semanal + git tags + quarantine"}
+  },
+  "score": "10/10"
+}

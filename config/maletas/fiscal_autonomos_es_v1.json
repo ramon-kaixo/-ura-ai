@@ -1,0 +1,85 @@
+{
+  "maleta_id": "fiscal_autonomos_es_v1",
+  "version": 1,
+  "creada_por": "manual",
+  "fecha_creacion": "2026-05-05T00:00:00+00:00",
+  "ultimo_uso": null,
+  "confianza": 0.5,
+  "tema": "Fiscalidad para autónomos en España: IRPF, IVA, trimestrales, cuotas y deducciones",
+  "herramientas": {
+    "buscadores": [
+      {
+        "nombre": "duckduckgo_text",
+        "tipo": "web",
+        "prioridad": 1,
+        "limite_por_sesion": 10
+      },
+      {
+        "nombre": "duckduckgo_news",
+        "tipo": "news",
+        "prioridad": 2,
+        "limite_diario": 50
+      },
+      {
+        "nombre": "stealth_browser",
+        "tipo": "browser",
+        "prioridad": 3,
+        "limite_diario": 30
+      }
+    ],
+    "extractores": [
+      {"nombre": "readability", "tipo": "limpiar_html"}
+    ],
+    "procesadores": [
+      {"nombre": "ollama_resumir", "modelo": "llama3", "max_tokens": 500}
+    ],
+    "validadores": [
+      {"nombre": "head_check", "tipo": "verificar_url_viva", "timeout_s": 5}
+    ]
+  },
+  "fuentes_blancas": {
+    "oficiales": [
+      {"nombre": "AEAT", "dominio": "agenciatributaria.gob.es", "tipo": "administracion"},
+      {"nombre": "Seguridad Social", "dominio": "seg-social.es", "tipo": "administracion"},
+      {"nombre": "BOE", "dominio": "boe.es", "tipo": "normativa"},
+      {"nombre": "Ministerio de Hacienda", "dominio": "hacienda.gob.es", "tipo": "administracion"}
+    ],
+    "academicas": [],
+    "especializadas": [
+      {"nombre": "Infoautónomos", "dominio": "infoautonomos.com", "tipo": "profesional"},
+      {"nombre": "Cinco Días", "dominio": "cincodias.elpais.com", "tipo": "prensa_economica"}
+    ]
+  },
+  "anti_repeticion": {
+    "cache_duracion_horas": 24,
+    "fingerprint_campos": ["query_normalizada", "rango_fechas"],
+    "umbral_similaridad": 0.85
+  },
+  "reglas_negocio": [
+    "Solo normas vigentes (no borradores ni anteproyectos)",
+    "Priorizar fuentes oficiales AEAT / BOE sobre blogs",
+    "Incluir fecha de publicación en todos los resultados",
+    "Descartar contenido anterior al año fiscal en curso salvo si es referencia normativa"
+  ],
+  "formato_salida": {
+    "estructura": {
+      "titulo": "string",
+      "resumen": "string",
+      "fuente_principal": "url",
+      "nivel_confianza": "alta|media|baja",
+      "fecha": "ISO8601|null",
+      "tipo_fuente": "oficial|especializada|generica"
+    }
+  },
+  "division_subtemas": {
+    "num_agentes_sugerido": 4,
+    "criterio_division": "por_tema",
+    "resultados_por_agente": 8,
+    "subtemas_explicitos": [
+      "cuota autónomos 2025 tramos ingresos",
+      "modelos IRPF autónomos trimestral 130 131",
+      "deducciones IRPF autónomos gastos deducibles",
+      "IVA autónomos modelo 303 presentación trimestral"
+    ]
+  }
+}

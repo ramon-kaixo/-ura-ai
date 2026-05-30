@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-connect
+  namespace: ura
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: debezium
+  template:
+    metadata:
+      labels:
+        app: debezium
+    spec:
+      containers:
+      - name: debezium
+        image: debezium/connect:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: CONFIG_STORAGE_TOPIC
+          value: "debezium-configs"
+        - name: OFFSET_STORAGE_TOPIC
+          value: "debezium-offsets"
+        - name: STATUS_STORAGE_TOPIC
+          value: "debezium-status"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: debezium-config
+  namespace: ura
+data:
+  connector-config.json: |
+    {
+      "name": "ura-connector",
+      "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "ura",
+        "database.password": "password",
+        "database.dbname": "ura",
+        "database.server.name": "ura-db",
+        "plugin.name": "pgoutput",
+        "table.include.list": "public.users,public.conversations"
+      }
+    }

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ura-config
+data:
+  OLLAMA_HOST: "http://ollama-service"
+  OLLAMA_PORT: "11434"
+  OLLAMA_MODEL: "qwen2.5:7b-instruct"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  LOG_LEVEL: "INFO"
+  SECURITY_MODE: "APPLE"

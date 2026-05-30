@@ -1,0 +1,5 @@
+## Abrir cierre de caja
+Para abrir el cierre de caja, haz clic en el menú "Utilidades" y luego en "Cierre de caja".
+
+## Exportar ventas
+Ve a "Informes" -> "Ventas diarias" y pulsa el botón con icono de disco.

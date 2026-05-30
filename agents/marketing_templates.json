@@ -1,0 +1,26 @@
+{
+  "colores": {
+    "gradiente_azul": ["#00f2fe", "#4facfe"],
+    "gradiente_rojo": ["#ff6b6b", "#ff8e53"],
+    "gradiente_verde": ["#00e676", "#00c853"],
+    "gradiente_purpura": ["#bb8fce", "#9b59b6"]
+  },
+  "tamanos": {
+    "twitter": [1200, 675],
+    "instagram": [1080, 1080],
+    "facebook": [1200, 630],
+    "linkedin": [1200, 627]
+  },
+  "plantillas": {
+    "oferta": {
+      "texto": "¡OFERTA ESPECIAL!",
+      "colores": ["gradiente_rojo"],
+      "fuente": "bold"
+    },
+    "evento": {
+      "texto": "EVENTO",
+      "colores": ["gradiente_azul"],
+      "fuente": "normal"
+    }
+  }
+}

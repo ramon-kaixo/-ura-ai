@@ -1,0 +1,46 @@
+# REGLAS PERMANENTES DE DESARROLLO URA
+# Estas reglas se aplican en cada sesión de trabajo
+
+REGLA 1 — Búsqueda exhaustiva antes de cualquier cambio:
+Antes de modificar, eliminar o renombrar cualquier función, variable, modelo o módulo, ejecuta siempre un grep completo en todo el proyecto:
+bash grep -r "TÉRMINO" ~/Desktop/URA_App --include="*.py" --include="*.json" --include="*.sh" | grep -v ".venv" | grep -v "benchmark"
+Nunca declares "0 referencias" sin haber ejecutado este comando.
+
+REGLA 2 — Verificación de ramificaciones:
+Cuando modifiques un módulo, identifica siempre qué otros módulos lo importan y si el cambio les afecta. Muestra la lista antes de aplicar.
+
+REGLA 3 — Una sola instancia de servicios críticos:
+Telegram bridge, ram_manager y ura_identity son singletons. Antes de instanciar cualquiera de ellos busca si ya existe una instancia en el proyecto.
+
+REGLA 4 — Diagnóstico antes de solución:
+Ante cualquier problema muestra primero el diagnóstico completo con datos reales antes de proponer cambios. No apliques nada sin confirmación explícita.
+
+REGLA 5 — Sincronización obligatoria:
+Después de cada cambio: sincronizar al .app bundle, ejecutar tres aperturas y cierres, confirmar exit code 0, y documentar en URA_CHANGELOG.md con fecha y hora exacta.
+
+REGLA 6 — Changelog honesto:
+El estado en URA_CHANGELOG.md debe reflejar la realidad, no lo que debería ser. Si algo está pendiente se marca como PENDIENTE, no como completado.
+
+REGLA 7 — Grep de validación final:
+Después de cualquier cambio de modelo, variable global o configuración, ejecuta siempre el grep de validación para confirmar que no quedan referencias obsoletas en ningún archivo del proyecto.
+
+REGLA 8 — Sin parches repetidos:
+Si un problema aparece más de dos veces, no apliques la misma solución una tercera vez. Para, analiza la causa raíz real y propón una solución estructural diferente. Documenta por qué las soluciones anteriores no funcionaron.
+
+REGLA 9 — Registro de problemas recurrentes:
+Crea y mantén un archivo URA_PROBLEMS.md donde se registre cada problema con fecha, síntoma, causa raíz, solución aplicada y si funcionó o no. Si el mismo síntoma aparece dos veces, la entrada anterior es obligatoria de leer antes de proponer nada.
+
+REGLA 10 — Alternativas antes de reintentar:
+Si una solución ha fallado dos veces, presenta siempre al menos dos alternativas diferentes antes de proceder, explicando pros y contras de cada una. El usuario decide cuál aplicar.
+
+REGLA 11 — Problema recurrente actual:
+El problema de modelo equivocado y Telegram duplicado ha aparecido tres veces. No apliques la misma solución. Explícame por qué han fallado las soluciones anteriores y propón dos alternativas estructurales diferentes antes de tocar nada.
+
+REGLA 12 — Consulta obligatoria de deprecated:
+Antes de instalar, activar o sugerir cualquier modelo, herramienta, librería o módulo nuevo, consulta siempre URA_DEPRECATED.md para verificar si ya se usó antes y por qué se descartó. Si está en ese archivo, explica al usuario por qué se retiró antes de proponer usarlo de nuevo.
+
+REGLA 13 — Registro obligatorio antes de borrar:
+Nunca borres código, módulos, modelos o configuraciones sin antes añadir una entrada completa en URA_DEPRECATED.md. Borrar sin registrar está prohibido. El código debe estar limpio pero la memoria del sistema debe estar completa.
+
+REGLA 14 — Inyección de dependencias para servicios críticos:
+Ningún módulo puede crear instancias de servicios críticos por sí mismo. Los servicios críticos son: telegram_bridge, ram_manager, ura_identity y model_config. Todos se crean en main_final.py y se pasan como parámetros a los módulos que los necesitan. Esto garantiza una sola instancia de cada servicio crítico y evita duplicados.

@@ -1,0 +1,8 @@
+{
+  "dimension_1_precision": 0.95,
+  "dimension_2_recall": 0.92,
+  "dimension_3_latency": 0.88,
+  "dimension_4_robustness": 0.9,
+  "dimension_5_adaptability": 0.93,
+  "overall_score": 0.916
+}

@@ -1,0 +1,5124 @@
+{
+  "inventory": {},
+  "api_health": {
+    "ollama_11434": {
+      "endpoint": "http://127.0.0.1:11434/api/tags",
+      "port": 11434,
+      "status": "healthy",
+      "response_time": 0.00235,
+      "content_available": true,
+      "error": ""
+    },
+    "windsurf_3000": {
+      "endpoint": "http://127.0.0.1:3000/health",
+      "port": 3000,
+      "status": "error",
+      "response_time": 0.0,
+      "content_available": false,
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=3000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=3000): Failed to establish a new connection: [Errno 61] Connection refused\"))"
+    }
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-05-03T03:17:43.619001",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:17:43.618990",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:17:43.645415",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:17:43.645406",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:27:15.570803",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:27:15.570794",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:27:15.594224",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:27:15.594217",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:35:00.279882",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:35:00.279873",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:35:00.301459",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:35:00.301452",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:42:05.593414",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:42:05.593405",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:42:05.619848",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:42:05.619838",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:56:25.624901",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:56:25.624889",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T03:56:25.655678",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T03:56:25.655664",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T23:20:56.088512",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T23:20:56.088502",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T23:20:56.119143",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T23:20:56.119135",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T23:33:51.446244",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T23:33:51.446236",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-03T23:33:51.472559",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-03T23:33:51.472534",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:26:54.364646",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:26:54.364636",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:26:54.394851",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:26:54.394838",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:35:06.757147",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:35:06.757132",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:35:06.790200",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:35:06.790182",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:52:21.361329",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:52:21.361306",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T21:52:21.420183",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T21:52:21.420165",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T22:04:07.578456",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T22:04:07.578444",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-05T22:04:07.655166",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-05T22:04:07.655157",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:09:49.106013",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:09:49.106002",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:09:49.126051",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:09:49.126041",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:27:52.098761",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:27:52.098754",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:27:52.114506",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:27:52.114496",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:55:51.972623",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:55:51.972616",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T13:55:51.994560",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T13:55:51.994552",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:11:18.790584",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:11:18.790573",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:11:18.807843",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:11:18.807835",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:31:47.244264",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:31:47.244255",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:31:47.266345",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:31:47.266330",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:53:16.747190",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:53:16.747183",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-08T14:53:16.766124",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-08T14:53:16.766117",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 2,
+          "empty": 0,
+          "error": 0
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:00:25.934777",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:00:25.934772",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:00:25.944479",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:00:25.944474",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:05:12.304479",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:05:12.304472",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:05:12.314880",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:05:12.314875",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:07:48.650558",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:07:48.650553",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:07:48.660668",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:07:48.660662",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:10:24.877103",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:10:24.877095",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:10:24.888284",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:10:24.888279",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:12:08.938370",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:12:08.938364",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:12:08.948659",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:12:08.948653",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:13:51.401217",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:13:51.401210",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:13:51.411967",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:13:51.411962",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:15:41.336153",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:15:41.336143",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:15:41.347355",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:15:41.347350",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:17:20.976928",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:17:20.976917",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:17:20.988019",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:17:20.988014",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:22:00.382716",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:22:00.382710",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:22:00.393120",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:22:00.393114",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:24:32.286517",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:24:32.286510",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:24:32.302862",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:24:32.302854",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:26:50.708295",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:26:50.708288",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:26:50.720542",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:26:50.720537",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:29:05.026765",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:29:05.026758",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:29:05.039885",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:29:05.039880",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:30:51.521616",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:30:51.521610",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:30:51.532457",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:30:51.532452",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:33:40.789375",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:33:40.789368",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:33:40.805601",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:33:40.805593",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:34:51.580407",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:34:51.580395",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:34:51.593686",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:34:51.593676",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:36:02.893309",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:36:02.893295",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:36:02.909584",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:36:02.909577",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:37:13.633569",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:37:13.633558",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:37:13.649251",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:37:13.649244",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:38:24.627121",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:38:24.627114",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:38:24.640663",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:38:24.640656",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:41:11.273734",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:41:11.273723",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:41:11.287137",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:41:11.287130",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:42:21.419349",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:42:21.419342",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:42:21.433587",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:42:21.433581",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:43:34.503868",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:43:34.503854",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:43:34.518439",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:43:34.518433",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:44:38.263126",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:44:38.263119",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:44:38.276485",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:44:38.276479",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:45:45.148429",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:45:45.148423",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:45:45.162559",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:45:45.162554",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:52:04.568611",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:52:04.568600",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:52:04.582116",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:52:04.582110",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:54:34.608338",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:54:34.608323",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:54:34.621822",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:54:34.621815",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:55:53.282674",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:55:53.282667",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:55:53.296539",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:55:53.296534",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:57:00.990527",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:57:00.990515",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:57:01.005846",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:57:01.005840",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:57:52.999106",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:57:52.999099",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:57:53.013095",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:57:53.013089",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:58:26.303150",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:58:26.303142",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:58:26.318179",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:58:26.318172",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:59:02.543054",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:59:02.543047",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T03:59:02.557700",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T03:59:02.557694",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T04:32:08.791389",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T04:32:08.791382",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T04:32:08.807303",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T04:32:08.807297",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T04:40:20.827842",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T04:40:20.827821",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-24T04:40:20.928373",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-24T04:40:20.928358",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-25T20:08:50.062543",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-25T20:08:50.062525",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    },
+    {
+      "timestamp": "2026-05-25T20:08:50.076441",
+      "action": "full_audit",
+      "report": {
+        "timestamp": "2026-05-25T20:08:50.076434",
+        "total_ports": 0,
+        "docker_ports": 0,
+        "native_ports": 0,
+        "api_health": {
+          "healthy": 1,
+          "empty": 0,
+          "error": 1
+        },
+        "fixed_assignments": {
+          "ollama": {
+            "port": 11434,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/api/tags"
+          },
+          "windsurf": {
+            "port": 3000,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/health"
+          },
+          "redis": {
+            "port": 6379,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "postgres": {
+            "port": 5432,
+            "ip": "127.0.0.1",
+            "api_endpoint": null
+          },
+          "n8n": {
+            "port": 5678,
+            "ip": "127.0.0.1",
+            "api_endpoint": "/healthz"
+          }
+        },
+        "reserve_ports": [
+          11436,
+          11437,
+          11438,
+          11439,
+          11440
+        ],
+        "use_localhost": true,
+        "local_ip": "10.164.1.26"
+      }
+    }
+  ],
+  "last_updated": "2026-05-25T20:08:50.076459"
+}

@@ -1,0 +1,71 @@
+{
+  "Python": {
+    "prefix": "ura-agent",
+    "body": [
+      "#!/usr/bin/env python3",
+      "\"\"\"",
+      "URA Agent - ${1:Agent Name}",
+      "\"\"\"",
+      "from typing import Dict, Any, Optional",
+      "from core.logging_config import get_logger",
+      "",
+      "logger = get_logger(\"${2:agent_name}\", log_dir=\"./logs\")",
+      "",
+      "",
+      "class ${3:AgentClass}:",
+      "    \"\"\"${4:Agent description}\"\"\"",
+      "    ",
+      "    def __init__(self):",
+      "        \"\"\"Inicializar agente\"\"\"",
+      "        self.logger = logger",
+      "    ",
+      "    def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:",
+      "        \"\"\"",
+      "        Procesar entrada",
+      "        ",
+      "        Args:",
+      "            input_data: Datos de entrada",
+      "            ",
+      "        Returns:",
+      "            Resultado del procesamiento",
+      "        \"\"\"",
+      "        ${5:# implementation}",
+      "        return {}",
+      "",
+      "",
+      "# Instancia global",
+      "agent = ${3:AgentClass}()"
+    ],
+    "description": "URA Agent template"
+  },
+  "FastAPI Route": {
+    "prefix": "ura-route",
+    "body": [
+      "@app.${1:get}(\"${2:/endpoint}\")",
+      "async def ${3:endpoint_name}(request: Request):",
+      "    \"\"\"${4:Endpoint description}\"\"\"",
+      "    ${5:# implementation}",
+      "    return {\"status\": \"success\"}"
+    ],
+    "description": "FastAPI route template"
+  },
+  "Logger": {
+    "prefix": "ura-logger",
+    "body": [
+      "from core.logging_config import get_logger",
+      "logger = get_logger(\"${1:module_name}\", log_dir=\"./logs\")"
+    ],
+    "description": "URA logger import"
+  },
+  "Error Handler": {
+    "prefix": "ura-error",
+    "body": [
+      "try:",
+      "    ${1:# code}",
+      "except Exception as e:",
+      "    logger.error(f\"Error: {e}\")",
+      "    raise"
+    ],
+    "description": "URA error handling pattern"
+  }
+}

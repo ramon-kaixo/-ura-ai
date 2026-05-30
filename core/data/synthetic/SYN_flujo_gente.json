@@ -1,0 +1,47 @@
+{
+  "ORIGIN": "SYNTHETIC",
+  "descripcion": "Datos sintéticos de flujo de personas en el barrio simulado",
+  "generado_por": "URA Sistema Sintético",
+  "fecha_generacion": "2026-04-22T21:30:00",
+  "datos": {
+    "barrio": "Barrio Centro Simulado",
+    "flujo_por_hora": {
+      "08:00": {"personas": 45, "tipo": "trabajadores", "intensidad": "baja"},
+      "09:00": {"personas": 120, "tipo": "trabajadores", "intensidad": "media"},
+      "10:00": {"personas": 85, "tipo": "mixto", "intensidad": "media-baja"},
+      "11:00": {"personas": 65, "tipo": "mixto", "intensidad": "baja"},
+      "12:00": {"personas": 95, "tipo": "comerciantes", "intensidad": "media"},
+      "13:00": {"personas": 110, "tipo": "comerciantes", "intensidad": "media"},
+      "14:00": {"personas": 75, "tipo": "mixto", "intensidad": "baja"},
+      "15:00": {"personas": 60, "tipo": "mixto", "intensidad": "baja"},
+      "16:00": {"personas": 55, "tipo": "mixto", "intensidad": "baja"},
+      "17:00": {"personas": 80, "tipo": "mixto", "intensidad": "media-baja"},
+      "18:00": {"personas": 180, "tipo": "ocio", "intensidad": "alta"},
+      "19:00": {"personas": 250, "tipo": "ocio", "intensidad": "muy alta"},
+      "20:00": {"personas": 280, "tipo": "ocio", "intensidad": "muy alta"},
+      "21:00": {"personas": 320, "tipo": "ocio", "intensidad": "muy alta"},
+      "22:00": {"personas": 290, "tipo": "ocio", "intensidad": "muy alta"},
+      "23:00": {"personas": 200, "tipo": "ocio", "intensidad": "alta"},
+      "00:00": {"personas": 120, "tipo": "ocio", "intensidad": "media"},
+      "01:00": {"personas": 65, "tipo": "ocio", "intensidad": "baja"},
+      "02:00": {"personas": 35, "tipo": "ocio", "intensidad": "muy baja"},
+      "03:00": {"personas": 20, "tipo": "ocio", "intensidad": "muy baja"},
+      "04:00": {"personas": 15, "tipo": "ocio", "intensidad": "muy baja"},
+      "05:00": {"personas": 25, "tipo": "mixto", "intensidad": "muy baja"},
+      "06:00": {"personas": 40, "tipo": "trabajadores", "intensidad": "baja"},
+      "07:00": {"personas": 95, "tipo": "trabajadores", "intensidad": "media"}
+    },
+    "pico_maximo": {
+      "hora": "21:00",
+      "personas": 320,
+      "intensidad": "muy alta"
+    },
+    "pico_minimo": {
+      "hora": "04:00",
+      "personas": 15,
+      "intensidad": "muy baja"
+    },
+    "promedio_diario": 118,
+    "total_estimado": 2835
+  }
+}

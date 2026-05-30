@@ -1,0 +1,11 @@
+# OBSOLETO: Reemplazado por scripts/start_router_user.service
+# El autoarranque del router se maneja via systemd --user (sin sudo):
+#
+#   mkdir -p ~/.config/systemd/user/
+#   cp scripts/start_router_user.service ~/.config/systemd/user/start-router.service
+#   loginctl enable-linger $(whoami)
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now start-router.service
+#
+# El servicio ya está instalado y activo en GX10.
+# Ver: scripts/start_router_user.service

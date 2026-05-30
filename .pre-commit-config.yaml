@@ -1,0 +1,50 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.5
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests]
+        args: [--follow-imports=silent, --ignore-missing-imports, --exclude, "monitor_circuit_breaker|api/v2|sandbox|archive|web|scripts/legacy", core/, agents/]
+  - repo: local
+    hooks:
+      - id: forbid-imports-in-init
+        name: Forbid imports in __init__.py
+        entry: python3 scripts/audit_init.py
+        language: system
+        files: ^(core|agents)/__init__.py$
+        pass_filenames: false
+        always_run: true
+      - id: wip-guard
+        name: WIP guard (no stale changes >24h)
+        entry: ./scripts/ura-wip-guard.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+        args: [check]
+      - id: bandit
+        name: bandit
+        entry: bandit
+        language: python
+        files: \.py$
+        args: ["-ll", "--skip", "B101,B311"]
+      - id: pytest
+        name: pytest (smoke)
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: ["tests/test_core_basics.py", "tests/test_core_data.py", "tests/test_core_security.py", "-v", "--maxfail=1"]
+      - id: quality-check
+        name: Full quality check
+        entry: ./scripts/quality_check.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]

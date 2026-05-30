@@ -1,0 +1,40 @@
+{
+  "modelos": [
+    {
+      "nombre": "qwen2.5:3b-instruct",
+      "ram_minima_gb": 3.5,
+      "descripcion": "Modelo pequeño para tareas básicas con poca RAM",
+      "descargado": false
+    },
+    {
+      "nombre": "llama3.2:3b",
+      "ram_minima_gb": 7.0,
+      "descripcion": "Modelo pequeño estándar para tareas generales",
+      "descargado": false
+    },
+    {
+      "nombre": "qwen2.5:14b-instruct",
+      "ram_minima_gb": 16.0,
+      "descripcion": "Modelo mediano para tareas complejas",
+      "descargado": false
+    },
+    {
+      "nombre": "qwen2.5:32b-instruct",
+      "ram_minima_gb": 32.0,
+      "descripcion": "Modelo grande para tareas avanzadas",
+      "descargado": false
+    },
+    {
+      "nombre": "llama3.1:70b",
+      "ram_minima_gb": 64.0,
+      "descripcion": "Modelo muy grande para tareas complejas de alta calidad",
+      "descargado": false
+    },
+    {
+      "nombre": "qwen2.5:72b-instruct",
+      "ram_minima_gb": 128.0,
+      "descripcion": "Modelo enorme para tareas de máxima calidad",
+      "descargado": false
+    }
+  ]
+}

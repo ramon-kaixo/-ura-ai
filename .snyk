@@ -1,0 +1,24 @@
+# Snyk configuration for URA
+version: v1.25.0
+
+# Exclude certain paths from scanning
+exclude:
+  - node_modules
+  - vendor
+  - .venv
+  - __pycache__
+  - "*.egg-info"
+
+# Severity thresholds
+severity-threshold: medium
+
+# Organization settings
+org: ura-development
+
+# Project settings
+project:
+  name: ura-assistant
+  tags:
+    - python
+    - ai
+    - security

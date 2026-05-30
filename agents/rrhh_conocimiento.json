@@ -1,0 +1,50 @@
+{
+  "errores_comunes_contratos": [
+    "No especificar tipo de contrato",
+    "Falta de jornada laboral",
+    "No incluir periodo de prueba",
+    "Salario inferior al SMI",
+    "No registrar en SEPE",
+    "No especificar convenio colectivo",
+    "Falta de cláusula de confidencialidad"
+  ],
+  "tipos_contrato": {
+    "indefinido": "Sin fecha de finalización - Mayor estabilidad",
+    "fijo_discontinuo": "Para trabajos discontinuos - Llamada según necesidad",
+    "temporal": "Por obra o servicio determinado - Duración limitada",
+    "practicas": "Para formación - Remuneración o sin remuneración",
+    "eventual": "Por circunstancias de la producción - Máximo 6 meses"
+  },
+  "camaras_homologadas": [
+    {
+      "marca": "Hikvision",
+      "modelo": "Serie EasyIP",
+      "precio": "150-300€",
+      "homologada": true
+    },
+    {
+      "marca": "Dahua",
+      "modelo": "Serie Pro",
+      "precio": "120-250€",
+      "homologada": true
+    },
+    {
+      "marca": "Axis",
+      "modelo": "Serie M",
+      "precio": "300-600€",
+      "homologada": true
+    },
+    {
+      "marca": "Bosch",
+      "modelo": "Serie Flexidome",
+      "precio": "400-800€",
+      "homologada": true
+    }
+  ],
+  "normativa_lopd": {
+    "videovigilancia": "Requiere cartel informativo visible",
+    "datos": "Registro de fichero en AEPD obligatorio",
+    "conservacion": "Máximo 30 días grabaciones (salvo excepciones)",
+    "acceso": "Solo personal autorizado puede acceder a grabaciones"
+  }
+}

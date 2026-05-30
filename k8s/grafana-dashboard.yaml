@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-config
+  namespace: ura
+data:
+  ura-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "URA Consolidated Dashboard",
+        "uid": "ura-consolidated",
+        "panels": [
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])"
+              }
+            ]
+          },
+          {
+            "title": "Response Time (p95)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, http_request_duration_seconds)"
+              }
+            ]
+          },
+          {
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m])"
+              }
+            ]
+          },
+          {
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_cpu_usage_seconds_total"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_working_set_bytes"
+              }
+            ]
+          },
+          {
+            "title": "Active Connections",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "redis_connected_clients"
+              }
+            ]
+          },
+          {
+            "title": "Cache Hit Rate",
+            "type": "gauge",
+            "targets": [
+              {
+                "expr": "redis_keyspace_hits / (redis_keyspace_hits + redis_keyspace_misses)"
+              }
+            ]
+          },
+          {
+            "title": "Database Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "pg_stat_database_numbackends"
+              }
+            ]
+          },
+          {
+            "title": "Log Errors",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(log_entries_total{level=\"error\"}[5m])"
+              }
+            ]
+          },
+          {
+            "title": "Trace Latency",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, jaeger_span_duration_milliseconds)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: ura
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus:9090
+        access: proxy
+        isDefault: true
+      - name: Jaeger
+        type: jaeger
+        url: http://jaeger:16686
+        access: proxy
+      - name: Elasticsearch
+        type: elasticsearch
+        url: http://elasticsearch:9200
+        access: proxy
+        jsonData:
+          esVersion: "8.11.0"
+          timeField: "@timestamp"

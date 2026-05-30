@@ -1,0 +1,21 @@
+services:
+  aprendizaje:
+    build: .
+    container_name: ura-sandbox-aprendizaje
+    network_mode: bridge
+    volumes:
+      - ./Enjambre:/sandbox/Enjambre:ro
+      - ./scripts:/sandbox/scripts:ro
+      - ../../data:/data:rw
+      - ../../biblioteca:/biblioteca:rw
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

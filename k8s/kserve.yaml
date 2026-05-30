@@ -1,0 +1,26 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: ura-model
+  namespace: ura
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: triton
+      storageUri: gs://ura-models/qwen2.5
+      resources:
+        requests:
+          cpu: "2"
+          memory: "4Gi"
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+          nvidia.com/gpu: "1"
+    serviceAccountName: kserve-sa
+    containers:
+    - name: kserve-container
+      env:
+      - name: OLLAMA_HOST
+        value: "http://ollama.svc.cluster.local:11434"

@@ -1,0 +1,50 @@
+name: Dependency Scanning
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  dependency-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install safety pip-audit
+    
+    - name: Run Safety
+      run: safety check --json > safety-report.json || true
+    
+    - name: Run Pip-Audit
+      run: pip-audit --format=json > audit-report.json || true
+    
+    - name: Upload Security Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-security-reports
+        path: |
+          safety-report.json
+          audit-report.json
+    
+    - name: Check for Vulnerabilities
+      run: |
+        # Fail if high severity vulnerabilities found
+        if [ -f safety-report.json ]; then
+          HIGH_VULNS=$(python -c "import json; data=json.load(open('safety-report.json')); print(sum(1 for v in data if v.get('severity') == 'HIGH')))")
+          if [ "$HIGH_VULNS" -gt 0 ]; then
+            echo "Found $HIGH_VULNS high severity vulnerabilities"
+            exit 1
+          fi
+        fi

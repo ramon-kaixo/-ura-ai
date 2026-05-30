@@ -1,0 +1,54 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install black flake8 mypy bandit pytest pytest-cov
+    
+    - name: Black formatting check
+      run: black --check core/
+    
+    - name: Flake8 linting
+      run: flake8 core/ --max-line-length=120
+    
+    - name: MyPy type checking
+      run: mypy core/ --ignore-missing-imports
+    
+    - name: Bandit security check
+      run: bandit -r core/ -f json -o bandit-report.json || true
+    
+    - name: Run tests
+      run: pytest tests/ --cov=core --cov-report=xml --cov-report=term
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: true
+    
+    - name: Quality Gate Check
+      run: |
+        # Check coverage threshold
+        COVERAGE=$(python -c "import json; data=json.load(open('coverage.json')); print(data['totals']['percent_covered'])")
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "Coverage below 80%: $COVERAGE%"
+          exit 1
+        fi
+        echo "Quality gate passed"

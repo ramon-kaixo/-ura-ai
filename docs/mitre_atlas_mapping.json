@@ -1,0 +1,10 @@
+{
+  "ATLAS-001 (Prompt Injection)": "input_sanitizer.py + jailbreak_guard.py + agente_policia_v2",
+  "ATLAS-002 (Tool Misuse)": "dual_verification.py + circuit_breaker.py + action_signer.py",
+  "ATLAS-003 (Data Exfiltration)": "AgenShield + network allowlist + privacy_scrubber.py",
+  "ATLAS-004 (Model Theft)": "Rate limiter + access control + ollama_connector auth",
+  "ATLAS-005 (Supply Chain)": "Tuneladora Rodillo 0 + Enjambre buzos + mini-tuneladora",
+  "ATLAS-006 (Privilege Escalation)": "cap_drop ALL + no-new-privileges + user 1000:1000",
+  "ATLAS-007 (Denial of Service)": "Resource limits (2 CPU, 4G RAM) + circuit_breaker",
+  "ATLAS-008 (Information Disclosure)": "log_scrubber + forensic_scribe + privacy by design"
+}

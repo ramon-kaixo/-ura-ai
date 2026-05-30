@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-04-22T17:10:44.274012",
+  "results": {
+    "Test 1: Acci\u00f3n Cruzada": {
+      "Tiempo Terminal 1": {
+        "value": 0.020862817764282227,
+        "unit": "s"
+      },
+      "Tiempo Terminal 2": {
+        "value": 0.012875795364379883,
+        "unit": "s"
+      },
+      "Tiempo IA": {
+        "value": 1.223228931427002,
+        "unit": "s"
+      },
+      "Estado": {
+        "value": "\u00c9xito",
+        "unit": ""
+      }
+    },
+    "Test 2: Sandboxing": {
+      "Estado": {
+        "value": "Seguridad activa",
+        "unit": ""
+      },
+      "Tiempo respuesta": {
+        "value": 0.00016307830810546875,
+        "unit": "s"
+      }
+    },
+    "Test 3: Auditor\u00eda": {
+      "Log tama\u00f1o": {
+        "value": 5131,
+        "unit": "bytes"
+      },
+      "Estado": {
+        "value": "\u00c9xito",
+        "unit": ""
+      },
+      "Tiempo medio": {
+        "value": 0.004735302925109863,
+        "unit": "s"
+      },
+      "Aumento memoria": {
+        "value": 0.03125,
+        "unit": "MB"
+      }
+    },
+    "Test 4: Resiliencia": {
+      "Estado": {
+        "value": "Timeout activo",
+        "unit": ""
+      },
+      "Tiempo respuesta": {
+        "value": 30.00446391105652,
+        "unit": "s"
+      }
+    }
+  }
+}

@@ -1,0 +1,107 @@
+services:
+  seguridad:
+    build: ./sandbox/Seguridad
+    container_name: ura-sandbox-seguridad
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Seguridad/scripts:/sandbox/scripts:ro
+      - ./data:/data:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  mantenimiento:
+    build: ./sandbox/Mantenimiento
+    container_name: ura-sandbox-mantenimiento
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Mantenimiento/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  documentacion:
+    build: ./sandbox/Documentacion
+    container_name: ura-sandbox-documentacion
+    networks:
+      - sandbox-net
+    ports:
+      - "8087:8000"
+    volumes:
+      - ./sandbox/Documentacion/scripts:/sandbox/scripts:ro
+      - /opt/ura/docs:/docs:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  aprendizaje:
+    build: ./sandbox/Aprendizaje
+    container_name: ura-sandbox-aprendizaje
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Aprendizaje/Enjambre:/sandbox/Enjambre:ro
+      - ./sandbox/Aprendizaje/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  exploracion:
+    build: ./sandbox/Exploracion
+    container_name: ura-sandbox-exploracion
+    network_mode: none
+    volumes:
+      - ./sandbox/Exploracion/proyecto_prueba:/sandbox/proyecto_prueba:ro
+      - ./sandbox/Exploracion/scripts:/sandbox/scripts:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+networks:
+  sandbox-net:
+    driver: bridge

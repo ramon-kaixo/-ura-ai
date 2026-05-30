@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I{} basename {})",
+      "Bash(grep -B2 \"^\\\\s*pass$\")",
+      "Bash(read f *)",
+      "Bash(python3 -c 'import json; json.load\\(open\\('\\\\''__TRACKED_VAR__'\\\\''\\)\\)')",
+      "Bash(grep -v \"^$\")",
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $5, $NF}')",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 *)",
+      "Bash(grep -B1 \"^\\\\s*pass\\\\s*$\")",
+      "Bash(grep -rn \"^[A-Z_]\\\\{3,\\\\}\\\\s*=\\\\s*None\\\\|^[a-z_]\\\\{3,\\\\}\\\\s*=\\\\s*None\" /Users/ramonesnaola/URA/ura_ia_1972/core --include=\"*.py\" --exclude-dir=\".venv\")"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "_comment": "Configuracion TPV. Para usar API real, cambiar base_url y api_key.",
+  "_mock_url": "http://localhost:8080/api",
+  "_real_example": "https://api.tudominio.com/v1",
+  "base_url": "http://localhost:8080/api",
+  "api_key": "${TPV_API_KEY}",
+  "endpoints": {
+    "ventas_hoy": "/ventas?fecha={fecha}",
+    "stock_producto": "/stock/{producto}",
+    "registrar_venta": "/ventas",
+    "clientes_hoy": "/clientes/activos"
+  },
+  "timeout": 10
+}
