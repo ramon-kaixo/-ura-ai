@@ -200,8 +200,42 @@ def analyze_node(hostname: str, ip: str) -> dict[str, Any] | None:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+    connected = connect_via_ssh(ssh, ip, user, ssh_key)
+    if not connected:
+        return None
+
+    try:
+        version_remota = analizar_version_remota(ssh)
+        info["version_scripts"] = version_remota
+        if is_up_to_date(info, version_remota):
+            logger.info(
+                f"Nodo {hostname} ya esta en la version actual ({version_remota}). No se redesplegara."
+            )
+            ssh.close()
+            return set_node_info(info)
+    except Exception as exc:
+        logger.warning(sanitize_log_wrapper(f"SSH a {ip}: {exc}"))
+        return {"hostname": hostname, "ip": ip, "error": str(exc)}
+
+    try:
+        collect_profile_data(ssh, info)
+        if not has_enough_disk_space(info):
+            ssh.close()
+            return None
+    except Exception as exc:
+        logger.warning(sanitize_log_wrapper(f"SSH a {ip}: {exc}"))
+        return {"hostname": hostname, "ip": ip, "error": str(exc)}
+
+    ssh.close()
+    rol = classify_with_llm(info)
+    info["rol"] = rol
+    info["actualizado"] = True
+    return info
+
+
+def connect_via_ssh(ssh: paramiko.SSHClient, ip: str, user: str, ssh_key: str) -> bool:
+    """Intenta conectarse al nodo via SSH con clave privada."""
     connected = False
-    # Intentar conexion con clave SSH primero
     if os.path.isfile(ssh_key):
         try:
             ssh.connect(ip, username=user, key_filename=ssh_key, timeout=10)
@@ -209,100 +243,78 @@ def analyze_node(hostname: str, ip: str) -> dict[str, Any] | None:
             logger.info(f"Conectado a {ip} via clave SSH")
         except Exception as exc:
             logger.debug(f"SSH key fallo para {ip}: {exc}")
+    return connected
 
-    # Fallback a password
-    if not connected:
-        try:
-            from core.security.ssh_credentials import obtener_credenciales
 
-            passwd = obtener_credenciales(user)
-        except Exception:
-            passwd = os.getenv("URA_SSH_PASSWORD")
+def analizar_version_remota(ssh: paramiko.SSHClient) -> str:
+    """Analiza la version remota del nodo."""
+    stdin, stdout, stderr = ssh.exec_command("cat /etc/ura-version", timeout=5)
+    version_remota = stdout.read().decode().strip()
+    return version_remota
 
-        if not passwd:
-            logger.error(sanitize_log_wrapper(f"Sin credenciales para {user}@{ip}"))
-            return None
 
-        try:
-            ssh.connect(ip, username=user, password=passwd, timeout=10)
-            connected = True
-            logger.info(f"Conectado a {ip} via password")
-        except Exception as exc:
-            logger.warning(sanitize_log_wrapper(f"SSH password fallo para {ip}: {exc}"))
-            return None
+def is_up_to_date(info: dict[str, Any], version_remota: str) -> bool:
+    """Compara la versión remota con la actual."""
+    nodo_previo = next(
+        (
+            n
+            for n in json.load(open(NODOS_DB, encoding="utf-8"))["nodos"]
+            if n["id"] == info["hostname"]
+        ),
+        None,
+    )
+    return (
+        nodo_previo
+        and nodo_previo.get("version_scripts") == version_remota
+        and version_remota != "0"
+    )
 
-    if not connected:
-        return None
 
-    try:
-        # Punto 4: Verificar version remota
-        version_remota = analizar_version_remota(ssh)
-        info["version_scripts"] = version_remota
-
-        # Comparar con version actual
-        with open(NODOS_DB, encoding="utf-8") as fh:
-            nodos = json.load(fh)
-        nodo_previo = next((n for n in nodos.get("nodos", []) if n["id"] == hostname), None)
-        if (
-            nodo_previo
-            and nodo_previo.get("version_scripts") == version_remota
-            and version_remota != "0"
-        ):
-            logger.info(
-                f"Nodo {hostname} ya esta en la version actual ({version_remota}). No se redesplegara."
-            )
-            ssh.close()
-            info["rol"] = nodo_previo.get("rol", "worker")
-            info["actualizado"] = False
-            return info
-
-        # Recopilar perfil
-        commands = {
-            "distro": "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2",
-            "memoria_mb": "free -m | awk '/Mem/{print $2}'",
-            "cpu_cores": "nproc",
-            "arch": "uname -m",
-            "disco_total": "df -h / | tail -1 | awk '{print $2}'",
-            "disco_libre": "df -h / | tail -1 | awk '{print $4}'",
-            "docker": "command -v docker && echo si || echo no",
-            "ollama": "command -v ollama && ollama --version 2>/dev/null || echo no",
-            "python": "python3 --version 2>/dev/null || echo no",
-            "gpu": "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || echo no",
-            "vram": "nvidia-smi --query-gpu=memory.total --format=csv,noheader 2>/dev/null || echo 0",
-            "tailscale_ver": "tailscale version 2>/dev/null || echo no",
-            "ip_local": "hostname -I | awk '{print $1}'",
-        }
-        for k, cmd in commands.items():
-            try:
-                stdin, stdout, stderr = ssh.exec_command(cmd, timeout=5)
-                val = stdout.read().decode().strip()
-                info[k] = val if val else "no"
-            except Exception:
-                info[k] = "error"
-
-        # Punto 13: Verificar espacio en disco
-        disco_libre = info.get("disco_libre", "0G")
-        if "G" in disco_libre:
-            try:
-                gb = float(disco_libre.replace("G", "").strip())
-                if gb < MIN_DISK_GB:
-                    logger.warning(
-                        f"Nodo {hostname} tiene menos de {MIN_DISK_GB}GB libres ({disco_libre}). No se desplegara."
-                    )
-                    ssh.close()
-                    return None
-            except ValueError:
-                pass
-
-        ssh.close()
-    except Exception as exc:
-        logger.warning(sanitize_log_wrapper(f"SSH a {ip}: {exc}"))
-        return {"hostname": hostname, "ip": ip, "error": str(exc)}
-
-    rol = classify_with_llm(info)
-    info["rol"] = rol
-    info["actualizado"] = True
+def set_node_info(info: dict[str, Any]) -> dict[str, Any]:
+    """Establece el rol y marca como actualizado."""
+    info["rol"] = next(
+        (
+            n
+            for n in json.load(open(NODOS_DB, encoding="utf-8"))["nodos"]
+            if n["id"] == info["hostname"]
+        ),
+        None,
+    ).get("rol", "worker")
+    info["actualizado"] = False
     return info
+
+
+def collect_profile_data(ssh: paramiko.SSHClient, info: dict[str, Any]) -> None:
+    """Recopila datos del perfil."""
+    commands = {
+        "distro": "cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2",
+        "memoria_mb": "free -m | awk '/Mem/{print $2}'",
+        "cpu_cores": "nproc",
+        "arch": "uname -m",
+        "disco_total": "df -h / | tail -1 | awk '{print $2}'",
+        "disco_libre": "df -h / | tail -1 | awk '{print $4}'",
+        "docker": "command -v docker && echo si || echo no",
+        "ollama": "command -v ollama && ollama --version 2>/dev/null || echo no",
+        "python": "python3 --version 2>/dev/null || echo no",
+        "gpu": "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || echo no",
+        "vram": "nvidia-smi --query-gpu=memory.total --format=csv,noheader 2>/dev/null || echo 0",
+        "tailscale_ver": "tailscale version 2>/dev/null || echo no",
+        "ip_local": "hostname -I | awk '{print $1}'",
+    }
+    for k, cmd in commands.items():
+        try:
+            stdin, stdout, stderr = ssh.exec_command(cmd, timeout=5)
+            val = stdout.read().decode().strip()
+            info[k] = val if val else "no"
+        except Exception:
+            info[k] = "error"
+
+
+def has_enough_disk_space(info: dict[str, Any]) -> bool:
+    """Verifica el espacio en disco."""
+    disco_libre = info.get("disco_libre", "0G")
+    gb = float(disco_libre.replace("G", "").strip())
+    return gb >= MIN_DISK_GB
 
 
 def procesar_evento(ev_file: Path) -> bool:

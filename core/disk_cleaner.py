@@ -33,95 +33,30 @@ def limpiar(modo: str = "safe") -> dict[str, Any]:
     espacio_liberado_mb = 0.0
     ok = True
 
-    # 1. Limpiar logs > 30 días
     try:
-        log_dirs = [
-            Path.home() / "Desktop" / "URA_App" / "logs",
-            Path.home() / "Library" / "Logs",
-        ]
-
-        cutoff_date = datetime.now() - timedelta(days=30)
-        logs_eliminados = 0
-        logs_size_mb = 0.0
-
-        for log_dir in log_dirs:
-            if log_dir.exists():
-                for log_file in log_dir.glob("*.log"):
-                    try:
-                        file_time = datetime.fromtimestamp(log_file.stat().st_mtime)
-                        if file_time < cutoff_date:
-                            size_mb = log_file.stat().st_size / (1024 * 1024)
-                            log_file.unlink()
-                            logs_eliminados += 1
-                            logs_size_mb += size_mb
-                    except Exception as e:
-                        errores.append(f"Error eliminando log {log_file}: {e}")
-
-        if logs_eliminados > 0:
-            acciones.append(f"Logs eliminados: {logs_eliminados} archivos ({logs_size_mb:.2f} MB)")
-            espacio_liberado_mb += logs_size_mb
-            logger.info(
-                f"Logs >30 días eliminados: {logs_eliminados} archivos, {logs_size_mb:.2f} MB"
-            )
+        liberar_espacio_logs(acciones, errores)
     except Exception as e:
-        errores.append(f"Error limpiando logs: {e}")
+        errores.append(f"Error general: {e}")
         ok = False
 
-    # 2. Limpiar pip cache
     try:
-        import psutil
-
-        free_before = psutil.disk_usage("/").free
-    except ImportError:
-        free_before = 0
-    try:
-        resultado = ejecutar("pip cache purge")
-        if resultado["ok"]:
-            acciones.append("pip cache purged")
-            try:
-                espacio_liberado_mb += (free_before - psutil.disk_usage("/").free) / (1024 * 1024)
-            except:
-                pass
-            logger.info("pip cache purged")
-        else:
-            errores.append(f"pip cache purge falló: {resultado['stderr']}")
+        liberar_espacio_pip_cache(acciones, errores)
     except Exception as e:
         errores.append(f"Error limpiando pip cache: {e}")
 
-    # 3. Limpiar npm cache
     try:
-        resultado = ejecutar("npm cache clean --force")
-        if resultado["ok"]:
-            acciones.append("npm cache cleaned")
-            espacio_liberado_mb += 30.0  # Estimación
-            logger.info("npm cache cleaned")
-        else:
-            errores.append(f"npm cache clean falló: {resultado['stderr']}")
+        liberar_espacio_npm_cache(acciones, errores)
     except Exception as e:
         errores.append(f"Error limpiando npm cache: {e}")
 
-    # 4. Limpiar brew cache
     try:
-        resultado = ejecutar("brew cleanup --prune=all")
-        if resultado["ok"]:
-            acciones.append("brew cache cleaned")
-            espacio_liberado_mb += 100.0  # Estimación
-            logger.info("brew cache cleaned")
-        else:
-            errores.append(f"brew cleanup falló: {resultado['stderr']}")
+        liberar_espacio_brew_cache(acciones, errores)
     except Exception as e:
         errores.append(f"Error limpiando brew cache: {e}")
 
-    # 5. Docker (solo en modo full)
     if modo == "full":
         try:
-            resultado = ejecutar("docker system prune -f")
-            if resultado["ok"]:
-                acciones.append("docker system prune ejecutado")
-                espacio_liberado_mb += 200.0  # Estimación
-                logger.info("docker system prune ejecutado")
-            else:
-                errores.append(f"docker system prune falló: {resultado['stderr']}")
+            liberar_espacio_docker(acciones, errores)
         except Exception as e:
             errores.append(f"Error limpiando Docker: {e}")
 
@@ -135,6 +70,99 @@ def limpiar(modo: str = "safe") -> dict[str, Any]:
         "acciones": acciones,
         "errores": errores,
     }
+
+
+def liberar_espacio_logs(acciones: list[str], errores: list[str]) -> None:
+    log_dirs = [
+        Path.home() / "Desktop" / "URA_App" / "logs",
+        Path.home() / "Library" / "Logs",
+    ]
+
+    cutoff_date = datetime.now() - timedelta(days=30)
+    logs_eliminados = 0
+    logs_size_mb = 0.0
+
+    for log_dir in log_dirs:
+        if log_dir.exists():
+            for log_file in log_dir.glob("*.log"):
+                try:
+                    file_time = datetime.fromtimestamp(log_file.stat().st_mtime)
+                    if file_time < cutoff_date:
+                        size_mb = log_file.stat().st_size / (1024 * 1024)
+                        log_file.unlink()
+                        logs_eliminados += 1
+                        logs_size_mb += size_mb
+                except Exception as e:
+                    errores.append(f"Error eliminando log {log_file}: {e}")
+
+    if logs_eliminados > 0:
+        acciones.append(f"Logs eliminados: {logs_eliminados} archivos ({logs_size_mb:.2f} MB)")
+        logger.info(f"Logs >30 días eliminados: {logs_eliminados} archivos, {logs_size_mb:.2f} MB")
+
+
+def liberar_espacio_pip_cache(acciones: list[str], errores: list[str]) -> None:
+    import psutil
+
+    try:
+        free_before = psutil.disk_usage("/").free
+    except ImportError:
+        free_before = 0
+
+    try:
+        resultado = ejecutar("pip cache purge")
+        if resultado["ok"]:
+            acciones.append("pip cache purged")
+            try:
+                espacio_liberado_mb = (free_before - psutil.disk_usage("/").free) / (1024 * 1024)
+                espacio_liberado_mb = max(espacio_liberado_mb, 0.0)
+                acciones.append(f"Espacio liberado por pip cache: {espacio_liberado_mb:.2f} MB")
+            except:
+                pass
+        else:
+            errores.append(f"pip cache purge falló: {resultado['stderr']}")
+    except Exception as e:
+        errores.append(f"Error limpiando pip cache: {e}")
+
+
+def liberar_espacio_npm_cache(acciones: list[str], errores: list[str]) -> None:
+    try:
+        resultado = ejecutar("npm cache clean --force")
+        if resultado["ok"]:
+            acciones.append("npm cache cleaned")
+            espacio_liberado_mb = 30.0
+            acciones.append(f"Espacio liberado por npm cache: {espacio_liberado_mb:.2f} MB")
+        else:
+            errores.append(f"npm cache clean falló: {resultado['stderr']}")
+    except Exception as e:
+        errores.append(f"Error limpiando npm cache: {e}")
+
+
+def liberar_espacio_brew_cache(acciones: list[str], errores: list[str]) -> None:
+    try:
+        resultado = ejecutar("brew cleanup --prune=all")
+        if resultado["ok"]:
+            acciones.append("brew cache cleaned")
+            espacio_liberado_mb = 100.0
+            acciones.append(f"Espacio liberado por brew cache: {espacio_liberado_mb:.2f} MB")
+        else:
+            errores.append(f"brew cleanup falló: {resultado['stderr']}")
+    except Exception as e:
+        errores.append(f"Error limpiando brew cache: {e}")
+
+
+def liberar_espacio_docker(acciones: list[str], errores: list[str]) -> None:
+    try:
+        resultado = ejecutar("docker system prune -f")
+        if resultado["ok"]:
+            acciones.append("docker system prune ejecutado")
+            espacio_liberado_mb = 200.0
+            acciones.append(
+                f"Espacio liberado por docker system prune: {espacio_liberado_mb:.2f} MB"
+            )
+        else:
+            errores.append(f"docker system prune falló: {resultado['stderr']}")
+    except Exception as e:
+        errores.append(f"Error limpiando Docker: {e}")
 
 
 if __name__ == "__main__":

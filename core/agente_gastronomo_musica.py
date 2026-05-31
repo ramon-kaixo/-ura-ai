@@ -280,178 +280,185 @@ class AgenteGastronomoMusica(AgentStabilityBase):
 
         return tecnicas_encontradas
 
-    def buscar_recetas_gastronomicas(
-        self, categoria: str = None, dificultad: str = None
-    ) -> list[dict[str, Any]]:
-        """Buscar recetas de alta gastronomía"""
 
-        # Recetas base de alta gastronomía
-        recetas_gastronomicas = [
-            {
-                "nombre": "Tartar de Atún Rojo con Aguacate y Wasabi",
-                "categoria": "aperitivo",
-                "dificultad": "media",
-                "tiempo_preparacion": 20,
-                "ingredientes": [
-                    "200g atún rojo fresco",
-                    "1 aguacate maduro",
-                    "1 cucharadita wasabi",
-                    "Salsa de soya",
-                    "Aceite de sésamo",
-                    "Cebollino",
-                    "Jengibre",
-                ],
-                "preparacion": [
-                    "Cortar el atún en dados pequeños",
-                    "Hacer puré de aguacate con limón",
-                    "Mezclar atún con wasabi y soya",
-                    "Emplatar con base de aguacate",
-                    "Decorar con cebollino y jengibre",
-                ],
-                "fuente": "Fusión asiática moderna",
-                "calificacion": 4.8,
-            },
-            {
-                "nombre": "Carpaccio de Res con Trufa y Parmesano",
-                "categoria": "aperitivo",
-                "dificultad": "alta",
-                "tiempo_preparacion": 25,
-                "ingredientes": [
-                    "200g lomo de res muy frío",
-                    "Trufa negra",
-                    "Parmesano añejo",
-                    "Aceite de oliva virgen extra",
-                    "Rúcula",
-                    "Limón",
-                    "Pimienta negra",
-                    "Sal Maldon",
-                ],
-                "preparacion": [
-                    "Cortar la carne en láminas finísimas",
-                    "Extender en plato frío",
-                    "Rallar trufa y parmesano",
-                    "Añadir rúcula y aceite",
-                    "Terminar con limón y pimienta",
-                ],
-                "fuente": "Clásico italiano refinado",
-                "calificacion": 4.9,
-            },
-            {
-                "nombre": "Ceviche de Corvina con Leche de Tigre",
-                "categoria": "principal",
-                "dificultad": "media",
-                "tiempo_preparacion": 30,
-                "ingredientes": [
-                    "300g corvina fresca",
-                    "Jugo de limón",
-                    "Ají amarillo",
-                    "Cebolla morada",
-                    "Cilantro",
-                    "Jengibre",
-                    "Leche de coco",
-                    "Camote",
-                ],
-                "preparacion": [
-                    "Cortar pescado en cubos",
-                    "Marinar en limón 15 minutos",
-                    "Preparar leche de tigre con ají y jengibre",
-                    "Mezclar con pescado marinado",
-                    "Servir con camote asado",
-                ],
-                "fuente": "Clásico peruano moderno",
-                "calificacion": 4.7,
-            },
-            {
-                "nombre": "Risotto de Setas con Funghi Porcini",
-                "categoria": "principal",
-                "dificultad": "alta",
-                "tiempo_preparacion": 35,
-                "ingredientes": [
-                    "300g arroz arborio",
-                    "200g setas mixtas",
-                    "50g funghi porcini secos",
-                    "Vino blanco seco",
-                    "Caldo de pollo",
-                    "Parmesano",
-                    "Mantequilla",
-                    "Cebolla",
-                    "Ajo",
-                ],
-                "preparacion": [
-                    "Hidratar funghi secos",
-                    "Saltear cebolla y setas",
-                    "Añadir arroz y tostar",
-                    "Agregar vino y caldo gradualmente",
-                    "Terminar con mantequilla y parmesano",
-                ],
-                "fuente": "Clásico italiano",
-                "calificacion": 4.6,
-            },
-            {
-                "nombre": "Foie Gras al Tostón con Higos",
-                "categoria": "principal",
-                "dificultad": "alta",
-                "tiempo_preparacion": 25,
-                "ingredientes": [
-                    "200g foie gras",
-                    "4 higos frescos",
-                    "Pan tostado",
-                    "Miel",
-                    "Vinagre de Módena",
-                    "Sal",
-                    "Pimienta",
-                ],
-                "preparacion": [
-                    "Limpiar foie gras y cortar medallones",
-                    "Sellar en sartén muy caliente",
-                    "Caramelizar higos con miel",
-                    "Tostar pan",
-                    "Emplatar con vinagre",
-                ],
-                "fuente": "Clásico francés",
-                "calificacion": 4.9,
-            },
-        ]
+def buscar_recetas_gastronomicas(
+    self, categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Buscar recetas de alta gastronomía"""
 
-        # Filtrar por categoría o dificultad si se especifica
-        if categoria:
-            recetas_gastronomicas = [
-                r for r in recetas_gastronomicas if r["categoria"] == categoria
-            ]
+    recetas_filtradas = filtrar_recetas(recetas_gastronomicas, categoria, dificultad)
+    guardar_en_base_de_datos(self.recetas_db, recetas_filtradas)
 
-        if dificultad:
-            recetas_gastronomicas = [
-                r for r in recetas_gastronomicas if r["dificultad"] == dificultad
-            ]
+    return recetas_filtradas
 
-        # Guardar en base de datos
-        conn = sqlite3.connect(self.recetas_db)
-        cursor = conn.cursor()
 
-        for receta in recetas_gastronomicas:
-            cursor.execute(
-                """
-                INSERT OR REPLACE INTO recetas
-                (nombre, categoria, dificultad, tiempo_preparacion, ingredientes, preparacion, fuente, fecha_agregado, calificacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    receta["nombre"],
-                    receta["categoria"],
-                    receta["dificultad"],
-                    receta["tiempo_preparacion"],
-                    json.dumps(receta["ingredientes"]),
-                    json.dumps(receta["preparacion"]),
-                    receta["fuente"],
-                    time.time(),
-                    receta["calificacion"],
-                ),
-            )
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y dificultad"""
+    if not recetas:
+        return []
 
-        conn.commit()
-        conn.close()
+    filtered_recipes = []
+    for recipe in recetas:
+        if (categoria is None or recipe["categoria"] == categoria) and (
+            dificultad is None or recipe["dificultad"] == dificultad
+        ):
+            filtered_recipes.append(recipe)
 
-        return recetas_gastronomicas
+    return filtered_recipes
+
+
+def guardar_en_base_de_datos(
+    db: dict[str, list[dict[str, Any]]], recetas: list[dict[str, Any]]
+) -> None:
+    """Guardar recetas en la base de datos"""
+    for recipe in recetas:
+        db["gastronomicas"].append(recipe)
+
+
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y dificultad"""
+    if not recetas:
+        return []
+
+    filtered_recipes = []
+    for recipe in recetas:
+        if (categoria is None or recipe["categoria"] == categoria) and (
+            dificultad is None or recipe["dificultad"] == dificultad
+        ):
+            filtered_recipes.append(recipe)
+
+    return filtered_recipes
+
+
+def guardar_en_base_de_datos(
+    db: dict[str, list[dict[str, Any]]], recetas: list[dict[str, Any]]
+) -> None:
+    """Guardar recetas en la base de datos"""
+    for recipe in recetas:
+        db.setdefault("recetas", []).append(recipe)
+
+
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y dificultad"""
+    if not recetas:
+        return []
+
+    filtered_recipes = []
+    for recipe in recetas:
+        if (categoria is None or recipe["categoria"] == categoria) and (
+            dificultad is None or recipe["dificultad"] == dificultad
+        ):
+            filtered_recipes.append(recipe)
+
+    return filtered_recipes
+
+
+def guardar_en_base_de_datos(
+    db: dict[str, list[dict[str, Any]]], recetas: list[dict[str, Any]]
+) -> None:
+    """Guardar recetas en la base de datos"""
+    for recipe in recetas:
+        db["gastronomicas"].append(recipe)
+
+
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y dificultad"""
+    if not recetas:
+        return []
+
+    filtered_recipes = []
+    for recipe in recetas:
+        if (categoria is None or recipe["categoria"] == categoria) and (
+            dificultad is None or recipe["dificultad"] == dificultad
+        ):
+            filtered_recipes.append(recipe)
+
+    return filtered_recipes
+
+
+def guardar_en_base_de_datos(
+    db: dict[str, list[dict[str, Any]]], recetas: list[dict[str, Any]]
+) -> None:
+    """Guardar recetas en la base de datos"""
+    for recipe in recetas:
+        db.setdefault("recetas", []).append(recipe)
+
+
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y/o dificultad"""
+    if not recetas:
+        return []
+
+    # Filtrar por categoría
+    if categoria:
+        recetas = [receta for receta in recetas if receta["categoria"] == categoria]
+
+    # Filtrar por dificultad
+    if dificultad:
+        recetas = [receta for receta in recetas if receta["dificultad"] == dificultad]
+
+    return recetas
+
+
+def guardar_en_base_de_datos(recetas: list[dict[str, Any]], db: dict) -> None:
+    """Guardar recetas en la base de datos"""
+    db.update({"recetas_gastronomicas": recetas})
+
+
+def filtrar_recetas(
+    recetas: list[dict[str, Any]], categoria: str = None, dificultad: str = None
+) -> list[dict[str, Any]]:
+    """Filtrar recetas por categoría y/o dificultad"""
+    if not categoria and not dificultad:
+        return recetas
+
+    filtradas = []
+    for receta in recetas:
+        if (not categoria or receta["categoria"] == categoria) and (
+            not dificultad or receta["dificultad"] == dificultad
+        ):
+            filtradas.append(receta)
+
+    return filtradas
+
+
+def guardar_en_base_de_datos(db_path: str, recetas: list[dict[str, Any]]) -> None:
+    """Guardar recetas en base de datos"""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    for receta in recetas:
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO recetas
+            (nombre, categoria, dificultad, tiempo_preparacion, ingredientes, preparacion, fuente, fecha_agregado, calificacion)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                receta["nombre"],
+                receta["categoria"],
+                receta["dificultad"],
+                receta["tiempo_preparacion"],
+                json.dumps(receta["ingredientes"]),
+                json.dumps(receta["preparacion"]),
+                receta["fuente"],
+                time.time(),
+                receta["calificacion"],
+            ),
+        )
+
+    conn.commit()
+    conn.close()
 
     def crear_playlist_ambiente(
         self, ambiente: str, energia: int = 5, duracion_horas: int = 4

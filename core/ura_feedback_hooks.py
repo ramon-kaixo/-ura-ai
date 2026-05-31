@@ -136,137 +136,178 @@ class URAFeedbackHooks:
 
         return triggered_hooks
 
-    def _execute_hook_action(self, level: str, action: str, data: dict):
-        """Ejecutar acción en un nivel específico."""
-        try:
-            # Importar el nivel correspondiente
-            level_map = {
-                "personality": "core.ura_personality",
-                "reinforcement_learning": "core.ura_reinforcement_learning",
-                "theory_of_mind": "core.ura_theory_of_mind",
-                "metaconsciousness": "core.ura_metaconsciousness",
-                "emotions": "core.ura_emotions",
-                "anticipation": "core.ura_anticipation",
-                "value_system": "core.ura_value_system",
-                "diary": "core.ura_diary",
-                "dream": "core.ura_dream",
-                "goals": "core.ura_goals",
-            }
 
-            if level not in level_map:
-                return
+def _execute_hook_action(self, level: str, action: str, data: dict):
+    """Ejecutar acción en un nivel específico."""
+    try:
+        self._import_level(level)
+        if action == "update_from_response":
+            self._handle_update_from_response(data)
+        elif action == "record_error_and_learn":
+            self._handle_record_error_and_learn(data)
+        elif action == "reinforce_success_pattern":
+            self._handle_reinforce_success_pattern(data)
+        elif action == "process_user_feedback":
+            self._handle_process_user_feedback(data)
+        elif action == "consolidate_daily_learning":
+            self._handle_consolidate_daily_learning(data)
+    except Exception as e:
+        logger.error(f"Error ejecutando hook action en {level}: {e}")
 
-            level_map[level]
 
-            # Acciones específicas
-            if action == "update_from_response":
-                if level == "personality":
-                    from core.ura_personality import get_ura_personality
+def _import_level(self, level: str):
+    """Importar el nivel correspondiente."""
+    level_map = {
+        "personality": "core.ura_personality",
+        "reinforcement_learning": "core.ura_reinforcement_learning",
+        "theory_of_mind": "core.ura_theory_of_mind",
+        "metaconsciousness": "core.ura_metaconsciousness",
+        "emotions": "core.ura_emotions",
+        "anticipation": "core.ura_anticipation",
+        "value_system": "core.ura_value_system",
+        "diary": "core.ura_diary",
+        "dream": "core.ura_dream",
+        "goals": "core.ura_goals",
+    }
 
-                    personality = get_ura_personality()
-                    if "feedback" in data:
-                        personality.record_feedback(data["feedback"])
+    if level not in level_map:
+        return
 
-                elif level == "theory_of_mind":
-                    from core.ura_theory_of_mind import get_ura_theory_of_mind
 
-                    tom = get_ura_theory_of_mind()
-                    if "message" in data:
-                        tom.update_user_state(data["message"])
+def _handle_update_from_response(self, data: dict):
+    """Manejar la acción 'update_from_response'."""
+    personality = self._get_ura_personality()
+    if "feedback" in data:
+        personality.record_feedback(data["feedback"])
 
-                elif level == "reinforcement_learning":
-                    from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-                    rl = get_ura_reinforcement_learning()
-                    if "action" in data and "success" in data:
-                        rl.record_outcome(data["action"], data["success"], data.get("reward", 0.5))
+def _handle_record_error_and_learn(self, data: dict):
+    """Manejar la acción 'record_error_and_learn'."""
+    if level == "metaconsciousness":
+        meta = self._get_ura_metaconsciousness()
+        if "domain" in data:
+            meta.record_knowledge(data["domain"], False, data.get("error", ""))
+    elif level == "emotions":
+        emotions = self._get_ura_emotions()
+        emotions.set_emotion("cauto", 0.7, "Error detectado")
+    elif level == "reinforcement_learning":
+        rl = self._get_ura_reinforcement_learning()
+        if "action" in data:
+            rl.record_outcome(data["action"], False, -0.5, data.get("error", ""))
 
-            elif action == "record_error_and_learn":
-                if level == "metaconsciousness":
-                    from core.ura_metaconsciousness import get_ura_metaconsciousness
 
-                    meta = get_ura_metaconsciousness()
-                    if "domain" in data:
-                        meta.record_knowledge(data["domain"], False, data.get("error", ""))
+def _handle_reinforce_success_pattern(self, data: dict):
+    """Manejar la acción 'reinforce_success_pattern'."""
+    if level == "reinforcement_learning":
+        rl = self._get_ura_reinforcement_learning()
+        if "action" in data:
+            rl.record_outcome(data["action"], True, 0.8)
+    elif level == "emotions":
+        emotions = self._get_ura_emotions()
+        emotions.set_emotion("satisfecho", 0.8, "Éxito en acción")
+    elif level == "anticipation":
+        anticipation = self._get_ura_anticipation()
+        if "action" in data:
+            anticipation.record_action(data["action"])
 
-                elif level == "emotions":
-                    from core.ura_emotions import get_ura_emotions
 
-                    emotions = get_ura_emotions()
-                    emotions.set_emotion("cauto", 0.7, "Error detectado")
+def _handle_process_user_feedback(self, data: dict):
+    """Manejar la acción 'process_user_feedback'."""
+    personality = self._get_ura_personality()
+    if "feedback" in data:
+        personality.record_feedback(data["feedback"])
+    elif level == "reinforcement_learning":
+        rl = self._get_ura_reinforcement_learning()
+        if "action" in data:
+            reward = 0.8 if "positive" in data and data["positive"] else -0.3
+            rl.record_outcome(data["action"], data.get("success", True), reward)
 
-                elif level == "reinforcement_learning":
-                    from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-                    rl = get_ura_reinforcement_learning()
-                    if "action" in data:
-                        rl.record_outcome(data["action"], False, -0.5, data.get("error", ""))
+def _handle_consolidate_daily_learning(self, data: dict):
+    """Manejar la acción 'consolidate_daily_learning'."""
+    if level == "diary":
+        diary = self._get_ura_diary()
+        diary.escribir_entrada_diaria()
+    elif level == "dream":
+        dream = self._get_ura_dream()
+        if "conversations" in data:
+            dream.generate_nightly_insights(data["conversations"])
+    elif level == "goals":
+        goals = self._get_ura_goals()
+        goals.record_learning("Consolidación nocturna")
+    elif level == "metaconsciousness":
+        meta = self._get_ura_metaconsciousness()
+        meta.self_evaluate("Consolidación diaria", 0.7, "Procesamiento nocturno")
 
-            elif action == "reinforce_success_pattern":
-                if level == "reinforcement_learning":
-                    from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-                    rl = get_ura_reinforcement_learning()
-                    if "action" in data:
-                        rl.record_outcome(data["action"], True, 0.8)
+def _get_ura_personality(self):
+    """Obtener el objeto de personalidad."""
+    from core.ura_personality import get_ura_personality
 
-                elif level == "emotions":
-                    from core.ura_emotions import get_ura_emotions
+    return get_ura_personality()
 
-                    emotions = get_ura_emotions()
-                    emotions.set_emotion("satisfecho", 0.8, "Éxito en acción")
 
-                elif level == "anticipation":
-                    from core.ura_anticipation import get_ura_anticipation
+def _get_ura_theory_of_mind(self):
+    """Obtener el objeto de teoría de la mente."""
+    from core.ura_theory_of_mind import get_ura_theory_of_mind
 
-                    anticipation = get_ura_anticipation()
-                    if "action" in data:
-                        anticipation.record_action(data["action"])
+    return get_ura_theory_of_mind()
 
-            elif action == "process_user_feedback":
-                if level == "personality":
-                    from core.ura_personality import get_ura_personality
 
-                    personality = get_ura_personality()
-                    if "feedback" in data:
-                        personality.record_feedback(data["feedback"])
+def _get_ura_reinforcement_learning(self):
+    """Obtener el objeto de aprendizaje por refuerzo."""
+    from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-                elif level == "reinforcement_learning":
-                    from core.ura_reinforcement_learning import get_ura_reinforcement_learning
+    return get_ura_reinforcement_learning()
 
-                    rl = get_ura_reinforcement_learning()
-                    if "action" in data:
-                        reward = 0.8 if "positive" in data and data["positive"] else -0.3
-                        rl.record_outcome(data["action"], data.get("success", True), reward)
 
-            elif action == "consolidate_daily_learning":
-                if level == "diary":
-                    from core.ura_diary import URAdiary
+def _get_ura_emotions(self):
+    """Obtener el objeto de emociones."""
+    from core.ura_emotions import get_ura_emotions
 
-                    diary = URAdiary()
-                    diary.escribir_entrada_diaria()
+    return get_ura_emotions()
 
-                elif level == "dream":
-                    from core.ura_dream import get_ura_dream
 
-                    dream = get_ura_dream()
-                    if "conversations" in data:
-                        dream.generate_nightly_insights(data["conversations"])
+def _get_ura_anticipation(self):
+    """Obtener el objeto de anticipación."""
+    from core.ura_anticipation import get_ura_anticipation
 
-                elif level == "goals":
-                    from core.ura_goals import get_ura_goals
+    return get_ura_anticipation()
 
-                    goals = get_ura_goals()
-                    goals.record_learning("Consolidación nocturna")
 
-                elif level == "metaconsciousness":
-                    from core.ura_metaconsciousness import get_ura_metaconsciousness
+def _get_ura_value_system(self):
+    """Obtener el objeto del sistema de valores."""
+    from core.ura_value_system import get_ura_value_system
 
-                    meta = get_ura_metaconsciousness()
-                    meta.self_evaluate("Consolidación diaria", 0.7, "Procesamiento nocturno")
+    return get_ura_value_system()
 
-        except Exception as e:
-            logger.error(f"Error ejecutando hook action en {level}: {e}")
+
+def _get_ura_diary(self):
+    """Obtener el objeto del diario."""
+    from core.ura_diary import URAdiary
+
+    return URAdiary()
+
+
+def _get_ura_dream(self):
+    """Obtener el objeto de los sueños."""
+    from core.ura_dream import get_ura_dream
+
+    return get_ura_dream()
+
+
+def _get_ura_goals(self):
+    """Obtener el objeto de metas."""
+    from core.ura_goals import get_ura_goals
+
+    return get_ura_goals()
+
+
+def _get_ura_metaconsciousness(self):
+    """Obtener el objeto de metaconciencia."""
+    from core.ura_metaconsciousness import get_ura_metaconsciousness
+
+    return get_ura_metaconsciousness()
 
     def get_hooks_context(self) -> str:
         """Genera contexto de hooks para el system prompt."""

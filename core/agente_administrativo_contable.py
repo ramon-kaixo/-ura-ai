@@ -105,121 +105,164 @@ class AgenteAdministrativoContable(AgentStabilityBase):
             },
         }
 
-    def _init_database(self):
-        """Inicializar base de datos contable"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
 
-        # Tabla de facturas
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS facturas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                numero_factura TEXT NOT NULL,
-                proveedor TEXT NOT NULL,
-                fecha_emision DATE,
-                fecha_vencimiento DATE,
-                importe_total REAL,
-                iva REAL,
-                base_imponible REAL,
-                concepto TEXT,
-                estado TEXT DEFAULT 'pendiente',
-                ruta_imagen TEXT,
-                fecha_procesamiento REAL,
-                datos_ocr TEXT
-            )
+def _init_database(self):
+    """Inicializar base de datos contable"""
+    create_tables(cursor, "facturas")
+    create_tables(cursor, "albaranes")
+    create_tables(cursor, "proveedores")
+    create_tables(cursor, "control_costes")
+    create_tables(cursor, "empleados")
+    create_tables(cursor, "fichajes")
+
+
+def create_facturas_table(cursor):
+    """Crear la tabla facturas si no existe"""
+    cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS facturas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero_factura TEXT NOT NULL,
+            proveedor TEXT NOT NULL,
+            fecha_emision DATE,
+            fecha_vencimiento DATE,
+            importe_total REAL,
+            iva REAL,
+            base_imponible REAL,
+            concepto TEXT,
+            estado TEXT DEFAULT 'pendiente',
+            ruta_imagen TEXT,
+            fecha_procesamiento REAL,
+            datos_ocr TEXT
         )
-
-        # Tabla de albaranes
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS albaranes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                numero_albaran TEXT NOT NULL,
-                proveedor TEXT NOT NULL,
-                fecha DATE,
-                productos TEXT,
-                importe_total REAL,
-                ruta_imagen TEXT,
-                fecha_procesamiento REAL,
-                datos_ocr TEXT
-            )
         """
-        )
+    )
 
-        # Tabla de proveedores
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS proveedores (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL UNIQUE,
-                cif TEXT,
-                direccion TEXT,
-                telefono TEXT,
-                email TEXT,
-                categoria TEXT,
-                precio_medio_historico REAL,
-                ultima_actualizacion REAL
-            )
+
+def create_albaranes_table(cursor):
+    """Crear la tabla albaranes si no existe"""
+    cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS albaranes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero_albaran TEXT NOT NULL,
+            proveedor TEXT NOT NULL,
+            fecha DATE,
+            productos TEXT,
+            importe_total REAL,
+            ruta_imagen TEXT,
+            fecha_procesamiento REAL,
+            datos_ocr TEXT
         )
-
-        # Tabla de control de costes
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS control_costes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                producto TEXT NOT NULL,
-                proveedor TEXT NOT NULL,
-                fecha DATE,
-                precio_unitario REAL,
-                cantidad REAL,
-                precio_total REAL,
-                variacion_porcentual REAL,
-                alerta_subida INTEGER DEFAULT 0
-            )
         """
-        )
+    )
 
-        # Tabla de RRHH
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS empleados (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                apellidos TEXT,
-                dni TEXT UNIQUE,
-                puesto TEXT NOT NULL,
-                fecha_contratacion DATE,
-                salario_base REAL,
-                horario_semanal INTEGER,
-                email TEXT,
-                telefono TEXT,
-                estado TEXT DEFAULT 'activo'
-            )
+
+def create_proveedores_table(cursor):
+    """Crear la tabla proveedores si no existe"""
+    cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS proveedores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE,
+            cif TEXT,
+            direccion TEXT,
+            telefono TEXT,
+            email TEXT,
+            categoria TEXT,
+            precio_medio_historico REAL,
+            ultima_actualizacion REAL
         )
-
-        # Tabla de fichajes
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS fichajes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                empleado_id INTEGER,
-                fecha DATE,
-                hora_entrada TIME,
-                hora_salida TIME,
-                horas_trabajadas REAL,
-                tipo_jornada TEXT,
-                observaciones TEXT,
-                FOREIGN KEY (empleado_id) REFERENCES empleados (id)
-            )
         """
-        )
+    )
 
-        conn.commit()
-        conn.close()
+
+def create_control_costes_table(cursor):
+    """Crear la tabla control_costes si no existe"""
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS control_costes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            producto TEXT NOT NULL,
+            proveedor TEXT NOT NULL,
+            fecha DATE,
+            precio_unitario REAL,
+            cantidad REAL,
+            precio_total REAL,
+            variacion_porcentual REAL,
+            alerta_subida INTEGER DEFAULT 0
+        )
+        """
+    )
+
+
+def create_empleados_table(cursor):
+    """Crear la tabla empleados si no existe"""
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS empleados (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            apellidos TEXT,
+            dni TEXT UNIQUE,
+            puesto TEXT NOT NULL,
+            fecha_contratacion DATE,
+            salario_base REAL,
+            horario_semanal INTEGER,
+            email TEXT,
+            telefono TEXT,
+            estado TEXT DEFAULT 'activo'
+        )
+        """
+    )
+
+
+def create_fichajes_table(cursor):
+    """Crear la tabla fichajes si no existe"""
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS fichajes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            empleado_id INTEGER,
+            fecha DATE,
+            hora_entrada TIME,
+            hora_salida TIME,
+            horas_trabajadas REAL,
+            tipo_jornada TEXT,
+            observaciones TEXT,
+            FOREIGN KEY (empleado_id) REFERENCES empleados (id)
+        )
+        """
+    )
+
+
+def create_tables(cursor, table_name):
+    if table_name == "facturas":
+        create_facturas_table(cursor)
+    elif table_name == "albaranes":
+        create_albaranes_table(cursor)
+    elif table_name == "proveedores":
+        create_proveedores_table(cursor)
+    elif table_name == "control_costes":
+        create_control_costes_table(cursor)
+    elif table_name == "empleados":
+        create_empleados_table(cursor)
+    elif table_name == "fichajes":
+        create_fichajes_table(cursor)
+
+
+def _init_database(self):
+    """Inicializar base de datos contable"""
+    conn = sqlite3.connect(self.db_path)
+    cursor = conn.cursor()
+    create_tables(cursor, "facturas")
+    create_tables(cursor, "albaranes")
+    create_tables(cursor, "proveedores")
+    create_tables(cursor, "control_costes")
+    create_tables(cursor, "empleados")
+    create_tables(cursor, "fichajes")
+    conn.commit()
+    conn.close()
 
     def _procesar_factura_ocr_core(self, ruta_imagen: str) -> dict[str, Any]:
         """Método core para procesar factura usando OCR y extraer datos"""

@@ -259,262 +259,286 @@ class AgenteCocinaNavarraTemporada:
         else:
             raise ValueError("Tipo de menú no válido. Use 'dia' o 'fin_semana'")
 
-    def _generar_menu_dia(self, precio_menu: float) -> dict[str, Any]:
-        """Genera MENÚ DEL DÍA (17) con productos de temporada"""
 
-        # Productos de temporada actual (abril)
-        self._obtener_productos_temporada_actual()
+def _generar_menu_dia(self, precio_menu: float) -> dict[str, Any]:
+    """Genera MENÚ DEL DÍA (17) con productos de temporada"""
 
-        menu = {
-            "nombre": "MENÚ DEL DÍA - SOBERANÍA NAVARRA",
-            "precio": precio_menu,
-            "tipo": "dia",
-            "mes_actual": self.mes_espanol,
-            "estructura": {"primeros": [], "segundos": [], "postres": []},
-            "marketing_tags": [],
-            "porcentaje_temporada_global": 0,
-        }
+    menu = self._inicializar_menu(precio_menu)
+    primeros = self._generar_primeros()
+    segundos = self._generar_segundos()
+    postres = self._generar_postres()
 
-        # Primeros platos (4 opciones)
-        primeros = [
-            {
-                "nombre": "Menestra de verduras de la Ribera con velouté de jamón ibérico",
-                "descripcion": "Verduras frescas de temporada con crema suave de jamón",
-                "ingredientes": ["espárrago verde", "guisante", "lechuga", "jamón ibérico", "nata"],
-                "precio": 8.50,
-                "tiempo": "25 min",
-                "tendencia": "moderno",
-            },
-            {
-                "nombre": "Ensalada de temporada con queso de Idiazábal",
-                "descripcion": "Verduras frescas de Navarra con queso local",
-                "ingredientes": ["lechuga", "fresa", "queso idiazábal", "nueces", "vinagreta"],
-                "precio": 7.50,
-                "tiempo": "15 min",
-                "tendencia": "saludable",
-            },
-            {
-                "nombre": "Revuelto de espárragos navarros",
-                "descripcion": "Espárragos frescos de la Ribera en revuelto cremoso",
-                "ingredientes": ["espárrago verde", "huevo", "ajo", "aceite", "perejil"],
-                "precio": 8.00,
-                "tiempo": "20 min",
-                "tendencia": "tradicional",
-            },
-            {
-                "nombre": "Gazpacho de fresas navarras",
-                "descripcion": "Gazpacho dulce con fresas de temporada",
-                "ingredientes": ["fresa", "tomate", "pimiento", "cebolla", "pan"],
-                "precio": 7.00,
-                "tiempo": "10 min",
-                "tendencia": "innovador",
-            },
-        ]
+    menu["estructura"]["primeros"] = primeros
+    menu["estructura"]["segundos"] = segundos
+    menu["estructura"]["postres"] = postres
 
-        # Segundos platos (4 opciones)
-        segundos = [
-            {
-                "nombre": "Estofado de rabo de toro deshuesado con parmentier de patata trufada",
-                "descripcion": "Rabo navarro cocido a baja temperatura con puré de patata",
-                "ingredientes": ["rabo de toro", "patata", "trufa", "vino tinto", "zanahoria"],
-                "precio": 12.50,
-                "tiempo": "45 min",
-                "tendencia": "baja temperatura",
-            },
-            {
-                "nombre": "Lomo de cerdo navarro con guarnición de temporada",
-                "descripcion": "Lomo local con verduras frescas de la huerta",
-                "ingredientes": ["lomo cerdo", "espárrago", "guisante", "pimiento", "aceite"],
-                "precio": 11.00,
-                "tiempo": "30 min",
-                "tendencia": "moderno",
-            },
-            {
-                "nombre": "Merluza a la plancha con pimientos de Navarra",
-                "descripcion": "Pescado fresco con pimientos locales",
-                "ingredientes": ["merluza", "pimiento verde", "ajo", "perejil", "limón"],
-                "precio": 10.50,
-                "tiempo": "20 min",
-                "tendencia": "clásico",
-            },
-            {
-                "nombre": "Pollo al chilindrón navarro",
-                "descripcion": "Pollo local con salsa de pimientos y cebollas",
-                "ingredientes": ["pollo", "pimiento verde", "cebolla", "tomate", "ajo"],
-                "precio": 9.50,
-                "tiempo": "35 min",
-                "tendencia": "tradicional",
-            },
-        ]
+    todos_platos = primeros + segundos + postres
+    analisis_global = self._analizar_menu_global(todos_platos)
 
-        # Postres (3 opciones)
-        postres = [
-            {
-                "nombre": "Tarta de fresas de Navarra",
-                "descripcion": "Tarta casera con fresas frescas de temporada",
-                "ingredientes": ["fresa", "nata", "azúcar", "harina", "mantequilla"],
-                "precio": 4.50,
-                "tiempo": "30 min",
-                "tendencia": "casero",
-            },
-            {
-                "nombre": "Flan de huevo con caramelo",
-                "descripcion": "Flan tradicional navarro",
-                "ingredientes": ["huevo", "leche", "azúcar", "caramelo"],
-                "precio": 4.00,
-                "tiempo": "45 min",
-                "tendencia": "clásico",
-            },
-            {
-                "nombre": "Mousse de yogur con miel de Navarra",
-                "descripcion": "Mousse ligero con miel local",
-                "ingredientes": ["yogur", "miel", "nata", "gelatina"],
-                "precio": 4.00,
-                "tiempo": "20 min",
-                "tendencia": "saludable",
-            },
-        ]
+    menu["analisis_temporada"] = analisis_global
+    menu["marketing_tags"] = analisis_global["marketing_tags"]
+    menu["porcentaje_temporada_global"] = analisis_global["porcentaje_temporada_promedio"]
 
-        menu["estructura"]["primeros"] = primeros
-        menu["estructura"]["segundos"] = segundos
-        menu["estructura"]["postres"] = postres
+    return menu
 
-        # Analizar todos los platos
-        todos_platos = primeros + segundos + postres
-        analisis_global = self._analizar_menu_global(todos_platos)
 
-        menu["analisis_temporada"] = analisis_global
-        menu["marketing_tags"] = analisis_global["marketing_tags"]
-        menu["porcentaje_temporada_global"] = analisis_global["porcentaje_temporada_promedio"]
+def _inicializar_menu(self, precio_menu: float) -> dict[str, Any]:
+    """Inicializa el menú del día con los datos iniciales"""
+    return {
+        "nombre": "MENÚ DEL DÍA - SOBERANÍA NAVARRA",
+        "precio": precio_menu,
+        "tipo": "dia",
+        "mes_actual": self.mes_espanol,
+        "estructura": {"primeros": [], "segundos": [], "postres": []},
+        "marketing_tags": [],
+        "porcentaje_temporada_global": 0,
+    }
 
-        return menu
 
-    def _generar_menu_fin_semana(self, precio_menu: float) -> dict[str, Any]:
-        """Genera MENÚ FIN DE SEMANA (22) con productos de temporada"""
+def _generar_primeros(self) -> list[dict[str, Any]]:
+    """Genera los primeros platos del menú"""
+    return [
+        {
+            "nombre": "Menestra de verduras de la Ribera con velouté de jamón ibérico",
+            "descripcion": "Verduras frescas de temporada con crema suave de jamón",
+            "ingredientes": ["espárrago verde", "guisante", "lechuga", "jamón ibérico", "nata"],
+            "precio": 8.50,
+            "tiempo": "25 min",
+            "tendencia": "moderno",
+        },
+        {
+            "nombre": "Ensalada de temporada con queso de Idiazábal",
+            "descripcion": "Verduras frescas de Navarra con queso local",
+            "ingredientes": ["lechuga", "fresa", "queso idiazábal", "nueces", "vinagreta"],
+            "precio": 7.50,
+            "tiempo": "15 min",
+            "tendencia": "saludable",
+        },
+        {
+            "nombre": "Revuelto de espárragos navarros",
+            "descripcion": "Espárragos frescos de la Ribera en revuelto cremoso",
+            "ingredientes": ["espárrago verde", "huevo", "ajo", "aceite", "perejil"],
+            "precio": 8.00,
+            "tiempo": "20 min",
+            "tendencia": "tradicional",
+        },
+        {
+            "nombre": "Gazpacho de fresas navarras",
+            "descripcion": "Gazpacho dulce con fresas de temporada",
+            "ingredientes": ["fresa", "tomate", "pimiento", "cebolla", "pan"],
+            "precio": 7.00,
+            "tiempo": "10 min",
+            "tendencia": "innovador",
+        },
+    ]
 
-        menu = {
-            "nombre": "MENÚ FIN DE SEMANA - EXPERIENCIA GASTRONÓMICA NAVARRA",
-            "precio": precio_menu,
-            "tipo": "fin_semana",
-            "mes_actual": self.mes_espanol,
-            "estructura": {"platos_centro": [], "segundos": [], "postres": []},
-            "marketing_tags": [],
-            "porcentaje_temporada_global": 0,
-        }
 
-        # Platos al centro para compartir (3 opciones)
-        platos_centro = [
-            {
-                "nombre": "Alcachofas fritas con lascas de foie y miel de caña",
-                "descripcion": "Alcachofas de Tudela con foie gras y miel",
-                "ingredientes": ["alcachofa", "foie gras", "miel", "aceite", "sal"],
-                "precio": 14.00,
-                "tiempo": "25 min",
-                "tendencia": "gourmet",
-            },
-            {
-                "nombre": "Croquetas de chuletón navarro",
-                "descripcion": "Croquetas cremosas con carne de chuletón",
-                "ingredientes": ["chuletón", "bechamel", "pan rallado", "aceite", "nuez moscada"],
-                "precio": 12.00,
-                "tiempo": "30 min",
-                "tendencia": "tendencia",
-            },
-            {
-                "nombre": "Carpaccio de tomate rosa de Tudela con ventresca y emulsión de piparras",
-                "descripcion": "Tomate rosa con ventresca de bonito y piparras",
-                "ingredientes": ["tomate rosa", "ventresca", "piparras", "aceite", "limón"],
-                "precio": 13.00,
-                "tiempo": "15 min",
-                "tendencia": "moderno",
-            },
-        ]
+def _generar_segundos(self) -> list[dict[str, Any]]:
+    """Genera los segundos platos del menú"""
+    return [
+        {
+            "nombre": "Estofado de rabo de toro deshuesado con parmentier de patata trufada",
+            "descripcion": "Rabo navarro cocido a baja temperatura con puré de patata",
+            "ingredientes": ["rabo de toro", "patata", "trufa", "vino tinto", "zanahoria"],
+            "precio": 12.50,
+            "tiempo": "45 min",
+            "tendencia": "baja temperatura",
+        },
+        {
+            "nombre": "Lomo de cerdo navarro con guarnición de temporada",
+            "descripcion": "Lomo local con verduras frescas de la huerta",
+            "ingredientes": ["lomo cerdo", "espárrago", "guisante", "pimiento", "aceite"],
+            "precio": 11.00,
+            "tiempo": "30 min",
+            "tendencia": "moderno",
+        },
+        {
+            "nombre": "Merluza a la plancha con pimientos de Navarra",
+            "descripcion": "Pescado fresco con pimientos locales",
+            "ingredientes": ["merluza", "pimiento verde", "ajo", "perejil", "limón"],
+            "precio": 10.50,
+            "tiempo": "20 min",
+            "tendencia": "clásico",
+        },
+        {
+            "nombre": "Pollo al chilindrón navarro",
+            "descripcion": "Pollo local con salsa de pimientos y cebollas",
+            "ingredientes": ["pollo", "pimiento verde", "cebolla", "tomate", "ajo"],
+            "precio": 9.50,
+            "tiempo": "35 min",
+            "tendencia": "tradicional",
+        },
+    ]
 
-        # Segundos platos (5 opciones)
-        segundos = [
-            {
-                "nombre": "Solomillo de ternera navarra a baja temperatura",
-                "descripcion": "Solomillo madurado cocido lentamente",
-                "ingredientes": ["solomillo ternera", "vino tinto", "romero", "ajo", "aceite"],
-                "precio": 18.00,
-                "tiempo": "40 min",
-                "tendencia": "baja temperatura",
-            },
-            {
-                "nombre": "Lubina a la espalda con refrito de verduras navarras",
-                "descripcion": "Pescado de lonja con verduras frescas",
-                "ingredientes": ["lubina", "espárrago", "pimiento", "ajo", "aceite"],
-                "precio": 16.00,
-                "tiempo": "25 min",
-                "tendencia": "moderno",
-            },
-            {
-                "nombre": "Cordero lechal navarro con patatas panaderas",
-                "descripcion": "Cordero local asado con patatas",
-                "ingredientes": ["cordero lechal", "patata", "romero", "ajo", "aceite"],
-                "precio": 17.00,
-                "tiempo": "35 min",
-                "tendencia": "tradicional",
-            },
-            {
-                "nombre": "Risotto de setas de Navarra con parmesano",
-                "descripcion": "Arroz cremoso con setas locales",
-                "ingredientes": ["arroz", "boletus", "níscalos", "parmesano", "vino blanco"],
-                "precio": 15.00,
-                "tiempo": "30 min",
-                "tendencia": "moderno",
-            },
-            {
-                "nombre": "Pez de roca con mojo verde navarro",
-                "descripcion": "Pescado fresco con salsa verde local",
-                "ingredientes": ["pez roca", "perejil", "ajo", "vinagre", "aceite"],
-                "precio": 14.50,
-                "tiempo": "20 min",
-                "tendencia": "innovador",
-            },
-        ]
 
-        # Postres (3 opciones)
-        postres = [
-            {
-                "nombre": "Tarta de queso de Idiazábal con membrillo",
-                "descripcion": "Tarta cremosa con queso navarro y membrillo",
-                "ingredientes": ["queso idiazábal", "membrillo", "nata", "azúcar", "galletas"],
-                "precio": 6.00,
-                "tiempo": "40 min",
-                "tendencia": "tradicional",
-            },
-            {
-                "nombre": "Couant de chocolate con naranjas de Navarra",
-                "descripcion": "Bizcocho de chocolate con naranjas frescas",
-                "ingredientes": ["chocolate", "naranja", "harina", "huevos", "mantequilla"],
-                "precio": 5.50,
-                "tiempo": "35 min",
-                "tendencia": "clásico",
-            },
-            {
-                "nombre": "Panna cotta de fresas de temporada",
-                "descripcion": "Postre italiano con fresas navarras",
-                "ingredientes": ["nata", "fresa", "azúcar", "gelatina", "vainilla"],
-                "precio": 5.00,
-                "tiempo": "25 min",
-                "tendencia": "moderno",
-            },
-        ]
+def _generar_postres(self) -> list[dict[str, Any]]:
+    """Genera los postres del menú"""
+    return [
+        {
+            "nombre": "Tarta de fresas de Navarra",
+            "descripcion": "Tarta casera con fresas frescas de temporada",
+            "ingredientes": ["fresa", "nata", "azúcar", "harina", "mantequilla"],
+            "precio": 4.50,
+            "tiempo": "30 min",
+            "tendencia": "casero",
+        },
+        {
+            "nombre": "Flan de huevo con caramelo",
+            "descripcion": "Flan tradicional navarro",
+            "ingredientes": ["huevo", "leche", "azúcar", "caramelo"],
+            "precio": 4.00,
+            "tiempo": "45 min",
+            "tendencia": "clásico",
+        },
+        {
+            "nombre": "Mousse de yogur con miel de Navarra",
+            "descripcion": "Mousse ligero con miel local",
+            "ingredientes": ["yogur", "miel", "nata", "gelatina"],
+            "precio": 4.00,
+            "tiempo": "20 min",
+            "tendencia": "saludable",
+        },
+    ]
 
-        menu["estructura"]["platos_centro"] = platos_centro
-        menu["estructura"]["segundos"] = segundos
-        menu["estructura"]["postres"] = postres
 
-        # Analizar todos los platos
-        todos_platos = platos_centro + segundos + postres
-        analisis_global = self._analizar_menu_global(todos_platos)
+def _generar_menu_fin_semana(self, precio_menu: float) -> dict[str, Any]:
+    """Genera MENÚ FIN DE SEMANA (22) con productos de temporada"""
 
-        menu["analisis_temporada"] = analisis_global
-        menu["marketing_tags"] = analisis_global["marketing_tags"]
-        menu["porcentaje_temporada_global"] = analisis_global["porcentaje_temporada_promedio"]
+    menu = {
+        "nombre": "MENÚ FIN DE SEMANA - EXPERIENCIA GASTRONÓMICA NAVARRA",
+        "precio": precio_menu,
+        "tipo": "fin_semana",
+        "mes_actual": self.mes_espanol,
+        "estructura": {"platos_centro": [], "segundos": [], "postres": []},
+        "marketing_tags": [],
+        "porcentaje_temporada_global": 0,
+    }
 
-        return menu
+    platos_centro = _generar_platos_centro()
+    segundos = _generar_segundos()
+    postres = _generar_postres()
+
+    menu["estructura"]["platos_centro"] = platos_centro
+    menu["estructura"]["segundos"] = segundos
+    menu["estructura"]["postres"] = postres
+
+    todos_platos = platos_centro + segundos + postres
+    analisis_global = self._analizar_menu_global(todos_platos)
+
+    menu["analisis_temporada"] = analisis_global
+    menu["marketing_tags"] = analisis_global["marketing_tags"]
+    menu["porcentaje_temporada_global"] = analisis_global["porcentaje_temporada_promedio"]
+
+    return menu
+
+
+def _generar_platos_centro() -> list[dict[str, Any]]:
+    """Genera los platos al centro para compartir (3 opciones)"""
+
+    return [
+        {
+            "nombre": "Alcachofas fritas con lascas de foie y miel de caña",
+            "descripcion": "Alcachofas de Tudela con foie gras y miel",
+            "ingredientes": ["alcachofa", "foie gras", "miel", "aceite", "sal"],
+            "precio": 14.00,
+            "tiempo": "25 min",
+            "tendencia": "gourmet",
+        },
+        {
+            "nombre": "Croquetas de chuletón navarro",
+            "descripcion": "Croquetas cremosas con carne de chuletón",
+            "ingredientes": ["chuletón", "bechamel", "pan rallado", "aceite", "nuez moscada"],
+            "precio": 12.00,
+            "tiempo": "30 min",
+            "tendencia": "tendencia",
+        },
+        {
+            "nombre": "Carpaccio de tomate rosa de Tudela con ventresca y emulsión de piparras",
+            "descripcion": "Tomate rosa con ventresca de bonito y piparras",
+            "ingredientes": ["tomate rosa", "ventresca", "piparras", "aceite", "limón"],
+            "precio": 13.00,
+            "tiempo": "15 min",
+            "tendencia": "moderno",
+        },
+    ]
+
+
+def _generar_segundos() -> list[dict[str, Any]]:
+    """Genera los segundos platos (5 opciones)"""
+
+    return [
+        {
+            "nombre": "Solomillo de ternera navarra a baja temperatura",
+            "descripcion": "Solomillo madurado cocido lentamente",
+            "ingredientes": ["solomillo ternera", "vino tinto", "romero", "ajo", "aceite"],
+            "precio": 18.00,
+            "tiempo": "40 min",
+            "tendencia": "baja temperatura",
+        },
+        {
+            "nombre": "Lubina a la espalda con refrito de verduras navarras",
+            "descripcion": "Pescado de lonja con verduras frescas",
+            "ingredientes": ["lubina", "espárrago", "pimiento", "ajo", "aceite"],
+            "precio": 16.00,
+            "tiempo": "25 min",
+            "tendencia": "moderno",
+        },
+        {
+            "nombre": "Cordero lechal navarro con patatas panaderas",
+            "descripcion": "Cordero local asado con patatas",
+            "ingredientes": ["cordero lechal", "patata", "romero", "ajo", "aceite"],
+            "precio": 17.00,
+            "tiempo": "35 min",
+            "tendencia": "tradicional",
+        },
+        {
+            "nombre": "Risotto de setas de Navarra con parmesano",
+            "descripcion": "Arroz cremoso con setas locales",
+            "ingredientes": ["arroz", "boletus", "níscalos", "parmesano", "vino blanco"],
+            "precio": 15.00,
+            "tiempo": "30 min",
+            "tendencia": "moderno",
+        },
+        {
+            "nombre": "Pez de roca con mojo verde navarro",
+            "descripcion": "Pescado fresco con salsa verde local",
+            "ingredientes": ["pez roca", "perejil", "ajo", "vinagre", "aceite"],
+            "precio": 14.50,
+            "tiempo": "20 min",
+            "tendencia": "innovador",
+        },
+    ]
+
+
+def _generar_postres() -> list[dict[str, Any]]:
+    """Genera los postres (3 opciones)"""
+
+    return [
+        {
+            "nombre": "Tarta de queso de Idiazábal con membrillo",
+            "descripcion": "Tarta cremosa con queso navarro y membrillo",
+            "ingredientes": ["queso idiazábal", "membrillo", "nata", "azúcar", "galletas"],
+            "precio": 6.00,
+            "tiempo": "40 min",
+            "tendencia": "tradicional",
+        },
+        {
+            "nombre": "Couant de chocolate con naranjas de Navarra",
+            "descripcion": "Bizcocho de chocolate con naranjas frescas",
+            "ingredientes": ["chocolate", "naranja", "harina", "huevos", "mantequilla"],
+            "precio": 5.50,
+            "tiempo": "35 min",
+            "tendencia": "clásico",
+        },
+        {
+            "nombre": "Panna cotta de fresas de temporada",
+            "descripcion": "Postre italiano con fresas navarras",
+            "ingredientes": ["nata", "fresa", "azúcar", "gelatina", "vainilla"],
+            "precio": 5.00,
+            "tiempo": "25 min",
+            "tendencia": "moderno",
+        },
+    ]
 
     def _analizar_menu_global(self, platos: list[dict[str, Any]]) -> dict[str, Any]:
         """Analiza el porcentaje de temporada de todo el menú"""

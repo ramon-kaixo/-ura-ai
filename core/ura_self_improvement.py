@@ -80,31 +80,66 @@ class URASelfImprovement:
 
         self._save_improvements()
 
-    def apply_improvement(self, improvement_id: int) -> bool:
-        """Aplicar una mejora usando OpenClaw."""
-        if improvement_id >= len(self.improvements):
+
+def apply_improvement(self, improvement_id: int) -> bool:
+    """Aplicar una mejora usando OpenClaw."""
+    if not _validate_improvement_index(improvement_id):
+        return False
+
+    improvement = self.improvements[improvement_id]
+
+    rollback = _create_rollback_snapshot(improvement)
+    prompt = _build_openclaw_prompt(improvement)
+
+    try:
+        sandbox_result = _run_sandbox()
+        if not sandbox_result.get("success"):
+            logger.warning(f"Sandbox rechazó la mejora: {sandbox_result.get('error')}")
             return False
 
-        improvement = self.improvements[improvement_id]
+        openclaw_output = _execute_openclaw(prompt)
+        if "SUCCESS" in openclaw_output:
+            test_result = _run_tests()
+            if test_result.returncode == 0:
+                _mark_improvement_as_applied(improvement)
+                return True
+            else:
+                _restore_snapshot_and_mark_failure(improvement, rollback)
+        else:
+            _mark_improvement_as_failed(improvement)
 
-        # Crear snapshot antes de aplicar la mejora
-        from core.ura_rollback import get_ura_rollback
+    except subprocess.TimeoutExpired:
+        logger.error(f"Timeout aplicando mejora: {improvement.file}")
+        _mark_improvement_as_failed(improvement)
+    except Exception as e:
+        logger.error(f"Error aplicando mejora: {e}")
+        _mark_improvement_as_failed(improvement)
 
+    return False
+
+
+def _validate_improvement_index(improvement_id: int) -> bool:
+    if improvement_id >= len(self.improvements):
+        return False
+    return True
+
+
+def _create_rollback_snapshot(improvement):
+    file_path = Path(improvement.file)
+    if file_path.exists():
         rollback = get_ura_rollback()
+        snapshot_id = rollback.create_snapshot(
+            level_name="code_changes",
+            data_path=file_path,
+            metadata={"file": str(file_path), "improvement": improvement.description},
+        )
+        improvement.snapshot_id = snapshot_id
+        logger.info(f"Snapshot creado antes de mejora: {snapshot_id}")
+    return get_ura_rollback()
 
-        # Crear snapshot del archivo antes de cambios
-        file_path = Path(improvement.file)
-        if file_path.exists():
-            snapshot_id = rollback.create_snapshot(
-                level_name="code_changes",
-                data_path=file_path,
-                metadata={"file": str(file_path), "improvement": improvement.description},
-            )
-            improvement.snapshot_id = snapshot_id
-            logger.info(f"Snapshot creado antes de mejora: {snapshot_id}")
 
-        # Construir prompt para OpenClaw
-        prompt = f"""
+def _build_openclaw_prompt(improvement):
+    prompt = f"""
 Aplica esta mejora de código en el archivo {improvement.file}:
 
 Tipo: {improvement.issue}
@@ -119,82 +154,54 @@ Instrucciones:
 
 Responde solo con "SUCCESS" si la mejora se aplicó correctamente, o "FAILED: <razón>" si falló.
 """
+    return prompt
 
-        try:
-            # Ejecutar en sandbox primero
-            from core.sandbox_orchestrator import get_sandbox_orchestrator
 
-            sandbox_orch = get_sandbox_orchestrator()
-            sandbox_result = sandbox_orch._run_sandbox("mantenimiento")
+def _run_sandbox():
+    sandbox_orch = get_sandbox_orchestrator()
+    return sandbox_orch._run_sandbox("mantenimiento")
 
-            if not sandbox_result.get("success"):
-                logger.warning(f"Sandbox rechazó la mejora: {sandbox_result.get('error')}")
-                return False
 
-            result = subprocess.run(
-                ["openclaw", "agent", "--agent", "main", "-m", prompt],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            output = result.stdout if result.stdout else result.stderr
+def _execute_openclaw(prompt):
+    result = subprocess.run(
+        ["openclaw", "agent", "--agent", "main", "-m", prompt],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result.stdout if result.stdout else result.stderr
 
-            # Verificar respuesta de OpenClaw
-            if "SUCCESS" in output:
-                # Ejecutar tests unitarios para validar la mejora
-                test_result = subprocess.run(
-                    ["pytest", "tests/", "-q"], capture_output=True, text=True, timeout=300
-                )
 
-                if test_result.returncode != 0:
-                    # Tests fallaron, restaurar snapshot
-                    logger.warning(f"Tests fallaron después de mejora: {test_result.stdout}")
-                    if improvement.snapshot_id:
-                        restored = rollback.restore_snapshot(
-                            improvement.snapshot_id, "code_changes"
-                        )
-                        if restored:
-                            logger.info(f"Snapshot restaurado: {improvement.snapshot_id}")
-                        else:
-                            logger.error(
-                                f"No se pudo restaurar snapshot: {improvement.snapshot_id}"
-                            )
+def _run_tests():
+    test_result = subprocess.run(
+        ["pytest", "tests/", "-q"], capture_output=True, text=True, timeout=300
+    )
+    return test_result
 
-                    improvement.status = "failed"
-                    improvement.timestamp = datetime.now().isoformat()
-                    self._save_improvements()
-                    logger.warning(
-                        f"Mejora rechazada por tests fallidos: {improvement.file} - {improvement.description}"
-                    )
-                    return False
-                else:
-                    # Tests pasaron, marcar como aplicada
-                    improvement.status = "applied"
-                    improvement.timestamp = datetime.now().isoformat()
-                    self._save_improvements()
-                    logger.info(
-                        f"Mejora aplicada exitosamente: {improvement.file} - {improvement.description}"
-                    )
-                    return True
-            else:
-                improvement.status = "failed"
-                improvement.timestamp = datetime.now().isoformat()
-                self._save_improvements()
-                logger.warning(
-                    f"Mejora falló: {improvement.file} - {improvement.description} - {output}"
-                )
-                return False
 
-        except subprocess.TimeoutExpired:
-            logger.error(f"Timeout aplicando mejora: {improvement.file}")
-            improvement.status = "failed"
-            self._save_improvements()
-            return False
-        except Exception as e:
-            logger.error(f"Error aplicando mejora: {e}")
-            improvement.status = "failed"
-            self._save_improvements()
-            return False
+def _mark_improvement_as_applied(improvement):
+    improvement.status = "applied"
+    improvement.timestamp = datetime.now().isoformat()
+    self._save_improvements()
+    logger.info(f"Mejora aplicada exitosamente: {improvement.file} - {improvement.description}")
+
+
+def _restore_snapshot_and_mark_failure(improvement, rollback):
+    if improvement.snapshot_id:
+        restored = rollback.restore_snapshot(improvement.snapshot_id, "code_changes")
+        if restored:
+            logger.info(f"Snapshot restaurado: {improvement.snapshot_id}")
+        else:
+            logger.error(f"No se pudo restaurar snapshot: {improvement.snapshot_id}")
+
+    _mark_improvement_as_failed(improvement)
+
+
+def _mark_improvement_as_failed(improvement):
+    improvement.status = "failed"
+    improvement.timestamp = datetime.now().isoformat()
+    self._save_improvements()
+    logger.warning(f"Mejora falló: {improvement.file} - {improvement.description}")
 
     def get_improvement_context(self) -> str:
         """Genera contexto de auto-mejora para el system prompt."""

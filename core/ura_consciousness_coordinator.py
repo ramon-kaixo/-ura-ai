@@ -164,115 +164,149 @@ class URAConsciousnessCoordinator:
 
         return winner
 
-    def negotiate(self, proposals: list[dict]) -> dict:
-        """
-        Resuelve conflictos entre niveles usando promedio ponderado de prioridades.
 
-        Args:
-            proposals: Lista de propuestas con formato:
-                [
-                    {
-                        "level": "nombre_del_nivel",
-                        "proposal": "descripción de la propuesta",
-                        "priority_override": int (opcional, usa prioridad del nivel si no se proporciona)
-                    },
-                    ...
-                ]
+def calculate_weighted_scores(self, proposals: list[dict]) -> tuple[list[float], float]:
+    """
+    Calcula las puntuaciones ponderadas y el peso total.
+    """
+    weighted_scores = []
+    total_weight = 0.0
 
-        Returns:
-            Diccionario con resultado de la negociación:
-                {
-                    "accepted_proposal": índice de la propuesta aceptada,
-                    "weighted_scores": puntuaciones ponderadas de cada propuesta,
-                    "reasoning": explicación de la decisión
-                }
-        """
-        if not proposals:
-            return {
-                "accepted_proposal": None,
-                "weighted_scores": [],
-                "reasoning": "No hay propuestas para negociar",
-            }
+    for i, proposal in enumerate(proposals):
+        level_name = proposal.get("level")
+        priority_override = proposal.get("priority_override")
 
-        # Calcular puntuaciones ponderadas
-        weighted_scores = []
-        total_weight = 0.0
+        if level_name not in self.levels:
+            weighted_scores.append(0.0)
+            continue
 
-        for i, proposal in enumerate(proposals):
-            level_name = proposal.get("level")
-            priority_override = proposal.get("priority_override")
-
-            if level_name not in self.levels:
-                weighted_scores.append(0.0)
-                continue
-
-            # Usar prioridad override si se proporciona, si no usar prioridad del nivel
-            priority = (
-                priority_override
-                if priority_override is not None
-                else self.levels[level_name].priority
-            )
-
-            # Verificar si el nivel está activo
-            if not self.levels[level_name].active:
-                weighted_scores.append(0.0)
-                continue
-
-            # Calcular puntuación ponderada
-            weighted_score = priority / 10.0  # Normalizar a 0-1
-            weighted_scores.append(weighted_score)
-            total_weight += weighted_score
-
-        # Si no hay pesos válidos, usar el método de mayor prioridad
-        if total_weight == 0:
-            # Fallback a resolve_conflict
-            level_names = [p.get("level") for p in proposals if p.get("level") in self.levels]
-            if level_names:
-                winner = self.resolve_conflict("Negotiation fallback", level_names)
-                winner_index = next(
-                    (i for i, p in enumerate(proposals) if p.get("level") == winner), None
-                )
-                return {
-                    "accepted_proposal": winner_index,
-                    "weighted_scores": weighted_scores,
-                    "reasoning": f"Fallback a resolución por prioridad: {winner} tiene mayor prioridad",
-                }
-            else:
-                return {
-                    "accepted_proposal": None,
-                    "weighted_scores": weighted_scores,
-                    "reasoning": "No hay niveles válidos para negociar",
-                }
-
-        # Normalizar puntuaciones
-        normalized_scores = [
-            score / total_weight if total_weight > 0 else 0 for score in weighted_scores
-        ]
-
-        # Elegir propuesta con mayor puntuación ponderada
-        max_score = max(normalized_scores)
-        accepted_index = normalized_scores.index(max_score)
-
-        # Generar reasoning
-        accepted_proposal = proposals[accepted_index]
-        level_name = accepted_proposal.get("level", "unknown")
-
-        reasoning = (
-            f"Propuesta aceptada: índice {accepted_index} del nivel '{level_name}' "
-            f"con puntuación ponderada de {max_score:.2f}. "
-            f"Se usó promedio ponderado de prioridades de {len(proposals)} propuestas."
+        # Usar prioridad override si se proporciona, si no usar prioridad del nivel
+        priority = (
+            priority_override if priority_override is not None else self.levels[level_name].priority
         )
 
-        # Registrar comunicación
-        if level_name in self.levels:
-            self.levels[level_name].last_updated = datetime.now().isoformat()
-            self._save_levels()
+        # Verificar si el nivel está activo
+        if not self.levels[level_name].active:
+            weighted_scores.append(0.0)
+            continue
 
+        # Calcular puntuación ponderada
+        weighted_score = priority / 10.0  # Normalizar a 0-1
+        weighted_scores.append(weighted_score)
+        total_weight += weighted_score
+
+    return weighted_scores, total_weight
+
+
+def handle_no_valid_weights(self, proposals: list[dict], weighted_scores: list[float]) -> dict:
+    """
+    Maneja el caso en que no hay pesos válidos.
+    """
+    level_names = [p.get("level") for p in proposals if p.get("level") in self.levels]
+    if level_names:
+        winner = self.resolve_conflict("Negotiation fallback", level_names)
+        winner_index = next((i for i, p in enumerate(proposals) if p.get("level") == winner), None)
         return {
-            "accepted_proposal": accepted_index,
-            "weighted_scores": normalized_scores,
-            "reasoning": reasoning,
+            "accepted_proposal": winner_index,
+            "weighted_scores": weighted_scores,
+            "reasoning": f"Fallback a resolución por prioridad: {winner} tiene mayor prioridad",
         }
+    else:
+        return {
+            "accepted_proposal": None,
+            "weighted_scores": weighted_scores,
+            "reasoning": "No hay niveles válidos para negociar",
+        }
+
+
+def normalize_scores(self, weighted_scores: list[float], total_weight: float) -> list[float]:
+    """
+    Normaliza las puntuaciones ponderadas.
+    """
+    return [score / total_weight if total_weight > 0 else 0 for score in weighted_scores]
+
+
+def select_proposal(self, normalized_scores: list[float]) -> int:
+    """
+    Selecciona la propuesta con mayor puntuación ponderada.
+    """
+    max_score = max(normalized_scores)
+    accepted_index = normalized_scores.index(max_score)
+    return accepted_index
+
+
+def generate_reasoning(self, proposals: list[dict], accepted_index: int) -> str:
+    """
+    Genera la explicación de la decisión.
+    """
+    accepted_proposal = proposals[accepted_index]
+    level_name = accepted_proposal.get("level", "unknown")
+    reasoning = (
+        f"Propuesta aceptada: índice {accepted_index} del nivel '{level_name}' "
+        f"con puntuación ponderada de {max(normalized_scores):.2f}. "
+        f"Se usó promedio ponderado de prioridades de {len(proposals)} propuestas."
+    )
+    return reasoning
+
+
+def update_levels(self, level_name: str) -> None:
+    """
+    Actualiza el nivel y guarda los cambios.
+    """
+    if level_name in self.levels:
+        self.levels[level_name].last_updated = datetime.now().isoformat()
+        self._save_levels()
+
+
+def negotiate(self, proposals: list[dict]) -> dict:
+    """
+    Resuelve conflictos entre niveles usando promedio ponderado de prioridades.
+
+    Args:
+        proposals: Lista de propuestas con formato:
+            [
+                {
+                    "level": "nombre_del_nivel",
+                    "proposal": "descripción de la propuesta",
+                    "priority_override": int (opcional, usa prioridad del nivel si no se proporciona)
+                },
+                ...
+            ]
+
+    Returns:
+        Diccionario con resultado de la negociación:
+            {
+                "accepted_proposal": índice de la propuesta aceptada,
+                "weighted_scores": puntuaciones ponderadas de cada propuesta,
+                "reasoning": explicación de la decisión
+            }
+    """
+    if not proposals:
+        return {
+            "accepted_proposal": None,
+            "weighted_scores": [],
+            "reasoning": "No hay propuestas para negociar",
+        }
+
+    weighted_scores, total_weight = self.calculate_weighted_scores(proposals)
+
+    if total_weight == 0:
+        result = self.handle_no_valid_weights(proposals, weighted_scores)
+        return result
+
+    normalized_scores = self.normalize_scores(weighted_scores, total_weight)
+    accepted_index = self.select_proposal(normalized_scores)
+    reasoning = self.generate_reasoning(proposals, accepted_index)
+
+    # Registrar comunicación
+    level_name = proposals[accepted_index].get("level", "unknown")
+    self.update_levels(level_name)
+
+    return {
+        "accepted_proposal": accepted_index,
+        "weighted_scores": normalized_scores,
+        "reasoning": reasoning,
+    }
 
     def get_active_levels(self) -> list[str]:
         """Obtener niveles activos ordenados por prioridad."""

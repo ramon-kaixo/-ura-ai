@@ -84,108 +84,122 @@ class OpenClawConnector:
             logger.warning(f"Health check CLI falló: {e}")
             return False
 
-    async def execute(self, task: str, context: dict | None = None) -> dict[str, Any]:
-        """
-        Ejecuta tarea en OpenClaw usando CLI con protección del Guardián.
 
-        Args:
-            task: Tarea a ejecutar
-            context: Contexto adicional (opcional)
+async def execute(self, task: str, context: dict | None = None) -> dict[str, Any]:
+    """
+    Ejecuta tarea en OpenClaw usando CLI con protección del Guardián.
 
-        Returns:
-            Dict con {'success': bool, 'response': str, 'error': str | None}
-        """
-        start = time.monotonic()
+    Args:
+        task: Tarea a ejecutar
+        context: Contexto adicional (opcional)
 
-        try:
-            # REGLA DEL GUARDIÁN: Consultar antes de ejecutar
-            guardian = get_guardian()
-            resultado_guardian = guardian.ejecutar(task, context=context or {})
+    Returns:
+        Dict con {'success': bool, 'response': str, 'error': str | None}
+    """
+    start = time.monotonic()
 
-            if not resultado_guardian.get("success", False):
-                logger.warning(f"Guardián bloqueó la acción: {resultado_guardian.get('message')}")
-                return {
-                    "success": False,
-                    "response": "",
-                    "error": f"Guardián bloqueó: {resultado_guardian.get('message')}",
-                    "elapsed": time.monotonic() - start,
-                    "guardian_bloqueado": True,
-                }
-
-            # Construir comando CLI con --agent main
-            cmd = [
-                "openclaw",
-                "agent",
-                "--local",
-                "--agent",
-                "main",
-                "--message",
-                task,
-                "--json",
-                "--timeout",
-                str(self.timeout),
-            ]
-
-            # Ejecutar en subproceso
-            result = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=self.timeout + 5)
-
-            elapsed = time.monotonic() - start
-
-            if result.returncode == 0:
-                try:
-                    data = json.loads(stdout.decode())
-                    # Extraer respuesta de payloads si existe
-                    if "payloads" in data and data["payloads"]:
-                        response_text = data["payloads"][0].get("text", stdout.decode())
-                    elif "response" in data:
-                        response_text = data.get("response", stdout.decode())
-                    else:
-                        response_text = stdout.decode()
-
-                    # Verificar si fue abortado
-                    if data.get("aborted", False):
-                        return {
-                            "success": False,
-                            "response": response_text,
-                            "error": "Operación abortada por timeout",
-                            "elapsed": elapsed,
-                        }
-
-                    return {
-                        "success": True,
-                        "response": response_text,
-                        "error": None,
-                        "elapsed": elapsed,
-                        "guardian_aprobado": True,
-                    }
-                except json.JSONDecodeError:
-                    return {
-                        "success": True,
-                        "response": stdout.decode(),
-                        "error": None,
-                        "elapsed": elapsed,
-                        "guardian_aprobado": True,
-                    }
-            else:
-                error_msg = stderr.decode() if stderr else f"Exit code {result.returncode}"
-                return {"success": False, "response": "", "error": error_msg, "elapsed": elapsed}
-
-        except TimeoutError:
-            elapsed = time.monotonic() - start
+    try:
+        guardian_result = await check_guardian(task, context)
+        if not guardian_result["success"]:
+            logger.warning(f"Guardián bloqueó la acción: {guardian_result.get('message')}")
             return {
                 "success": False,
                 "response": "",
-                "error": f"Timeout después de {self.timeout}s",
-                "elapsed": elapsed,
+                "error": f"Guardián bloqueó: {guardian_result.get('message')}",
+                "elapsed": time.monotonic() - start,
+                "guardian_bloqueado": True,
             }
-        except Exception as e:
-            elapsed = time.monotonic() - start
-            logger.error(f"Error ejecutando OpenClaw CLI: {e}")
-            return {"success": False, "response": "", "error": str(e), "elapsed": elapsed}
+
+        cmd = build_command(task)
+        result = await run_subprocess(cmd)
+
+        stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=self.timeout + 5)
+        elapsed = time.monotonic() - start
+
+        if result.returncode == 0:
+            try:
+                data = json.loads(stdout.decode())
+                response_text = extract_response(data)
+                if data.get("aborted", False):
+                    return {
+                        "success": False,
+                        "response": response_text,
+                        "error": "Operación abortada por timeout",
+                        "elapsed": elapsed,
+                    }
+                return {
+                    "success": True,
+                    "response": response_text,
+                    "error": None,
+                    "elapsed": elapsed,
+                    "guardian_aprobado": True,
+                }
+            except json.JSONDecodeError:
+                return {
+                    "success": True,
+                    "response": stdout.decode(),
+                    "error": None,
+                    "elapsed": elapsed,
+                    "guardian_aprobado": True,
+                }
+        else:
+            error_msg = stderr.decode() if stderr else f"Exit code {result.returncode}"
+            return {"success": False, "response": "", "error": error_msg, "elapsed": elapsed}
+
+    except TimeoutError:
+        elapsed = time.monotonic() - start
+        return {
+            "success": False,
+            "response": "",
+            "error": f"Timeout después de {self.timeout}s",
+            "elapsed": elapsed,
+        }
+    except Exception as e:
+        elapsed = time.monotonic() - start
+        logger.error(f"Error ejecutando OpenClaw CLI: {e}")
+        return {"success": False, "response": "", "error": str(e), "elapsed": elapsed}
+
+
+async def check_guardian(task: str, context: dict | None) -> dict[str, Any]:
+    guardian = get_guardian()
+    return await guardian.ejecutar(task, context=context or {})
+
+
+def build_command(task: str) -> List[str]:
+    return [
+        "openclaw",
+        "agent",
+        "--local",
+        "--agent",
+        "main",
+        "--message",
+        task,
+        "--json",
+        "--timeout",
+        str(self.timeout),
+    ]
+
+
+async def run_subprocess(cmd: List[str]) -> asyncio.subprocess.Process:
+    result = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
+    return result
+
+
+def extract_response(data: dict) -> str:
+    response_text = get_first_payload_text(data)
+    return response_text
+
+
+def get_first_payload_text(data: dict) -> str:
+    if "payloads" in data and data["payloads"]:
+        return data["payloads"][0].get("text", "")
+    elif "response" in data:
+        response_text = data.get("response", "")
+    else:
+        response_text = ""
+    return response_text
 
     async def search(self, query: str, max_tokens: int = 2000) -> SearchResult:
         """
