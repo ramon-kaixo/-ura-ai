@@ -12,115 +12,175 @@ class DegradationManager:
         self.intent_keywords = intent_keywords or {}
         self.category_map = self._build_category_map()
 
-    def _build_category_map(self) -> dict[str, str]:
-        """Construir mapa de categorías de agentes."""
-        return {
-            # COCINA
-            "cocina_espanola": "cocina",
-            "cocina_navarra": "cocina",
-            "cocina_italiana": "cocina",
-            "cocina_mexicana": "cocina",
-            "cocina_peruana": "cocina",
-            "gastronomo_musica": "cocina",
-            "orquestador_recetas": "cocina",
-            "media_recetas": "cocina",
-            "vocabulario_gastronomico": "cocina",
-            "vocabulario_bar": "cocina",
-            "cocina_internacional": "cocina",
-            "recetas_con_media": "cocina",
-            # CONTABILIDAD
-            "administrativo_contable": "contabilidad",
-            "contabilidad": "contabilidad",
-            "facturas": "contabilidad",
-            "banco": "contabilidad",
-            "vocabulario_financiero": "contabilidad",
-            "contabilidad_agent": "contabilidad",
-            # MARKETING
-            "marketing": "marketing",
-            "creativo_marketing": "marketing",
-            "marketing_navarra": "marketing",
-            "galeria_videos": "marketing",
-            "galeria_fotos": "marketing",
-            "lenguaje_creativo": "marketing",
-            "marketing_agent": "marketing",
-            "tendencias_pamplona": "marketing",
-            # LEGAL
-            "juridico": "legal",
-            "policia": "legal",
-            "vocabulario_legal": "legal",
-            "leyes_agent": "legal",
-            # RRHH
-            "rrhh": "rrhh",
-            "laboral": "rrhh",
-            "rrhh_camaras": "rrhh",
-            # SISTEMA
-            "tailscale": "sistema",
-            "automatizador": "sistema",
-            "automatizacion": "sistema",
-            "conectividad": "sistema",
-            "red_telefonia": "sistema",
-            "hardware": "sistema",
-            "scheduler": "sistema",
-            "gobierno": "sistema",
-            "sistemas": "sistema",
-            "red": "sistema",
-            "backup": "sistema",
-            "seguridad": "sistema",
-            "rendimiento": "sistema",
-            "instalador": "sistema",
-            "camaras": "sistema",
-            "arquitectura": "sistema",
-            "clasificador": "sistema",
-            "registry": "sistema",
-            "gui": "sistema",
-            # DOCUMENTOS
-            "documentos_pdf": "documentos",
-            "documentos_texto": "documentos",
-            "documentos_word": "documentos",
-            "documentos_excel": "documentos",
-            "documentos_presentaciones": "documentos",
-            "orquestador_documentacion": "documentos",
-            "archivist": "documentos",
-            "librarian": "documentos",
-            "biblioteca": "documentos",
-            "bibliotecario_pasillo": "documentos",
-            # COMUNICACIÓN
-            "email": "comunicacion",
-            "notificaciones": "comunicacion",
-            "conversacion": "comunicacion",
-            "telegram_dam": "comunicacion",
-            "notificador_dam": "comunicacion",
-            # IA
-            "investigador_ia": "ia",
-            "conciencia": "ia",
-            "memoria": "ia",
-            "lenguaje": "ia",
-            "vocabulario": "ia",
-            "vocabulario_codigo": "ia",
-            "vocabulario_tecnico": "ia",
-            "vocabulario_bar": "ia",
-            "modelos": "ia",
-            "lenguaje_escribiente": "ia",
-            "lenguaje_tecnico": "ia",
-            "vision": "ia",
-            "opencode": "ia",
-            # SUPERVISIÓN
-            "verificador": "supervision",
-            "auditor": "supervision",
-            "auditor_externo": "supervision",
-            "supervisor": "supervision",
-            "revisor": "supervision",
-            "reparador": "supervision",
-            "guardian_residente": "supervision",
-            # ESPECIALES
-            "motor_autorizacion_dual": "especiales",
-            "doble_verificacion": "especiales",
-            "servidor_validacion": "especiales",
-            "asesor": "especiales",
-            # ORQUESTACIÓN
-            "busqueda": "orquestacion",
-            "orquestador_documentacion": "orquestacion",
-        }
+
+def _build_category_map(self) -> dict[str, str]:
+    return {
+        **_map_cocina(),
+        **_map_contabilidad(),
+        **_map_marketing(),
+        **_map_legal(),
+        **_map_rrhh(),
+        **_map_sistema(),
+        **_map_documentos(),
+        **_map_comunicacion(),
+        **_map_ia(),
+        **_map_supervision(),
+        **_map_especiales(),
+        **_map_orquestacion(),
+    }
+
+
+def _map_cocina() -> dict[str, str]:
+    return {
+        "cocina_espanola": "cocina",
+        "cocina_navarra": "cocina",
+        "cocina_italiana": "cocina",
+        "cocina_mexicana": "cocina",
+        "cocina_peruana": "cocina",
+        "gastronomo_musica": "cocina",
+        "orquestador_recetas": "cocina",
+        "media_recetas": "cocina",
+        "vocabulario_gastronomico": "cocina",
+        "vocabulario_bar": "cocina",
+        "cocina_internacional": "cocina",
+        "recetas_con_media": "cocina",
+    }
+
+
+def _map_contabilidad() -> dict[str, str]:
+    return {
+        "administrativo_contable": "contabilidad",
+        "contabilidad": "contabilidad",
+        "facturas": "contabilidad",
+        "banco": "contabilidad",
+        "vocabulario_financiero": "contabilidad",
+        "contabilidad_agent": "contabilidad",
+    }
+
+
+def _map_marketing() -> dict[str, str]:
+    return {
+        "marketing": "marketing",
+        "creativo_marketing": "marketing",
+        "marketing_navarra": "marketing",
+        "galeria_videos": "marketing",
+        "galeria_fotos": "marketing",
+        "lenguaje_creativo": "marketing",
+        "marketing_agent": "marketing",
+        "tendencias_pamplona": "marketing",
+    }
+
+
+def _map_legal() -> dict[str, str]:
+    return {
+        "juridico": "legal",
+        "policia": "legal",
+        "vocabulario_legal": "legal",
+        "leyes_agent": "legal",
+    }
+
+
+def _map_rrhh() -> dict[str, str]:
+    return {
+        "rrhh": "rrhh",
+        "laboral": "rrhh",
+        "rrhh_camaras": "rrhh",
+    }
+
+
+def _map_sistema() -> dict[str, str]:
+    return {
+        "tailscale": "sistema",
+        "automatizador": "sistema",
+        "automatizacion": "sistema",
+        "conectividad": "sistema",
+        "red_telefonia": "sistema",
+        "hardware": "sistema",
+        "scheduler": "sistema",
+        "gobierno": "sistema",
+        "sistemas": "sistema",
+        "red": "sistema",
+        "backup": "sistema",
+        "seguridad": "sistema",
+        "rendimiento": "sistema",
+        "instalador": "sistema",
+        "camaras": "sistema",
+        "arquitectura": "sistema",
+        "clasificador": "sistema",
+        "registry": "sistema",
+        "gui": "sistema",
+    }
+
+
+def _map_documentos() -> dict[str, str]:
+    return {
+        "documentos_pdf": "documentos",
+        "documentos_texto": "documentos",
+        "documentos_word": "documentos",
+        "documentos_excel": "documentos",
+        "documentos_presentaciones": "documentos",
+        "orquestador_documentacion": "documentos",
+        "archivist": "documentos",
+        "librarian": "documentos",
+        "biblioteca": "documentos",
+        "bibliotecario_pasillo": "documentos",
+    }
+
+
+def _map_comunicacion() -> dict[str, str]:
+    return {
+        "email": "comunicacion",
+        "notificaciones": "comunicacion",
+        "conversacion": "comunicacion",
+        "telegram_dam": "comunicacion",
+        "notificador_dam": "comunicacion",
+    }
+
+
+def _map_ia() -> dict[str, str]:
+    return {
+        "investigador_ia": "ia",
+        "conciencia": "ia",
+        "memoria": "ia",
+        "lenguaje": "ia",
+        "vocabulario": "ia",
+        "vocabulario_codigo": "ia",
+        "vocabulario_tecnico": "ia",
+        "vocabulario_bar": "ia",
+        "modelos": "ia",
+        "lenguaje_escribiente": "ia",
+        "lenguaje_tecnico": "ia",
+        "vision": "ia",
+        "opencode": "ia",
+    }
+
+
+def _map_supervision() -> dict[str, str]:
+    return {
+        "verificador": "supervision",
+        "auditor": "supervision",
+        "auditor_externo": "supervision",
+        "supervisor": "supervision",
+        "revisor": "supervision",
+        "reparador": "supervision",
+        "guardian_residente": "supervision",
+    }
+
+
+def _map_especiales() -> dict[str, str]:
+    return {
+        "motor_autorizacion_dual": "especiales",
+        "doble_verificacion": "especiales",
+        "servidor_validacion": "especiales",
+        "asesor": "especiales",
+    }
+
+
+def _map_orquestacion() -> dict[str, str]:
+    return {
+        "busqueda": "orquestacion",
+        "orquestador_documentacion": "orquestacion",
+    }
 
     def find_similar_agent(self, failed_intent: str) -> str | None:
         """

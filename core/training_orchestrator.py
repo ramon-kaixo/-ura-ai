@@ -239,128 +239,126 @@ class TrainingOrchestrator:
 
         return processed_results
 
-    async def night_training(self, max_queries: int | None = None):
-        """
-        Ejecuta entrenamiento nocturno masivo.
 
-        Args:
-            max_queries: Máximo de queries a procesar (usa self.max_queries si no se especifica)
-        """
-        max_to_process = max_queries or self.max_queries
-        logger.info(f"Iniciando entrenamiento nocturno N3 (max_queries={max_to_process})...")
-        self.stats["start_time"] = datetime.now().isoformat()
+async def night_training(self, max_queries: int | None = None):
+    """
+    Ejecuta entrenamiento nocturno masivo.
 
-        # Cargar semillas pendientes del seed_pipeline
-        try:
-            from core.seed_pipeline import get_seed_pipeline
+    Args:
+        max_queries: Máximo de queries a procesar (usa self.max_queries si no se especifica)
+    """
+    max_to_process = max_queries or self.max_queries
+    logger.info(f"Iniciando entrenamiento nocturno N3 (max_queries={max_to_process})...")
+    self.stats["start_time"] = datetime.now().isoformat()
 
-            pipeline = get_seed_pipeline()
-            seeds = pipeline.get_pending_seeds()
-        except ImportError:
-            logger.warning("seed_pipeline no disponible, usando archivo seeds.txt")
-            seeds = self.load_seeds()
+    seeds = await load_seeds(self, max_to_process)
 
-        if not seeds:
-            logger.warning("No hay semillas para procesar")
-            return
+    if not seeds:
+        logger.warning("No hay semillas para procesar")
+        return
 
-        # Descomponer semillas complejas
-        logger.info("Descomponiendo semillas complejas...")
-        expanded_seeds = await self.decompose_complex_seeds(seeds)
-        logger.info(f"Semillas expandidas: {len(seeds)} -> {len(expanded_seeds)}")
+    expanded_seeds = await decompose_complex_seeds(seeds)
+    logger.info(f"Semillas expandidas: {len(seeds)} -> {len(expanded_seeds)}")
 
-        # Guardar semillas expandidas (solo si usamos archivo)
-        if seeds:
-            # Si usamos seed_pipeline, no guardamos en archivo
-            pass
-        else:
-            self.save_seeds(expanded_seeds)
+    save_expanded_seeds(self, seeds, expanded_seeds)
 
-        # Procesar en lotes
-        batch_size = 50
-        processed = 0
+    processed = 0
+    batch_size = 50
 
-        while processed < min(len(expanded_seeds), max_to_process):
-            # Verificar si sistema está ocupado
-            if self.is_system_busy():
-                logger.warning(f"Sistema ocupado (CPU {self.check_cpu_usage()}%), pausando 60s...")
-                await asyncio.sleep(60)
-                continue
+    while processed < min(len(expanded_seeds), max_to_process):
+        if self.is_system_busy():
+            logger.warning(f"Sistema ocupado (CPU {self.check_cpu_usage()}%), pausando 60s...")
+            await asyncio.sleep(60)
+            continue
 
-            # Tomar lote
-            batch = expanded_seeds[processed : processed + batch_size]
-            logger.info(f"Procesando lote {processed // batch_size + 1}: {len(batch)} queries")
+        batch = expanded_seeds[processed : processed + batch_size]
+        logger.info(f"Procesando lote {processed // batch_size + 1}: {len(batch)} queries")
 
-            # Procesar lote
-            results = await self.process_batch(batch)
+        results = await self.process_batch(batch)
 
-            # Guardar resultados y validar
-            for query, result in zip(batch, results, strict=False):
-                is_valid, score = self.validate_response(result)
+        for query, result in zip(batch, results, strict=False):
+            is_valid, score = self.validate_response(result)
+            if is_valid:
+                self.save_response(query, result)
+                self.stats["successful"] += 1
+            else:
+                self.stats["failed"] += 1
 
-                if is_valid:
-                    self.save_response(query, result)
-                    self.stats["successful"] += 1
-                else:
-                    self.stats["failed"] += 1
+            self.stats["total_queries"] += 1
 
-                self.stats["total_queries"] += 1
+            try:
+                from core.ura_observational_learner import get_learner
 
-                # Aprendizaje observacional: guardar interacción en maletas
-                try:
-                    from core.ura_observational_learner import get_learner
+                learner = get_learner()
+                intent = self._detect_intent_from_query(query)
+                await learner.learn_from_interaction(query, result.get("response", ""), intent)
+            except Exception as e:
+                logger.debug(f"Error en aprendizaje observacional: {e}")
 
-                    learner = get_learner()
-                    # Detectar intent simple basado en keywords del query
-                    intent = self._detect_intent_from_query(query)
-                    await learner.learn_from_interaction(query, result.get("response", ""), intent)
-                except Exception as e:
-                    logger.debug(f"Error en aprendizaje observacional: {e}")
+        processed += len(batch)
+        logger.info(f"Procesadas {processed}/{min(len(expanded_seeds), max_to_process)} queries")
 
-            processed += len(batch)
-            logger.info(
-                f"Procesadas {processed}/{min(len(expanded_seeds), max_to_process)} queries"
-            )
+        await asyncio.sleep(5)
 
-            # Pausa breve entre lotes
-            await asyncio.sleep(5)
+    try:
+        pipeline = get_seed_pipeline()
+        pipeline.mark_seeds_used(expanded_seeds[:max_to_process])
+    except ImportError:
+        logger.warning("seed_pipeline no disponible")
 
-        # Marcar semillas procesadas como usadas en seed_pipeline
-        try:
-            from core.seed_pipeline import get_seed_pipeline
+    try:
+        learner = get_learner()
+        await learner.run_validation_cycle()
+        logger.info("Ciclo de validación de maletas completado")
+    except Exception as e:
+        logger.warning(f"Error en ciclo de validación: {e}")
 
-            pipeline = get_seed_pipeline()
-            pipeline.mark_seeds_used(expanded_seeds[:max_to_process])
-        except ImportError:
-            logger.warning("seed_pipeline no disponible")
+    self.stats["end_time"] = datetime.now().isoformat()
+    logger.info(f"Entrenamiento nocturno completado. Stats: {self.stats}")
 
-        # Ejecutar ciclo de validación de maletas
-        try:
-            from core.ura_observational_learner import get_learner
+    if self.stats["start_time"]:
+        start = datetime.fromisoformat(self.stats["start_time"])
+        end = datetime.fromisoformat(self.stats["end_time"])
+        self.stats["duration"] = (end - start).total_seconds()
 
-            learner = get_learner()
-            await learner.run_validation_cycle()
-            logger.info("Ciclo de validación de maletas completado")
-        except Exception as e:
-            logger.warning(f"Error en ciclo de validación: {e}")
+    self.save_report()
 
-        self.stats["end_time"] = datetime.now().isoformat()
-        logger.info(f"Entrenamiento nocturno completado. Stats: {self.stats}")
+    logger.info("Entrenamiento nocturno completado")
+    logger.info(f"Total queries: {self.stats['total_queries']}")
+    logger.info(f"Exitosas: {self.stats['successful']}")
+    logger.info(f"Fallidas: {self.stats['failed']}")
+    logger.info(f"Descompuestas: {self.stats['decomposed']}")
+    logger.info(f"Duración: {self.stats['duration']:.2f}s")
 
-        if self.stats["start_time"]:
-            start = datetime.fromisoformat(self.stats["start_time"])
-            end = datetime.fromisoformat(self.stats["end_time"])
-            self.stats["duration"] = (end - start).total_seconds()
 
-        # Generar informe
-        self.save_report()
+async def load_seeds(self, max_to_process: int) -> list:
+    try:
+        from core.seed_pipeline import get_seed_pipeline
 
-        logger.info("Entrenamiento nocturno completado")
-        logger.info(f"Total queries: {self.stats['total_queries']}")
-        logger.info(f"Exitosas: {self.stats['successful']}")
-        logger.info(f"Fallidas: {self.stats['failed']}")
-        logger.info(f"Descompuestas: {self.stats['decomposed']}")
-        logger.info(f"Duración: {self.stats['duration']:.2f}s")
+        pipeline = get_seed_pipeline()
+        seeds = pipeline.get_pending_seeds()
+    except ImportError:
+        logger.warning("seed_pipeline no disponible, usando archivo seeds.txt")
+        seeds = self.load_seeds()
+
+    return seeds[:max_to_process]
+
+
+async def decompose_complex_seeds(seeds: list) -> list:
+    expanded_seeds = await self.decompose_complex_seeds(seeds)
+    return expanded_seeds
+
+
+def save_expanded_seeds(self, seeds: list, expanded_seeds: list):
+    if seeds:
+        pass
+    else:
+        self.save_seeds(expanded_seeds)
+
+
+async def process_batch(self, batch: list) -> list:
+    results = await self.process_batch(batch)
+    return results
 
     def save_report(self):
         """Guarda informe de entrenamiento."""

@@ -41,235 +41,133 @@ class AgenteVideo:
         self.embedding_service = get_embedding_service()
         self.memoria = get_memoria()
 
-    def execute(self, video_path: str | Path, intervalo_frames: int = 2) -> dict:
-        """
-        Orquesta análisis completo de un vídeo
 
-        Args:
-            video_path: Ruta al vídeo
-            intervalo_frames: Intervalo en segundos entre frames (default: 2)
+def execute(self, video_path: str | Path, intervalo_frames: int = 2) -> dict:
+    """
+    Orquesta análisis completo de un vídeo
 
-        Returns:
-            Diccionario con resultados del análisis
-        """
-        video_path = Path(video_path)
+    Args:
+        video_path: Ruta al vídeo
+        intervalo_frames: Intervalo en segundos entre frames (default: 2)
 
-        if not video_path.exists():
-            raise FileNotFoundError(f"Vídeo no encontrado: {video_path}")
+    Returns:
+        Diccionario con resultados del análisis
+    """
+    video_path = Path(video_path)
 
-        logger.info(f"Iniciando análisis de vídeo: {video_path}")
-        video_id = video_path.stem
-        output_dir = video_path.parent / f"{video_id}_frames"
+    if not video_path.exists():
+        raise FileNotFoundError(f"Vídeo no encontrado: {video_path}")
 
-        resultado = {
-            "video_id": video_id,
-            "video_path": str(video_path),
-            "inicio": datetime.now().isoformat(),
-            "frames_extraidos": 0,
-            "transcripcion": None,
-            "frames_analizados": 0,
-            "errores": [],
-        }
+    logger.info(f"Iniciando análisis de vídeo: {video_path}")
+    video_id = video_path.stem
+    output_dir = video_path.parent / f"{video_id}_frames"
 
+    resultado = {
+        "video_id": video_id,
+        "video_path": str(video_path),
+        "inicio": datetime.now().isoformat(),
+        "frames_extraidos": 0,
+        "transcripcion": None,
+        "frames_analizados": 0,
+        "errores": [],
+    }
+
+    try:
+        resultado = extraer_frames(self, video_path, output_dir, intervalo_frames, resultado)
+        resultado = transcribir_audio(self, video_path, resultado)
+        resultado = analizar_frames_vision(
+            self, frames=resultado["frames_extraidos"], resultado=resultado
+        )
+        guardar_referencia_en_memoria(self, video_id, resultado)
+
+        return resultado
+
+    except Exception as e:
+        logger.error(f"Error en análisis de vídeo: {e}")
+        resultado["estado"] = "error"
+        resultado["errores"].append(str(e))
+        resultado["fin"] = datetime.now().isoformat()
+        return resultado
+
+
+def extraer_frames(
+    self, video_path: Path, output_dir: Path, intervalo_frames: int, resultado: dict
+) -> dict:
+    logger.info("Extrayendo frames...")
+    frames = self.frame_extractor.extraer_frames(video_path, output_dir, intervalo=intervalo_frames)
+    resultado["frames_extraidos"] = len(frames)
+    logger.info(f"Frames extraídos: {len(frames)}")
+    return resultado
+
+
+def transcribir_audio(self, video_path: Path, resultado: dict) -> dict:
+    logger.info("Transcribiendo audio...")
+    try:
+        transcripcion = self.whisper_transcriber.transcribir(video_path, language="es")
+        resultado["transcripcion"] = transcripcion
+        logger.info(f"Transcripción completada: {len(transcripcion)} caracteres")
+
+        # Indexar transcripción en VectorStore
+        embedding_transcripcion = self.embedding_service.encode(transcripcion)
+        self.vector_store.agregar_documento(
+            texto=transcripcion,
+            metadatos={
+                "tipo": "transcripcion_audio",
+                "video_id": resultado["video_id"],
+                "video_path": str(video_path),
+            },
+            embedding=embedding_transcripcion,
+        )
+    except Exception as e:
+        logger.error(f"Error transcribiendo audio: {e}")
+        resultado["errores"].append(f"Transcripción fallida: {e}")
+
+    return resultado
+
+
+def analizar_frames_vision(self, frames: int, resultado: dict) -> dict:
+    logger.info("Analizando frames con visión...")
+    for i in range(frames):
         try:
-            # 1. Extraer frames
-            logger.info("Extrayendo frames...")
-            frames = self.frame_extractor.extraer_frames(
-                video_path, output_dir, intervalo=intervalo_frames
-            )
-            resultado["frames_extraidos"] = len(frames)
-            logger.info(f"Frames extraídos: {len(frames)}")
+            frame_path = self.frame_extractor.get_frame_path(i)
+            descripcion = self.agente_vision.execute(frame_path)
 
-            # 2. Transcribir audio
-            logger.info("Transcribiendo audio...")
-            try:
-                transcripcion = self.whisper_transcriber.transcribir(video_path, language="es")
-                resultado["transcripcion"] = transcripcion
-                logger.info(f"Transcripción completada: {len(transcripcion)} caracteres")
+            if descripcion:
+                # Obtener timestamp del frame
+                timestamp = i * resultado["intervalo_frames"]
 
-                # Indexar transcripción en VectorStore
-                embedding_transcripcion = self.embedding_service.encode(transcripcion)
-                self.vector_store.agregar_documento(
-                    texto=transcripcion,
-                    metadatos={
-                        "tipo": "transcripcion_audio",
-                        "video_id": video_id,
-                        "video_path": str(video_path),
-                    },
-                    embedding=embedding_transcripcion,
+                # Indexar frame en VectorStore
+                embedding_frame = self.embedding_service.encode(descripcion)
+                self.vector_store.agregar_frame(
+                    frame_path=frame_path,
+                    descripcion=descripcion,
+                    embedding=embedding_frame,
+                    video_id=resultado["video_id"],
+                    timestamp=timestamp,
                 )
-            except Exception as e:
-                logger.error(f"Error transcribiendo audio: {e}")
-                resultado["errores"].append(f"Transcripción fallida: {e}")
 
-            # 3. Analizar cada frame con visión
-            logger.info("Analizando frames con visión...")
-            for i, frame_path in enumerate(frames):
-                try:
-                    descripcion = self.agente_vision.execute(frame_path)
+                resultado["frames_analizados"] += 1
 
-                    if descripcion:
-                        # Obtener timestamp del frame
-                        timestamp = i * intervalo_frames
-
-                        # Indexar frame en VectorStore
-                        embedding_frame = self.embedding_service.encode(descripcion)
-                        self.vector_store.agregar_frame(
-                            frame_path=frame_path,
-                            descripcion=descripcion,
-                            embedding=embedding_frame,
-                            video_id=video_id,
-                            timestamp=timestamp,
-                        )
-
-                        resultado["frames_analizados"] += 1
-
-                        if i % 5 == 0:  # Log cada 5 frames
-                            logger.info(f"Frames analizados: {i + 1}/{len(frames)}")
-                except Exception as e:
-                    logger.error(f"Error analizando frame {frame_path}: {e}")
-                    resultado["errores"].append(f"Frame {frame_path.name}: {e}")
-
-            # 4. Guardar referencia en memoria
-            logger.info("Guardando referencia en memoria...")
-            self.memoria.recordar(
-                contenido=f"Vídeo analizado: {video_id} con {resultado['frames_extraidos']} frames y transcripción de {len(resultado['transcripcion']) if resultado['transcripcion'] else 0} caracteres",
-                tipo="video",
-                importancia=8,
-            )
-
-            resultado["fin"] = datetime.now().isoformat()
-            resultado["estado"] = "completado"
-
-            logger.info(f"Análisis completado: {resultado['estado']}")
-            return resultado
-
+                if i % 5 == 0:  # Log cada 5 frames
+                    logger.info(f"Frames analizados: {i + 1}/{frames}")
         except Exception as e:
-            logger.error(f"Error en análisis de vídeo: {e}")
-            resultado["estado"] = "error"
-            resultado["errores"].append(str(e))
-            resultado["fin"] = datetime.now().isoformat()
-            return resultado
+            logger.error(f"Error analizando frame {frame_path}: {e}")
+            resultado["errores"].append(f"Frame {frame_path.name}: {e}")
 
-    def buscar_en_video(self, consulta: str, video_id: str = None, top_k: int = 5) -> dict:
-        """
-        Busca en los vectores indexados de un vídeo
+    return resultado
 
-        Args:
-            consulta: Consulta de búsqueda
-            video_id: Filtrar por ID de vídeo (opcional)
-            top_k: Número de resultados (default: 5)
 
-        Returns:
-            Diccionario con resultados de búsqueda
-        """
-        logger.info(f"Buscando: '{consulta}' en vídeo {video_id or 'todos'}")
+def guardar_referencia_en_memoria(self, video_id: str, resultado: dict):
+    logger.info("Guardando referencia en memoria...")
+    _guardar_contenido_en_memoria(
+        contenido=f"Vídeo analizado: {video_id} con {resultado['frames_extraidos']} frames y transcripción de {len(resultado['transcripcion']) if resultado['transcripcion'] else 0} caracteres",
+        tipo="video",
+        importancia=8,
+    )
 
-        # Generar embedding de la consulta
-        embedding_consulta = self.embedding_service.encode(consulta)
 
-        # Buscar en documentos (transcripciones)
-        resultados_docs = self.vector_store.buscar_similares(
-            embedding=embedding_consulta, top_k=top_k
-        )
-
-        # Buscar en frames
-        resultados_frames = self.vector_store.buscar_frames(
-            embedding=embedding_consulta, video_id=video_id, top_k=top_k
-        )
-
-        return {
-            "consulta": consulta,
-            "video_id": video_id,
-            "resultados_documentos": resultados_docs,
-            "resultados_frames": resultados_frames,
-            "total_documentos": len(resultados_docs),
-            "total_frames": len(resultados_frames),
-        }
-
-    def buscar_similar_frames(
-        self, imagen_path: str | Path, video_id: str = None, top_k: int = 5
-    ) -> dict:
-        """
-        Busca frames similares a una imagen de referencia
-
-        Args:
-            imagen_path: Ruta a la imagen de referencia
-            video_id: Filtrar por ID de vídeo (opcional)
-            top_k: Número de resultados (default: 5)
-
-        Returns:
-            Diccionario con frames similares
-        """
-        imagen_path = Path(imagen_path)
-
-        if not imagen_path.exists():
-            raise FileNotFoundError(f"Imagen no encontrada: {imagen_path}")
-
-        logger.info(f"Buscando frames similares a: {imagen_path}")
-
-        # Analizar imagen de referencia
-        descripcion_ref = self.agente_vision.execute(imagen_path)
-
-        if not descripcion_ref:
-            return {"error": "No se pudo analizar la imagen de referencia"}
-
-        # Generar embedding de la descripción
-        embedding_ref = self.embedding_service.encode(descripcion_ref)
-
-        # Buscar frames similares
-        resultados = self.vector_store.buscar_frames(
-            embedding=embedding_ref, video_id=video_id, top_k=top_k
-        )
-
-        return {
-            "imagen_referencia": str(imagen_path),
-            "descripcion_referencia": descripcion_ref,
-            "video_id": video_id,
-            "resultados": resultados,
-            "total": len(resultados),
-        }
-
-    # Métodos de compatibilidad con interfaz de agentes URA
-    def procesar(self, texto: str) -> str:
-        """Procesar consulta para AgenteVideo"""
-        texto_lower = texto.lower()
-
-        if "analizar" in texto_lower or "procesar" in texto_lower:
-            # Extraer ruta del vídeo del texto
-            palabras = texto.split()
-            for palabra in palabras:
-                if palabra.endswith((".mp4", ".mov", ".avi", ".mkv")):
-                    try:
-                        resultado = self.execute(palabra)
-                        return f"Vídeo analizado: {resultado['frames_extraidos']} frames, {len(resultado['transcripcion']) if resultado['transcripcion'] else 0} caracteres de transcripción. Errores: {len(resultado['errores'])}"
-                    except Exception as e:
-                        return f"Error analizando vídeo: {e}"
-            return "Por favor proporciona la ruta del vídeo (ej: .mp4, .mov, .avi, .mkv)"
-
-        elif "buscar" in texto_lower:
-            # Buscar en vídeos indexados
-            palabras = texto.split()
-            consulta = " ".join([p for p in palabras if p.lower() != "buscar"])
-            if consulta:
-                resultados = self.buscar_en_video(consulta)
-                return f"Encontrados {resultados['total_documentos']} documentos y {resultados['total_frames']} frames para '{consulta}'"
-            return "Por favor proporciona una consulta de búsqueda"
-
-        else:
-            return "Puedo analizar vídeos (extraer frames, transcribir audio, analizar visión) y buscar en contenido indexado. Usa: analizar [vídeo] o buscar [consulta]"
-
-    def ejecutar(self, texto: str) -> str:
-        """Ejecutar acción para AgenteVideo"""
-        return self.procesar(texto)
-
-    def consultar(self, texto: str) -> str:
-        """Consultar información para AgenteVideo"""
-        return self.procesar(texto)
-
-    def responder(self, texto: str) -> str:
-        """Responder pregunta para AgenteVideo"""
-        return self.procesar(texto)
+def _guardar_contenido_en_memoria(contenido: str, tipo: str, importancia: int):
+    self.memoria.recordar(contenido=contenido, tipo=tipo, importancia=importancia)
 
 
 # Singleton para consistencia con otros agentes
@@ -285,7 +183,6 @@ def get_agente_video(persist_directory: str | Path = None) -> AgenteVideo:
 
 
 if __name__ == "__main__":
-    import sys
     import json
 
     # Configurar logging

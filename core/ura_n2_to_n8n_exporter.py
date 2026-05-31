@@ -68,113 +68,147 @@ class N2ToN8nExporter:
         validadores_ok = bool((maleta.get("herramientas") or {}).get("validadores"))
         return conf >= 0.95 and uses >= 20 and validadores_ok
 
-    def build_workflow_json(self, maleta: dict[str, Any]) -> dict[str, Any]:
-        """
-        Traducir la maleta a un JSON de workflow de n8n con nodos básicos:
 
-          ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-          │ Schedule │ →  │ Set vars │ →  │ HTTP Req │ →  │  Filter  │
-          └──────────┘    └──────────┘    └──────────┘    └──────────┘
+def build_workflow_json(self, maleta: dict[str, Any]) -> dict[str, Any]:
+    """
+    Traducir la maleta a un JSON de workflow de n8n con nodos básicos:
 
-        El workflow queda inactivo (`active=False`) hasta que el usuario lo
-        revise y lo active manualmente en n8n.
-        """
-        maleta_id = maleta.get("maleta_id", "desconocida")
-        tema = maleta.get("tema", "")
-        buscadores = (maleta.get("herramientas") or {}).get("buscadores", []) or []
-        validadores = (maleta.get("herramientas") or {}).get("validadores", []) or []
-        fuentes = maleta.get("fuentes_blancas") or {}
-        cache_h = (maleta.get("anti_repeticion") or {}).get("cache_duracion_horas", 24)
+      ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+      │ Schedule │ →  │ Set vars │ →  │ HTTP Req │ →  │  Filter  │
+      └──────────┘    └──────────┘    └──────────┘    └──────────┘
 
-        # Nodos
-        nodes = [
-            {
-                "id": "node_schedule",
-                "name": "Schedule",
-                "type": "n8n-nodes-base.scheduleTrigger",
-                "typeVersion": 1,
-                "position": [240, 300],
-                "parameters": {
-                    "rule": {"interval": [{"field": "hours", "hoursInterval": int(cache_h)}]},
+    El workflow queda inactivo (`active=False`) hasta que el usuario lo
+    revise y lo active manualmente en n8n.
+    """
+    maleta_id = get_maleta_id(maleta)
+    tema = get_tema(maleta)
+    buscadores = get_buscadores(maleta)
+    validadores = get_validadores(maleta)
+    fuentes = get_fuentes_blancas(maleta)
+    cache_h = get_cache_duracion_horas(maleta)
+
+    nodes = create_nodes(maleta_id, tema, cache_h)
+    connections = create_connections(nodes)
+
+    return {
+        "name": f"URA N2→N1 · {maleta_id}",
+        "nodes": nodes,
+        "connections": connections,
+        "active": False,
+        "settings": {"executionOrder": "v1"},
+        "staticData": None,
+        "meta": {
+            "source": "URA N2 exporter",
+            "maleta_id": maleta_id,
+            "version": get_version(maleta),
+            "buscadores_count": len(buscadores),
+            "validadores_count": len(validadores),
+            "fuentes_oficiales": [f.get("dominio") for f in fuentes.get("oficiales", [])],
+            "cache_duracion_horas": cache_h,
+        },
+    }
+
+
+def get_maleta_id(maleta: dict[str, Any]) -> str:
+    return maleta.get("maleta_id", "desconocida")
+
+
+def get_tema(maleta: dict[str, Any]) -> str:
+    return maleta.get("tema", "")
+
+
+def get_buscadores(maleta: dict[str, Any]) -> list:
+    return (maleta.get("herramientas") or {}).get("buscadores", []) or []
+
+
+def get_validadores(maleta: dict[str, Any]) -> list:
+    return (maleta.get("herramientas") or {}).get("validadores", [])
+
+
+def get_fuentes_blancas(maleta: dict[str, Any]) -> dict:
+    return maleta.get("fuentes_blancas") or {}
+
+
+def get_cache_duracion_horas(maleta: dict[str, Any]) -> int:
+    return (maleta.get("anti_repeticion") or {}).get("cache_duracion_horas", 24)
+
+
+def create_nodes(maleta_id: str, tema: str, cache_h: int) -> list[dict]:
+    nodes = [
+        {
+            "id": "node_schedule",
+            "name": "Schedule",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [240, 300],
+            "parameters": {
+                "rule": {"interval": [{"field": "hours", "hoursInterval": int(cache_h)}]},
+            },
+        },
+        {
+            "id": "node_set",
+            "name": "Set vars",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [460, 300],
+            "parameters": {
+                "values": {
+                    "string": [
+                        {"name": "maleta_id", "value": maleta_id},
+                        {"name": "tema", "value": tema},
+                        {"name": "version", "value": str(get_version(maleta))},
+                    ],
                 },
             },
-            {
-                "id": "node_set",
-                "name": "Set vars",
-                "type": "n8n-nodes-base.set",
-                "typeVersion": 1,
-                "position": [460, 300],
-                "parameters": {
-                    "values": {
-                        "string": [
-                            {"name": "maleta_id", "value": maleta_id},
-                            {"name": "tema", "value": tema},
-                            {"name": "version", "value": str(maleta.get("version", 1))},
-                        ],
-                    },
+        },
+        {
+            "id": "node_http_search",
+            "name": "DDG Search",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [700, 300],
+            "parameters": {
+                "url": "https://duckduckgo.com/html/",
+                "method": "GET",
+                "queryParameters": {
+                    "parameters": [
+                        {"name": "q", "value": "={{$json.tema}}"},
+                        {"name": "kl", "value": "es-es"},
+                    ],
+                },
+                "options": {"timeout": 20000},
+            },
+        },
+        {
+            "id": "node_filter",
+            "name": "Filter live URLs",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [940, 300],
+            "parameters": {
+                "conditions": {
+                    "boolean": [],
+                    "string": [
+                        {"value1": "={{$json.body}}", "operation": "isNotEmpty"},
+                    ],
                 },
             },
-            {
-                "id": "node_http_search",
-                "name": "DDG Search",
-                "type": "n8n-nodes-base.httpRequest",
-                "typeVersion": 4,
-                "position": [700, 300],
-                "parameters": {
-                    "url": "https://duckduckgo.com/html/",
-                    "method": "GET",
-                    "queryParameters": {
-                        "parameters": [
-                            {"name": "q", "value": "={{$json.tema}}"},
-                            {"name": "kl", "value": "es-es"},
-                        ],
-                    },
-                    "options": {"timeout": 20000},
-                },
-            },
-            {
-                "id": "node_filter",
-                "name": "Filter live URLs",
-                "type": "n8n-nodes-base.if",
-                "typeVersion": 1,
-                "position": [940, 300],
-                "parameters": {
-                    "conditions": {
-                        "boolean": [],
-                        "string": [
-                            {
-                                "value1": "={{$json.body}}",
-                                "operation": "isNotEmpty",
-                            }
-                        ],
-                    },
-                },
-            },
-        ]
+        },
+    ]
+    return nodes
 
-        connections = {
-            "Schedule": {"main": [[{"node": "Set vars", "type": "main", "index": 0}]]},
-            "Set vars": {"main": [[{"node": "DDG Search", "type": "main", "index": 0}]]},
-            "DDG Search": {"main": [[{"node": "Filter live URLs", "type": "main", "index": 0}]]},
-        }
 
-        return {
-            "name": f"URA N2→N1 · {maleta_id}",
-            "nodes": nodes,
-            "connections": connections,
-            "active": False,
-            "settings": {"executionOrder": "v1"},
-            "staticData": None,
-            "meta": {
-                "source": "URA N2 exporter",
-                "maleta_id": maleta_id,
-                "version": maleta.get("version", 1),
-                "buscadores_count": len(buscadores),
-                "validadores_count": len(validadores),
-                "fuentes_oficiales": [f.get("dominio") for f in fuentes.get("oficiales", [])],
-                "cache_duracion_horas": cache_h,
-            },
-        }
+def create_connections(nodes: list[dict]) -> dict[str, Any]:
+    connections = {
+        "Schedule": {"main": [[{"node": "Set vars", "type": "main", "index": 0}]]},
+        "Set vars": {"main": [[{"node": "DDG Search", "type": "main", "index": 0}]]},
+        "DDG Search": {"main": [[{"node": "Filter live URLs", "type": "main", "index": 0}]]},
+    }
+    return connections
+
+
+def get_version(maleta: dict[str, Any]) -> int:
+    return maleta.get("version", 1)
 
     async def export(self, maleta: dict[str, Any], *, uses: int) -> N8nExportResult:
         """

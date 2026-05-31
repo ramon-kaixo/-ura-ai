@@ -121,117 +121,145 @@ class URASwarm:
     def __init__(self) -> None:
         self.cache = get_search_cache()
 
-    async def run(
-        self,
-        *,
-        tema: str,
-        maleta: dict[str, Any],
-        agent_factory: Callable[[str, str, dict[str, Any]], AgentSpec],
-        use_cache: bool = True,
-    ) -> dict[str, Any]:
-        """
-        Run a full N2 swarm for the given theme.
 
-        agent_factory(subtema, rol, maleta) -> AgentSpec
-        The caller builds the AgentSpec (this keeps the swarm decoupled from
-        the specific agent implementation, which in Fase 1 will be a DDG wrapper).
-        """
-        start = time.monotonic()
-        semaphore, swarm_queue = _ensure_primitives()
+async def run(
+    self,
+    *,
+    tema: str,
+    maleta: dict[str, Any],
+    agent_factory: Callable[[str, str, dict[str, Any]], AgentSpec],
+    use_cache: bool = True,
+) -> dict[str, Any]:
+    """
+    Run a full N2 swarm for the given theme.
 
-        # Queue slot (bounded swarms)
-        token = object()
+    agent_factory(subtema, rol, maleta) -> AgentSpec
+    The caller builds the AgentSpec (this keeps the swarm decoupled from
+    the specific agent implementation, which in Fase 1 will be a DDG wrapper).
+    """
+    start = time.monotonic()
+    semaphore, swarm_queue = _ensure_primitives()
+
+    # Queue slot (bounded swarms)
+    token = object()
+    try:
+        await asyncio.wait_for(swarm_queue.put(token), timeout=30)
+    except TimeoutError:
+        return _handle_swarm_rejection(start)
+
+    try:
+        # Cache lookup (fingerprint on the main query)
+        if use_cache:
+            cached = await self.cache.get(tema, maleta_id=maleta.get("maleta_id"))
+            if cached:
+                payload = cached.get("results")
+                if isinstance(payload, dict):
+                    # We previously stored a full informe dict
+                    return _handle_cached_result(cached)
+                return _handle_partial_cache_result(cached)
+
+        subtemas = _split_tema(tema, maleta)
+        roles = _agent_roles_from_maleta(maleta, len(subtemas))
+        specs = [
+            agent_factory(subtemas[i], roles[i % len(roles)], maleta) for i in range(len(subtemas))
+        ]
+
         try:
-            await asyncio.wait_for(swarm_queue.put(token), timeout=30)
+            resultados = await asyncio.wait_for(
+                self._run_agents(specs, semaphore),
+                timeout=SWARM_TIMEOUT_S,
+            )
         except TimeoutError:
-            return {
-                "exito": False,
-                "score_calidad": 0.0,
-                "resumen_ejecutivo": "Swarm rechazado: demasiados swarms activos",
-                "resultados_por_agente": [],
-                "contradicciones_detectadas": [],
-                "fuentes_consolidadas": [],
-                "alertas": ["saturation"],
-                "tiempo_total_segundos": 0.0,
-                "cache_usado": False,
-            }
+            logger.warning("Swarm timeout global tras %ds", SWARM_TIMEOUT_S)
+            resultados = []
 
+        # Always validate
+        resultados_dicts = [r.to_dict() for r in resultados]
+        validation = await validate_swarm_output(resultados_dicts)
+
+        duration = time.monotonic() - start
+        exito = validation["score_calidad"] >= 0.4 and bool(resultados_dicts)
+
+        informe = {
+            "exito": exito,
+            "score_calidad": validation["score_calidad"],
+            "resumen_ejecutivo": _summary(tema, resultados_dicts, validation),
+            "resultados_por_agente": resultados_dicts,
+            "contradicciones_detectadas": validation["contradictions"],
+            "fuentes_consolidadas": validation["fuentes_consolidadas"],
+            "alertas": validation["alertas"],
+            "tiempo_total_segundos": round(duration, 2),
+            "cache_usado": False,
+        }
+
+        # Persist in cache
+        if use_cache and exito:
+            await self.cache.put(
+                tema,
+                informe,
+                maleta_id=maleta.get("maleta_id"),
+                score_calidad=validation["score_calidad"],
+                ttl_hours=maleta.get("anti_repeticion", {}).get("cache_duracion_horas", 24),
+            )
+
+        return informe
+    finally:
+        # Release swarm slot
         try:
-            # Cache lookup (fingerprint on the main query)
-            if use_cache:
-                cached = await self.cache.get(tema, maleta_id=maleta.get("maleta_id"))
-                if cached:
-                    payload = cached.get("results")
-                    if isinstance(payload, dict):
-                        # We previously stored a full informe dict
-                        informe = dict(payload)
-                        informe["cache_usado"] = True
-                        return informe
-                    return {
-                        "exito": True,
-                        "score_calidad": cached.get("score_calidad", 0.0),
-                        "resumen_ejecutivo": f"(cache) {tema}",
-                        "resultados_por_agente": payload or [],
-                        "contradicciones_detectadas": [],
-                        "fuentes_consolidadas": [],
-                        "alertas": [],
-                        "tiempo_total_segundos": round(time.monotonic() - start, 2),
-                        "cache_usado": True,
-                    }
+            swarm_queue.get_nowait()
+            swarm_queue.task_done()
+        except Exception:  # noqa: BLE001
+            pass
 
-            subtemas = _split_tema(tema, maleta)
-            roles = _agent_roles_from_maleta(maleta, len(subtemas))
-            specs = [
-                agent_factory(subtemas[i], roles[i % len(roles)], maleta)
-                for i in range(len(subtemas))
-            ]
 
-            try:
-                resultados = await asyncio.wait_for(
-                    self._run_agents(specs, semaphore),
-                    timeout=SWARM_TIMEOUT_S,
-                )
-            except TimeoutError:
-                logger.warning("Swarm timeout global tras %ds", SWARM_TIMEOUT_S)
-                resultados = []
+def _handle_swarm_rejection(start: float) -> dict[str, Any]:
+    return {
+        "exito": False,
+        "score_calidad": 0.0,
+        "resumen_ejecutivo": "Swarm rechazado: demasiados swarms activos",
+        "resultados_por_agente": [],
+        "contradicciones_detectadas": [],
+        "fuentes_consolidadas": [],
+        "alertas": ["saturation"],
+        "tiempo_total_segundos": 0.0,
+        "cache_usado": False,
+    }
 
-            # Always validate
-            resultados_dicts = [r.to_dict() for r in resultados]
-            validation = await validate_swarm_output(resultados_dicts)
 
-            duration = time.monotonic() - start
-            exito = validation["score_calidad"] >= 0.4 and bool(resultados_dicts)
+def _handle_cached_result(cached: dict[str, Any]) -> dict[str, Any]:
+    payload = cached.get("results")
+    if isinstance(payload, dict):
+        # We previously stored a full informe dict
+        return dict(payload)
+    return {
+        "exito": True,
+        "score_calidad": cached.get("score_calidad", 0.0),
+        "resumen_ejecutivo": f"(cache) {cached['tema']}",
+        "resultados_por_agente": payload or [],
+        "contradicciones_detectadas": [],
+        "fuentes_consolidadas": [],
+        "alertas": [],
+        "tiempo_total_segundos": round(time.monotonic() - cached["start_time"], 2),
+        "cache_usado": True,
+    }
 
-            informe = {
-                "exito": exito,
-                "score_calidad": validation["score_calidad"],
-                "resumen_ejecutivo": _summary(tema, resultados_dicts, validation),
-                "resultados_por_agente": resultados_dicts,
-                "contradicciones_detectadas": validation["contradictions"],
-                "fuentes_consolidadas": validation["fuentes_consolidadas"],
-                "alertas": validation["alertas"],
-                "tiempo_total_segundos": round(duration, 2),
-                "cache_usado": False,
-            }
 
-            # Persist in cache
-            if use_cache and exito:
-                await self.cache.put(
-                    tema,
-                    informe,
-                    maleta_id=maleta.get("maleta_id"),
-                    score_calidad=validation["score_calidad"],
-                    ttl_hours=maleta.get("anti_repeticion", {}).get("cache_duracion_horas", 24),
-                )
+def _handle_partial_cache_result(cached: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "exito": True,
+        "score_calidad": cached.get("score_calidad", 0.0),
+        "resumen_ejecutivo": f"(cache) {cached['tema']}",
+        "resultados_por_agente": cached["results"] or [],
+        "contradicciones_detectadas": [],
+        "fuentes_consolidadas": [],
+        "alertas": [],
+        "tiempo_total_segundos": round(time.monotonic() - cached["start_time"], 2),
+        "cache_usado": True,
+    }
 
-            return informe
-        finally:
-            # Release swarm slot
-            try:
-                swarm_queue.get_nowait()
-                swarm_queue.task_done()
-            except Exception:  # noqa: BLE001
-                pass
+
+def _summary(tema: str, resultados_dicts: list[dict[str, Any]], validation: dict[str, Any]) -> str:
+    return f"Resumen ejecutivo para {tema}: {validation['score_calidad']:.2f} ({len(resultados_dicts)} agentes)"
 
     async def _run_agents(
         self, specs: list[AgentSpec], semaphore: asyncio.Semaphore

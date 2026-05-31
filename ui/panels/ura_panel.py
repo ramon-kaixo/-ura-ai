@@ -15,6 +15,11 @@ def create_ura_panel_optimized(context, parent_layout):
         context: Contexto de la ventana principal (self)
         parent_layout: Layout padre donde agregar el panel
     """
+    ura_group = create_ura_group(context)
+    parent_layout.addWidget(ura_group)
+
+
+def create_ura_group(context):
     ura_group = QGroupBox()
     ura_group.setStyleSheet("""
         QGroupBox {
@@ -23,12 +28,19 @@ def create_ura_panel_optimized(context, parent_layout):
             padding: 0px;
         }
     """)
-
     ura_layout = QVBoxLayout(ura_group)
     ura_layout.setContentsMargins(0, 0, 0, 0)
     ura_layout.setSpacing(5)
 
-    # SECCIÓN 1 - Historial (60% de altura) - fondo claro, colores por emisor
+    add_history_section(context, ura_layout)
+    add_pending_section(context, ura_layout)
+    add_decision_buttons(context, ura_layout)
+    add_context_section(context, ura_layout)
+
+    return ura_group
+
+
+def add_history_section(context, parent_layout):
     context.ura_history_text = QTextEdit()
     # !important: sobreescribe el verde neón global del qss en la selección
     context.ura_history_text.setStyleSheet("""
@@ -44,9 +56,10 @@ def create_ura_panel_optimized(context, parent_layout):
         }
     """)
     context.ura_history_text.setReadOnly(True)
-    ura_layout.addWidget(context.ura_history_text, 6)  # 6/10 = 60%
+    parent_layout.addWidget(context.ura_history_text, 6)  # 6/10 = 60%
 
-    # SECCIÓN 2 - Respuesta Pendiente (30% de altura) - fondo crema suave
+
+def add_pending_section(context, parent_layout):
     context.ura_pending_text = QTextEdit()
     context.ura_pending_text.setStyleSheet("""
         QTextEdit {
@@ -63,9 +76,10 @@ def create_ura_panel_optimized(context, parent_layout):
     context.ura_pending_text.setPlaceholderText(
         "Respuestas de URA pendientes de decisión aparecerán aquí..."
     )
-    ura_layout.addWidget(context.ura_pending_text, 3)  # 3/10 = 30%
+    parent_layout.addWidget(context.ura_pending_text, 3)  # 3/10 = 30%
 
-    # Botones de decisión
+
+def add_decision_buttons(context, parent_layout):
     decision_widget = QWidget()
     decision_layout = QHBoxLayout(decision_widget)
     decision_layout.setContentsMargins(0, 5, 0, 5)
@@ -113,9 +127,10 @@ def create_ura_panel_optimized(context, parent_layout):
     decision_layout.addWidget(context.clear_pending_button)
 
     decision_layout.addStretch()
-    ura_layout.addWidget(decision_widget)
+    parent_layout.addWidget(decision_widget)
 
-    # SECCIÓN 3 - Contexto Windsurf (10% de altura) - fondo gris claro
+
+def add_context_section(context, parent_layout):
     context.ura_context_text = QTextEdit()
     context.ura_context_text.setStyleSheet("""
         QTextEdit {
@@ -129,6 +144,4 @@ def create_ura_panel_optimized(context, parent_layout):
     """)
     context.ura_context_text.setReadOnly(True)
     context.ura_context_text.setPlaceholderText("Contexto de Windsurf aparecerá aquí...")
-    ura_layout.addWidget(context.ura_context_text, 1)  # 1/10 = 10%
-
-    parent_layout.addWidget(ura_group)
+    parent_layout.addWidget(context.ura_context_text, 1)  # 1/10 = 10%

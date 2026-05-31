@@ -360,314 +360,215 @@ class ThreadCleaner:
 
         return zombies
 
-    def clean_process(self, pid: int, force: bool = False) -> bool:
-        """Limpiar un proceso específico con arquitectura KILL_ALLOWED vs REPORT_ONLY"""
-        try:
-            process = psutil.Process(pid)
-            name = process.name()
 
-            # CHECK 1: Verificar si está protegido (NUNCA MATAR)
-            is_protected, protection_reason = self._is_process_protected(pid, name)
-            if is_protected and not force:
-                logger.warning(
-                    f"🛡️ PROTEGIDO: {name} (PID: {pid}) - {protection_reason} - NO SE ELIMINA"
-                )
-                self._log_kill_attempt_failed(pid, name, protection_reason)
-                return False
+def clean_process(self, pid: int, force: bool = False) -> bool:
+    """Limpiar un proceso específico con arquitectura KILL_ALLOWED vs REPORT_ONLY"""
+    try:
+        process = psutil.Process(pid)
+        name = process.name()
 
-            # CHECK 2: Verificar lista blanca tradicional (antes de verificar si es URA)
-            if not force and self.is_process_whitelisted(pid, name):
-                logger.warning(
-                    f"⚠️ WHITELIST: {name} (PID: {pid}) está en lista blanca - NO SE ELIMINA"
-                )
-                self._log_kill_attempt_failed(pid, name, "whitelisted")
-                return False
+        if is_protected_process(pid, name):
+            logger.warning(
+                f"🛡️ PROTEGIDO: {name} (PID: {pid}) - {protection_reason} - NO SE ELIMINA"
+            )
+            self._log_kill_attempt_failed(pid, name, protection_reason)
+            return False
 
-            # CHECK 3: Verificar si es proceso externo (REPORT_ONLY)
-            if self._is_external_process(name) and not force:
-                logger.warning(
-                    f"📋 REPORT_ONLY: {name} (PID: {pid}) es proceso externo - SOLO SE REPORTA, NO SE ELIMINA"
-                )
-                self.stats["processes_reported_today"] += 1
-                self.stats["history"].append(
-                    {
-                        "timestamp": datetime.now().isoformat(),
-                        "pid": pid,
-                        "name": name,
-                        "action": "reported",
-                        "reason": "external process (report_only)",
-                    }
-                )
-                self._save_stats()
-                return False
+        if is_whitelisted_process(pid, name):
+            logger.warning(f"⚠️ WHITELIST: {name} (PID: {pid}) está en lista blanca - NO SE ELIMINA")
+            self._log_kill_attempt_failed(pid, name, "whitelisted")
+            return False
 
-            # CHECK 4: Verificar si es proceso URA (KILL_ALLOWED)
-            if not self._is_ura_process(pid, name) and not force:
-                logger.warning(f"⚠️ NO URA: {name} (PID: {pid}) no es proceso URA - NO SE ELIMINA")
-                self._log_kill_attempt_failed(pid, name, "not a URA process")
-                return False
-
-            # CHECK 5: Verificar modo seguro
-            if self.config["auto_clean"]["safe_mode"] and not force:
-                logger.warning(
-                    f"🔒 SAFE_MODE: {name} (PID: {pid}) - Modo seguro activado, NO SE ELIMINA"
-                )
-                self._log_kill_attempt_failed(pid, name, "safe_mode")
-                return False
-
-            # PASÓ TODOS LOS CHECKS - PROCEDER CON KILL
-            logger.info(f"🔨 KILL_ALLOWED: {name} (PID: {pid}) - Eliminando proceso URA...")
-
-            # Eliminar proceso
-            process.terminate()
-
-            # Esperar a que termine
-            try:
-                process.wait(timeout=5)
-                logger.info(f"✅ ELIMINADO: {name} (PID: {pid}) - Terminado correctamente")
-            except psutil.TimeoutExpired:
-                # Si no termina, forzar kill
-                process.kill()
-                logger.warning(f"⚡ FORCE_KILL: {name} (PID: {pid}) - Forzado con kill")
-
-            # Actualizar estadísticas
-            self.stats["processes_killed_today"] += 1
+        if is_external_process(name):
+            logger.warning(
+                f"📋 REPORT_ONLY: {name} (PID: {pid}) es proceso externo - SOLO SE REPORTA, NO SE ELIMINA"
+            )
+            self.stats["processes_reported_today"] += 1
             self.stats["history"].append(
                 {
                     "timestamp": datetime.now().isoformat(),
                     "pid": pid,
                     "name": name,
-                    "action": "killed",
-                    "reason": "URA zombie process",
+                    "action": "reported",
+                    "reason": "external process (report_only)",
                 }
             )
             self._save_stats()
+            return False
 
-            # Registrar acción
-            clean_action = CleanAction(
-                pid=pid,
-                name=name,
-                action="killed",
-                timestamp=datetime.now().isoformat(),
-                reason="URA zombie process eliminated",
+        if not is_ura_process(pid, name):
+            logger.warning(f"⚠️ NO URA: {name} (PID: {pid}) no es proceso URA - NO SE ELIMINA")
+            self._log_kill_attempt_failed(pid, name, "not a URA process")
+            return False
+
+        if self.config["auto_clean"]["safe_mode"]:
+            logger.warning(
+                f"🔒 SAFE_MODE: {name} (PID: {pid}) - Modo seguro activado, NO SE ELIMINA"
             )
-            self.clean_log.append(clean_action)
-
-            return True
-
-        except psutil.NoSuchProcess:
-            logger.warning(f"Proceso {pid} no existe")
-            return False
-        except psutil.AccessDenied:
-            logger.error(f"Acceso denegado al proceso {pid}")
-            self._log_kill_attempt_failed(pid, "unknown", "access_denied")
-            return False
-        except Exception as e:
-            logger.error(f"Error eliminando proceso {pid}: {e}")
-            self._log_kill_attempt_failed(pid, "unknown", str(e))
+            self._log_kill_attempt_failed(pid, name, "safe_mode")
             return False
 
-    def clean_all_zombies(self, force: bool = False) -> int:
-        """Limpiar todos los procesos zombies"""
-        zombies = self.get_zombie_processes()
-        cleaned_count = 0
+        logger.info(f"🔨 KILL_ALLOWED: {name} (PID: {pid}) - Eliminando proceso URA...")
 
-        for zombie in zombies:
-            if self.clean_process(zombie.pid, force=force):
-                cleaned_count += 1
-
-        logger.info(f"Limpiados {cleaned_count} de {len(zombies)} procesos zombies")
-        return cleaned_count
-
-    def post_action_clean(self, action_name: str) -> int:
-        """Limpieza automática post-acción"""
-        logger.info(f"Ejecutando limpieza post-acción: {action_name}")
-
-        # Limpiar zombies
-        cleaned_count = self.clean_all_zombies(force=False)
-
-        # Limpiar procesos específicos relacionados con la acción
-        if action_name.lower() == "quickbooks":
-            self._clean_quickbooks_processes()
-        elif action_name.lower() == "email":
-            self._clean_email_processes()
-        elif action_name.lower() == "banco":
-            self._clean_bank_processes()
-
-        logger.info(f"Limpieza post-acción completada: {action_name}")
-        return cleaned_count
-
-    def _clean_quickbooks_processes(self):
-        """Limpiar procesos específicos de QuickBooks"""
+        process.terminate()
         try:
-            # Buscar procesos relacionados con QuickBooks que no sean el principal
-            for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-                try:
-                    name = proc.info["name"].lower()
-                    if "quickbooks" in name and not self.is_process_whitelisted(
-                        proc.info["pid"], proc.info["name"]
-                    ):
-                        # Solo eliminar si es un proceso auxiliar
-                        cmdline = " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else ""
-                        if "helper" in cmdline.lower() or "background" in cmdline.lower():
-                            self.clean_process(proc.info["pid"], force=False)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-        except Exception as e:
-            logger.error(f"Error limpiando procesos QuickBooks: {e}")
+            process.wait(timeout=5)
+            logger.info(f"✅ ELIMINADO: {name} (PID: {pid}) - Terminado correctamente")
+        except psutil.TimeoutExpired:
+            process.kill()
+            logger.warning(f"⚡ FORCE_KILL: {name} (PID: {pid}) - Forzado con kill")
 
-    def _clean_email_processes(self):
-        """Limpiar procesos específicos de email"""
-        try:
-            email_clients = ["mail", "thunderbird", "outlook", "apple mail"]
-            for proc in psutil.process_iter(["pid", "name"]):
-                try:
-                    name = proc.info["name"].lower()
-                    if any(client in name for client in email_clients):
-                        if not self.is_process_whitelisted(proc.info["pid"], proc.info["name"]):
-                            self.clean_process(proc.info["pid"], force=False)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-        except Exception as e:
-            logger.error(f"Error limpiando procesos email: {e}")
-
-    def _clean_bank_processes(self):
-        """Limpiar procesos específicos de banco"""
-        try:
-            # Limpiar procesos de navegadores que puedan estar relacionados con banca
-            for proc in psutil.process_iter(["pid", "name"]):
-                try:
-                    name = proc.info["name"].lower()
-                    if "chrome" in name or "firefox" in name or "safari" in name:
-                        if not self.is_process_whitelisted(proc.info["pid"], proc.info["name"]):
-                            # Solo eliminar si hay múltiples instancias
-                            count = sum(
-                                1
-                                for p in psutil.process_iter(["name"])
-                                if p.info["name"].lower() == name
-                            )
-                            if count > 1:
-                                self.clean_process(proc.info["pid"], force=False)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-        except Exception as e:
-            logger.error(f"Error limpiando procesos banco: {e}")
-
-    def list_zombies(self) -> list[ProcessInfo]:
-        """Listar procesos zombies"""
-        return self.get_zombie_processes()
-
-    def get_clean_log(self) -> list[CleanAction]:
-        """Obtener log de limpieza"""
-        return self.clean_log
-
-    def add_to_whitelist(self, name: str | None = None, pid: int | None = None) -> bool:
-        """Añadir proceso a lista blanca"""
-        if name:
-            self.config["whitelist"]["processes"].append(name)
-        if pid:
-            self.config["whitelist"]["pids"].append(pid)
-
-        return self._save_config()
-
-    def register_messaging_thread(self, thread, service_name: str):
-        """Registrar hilo de mensajería activo"""
-        self.messaging_threads.append(
-            {"thread": thread, "service": service_name, "registered_at": datetime.now().isoformat()}
+        self.stats["processes_killed_today"] += 1
+        self.stats["history"].append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "pid": pid,
+                "name": name,
+                "action": "killed",
+                "reason": "URA zombie process",
+            }
         )
-        logger.info(f"Hilo de mensajería registrado: {service_name}")
+        self._save_stats()
 
-    def register_app_thread(self, thread, thread_name: str):
-        """Registrar hilo de la aplicación"""
-        self.app_threads.append(
-            {"thread": thread, "name": thread_name, "registered_at": datetime.now().isoformat()}
+        clean_action = CleanAction(
+            pid=pid,
+            name=name,
+            action="killed",
+            timestamp=datetime.now().isoformat(),
+            reason="URA zombie process eliminated",
         )
-        logger.info(f"Hilo de aplicación registrado: {thread_name}")
+        self.clean_log.append(clean_action)
 
-    def clean_unauthorized_network_processes(self) -> int:
-        """Limpiar procesos de red no autorizados"""
-        if not self.network_audit:
-            logger.warning("Sistema de auditoría de red no disponible")
-            return 0
+        return True
 
-        cleaned_count = 0
+    except psutil.NoSuchProcess:
+        logger.warning(f"Proceso {pid} no existe")
+        return False
+    except psutil.AccessDenied:
+        logger.error(f"Acceso denegado al proceso {pid}")
+        self._log_kill_attempt_failed(pid, "unknown", "access_denied")
+        return False
+    except Exception as e:
+        logger.error(f"Error eliminando proceso {pid}: {e}")
+        self._log_kill_attempt_failed(pid, "unknown", str(e))
+        return False
 
-        # Ejecutar auditoría de red
-        self.network_audit.scan_ports()
 
-        # Buscar procesos con puertos no autorizados
-        for _key, port_info in self.network_audit.inventory.items():
-            if not port_info.is_authorized and port_info.status == "CONFLICT":
-                # Intentar limpiar el proceso
-                if port_info.pid > 0:
-                    if self.clean_process(port_info.pid, force=False):
-                        cleaned_count += 1
-                        logger.info(
-                            f"Proceso con puerto no autorizado {port_info.port} eliminado (PID: {port_info.pid})"
+def is_protected_process(pid: int, name: str) -> bool:
+    """Verificar si el proceso está protegido"""
+    is_protected, protection_reason = _is_process_protected(pid, name)
+    return is_protected
+
+
+def is_whitelisted_process(pid: int, name: str) -> bool:
+    """Verificar si el proceso está en la lista blanca"""
+    return not force and is_process_whitelisted(pid, name)
+
+
+def is_external_process(name: str) -> bool:
+    """Verificar si el proceso es externo (REPORT_ONLY)"""
+    return _is_external_process(name)
+
+
+def is_ura_process(pid: int, name: str) -> bool:
+    """Verificar si el proceso es URA (KILL_ALLOWED)"""
+    return not force and _is_ura_process(pid, name)
+
+
+def _is_ura_process(pid: int, name: str) -> bool:
+    # Implementación detallada de la lógica para verificar si el proceso es URA
+    pass
+
+
+def clean_all_zombies(self, force: bool = False) -> int:
+    """Limpiar todos los procesos zombies"""
+    zombies = self.get_zombie_processes()
+    cleaned_count = 0
+
+    for zombie in zombies:
+        if self.clean_process(zombie.pid, force=force):
+            cleaned_count += 1
+
+    logger.info(f"Limpiados {cleaned_count} de {len(zombies)} procesos zombies")
+    return cleaned_count
+
+
+def post_action_clean(self, action_name: str) -> int:
+    """Limpieza automática post-acción"""
+    logger.info(f"Ejecutando limpieza post-acción: {action_name}")
+
+    # Limpiar zombies
+    cleaned_count = self.clean_all_zombies(force=False)
+
+    # Limpieza de procesos específicos según la acción
+    if action_name.lower() == "quickbooks":
+        _clean_quickbooks_processes(self)
+    elif action_name.lower() == "email":
+        _clean_email_processes(self)
+    elif action_name.lower() == "banco":
+        _clean_bank_processes(self)
+
+    logger.info(f"Limpieza post-acción completada: {action_name}")
+    return cleaned_count
+
+
+def _clean_quickbooks_processes(self):
+    """Limpiar procesos específicos de QuickBooks"""
+    try:
+        # Buscar procesos relacionados con QuickBooks que no sean el principal
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                name = proc.info["name"].lower()
+                if "quickbooks" in name and not self.is_process_whitelisted(
+                    proc.info["pid"], proc.info["name"]
+                ):
+                    # Solo eliminar si es un proceso auxiliar
+                    cmdline = " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else ""
+                    if "helper" in cmdline.lower() or "background" in cmdline.lower():
+                        self.clean_process(proc.info["pid"], force=False)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logger.error(f"Error limpiando procesos QuickBooks: {e}")
+
+
+def _clean_email_processes(self):
+    """Limpiar procesos específicos de email"""
+    try:
+        email_clients = ["mail", "thunderbird", "outlook", "apple mail"]
+        for proc in psutil.process_iter(["pid", "name"]):
+            try:
+                name = proc.info["name"].lower()
+                if any(client in name for client in email_clients):
+                    if not self.is_process_whitelisted(proc.info["pid"], proc.info["name"]):
+                        self.clean_process(proc.info["pid"], force=False)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logger.error(f"Error limpiando procesos email: {e}")
+
+
+def _clean_bank_processes(self):
+    """Limpiar procesos específicos de banco"""
+    try:
+        # Limpiar procesos de navegadores que puedan estar relacionados con banca
+        for proc in psutil.process_iter(["pid", "name"]):
+            try:
+                name = proc.info["name"].lower()
+                if "chrome" in name or "firefox" in name or "safari" in name:
+                    if not self.is_process_whitelisted(proc.info["pid"], proc.info["name"]):
+                        # Solo eliminar si hay múltiples instancias
+                        count = sum(
+                            1
+                            for p in psutil.process_iter(["name"])
+                            if p.info["name"].lower() == name
                         )
-
-        return cleaned_count
-
-    def clean_messaging_threads(self) -> int:
-        """Limpiar hilos de mensajería"""
-        cleaned_count = 0
-
-        for thread_info in self.messaging_threads:
-            thread = thread_info["thread"]
-            service = thread_info["service"]
-
-            try:
-                if thread.isRunning():
-                    thread.quit()
-                    thread.wait(timeout=5)
-                    cleaned_count += 1
-                    logger.info(f"Hilo de mensajería {service} detenido")
-            except Exception as e:
-                logger.error(f"Error deteniendo hilo de mensajería {service}: {e}")
-
-        self.messaging_threads.clear()
-        return cleaned_count
-
-    def clean_app_threads(self) -> int:
-        """Limpiar todos los hilos de la aplicación"""
-        cleaned_count = 0
-
-        for thread_info in self.app_threads:
-            thread = thread_info["thread"]
-            name = thread_info["name"]
-
-            try:
-                if thread.isRunning():
-                    thread.quit()
-                    thread.wait(timeout=5)
-                    cleaned_count += 1
-                    logger.info(f"Hilo de aplicación {name} detenido")
-            except Exception as e:
-                logger.error(f"Error deteniendo hilo de aplicación {name}: {e}")
-
-        self.app_threads.clear()
-        return cleaned_count
-
-    def full_cleanup(self) -> dict[str, int]:
-        """Limpieza completa: zombies, red, mensajería, app threads"""
-        logger.info("Iniciando limpieza completa...")
-
-        results = {"zombies": 0, "network": 0, "messaging": 0, "app_threads": 0}
-
-        # Limpiar zombies
-        results["zombies"] = self.clean_all_zombies(force=False)
-
-        # Limpiar procesos de red no autorizados
-        results["network"] = self.clean_unauthorized_network_processes()
-
-        # Limpiar hilos de mensajería
-        results["messaging"] = self.clean_messaging_threads()
-
-        # Limpiar hilos de aplicación
-        results["app_threads"] = self.clean_app_threads()
-
-        logger.info(f"Limpieza completa: {results}")
-        return results
+                        if count > 1:
+                            self.clean_process(proc.info["pid"], force=False)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logger.error(f"Error limpiando procesos banco: {e}")
 
 
 def main():

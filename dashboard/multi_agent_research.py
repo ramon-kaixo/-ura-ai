@@ -249,82 +249,21 @@ async def curar_conocimiento():
                 continue
 
             try:
-                with open(archivo) as f:
-                    data = json.load(f)
-
-                textos = []
-                for q, res in data.get("resultados_por_query", {}).items():
-                    for item in res.get("conocimiento", []):
-                        if isinstance(item, str) and len(item) > 50:
-                            textos.append(item[:500])
+                data = await cargar_datos(archivo)
+                textos = await filtrar_textos(data, area)
                 if not textos:
                     descartados += 1
                     continue
 
                 texto_completo = "\n---\n".join(textos[:5])
+                puntuacion = await evaluar_calidad(texto_completo, area)
 
-                # ── FASE 1: FILTRAR (puntuar calidad) ─────────────────
-                r = req.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": "llama3.2:3b",
-                        "prompt": (
-                            f"Evalúa la calidad de esta información sobre '{area}' del 1 al 10. "
-                            f"Responde SOLO con un número.\n\n{texto_completo[:500]}"
-                        ),
-                        "stream": False,
-                        "options": {"temperature": 0, "max_tokens": 5},
-                    },
-                    timeout=30,
-                )
-                puntuacion_str = r.json().get("response", "0").strip()
-                try:
-                    puntuacion = int(puntuacion_str) if puntuacion_str.isdigit() else 5
-                except ValueError:
-                    puntuacion = 5
-
-                if (
-                    puntuacion < 5
-                ):  # Bajar umbral de 7→5 para no descartar todo                    logger.info(f"🗑️ Descartado ({puntuacion}/10): {area}")
+                if puntuacion < 5:
+                    logger.info(f"🗑️ Descartado ({puntuacion}/10): {area}")
                     descartados += 1
                     continue
 
-                # ── FASE 2: ORGANIZAR (resumir + etiquetar) ──────────
-                r2 = req.post(
-                    "http://localhost:11434/api/generate",
-                    json={
-                        "model": "llama3.2:3b",
-                        "prompt": (
-                            f"Resume este conocimiento sobre '{area}' en 3 frases en español. "
-                            f"Luego, en una línea aparte, escribe 3 etiquetas separadas por comas "
-                            f"que categoricen el contenido (ej: 'agentes,arquitectura,patterns').\n\n"
-                            f"TEXTO:\n{texto_completo[:1500]}"
-                        ),
-                        "stream": False,
-                        "options": {"temperature": 0.3, "max_tokens": 250},
-                    },
-                    timeout=30,
-                )
-                full_response = r2.json().get("response", "")
-                # Separar resumen de etiquetas
-                if "\n" in full_response:
-                    lines = full_response.strip().split("\n")
-                    resumen = lines[0] if lines else ""
-                    tags = lines[-1] if len(lines) > 1 else ""
-                else:
-                    resumen = full_response
-                    tags = ""
-
-                curado = {
-                    "area": area,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                    "resumen": resumen.strip(),
-                    "tags": [t.strip() for t in tags.split(",") if t.strip()],
-                    "puntuacion": puntuacion,
-                    "fuentes_originales": len(textos),
-                    "archivo_origen": str(archivo.name),
-                }
-                curado_path.parent.mkdir(parents=True, exist_ok=True)
+                curado = await organizar_conocimiento(texto_completo, area, puntuacion)
                 with open(curado_path, "w") as f:
                     json.dump(curado, f, ensure_ascii=False, indent=2)
                 curados += 1
@@ -333,6 +272,80 @@ async def curar_conocimiento():
                 logger.warning(f"Error curando {archivo.name}: {e}")
 
     return {"curados": curados, "descartados": descartados}
+
+
+async def cargar_datos(archivo):
+    with open(archivo) as f:
+        data = json.load(f)
+    return data
+
+
+async def filtrar_textos(data, area):
+    textos = []
+    for q, res in data.get("resultados_por_query", {}).items():
+        for item in res.get("conocimiento", []):
+            if isinstance(item, str) and len(item) > 50:
+                textos.append(item[:500])
+    return textos
+
+
+async def evaluar_calidad(texto_completo, area):
+    r = req.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3.2:3b",
+            "prompt": (
+                f"Evalúa la calidad de esta información sobre '{area}' del 1 al 10. "
+                f"Responde SOLO con un número.\n\n{texto_completo[:500]}"
+            ),
+            "stream": False,
+            "options": {"temperature": 0, "max_tokens": 5},
+        },
+        timeout=30,
+    )
+    puntuacion_str = r.json().get("response", "0").strip()
+    try:
+        puntuacion = int(puntuacion_str) if puntuacion_str.isdigit() else 5
+    except ValueError:
+        puntuacion = 5
+    return puntuacion
+
+
+async def organizar_conocimiento(texto_completo, area, puntuacion):
+    r2 = req.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3.2:3b",
+            "prompt": (
+                f"Resume este conocimiento sobre '{area}' en 3 frases en español. "
+                f"Luego, en una línea aparte, escribe 3 etiquetas separadas por comas "
+                f"que categoricen el contenido (ej: 'agentes,arquitectura,patterns').\n\n"
+                f"TEXTO:\n{texto_completo[:1500]}"
+            ),
+            "stream": False,
+            "options": {"temperature": 0.3, "max_tokens": 250},
+        },
+        timeout=30,
+    )
+    full_response = r2.json().get("response", "")
+    if "\n" in full_response:
+        lines = full_response.strip().split("\n")
+        resumen = lines[0] if lines else ""
+        tags = lines[-1] if len(lines) > 1 else ""
+    else:
+        resumen = full_response
+        tags = ""
+
+    curado = {
+        "area": area,
+        "timestamp": datetime.now(UTC).isoformat(),
+        "resumen": resumen.strip(),
+        "tags": [t.strip() for t in tags.split(",") if t.strip()],
+        "puntuacion": puntuacion,
+        "fuentes_originales": len(textos),
+        "archivo_origen": str(archivo.name),
+    }
+    return curado
 
 
 async def descartar_conocimiento_antiguo(dias: int = 7):

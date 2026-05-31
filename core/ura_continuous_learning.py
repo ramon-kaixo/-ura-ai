@@ -62,127 +62,129 @@ class URAContinuousLearning:
         with open(CONTINUOUS_LEARNING_PATH, "w") as f:
             json.dump({"events": [e.to_dict() for e in self.learning_events]}, f, indent=2)
 
-    def record_interaction(self, interaction_type: str, data: dict) -> list[str]:
-        """Registrar interacción y actualizar múltiples niveles."""
-        levels_updated = []
-        learning_outcome = ""
 
-        # Usar hooks de retroalimentación para actualizar niveles
-        try:
-            from core.ura_feedback_hooks import get_ura_feedback_hooks
+def record_interaction(self, interaction_type: str, data: dict) -> list[str]:
+    """Registrar interacción y actualizar múltiples niveles."""
+    levels_updated = []
+    learning_outcome = ""
 
-            hooks = get_ura_feedback_hooks()
-            triggered_hooks = hooks.trigger_hook(interaction_type, data)
-            levels_updated.extend(triggered_hooks)
-        except Exception as e:
-            logger.error(f"Error en hooks de retroalimentación: {e}")
+    try:
+        hooks_triggered = trigger_hooks(interaction_type, data)
+        levels_updated.extend(hooks_triggered)
+    except Exception as e:
+        logger.error(f"Error en hooks de retroalimentación: {e}")
 
-        # Actualizar niveles específicos según el tipo de interacción
-        if interaction_type == "error":
-            # Error activa meta-conciencia y aprendizaje por refuerzo
-            try:
-                from core.ura_metaconsciousness import get_ura_metaconsciousness
+    if interaction_type == "error":
+        error_handling(data, levels_updated)
 
-                meta = get_ura_metaconsciousness()
-                if "domain" in data:
-                    meta.record_knowledge(data["domain"], False, data.get("error", ""))
-                    levels_updated.append("metaconsciousness")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
+    elif interaction_type == "success":
+        success_handling(data, levels_updated)
 
-            try:
-                from core.ura_reinforcement_learning import get_ura_reinforcement_learning
+    elif interaction_type == "response":
+        response_handling(data, levels_updated)
 
-                rl = get_ura_reinforcement_learning()
-                if "action" in data:
-                    rl.record_outcome(data["action"], False, -0.5, data.get("error", ""))
-                    levels_updated.append("reinforcement_learning")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
+    event = LearningEvent(
+        timestamp=datetime.now().isoformat(),
+        interaction_type=interaction_type,
+        levels_updated=list(set(levels_updated)),  # Eliminar duplicados
+        learning_outcome=learning_outcome,
+        confidence=0.7,
+    )
 
-            learning_outcome = "Error registrado para aprendizaje futuro"
+    self.learning_events.append(event)
 
-        elif interaction_type == "success":
-            # Éxito refuerza patrones en anticipación
-            try:
-                from core.ura_anticipation import get_ura_anticipation
+    if len(self.learning_events) > 500:
+        self.learning_events = self.learning_events[-500:]
 
-                anticipation = get_ura_anticipation()
-                if "action" in data:
-                    anticipation.record_action(data["action"])
-                    levels_updated.append("anticipation")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
+    self._save_events()
+    return levels_updated
 
-            try:
-                from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-                rl = get_ura_reinforcement_learning()
-                if "action" in data:
-                    rl.record_outcome(data["action"], True, 0.8)
-                    levels_updated.append("reinforcement_learning")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
+def trigger_hooks(interaction_type: str, data: dict) -> list[str]:
+    """Triggers hooks for feedback and returns updated levels."""
+    from core.ura_feedback_hooks import get_ura_feedback_hooks
 
-            try:
-                from core.ura_emotions import get_ura_emotions
+    hooks = get_ura_feedback_hooks()
+    triggered_hooks = hooks.trigger_hook(interaction_type, data)
+    return triggered_hooks
 
-                emotions = get_ura_emotions()
-                emotions.set_emotion("satisfecho", 0.8, "Éxito en acción")
-                levels_updated.append("emotions")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
 
-            learning_outcome = "Patrón exitoso reforzado"
+def error_handling(data: dict, levels_updated: list[str]):
+    """Handles errors by updating metaconsciousness and reinforcement learning."""
+    try:
+        from core.ura_metaconsciousness import get_ura_metaconsciousness
 
-        elif interaction_type == "response":
-            # Respuesta actualiza personalidad y teoría de la mente
-            try:
-                from core.ura_personality import get_ura_personality
+        meta = get_ura_metaconsciousness()
+        if "domain" in data:
+            meta.record_knowledge(data["domain"], False, data.get("error", ""))
+            levels_updated.append("metaconsciousness")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
 
-                personality = get_ura_personality()
-                if "feedback" in data:
-                    personality.record_feedback(data["feedback"])
-                    levels_updated.append("personality")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
+    try:
+        from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-            try:
-                from core.ura_theory_of_mind import get_ura_theory_of_mind
+        rl = get_ura_reinforcement_learning()
+        if "action" in data:
+            rl.record_outcome(data["action"], False, -0.5, data.get("error", ""))
+            levels_updated.append("reinforcement_learning")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
 
-                tom = get_ura_theory_of_mind()
-                if "message" in data:
-                    tom.update_user_state(data["message"])
-                    levels_updated.append("theory_of_mind")
-            except Exception as e:
-                logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
-                # fallback: continuar
 
-            learning_outcome = "Preferencias y estado del usuario actualizados"
+def success_handling(data: dict, levels_updated: list[str]):
+    """Handles successes by updating anticipation and reinforcement learning."""
+    try:
+        from core.ura_anticipation import get_ura_anticipation
 
-        # Registrar evento de aprendizaje
-        event = LearningEvent(
-            timestamp=datetime.now().isoformat(),
-            interaction_type=interaction_type,
-            levels_updated=list(set(levels_updated)),  # Eliminar duplicados
-            learning_outcome=learning_outcome,
-            confidence=0.7,
-        )
+        anticipation = get_ura_anticipation()
+        if "action" in data:
+            anticipation.record_action(data["action"])
+            levels_updated.append("anticipation")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
 
-        self.learning_events.append(event)
+    try:
+        from core.ura_reinforcement_learning import get_ura_reinforcement_learning
 
-        # Mantener solo últimos 500 eventos
-        if len(self.learning_events) > 500:
-            self.learning_events = self.learning_events[-500:]
+        rl = get_ura_reinforcement_learning()
+        if "action" in data:
+            rl.record_outcome(data["action"], True, 0.8)
+            levels_updated.append("reinforcement_learning")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
 
-        self._save_events()
-        return levels_updated
+    try:
+        from core.ura_emotions import get_ura_emotions
+
+        emotions = get_ura_emotions()
+        emotions.set_emotion("satisfecho", 0.8, "Éxito en acción")
+        levels_updated.append("emotions")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
+
+
+def response_handling(data: dict, levels_updated: list[str]):
+    """Handles responses by updating personality and theory of mind."""
+    try:
+        from core.ura_personality import get_ura_personality
+
+        personality = get_ura_personality()
+        if "feedback" in data:
+            personality.record_feedback(data["feedback"])
+            levels_updated.append("personality")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
+
+    try:
+        from core.ura_theory_of_mind import get_ura_theory_of_mind
+
+        tom = get_ura_theory_of_mind()
+        if "message" in data:
+            tom.update_user_state(data["message"])
+            levels_updated.append("theory_of_mind")
+    except Exception as e:
+        logger.warning(f"Error silencioso en ura_continuous_learning: {e}")
 
     def get_learning_summary(self) -> str:
         """Genera resumen de aprendizaje para el system prompt."""

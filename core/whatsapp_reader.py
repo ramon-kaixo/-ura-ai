@@ -37,123 +37,137 @@ class WhatsAppReader:
         except Exception as e:
             logger.warning(f"⚠️ No se pudo establecer permisos: {e}")
 
-    async def connect(self) -> bool:
-        """
-        Conectar a WhatsApp Web con persistencia de sesión
 
-        Returns:
-            True si conexión exitosa
-        """
-        try:
-            logger.info("Iniciando Playwright para WhatsApp Web...")
+async def connect(self) -> bool:
+    """
+    Conectar a WhatsApp Web con persistencia de sesión
 
-            # Verificar si existe sesión previa
-            session_file = SESSION_PATH / "state.json"
-            has_session = session_file.exists()
+    Returns:
+        True si conexión exitosa
+    """
+    try:
+        logger.info("Iniciando Playwright para WhatsApp Web...")
 
-            # Si no hay sesión, forzar modo visible para escanear QR
-            if not has_session:
-                logger.info("⚠️ No existe sesión previa")
-                logger.info("🖥️ Abriendo navegador en modo VISIBLE para escanear QR")
-                self.headless = False
-            else:
-                logger.info("✅ Sesión previa encontrada")
+        session_file = SESSION_PATH / "state.json"
+        has_session = await check_session_existence(session_file)
 
-            playwright = await async_playwright().start()
+        if not has_session:
+            logger.info("⚠️ No existe sesión previa")
+            logger.info("🖥️ Abriendo navegador en modo VISIBLE para escanear QR")
+            self.headless = False
+        else:
+            logger.info("✅ Sesión previa encontrada")
 
-            # Iniciar navegador con persistencia
-            self.browser = await playwright.chromium.launch(
-                headless=self.headless,
-                args=[
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-web-security",
-                    "--disable-features=IsolateOrigins,site-per-process",
-                ],
-            )
+        playwright = await async_playwright().start()
 
-            # Crear contexto con persistencia de sesión solo si existe
-            if has_session:
-                self.context = await self.browser.new_context(
-                    storage_state=str(session_file),
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                )
-            else:
-                self.context = await self.browser.new_context(
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                )
+        self.browser = await launch_browser(playwright, headless=self.headless)
 
-            # Crear página
-            self.page = await self.context.new_page()
+        if has_session:
+            self.context = await create_context_with_storage_state(self.browser, str(session_file))
+        else:
+            self.context = await create_context(self.browser)
 
-            # Ir a WhatsApp Web
-            logger.info("Navegando a WhatsApp Web...")
-            await self.page.goto(
-                "https://web.whatsapp.com", wait_until="networkidle", timeout=120000
-            )
+        self.page = await self.context.new_page()
 
-            # Pausa infinita para escanear QR
-            print("\n" + "=" * 60)
-            print("🔴 ESCANEA EL QR Y NO TOQUES NADA")
-            print("=" * 60)
-            print(f"📍 Sesión se guardará en: {SESSION_PATH}")
-            print("🔴 Pulsa ENTER aquí solo cuando termines...")
-            print("=" * 60)
+        logger.info("Navegando a WhatsApp Web...")
+        await navigate_to_whatsapp_web(self.page)
+
+        print("\n" + "=" * 60)
+        print("🔴 ESCANEA EL QR Y NO TOQUES NADA")
+        print("=" * 60)
+        print(f"📍 Sesión se guardará en: {SESSION_PATH}")
+        print("🔴 Pulsa ENTER aquí solo cuando termines...")
+        print("=" * 60)
+        input()
+
+        await check_and_scan_qr_code(self.page)
+
+        if await is_logged_in(self.page):
+            logger.info("✅ Sesión iniciada correctamente")
+
+            await save_session_state(self.context, session_file)
+            logger.info(f"💾 Sesión guardada en: {session_file}")
+
+            print("\n✅ Sesión guardada correctamente")
+            print("👉 Pulsa ENTER en esta terminal para continuar...")
             input()
 
-            # Verificar si necesita escanear QR
-            await asyncio.sleep(3)
-
-            # Verificar si ya está logueado o necesita QR
-            qr_code = await self.page.query_selector('canvas[aria-label="Scan this QR code"]')
-
-            if qr_code:
-                logger.info("⚠️ Se requiere escanear código QR")
-                logger.info(f"📍 Sesión se guardará en: {SESSION_PATH}")
-                logger.info("ℹ️ Solo necesitas escanear el QR la primera vez")
-                logger.info("📱 Escanea el QR con tu teléfono...")
-                print("\n" + "=" * 60)
-                print("📱 ESCANEO DE CÓDIGO QR")
-                print("=" * 60)
-                print("🔍 Esperando escaneo de código QR...")
-                print("📲 Abre WhatsApp en tu teléfono")
-                print("⚙️ Ve a Configuración > Dispositivos vinculados")
-                print("📷 Escanea el código QR que aparece en el navegador")
-                print("=" * 60)
-
-                # Esperar a que se loguee (timeout de 5 minutos)
-                try:
-                    await self.page.wait_for_selector(
-                        'div[contenteditable="true"][data-tab="3"]', timeout=300000
-                    )
-                    logger.info("✅ Sesión iniciada correctamente")
-
-                    # Guardar estado de sesión
-                    await self.context.storage_state(path=str(session_file))
-                    logger.info(f"💾 Sesión guardada en: {session_file}")
-
-                    print("\n✅ Sesión guardada correctamente")
-                    print("👉 Pulsa ENTER en esta terminal para continuar...")
-                    input()
-
-                    return True
-                except Exception as e:
-                    logger.error(f"❌ Timeout esperando login: {e}")
-                    print("\n❌ Timeout esperando login. Intenta de nuevo.")
-                    print("👉 Pulsa ENTER para salir...")
-                    input()
-                    return False
-            else:
-                logger.info("✅ Sesión ya iniciada (persistente)")
-                return True
-
-        except Exception as e:
-            logger.error(f"❌ Error conectando a WhatsApp Web: {e}")
-            print(f"\n❌ Error conectando a WhatsApp Web: {e}")
+            return True
+        else:
+            logger.error("❌ No se pudo iniciar sesión")
+            print("\n❌ No se pudo iniciar sesión. Intenta de nuevo.")
             print("👉 Pulsa ENTER para salir...")
             input()
             return False
+
+    except Exception as e:
+        logger.error(f"❌ Error conectando a WhatsApp Web: {e}")
+        print(f"\n❌ Error conectando a WhatsApp Web: {e}")
+        print("👉 Pulsa ENTER para salir...")
+        input()
+        return False
+
+
+async def check_session_existence(session_file) -> bool:
+    return session_file.exists()
+
+
+async def launch_browser(playwright, headless):
+    return await playwright.chromium.launch(
+        headless=headless,
+        args=[
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+        ],
+    )
+
+
+async def create_context_with_storage_state(browser, storage_state_path):
+    return await browser.new_context(
+        storage_state=storage_state_path,
+        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    )
+
+
+async def create_context(browser):
+    return await browser.new_context(
+        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+
+
+async def navigate_to_whatsapp_web(page):
+    await page.goto("https://web.whatsapp.com", wait_until="networkidle", timeout=120000)
+
+
+async def check_and_scan_qr_code(page):
+    qr_code = await page.query_selector('canvas[aria-label="Scan this QR code"]')
+
+    if qr_code:
+        logger.info("⚠️ Se requiere escanear código QR")
+        logger.info(f"📍 Sesión se guardará en: {SESSION_PATH}")
+        logger.info("ℹ️ Solo necesitas escanear el QR la primera vez")
+        logger.info("📱 Escanea el QR con tu teléfono...")
+        print("\n" + "=" * 60)
+        print("📱 ESCANEO DE CÓDIGO QR")
+        print("=" * 60)
+        print("🔍 Esperando escaneo de código QR...")
+        print("📲 Abre WhatsApp en tu teléfono")
+        print("⚙️ Ve a Configuración > Dispositivos vinculados")
+        print("📷 Escanea el código QR que aparece en el navegador")
+        print("=" * 60)
+
+        await page.wait_for_selector('div[contenteditable="true"][data-tab="3"]', timeout=300000)
+
+
+async def is_logged_in(page):
+    return await page.query_selector('div[contenteditable="true"][data-tab="3"]') is not None
+
+
+async def save_session_state(context, session_file_path):
+    await context.storage_state(path=session_file_path)
 
     async def obtener_mensajes_whatsapp(self, max_chats: int = 10) -> list[dict]:
         """

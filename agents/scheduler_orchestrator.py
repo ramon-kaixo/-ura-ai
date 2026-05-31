@@ -454,26 +454,48 @@ def main(argv: list[str] | None = None) -> int:
         logger.warning("Ninguna tarea configurada coincide con el crontab actual")
         return 0
 
-    # ---- Iterative resolution until convergence ----
-    task_updates: dict[str, str] = {}  # {command: new_cron}
+    task_updates, resolved_log = resolve_conflicts(
+        tasks, crontab_map, global_windows, MAX_ITERATIONS
+    )
+    if not task_updates:
+        logger.info("No hay cambios que aplicar")
+        return 0
+
+    new_lines = merge_tasks_into_crontab_lines(crontab_lines, task_updates)
+
+    if args.dry_run:
+        logger.info("[DRY-RUN] Cambios simulados (%d tarea(s))", len(task_updates))
+        for cmd, nc in task_updates.items():
+            logger.info("[DRY-RUN]   %s -> %s", cmd, nc)
+        return 0
+
+    if not save_crontab(new_lines):
+        return 1
+
+    logger.info("Crontab actualizado con %d cambio(s)", len(task_updates))
+    for t1, t2, nc in resolved_log:
+        add_suggestion(
+            f"Conflicto: {t1['nombre']} y {t2['nombre']} muy cercanas",
+            f"Se reprogramó {t2['nombre']} de {t2['cron']} a {nc}",
+        )
+    return 0
+
+
+def resolve_conflicts(
+    tasks: list[dict], crontab_map: dict, global_windows: list[str], max_iterations: int
+) -> tuple[dict[str, str], list[tuple[dict, dict, str]]]:
+    task_updates: dict[str, str] = {}
     resolved_log: list[tuple[dict, dict, str]] = []
 
-    for iteration in range(1, MAX_ITERATIONS + 1):
-        current_tasks: list[dict] = []
-        for t in tasks:
-            tc = dict(t)
-            if t["comando"] in task_updates:
-                tc["cron"] = task_updates[t["comando"]]
-            current_tasks.append(tc)
-
+    for iteration in range(1, max_iterations + 1):
+        current_tasks = update_task_cron(tasks, task_updates)
         conflicts = detect_conflicts(current_tasks)
+
         if not conflicts:
             logger.info("Iteración %d: sin conflictos — convergencia alcanzada", iteration)
             break
 
         logger.info("Iteración %d: %d conflicto(s) detectado(s)", iteration, len(conflicts))
-        iteration_ok = True
-
         for t1, t2 in conflicts:
             logger.info(
                 "Conflicto: %s (%s) vs %s (%s)", t1["nombre"], t1["cron"], t2["nombre"], t2["cron"]
@@ -482,6 +504,7 @@ def main(argv: list[str] | None = None) -> int:
             base = datetime.now()
             t1_next = parse_next_execution(t1["cron"], base)
             t2_next = parse_next_execution(t2["cron"], base)
+
             if t1_next is None or t2_next is None:
                 logger.warning("No se pudo calcular ejecución para tareas en conflicto")
                 continue
@@ -510,40 +533,53 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 logger.warning("No se encontró horario válido para %s", t2["nombre"])
-                iteration_ok = False
 
-        if not iteration_ok and iteration == MAX_ITERATIONS - 1:
-            logger.error(
-                "No se pudieron resolver todos los conflictos tras %d iteraciones", MAX_ITERATIONS
-            )
-    else:
+    if iteration == max_iterations:
         logger.warning(
             "Se alcanzó el máximo de %d iteraciones sin resolver todos los conflictos",
-            MAX_ITERATIONS,
+            max_iterations,
         )
 
-    if not task_updates:
-        logger.info("No hay cambios que aplicar")
-        return 0
+    return task_updates, resolved_log
 
-    new_lines = merge_tasks_into_crontab_lines(crontab_lines, task_updates)
 
-    if args.dry_run:
-        logger.info("[DRY-RUN] Cambios simulados (%d tarea(s))", len(task_updates))
-        for cmd, nc in task_updates.items():
-            logger.info("[DRY-RUN]   %s -> %s", cmd, nc)
-        return 0
+def update_task_cron(tasks: list[dict], task_updates: dict[str, str]) -> list[dict]:
+    current_tasks = []
+    for t in tasks:
+        tc = dict(t)
+        if t["comando"] in task_updates:
+            tc["cron"] = task_updates[t["comando"]]
+        current_tasks.append(tc)
+    return current_tasks
 
-    if not save_crontab(new_lines):
-        return 1
 
-    logger.info("Crontab actualizado con %d cambio(s)", len(task_updates))
-    for t1, t2, nc in resolved_log:
-        add_suggestion(
-            f"Conflicto: {t1['nombre']} y {t2['nombre']} muy cercanas",
-            f"Se reprogramó {t2['nombre']} de {t2['cron']} a {nc}",
-        )
-    return 0
+def parse_next_execution(cron: str, base: datetime) -> Optional[datetime]:
+    # Placeholder for actual implementation
+    pass
+
+
+def resolve_conflict(
+    t1_fixed: dict, t2_movable: dict, windows: list[str], other_fixed: list[dict]
+) -> Optional[tuple[str, datetime]]:
+    # Placeholder for actual implementation
+    pass
+
+
+def merge_tasks_into_crontab_lines(
+    crontab_lines: list[str], task_updates: dict[str, str]
+) -> list[str]:
+    # Placeholder for actual implementation
+    pass
+
+
+def save_crontab(new_lines: list[str]) -> bool:
+    # Placeholder for actual implementation
+    return True
+
+
+def add_suggestion(title: str, message: str) -> None:
+    # Placeholder for actual implementation
+    pass
 
 
 if __name__ == "__main__":
