@@ -1,0 +1,19 @@
+{
+  "name": "URA-Search: Recolección diaria",
+  "nodes": [
+    {"name": "Timer", "type": "n8n-nodes-base.scheduleTrigger", "position": [250,300],
+     "parameters": {"rule": {"interval": [{"field":"crons","expression":"0 */12 * * *"}]}}},
+    {"name": "HTTP Request", "type": "n8n-nodes-base.httpRequest", "position": [450,300],
+     "parameters": {"url": "http://localhost:11435/api/search","options":{}}},
+    {"name": "Python Script", "type": "n8n-nodes-base.function", "position": [650,300],
+     "parameters": {"functionCode": "const { execSync } = require('child_process');\nconst result = execSync('python3 ura_search/collector_base.py batch --batch ura_search/config/fuentes.json --workers 5').toString();\nreturn [{json: {output: result}}];"}},
+    {"name": "Webhook a GX10", "type": "n8n-nodes-base.webhook", "position": [850,300],
+     "parameters": {"httpMethod":"POST","path":"ura-search-nuevos","options":{}}},
+    {"name": "If datos nuevos", "type": "n8n-nodes-base.if", "position": [850,200],
+     "parameters": {"conditions":{"string":[{"value1":"{{$json[\"output\"]}}","operation":"contains","value2":"Nuevos:"}]}}}
+  ],
+  "connections": {"Timer": {"main":[[{"node":"HTTP Request"}]]},
+    "HTTP Request": {"main":[[{"node":"Python Script"}]]},
+    "Python Script": {"main":[[{"node":"If datos nuevos"}]]},
+    "If datos nuevos": {"main":[[{"node":"Webhook a GX10"}],[]]}}
+}
