@@ -60,7 +60,13 @@ repair_attempts: dict[str, int] = {}
 def load_runbook() -> dict:
     try:
         return json.loads(RUNBOOK_PATH.read_text())
-    except Exception:
+    except Exception as e:
+        error_logger.log_error(
+            context="SNC",
+            gateway_status="RUNBOOK_LOAD_FAIL",
+            severity="CRIT",
+            message=f"Error cargando runbook: {e}",
+        )
         return {"version": "0", "commands": {}, "retry_policy": {}}
 
 
@@ -154,7 +160,13 @@ def check_mac_unauthorized_writes() -> bool:
                 message=f"Intento de escritura detectado en Mac: {result.stdout.strip()[:100]}",
             )
             return True
-    except Exception:
+    except Exception as e:
+        error_logger.log_error(
+            context="MAC",
+            gateway_status="UNAUTHORIZED_WRITE_CHECK_FAIL",
+            severity="WARN",
+            message=f"Error verificando escrituras no autorizadas: {e}",
+        )
         pass
 
     return False
@@ -235,9 +247,16 @@ def poll_services(runbook: dict) -> dict:
                 # Lanzar openclaw.py como proceso independiente
                 openclaw_script = Path(__file__).parent / "openclaw.py"
                 if openclaw_script.exists():
-                    subprocess.Popen(
+                    proc = subprocess.Popen(
                         [sys.executable, str(openclaw_script)],
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    )
+                    # No esperamos a que termine, pero registramos el PID para tracking
+                    error_logger.log_error(
+                        context="SNC",
+                        gateway_status="OPENCLAW_LAUNCHED",
+                        severity="INFO",
+                        message=f"OpenClaw lanzado con PID {proc.pid}",
                     )
 
         state["services"][svc_name] = svc_state
@@ -275,8 +294,13 @@ def write_state(state: dict) -> None:
         tmp = STATE_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(state, indent=2))
         os.replace(str(tmp), str(STATE_FILE))
-    except Exception:
-        pass
+    except Exception as e:
+        error_logger.log_error(
+            context="SNC",
+            gateway_status="STATE_WRITE_FAIL",
+            severity="CRIT",
+            message=f"Error escribiendo estado: {e}",
+        )
 
 
 def handle_signal(sig, frame) -> None:

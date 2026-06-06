@@ -127,7 +127,9 @@ def analizar_reflexiones() -> None:
         })
         with open(SUGERENCIAS, "w") as f:
             json.dump(sugs, f, indent=2)
-        subprocess.Popen([sys.executable, str(PROBAR), str(idx)])
+        proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])
+        # No esperamos a que termine, pero registramos el PID
+        log(f"Test lanzado con PID {proc.pid}")
     MEJORAS.parent.mkdir(parents=True, exist_ok=True)
     with open(MEJORAS, "a") as f:
         f.write(f"\n# {datetime.now().isoformat()}\n# {sugerencia}\n")
