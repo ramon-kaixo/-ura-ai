@@ -1,190 +1,181 @@
 #!/usr/bin/env python3
-"""
-Config Manager — FASE 1.2
-───────────────────────────
-Configuración centralizada con validación Pydantic.
-Carga desde settings.json, notifica cambios a suscriptores.
+"""Config Manager - Carga unificada de configuración con perfiles por sistema operativo.
+Detecta automáticamente Linux (Asus GX10) vs Darwin (Mac) y carga el perfil correcto.
 """
 
 import json
 import os
-import threading
+import platform
 from pathlib import Path
-from typing import Callable
+from typing import Any
 
-from pydantic import BaseModel, Field
+_CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
 
-from core.logging_config import get_logger
-
-logger = get_logger("config_manager", log_dir="./logs")
-
-
-class OllamaConfig(BaseModel):
-    url: str = "http://localhost:11434"
-    remote_host: str = "localhost"
-    remote_port: int = 11434
-    default_model: str = "llama3.2:3b"
-    vision_model: str = "llava:latest"
-    max_retries: int = 3
-    timeout: int = 60
-    use_remote: bool = False
-
-    def get_ollama_url(self) -> str:
-        """
-        Retorna URL de Ollama.
-        Prioridad: OLLAMA_HOST env var → use_remote+remote_host → url local
-        """
-        env_host = os.environ.get("OLLAMA_HOST", "")
-        if env_host:
-            if "://" not in env_host:
-                parts = env_host.split(":")
-                host = parts[0]
-                port = int(parts[1]) if len(parts) > 1 else self.remote_port
-                return f"http://{host}:{port}"
-            return env_host
-        if self.use_remote and self.remote_host:
-            return f"http://{self.remote_host}:{self.remote_port}"
-        return self.url
+_OS_MAP = {
+    "linux": "linux_asus",
+    "darwin": "darwin_mac",
+}
 
 
-class DashboardConfig(BaseModel):
-    port: int = 5051
-    host: str = "0.0.0.0"
-    auth_required: bool = True
-    max_message_length: int = 4000
+def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
+    """Expande ~ a home directory en todos los paths del perfil."""
+    paths = config.get("paths", {})
+    for key in list(paths):
+        paths[key] = str(Path(paths[key]).expanduser().resolve())
+
+    if "swarm" in config:
+        sp = config["swarm"].get("devices_path", "")
+        config["swarm"]["devices_path"] = str(Path(sp).expanduser().resolve())
+
+    maintenance = config.get("maintenance", {})
+    if "allowed_log_dirs" in maintenance:
+        maintenance["allowed_log_dirs"] = [
+            str(Path(d).expanduser().resolve()) for d in maintenance["allowed_log_dirs"]
+        ]
+    return config
 
 
-class ResearchConfig(BaseModel):
-    enabled: bool = True
-    models: list[str] = Field(default_factory=lambda: ["llama3.2:3b"])
-    interval_seconds: int = 300
-    max_idle_models: list[str] = Field(
-        default_factory=lambda: ["llama3:latest", "qwen2.5:3b-instruct"]
-    )
-    idle_interval_seconds: int = 30
-    save_path: str = "/Volumes/TOSHIBA_NUEVO/URA/biblioteca_conocimiento"
+def _load_raw_config() -> dict[str, Any]:
+    """Carga el archivo JSON de configuración."""
+    with open(_CONFIG_PATH) as f:
+        return json.load(f)
 
 
-class SecurityConfig(BaseModel):
-    token_file: str = "~/.ura/api_token"
-    max_input_length: int = 4000
-    jailbreak_detection: bool = True
-    command_whitelist: bool = True
+def load_config() -> dict[str, Any]:
+    """Carga y fusiona la configuración para el sistema operativo actual."""
+    raw = _load_raw_config()
+
+    system = platform.system().lower()
+    profile_key = _OS_MAP.get(system)
+    if profile_key is None:
+        msg = f"Sistema operativo no soportado: {system}"
+        raise RuntimeError(msg)
+
+    profile = raw.get("profiles", {}).get(profile_key, {})
+    if not profile:
+        msg = f"Perfil '{profile_key}' no encontrado en system_config.json"
+        raise RuntimeError(msg)
+
+    config: dict[str, Any] = {}
+    config.update(raw.get("global_defaults", {}))
+    config.update(profile)
+
+    # Guardar referencia a perfiles raw para validate_schema()
+    config["_raw_profiles"] = raw.get("profiles", {})
+
+    return _expand_paths(config)
 
 
-class MemoryConfig(BaseModel):
-    max_history_entries: int = 200
-    pruning_threshold: int = 100
-    vector_cache_size: int = 1000
+CONFIG = load_config()
 
 
-class URAConfig(BaseModel):
-    """Configuración completa de URA."""
-
-    ollama: OllamaConfig = Field(default_factory=OllamaConfig)
-    dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
-    research: ResearchConfig = Field(default_factory=ResearchConfig)
-    security: SecurityConfig = Field(default_factory=SecurityConfig)
-    memory: MemoryConfig = Field(default_factory=MemoryConfig)
-    auto_update: bool = True
-    debug: bool = False
+def get_base_dir() -> Path:
+    """Devuelve el directorio base URA según el SO: ~/URA en Mac, /home/ramon/URA en Linux."""
+    return Path(CONFIG["paths"]["data"]).parent
 
 
-DEFAULT_CONFIG = URAConfig()
+def get_ollama_url() -> str:
+    """Devuelve la URL completa de Ollama para este nodo."""
+    return f"http://{CONFIG['ollama']['host']}:{CONFIG['ollama']['port']}"
 
 
-class ConfigManager:
+def get_role() -> str:
+    """Devuelve el rol de este nodo: 'client' o 'server'."""
+    return CONFIG.get("role", "unknown")
+
+
+def get_hostname() -> str:
+    """Devuelve el hostname lógico de este nodo según el perfil."""
+    return CONFIG.get("hostname", "unknown")
+
+
+def validate_config() -> list:
+    """Valida que los directorios declarados en config existan y tengan permisos.
+    Retorna lista de warnings.
     """
-    Gestor centralizado de configuración.
+    warnings = []
+    for key in ("data", "logs", "maintenance_logs"):
+        path = CONFIG["paths"].get(key)
+        if path:
+            p = Path(path)
+            if not p.exists():
+                warnings.append(f"Directorio no existe: {p}")
+            elif not os.access(p, os.W_OK):
+                warnings.append(f"Sin permisos de escritura: {p}")
 
-    Uso:
-        cm = ConfigManager()
-        cm.load()
-        print(cm.config.ollama.default_model)
-        cm.subscribe("ollama", callback)
+    for dir_path in CONFIG.get("maintenance", {}).get("allowed_temp_dirs", []):
+        if not Path(dir_path).exists():
+            warnings.append(f"Directorio temp no existe: {dir_path}")
+
+    for dir_path in CONFIG.get("maintenance", {}).get("allowed_log_dirs", []):
+        if not Path(dir_path).exists():
+            warnings.append(f"Directorio log no existe: {dir_path}")
+
+    return warnings
+
+
+_REQUIRED_KEYS = {
+    "ollama": ["host", "port"],
+    "router": ["host", "port"],
+    "paths": ["data", "logs", "maintenance_logs"],
+    "maintenance": ["thresholds", "exclude_patterns", "allowed_temp_dirs", "allowed_log_dirs"],
+    "models": ["razonamiento", "codigo_complejo", "codigo_rapido", "respuesta_rapida"],
+    "fallback_model": str,
+    "cache_ttl": int,
+}
+
+
+def validate_schema() -> list:
+    """Valida la estructura de CONFIG contra el esquema esperado.
+    Retorna lista de errores (vacia = OK).
     """
+    errors = []
 
-    def __init__(self, config_path: Path | None = None):
-        self.config_path = config_path or Path(__file__).parent.parent / "config" / "settings.json"
-        self.config: URAConfig = DEFAULT_CONFIG
-        self._lock = threading.Lock()
-        self._subscribers: dict[str, list[Callable]] = {}
+    for section, keys in _REQUIRED_KEYS.items():
+        if section not in CONFIG:
+            errors.append(f"Falta seccion requerida: '{section}'")
+            continue
 
-    def load(self) -> URAConfig:
-        """Carga configuración desde archivo JSON."""
-        if not self.config_path.exists():
-            logger.warning(f"Config no encontrada: {self.config_path}. Usando defaults.")
-            self._save()
-            return self.config
+        if isinstance(keys, list):
+            for key in keys:
+                if key not in CONFIG[section]:
+                    errors.append(f"Falta key '{key}' en seccion '{section}'")
 
-        try:
-            with open(self.config_path) as f:
-                data = json.load(f)
-            with self._lock:
-                self.config = URAConfig(**data)
-            logger.info(f"Config cargada: {self.config_path}")
-        except Exception as e:
-            logger.error(f"Error cargando config: {e}. Usando defaults.")
-            self.config = DEFAULT_CONFIG
-            self._save()
+    for profile_name in ("linux_asus", "darwin_mac"):
+        if profile_name not in CONFIG.get("_raw_profiles", {}):
+            errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")
 
-        return self.config
+    if "patrones_clasificacion" not in CONFIG:
+        errors.append("Falta 'patrones_clasificacion' en global_defaults")
 
-    def save(self):
-        """Guarda la configuración actual al archivo."""
-        self._save()
-
-    def _save(self):
-        try:
-            self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, "w") as f:
-                f.write(self.config.model_dump_json(indent=2))
-        except Exception as e:
-            logger.error(f"Error guardando config: {e}")
-
-    def update(self, section: str, values: dict):
-        """Actualiza una sección de la configuración."""
-        with self._lock:
-            if hasattr(self.config, section):
-                current = getattr(self.config, section)
-                for key, val in values.items():
-                    if hasattr(current, key):
-                        setattr(current, key, val)
-                self._save()
-                self._notify(section)
-
-    def get(self, path: str):
-        """Obtiene un valor por ruta (ej: 'ollama.default_model')."""
-        parts = path.split(".")
-        current = self.config
-        for part in parts:
-            current = getattr(current, part, None)
-            if current is None:
-                return None
-        return current
-
-    def subscribe(self, section: str, callback: Callable):
-        """Suscribe un callback a cambios en una sección."""
-        if section not in self._subscribers:
-            self._subscribers[section] = []
-        self._subscribers[section].append(callback)
-
-    def _notify(self, section: str):
-        for cb in self._subscribers.get(section, []):
-            try:
-                cb(section, getattr(self.config, section, None))
-            except Exception as e:
-                logger.error(f"Error en subscriber de {section}: {e}")
+    return errors
 
 
-# ── Singleton ──────────────────────────────────────────────
+def validate_schema_json() -> list:
+    """Valida system_config.json contra el JSON Schema declarativo (config/schema.json).
+    Requiere jsonschema instalado. Si no está, retorna lista vacía (no bloquea).
+    """
+    try:
+        import jsonschema
+    except ImportError:
+        return []
 
-_manager: ConfigManager | None = None
+    schema_path = Path(__file__).parent.parent / "config" / "schema.json"
+    config_path = Path(__file__).parent.parent / "config" / "system_config.json"
 
+    if not schema_path.exists():
+        return ["Schema file not found: config/schema.json"]
 
-def get_config_manager() -> ConfigManager:
-    global _manager
-    if _manager is None:
-        _manager = ConfigManager()
-        _manager.load()
-    return _manager
+    errors = []
+    try:
+        schema = json.loads(schema_path.read_text())
+        raw_config = json.loads(config_path.read_text())
+        validator = jsonschema.Draft202012Validator(schema)
+        for err in sorted(validator.iter_errors(raw_config), key=lambda e: e.path):
+            errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")
+    except json.JSONDecodeError as e:
+        errors.append(f"JSON invalido: {e}")
+    except Exception as e:
+        errors.append(str(e))
+
+    return errors

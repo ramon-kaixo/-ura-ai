@@ -1,0 +1,11 @@
+{
+  "workspace": "/Users/ramonesnaola/URA/ura_ia_1972",
+  "server": {
+    "url": "http://10.164.1.99:8081",
+    "password": "ura_1972_secure_autonomous"
+  },
+  "model": {
+    "provider": "ollama",
+    "baseURL": "http://10.164.1.99:11434/v1"
+  }
+}

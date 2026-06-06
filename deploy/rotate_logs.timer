@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Log Rotation — semanal, domingo a las 4am
+Requires=rotate-logs.service
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,143 +1,32 @@
-[tool.black]
-line-length = 100
-target-version = ['py311']
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | __pycache__
-  | backups
-  | lab
-  | bot_agentes
-  | build
-  | dist
-)/
-'''
+[project]
+name = "ura"
+version = "2.1.0"
+description = "URA - Ultimate Research Agent: multi-agent desktop assistant with consciousness, self-improvement, and autonomous swarm"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ura-snc = "monitor.snc:main"
+ura-openclaw = "monitor.openclaw:main"
+ura-router = "core.model_router:main"
+ura-ejecutor = "scripts.pro.ejecutor_api:main"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
-exclude = [
-    ".git",
-    ".venv",
-    "__pycache__",
-    "backups",
-    "lab",
-    "bot_agentes",
-    "build",
-    "dist",
-    ".mypy_cache",
-    ".ruff_cache",
-]
 
 [tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "UP",  # pyupgrade
-    "ARG", # flake8-unused-arguments
-    "SIM", # flake8-simplify
-]
-ignore = [
-    "E501",  # line too long (handled by formatter)
-    "B008",  # do not perform function calls in argument defaults
-    "W191",  # tab indentation
-    "E402",  # module level import not at top of file (legacy code)
-    "F401",  # imported but unused (legacy code)
-    "F821",  # undefined name (legacy code)
-    "F841",  # local variable assigned to but never used (legacy code)
-    "E722",  # bare except (legacy code)
-    "E712",  # comparison to True (legacy code)
-    "UP035",  # typing.Dict/List deprecated (legacy code)
-    "ARG002", # unused method arguments (legacy code)
-    "B904",  # raise exceptions without from (legacy code)
-    "SIM115", # use context manager for opening files (legacy code)
-    "SIM117", # use single with statement (legacy code)
-    "W293",  # blank line contains whitespace (legacy code)
-    "I001",  # import block un-sorted (legacy code)
-    "ARG001", # unused function arguments (legacy code)
-    "SIM102", # use single if instead of nested if (legacy code)
-    "SIM105", # use contextlib.suppress instead of try-except-pass (legacy code)
-    "E741",  # ambiguous variable name (legacy code)
-    "F521",  # invalid-syntax escape sequence in f-strings (legacy code)
-    "F405",  # star imports may be undefined (legacy code)
-    "B007",  # loop control variable not used (legacy code)
-    "ARG005", # unused lambda argument (legacy code)
-    "F403",  # star imports used; unable to detect undefined names (legacy code)
-    "F811",  # redefinition of unused variables (legacy code)
-    "SIM103", # return the negated condition directly (legacy code)
-    "SIM108", # use ternary operator (legacy code)
-    "SIM116", # use a dictionary instead of consecutive if statements (legacy code)
-    "ARG004", # unused static method argument (legacy code)
-    "F601",  # dictionary key literal repeated (legacy code)
-    "B023",  # function definition does not bind loop variable (legacy code)
-]
+select = ["ALL"]
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"scripts/*" = ["E402", "F401", "F821", "E722"]
-"tests/*" = ["E402", "F401", "F821", "E722"]
-"telegram_run.py" = ["E402"]
-"slack_bot.py" = ["F821"]
-"agents/agente_lenguaje_escribiente.py" = ["F521"]
-"main_final.py" = ["F521"]
-
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = false
-warn_unused_configs = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
-no_implicit_optional = false
-warn_redundant_casts = false
-warn_unused_ignores = false
-warn_no_return = false
-strict_equality = false
-ignore_errors = true
-exclude = [
-    "api/",
-    "gateway/",
-    "core/code_agents/",
-    "core_organized/",
-    "core/validadores/",
-    "core/vocabulario/",
-    "scripts/",
-    "agents/",
-    "benchmarks/",
-    "performance/",
-    "web/",
-    "tests/",
-]
-
-[[tool.mypy.overrides]]
-module = [
-    "psutil.*",
-    "core.network_audit.*",
-]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-    "scripts.*",
-    "tests.*",
-    "telegram_run",
-    "slack_bot",
-    "api.*",
-]
-ignore_errors = true
-
-[tool.bandit]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.pytest.ini_options]
-markers = [
-    "platform_specific: tests that only run on specific platforms (Windows, Linux, macOS)",
-]
-exclude_dirs = [".venv", "venv", "build", "dist"]
-skips = ["B101"]  # Skip assert_used
-severity_level = "medium"
-confidence_level = "medium"
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["ignore::DeprecationWarning"]
+timeout = 60
+asyncio_mode = "auto"

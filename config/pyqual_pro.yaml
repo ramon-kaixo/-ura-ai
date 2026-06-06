@@ -1,9 +1,0 @@
-gates:
-  ruff:
-    command: ruff check .
-    threshold: 0 errors
-    max_iterations: 3
-  pytest:
-    command: pytest tests/ -q
-    threshold: 0 failures
-    max_iterations: 2

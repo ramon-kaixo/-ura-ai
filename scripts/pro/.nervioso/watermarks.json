@@ -1,0 +1,31 @@
+{
+  "watermarks": [
+    {
+      "check_id": 2,
+      "nombre": "Anidamiento >4 niveles",
+      "passed": false,
+      "linea": 0,
+      "tipo": "EXCEPTION",
+      "mensaje": "cannot unpack non-iterable NoneType object",
+      "watermark_id": "WTR-EXCE-514383",
+      "archivo": "/tmp/test_orig.py",
+      "timestamp": "2026-06-03T21:19:43",
+      "reparado": false
+    },
+    {
+      "check_id": 2,
+      "nombre": "Triple quotes balanceadas",
+      "passed": false,
+      "linea": 2,
+      "tipo": "BROKEN_STR",
+      "mensaje": "Triple comillas sin cerrar",
+      "watermark_id": "WTR-BROK-514406",
+      "archivo": "ajustar_contexto.py",
+      "timestamp": "2026-06-03T21:20:06",
+      "reparado": false
+    }
+  ],
+  "patrones_sistemicos": [],
+  "ultima_inspeccion": "2026-06-03T21:20:50",
+  "total_watermarks": 2
+}

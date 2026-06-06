@@ -1,0 +1,112 @@
+{
+  "version": "1.0",
+  "descripcion": "Configuración unificada de prompts para LLM y herramientas deterministas",
+  "created": "2026-06-03",
+
+  "llm": {
+    "refactorer": {
+      "identity": "Eres un ingeniero senior de Python especializado en refactorización de código legacy. Tu experiencia: 20 años dividiendo funciones monolíticas en componentes atómicos sin cambiar comportamiento.",
+      "format": "Devuelve SOLO código Python. Sin explicaciones. Sin markdown. Sin bloques ```. Sin comentarios adicionales.",
+      "rules": [
+        "NO cambies la lógica, nombres de variables, argumentos, ni imports de la función original",
+        "NO añadas ni elimines imports",
+        "NO cambies la firma de la función ni sus argumentos",
+        "Las helpers van al MISMO nivel de indentación que la original, nunca anidadas",
+        "Cada helper: MÁXIMO 30 líneas, nombre descriptivo, sin efectos secundarios",
+        "Incluye TODAS las helpers + la función original refactorizada llamándolas",
+        "El código DEBE COMPILAR: verifica paréntesis, indentación, bloques vacíos"
+      ],
+      "verification_checklist": [
+        "paréntesis balanceados",
+        "corchetes balanceados",
+        "llaves balanceadas",
+        "indentación consistente (4 espacios)",
+        "sin bloques vacíos (if/for/while/try sin cuerpo)",
+        "sin código muerto después de return/raise/break/continue",
+        "todos los nombres de funciones/argumentos existen",
+        "las helpers no tienen el mismo nombre que funciones existentes"
+      ],
+      "temperature": 0.1,
+      "num_predict_factor": 1.5
+    },
+
+    "fixer": {
+      "identity": "Eres un corrector de errores de sintaxis Python. Recibes código con un error y debes repararlo SIN cambiar la lógica.",
+      "format": "Devuelve SOLO el código corregido. Sin explicaciones.",
+      "rules": [
+        "NO cambies la lógica del programa",
+        "NO renombres variables ni funciones",
+        "SOLO corrige el error de sintaxis específico",
+        "Mantén la indentación original"
+      ],
+      "temperature": 0.0
+    }
+  },
+
+  "deterministic": {
+    "auto_reglas": {
+      "confianza_minima": 0.5,
+      "ciclos_para_aprender": 3,
+      "max_reglas_auto": 50,
+      "tolerancia_contabilidad": 0.1,
+      "tipos_reparables": ["F821", "F841", "F401"],
+      "imports_estandar": {
+        "os": "import os",
+        "json": "import json",
+        "sys": "import sys",
+        "re": "import re",
+        "math": "import math",
+        "time": "import time",
+        "uuid": "import uuid",
+        "shutil": "import shutil",
+        "subprocess": "import subprocess",
+        "pathlib": "from pathlib import Path",
+        "datetime": "from datetime import datetime",
+        "typing": "from typing import List, Dict, Optional, Tuple",
+        "collections": "from collections import defaultdict, Counter",
+        "functools": "import functools",
+        "itertools": "import itertools",
+        "hashlib": "import hashlib",
+        "tempfile": "import tempfile",
+        "logging": "import logging",
+        "requests": "import requests",
+        "argparse": "import argparse"
+      }
+    },
+
+    "poda_mecanica": {
+      "ruff_select": ["F841", "F401", "F811"],
+      "eliminar_comentarios_inline": true,
+      "eliminar_comentarios_bloque": false,
+      "conservar_docstrings": true
+    },
+
+    "compactadora": {
+      "verificar_compile": true,
+      "verificar_firmas_ast": true,
+      "verificar_cromatico": true,
+      "tolerancia_contabilidad": 0.10,
+      "crear_backup": true,
+      "sufijo_backup": ".bak3"
+    },
+
+    "inspectores": {
+      "num_inspectores": 10,
+      "checks_por_inspector": 12,
+      "max_workers": 10,
+      "criticos": ["SYNTAX", "MERGE_CONFLICT", "MARKDOWN"],
+      "umbral_rollback": 5,
+      "umbral_repair": 4
+    }
+  },
+
+  "aprendizaje": {
+    "ciclos_para_patron": 3,
+    "ciclos_para_olvidar": 20,
+    "max_watermarks": 1000,
+    "auto_generar_reglas": true,
+    "confianza_inicial_auto": 0.5,
+    "incremento_confianza": 0.1,
+    "decremento_confianza": 0.2
+  }
+}

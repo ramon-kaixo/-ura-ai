@@ -2,7 +2,7 @@
 # Sincronización Mac → GX10 + Tuneladora Pro
 # Ejecutar desde el GX10
 set -euo pipefail
-MAC_IP="10.164.1.17"
+MAC_IP="10.164.1.26"
 MAC_USER="ramonesnaola"
 REPO="${HOME}/URA/ura_ia_1972"
 LOG="${HOME}/logs/gx10_sync.log"

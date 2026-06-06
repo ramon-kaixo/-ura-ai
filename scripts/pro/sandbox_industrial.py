@@ -26,7 +26,6 @@ import subprocess
 import sys
 import time
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────────────
@@ -62,7 +61,7 @@ RAM_CEILING_GB = 16.0
 
 
 def log(msg: str) -> None:
-    print(msg, flush=True)
+    pass
 
 
 def _get_ssh_command_output(command: list[str], timeout: int = 10) -> str:
@@ -116,16 +115,15 @@ def _determine_worker_count(free_memory: float) -> int:
     """Determina el número de workers basado en la memoria libre."""
     if free_memory > 90:
         return 12
-    elif free_memory > 70:
+    if free_memory > 70:
         return 10
-    elif free_memory > 50:
+    if free_memory > 50:
         return 8
-    elif free_memory > 30:
+    if free_memory > 30:
         return 6
-    elif free_memory > 10:
+    if free_memory > 10:
         return 4
-    else:
-        return 2
+    return 2
 
 
 def auto_workers() -> int:
@@ -185,7 +183,7 @@ def _llm(prompt: str, model: str, num_predict: int = 4096) -> str:
             "stream": False,
             "keep_alive": -1,
             "options": {"temperature": 0.1, "num_predict": num_predict},
-        }
+        },
     ).encode()
     req = urllib.request.Request(
         f"{OLLAMA_URL}/api/generate",
@@ -228,7 +226,7 @@ def chunk_file(file_path: str) -> list[dict]:
     buf = []
     buf_lines = 0
 
-    def flush():
+    def flush() -> None:
         nonlocal buf, buf_lines
         if not buf:
             return
@@ -240,7 +238,7 @@ def chunk_file(file_path: str) -> list[dict]:
                 "source": src,
                 "lines": end - start + 1,
                 "idx": len(chunks),
-            }
+            },
         )
         buf.clear()
         buf_lines = 0
@@ -262,8 +260,7 @@ def detect_indent(text: str) -> int:
         stripped = line.rstrip()
         if stripped and stripped.lstrip() != "":
             indent = len(line) - len(line.lstrip())
-            if indent < min_indent:
-                min_indent = indent
+            min_indent = min(min_indent, indent)
     return min_indent if min_indent != 999 else 0
 
 
@@ -365,92 +362,43 @@ def run_refactorer(cleaned_chunk: dict, rel_path: str, total: int) -> dict:
 # ── Main sandbox pipeline ──────────────────────────────────────────────────
 
 
-def sandbox_file(file_path: str) -> bool:
-    global CHUNKS_DONE, CHUNKS_FAILED, FILES_DONE, FILES_FAILED
-
+def helper1(file_path):
     path = Path(file_path)
     if not path.exists():
-        log(f"❌ Archivo no encontrado: {file_path}")
-        FILES_FAILED += 1
-        return False
-
+        log(f"❌ Archivo no encontrado:  {file_path}")
+        return False, None
     rel = os.path.relpath(str(path), str(URA_ROOT))
-    log(f"\n{'=' * 70}")
-    log(f"🏭 Sandbox Industrial: {rel}")
+    return True, (path, rel)
 
-    # 1. Copy to sandbox
+
+def helper2(data) -> None:
+    path, rel = data
+    log(f"\n{'=' * 70}")
+    log(f"🏭 Sandbox Industrial:  {rel}")
+
     SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
     sandbox_file_path = SANDBOX_DIR / path.name
     sandbox_file_path_bak = SANDBOX_DIR / (path.name + ".orig")
     shutil.copy2(path, sandbox_file_path)
     shutil.copy2(path, sandbox_file_path_bak)
-    log(f"📋 Copia en sandbox: {sandbox_file_path}")
-    log(f"💾 Original guardado:  {sandbox_file_path_bak}")
+    log(f"📋 Copia en sandbox:  {sandbox_file_path}")
+    log(f"💾 Original guardado:   {sandbox_file_path_bak}")
 
-    # 2. Chunk
-    chunks = chunk_file(str(sandbox_file_path))
+
+def helper3(data) -> None:
+    path, _rel = data
+    chunks = chunk_file(str(SANDBOX_DIR / path.name))
     total = len(chunks)
     log(f"📚 {total} chunks de ~{SANDBOX_CHUNK}l cada uno")
 
-    if DRY_RUN:
-        CHUNKS_DONE += total
-        log(f"   🏷️  DRY RUN — {total} chunks listos para procesar (sin LLM)")
-        return True
 
-    # 3. Workers
+def helper4(data) -> None:
+    _, _rel = data
     workers = SANDBOX_WORKERS if SANDBOX_WORKERS > 0 else auto_workers()
     log(f"🎛️  Workers: {workers} | RAM usada: {get_ram_used_gb():.1f}GB | Techo: {RAM_CEILING_GB}GB")
 
-    # 4. Parallel cleaning
-    log(f"🌪️  FASE 1: Limpieza ({MODEL_CLEANER}, {workers} workers)...")
-    t_fase1 = time.time()
-    cleaned_results: list[dict] = []
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(run_cleaner, c, rel, total): c["idx"] for c in chunks}
-        for future in as_completed(futures):
-            try:
-                cleaned_results.append(future.result())
-            except Exception as e:
-                idx = futures[future]
-                log(f"  ❌ Error F1 chunk {idx + 1}: {e}")
-                cleaned_results.append(
-                    {"idx": idx, "cleaned": chunks[idx]["source"], "lines": chunks[idx]["lines"]}
-                )
-    log(f"   ✅ FASE 1 completada en {time.time() - t_fase1:.1f}s")
 
-    # 5. Parallel refactoring
-    log(f"💎 FASE 2: Reescritura ({MODEL_REFACTOR}, {workers} workers)...")
-    t_fase2 = time.time()
-    refactored_results: list[dict] = []
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {
-            executor.submit(run_refactorer, c, rel, total): c["idx"] for c in cleaned_results
-        }
-        for future in as_completed(futures):
-            try:
-                refactored_results.append(future.result())
-            except Exception as e:
-                idx = futures[future]
-                log(f"  ❌ Error F2 chunk {idx + 1}: {e}")
-                refactored_results.append(
-                    {"idx": idx, "refactored": cleaned_results[idx]["cleaned"], "indent": 0}
-                )
-    log(f"   ✅ FASE 2 completada en {time.time() - t_fase2:.1f}s")
-
-    # 6. Costura láser: ordenar por idx, concatenar
-    log("🧵 Costura láser por coordenadas...")
-    refactored_results.sort(key=lambda x: x["idx"])
-    final_parts = [r["refactored"] for r in refactored_results]
-    final_code = "\n\n".join(final_parts)
-
-    # 7. Aduana de calidad
-    log("🚧 Aduana de calidad...")
-
-    # Write to sandbox file
-    sandbox_file_path.write_text(final_code, encoding="utf-8")
-
-
-def _ejecutar_ruff_check(sandbox_file_path):
+def _ejecutar_ruff_check(sandbox_file_path) -> None:
     log("   🧹 ruff check --fix --unsafe-fixes...")
     resultado = subprocess.run(
         ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],
@@ -462,7 +410,7 @@ def _ejecutar_ruff_check(sandbox_file_path):
         log(f"      ruff: {resultado.stdout.strip()[:200]}")
 
 
-def _ejecutar_ruff_format(sandbox_file_path):
+def _ejecutar_ruff_format(sandbox_file_path) -> None:
     subprocess.run(["ruff", "format", str(sandbox_file_path)], capture_output=True, timeout=30)
 
 
@@ -480,13 +428,12 @@ def _ejecutar_py_compile(sandbox_file_path):
 def _verificar_compilacion(code_content, sandbox_file_path):
     from scripts.utils import verify_compile
 
-    compile_ok = verify_compile(code_content, str(sandbox_file_path))
-    return compile_ok
+    return verify_compile(code_content, str(sandbox_file_path))
 
 
 def _procesar_resultados(
-    pyc_ok, compile_ok, sandbox_file_path, sandbox_file_path_bak, CHUNKS_FAILED, FILES_FAILED
-):
+    pyc_ok, compile_ok, sandbox_file_path, sandbox_file_path_bak, CHUNKS_FAILED, FILES_FAILED,
+) -> bool | None:
     if not pyc_ok or not compile_ok:
         log("❌ Aduana RECHAZADA")
         if not pyc_ok:
@@ -499,9 +446,10 @@ def _procesar_resultados(
         CHUNKS_FAILED += total
         FILES_FAILED += 1
         return False
+    return None
 
 
-def _inyectar_en_repo_real(sandbox_file_path, path):
+def _inyectar_en_repo_real(sandbox_file_path, path) -> None:
     log("✅ Aduana APROBADA → inyectando en repositorio real...")
     shutil.copy2(sandbox_file_path, path)
 
@@ -593,7 +541,7 @@ def process_sandbox(
     _ejecutar_ruff_format(sandbox_file_path)
     pyc_ok = _ejecutar_py_compile(sandbox_file_path)
     compile_ok = _verificar_compilacion(
-        sandbox_file_path.read_text(encoding="utf-8"), str(sandbox_file_path)
+        sandbox_file_path.read_text(encoding="utf-8"), str(sandbox_file_path),
     )
     if not pyc_ok or not compile_ok:
         return _procesar_resultados(
@@ -606,16 +554,17 @@ def process_sandbox(
         )
     _inyectar_en_repo_real(sandbox_file_path, path)
     _revisar_ruff_ultimo(path)
+    return None
 
 
-def _verificar_argumentos(targets):
+def _verificar_argumentos(targets) -> None:
     if not targets:
         log("Uso: python scripts/pro/sandbox_industrial.py <archivo> [archivo2...]")
         log("     python scripts/pro/sandbox_industrial.py --monsters")
         raise SystemExit(1)
 
 
-def _procesar_monsters(targets):
+def _procesar_monsters(targets) -> None:
     if "--monsters" in targets:
         targets = [str(URA_ROOT / m) for m in MONSTER_LIST]
         log(f"🎯 Objetivos: {len(targets)} archivos monstruo")
@@ -627,7 +576,7 @@ def _leer_archivo(file_path: str) -> list[str]:
 
 
 def _escribir_log(message: str) -> None:
-    print(message)
+    pass
 
 
 def _actualizar_contadores(chunks_done: int = 0, chunks_failed: int = 0) -> None:
@@ -660,8 +609,8 @@ def sandbox_file(file_path: str) -> None:
 
 
 def main() -> None:
-    global CHUNKS_DONE, CHUNKS_FAILED, FILES_DONE, FILES_FAILED  # noqa: F823
-    start = time.time()
+    global CHUNKS_DONE, CHUNKS_FAILED, FILES_DONE, FILES_FAILED
+    time.time()
 
     log("═" * 70)
     log("🏭 SANDBOX INDUSTRIAL — Aislamiento Total")
@@ -688,7 +637,7 @@ def _calcular_totales():
     return FILES_DONE, FILES_FAILED, CHUNKS_DONE, CHUNKS_FAILED
 
 
-def _log_formato(tiempo_total, archivos_ok, archivos_fallidos, chunks_ok, chunks_fallidos):
+def _log_formato(tiempo_total, archivos_ok, archivos_fallidos, chunks_ok, chunks_fallidos) -> None:
     log("═" * 70)
     log(f"🏁 SANDBOX INDUSTRIAL — Finalizado en {tiempo_total:.1f}s")
     log(f"   Archivos OK:     {archivos_ok}")
@@ -697,7 +646,7 @@ def _log_formato(tiempo_total, archivos_ok, archivos_fallidos, chunks_ok, chunks
     log(f"   Chunks FAIL:     {chunks_fallidos}")
 
 
-def _ejecutar_sandbox(t):
+def _ejecutar_sandbox(t) -> None:
     global FILES_FAILED
     try:
         sandbox_file(t)
@@ -708,7 +657,7 @@ def _ejecutar_sandbox(t):
         FILES_FAILED += 1
 
 
-def _registrar_tiempo_final(start, elapsed):
+def _registrar_tiempo_final(start, elapsed) -> None:
     archivos_ok, archivos_fallidos, chunks_ok, chunks_fallidos = _calcular_totales()
     _log_formato(elapsed, archivos_ok, archivos_fallidos, chunks_ok, chunks_fallidos)
 

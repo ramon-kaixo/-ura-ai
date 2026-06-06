@@ -1,0 +1,17 @@
+[Unit]
+Description=URA Sistema Nervioso Central (SNC)
+After=network.target docker.service ollama.service
+Wants=network.target docker.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/monitor/snc.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

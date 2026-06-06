@@ -1,0 +1,210 @@
+# URA — Docker Compose Unificado v3.0
+# Perfiles:
+#   docker compose --profile core up -d       (servicios base)
+#   docker compose --profile sandbox up -d    (6 entornos aislados)
+#   docker compose --profile monitoring up -d (prometheus + grafana)
+#   docker compose --profile all up -d        (todo)
+# Sustituye a: docker-compose.yml + docker-compose.sandbox.yml separados
+# Env vars: URA_BASE (default: /home/ramon/URA)
+
+name: ura
+
+services:
+  # ==================== CORE ====================
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ura-openwebui
+    profiles: ["core", "all"]
+    ports:
+      - "127.0.0.1:3080:8080"
+    volumes:
+      - openwebui-data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: always
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ura-n8n
+    profiles: ["core", "all"]
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_PORT=5678
+    volumes:
+      - n8n-data:/home/node/.n8n
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: ura-redis
+    profiles: ["core", "all"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: always
+
+  # ==================== SANDBOX ====================
+  mejora-continua:
+    build: ./docker
+    container_name: ura-mejora-continua
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    volumes:
+      - ${URA_BASE:-/home/ramon/URA}/ura_ia_1972:/workspace:ro
+      - ${URA_BASE:-/home/ramon/URA}/workspace_rw:/workspace_rw:rw
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  seguridad:
+    build: ./docker/sandbox/Seguridad
+    container_name: ura-sandbox-seguridad
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    volumes:
+      - ./docker/sandbox/Seguridad/scripts:/sandbox/scripts:ro
+      - ./data:/data:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  mantenimiento:
+    build: ./docker/sandbox/Mantenimiento
+    container_name: ura-sandbox-mantenimiento
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    volumes:
+      - ./docker/sandbox/Mantenimiento/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  documentacion:
+    build: ./docker/sandbox/Documentacion
+    container_name: ura-sandbox-documentacion
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    ports:
+      - "127.0.0.1:8087:8000"
+    volumes:
+      - ./docker/sandbox/Documentacion/scripts:/sandbox/scripts:ro
+      - ./docs:/docs:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  aprendizaje:
+    build: ./docker/sandbox/Aprendizaje
+    container_name: ura-sandbox-aprendizaje
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    volumes:
+      - ./docker/sandbox/Aprendizaje/Enjambre:/sandbox/Enjambre:ro
+      - ./docker/sandbox/Aprendizaje/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  exploracion:
+    build: ./docker/sandbox/Exploracion
+    container_name: ura-sandbox-exploracion
+    profiles: ["sandbox", "all"]
+    networks:
+      - sandbox-net
+    volumes:
+      - ./docker/sandbox/Exploracion/proyecto_prueba:/sandbox/proyecto_prueba:ro
+      - ./docker/sandbox/Exploracion/scripts:/sandbox/scripts:ro
+    environment:
+      - OLLAMA_HOST=http://localhost:11434
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ==================== MONITORING ====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ura-prometheus
+    profiles: ["monitoring", "all"]
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - /home/ramon/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: always
+
+volumes:
+  openwebui-data:
+  n8n-data:
+  redis-data:
+
+networks:
+  sandbox-net:
+    driver: bridge
