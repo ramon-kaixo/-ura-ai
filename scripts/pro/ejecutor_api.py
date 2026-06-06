@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """ejecutor_api.py — Endpoint de automatizacion remota para URA.
 Recibe tareas de desarrollo de la Tuneladora y las ejecuta.
-Puerto: 4096 (OpenCode)
+Puerto: 4096 (OpenCode).
 """
 
 import json
 import os
 import subprocess
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
 MCP_SYNC = "http://10.164.1.26:9093"
-HOST = "0.0.0.0"
+HOST = "127.0.0.1"
 PORT = 4096
 
 
-def log_evento(evento, datos=None):
+def log_evento(evento, datos=None) -> None:
     """Registra evento en MCP Sync del Mac Mini."""
     import urllib.request
 
@@ -30,7 +30,7 @@ def log_evento(evento, datos=None):
             method="POST",
         )
         urllib.request.urlopen(req, timeout=5)
-    except:
+    except Exception:
         pass
 
 
@@ -42,7 +42,7 @@ def leer_contexto():
     return {}
 
 
-def escribir_contexto(ctx):
+def escribir_contexto(ctx) -> None:
     """Escribe el contexto compartido."""
     os.makedirs(os.path.dirname(CONTEXT_PATH), exist_ok=True)
     with open(CONTEXT_PATH, "w") as f:
@@ -51,8 +51,6 @@ def escribir_contexto(ctx):
 
 def ejecutar_tarea(task_desc, target_files):
     """Ejecuta una tarea de desarrollo y actualiza el contexto."""
-    print(f"  Ejecutando: {task_desc[:80]}...")
-
     # 1. Actualizar contexto
     ctx = leer_contexto()
     ctx["opencode_agent"]["ultima_sincronizacion"] = datetime.utcnow().isoformat()
@@ -66,7 +64,7 @@ def ejecutar_tarea(task_desc, target_files):
     log_evento("tarea_iniciada", {"descripcion": task_desc[:50], "archivos": target_files})
 
     # 2. Ejecutar en segundo plano (no bloquea la Tuneladora)
-    def worker():
+    def worker() -> None:
         try:
             # Abrir terminal para ejecutar opencode run-context
             cmd = ["opencode", "run-context"]
@@ -93,7 +91,7 @@ def ejecutar_tarea(task_desc, target_files):
 
 
 class ExecutorHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
+    def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(length)) if length else {}
 
@@ -113,11 +111,11 @@ class ExecutorHandler(BaseHTTPRequestHandler):
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "http://127.0.0.1:8081")
         self.end_headers()
         self.wfile.write(json.dumps(result).encode())
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         ctx = leer_contexto()
         status = ctx.get("opencode_agent", {}).get("estado", "idle")
         self.send_response(200)
@@ -130,15 +128,14 @@ class ExecutorHandler(BaseHTTPRequestHandler):
                     "estado": status,
                     "puerto": PORT,
                     "agente": "OpenCode - Brazo ejecutor de URA",
-                }
-            ).encode()
+                },
+            ).encode(),
         )
 
-    def log_message(self, *args):
+    def log_message(self, *args) -> None:
         pass
 
 
 if __name__ == "__main__":
-    print(f"OpenCode Executor API en http://{HOST}:{PORT}")
     log_evento("ejecutor_api_iniciado", {"puerto": PORT})
     HTTPServer((HOST, PORT), ExecutorHandler).serve_forever()

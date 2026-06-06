@@ -1,0 +1,723 @@
+{
+  "version": "2.0",
+  "descripcion": "Reglas de reparación con estructura mejorada. Campos: id, error_detectado, descripcion, accion_determinista, prompt_ia, parametros, confianza_esperada, severidad, bloquea_escritura, aplica_a",
+  "reglas_builtin": [
+    {
+      "id": "R001",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'os'",
+      "accion_determinista": "Añadir 'import os' al inicio del archivo sin duplicar",
+      "prompt_ia": "Inserta 'import os' al inicio del archivo sin duplicar librerías existentes. No cambies la lógica.",
+      "parametros": {
+        "modulo": "os",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'os'",
+      "accion": "Añadir 'import os' al inicio del archivo sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R002",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'json'",
+      "accion_determinista": "Añadir 'import json' al inicio del archivo sin duplicar",
+      "prompt_ia": "Inserta 'import json' al inicio del archivo sin duplicar. No cambies la lógica.",
+      "parametros": {
+        "modulo": "json",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'json'",
+      "accion": "Añadir 'import json' al inicio del archivo sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R003",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Path' (from pathlib)",
+      "accion_determinista": "Añadir 'from pathlib import Path' sin duplicar",
+      "prompt_ia": "Inserta 'from pathlib import Path' al inicio. No cambies la lógica ni otros imports.",
+      "parametros": {
+        "modulo": "pathlib",
+        "importar": "Path",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Path' (from pathlib)",
+      "accion": "Añadir 'from pathlib import Path' sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R004",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Optional' (from typing)",
+      "accion_determinista": "Añadir 'from typing import Optional' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import Optional' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "Optional",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Optional' (from typing)",
+      "accion": "Añadir 'from typing import Optional' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R005",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'List' (from typing)",
+      "accion_determinista": "Añadir 'from typing import List' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import List' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "List",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'List' (from typing)",
+      "accion": "Añadir 'from typing import List' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R006",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Dict' (from typing)",
+      "accion_determinista": "Añadir 'from typing import Dict' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import Dict' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "Dict",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Dict' (from typing)",
+      "accion": "Añadir 'from typing import Dict' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R007",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'datetime'",
+      "accion_determinista": "Añadir 'from datetime import datetime' sin duplicar",
+      "prompt_ia": "Inserta 'from datetime import datetime' al inicio sin duplicar.",
+      "parametros": {
+        "modulo": "datetime",
+        "importar": "datetime",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'datetime'",
+      "accion": "Añadir 'from datetime import datetime' sin duplicar",
+      "confianza": 0.85,
+      "origen": "built-in"
+    },
+    {
+      "id": "R008",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'subprocess'",
+      "accion_determinista": "Añadir 'import subprocess' sin duplicar",
+      "prompt_ia": "Inserta 'import subprocess' al inicio. No cambies la lógica.",
+      "parametros": {
+        "modulo": "subprocess",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'subprocess'",
+      "accion": "Añadir 'import subprocess' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R009",
+      "error_detectado": "F821",
+      "descripcion": "Falso positivo: 'self' usado fuera de método (patrón Qt/PySide)",
+      "accion_determinista": "Ignorar. Añadir '# noqa: F821' en la línea afectada.",
+      "prompt_ia": "No modificar. Ignorar este error. Es un falso positivo de código legacy.",
+      "parametros": {},
+      "confianza_esperada": 0.0,
+      "severidad": "baja",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Falso positivo: 'self' usado fuera de método (patrón Qt/PySide)",
+      "accion": "Ignorar. Añadir '# noqa: F821' en la línea afectada.",
+      "confianza": 0.0,
+      "origen": "built-in"
+    },
+    {
+      "id": "R010",
+      "error_detectado": "IndentationError",
+      "descripcion": "El LLM devuelve código con indentación rota (mezcla tabs/espacios, bloques vacíos)",
+      "accion_determinista": "Ejecutar 'ruff format' antes de compile(). Si sigue fallando, reintentar con 'ruff check --fix --unsafe-fixes'.",
+      "prompt_ia": "Usa EXCLUSIVAMENTE 4 espacios para indentar. NUNCA uses tabs. Verifica que cada bloque (if/for/while/def/class) tenga al menos una instrucción. Si un bloque está vacío, usa 'pass'.",
+      "parametros": {
+        "comando": "ruff format && ruff check --fix --unsafe-fixes"
+      },
+      "confianza_esperada": 0.7,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "IndentationError",
+      "patron": "IndentationError: El LLM devuelve código con indentación rota (mezcla tabs/espacios, bloques vacíos)",
+      "accion": "Ejecutar 'ruff format' antes de compile(). Si sigue fallando, reintentar con 'ruff check --fix --unsafe-fixes'.",
+      "confianza": 0.7,
+      "origen": "built-in"
+    },
+    {
+      "id": "R011",
+      "error_detectado": "SyntaxError: invalid character",
+      "descripcion": "El LLM devuelve caracteres Unicode inválidos (｜fullwidth bar, emojis, comillas curvas, ñ mal codificada)",
+      "accion_determinista": "Filtrar respuesta del LLM con regex [^\\x00-\\x7F]+ antes de compile(). Reemplazar caracteres Unicode no-ASCII por equivalentes ASCII.",
+      "prompt_ia": "Prohibido usar caracteres especiales Unicode. Solo ASCII estándar (0-127). Prohibido emojis. Prohibido ｜(U+FF5C fullwidth vertical bar). Prohibido comillas curvas (\"\"). Usa solo comillas rectas (\\\").",
+      "parametros": {
+        "regex": "[^\\x00-\\x7F]+",
+        "reemplazo": " "
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "SyntaxError: invalid character",
+      "patron": "SyntaxError: invalid character: El LLM devuelve caracteres Unicode inválidos (｜fullwidth bar, emojis, comillas curvas, ñ mal codificada)",
+      "accion": "Filtrar respuesta del LLM con regex [^\\x00-\\x7F]+ antes de compile(). Reemplazar caracteres Unicode no-ASCII por equivalentes ASCII.",
+      "confianza": 0.85,
+      "origen": "built-in"
+    },
+    {
+      "id": "REG-PERSONAL-01",
+      "error_detectado": "FileNotFoundError",
+      "descripcion": "Rutas absolutas rotas por intercambio de entorno Mac (/Users/...) vs ASUS (/home/ramon/...)",
+      "accion_determinista": "Verificar la existencia del archivo en el directorio de trabajo actual. Si no existe, buscar en URA_ROOT.",
+      "prompt_ia": "PROHIBIDO usar rutas absolutas como /Users/mac/ o /home/ramon/ en el código generado. Usa SIEMPRE la librería pathlib con Path(__file__).parent o Path.cwd(). Usa URA_ROOT como variable de entorno para la raíz del proyecto. Nunca hardcodees rutas de sistema operativo.",
+      "parametros": {
+        "ura_root_env": "URA_ROOT",
+        "fallback": "/home/ramon/URA/ura_ia_1972"
+      },
+      "confianza_esperada": 0.98,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py",
+        "*.sh"
+      ],
+      "tipo": "FileNotFoundError",
+      "patron": "FileNotFoundError: Rutas absolutas rotas por intercambio de entorno Mac (/Users/...) vs ASUS (/home/ramon/...)",
+      "accion": "Verificar la existencia del archivo en el directorio de trabajo actual. Si no existe, buscar en URA_ROOT.",
+      "confianza": 0.98,
+      "origen": "built-in"
+    },
+    {
+      "id": "R012",
+      "error_detectado": "TimeoutError",
+      "descripcion": "Latencia excesiva en la llamada local a Ollama o al Model Router",
+      "accion_determinista": "Activar backoff exponencial: esperar 2s, 4s, 8s. Máximo 2 reintentos. Si sigue fallando, marcar como WATERMARK y pasar al siguiente ciclo.",
+      "prompt_ia": "Optimiza los parámetros: usa temperature=0.0 y num_predict ajustado al tamaño real del chunk (no el máximo). Si el chunk es pequeño (<5K tokens), baja num_predict a 2048.",
+      "parametros": {
+        "max_reintentos": 2,
+        "backoff_base_s": 2
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "TimeoutError",
+      "patron": "TimeoutError: Latencia excesiva en la llamada local a Ollama o al Model Router",
+      "accion": "Activar backoff exponencial: esperar 2s, 4s, 8s. Máximo 2 reintentos. Si sigue fallando, marcar como WATERMARK y pasar al siguiente ciclo.",
+      "confianza": 0.85,
+      "origen": "built-in"
+    }
+  ],
+  "reglas_reparacion": [
+    {
+      "id": "R001",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'os'",
+      "accion_determinista": "Añadir 'import os' al inicio del archivo sin duplicar",
+      "prompt_ia": "Inserta 'import os' al inicio del archivo sin duplicar librerías existentes. No cambies la lógica.",
+      "parametros": {
+        "modulo": "os",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'os'",
+      "accion": "Añadir 'import os' al inicio del archivo sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R002",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'json'",
+      "accion_determinista": "Añadir 'import json' al inicio del archivo sin duplicar",
+      "prompt_ia": "Inserta 'import json' al inicio del archivo sin duplicar. No cambies la lógica.",
+      "parametros": {
+        "modulo": "json",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'json'",
+      "accion": "Añadir 'import json' al inicio del archivo sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R003",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Path' (from pathlib)",
+      "accion_determinista": "Añadir 'from pathlib import Path' sin duplicar",
+      "prompt_ia": "Inserta 'from pathlib import Path' al inicio. No cambies la lógica ni otros imports.",
+      "parametros": {
+        "modulo": "pathlib",
+        "importar": "Path",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.95,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Path' (from pathlib)",
+      "accion": "Añadir 'from pathlib import Path' sin duplicar",
+      "confianza": 0.95,
+      "origen": "built-in"
+    },
+    {
+      "id": "R004",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Optional' (from typing)",
+      "accion_determinista": "Añadir 'from typing import Optional' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import Optional' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "Optional",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Optional' (from typing)",
+      "accion": "Añadir 'from typing import Optional' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R005",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'List' (from typing)",
+      "accion_determinista": "Añadir 'from typing import List' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import List' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "List",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'List' (from typing)",
+      "accion": "Añadir 'from typing import List' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R006",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'Dict' (from typing)",
+      "accion_determinista": "Añadir 'from typing import Dict' sin duplicar",
+      "prompt_ia": "Inserta 'from typing import Dict' al inicio. No cambies otros imports.",
+      "parametros": {
+        "modulo": "typing",
+        "importar": "Dict",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'Dict' (from typing)",
+      "accion": "Añadir 'from typing import Dict' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R007",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'datetime'",
+      "accion_determinista": "Añadir 'from datetime import datetime' sin duplicar",
+      "prompt_ia": "Inserta 'from datetime import datetime' al inicio sin duplicar.",
+      "parametros": {
+        "modulo": "datetime",
+        "importar": "datetime",
+        "tipo": "import_from"
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'datetime'",
+      "accion": "Añadir 'from datetime import datetime' sin duplicar",
+      "confianza": 0.85,
+      "origen": "built-in"
+    },
+    {
+      "id": "R008",
+      "error_detectado": "F821",
+      "descripcion": "Variable o import no definido: 'subprocess'",
+      "accion_determinista": "Añadir 'import subprocess' sin duplicar",
+      "prompt_ia": "Inserta 'import subprocess' al inicio. No cambies la lógica.",
+      "parametros": {
+        "modulo": "subprocess",
+        "tipo": "import"
+      },
+      "confianza_esperada": 0.9,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Variable o import no definido: 'subprocess'",
+      "accion": "Añadir 'import subprocess' sin duplicar",
+      "confianza": 0.9,
+      "origen": "built-in"
+    },
+    {
+      "id": "R009",
+      "error_detectado": "F821",
+      "descripcion": "Falso positivo: 'self' usado fuera de método (patrón Qt/PySide)",
+      "accion_determinista": "Ignorar. Añadir '# noqa: F821' en la línea afectada.",
+      "prompt_ia": "No modificar. Ignorar este error. Es un falso positivo de código legacy.",
+      "parametros": {},
+      "confianza_esperada": 0.0,
+      "severidad": "baja",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "F821",
+      "patron": "F821: Falso positivo: 'self' usado fuera de método (patrón Qt/PySide)",
+      "accion": "Ignorar. Añadir '# noqa: F821' en la línea afectada.",
+      "confianza": 0.0,
+      "origen": "built-in"
+    },
+    {
+      "id": "R010",
+      "error_detectado": "IndentationError",
+      "descripcion": "El LLM devuelve código con indentación rota (mezcla tabs/espacios, bloques vacíos)",
+      "accion_determinista": "Ejecutar 'ruff format' antes de compile(). Si sigue fallando, reintentar con 'ruff check --fix --unsafe-fixes'.",
+      "prompt_ia": "Usa EXCLUSIVAMENTE 4 espacios para indentar. NUNCA uses tabs. Verifica que cada bloque (if/for/while/def/class) tenga al menos una instrucción. Si un bloque está vacío, usa 'pass'.",
+      "parametros": {
+        "comando": "ruff format && ruff check --fix --unsafe-fixes"
+      },
+      "confianza_esperada": 0.7,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "IndentationError",
+      "patron": "IndentationError: El LLM devuelve código con indentación rota (mezcla tabs/espacios, bloques vacíos)",
+      "accion": "Ejecutar 'ruff format' antes de compile(). Si sigue fallando, reintentar con 'ruff check --fix --unsafe-fixes'.",
+      "confianza": 0.7,
+      "origen": "built-in"
+    },
+    {
+      "id": "R011",
+      "error_detectado": "SyntaxError: invalid character",
+      "descripcion": "El LLM devuelve caracteres Unicode inválidos (｜fullwidth bar, emojis, comillas curvas, ñ mal codificada)",
+      "accion_determinista": "Filtrar respuesta del LLM con regex [^\\x00-\\x7F]+ antes de compile(). Reemplazar caracteres Unicode no-ASCII por equivalentes ASCII.",
+      "prompt_ia": "Prohibido usar caracteres especiales Unicode. Solo ASCII estándar (0-127). Prohibido emojis. Prohibido ｜(U+FF5C fullwidth vertical bar). Prohibido comillas curvas (\"\"). Usa solo comillas rectas (\\\").",
+      "parametros": {
+        "regex": "[^\\x00-\\x7F]+",
+        "reemplazo": " "
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "SyntaxError: invalid character",
+      "patron": "SyntaxError: invalid character: El LLM devuelve caracteres Unicode inválidos (｜fullwidth bar, emojis, comillas curvas, ñ mal codificada)",
+      "accion": "Filtrar respuesta del LLM con regex [^\\x00-\\x7F]+ antes de compile(). Reemplazar caracteres Unicode no-ASCII por equivalentes ASCII.",
+      "confianza": 0.85,
+      "origen": "built-in"
+    },
+    {
+      "id": "REG-PERSONAL-01",
+      "error_detectado": "FileNotFoundError",
+      "descripcion": "Rutas absolutas rotas por intercambio de entorno Mac (/Users/...) vs ASUS (/home/ramon/...)",
+      "accion_determinista": "Verificar la existencia del archivo en el directorio de trabajo actual. Si no existe, buscar en URA_ROOT.",
+      "prompt_ia": "PROHIBIDO usar rutas absolutas como /Users/mac/ o /home/ramon/ en el código generado. Usa SIEMPRE la librería pathlib con Path(__file__).parent o Path.cwd(). Usa URA_ROOT como variable de entorno para la raíz del proyecto. Nunca hardcodees rutas de sistema operativo.",
+      "parametros": {
+        "ura_root_env": "URA_ROOT",
+        "fallback": "/home/ramon/URA/ura_ia_1972"
+      },
+      "confianza_esperada": 0.98,
+      "severidad": "alta",
+      "bloquea_escritura": true,
+      "aplica_a": [
+        "*.py",
+        "*.sh"
+      ],
+      "tipo": "FileNotFoundError",
+      "patron": "FileNotFoundError: Rutas absolutas rotas por intercambio de entorno Mac (/Users/...) vs ASUS (/home/ramon/...)",
+      "accion": "Verificar la existencia del archivo en el directorio de trabajo actual. Si no existe, buscar en URA_ROOT.",
+      "confianza": 0.98,
+      "origen": "built-in"
+    },
+    {
+      "id": "R012",
+      "error_detectado": "TimeoutError",
+      "descripcion": "Latencia excesiva en la llamada local a Ollama o al Model Router",
+      "accion_determinista": "Activar backoff exponencial: esperar 2s, 4s, 8s. Máximo 2 reintentos. Si sigue fallando, marcar como WATERMARK y pasar al siguiente ciclo.",
+      "prompt_ia": "Optimiza los parámetros: usa temperature=0.0 y num_predict ajustado al tamaño real del chunk (no el máximo). Si el chunk es pequeño (<5K tokens), baja num_predict a 2048.",
+      "parametros": {
+        "max_reintentos": 2,
+        "backoff_base_s": 2
+      },
+      "confianza_esperada": 0.85,
+      "severidad": "media",
+      "bloquea_escritura": false,
+      "aplica_a": [
+        "*.py"
+      ],
+      "tipo": "TimeoutError",
+      "patron": "TimeoutError: Latencia excesiva en la llamada local a Ollama o al Model Router",
+      "accion": "Activar backoff exponencial: esperar 2s, 4s, 8s. Máximo 2 reintentos. Si sigue fallando, marcar como WATERMARK y pasar al siguiente ciclo.",
+      "confianza": 0.85,
+      "origen": "built-in"
+    }
+  ],
+  "imports_estandar": {
+    "os": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import os"
+      }
+    },
+    "json": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import json"
+      }
+    },
+    "sys": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import sys"
+      }
+    },
+    "re": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import re"
+      }
+    },
+    "time": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import time"
+      }
+    },
+    "shutil": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import shutil"
+      }
+    },
+    "subprocess": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import subprocess"
+      }
+    },
+    "pathlib": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "from pathlib import Path"
+      }
+    },
+    "datetime": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "from datetime import datetime"
+      }
+    },
+    "typing": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "from typing import List, Dict, Optional, Tuple"
+      }
+    },
+    "collections": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "from collections import defaultdict, Counter"
+      }
+    },
+    "functools": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import functools"
+      }
+    },
+    "itertools": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import itertools"
+      }
+    },
+    "hashlib": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import hashlib"
+      }
+    },
+    "tempfile": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import tempfile"
+      }
+    },
+    "logging": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import logging"
+      }
+    },
+    "argparse": {
+      "accion": "añadir_import",
+      "params": {
+        "import": "import argparse"
+      }
+    },
+    "Path": {
+      "accion": "añadir_import_from",
+      "params": {
+        "from": "pathlib",
+        "import": "Path"
+      }
+    },
+    "Optional": {
+      "accion": "añadir_import_from",
+      "params": {
+        "from": "typing",
+        "import": "Optional"
+      }
+    },
+    "List": {
+      "accion": "añadir_import_from",
+      "params": {
+        "from": "typing",
+        "import": "List"
+      }
+    },
+    "Dict": {
+      "accion": "añadir_import_from",
+      "params": {
+        "from": "typing",
+        "import": "Dict"
+      }
+    },
+    "Tuple": {
+      "accion": "añadir_import_from",
+      "params": {
+        "from": "typing",
+        "import": "Tuple"
+      }
+    }
+  }
+}

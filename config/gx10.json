@@ -1,8 +1,0 @@
-{
-  "ip_local": "10.164.1.99",
-  "ip_tailscale": "10.164.1.99",
-  "ssh_alias": "gx10",
-  "ssh_user": "ramon",
-  "health_port": 5103,
-  "ollama_port": 11434
-}

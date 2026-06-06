@@ -1,9 +1,0 @@
-{
-  "rules": [
-    {"if": {"docker": "si"}, "then": "worker"},
-    {"if": {"so_contains": "Windows"}, "then": "tpv-server"},
-    {"if": {"gpu": "no"}, "then": "worker"},
-    {"if": {"ollama": "si"}, "then": "master"},
-    {"default": "worker"}
-  ]
-}

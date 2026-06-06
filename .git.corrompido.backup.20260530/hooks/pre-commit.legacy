@@ -1,8 +1,0 @@
-#!/bin/bash
-echo "🔍 Ejecutando ruff check --fix..."
-ruff check --fix .
-if [ $? -ne 0 ]; then
-    echo "❌ Hay errores. Corrígelos antes de commit."
-    exit 1
-fi
-echo "✅ Todo correcto."

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-URA Sandbox Bridge — Capa de seguridad para todo I/O de internet (Fase 3).
+"""URA Sandbox Bridge — Capa de seguridad para todo I/O de internet (Fase 3).
 
 Objetivo: cuando el usuario instale el "ordenador virtual" (VM/contenedor),
 todas las descargas, fetches y ejecuciones de OpenClaw pasarán por esa VM.
@@ -155,8 +154,7 @@ class SandboxBridge:
     # ----------------------------------------------------- run_openclaw ----
 
     async def run_openclaw(self, tema: str, *, contexto: str | None = None) -> dict[str, Any]:
-        """
-        Invoca OpenClaw siempre dentro del sandbox.
+        """Invoca OpenClaw siempre dentro del sandbox.
 
         En modo passthrough delega al `OpenClawClient` nativo.
         En ssh/lima ejecuta el binario remoto y parsea JSON.
@@ -172,8 +170,8 @@ class SandboxBridge:
             args += ["--context", contexto]
         try:
             output = await self.run_command(args, timeout_s=180)
-        except Exception as e:  # noqa: BLE001
-            logger.error("OpenClaw remoto error: %s", e)
+        except Exception as e:
+            logger.exception("OpenClaw remoto error: %s", e)
             return {
                 "tema": tema,
                 "nivel": "N3",
@@ -186,10 +184,10 @@ class SandboxBridge:
             import json
 
             raw = json.loads(output) if output.strip() else {}
-        except Exception:  # noqa: BLE001
+        except Exception:
             raw = {"text": output}
         # Reusar normalize del cliente local
-        from core.ura_openclaw_client import OpenClawClient, OpenClawAvailability
+        from core.ura_openclaw_client import OpenClawAvailability, OpenClawClient
 
         client = OpenClawClient(availability=OpenClawAvailability(mode="stub"))
         normalized = client._normalize(tema, raw)
@@ -217,7 +215,7 @@ class SandboxBridge:
             return ""
         if proc.returncode != 0:
             logger.warning(
-                "comando no-cero %s: %s", args[0], stderr_b.decode(errors="ignore")[:200]
+                "comando no-cero %s: %s", args[0], stderr_b.decode(errors="ignore")[:200],
             )
             return ""
         return stdout_b.decode(errors="ignore")

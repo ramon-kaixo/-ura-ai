@@ -1,8 +1,0 @@
-{
-  "acls": [
-    {"action": "accept", "src": ["tag:cajas"], "dst": ["*:22", "*:8080"]},
-    {"action": "accept", "src": ["tag:musica"], "dst": ["*:22", "*:42010"]},
-    {"action": "accept", "src": ["tag:ura"], "dst": ["*:*"]},
-    {"action": "accept", "src": ["*"], "dst": ["*:22"]}
-  ]
-}

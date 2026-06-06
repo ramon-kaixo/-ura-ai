@@ -1,0 +1,19 @@
+[Unit]
+Description=URA MkDocs — Base de Conocimiento y Autopsias
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/opt/ura
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/usr/bin/pip install mkdocs mkdocs-material 2>/dev/null || true
+ExecStart=/usr/bin/python3 -m mkdocs serve -a 0.0.0.0:8087
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

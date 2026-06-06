@@ -1,5 +1,20 @@
 # URA — AI Agent Instructions
 
+## REGLA PRINCIPAL: SIEMPRE TRABAJAR EN ASUS (MEJORA CONTINUA)
+
+**IMPORTANTE**: El código fuente principal está en ASUS (GX10) en `/home/ramon/URA/ura_ia_1972/`.
+
+- **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
+- **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
+- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@10.164.1.99`
+- Para trabajar directamente en ASUS: usar `ssh ramon@10.164.1.99 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
+
+### Flujo de Trabajo Obligatorio
+1. **Desarrollar** en Mac (edithores, tests locales)
+2. **Sincronizar** a ASUS cuando el código esté listo
+3. **Ejecutar** y verificar en ASUS (el servidor real)
+4. **NUNCA** dejar código sin sincronizar a ASUS por más de una sesión
+
 ## Project Context
 URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
 
@@ -15,10 +30,57 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - `core/` — Domain logic (consciousness, values, forensic scribe, rollback)
 - `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
 - `adapters/` — External connectors (Ollama, messaging platforms)
-- `knowledge/` — Long-term memory, document fragments, knowledge base
-- `scripts/pro/` — Pro maintenance module (6 phases with snapshot + rollback)
+- `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
+- `scripts/pro/` — Pipeline activo (solo scripts esenciales)
 
-## GX10 (ASUS GB10) — Estado Real (2026-05-29 23:05)
+### Pipeline Activo (scripts/pro/)
+**Solo 26 scripts** — los demás fueron eliminados o fusionados:
+
+| Script | Propósito | Llamado por |
+|--------|-----------|-------------|
+| `tuneladora_mantenimiento.py` | Diario/semanal + commit/rollback | systemd timer |
+| `tuneladora_mejora.py` | Desarrollo + watchdog workers | OpenCode/docker |
+| `token_screen.py` | RAM check antes de cada paso | ambas tuneladoras |
+| `scanner_autoajuste.py` | Snapshot AST + chunk_optimizer | ambas tuneladoras |
+| `poda_mecanica.py` | Dead code removal + chromatic map | tuneladora_mantenimiento |
+| `refactor_large_functions_v2.py` | Refactor con LLM + compactación | ambas tuneladoras |
+| `compactadora.py` | Reensamblaje post-LLM | tuneladora_mantenimiento |
+| `compactador_espacios.py` | Compactación pre-LLM | importado por refactor_v2 |
+| `auto_reglas.py` | Deterministic F821 repairs | ambas tuneladoras |
+| `inspectores.py` | 10 inspectores (120 checks) | ambas tuneladoras |
+| `watermark_aggregator.py` | Watermark + auto-reglas | tuneladora_mantenimiento |
+| `chunk_optimizer.py` | Recomienda chunk size dinámicamente | scanner_autoajuste |
+| `conciencia.py` | Memory system | pipeline_supremo |
+| `meta_mejora.py` | Meta-mejora con medición de impacto | manual |
+| `analisis_completo.py` | Análisis integral (estado + monólogo + acciones) | manual |
+| `openclaw_reviewer.py` | LLM reviewer (GPU) | pipeline_supremo |
+| `openclaw_firmador.py` | Firma de código | manual |
+| `ajustar_contexto.py` | Ajusta contexto del LLM | refactor_v2 |
+| `auditor_router.py` | Auditor del Model Router | manual |
+| `auto_conciencia.py` | Auto-conciencia | manual |
+| `f821_watch.py` | Watchdog de F821 | ciclo_autonomo |
+| `reglas_loader.py` | Carga reglas | auto_reglas |
+| `sandbox_industrial.py` | Sandbox industrial | manual |
+| `ejecutor_api.py` | API REST puerto 4096 | systemd |
+| `bypass_linksys_gui.py` | Playwright port forwarding | manual (one-shot) |
+| `alineador.py` | Valida respuestas URA/OpenClaw | pipeline_supremo |
+| `analizar_fallo_conciencia.py` | Diagnóstico de conciencia | tuneladora_mantenimiento |
+| `master_conciencia.py` | Testing de acciones URA | tuneladora_mantenimiento |
+| `pareto_router.py` | Distribución 20/80 datos | tuneladora_mantenimiento |
+| `ura_self_modify.py` | Auto-mejora del prompt | tuneladora_mantenimiento |
+
+### Scripts Eliminados/Fusionados (2026-06-04)
+- `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py` (commit/rollback)
+- `meta_mejora_real.py` → fusionado con `meta_mejora.py` (medición de impacto)
+- `analisis_llm.py` + `meta_mejora_v2.py` + `reflexion_ura.py` → fusionado en `analisis_completo.py`
+- `refactor_watchdog.py` → fusionado con `tuneladora_mejora.py` (watchdog integrado)
+- `rpa_linksys.py` → eliminado (bypass_linksys_gui.py lo hace mejor)
+- `auto_aplicar_mejoras.py` → eliminado (ura_self_modify.py lo hace todo)
+- `reflexion_profunda.py` → eliminado (analizar_fallo_conciencia.py lo reemplaza)
+- `translate_to_english.py` → eliminado (código ya está en inglés)
+- 34 scripts huérfanos → movidos a `.nervioso/scripts_eliminados/`
+
+## GX10 (ASUS GB10) — Estado Real (2026-06-03)
 
 ### Hardware NVIDIA GB10 Grace Blackwell Superchip
 - **CPU**: 20 núcleos ARM nativos de alto rendimiento
@@ -55,7 +117,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | `backend@qwen2.5-coder-32b` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-32b |
 | `backend@qwen2.5-coder-q8_0` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-q8_0 |
 
-### Ollama Optimizado (2026-05-29)
+### Ollama Optimizado (2026-06-03)
 - **Configuración**:
   - `OLLAMA_NUM_PARALLEL=2` (reducido de 8)
   - `OLLAMA_MAX_LOADED_MODELS=2` (2 modelos en memoria)
@@ -170,7 +232,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
 - `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
 
-## Problemas Conocidos (2026-05-29)
+## Problemas Conocidos (2026-06-03)
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)

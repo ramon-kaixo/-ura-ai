@@ -1,0 +1,11 @@
+[Unit]
+Description=URA SNC Poll Timer — pulso cada 10 segundos
+Requires=snc.service
+
+[Timer]
+OnBootSec=10s
+OnUnitActiveSec=10s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

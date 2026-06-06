@@ -1,9 +1,0 @@
-{"timestamp": "2026-04-29T19:10:48.990229", "importe": 5.0, "concepto": "test automatico", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:39:21.237917", "importe": 5.0, "concepto": "cafe", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:39:21.265327", "importe": 150.0, "concepto": "servidor", "fuente": "test", "decision": "bloqueado_pendiente_autorizacion", "nota": "Token=5a3b21daff8a, Telegram=fallido"}
-{"timestamp": "2026-05-12T04:39:21.265584", "importe": 150.0, "concepto": "servidor", "fuente": "test", "decision": "autorizado_via_telegram", "nota": "Autorizado por test_user via Telegram"}
-{"timestamp": "2026-05-12T04:43:08.712768", "importe": 3.5, "concepto": "cafe", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:43:08.713162", "importe": 2.0, "concepto": "pan", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:43:08.713297", "importe": 8.0, "concepto": "taxi", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:43:08.713376", "importe": 9.99, "concepto": "menu", "fuente": "test", "decision": "autorizado_automatico", "nota": ""}
-{"timestamp": "2026-05-12T04:43:08.739692", "importe": 8.0, "concepto": "libro", "fuente": "test", "decision": "bloqueado_acumulado_excedido", "nota": "Acumulado 28.49€ + 8.00€ > 30.0€. Token=3576ba946eb4"}

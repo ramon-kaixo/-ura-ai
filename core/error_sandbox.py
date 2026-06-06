@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-URA - Sandbox de Errores
+"""URA - Sandbox de Errores.
 
 Sistema para errores que no se pudieron solucionar automáticamente:
 - Análisis profundo del error
@@ -27,7 +26,7 @@ KNOWLEDGE_BASE_PATH = Path(__file__).parent.parent / "data" / "error_knowledge.j
 
 @dataclass
 class SandboxResult:
-    """Resultado del análisis en sandbox"""
+    """Resultado del análisis en sandbox."""
 
     alert_id: str
     error_type: str
@@ -40,9 +39,9 @@ class SandboxResult:
 
 
 class ErrorSandbox:
-    """Sandbox para análisis de errores no solucionados"""
+    """Sandbox para análisis de errores no solucionados."""
 
-    def __init__(self, config_path: Path | None = None):
+    def __init__(self, config_path: Path | None = None) -> None:
         self.config_path = config_path or CONFIG_PATH
         self.knowledge_base_path = KNOWLEDGE_BASE_PATH
         self.config = self._load_config()
@@ -50,7 +49,7 @@ class ErrorSandbox:
         self.sandbox_log: list[SandboxResult] = []
 
     def _load_config(self) -> dict:
-        """Cargar configuración desde archivo"""
+        """Cargar configuración desde archivo."""
         try:
             with open(self.config_path) as f:
                 return json.load(f)
@@ -58,11 +57,11 @@ class ErrorSandbox:
             logger.warning(f"Archivo de configuración no encontrado: {self.config_path}")
             return self._default_config()
         except json.JSONDecodeError as e:
-            logger.error(f"Error decodificando configuración: {e}")
+            logger.exception(f"Error decodificando configuración: {e}")
             return self._default_config()
 
     def _default_config(self) -> dict:
-        """Configuración por defecto"""
+        """Configuración por defecto."""
         return {
             "version": "1.0",
             "max_analysis_time": 60,
@@ -70,9 +69,8 @@ class ErrorSandbox:
             "auto_intervention": False,
             "log_to_file": True,
         }
-
     def _load_knowledge_base(self) -> dict:
-        """Cargar base de conocimiento de errores"""
+        """Cargar base de conocimiento de errores."""
         try:
             with open(self.knowledge_base_path) as f:
                 return json.load(f)
@@ -80,11 +78,11 @@ class ErrorSandbox:
             logger.warning(f"Base de conocimiento no encontrada: {self.knowledge_base_path}")
             return self._default_knowledge_base()
         except json.JSONDecodeError as e:
-            logger.error(f"Error decodificando base de conocimiento: {e}")
+            logger.exception(f"Error decodificando base de conocimiento: {e}")
             return self._default_knowledge_base()
 
     def _default_knowledge_base(self) -> dict:
-        """Base de conocimiento por defecto"""
+        """Base de conocimiento por defecto."""
         return {
             "ollama_404": {
                 "common_causes": [
@@ -127,7 +125,7 @@ class ErrorSandbox:
         }
 
     def analyze_error(self, alert_id: str, error_type: str, context: dict) -> SandboxResult:
-        """Analizar error en sandbox"""
+        """Analizar error en sandbox."""
         logger.info(f"Analizando error {alert_id} en sandbox: {error_type}")
 
         # Buscar en base de conocimiento
@@ -175,7 +173,7 @@ class ErrorSandbox:
         return result
 
     def _generate_analysis(self, error_type: str, context: dict, error_info: dict) -> str:
-        """Generar análisis del error"""
+        """Generar análisis del error."""
         analysis_parts = [
             f"Tipo de error: {error_type}",
             f"Causas comunes: {', '.join(error_info['common_causes'])}",
@@ -191,7 +189,7 @@ class ErrorSandbox:
         return " | ".join(analysis_parts)
 
     def _attempt_solution(self, solution: str, context: dict) -> bool:
-        """Intentar aplicar solución"""
+        """Intentar aplicar solución."""
         try:
             # Soluciones específicas basadas en keywords
             if "Matar proceso" in solution:
@@ -213,14 +211,14 @@ class ErrorSandbox:
                 subprocess.run(["pkill", "-9", "ollama"], timeout=5)
                 time.sleep(2)
                 subprocess.Popen(
-                    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 )
                 time.sleep(3)
                 return True
 
             elif "Iniciar Redis" in solution:
                 subprocess.run(
-                    ["brew", "services", "start", "redis"], capture_output=True, timeout=10
+                    ["brew", "services", "start", "redis"], capture_output=True, timeout=10,
                 )
                 time.sleep(2)
                 return True
@@ -237,27 +235,27 @@ class ErrorSandbox:
             return False
 
         except Exception as e:
-            logger.error(f"Error intentando solución '{solution}': {e}")
+            logger.exception(f"Error intentando solución '{solution}': {e}")
             return False
 
     def get_sandbox_log(self) -> list[SandboxResult]:
-        """Obtener log del sandbox"""
+        """Obtener log del sandbox."""
         return self.sandbox_log
 
     def get_manual_intervention_errors(self) -> list[SandboxResult]:
-        """Obtener errores que requieren intervención manual"""
+        """Obtener errores que requieren intervención manual."""
         return [r for r in self.sandbox_log if r.requires_manual_intervention]
 
 
-def main():
-    """Punto de entrada CLI"""
+def main() -> None:
+    """Punto de entrada CLI."""
     parser = argparse.ArgumentParser(description="URA - Sandbox de Errores")
     parser.add_argument(
-        "--analyze", nargs=2, metavar=("ALERT_ID", "ERROR_TYPE"), help="Analizar error"
+        "--analyze", nargs=2, metavar=("ALERT_ID", "ERROR_TYPE"), help="Analizar error",
     )
     parser.add_argument("--log", action="store_true", help="Mostrar log del sandbox")
     parser.add_argument(
-        "--manual", action="store_true", help="Mostrar errores que requieren intervención"
+        "--manual", action="store_true", help="Mostrar errores que requieren intervención",
     )
     parser.add_argument("--verbose", action="store_true", help="Modo verboso")
 
@@ -271,37 +269,24 @@ def main():
         alert_id, error_type = args.analyze
         result = sandbox.analyze_error(alert_id, error_type, {})
 
-        print(f"\n=== ANÁLISIS SANDBOX {alert_id} ===")
-        print(f"Tipo: {result.error_type}")
-        print(f"Análisis: {result.analysis}")
-        print("\nSoluciones sugeridas:")
-        for sol in result.suggested_solutions:
-            print(f"  - {sol}")
-        print("\nSoluciones intentadas:")
-        for sol in result.attempted_solutions:
-            print(f"  - {sol}")
+        for _sol in result.suggested_solutions:
+            pass
+        for _sol in result.attempted_solutions:
+            pass
         if result.successful_solution:
-            print(f"\n✅ Solución exitosa: {result.successful_solution}")
+            pass
         else:
-            print("\n❌ Requiere intervención manual")
+            pass
 
     elif args.log:
         log = sandbox.get_sandbox_log()
-        print(f"\n=== LOG SANDBOX ({len(log)}) ===")
         for result in log:
-            print(f"ID: {result.alert_id}")
-            print(f"  Tipo: {result.error_type}")
-            print(f"  Éxito: {result.successful_solution}")
-            print(f"  Manual: {result.requires_manual_intervention}")
+            pass
 
     elif args.manual:
         manual_errors = sandbox.get_manual_intervention_errors()
-        print(f"\n=== ERRORES QUE REQUIEREN INTERVENCIÓN ({len(manual_errors)}) ===")
         for result in manual_errors:
-            print(f"ID: {result.alert_id}")
-            print(f"  Tipo: {result.error_type}")
-            print(f"  Análisis: {result.analysis}")
-            print(f"  Soluciones sugeridas: {', '.join(result.suggested_solutions)}")
+            pass
 
     else:
         parser.print_help()

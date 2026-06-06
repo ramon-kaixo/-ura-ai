@@ -1,0 +1,36 @@
+// OpenCode Configuration — ASUS (Servidor de Mejora Continua)
+// Ruta de mejora continua: /home/ramon/URA/ura_ia_1972
+// Puerto: 8081
+// Instalación:
+//   cp deploy/opencode_asus_config.jsonc /home/ramon/.config/opencode/opencode.jsonc
+//   systemctl restart opencode.service
+
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Modelo: Ollama local en ASUS (puerto 11434)
+  "model": "ollama/qwen3:32b-q8_0",
+  "provider": {
+    "ollama": {
+      "baseURL": "http://localhost:11434/v1",
+      "models": {
+        "qwen3:32b-q8_0": {},
+        "qwen2.5-coder:14b": {},
+        "qwen2.5-coder:32b": {},
+        "llama3.3:70b": {},
+        "codestral:22b": {}
+      }
+    }
+  },
+
+  // MCP: OpenClaw Gateway local en ASUS
+  "mcp": {
+    "openclaw": {
+      "type": "local",
+      "command": ["openclaw", "mcp", "serve"],
+      "enabled": true
+    }
+  },
+
+  "username": "ramon"
+}

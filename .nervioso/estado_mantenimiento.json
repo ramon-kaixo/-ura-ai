@@ -1,0 +1,8 @@
+{
+  "ultima_ejecucion": "2026-06-06T00:02:14.036965",
+  "nivel": "ligero",
+  "resultado": {
+    "ruff_f821": 0,
+    "token_screen": false
+  }
+}

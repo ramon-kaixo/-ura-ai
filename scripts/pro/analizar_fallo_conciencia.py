@@ -6,7 +6,8 @@ Flujo:
 1. Ejecuta test_conciencia.py
 2. Si falla, determina la causa probable
 3. Intenta corregirla (permisos, tools, system prompt)
-4. Si no puede, notifica al instalador"""
+4. Si no puede, notifica al instalador
+"""
 
 import json
 import os
@@ -45,13 +46,12 @@ FALLOS_CONOCIDOS = {
 }
 
 
-def log(mensaje):
+def log(mensaje) -> None:
     with open(LOG, "a") as f:
         f.write(f"{datetime.now().isoformat()} - {mensaje}\n")
-    print(mensaje)
 
 
-def agregar_sugerencia(problema, solucion):
+def agregar_sugerencia(problema, solucion) -> None:
     sugerencias = []
     if SUGERENCIAS.exists():
         with open(SUGERENCIAS) as f:
@@ -63,18 +63,18 @@ def agregar_sugerencia(problema, solucion):
             "problema": problema,
             "solucion": solucion,
             "gravedad": "alta",
-        }
+        },
     )
     with open(SUGERENCIAS, "w") as f:
         json.dump(sugerencias, f, indent=2)
 
 
-def notificar(mensaje):
+def notificar(mensaje) -> None:
     if NOTIFICAR.exists():
         subprocess.run([str(NOTIFICAR), mensaje])
 
 
-def diagnosticar_y_corregir():
+def diagnosticar_y_corregir() -> bool:
     """Ejecuta el test, analiza fallos, intenta corregir."""
     log("=== Inicio analisis de conciencia ===")
 

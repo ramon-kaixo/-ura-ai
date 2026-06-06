@@ -1,85 +1,23 @@
-
-# Archivos del sistema
-# Backup
-# Base de datos
-# Credenciales y secretos (NUNCA commitear)
-# IDE
-# Logs
-# Ollama
-# Output accidentales de pip
-# Python
-# Telegram
-# Testing
-# Variables de entorno
-# Virtualenv dedicado
-*$py.class
-*.backup
-*.bak
-*.db
-*.egg
-*.egg-info/
-*.key
-*.log
-*.pem
-*.py[cod]
+__pycache__/
 *.pyc
 *.pyo
-*.so
-*.sqlite
-*.sqlite3
-*.swo
-*.swp
-*~
-.DS_Store
-.Python
-.boveda_key
-.coverage
-.eggs/
+venv/
 .env
-.env.*.local
-.env.local
-.idea/
-.installed.cfg
-.ollama/
-.pytest_cache/
-.tox/
-.venv/
-.vscode/
-=*
-Thumbs.db
-__pycache__/
-build/
-config/*_credentials.json
-config/*_token.json
-config/gmail_credentials.json
-config/gmail_token.json
-core/data/*.json
-credentials.json
-develop-eggs/
-dist/
-downloads/
-eggs/
-htmlcov/
-lib/
-lib64/
+*.env
 logs/
-logs/*.log
-maintenance.log
-oauth_*.json
-parts/
-sdist/
-secrets/
-service_account*.json
-telegram_session.session
-token.pickle
-ura_app.log
-var/
-wheels/
+*.log
+.DS_Store
+*.swp
+*.swo
+*~
+.swarm/
+known_devices.json
+/tmp/
 
-# AOC genera estos archivos automaticamente — no versionar
-biblioteca/
-quarantine/
-data/*.json
-data/fallos_agentes.json
-docs/refactor_duplicados_*.json
-docs/refactor_duplicados_*.log
+# Bloquear archivos fantasma recurrentes
+CLAUDE.md
+config/maintenance.json
+mantenimiento/config.json
+data/chroma_db/
+data/documentos/
+data/.index_manifest.json

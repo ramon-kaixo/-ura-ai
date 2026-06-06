@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Módulo: core/sandbox_orchestrator.py
+"""Módulo: core/sandbox_orchestrator.py
 Propósito: Orquesta ejecuciones en sandbox: gestiona cola de tareas, log de ejecuciones y rotación de entornos.
 Dependencias principales: json, datetime, pathlib, Sandbox
 Reglas especiales: Máximo de ejecuciones concurrentes. Rotar logs cada 1000 entradas.
@@ -11,7 +10,7 @@ import logging
 import subprocess
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -100,7 +99,7 @@ ROTACION = {
 class SandboxOrchestrator:
     """Orquestador de los 4 sandboxes — ciclo cada 6h."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sandboxes = {sid: dict(meta) for sid, meta in SANDBOX_DEFINITIONS.items()}
         for sb in self.sandboxes.values():
             sb["status"] = "idle"
@@ -119,7 +118,7 @@ class SandboxOrchestrator:
         self._load_state()
         self._ensure_dirs()
 
-    def _ensure_dirs(self):
+    def _ensure_dirs(self) -> None:
         for sb in self.sandboxes.values():
             d = sb.get("dir")
             if d:
@@ -136,11 +135,11 @@ class SandboxOrchestrator:
                 logger.warning(f"Error cargando sandbox_log: {e}")
         return []
 
-    def _save_log(self):
+    def _save_log(self) -> None:
         with open(SANDBOX_LOG_PATH, "w") as f:
             json.dump(self.log[-500:], f, indent=2)
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         if SANDBOX_STATE_PATH.exists():
             try:
                 with open(SANDBOX_STATE_PATH) as f:
@@ -152,7 +151,7 @@ class SandboxOrchestrator:
             except Exception as e:
                 logger.warning(f"Error cargando sandbox_state: {e}")
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         state = {
             "accelerated_until": self.accelerated_until,
             "accelerated_active": self.accelerated_active,
@@ -172,7 +171,7 @@ class SandboxOrchestrator:
             sb["status"] = "ejecutando"
             return True
 
-    def release_sandbox(self, sandbox_id: str):
+    def release_sandbox(self, sandbox_id: str) -> None:
         with self._lock:
             sb = self.sandboxes.get(sandbox_id)
             if sb:
@@ -209,28 +208,28 @@ class SandboxOrchestrator:
         try:
             if sandbox_id == "mantenimiento":
                 result["herramientas"]["limpieza_temp"] = self._tarea_generica(
-                    "limpieza temp", sandbox_dir
+                    "limpieza temp", sandbox_dir,
                 )
                 result["herramientas"]["rotacion_logs"] = self._tarea_generica(
-                    "rotacion logs", sandbox_dir
+                    "rotacion logs", sandbox_dir,
                 )
                 result["herramientas"]["optimizacion_db"] = self._tarea_generica(
-                    "optimizacion db", sandbox_dir
+                    "optimizacion db", sandbox_dir,
                 )
 
             elif sandbox_id == "seguridad":
                 result["herramientas"]["bandit"] = self._check_tool("bandit", "--version")
                 result["herramientas"]["pip_audit"] = self._check_tool("pip-audit", "--version")
                 result["herramientas"]["verificacion_permisos"] = self._tarea_generica(
-                    "verificacion permisos", sandbox_dir
+                    "verificacion permisos", sandbox_dir,
                 )
 
             elif sandbox_id == "aprendizaje":
                 result["herramientas"]["embeddings"] = self._tarea_generica(
-                    "generacion embeddings", sandbox_dir
+                    "generacion embeddings", sandbox_dir,
                 )
                 result["herramientas"]["indexacion"] = self._tarea_generica(
-                    "indexacion memoria", sandbox_dir
+                    "indexacion memoria", sandbox_dir,
                 )
 
             elif sandbox_id == "documentacion":
@@ -285,7 +284,7 @@ class SandboxOrchestrator:
         sandboxes_a_ejecutar = self._get_current_rotation()
         threads = []
 
-        def _ejecutar(sid):
+        def _ejecutar(sid) -> None:
             res = self._run_sandbox(sid)
             with self._lock:
                 run_log["results"][sid] = res
@@ -331,14 +330,14 @@ class SandboxOrchestrator:
             {
                 "event": "accelerated_triggered",
                 "reason": reason,
-                "until": datetime.fromtimestamp(self.accelerated_until).isoformat(),
+                "until": datetime.fromtimestamp(self.accelerated_until, tz=timezone.utc).isoformat(),
                 "timestamp": datetime.now().isoformat(),
-            }
+            },
         )
         self._save_log()
         return {"ok": True, "message": notification, "until": self.accelerated_until}
 
-    def check_and_update_cycle(self):
+    def check_and_update_cycle(self) -> None:
         """Desactiva acelerado si expiro."""
         now = time.time()
         if self.accelerated_active and self.accelerated_until and now > self.accelerated_until:
@@ -352,17 +351,17 @@ class SandboxOrchestrator:
                 self._save_state()
                 logger.info("Ciclo acelerado finalizado")
 
-    CRITICAL_CHANGE_TYPES = {
+    CRITICAL_CHANGE_TYPES: frozenset = frozenset({
         "package_install",
         "systemic_repair",
         "core_modification",
         "ollama_model_update",
         "network_config_change",
         "external_merge",
-    }
+    })
 
     def register_critical_change(
-        self, change_type: str, reason: str = "", metadata: dict = None
+        self, change_type: str, reason: str = "", metadata: dict | None = None,
     ) -> bool:
         if change_type not in self.CRITICAL_CHANGE_TYPES:
             logger.warning(f"Tipo de cambio desconocido: {change_type}")
