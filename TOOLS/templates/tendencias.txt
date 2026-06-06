@@ -1,0 +1,8 @@
+Analiza la siguiente tendencia de {dominio}.
+
+{if score_bajo}ATENCION: Fuente con baja reputacion. Contrasta con otras fuentes.{endif}
+
+TAREA: Extrae nombre, categoria, fase del ciclo, aplicabilidad en hosteleria y puntuacion en formato JSON.
+
+Contenido:
+{texto_sanitizado}
