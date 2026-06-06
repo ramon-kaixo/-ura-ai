@@ -1,5 +1,7 @@
 {
   "version": "3.0",
+  "schema_version": "1.0",
+  "baseline_date": "2026-06-06",
   "critical_metrics": {
     "min_coroutines": 11,
     "current_coroutines": 19,
@@ -8,6 +10,6 @@
   },
   "required_components": ["ura-supervisor", "model-router", "redis"],
   "promotions": [
-    {"version": "3.0", "change": "19 coroutines. Módulos ingest/ ai/ infra/. data_scraper+analyzer movidos a modules/. Whitelist + FSM extendida"}
+    {"version": "3.0", "change": "19 coroutines, módulos ingest/ai/infra, ZeroMQ event bus, /status dashboard"}
   ]
 }
