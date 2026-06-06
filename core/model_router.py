@@ -672,6 +672,47 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(supervisor_data.encode())
+        elif self.path == "/status":
+            html = "<html><head><title>URA System Status</title><meta charset='utf-8'><style>"
+            html += "body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}"
+            html += "h1{color:#58a6ff}.ok{color:#3fb950}.err{color:#f85149}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}"
+            html += ".card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px}"
+            html += ".card h3{color:#8b949e;margin:0 0 8px 0;font-size:14px;text-transform:uppercase}"
+            html += "</style></head><body>"
+            html += "<h1>URA System Status</h1><div class='grid'>"
+
+            # Get tasks from IPC
+            tasks_data = []
+            try:
+                ctx = zmq.Context()
+                sock = ctx.socket(zmq.REQ)
+                sock.setsockopt(zmq.RCVTIMEO, 3000)
+                sock.connect("ipc:///tmp/ura-supervisor.ipc")
+                sock.send(b"tasks")
+                tasks_data = json.loads(sock.recv())
+                sock.close()
+                ctx.term()
+            except Exception:
+                pass
+
+            healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
+            html += "<div class='card'><h3>Corrutinas</h3>"
+            html += f"<div style='font-size:24px;font-weight:bold;color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
+            html += "<div style='margin-top:8px'>"
+            for t in sorted(tasks_data, key=lambda x: x["name"]):
+                ok = not t["done"] and t.get("last_error") is None
+                icon = "●" if ok else "○"
+                color = "#3fb950" if ok else "#f85149"
+                html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
+            html += "</div></div>"
+
+            html += "</div>"
+            html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC</div>"
+            html += "</body></html>"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(html.encode("utf-8"))
         elif self.path.startswith("/dashboard") and not self.path.startswith("/dashboard.json"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
