@@ -656,6 +656,8 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Forbidden: X-API-KEY inválido o faltante"}).encode())
                 return
             supervisor_data = "{}"
+            ctx = None
+            sock = None
             try:
                 import zmq
                 ctx = zmq.Context()
@@ -664,10 +666,20 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 sock.connect("ipc:///tmp/ura-supervisor.ipc")
                 sock.send(b"status")
                 supervisor_data = sock.recv().decode()
-                sock.close()
-                ctx.term()
-            except Exception:
+            except Exception as e:
+                log.warning(f"Error conectando a supervisor IPC: {e}")
                 supervisor_data = json.dumps({"error": "supervisor no accesible"})
+            finally:
+                if sock:
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+                if ctx:
+                    try:
+                        ctx.term()
+                    except Exception:
+                        pass
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -683,17 +695,29 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
             # Get tasks from IPC
             tasks_data = []
+            ctx = None
+            sock = None
             try:
+                import zmq
                 ctx = zmq.Context()
                 sock = ctx.socket(zmq.REQ)
                 sock.setsockopt(zmq.RCVTIMEO, 3000)
                 sock.connect("ipc:///tmp/ura-supervisor.ipc")
                 sock.send(b"tasks")
                 tasks_data = json.loads(sock.recv())
-                sock.close()
-                ctx.term()
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning(f"Error conectando a supervisor IPC (tasks): {e}")
+            finally:
+                if sock:
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+                if ctx:
+                    try:
+                        ctx.term()
+                    except Exception:
+                        pass
 
             healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
             html += "<div class='card'><h3>Corrutinas</h3>"

@@ -77,18 +77,18 @@ def close() -> None:
         if _pub_sock:
             try:
                 _pub_sock.close()
-            except Exception:
-                pass
+            except Exception as e:
+                log.debug("event_bus.close: %s", e)
             _pub_sock = None
     if _zmq_ctx:
         try:
             _zmq_ctx.term()
-        except Exception:
-            pass
+        except Exception as e:
+            log.debug("event_bus.term: %s", e)
         _zmq_ctx = None
     sock_path = IPC_PUB.replace("ipc://", "")
     if os.path.exists(sock_path):
         try:
             os.unlink(sock_path)
         except Exception:
-            pass
+            log.debug("silent exception in %s", e if 'e' in prev else 'event_bus')
