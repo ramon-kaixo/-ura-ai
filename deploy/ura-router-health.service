@@ -8,3 +8,6 @@ User=root
 ExecStart=/usr/local/bin/ura-router-health.sh
 StandardOutput=journal
 StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,0 @@
-Analiza el siguiente contenido extraido de {dominio}.
-
-{if score_bajo}ATENCION: Dominio con baja reputacion ({score_fiabilidad}). Verifica las afirmaciones.{endif}
-
-TAREA: Extrae paleta de colores, composicion, tipografia y estilo artistico en formato JSON.
-
-Contenido:
-{texto_sanitizado}

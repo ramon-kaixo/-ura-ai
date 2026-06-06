@@ -1,0 +1,8 @@
+{"ts": "2026-06-06T06:19:52.580721Z", "topic": "analytics", "data": {"source": "coingecko_btc", "file": "data_2026-06-06.jsonl", "records": 7}}
+{"ts": "2026-06-06T06:19:52.580842Z", "topic": "analytics", "data": {"source": "httpbin_ip", "file": "data_2026-06-06.jsonl", "records": 7}}
+{"ts": "2026-06-06T06:19:52.580880Z", "topic": "analytics", "data": {"source": "coingecko_btc", "file": "data_2026-06-06.jsonl", "records": 7}}
+{"ts": "2026-06-06T06:19:52.580905Z", "topic": "analytics", "data": {"source": "httpbin_ip", "file": "data_2026-06-06.jsonl", "records": 7}}
+{"ts": "2026-06-06T06:20:36.266563Z", "topic": "analytics", "data": {"source": "coingecko_btc", "file": "data_2026-06-06.jsonl", "records": 9}}
+{"ts": "2026-06-06T06:20:36.266769Z", "topic": "analytics", "data": {"source": "httpbin_ip", "file": "data_2026-06-06.jsonl", "records": 9}}
+{"ts": "2026-06-06T06:20:36.266886Z", "topic": "analytics", "data": {"source": "coingecko_btc", "file": "data_2026-06-06.jsonl", "records": 9}}
+{"ts": "2026-06-06T06:20:36.266965Z", "topic": "analytics", "data": {"source": "httpbin_ip", "file": "data_2026-06-06.jsonl", "records": 9}}
