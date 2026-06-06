@@ -76,7 +76,8 @@ class Telemetria:
                             metrics["ram_libre_mb"] = int(line.split()[1]) // 1024
                         elif "MemTotal" in line:
                             metrics["ram_total_mb"] = int(line.split()[1]) // 1024
-            except Exception:
+            except Exception as e:
+                log.warning(f"Error leyendo /proc/meminfo: {e}")
                 metrics["ram_libre_mb"] = 8192
                 metrics["ram_total_mb"] = 121920
         return metrics
