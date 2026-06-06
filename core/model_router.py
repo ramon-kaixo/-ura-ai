@@ -707,7 +707,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             html += "</div></div>"
 
             html += "</div>"
-            html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC</div>"
+            html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
             html += "</body></html>"
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
