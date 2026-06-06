@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ura.opencode-watchdog</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/ramonesnaola/URA/ura_ia_1972/deploy/ura_opencode_watchdog.sh</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/ramonesnaola/URA/ura_ia_1972</string>
+    <key>KeepAlive</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/ramonesnaola/URA/logs/opencode_watchdog.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/ramonesnaola/URA/logs/opencode_watchdog.stderr.log</string>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>

@@ -1,0 +1,169 @@
+# URA - Sandboxes (6 entornos aislados de auto-mejora)
+# Los 4 del San box + Mejora Continua + Exploracion
+#
+# Para levantar todos:
+#   docker compose -f docker-compose.sandbox.yml up -d
+#
+# Para levantar solo uno:
+#   docker compose -f sandbox/Seguridad/docker-compose.yml up -d
+
+services:
+  # ==================== SAN BOX (4) ====================
+  seguridad:
+    build: ./sandbox/Seguridad
+    container_name: ura-sandbox-seguridad
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Seguridad/scripts:/sandbox/scripts:ro
+      - ./data:/data:ro
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  mantenimiento:
+    build: ./sandbox/Mantenimiento
+    container_name: ura-sandbox-mantenimiento
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Mantenimiento/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+      # docker.sock eliminado por seguridad 2026-06-03
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  documentacion:
+    build: ./sandbox/Documentacion
+    container_name: ura-sandbox-documentacion
+    networks:
+      - sandbox-net
+    ports:
+      - "8087:8000"
+    volumes:
+      - ./sandbox/Documentacion/scripts:/sandbox/scripts:ro
+      - ./docs:/docs:ro
+      - ./:/repo:ro
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  aprendizaje:
+    build: ./sandbox/Aprendizaje
+    container_name: ura-sandbox-aprendizaje
+    networks:
+      - sandbox-net
+    volumes:
+      - ./sandbox/Aprendizaje/Enjambre:/sandbox/Enjambre:ro
+      - ./sandbox/Aprendizaje/scripts:/sandbox/scripts:ro
+      - ./data:/data:rw
+      - ./biblioteca:/biblioteca:rw
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ==================== MEJORA CONTINUA ====================
+  mejora-continua:
+    image: python:3.12-slim
+    container_name: ura-mejora-continua
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,nodev
+    networks:
+      - sandbox-net
+    volumes:
+      - ./:/workspace:rw
+      - sandbox-venv:/workspace/.venv:rw
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "www.google.com:127.0.0.1"
+      - "facebook.com:127.0.0.1"
+      - "instagram.com:127.0.0.1"
+      - "tiktok.com:127.0.0.1"
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    working_dir: /workspace
+    command: sh -c "exec tail -f /dev/null"
+    restart: unless-stopped
+
+  # ==================== EXPLORACION + SQUID ====================
+  squid-proxy:
+    build:
+      context: ./sandbox/Exploracion
+      dockerfile: Dockerfile.squid
+    container_name: ura-squid
+    networks:
+      - sandbox-net
+    ports:
+      - "3128:3128"
+    restart: unless-stopped
+
+  exploracion:
+    build: ./sandbox/Exploracion
+    container_name: ura-exploracion
+    network_mode: none
+    volumes:
+      - ./sandbox/Exploracion/proyecto_prueba:/sandbox/proyecto_prueba:ro
+      - ./sandbox/Exploracion/scripts:/sandbox/scripts:ro
+    environment:
+      - http_proxy=http://squid-proxy:3128
+      - https_proxy=http://squid-proxy:3128
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+volumes:
+  sandbox-venv:
+
+networks:
+  sandbox-net:
+    driver: bridge

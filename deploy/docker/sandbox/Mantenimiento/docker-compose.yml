@@ -1,0 +1,20 @@
+services:
+  mantenimiento:
+    build: .
+    container_name: ura-sandbox-mantenimiento
+    network_mode: bridge
+    volumes:
+      - ./scripts:/sandbox/scripts:ro
+      - ../../data:/data:rw
+      # docker.sock eliminado por seguridad 2026-06-05
+    environment:
+      - OLLAMA_HOST=http://10.164.1.99:11434
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

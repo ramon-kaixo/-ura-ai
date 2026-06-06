@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""
-Módulo: core/sandbox.py
+"""Módulo: core/sandbox.py
 Propósito: Entorno aislado para ejecutar código Python de forma segura con import dinámico controlado.
 Dependencias principales: importlib, subprocess, pathlib, logging
 Reglas especiales: Nunca ejecutar código sin sandbox. Capturar OSError. No propagar excepciones del sandbox.
 """
 
 import asyncio
+import contextlib
 import logging
 import shutil
 import tempfile
@@ -22,22 +22,21 @@ SANDBOX_LOG.parent.mkdir(parents=True, exist_ok=True)
 class Sandbox:
     """Caja de arena para pruebas aisladas de módulos."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.backup_dir = Path.home() / ".ura" / "sandbox_backups"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
-    def _log(self, event_type: str, details: str):
+    def _log(self, event_type: str, details: str) -> None:
         """Registrar evento en log del sandbox."""
         try:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(SANDBOX_LOG, "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp}] [{event_type}] {details}\n")
         except Exception as e:
-            logger.error(f"Error registrando en sandbox.log: {e}")
+            logger.exception(f"Error registrando en sandbox.log: {e}")
 
     async def test_improvement(self, module_name: str, test_code: str) -> dict:
-        """
-        Ejecutar código de prueba en subproceso aislado con timeout.
+        """Ejecutar código de prueba en subproceso aislado con timeout.
 
         Args:
             module_name: Nombre del módulo a probar
@@ -45,6 +44,7 @@ class Sandbox:
 
         Returns:
             Dict con {'success': bool, 'output': str, 'error': str}
+
         """
         self._log("TEST_START", f"Probando módulo: {module_name}")
 
@@ -91,26 +91,24 @@ class Sandbox:
 
             finally:
                 # Limpiar archivo temporal
-                try:
+                with contextlib.suppress(OSError):
                     Path(test_file).unlink()
-                except OSError:
-                    pass
 
         except Exception as e:
             result = {"success": False, "output": "", "error": str(e)}
 
-            self._log("TEST_ERROR", f"Módulo: {module_name}, Error: {str(e)}")
+            self._log("TEST_ERROR", f"Módulo: {module_name}, Error: {e!s}")
             return result
 
     def safe_import(self, module_name: str) -> bool:
-        """
-        Intentar importar un módulo de prueba sin afectar al sistema principal.
+        """Intentar importar un módulo de prueba sin afectar al sistema principal.
 
         Args:
             module_name: Nombre del módulo a importar
 
         Returns:
             True si exitoso, False si no
+
         """
         self._log("IMPORT_START", f"Importando módulo: {module_name}")
 
@@ -134,18 +132,18 @@ class Sandbox:
             return True
 
         except Exception as e:
-            self._log("IMPORT_ERROR", f"Módulo: {module_name}, Error: {str(e)}")
+            self._log("IMPORT_ERROR", f"Módulo: {module_name}, Error: {e!s}")
             return False
 
     def create_backup(self, module_path: str) -> str | None:
-        """
-        Crear copia de seguridad del módulo antes de probar cambios.
+        """Crear copia de seguridad del módulo antes de probar cambios.
 
         Args:
             module_path: Ruta del módulo a respaldar
 
         Returns:
             Ruta de la copia de seguridad o None si falla
+
         """
         try:
             source = Path(module_path)
@@ -165,12 +163,11 @@ class Sandbox:
             return str(backup_path)
 
         except Exception as e:
-            self._log("BACKUP_ERROR", f"Error creando backup: {str(e)}")
+            self._log("BACKUP_ERROR", f"Error creando backup: {e!s}")
             return None
 
     def rollback(self, module_path: str, backup_path: str) -> bool:
-        """
-        Restaurar copia de seguridad si la prueba falla.
+        """Restaurar copia de seguridad si la prueba falla.
 
         Args:
             module_path: Ruta del módulo a restaurar
@@ -178,6 +175,7 @@ class Sandbox:
 
         Returns:
             True si exitoso, False si no
+
         """
         try:
             source = Path(backup_path)
@@ -194,15 +192,15 @@ class Sandbox:
             return True
 
         except Exception as e:
-            self._log("ROLLBACK_ERROR", f"Error restaurando: {str(e)}")
+            self._log("ROLLBACK_ERROR", f"Error restaurando: {e!s}")
             return False
 
-    def cleanup_old_backups(self, days: int = 7):
-        """
-        Limpiar copias de seguridad antiguas.
+    def cleanup_old_backups(self, days: int = 7) -> None:
+        """Limpiar copias de seguridad antiguas.
 
         Args:
             days: Días de antigüedad para eliminar
+
         """
         try:
             cutoff = datetime.now().timestamp() - (days * 86400)
@@ -213,7 +211,7 @@ class Sandbox:
                     self._log("CLEANUP", f"Backup antiguo eliminado: {backup.name}")
 
         except Exception as e:
-            self._log("CLEANUP_ERROR", f"Error limpiando backups: {str(e)}")
+            self._log("CLEANUP_ERROR", f"Error limpiando backups: {e!s}")
 
 
 _sandbox_instance: Sandbox | None = None
@@ -228,44 +226,31 @@ def get_sandbox() -> Sandbox:
 
 
 if __name__ == "__main__":
-    import asyncio
 
-    async def test():
+    async def test() -> None:
         sandbox = Sandbox()
 
         # Test 1: safe_import
-        print("Test safe_import:")
-        print(f"  math: {sandbox.safe_import('math')}")
-        print(f"  modulo_inexistente: {sandbox.safe_import('modulo_inexistente')}")
 
         # Test 2: test_improvement
-        print("\nTest test_improvement:")
         test_code = """
 print('Hola desde el sandbox')
 x = 1 + 1
 print(f'1 + 1 = {x}')
 """
-        result = await sandbox.test_improvement("test_module", test_code)
-        print(f"  Success: {result['success']}")
-        print(f"  Output: {result['output']}")
+        await sandbox.test_improvement("test_module", test_code)
 
         # Test 3: backup
-        print("\nTest backup:")
         test_file = Path("/tmp/test_sandbox.txt")
         test_file.write_text("contenido original")
         backup = sandbox.create_backup(str(test_file))
-        print(f"  Backup creado: {backup}")
 
         # Test 4: rollback
-        print("\nTest rollback:")
         test_file.write_text("contenido modificado")
-        success = sandbox.rollback(str(test_file), backup)
-        print(f"  Rollback exitoso: {success}")
-        print(f"  Contenido restaurado: {test_file.read_text()}")
+        sandbox.rollback(str(test_file), backup)
 
         # Limpiar
         test_file.unlink()
 
-        print("\n✅ SANDBOX FUNCIONANDO")
 
     asyncio.run(test())

@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """alineador.py — Valida que las respuestas de URA/OpenClaw sean utiles y no se desvien.
-Se ejecuta en la tuneladora para auditar el comportamiento."""
+Se ejecuta en la tuneladora para auditar el comportamiento.
+"""
+
+PLUGIN = {
+    "name": "alineador",
+    "phase": "post",
+    "timeout": 30,
+    "blocking": False,
+    "needs_file": False,
+}
 
 import json
 from datetime import datetime
@@ -12,13 +21,12 @@ MONOLOGO = Path("/opt/ura/data/monologo_interno.json")
 LOG.parent.mkdir(parents=True, exist_ok=True)
 
 
-def log(msg):
+def log(msg) -> None:
     with open(LOG, "a") as f:
         f.write(f"{datetime.now().isoformat()} - {msg}\n")
-    print(msg)
 
 
-def check_monologo():
+def check_monologo() -> bool:
     """Verifica que el monologo tenga acciones reales, no charla."""
     if not MONOLOGO.exists():
         log("⚠️ Monologo interno no encontrado")
@@ -40,7 +48,7 @@ def check_monologo():
     if ok_count == 0 and total > 0:
         log("🔴 Ninguna accion exitosa — revisar tools/MCP")
         agregar_sugerencia(
-            "Master Conciencia: 0 acciones exitosas", "Revisar servidor MCP y tools de Open WebUI"
+            "Master Conciencia: 0 acciones exitosas", "Revisar servidor MCP y tools de Open WebUI",
         )
         return False
 
@@ -70,7 +78,7 @@ def check_deviation(message):
     return any(marker in message.lower() for marker in deviation_markers)
 
 
-def agregar_sugerencia(problema, solucion):
+def agregar_sugerencia(problema, solucion) -> None:
     sugerencias = []
     if SUGERENCIAS.exists():
         with open(SUGERENCIAS) as f:
@@ -81,13 +89,26 @@ def agregar_sugerencia(problema, solucion):
             "dominio": "alineador",
             "problema": problema,
             "solucion": solucion,
-        }
+        },
     )
     with open(SUGERENCIAS, "w") as f:
         json.dump(sugerencias, f, indent=2)
 
 
-def main():
+def scan_project() -> None:
+    from pathlib import Path as _Path
+    root = _Path.home() / "URA/ura_ia_1972"
+    list(root.rglob("*.py"))
+
+
+def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description="Alineador URA/OpenClaw")
+    parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
+    args = parser.parse_args()
+    if args.scan:
+        scan_project()
+        return
     log("=== Alineador de conciencia ===")
     check_monologo()
     log("=== Alineacion completada ===")

@@ -1,0 +1,127 @@
+{
+  "version": "2.0",
+  "description": "Runbook de autoreparación determinista. v2: añadidos tailscale, hetzner, mac multi-path.",
+  "retry_policy": {
+    "max_attempts": 3,
+    "cooldown_seconds": 10,
+    "escalate_after_failures": 3,
+    "escalate_to": "openclaw"
+  },
+  "commands": {
+    "ollama": {
+      "description": "Servicio de inferencia Ollama",
+      "check": "curl -sf --max-time 5 http://localhost:11434/api/tags",
+      "repair": ["systemctl restart ollama"],
+      "timeout_after_repair": 15,
+      "max_repair_attempts": 3
+    },
+    "model_router": {
+      "description": "Router de modelos URA",
+      "check": "curl -sf --max-time 5 http://localhost:11435/health",
+      "repair": ["pkill -HUP -f model_router.py"],
+      "timeout_after_repair": 10,
+      "max_repair_attempts": 2
+    },
+    "network": {
+      "description": "Conectividad de red primaria (Ethernet enP7s7)",
+      "check": "ip link show enP7s7 | grep -q UP",
+      "repair": [
+        "ip link set enP7s7 down && sleep 2 && ip link set enP7s7 up",
+        "ip route replace 10.164.1.0/24 dev enP7s7 metric 100"
+      ],
+      "timeout_after_repair": 5,
+      "max_repair_attempts": 2
+    },
+    "wifi_failover": {
+      "description": "Wi-Fi como failover de red (wlP9s9)",
+      "check": "ip link show wlP9s9 | grep -q UP",
+      "repair": [
+        "ip link set wlP9s9 up",
+        "ip route replace 192.168.1.0/24 dev wlP9s9 metric 300",
+        "ip route replace default via 192.168.1.1 dev wlP9s9 metric 300"
+      ],
+      "timeout_after_repair": 5,
+      "max_repair_attempts": 2,
+      "only_if": "network"
+    },
+    "tailscale": {
+      "description": "Servicio Tailscale (VPN)",
+      "check": "tailscale status --json | python3 -c 'import json,sys; d=json.load(sys.stdin); peers=[p for p in d.get(\"Peer\",{}).values() if p.get(\"Online\")]; exit(0 if len(peers)>0 else 1)'",
+      "repair": [
+        "systemctl restart tailscaled",
+        "sleep 3",
+        "tailscale up --accept-routes --exit-node=hetzner-escudo --exit-node-allow-lan-access"
+      ],
+      "timeout_after_repair": 15,
+      "max_repair_attempts": 3
+    },
+    "containers": {
+      "description": "Contenedores Docker activos (mínimo 3 esperados)",
+      "check": "docker ps --format '{{.Names}}' | wc -l | grep -q '[3-9]'",
+      "repair": ["docker compose -f /home/ramon/URA/ura_ia_1972/deploy/docker/docker-compose.sandbox.yml up -d"],
+      "timeout_after_repair": 30,
+      "max_repair_attempts": 2
+    },
+    "openclaw": {
+      "description": "Gateway OpenClaw (solo activación en emergencia)",
+      "check": "curl -sf --max-time 5 http://localhost:18789/health",
+      "repair": [],
+      "activate_on_emergency": true,
+      "deactivate_after_stable_seconds": 30
+    },
+    "hetzner_connectivity": {
+      "description": "Conectividad con hetzner-escudo vía Tailscale",
+      "check": "ping -c 1 -W 3 hetzner-escudo",
+      "repair": [
+        "ping -c 1 -W 3 100.78.49.106",
+        "/home/ramon/ura-exit-node.sh"
+      ],
+      "timeout_after_repair": 15,
+      "max_repair_attempts": 2,
+      "log_on_failure": true
+    },
+    "mac_reachability": {
+      "description": "Conectividad con Mac — multi-path (Ethernet 10.164.1.26 → Tailscale 100.123.81.101)",
+      "check": "ping -c 1 -W 2 10.164.1.26",
+      "repair": [
+        "ping -c 1 -W 2 100.123.81.101",
+        "ssh -o ConnectTimeout=5 ramon@10.164.1.26 '/opt/homebrew/bin/tailscale up --accept-routes'",
+        "ssh -o ConnectTimeout=5 ramon@100.123.81.101 '/opt/homebrew/bin/tailscale up --accept-routes'"
+      ],
+      "timeout_after_repair": 10,
+      "max_repair_attempts": 2,
+      "log_on_failure": true,
+      "sync_command": "rsync -avz /home/ramon/URA/ura_ia_1972/ ramonesnaola@10.164.1.26:/Users/ramonesnaola/URA/ura_ia_1972/"
+    }
+  },
+  "forbidden_commands": [
+    "rm -rf",
+    "rm -r -f",
+    "rm -f -r",
+    "shutdown",
+    "reboot",
+    "halt",
+    "poweroff",
+    "init 0",
+    "init 6",
+    "mkfs",
+    "dd if=",
+    "dd of=",
+    "> /dev/sd",
+    "> /dev/nvme",
+    ":(){ :|:& };:",
+    "chmod 777",
+    "chmod -R 777",
+    "iptables -F",
+    "iptables -X",
+    "docker rm -f",
+    "docker system prune",
+    "docker system prune -a",
+    "docker system prune -a --volumes",
+    "drop table",
+    "drop database",
+    "drop schema",
+    "truncate table",
+    ":(){ :|:& };:"
+  ]
+}

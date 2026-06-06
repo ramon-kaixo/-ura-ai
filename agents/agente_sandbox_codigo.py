@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""
-agente_sandbox_codigo.py — Vigilante del sandbox de codigo URA
+"""agente_sandbox_codigo.py — Vigilante del sandbox de codigo URA.
 
 Modo mixto:
 - AUTONOMO en lo aburrido (mover, testear, documentar)
 - MANUAL en lo critico (Ramon aprueba antes de tocar produccion)
 """
 
+import hashlib
 import json
-import time
 import logging
+import os
 import shutil
 import subprocess
-import hashlib
-import os
-from pathlib import Path
+import time
 from datetime import datetime
+from pathlib import Path
 
 SANDBOX_PENDIENTES = Path.home() / "URA" / "sandbox" / "pendientes"
 SANDBOX_EN_PRUEBAS = Path.home() / "URA" / "sandbox" / "en_pruebas"
@@ -52,7 +51,7 @@ logging.basicConfig(
 log = logging.getLogger("sandbox")
 
 
-def pushover(msg, title="URA Sandbox", pri=0):
+def pushover(msg, title="URA Sandbox", pri=0) -> None:
     if not PUSHOVER_USER or not PUSHOVER_TOKEN:
         return
     try:
@@ -98,7 +97,7 @@ def cargar_inventario():
     return json.loads(INVENTARIO.read_text()) if INVENTARIO.exists() else {"archivos": {}}
 
 
-def actualizar_inventario(rel, h, ver):
+def actualizar_inventario(rel, h, ver) -> None:
     inv = cargar_inventario()
     if rel in inv["archivos"]:
         inv["archivos"][rel]["hash_md5"] = h
@@ -114,49 +113,96 @@ def actualizar_inventario(rel, h, ver):
         INVENTARIO.write_text(json.dumps(inv, indent=2, ensure_ascii=False))
 
 
-def crear_ramal(rel, v_old, v_new, origen, razon):
+def create_branch(rel, v_old, v_new, origin, reason):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    nombre = f"cambio_{ts}_{rel.replace('/', '_')}.json"
-    (RAMALES / nombre).write_text(
+    name = f"change_{ts}_{rel.replace('/', '_')}.json"
+    (BRANCHES / name).write_text(
         json.dumps(
             {
-                "fecha": datetime.now().isoformat(),
-                "agente_origen": origen,
-                "razon": razon,
-                "archivo": rel,
-                "version_anterior": v_old,
-                "version_nueva": v_new,
-                "estado": "esperando_aprobacion",
+                "date": datetime.now().isoformat(),
+                "agent_origin": origin,
+                "reason": reason,
+                "file": rel,
+                "previous_version": v_old,
+                "new_version": v_new,
+                "status": "awaiting_approval",
             },
             indent=2,
             ensure_ascii=False,
-        )
+        ),
     )
-    return nombre
+    return name
 
 
-def testear(archivo):
+def test_file(file_path):
     try:
-        r = subprocess.run(
-            ["python3", "-m", "py_compile", str(archivo)],
+        result = subprocess.run(
+            ["python3", "-m", "py_compile", str(file_path)],
             capture_output=True,
             text=True,
             timeout=30,
         )
-        return r.returncode == 0, r.stderr[:200]
+        return result.returncode == 0, result.stderr[:200]
     except subprocess.TimeoutExpired:
         return False, "timeout"
 
 
-def main():
-    log.info("Agente sandbox iniciado (modo mixto)")
-    pushover("Agente sandbox de codigo iniciado en GX10", "URA Sandbox")
+def _probar_compilacion(pruebas_path: Path) -> tuple[bool, str]:
+    ok, err = test_file(pruebas_path)
+    return ok, err
+
+
+def _rechazar_cambio(pruebas_path: Path, archivo: Path, rel: str, err: str) -> None:
+    shutil.move(str(pruebas_path), str(SANDBOX_RECHAZADOS / archivo.name))
+    log.warning(f"REJECTED {rel}: compilation failed - {err[:100]}")
+    pushover(f"Change REJECTED in {rel}: {err[:100]}", "URA Sandbox")
+
+
+def _esperar_aprobacion(pruebas_path: Path, archivo: Path, rel: str) -> None:
+    shutil.move(str(pruebas_path), str(SANDBOX_ESPERA_APROBACION / archivo.name))
+    log.warning(f"{rel} is CRITICAL — requires Ramon's approval")
+    pushover(f"Pending approval: {rel} (critical file)", "URA Sandbox", 1)
+
+
+def _aprobar_cambio(pruebas_path: Path, archivo: Path, rel: str) -> None:
+    shutil.move(str(pruebas_path), str(SANDBOX_APROBADOS / archivo.name))
+    log.info(f"Approved automatically: {rel}")
+
+
+def _procesar_aprobados() -> None:
+    for archivo in SANDBOX_APROBADOS.glob("*.py"):
+        rel = archivo.name
+        prod_path = PRODUCCION / rel
+
+        if prod_path.exists():
+            backup_path = BACKUP / f"{rel}.{datetime.now().strftime('%Y%m%d_%H%M')}"
+            shutil.copy2(str(prod_path), str(backup_path))
+            log.info(f"Backup: {rel} → backup_versiones")
+
+        nuevo_hash = md5(archivo)
+        shutil.move(str(archivo), str(prod_path))
+        actualizar_inventario(rel, nuevo_hash, "auto_aprobado")
+        inv = cargar_inventario()
+        v_old = (
+            inv["archivos"].get(rel, {}).get("version", "unknown")
+            if rel in inv.get("archivos", {})
+            else "unknown"
+        )
+        create_branch(
+            rel, v_old, "auto_aprobado", "agente_sandbox", "Automatic non-critical change",
+        )
+        log.info(f"Production updated: {rel}")
+        pushover(f"Change applied in production: {rel}")
+
+
+def main() -> None:
+    log.info("Sandbox agent started (mixed mode)")
+    pushover("Sandbox code agent started on GX10", "URA Sandbox")
 
     while True:
-        pendientes = list(SANDBOX_PENDIENTES.glob("*.py"))
-        for archivo in pendientes:
+        pending_files = list(SANDBOX_PENDIENTES.glob("*.py"))
+        for archivo in pending_files:
             rel = archivo.name
-            # Extraer estructura de directorios del nombre (usando __ como /)
             sub_dir = ""
             if "_" in rel[:-3]:
                 parts = rel[:-3].split("__")
@@ -168,58 +214,21 @@ def main():
             else:
                 rel_path = rel
 
-            prod_path = PRODUCCION / rel_path
-
-            # Copiar al area de pruebas
             pruebas_path = SANDBOX_EN_PRUEBAS / archivo.name
             shutil.move(str(archivo), str(pruebas_path))
-            log.info(f"Nuevo cambio: {rel} → en_pruebas")
+            log.info(f"New change: {rel_path} → en_pruebas")
 
-            # Test rapido: compilar
-            ok, err = testear(pruebas_path)
+            ok, err = _probar_compilacion(pruebas_path)
             if not ok:
-                shutil.move(str(pruebas_path), str(SANDBOX_RECHAZADOS / archivo.name))
-                log.warning(f"RECHAZADO {rel}: fallo compilacion - {err[:100]}")
-                pushover(f"Cambio RECHAZADO en {rel}: {err[:100]}", "URA Sandbox")
+                _rechazar_cambio(pruebas_path, archivo, rel_path, err)
                 continue
 
-            # ¿Critico? → Manual
-            if es_critico(rel):
-                shutil.move(str(pruebas_path), str(SANDBOX_ESPERA_APROBACION / archivo.name))
-                log.warning(f"{rel} es CRITICO — requiere aprobacion de Ramon")
-                pushover(f" Pendiente aprobacion: {rel} (archivo critico)", "URA Sandbox", 1)
+            if es_critico(rel_path):
+                _esperar_aprobacion(pruebas_path, archivo, rel_path)
             else:
-                # Auto-aprobar cambio no critico
-                shutil.move(str(pruebas_path), str(SANDBOX_APROBADOS / archivo.name))
-                log.info(f"Aprobado automaticamente: {rel}")
+                _aprobar_cambio(pruebas_path, archivo, rel_path)
 
-        # Procesar aprobados: mover a produccion
-        for archivo in SANDBOX_APROBADOS.glob("*.py"):
-            rel = archivo.name
-            prod_path = PRODUCCION / rel
-
-            # Backup de produccion actual
-            if prod_path.exists():
-                backup_path = BACKUP / f"{rel}.{datetime.now().strftime('%Y%m%d_%H%M')}"
-                shutil.copy2(str(prod_path), str(backup_path))
-                log.info(f"Backup: {rel} → backup_versiones")
-
-            # Sustitucion atomica
-            nuevo_hash = md5(archivo)
-            shutil.move(str(archivo), str(prod_path))
-            actualizar_inventario(rel, nuevo_hash, "auto_aprobado")
-            inv = cargar_inventario()
-            v_old = (
-                inv["archivos"].get(rel, {}).get("version", "desconocida")
-                if rel in inv.get("archivos", {})
-                else "desconocida"
-            )
-            crear_ramal(
-                rel, v_old, "auto_aprobado", "agente_sandbox", "Cambio automatico no critico"
-            )
-            log.info(f"Produccion actualizado: {rel}")
-            pushover(f" Cambio aplicado en produccion: {rel}")
-
+        _procesar_aprobados()
         time.sleep(INTERVALO)
 
 

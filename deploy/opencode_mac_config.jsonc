@@ -1,0 +1,45 @@
+// OpenCode Configuration — Mac (Interfaz pura)
+// El Mac NUNCA ejecuta modelos. Todo va al GX10 vía Router.
+// Ejecución de scripts: remota vía SSH al sandbox mejora-continua.
+//
+// Instalación:
+//   cp deploy/opencode_mac_config.jsonc ~/.config/opencode/opencode.jsonc
+
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Modelo: apunta al Model Router del GX10 (puerto 11435)
+  // El router clasifica la tarea y selecciona el mejor modelo disponible
+  "model": "http://10.164.1.99:11435/v1/chat",
+  "provider": "openai-compatible",
+
+  // Agentes: solo edición de código local, NUNCA ejecución
+  "agent": {
+    "default": "ura_router",
+    "workspace": "~/URA/ura_ia_1972",
+    "executor": "remote",
+    "executor_remote": {
+      "host": "10.164.1.99",
+      "user": "ramon",
+      "sandbox": "mejora-continua",
+      "command": "docker exec -i ura-mejora-continua"
+    }
+  },
+
+  // MCP: OpenClaw Gateway en GX10 (localhost allí)
+  "mcp": {
+    "openclaw": {
+      "type": "remote",
+      "command": ["ssh", "ramon@10.164.1.99", "openclaw", "mcp", "serve"],
+      "enabled": false,
+      "timeout": 30000
+    }
+  },
+
+  // NO usar modelos locales en Mac
+  "features": {
+    "local_models": false,
+    "context_cache": true,
+    "cache_ttl": 3600
+  }
+}

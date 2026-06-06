@@ -1,0 +1,17 @@
+[Unit]
+Description=URA Model Router (intelligent model selection)
+After=network.target ollama.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA
+ExecStartPre=/bin/bash -c '/bin/fuser -k 11435/tcp 2>/dev/null || true'
+ExecStart=/usr/bin/python3 /home/ramon/URA/core/model_router.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

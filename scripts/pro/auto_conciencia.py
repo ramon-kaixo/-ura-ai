@@ -3,8 +3,8 @@
 
 import json
 import subprocess
-import time
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -37,13 +37,12 @@ def mcp(nombre, args=None):
         return ms, {"ok": False, "error": str(e)}
 
 
-def log(msg):
+def log(msg) -> None:
     with open(LOG, "a") as f:
         f.write(f"{datetime.now().isoformat()} - {msg}\n")
-    print(msg)
 
 
-def sugerir(problema, solucion):
+def sugerir(problema, solucion) -> None:
     sugs = []
     if SUGERENCIAS.exists():
         with open(SUGERENCIAS) as f:
@@ -54,13 +53,13 @@ def sugerir(problema, solucion):
             "dominio": "auto_conciencia",
             "problema": problema,
             "solucion": solucion,
-        }
+        },
     )
     with open(SUGERENCIAS, "w") as f:
         json.dump(sugs, f, indent=2)
 
 
-def notificar(msg):
+def notificar(msg) -> None:
     if NOTIFICAR.exists():
         subprocess.run([str(NOTIFICAR), msg])
 
@@ -76,7 +75,7 @@ def test(nombre, accion, args=None):
     return ok, r
 
 
-def main():
+def main() -> int:
     log("=" * 50)
     log("AUTO-CONCIENCIA URA")
     log("=" * 50)
@@ -116,7 +115,7 @@ def main():
     resultados.append(("explorar", ok))
 
     # 7. Raton
-    ok, r = test("Raton", "raton", {"accion": "posicion"})
+    ok, _r = test("Raton", "raton", {"accion": "posicion"})
     resultados.append(("raton", ok))
     if ok:
         time.sleep(1)

@@ -1,0 +1,11 @@
+[Unit]
+Description=URA Model Router Health Check Timer
+Documentation=https://github.com/anomalyco/ura
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=5min
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

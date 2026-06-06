@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ura_self_modify.py — Permite a URA modificar su propio prompt y tools.
-Ejecuta contra la BD de Open WebUI en el GX10."""
+Ejecuta contra la BD de Open WebUI en el GX10.
+"""
 
 import subprocess
 import sys
@@ -21,9 +22,9 @@ def ejecutar_remoto(python_code, env=None):
     if env:
         for k, v in env.items():
             env_args.extend(["-e", f"{k}={v}"])
-    subprocess.run(["scp", tmp, f"ramon@{GX10.split('@')[-1]}:/tmp/"], capture_output=True)
+    subprocess.run(["scp", tmp, f"ramon@{GX10.rsplit('@', maxsplit=1)[-1]}:/tmp/"], capture_output=True)
     r = subprocess.run(
-        ["ssh", GX10, "docker", "exec"] + env_args + ["open-webui", "python3", tmp],
+        ["ssh", GX10, "docker", "exec", *env_args, "open-webui", "python3", tmp],
         capture_output=True,
         text=True,
         timeout=15,
@@ -49,7 +50,6 @@ conn.close()
 
 def actualizar_prompt(nuevo_prompt):
     """Actualiza el system prompt de URA en Open WebUI."""
-
     code = """
 import sqlite3, json, os
 conn = sqlite3.connect('/app/backend/data/webui.db')
@@ -86,8 +86,8 @@ conn.close()
 
 def crear_tool(nombre, descripcion, codigo):
     """Crea una new tool en Open WebUI."""
-    import time
     import json as _json
+    import time
 
     tool_id = nombre.lower().replace(" ", "_")
     now = int(time.time())
@@ -97,21 +97,28 @@ def crear_tool(nombre, descripcion, codigo):
                 "name": "ejecutar",
                 "description": descripcion,
                 "parameters": {"type": "object", "properties": {}},
-            }
-        ]
+            },
+        ],
     )
     meta = _json.dumps({"description": descripcion})
-    code = f"""
-import sqlite3, json
+    code = """
+import sqlite3, json, os
 conn = sqlite3.connect('/app/backend/data/webui.db')
 conn.execute("INSERT OR REPLACE INTO tool (id, user_id, name, content, specs, meta, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    ('{tool_id}', 'admin', {_json.dumps(nombre)}, {_json.dumps(codigo)},
-     '{specs}', '{meta}', {now}, {now})
+    (os.environ['URA_TOOL_ID'], 'admin', json.loads(os.environ['URA_TOOL_NAME']), json.loads(os.environ['URA_TOOL_CODE']),
+     os.environ['URA_TOOL_SPECS'], os.environ['URA_TOOL_META'], int(os.environ['URA_TOOL_NOW']), int(os.environ['URA_TOOL_NOW']))
 conn.commit()
 print('OK: tool creada')
 conn.close()
 """
-    out, err = ejecutar_remoto(code)
+    out, err = ejecutar_remoto(code, env={
+        "URA_TOOL_ID": tool_id,
+        "URA_TOOL_NAME": _json.dumps(nombre),
+        "URA_TOOL_CODE": _json.dumps(codigo),
+        "URA_TOOL_SPECS": specs,
+        "URA_TOOL_META": meta,
+        "URA_TOOL_NOW": str(now),
+    })
     return out.strip() or err.strip()
 
 
@@ -131,19 +138,9 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
-        if cmd == "leer_prompt":
-            print(leer_prompt())
-        elif cmd == "actualizar_prompt":
-            print(actualizar_prompt(sys.argv[2]))
-        elif cmd == "listar_tools":
-            print(listar_tools())
-        elif cmd == "crear_tool":
-            print(crear_tool(sys.argv[2], sys.argv[3], sys.argv[4]))
-        elif cmd == "reiniciar":
-            print(reiniciar())
+        if cmd in {"leer_prompt", "actualizar_prompt"} or cmd in {"listar_tools", "crear_tool"} or cmd == "reiniciar":
+            pass
         else:
-            print(f"Comando desconocido: {cmd}")
+            pass
     else:
-        print(
-            "Comandos: leer_prompt, actualizar_prompt <texto>, listar_tools, crear_tool <nom> <desc> <codigo>, reiniciar"
-        )
+        pass

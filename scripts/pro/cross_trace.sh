@@ -17,4 +17,9 @@ MACHINE=$(hostname -s 2>/dev/null || echo "unknown")
     echo "  ---"
 } >> "$TRACE_FILE"
 
+# Rotar: mantener las últimas 1000 líneas
+if [ "$(wc -l < "$TRACE_FILE" 2>/dev/null || echo 0)" -gt 1000 ]; then
+    tail -n 1000 "$TRACE_FILE" > "${TRACE_FILE}.tmp" && mv "${TRACE_FILE}.tmp" "$TRACE_FILE"
+fi
+
 echo "✅ Traza guardada: $OPERATION → $STATUS en $MACHINE"

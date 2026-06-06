@@ -1,9 +1,0 @@
-/tmp/ura_errors.log /tmp/prensa_diaria.log /tmp/auto_cleanup.log /tmp/ura_watchdog.log {
-    daily
-    missingok
-    rotate 7
-    compress
-    delaycompress
-    notifempty
-    maxsize 50M
-}

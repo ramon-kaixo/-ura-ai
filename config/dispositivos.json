@@ -1,0 +1,103 @@
+{
+  "version": "1.1",
+  "descripcion": "Inventario dinámico de dispositivos en el ecosistema URA.",
+  "actualizado": "2026-06-04",
+  "propietario": "Ramon Esnaola",
+  "licencia_servidor": "K0513893926",
+  "admin_email": "barkaixo@gmail.com",
+  "dns_principal": "hetzner-escudo",
+  "rutas_camaras": "/vids/camaras/",
+  "dispositivos": {
+    "gx10-64c3": {
+      "nombre_dns": "gx10-64c3",
+      "rol": "servidor_principal",
+      "tipo": "linux",
+      "ram_gb": 121,
+      "cpu_cores": 20,
+      "gpu": "NVIDIA Blackwell",
+      "ip_cable": "10.164.1.99",
+      "ip_wifi": "192.168.1.139",
+      "ip_tailscale": "100.127.206.86",
+      "puertos": {"ollama": 11434, "model_router": 11435, "opencode": 8081, "openclaw": 18789, "gx10_api": 4096},
+      "tareas_asignables": ["refactorizacion", "inferencia_llm", "entrenamiento", "sandbox", "backup"],
+      "prioridad_conexion": ["cable", "tailscale"],
+      "estado": "online"
+    },
+    "mac-mini-de-ramon": {
+      "nombre_dns": "mac-mini-de-ramon",
+      "rol": "cliente_desarrollo",
+      "tipo": "macos",
+      "ram_gb": 16,
+      "ip_cable": "10.164.1.26",
+      "ip_tailscale": "100.123.81.101",
+      "puertos": {"ssh": 22, "opencode": 8081},
+      "tareas_asignables": ["monitoreo", "ui_dashboard", "desarrollo_ligero", "sincronizacion"],
+      "prioridad_conexion": ["cable", "tailscale"],
+      "estado": "online"
+    },
+    "mac-mini-de-kaixo": {
+      "nombre_dns": "mac-mini-de-kaixo",
+      "rol": "cliente_secundario",
+      "tipo": "macos",
+      "ip_tailscale": "100.73.155.53",
+      "tareas_asignables": ["monitoreo", "sincronizacion"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "online"
+    },
+    "caja0": {
+      "nombre_dns": "caja0",
+      "rol": "estacion_trabajo",
+      "tipo": "windows",
+      "ip_tailscale": "100.127.217.113",
+      "tareas_asignables": ["ui_dashboard", "desarrollo_ligero"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "online"
+    },
+    "desktop-0d7s0tc": {
+      "nombre_dns": "desktop-0d7s0tc",
+      "rol": "estacion_trabajo",
+      "tipo": "windows",
+      "ip_tailscale": "100.88.13.84",
+      "tareas_asignables": ["ui_dashboard"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "online"
+    },
+    "ipad-pro-12-9-6th-gen-wifi": {
+      "nombre_dns": "ipad-pro-12-9-6th-gen-wifi",
+      "rol": "monitor_movil",
+      "tipo": "ios",
+      "ip_tailscale": "100.82.5.47",
+      "tareas_asignables": ["dashboard_web", "alertas_push"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "online"
+    },
+    "iphone-15": {
+      "nombre_dns": "iphone-15",
+      "rol": "monitor_movil",
+      "tipo": "ios",
+      "ip_tailscale": "100.91.69.28",
+      "tareas_asignables": ["dashboard_web", "alertas_push"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "online"
+    },
+    "mac-mini-san-gregorio": {
+      "nombre_dns": "mac-mini-san-gregorio",
+      "rol": "cliente_remoto",
+      "tipo": "macos",
+      "ip_tailscale": "100.90.99.76",
+      "tareas_asignables": ["monitoreo"],
+      "prioridad_conexion": ["tailscale"],
+      "estado": "idle"
+    }
+  },
+  "offline_recientes": {
+    "macbook-air-de-kaixo": "offline 3min",
+    "devin-ura": "offline 2d",
+    "mac-mini-bar-san-gregorio": "offline 1d"
+  },
+  "offline_largo_plazo": {
+    "devin-vm": "offline 6d",
+    "mini-de-ramon": "offline 47d",
+    "ura-shield": "offline 17d"
+  }
+}

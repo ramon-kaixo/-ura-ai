@@ -1,0 +1,28 @@
+{
+  "propietario": "Ramon Esnaola",
+  "licencia_servidor": "K0513893926",
+  "admin_email": "barkaixo@gmail.com",
+  "dns_principal": "hetzner-escudo",
+  "tailscale_hostname": "gx10-64c3",
+  "rutas": {
+    "camaras": "/vids/camaras/",
+    "repo": "/home/ramon/URA/ura_ia_1972",
+    "logs": "/opt/ura/logs",
+    "backups": "/opt/ura/backups",
+    "sandbox": "/home/ramon/URA/ura_ia_1972/sandbox/MejoraContinua"
+  },
+  "puertos": {
+    "ollama": 11434,
+    "model_router": 11435,
+    "opencode": 8081,
+    "openclaw": 18789,
+    "gx10_api": 4096,
+    "mkdocs": 8088,
+    "prometheus": 9090
+  },
+  "contacto": {
+    "email": "barkaixo@gmail.com",
+    "telegram": "ramon_esnaola"
+  },
+  "actualizado": "2026-06-04"
+}
