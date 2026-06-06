@@ -723,6 +723,28 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(_dashboard_json(client_ip=self.client_address[0]).encode())
+        elif self.path.startswith("/api/search"):
+            import urllib.parse as _up
+            q = _up.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
+            if not q:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "parametro q requerido"}).encode())
+                return
+            try:
+                from core.search_engine import search
+                results = search(q)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"query": q, "results": results}).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+
         elif self.path.startswith("/v1/"):
             status, headers, body = proxy_request(self.path, None, "GET", client_ip=self.client_address[0])
             self.send_response(status)

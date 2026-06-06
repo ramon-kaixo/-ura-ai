@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Weekly Backup to Toshiba
+Documentation=https://github.com/anomalyco/ura
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/home/ramon/URA/ura_ia_1972/scripts/backup_toshiba.sh
+StandardOutput=append:/home/ramon/URA/logs/backup_toshiba.log
+StandardError=append:/home/ramon/URA/logs/backup_toshiba.log
