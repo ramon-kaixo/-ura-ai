@@ -942,7 +942,8 @@ def main() -> None:
         fallback = info.get("fallback", "N/A")
         log.info("  %-20s → %s (fallback: %s)", tipo, modelo, fallback)
 
-    server = http.server.HTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
+    from http.server import ThreadingHTTPServer
+    server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
     log.info("Escuchando en 127.0.0.1:%s", ROUTER_PORT)
     log.info("Dashboard: http://127.0.0.1:%s/dashboard", ROUTER_PORT)
     log.info("Metricas:  http://127.0.0.1:%s/metrics", ROUTER_PORT)
