@@ -344,7 +344,7 @@ class Supervisor:
             cpu_pct = psutil.cpu_percent(interval=0.5)
             mem_pct = psutil.virtual_memory().percent
         except ImportError:
-            pass
+            log.debug("silent exception suppressed")
         await self.state.set("supervisor:collector:system", {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "cpu_pct": cpu_pct,
@@ -422,7 +422,7 @@ class Supervisor:
             ping_lan_ms = round((time.monotonic() - t0) * 1000, 1)
             lan_ok = r.returncode == 0
         except Exception:
-            pass
+            log.debug("silent exception suppressed")
         await self.state.set("supervisor:watchdog:network", {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "lan_reachable": lan_ok,
@@ -601,7 +601,7 @@ class Supervisor:
                         except (IndexError, ValueError):
                             continue
             except Exception:
-                pass
+                log.debug("silent exception suppressed")
 
         # Filtrar cambios en los últimos 10 minutos
         cutoff = now - 600
@@ -630,7 +630,7 @@ class Supervisor:
                 req.add_header("Content-Type", "application/json")
                 urllib.request.urlopen(req, timeout=5)
             except Exception:
-                pass
+                log.debug("silent exception suppressed")
 
         current_mode = mode_data.get("mode", "?")
         if is_thrashing:
@@ -666,6 +666,8 @@ class Supervisor:
                 msg = await self._zmq_sock.recv_multipart()
                 response = await self._handle_ipc(msg)
                 await self._zmq_sock.send_multipart([response.encode()])
+            except asyncio.CancelledError:
+                raise
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -833,7 +835,7 @@ async def main() -> None:
         while sup._running:
             await asyncio.sleep(1)
     except asyncio.CancelledError:
-        pass
+        log.debug("silent exception suppressed")
     finally:
         await sup.stop()
 
