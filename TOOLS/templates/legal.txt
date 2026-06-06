@@ -1,0 +1,8 @@
+Analiza el siguiente documento legal de {dominio}.
+
+{if score_bajo}ATENCION: Fuente con baja reputacion. Verifica fechas y referencias.{endif}
+
+TAREA: Extrae tipo de documento, organismo, obligaciones, plazos y sanciones en formato JSON.
+
+Contenido:
+{texto_sanitizado}

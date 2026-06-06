@@ -1,0 +1,8 @@
+Analiza el siguiente contenido extraido de {dominio}.
+
+{if score_bajo}ATENCION: Dominio con baja reputacion ({score_fiabilidad}). Verifica las afirmaciones.{endif}
+
+TAREA: Extrae y estructura la informacion relevante en formato JSON.
+
+Contenido:
+{texto_sanitizado}
