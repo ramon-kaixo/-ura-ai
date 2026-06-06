@@ -1,0 +1,12 @@
+{
+  "urls": [
+    {"url": "https://docs.python.org/3.12/library/asyncio.html", "categoria": "programacion", "metadata": {"fuente": "python_docs", "tema": "asyncio"}},
+    {"url": "https://docs.python.org/3.12/library/sqlite3.html", "categoria": "programacion", "metadata": {"fuente": "python_docs", "tema": "sqlite3"}},
+    {"url": "https://realpython.com/python-httpx/", "categoria": "programacion", "metadata": {"fuente": "realpython", "tema": "httpx"}},
+    {"url": "https://www.hosteltur.com", "categoria": "hosteleria", "metadata": {"fuente": "hosteltur", "tema": "tendencias"}},
+    {"url": "https://www.gastroactitud.com", "categoria": "hosteleria", "metadata": {"fuente": "gastroactitud", "tema": "gastronomia"}},
+    {"url": "https://www.boe.es/buscar/act.php?id=BOE-A-2022-5087", "categoria": "legal", "metadata": {"fuente": "BOE", "tema": "hosteleria"}},
+    {"url": "https://www.behance.net/search/projects?search=restaurant+poster", "categoria": "diseno", "metadata": {"fuente": "behance", "tema": "carteles"}},
+    {"url": "https://www.navarra.es/es/web/turismo/restauracion", "categoria": "legal", "metadata": {"fuente": "Navarra", "tema": "restauracion"}}
+  ]
+}
