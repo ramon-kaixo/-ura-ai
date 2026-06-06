@@ -1,6 +1,0 @@
-Analiza el siguiente Guion Tecnico Vectorizado de {dominio}.
-
-TAREA: Extrae estructura narrativa, ritmo, paleta, tipo de planos y potencial para Laia en formato JSON.
-
-Contenido:
-{texto_sanitizado}

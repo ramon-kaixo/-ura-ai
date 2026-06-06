@@ -161,6 +161,7 @@ class Conciencia:
     """Memoria unificada del sistema. Archivo: .nervioso/conciencia.json."""
 
     PATH = NERVIOSO / "conciencia.json"
+    _lock = threading.Lock()
 
     @classmethod
     def leer(cls) -> dict:
@@ -191,10 +192,11 @@ class Conciencia:
 
     @classmethod
     def escribir(cls, data: dict) -> None:
-        cls.PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp = cls.PATH.with_suffix(".tmp")
-        tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
-        tmp.replace(cls.PATH)
+        with cls._lock:
+            cls.PATH.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cls.PATH.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+            tmp.replace(cls.PATH)
 
     @classmethod
     def actualizar_proceso(cls, nombre: str, estado: str) -> None:
@@ -271,10 +273,10 @@ class AgenteOrquestador:
                             if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
                                 if node.end_lineno - node.lineno > 80:
                                     total += 1
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as e:
+                    log.warning(f"Error parseando AST en {py_file}: {e}")
+        except Exception as e:
+            log.warning(f"Error contando funciones pendientes: {e}")
         return total
 
 
@@ -321,9 +323,22 @@ class AgenteEjecutor:
                 resultados["workers"].append({"id": i + 1, "ok": ok, "err": err})
             except subprocess.TimeoutExpired:
                 proc.kill()
-                resultados[workers].append({id: i + 1, ok: 0, err: 1, timeout: True})
+                try:
+                    proc.wait(timeout=5)
+                except Exception:
+                    pass
+                resultados["workers"].append({"id": i + 1, "ok": 0, "err": 1, "timeout": True})
             finally:
                 dead_man.cancel()
+                if proc.poll() is None:
+                    try:
+                        proc.terminate()
+                        proc.wait(timeout=5)
+                    except Exception:
+                        try:
+                            proc.kill()
+                        except Exception:
+                            pass
 
         return resultados
 
