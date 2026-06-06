@@ -1,0 +1,10 @@
+{
+  "name": "URA-Search: Backup semanal a Toshiba",
+  "nodes": [
+    {"name": "Timer", "type": "n8n-nodes-base.scheduleTrigger", "position": [250,300],
+     "parameters": {"rule": {"interval": [{"field":"crons","expression":"0 4 * * 0"}]}}},
+    {"name": "Execute Command", "type": "n8n-nodes-base.execCommand", "position": [450,300],
+     "parameters": {"command": "bash scripts/backup_toshiba.sh"}}
+  ],
+  "connections": {"Timer": {"main":[[{"node":"Execute Command"}]]}}
+}
