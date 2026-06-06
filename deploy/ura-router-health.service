@@ -5,6 +5,6 @@ Documentation=https://github.com/anomalyco/ura
 [Service]
 Type=oneshot
 User=root
-ExecStart=/home/ramon/URA/ura_ia_1972/scripts/pro/health_check_router.sh
+ExecStart=/usr/local/bin/ura-router-health.sh
 StandardOutput=journal
 StandardError=journal
