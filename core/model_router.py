@@ -757,12 +757,26 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "parametro q requerido"}).encode())
                 return
             try:
-                from core.search_engine import search
-                results = search(q)
+                # Buscar en FTS5 (search_engine + indexer combinado)
+                results = []
+                try:
+                    from core.search_engine import search as fts_search
+                    results = fts_search(q)
+                except Exception:
+                    pass
+                # También buscar en el indexer de URA-Search si existe
+                try:
+                    import sys as _sys
+                    _sys.path.insert(0, '/home/ramon/URA/ura_ia_1972')
+                    from ura_search.indexer import search as idx_search
+                    idx_results = idx_search(q)
+                    results.extend(idx_results)
+                except Exception:
+                    pass
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"query": q, "results": results}).encode())
+                self.wfile.write(json.dumps({"query": q, "results": results, "total": len(results)}).encode())
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
