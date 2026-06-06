@@ -11,10 +11,13 @@ import time
 import urllib.error
 import urllib.request
 from collections import defaultdict, deque
+from pathlib import Path
 from typing import Any
 import sys
 sys.path.insert(0, '/usr/local/bin')
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from router_rate_limiter import rate_limiter
+from core.auth_layer import validate as auth_validate, require_auth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -620,6 +623,12 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                              "dashboard", "power_mode", "context_checker"],
             }).encode())
         elif self.path == "/health":
+            if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
+                self.send_response(403)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Forbidden"}).encode())
+                return
             disponibles = self._get_modelos()
             ollama_ok = len(disponibles) > 0
             self.send_response(200 if ollama_ok else 503)
@@ -639,6 +648,30 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain")
             self.end_headers()
             self.wfile.write(metrics.get_prometheus_format().encode())
+        elif self.path == "/supervisor":
+            if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
+                self.send_response(403)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Forbidden: X-API-KEY inválido o faltante"}).encode())
+                return
+            supervisor_data = "{}"
+            try:
+                import zmq
+                ctx = zmq.Context()
+                sock = ctx.socket(zmq.REQ)
+                sock.setsockopt(zmq.RCVTIMEO, 3000)
+                sock.connect("ipc:///tmp/ura-supervisor.ipc")
+                sock.send(b"status")
+                supervisor_data = sock.recv().decode()
+                sock.close()
+                ctx.term()
+            except Exception:
+                supervisor_data = json.dumps({"error": "supervisor no accesible"})
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(supervisor_data.encode())
         elif self.path.startswith("/dashboard") and not self.path.startswith("/dashboard.json"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
