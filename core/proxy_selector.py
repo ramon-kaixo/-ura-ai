@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""proxy_selector.py — Cerebro de enrutamiento para el Pool Híbrido URA.
+"""proxy_selector.py — Routing engine for URA hybrid proxy pool.
 
-Decide, para cada target, si usar Pool Residencial (Cloudflare Worker)
-o Anti-Detection (GX10 GPU + Stealth). Punto único de decisión para
-todos los agentes/scrapers del sistema.
-
-Cloudflare Worker desplegado en: https://ura-pool.barkaixo.workers.dev
+Loads target rules from config/target_rules.json (external config).
 """
 
-import re
+import json
 import logging
+import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 log = logging.getLogger(__name__)
 
+CONFIG_PATH = Path(__file__).parent.parent / "config" / "target_rules.json"
 CLOUDFLARE_WORKER_URL = "https://ura-pool.barkaixo.workers.dev"
 
 
@@ -42,55 +41,45 @@ class RouteDecision:
         }
 
 
-@dataclass
-class TargetRule:
-    mode: str
-    priority: str
-    node: str
-    fingerprint: str = "generic"
-    stealth: bool = False
-    proxy: Optional[str] = None
+def _load_rules() -> tuple[list[tuple[re.Pattern, dict]], dict]:
+    """Load rules from JSON config, return (rules, fallback)."""
+    try:
+        data = json.loads(CONFIG_PATH.read_text())
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        log.warning("Cannot load %s: %s. Using built-in defaults.", CONFIG_PATH, e)
+        data = _default_config()
+
+    rules = []
+    for r in data.get("rules", []):
+        try:
+            rules.append((re.compile(r["pattern"]), r))
+        except re.error as e:
+            log.warning("Bad regex in rule %s: %s", r.get("pattern"), e)
+
+    fallback = data.get("fallback", {})
+    return rules, fallback
 
 
-TARGET_RULES: dict[re.Pattern, TargetRule] = {
-    re.compile(r"(^|\.)pinterest\.(com|es|fr|de|it)$"): TargetRule(
-        mode="pool", priority="speed", node="hetzner",
-        stealth=False, proxy=f"{CLOUDFLARE_WORKER_URL}/proxy?url=",
-    ),
-    re.compile(r"(^|\.)bing\.com$"): TargetRule(
-        mode="pool", priority="speed", node="hetzner",
-        stealth=False, proxy=f"{CLOUDFLARE_WORKER_URL}/proxy?url=",
-    ),
-    re.compile(r"(^|\.)fontsinuse\.com$"): TargetRule(
-        mode="pool", priority="speed", node="hetzner",
-        stealth=False, proxy=f"{CLOUDFLARE_WORKER_URL}/proxy?url=",
-    ),
-    re.compile(r"(^|\.)google\.(com|es|fr|de|it)$"): TargetRule(
-        mode="pool", priority="volume", node="hetzner",
-        stealth=False, proxy=f"{CLOUDFLARE_WORKER_URL}/proxy?url=",
-    ),
-    re.compile(r"(^|\.)behance\.net$"): TargetRule(
-        mode="stealth", priority="quality", node="gx10",
-        fingerprint="chrome_124_win", stealth=True,
-    ),
-    re.compile(r"(^|\.)youtube\.com$"): TargetRule(
-        mode="stealth", priority="persistence", node="gx10",
-        fingerprint="chrome_124_win", stealth=True,
-    ),
-    re.compile(r"(^|\.)dribbble\.com$"): TargetRule(
-        mode="stealth", priority="quality", node="gx10",
-        fingerprint="chrome_124_mac", stealth=True,
-    ),
-    re.compile(r"(^|\.)noona\.app$"): TargetRule(
-        mode="stealth", priority="security", node="gx10",
-        fingerprint="chrome_124_win", stealth=True,
-    ),
-}
+def _default_config() -> dict:
+    """Hardcoded fallback if JSON is unavailable."""
+    return {
+        "cloudflare_worker": "https://ura-pool.barkaixo.workers.dev",
+        "rules": [
+            {"pattern": r"(^|\.)pinterest\.(com|es|fr|de|it)$", "mode": "pool", "priority": "speed", "node": "hetzner", "stealth": False, "fingerprint": "generic"},
+            {"pattern": r"(^|\.)bing\.com$", "mode": "pool", "priority": "speed", "node": "hetzner", "stealth": False, "fingerprint": "generic"},
+            {"pattern": r"(^|\.)fontsinuse\.com$", "mode": "pool", "priority": "speed", "node": "hetzner", "stealth": False, "fingerprint": "generic"},
+            {"pattern": r"(^|\.)google\.(com|es|fr|de|it)$", "mode": "pool", "priority": "volume", "node": "hetzner", "stealth": False, "fingerprint": "generic"},
+            {"pattern": r"(^|\.)behance\.net$", "mode": "stealth", "priority": "quality", "node": "gx10", "stealth": True, "fingerprint": "chrome_124_win"},
+            {"pattern": r"(^|\.)youtube\.com$", "mode": "stealth", "priority": "persistence", "node": "gx10", "stealth": True, "fingerprint": "chrome_124_win"},
+            {"pattern": r"(^|\.)dribbble\.com$", "mode": "stealth", "priority": "quality", "node": "gx10", "stealth": True, "fingerprint": "chrome_124_mac"},
+            {"pattern": r"(^|\.)noona\.app$", "mode": "stealth", "priority": "security", "node": "gx10", "stealth": True, "fingerprint": "chrome_124_win"},
+        ],
+        "fallback": {"mode": "pool", "priority": "standard", "node": "hetzner", "stealth": False, "fingerprint": "generic"},
+    }
 
-FALLBACK_RULE = TargetRule(
-    mode="pool", priority="standard", node="hetzner",
-    stealth=False, proxy=f"{CLOUDFLARE_WORKER_URL}/proxy?url=",
-)
+
+# Load once at import time
+_RULES, _FALLBACK = _load_rules()
 
 
 def get_best_path(target: str, context: Optional[dict] = None) -> RouteDecision:
@@ -100,24 +89,22 @@ def get_best_path(target: str, context: Optional[dict] = None) -> RouteDecision:
 
     mode_override = context.get("mode_override")
     if mode_override in ("pool", "stealth"):
-        rule = TargetRule(
-            mode=mode_override,
-            priority=rule.priority,
-            node="hetzner" if mode_override == "pool" else "gx10",
-            fingerprint=rule.fingerprint,
-            stealth=(mode_override == "stealth"),
-            proxy=rule.proxy,
-        )
+        rule = dict(rule)
+        rule["mode"] = mode_override
+        rule["node"] = "hetzner" if mode_override == "pool" else "gx10"
+        rule["stealth"] = (mode_override == "stealth")
+
+    proxy = None if rule["mode"] == "stealth" else f"{CLOUDFLARE_WORKER_URL}/proxy?url="
 
     return RouteDecision(
         target=domain,
-        mode=rule.mode,
-        priority=rule.priority,
-        node=rule.node,
-        proxy=rule.proxy,
-        fingerprint=rule.fingerprint,
-        stealth=rule.stealth,
-        reason=f"target={domain} -> mode:{rule.mode} node:{rule.node}",
+        mode=rule["mode"],
+        priority=rule.get("priority", "standard"),
+        node=rule["node"],
+        proxy=proxy,
+        fingerprint=rule.get("fingerprint", "generic"),
+        stealth=rule.get("stealth", False),
+        reason=f"target={domain} -> mode:{rule['mode']} node:{rule['node']}",
     )
 
 
@@ -130,16 +117,24 @@ def _extract_domain(target: str) -> str:
     return target
 
 
-def _match_rule(domain: str) -> TargetRule:
-    for pattern, rule in TARGET_RULES.items():
+def _match_rule(domain: str) -> dict:
+    for pattern, rule in _RULES:
         if pattern.search(domain):
             return rule
     log.debug("No matching rule for %s, using fallback", domain)
-    return FALLBACK_RULE
+    return _FALLBACK
 
 
 def evaluate(target: str, context: Optional[dict] = None) -> str:
     return get_best_path(target, context).mode
+
+
+def list_rules() -> list[dict]:
+    result = []
+    for pattern, rule in _RULES:
+        result.append({"pattern": pattern.pattern, "rule": rule})
+    result.append({"pattern": "* (fallback)", "rule": _FALLBACK})
+    return result
 
 
 if __name__ == "__main__":
@@ -154,4 +149,4 @@ if __name__ == "__main__":
         "unknown-site.com",
     ]:
         d = get_best_path(t)
-        print(f"{t:50s} -> {d.mode:8s} | {d.node:8s} | proxy={d.proxy or 'none'}")
+        print(f"{t:40s} -> {d.mode:8s} | {d.node:8s} | {d.fingerprint:20s} | {d.priority}")

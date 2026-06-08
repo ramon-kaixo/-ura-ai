@@ -1,0 +1,79 @@
+{
+  "_comment": "Target routing rules for proxy_selector.py",
+  "cloudflare_worker": "https://ura-pool.barkaixo.workers.dev",
+
+  "rules": [
+    {
+      "pattern": "(^|\\.)pinterest\\.(com|es|fr|de|it)$",
+      "mode": "pool",
+      "priority": "speed",
+      "node": "hetzner",
+      "stealth": false,
+      "fingerprint": "generic"
+    },
+    {
+      "pattern": "(^|\\.)bing\\.com$",
+      "mode": "pool",
+      "priority": "speed",
+      "node": "hetzner",
+      "stealth": false,
+      "fingerprint": "generic"
+    },
+    {
+      "pattern": "(^|\\.)fontsinuse\\.com$",
+      "mode": "pool",
+      "priority": "speed",
+      "node": "hetzner",
+      "stealth": false,
+      "fingerprint": "generic"
+    },
+    {
+      "pattern": "(^|\\.)google\\.(com|es|fr|de|it)$",
+      "mode": "pool",
+      "priority": "volume",
+      "node": "hetzner",
+      "stealth": false,
+      "fingerprint": "generic"
+    },
+    {
+      "pattern": "(^|\\.)behance\\.net$",
+      "mode": "stealth",
+      "priority": "quality",
+      "node": "gx10",
+      "stealth": true,
+      "fingerprint": "chrome_124_win"
+    },
+    {
+      "pattern": "(^|\\.)youtube\\.com$",
+      "mode": "stealth",
+      "priority": "persistence",
+      "node": "gx10",
+      "stealth": true,
+      "fingerprint": "chrome_124_win"
+    },
+    {
+      "pattern": "(^|\\.)dribbble\\.com$",
+      "mode": "stealth",
+      "priority": "quality",
+      "node": "gx10",
+      "stealth": true,
+      "fingerprint": "chrome_124_mac"
+    },
+    {
+      "pattern": "(^|\\.)noona\\.app$",
+      "mode": "stealth",
+      "priority": "security",
+      "node": "gx10",
+      "stealth": true,
+      "fingerprint": "chrome_124_win"
+    }
+  ],
+
+  "fallback": {
+    "mode": "pool",
+    "priority": "standard",
+    "node": "hetzner",
+    "stealth": false,
+    "fingerprint": "generic"
+  }
+}
