@@ -1,0 +1,26 @@
+{
+  "committee": [
+    "deepseek/deepseek-v3",
+    "qwen/qwen-2.5-coder-32b",
+    "moonshot/kimi-v1",
+    "mistral/mistral-large",
+    "meta-llama/llama-3-70b",
+    "anthropic/claude-3.5-sonnet",
+    "openai/gpt-4o",
+    "google/gemini-pro-1.5",
+    "nousresearch/hermes-3-llama-3.1-405b",
+    "gryphe/mythomax-l2-13b"
+  ],
+  "consensus_threshold": 0.7,
+  "available_locally": [
+    "qwen/qwen-2.5-coder-32b",
+    "deepseek/deepseek-coder-6.7b"
+  ],
+  "available_via_groq": [
+    "meta-llama/llama-3-70b",
+    "deepseek/deepseek-v3",
+    "mistral/mistral-large",
+    "google/gemini-pro-1.5"
+  ],
+  "fallback_strategy": "local_first_groq_second"
+}
