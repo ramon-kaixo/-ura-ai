@@ -8,8 +8,11 @@ Cada agente recibe:
 
 El agente NO tiene red. NO puede escribir fuera de --output.
 """
-import argparse, json, sys, time
+import argparse
+import json
+import sys
 from pathlib import Path
+
 
 def main():
     p = argparse.ArgumentParser()
