@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: ura
-Version: 2.1.0
-Summary: URA - Ultimate Research Agent
-Requires-Python: >=3.11
-Requires-Dist: click>=8.0
-Requires-Dist: rich>=13.0

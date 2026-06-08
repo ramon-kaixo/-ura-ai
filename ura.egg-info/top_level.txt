@@ -1,4 +1,0 @@
-TOOLS
-cli
-core
-monitor

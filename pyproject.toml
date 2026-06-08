@@ -1,19 +1,15 @@
 [project]
 name = "ura"
 version = "2.1.0"
-description = "URA - Ultimate Research Agent"
+description = "URA - Ultimate Research Agent: multi-agent desktop assistant with consciousness, self-improvement, and autonomous swarm"
 requires-python = ">=3.11"
-dependencies = ["click>=8.0", "rich>=13.0"]
+dependencies = []
 
 [project.scripts]
-ura = "cli.gatekeeper:ura"
 ura-snc = "monitor.snc:main"
 ura-openclaw = "monitor.openclaw:main"
 ura-router = "core.model_router:main"
 ura-ejecutor = "scripts.pro.ejecutor_api:main"
-
-[tool.setuptools.packages.find]
-include = ["core*", "cli*", "TOOLS*", "monitor*"]
 
 [tool.ruff]
 line-length = 120
