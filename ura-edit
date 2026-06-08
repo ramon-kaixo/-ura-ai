@@ -1,0 +1,34 @@
+#!/bin/bash
+# ura-edit — desbloquea, edita, y rebloquea archivos inmutables
+# Uso: ura-edit <archivo>         → editar con nano
+#       ura-edit <archivo> "texto" → reemplazar contenido
+
+set -euo pipefail
+cd /home/ramon/URA/ura_ia_1972
+
+unlock() { sudo chattr -i "$1" 2>/dev/null || true; }
+lock() { sudo chattr +i "$1" 2>/dev/null || true; }
+
+if [ $# -eq 0 ]; then
+  echo "Uso: ura-edit <archivo> [contenido]"
+  echo "  Sin contenido: abre nano para editar"
+  echo "  Con contenido: reemplaza archivo con el texto"
+  exit 1
+fi
+
+FILE="$1"
+mkdir -p "$(dirname "$FILE")"
+
+if [ -n "${2:-}" ]; then
+  # Write mode
+  unlock "$FILE"
+  echo "$2" > "$FILE"
+  lock "$FILE"
+  echo "✓ Escrito: $FILE"
+else
+  # Edit mode
+  unlock "$FILE"
+  nano "$FILE" || vim "$FILE"
+  lock "$FILE"
+  echo "✓ Editado: $FILE"
+fi
