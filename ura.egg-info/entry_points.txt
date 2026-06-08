@@ -1,6 +1,0 @@
-[console_scripts]
-ura = cli.gatekeeper:ura
-ura-ejecutor = scripts.pro.ejecutor_api:main
-ura-openclaw = monitor.openclaw:main
-ura-router = core.model_router:main
-ura-snc = monitor.snc:main
