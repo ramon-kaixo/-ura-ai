@@ -1,15 +1,5 @@
 __pycache__/
 *.pyc
-*.pyo
 *.log
 prompt_cache/
 .nervioso/
-venv/
-.env
-*.swp
-*.swo
-*~
-.DS_Store
-dist/
-*.egg-info/
-.tmp/
