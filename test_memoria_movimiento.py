@@ -63,4 +63,5 @@ print("\n" + "=" * 40)
 if e == 0: print("\033[92m  TODO OK \u2014 la memoria de movimiento funciona\033[0m")
 else: print(f"\033[91m  {e} FALLO(S)\033[0m")
 print("=" * 40 + "\n")
-sys.exit(e)
+if __name__ == "__main__":
+    sys.exit(e)
