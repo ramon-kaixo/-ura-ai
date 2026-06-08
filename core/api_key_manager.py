@@ -87,7 +87,7 @@ def list_providers() -> list[dict]:
     return providers
 
 VERIFY_ENDPOINTS = {
-    "gemini": ("https://generativelanguage.googleapis.com/v1beta/models", {"key": None}),
+    "gemini": ("https://generativelanguage.googleapis.com/v1beta/models", {}),
     "openai": ("https://api.openai.com/v1/models", {"Authorization": "Bearer {key}"}),
     "anthropic": ("https://api.anthropic.com/v1/models", {"x-api-key": "{key}", "anthropic-version": "2023-06-01"}),
 }
@@ -98,7 +98,7 @@ def verify_key(provider: str, api_key: str) -> dict:
     url, headers_template = VERIFY_ENDPOINTS[provider]
     headers = {}
     for k, v in headers_template.items():
-        headers[k] = v.replace("{key}", api_key) if isinstance(v, str) else v
+        headers[k] = v.replace("{key}", api_key)
     if provider == "gemini":
         url = f"{url}?key={api_key}"
     try:
