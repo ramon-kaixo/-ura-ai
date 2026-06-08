@@ -37,4 +37,5 @@ async def main():
     else: print(f"\033[91m  {e} FALLO(S)\033[0m")
     print("="*40); return e
 
-sys.exit(asyncio.run(main()))
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main()))
