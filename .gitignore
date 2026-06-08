@@ -21,8 +21,4 @@ mantenimiento/config.json
 data/chroma_db/
 data/documentos/
 data/.index_manifest.json
-
-# Forzar exclusion de ChromaDB
-**/chroma_db_code/
-core/modules/data/chroma_db_code/**
-node_modules/
+.coverage
