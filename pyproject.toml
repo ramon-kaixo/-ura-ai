@@ -30,3 +30,8 @@ python_files = ["test_*.py"]
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
+
+[tool.mutmut]
+source_paths = "."
+paths_to_mutate = "mochila_engine.py"
+runner = "python3 -m pytest -p no:testpaths"
