@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """Unit Test Suite — URA v3.0
 Verifica que nada de lo de "ayer" vuelva a pasar:
