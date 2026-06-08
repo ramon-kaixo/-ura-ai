@@ -21,10 +21,10 @@ fi
 log "  ✅ RAM al ${RAM_PCT}% — dentro del limite."
 
 # 2. Cargar modelo si no esta en memoria
-log "Verificando modelo qwen2.5:32b..."
-if ! ollama ps 2>/dev/null | grep -q "qwen2.5:32b"; then
+log "Verificando modelo qwen2.5-coder:32b..."
+if ! ollama ps 2>/dev/null | grep -q "qwen2.5-coder:32b"; then
     log "  Modelo no cargado. Cargando en background..."
-    ollama run qwen2.5:32b "" &
+    ollama run qwen2.5-coder:32b "" &
     sleep 5
 fi
 log "  ✅ Modelo disponible."
@@ -41,7 +41,7 @@ Salida: Formato JSON estrictamente validado. No refactorices nada, solo lista la
 for mod in core/memory_engine.py core/model_router.py core/auth_layer.py; do
     if [ -f "$mod" ]; then
         CONTENIDO=$(head -500 "$mod")
-        RESPUESTA=$(ollama run qwen2.5:32b "$PROMPT
+        RESPUESTA=$(ollama run qwen2.5-coder:32b "$PROMPT
 
 Archivo: $mod
 \`\`\`python
