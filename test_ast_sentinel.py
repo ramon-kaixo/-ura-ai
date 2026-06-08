@@ -17,4 +17,5 @@ else: e+=ng("P3: debio rechazar")
 print("\n"+"="*40)
 if e==0: print("\033[92m  TODO OK - revisor funciona\033[0m")
 else: print(f"\033[91m  {e} FALLO(S)\033[0m")
-print("="*40); sys.exit(e)
+if __name__ == "__main__":
+    print("="*40); sys.exit(e)
