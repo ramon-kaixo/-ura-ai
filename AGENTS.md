@@ -20,6 +20,18 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 
 ## Build & Test Commands
 - Install: `pip install -r requirements.txt`
+- Full audit: `bash /home/ramon/URA/ura_ia_1972/.analisis.sh`
+- Audit (10 tools): `python3 ura-audit`
+- Contexto IA: `bash ura-contexto`  (genera contexto_auditoria_ia.md)
+- Tests: `python3 test_mochila.py` (5 tests disponibles)
+- Coverage: `python3 -m pytest --cov=mochila_engine --cov=prompt_injector --cov=core.guardians.ast_sentinel --cov=memoria_fallos --cov=memoria_movimiento --cov-report=term -p no:testpaths`
+- Lint: `ruff check .`
+- Seguridad: `bandit -r core/ cli/`
+- Tipado: `mypy --strict core/ cli/`
+- Dependencias: `safety check`
+- Mutaciones: `mutmut run --paths-to-mutate=mochila_engine.py`
+
+- Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
 - Test: `pytest -q` (needs hypothesis, pytest-asyncio, pytest-timeout)
 - Full audit: `bash /home/ramon/URA/ura_ia_1972/tuneladora.sh`
