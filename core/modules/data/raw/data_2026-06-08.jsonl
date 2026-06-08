@@ -356,3 +356,79 @@
 {"ts": "2026-06-08T17:27:38Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 413.1}
 {"ts": "2026-06-08T17:27:41Z", "source": "coingecko_btc", "data": {"btc_usd": 63531, "eth_usd": 1684.41}, "latency_ms": 105.9}
 {"ts": "2026-06-08T17:27:42Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 476.7}
+{"ts": "2026-06-08T17:37:38Z", "source": "coingecko_btc", "data": {"btc_usd": 63347, "eth_usd": 1679.52}, "latency_ms": 165.2}
+{"ts": "2026-06-08T17:37:38Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 445.2}
+{"ts": "2026-06-08T17:37:42Z", "source": "coingecko_btc", "data": {"btc_usd": 63347, "eth_usd": 1679.52}, "latency_ms": 98.1}
+{"ts": "2026-06-08T17:37:42Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 428.7}
+{"ts": "2026-06-08T17:47:39Z", "source": "coingecko_btc", "data": {"btc_usd": 63367, "eth_usd": 1680.73}, "latency_ms": 114.3}
+{"ts": "2026-06-08T17:47:39Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 415.6}
+{"ts": "2026-06-08T17:47:42Z", "source": "coingecko_btc", "data": {"btc_usd": 63367, "eth_usd": 1680.73}, "latency_ms": 68.2}
+{"ts": "2026-06-08T17:47:43Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 431.7}
+{"ts": "2026-06-08T17:57:39Z", "source": "coingecko_btc", "data": {"btc_usd": 63454, "eth_usd": 1683.61}, "latency_ms": 136.6}
+{"ts": "2026-06-08T17:57:40Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 403.2}
+{"ts": "2026-06-08T17:57:43Z", "source": "coingecko_btc", "data": {"btc_usd": 63454, "eth_usd": 1683.61}, "latency_ms": 100.5}
+{"ts": "2026-06-08T17:57:43Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 473.6}
+{"ts": "2026-06-08T18:07:40Z", "source": "coingecko_btc", "data": {"btc_usd": 63576, "eth_usd": 1690.28}, "latency_ms": 139.8}
+{"ts": "2026-06-08T18:07:40Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 506.2}
+{"ts": "2026-06-08T18:07:44Z", "source": "coingecko_btc", "data": {"btc_usd": 63576, "eth_usd": 1690.28}, "latency_ms": 110.6}
+{"ts": "2026-06-08T18:07:44Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 392.6}
+{"ts": "2026-06-08T18:17:40Z", "source": "coingecko_btc", "data": {"btc_usd": 63556, "eth_usd": 1687.06}, "latency_ms": 182.0}
+{"ts": "2026-06-08T18:17:41Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 448.3}
+{"ts": "2026-06-08T18:17:44Z", "source": "coingecko_btc", "data": {"btc_usd": 63556, "eth_usd": 1687.06}, "latency_ms": 110.0}
+{"ts": "2026-06-08T18:17:45Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 410.0}
+{"ts": "2026-06-08T18:27:41Z", "source": "coingecko_btc", "data": {"btc_usd": 63546, "eth_usd": 1685.65}, "latency_ms": 112.7}
+{"ts": "2026-06-08T18:27:41Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 513.2}
+{"ts": "2026-06-08T18:27:45Z", "source": "coingecko_btc", "data": {"btc_usd": 63546, "eth_usd": 1685.65}, "latency_ms": 68.2}
+{"ts": "2026-06-08T18:27:45Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 387.4}
+{"ts": "2026-06-08T18:37:42Z", "source": "coingecko_btc", "data": {"btc_usd": 63497, "eth_usd": 1683.1}, "latency_ms": 149.6}
+{"ts": "2026-06-08T18:37:42Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 440.7}
+{"ts": "2026-06-08T18:37:45Z", "source": "coingecko_btc", "data": {"btc_usd": 63497, "eth_usd": 1683.1}, "latency_ms": 122.5}
+{"ts": "2026-06-08T18:37:46Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 616.7}
+{"ts": "2026-06-08T18:47:42Z", "source": "coingecko_btc", "data": {"btc_usd": 63471, "eth_usd": 1682.73}, "latency_ms": 97.9}
+{"ts": "2026-06-08T18:47:43Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 462.3}
+{"ts": "2026-06-08T18:47:46Z", "source": "coingecko_btc", "data": {"btc_usd": 63471, "eth_usd": 1682.73}, "latency_ms": 112.0}
+{"ts": "2026-06-08T18:47:46Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 427.5}
+{"ts": "2026-06-08T18:57:43Z", "source": "coingecko_btc", "data": {"btc_usd": 63413, "eth_usd": 1683.37}, "latency_ms": 149.1}
+{"ts": "2026-06-08T18:57:43Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 444.8}
+{"ts": "2026-06-08T18:57:46Z", "source": "coingecko_btc", "data": {"btc_usd": 63413, "eth_usd": 1683.37}, "latency_ms": 108.7}
+{"ts": "2026-06-08T18:57:47Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 630.4}
+{"ts": "2026-06-08T19:07:43Z", "source": "coingecko_btc", "data": {"btc_usd": 63485, "eth_usd": 1685.84}, "latency_ms": 114.9}
+{"ts": "2026-06-08T19:07:44Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 452.8}
+{"ts": "2026-06-08T19:07:47Z", "source": "coingecko_btc", "data": {"btc_usd": 63485, "eth_usd": 1685.84}, "latency_ms": 106.4}
+{"ts": "2026-06-08T19:07:47Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 392.7}
+{"ts": "2026-06-08T19:17:44Z", "source": "coingecko_btc", "data": {"btc_usd": 63381, "eth_usd": 1682.66}, "latency_ms": 134.5}
+{"ts": "2026-06-08T19:17:44Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 400.4}
+{"ts": "2026-06-08T19:17:48Z", "source": "coingecko_btc", "data": {"btc_usd": 63381, "eth_usd": 1682.66}, "latency_ms": 67.8}
+{"ts": "2026-06-08T19:17:48Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 395.8}
+{"ts": "2026-06-08T19:27:44Z", "source": "coingecko_btc", "data": {"btc_usd": 63429, "eth_usd": 1684.12}, "latency_ms": 146.5}
+{"ts": "2026-06-08T19:27:45Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 439.2}
+{"ts": "2026-06-08T19:27:48Z", "source": "coingecko_btc", "data": {"btc_usd": 63429, "eth_usd": 1684.12}, "latency_ms": 74.0}
+{"ts": "2026-06-08T19:27:48Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 429.3}
+{"ts": "2026-06-08T19:37:45Z", "source": "coingecko_btc", "data": {"btc_usd": 63489, "eth_usd": 1687.67}, "latency_ms": 144.6}
+{"ts": "2026-06-08T19:37:46Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 470.2}
+{"ts": "2026-06-08T19:37:49Z", "source": "coingecko_btc", "data": {"btc_usd": 63489, "eth_usd": 1687.67}, "latency_ms": 114.2}
+{"ts": "2026-06-08T19:37:49Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 433.6}
+{"ts": "2026-06-08T19:47:46Z", "source": "coingecko_btc", "data": {"btc_usd": 63459, "eth_usd": 1688.28}, "latency_ms": 101.8}
+{"ts": "2026-06-08T19:47:46Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 440.6}
+{"ts": "2026-06-08T19:47:49Z", "source": "coingecko_btc", "data": {"btc_usd": 63459, "eth_usd": 1688.28}, "latency_ms": 108.3}
+{"ts": "2026-06-08T19:47:50Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 680.2}
+{"ts": "2026-06-08T19:57:51Z", "source": "coingecko_btc", "data": {"btc_usd": 63400, "eth_usd": 1685.26}, "latency_ms": 5121.5}
+{"ts": "2026-06-08T19:57:52Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 406.9}
+{"ts": "2026-06-08T19:57:52Z", "source": "coingecko_btc", "data": {"btc_usd": 63400, "eth_usd": 1685.26}, "latency_ms": 62.3}
+{"ts": "2026-06-08T19:57:52Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 430.1}
+{"ts": "2026-06-08T20:07:52Z", "source": "coingecko_btc", "data": {"btc_usd": 63380, "eth_usd": 1687.3}, "latency_ms": 151.9}
+{"ts": "2026-06-08T20:07:52Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 479.2}
+{"ts": "2026-06-08T20:07:52Z", "source": "coingecko_btc", "data": {"btc_usd": 63380, "eth_usd": 1687.3}, "latency_ms": 67.4}
+{"ts": "2026-06-08T20:07:53Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 456.7}
+{"ts": "2026-06-08T20:17:52Z", "source": "coingecko_btc", "data": {"btc_usd": 63239, "eth_usd": 1682.74}, "latency_ms": 145.8}
+{"ts": "2026-06-08T20:17:53Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 481.8}
+{"ts": "2026-06-08T20:17:53Z", "source": "coingecko_btc", "data": {"btc_usd": 63239, "eth_usd": 1682.74}, "latency_ms": 104.3}
+{"ts": "2026-06-08T20:17:53Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 434.4}
+{"ts": "2026-06-08T20:27:53Z", "source": "coingecko_btc", "data": {"btc_usd": 63237, "eth_usd": 1684.29}, "latency_ms": 189.2}
+{"ts": "2026-06-08T20:27:54Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 485.8}
+{"ts": "2026-06-08T20:27:54Z", "source": "coingecko_btc", "data": {"btc_usd": 63237, "eth_usd": 1684.29}, "latency_ms": 108.9}
+{"ts": "2026-06-08T20:27:54Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 433.9}
+{"ts": "2026-06-08T20:37:54Z", "source": "coingecko_btc", "data": {"btc_usd": 63254, "eth_usd": 1684.2}, "latency_ms": 107.3}
+{"ts": "2026-06-08T20:37:54Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 482.8}
+{"ts": "2026-06-08T20:37:54Z", "source": "coingecko_btc", "data": {"btc_usd": 63254, "eth_usd": 1684.2}, "latency_ms": 67.0}
+{"ts": "2026-06-08T20:37:55Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 461.8}
