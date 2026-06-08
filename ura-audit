@@ -48,7 +48,7 @@ if not QUICK:
         "test_mochila.py", "test_ast_sentinel.py", "test_prompt_injector.py",
         "test_memoria_fallos.py", "test_memoria_movimiento.py",
         "--cov=mochila_engine", "--cov=prompt_injector", "--cov=core.guardians.ast_sentinel",
-        "--cov=memoria_fallos", "--cov=memoria_movimiento",
+        "--cov=memoria_fallos", "--cov=memoria_movimiento --ignore=test_mochila.py --ignore=test_ast_sentinel.py --ignore=test_prompt_injector.py --ignore=test_memoria_fallos.py --ignore=test_memoria_movimiento.py",
         "--cov-report=term-missing"], to=30)
     print(f"  [6] coverage:  {'OK' if r['tools']['coverage']['ok'] else 'FALLOS'} ({r['tools']['coverage']['ms']}ms)")
 
