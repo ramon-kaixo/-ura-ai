@@ -1,0 +1,51 @@
+#!/bin/bash
+# =====================================================================
+# URA-CONTEXTO — EXTRACTOR DE CONTEXTO OPTIMIZADO PARA IA
+# =====================================================================
+set -e
+
+IA_OUTPUT="contexto_auditoria_ia.md"
+echo "[+] Generando volcado unificado en $IA_OUTPUT..."
+
+# 1. Cabecera con Meta-información
+echo "# CONTEXTO DE AUDITORÍA SEMÁNTICA — URA v3.1" > "$IA_OUTPUT"
+echo "Fecha de generación: $(date +'%Y-%m-%d %H:%M:%S')" >> "$IA_OUTPUT"
+echo "Último Commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'Ninguno')" >> "$IA_OUTPUT"
+
+# 2. Catálogo de Herramientas
+echo -e "\n## 1. MATRIZ DE AUDITORÍA (AUDITORIA.md)" >> "$IA_OUTPUT"
+echo -e "\`\`\`markdown" >> "$IA_OUTPUT"
+if [ -f AUDITORIA.md ]; then head -n 200 AUDITORIA.md >> "$IA_OUTPUT"; else echo "No disponible" >> "$IA_OUTPUT"; fi
+echo -e "\`\`\`" >> "$IA_OUTPUT"
+
+# 3. Telemetría Reciente
+echo -e "\n## 2. REPORTE DE TELEMETRÍA DETERMINISTA" >> "$IA_OUTPUT"
+echo -e "\`\`\`json" >> "$IA_OUTPUT"
+LATEST_JSON=$(ls -t /tmp/ura-audit-*.json 2>/dev/null | head -n 1)
+if [ -n "$LATEST_JSON" ]; then cat "$LATEST_JSON" >> "$IA_OUTPUT"; else echo "{\"info\": \"No se localizó reporte JSON en /tmp\"}" >> "$IA_OUTPUT"; fi
+echo -e "\`\`\`" >> "$IA_OUTPUT"
+
+# 4. Árbol de archivos
+echo -e "\n## 3. ESTRUCTURA FILTRADA DEL REPOSITORIO" >> "$IA_OUTPUT"
+echo -e "\`\`\`" >> "$IA_OUTPUT"
+git ls-files >> "$IA_OUTPUT"
+echo -e "\`\`\`" >> "$IA_OUTPUT"
+
+# 5. Inyección del código fuente crítico (Truncado a 200 líneas)
+echo -e "\n## 4. CÓDIGO FUENTE CONFIGURADO" >> "$IA_OUTPUT"
+git ls-files | grep -E '\.(py|sh|yml|json|md)$' | grep -vE "(contexto_auditoria_ia\.md|ura-contexto|ura-audit)" | while read -r file; do
+    if [ -f "$file" ]; then
+        echo -e "\n### ARCHIVO: $file" >> "$IA_OUTPUT"
+        echo -e "\`\`\`$(echo "$file" | awk -F. '{print $NF}')" >> "$IA_OUTPUT"
+        head -n 200 "$file" >> "$IA_OUTPUT"
+        
+        # Indicador visual si el archivo fue truncado
+        if [ $(wc -l < "$file") -gt 200 ]; then
+            echo -e "\n... [TRUNCADO POR LÍMITE DE TOKENS (>200 líneas)]" >> "$IA_OUTPUT"
+        fi
+        
+        echo -e "\`\`\`" >> "$IA_OUTPUT"
+    fi
+done
+
+echo "✓ Extracción completada con éxito. Archivo: $IA_OUTPUT"
