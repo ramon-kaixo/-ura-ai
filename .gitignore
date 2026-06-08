@@ -21,4 +21,12 @@ mantenimiento/config.json
 data/chroma_db/
 data/documentos/
 data/.index_manifest.json
-core/modules/data/chroma_db_code/
+
+# Cobertura y test caches
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Forzar exclusión absoluta de ChromaDB
+**/chroma_db_code/
+core/modules/data/chroma_db_code/**
