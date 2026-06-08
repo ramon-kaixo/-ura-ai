@@ -14,7 +14,16 @@ mkdir -p "$(dirname "$REPORTE")"
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
-log "=== Comite de 10 IAs ==="
+# Parsear argumentos
+COMMIT_HASH="unknown"
+if [ "$1" == "--commit" ]; then
+    COMMIT_HASH="$2"
+    log "Auditando commit: $COMMIT_HASH"
+    # Analizar solo el diff del commit
+    git diff --stat "$COMMIT_HASH^" "$COMMIT_HASH" 2>/dev/null | tail -1 || true
+fi
+
+log "=== Comite de 10 IAs ===
 
 # Código a auditar (sanitizado)
 python3 -c "
