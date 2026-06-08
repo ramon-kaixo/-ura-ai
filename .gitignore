@@ -22,11 +22,6 @@ data/chroma_db/
 data/documentos/
 data/.index_manifest.json
 
-# Cobertura y test caches
-.coverage
-htmlcov/
-.pytest_cache/
-
-# Forzar exclusión absoluta de ChromaDB
+# Forzar exclusion de ChromaDB
 **/chroma_db_code/
 core/modules/data/chroma_db_code/**
