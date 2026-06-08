@@ -1,0 +1,16 @@
+[Unit]
+Description=URA GUI Bridge - HTTP API para GUI Agent (GX10)
+After=docker.service ollama.service
+Wants=docker.service ollama.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/gui_bridge.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
