@@ -15,7 +15,8 @@ print(f'Patrones detectados: {len(d[\"patrones\"])}')
 for p in d['patrones']:
     print(f'  - {p[\"error\"]}: {p[\"repeticiones\"]} veces (ultimo: {p[\"ultimo\"][:10]})')
 " > "$REPO_DIR/mantenimiento/informe_mensual.md"
-    scp "$REPO_DIR/mantenimiento/informe_mensual.md" ramon@100.123.81.101:~/REVISIONES_IA/ 2>/dev/null || true
+    python3 /home/ramon/URA/ura_ia_1972/core/utils/anonymizer.py "$REPO_DIR/mantenimiento/informe_mensual.md"
+    $old
     echo "[✓] Informe mensual generado y enviado al Mac."
 else
     echo "[i] Sin fallos registrados este mes. Informe limpio."
