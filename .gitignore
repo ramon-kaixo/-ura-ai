@@ -22,3 +22,9 @@ data/chroma_db/
 data/documentos/
 data/.index_manifest.json
 .coverage
+
+# Base de datos local y temporales de cobertura
+**/chroma_db_code/
+*.bin
+*.pickle
+htmlcov/
