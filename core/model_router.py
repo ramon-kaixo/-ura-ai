@@ -29,7 +29,7 @@ try:
     from core.config_manager import get_ollama_urls
 except ImportError:
     def get_ollama_urls() -> dict[str, str]:
-        return {"primary": "http://127.0.0.1:11434", "fallback": "http://127.0.0.1:11434"}
+        return {"primary": "http://10.164.1.99:11434", "fallback": "http://localhost:11434"}
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
