@@ -48,4 +48,13 @@ git ls-files | grep -E '\.(py|sh|yml|json|md)$' | grep -vE "(contexto_auditoria_
     fi
 done
 
+# Post-procesado: sanear datos sensibles antes de enviar
+python3 -c "
+import sys; sys.path.insert(0, '.')
+from core.utils.anonymizer import sanitize_text
+with open('$IA_OUTPUT') as f: c = f.read()
+with open('$IA_OUTPUT', 'w') as f: f.write(sanitize_text(c))
+" 2>/dev/null && echo "[+] Datos sensibles anonimizados en $IA_OUTPUT" || echo "[-] Anonimizacion no disponible (saltando)"
+
 echo "✓ Extracción completada con éxito. Archivo: $IA_OUTPUT"
+
