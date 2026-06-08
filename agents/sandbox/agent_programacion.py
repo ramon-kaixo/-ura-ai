@@ -1,6 +1,7 @@
 """Agente Programación — analiza documentación técnica y código."""
 import re
 
+
 def process(text: str, meta: dict) -> dict:
     result = {
         "categoria": "programacion",
@@ -25,7 +26,7 @@ def process(text: str, meta: dict) -> dict:
             result["frameworks"].append(fw)
 
     # Detectar si tiene código
-    if re.search(r'(def |class |import |from |async |await )', text):
+    if re.search(r"(def |class |import |from |async |await )", text):
         result["tipo"] = "codigo"
         result["relevante"] = True
     elif any(fw in text.lower() for fw in ["api", "documentacion", "tutorial", "guia"]):
