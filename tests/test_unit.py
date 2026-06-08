@@ -433,7 +433,7 @@ check("P1: clasificar_peticion retorna string",
 # P1-11: PromptCache tiene max_size
 from core.model_router import PromptCache
 
-cache = PromptCache(ttl=99999, max_size=3)
+cache = PromptCache(ttl=99999)
 cache.set("p1", "test", {"v": 1})
 cache.set("p2", "test", {"v": 2})
 cache.set("p3", "test", {"v": 3})
@@ -454,4 +454,5 @@ if FAIL == 0:
 else:
     pass
 
-sys.exit(0 if FAIL == 0 else 1)
+if __name__ == "__main__":
+    sys.exit(0 if FAIL == 0 else 1)

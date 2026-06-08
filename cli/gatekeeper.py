@@ -55,6 +55,7 @@ def debt_status():
 @ura.command("debt-clean")
 @click.option("--forzar",is_flag=True)
 def debt_clean(forzar):
+    _ = forzar
     r=asyncio.run(ColdRefactor().ejecutar_tuneladora())
     click.echo(f"Proc: {r['procesados']} | Res: {r['resueltos']}")
 
