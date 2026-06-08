@@ -1,0 +1,972 @@
+{
+  "files": {
+    ".config/prompts/unified_prompts.json": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:30:34.597723",
+      "sha256": "ccbee312363f60fc421e079ce70c0d0aec61c28dbae6c2f13008412d4d2dcdab"
+    },
+    ".pre-commit-config.yaml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:35.101892",
+      "sha256": "751f874ed7e7168e83f78c91dc42ec45d3f9d0522d25f308e881079b9283dcfb"
+    },
+    ".pytest_cache/README.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:35.574777",
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+    },
+    "AGENTS.md": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:30:36.754848",
+      "sha256": "661d00dbf1e9ba8fb110b60da31aa6059a753d789b08c68ad04fa36d4bdd3bbf"
+    },
+    "CLAUDE.md": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:30:38.080743",
+      "sha256": "661d00dbf1e9ba8fb110b60da31aa6059a753d789b08c68ad04fa36d4bdd3bbf"
+    },
+    "agents/agente_sandbox_codigo.py": {
+      "chunks": 15,
+      "indexed_at": "2026-06-08T07:30:40.266441",
+      "sha256": "f5081b341d8d5563a71b224f2b6582e9d4b1aa65752bfe6bc90407aa47ef0213"
+    },
+    "agents/sandbox/agent_diseno.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:30:41.085922",
+      "sha256": "a655de175228337307678847f5415e216d558137dfdd99cf6531bb0b55f4aefe"
+    },
+    "agents/sandbox/agent_hosteleria.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:30:41.803888",
+      "sha256": "52f6cf82629333e61b8c000d986e513789dc3e5c40071191ddf58414164e4a9e"
+    },
+    "agents/sandbox/agent_legal.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:30:42.652241",
+      "sha256": "3360c20ade8f96d8ba364743aed55290177e739cef1d654d6377a35bab8ebbcd"
+    },
+    "agents/sandbox/agent_programacion.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:30:43.341700",
+      "sha256": "f281e719d185f45fa154b5a29a72288aa8143a5d00d2ae8a7b2364e5d282a72b"
+    },
+    "agents/sandbox/agent_runner.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:30:44.057717",
+      "sha256": "ddeae746fe42f15b5d025aded167572eb4a29911894dca7cca33bdbf197923b6"
+    },
+    "agents/sandbox/requirements.txt": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:44.568315",
+      "sha256": "b621847b55065fa6cbff6309a6620b1e57f114fc1c2a86189f8b883f4f9923b3"
+    },
+    "config/dispositivos.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:45.068768",
+      "sha256": "1415c61f310f3885e905be28761981b801d1c1fc3fe14bc71d7ce1bdf9559b8e"
+    },
+    "config/infra_config.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:45.918323",
+      "sha256": "813593c6683b8705a8f0d9b9a43c13920e06a5267dd413d2b62ef2e237b5e4cd"
+    },
+    "config/loader.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:30:47.185536",
+      "sha256": "56526b7cbdaa17a2062a0d40d5199cca1604724966699dd8eb4ed7a61585507a"
+    },
+    "config/maintenance.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:30:47.696769",
+      "sha256": "4e887e1d1acddcbb0cbad23466877fb11dce84744a5d8d379d1e16c2f47503df"
+    },
+    "config/reglas_builtin.json": {
+      "chunks": 11,
+      "indexed_at": "2026-06-08T07:30:49.782773",
+      "sha256": "e5a1d4caf47da75fd753b5af0f8ee48874f467a18a3ca0b031a46bfe12622b41"
+    },
+    "config/schema.json": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:30:50.436940",
+      "sha256": "028e7de82175121880bbd36383d09689cc60063c888d423d37e3e068f3ffe562"
+    },
+    "config/system_config.json": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:30:51.519928",
+      "sha256": "be3b0cc197add6368daf12056ac1e7d72c848cf31203b20900b3bbd0abffb776"
+    },
+    "core/auth_layer.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:30:52.493140",
+      "sha256": "e9a7242bf22253bb4b2b0b9861d164fbcedb0bfb2eda0541fb2c9a34163096cc"
+    },
+    "core/code_indexer.py": {
+      "chunks": 17,
+      "indexed_at": "2026-06-08T07:50:24.303997",
+      "sha256": "211f3f4a03746d7a60c6176a903fa1325aa24733ea7dbdb2b5e542cb3e9007da"
+    },
+    "core/config_manager.py": {
+      "chunks": 12,
+      "indexed_at": "2026-06-08T07:30:55.911178",
+      "sha256": "99c1af10ac142ab3199d222f52d32f316936d436217a0be7cbb1039137e187b8"
+    },
+    "core/error_sandbox.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:30:57.120343",
+      "sha256": "7d7ebaada2dfb37f93172f490c971183ecda533280aa17348e9641eb814a2907"
+    },
+    "core/guardi\u00e1n_disco.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:30:58.420774",
+      "sha256": "73ec7b4dd43c92820e3f88f23285f2e98548634b00a7986239680cb075577f80"
+    },
+    "core/ingestador_red.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:30:59.567133",
+      "sha256": "ce2f5af7b0b80f0e1b9ffc9e11c6fbc54b2756221dba87ee11e1c2586f2f13aa"
+    },
+    "core/memory_engine.py": {
+      "chunks": 12,
+      "indexed_at": "2026-06-08T07:31:01.327877",
+      "sha256": "03d844d522235f222729dcd99100da21c4a2b6ee2c8be44cf075f030976a4fad"
+    },
+    "core/model_router.py": {
+      "chunks": 26,
+      "indexed_at": "2026-06-08T07:31:04.459606",
+      "sha256": "627751ea5f834bed33b98fcfb1050d70fa19f8bc3a37f0cad5775eb7761c2f2c"
+    },
+    "core/modules/data/.code_index_manifest.json": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:50:26.093521",
+      "sha256": "b9436969e1f89767f8b451cdd7554863254ebaed74b6f9d0302ccdf908f0f402"
+    },
+    "core/resolver_red.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:31:05.609566",
+      "sha256": "800ec48bfc6f0062b2d9faccc8204f0ee765644fcd7621fad0840fcb72f2461a"
+    },
+    "core/sandbox.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:31:06.420617",
+      "sha256": "b9da0d4497fb9258dfb6a87794901b5f5dd7c799ad5330b2423027eba6012740"
+    },
+    "core/sandbox_orchestrator.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:31:07.342501",
+      "sha256": "bbbd85520663cf48fcf4a1d82e18834921573844adda09e9506cb05c470e3d67"
+    },
+    "core/search_engine.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:08.082523",
+      "sha256": "5dacc419c92fc818d12ff4f5d32abddd1d6563491dd06b6ca41900859187f1c3"
+    },
+    "core/ura_multi_agent.py": {
+      "chunks": 9,
+      "indexed_at": "2026-06-08T07:31:09.625613",
+      "sha256": "910ed1b7ce2407898ae145f8397b7623512029de9fe212d0e6f78ad9dcf0fb46"
+    },
+    "core/ura_sandbox_bridge.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:31:10.729222",
+      "sha256": "87cf5b5cc25302b8b8bf847f23f59eb9a8ddbe1c0642cc7d367d9b1108c745b0"
+    },
+    "data/documentos/arquitectura.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:11.513419",
+      "sha256": "2256374c9365d1b220840d3308609786db58eb91f08d83df7cb6f54ddc8c6730"
+    },
+    "data/documentos/faq.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:12.258401",
+      "sha256": "1a6f7ce13207360b6c74e5fc76684cb1d22b09ef6c9985b7c295901c0c402f60"
+    },
+    "data/documentos/reglas.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:12.952725",
+      "sha256": "e04228caacf1dec2b6f6e5fd5572107c9e62c66a38c87ff6172502736a7c043a"
+    },
+    "data/openclaw_stats.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:13.779335",
+      "sha256": "0fb4df5ebadd434949bf6c9aea8c6e4ce79274681cbfe2ac13d64993e7b8117d"
+    },
+    "data/snapshots/20260603_161053.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:14.625979",
+      "sha256": "d742e07525dde84372cad53d0d120c6a5869249275ea6b5d1c7d964fc00a1613"
+    },
+    "data/snapshots/20260603_161109.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:15.131199",
+      "sha256": "53904e4b8d46fa5bbd32a0a624aaa2059181afd29d6a2e42c06ea02ecd8ecc32"
+    },
+    "deploy/SYNC_WORKFLOW.md": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:15.822154",
+      "sha256": "e7b67c4da532df37acfa3bd1dc0cce5e2c33ffa8266460336b009c9359ff0cc0"
+    },
+    "deploy/auto_pull.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:16.407557",
+      "sha256": "b7b1063ebf11768472725e041c300cece9258e928976ca03061f4c2348d7d245"
+    },
+    "deploy/backup_to_mac.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:16.967910",
+      "sha256": "1e9a991443b03ef7c2968a11fc1c9136ea7171d9f2330f440478f7ff383f370f"
+    },
+    "deploy/claw_listener.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:17.488083",
+      "sha256": "fbe435e873a25893bb98c4abf21945ef9fa7ae0ea9fd8d00035eddfe40098aba"
+    },
+    "deploy/clean_session_cache.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:18.208630",
+      "sha256": "5c6020233e9c55bd5b70352ec7ae4b0f306d00911dc132dc7b8fb4b7c631fefd"
+    },
+    "deploy/deploy_router_improvements.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:18.698744",
+      "sha256": "4309c3e7bcbe4c4beb461f718fd498bb262f9088661ea8fdf310cc4f7fb0c215"
+    },
+    "deploy/docker-compose.yml": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:24.094122",
+      "sha256": "ff0526bbb41402299d95f5dc977ebd39c369e69897326d6318c7ad6bd777cd9b"
+    },
+    "deploy/docker/docker-compose.sandbox.yml": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:19.366892",
+      "sha256": "b398da58254b31ff95273adbbecfd3d103437e72ea61c31ab03fcb1a9ea12d0d"
+    },
+    "deploy/docker/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:20.007872",
+      "sha256": "a8e905c27d30cc5798d5e9764e247dd0e679a65338c511fff2b1d8ae62f3cbb1"
+    },
+    "deploy/docker/sandbox/Aprendizaje/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:20.559862",
+      "sha256": "fefc8c3018ee14ec84617851e694be2f875a636648b74105fd994ac9f45e1a87"
+    },
+    "deploy/docker/sandbox/Documentacion/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:21.119954",
+      "sha256": "4f8e213e143d79b0ce0d853ac444567de146062ff4e873ebc95ac115014ddee8"
+    },
+    "deploy/docker/sandbox/Exploracion/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:21.611402",
+      "sha256": "69c87f0428e8ea5937196430eebd719547e38a0628cf9240db3def02ff3ef9cc"
+    },
+    "deploy/docker/sandbox/Mantenimiento/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:22.117666",
+      "sha256": "6f115f0979429c3899a03e88d434cc6e4d270f9b200cfd098f7e69029fc4ae46"
+    },
+    "deploy/docker/sandbox/Seguridad/docker-compose.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:22.630797",
+      "sha256": "26afece91de006a636a8afe6a2de5a97b96740cc55a301b63e1a066c44d0715f"
+    },
+    "deploy/docker/scripts/pro/docker-compose.gx10-sandbox.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:23.477302",
+      "sha256": "ec045049f80301162c1c05ed9de79cbb5345d55400bc79ba112d827778310900"
+    },
+    "deploy/emergency_runbook.json": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:25.175679",
+      "sha256": "0729e49323670ce39384334808ad0a79ee8d1454c90a862905496067b4d2bb64"
+    },
+    "deploy/gx10_bootstrap.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:26.178694",
+      "sha256": "256d3d605ccb31d492033f7fd362bab8856c5dc141052ec74af07f75089f49a3"
+    },
+    "deploy/hardening.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:26.782422",
+      "sha256": "29d80eb9dd1e16154f1515c52dd560692e34a913b32073732216fedf7c536337"
+    },
+    "deploy/immutable_mac.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:27.692761",
+      "sha256": "838cdabba2b4358d4627ddb74f867820312cd3091f250fd88be77b71e2a93df8"
+    },
+    "deploy/install_opencode_mac.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:28.453449",
+      "sha256": "f6ab75f9a5556655a0ef98712bbea970726140a4fbe414d4ec425b421b97baae"
+    },
+    "deploy/lildax_config.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:29.448211",
+      "sha256": "e11895d2134bfcf3557f01096a8191211223c80f9072d62bc898c8c3dd55f7d3"
+    },
+    "deploy/lock_mac_folder.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:30.069892",
+      "sha256": "f9e2847dfbee9effb47a6b4cb3d3c894a70702bab7dfaae4ca9c7f97afda73c2"
+    },
+    "deploy/network_failover.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:30.930946",
+      "sha256": "3acd7b677be13b1f25a7b1e5d25b5c976d9786351b42a283e10445078eb927f0"
+    },
+    "deploy/opencode_asus_config.jsonc": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:31.630394",
+      "sha256": "6bb7aa2dd07799eed8ba75b2950e0527c00c2efe2c834d26a27a0f44b6fef504"
+    },
+    "deploy/opencode_health.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:32.706099",
+      "sha256": "4454f3e8b31f9d2873f55a6a8e54ad2bb3a3f3c09e1da32992c07fd948babe32"
+    },
+    "deploy/opencode_mac_config.jsonc": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:33.448762",
+      "sha256": "745df1ea65e7e8d81ef1abf1dfe15ec031a97d9f0f21e5910c42f0c4ca30dda9"
+    },
+    "deploy/panic_handler.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:34.151969",
+      "sha256": "8f8174f608a1efdb9e8f103b2ad259131c2c76b15f6905699a0083f90f6a52de"
+    },
+    "deploy/sync_to_asus.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:35.171361",
+      "sha256": "27c89eb06389b5d96d77143eb9db0becb61de2e88a7c8fcb70c888fcfc65b644"
+    },
+    "deploy/sync_workflow.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:31:35.968063",
+      "sha256": "3c0bb7cfead84db82c5e40be3c92678e7f63c56444e10c75acca9d8982488a5f"
+    },
+    "deploy/test_proteccion.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:36.942413",
+      "sha256": "a349549f8344598a5e3f28a92904c4641f5e80ab50299d65a2571970ac1c80a3"
+    },
+    "deploy/uninstall_opencode.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:37.622841",
+      "sha256": "2cfd37b1f05b4134d09122ddd2e039f47bdc7b7205618cc8f96f936eecac9c29"
+    },
+    "deploy/ura_opencode_watchdog.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:38.131773",
+      "sha256": "28d3b9e880a77975493dc7e359144c0295a4f694cfe0af4f928c22307bc5c320"
+    },
+    "deploy/ura_tailscale_watchdog.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:38.834541",
+      "sha256": "3aa5f24c7e119b4dc7ffb2c06c1ec826ff56124f33e89fddb5ab6182c947ae84"
+    },
+    "deploy/ura_watcher.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:39.609389",
+      "sha256": "850790b70987b29a44ca6db0647056c1b8119b5dce6d0b23fff6b2979ca2edeb"
+    },
+    "deploy/validate_change.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:40.318677",
+      "sha256": "262fc15fba770b0d39d8e10583a83b1df93f72bf338e16c4294844f606161b63"
+    },
+    "docs/ARQUITECTURA_MULTI_AGENTE.md": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:31:41.446860",
+      "sha256": "c9fb51bfbf5df6156fe4000210c777f4f3a415da711d3b9a279b531d19fae315"
+    },
+    "docs/ARQUITECTURA_REFACTOR.md": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:31:42.279970",
+      "sha256": "17b411634e108637b5b45ec9cfcc490c36189b4f546121fa57e96940264d4c60"
+    },
+    "docs/CONSULTA_EXPERTOS_TUNELADORA.md": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:31:43.413616",
+      "sha256": "02e23709b870a50c9e697c09659e29be6d32b4b5072f6f72956dfcee03aa20e5"
+    },
+    "docs/INFORME_FINAL_TUNELADORAS.md": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:44.405443",
+      "sha256": "0d07ba39d91bc7ba3d51c035fd13f9b85e886a6727fd219b695f29a8780538b7"
+    },
+    "docs/MANIFIESTO_DETERMINISMO.md": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:45.193284",
+      "sha256": "eae32fecb0914b1ff1369e96ff1fe1562dc265e8ffcb4b4d5ceb3ed3eed42e08"
+    },
+    "docs/PROYECTO_TUNELADORA_SUPREMA.md": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:31:46.104594",
+      "sha256": "fa93f974e967f3410d1cf3e6d665267a67ddf66ff8be9b19fb0d71b0df88c1e0"
+    },
+    "docs/URA_AUDITOR_SISTEMAS_IA.md": {
+      "chunks": 18,
+      "indexed_at": "2026-06-08T07:31:48.753206",
+      "sha256": "147366fad972b7bf8832ea12204d343f7140428910e3534a13b8ad3d57d3d8c5"
+    },
+    "docs/gx10/MEJORAS_MCP_AVANZADAS.md": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:49.694635",
+      "sha256": "4ed86b2df3806ed24d837226ebd83c03d1e8f854b218b482a921e6a6f3ff3363"
+    },
+    "docs/gx10/MEJORAS_OPENCLAW.md": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:50.678166",
+      "sha256": "ec17ef56d1b1e76f6da80b7cd1b0adb4a25b6d8e6cf50a66a29d1123a2b88229"
+    },
+    "docs/pro/conexion-hetzner.md": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:31:51.958631",
+      "sha256": "f7151fdd5f42c659b0ee991824112f599357844f34d7fa077e03291e4d829705"
+    },
+    "docs/pro/opencode-lifecycle-fix.md": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:31:53.028950",
+      "sha256": "1cef2dcff5951754894ccba7b94d5fa4ff23074f5eda50b5aaca8ef3c5566fe5"
+    },
+    "knowledge/interacciones/historico_interacciones.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:53.597099",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "mantenimiento/config.json": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:54.375541",
+      "sha256": "bd57effcf92fd72d3764715c57655a839eb6d91a3075dacd6c8f8a51df8f5ea4"
+    },
+    "mantenimiento/rotate_logs.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:31:55.155431",
+      "sha256": "d62b2d7573ecefd13d3a4851c1e8793e5570c71749d4de9c6cd4b583def88c9f"
+    },
+    "mantenimiento/ura_maintenance.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:31:56.840692",
+      "sha256": "a33cfd404db2ca7bbcdd25d6f119868a665148c5063a8b542c2a93c289233372"
+    },
+    "mantenimiento/ura_maintenance_remote.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:31:58.706013",
+      "sha256": "2de6669ddfb1c9743ef02931b1ef77c7814650bc465aa4da7fe277fe450f2bca"
+    },
+    "monitor/error_logger.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:31:59.824727",
+      "sha256": "ea6663ed1c060c22779f813bb687785bdd925f991e9c15ac4c290b439432bc3e"
+    },
+    "monitor/health_check.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:32:01.329639",
+      "sha256": "1623c562cef5d614b75ecd40ab462c4b3e40b7af26eba5ee3342ab847e9228ea"
+    },
+    "monitor/log_alerts.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:02.603600",
+      "sha256": "d669cc0ebf7ccc1427c0282722f1d76ccc5f698180784150bd3e92a75df2b6b9"
+    },
+    "monitor/mac_heartbeat.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:32:03.506412",
+      "sha256": "aa4d5f23a09a3dbda7bdd5d03eb7be21b3fd2b8952dd11acf0c1915654016921"
+    },
+    "monitor/openclaw.py": {
+      "chunks": 13,
+      "indexed_at": "2026-06-08T07:32:05.182963",
+      "sha256": "d50e7b47158c2dfb568e342c85ddc82a1219ca289156453808ebf083aa226729"
+    },
+    "monitor/snc.py": {
+      "chunks": 12,
+      "indexed_at": "2026-06-08T07:32:06.666849",
+      "sha256": "7050be3ba9aaae6613ac734214b5933643a4643282683b6fdd290d53977965ff"
+    },
+    "monitor/snc_remote.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:32:07.810467",
+      "sha256": "077e06354146168c144843dc43b555f7508fcef16ec63b24a7cd5af836e018fb"
+    },
+    "pyproject.toml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:08.379075",
+      "sha256": "e22c4d2edd78944caae45ed9827aef31dcc443441692c8e4b7a07146841d4b23"
+    },
+    "scripts/pro/PLUGIN_TEMPLATE.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:32:09.941124",
+      "sha256": "683362465d2d564c9f6af18fa8aa59698f4257457a7a239d31f2b8999e8606dd"
+    },
+    "scripts/pro/README.md": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:10.638174",
+      "sha256": "25b73b8467fb9867a0bb4a0582dd30c7a19a18d9541ad125f0db89b3727f9ad8"
+    },
+    "scripts/pro/ajustar_contexto.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:11.911945",
+      "sha256": "b12e99647ad58dbe072f8adba69a5214108dde88a3fd367cf04799c4c220af58"
+    },
+    "scripts/pro/alineador.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:13.252367",
+      "sha256": "6a8c365eb3b44bbce4e7eb16d52c3bfa465060b2e1ed1a36ff90bbd00dea41c3"
+    },
+    "scripts/pro/analisis_completo.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:32:14.771520",
+      "sha256": "6df1afc582877a5a491241ca68126de8a237dd768ff8f36da15105df40ae848a"
+    },
+    "scripts/pro/analizar_fallo_conciencia.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:32:16.041471",
+      "sha256": "622a3eb4da778e84bfa38e7b3e79f11d3357524cae03a0302413164fd4fe65a9"
+    },
+    "scripts/pro/asus_connect_hetzner.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:32:17.064689",
+      "sha256": "3717ee6c94195d15b260a2b00b180aa27ca5e79a302b228c538955449d74759e"
+    },
+    "scripts/pro/auditor_router.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:18.442691",
+      "sha256": "857b28d7965d1553c6969706648330911c770c282b8c9d6a2d74ccf0b63ed250"
+    },
+    "scripts/pro/auto_conciencia.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:19.942111",
+      "sha256": "66ba0b8e4a37a00a8d04870b5dfce936ca773e6ec69f2b435f76888fff14cf9d"
+    },
+    "scripts/pro/auto_reglas.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:32:21.183481",
+      "sha256": "80f68da9d5fa1be32b2b4e18aaedd4b646f9af093f0cf12a8e2fad880671ea40"
+    },
+    "scripts/pro/bypass_linksys_gui.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:32:22.205207",
+      "sha256": "42cfef01bcbbf80751b9b8e4ff25e4b21ad76667d826ae9767ad9abd3f9aede2"
+    },
+    "scripts/pro/check_licenses.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:22.769098",
+      "sha256": "256ba339f1057baf76054731ec5c22f99c1bd6a52bd5745839a83c7015c0356c"
+    },
+    "scripts/pro/chunk_optimizer.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:32:24.636373",
+      "sha256": "bc1810f902955582bdc31ce73f3f99ba3e9d98a82406e2db4a0d525ef8268f17"
+    },
+    "scripts/pro/ciclo_rapido.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:25.354064",
+      "sha256": "1166237126afacbdd342bfc95dfca588ad3fe1f3ce3f67728df776ba0b003333"
+    },
+    "scripts/pro/compactador_espacios.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:32:26.498145",
+      "sha256": "8a965fc348827043b11d7203571108d2939fc2a3d281a9e9c2d63e7c9ce7a3f8"
+    },
+    "scripts/pro/compactadora.py": {
+      "chunks": 12,
+      "indexed_at": "2026-06-08T07:32:27.925383",
+      "sha256": "2fbe64a181919ddee95329fc26b833994b929005d566dfc678bc1d54727d7017"
+    },
+    "scripts/pro/conceder_permisos_accesibilidad.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:28.392453",
+      "sha256": "71e9ce6cc8ebc4862bfa95a26efdaa5ef8259833f72b9cf5c1fe282e5d7049e5"
+    },
+    "scripts/pro/conciencia.py": {
+      "chunks": 13,
+      "indexed_at": "2026-06-08T07:32:29.918103",
+      "sha256": "9674a64879b6914afac4ba1e48b3af65524e1e54b16945085e1b896f5202ceda"
+    },
+    "scripts/pro/conectar_servidor_externo.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:32:30.536377",
+      "sha256": "8383dcf7a5e18c855bb0b116b7911507afd32314f41a2c17ce1147a9f41b41e7"
+    },
+    "scripts/pro/conflict_detector.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:31.097367",
+      "sha256": "0dd2244e7c10957ab68913ea2efad00b112530a359ec20567ec788618a803bea"
+    },
+    "scripts/pro/cross_trace.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:31.716183",
+      "sha256": "eeeb1ee32d448fbc606f87d5a142f3f3e20092d31613c4a68b3d5fed012f15cf"
+    },
+    "scripts/pro/deploy_camaras.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:32:32.885053",
+      "sha256": "4e4f51d03513f8f9d096d66a75ef740052ac5e00b4b33fbfe5a2c15ec86960ee"
+    },
+    "scripts/pro/deploy_copilotos.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:32:33.707778",
+      "sha256": "662ce87771800c46a3bed83a62e5e536d17ca6e87623acbbf8bd56bf1ba755cf"
+    },
+    "scripts/pro/deploy_sandbox_gx10.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:34.166295",
+      "sha256": "d217161131acfb22f7e2a129dad562de593cca115b96fbdedead0e0ef8dafe5b"
+    },
+    "scripts/pro/descubrir_puertos.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:34.655203",
+      "sha256": "7b7b36c23cc46477f45bb605ff8b36bbb5ab29667c51421c26abe76ecc36d4f0"
+    },
+    "scripts/pro/desplegar_dahua_supervisor.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:35.216140",
+      "sha256": "f462050d98d6615ab590911dd597c64a6376ab46ac83e56b00853327631f07e0"
+    },
+    "scripts/pro/detect_environment.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:35.798892",
+      "sha256": "9ade2374154f65d2234426bd592f5b47f5adc2564b4ea94362aec990a3a33963"
+    },
+    "scripts/pro/docker-compose.gx10-sandbox.yml": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:36.284902",
+      "sha256": "ec045049f80301162c1c05ed9de79cbb5345d55400bc79ba112d827778310900"
+    },
+    "scripts/pro/ejecutor_api.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:32:37.510112",
+      "sha256": "24533d5b98b19b5b43db830525abd44f7f0a090cfcdd4f3a5f92dce57eab1c16"
+    },
+    "scripts/pro/evolve.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:38.004650",
+      "sha256": "dac28e23c8960a3ca1c1d209e4e1d776b03589d6c1b2be678e96f8e0f791e671"
+    },
+    "scripts/pro/f821_watch.py": {
+      "chunks": 9,
+      "indexed_at": "2026-06-08T07:32:39.338745",
+      "sha256": "b2b41bf499b694cbb5b08c4a87fef1f665d85083a096f664f677a889d097636e"
+    },
+    "scripts/pro/false_positive_baseline.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:39.899721",
+      "sha256": "adba1ed2db0d2b12c9160594824ea9e8e2925d09ed3dac207e67b6868b82c189"
+    },
+    "scripts/pro/fn_scanner.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:40.403388",
+      "sha256": "c397a12ed863f5478169d3c889c38fd5fac3adc0d1788198a7100d942fd18f86"
+    },
+    "scripts/pro/fp_scanner.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:40.966126",
+      "sha256": "bd6e81f7e36754d38a9dc596fd3919ac613ad0f1c4b73ba1a927fe08c7a6e06e"
+    },
+    "scripts/pro/fpfn_report.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:41.458348",
+      "sha256": "311137e42a00c464e434fac274b6e4c53969170cfa2b57df6cfb0b090d3e08fa"
+    },
+    "scripts/pro/gx10_sync.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:41.995134",
+      "sha256": "d174f79616e02cb9f87d94afbd418d429023e10f480f142daca2b9fdedf7b8ad"
+    },
+    "scripts/pro/gx10_sync_final.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:42.492475",
+      "sha256": "1d5a8447c1e45e01153a004d89cfcebfb72f5dc44338a3e0b88987d5f5e16ba6"
+    },
+    "scripts/pro/health_check_router.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:42.961727",
+      "sha256": "fa0713b002aaac2a353d4d55167b2433d70a4a9289e68316bef001338339c965"
+    },
+    "scripts/pro/inspectores.py": {
+      "chunks": 24,
+      "indexed_at": "2026-06-08T07:32:45.494050",
+      "sha256": "d254be16a404e45cbb7e79c6efe21c3db50ba2b6afc70b3e437d37d0c4ecc132"
+    },
+    "scripts/pro/instalar_gx10_circuit.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:32:46.349349",
+      "sha256": "c8160c152228663cc8751b1ea83d36eeb27736663a9f17f1aa04d700001a4971"
+    },
+    "scripts/pro/instalar_servidor_camaras.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:46.837880",
+      "sha256": "7a3b2c239dffe3c3c67a03dfdb7e22fef319d6930c823de5880cbcf9679f12e4"
+    },
+    "scripts/pro/install_tailscale_hetzner.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:32:47.623915",
+      "sha256": "86f1e14b968b93808dc1e1797fec0db8c676bfd3505717d194af218ae39d321e"
+    },
+    "scripts/pro/integracion_opencode.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:32:48.526991",
+      "sha256": "a898011720efe3e8a9e1c290c05fcc77400e3d59070e6427453df733e2a0ec45"
+    },
+    "scripts/pro/launch_refactor_gx10.sh": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:32:49.296157",
+      "sha256": "fe78c51f72938ee5e9e50290c72ad189d1c25d3b74a3f4cd8abaf3c352aca504"
+    },
+    "scripts/pro/maquinas.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:49.756028",
+      "sha256": "9c96eb42e9aa6dfe1fc4cc4d4fd2415874396cc6a0e81f2605dd876957771322"
+    },
+    "scripts/pro/master_conciencia.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:32:50.522020",
+      "sha256": "02228cfd703af454401505e84a3e26eb8d783ab5393a8ecd7220fd8868eda89a"
+    },
+    "scripts/pro/meta_mejora.py": {
+      "chunks": 10,
+      "indexed_at": "2026-06-08T07:32:51.824330",
+      "sha256": "9f21ed4d858919551e52840e9cab6abf3c10935ec2e32819bc71e72766d10025"
+    },
+    "scripts/pro/notify_on_change.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:52.344651",
+      "sha256": "6f1d425ffdf0ec80f06b9a6ff9ebe64e853e27f8754bab5a7c9bd4807eefacfd"
+    },
+    "scripts/pro/openclaw_firmador.py": {
+      "chunks": 21,
+      "indexed_at": "2026-06-08T07:32:55.119666",
+      "sha256": "975df7879a113118de6231b7a1888fafea4f28091c26c4c358d3865c13b24980"
+    },
+    "scripts/pro/openclaw_reviewer.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:32:56.327111",
+      "sha256": "de43d8632b53bc4b1174d3f9ef937452df0fa48893cac9b995186159667774e7"
+    },
+    "scripts/pro/pareto_router.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:32:57.459864",
+      "sha256": "3ff3f23a697d1fc36f1b31b652bf4376d6379e36dc0807429a770a3d5d818b89"
+    },
+    "scripts/pro/phase1_diagnosis.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:58.113960",
+      "sha256": "0f4f70bfe1c0db1e18b03ef277047c384bca38e66a57446cb0648004a5de9cfe"
+    },
+    "scripts/pro/phase2_filter.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:58.593689",
+      "sha256": "cd1f63b8c295363d05f05bec795d96c1585fa837c3ef80257fbc6b3f42f14cd4"
+    },
+    "scripts/pro/phase3_architecture.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:59.077455",
+      "sha256": "18086f7fa250c3922fb1d72ddcf52816dc988afca7d63ab213232f94ea5d7cfb"
+    },
+    "scripts/pro/phase4_rollback.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:32:59.572647",
+      "sha256": "38ab91f1019213f338a1c02b143bc4a5b8988d8eb2459eae660deff5cf04693f"
+    },
+    "scripts/pro/pipeline_supremo.py": {
+      "chunks": 18,
+      "indexed_at": "2026-06-08T07:33:02.112183",
+      "sha256": "941addd2b38e5573b789525438f699adc0c1e50626bbfa6bb09e93a470116e53"
+    },
+    "scripts/pro/plugin_registry.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:33:03.224607",
+      "sha256": "73a6db0975c2dbec884d548cceab81bcc388f11220e33a52273f23f17aaf069d"
+    },
+    "scripts/pro/poda_mecanica.py": {
+      "chunks": 9,
+      "indexed_at": "2026-06-08T07:33:04.549368",
+      "sha256": "11c8631e14b81cde54e6debfae12a88b0cf283d1ae73de7bad142e14e2b751ba"
+    },
+    "scripts/pro/quality_metrics.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:05.133044",
+      "sha256": "5d602808a45b0df859378658d8027c7da87a2ce4983eafa6d69fe344857975df"
+    },
+    "scripts/pro/redirect_mejora_gx10.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:33:05.770622",
+      "sha256": "557f80346c597e80864d294fd452c96046fbeb815e788ab03bd0fd85b308d8b3"
+    },
+    "scripts/pro/refactor_4_motores.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:33:06.747540",
+      "sha256": "6ea08f2a11276b5d922d20940302896baec448208e49042d86b40341750779aa"
+    },
+    "scripts/pro/refactor_large_functions.py": {
+      "chunks": 12,
+      "indexed_at": "2026-06-08T07:33:08.205552",
+      "sha256": "44a7867f2b4f72ea37f2231dfc236eebca7bd08f9b3c8caddf7c89e5b93df4f9"
+    },
+    "scripts/pro/refactor_large_functions_v2.py": {
+      "chunks": 15,
+      "indexed_at": "2026-06-08T07:33:09.870720",
+      "sha256": "641c388687b50716487f1957149ab903d7d7df1f37db4c665fc4fcd38e216c4d"
+    },
+    "scripts/pro/refactor_preflight.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:33:10.761797",
+      "sha256": "bfd15e193d4cd1caac1e6bde8a24c61acefcaa8887431c5c567c461358e5b242"
+    },
+    "scripts/pro/refactor_v2.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:33:11.888515",
+      "sha256": "5e5dde3d8d3fbe9694579ba38e068b79ba89491871aad21534339d73e3e60dd1"
+    },
+    "scripts/pro/reglas_applier.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:33:12.851590",
+      "sha256": "db75b60c10681622c0f30f57f53b7f27f984c71fa4297474604425bccf554885"
+    },
+    "scripts/pro/reglas_generator.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:33:13.938852",
+      "sha256": "e0fd548f5eecdc9b5d483b3ea83269c6a081600242eafed57a79fb606ac18e52"
+    },
+    "scripts/pro/reglas_loader.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:33:15.165508",
+      "sha256": "d6ac0f8ee627d21aecbb5f035abb1bdd2d3318fdf52f5e74e16d2e0eef1e4239"
+    },
+    "scripts/pro/router_rate_limiter.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:33:16.275235",
+      "sha256": "088e889e6f47b4a4329a4a87ffad9dd7f2b5af4940c4a882c093a690c67217ba"
+    },
+    "scripts/pro/rpa_linksys.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:33:17.394623",
+      "sha256": "861160988d79f51f4a7bcaa2d550d36f1696a57d8ab28ffaa98803b9743acabf"
+    },
+    "scripts/pro/rpa_linksys_v2.py": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:33:18.447874",
+      "sha256": "d379f290ea42c2855d906364f14b710254fbc4c4cb3e35759829220425f2a276"
+    },
+    "scripts/pro/rpa_zte_f6640.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:33:19.365610",
+      "sha256": "922db20c4f66e40f68abdc72b7e7368de033e91939fb928b95e6affda3eec209"
+    },
+    "scripts/pro/safe_rollback.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:19.882605",
+      "sha256": "4bc25faf0bb1e566b20522b868ef8c20ae1367a3fe3977195c1ea0304829a851"
+    },
+    "scripts/pro/sandbox_industrial.py": {
+      "chunks": 55,
+      "indexed_at": "2026-06-08T07:33:25.722280",
+      "sha256": "f5283bd7664c52ea3155e6e17a7da49978da626560531fe09de32bcba17b3ae7"
+    },
+    "scripts/pro/scanner_autoajuste.py": {
+      "chunks": 7,
+      "indexed_at": "2026-06-08T07:33:27.369638",
+      "sha256": "45ab9f6536414a89a5e028ca116abf84d602acb4ed5b03af3773c4b3997072c3"
+    },
+    "scripts/pro/setup_logrotate_newsyslog.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:27.897715",
+      "sha256": "252d0c1c555b9b1a7de8e1124d5f3a9040c6c95160122704e488b1d8cf07cfc3"
+    },
+    "scripts/pro/shadow_git_rollback.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:28.501808",
+      "sha256": "273dc324e34476bd9131a7d3eb822a915b203463482f4d3543209031a85f0a31"
+    },
+    "scripts/pro/supervisor_ciclo.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:29.232142",
+      "sha256": "72f9b34abf1f88153a418af1bba63f37cea33dd761c5357e0b917aaad90c9a76"
+    },
+    "scripts/pro/token_screen.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:33:30.406639",
+      "sha256": "b6c55505928c575e0fb837af97228ce30567ea0dc571a26a32163b3b029cf727"
+    },
+    "scripts/pro/trampa_rm.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:30.924986",
+      "sha256": "60166ab024284b584f4bf56d1f57b55f3ea0d763f0e5bba41016fc43ec2511f2"
+    },
+    "scripts/pro/tuneladora_mantenimiento.py": {
+      "chunks": 29,
+      "indexed_at": "2026-06-08T07:33:33.883242",
+      "sha256": "0b922c440fe96ef939ba94471c0e87982086f5f1a9d31d8e1d682248a644d4d3"
+    },
+    "scripts/pro/tuneladora_master.py": {
+      "chunks": 11,
+      "indexed_at": "2026-06-08T07:33:35.244358",
+      "sha256": "6e94fbceef5a842b4651123046a1e0b45bc2be9711623dd839e30253dc09ca0d"
+    },
+    "scripts/pro/tuneladora_mejora.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:33:36.164638",
+      "sha256": "67802d0146d309f90d00b43e4930167a7a371468ae58d220d9069cd6042fdb0c"
+    },
+    "scripts/pro/upgrade_pipeline.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:36.897393",
+      "sha256": "f96aa07f092a48a7fe36cff0baa03d57ec949a87d71f9d7fb8e2bd269cf2a221"
+    },
+    "scripts/pro/ura-exit-node.sh": {
+      "chunks": 1,
+      "indexed_at": "2026-06-08T07:33:37.838481",
+      "sha256": "369fc95380ed3e90721ea53f9567f5bb372dc004ef7b4c6984a98d6c7a007771"
+    },
+    "scripts/pro/ura_self_modify.py": {
+      "chunks": 8,
+      "indexed_at": "2026-06-08T07:33:39.174242",
+      "sha256": "b9beb5b8bb6e374d34c58c202aa086e361c5befb5b1f591ec2612e3851415d4c"
+    },
+    "scripts/pro/watermark_aggregator.py": {
+      "chunks": 11,
+      "indexed_at": "2026-06-08T07:33:40.724201",
+      "sha256": "664ad174464fc11776354301ff542312a81b834c6c806d0ecd7789dd2672f807"
+    },
+    "scripts/profile_startup.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:33:41.561073",
+      "sha256": "f21a2e78be25030653c673681d0fcba22a0f176ec29abf012948790697df6a76"
+    },
+    "tests/integration_smoke.sh": {
+      "chunks": 2,
+      "indexed_at": "2026-06-08T07:33:42.338735",
+      "sha256": "3d4183db26af2e8304eb559e1aca285edca43b0f7d248bc60e93392445b6989d"
+    },
+    "tests/test_integration.py": {
+      "chunks": 6,
+      "indexed_at": "2026-06-08T07:33:43.281678",
+      "sha256": "3b117eae4ca015448000d63e5963dffbc7090ba3428629524d5d3fb746594571"
+    },
+    "tests/test_openclaw.py": {
+      "chunks": 4,
+      "indexed_at": "2026-06-08T07:33:44.359287",
+      "sha256": "2db2df24ff13d8ab9785d7a5646d25cbbe8620dce66962efd26428608df7ced2"
+    },
+    "tests/test_unit.py": {
+      "chunks": 3,
+      "indexed_at": "2026-06-08T07:33:45.368922",
+      "sha256": "67097861867bce37fd39c9c1079aa6df48fab9c956d0b2d60fcd2aab755c1713"
+    },
+    "ura.py": {
+      "chunks": 18,
+      "indexed_at": "2026-06-08T07:33:47.649357",
+      "sha256": "bd8c75cef3e0a90d49634622af49896d7fe5108db28a7e37332db6aec21fcc7c"
+    },
+    "ura_search/data/analisis/intel_competencia_20260606_2043.json": {
+      "chunks": 5,
+      "indexed_at": "2026-06-08T07:33:48.638454",
+      "sha256": "7d79a3f2bb02c214a537486745043af51e3bd565721caf3a55f2d27c8d3b4cb5"
+    }
+  },
+  "indexed_at": "2026-06-08T07:50:26.097697",
+  "total_chunks": 24,
+  "total_files": 193
+}
