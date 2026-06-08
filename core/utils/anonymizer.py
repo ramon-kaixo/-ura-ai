@@ -35,3 +35,16 @@ def sanitize_text(text: str) -> str:
     text = PATTERNS["IP_ADDRESS"].sub("[IP_REDACTADA]", text)
     text = PATTERNS["GENERIC_SECRET"].sub(r'\1: "[CREDENTIAL_REDACTADA]"', text)
     return text
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(sanitize_text(content))
+        print(f"[anonymizer] Sanitizado: {file_path}")
+    else:
+        import sys
+        sys.stdout.write(sanitize_text(sys.stdin.read()))
