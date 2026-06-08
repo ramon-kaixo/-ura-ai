@@ -1,6 +1,7 @@
 """Agente Diseño — analiza carteles, imagenes y diseño visual."""
 import re
 
+
 def process(text: str, meta: dict) -> dict:
     result = {
         "categoria": "diseno",
@@ -23,11 +24,11 @@ def process(text: str, meta: dict) -> dict:
         result["relevante"] = True
 
     # Extraer colores mencionados
-    colores = re.findall(r'(rojo|azul|verde|negro|blanco|amarillo|naranja|gris|dorado|plateado)', text.lower())
+    colores = re.findall(r"(rojo|azul|verde|negro|blanco|amarillo|naranja|gris|dorado|plateado)", text.lower())
     result["paletas"] = list(set(colores))
 
     # Fuentes mencionadas
-    fonts = re.findall(r'(Helvetica|Arial|Times|Garamond|Futura|Montserrat|Roboto|Open\s+Sans)', text)
+    fonts = re.findall(r"(Helvetica|Arial|Times|Garamond|Futura|Montserrat|Roboto|Open\s+Sans)", text)
     result["tipografia"] = list(set(fonts))
 
     return result

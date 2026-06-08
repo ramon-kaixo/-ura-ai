@@ -1,6 +1,7 @@
 """Agente Hostelería — analiza tendencias, recetas y gestión hostelera."""
 import re
 
+
 def process(text: str, meta: dict) -> dict:
     result = {
         "categoria": "hosteleria",
@@ -23,7 +24,7 @@ def process(text: str, meta: dict) -> dict:
             break
 
     # Detectar menciones a restaurantes locales
-    local = re.findall(r'(Navarra|Pamplona|Iruña|Tudela|Estella|Barañáin)', text)
+    local = re.findall(r"(Navarra|Pamplona|Iruña|Tudela|Estella|Barañáin)", text)
     if local:
         result["zona"] = list(set(local))
         result["relevante"] = True

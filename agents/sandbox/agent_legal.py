@@ -1,6 +1,6 @@
 """Agente Legal — analiza textos normativos y fiscales."""
-import json, re
-from typing import Any
+import re
+
 
 def process(text: str, meta: dict) -> dict:
     result = {
@@ -24,7 +24,7 @@ def process(text: str, meta: dict) -> dict:
     result["resumen"] = lines[0][:300] if lines else ""
 
     # Detectar referencias legales (BOE, artículos, leyes)
-    refs = re.findall(r'(Ley\s+\d+/\d+|BOE|Real\s+Decreto|Artículo\s+\d+|Norma\s+Foral)', text)
+    refs = re.findall(r"(Ley\s+\d+/\d+|BOE|Real\s+Decreto|Artículo\s+\d+|Norma\s+Foral)", text)
     result["referencias"] = list(set(refs))
 
     return result

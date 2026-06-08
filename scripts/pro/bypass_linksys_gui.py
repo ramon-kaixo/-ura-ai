@@ -11,11 +11,17 @@
   Firma: Ramon Esnaola (K0513893926)
 """
 
-import contextlib, json, os, subprocess, sys, time
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import sync_playwright
 except ImportError:
     print("Playwright no instalado. Ejecuta: pip install --break-system-packages playwright && python3 -m playwright install chromium")
     sys.exit(1)
@@ -88,10 +94,10 @@ def bypass_linksys():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=[
-            '--ignore-certificate-errors',
-            '--ignore-ssl-errors',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
+            "--ignore-certificate-errors",
+            "--ignore-ssl-errors",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
         ])
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
@@ -117,7 +123,7 @@ def bypass_linksys():
                 ".bypass-link",
                 ".continue-link",
             ]
-            
+
             # Try to find the bypass link
             found = find_and_click(page, bypass_selectors, timeout=3000)
             if not found:
@@ -148,12 +154,12 @@ def bypass_linksys():
             if password_field:
                 password_field.fill(RECOVERY_KEY)
                 print(f"  Password introducida: {RECOVERY_KEY}")
-                
+
                 # Esperar a que JS cifre el password (RSA) y submit el formulario
                 time.sleep(1)
                 password_field.press("Enter")
                 time.sleep(5)  # Esperar a que cargue el dashboard
-                
+
                 # Verificar si el login fue exitoso
                 page.wait_for_load_state("networkidle", timeout=10000)
                 content = page.content()
@@ -169,7 +175,7 @@ def bypass_linksys():
 
             # ── PASO 4: Navegar a Port Forwarding ──
             print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
-            
+
             # Menu items in order of navigation (Linksys Velop UI)
             menu_items = [
                 ("Security", ["Security", "Seguridad"]),
