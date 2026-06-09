@@ -13,9 +13,13 @@ class CapturaVirtual:
         OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     def capturar(self, nombre: str = "captura") -> Path:
-        out = OUT_DIR / f"{nombre}_{int(time.time())}.png"
-        subprocess.run(["scrot", str(out)], env=self.env, capture_output=True, timeout=10)
-        return out if out.exists() else Path("")
+        ts = int(time.time())
+        tmp = OUT_DIR / f".{nombre}_{ts}.png"
+        final = OUT_DIR / f"{nombre}_{ts}.png"
+        subprocess.run(["scrot", str(tmp)], env=self.env, capture_output=True, timeout=10)
+        if tmp.exists():
+            tmp.rename(final)
+        return final if final.exists() else Path("")
 
     def abrir(self, cmd: list[str]) -> subprocess.Popen:
         return subprocess.Popen(cmd, env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
