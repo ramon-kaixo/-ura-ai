@@ -41,7 +41,15 @@ def capturar_pantalla() -> str | None:
     except Exception as e:
         return None
 
-def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> str:
+from dataclasses import dataclass
+
+@dataclass
+class RespuestaOllama:
+    texto: str
+    modelo: str = "llama3.2-vision:11b"
+    confianza: float = 0.0
+
+def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
     import urllib.request
     data = {"model": "llama3.2-vision:11b", "prompt": prompt, "stream": False}
     if imagen_b64:
@@ -50,9 +58,11 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> str:
         req = urllib.request.Request("http://127.0.0.1:11434/api/generate",
             data=json.dumps(data).encode(), headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=120) as r:
-            return json.loads(r.read()).get("response", "")
+            resp = json.loads(r.read())
+        texto = resp.get("response", "")
+        return RespuestaOllama(texto=texto, modelo="llama3.2-vision:11b")
     except Exception as e:
-        return f"Error: {e}"
+        return RespuestaOllama(texto=f"Error: {e}")
 
 def main():
     print("=== UI-TARS GX10 ===")
@@ -67,9 +77,10 @@ def main():
         print(f"  Captura: {len(imagen)} bytes")
     print("  Analizando con Ollama vision...")
     resultado = analizar_con_ollama(imagen, "Describe esta interfaz en detalle")
-    print(f"  Resultado: {resultado[:200]}")
+    print(f"  Resultado: {resultado.texto[:200]}")
+    print(f"  Modelo: {resultado.modelo}")
     path = REPORTS_DIR / f"uitars_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    path.write_text(json.dumps({"modo": modo, "resultado": resultado}, indent=2))
+    path.write_text(json.dumps({"modo": modo, "resultado": resultado.texto}, indent=2))
     print(f"  Reporte: {path}")
 
 if __name__ == "__main__":
