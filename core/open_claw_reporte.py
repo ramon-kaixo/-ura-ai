@@ -6,8 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 HOME = Path.home()
 REPORTS_DIR = HOME / "URA" / "ura_ia_1972" / "reports"
-COLA_DIR = HOME / ".nervioso" / "ura_search" / "cola" / "hetzner"
-if not COLA_DIR.exists(): COLA_DIR = HOME / "URA" / "storage" / "inbox"
+COLA_DIR = (HOME / ".nervioso" / "ura_search" / "cola" / "hetzner").resolve()
+if not COLA_DIR.exists(): COLA_DIR = (HOME / "URA" / "storage" / "inbox").resolve()
+if not str(COLA_DIR).startswith(str(HOME.resolve())):
+    raise PermissionError("COLA_DIR fuera del home del usuario")
 def get_ram_libre_gb() -> float:
     if platform.system() == "Darwin":
         try: out = subprocess.getoutput("sysctl hw.memsize | awk '{print $2}'"); return round(int(out) / (1024**3), 1)
