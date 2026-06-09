@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from io import BytesIO
 
+MAX_PIXEL_AREA = 1280 * 720  # 720p máximo
+
 REPORTS_DIR = Path("/home/ramon/URA/reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -30,6 +32,9 @@ def capturar_pantalla() -> str | None:
         with mss.mss() as sct:
             img = sct.grab(sct.monitors[1])
             pil_img = Image.frombytes("RGB", img.size, img.rgb)
+            if pil_img.width * pil_img.height > MAX_PIXEL_AREA:
+                ratio = (MAX_PIXEL_AREA / (pil_img.width * pil_img.height)) ** 0.5
+                pil_img = pil_img.resize((int(pil_img.width * ratio), int(pil_img.height * ratio)))
             buf = BytesIO()
             pil_img.save(buf, format="JPEG", quality=50)
             return base64.b64encode(buf.getvalue()).decode()
