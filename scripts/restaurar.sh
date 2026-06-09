@@ -49,6 +49,7 @@ CRITICOS=(
   "tests/test_anonymizer.py"
   "tests/test_seguridad_paths.py"
   "docs/CONTEXTO_SESION_2026-06-09.md"
+  "$HOME/.openclaw/openclaw.json"
 )
 
 for f in "${CRITICOS[@]}"; do
