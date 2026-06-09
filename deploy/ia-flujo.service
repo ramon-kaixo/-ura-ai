@@ -1,0 +1,16 @@
+[Unit]
+Description=Motor Flujo Constante 200 Mbps - GX10
+After=network.target
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/python3 app/flujo_constante.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
