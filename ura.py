@@ -23,7 +23,6 @@ _STARTUP_START = time.perf_counter()
 print(f"[Inicio] {datetime.now().isoformat()}")
 
 from core.config_manager import CONFIG as _CFG
-
 _CONFIG_LOAD_TIME = time.perf_counter() - _STARTUP_START
 print(f"[Carga de Config] {_CONFIG_LOAD_TIME:.3f}s")
 

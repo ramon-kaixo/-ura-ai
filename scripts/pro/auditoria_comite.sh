@@ -26,7 +26,7 @@ fi
 log "=== Comite de 10 IAs ===
 
 # Código a auditar (sanitizado)
-python3 -c "
+python3 << 'PY'
 from core.utils.anonymizer import sanitize_text
 import os, json
 result = {}

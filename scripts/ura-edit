@@ -1,0 +1,20 @@
+#!/bin/bash
+# ura-edit — helper: unlocks chattr +i, opens $EDITOR, re-locks
+# Uso: ura-edit <file>
+FILE="$1"
+if [ -z "$FILE" ]; then
+  echo "Uso: ura-edit <archivo>"
+  exit 1
+fi
+FULL=$(readlink -f "$FILE" 2>/dev/null || echo "$FILE")
+if [ ! -f "$FULL" ]; then
+  echo "Error: no existe $FULL"
+  exit 1
+fi
+# Unlock
+sudo chattr -i "$FULL" 2>/dev/null
+# Edit
+${EDITOR:-nano} "$FULL"
+# Re-lock
+sudo chattr +i "$FULL" 2>/dev/null
+echo "Relockeado: $FULL"
