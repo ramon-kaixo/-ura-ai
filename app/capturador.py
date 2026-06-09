@@ -1,44 +1,87 @@
 #!/usr/bin/env python3
-"""app/capturador.py — Puente a scripts/pro/uitars_gx10.py.
-Proporciona CapturadorPantallaSeguro con normalizacion Retina.
+"""app/capturador.py — Captura aislada por nodo (ASUS/HETZNER/MAC).
+Cada maquina captura su propia pantalla. Sin cruce de contextos.
 """
 from __future__ import annotations
-import sys
+import os, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.pro.uitars_gx10 import (
-    capturar_pantalla, analizar_con_ollama, tiene_display
-)
+# Identificacion del nodo via variable de entorno (default: ASUS_GX10)
+NODO = os.getenv("URA_NODE_ENV", "ASUS_GX10")
 
-class CapturadorPantallaSeguro:
-    """Wrapper con normalizacion Retina para Mac."""
-    def __init__(self, normalizar_retina: bool = True) -> None:
-        self.normalizar_retina = normalizar_retina
+class CapturadorTarget:
+    """Capturador aislado por nodo. Cada maquina solo ve su pantalla."""
+
+    def __init__(self) -> None:
+        self.nodo = NODO
         self.es_mac = sys.platform == "darwin"
 
     def capturar(self) -> str | None:
-        import base64
-        from PIL import Image
-        from io import BytesIO
-        b64 = capturar_pantalla()
-        if not b64:
-            return None
-        img = Image.open(BytesIO(base64.b64decode(b64)))
-        w, h = img.size
-        if self.es_mac and self.normalizar_retina and (w > 1920 or h > 1080):
-            img = img.resize((w // 2, h // 2))
+        """Captura segun el nodo actual. Sin cruce de contextos."""
+        if self.nodo == "HETZNER_ALEMANIA":
+            return self._capturar_vnc()
+        elif self.nodo == "MAC":
+            return self._capturar_mac()
+        else:
+            return self._capturar_headless()
+
+    def _capturar_vnc(self) -> str | None:
+        """Captura desde el monitor virtual de Hetzner via VNC."""
+        try:
+            import vncdotool.api, base64
+            from PIL import Image
+            from io import BytesIO
+            client = vncdotool.api.connect("127.0.0.1::5901")
+            client.password(os.getenv("VNC_PWD", "ura2026"))
+            img = client.captureScreen()
+            client.disconnect()
             buf = BytesIO()
             img.save(buf, format="JPEG", quality=50)
             return base64.b64encode(buf.getvalue()).decode()
-        return b64
+        except Exception as e:
+            return None
+
+    def _capturar_mac(self) -> str | None:
+        """Captura nativa en Mac con normalizacion Retina."""
+        try:
+            import base64
+            from PIL import ImageGrab, Image
+            from io import BytesIO
+            img = ImageGrab.grab()
+            w, h = img.size
+            if w > 1920 or h > 1080:
+                img = img.resize((w // 2, h // 2))
+            buf = BytesIO()
+            img.save(buf, format="JPEG", quality=50)
+            return base64.b64encode(buf.getvalue()).decode()
+        except Exception as e:
+            return None
+
+    def _capturar_headless(self) -> None:
+        """ASUS GX10: modo headless. Sin captura real."""
+        return None
 
     def normalizar_coordenadas(self, x: int, y: int) -> tuple[int, int]:
-        """Convierte coordenadas de pantalla Mac Retina a coordenadas reales."""
-        if self.es_mac and self.normalizar_retina:
+        """Convierte coordenadas Mac Retina a reales."""
+        if self.nodo == "MAC":
             return x // 2, y // 2
         return x, y
 
-    def analizar(self, imagen_b64: str | None = None, prompt: str = "") -> str:
-        r = analizar_con_ollama(imagen_b64, prompt)
-        return r.texto if hasattr(r, "texto") else str(r)
+
+# Mantener compatibilidad hacia atras
+class CapturadorPantallaSeguro(CapturadorTarget):
+    pass
+
+def capturar_pantalla():
+    """Funcion de acceso directo (compatibilidad)."""
+    c = CapturadorTarget()
+    return c.capturar()
+
+def normalizar_coordenadas(x: int, y: int) -> tuple[int, int]:
+    c = CapturadorTarget()
+    return c.normalizar_coordenadas(x, y)
+
+def analizar_con_ollama(imagen_b64: str | None = None, prompt: str = "") -> str:
+    from scripts.pro.uitars_gx10 import analizar_con_ollama as _ollama
+    return _ollama(imagen_b64, prompt)
