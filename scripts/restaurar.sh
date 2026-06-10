@@ -63,6 +63,10 @@ CRITICOS=(
   "core/mochila/providers/ollama.py"
   "core/mochila/providers/openrouter.py"
   "tests/test_mochila.py"
+  "core/memoria/__init__.py"
+  "core/memoria/detector.py"
+  "core/memoria/ficha.py"
+  "core/memoria/ingesto.py"
 )
 
 for f in "${CRITICOS[@]}"; do
