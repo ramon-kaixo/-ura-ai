@@ -121,3 +121,52 @@ async def procesar_cambios() -> list[dict]:
 
     guardar_fuentes(fuentes)
     return cambios
+
+async def generar_parte() -> dict:
+    """Genera el parte de la ultima pasada de actualizacion."""
+    from core.memoria.qdrant_store import _get_client
+    from qdrant_client import models
+    import time, json
+
+    fuentes = cargar_fuentes()
+    if not fuentes:
+        return {"pasada": 0, "fuentes_vigiladas": 0, "cambios": 0, "fallos": 0, "detalle": []}
+
+    client = _get_client()
+    detalle = []
+    cambios_total = 0
+    fallos = 0
+
+    for fuente in fuentes:
+        url = fuente.get("url", "")
+        # Count versions of this source in Qdrant
+        results = client.query_points(
+            "ideas",
+            query_filter=models.Filter(must=[models.FieldCondition(key="fuente", match=models.MatchValue(value=url))]),
+            limit=50, with_payload=["version", "vigente", "fecha_captura"],
+        )
+        versions = [p.payload for p in results.points if p.payload]
+        activas = [v for v in versions if v.get("vigente")]
+        total = len(versions)
+        item = {
+            "url": url[:100],
+            "tema": fuente.get("tema", ""),
+            "intervalo_h": fuente.get("intervalo_horas", 0),
+            "ultima_revision": fuente.get("ultima_revision", ""),
+            "versiones": total,
+            "activas": len(activas),
+        }
+        if not activas:
+            fallos += 1
+            item["alerta"] = "sin_version_activa"
+        else:
+            cambios_total += total
+        detalle.append(item)
+
+    return {
+        "pasada": len([f for f in fuentes if f.get("ultima_revision")]),
+        "fuentes_vigiladas": len(fuentes),
+        "cambios": cambios_total,
+        "fallos": fallos,
+        "detalle": detalle,
+    }

@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
-from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
+from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError, GroqProvider, DeepSeekProvider
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
@@ -25,6 +25,7 @@ from core.memoria.sintetizador import sintetizar
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.comprar import fase_comprar
+from core.memoria.vigilante import generar_parte
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -32,8 +33,12 @@ PROVIDERS: dict[str, OllamaProvider | OpenRouterProvider | GeminiProvider] = {
     "ollama": OllamaProvider(),
     "openrouter": OpenRouterProvider(),
     "gemini": GeminiProvider(),
+    "groq": GroqProvider(),
+    "deepseek": DeepSeekProvider(),
 }
-PROVIDER_TIMEOUTS: dict[str, int] = {"ollama": 180, "openrouter": 60, "gemini": 60}
+PROVIDER_TIMEOUTS: dict[str, int] = {"ollama": 180, "openrouter": 60, "gemini": 60,
+    "groq": 60,
+    "deepseek": 60}
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
 
@@ -286,6 +291,11 @@ async def memoria_fase_hacer(body: FaseRequest):
 @app.post("/memoria/fase/comprar")
 async def memoria_fase_comprar(body: FaseRequest):
     return await fase_comprar(body.keywords)
+
+
+@app.get("/memoria/vigilancia/parte")
+async def memoria_vigilancia_parte():
+    return await generar_parte()
 
 @app.get("/metrics")
 async def metrics():
