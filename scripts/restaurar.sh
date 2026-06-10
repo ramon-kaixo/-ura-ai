@@ -76,6 +76,7 @@ CRITICOS=(
   "core/memoria/bridge.py"
   "core/memoria/compresor.py"
   "core/memoria/qdrant_store.py"
+  "core/memoria/vigilante.py"
 )
 
 for f in "${CRITICOS[@]}"; do
