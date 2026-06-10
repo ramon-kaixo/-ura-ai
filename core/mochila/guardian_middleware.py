@@ -4,7 +4,6 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from core.guardian_openclaw import get_guardian
-from core.change_guardian import validate_and_clean
 
 log = logging.getLogger("mochila.guardian")
 guardian = get_guardian()
@@ -26,20 +25,7 @@ class GuardianMiddleware(BaseHTTPMiddleware):
 
 
 
-async def _init_guardian_async():
-    import asyncio as _asyncio
-    await _asyncio.sleep(2)
-    try:
-        init_guardian()
-    except Exception as e:
-        log.warning(f"Guardian async init: {e}")
-
 def init_guardian():
     estado = guardian.estado()
     log.info(f"GuardianOpenClaw: {len(estado.get('reglas',[]))} reglas activas")
-    try:
-        valid = validate_and_clean(description="arranque Mochila")
-        log.info(f"ChangeGuardian: {'repo limpio' if valid else 'repo con cambios'}")
-    except Exception as e:
-        log.warning(f"ChangeGuardian: {e}")
     return {"guardian": estado}
