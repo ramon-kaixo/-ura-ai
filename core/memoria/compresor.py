@@ -13,34 +13,35 @@ OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
 MODELO_COMPRESOR = "qwen2.5-coder:14b"
 MAX_CHARS_TEXTO = 8000
 
-PROMPT_COMPRESOR = """Eres un extractor de ideas. Analiza el texto y extrae SOLO ideas concretas, accionables y con valor practico.
+PROMPT_COMPRESOR = """Eres un extractor de conocimiento practico. Lee el texto y extrae SOLO ideas accionables: cosas que alguien PUEDE HACER, USAR o SABER para aplicarlo.
 
 REGLAS:
-1. Cada idea debe ser 1-2 frases utiles, no un resumen.
-2. Clasifica cada idea: tipo=herramienta|tendencia|tecnica|dato
-3. Si la idea habla de una herramienta concreta, pon su nombre en "herramienta".
-4. Si menciona coste (gratis/pago/freemium), ponlo en "coste". Si no, dejalo vacio.
-5. Asigna un tema principal corto y etiquetas relevantes.
-6. NO inventes nada. Solo ideas que salgan del texto.
-7. Si el texto no tiene ideas utiles, devuelve lista vacia.
+1. NO repitas frases del texto. Sintetiza. Transforma datos en consejos.
+2. Cada idea debe responder: "que puedo hacer con esto?" o "por que me importa?"
+3. Buenas ideas: "Usa Canva (gratis) para disenar menus con plantillas y exportarlos via API"
+4. Malas ideas: "Canva es una herramienta de diseno grafico que permite crear..." (eso es una definicion, no una idea)
+5. Se breve: maximo 2 frases por idea.
+6. Clasifica: tipo=herramienta|tendencia|tecnica|dato
+7. Si la idea recomienda una herramienta, ponla en "herramienta". Si es gratis o de pago, en "coste".
+8. Si el texto no tiene ideas accionables, devuelve [].
 
-Responde UNICAMENTE con un array JSON valido, sin explicacion, sin markdown:
+Responde UNICAMENTE con un array JSON valido, sin markdown ni explicacion:
 
 [
   {{
-    "idea": "Frase concreta con la idea extraida",
-    "tema": "categoria corta",
+    "idea": "Idea accionable sintetizada",
+    "tema": "categoria",
     "etiquetas": ["tag1", "tag2"],
     "tipo": "herramienta",
-    "herramienta": "NombreHerramienta",
+    "herramienta": "Nombre",
     "coste": "gratis"
   }}
 ]
 
-Texto a analizar:
+Texto:
 {texto}
 
-Responde SOLO con el array JSON:"""
+JSON:"""
 
 
 async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = "") -> list[Idea]:
@@ -86,9 +87,10 @@ async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "",
     if not isinstance(raw, list):
         return ideas
 
-    for item in raw:
+    for idx, item in enumerate(raw):
         if not isinstance(item, dict) or "idea" not in item:
             continue
+        idea_hash = f"{hash_origen}:{idx}" if hash_origen else ""
         idea = Idea(
             idea=item.get("idea", ""),
             tema=item.get("tema", ""),
@@ -97,7 +99,7 @@ async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "",
             herramienta=item.get("herramienta", ""),
             coste=item.get("coste", ""),
             fuente=fuente,
-            hash_origen=hash_origen,
+            hash_origen=idea_hash,
             fecha_fuente=fecha_fuente,
             version=1,
             vigente=True,
