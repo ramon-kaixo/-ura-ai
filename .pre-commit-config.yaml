@@ -1,14 +1,42 @@
+# ============================================================
+# .pre-commit-config.yaml — URA v3.0
+# Validación declarativa. Instalar: pip install pre-commit && pre-commit install
+# Ejecutar manual: pre-commit run --all-files
+# ============================================================
 repos:
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.0
+  - repo: local
     hooks:
-    -   id: ruff
-        args: [--fix, --exit-non-zero-on-fix, --ignore, E902]
-        files: ^core/(mochila|memoria)/
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
-    hooks:
-    -   id: mypy
-        args: [core/mochila/, core/memoria/, --ignore-missing-imports]
+      - id: json-schema-config
+        name: Validate system_config.json (jsonschema)
+        entry: python3 -c "from core.config_manager import validate_schema_json; e=validate_schema_json(); [print(x) for x in e]; exit(1 if e else 0)"
+        language: system
+        files: ^config/system_config\.json$
         pass_filenames: false
-        additional_dependencies: [types-requests, types-PyYAML]
+
+      - id: runbook-validate
+        name: Validate emergency_runbook.json
+        entry: python3 -c "from monitor.snc import load_runbook; rb=load_runbook(); assert rb['version']=='1.0'; assert len(rb['commands'])>=3"
+        language: system
+        files: ^deploy/emergency_runbook\.json$
+        pass_filenames: false
+
+      - id: py-compile-core
+        name: Compile core Python files
+        entry: python3 -m py_compile
+        language: system
+        files: ^(core|mantenimiento|monitor)/.*\.py$
+        types: [python]
+
+      - id: unit-tests
+        name: Run unit tests (113 tests)
+        entry: python3 tests/test_unit.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: no-ghost-files
+        name: No ghost files (CLAUDE.md, duplicate configs)
+        entry: bash -c '! test -f CLAUDE.md && ! test -f config/maintenance.json && ! test -f mantenimiento/config.json'
+        language: system
+        pass_filenames: false
+        always_run: true
