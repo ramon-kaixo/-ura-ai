@@ -121,19 +121,6 @@ def check_model_router():
         return False
 
 
-def check_mochila():
-    try:
-        rc, out, _ = run(["curl", "-s", "--max-time", "5", "http://127.0.0.1:4098/health"])
-        if rc == 0 and out:
-            data = json.loads(out)
-            providers = data.get("providers", {})
-            ok = [n for n, p in providers.items() if p.get("status") == "ok"]
-            return {"ok": True, "providers_ok": ok, "total": len(providers)}
-    except Exception:
-        pass
-    return {"ok": False}
-
-
 def check_dispositivos():
     resultados = {}
     for nombre, ip in DISPOSITIVOS.items():
@@ -402,11 +389,6 @@ def main() -> int:
     _health, alertas = health_check()
     if alertas:
         log(f"  ALERTAS: {alertas}")
-    mochila = check_mochila()
-    if mochila.get("ok"):
-        log(f"  Mochila :4098 — ok [{','.join(mochila['providers_ok'])}]")
-    else:
-        log("  Mochila :4098 — NO RESPONDE")
     if nivel == "profundo":
         resultado = revision_profunda()
     elif nivel == "medio":

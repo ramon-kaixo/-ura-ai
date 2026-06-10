@@ -1,4 +1,3 @@
-import os
 #!/usr/bin/env python3
 """Unit Test Suite — URA v3.0
 Verifica que nada de lo de "ayer" vuelva a pasar:
@@ -433,7 +432,7 @@ check("P1: clasificar_peticion retorna string",
 # P1-11: PromptCache tiene max_size
 from core.model_router import PromptCache
 
-cache = PromptCache(ttl=99999)
+cache = PromptCache(ttl=99999, max_size=3)
 cache.set("p1", "test", {"v": 1})
 cache.set("p2", "test", {"v": 2})
 cache.set("p3", "test", {"v": 3})
@@ -454,5 +453,4 @@ if FAIL == 0:
 else:
     pass
 
-if __name__ == "__main__":
-    sys.exit(0 if FAIL == 0 else 1)
+sys.exit(0 if FAIL == 0 else 1)
