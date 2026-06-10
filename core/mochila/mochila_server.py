@@ -19,6 +19,7 @@ from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
+from core.memoria.extractores.video_pipeline import pipeline_video
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -238,6 +239,16 @@ async def rate_limit_status(provider: str):
 async def cost_summary():
     return cost_tracker.resumen_hoy()
 
+class VideoIngestRequest(BaseModel):
+    path: str
+
+@app.post("/memoria/ingestar/video")
+async def memoria_ingestar_video(body: VideoIngestRequest):
+    from pathlib import Path
+    ruta = Path(body.path)
+    if not ruta.exists():
+        raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
+    return pipeline_video(ruta)
 
 @app.get("/metrics")
 async def metrics():
