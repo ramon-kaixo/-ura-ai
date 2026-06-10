@@ -14,7 +14,7 @@ WHITELIST_DIRS = [
     Path("/home/ramon/URA").resolve(),
 ]
 
-SEARXNG_URL = os.environ.get("SEARXNG_URL", "http://10.164.1.249:8080")
+SEARXNG_URL = os.environ.get("SEARXNG_URL", "http://127.0.0.1:8888")  # SSH tunnel from Hetzner
 DUCKDUCKGO_URL = os.environ.get("DUCKDUCKGO_URL", "https://lite.duckduckgo.com/lite")
 DUCKDUCKGO_URL = os.environ.get("DUCKDUCKGO_URL", "https://lite.duckduckgo.com/lite")
 WEBSEARCH_TIMEOUT = int(os.environ.get("MOCHILA_WEBSEARCH_TIMEOUT", "15"))
