@@ -6,13 +6,13 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
+from core.mochila.router import NoProviderAvailable, Router
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -31,6 +31,8 @@ PROVIDER_TIMEOUTS: dict[str, int] = {
 
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
+
+router = Router(providers=PROVIDERS)
 
 
 class ChatRequest(BaseModel):
@@ -54,84 +56,6 @@ class ChatResponse(BaseModel):
 
 def _generar_id() -> str:
     return f"mochila-{uuid.uuid4().hex[:12]}"
-
-
-def _now() -> int:
-    return int(time.time())
-
-
-def _estimar_tokens(texto: str) -> int:
-    return len(texto) // 4
-
-
-def _clasificar_peticion(mensajes: list, task: str | None) -> str:
-    if task and task in ("codigo", "razonamiento", "rapido"):
-        return task
-
-    texto = " ".join(m.get("content", "") for m in mensajes).lower()
-
-    patrones = {
-        "codigo": [
-            "refactor", "funcion", "clase", "import", "def ", "bug", "fix",
-            "test", "type", "codigo", "implementa", "bash", "script",
-            "terminal", "git", "commit", "push", "pip",
-        ],
-        "razonamiento": [
-            "analiza", "compara", "evalua", "planea", "arquitectura",
-            "estrategia", "diseno", "sistema", "impacto", "pros y contras",
-            "recomienda", "que es mejor",
-        ],
-    }
-
-    puntuaciones: dict[str, int] = {"codigo": 0, "razonamiento": 0}
-    for tipo, palabras in patrones.items():
-        for p in palabras:
-            if p in texto:
-                puntuaciones[tipo] += 1
-
-    if puntuaciones["codigo"] > puntuaciones["razonamiento"]:
-        return "codigo"
-    elif puntuaciones["razonamiento"] > puntuaciones["codigo"]:
-        return "razonamiento"
-    return "rapido"
-
-
-RUTAS: dict[str, list[dict]] = {
-    "codigo": [
-        {"provider": "ollama", "modelo": "qwen2.5-coder:32b"},
-        {"provider": "openrouter", "modelo": "anthropic/claude-sonnet-4"},
-        {"provider": "openrouter", "modelo": "deepseek/deepseek-v4-flash"},
-    ],
-    "razonamiento": [
-        {"provider": "openrouter", "modelo": "google/gemini-2.5-flash"},
-        {"provider": "ollama", "modelo": "qwen3:32b-q8_0"},
-        {"provider": "openrouter", "modelo": "anthropic/claude-sonnet-4"},
-    ],
-    "rapido": [
-        {"provider": "ollama", "modelo": "qwen2.5:7b"},
-        {"provider": "openrouter", "modelo": "deepseek/deepseek-v4-flash"},
-    ],
-}
-
-
-class NoProviderAvailable(Exception):
-    ...
-
-
-def _elegir_provider(tipo: str, modelo_especifico: str | None) -> tuple[str, str, str]:
-    if modelo_especifico and modelo_especifico != "auto":
-        if "/" in modelo_especifico:
-            p, m = modelo_especifico.split("/", 1)
-            if p in PROVIDERS:
-                return p, m, f"explicit:{modelo_especifico}"
-        return "ollama", modelo_especifico, f"explicit:{modelo_especifico}"
-
-    for entrada in RUTAS.get(tipo, RUTAS["rapido"]):
-        p = entrada["provider"]
-        if p in PROVIDERS:
-            return p, entrada["modelo"], f"keyword:{tipo}"
-
-    raise NoProviderAvailable(f"Ningún provider disponible para tipo={tipo}")
 
 
 async def _stream_from_provider(
@@ -217,7 +141,7 @@ async def v1_models():
                 models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})
         models.append({"id": f"{name}/auto", "provider": name, "object": "model"})
 
-    for tipo, ruta in RUTAS.items():
+    for tipo, ruta in router.rutas.items():
         for entrada in ruta:
             mid = f"{entrada['provider']}/{entrada['modelo']}"
             if not any(m["id"] == mid for m in models):
@@ -230,9 +154,11 @@ async def v1_models():
 
 @app.post("/v1/chat/completions")
 async def v1_chat_completions(body: ChatRequest):
-    tipo = _clasificar_peticion(body.messages, body.task)
     try:
-        provider_name, modelo, route_reason = _elegir_provider(tipo, body.model if body.model != "auto" else None)
+        ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
+        provider_name = ruta.provider
+        modelo = ruta.modelo
+        route_reason = ruta.route_reason
     except NoProviderAvailable as e:
         raise HTTPException(status_code=503, detail=str(e))
 
@@ -288,6 +214,6 @@ async def metrics():
     return {
         "providers": list(PROVIDERS.keys()),
         "timeouts": PROVIDER_TIMEOUTS,
-        "rutas": {k: [e["provider"] + "/" + e["modelo"] for e in v] for k, v in RUTAS.items()},
-        "clasificador": "keyword",
+        "rutas": {k: [e["provider"] + "/" + e["modelo"] for e in v] for k, v in router.rutas.items()},
+        "clasificador": type(router.clasificador).__name__,
     }
