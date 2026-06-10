@@ -22,6 +22,9 @@ from core.memoria.ingesto import procesar_inbox_completo
 from core.memoria.extractores.video_pipeline import pipeline_video
 from core.memoria.analizador import analizar
 from core.memoria.sintetizador import sintetizar
+from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.comprar import fase_comprar
@@ -135,13 +138,17 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_guardian()
     yield
     for p in PROVIDERS.values():
         if hasattr(p, "__aenter__"):
             await p.__aexit__(None, None, None)
 
 
-app = FastAPI(title="Mochila Middleware", version="0.6.0", lifespan=lifespan)
+app = FastAPI(title="Mochila Middleware", version="0.7.0", lifespan=lifespan)
+app.add_middleware(GuardianMiddleware)
+app.add_middleware(GuardianMiddleware)
+app.add_middleware(GuardianMiddleware)
 
 
 @app.get("/health")
