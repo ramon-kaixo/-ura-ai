@@ -1,5 +1,5 @@
 """Endpoint unificado de estado del sistema."""
-import os, subprocess, json
+import subprocess
 from pathlib import Path
 
 

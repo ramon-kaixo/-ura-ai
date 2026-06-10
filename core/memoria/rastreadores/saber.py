@@ -5,8 +5,8 @@ from pathlib import Path
 
 import httpx
 
-from core.memoria.ingesto import procesar_archivo
 from core.memoria.compresor import comprimir_a_ideas
+from core.memoria.ingesto import procesar_archivo
 from core.memoria.qdrant_store import almacenar_ideas
 
 log = logging.getLogger("memoria.saber")
@@ -44,7 +44,7 @@ Responde SOLO con el numero (ej: 8):"""
         data = resp.json()
         text = data["message"]["content"].strip()
         import re
-        match = re.search(r'(\d+)', text)
+        match = re.search(r"(\d+)", text)
         return int(match.group(1)) if match else 5
     except Exception:
         return 5
@@ -103,11 +103,11 @@ async def buscar_arxiv(keywords: str, max_results: int = 5) -> list[dict]:
             return resultados
 
         import re
-        entries = re.split(r'<entry>', resp.text)[1:]
+        entries = re.split(r"<entry>", resp.text)[1:]
         for entry in entries:
-            titulo = re.search(r'<title>(.*?)</title>', entry, re.DOTALL)
-            abstract = re.search(r'<summary>(.*?)</summary>', entry, re.DOTALL)
-            link = re.search(r'<id>(.*?)</id>', entry)
+            titulo = re.search(r"<title>(.*?)</title>", entry, re.DOTALL)
+            abstract = re.search(r"<summary>(.*?)</summary>", entry, re.DOTALL)
+            link = re.search(r"<id>(.*?)</id>", entry)
             titulo_text = titulo.group(1).strip() if titulo else ""
             abstract_text = abstract.group(1).strip() if abstract else ""
             link_text = link.group(1).strip() if link else ""

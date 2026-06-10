@@ -4,9 +4,9 @@ import logging
 
 import httpx
 
-from core.mochila.tools import web_search, page_read
 from core.memoria.compresor import comprimir_a_ideas
 from core.memoria.qdrant_store import almacenar_ideas
+from core.mochila.tools import page_read, web_search
 
 log = logging.getLogger("memoria.comprar")
 
