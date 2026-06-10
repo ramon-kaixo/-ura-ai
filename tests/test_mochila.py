@@ -17,6 +17,14 @@ from core.mochila.tools import TOOL_SCHEMAS, file_read, ejecutar_tool
 # ---------------------------------------------------------------------------
 
 class TestCircuitBreaker:
+    def setup_method(self):
+        import glob, os
+        for f in glob.glob("/tmp/test_cb_*.json"):
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
     def test_init_closed(self):
         cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_init.json"))
         assert cb.puede_pasar("test") is True
