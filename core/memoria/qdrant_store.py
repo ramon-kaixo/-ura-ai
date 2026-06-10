@@ -79,6 +79,37 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
     return insertados
 
 
+def marcar_antiguas(fuente_url: str) -> int:
+    client = _get_client()
+    marcadas = 0
+    offset = None
+    while True:
+        items, next_offset = client.scroll(
+            COLLECTION,
+            scroll_filter=models.Filter(
+                must=[
+                    models.FieldCondition(key="fuente", match=models.MatchValue(value=fuente_url)),
+                    models.FieldCondition(key="vigente", match=models.MatchValue(value=True)),
+                ]
+            ),
+            limit=50,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in items:
+            payload = point.payload or {}
+            payload["vigente"] = False
+            client.set_payload(COLLECTION, [point.id], payload)
+            marcadas += 1
+        if next_offset is None or not items:
+            break
+        offset = next_offset
+    if marcadas:
+        log.info(f"Qdrant: {marcadas} ideas marcadas vigente=false para {fuente_url[:60]}")
+    return marcadas
+
+
 def buscar_ideas(
     query: str,
     tema: str | None = None,
