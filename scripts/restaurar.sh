@@ -50,6 +50,19 @@ CRITICOS=(
   "tests/test_seguridad_paths.py"
   "docs/CONTEXTO_SESION_2026-06-09.md"
   "$HOME/.openclaw/openclaw.json"
+  "core/mochila/__init__.py"
+  "core/mochila/circuit_breaker.py"
+  "core/mochila/cost_tracker.py"
+  "core/mochila/mochila_server.py"
+  "core/mochila/rate_limiter.py"
+  "core/mochila/router.py"
+  "core/mochila/tools.py"
+  "core/mochila/providers/__init__.py"
+  "core/mochila/providers/base.py"
+  "core/mochila/providers/gemini.py"
+  "core/mochila/providers/ollama.py"
+  "core/mochila/providers/openrouter.py"
+  "tests/test_mochila.py"
 )
 
 for f in "${CRITICOS[@]}"; do
