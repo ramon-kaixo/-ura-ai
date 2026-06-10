@@ -6,6 +6,7 @@ from core.memoria.extractores.pdf_extractor import extraer_pdf
 from core.memoria.extractores.imagen_extractor import extraer_imagen
 from core.memoria.extractores.media_extractor import extraer_video, extraer_audio
 from core.memoria.extractores.office_extractor import extraer_office
+from core.memoria.extractores.video_pipeline import pipeline_video
 
 EXTRACTORES: dict[str, Any] = {
     "html": extraer_html,
@@ -29,3 +30,4 @@ def extraer_archivo(ruta: Path, tipo: str) -> dict | None:
 
 
 __all__ = ["extraer_archivo", "EXTRACTORES"]
+
