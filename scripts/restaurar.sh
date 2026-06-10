@@ -67,6 +67,9 @@ CRITICOS=(
   "core/memoria/detector.py"
   "core/memoria/ficha.py"
   "core/memoria/ingesto.py"
+  "core/memoria/extractores/__init__.py"
+  "core/memoria/extractores/html_extractor.py"
+  "core/memoria/extractores/pdf_extractor.py"
 )
 
 for f in "${CRITICOS[@]}"; do
