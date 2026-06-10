@@ -18,6 +18,7 @@ from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 from core.memoria.consulta import consultar as memoria_consultar
+from core.memoria.ingesto import procesar_inbox_completo
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -275,3 +276,8 @@ async def memoria_health():
         }
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+
+@app.post("/memoria/ingestar")
+async def memoria_ingestar():
+    return await procesar_inbox_completo()
