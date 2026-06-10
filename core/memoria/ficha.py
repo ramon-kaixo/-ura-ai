@@ -8,15 +8,23 @@ class Idea:
     idea: str
     tema: str
     etiquetas: list[str] = field(default_factory=list)
-    tipo: str = "dato"  # herramienta | tendencia | tecnica | dato
+    tipo: str = "dato"
     herramienta: str = ""
-    coste: str = ""  # gratis | pago | freemium
+    coste: str = ""
     fuente: str = ""
     fecha_captura: str = ""
     fecha_fuente: str = ""
-    hash_origen: str = ""  # BLAKE3 del archivo fuente
+    hash_origen: str = ""
     version: int = 1
     vigente: bool = True
+    # --- v2 ---
+    datos_duros: dict = field(default_factory=dict)
+    rasgos_visuales: dict = field(default_factory=dict)
+    resumen_visual: str = ""
+    puentes: list[str] = field(default_factory=list)
+    vigilada: bool = False
+    frecuencia: str = ""
+    detector: str = ""
 
     def __post_init__(self):
         if not self.fecha_captura:
@@ -24,7 +32,9 @@ class Idea:
 
     def texto_para_embedding(self) -> str:
         extras = " ".join(self.etiquetas) if self.etiquetas else ""
-        return f"{self.idea} {self.tema} {extras}".strip()
+        duros = " ".join(f"{k}: {v}" for k, v in self.datos_duros.items()) if self.datos_duros else ""
+        visual = self.resumen_visual if self.resumen_visual else ""
+        return f"{self.idea} {self.tema} {extras} {duros} {visual}".strip()
 
     def to_payload(self) -> dict[str, Any]:
         d = asdict(self)
@@ -37,4 +47,4 @@ class Idea:
 
     @property
     def dimensiones(self) -> int:
-        return 768  # nomic-embed-text
+        return 768
