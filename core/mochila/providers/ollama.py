@@ -87,29 +87,89 @@ class OllamaProvider(Provider):
     @staticmethod
     def _to_openai_chunk(chunk: dict, modelo: str) -> dict:
         done = chunk.get("done", False)
-        delta = {}
-        if "message" in chunk:
-            msg = chunk["message"]
-            if msg.get("content"):
-                delta["content"] = msg["content"]
-            if msg.get("role"):
-                delta["role"] = msg["role"]
+        msg = chunk.get("message", {})
+        content = msg.get("content", "")
+        delta: dict[str, object] = {}
+        if msg.get("role"):
+            delta["role"] = msg.get("role")
+        if msg.get("tool_calls"):
+            delta["tool_calls"] = [
+                {
+                    "id": tc.get("id", f"call_{i}"),
+                    "type": "function",
+                    "function": {
+                        "name": tc["function"]["name"],
+                        "arguments": tc["function"].get("arguments", "{}") if isinstance(tc["function"].get("arguments"), str) else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
+                    },
+                }
+                for i, tc in enumerate(msg["tool_calls"])
+            ]
+        elif content and isinstance(content, str):
+            extraido = OllamaProvider._extraer_tool_call(content)
+            if extraido:
+                delta["tool_calls"] = extraido
+                delta["content"] = None
+            elif content:
+                delta["content"] = content
         if not delta and not done:
             return {}
+        tiene_tc = "tool_calls" in delta
+        finish = "tool_calls" if tiene_tc else ("stop" if done else None)
         return {
             "id": chunk.get("id", "ollama-unknown"),
             "object": "chat.completion.chunk",
             "created": chunk.get("created_at", ""),
             "model": modelo,
-            "choices": [{"index": 0, "delta": delta, "finish_reason": "stop" if done else None}],
+            "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
             if done
             else None,
         }
 
     @staticmethod
+    def _extraer_tool_call(content: str) -> list | None:
+        try:
+            obj = json.loads(content) if isinstance(content, str) else None
+            if isinstance(obj, dict) and "name" in obj and "arguments" in obj:
+                args = obj["arguments"]
+                return [{
+                    "id": "call_0",
+                    "type": "function",
+                    "function": {
+                        "name": obj["name"],
+                        "arguments": args if isinstance(args, str) else json.dumps(args, ensure_ascii=False),
+                    },
+                }]
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return None
+
+    @staticmethod
     def _to_openai(data: dict, modelo: str) -> dict:
         msg = data.get("message", {})
+        content = msg.get("content", "")
+        message: dict[str, object] = {
+            "role": msg.get("role", "assistant"),
+            "content": content,
+        }
+        if "tool_calls" in msg:
+            message["tool_calls"] = [
+                {
+                    "id": tc.get("id", f"call_{i}"),
+                    "type": "function",
+                    "function": {
+                        "name": tc["function"]["name"],
+                        "arguments": tc["function"].get("arguments", "{}") if isinstance(tc["function"].get("arguments"), str) else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
+                    },
+                }
+                for i, tc in enumerate(msg["tool_calls"])
+            ]
+        elif content and isinstance(content, str):
+            extraido = OllamaProvider._extraer_tool_call(content)
+            if extraido:
+                message["tool_calls"] = extraido
+                message["content"] = ""
+        finish = "tool_calls" if message.get("tool_calls") else "stop"
         return {
             "id": data.get("id", "ollama-unknown"),
             "object": "chat.completion",
@@ -118,11 +178,8 @@ class OllamaProvider(Provider):
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": msg.get("role", "assistant"),
-                        "content": msg.get("content", ""),
-                    },
-                    "finish_reason": "stop",
+                    "message": message,
+                    "finish_reason": finish,
                 }
             ],
             "usage": {
