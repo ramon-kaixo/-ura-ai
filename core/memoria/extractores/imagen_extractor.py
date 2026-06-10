@@ -1,13 +1,12 @@
 import json
-import os
-from datetime import datetime
+import subprocess
 from pathlib import Path
 
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 
 
-def _extraer_exif(ruta: Path) -> dict:
+def _exif_pillow(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         img = Image.open(ruta)
@@ -45,9 +44,50 @@ def _extraer_exif(ruta: Path) -> dict:
     return resultado
 
 
+def _exif_exiftool(ruta: Path) -> dict:
+    resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
+    try:
+        out = subprocess.run(
+            ["exiftool", "-json", "-DateTimeOriginal", "-Make", "-Model",
+             "-GPSLatitude", "-GPSLongitude", "-ImageWidth", "-ImageHeight",
+             "-IPTCDigest", "-ObjectName", str(ruta)],
+            capture_output=True, text=True, timeout=10,
+        )
+        if out.returncode != 0 or not out.stdout.strip():
+            return resultado
+        data = json.loads(out.stdout)
+        item = data[0] if data else {}
+        resultado["fecha"] = item.get("DateTimeOriginal", "")
+        make = item.get("Make", "")
+        model = item.get("Model", "")
+        if make or model:
+            resultado["camara"] = f"{make} {model}".strip()
+        lat = item.get("GPSLatitude", "")
+        lon = item.get("GPSLongitude", "")
+        if lat and lon:
+            resultado["gps"] = f"{lat}, {lon}"
+        elif lat:
+            resultado["gps"] = str(lat)
+        resultado["exif_raw"] = {k: v for k, v in item.items() if k not in ("SourceFile",)}
+    except Exception:
+        pass
+    return resultado
+
+
 def extraer_imagen(ruta: Path) -> dict:
     img = Image.open(ruta)
-    exif = _extraer_exif(ruta)
+
+    exif = _exif_pillow(ruta)
+    if not exif.get("fecha") and not exif.get("camara"):
+        exiftool_data = _exif_exiftool(ruta)
+        if exiftool_data.get("fecha"):
+            exif["fecha"] = exif["fecha"] or exiftool_data["fecha"]
+        if exiftool_data.get("camara"):
+            exif["camara"] = exif["camara"] or exiftool_data["camara"]
+        if exiftool_data.get("gps"):
+            exif["gps"] = exif["gps"] or exiftool_data["gps"]
+        if exiftool_data.get("exif_raw"):
+            exif["exif_raw"] = {**exif["exif_raw"], **exiftool_data["exif_raw"]}
 
     return {
         "tipo": "imagen",
@@ -60,6 +100,6 @@ def extraer_imagen(ruta: Path) -> dict:
             "gps": exif.get("gps"),
             "tamano_bytes": ruta.stat().st_size,
         },
-        "texto_plano": "",  # imágenes no generan texto (se hará con OCR en fase posterior)
+        "texto_plano": "",
         "ruta": str(ruta),
     }
