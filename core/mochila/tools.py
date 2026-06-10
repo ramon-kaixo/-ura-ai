@@ -69,6 +69,20 @@ TOOL_SCHEMAS: list[dict] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "crawl_web",
+            "description": "Raspa una web dinamica con JavaScript usando Crawl4AI",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "URL completa a raspar"},
+                },
+                "required": ["url"],
+            },
+        },
+    },
 ]
 
 
@@ -250,3 +264,22 @@ async def ejecutar_tool(name: str, arguments: dict) -> dict:
     if not handler:
         return {"error": f"Tool desconocida: {name}"}
     return await handler(**arguments)
+
+
+async def crawl_web(url: str, max_chars: int = 50000) -> dict:
+    try:
+        from crawl4ai import AsyncWebCrawler
+        async with AsyncWebCrawler(verbose=False) as crawler:
+            result = await crawler.arun(url=url)
+            if result.success:
+                text = result.markdown[:max_chars] if result.markdown else result.text[:max_chars]
+                return {"url": url, "status": 200, "content_length": len(text), "content": text}
+            return {"error": f"Crawl4AI: {result.error}", "url": url}
+    except ImportError:
+        return {"error": "crawl4ai no instalado", "url": url}
+    except Exception as e:
+        return {"error": str(e), "url": url}
+
+
+# Register crawl_web after definition
+TOOL_HANDLERS["crawl_web"] = crawl_web
