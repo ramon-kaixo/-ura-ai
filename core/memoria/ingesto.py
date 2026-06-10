@@ -9,6 +9,7 @@ import blake3
 
 from core.memoria.detector import detectar_tipo
 from core.memoria.extractores import extraer_archivo
+from core.memoria.archivo import guardar_texto as archivar_texto
 
 INBOX_DIR = Path(os.environ.get("MEMORIA_INBOX", os.path.expanduser("~/.nervioso/inbox")))
 CUARENTENA_DIR = Path(os.environ.get("MEMORIA_CUARENTENA", os.path.expanduser("~/.nervioso/cuarentena")))
@@ -64,6 +65,14 @@ def procesar_archivo(ruta: Path) -> dict | None:
         extraido = extraer_archivo(ruta, tipo)
 
         limpiar_cuarentena()
+
+        if extraido and extraido.get("texto_plano"):
+            archivar_texto(
+                extraido["texto_plano"],
+                extraido.get("metadatos", {}),
+                h,
+                extraido.get("ruta", proc.get("ruta_original", "")),
+            )
 
         return {
             "hash": h,
