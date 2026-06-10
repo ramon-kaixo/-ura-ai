@@ -117,25 +117,26 @@ def buscar_ideas(
     coste: str | None = None,
     limit: int = 5,
 ) -> list[dict]:
-    client = _get_client()
+    import httpx as _httpx
     query_vec = _embed(query)
-
-    filtros = [models.FieldCondition(key="vigente", match=models.MatchValue(value=True))]
+    must = [{"key": "vigente", "match": {"value": True}}]
     if tema:
-        filtros.append(models.FieldCondition(key="tema", match=models.MatchValue(value=tema)))
+        must.append({"key": "tema", "match": {"value": tema}})
     if tipo:
-        filtros.append(models.FieldCondition(key="tipo", match=models.MatchValue(value=tipo)))
+        must.append({"key": "tipo", "match": {"value": tipo}})
     if coste:
-        filtros.append(models.FieldCondition(key="coste", match=models.MatchValue(value=coste)))
+        must.append({"key": "coste", "match": {"value": coste}})
 
-    results = client.query_points(COLLECTION, query=query_vec, limit=limit,
-        query_filter=models.Filter(must=filtros))
+    resp = _httpx.post(f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{COLLECTION}/points/search",
+        json={"vector": {"name": "texto", "vector": query_vec}, "limit": limit,
+              "filter": {"must": must}, "with_payload": True}, timeout=15)
+    resp.raise_for_status()
 
     return [
         {
-            "score": round(p.score, 3) if p.score else 0,
-            "id": p.id,
-            **p.payload,
+            "score": round(p.get("score", 0), 3),
+            "id": p.get("id", ""),
+            **(p.get("payload", {})),
         }
-        for p in results.points
+        for p in resp.json()["result"]
     ]
