@@ -2,10 +2,10 @@ from pathlib import Path
 from typing import Any
 
 from core.memoria.extractores.html_extractor import extraer_html
-from core.memoria.extractores.pdf_extractor import extraer_pdf
 from core.memoria.extractores.imagen_extractor import extraer_imagen
-from core.memoria.extractores.media_extractor import extraer_video, extraer_audio
+from core.memoria.extractores.media_extractor import extraer_audio, extraer_video
 from core.memoria.extractores.office_extractor import extraer_office
+from core.memoria.extractores.pdf_extractor import extraer_pdf
 from core.memoria.extractores.video_pipeline import pipeline_video
 
 EXTRACTORES: dict[str, Any] = {
@@ -29,5 +29,5 @@ def extraer_archivo(ruta: Path, tipo: str) -> dict | None:
         return {"tipo": tipo, "error": str(e), "ruta": str(ruta)}
 
 
-__all__ = ["extraer_archivo", "EXTRACTORES"]
+__all__ = ["EXTRACTORES", "extraer_archivo"]
 

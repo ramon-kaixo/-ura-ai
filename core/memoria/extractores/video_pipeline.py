@@ -30,7 +30,7 @@ def _extraer_frames_clave(ruta: Path, out_dir: Path, max_frames: int = MAX_FRAME
     # Try scene detection first
     subprocess.run(
         ["ffmpeg", "-y", "-i", str(ruta), "-vf",
-         f"select='gt(scene\\,0.15)',scale=640:-1",
+         "select='gt(scene\\,0.15)',scale=640:-1",
          "-vsync", "vfr", "-frames:v", str(max_frames),
          f"{out_dir}/frame_%03d.jpg"],
         capture_output=True, text=True, timeout=60,
@@ -119,7 +119,7 @@ def pipeline_video(ruta: Path) -> dict:
                 descripciones.append(desc["descripcion"])
 
     resumen = " | ".join(descripciones) if descripciones else ""
-    embedding_texto = resumen if resumen else f"Video: {ritmo['resolucion']} {ritmo['codec']}"
+    embedding_texto = resumen or f"Video: {ritmo['resolucion']} {ritmo['codec']}"
 
     return {
         "tipo": "video",

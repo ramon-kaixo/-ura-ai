@@ -1,7 +1,7 @@
 """Archivo de texto limpio: guarda el texto extraído de cada fuente para siempre."""
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 log = logging.getLogger("memoria.archivo")
@@ -15,14 +15,14 @@ def guardar_texto(texto: str, metadatos: dict, hash_origen: str, fuente: str, ti
 
     ARCHIVO_DIR.mkdir(parents=True, exist_ok=True)
 
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
-    slug = fuente.split("//")[-1].split("?")[0].replace("/", "_")[:60] or "fuente"
+    ts = datetime.now(UTC).strftime("%Y-%m-%d_%H%M%S")
+    slug = fuente.rsplit("//", maxsplit=1)[-1].split("?", maxsplit=1)[0].replace("/", "_")[:60] or "fuente"
     nombre = f"{slug}_{ts}_{hash_origen[:12]}.txt"
     ruta = ARCHIVO_DIR / nombre
 
     contenido = json.dumps({
         "origen": fuente,
-        "fecha_captura": datetime.now(timezone.utc).isoformat(),
+        "fecha_captura": datetime.now(UTC).isoformat(),
         "tipo": tipo,
         "concepto": concepto,
         "hash_blake3": hash_origen,
@@ -62,7 +62,7 @@ def listar_archivo(limit: int = 20) -> list[dict]:
 def generar_manifiesto(origen: str, tipo: str, concepto: str, hash_origen: str, texto_chars: int, extractor: str = "", ruta_archivado: str = "") -> dict:
     return {
         "origen": origen,
-        "fecha_captura": datetime.now(timezone.utc).isoformat(),
+        "fecha_captura": datetime.now(UTC).isoformat(),
         "tipo": tipo,
         "concepto": concepto,
         "hash_blake3": hash_origen,
