@@ -72,6 +72,9 @@ def procesar_archivo(ruta: Path) -> dict | None:
                 extraido.get("metadatos", {}),
                 h,
                 extraido.get("ruta", proc.get("ruta_original", "")),
+                tipo=tipo,
+                concepto="",
+                extractor=f"{tipo}_extractor",
             )
 
         return {

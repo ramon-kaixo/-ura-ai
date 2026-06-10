@@ -9,7 +9,7 @@ log = logging.getLogger("memoria.archivo")
 ARCHIVO_DIR = Path.home() / ".nervioso" / "archivo"
 
 
-def guardar_texto(texto: str, metadatos: dict, hash_origen: str, fuente: str) -> Path | None:
+def guardar_texto(texto: str, metadatos: dict, hash_origen: str, fuente: str, tipo: str = "desconocido", concepto: str = "", extractor: str = "") -> Path | None:
     if not texto.strip():
         return None
 
@@ -21,9 +21,12 @@ def guardar_texto(texto: str, metadatos: dict, hash_origen: str, fuente: str) ->
     ruta = ARCHIVO_DIR / nombre
 
     contenido = json.dumps({
-        "fuente": fuente,
-        "hash": hash_origen,
-        "fecha_archivado": datetime.now(timezone.utc).isoformat(),
+        "origen": fuente,
+        "fecha_captura": datetime.now(timezone.utc).isoformat(),
+        "tipo": tipo,
+        "concepto": concepto,
+        "hash_blake3": hash_origen,
+        "extractor": extractor,
         "metadatos": metadatos,
     }, ensure_ascii=False, indent=2)
 
@@ -54,3 +57,16 @@ def listar_archivo(limit: int = 20) -> list[dict]:
         except Exception:
             pass
     return resultados
+
+
+def generar_manifiesto(origen: str, tipo: str, concepto: str, hash_origen: str, texto_chars: int, extractor: str = "", ruta_archivado: str = "") -> dict:
+    return {
+        "origen": origen,
+        "fecha_captura": datetime.now(timezone.utc).isoformat(),
+        "tipo": tipo,
+        "concepto": concepto,
+        "hash_blake3": hash_origen,
+        "extractor": extractor,
+        "tamano_chars": texto_chars,
+        "archivado_en": ruta_archivado,
+    }
