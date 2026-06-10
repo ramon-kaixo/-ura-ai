@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir fastapi uvicorn httpx pydantic pydantic-settings python-dotenv
+
+WORKDIR /workspace
+
+ENV PYTHONPATH=/workspace
+
+COPY core/mochila/ /workspace/core/mochila/
+
+EXPOSE 4098
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD python3 -c "import httpx; r=httpx.get('http://127.0.0.1:4098/health', timeout=5); assert r.status_code==200" || exit 1
+
+CMD ["python3", "-m", "uvicorn", "core.mochila.mochila_server:app", "--host", "0.0.0.0", "--port", "4098"]
