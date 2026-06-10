@@ -21,6 +21,7 @@ from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
 from core.memoria.extractores.video_pipeline import pipeline_video
 from core.memoria.analizador import analizar
+from core.memoria.sintetizador import sintetizar
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -258,6 +259,14 @@ class AnalizarRequest(BaseModel):
 @app.post("/memoria/analizar")
 async def memoria_analizar(body: AnalizarRequest):
     return await analizar(body.peticion)
+
+
+class SintesisRequest(BaseModel):
+    peticion: str
+
+@app.post("/memoria/sintetizar")
+async def memoria_sintetizar(body: SintesisRequest):
+    return await sintetizar(body.peticion)
 
 @app.get("/metrics")
 async def metrics():
