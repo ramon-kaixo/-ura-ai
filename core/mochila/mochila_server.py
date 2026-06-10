@@ -77,8 +77,8 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     try:
         async for chunk in provider.chat(modelo=modelo, mensajes=mensajes, stream=False, tools=herramientas, max_tokens=max_tokens, temperature=temperature):
             return chunk
-    except ProviderError:
-        return None
+    except ProviderError as e:
+        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
     return None
 
 
@@ -128,7 +128,7 @@ async def lifespan(app: FastAPI):
             await p.__aexit__(None, None, None)
 
 
-app = FastAPI(title="Mochila Middleware", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Mochila Middleware", version="0.5.0", lifespan=lifespan)
 
 
 @app.get("/health")
