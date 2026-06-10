@@ -17,6 +17,7 @@ from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterPro
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
+from core.memoria.consulta import consultar as memoria_consultar
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -128,7 +129,7 @@ async def lifespan(app: FastAPI):
             await p.__aexit__(None, None, None)
 
 
-app = FastAPI(title="Mochila Middleware", version="0.5.0", lifespan=lifespan)
+app = FastAPI(title="Mochila Middleware", version="0.6.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -248,3 +249,29 @@ async def metrics():
         "cost_hoy": cost_tracker.resumen_hoy(),
         "tools_disponibles": len(TOOL_SCHEMAS),
     }
+
+
+class ConsultaRequest(BaseModel):
+    query: str
+    forzar_web: bool = False
+
+
+@app.post("/memoria/consultar")
+async def memoria_consultar_endpoint(body: ConsultaRequest):
+    return await memoria_consultar(body.query, body.forzar_web)
+
+
+@app.get("/memoria/health")
+async def memoria_health():
+    try:
+        from core.memoria.qdrant_store import _get_client
+        client = _get_client()
+        info = client.get_collection("ideas")
+        return {
+            "status": "ok",
+            "coleccion": "ideas",
+            "puntos": info.points_count,
+            "vectores": str(info.config.params.vectors),
+        }
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
