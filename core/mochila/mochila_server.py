@@ -20,6 +20,7 @@ from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
 from core.memoria.extractores.video_pipeline import pipeline_video
+from core.memoria.analizador import analizar
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -249,6 +250,14 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
     if not ruta.exists():
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
     return pipeline_video(ruta)
+
+
+class AnalizarRequest(BaseModel):
+    peticion: str
+
+@app.post("/memoria/analizar")
+async def memoria_analizar(body: AnalizarRequest):
+    return await analizar(body.peticion)
 
 @app.get("/metrics")
 async def metrics():

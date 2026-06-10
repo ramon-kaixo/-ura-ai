@@ -2,8 +2,12 @@ import json
 import subprocess
 from pathlib import Path
 
+import httpx
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
+
+OLLAMA = "http://127.0.0.1:11434/api/chat"
+VISION_MODEL = "llama3.2-vision:11b"
 
 
 def _exif_pillow(ruta: Path) -> dict:
@@ -24,7 +28,7 @@ def _exif_pillow(ruta: Path) -> dict:
                 valor = str(valor)[:200]
             resultado["exif_raw"][str(tag_name)] = valor
 
-            if tag_name == "DateTimeOriginal" or tag_name == "DateTime":
+            if tag_name in ("DateTimeOriginal", "DateTime"):
                 resultado["fecha"] = str(valor)
             elif tag_name == "Make":
                 resultado["camara"] = f"{valor} {resultado['camara']}".strip()
@@ -49,8 +53,7 @@ def _exif_exiftool(ruta: Path) -> dict:
     try:
         out = subprocess.run(
             ["exiftool", "-json", "-DateTimeOriginal", "-Make", "-Model",
-             "-GPSLatitude", "-GPSLongitude", "-ImageWidth", "-ImageHeight",
-             "-IPTCDigest", "-ObjectName", str(ruta)],
+             "-GPSLatitude", "-GPSLongitude", "-ImageWidth", "-ImageHeight", str(ruta)],
             capture_output=True, text=True, timeout=10,
         )
         if out.returncode != 0 or not out.stdout.strip():
@@ -68,10 +71,46 @@ def _exif_exiftool(ruta: Path) -> dict:
             resultado["gps"] = f"{lat}, {lon}"
         elif lat:
             resultado["gps"] = str(lat)
-        resultado["exif_raw"] = {k: v for k, v in item.items() if k not in ("SourceFile",)}
+        resultado["exif_raw"] = {k: v for k, v in item.items() if k != "SourceFile"}
     except Exception:
         pass
     return resultado
+
+
+def _paleta_colores(ruta: Path, k: int = 5) -> list[str]:
+    try:
+        img = Image.open(ruta).convert("RGB")
+        img = img.resize((100, 100))
+        import numpy as np
+        from collections import Counter
+        pixels = np.array(img).reshape(-1, 3)
+        counter = Counter(map(tuple, pixels))
+        return [f"#{r:02x}{g:02x}{b:02x}" for (r, g, b), _ in counter.most_common(k)]
+    except Exception:
+        return []
+
+
+def _describir_imagen(ruta: Path) -> dict:
+    try:
+        import base64
+        img_b64 = base64.b64encode(ruta.read_bytes()).decode()
+        resp = httpx.post(OLLAMA, json={
+            "model": VISION_MODEL,
+            "messages": [{
+                "role": "user",
+                "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",
+                "images": [img_b64],
+            }],
+            "stream": False,
+            "options": {"temperature": 0.0, "num_predict": 200},
+        }, timeout=60)
+        if resp.is_error:
+            return {"descripcion": "", "error": f"Ollama {resp.status_code}"}
+        data = resp.json()
+        desc = data.get("message", {}).get("content", "").strip()
+        return {"descripcion": desc, "modelo": VISION_MODEL}
+    except Exception as e:
+        return {"descripcion": "", "error": str(e)}
 
 
 def extraer_imagen(ruta: Path) -> dict:
@@ -89,6 +128,9 @@ def extraer_imagen(ruta: Path) -> dict:
         if exiftool_data.get("exif_raw"):
             exif["exif_raw"] = {**exif["exif_raw"], **exiftool_data["exif_raw"]}
 
+    vis = _describir_imagen(ruta)
+    pal = _paleta_colores(ruta)
+
     return {
         "tipo": "imagen",
         "metadatos": {
@@ -100,6 +142,8 @@ def extraer_imagen(ruta: Path) -> dict:
             "gps": exif.get("gps"),
             "tamano_bytes": ruta.stat().st_size,
         },
+        "resumen_visual": vis.get("descripcion", ""),
+        "paleta": pal,
         "texto_plano": "",
         "ruta": str(ruta),
     }
