@@ -271,7 +271,7 @@ class TestFileRead:
             assert schema["type"] == "function"
             assert "name" in schema["function"]
             assert "parameters" in schema["function"]
-            assert schema["function"]["name"] in ("web_search", "page_read", "file_read")
+            assert schema["function"]["name"] in ("web_search", "page_read", "file_read", "crawl_web")
 
 
 # ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ class TestServer:
         assert "clasificador" in data
         assert "circuit_breaker" in data
         assert "tools_disponibles" in data
-        assert data["tools_disponibles"] == 3
+        assert data["tools_disponibles"] == 4
 
     def test_breaker(self, client):
         resp = client.get("/breaker")
