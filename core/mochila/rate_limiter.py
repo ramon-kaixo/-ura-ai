@@ -9,6 +9,19 @@ class RateLimiter:
         self._por_defecto = int(os.environ.get("MOCHILA_RATE_LIMIT_DEFAULT", "30"))
         self._limites: dict[str, int] = {}
 
+
+    def _cargar_config(self, config_file: str | None = None) -> None:
+        import json, os
+        path = config_file or os.path.expanduser("~/.nervioso/rate_limits.json")
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            for provider, limit in data.items():
+                if isinstance(limit, int):
+                    self._limites[provider] = limit
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
     def configurar(self, provider: str, max_requests: int) -> None:
         self._limites[provider] = max_requests
 
