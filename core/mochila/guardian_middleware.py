@@ -25,6 +25,15 @@ class GuardianMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+
+async def _init_guardian_async():
+    import asyncio as _asyncio
+    await _asyncio.sleep(2)
+    try:
+        init_guardian()
+    except Exception as e:
+        log.warning(f"Guardian async init: {e}")
+
 def init_guardian():
     estado = guardian.estado()
     log.info(f"GuardianOpenClaw: {len(estado.get('reglas',[]))} reglas activas")
