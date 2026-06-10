@@ -22,7 +22,8 @@ class ProviderHealth:
     consecutive_failures: int = 0
 
 
-HEALTH_FILE = Path(os.environ.get("MOCHILA_HEALTH_FILE", str(Path.home() / ".nervioso" / "provider_health.json")))
+def _health_file() -> Path:
+    return Path(os.environ.get("MOCHILA_HEALTH_FILE", str(Path.home() / ".nervioso" / "provider_health.json")))
 
 
 class CircuitBreaker:
@@ -31,17 +32,19 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         recovery_timeout: float = 30.0,
         half_open_max_requests: int = 2,
+        health_file: Path | None = None,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.half_open_max_requests = half_open_max_requests
+        self._health_file = health_file or _health_file()
         self._health: dict[str, ProviderHealth] = {}
         self._caragar()
 
     def _caragar(self) -> None:
-        if HEALTH_FILE.exists():
+        if self._health_file.exists():
             try:
-                with open(HEALTH_FILE) as f:
+                with open(self._health_file) as f:
                     raw = json.load(f)
                 for provider, data in raw.items():
                     if data.get("state") in ("closed", "open", "half_open"):
@@ -60,11 +63,11 @@ class CircuitBreaker:
         raw = {p: asdict(h) for p, h in self._health.items()}
         for p, d in raw.items():
             d["state"] = d["state"].value if isinstance(d["state"], CircuitState) else d["state"]
-        tmp = HEALTH_FILE.with_suffix(".tmp")
-        HEALTH_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self._health_file.with_suffix(".tmp")
+        self._health_file.parent.mkdir(parents=True, exist_ok=True)
         with open(tmp, "w") as f:
             json.dump(raw, f, indent=2)
-        tmp.replace(HEALTH_FILE)
+        tmp.replace(self._health_file)
 
     def _health_por_provider(self, provider: str) -> ProviderHealth:
         if provider not in self._health:

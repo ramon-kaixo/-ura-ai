@@ -5,8 +5,6 @@ from datetime import date
 from pathlib import Path
 
 
-COST_FILE = Path(os.environ.get("MOCHILA_COST_FILE", str(Path.home() / ".nervioso" / "cost_tracker.jsonl")))
-
 TARIFAS: dict[str, float] = {
     "ollama": 0.0,
     "openrouter": 0.0,
@@ -14,10 +12,15 @@ TARIFAS: dict[str, float] = {
 }
 
 
+def _cost_file() -> Path:
+    return Path(os.environ.get("MOCHILA_COST_FILE", str(Path.home() / ".nervioso" / "cost_tracker.jsonl")))
+
+
 class CostTracker:
-    def __init__(self, tarifas: dict[str, float] | None = None):
+    def __init__(self, tarifas: dict[str, float] | None = None, cost_file: Path | None = None):
         self.tarifas = tarifas or TARIFAS
-        COST_FILE.parent.mkdir(parents=True, exist_ok=True)
+        self._cost_file = cost_file or _cost_file()
+        self._cost_file.parent.mkdir(parents=True, exist_ok=True)
 
     def registrar(self, provider: str, modelo: str, prompt_tokens: int, completion_tokens: int) -> dict:
         entrada = {
@@ -30,7 +33,7 @@ class CostTracker:
             "total_tokens": prompt_tokens + completion_tokens,
             "cost_estimate": self._calcular_coste(provider, prompt_tokens, completion_tokens),
         }
-        with open(COST_FILE, "a") as f:
+        with open(self._cost_file, "a") as f:
             f.write(json.dumps(entrada) + "\n")
         return entrada
 
@@ -43,9 +46,9 @@ class CostTracker:
         total_cost = 0.0
         total_tokens = 0
         por_provider: dict[str, int] = {}
-        if not COST_FILE.exists():
+        if not self._cost_file.exists():
             return {"date": hoy, "total_cost": 0.0, "total_tokens": 0, "por_provider": {}}
-        with open(COST_FILE) as f:
+        with open(self._cost_file) as f:
             for line in f:
                 line = line.strip()
                 if not line:
