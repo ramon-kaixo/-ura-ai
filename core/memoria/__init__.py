@@ -8,6 +8,8 @@ from core.memoria.bridge import buscar_y_aprender
 from core.memoria.vigilante import revisar_fuente, procesar_cambios, cargar_fuentes, guardar_fuentes
 from core.memoria.limpieza import limpiar_inbox, limpiar_cuarentena, limpiar_versiones_antiguas, limpiar_todo
 from core.memoria.consulta import consultar
+from core.memoria.analizador import analizar
+from core.memoria.sintetizador import sintetizar
 
 __all__ = [
     "Idea", "detectar_tipo", "TIPO_EXTRACTORES", "IngestionWatcher", "procesar_archivo",
@@ -16,4 +18,5 @@ __all__ = [
     "revisar_fuente", "procesar_cambios", "cargar_fuentes", "guardar_fuentes",
     "limpiar_inbox", "limpiar_cuarentena", "limpiar_versiones_antiguas", "limpiar_todo",
     "consultar",
+    "analizar", "sintetizar",
 ]
