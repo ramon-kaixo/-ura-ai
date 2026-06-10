@@ -114,17 +114,24 @@ def _describir_imagen(ruta: Path) -> dict:
 
 
 def _extraer_iptc(ruta: Path) -> dict:
+    """Extrae metadatos IPTC via iptcinfo3 usando record numbers."""
     try:
         from iptcinfo3 import IPTCInfo
         info = IPTCInfo(str(ruta))
+        data = info._data if hasattr(info, '_data') else {}
+
+        def _bytes(val):
+            return val.decode() if isinstance(val, bytes) else str(val) if val else ""
+
+        keywords = data.get(25, []) or []
         return {
-            "titulo": str(info.get("object name", "") or ""),
-            "descripcion": str(info.get("caption/abstract", "") or ""),
-            "autor": str(info.get("by-line", "") or ""),
-            "keywords": list(info.get("keywords", []) if info.get("keywords") else []),
-            "ciudad": str(info.get("city", "") or ""),
-            "pais": str(info.get("country/primary location name", "") or ""),
-            "copyright": str(info.get("copyright notice", "") or ""),
+            "titulo": _bytes(data.get(5, b"")),
+            "descripcion": _bytes(data.get(120, b"")),
+            "autor": _bytes(data.get(80, b"")),
+            "keywords": [k.decode() if isinstance(k, bytes) else str(k) for k in keywords],
+            "ciudad": _bytes(data.get(90, b"")),
+            "pais": _bytes(data.get(101, b"")),
+            "copyright": _bytes(data.get(116, b"")),
         }
     except Exception:
         return {}
