@@ -1,5 +1,6 @@
-"""Almacén Qdrant: ideas → embedding → insert + búsqueda."""
+"""Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 import logging
+import uuid
 
 import httpx
 from qdrant_client import QdrantClient, models
@@ -33,6 +34,11 @@ def _embed(texto: str) -> list[float]:
     return resp.json()["embedding"]
 
 
+def _make_id(idea: Idea) -> str:
+    base = idea.hash_origen or idea.idea[:40]
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{base}:{idea.idea}"))
+
+
 async def almacenar_ideas(ideas: list[Idea]) -> int:
     if not ideas:
         return 0
@@ -62,7 +68,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             continue
 
         client.upsert(COLLECTION, [models.PointStruct(
-            id=None,
+            id=_make_id(idea),
             vector=vec,
             payload=idea.to_payload(),
         )])

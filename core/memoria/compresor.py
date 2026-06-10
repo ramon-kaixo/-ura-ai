@@ -27,14 +27,14 @@ REGLAS:
 Responde UNICAMENTE con un array JSON valido, sin explicacion, sin markdown:
 
 [
-  {
+  {{
     "idea": "Frase concreta con la idea extraida",
     "tema": "categoria corta",
     "etiquetas": ["tag1", "tag2"],
     "tipo": "herramienta",
     "herramienta": "NombreHerramienta",
     "coste": "gratis"
-  }
+  }}
 ]
 
 Texto a analizar:
