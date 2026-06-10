@@ -23,8 +23,11 @@ from core.memoria.extractores.video_pipeline import pipeline_video
 from core.memoria.analizador import analizar
 from core.memoria.sintetizador import sintetizar
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.status_endpoint import system_status
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.status_endpoint import system_status
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.status_endpoint import system_status
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.comprar import fase_comprar
@@ -303,6 +306,11 @@ async def memoria_fase_comprar(body: FaseRequest):
 @app.get("/memoria/vigilancia/parte")
 async def memoria_vigilancia_parte():
     return await generar_parte()
+
+
+@app.get("/status")
+async def system_status_endpoint():
+    return await system_status(PROVIDERS, cost_tracker, circuit_breaker, len(TOOL_SCHEMAS), router)
 
 @app.get("/metrics")
 async def metrics():
