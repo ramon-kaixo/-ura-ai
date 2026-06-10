@@ -3,10 +3,18 @@ from typing import Any
 
 from core.memoria.extractores.html_extractor import extraer_html
 from core.memoria.extractores.pdf_extractor import extraer_pdf
+from core.memoria.extractores.imagen_extractor import extraer_imagen
+from core.memoria.extractores.media_extractor import extraer_video, extraer_audio
+from core.memoria.extractores.office_extractor import extraer_office
 
 EXTRACTORES: dict[str, Any] = {
     "html": extraer_html,
     "pdf": extraer_pdf,
+    "imagen": extraer_imagen,
+    "video": extraer_video,
+    "audio": extraer_audio,
+    "office": extraer_office,
+    "texto": extraer_html,  # texto simple se trata como HTML
 }
 
 
