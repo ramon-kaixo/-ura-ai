@@ -74,6 +74,8 @@ CRITICOS=(
   "core/memoria/extractores/media_extractor.py"
   "core/memoria/extractores/office_extractor.py"
   "core/memoria/bridge.py"
+  "core/memoria/compresor.py"
+  "core/memoria/qdrant_store.py"
 )
 
 for f in "${CRITICOS[@]}"; do
