@@ -1,0 +1,39 @@
+import os
+import time
+from collections import defaultdict
+
+
+class RateLimiter:
+    def __init__(self):
+        self._ventanas: dict[str, list[float]] = defaultdict(list)
+        self._por_defecto = int(os.environ.get("MOCHILA_RATE_LIMIT_DEFAULT", "30"))
+        self._limites: dict[str, int] = {}
+
+    def configurar(self, provider: str, max_requests: int) -> None:
+        self._limites[provider] = max_requests
+
+    def _limite(self, provider: str) -> int:
+        return self._limites.get(provider, self._por_defecto)
+
+    def puede_pasar(self, provider: str) -> tuple[bool, int, int]:
+        ahora = time.time()
+        ventana = 60.0
+        cola = self._ventanas[provider]
+        while cola and cola[0] < ahora - ventana:
+            cola.pop(0)
+        limite = self._limite(provider)
+        puede = len(cola) < limite
+        return puede, len(cola), limite
+
+    def registrar(self, provider: str) -> None:
+        self._ventanas[provider].append(time.time())
+
+    def estado(self, provider: str) -> dict:
+        puede, actual, limite = self.puede_pasar(provider)
+        return {
+            "provider": provider,
+            "can_pass": puede,
+            "current_requests": actual,
+            "max_requests": limite,
+            "window_seconds": 60,
+        }
