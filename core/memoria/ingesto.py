@@ -8,6 +8,7 @@ from pathlib import Path
 import blake3
 
 from core.memoria.detector import detectar_tipo
+from core.memoria.extractores import extraer_archivo
 
 INBOX_DIR = Path(os.environ.get("MEMORIA_INBOX", os.path.expanduser("~/.nervioso/inbox")))
 CUARENTENA_DIR = Path(os.environ.get("MEMORIA_CUARENTENA", os.path.expanduser("~/.nervioso/cuarentena")))
@@ -60,6 +61,8 @@ def procesar_archivo(ruta: Path) -> dict | None:
         tipo = detectar_tipo(ruta)
         PROCESADOS.add(h)
 
+        extraido = extraer_archivo(ruta, tipo)
+
         limpiar_cuarentena()
 
         return {
@@ -67,6 +70,7 @@ def procesar_archivo(ruta: Path) -> dict | None:
             "tipo": tipo,
             "ruta_original": str(ruta),
             "tamano_bytes": ruta.stat().st_size,
+            "extraido": extraido,
         }
     except OSError as e:
         log.error(f"Error procesando {ruta}: {e}")
