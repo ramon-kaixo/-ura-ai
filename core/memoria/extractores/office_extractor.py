@@ -8,10 +8,9 @@ def extraer_office(ruta: Path) -> dict:
     suf = ruta.suffix.lower()
     if suf == ".docx":
         return _extraer_docx(ruta)
-    elif suf in (".pptx", ".ppt"):
+    if suf in (".pptx", ".ppt"):
         return _extraer_pptx(ruta)
-    else:
-        return _extraer_generico(ruta)
+    return _extraer_generico(ruta)
 
 
 def _extraer_docx(ruta: Path) -> dict:
