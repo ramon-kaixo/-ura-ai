@@ -30,8 +30,6 @@ CRITICOS=(
   "core/code_indexer.py"
   "core/open_claw_coordinador.py"
   "core/open_claw_reporte.py"
-  "cli/gatekeeper.py"
-  "cli/__init__.py"
   "config/settings.json"
   "app/main.py"
   "app/capturador.py"
