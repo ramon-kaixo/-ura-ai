@@ -113,6 +113,22 @@ def _describir_imagen(ruta: Path) -> dict:
         return {"descripcion": "", "error": str(e)}
 
 
+def _extraer_iptc(ruta: Path) -> dict:
+    try:
+        from iptcinfo3 import IPTCInfo
+        info = IPTCInfo(str(ruta))
+        return {
+            "titulo": str(info.get("object name", "") or ""),
+            "descripcion": str(info.get("caption/abstract", "") or ""),
+            "autor": str(info.get("by-line", "") or ""),
+            "keywords": list(info.get("keywords", []) if info.get("keywords") else []),
+            "ciudad": str(info.get("city", "") or ""),
+            "pais": str(info.get("country/primary location name", "") or ""),
+            "copyright": str(info.get("copyright notice", "") or ""),
+        }
+    except Exception:
+        return {}
+
 def extraer_imagen(ruta: Path) -> dict:
     img = Image.open(ruta)
 
@@ -128,6 +144,7 @@ def extraer_imagen(ruta: Path) -> dict:
         if exiftool_data.get("exif_raw"):
             exif["exif_raw"] = {**exif["exif_raw"], **exiftool_data["exif_raw"]}
 
+    iptc = _extraer_iptc(ruta)
     vis = _describir_imagen(ruta)
     pal = _paleta_colores(ruta)
 
@@ -142,6 +159,7 @@ def extraer_imagen(ruta: Path) -> dict:
             "gps": exif.get("gps"),
             "tamano_bytes": ruta.stat().st_size,
         },
+        "iptc": iptc,
         "resumen_visual": vis.get("descripcion", ""),
         "paleta": pal,
         "texto_plano": "",
