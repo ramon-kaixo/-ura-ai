@@ -22,6 +22,9 @@ from core.memoria.ingesto import procesar_inbox_completo
 from core.memoria.extractores.video_pipeline import pipeline_video
 from core.memoria.analizador import analizar
 from core.memoria.sintetizador import sintetizar
+from core.memoria.rastreadores.saber import fase_saber
+from core.memoria.rastreadores.hacer import fase_hacer
+from core.memoria.rastreadores.comprar import fase_comprar
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -267,6 +270,22 @@ class SintesisRequest(BaseModel):
 @app.post("/memoria/sintetizar")
 async def memoria_sintetizar(body: SintesisRequest):
     return await sintetizar(body.peticion)
+
+
+class FaseRequest(BaseModel):
+    keywords: str
+
+@app.post("/memoria/fase/saber")
+async def memoria_fase_saber(body: FaseRequest):
+    return await fase_saber(body.keywords)
+
+@app.post("/memoria/fase/hacer")
+async def memoria_fase_hacer(body: FaseRequest):
+    return await fase_hacer(body.keywords)
+
+@app.post("/memoria/fase/comprar")
+async def memoria_fase_comprar(body: FaseRequest):
+    return await fase_comprar(body.keywords)
 
 @app.get("/metrics")
 async def metrics():
