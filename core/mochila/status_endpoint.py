@@ -40,6 +40,31 @@ def _timer_status(name: str) -> str:
         return "unknown"
 
 
+
+def _alemania_status() -> dict:
+    try:
+        estado = json.loads(Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text())
+        return estado
+    except Exception:
+        return {"global": "unknown", "ips": {}, "servicios": {}}
+
+
+def _tunnel_status() -> dict:
+    try:
+        import subprocess
+        r = subprocess.run(["systemctl", "is-active", "ura-hetzner-tunnel"], capture_output=True, text=True, timeout=5)
+        active = r.stdout.strip() == "active"
+    except Exception:
+        active = False
+    searxng_ok = False
+    try:
+        import httpx
+        resp = httpx.get("http://127.0.0.1:8888/search?q=health&format=json", timeout=5)
+        searxng_ok = resp.status_code == 200
+    except Exception:
+        pass
+    return {"tunnel_active": active, "searxng_accessible": searxng_ok}
+
 def _openclaw_status() -> dict:
     try:
         import httpx
@@ -61,6 +86,8 @@ async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_co
         "openclaw": _openclaw_status(),
         "ram": _ram_info(),
         "fs_bug": _fs_bug_status(),
+        "alemania": _alemania_status(),
+        "tunnel_hetzner": _tunnel_status(),
         "timers": {
             "guard": _timer_status("ura-mochila-guard.timer"),
             "backup": _timer_status("ura-qdrant-backup.timer"),
