@@ -11,17 +11,20 @@ class RouteResult:
 
 RUTAS_POR_DEFECTO: dict[str, list[dict]] = {
     "codigo": [
+        {"provider": "ollama", "modelo": "deepseek-coder:6.7b"},
         {"provider": "ollama", "modelo": "qwen2.5-coder:32b"},
         {"provider": "openrouter", "modelo": "anthropic/claude-sonnet-4"},
         {"provider": "openrouter", "modelo": "deepseek/deepseek-v4-flash"},
     ],
     "razonamiento": [
-        {"provider": "openrouter", "modelo": "google/gemini-2.5-flash"},
+        {"provider": "ollama", "modelo": "deepseek-r1:14b"},
         {"provider": "ollama", "modelo": "qwen3:32b-q8_0"},
+        {"provider": "openrouter", "modelo": "google/gemini-2.5-flash"},
         {"provider": "openrouter", "modelo": "anthropic/claude-sonnet-4"},
     ],
     "rapido": [
         {"provider": "ollama", "modelo": "qwen2.5:7b"},
+        {"provider": "ollama", "modelo": "deepseek-coder:6.7b"},
         {"provider": "openrouter", "modelo": "deepseek/deepseek-v4-flash"},
     ],
 }
