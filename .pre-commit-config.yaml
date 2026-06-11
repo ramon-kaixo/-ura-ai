@@ -35,8 +35,8 @@ repos:
         always_run: true
 
       - id: no-ghost-files
-        name: No ghost files (CLAUDE.md, duplicate configs)
-        entry: bash -c '! test -f CLAUDE.md && ! test -f config/maintenance.json && ! test -f mantenimiento/config.json'
+        name: No ghost files
+        entry: bash -c '! find . -name "*.pyc" -not -path "./__pycache__/*" -not -path "./*/__pycache__/*" 2>/dev/null | grep -q . && ! find . -name "*.jsonl.1" 2>/dev/null | grep -q .'
         language: system
         pass_filenames: false
         always_run: true

@@ -6,7 +6,6 @@ import http.server
 import json
 import logging
 import os
-import sys
 import threading
 import time
 import urllib.error
@@ -14,13 +13,11 @@ import urllib.request
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
-
-sys.path.insert(0, "/usr/local/bin")
+import sys
+sys.path.insert(0, '/usr/local/bin')
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from router_rate_limiter import rate_limiter
-
-from core.auth_layer import require_auth
-from core.auth_layer import validate as auth_validate
+from core.auth_layer import validate as auth_validate, require_auth
 
 logging.basicConfig(
     level=logging.INFO,
@@ -278,9 +275,10 @@ metrics = MetricsCollector()
 
 
 class PromptCache:
-    def __init__(self, ttl: int = CACHE_TTL) -> None:
+    def __init__(self, ttl: int = CACHE_TTL, max_size: int = 100) -> None:
         self.cache: dict[str, dict[str, Any]] = {}
         self.ttl = ttl
+        self.max_size = max_size
         self.lock = threading.Lock()
 
     def _hash_content(self, content: str) -> str:
@@ -302,6 +300,9 @@ class PromptCache:
         key = self._hash_content(f"{tipo}:{prompt}")
         with self.lock:
             self.cache[key] = {"response": response, "timestamp": time.time()}
+            if len(self.cache) > self.max_size:
+                oldest = min(self.cache, key=lambda k: self.cache[k]["timestamp"])
+                del self.cache[oldest]
 
     def clear(self) -> None:
         with self.lock:
@@ -537,15 +538,15 @@ def _render_dashboard() -> str:
         lat = _asus_latency_ms
         lat_updated = time.strftime("%H:%M:%S", time.localtime(_asus_latency_updated)) if _asus_latency_updated else ""
     status_class = "status-remote" if backend_label == "ASUS Remoto" else "status-local"
-    auto_sel = "selected" if POWER_MODE.upper() == "AUTO" else ""
-    turbo_sel = "selected" if POWER_MODE.upper() == "TURBO" else ""
-    eco_sel = "selected" if POWER_MODE.upper() == "ECO" else ""
+    auto_sel = 'selected' if POWER_MODE.upper() == "AUTO" else ''
+    turbo_sel = 'selected' if POWER_MODE.upper() == "TURBO" else ''
+    eco_sel = 'selected' if POWER_MODE.upper() == "ECO" else ''
     if POWER_MODE.upper() == "AUTO":
         power_hint = "Clientes locales → ASUS | Remotos → Local"
     elif POWER_MODE.upper() == "TURBO":
         power_hint = "Toda la inferencia va a ASUS. Fallback local bloqueado."
     else:
-        power_hint = "Toda la inferencia va al Mac local."
+        power_hint = "Toda la inferencia va al Mac local." 
     if lat < 0:
         latency_class = "value-red"
         asus_latency = "N/A"
@@ -770,7 +771,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 # También buscar en el indexer de URA-Search si existe
                 try:
                     import sys as _sys
-                    _sys.path.insert(0, "/home/ramon/URA/ura_ia_1972")
+                    _sys.path.insert(0, '/home/ramon/URA/ura_ia_1972')
                     from ura_search.indexer import search as idx_search
                     idx_results = idx_search(q)
                     results.extend(idx_results)
@@ -931,7 +932,7 @@ def main() -> None:
 
     log.info("Model Router Enhanced v2.2 iniciando en puerto %s", ROUTER_PORT)
     log.info("Ollama backend: %s", OLLAMA_URL)
-    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'")
+    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'") 
     log.info("Features: Dashboard, Prompt Caching, Fallback System, Metrics, Context Checker")
 
     disponibles = obtener_modelos_disponibles()

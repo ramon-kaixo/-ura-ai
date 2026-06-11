@@ -43,10 +43,7 @@ def cargar_config() -> dict:
         except Exception:
             pass
     NERVIOSO.mkdir(parents=True, exist_ok=True)
-    try:
     CONFIG_PATH.write_text(json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False) + "\n")
-except Exception:
-    pass
     return dict(DEFAULT_CONFIG)
 
 
