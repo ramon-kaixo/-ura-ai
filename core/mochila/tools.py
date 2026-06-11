@@ -17,6 +17,9 @@ WHITELIST_DIRS = [
 SEARXNG_URL = os.environ.get("SEARXNG_URL", "http://127.0.0.1:8888")  # SSH tunnel from Hetzner
 DUCKDUCKGO_URL = os.environ.get("DUCKDUCKGO_URL", "https://lite.duckduckgo.com/lite")
 DUCKDUCKGO_URL = os.environ.get("DUCKDUCKGO_URL", "https://lite.duckduckgo.com/lite")
+
+HTTPS_PROXY = os.environ.get("HTTPS_PROXY", "")  # proxy via Hetzner
+HTTP_PROXY = os.environ.get("HTTP_PROXY", "")
 WEBSEARCH_TIMEOUT = int(os.environ.get("MOCHILA_WEBSEARCH_TIMEOUT", "15"))
 PAGEREAD_TIMEOUT = int(os.environ.get("MOCHILA_PAGEREAD_TIMEOUT", "20"))
 PAGEREAD_MAX_SIZE = int(os.environ.get("MOCHILA_PAGEREAD_MAX_SIZE", "50000"))
@@ -192,7 +195,7 @@ async def web_search(query: str, max_results: int = 5) -> dict:
         async with httpx.AsyncClient(timeout=WEBSEARCH_TIMEOUT) as client:
             resp = await client.get(f"{SEARXNG_URL}/search", params=params)
             if resp.is_error:
-                return await _buscar_ddg(query, max_results)
+                return {"error": f"SearXNG error: {resp.status_code} — toda la busqueda via Hetzner", "query": query}
             data = resp.json()
             results = data.get("results", [])[:max_results]
             return {
@@ -201,9 +204,9 @@ async def web_search(query: str, max_results: int = 5) -> dict:
                 "results": [{"title": r.get("title", ""), "url": r.get("url", ""), "snippet": r.get("content", "")} for r in results],
             }
     except httpx.TimeoutException:
-        return await _buscar_ddg(query, max_results)
+        return {"error": "SearXNG timeout — toda la busqueda via Hetzner", "query": query}
     except Exception:
-        return await _buscar_ddg(query, max_results)
+        return {"error": "SearXNG error — toda la busqueda via Hetzner", "query": query}
 
 
 async def page_read(url: str, max_chars: int = 50000) -> dict:
