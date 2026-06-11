@@ -87,7 +87,7 @@ def load_manifest() -> dict:
 def save_manifest(manifest: dict) -> None:
     """Guarda el manifest (determinista: mismo estado → mismo archivo)."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-
+    
     # Verificar espacio en disco antes de escribir
     try:
         import shutil
@@ -99,7 +99,7 @@ def save_manifest(manifest: dict) -> None:
     except Exception as e:
         log.error(f"Error verificando espacio en disco: {e}")
         raise
-
+    
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
