@@ -12,6 +12,15 @@ Usage:
   python3 scripts/pro/systemd_orphan_scanner.py --json     # pipeline output
 """
 
+PLUGIN = {
+    "name": "systemd_orphan_scanner",
+    "phase": "pre",
+    "timeout": 30,
+    "args": ["--json"],
+    "blocking": False,
+    "needs_file": False,
+}
+
 import json
 import os
 import shutil
