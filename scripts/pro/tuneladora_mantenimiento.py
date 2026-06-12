@@ -155,6 +155,16 @@ def step_scanner_salida() -> None:
     run([VENV_PYTHON, "scripts/pro/scanner_autoajuste.py", "--diff", "--json"], timeout=30)
 
 
+def step_orphan_scanner() -> int:
+    log("  Orphan systemd units...")
+    _rc, out, _ = run([VENV_PYTHON, "scripts/pro/systemd_orphan_scanner.py", "--json"], timeout=30)
+    try:
+        data = json.loads(out)
+        return data.get("total", 0)
+    except (json.JSONDecodeError, TypeError):
+        return -1
+
+
 def step_poda() -> None:
     log("  Poda mecanica...")
     run([VENV_PYTHON, "scripts/pro/poda_mecanica.py", "--json"], timeout=30)
@@ -294,6 +304,7 @@ def revision_media():
         log(f"  ALERTAS: {alertas}")
     token_ok = step_token_screen()
     step_scanner_entrada()
+    orphan_count = step_orphan_scanner()
     run([RUFF, "check", "--fix", "."], timeout=120)
     run([RUFF, "format", "."], timeout=60)
     step_poda()
@@ -305,6 +316,7 @@ def revision_media():
     return {
         "health": health,
         "token_screen": token_ok,
+        "orphan_units": orphan_count,
         "refactor_ok": ok,
         "refactor_err": err,
         "inspectores_ok": inspectores_ok,
@@ -327,6 +339,7 @@ def revision_profunda():
     token_ok = step_token_screen()
     results["token_screen"] = token_ok
     step_scanner_entrada()
+    results["orphan_units"] = step_orphan_scanner()
     run([RUFF, "check", "--fix", "--unsafe-fixes", "."], timeout=300)
     run([RUFF, "format", "."], timeout=120)
     step_poda()
