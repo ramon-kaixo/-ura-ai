@@ -16,13 +16,11 @@ Incluye siempre al final de todas tus respuestas este menú desplegable exacto l
 
 <details><summary><b>⚙️ Ver/Modificar Prompt Activo</b></summary>
 
-```text
-[CONTENIDO REAL DE AGENTS.md]
-```
+[CONTENIDO REAL DE AGENTS.md EN TEXTO PLANO]
 
 Para modificarlo en caliente, responderé con:
-`ACTUALIZAR_PROMPT:`
-`[Nuevo prompt]`
+ACTUALIZAR_PROMPT:
+[Nuevo prompt]
 </details>
 
 ### ACTUALIZAR_PROMPT
