@@ -20,10 +20,11 @@ import contextlib
 
 # PROFILE STARTUP
 _STARTUP_START = time.perf_counter()
+print(f"[Inicio] {datetime.now().isoformat()}")
 
 from core.config_manager import CONFIG as _CFG
-
 _CONFIG_LOAD_TIME = time.perf_counter() - _STARTUP_START
+print(f"[Carga de Config] {_CONFIG_LOAD_TIME:.3f}s")
 
 TARGET = _CFG["ollama"]["host"]
 OLLAMA_PORT = _CFG["ollama"]["port"]
@@ -369,6 +370,7 @@ def cmd_status(args) -> int:
 def main():
     _MAIN_START = time.perf_counter()
     _MAIN_LOAD_TIME = _MAIN_START - _STARTUP_START
+    print(f"[Main Entry] {_MAIN_LOAD_TIME:.3f}s")
 
     if len(sys.argv) < 2:
         return 0
