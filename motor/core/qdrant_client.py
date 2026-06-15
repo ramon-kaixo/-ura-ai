@@ -18,14 +18,25 @@ class QdrantClient:
     def _conectar(self):
         try:
             from qdrant_client import QdrantClient as QC
-            from qdrant_client.http import models
             self._cliente = QC(host=self.config.qdrant_host, port=self.config.qdrant_port, timeout=3)
             self._cliente.get_collections()
             self.disponible = True
-            log.info("qdrant conectado")
-        except Exception as e:
-            log.warning("qdrant no disponible: %s", e)
-            self.disponible = False
+            self._modo_rest = False
+            log.info("qdrant conectado (cliente nativo)")
+        except Exception:
+            try:
+                import requests
+                r = requests.get(f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections",
+                                 timeout=3)
+                if r.status_code < 500:
+                    self._cliente = None
+                    self.disponible = True
+                    self._modo_rest = True
+                    log.info("qdrant conectado (REST fallback)")
+                    return
+            except Exception:
+                pass
+            log.warning("qdrant no disponible")
 
     def health(self) -> bool:
         if not self.disponible or not self._cliente:
