@@ -89,7 +89,9 @@ class Orchestrator:
             s = {"timestamp": result.scan.timestamp, "hostname": result.scan.hostname,
                  "health_score": result.scan.health_score, "servicios": result.scan.servicios,
                  "recursos": result.scan.recursos, "red": result.scan.red,
-                 "hw_health": result.scan.hw_health}
+                 "hw_health": result.scan.hw_health,
+                 "orphans": result.scan.orphans,
+                 "systemd_failed": result.scan.systemd_failed}
             (dep / "estado_alemania.json").write_text(json.dumps(s, indent=2))
         if result.diagnose:
             d = {"timestamp": result.diagnose.timestamp,
