@@ -100,13 +100,6 @@ class Scanner:
             return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
         except: return {}
 
-    def _check_opencode(self) -> str:
-        try:
-            import subprocess
-            r = subprocess.run(["systemctl", "is-active", "opencode"], capture_output=True, text=True, timeout=3)
-            return r.stdout.strip()
-        except: return "unknown"
-
     def _check_recursos(self) -> dict:
         try:
             import psutil
