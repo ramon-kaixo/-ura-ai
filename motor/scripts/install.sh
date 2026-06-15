@@ -16,7 +16,18 @@ if command -v apt-get &>/dev/null; then
     apt-get install -y -qq smartmontools lm-sensors 2>/dev/null || true
 fi
 
-# Timer systemd unico
+mkdir -p /etc/ura
+if [ ! -f /etc/ura/config.json ]; then
+    cat > /etc/ura/config.json << 'CFG'
+{
+  "deploy_dir": "/opt/motor/deploy",
+  "data_dir": "/opt/motor/data",
+  "failure_knowledge_path": "/opt/motor/data/failure_knowledge_inicial.json",
+  "baseline_path": "/opt/motor/data/baseline_inicial.json"
+}
+CFG
+fi
+
 cat > /etc/systemd/system/ura-pipeline.service << 'EOF'
 [Unit]
 Description=URA Motor de Conocimiento - Pipeline completo
@@ -24,7 +35,8 @@ After=network.target qdrant.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/ura pipeline
+ExecStart=/usr/local/bin/ura --config /etc/ura/config.json pipeline
+Environment=URA_CONFIG=/etc/ura/config.json
 User=root
 StandardOutput=journal
 StandardError=journal
@@ -44,6 +56,9 @@ WantedBy=timers.target
 EOF
 
 systemctl daemon-reload
+systemctl disable --now ura-hetzner-watchdog.timer 2>/dev/null || true
+systemctl disable --now ura-scanner.timer 2>/dev/null || true
+systemctl disable --now ura-diagnostico.timer 2>/dev/null || true
 systemctl enable --now ura-pipeline.timer || true
 
 echo "OK. ura pipeline cada 5 min activo."
