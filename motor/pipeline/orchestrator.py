@@ -40,6 +40,7 @@ class Orchestrator:
             hubo_cambios = result.diagnose.causas_raiz or result.scan.diff_total > 0
             result.verify = ejecutar_verificacion(self.config, hubo_cambios=hubo_cambios)
             self._escribir_side_effects(result)
+            self._registrar_trend(result)
             result.ok = True
             log.info("pipeline OK health=%.1f incidentes=%d",
                      result.scan.health_score, len(result.diagnose.incidentes))
@@ -49,6 +50,22 @@ class Orchestrator:
             log.error("pipeline error: %s", e, exc_info=True)
         self._emit(result)
         return result
+
+    def _registrar_trend(self, result: PipelineResult):
+        if not result.scan:
+            return
+        dep = Path(self.config.deploy_dir)
+        dep.mkdir(parents=True, exist_ok=True)
+        entry = {"ts": result.scan.timestamp, "hostname": result.scan.hostname,
+                 "health": result.scan.health_score,
+                 "incidentes": len(result.diagnose.incidentes) if result.diagnose else 0,
+                 "ram_pct": result.scan.recursos.get("ram_pct", 0),
+                 "disk_pct": result.scan.recursos.get("disk_pct", 0),
+                 "load": result.scan.recursos.get("load_avg_1m", 0),
+                 "ok": result.ok}
+        lines = (dep / "trends.ndjson")
+        with open(lines, "a") as f:
+            f.write(json.dumps(entry, default=str) + "\n")
 
     def _escribir_side_effects(self, result: PipelineResult):
         dep = Path(self.config.deploy_dir)
