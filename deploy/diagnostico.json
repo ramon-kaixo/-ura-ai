@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-06-15T03:04:57.599588Z",
+  "timestamp": "2026-06-15T03:08:22.475633Z",
   "ok": false,
   "incidentes": [],
   "causas_raiz": [],
-  "modo_offline": true,
+  "modo_offline": false,
   "coste_historico": {}
 }
