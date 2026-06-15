@@ -1,4 +1,6 @@
 import argparse, sys, logging
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('httpcore').setLevel(logging.WARNING)
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import UraConfig
@@ -18,6 +20,8 @@ COMMANDS = {
 
 
 def _setup_logging(level: str):
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logging.getLogger('httpcore').setLevel(logging.WARNING)
     h = logging.StreamHandler(sys.stderr)
     h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(h)
@@ -35,7 +39,8 @@ def main():
     sub.add_parser("scan", help="Solo escanear")
     sub.add_parser("diagnose", help="Solo diagnosticar (requiere scan previo)")
     sub.add_parser("status", help="Estado unificado")
-    sub.add_parser("check", help="Preflight check")
+    sp_check = sub.add_parser("check", help="Preflight check / purge")
+    sp_check.add_argument("--purge", action="store_true", help="Purgar huerfanos: stale PIDs, failed units, dangling Docker")
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
