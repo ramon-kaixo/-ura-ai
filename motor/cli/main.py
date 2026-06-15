@@ -10,6 +10,12 @@ from pipeline.orchestrator import Orchestrator
 from guard.preflight import ejecutar_preflight
 from guard.verifier import ejecutar_verificacion
 
+def _setup_logging(level: str):
+    h = logging.StreamHandler(sys.stderr)
+    h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
+    logging.getLogger().addHandler(h)
+    logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
+
 def main():
     parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
     parser.add_argument("--config", default="", help="Ruta a config JSON")
@@ -30,8 +36,7 @@ def main():
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
 
     args = parser.parse_args()
-    logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO),
-                        format="%(name)s %(levelname)s %(message)s")
+    _setup_logging(args.log_level)
     config = UraConfig.load(args.config)
     config.log_level = args.log_level
 
