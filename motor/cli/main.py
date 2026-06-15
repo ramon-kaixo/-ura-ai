@@ -35,6 +35,7 @@ def main():
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
     sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
     sub.add_parser("alerta", help="Alertas recientes desde journald")
+    sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -122,8 +123,12 @@ def main():
             sys.exit(1)
         sc = Scanner(config)
         scan = sc.run()
-        bl = cal.learn(scan)
-        print(json.dumps({"ok": True, "baseline": bl}, indent=2, default=str))
+        trend_path = Path(config.deploy_dir) / "trends.ndjson"
+        trends = []
+        if trend_path.exists():
+            trends = [json.loads(l) for l in trend_path.read_text().strip().splitlines() if l.strip()]
+        bl = cal.learn(scan, trends)
+        print(json.dumps({"ok": True, "baseline": bl, "puntos_usados": len(trends)}, indent=2, default=str))
 
     elif args.command == "cross":
         import subprocess as sproc, socket
@@ -153,6 +158,16 @@ def main():
                       capture_output=True, text=True, timeout=10)
         alerts = [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
         print(json.dumps({"alertas": alerts[-20:], "total": len(alerts)}, indent=2, default=str))
+
+    elif args.command == "detect":
+        trend_path = Path(config.deploy_dir) / "trends.ndjson"
+        if not trend_path.exists():
+            print(json.dumps({"error": "No hay datos de tendencia. Ejecuta pipeline primero."}, indent=2))
+            sys.exit(1)
+        lines = [json.loads(l) for l in trend_path.read_text().strip().splitlines() if l.strip()]
+        cal = Calibration(config)
+        res = cal.detect(lines)
+        print(json.dumps(res, indent=2, default=str))
 
 if __name__ == "__main__":
     main()
