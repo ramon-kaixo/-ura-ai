@@ -18,6 +18,9 @@ class ScanResult:
     calibration_status: str = "unknown"
     duplicados: dict = field(default_factory=dict)
     contenedores_ko: list = field(default_factory=list)
+    orphans: list = field(default_factory=list)
+    systemd_failed: list = field(default_factory=list)
+    systemd_orphans: list = field(default_factory=list)
     snapshot_hash: str = ""
 
 @dataclass
