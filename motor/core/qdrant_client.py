@@ -39,7 +39,11 @@ class QdrantClient:
             log.warning("qdrant no disponible")
 
     def health(self) -> bool:
-        if not self.disponible or not self._cliente:
+        if not self.disponible:
+            return False
+        if getattr(self, "_modo_rest", False):
+            return True
+        if not self._cliente:
             return False
         try:
             self._cliente.get_collections()
@@ -49,7 +53,11 @@ class QdrantClient:
             return False
 
     def guardar_incidente(self, incidente: dict) -> bool:
-        if not self.disponible or not self._cliente:
+        if not self.disponible:
+            return False
+        if getattr(self, "_modo_rest", False):
+            return self._guardar_rest(incidente)
+        if not self._cliente:
             return False
         try:
             from qdrant_client.http import models
@@ -62,17 +70,7 @@ class QdrantClient:
                     collection_name=collection,
                     vectors_config=models.VectorParams(size=7, distance=models.Distance.COSINE),
                 )
-            payload = {
-                "timestamp_inicio": incidente.get("ts", datetime.utcnow().isoformat()),
-                "timestamp_resolucion": incidente.get("ts_resolucion", ""),
-                "tipo_incidencia": incidente.get("tipo", "Unknown"),
-                "subtipo": incidente.get("subtipo", ""),
-                "resumen": incidente.get("resumen", ""),
-                "impacto_memoria": incidente.get("impacto_memoria", [0.0]*7),
-                "schema_version": self.config.schema_version,
-                "hw_ok": incidente.get("hw_ok", True),
-                "hw_issues": incidente.get("hw_issues", []),
-            }
+            payload = self._build_payload(incidente)
             self._cliente.upsert(
                 collection_name=collection,
                 points=[models.PointStruct(id=abs(hash(payload["timestamp_inicio"])),
@@ -82,6 +80,35 @@ class QdrantClient:
             return True
         except Exception as e:
             log.error("error guardar incidente: %s", e)
+            return False
+
+    def _build_payload(self, incidente: dict) -> dict:
+        return {
+            "timestamp_inicio": incidente.get("ts", datetime.utcnow().isoformat()),
+            "timestamp_resolucion": incidente.get("ts_resolucion", ""),
+            "tipo_incidencia": incidente.get("tipo", "Unknown"),
+            "subtipo": incidente.get("subtipo", ""),
+            "resumen": incidente.get("resumen", ""),
+            "impacto_memoria": incidente.get("impacto_memoria", [0.0]*7),
+            "schema_version": self.config.schema_version,
+            "hw_ok": incidente.get("hw_ok", True),
+            "hw_issues": incidente.get("hw_issues", []),
+        }
+
+    def _guardar_rest(self, incidente: dict) -> bool:
+        try:
+            import requests
+            payload = self._build_payload(incidente)
+            point = {
+                "id": abs(hash(payload["timestamp_inicio"])),
+                "vector": payload["impacto_memoria"],
+                "payload": payload,
+            }
+            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/incidente_record/points"
+            r = requests.put(url, json={"points": [point]}, timeout=5)
+            return r.status_code in (200, 201)
+        except Exception as e:
+            log.error("error guardar incidente (REST): %s", e)
             return False
 
     def buscar_incidentes(self, vector: list = None, limit: int = 10) -> list:
