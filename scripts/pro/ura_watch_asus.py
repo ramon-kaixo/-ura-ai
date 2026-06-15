@@ -6,9 +6,7 @@ ASUS MAC: 30:c5:99:c0:64:c3
 Check via: Tailscale (100.72.103.12) o Ethernet (10.164.1.99)
 """
 import socket
-import struct
 import subprocess
-import sys
 import os
 import time
 

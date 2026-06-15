@@ -1,11 +1,10 @@
-import sys, json
+import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import UraConfig
-from core.state import ScanResult
 from pipeline.orchestrator import Orchestrator
 from scanner.diff_detector import compute_diff
-from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
+from diagnostico.correlacion import agrupar_incidentes
 
 def test_pipeline_orchestrator_init():
     cfg = UraConfig()

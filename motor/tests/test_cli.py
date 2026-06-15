@@ -1,4 +1,4 @@
-import json, os, sys, tempfile
+import json, sys, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

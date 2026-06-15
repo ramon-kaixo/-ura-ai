@@ -2,10 +2,8 @@
 """Search Engine - Búsqueda simple en documentos indexados."""
 
 import logging
-from pathlib import Path
 from typing import List, Dict
 
-from core.config_manager import CONFIG
 from core.memory_engine import query, rag_enabled
 
 log = logging.getLogger(__name__)

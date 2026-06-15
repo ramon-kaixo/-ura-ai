@@ -1,4 +1,4 @@
-import sys, json, tempfile, shutil
+import sys, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from scanner.diff_detector import compute_diff
