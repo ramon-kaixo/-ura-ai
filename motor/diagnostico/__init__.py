@@ -67,7 +67,7 @@ class Diagnostico:
         return [c["causa_raiz"] for c in correlaciones if "causa_raiz" in c]
 
     def _guardar_incidente_qdrant(self, diag: DiagnoseResult, scan: ScanResult):
-        if not scan.ok:
+        if not diag.incidentes:
             return
         impacto = [0.0]*7
         if diag.causas_raiz:
