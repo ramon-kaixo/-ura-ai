@@ -33,6 +33,7 @@ def main():
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
+    sub.add_parser("graph", help="Gráfico ASCII de tendencia de salud")
     sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
     sub.add_parser("alerta", help="Alertas recientes desde journald")
     sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
@@ -115,6 +116,26 @@ def main():
         print(json.dumps({"tendencia": lines[-50:], "total": len(lines),
                           "health_avg": round(sum(l["health"] for l in lines[-20:])/max(len(lines[-20:]),1), 1),
                           "ultimo": lines[-1] if lines else None}, indent=2, default=str))
+
+    elif args.command == "graph":
+        dep = Path(config.deploy_dir) / "trends.ndjson"
+        if not dep.exists():
+            print("No hay datos de tendencia")
+            sys.exit(1)
+        lines = [json.loads(l) for l in dep.read_text().strip().splitlines() if l.strip()]
+        if len(lines) < 2:
+            print("Se necesitan al menos 2 puntos")
+            sys.exit(1)
+        vals = [l["health"] for l in lines[-40:]]
+        mn, mx = 90, 100
+        rng = max(mx - mn, 0.1)
+        idx = -len(vals)
+        for i, v in enumerate(vals):
+            h = max(0, min(10, int((v - mn) / rng * 10)))
+            marca = "█" * h + "░" * (10 - h)
+            label = lines[idx + i]["ts"][11:16]
+            print(f"{label} {marca} {v:.1f}")
+        print(f"\nRango: {mn:.1f} - {mx:.1f} | {len(vals)} puntos | Último: {vals[-1]:.1f}")
 
     elif args.command == "calibrate":
         cal = Calibration(config)
