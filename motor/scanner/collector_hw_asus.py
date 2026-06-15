@@ -12,12 +12,14 @@ def escanear_hw_asus(temp_gpu=None) -> dict:
         "temp_gpu": _temp_gpu_orin() if temp_gpu is None else temp_gpu,
     }
 
-def _smart_ok() -> bool:
+def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
     try:
-        r = subprocess.run(["sudo", "smartctl", "-H", "/dev/nvme0n1"],
+        r = subprocess.run(["sudo", "smartctl", "-H", disk],
                          capture_output=True, text=True, timeout=10)
         return "PASSED" in r.stdout
-    except: return True
+    except Exception as e:
+        log.warning("smartctl fallo en %s: %s", disk, e)
+        return True
 
 def _thermal_zones() -> dict:
     zonas = {}
