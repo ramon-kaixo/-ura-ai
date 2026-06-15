@@ -37,6 +37,8 @@ def main():
     sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
     sub.add_parser("alerta", help="Alertas recientes desde journald")
     sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
+    sub.add_parser("health-check", help="Verificar todos los componentes del monitor")
+    sub.add_parser("qdrant-backup", help="Exportar Qdrant a JSON de respaldo")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -189,6 +191,42 @@ def main():
         cal = Calibration(config)
         res = cal.detect(lines)
         print(json.dumps(res, indent=2, default=str))
+
+    elif args.command == "health-check":
+        import subprocess as sproc, socket
+        checks = []
+        for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
+            try:
+                r = sproc.run(["systemctl", "is-active", unit], capture_output=True, text=True, timeout=5)
+                ok = "active" in r.stdout or r.stdout.strip() in ("inactive",)  # oneshot se desactiva tras ejecutar
+                checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})
+            except Exception as e:
+                checks.append({"check": unit, "ok": False, "detail": str(e)})
+        qdrant = QdrantClient.instancia(config)
+        checks.append({"check": "qdrant", "ok": qdrant.disponible, "detail": f"host={config.qdrant_host}:{config.qdrant_port}"})
+        estado_path = Path(config.deploy_dir) / "estado_alemania.json"
+        checks.append({"check": "deploy json", "ok": estado_path.exists(), "detail": "existe" if estado_path.exists() else "no existe"})
+        trend_path = Path(config.deploy_dir) / "trends.ndjson"
+        pts = len([l for l in trend_path.read_text().splitlines() if l.strip()]) if trend_path.exists() else 0
+        checks.append({"check": "trends", "ok": trend_path.exists(), "detail": f"{pts} puntos" if trend_path.exists() else "no existe"})
+        try:
+            r = sproc.run(["docker", "ps", "-q", "--filter", "name=qdrant"], capture_output=True, text=True, timeout=5)
+            checks.append({"check": "docker qdrant", "ok": bool(r.stdout.strip()), "detail": "running" if r.stdout.strip() else "no running"})
+        except Exception as e:
+            checks.append({"check": "docker qdrant", "ok": False, "detail": str(e)})
+        print(json.dumps({"ok": all(c["ok"] for c in checks), "hostname": socket.gethostname(), "checks": checks}, indent=2))
+
+    elif args.command == "qdrant-backup":
+        qdrant = QdrantClient.instancia(config)
+        if not qdrant.disponible:
+            print(json.dumps({"error": "Qdrant no disponible"}, indent=2))
+            sys.exit(1)
+        incidents = qdrant.buscar_incidentes(limit=1000)
+        backup_path = Path(config.deploy_dir) / f"qdrant_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        backup_path.parent.mkdir(parents=True, exist_ok=True)
+        backup_path.write_text(json.dumps({"incidentes": incidents, "exported_at": datetime.utcnow().isoformat() + "Z",
+                                            "total": len(incidents)}, indent=2))
+        print(json.dumps({"ok": True, "path": str(backup_path), "total": len(incidents)}, indent=2))
 
 if __name__ == "__main__":
     main()
