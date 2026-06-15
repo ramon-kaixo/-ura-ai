@@ -1,0 +1,75 @@
+{
+  "reporte": "Implementaciones URA \u2014 2026-06-14/15",
+  "version": "3.1",
+  "rama": "dev/v3.1-expansion",
+  "tags": [
+    "pre-inmutabilidad"
+  ],
+  "maquinas": {
+    "gx10": {
+      "hostname": "gx10-64c3",
+      "so": "aarch64 Linux",
+      "ram_gb": 128,
+      "rol": "servidor principal + Qdrant"
+    },
+    "alemania": {
+      "hostname": "hetzner-escudo",
+      "ip": "178.105.81.83",
+      "ram_gb": 16,
+      "rol": "VM Hetzner"
+    },
+    "mac_mini": {
+      "hostname": "mini-de-ramon",
+      "estado": "offline 58d",
+      "rol": "orquestador"
+    }
+  },
+  "commits": 40,
+  "archivos_tocados": 116,
+  "lineas_netas": 4053,
+  "modulos": {
+    "motor": {
+      "lineas": 2285,
+      "archivos": 31,
+      "tests": 20
+    },
+    "cli_split": {
+      "antes": "main.py 435 lineas",
+      "despues": "main.py 66 lineas + 4 modulos"
+    },
+    "tests": {
+      "motor": "20/20",
+      "legacy": "32/32",
+      "total": 52
+    },
+    "bugs_corregidos": [
+      "scan.ok nunca True \u2192 Qdrant vacio",
+      "calibration getattr sobre dict",
+      "pattern_matcher typo load_avg_1m",
+      "dmesg --read-clear destructivo",
+      "coste historico siempre cero",
+      "singleton qdrant_client sin lock",
+      "_check_opencode muerto (nunca llamado)",
+      "backup_qdrant no hacia backup real",
+      "CLI God Object (435\u219266 lineas)",
+      "except:pass masivos (25+)",
+      "hardcodeos varios"
+    ],
+    "defensas": {
+      "auditd": "activo, reglas ura_motor_changes, logrotate, watchdog 5min",
+      "fs_bug": "rsync --delete desde Mac Mini. Fix: --exclude motor/",
+      "inmutabilidad": "selectiva: failure_knowledge.json, bitacora/, AGENTS.md",
+      "pre_commit": "proporcional: dev=relax, main=estricto",
+      "backups": "manifest + vault + retention max 3",
+      "emergency_override": "documentado en AGENTS.md"
+    },
+    "features_nuevas": [
+      "graph, perf, learn, notify, summarise",
+      "cross (estado GX10+Alemania)",
+      "detect (anomalias vs tendencia)",
+      "health-check, qdrant-backup, alerta",
+      "deteccion huerfanos (stale PIDs, systemd failed)",
+      "config auto-detect"
+    ]
+  }
+}
