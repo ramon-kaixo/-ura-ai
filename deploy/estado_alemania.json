@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-15T03:16:26.452737Z",
+  "timestamp": "2026-06-15T03:17:49.292956Z",
   "hostname": "gx10-64c3",
   "health_score": 99.3,
   "servicios": {
@@ -13,13 +13,13 @@
     "agent-search": "not_found"
   },
   "recursos": {
-    "ram_pct": 12.0,
+    "ram_pct": 11.9,
     "ram_gb": 130.6,
     "ram_available_gb": 115.0,
     "disk_pct": 46.5,
     "disk_gb": 1967.3,
     "disk_free_gb": 999.1,
-    "load_1m": 0.67,
+    "load_1m": 0.51,
     "ncpu": 20,
     "zombies": 0
   },
@@ -27,7 +27,7 @@
     "gateway": "10.164.1.1",
     "internet": true,
     "dns_ok": true,
-    "latencia_ms": 14,
+    "latencia_ms": 13,
     "tailscale_peers": {
       "hetzner-escudo.tail7b3cf3.ts.net": {
         "online": true,
@@ -116,9 +116,9 @@
     "smart_ok": true,
     "thermal_zones": {
       "thermal_zone0": 40.8,
-      "thermal_zone1": 38.2,
-      "thermal_zone2": 38.8,
-      "thermal_zone3": 38.8,
+      "thermal_zone1": 38.0,
+      "thermal_zone2": 38.4,
+      "thermal_zone3": 39.0,
       "thermal_zone4": 37.9,
       "thermal_zone5": 40.8,
       "thermal_zone6": 38.7

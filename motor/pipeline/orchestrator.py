@@ -10,6 +10,7 @@ from guard.preflight import ejecutar_preflight
 from guard.verifier import ejecutar_verificacion
 
 log = logging.getLogger("ura.pipeline")
+ALERT_LOG = logging.getLogger("ura.alerta")
 
 class Orchestrator:
     def __init__(self, config: UraConfig):
@@ -41,9 +42,13 @@ class Orchestrator:
             result.verify = ejecutar_verificacion(self.config, hubo_cambios=hubo_cambios)
             self._escribir_side_effects(result)
             self._registrar_trend(result)
+            hs = result.scan.health_score
+            inc = len(result.diagnose.incidentes)
+            if hs < 90 or inc > 0:
+                ALERT_LOG.error("ALERTA health=%.1f incidentes=%d host=%s",
+                                hs, inc, result.scan.hostname)
             result.ok = True
-            log.info("pipeline OK health=%.1f incidentes=%d",
-                     result.scan.health_score, len(result.diagnose.incidentes))
+            log.info("pipeline OK health=%.1f incidentes=%d", hs, inc)
         except Exception as e:
             result.ok = False
             result.error = str(e)
