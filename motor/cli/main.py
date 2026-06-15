@@ -34,6 +34,7 @@ def main():
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
     sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
+    sub.add_parser("alerta", help="Alertas recientes desde journald")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -144,6 +145,14 @@ def main():
             except Exception as e:
                 res[name] = {"error": str(e)[:200]}
         print(json.dumps(res, indent=2, default=str))
+
+    elif args.command == "alerta":
+        import subprocess as sproc
+        r = sproc.run(["journalctl", "-u", "ura-pipeline.service", "--no-pager",
+                       "-p", "err", "--since", "1 hour ago", "-o", "short-iso"],
+                      capture_output=True, text=True, timeout=10)
+        alerts = [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
+        print(json.dumps({"alertas": alerts[-20:], "total": len(alerts)}, indent=2, default=str))
 
 if __name__ == "__main__":
     main()
