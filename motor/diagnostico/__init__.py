@@ -7,7 +7,7 @@ from core.qdrant_client import QdrantClient
 from diagnostico.pattern_matcher import buscar_patrones
 from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
 from diagnostico.circuit_breaker import CircuitBreaker
-from diagnostico.backup_knowledge import backup_qdrant
+from diagnostico.backup_knowledge import backup_incidente
 
 log = logging.getLogger("ura.diagnostico")
 
@@ -34,7 +34,8 @@ class Diagnostico:
                                               hw_issues=scan.hw_health.get("issues", []))
         r.causas_raiz = self._determinar_causas(r.correlaciones)
         self._guardar_incidente_qdrant(r, scan)
-        backup_qdrant(self.config)
+        if r.incidentes:
+            backup_incidente(self.config, r.incidentes[0])
         log.info("diagnostico: %d incidentes, %d causas", len(r.incidentes), len(r.causas_raiz))
         return r
 
