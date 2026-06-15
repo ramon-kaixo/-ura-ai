@@ -2,11 +2,12 @@ import json, logging, hashlib, subprocess
 from datetime import datetime
 from pathlib import Path
 from core.state import PreflightResult
-from core.config import UraConfig
+from core.config import UraConfig, RUTAS_CONFIG_OPENCODE
 
 log = logging.getLogger("ura.guard.preflight")
 
 def ejecutar_preflight(config: UraConfig) -> PreflightResult:
+    """Ejecuta verificación prevuelo: detecta duplicados y toma snapshot."""
     r = PreflightResult()
     snap = {"timestamp": datetime.utcnow().isoformat()+"Z"}
     dups = _detectar_configs_duplicadas()
@@ -27,28 +28,24 @@ def ejecutar_preflight(config: UraConfig) -> PreflightResult:
     return r
 
 def _detectar_configs_duplicadas() -> list:
-    candidatos = [
-        "/etc/opencode/opencode.json",
-        "/etc/opencode/opencode.jsonc",
-        "/home/ramon/URA/ura_ia_1972/opencode.json",
-        "/home/ramon/URA/ura_ia_1972/opencode.jsonc",
-    ]
-    existentes = [p for p in candidatos if Path(p).exists()]
-    if len(existentes) > 1:
-        return existentes
-    return []
+    """Detecta si hay múltiples archivos de configuración de opencode."""
+    existentes = [p for p in RUTAS_CONFIG_OPENCODE if Path(p).exists()]
+    return existentes if len(existentes) > 1 else []
 
 def _snapshot_configs() -> dict:
+    """Toma hash y tamaño de los archivos de configuración."""
     snap = {}
-    for p in ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json",
-              "/home/ramon/URA/ura_ia_1972/opencode.jsonc", "/home/ramon/URA/ura_ia_1972/opencode.json"]:
+    for p in RUTAS_CONFIG_OPENCODE:
         f = Path(p)
         if f.exists():
             snap[p] = {"hash": hashlib.sha256(f.read_bytes()).hexdigest()[:16], "size": f.stat().st_size}
     return snap
 
 def _snapshot_procesos() -> list:
+    """Snapshot de los primeros 30 procesos del sistema."""
     try:
         r = subprocess.run(["ps", "-eo", "pid,comm", "--no-headers"], capture_output=True, text=True, timeout=3)
         return [l.strip() for l in r.stdout.strip().split("\n") if l.strip()][:30]
-    except: return []
+    except Exception as e:
+        log.debug("snapshot procesos falló: %s", e)
+        return []

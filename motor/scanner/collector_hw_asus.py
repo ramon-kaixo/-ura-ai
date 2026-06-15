@@ -1,8 +1,11 @@
-import logging, subprocess
+import logging, subprocess, glob
 
 log = logging.getLogger("ura.scanner.hw_asus")
 
+RUTA_THERMAL = "/sys/class/thermal/thermal_zone*/temp"
+
 def escanear_hw_asus(temp_gpu=None) -> dict:
+    """Escanea salud hardware en equipo físico ASUS."""
     return {
         "ok": True,
         "issues": [],
@@ -13,6 +16,7 @@ def escanear_hw_asus(temp_gpu=None) -> dict:
     }
 
 def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
+    """Verifica estado SMART del disco."""
     try:
         r = subprocess.run(["sudo", "smartctl", "-H", disk],
                          capture_output=True, text=True, timeout=10)
@@ -22,20 +26,25 @@ def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
         return True
 
 def _thermal_zones() -> dict:
+    """Lee temperaturas de zonas térmicas."""
     zonas = {}
-    try:
-        import glob
-        for z in sorted(glob.glob("/sys/class/thermal/thermal_zone*/temp")):
-            temp = open(z).read().strip()
+    for z in sorted(glob.glob(RUTA_THERMAL)):
+        try:
+            with open(z) as f:
+                temp = f.read().strip()
             zonas[z.split("/")[4]] = round(int(temp)/1000, 1) if temp else 0
-    except: pass
+        except (OSError, ValueError) as e:
+            log.debug("fallo lectura zona termica %s: %s", z, e)
     return zonas
 
 def _temp_gpu_orin() -> float:
+    """Obtiene temperatura GPU via tegrastats."""
     try:
         r = subprocess.run(["tegrastats", "--interval", "1000", "--count", "1"],
                          capture_output=True, text=True, timeout=5)
         m = __import__("re").search(r"GPU@(\d+)mW", r.stdout)
-        if m: return int(m.group(1))
-    except: pass
+        if m:
+            return int(m.group(1))
+    except Exception as e:
+        log.debug("tegrastats falló: %s", e)
     return 0.0

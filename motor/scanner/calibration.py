@@ -5,23 +5,29 @@ from pathlib import Path
 log = logging.getLogger("ura.scanner.calib")
 
 class Calibration:
+    """Gestión de baseline y detección de anomalías por calibración."""
+
     def __init__(self, config):
         self.config = config
         self.baseline_path = Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"
         self._baseline = self._cargar()
 
     def _cargar(self) -> dict:
+        """Carga baseline desde disco."""
         try:
             if self.baseline_path.exists():
                 return json.loads(self.baseline_path.read_text())
-        except: pass
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("error cargando baseline: %s", e)
         return {}
 
     @property
     def hay_baseline(self) -> bool:
+        """Indica si existe un baseline cargado."""
         return bool(self._baseline)
 
     def detectar_anomalias(self, estado) -> list:
+        """Detecta anomalías comparando estado actual vs baseline."""
         if not self._baseline:
             return []
         anomalias = []
@@ -34,6 +40,7 @@ class Calibration:
         return anomalias
 
     def learn(self, estado, trends: list = None) -> dict:
+        """Entrena baseline a partir de un scan y tendencias históricas."""
         bl = {k: v for k, v in estado.recursos.items() if isinstance(v, (int, float))}
         if trends and len(trends) >= 3:
             for metrica, factor in [("ram_pct", 1.3), ("disk_pct", 1.2), ("load_1m", 2.0)]:
@@ -55,6 +62,7 @@ class Calibration:
         return bl
 
     def detect(self, trends: list) -> dict:
+        """Detecta anomalías vs tendencia histórica usando z-score."""
         if not trends:
             return {"anomalias": [], "ok": True}
         anomalias = []

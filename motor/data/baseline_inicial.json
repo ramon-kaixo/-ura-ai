@@ -1,9 +1,15 @@
 {
-  "ts_calibracion": "2026-06-15T00:00:00+00:00",
-  "dias_aprendizaje": 0,
-  "n_muestras": 0,
-  "thresholds": {},
-  "estado": "aprendiendo",
-  "proximo_recalibrado": "2026-06-22T00:00:00+00:00",
-  "nota": "Baseline inicial. Los primeros 7 días son de aprendizaje pasivo."
+  "ram_pct": 50,
+  "disk_pct": 60,
+  "load_1m": 0.5,
+  "ram_gb": 16,
+  "ram_available_gb": 8,
+  "disk_gb": 100,
+  "disk_free_gb": 40,
+  "ncpu": 8,
+  "ram_pct_max": 60.0,
+  "disk_pct_max": 72.0,
+  "load_max": 0.75,
+  "generated": "2026-06-15T04:45:29.205934Z",
+  "puntos_trend": 1
 }

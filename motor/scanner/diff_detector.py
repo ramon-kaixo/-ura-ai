@@ -3,6 +3,7 @@ import logging
 log = logging.getLogger("ura.scanner.diff")
 
 def compute_diff(actual: dict, prev: dict) -> tuple:
+    """Compara dos snapshots y devuelve (diff_count, anomalias)."""
     count = 0
     anomalias = []
     for key in prev:
@@ -19,6 +20,7 @@ def compute_diff(actual: dict, prev: dict) -> tuple:
     return count, anomalias
 
 def _es_critico(cat: str, sub: str, old, new) -> bool:
+    """Determina si un cambio es crítico (servicio caído, recurso alto, HW fail)."""
     if cat == "servicios" and new in ("inactive", "failed", "unknown"):
         return True
     if cat == "recursos":

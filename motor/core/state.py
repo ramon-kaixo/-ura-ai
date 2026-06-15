@@ -3,6 +3,7 @@ from typing import Optional
 
 @dataclass
 class ScanResult:
+    """Resultado completo de un escaneo del sistema."""
     ok: bool = False
     timestamp: str = ""
     hostname: str = ""
@@ -25,6 +26,7 @@ class ScanResult:
 
 @dataclass
 class PreflightResult:
+    """Resultado de la verificación prevuelo antes de escanear."""
     ok: bool = True
     bloqueado: bool = False
     razon: str = ""
@@ -34,6 +36,7 @@ class PreflightResult:
 
 @dataclass
 class DiagnoseResult:
+    """Resultado del diagnóstico: incidentes, correlaciones y causas raíz."""
     ok: bool = True
     timestamp: str = ""
     incidentes: list = field(default_factory=list)
@@ -45,6 +48,7 @@ class DiagnoseResult:
 
 @dataclass
 class VerifyResult:
+    """Resultado de la verificación post-cambio."""
     ok: bool = True
     verdict: str = "not_run"
     test_response: str = ""
@@ -53,6 +57,7 @@ class VerifyResult:
 
 @dataclass
 class PipelineResult:
+    """Resultado completo del pipeline: preflight + scan + diagnose + verify."""
     ok: bool = False
     timestamp: str = ""
     preflight: Optional[PreflightResult] = None
