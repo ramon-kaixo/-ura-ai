@@ -48,7 +48,7 @@ class Scanner:
         try: import socket; return socket.gethostname()
         except: return "unknown"
 
-    DOCKER_ALIASES = {"vane": "perplexica-vane", "agent-search": "agent-search-agent-search-1"}
+    DOCKER_ALIASES = {"vane": "perplexica-vane-1", "agent-search": "agent-search-agent-search-1"}
 
     def _check_servicios(self) -> dict:
         s = {}
