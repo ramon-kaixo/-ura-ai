@@ -96,14 +96,14 @@ def test_sliding_window():
 
 def test_diff_detector():
     from scanner.diff_detector import compute_diff
-        actual = {"servicios": {"sshd": "active", "docker": "inactive"},
-                  "recursos": {"ram_pct": 95.0},
-                  "contenedores": {"total": 2},
-                  "hw_health": {"ok": True}}
-        prev = {"servicios": {"sshd": "active", "docker": "active"},
-                "recursos": {"ram_pct": 50.0},
-                "contenedores": {"total": 2},
-                "hw_health": {"ok": True}}
-        diff, anomalias = compute_diff(actual, prev)
-        assert diff > 0
-        assert len(anomalias) > 0  # docker inactive + ram 95%
+    actual = {"servicios": {"sshd": "active", "docker": "inactive"},
+              "recursos": {"ram_pct": 95.0},
+              "contenedores": {"total": 2},
+              "hw_health": {"ok": True}}
+    prev = {"servicios": {"sshd": "active", "docker": "active"},
+            "recursos": {"ram_pct": 50.0},
+            "contenedores": {"total": 2},
+            "hw_health": {"ok": True}}
+    diff, anomalias = compute_diff(actual, prev)
+    assert diff > 0
+    assert len(anomalias) > 0
