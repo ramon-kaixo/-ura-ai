@@ -1,0 +1,9 @@
+{
+  "ts_calibracion": "2026-06-15T00:00:00+00:00",
+  "dias_aprendizaje": 0,
+  "n_muestras": 0,
+  "thresholds": {},
+  "estado": "aprendiendo",
+  "proximo_recalibrado": "2026-06-22T00:00:00+00:00",
+  "nota": "Baseline inicial. Los primeros 7 días son de aprendizaje pasivo."
+}

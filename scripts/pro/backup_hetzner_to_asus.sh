@@ -1,6 +1,12 @@
 #!/bin/bash
 # Backup datos críticos Hetzner → ASUS + rotación 7 días
-HETZNER="root@178.105.81.83"
+# EXPLÍCITAMENTE NO BACKUP (raw descargas): /root/ura_search/data/, /storage/inbox/
+# Esos directorios contienen datos scrapeados de internet sin escanear.
+# Si necesitas algo concreto, usa pull-from-hetzner.sh (escanea antes de traer).
+HETZNER_HOST="100.78.49.106"
+SSH_USER="ramon_admin"
+SSH_KEY="$HOME/.ssh/id_ura_backup"
+RSYNC_OPTS="-az --delete -e \"ssh -i $SSH_KEY -o StrictHostKeyChecking=no\" --rsync-path=\"sudo rsync\""
 BACKUP_DIR="/home/ramon/URA/backups/hetzner"
 LOG="/home/ramon/URA/logs/hetzner_backup.log"
 RETENTION_DAYS=7
@@ -8,11 +14,10 @@ RETENTION_DAYS=7
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG"; }
 log "=== Backup Hetzner ==="
 
-mkdir -p "$BACKUP_DIR/n8n" "$BACKUP_DIR/qdrant" "$BACKUP_DIR/scraper"
+mkdir -p "$BACKUP_DIR/n8n" "$BACKUP_DIR/qdrant"
 
-rsync -az --delete -e "ssh -o StrictHostKeyChecking=no" "$HETZNER:/opt/n8n/" "$BACKUP_DIR/n8n/" >> "$LOG" 2>&1 || log "n8n FAIL"
-rsync -az --delete -e "ssh -o StrictHostKeyChecking=no" "$HETZNER:/opt/qdrant/storage/" "$BACKUP_DIR/qdrant/" >> "$LOG" 2>&1 || log "Qdrant FAIL"
-rsync -az --delete -e "ssh -o StrictHostKeyChecking=no" "$HETZNER:/root/ura_search/data/" "$BACKUP_DIR/scraper/" >> "$LOG" 2>&1 || log "Scraper FAIL"
+rsync -az --delete -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" "$SSH_USER@$HETZNER_HOST:/opt/n8n/" "$BACKUP_DIR/n8n/" >> "$LOG" 2>&1 || log "n8n FAIL"
+rsync -az --delete -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" "$SSH_USER@$HETZNER_HOST:/opt/qdrant/storage/" "$BACKUP_DIR/qdrant/" >> "$LOG" 2>&1 || log "Qdrant FAIL"
 
 # Rotación: mantener snapshot diario 7 días
 SNAPSHOT="$BACKUP_DIR/snapshots/$(date '+%Y%m%d')"

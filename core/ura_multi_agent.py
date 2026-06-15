@@ -21,7 +21,6 @@
 """
 
 import json
-import logging
 import os
 import shutil
 import subprocess
@@ -30,8 +29,6 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-
-log = logging.getLogger(__name__)
 
 # ── Configuración ──────────────────────────────────────────────────────────
 

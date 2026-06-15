@@ -241,6 +241,7 @@ def main():
         log.warning("Container '%s' NOT running!", CONTAINER)
     if _mcp.start():
         log.info("Browser ready.")
+    assert_port_free(HOST, PORT, "gui-bridge")
     server = HTTPServer((HOST, PORT), BridgeHandler)
     try:
         server.serve_forever()

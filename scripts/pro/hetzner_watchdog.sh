@@ -1,41 +1,48 @@
 #!/bin/bash
-# URA Hetzner Watchdog — Monitoriza hetzner-escudo desde ASUS
-HETZNER_PUBLIC="178.105.81.83"
-LOG="/home/ramon/URA/logs/hetzner_watchdog.log"
+# URA Hetzner Watchdog — solo monitorización, cero reparación automática
+# Ejecuta health check contra hetzner-escudo y escribe estado_alemania.json
+# Logs estructurados a stdout/stderr para journald
+set -euo pipefail
+
+HETZNER_HOST="100.78.49.106"
+SSH_USER="ramon_admin"
+SSH_KEY="$HOME/.ssh/id_ura_watchdog"
+SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+STATUS_FILE="/home/ramon/URA/ura_ia_1972/deploy/estado_alemania.json"
 DISK_WARN=85; DISK_CRIT=92
-FAIL_LOG="/tmp/hetzner_fail_count"; MAX_FAILS=3
-HCLOUD_TOKEN="${HCLOUD_TOKEN:-REMOVED_HCLOUD_TOKEN}"
-SERVER_ID=131473982
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG"; }
+log() { echo "{\"ts\":\"$NOW\",\"component\":\"hetzner_watchdog\",\"event\":\"$1\",\"detail\":${2:-null}}"; }
 
-log "=== Hetzner Watchdog ==="
+if OUTPUT=$($SSH_BASE "$SSH_USER@$HETZNER_HOST" "" 2>&1); then
+  DISK_USAGE=$(echo "$OUTPUT" | sed -n 's/^DISK://p')
+  UPTIME=$(echo "$OUTPUT" | sed -n 's/^UPTIME://p')
+  CONTAINERS=$(echo "$OUTPUT" | sed -n 's/^CONTAINERS://p')
 
-if ! timeout 15 ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no root@"$HETZNER_PUBLIC" "uptime" >> "$LOG" 2>&1; then
-  FAILS=$(cat "$FAIL_LOG" 2>/dev/null || echo 0)
-  FAILS=$((FAILS + 1))
-  echo "$FAILS" > "$FAIL_LOG"
-  log "SSH FAIL #${FAILS}/${MAX_FAILS}"
-  if [ "$FAILS" -ge "$MAX_FAILS" ]; then
-    log "Power cycle forzado (API reset)"
-    curl -s -X POST -H "Authorization: Bearer $HCLOUD_TOKEN" \
-      "https://api.hetzner.cloud/v1/servers/$SERVER_ID/actions/reset" >> "$LOG" 2>&1
-    echo 0 > "$FAIL_LOG"
+  DISK_VAL=${DISK_USAGE:-0}
+  if [ "$DISK_VAL" -gt "$DISK_CRIT" ]; then
+    log "disk_critical" "{\"disk\":$DISK_VAL,\"threshold\":$DISK_CRIT}"
+  elif [ "$DISK_VAL" -gt "$DISK_WARN" ]; then
+    log "disk_warning" "{\"disk\":$DISK_VAL,\"threshold\":$DISK_WARN}"
   fi
-  exit 1
-fi
-echo 0 > "$FAIL_LOG"
 
-DISK_USAGE=$(ssh root@"$HETZNER_PUBLIC" "df / | tail -1 | awk '{print \$5}' | tr -d '%'" 2>/dev/null)
-if [ -n "$DISK_USAGE" ] && [ "$DISK_USAGE" -gt "$DISK_CRIT" ]; then
-  log "CRITICO ${DISK_USAGE}% - cleanup remoto"
-  ssh root@"$HETZNER_PUBLIC" "/usr/local/bin/cleanup-disk.sh" >> "$LOG" 2>&1
-elif [ -n "$DISK_USAGE" ] && [ "$DISK_USAGE" -gt "$DISK_WARN" ]; then
-  log "ALTO ${DISK_USAGE}%"
+  STATUS="UP"
+  DETAIL="{\"uptime\":\"${UPTIME:-?}\",\"disk\":${DISK_USAGE:-null},\"containers\":\"${CONTAINERS:-ninguno}\"}"
+  log "up" "$DETAIL"
 else
-  log "OK ${DISK_USAGE:-?}%"
+  STATUS="DOWN"
+  DETAIL="{\"error\":\"$(echo "$OUTPUT" | head -1 | tr -d '"')\"}"
+  log "down" "$DETAIL"
 fi
 
-CONT=$(ssh root@"$HETZNER_PUBLIC" "docker ps --format '{{.Names}}'" 2>/dev/null)
-log "Contenedores: $(echo "$CONT" | tr '\n' ' ')"
-log "=== Fin ==="
+cat > "$STATUS_FILE" <<EOF2
+{
+  "ts": "$NOW",
+  "global": "$STATUS",
+  "ip_publica": "178.105.81.83",
+  "ip_tailscale": "100.78.49.106",
+  "publica": $( [ "$STATUS" = "UP" ] && echo '"ok"' || echo '"caido"' ),
+  "tailscale": $( [ "$STATUS" = "UP" ] && echo '"ok"' || echo '"caido"' ),
+  "detalle": $DETAIL
+}
+EOF2
