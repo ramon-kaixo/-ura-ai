@@ -41,6 +41,7 @@ def main():
     sub.add_parser("health-check", help="Verificar todos los componentes del monitor")
     sub.add_parser("qdrant-backup", help="Exportar Qdrant a JSON de respaldo")
     sub.add_parser("summarise", help="Resumen one-line del sistema (MOTD)")
+    sub.add_parser("learn", help="Analizar tendencias y extraer conocimiento")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -271,6 +272,38 @@ def main():
         qdrant = QdrantClient.instancia(config)
         qd_host = "local" if config.qdrant_host in ("localhost", "127.0.0.1") else config.qdrant_host
         print(f"URA {host}: health={hs} svc={svc_total}({svc_ko}KO) RAM={ram}% DISK={disk}% qdrant={qd_host} qd{'OK' if qdrant.disponible else 'DOWN'}{perf_info} trend={trend_pts}pts")
+
+    elif args.command == "learn":
+        trend_path = Path(config.deploy_dir) / "trends.ndjson"
+        if not trend_path.exists() or not trend_path.stat().st_size:
+            print(json.dumps({"error": "No hay datos de tendencia"}, indent=2))
+            sys.exit(1)
+        lines = [json.loads(l) for l in trend_path.read_text().splitlines() if l.strip()]
+        if len(lines) < 3:
+            print(json.dumps({"error": "Necesito al menos 3 puntos"}, indent=2))
+            sys.exit(1)
+        insights = []
+        for metrica, nombre in [("health", "Health"), ("ram_pct", "RAM"), ("disk_pct", "DISK")]:
+            vals = [l.get(metrica, 0) for l in lines if isinstance(l.get(metrica), (int, float))]
+            if len(vals) >= 3:
+                trend = (vals[-1] - vals[0]) / max(len(vals), 1)
+                if trend > 0.5:
+                    insights.append({"metrica": nombre, "direccion": "subiendo", "delta": round(trend * len(vals), 1),
+                                     "inicio": vals[0], "final": vals[-1]})
+                elif trend < -0.5:
+                    insights.append({"metrica": nombre, "direccion": "bajando", "delta": round(trend * len(vals), 1),
+                                     "inicio": vals[0], "final": vals[-1]})
+        health_vals = [l.get("health", 0) for l in lines if isinstance(l.get("health"), (int, float))]
+        min_h, max_h = min(health_vals), max(health_vals)
+        insights.append({"metrica": "Health", "rango": f"{min_h}-{max_h}", "min": min_h, "max": max_h})
+        disk_vals = [l.get("disk_pct", 0) for l in lines if isinstance(l.get("disk_pct"), (int, float))]
+        if len(disk_vals) >= 3:
+            tasa = (disk_vals[-1] - disk_vals[0]) / max(len(disk_vals), 1)
+            if tasa > 0:
+                dias_para_lleno = int((100 - disk_vals[-1]) / (tasa * 288)) if tasa > 0 else 999
+                insights.append({"metrica": "DISK", "tasa_crecimiento_diario": round(tasa * 288, 2),
+                                 "dias_para_llenar": dias_para_lleno if dias_para_lleno < 365 else ">1año"})
+        print(json.dumps({"ok": True, "total_puntos": len(lines), "insights": insights}, indent=2))
 
 if __name__ == "__main__":
     main()
