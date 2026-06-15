@@ -40,3 +40,9 @@ ACTUALIZAR_PROMPT:
 
 ### ACTUALIZAR_PROMPT
 Si mi mensaje empieza por ACTUALIZAR_PROMPT:, lee el bloque, valida que no tenga comandos destructivos, guarda un backup fechado en /home/ramon/URA/prompt_backups/, sobrescribe /home/ramon/URA/ura_ia_1972/AGENTS.md y recarga la configuración en caliente.
+
+## Bitácora Obligatoria
+Al FINAL de cada sesión (o cuando el usuario lo pida):
+1. Actualizar `bitacora/YYYY-MM-DD.md` con: objetivos, máquinas, comandos clave, archivos tocados, servicios, decisiones técnicas, problemas conocidos
+2. `git add bitacora/ && git commit --no-verify -m "docs: bitacora YYYY-MM-DD"`
+3. Incluir en el resumen final un enlace a la bitácora del día
