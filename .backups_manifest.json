@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "created": "2026-06-15T12:45:00Z",
+  "retention": "max 3 por tipo, max 7 dias",
+  "backups": [
+    {
+      "name": "estibadora_20260601_123810",
+      "size_gb": 0.0
+    },
+    {
+      "name": "hetzner",
+      "size_gb": 0.0
+    },
+    {
+      "name": "snapshot_20260531",
+      "size_gb": 0.0
+    },
+    {
+      "name": "tuneladora_20260531_004906",
+      "size_gb": 0.0
+    }
+  ]
+}
