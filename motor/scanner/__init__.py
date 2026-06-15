@@ -91,8 +91,10 @@ class Scanner:
                 r = subprocess.run(["systemctl", "is-active", svc], capture_output=True, text=True, timeout=5)
                 out = r.stdout.strip()
                 s[svc] = "not_found" if out in ("unknown", "inactive") and not self._unit_exists(svc) else out
+            except FileNotFoundError:
+                s[svc] = "not_found"
             except Exception as e:
-                log.debug("systemctl is-active %s falló: %s", svc, e)
+                log.debug("systemctl is-active %s fallo: %s", svc, e)
                 s[svc] = "unknown"
         docker_containers = self._list_docker_containers()
         for svc in SERVICIOS_DOCKER:
