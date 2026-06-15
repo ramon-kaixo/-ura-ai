@@ -1,4 +1,5 @@
 import argparse, sys, json, logging
+from datetime import datetime
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import UraConfig
@@ -32,6 +33,7 @@ def main():
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
+    sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -121,6 +123,27 @@ def main():
         scan = sc.run()
         bl = cal.learn(scan)
         print(json.dumps({"ok": True, "baseline": bl}, indent=2, default=str))
+
+    elif args.command == "cross":
+        import subprocess as sproc, socket
+        res = {"ts": datetime.utcnow().isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
+        estado_path = Path(config.deploy_dir) / "estado_alemania.json"
+        if estado_path.exists():
+            res["local"].update(json.loads(estado_path.read_text()))
+        for name, host in {"alemania": "ramon_admin@178.105.81.83"}.items():
+            try:
+                r = sproc.run(["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+                               "-o", "StrictHostKeyChecking=accept-new",
+                               "-i", "/home/ramon/.ssh/id_rsa",
+                               host, "sudo", "ura", "--config", "/etc/ura/config.json", "status"],
+                              capture_output=True, text=True, timeout=15)
+                if r.returncode == 0:
+                    res[name] = json.loads(r.stdout)
+                else:
+                    res[name] = {"error": r.stderr.strip()[:200]}
+            except Exception as e:
+                res[name] = {"error": str(e)[:200]}
+        print(json.dumps(res, indent=2, default=str))
 
 if __name__ == "__main__":
     main()
