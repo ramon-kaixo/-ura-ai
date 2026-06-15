@@ -178,14 +178,15 @@ class Scanner:
     def _detectar_duplicados(self) -> dict:
         d = {}
         try:
-            import subprocess
-            r = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=5)
+            r = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True, timeout=5)
             vistos = {}
             for line in r.stdout.strip().split("\n"):
-                c = line.strip()
-                if not c: continue
-                vistos[c] = vistos.get(c, 0) + 1
-            dups = {k: v for k, v in vistos.items() if v > 1 and k in ("opencode", "python3", "node", "docker")}
+                args = line.strip()
+                if not args: continue
+                clave = args.split()[0] if args.split() else args
+                if clave in ("opencode", "node", "docker"):
+                    vistos[args] = vistos.get(args, 0) + 1
+            dups = {k: v for k, v in vistos.items() if v > 1}
             if dups: d["procesos"] = dups
         except: pass
         return d
