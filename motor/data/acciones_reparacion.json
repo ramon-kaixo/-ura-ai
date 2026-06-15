@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "activa": false,
+  "calibracion_dias": 30,
+  "fecha_inicio": "2026-06-15",
+  "fecha_activacion": "2026-07-15",
+  "acciones": [
+    {
+      "patron": "ServiceFailure.docker",
+      "comando": "docker start {{subtipo}}",
+      "confirmar": true,
+      "limite_ejecuciones": 3,
+      "ventana_minutos": 60
+    },
+    {
+      "patron": "ServiceFailure.sshd",
+      "comando": "systemctl restart sshd",
+      "confirmar": true,
+      "limite_ejecuciones": 2,
+      "ventana_minutos": 30
+    },
+    {
+      "patron": "ResourcePressure.disco",
+      "comando": "docker system prune -f && journalctl --vacuum-time=3d",
+      "confirmar": true,
+      "limite_ejecuciones": 1,
+      "ventana_minutos": 1440
+    },
+    {
+      "patron": "ResourcePressure.ram",
+      "comando": "systemctl restart {{mayor_consumo}}",
+      "confirmar": true,
+      "limite_ejecuciones": 1,
+      "ventana_minutos": 60
+    }
+  ]
+}
