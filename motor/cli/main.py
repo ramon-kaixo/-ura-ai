@@ -42,6 +42,7 @@ def main():
     sub.add_parser("qdrant-backup", help="Exportar Qdrant a JSON de respaldo")
     sub.add_parser("summarise", help="Resumen one-line del sistema (MOTD)")
     sub.add_parser("learn", help="Analizar tendencias y extraer conocimiento")
+    sub.add_parser("notify", help="Enviar notificación si hay alertas activas")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -304,6 +305,28 @@ def main():
                 insights.append({"metrica": "DISK", "tasa_crecimiento_diario": round(tasa * 288, 2),
                                  "dias_para_llenar": dias_para_lleno if dias_para_lleno < 365 else ">1año"})
         print(json.dumps({"ok": True, "total_puntos": len(lines), "insights": insights}, indent=2))
+
+    elif args.command == "notify":
+        import subprocess as sproc, socket
+        estado_path = Path(config.deploy_dir) / "estado_alemania.json"
+        if not estado_path.exists():
+            sys.exit(0)
+        d = json.loads(estado_path.read_text())
+        hs = d.get("health_score", 100)
+        inc = 0
+        diag_path = Path(config.deploy_dir) / "diagnostico.json"
+        if diag_path.exists():
+            diag = json.loads(diag_path.read_text())
+            inc = len(diag.get("incidentes", []))
+        if hs < 95 or inc > 0:
+            msg = f"URA alerta: health={hs} incidentes={inc}"
+            try:
+                sproc.run(["notify-send", "--urgency=critical", "URA", msg], capture_output=True, timeout=5)
+            except FileNotFoundError:
+                pass
+            print(json.dumps({"ok": True, "notified": True, "mensaje": msg}))
+        else:
+            print(json.dumps({"ok": True, "notified": False, "mensaje": "Sin alertas"}))
 
 if __name__ == "__main__":
     main()
