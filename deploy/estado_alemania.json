@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-15T03:08:22.195273Z",
+  "timestamp": "2026-06-15T03:09:42.236678Z",
   "hostname": "gx10-64c3",
   "health_score": 99.3,
   "servicios": {
@@ -13,13 +13,13 @@
     "agent-search": "not_found"
   },
   "recursos": {
-    "ram_pct": 12.0,
+    "ram_pct": 11.9,
     "ram_gb": 130.6,
     "ram_available_gb": 115.0,
     "disk_pct": 46.5,
     "disk_gb": 1967.3,
     "disk_free_gb": 999.1,
-    "load_1m": 1.24,
+    "load_1m": 1.02,
     "zombies": 0
   },
   "red": {
@@ -114,12 +114,12 @@
     "tipo": "fisico",
     "smart_ok": true,
     "thermal_zones": {
-      "thermal_zone0": 40.9,
-      "thermal_zone1": 38.8,
-      "thermal_zone2": 37.9,
+      "thermal_zone0": 41.1,
+      "thermal_zone1": 38.5,
+      "thermal_zone2": 38.0,
       "thermal_zone3": 39.1,
-      "thermal_zone4": 38.1,
-      "thermal_zone5": 40.9,
+      "thermal_zone4": 38.3,
+      "thermal_zone5": 41.1,
       "thermal_zone6": 38.7
     },
     "temp_gpu": 0

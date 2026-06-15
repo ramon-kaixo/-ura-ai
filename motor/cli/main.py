@@ -31,6 +31,7 @@ def main():
     sub.add_parser("check", help="Preflight check")
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
+    sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -98,16 +99,18 @@ def main():
         if not qdrant.disponible:
             print(json.dumps({"error": "Qdrant no disponible"}, indent=2))
             sys.exit(1)
-        try:
-            from qdrant_client.http.exceptions import UnexpectedResponse
-            try:
-                r = qdrant._cliente.scroll(collection_name="incidente_record", limit=20)
-                incidents = [p.payload for p in r[0]] if r and r[0] else []
-                print(json.dumps({"incidentes": incidents}, indent=2, default=str))
-            except UnexpectedResponse:
-                print(json.dumps({"incidentes": []}))
-        except Exception as e:
-            print(json.dumps({"error": str(e)}))
+        incidents = qdrant.buscar_incidentes(limit=50)
+        print(json.dumps({"incidentes": incidents}, indent=2, default=str))
+
+    elif args.command == "trend":
+        dep = Path(config.deploy_dir) / "trends.ndjson"
+        if not dep.exists():
+            print(json.dumps({"error": "No hay datos de tendencia"}, indent=2))
+            sys.exit(1)
+        lines = [json.loads(l) for l in dep.read_text().strip().splitlines() if l.strip()]
+        print(json.dumps({"tendencia": lines[-50:], "total": len(lines),
+                          "health_avg": round(sum(l["health"] for l in lines[-20:])/max(len(lines[-20:]),1), 1),
+                          "ultimo": lines[-1] if lines else None}, indent=2, default=str))
 
     elif args.command == "calibrate":
         cal = Calibration(config)
