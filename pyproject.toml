@@ -25,8 +25,9 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["tests"]
+testpaths = ["motor/tests", "tests"]
 python_files = ["test_*.py"]
+norecursedirs = ["backups", "versiones", ".venv", "node_modules", "__pycache__", ".git"]
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
