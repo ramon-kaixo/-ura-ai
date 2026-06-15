@@ -29,13 +29,15 @@ WORKER_TIMEOUT = 600
 
 
 def log(msg) -> None:
-    time.strftime("%H:%M:%S")
+    print(f"[{time.strftime("%H:%M:%S")}] {msg}")
 
 
 def worker_task(worker_id):
     env = os.environ.copy()
     env["REFACTOR_WORKER_ID"] = str(worker_id)
+    env["WORKER_ID"] = str(worker_id)
     env["REFACTOR_WORKER_TOTAL"] = str(NUM_WORKERS)
+    env["WORKER_TOTAL"] = str(NUM_WORKERS)
     env["REFACTOR_MODEL"] = MODEL
     env["REFACTOR_MODEL_FALLBACK"] = "auto"
     env["OLLAMA_URL"] = "http://10.164.1.99:11435"
