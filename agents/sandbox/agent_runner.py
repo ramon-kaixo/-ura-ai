@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--categoria", required=True)
     p.add_argument("--input", required=True)
@@ -25,7 +25,6 @@ def main():
     output_path = Path(args.output)
 
     if not input_path.exists():
-        print(json.dumps({"error": "input no encontrado", "path": str(input_path)}))
         sys.exit(1)
 
     content = input_path.read_text(encoding="utf-8", errors="replace")[:50000]
@@ -40,7 +39,6 @@ def main():
     # Escribir resultado
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps({"status": "ok", "categoria": args.categoria}))
 
 if __name__ == "__main__":
     main()

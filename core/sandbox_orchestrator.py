@@ -10,7 +10,7 @@ import logging
 import subprocess
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -330,7 +330,7 @@ class SandboxOrchestrator:
             {
                 "event": "accelerated_triggered",
                 "reason": reason,
-                "until": datetime.fromtimestamp(self.accelerated_until, tz=timezone.utc).isoformat(),
+                "until": datetime.fromtimestamp(self.accelerated_until, tz=UTC).isoformat(),
                 "timestamp": datetime.now().isoformat(),
             },
         )
