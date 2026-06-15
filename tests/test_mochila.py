@@ -255,7 +255,7 @@ class TestRouter:
 
 class TestFileRead:
     def test_read_project_file(self):
-        result = asyncio.run(file_read("core/mochila/__init__.py", max_lines=5))
+        result = asyncio.run(file_read("pyproject.toml", max_lines=5))
         assert result["size"] >= 0
 
     def test_deny_outside_whitelist(self):

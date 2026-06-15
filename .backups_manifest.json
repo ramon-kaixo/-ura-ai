@@ -7,23 +7,28 @@
     "AGENTS.md",
     ".backups_manifest.json"
   ],
-  "nota": "con chattr +i, no se borran en limpiezas",
+  "nota": "Backups movidos a ~/ura_backups_vault/ (fuera del repo)",
   "backups": [
     {
       "name": "estibadora_20260601_123810",
-      "size": "705M"
+      "size": "705M",
+      "location": "/home/ramon/ura_backups_vault/estibadora_20260601_123810"
     },
     {
       "name": "hetzner",
-      "size": "36M"
+      "size": "36M",
+      "location": "/home/ramon/ura_backups_vault/hetzner"
     },
     {
       "name": "snapshot_20260531",
-      "size": "490M"
+      "size": "490M",
+      "location": "/home/ramon/ura_backups_vault/snapshot_20260531"
     },
     {
       "name": "tuneladora_20260531_004906",
-      "size": "1,1G"
+      "size": "1,1G",
+      "location": "/home/ramon/ura_backups_vault/tuneladora_20260531_004906"
     }
-  ]
+  ],
+  "vault": "/home/ramon/ura_backups_vault"
 }
