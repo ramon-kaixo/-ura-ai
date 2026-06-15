@@ -42,7 +42,7 @@ def _get_gateway() -> str:
 def _ping(host: str) -> bool:
     """Ping básico a un host."""
     try:
-        r = subprocess.run(["ping", "-c1", "-W2", host], capture_output=True, timeout=5)
+        r = subprocess.run(["ping", "-c1", "-W2" if __import__("sys").platform != "darwin" else "-t2", host], capture_output=True, timeout=5)
         return r.returncode == 0
     except Exception as e:
         log.debug("ping %s falló: %s", host, e)
@@ -51,7 +51,7 @@ def _ping(host: str) -> bool:
 def _latencia(host: str) -> int:
     """Mide latencia en ms a un host via ping."""
     try:
-        r = subprocess.run(["ping", "-c1", "-W3", host], capture_output=True, text=True, timeout=6)
+        r = subprocess.run(["ping", "-c1", "-W3" if __import__("sys").platform != "darwin" else "-t3", host], capture_output=True, text=True, timeout=6)
         for line in r.stdout.split("\n"):
             if "time=" in line:
                 ms = line.split("time=")[1].split(" ")[0]
