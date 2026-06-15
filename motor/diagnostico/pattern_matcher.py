@@ -24,7 +24,7 @@ def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:
             "tipo": "ResourcePressure", "subtipo": "disco",
             "resumen": f"Disco al {scan.recursos['disk_pct']}%", "ts": scan.timestamp,
         })
-    load = scan.recursos.get("load_avg_1m", 0)
+    load = scan.recursos.get("load_1m", 0)
     ncpu = scan.recursos.get("ncpu", 1)
     if ncpu > 0 and load / ncpu > 2.0:
         incidentes.append({
@@ -92,8 +92,7 @@ def _calcular_costes_historicos(incidentes: list) -> dict:
         t = inc.get("tipo", "Unknown")
         sub = inc.get("subtipo", "")
         clave = f"{t}.{sub}" if sub else t
-        costes[clave] = costes.get(clave, {"media_h": 0, "veces": 0, "total_h": 0})
-        costes[clave]["veces"] += 1
-    for k in costes:
-        costes[k]["media_h"] = round(costes[k]["total_h"] / costes[k]["veces"], 1) if costes[k]["veces"] else 0
+        entry = costes.get(clave, {"veces": 0})
+        entry["veces"] += 1
+        costes[clave] = entry
     return costes

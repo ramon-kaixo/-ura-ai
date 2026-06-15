@@ -15,7 +15,7 @@ def escanear_hw_vm() -> dict:
 
 def _dmesg_errors() -> list:
     try:
-        r = subprocess.run(["dmesg", "--level=err", "--read-clear"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["dmesg", "--level=err", "--since", "1 hour ago"], capture_output=True, text=True, timeout=5)
         lines = [l for l in r.stdout.strip().split("\n") if l and "usb" not in l.lower()]
         return lines[-5:] if lines else []
     except: return []

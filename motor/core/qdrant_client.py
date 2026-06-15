@@ -1,4 +1,4 @@
-import json, logging
+import json, logging, threading
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -8,6 +8,7 @@ log = logging.getLogger("ura.qdrant")
 
 class QdrantClient:
     _instancia: Optional["QdrantClient"] = None
+    _lock: threading.Lock = threading.Lock()
 
     def __init__(self, config: UraConfig):
         self.config = config
@@ -156,6 +157,7 @@ class QdrantClient:
 
     @classmethod
     def instancia(cls, config: UraConfig) -> "QdrantClient":
-        if cls._instancia is None:
-            cls._instancia = cls(config)
+        with cls._lock:
+            if cls._instancia is None:
+                cls._instancia = cls(config)
         return cls._instancia
