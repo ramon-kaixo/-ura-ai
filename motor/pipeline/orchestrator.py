@@ -1,4 +1,4 @@
-import json, logging, sys, time
+import json, logging, time
 from datetime import datetime
 from pathlib import Path
 from core.config import UraConfig
@@ -12,12 +12,19 @@ from guard.verifier import ejecutar_verificacion
 log = logging.getLogger("ura.pipeline")
 ALERT_LOG = logging.getLogger("ura.alerta")
 
+ARCHIVO_ESTADO = "estado_alemania.json"
+ARCHIVO_DIAGNOSTICO = "diagnostico.json"
+ARCHIVO_TRENDS = "trends.ndjson"
+
 class Orchestrator:
+    """Orquestador del pipeline: preflight → scan → diagnose → verify."""
+
     def __init__(self, config: UraConfig):
         self.config = config
         self.qdrant = QdrantClient.instancia(config)
 
     def run(self, dry_run: bool = False) -> PipelineResult:
+        """Ejecuta el pipeline completo."""
         result = PipelineResult(timestamp=datetime.utcnow().isoformat()+"Z")
         t_total = time.time()
         try:
@@ -65,6 +72,7 @@ class Orchestrator:
         return result
 
     def _registrar_trend(self, result: PipelineResult, perf: dict = None):
+        """Registra métricas de tendencia a disco."""
         if not result.scan:
             return
         dep = Path(self.config.deploy_dir)
@@ -78,11 +86,12 @@ class Orchestrator:
                  "ok": result.ok}
         if perf:
             entry["perf"] = perf
-        lines = (dep / "trends.ndjson")
+        lines = (dep / ARCHIVO_TRENDS)
         with open(lines, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")
 
     def _escribir_side_effects(self, result: PipelineResult):
+        """Escribe JSON de estado y diagnóstico a disco."""
         dep = Path(self.config.deploy_dir)
         dep.mkdir(parents=True, exist_ok=True)
         if result.scan:
@@ -92,7 +101,7 @@ class Orchestrator:
                  "hw_health": result.scan.hw_health,
                  "orphans": result.scan.orphans,
                  "systemd_failed": result.scan.systemd_failed}
-            (dep / "estado_alemania.json").write_text(json.dumps(s, indent=2))
+            (dep / ARCHIVO_ESTADO).write_text(json.dumps(s, indent=2))
         if result.diagnose:
             d = {"timestamp": result.diagnose.timestamp,
                  "ok": result.diagnose.ok,
@@ -100,9 +109,10 @@ class Orchestrator:
                  "causas_raiz": result.diagnose.causas_raiz,
                  "modo_offline": result.diagnose.modo_offline,
                  "coste_historico": result.diagnose.coste_historico}
-            (dep / "diagnostico.json").write_text(json.dumps(d, indent=2))
+            (dep / ARCHIVO_DIAGNOSTICO).write_text(json.dumps(d, indent=2))
 
     def _emit(self, result: PipelineResult):
+        """Emite resultado del pipeline como JSON a stdout."""
         print(json.dumps({"ura": "pipeline", "ok": result.ok,
                           "ts": result.timestamp,
                           "error": result.error,
