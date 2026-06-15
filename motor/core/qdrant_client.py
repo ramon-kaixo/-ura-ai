@@ -1,5 +1,4 @@
-import json, logging, threading
-from pathlib import Path
+import logging, threading
 from datetime import datetime
 from typing import Optional
 from core.config import UraConfig

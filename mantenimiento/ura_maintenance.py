@@ -11,11 +11,9 @@ import json
 import shutil
 import logging
 import re
-import pwd
-import grp
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple, Optional
 import platform
 from fnmatch import fnmatch
 
@@ -74,7 +72,7 @@ try:
     # Verificar permisos de escritura
     if not os.access(LOG_DIR, os.W_OK):
         raise PermissionError(f"No write access to {LOG_DIR}")
-except (PermissionError, OSError) as e:
+except (PermissionError, OSError):
     # Fallback a directorio temporal
     LOG_DIR = Path('/tmp/ura_maintenance_logs')
     LOG_DIR.mkdir(parents=True, exist_ok=True)

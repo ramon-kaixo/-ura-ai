@@ -1,5 +1,5 @@
 import json, logging, statistics
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 log = logging.getLogger("ura.scanner.calib")
