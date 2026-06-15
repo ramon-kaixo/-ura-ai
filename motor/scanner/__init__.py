@@ -39,6 +39,8 @@ class Scanner:
         r.servicios = self._check_servicios()
         r.recursos = self._check_recursos()
         r.contenedores = self._check_contenedores()
+        dc = self._list_docker_containers()
+        r.contenedores_ko = [name for name, st in dc.items() if st != "running"]
         r.red = escanear_red(self.config)
         is_vm = self.config.is_vm and not self._es_fisico()
         if is_vm:
@@ -114,6 +116,7 @@ class Scanner:
                 "disk_gb": round(disk.total / 1e9, 1),
                 "disk_free_gb": round(disk.free / 1e9, 1),
                 "load_1m": round(psutil.getloadavg()[0], 2),
+                "ncpu": psutil.cpu_count(),
                 "zombies": sum(1 for p in psutil.process_iter() if p.status() == "zombie"),
             }
         except ImportError:
@@ -124,6 +127,7 @@ class Scanner:
         mem_avail = meminfo.get("MemAvailable", 0) * 1024
         with open("/proc/loadavg") as f:
             load = float(f.read().split()[0])
+        ncpu = os.cpu_count() or 1
         s = os.statvfs("/")
         disk_total = s.f_frsize * s.f_blocks
         disk_free = s.f_frsize * s.f_bfree
@@ -136,6 +140,7 @@ class Scanner:
             "disk_gb": round(disk_total / 1e9, 1),
             "disk_free_gb": round(disk_free / 1e9, 1),
             "load_1m": load,
+            "ncpu": ncpu,
             "zombies": 0,
         }
 
