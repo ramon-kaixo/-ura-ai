@@ -69,6 +69,10 @@ def _tailscale_status() -> dict:
     return peers
 
 def _check_exit_node(peers: dict) -> bool:
+    import socket
+    host = socket.gethostname().lower()
+    if "hetzner" in host:
+        return True
     for name, info in peers.items():
         if "hetzner" in name.lower() or "exit" in name.lower():
             if info.get("online"):

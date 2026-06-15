@@ -35,11 +35,11 @@ def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:
             "resumen": "Sin salida a internet",
             "ts": scan.timestamp,
         })
-    if not scan.red.get("exit_node_online", True):
+    if not scan.red.get("exit_node_online", True) and not scan.red.get("internet", True):
         incidentes.append({
             "tipo": "NetworkTopologyFailure",
             "subtipo": "exit_node_offline",
-            "resumen": "Exit node caído",
+            "resumen": "Exit node caído + sin internet",
             "ts": scan.timestamp,
         })
     if scan.duplicados:
