@@ -30,11 +30,11 @@ def test_detect_with_trends():
     from scanner.calibration import Calibration
     cfg = UraConfig()
     cal = Calibration(cfg)
-    trends = [{"health": 99.0, "ram_pct": 50, "disk_pct": 60, "load": 0.5},
-              {"health": 99.1, "ram_pct": 51, "disk_pct": 61, "load": 0.5},
-              {"health": 80.0, "ram_pct": 52, "disk_pct": 62, "load": 0.5}]
+    trends = [{"ram_pct": 50, "disk_pct": 60, "load_1m": 0.5},
+              {"ram_pct": 51, "disk_pct": 61, "load_1m": 0.5},
+              {"ram_pct": 80, "disk_pct": 62, "load_1m": 0.5}]
     res = cal.detect(trends)
-    anomalias = [a for a in res["anomalias"] if a["metrica"] == "health"]
+    anomalias = [a for a in res["anomalias"] if a["metrica"] == "ram_pct"]
     assert len(anomalias) > 0
 
 def test_calibration_with_trends():
@@ -96,14 +96,14 @@ def test_sliding_window():
 
 def test_diff_detector():
     from scanner.diff_detector import compute_diff
-    actual = {"servicios": {"sshd": "active", "docker": "active"},
-              "recursos": {"ram_pct": 50.0},
-              "contenedores": {"total": 2},
-              "hw_health": {"ok": True}}
-    prev = {"servicios": {"sshd": "active", "docker": "inactive"},
-            "recursos": {"ram_pct": 50.0},
-            "contenedores": {"total": 2},
-            "hw_health": {"ok": True}}
-    diff, anomalias = compute_diff(actual, prev)
-    assert diff > 0
-    assert len(anomalias) > 0
+        actual = {"servicios": {"sshd": "active", "docker": "inactive"},
+                  "recursos": {"ram_pct": 95.0},
+                  "contenedores": {"total": 2},
+                  "hw_health": {"ok": True}}
+        prev = {"servicios": {"sshd": "active", "docker": "active"},
+                "recursos": {"ram_pct": 50.0},
+                "contenedores": {"total": 2},
+                "hw_health": {"ok": True}}
+        diff, anomalias = compute_diff(actual, prev)
+        assert diff > 0
+        assert len(anomalias) > 0  # docker inactive + ram 95%
