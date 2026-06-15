@@ -9,7 +9,7 @@ def escanear_hw_asus(temp_gpu=None) -> dict:
         "tipo": "fisico",
         "smart_ok": _smart_ok(),
         "thermal_zones": _thermal_zones(),
-        "temp_gpu": temp_gpu or _temp_gpu_orin(),
+        "temp_gpu": _temp_gpu_orin() if temp_gpu is None else temp_gpu,
     }
 
 def _smart_ok() -> bool:
