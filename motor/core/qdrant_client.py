@@ -84,7 +84,7 @@ class QdrantClient:
             log.error("error guardar incidente: %s", e)
             return False
 
-    def buscar_incidentes(self, vector: list, limit: int = 5) -> list:
+    def buscar_incidentes(self, vector: list = None, limit: int = 10) -> list:
         if not self.disponible:
             return []
         if getattr(self, "_modo_rest", False):
@@ -92,16 +92,9 @@ class QdrantClient:
         if not self._cliente:
             return []
         try:
-            from qdrant_client.http.exceptions import UnexpectedResponse
-            try:
-                r = self._cliente.search(
-                    collection_name="incidente_record",
-                    query_vector=vector,
-                    limit=limit,
-                )
-                return [p.payload for p in r if hasattr(p, "payload")]
-            except UnexpectedResponse:
-                return []
+            r = self._cliente.scroll(collection_name="incidente_record", limit=limit)
+            pts = r[0] if r else []
+            return [p.payload for p in pts if hasattr(p, "payload")]
         except Exception as e:
             log.error("error buscar incidentes: %s", e)
             return []
