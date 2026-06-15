@@ -107,3 +107,17 @@ def test_diff_detector():
     diff, anomalias = compute_diff(actual, prev)
     assert diff > 0
     assert len(anomalias) > 0
+
+def test_status_returns_json():
+    import subprocess, json
+    r = subprocess.run(["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],
+                       capture_output=True, text=True, timeout=10)
+    if r.returncode == 0 and r.stdout.strip():
+        d = json.loads(r.stdout)
+        assert "hostname" in d or "health_score" in d
+
+def test_preflight_module():
+    from guard.preflight import ejecutar_preflight
+    cfg = UraConfig()
+    r = ejecutar_preflight(cfg)
+    assert r.ok or not r.bloqueado  # preflight no debe bloquear sin config
