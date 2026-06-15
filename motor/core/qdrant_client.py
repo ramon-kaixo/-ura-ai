@@ -85,7 +85,11 @@ class QdrantClient:
             return False
 
     def buscar_incidentes(self, vector: list, limit: int = 5) -> list:
-        if not self.disponible or not self._cliente:
+        if not self.disponible:
+            return []
+        if getattr(self, "_modo_rest", False):
+            return self._buscar_rest(limit)
+        if not self._cliente:
             return []
         try:
             from qdrant_client.http.exceptions import UnexpectedResponse
@@ -101,6 +105,16 @@ class QdrantClient:
         except Exception as e:
             log.error("error buscar incidentes: %s", e)
             return []
+
+    def _buscar_rest(self, limit: int = 5) -> list:
+        try:
+            import requests
+            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/incidente_record/points/scroll"
+            r = requests.post(url, json={"limit": limit}, timeout=5)
+            if r.status_code == 200:
+                return [p.get("payload", {}) for p in r.json().get("result", {}).get("points", [])]
+        except: pass
+        return []
 
     @classmethod
     def instancia(cls, config: UraConfig) -> "QdrantClient":
