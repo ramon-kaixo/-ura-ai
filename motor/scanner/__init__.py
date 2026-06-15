@@ -55,7 +55,8 @@ class Scanner:
         for svc in ["sshd", "docker", "opencode"]:
             try:
                 r = subprocess.run(["systemctl", "is-active", svc], capture_output=True, text=True, timeout=5)
-                s[svc] = r.stdout.strip()
+                out = r.stdout.strip()
+                s[svc] = "not_found" if out in ("unknown", "inactive") and not self._unit_exists(svc) else out
             except: s[svc] = "unknown"
         docker_containers = self._list_docker_containers()
         for svc in ["qdrant", "n8n", "searxng", "vane", "agent-search"]:
@@ -63,6 +64,13 @@ class Scanner:
             state = docker_containers.get(name, "not_found")
             s[svc] = "active" if state == "running" else state
         return s
+
+    def _unit_exists(self, name: str) -> bool:
+        try:
+            r = subprocess.run(["systemctl", "list-units", "--all", "--type=service",
+                               f"{name}.service", "--no-legend"], capture_output=True, text=True, timeout=5)
+            return bool(r.stdout.strip())
+        except: return False
 
     def _list_docker_containers(self) -> dict:
         try:
@@ -154,7 +162,7 @@ class Scanner:
 
     def _calcular_health_score(self, r: ScanResult) -> float:
         score = 100.0
-        fallados = sum(1 for s in r.servicios.values() if s not in ("active", "ok"))
+        fallados = sum(1 for s in r.servicios.values() if s not in ("active", "ok", "not_found"))
         score -= fallados * 10
         if r.recursos.get("ram_pct", 0) > 90: score -= 15
         elif r.recursos.get("ram_pct", 0) > 80: score -= 10
