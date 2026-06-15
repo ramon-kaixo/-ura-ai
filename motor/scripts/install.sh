@@ -5,7 +5,8 @@ PYTHON="python3"
 
 echo "=== URA Motor de Conocimiento - Instalacion ==="
 
-SRC_DIR="$(cd "$(dirname "$(dirname "$0"))" && pwd)"
+SRC_DIR="$(dirname "$(readlink -f "$0")")"
+SRC_DIR="$(dirname "$SRC_DIR")"
 if [ "$SRC_DIR" != "$MOTOR_DIR" ]; then
     cp -r "$SRC_DIR"/* "$MOTOR_DIR/"
 fi
