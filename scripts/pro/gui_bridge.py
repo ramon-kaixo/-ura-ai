@@ -103,9 +103,11 @@ class MCPSession:
     def stop(self):
         if self._proc and self._proc.poll() is None:
             try: self.call("shutdown", {})
-            except Exception: pass
+            except Exception as e:
+            log.warning("GUI bridge error: %s", e)
             try: self._proc.stdin.close()
-            except Exception: pass
+            except Exception as e:
+            log.warning("GUI bridge error: %s", e)
             try: self._proc.terminate(); self._proc.wait(timeout=5)
             except Exception: self._proc.kill()
         self._proc = None

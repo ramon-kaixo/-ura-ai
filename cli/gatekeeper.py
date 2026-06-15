@@ -63,7 +63,8 @@ def _reg(n,v,sp):
     r={}
     if RP.exists():
         try: r=json.loads(RP.read_text())
-        except: pass
+        except Exception:
+        pass  # expected on missing dir
     r[n]={"path":str(sp),"debt":v.debt,"ts":datetime.now().isoformat()}
     RP.parent.mkdir(parents=1,exist_ok=1); RP.write_text(json.dumps(r,ensure_ascii=0,indent=2))
 

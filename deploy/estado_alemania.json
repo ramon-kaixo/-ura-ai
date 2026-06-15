@@ -1,9 +1,0 @@
-{
-  "ts": "2026-06-15T09:40:29Z",
-  "global": "UP",
-  "ip_publica": "178.105.81.83",
-  "ip_tailscale": "100.78.49.106",
-  "publica": "ok",
-  "tailscale": "ok",
-  "detalle": {"uptime":"up 15 hours, 11 minutes","disk":72,"containers":"ninguno"}
-}
