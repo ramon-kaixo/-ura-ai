@@ -22,6 +22,7 @@ class QdrantClient:
             self._cliente.get_collections()
             self.disponible = True
             self._modo_rest = False
+            self._asegurar_coleccion()
             log.info("qdrant conectado (cliente nativo)")
         except Exception:
             try:
@@ -32,11 +33,37 @@ class QdrantClient:
                     self._cliente = None
                     self.disponible = True
                     self._modo_rest = True
+                    self._asegurar_coleccion()
                     log.info("qdrant conectado (REST fallback)")
                     return
             except Exception:
                 pass
             log.warning("qdrant no disponible")
+
+    def _asegurar_coleccion(self):
+        try:
+            if getattr(self, "_modo_rest", False):
+                import requests
+                url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/incidente_record"
+                r = requests.get(url, timeout=3)
+                if r.status_code == 404:
+                    r2 = requests.put(url, json={"vectors": {"size": 7, "distance": "Cosine"},
+                                                  "on_disk_payload": True}, timeout=5)
+                    if r2.status_code in (200, 201):
+                        log.info("coleccion incidente_record creada (REST)")
+            else:
+                from qdrant_client.http.exceptions import UnexpectedResponse
+                try:
+                    self._cliente.get_collection("incidente_record")
+                except UnexpectedResponse:
+                    from qdrant_client.http import models
+                    self._cliente.recreate_collection(
+                        collection_name="incidente_record",
+                        vectors_config=models.VectorParams(size=7, distance=models.Distance.COSINE),
+                    )
+                    log.info("coleccion incidente_record creada (nativo)")
+        except Exception as e:
+            log.warning("no se pudo asegurar coleccion: %s", e)
 
     def health(self) -> bool:
         if not self.disponible:
@@ -61,18 +88,9 @@ class QdrantClient:
             return False
         try:
             from qdrant_client.http import models
-            from qdrant_client.http.exceptions import UnexpectedResponse
-            collection = "incidente_record"
-            try:
-                self._cliente.get_collection(collection)
-            except UnexpectedResponse:
-                self._cliente.recreate_collection(
-                    collection_name=collection,
-                    vectors_config=models.VectorParams(size=7, distance=models.Distance.COSINE),
-                )
             payload = self._build_payload(incidente)
             self._cliente.upsert(
-                collection_name=collection,
+                collection_name="incidente_record",
                 points=[models.PointStruct(id=abs(hash(payload["timestamp_inicio"])),
                                             vector=payload["impacto_memoria"],
                                             payload=payload)]
