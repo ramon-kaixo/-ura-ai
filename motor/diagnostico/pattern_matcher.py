@@ -1,11 +1,10 @@
-import json, logging
-from pathlib import Path
+import logging
 
 log = logging.getLogger("ura.diagnostico.pattern")
 
 def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:
+    """Busca patrones de incidente en el resultado del escaneo."""
     incidentes = []
-    costes = {}
     for svc, estado in scan.servicios.items():
         if estado in ("inactive", "failed"):
             incidentes.append({
@@ -87,6 +86,7 @@ def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:
     return incidentes, costes
 
 def _calcular_costes_historicos(incidentes: list) -> dict:
+    """Cuenta frecuencias de tipos/subtipos de incidentes."""
     costes = {}
     for inc in incidentes:
         t = inc.get("tipo", "Unknown")

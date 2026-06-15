@@ -1,4 +1,4 @@
-import json, logging, copy
+import json, logging, subprocess, hashlib
 from datetime import datetime
 from pathlib import Path
 from core.state import ScanResult, DiagnoseResult
@@ -11,13 +11,18 @@ from diagnostico.backup_knowledge import backup_incidente
 
 log = logging.getLogger("ura.diagnostico")
 
+RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
+
 class Diagnostico:
+    """Motor de diagnóstico: busca patrones, correlaciona, determina causas raíz."""
+
     def __init__(self, config: UraConfig, qdrant: QdrantClient):
         self.config = config
         self.qdrant = qdrant
         self.cb = CircuitBreaker(qdrant)
 
     def run(self, scan: ScanResult) -> DiagnoseResult:
+        """Ejecuta el pipeline de diagnóstico completo."""
         r = DiagnoseResult(timestamp=datetime.utcnow().isoformat()+"Z")
         r.snapshot_inicial = self._tomar_snapshot_inicial()
         if not scan.ok:
@@ -40,9 +45,9 @@ class Diagnostico:
         return r
 
     def _tomar_snapshot_inicial(self) -> dict:
-        import subprocess, hashlib
+        """Toma un snapshot de configs y procesos al inicio del diagnóstico."""
         snap = {"timestamp": datetime.utcnow().isoformat()+"Z"}
-        for archivo in ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]:
+        for archivo in RUTAS_CONFIG_OPENCODE:
             p = Path(archivo)
             if p.exists():
                 snap[archivo] = {"hash": hashlib.sha256(p.read_bytes()).hexdigest()[:16],
@@ -50,24 +55,33 @@ class Diagnostico:
         try:
             r = subprocess.run(["ps", "-eo", "pid,comm", "--sort=-pid"], capture_output=True, text=True, timeout=3)
             snap["procesos"] = [l.strip() for l in r.stdout.strip().split("\n")[:20]]
-        except: pass
+        except Exception as e:
+            log.debug("snapshot procesos falló: %s", e)
         return snap
 
     def _extraer_tags(self, incidentes: list, scan: ScanResult) -> list:
+        """Extrae tags desde incidentes y estado del scan para correlación."""
         tags = set()
         for inc in incidentes:
             tags.add(inc.get("tipo", "Unknown"))
-            if inc.get("subtipo"): tags.add(inc["subtipo"])
-        if scan.hw_health.get("issues"): tags.add("hw_issue")
-        if scan.duplicados: tags.add("config_conflict")
-        if scan.flapping: tags.add("flapping")
-        if not scan.red.get("exit_node_online", True): tags.add("exit_node_offline")
+            if inc.get("subtipo"):
+                tags.add(inc["subtipo"])
+        if scan.hw_health.get("issues"):
+            tags.add("hw_issue")
+        if scan.duplicados:
+            tags.add("config_conflict")
+        if scan.flapping:
+            tags.add("flapping")
+        if not scan.red.get("exit_node_online", True):
+            tags.add("exit_node_offline")
         return list(tags)
 
     def _determinar_causas(self, correlaciones: list) -> list:
+        """Extrae causas raíz de las correlaciones."""
         return [c["causa_raiz"] for c in correlaciones if "causa_raiz" in c]
 
     def _guardar_incidente_qdrant(self, diag: DiagnoseResult, scan: ScanResult):
+        """Persiste el diagnóstico como incidente en Qdrant."""
         if not diag.incidentes:
             return
         impacto = [0.0]*7

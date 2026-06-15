@@ -5,14 +5,18 @@ from typing import Any
 log = logging.getLogger("ura.scanner.sliding")
 
 class SlidingWindow:
+    """Ventana deslizante para detección de flapping en servicios."""
+
     def __init__(self, maxlen: int = 3):
         self._buffer = deque(maxlen=maxlen)
 
     def add_and_check(self, estado: Any) -> list:
+        """Añade un estado y detecta flapping entre las últimas N muestras."""
         self._buffer.append(estado)
         return self._detectar_flapping()
 
     def _detectar_flapping(self) -> list:
+        """Detecta servicios que cambian de estado entre muestras."""
         if len(self._buffer) < 3:
             return []
         flapping = []
