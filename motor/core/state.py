@@ -17,6 +17,7 @@ class ScanResult:
     flapping: list = field(default_factory=list)
     calibration_status: str = "unknown"
     duplicados: dict = field(default_factory=dict)
+    contenedores_ko: list = field(default_factory=list)
     snapshot_hash: str = ""
 
 @dataclass

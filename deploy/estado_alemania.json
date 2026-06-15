@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-15T03:09:42.236678Z",
+  "timestamp": "2026-06-15T03:12:08.436555Z",
   "hostname": "gx10-64c3",
-  "health_score": 99.3,
+  "health_score": 99.4,
   "servicios": {
     "sshd": "active",
     "docker": "active",
@@ -19,14 +19,15 @@
     "disk_pct": 46.5,
     "disk_gb": 1967.3,
     "disk_free_gb": 999.1,
-    "load_1m": 1.02,
+    "load_1m": 0.65,
+    "ncpu": 20,
     "zombies": 0
   },
   "red": {
     "gateway": "10.164.1.1",
     "internet": true,
     "dns_ok": true,
-    "latencia_ms": 13,
+    "latencia_ms": 12,
     "tailscale_peers": {
       "hetzner-escudo.tail7b3cf3.ts.net": {
         "online": true,
@@ -114,12 +115,12 @@
     "tipo": "fisico",
     "smart_ok": true,
     "thermal_zones": {
-      "thermal_zone0": 41.1,
-      "thermal_zone1": 38.5,
+      "thermal_zone0": 41.0,
+      "thermal_zone1": 38.8,
       "thermal_zone2": 38.0,
-      "thermal_zone3": 39.1,
-      "thermal_zone4": 38.3,
-      "thermal_zone5": 41.1,
+      "thermal_zone3": 39.4,
+      "thermal_zone4": 37.8,
+      "thermal_zone5": 41.0,
       "thermal_zone6": 38.7
     },
     "temp_gpu": 0
