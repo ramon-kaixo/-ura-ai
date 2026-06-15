@@ -34,6 +34,7 @@ def main():
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
     sub.add_parser("graph", help="Gráfico ASCII de tendencia de salud")
+    sub.add_parser("perf", help="Rendimiento del pipeline (duración por etapa)")
     sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
     sub.add_parser("alerta", help="Alertas recientes desde journald")
     sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
@@ -138,6 +139,21 @@ def main():
             label = lines[idx + i]["ts"][11:16]
             print(f"{label} {marca} {v:.1f}")
         print(f"\nRango: {mn:.1f} - {mx:.1f} | {len(vals)} puntos | Último: {vals[-1]:.1f}")
+
+    elif args.command == "perf":
+        dep = Path(config.deploy_dir) / "trends.ndjson"
+        if not dep.exists():
+            print(json.dumps({"error": "No hay datos de rendimiento"}, indent=2))
+            sys.exit(1)
+        lines = [json.loads(l) for l in dep.read_text().strip().splitlines() if l.strip()]
+        with_perf = [l for l in lines if "perf" in l]
+        if not with_perf:
+            print(json.dumps({"error": "Sin datos de rendimiento (actualiza pipeline)"}, indent=2))
+            sys.exit(1)
+        last = with_perf[-1]["perf"]
+        avg = {k: round(sum(p["perf"][k] for p in with_perf[-20:]) / max(len(with_perf[-20:]), 1), 1) for k in last}
+        print(json.dumps({"ok": True, "runs": len(with_perf),
+                          "ultimo": last, "promedio": avg}, indent=2))
 
     elif args.command == "calibrate":
         cal = Calibration(config)
