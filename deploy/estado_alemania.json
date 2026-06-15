@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-15T03:19:52.985431Z",
+  "timestamp": "2026-06-15T03:37:31.288489Z",
   "hostname": "gx10-64c3",
   "health_score": 99.3,
   "servicios": {
@@ -13,13 +13,13 @@
     "agent-search": "not_found"
   },
   "recursos": {
-    "ram_pct": 11.9,
+    "ram_pct": 12.0,
     "ram_gb": 130.6,
     "ram_available_gb": 115.0,
     "disk_pct": 46.5,
     "disk_gb": 1967.3,
     "disk_free_gb": 999.1,
-    "load_1m": 0.6,
+    "load_1m": 0.87,
     "ncpu": 20,
     "zombies": 0
   },
@@ -101,7 +101,7 @@
       },
       "macbook-air-de-kaixo.tail7b3cf3.ts.net": {
         "online": false,
-        "last_seen": "2026-06-15T02:40:00.1Z",
+        "last_seen": "2026-06-15T03:20:00.1Z",
         "relay": "mad"
       }
     },
@@ -115,12 +115,12 @@
     "tipo": "fisico",
     "smart_ok": true,
     "thermal_zones": {
-      "thermal_zone0": 40.8,
-      "thermal_zone1": 38.0,
-      "thermal_zone2": 37.9,
-      "thermal_zone3": 39.2,
-      "thermal_zone4": 37.8,
-      "thermal_zone5": 40.8,
+      "thermal_zone0": 40.9,
+      "thermal_zone1": 38.4,
+      "thermal_zone2": 38.3,
+      "thermal_zone3": 39.1,
+      "thermal_zone4": 37.9,
+      "thermal_zone5": 40.9,
       "thermal_zone6": 38.7
     },
     "temp_gpu": 0
