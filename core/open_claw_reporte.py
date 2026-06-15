@@ -1,3 +1,5 @@
+import logging
+log = logging.getLogger(__name__)
 #!/usr/bin/env python3
 """open_claw_reporte.py — Reporte estandarizado multiplataforma."""
 from __future__ import annotations
@@ -19,7 +21,8 @@ def get_ram_libre_gb() -> float:
             with open('/proc/meminfo') as f:
                 for line in f:
                     if "MemAvailable" in line: return round(int(line.split()[1]) / 1024 / 1024, 1)
-        except: pass
+        except Exception as e:
+        log.error("Error en reporte: %s", e)
         return 0.0
 def get_disco_libre_gb() -> float:
     try: st = os.statvfs('/'); return round((st.f_bavail * st.f_frsize) / (1024**3), 1)

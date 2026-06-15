@@ -15,7 +15,8 @@ def log():
         from mochila_engine import BASE_DIR
         p=BASE_DIR/"05_RETROALIMENTACION"/"tuneladora.log"; p.parent.mkdir(parents=1,exist_ok=1)
         l.addHandler(logging.FileHandler(str(p),encoding="utf-8"))
-    except: pass
+    except Exception:
+        pass  # expected if no args
     return l
 
 def ci(l):

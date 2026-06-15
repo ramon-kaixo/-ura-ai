@@ -48,7 +48,8 @@ class DockerOrchestrator:
             dt={}
             for l in s2.splitlines():
                 try: dt=json.loads(l); break
-                except: pass
+                except Exception as e:
+                log.warning("Docker error: %s", e)
             ok=rp.returncode==0 and dt.get("fallos",1)==0 and dt.get("error")is None
             return ResultadoSandbox(ok,dt.get("ejecuto",False),dt.get("pasados",0),dt.get("fallidos",0),dt.get("fallos_nombres",[]),s2[:3000],s3[:1000],round(ms,1),0,dt.get("error"))
         finally:
