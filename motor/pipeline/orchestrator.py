@@ -1,4 +1,4 @@
-import json, logging, sys
+import json, logging, sys, time
 from datetime import datetime
 from pathlib import Path
 from core.config import UraConfig
@@ -19,6 +19,7 @@ class Orchestrator:
 
     def run(self, dry_run: bool = False) -> PipelineResult:
         result = PipelineResult(timestamp=datetime.utcnow().isoformat()+"Z")
+        t_total = time.time()
         try:
             result.preflight = ejecutar_preflight(self.config)
             if result.preflight.bloqueado:
@@ -32,23 +33,30 @@ class Orchestrator:
                 result.ok = True
                 self._emit(result)
                 return result
+            t1 = time.time()
             scanner = Scanner(self.config)
             result.scan = scanner.run()
+            t_scan = time.time() - t1
             if not result.scan.ok:
                 log.warning("scan reporta no ok")
+            t2 = time.time()
             diagnostico = Diagnostico(self.config, self.qdrant)
             result.diagnose = diagnostico.run(result.scan)
+            t_diag = time.time() - t2
             hubo_cambios = result.diagnose.causas_raiz or result.scan.diff_total > 0
+            t3 = time.time()
             result.verify = ejecutar_verificacion(self.config, hubo_cambios=hubo_cambios)
+            t_ver = time.time() - t3
             self._escribir_side_effects(result)
-            self._registrar_trend(result)
+            self._registrar_trend(result, {"scan_s": round(t_scan, 1), "diag_s": round(t_diag, 1),
+                                            "ver_s": round(t_ver, 1), "total_s": round(time.time() - t_total, 1)})
             hs = result.scan.health_score
             inc = len(result.diagnose.incidentes)
             if hs < 90 or inc > 0:
                 ALERT_LOG.error("ALERTA health=%.1f incidentes=%d host=%s",
                                 hs, inc, result.scan.hostname)
             result.ok = True
-            log.info("pipeline OK health=%.1f incidentes=%d", hs, inc)
+            log.info("pipeline OK health=%.1f incidentes=%d (%.1fs)", hs, inc, time.time() - t_total)
         except Exception as e:
             result.ok = False
             result.error = str(e)
@@ -56,7 +64,7 @@ class Orchestrator:
         self._emit(result)
         return result
 
-    def _registrar_trend(self, result: PipelineResult):
+    def _registrar_trend(self, result: PipelineResult, perf: dict = None):
         if not result.scan:
             return
         dep = Path(self.config.deploy_dir)
@@ -66,8 +74,10 @@ class Orchestrator:
                  "incidentes": len(result.diagnose.incidentes) if result.diagnose else 0,
                  "ram_pct": result.scan.recursos.get("ram_pct", 0),
                  "disk_pct": result.scan.recursos.get("disk_pct", 0),
-                 "load": result.scan.recursos.get("load_avg_1m", 0),
+                 "load": result.scan.recursos.get("load_1m", 0),
                  "ok": result.ok}
+        if perf:
+            entry["perf"] = perf
         lines = (dep / "trends.ndjson")
         with open(lines, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")

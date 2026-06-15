@@ -1,3 +1,1 @@
-{"ts": "2026-06-15T03:16:26.452737Z", "hostname": "gx10-64c3", "health": 99.3, "incidentes": 0, "ram_pct": 12.0, "disk_pct": 46.5, "load": 0, "ok": false}
-{"ts": "2026-06-15T03:17:49.292956Z", "hostname": "gx10-64c3", "health": 99.3, "incidentes": 0, "ram_pct": 11.9, "disk_pct": 46.5, "load": 0, "ok": false}
-{"ts": "2026-06-15T03:19:52.985431Z", "hostname": "gx10-64c3", "health": 99.3, "incidentes": 0, "ram_pct": 11.9, "disk_pct": 46.5, "load": 0, "ok": false}
+{"ts": "2026-06-15T03:37:31.288489Z", "hostname": "gx10-64c3", "health": 99.3, "incidentes": 0, "ram_pct": 12.0, "disk_pct": 46.5, "load": 0.87, "ok": false, "perf": {"scan_s": 0.3, "diag_s": 0.0, "ver_s": 0.0, "total_s": 0.3}}
