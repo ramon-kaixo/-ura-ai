@@ -28,8 +28,7 @@ class Calibration:
         bl = self._baseline
         for metric, limite in [("ram_pct", "ram_pct_max"), ("disk_pct", "disk_pct_max"),
                                 ("load_1m", "load_max")]:
-            actual = getattr(estado.recursos, metric, 0) if hasattr(estado.recursos, metric) else 0
-            if isinstance(actual, dict): actual = 0
+            actual = estado.recursos.get(metric, 0) if isinstance(estado.recursos, dict) else 0
             if isinstance(actual, (int, float)) and actual > bl.get(limite, 999):
                 anomalias.append(f"Calib.{metric}={actual} > limite={bl.get(limite, 999)}")
         return anomalias
