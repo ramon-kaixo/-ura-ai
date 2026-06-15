@@ -1,4 +1,4 @@
-import logging, time, json
+import os, logging, time, json
 from pathlib import Path
 from datetime import datetime
 from core.state import ScanResult
@@ -67,18 +67,41 @@ class Scanner:
         except: return "unknown"
 
     def _check_recursos(self) -> dict:
-        import psutil
-        mem = psutil.virtual_memory()
-        disk = psutil.disk_usage("/")
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            disk = psutil.disk_usage("/")
+            return {
+                "ram_pct": round(mem.percent, 1),
+                "ram_gb": round(mem.total / 1e9, 1),
+                "ram_available_gb": round(mem.available / 1e9, 1),
+                "disk_pct": round(disk.percent, 1),
+                "disk_gb": round(disk.total / 1e9, 1),
+                "disk_free_gb": round(disk.free / 1e9, 1),
+                "load_1m": round(psutil.getloadavg()[0], 2),
+                "zombies": sum(1 for p in psutil.process_iter() if p.status() == "zombie"),
+            }
+        except ImportError:
+            pass
+        with open("/proc/meminfo") as f:
+            meminfo = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in f if ":" in l)}
+        mem_total = meminfo.get("MemTotal", 1) * 1024
+        mem_avail = meminfo.get("MemAvailable", 0) * 1024
+        with open("/proc/loadavg") as f:
+            load = float(f.read().split()[0])
+        s = os.statvfs("/")
+        disk_total = s.f_frsize * s.f_blocks
+        disk_free = s.f_frsize * s.f_bfree
+        disk_pct = round((1 - disk_free / disk_total) * 100, 1) if disk_total else 0
         return {
-            "ram_pct": round(mem.percent, 1),
-            "ram_gb": round(mem.total / 1e9, 1),
-            "ram_available_gb": round(mem.available / 1e9, 1),
-            "disk_pct": round(disk.percent, 1),
-            "disk_gb": round(disk.total / 1e9, 1),
-            "disk_free_gb": round(disk.free / 1e9, 1),
-            "load_1m": round(psutil.getloadavg()[0], 2),
-            "zombies": sum(1 for p in psutil.process_iter() if p.status() == "zombie"),
+            "ram_pct": round((1 - mem_avail / mem_total) * 100, 1),
+            "ram_gb": round(mem_total / 1e9, 1),
+            "ram_available_gb": round(mem_avail / 1e9, 1),
+            "disk_pct": disk_pct,
+            "disk_gb": round(disk_total / 1e9, 1),
+            "disk_free_gb": round(disk_free / 1e9, 1),
+            "load_1m": load,
+            "zombies": 0,
         }
 
     def _check_contenedores(self) -> dict:

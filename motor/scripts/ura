@@ -1,2 +1,5 @@
 #!/bin/bash
-exec python3 -m cli.main "$@"
+SCRIPT="$(readlink -f "$0")"
+DIR="$(cd "$(dirname "$SCRIPT")/.." && pwd)"
+export PYTHONPATH="$DIR:$PYTHONPATH"
+cd "$DIR" && exec python3 -m cli.main "$@"
