@@ -328,7 +328,7 @@ from monitor.snc import repair_attempts
 
 # T1: runbook JSON schema
 rb = load_runbook()
-check("T1: runbook.version >= 1.0", lambda: rb.get("version", "0") >= "1.0")
+check("T1: runbook.version = 1.0", lambda: rb.get("version") == "1.0")
 check("T1: runbook tiene commands", lambda: len(rb.get("commands", {})) >= 3)
 check("T1: runbook tiene retry_policy", lambda: "max_attempts" in rb.get("retry_policy", {}))
 check("T1: retry_policy.max_attempts = 3", lambda: rb["retry_policy"]["max_attempts"] == 3)
