@@ -18,18 +18,16 @@ sys.path.insert(0, '/usr/local/bin')
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from router_rate_limiter import rate_limiter
 from core.auth_layer import validate as auth_validate, require_auth
+from core.port_validator import assert_port_free
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-log = logging.getLogger(__name__)
+from core.json_logging import setup_json_logging
+log = setup_json_logging(__name__, level=logging.INFO)
 
 try:
     from core.config_manager import get_ollama_urls
 except ImportError:
     def get_ollama_urls() -> dict[str, str]:
-        return {"primary": "http://10.164.1.99:11434", "fallback": "http://localhost:11434"}
+        return {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
@@ -947,6 +945,7 @@ def main() -> None:
         log.info("  %-20s → %s (fallback: %s)", tipo, modelo, fallback)
 
     from http.server import ThreadingHTTPServer
+    assert_port_free("127.0.0.1", ROUTER_PORT, "model-router")
     server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
     log.info("Escuchando en 127.0.0.1:%s", ROUTER_PORT)
     log.info("Dashboard: http://127.0.0.1:%s/dashboard", ROUTER_PORT)

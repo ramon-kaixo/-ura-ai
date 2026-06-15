@@ -20,9 +20,7 @@ if [ "$AUDIT_FAILED" == "1" ]; then
     find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
     rm -rf .ruff_cache .pytest_cache .mypy_cache 2>/dev/null || true
 
-    echo "[2/3] Liberando procesos huerfanos..."
-    fuser -k 4097/tcp 2>/dev/null || true
-    fuser -k 4096/tcp 2>/dev/null || true
+    echo "[2/3] Verificando sockets (se gestionan via systemd, no se matan manualmente)"
 
     echo "[3/3] Resguardando cambios locales en git stash..."
     git stash --include-untracked 2>/dev/null || true

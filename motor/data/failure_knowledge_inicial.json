@@ -1,0 +1,105 @@
+[
+  {
+    "_meta": {"schema_version": 2, "ts_creacion": "2026-06-10T12:00:00Z", "ts_ultima_modificacion": "2026-06-10T14:00:00Z"},
+    "id": "fallo-001-fail2ban-ip-bloqueada",
+    "episodio": {
+      "ts_inicio": "2026-06-10T03:23:10Z", "ts_resolucion": "2026-06-10T03:25:00Z",
+      "duracion_minutos": 2, "sintoma_raw": "Connection refused SSH desde IP 62.99.13.109",
+      "severidad_inicial": "alta", "servicio_afectado": "ssh", "maquina": "alemania",
+      "tipo_incidencia": "ServiceFailure"
+    },
+    "diagnostico": {
+      "causa_detectada": "fail2ban baneó IP 62.99.13.109 (ASUS GX10) por intentos SSH",
+      "confianza_diagnostico": 1.0, "metodo": "verificacion_humana",
+      "incidente_similar_referido": null, "similitud_score": null
+    },
+    "accion": {
+      "comando": "nft delete element inet f2b-table addr-set-sshd { 62.99.13.109 }",
+      "tipo": "desbloquear_ip", "hash_firma": "sha256:fallo001-v1",
+      "ts_ejecucion": "2026-06-10T03:25:00Z"
+    },
+    "verificacion": {
+      "resultado": "exito", "solucion_funciono": true,
+      "health_score_pre": 72, "health_score_post": 98,
+      "intentos_fallidos": 0, "contraindicado": false
+    },
+    "contexto": {
+      "vector_estado": [0.15, 14, 0.08, 0.95, 0, 0, 0],
+      "impacto_memoria": [0.15, 14, 0.08, 0.95, 0, 0, 0],
+      "hw_ok": true, "hw_issues": []
+    },
+    "aprendizaje": {"is_verified": true, "veces_repetido": 1, "decay_score": 0.99}
+  },
+  {
+    "_meta": {"schema_version": 2, "ts_creacion": "2026-06-12T15:00:00Z", "ts_ultima_modificacion": "2026-06-12T16:00:00Z"},
+    "id": "fallo-002-watchdog-timer-perdido",
+    "episodio": {
+      "ts_inicio": "2026-06-12T13:26:24Z", "ts_resolucion": "2026-06-15T10:00:00Z",
+      "duracion_minutos": 4320, "sintoma_raw": "estado_alemania.json no se actualiza",
+      "severidad_inicial": "media", "servicio_afectado": "watchdog",
+      "tipo_incidencia": "ServiceFailure", "maquina": "alemania"
+    },
+    "diagnostico": {
+      "causa_detectada": "Units systemd watchdog no existen",
+      "confianza_diagnostico": 1.0, "metodo": "verificacion_humana"
+    },
+    "accion": {"comando": "Recrear timers systemd scanner + diagnostico", "tipo": "systemd"},
+    "verificacion": {"resultado": "exito", "solucion_funciono": true, "health_score_pre": 60, "health_score_post": 95},
+    "contexto": {"vector_estado": [0.20, 20, 0.10, 0.85, 0, 1, 0], "impacto_memoria": [0.20, 20, 0.10, 0.85, 0, 1, 0], "hw_ok": true},
+    "aprendizaje": {"is_verified": true, "veces_repetido": 1, "decay_score": 0.95}
+  },
+  {
+    "_meta": {"schema_version": 2, "ts_creacion": "2026-06-12T15:00:00Z", "ts_ultima_modificacion": "2026-06-12T16:00:00Z"},
+    "id": "fallo-003-networkd-eth0-mismatch",
+    "episodio": {
+      "ts_inicio": "2026-06-12T10:00:00Z", "ts_resolucion": "2026-06-12T15:00:00Z",
+      "duracion_minutos": 300, "sintoma_raw": "Red inestable en Hetzner, IP no asignada",
+      "severidad_inicial": "alta", "servicio_afectado": "systemd-networkd",
+      "tipo_incidencia": "ServiceFailure", "maquina": "alemania"
+    },
+    "diagnostico": {
+      "causa_detectada": "Match por Name=eth0 no coincide con interfaz real enp1s0",
+      "confianza_diagnostico": 1.0, "metodo": "verificacion_humana"
+    },
+    "accion": {"comando": "Quitar Name=eth0 del [Match], usar solo MAC", "tipo": "config_red"},
+    "verificacion": {"resultado": "exito", "solucion_funciono": true, "health_score_pre": 50, "health_score_post": 100},
+    "contexto": {"vector_estado": [0.25, 25, 0.50, 0.70, 0, 1, 0], "impacto_memoria": [0.25, 25, 0.50, 0.70, 0, 1, 0], "hw_ok": true},
+    "aprendizaje": {"is_verified": true, "veces_repetido": 1, "decay_score": 0.95}
+  },
+  {
+    "_meta": {"schema_version": 2, "ts_creacion": "2026-06-15T04:00:00Z", "ts_ultima_modificacion": "2026-06-15T04:00:00Z"},
+    "id": "fallo-004-vm-journal-corrupto",
+    "episodio": {
+      "ts_inicio": "2026-06-15T04:00:00Z", "ts_resolucion": null,
+      "duracion_minutos": null, "sintoma_raw": "journal systemd corrupto en VM Hetzner",
+      "severidad_inicial": "media", "servicio_afectado": "systemd-journald",
+      "tipo_incidencia": "HardwareFailure",
+      "subtipo": "vm_storage", "dispositivo": "/var/log/journal/",
+      "maquina": "alemania"
+    },
+    "diagnostico": {
+      "causa_detectada": "systemd-journald detectó journal corrupto: File corrupted or uncleanly shut down, renaming and replacing",
+      "confianza_diagnostico": 0.9, "metodo": "auto_deteccion_dmesg",
+      "incidente_similar_referido": null
+    },
+    "accion": {
+      "comando": "journalctl --rotate && journalctl --vacuum-size=100M",
+      "tipo": "mantenimiento_journal", "hash_firma": "sha256:fallo004-v1",
+      "dry_run_previo": false
+    },
+    "verificacion": {
+      "resultado": "pendiente", "solucion_funciono": null,
+      "health_score_pre": 85, "health_score_post": null,
+      "intentos_fallidos": 0, "contraindicado": false
+    },
+    "contexto": {
+      "vector_estado": [0.14, 71, 0.15, 0.95, 0, 0, 0.3],
+      "impacto_memoria": [0.14, 71, 0.15, 0.95, 0, 0, 0.3],
+      "hw_ok": false, "hw_issues": ["dmesg: journal corruption detected"],
+      "flapping": false
+    },
+    "aprendizaje": {
+      "is_verified": false, "veces_repetido": 1, "decay_score": 1.0
+    }
+  }
+]
