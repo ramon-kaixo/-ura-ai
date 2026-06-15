@@ -7,7 +7,7 @@ from pathlib import Path
 
 import blake3
 
-from core.memoria.detector import detectar_tipo
+from core.memoria.detectores import ejecutar_detector
 from core.memoria.extractores import extraer_archivo
 from core.memoria.archivo import guardar_texto as archivar_texto
 
@@ -59,7 +59,7 @@ def procesar_archivo(ruta: Path) -> dict | None:
             log.info(f"Duplicado {ruta.name} (hash={h[:12]}...) → cuarentena/{cuarentena.name}")
             return None
 
-        tipo = detectar_tipo(ruta)
+        tipo = ejecutar_detector("hash_texto", ruta)
         PROCESADOS.add(h)
 
         extraido = extraer_archivo(ruta, tipo)
