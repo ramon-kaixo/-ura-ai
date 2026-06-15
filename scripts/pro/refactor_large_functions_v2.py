@@ -31,7 +31,6 @@ from compactador_espacios import compactar, descompactar
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11435")
 OLLAMA_FALLBACK_URL = "http://10.164.1.99:11434"
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
-WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
@@ -243,11 +242,11 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
                     subprocess.run(
-                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+                        ["python3", "-m", "ruff", "check", "--fix", "--unsafe-fixes", file_path],
                         capture_output=True,
                         timeout=30,
                     )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
+                    subprocess.run(["python3", "-m", "ruff", "format", file_path], capture_output=True, timeout=30)
                 log("  Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -263,9 +262,9 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
     subprocess.run(
-        ["ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30,
+        ["python3", "-m", "ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30,
     )
-    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
+    subprocess.run(["python3", "-m", "ruff", "format", file_path], capture_output=True, timeout=30)
     return True
 
 
