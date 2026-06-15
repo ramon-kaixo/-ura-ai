@@ -56,6 +56,7 @@ class Scanner:
         r.calibration_status = "learning" if not self.cal.hay_baseline else "active"
         r.duplicados = self._detectar_duplicados()
         r.snapshot_hash = self._tomar_snapshot_hash()
+        r.ok = True
         log.info("scan %.2fs score=%.1f diff=%d", time.time()-t0, r.health_score, r.diff_total)
         return r
 
