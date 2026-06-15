@@ -1,4 +1,4 @@
-import os, logging, time, json
+import os, logging, time, json, subprocess
 from pathlib import Path
 from datetime import datetime
 from core.state import ScanResult
@@ -48,16 +48,30 @@ class Scanner:
         try: import socket; return socket.gethostname()
         except: return "unknown"
 
+    DOCKER_ALIASES = {"vane": "perplexica-vane", "agent-search": "agent-search-agent-search-1"}
+
     def _check_servicios(self) -> dict:
         s = {}
-        for svc in ["sshd", "docker", "qdrant", "n8n", "searxng", "vane"]:
+        for svc in ["sshd", "docker", "opencode"]:
             try:
-                import subprocess
                 r = subprocess.run(["systemctl", "is-active", svc], capture_output=True, text=True, timeout=5)
                 s[svc] = r.stdout.strip()
             except: s[svc] = "unknown"
-        s["opencode"] = self._check_opencode()
+        docker_containers = self._list_docker_containers()
+        for svc in ["qdrant", "n8n", "searxng", "vane", "agent-search"]:
+            name = self.DOCKER_ALIASES.get(svc, svc)
+            state = docker_containers.get(name, "not_found")
+            s[svc] = "active" if state == "running" else state
         return s
+
+    def _list_docker_containers(self) -> dict:
+        try:
+            r = subprocess.run(
+                ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
+                capture_output=True, text=True, timeout=10
+            )
+            return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
+        except: return {}
 
     def _check_opencode(self) -> str:
         try:
