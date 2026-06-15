@@ -328,7 +328,7 @@ from monitor.snc import repair_attempts
 
 # T1: runbook JSON schema
 rb = load_runbook()
-check("T1: runbook.version >= 1.0", lambda: rb.get("version", "0") >= "1.0")
+check("T1: runbook.version = 1.0", lambda: rb.get("version") == "1.0")
 check("T1: runbook tiene commands", lambda: len(rb.get("commands", {})) >= 3)
 check("T1: runbook tiene retry_policy", lambda: "max_attempts" in rb.get("retry_policy", {}))
 check("T1: retry_policy.max_attempts = 3", lambda: rb["retry_policy"]["max_attempts"] == 3)
@@ -432,7 +432,7 @@ check("P1: clasificar_peticion retorna string",
 # P1-11: PromptCache tiene max_size
 from core.model_router import PromptCache
 
-cache = PromptCache(ttl=99999)
+cache = PromptCache(ttl=99999, max_size=3)
 cache.set("p1", "test", {"v": 1})
 cache.set("p2", "test", {"v": 2})
 cache.set("p3", "test", {"v": 3})
