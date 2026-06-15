@@ -30,13 +30,15 @@ class UraConfig:
 
     @classmethod
     def load(cls, path: str = "") -> "UraConfig":
-        env_path = path or os.environ.get("URA_CONFIG", "")
+        candidates = [p for p in [path, os.environ.get("URA_CONFIG", ""), "/etc/ura/config.json"] if p]
         c = cls()
-        if env_path and Path(env_path).exists():
-            d = json.loads(Path(env_path).read_text())
-            for k, v in d.items():
-                if hasattr(c, k):
-                    setattr(c, k, v)
+        for p in candidates:
+            if p and Path(p).exists():
+                d = json.loads(Path(p).read_text())
+                for k, v in d.items():
+                    if hasattr(c, k):
+                        setattr(c, k, v)
+                break
         c.qdrant_host = os.environ.get("URA_QDRANT_HOST", c.qdrant_host)
         c.log_level = os.environ.get("URA_LOG_LEVEL", c.log_level)
         return c
