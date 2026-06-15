@@ -40,6 +40,7 @@ def main():
     sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
     sub.add_parser("health-check", help="Verificar todos los componentes del monitor")
     sub.add_parser("qdrant-backup", help="Exportar Qdrant a JSON de respaldo")
+    sub.add_parser("summarise", help="Resumen one-line del sistema (MOTD)")
 
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
@@ -243,6 +244,33 @@ def main():
         backup_path.write_text(json.dumps({"incidentes": incidents, "exported_at": datetime.utcnow().isoformat() + "Z",
                                             "total": len(incidents)}, indent=2))
         print(json.dumps({"ok": True, "path": str(backup_path), "total": len(incidents)}, indent=2))
+
+    elif args.command == "summarise":
+        import socket
+        host = socket.gethostname()
+        estado_path = Path(config.deploy_dir) / "estado_alemania.json"
+        if not estado_path.exists():
+            print(f"URA {host}: sin datos (ejecuta pipeline)")
+            sys.exit(1)
+        d = json.loads(estado_path.read_text())
+        hs = d.get("health_score", "?")
+        svc_total = len(d.get("servicios", {}))
+        svc_ko = sum(1 for v in d.get("servicios", {}).values() if v in ("inactive", "failed"))
+        ram = d.get("recursos", {}).get("ram_pct", 0)
+        disk = d.get("recursos", {}).get("disk_pct", 0)
+        trend_path = Path(config.deploy_dir) / "trends.ndjson"
+        trend_pts = 0
+        perf_info = ""
+        if trend_path.exists():
+            trend_pts = sum(1 for _ in trend_path.open())
+            lines = [json.loads(l) for l in trend_path.read_text().splitlines() if l.strip()]
+            with_p = [l for l in lines if "perf" in l]
+            if with_p:
+                p = with_p[-1]["perf"]
+                perf_info = f" scan={p.get('scan_s',0)}s"
+        qdrant = QdrantClient.instancia(config)
+        qd_host = "local" if config.qdrant_host in ("localhost", "127.0.0.1") else config.qdrant_host
+        print(f"URA {host}: health={hs} svc={svc_total}({svc_ko}KO) RAM={ram}% DISK={disk}% qdrant={qd_host} qd{'OK' if qdrant.disponible else 'DOWN'}{perf_info} trend={trend_pts}pts")
 
 if __name__ == "__main__":
     main()
