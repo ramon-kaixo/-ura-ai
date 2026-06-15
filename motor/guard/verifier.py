@@ -1,6 +1,10 @@
-import json, logging, subprocess, time
-from core.state import VerifyResult
+import json
+import logging
+import subprocess
+import time
+
 from core.config import UraConfig
+from core.state import VerifyResult
 
 log = logging.getLogger("ura.guard.verifier")
 
@@ -39,7 +43,7 @@ def _test_ollama() -> str:
             ["curl", "-sf", "-X", "POST", URL_OLLAMA,
              "-H", "Content-Type: application/json",
              "-d", '{"model":"test","messages":[{"role":"user","content":"ping"}]}'],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=10,
         )
         if r.returncode == 0:
             try:
@@ -53,9 +57,9 @@ def _test_ollama() -> str:
         log.warning("test_ollama falló: %s", e)
         return ""
 
-def _revertir_cambios():
+def _revertir_cambios() -> None:
     """Reinicia el servicio opencode para revertir cambios."""
     try:
         subprocess.run(["systemctl", "restart", "opencode"], timeout=15)
     except Exception as e:
-        log.error("revertir cambios falló: %s", e)
+        log.exception("revertir cambios falló: %s", e)

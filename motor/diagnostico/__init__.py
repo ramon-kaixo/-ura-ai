@@ -1,13 +1,17 @@
-import json, logging, subprocess, hashlib
+import hashlib
+import json
+import logging
+import subprocess
 from datetime import datetime
 from pathlib import Path
-from core.state import ScanResult, DiagnoseResult
+
 from core.config import UraConfig
 from core.qdrant_client import QdrantClient
-from diagnostico.pattern_matcher import buscar_patrones
-from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
-from diagnostico.circuit_breaker import CircuitBreaker
+from core.state import DiagnoseResult, ScanResult
 from diagnostico.backup_knowledge import backup_incidente
+from diagnostico.circuit_breaker import CircuitBreaker
+from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
+from diagnostico.pattern_matcher import buscar_patrones
 
 log = logging.getLogger("ura.diagnostico")
 
@@ -16,7 +20,7 @@ RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode
 class Diagnostico:
     """Motor de diagnóstico: busca patrones, correlaciona, determina causas raíz."""
 
-    def __init__(self, config: UraConfig, qdrant: QdrantClient):
+    def __init__(self, config: UraConfig, qdrant: QdrantClient) -> None:
         self.config = config
         self.qdrant = qdrant
         self.cb = CircuitBreaker(qdrant)
@@ -80,7 +84,7 @@ class Diagnostico:
         """Extrae causas raíz de las correlaciones."""
         return [c["causa_raiz"] for c in correlaciones if "causa_raiz" in c]
 
-    def _guardar_incidente_qdrant(self, diag: DiagnoseResult, scan: ScanResult):
+    def _guardar_incidente_qdrant(self, diag: DiagnoseResult, scan: ScanResult) -> None:
         """Persiste el diagnóstico como incidente en Qdrant."""
         if not diag.incidentes:
             return

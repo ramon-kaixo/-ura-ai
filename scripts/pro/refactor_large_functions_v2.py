@@ -242,11 +242,11 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
                     subprocess.run(
-                        ["python3", "-m", "ruff", "check", "--fix", "--unsafe-fixes", file_path],
+                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
                         capture_output=True,
                         timeout=30,
                     )
-                    subprocess.run(["python3", "-m", "ruff", "format", file_path], capture_output=True, timeout=30)
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
                 log("  Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -262,9 +262,9 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
     subprocess.run(
-        ["python3", "-m", "ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30,
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30,
     )
-    subprocess.run(["python3", "-m", "ruff", "format", file_path], capture_output=True, timeout=30)
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
     return True
 
 

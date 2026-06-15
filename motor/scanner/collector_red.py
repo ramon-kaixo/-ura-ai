@@ -1,4 +1,8 @@
-import logging, subprocess, json, socket
+import json
+import logging
+import socket
+import subprocess
+
 from core.config import UraConfig
 
 log = logging.getLogger("ura.scanner.red")
@@ -92,7 +96,6 @@ def _check_exit_node(peers: dict) -> bool:
     if "hetzner" in host:
         return True
     for name, info in peers.items():
-        if "hetzner" in name.lower() or "exit" in name.lower():
-            if info.get("online"):
-                return True
+        if ("hetzner" in name.lower() or "exit" in name.lower()) and info.get("online"):
+            return True
     return False

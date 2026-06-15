@@ -87,7 +87,7 @@ def load_manifest() -> dict:
 def save_manifest(manifest: dict) -> None:
     """Guarda el manifest (determinista: mismo estado → mismo archivo)."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Verificar espacio en disco antes de escribir
     try:
         import shutil
@@ -95,11 +95,12 @@ def save_manifest(manifest: dict) -> None:
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:
             log.error(f"Espacio en disco insuficiente: {free_space} bytes libres, {required_space} bytes requeridos")
-            raise OSError("Espacio en disco insuficiente")
+            msg = "Espacio en disco insuficiente"
+            raise OSError(msg)
     except Exception as e:
-        log.error(f"Error verificando espacio en disco: {e}")
+        log.exception(f"Error verificando espacio en disco: {e}")
         raise
-    
+
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
@@ -158,7 +159,7 @@ def index_documents(force: bool = False) -> dict:
             filepath = DOCS_DIR / rel_path
             text = filepath.read_text(encoding="utf-8")
         except Exception as e:
-            log.error(f"Error crítico leyendo {rel_path}: {e}")
+            log.exception(f"Error crítico leyendo {rel_path}: {e}")
             continue
 
         chunks = _chunk_text(text)
@@ -179,7 +180,7 @@ def index_documents(force: bool = False) -> dict:
             collection.add(documents=chunks, ids=ids, metadatas=metadatas)
             stats["chunks_added"] += len(chunks)
         except Exception as e:
-            log.error(f"Error crítico indexando {rel_path}: {e}")
+            log.exception(f"Error crítico indexando {rel_path}: {e}")
             continue
 
         manifest["files"][rel_path] = {
@@ -214,7 +215,7 @@ def query(question: str, top_k: int = TOP_K) -> list[dict]:
             n_results=min(top_k, 10),
         )
     except Exception as e:
-        log.error(f"Error crítico consultando ChromaDB: {e}")
+        log.exception(f"Error crítico consultando ChromaDB: {e}")
         return []
 
     if not results or not results.get("documents") or not results["documents"][0]:

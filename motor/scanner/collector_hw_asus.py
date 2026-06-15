@@ -1,4 +1,6 @@
-import logging, subprocess, glob
+import glob
+import logging
+import subprocess
 
 log = logging.getLogger("ura.scanner.hw_asus")
 

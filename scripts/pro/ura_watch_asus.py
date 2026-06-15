@@ -5,9 +5,10 @@ Se ejecuta vía launchd cada 2 minutos.
 ASUS MAC: 30:c5:99:c0:64:c3
 Check via: Tailscale (100.72.103.12) o Ethernet (10.164.1.99)
 """
+import contextlib
+import os
 import socket
 import subprocess
-import os
 import time
 
 ASUS_MAC = "30:c5:99:c0:64:c3"
@@ -21,7 +22,6 @@ LOG = "/Users/ramonesnaola/URA/logs/ura_asus_watch.log"
 def log(msg: str) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
-    print(line)
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     with open(LOG, "a") as f:
         f.write(line + "\n")
@@ -29,7 +29,7 @@ def log(msg: str) -> None:
 def ping(ip: str) -> bool:
     r = subprocess.run(
         ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],
-        capture_output=True, timeout=10
+        capture_output=True, timeout=10,
     )
     return r.returncode == 0
 
@@ -54,11 +54,9 @@ def main() -> None:
     alive = any(ping(ip) for ip in ASUS_IPS)
 
     if alive:
-        log(f"ASUS responde")
-        try:
+        log("ASUS responde")
+        with contextlib.suppress(FileNotFoundError):
             os.remove(FAIL_LOG)
-        except FileNotFoundError:
-            pass
         return
 
     # No responde — incrementar contador

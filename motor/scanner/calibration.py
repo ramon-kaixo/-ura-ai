@@ -1,4 +1,6 @@
-import json, logging, statistics
+import json
+import logging
+import statistics
 from datetime import datetime
 from pathlib import Path
 
@@ -7,7 +9,7 @@ log = logging.getLogger("ura.scanner.calib")
 class Calibration:
     """Gestión de baseline y detección de anomalías por calibración."""
 
-    def __init__(self, config):
+    def __init__(self, config) -> None:
         self.config = config
         self.baseline_path = Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"
         self._baseline = self._cargar()
@@ -39,11 +41,11 @@ class Calibration:
                 anomalias.append(f"Calib.{metric}={actual} > limite={bl.get(limite, 999)}")
         return anomalias
 
-    def learn(self, estado, trends: list = None) -> dict:
+    def learn(self, estado, trends: list | None = None) -> dict:
         """Entrena baseline a partir de un scan y tendencias históricas."""
         bl = {k: v for k, v in estado.recursos.items() if isinstance(v, (int, float))}
         if trends and len(trends) >= 3:
-            for metrica, factor in [("ram_pct", 1.3), ("disk_pct", 1.2), ("load_1m", 2.0)]:
+            for metrica, _factor in [("ram_pct", 1.3), ("disk_pct", 1.2), ("load_1m", 2.0)]:
                 vals = [t.get(metrica, 0) for t in trends if isinstance(t.get(metrica), (int, float))]
                 if len(vals) >= 3:
                     media = statistics.mean(vals)

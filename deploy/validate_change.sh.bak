@@ -1,0 +1,73 @@
+#!/bin/bash
+# ============================================================
+# validate_change.sh — Hook de validación URA
+# Valida que un cambio pase los 139 tests ANTES de aplicarse.
+# Uso: bash validate_change.sh [directorio]
+# ============================================================
+set -e
+
+ROOT="${1:-$(pwd)}"
+ERRORS=0
+
+red()   { echo -e "\033[31m  ✗ $1\033[0m"; ((ERRORS++)); }
+green() { echo -e "\033[32m  ✓ $1\033[0m"; }
+
+echo ""
+echo "URA Change Validator"
+echo "===================="
+echo "Directorio: $ROOT"
+echo ""
+
+# 1. Tests unitarios (127)
+echo "[1/4] Tests unitarios (127 checks)"
+if python3 "$ROOT/tests/test_unit.py" > /dev/null 2>&1; then
+    green "127/127 tests pasaron"
+else
+    red "Tests unitarios fallaron"
+    python3 "$ROOT/tests/test_unit.py" 2>&1 | grep "✗" | head -5
+fi
+
+# 2. Tests OpenClaw (12)
+echo "[2/4] Tests OpenClaw (12 checks)"
+if python3 -m pytest "$ROOT/tests/test_openclaw.py" -q > /dev/null 2>&1; then
+    green "12/12 tests pasaron"
+else
+    red "Tests OpenClaw fallaron"
+    python3 -m pytest "$ROOT/tests/test_openclaw.py" -v 2>&1 | grep "FAILED" | head -5
+fi
+
+# 3. Compilación Python
+echo "[3/4] Compilación Python"
+for f in core/model_router.py monitor/snc.py monitor/openclaw.py monitor/error_logger.py monitor/mac_heartbeat.py; do
+    if python3 -m py_compile "$ROOT/$f" 2>/dev/null; then
+        green "$f"
+    else
+        red "$f no compila"
+    fi
+done
+
+# 4. Schema JSON
+echo "[4/4] Schema JSON"
+SCHEMA=$(cd "$ROOT" && python3 -c "
+from core.config_manager import validate_schema
+errors = validate_schema()
+if errors:
+    for e in errors:
+        print(e)
+    exit(1)
+" 2>&1)
+if [ $? -eq 0 ]; then
+    green "Schema OK"
+else
+    red "Schema errors: $SCHEMA"
+fi
+
+echo ""
+if [ "$ERRORS" -gt 0 ]; then
+    echo -e "\033[31mCAMBIO RECHAZADO: $ERRORS error(es)\033[0m"
+    echo "Corrige los errores antes de sincronizar."
+    exit 1
+else
+    echo -e "\033[32mCAMBIO ACEPTADO: 139/139 tests pasaron\033[0m"
+    exit 0
+fi

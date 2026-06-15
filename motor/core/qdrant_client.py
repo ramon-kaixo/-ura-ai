@@ -1,6 +1,8 @@
-import logging, threading
+import logging
+import threading
 from datetime import datetime
 from typing import Optional
+
 from core.config import UraConfig
 
 log = logging.getLogger("ura.qdrant")
@@ -14,13 +16,13 @@ class QdrantClient:
     _instancia: Optional["QdrantClient"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __init__(self, config: UraConfig):
+    def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.disponible = False
         self._cliente = None
         self._conectar()
 
-    def _conectar(self):
+    def _conectar(self) -> None:
         """Intenta conectar vía cliente nativo; fallback a REST."""
         try:
             from qdrant_client import QdrantClient as QC
@@ -47,7 +49,7 @@ class QdrantClient:
                 log.warning("fallback REST qdrant falló: %s", e_rest)
             log.warning("qdrant no disponible en %s:%s", self.config.qdrant_host, self.config.qdrant_port)
 
-    def _asegurar_coleccion(self):
+    def _asegurar_coleccion(self) -> None:
         """Crea la colección de incidentes si no existe."""
         try:
             if getattr(self, "_modo_rest", False):
@@ -104,11 +106,11 @@ class QdrantClient:
                 collection_name=COLECCION_INCIDENTES,
                 points=[models.PointStruct(id=abs(hash(payload["timestamp_inicio"])),
                                             vector=payload["impacto_memoria"],
-                                            payload=payload)]
+                                            payload=payload)],
             )
             return True
         except Exception as e:
-            log.error("error guardar incidente: %s", e)
+            log.exception("error guardar incidente: %s", e)
             return False
 
     def _build_payload(self, incidente: dict) -> dict:
@@ -139,10 +141,10 @@ class QdrantClient:
             r = requests.put(url, json={"points": [point]}, timeout=5)
             return r.status_code in (200, 201)
         except Exception as e:
-            log.error("error guardar incidente (REST): %s", e)
+            log.exception("error guardar incidente (REST): %s", e)
             return False
 
-    def buscar_incidentes(self, vector: list = None, limit: int = 10) -> list:
+    def buscar_incidentes(self, vector: list | None = None, limit: int = 10) -> list:
         """Busca incidentes almacenados en Qdrant."""
         if not self.disponible:
             return []
@@ -155,7 +157,7 @@ class QdrantClient:
             pts = r[0] if r else []
             return [p.payload for p in pts if hasattr(p, "payload")]
         except Exception as e:
-            log.error("error buscar incidentes: %s", e)
+            log.exception("error buscar incidentes: %s", e)
             return []
 
     def _buscar_rest(self, limit: int = 5) -> list:

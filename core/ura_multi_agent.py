@@ -20,6 +20,7 @@
   Telemetría: RAM, CPU, tokens, F821, modelos disponibles
 """
 
+import contextlib
 import json
 import os
 import shutil
@@ -323,10 +324,8 @@ class AgenteEjecutor:
                 resultados["workers"].append({"id": i + 1, "ok": ok, "err": err})
             except subprocess.TimeoutExpired:
                 proc.kill()
-                try:
+                with contextlib.suppress(Exception):
                     proc.wait(timeout=5)
-                except Exception:
-                    pass
                 resultados["workers"].append({"id": i + 1, "ok": 0, "err": 1, "timeout": True})
             finally:
                 dead_man.cancel()
@@ -335,10 +334,8 @@ class AgenteEjecutor:
                         proc.terminate()
                         proc.wait(timeout=5)
                     except Exception:
-                        try:
+                        with contextlib.suppress(Exception):
                             proc.kill()
-                        except Exception:
-                            pass
 
         return resultados
 

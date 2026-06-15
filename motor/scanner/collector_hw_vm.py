@@ -1,4 +1,5 @@
-import logging, subprocess
+import logging
+import subprocess
 
 log = logging.getLogger("ura.scanner.hw_vm")
 

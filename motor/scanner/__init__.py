@@ -1,15 +1,19 @@
-import os, logging, time, subprocess
-from pathlib import Path
+import logging
+import os
+import subprocess
+import time
 from datetime import datetime
-from core.state import ScanResult
+from pathlib import Path
+
 from core.config import UraConfig
-from scanner.sliding_window import SlidingWindow
-from scanner.diff_detector import compute_diff
+from core.state import ScanResult
 from scanner.calibration import Calibration
-from scanner.collector_red import escanear_red
-from scanner.collector_hw_vm import escanear_hw_vm
-from scanner.collector_hw_asus import escanear_hw_asus
 from scanner.collector_asus import escanear_asus
+from scanner.collector_hw_asus import escanear_hw_asus
+from scanner.collector_hw_vm import escanear_hw_vm
+from scanner.collector_red import escanear_red
+from scanner.diff_detector import compute_diff
+from scanner.sliding_window import SlidingWindow
 
 log = logging.getLogger("ura.scanner")
 
@@ -21,7 +25,7 @@ RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode
 class Scanner:
     """Escáner principal del sistema: servicios, recursos, red y hardware."""
 
-    def __init__(self, config: UraConfig):
+    def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.sliding = SlidingWindow()
         self.cal = Calibration(config)
@@ -116,7 +120,7 @@ class Scanner:
         try:
             r = subprocess.run(
                 ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, timeout=10,
             )
             return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
         except Exception as e:

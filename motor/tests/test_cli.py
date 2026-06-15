@@ -1,11 +1,15 @@
-import json, sys, tempfile
+import json
+import sys
+import tempfile
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.config import UraConfig
 from core.state import ScanResult
 
-def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
+
+def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0) -> None:
     lines = []
     for i in range(puntos):
         lines.append(json.dumps({"ts": f"2026-06-15T0{i:02d}:00:00Z", "hostname": "test",
@@ -18,15 +22,15 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
                               "ok": True, "perf": {"scan_s": 1.2, "diag_s": 0.1, "ver_s": 0.0, "total_s": 1.3}}))
     Path(path).write_text("\n".join(lines) + "\n")
 
-def test_detect_no_trends():
+def test_detect_no_trends() -> None:
     from scanner.calibration import Calibration
     cfg = UraConfig()
     cal = Calibration(cfg)
     res = cal.detect([])
-    assert res["ok"] == True
+    assert res["ok"]
     assert len(res["anomalias"]) == 0
 
-def test_detect_with_trends():
+def test_detect_with_trends() -> None:
     from scanner.calibration import Calibration
     cfg = UraConfig()
     cal = Calibration(cfg)
@@ -37,7 +41,7 @@ def test_detect_with_trends():
     anomalias = [a for a in res["anomalias"] if a["metrica"] == "ram_pct"]
     assert len(anomalias) > 0
 
-def test_calibration_with_trends():
+def test_calibration_with_trends() -> None:
     from scanner.calibration import Calibration
     cfg = UraConfig()
     cfg.data_dir = tempfile.mkdtemp()
@@ -48,7 +52,7 @@ def test_calibration_with_trends():
     bl = cal.learn(estado, trends)
     assert "ram_pct_max" in bl
 
-def test_pattern_matcher_empty():
+def test_pattern_matcher_empty() -> None:
     from diagnostico.pattern_matcher import buscar_patrones
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "active", "docker": "active"}
@@ -60,10 +64,10 @@ def test_pattern_matcher_empty():
     scan.contenedores_ko = []
     scan.diff_total = 0
     cfg = UraConfig()
-    incidents, costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) == 0
 
-def test_pattern_matcher_failure():
+def test_pattern_matcher_failure() -> None:
     from diagnostico.pattern_matcher import buscar_patrones
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "failed", "docker": "active"}
@@ -75,26 +79,26 @@ def test_pattern_matcher_failure():
     scan.contenedores_ko = ["agent-foo"]
     scan.diff_total = 5
     cfg = UraConfig()
-    incidents, costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) >= 5
-    tipos = set(i["tipo"] for i in incidents)
+    tipos = {i["tipo"] for i in incidents}
     assert "ServiceFailure" in tipos
     assert "ResourcePressure" in tipos
     assert "ConfigConflict" in tipos
     assert "HardwareFailure" in tipos
 
-def test_correlacion():
+def test_correlacion() -> None:
     from diagnostico.correlacion import agrupar_incidentes
     tags = ["ServiceFailure", "docker"]
     r = agrupar_incidentes(tags, hw_ok=True, hw_issues=[])
     assert isinstance(r, list)
 
-def test_sliding_window():
+def test_sliding_window() -> None:
     from scanner.sliding_window import SlidingWindow
     sw = SlidingWindow()
     assert sw is not None
 
-def test_diff_detector():
+def test_diff_detector() -> None:
     from scanner.diff_detector import compute_diff
     actual = {"servicios": {"sshd": "active", "docker": "inactive"},
               "recursos": {"ram_pct": 95.0},
@@ -108,15 +112,16 @@ def test_diff_detector():
     assert diff > 0
     assert len(anomalias) > 0
 
-def test_status_returns_json():
-    import subprocess, json
+def test_status_returns_json() -> None:
+    import json
+    import subprocess
     r = subprocess.run(["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],
                        capture_output=True, text=True, timeout=10)
     if r.returncode == 0 and r.stdout.strip():
         d = json.loads(r.stdout)
         assert "hostname" in d or "health_score" in d
 
-def test_preflight_module():
+def test_preflight_module() -> None:
     from guard.preflight import ejecutar_preflight
     cfg = UraConfig()
     r = ejecutar_preflight(cfg)
