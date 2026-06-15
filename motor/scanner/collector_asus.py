@@ -1,4 +1,4 @@
-import logging, subprocess, json
+import logging, subprocess, json, os
 
 log = logging.getLogger("ura.scanner.asus")
 
@@ -37,7 +37,12 @@ def _check_whisper(host: str) -> bool:
 
 def _check_temp(host: str) -> float:
     try:
-        r = subprocess.run(["ssh", f"root@{host}", "cat /sys/class/thermal/thermal_zone0/temp"],
-                         capture_output=True, text=True, timeout=5)
+        ssh_user = os.environ.get("URA_SSH_USER", "")
+        target = f"{ssh_user}@{host}" if ssh_user else host
+        r = subprocess.run(["ssh", "-o", "ConnectTimeout=5", target,
+                           "cat /sys/class/thermal/thermal_zone0/temp"],
+                          capture_output=True, text=True, timeout=5)
         return round(int(r.stdout.strip())/1000, 1) if r.stdout.strip() else 0
-    except: return 0
+    except Exception as e:
+        log.warning("temp remota fallo %s: %s", host, e)
+        return 0
