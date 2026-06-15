@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # sync_to_asus.sh — Sync automático Mac → ASUS
-# PRE-FLIGHT VALIDATION OBLIGATORIA: 139 tests deben pasar.
+# PRE-FLIGHT VALIDATION OBLIGATORIA: Tests deben pasar.
 # Si falla 1 test, el rsync se ABORTA. No se sube nada imperfecto.
 # GESTIÓN INTELIGENTE DE INMUTABILIDAD: Desbloquea temporalmente.
 # ============================================================
@@ -93,6 +93,9 @@ rsync -avz --delete --delete-after --force \
     --exclude="scripts/manual_tests" \
     --exclude="scripts/GX10" \
     --exclude=".venv" \
+    --exclude="motor/" \
+    --exclude="deploy/estado_*.json" \
+    --exclude="deploy/diagnostico.json" \
     --exclude=".nervioso" \
     --exclude=".auditor_logs" \
     --exclude=".ruff_cache" \

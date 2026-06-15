@@ -46,3 +46,27 @@ Al FINAL de cada sesión (o cuando el usuario lo pida):
 1. Actualizar `bitacora/YYYY-MM-DD.md` con: objetivos, máquinas, comandos clave, archivos tocados, servicios, decisiones técnicas, problemas conocidos
 2. `git add bitacora/ && git commit --no-verify -m "docs: bitacora YYYY-MM-DD"`
 3. Incluir en el resumen final un enlace a la bitácora del día
+
+## Plan de Defensa — Inmutabilidad + Aislamiento (Producción)
+
+### FS Bug conocido
+`rsync --delete` desde Mac Mini borra `motor/`. Arreglado en `deploy/sync_to_asus.sh` (excluir motor/).
+Si reaparece: `sudo ausearch -k ura_motor_changes --start recent -i` para identificar el proceso.
+
+### Override de emergencia (si chattr +i bloquea un hotfix)
+```bash
+sudo chattr -i /ruta/al/archivo   # descongelar
+# ... hacer el cambio ...
+sudo chattr +i /ruta/al/archivo   # recongelar
+```
+
+### Rollback Qdrant
+```bash
+curl -s http://localhost:6333/collections/incidente_record/snapshots | python3 -m json.tool
+curl -X POST http://localhost:6333/collections/incidente_record/snapshots/{id}/restore
+```
+
+### Git rollback
+```bash
+git checkout pre-inmutabilidad
+```
