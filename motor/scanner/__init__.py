@@ -55,9 +55,12 @@ class Scanner:
             r.anomalias += self.cal.detectar_anomalias(r)
         r.calibration_status = "learning" if not self.cal.hay_baseline else "active"
         r.duplicados = self._detectar_duplicados()
+        r.orphans = self._detectar_orphans()
+        r.systemd_failed = self._detectar_systemd_failed()
         r.snapshot_hash = self._tomar_snapshot_hash()
         r.ok = True
-        log.info("scan %.2fs score=%.1f diff=%d", time.time()-t0, r.health_score, r.diff_total)
+        log.info("scan %.2fs score=%.1f diff=%d orphans=%d failed=%d",
+                 time.time()-t0, r.health_score, r.diff_total, len(r.orphans), len(r.systemd_failed))
         return r
 
     def _get_hostname(self):
@@ -133,6 +136,17 @@ class Scanner:
         disk_total = s.f_frsize * s.f_blocks
         disk_free = s.f_frsize * s.f_bfree
         disk_pct = round((1 - disk_free / disk_total) * 100, 1) if disk_total else 0
+        zombies = 0
+        try:
+            for p in Path("/proc").iterdir():
+                if p.name.isdigit():
+                    try:
+                        for line in (p / "status").read_text().split("\n"):
+                            if line.startswith("State:") and "Z" in line:
+                                zombies += 1
+                                break
+                    except: pass
+        except: pass
         return {
             "ram_pct": round((1 - mem_avail / mem_total) * 100, 1),
             "ram_gb": round(mem_total / 1e9, 1),
@@ -142,7 +156,7 @@ class Scanner:
             "disk_free_gb": round(disk_free / 1e9, 1),
             "load_1m": load,
             "ncpu": ncpu,
-            "zombies": 0,
+            "zombies": zombies,
         }
 
     def _check_contenedores(self) -> dict:
@@ -217,3 +231,36 @@ class Scanner:
             if os.path.isfile(archivo):
                 h.update(open(archivo, "rb").read())
         return h.hexdigest()[:16]
+
+    def _detectar_orphans(self) -> list:
+        orphans = []
+        try:
+            for p in Path("/var/run").glob("*.pid"):
+                try:
+                    pid = int(p.read_text().strip())
+                    if not Path(f"/proc/{pid}").exists():
+                        orphans.append({"pid_file": str(p), "pid": pid, "tipo": "stale_pid"})
+                except: pass
+        except: pass
+        try:
+            r = subprocess.run(["docker", "images", "-f", "dangling=true", "-q"],
+                               capture_output=True, text=True, timeout=10)
+            dangling = [i for i in r.stdout.strip().split("\n") if i]
+            if dangling:
+                orphans.append({"tipo": "docker_dangling", "cantidad": len(dangling)})
+        except: pass
+        try:
+            r = subprocess.run(["systemctl", "list-units", "--state=failed", "--no-legend"],
+                               capture_output=True, text=True, timeout=10)
+            failed = [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
+            if failed:
+                orphans.append({"tipo": "systemd_failed", "unidades": failed[:10]})
+        except: pass
+        return orphans
+
+    def _detectar_systemd_failed(self) -> list:
+        try:
+            r = subprocess.run(["systemctl", "list-units", "--state=failed", "--no-legend"],
+                               capture_output=True, text=True, timeout=10)
+            return [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
+        except: return []
