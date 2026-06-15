@@ -20,6 +20,18 @@ class Scanner:
         self.cal = Calibration(config)
         self._ventana_previa = {}
 
+    @staticmethod
+    def _es_fisico() -> bool:
+        try:
+            r = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=5)
+            return "none" in r.stdout.strip()
+        except Exception:
+            try:
+                with open("/proc/cpuinfo") as f:
+                    return "hypervisor" not in f.read()
+            except Exception:
+                return True
+
     def run(self) -> ScanResult:
         t0 = time.time()
         r = ScanResult(timestamp=datetime.utcnow().isoformat()+"Z")
@@ -28,7 +40,8 @@ class Scanner:
         r.recursos = self._check_recursos()
         r.contenedores = self._check_contenedores()
         r.red = escanear_red(self.config)
-        if self.config.is_vm:
+        is_vm = self.config.is_vm and not self._es_fisico()
+        if is_vm:
             r.hw_health = escanear_hw_vm()
         else:
             asus_info = escanear_asus(self.config)
