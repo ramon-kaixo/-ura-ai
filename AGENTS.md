@@ -238,3 +238,9 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
 - **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
 - **Zombies**: 3 (residuales del reboot, no crecen)
+
+## Protocolo de Contexto Vectorial (Knowledge Base)
+Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
+```bash
+$ python3 /home/ramon/URA/ura_ia_1972/scripts/pro/ura-query.py "descripción del cambio"
+```
