@@ -1,0 +1,21 @@
+{
+  "consensus_threshold": 0.7,
+  "ollama_url": "http://127.0.0.1:11434",
+  "debate_lock_path": "/tmp/ura_debate.lock",
+  "plan_path": "/tmp/ura_debate/plan.json",
+  "timeout_per_model": 180,
+  "models": {
+    "primary": {
+      "name": "qwen2.5-coder:14b",
+      "role": "razonador_tecnico",
+      "temperature": 0.1,
+      "max_tokens": 1024
+    },
+    "auditor": {
+      "name": "llama3.2:3b",
+      "role": "auditor_adversarial",
+      "temperature": 0.3,
+      "max_tokens": 1024
+    }
+  }
+}
