@@ -36,16 +36,28 @@ else
   log "down" "$DETAIL"
 fi
 
+
+DISK_RAW=$(echo "$OUTPUT" | grep "DISK:" | cut -d':' -f2)
+if [[ ! "$DISK_RAW" =~ ^[0-9]+$ ]]; then
+    DISK_JSON="None"
+else
+    DISK_JSON="$DISK_RAW"
+fi
+export DISK_JSON DETAIL_JSON="$DETAIL" TS="$NOW" STATUS_VAL="$STATUS"
 sudo chattr -i "$STATUS_FILE" 2>/dev/null || true
-cat > "$STATUS_FILE" <<EOF2
-{
-  "ts": "$NOW",
-  "global": "$STATUS",
-  "ip_publica": "178.105.81.83",
-  "ip_tailscale": "100.78.49.106",
-  "publica": $( [ "$STATUS" = "UP" ] && echo '"ok"' || echo '"caido"' ),
-  "tailscale": $( [ "$STATUS" = "UP" ] && echo '"ok"' || echo '"caido"' ),
-  "detalle": $DETAIL
+python3 << 'SCRIPT' > "$STATUS_FILE"
+import json, os
+detail = json.loads(os.environ["DETAIL_JSON"])
+payload = {
+    "ts": os.environ["TS"],
+    "global": os.environ["STATUS_VAL"],
+    "ip_publica": "178.105.81.83",
+    "ip_tailscale": "100.78.49.106",
+    "publica": "ok" if os.environ["STATUS_VAL"] == "UP" else "caido",
+    "tailscale": "ok" if os.environ["STATUS_VAL"] == "UP" else "caido",
+    "disk_usage_pct": None if os.environ["DISK_JSON"] == "None" else int(os.environ["DISK_JSON"]),
+    "detalle": detail
 }
-EOF2
+print(json.dumps(payload, indent=2))
+SCRIPT
 sudo chattr +i "$STATUS_FILE" 2>/dev/null || true

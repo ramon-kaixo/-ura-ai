@@ -55,6 +55,7 @@ class VRAMAwareScheduler:
         self._active: Dict[str, Dict[str, Any]] = {}
         self._current_mb = 0
         self._hot_models: set = set()
+        self._consecutive_smi_errors = 0
         self._lock = asyncio.Lock()
         self._ollama_client = httpx.AsyncClient(base_url=OLLAMA_SOCKET)
         self._log = logging.getLogger("mochila.vram")
@@ -94,24 +95,47 @@ class VRAMAwareScheduler:
         return base + kv_cache_overhead
 
     async def sync_vram(self):
+        proc = None
         try:
-            proc = await asyncio.create_subprocess_exec(
-                "nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader",
-                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
-            out, _ = await asyncio.wait_for(proc.communicate(), timeout=5.0)
-            processes = [int(line.strip().split()[0]) for line in out.decode().splitlines() if line.strip()]
-            self._current_mb = sum(processes) if processes else 0
+            proc = await asyncio.wait_for(
+                asyncio.create_subprocess_exec(
+                    "nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader",
+                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL),
+                timeout=0.2)
+            stdout, _ = await proc.communicate()
+            if proc.returncode == 0:
+                total = 0
+                for line in stdout.decode().strip().split("\n"):
+                    if line.strip():
+                        total += int(line.strip().split()[0])
+                self._current_mb = total
+                self._consecutive_smi_errors = 0
+        except asyncio.TimeoutError:
+            self._consecutive_smi_errors += 1
+            self._log.warning("nvidia-smi timeout (%d/3)", self._consecutive_smi_errors)
+            if proc:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except Exception:
+                    pass
         except Exception as e:
-            self._log.warning("sync_vram nvidia-smi fallback: %s", e)
-            self._current_mb = 0
+            self._consecutive_smi_errors += 1
+            self._log.warning("nvidia-smi error (%d/3): %s", self._consecutive_smi_errors, e)
+            if proc:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except Exception:
+                    pass
+        if self._consecutive_smi_errors >= 3:
+            self._log.critical("nvidia-smi caido persistentemente. Bloqueando VRAM.")
+            self._current_mb = self.max_mb
         try:
             resp = await self._ollama_client.get("/api/ps")
             if resp.status_code == 200:
                 data = resp.json()
-                for m in data.get("models", []):
-                    mid = m.get("name", "unknown").split(":")[0]
-                    if m.get("size_vram", 0) > 0:
-                        self._hot_models.add(mid)
+                self._hot_models = {m["name"] for m in data.get("models", [])}
         except Exception:
             pass
 
