@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from core.seguridad.rollback_manager import RollbackManager
+from sandbox.sandbox_runner import SandboxClient
 
 logger = logging.getLogger("ura.wrapper")
 
@@ -118,6 +119,20 @@ class OpenCodeWrapper:
 
             tmp_path = self.rollback.safe_write(abs_path, content)
             logger.info("[WRAPPER] Escritura temporal OK: %s", tmp_path)
+
+            try:
+                sandbox = SandboxClient()
+                sandbox_result = sandbox.run_validation(tmp_path, rel_path)
+                if not sandbox_result.get("passed", False):
+                    logger.error(
+                        "[WRAPPER] Sandbox rechazo para %s: %s",
+                        rel_path, sandbox_result.get("errors"),
+                    )
+                    self.rollback.rollback(abs_path)
+                    return False, f"Sandbox: {sandbox_result.get('errors', ['unknown'])}"
+                logger.info("[WRAPPER] Sandbox OK para %s", rel_path)
+            except Exception as e:
+                logger.warning("[WRAPPER] Sandbox no disponible, saltando: %s", e)
 
             ok = self.rollback.commit_if_valid(abs_path, task_id)
             if ok:
