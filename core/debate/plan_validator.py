@@ -148,6 +148,13 @@ def main():
                 return await run_debate(data.get("plan", ""), context)
         result = asyncio.run(_run())
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        verdict = result.get("verdict", "")
+        if verdict == "CONSENSUS":
+            sys.exit(0)
+        elif verdict == "HUMAN_ARBITRATION":
+            sys.exit(2)
+        else:
+            sys.exit(1)
     else:
         print(json.dumps(context, ensure_ascii=False, indent=2))
 

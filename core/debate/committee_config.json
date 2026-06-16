@@ -1,5 +1,5 @@
 {
-  "consensus_threshold": 0.7,
+  "consensus_threshold": 0.85,
   "ollama_url": "http://127.0.0.1:11434",
   "debate_lock_path": "/tmp/ura_debate.lock",
   "plan_path": "/tmp/ura_debate/plan.json",
