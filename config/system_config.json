@@ -184,11 +184,11 @@
       "fallback_model": "qwen2.5:7b",
       "cache_ttl": 7200,
       "rag": {
-        "enabled": false,
+        "enabled": true,
         "chunk_size": 500,
         "chunk_overlap": 50,
         "top_k": 5,
-        "threshold": 0.7
+        "threshold": 0.55
       }
     },
     "darwin_mac": {
