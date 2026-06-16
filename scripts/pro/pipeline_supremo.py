@@ -160,6 +160,29 @@ def step_guardian_verify(archivo):
     return run_step([sys.executable, str(GUARDIAN), "--verify", archivo, "--"], timeout=10)
 
 
+# -- SDA Gate --
+
+
+def verificar_consenso_SDA(propuesta_plan: str) -> bool:
+    ruta_plan = "/tmp/ura_debate_plan.json"
+    with open(ruta_plan, "w") as f:
+        json.dump({"plan": propuesta_plan, "author": "pipeline"}, f, ensure_ascii=False)
+    cmd = [
+        sys.executable,
+        str(SCRIPTS / "plan_validator.py"),
+        "--debate",
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300)
+    if proc.returncode == 0:
+        return True
+    elif proc.returncode == 2:
+        print("[SDA WARNING] REQUERIDA ARBITRACION HUMANA. Deteniendo pipeline.")
+        return False
+    else:
+        print(f"[SDA ERROR] Fallo interno o rechazo del comite: {proc.stderr[:500]}")
+        return False
+
+
 # -- Pipeline completo --
 
 
@@ -179,6 +202,11 @@ def ejecutar(ruta):
     poda_result = step_poda(ruta)
     report["pasos"]["poda"] = poda_result
     chromatic_map = poda_result.get("mapa_cromatico")
+
+    if not verificar_consenso_SDA(f"Refactorizar {ruta.name} en {ruta.parent.name}"):
+        print("[PIPELINE] Abortando: El Comite Local bloqueo el plan.")
+        report["resultado"] = "BLOQUEADO_SDA"
+        return report
 
     report["pasos"]["refactor"] = step_refactor()
 
@@ -246,6 +274,7 @@ def main() -> None:
     parser.add_argument("archivo", nargs="?", help="Archivo a procesar")
     parser.add_argument("--init", action="store_true", help="Inicializar conciencia")
     parser.add_argument("--status", action="store_true", help="Ver estado")
+    parser.add_argument("--task", help="Plan de tarea para validacion SDA antes de ejecutar pipeline")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
@@ -255,6 +284,36 @@ def main() -> None:
 
     if args.status:
         subprocess.run([sys.executable, str(SCRIPTS / "conciencia.py"), "--leer"])
+        return
+
+    if args.task:
+        print(f"[SDA] Evaluando plan: {args.task}")
+        ok = verificar_consenso_SDA(args.task)
+        if ok:
+            print("[SDA] CONSENSUS alcanzado. Procediendo con pipeline.")
+            if args.archivo:
+                ruta = Path(args.archivo)
+            else:
+                ruta = URA_ROOT / "bitacora" / f"task_{time.strftime('%Y%m%d_%H%M%S')}.md"
+                ruta.write_text(f"# Task: {args.task}\n")
+            init_conciencia()
+            report = ejecutar(ruta)
+            (NERVIOSO / f"report_{time.strftime('%Y%m%d_%H%M%S')}.json").write_text(
+                json.dumps(report, indent=2, ensure_ascii=False),
+            )
+            if args.json:
+                print(json.dumps(report, indent=2, ensure_ascii=False))
+            else:
+                resultado = report.get("resultado", "?")
+                print(f"[PIPELINE] Resultado: {resultado}")
+                if resultado in ("BLOQUEADO_SDA", "ROLLBACK", "RECHAZADO"):
+                    sys.exit(2)
+                elif resultado == "ESCRIBIR":
+                    sys.exit(0)
+                else:
+                    sys.exit(1)
+        else:
+            sys.exit(2)
         return
 
     if args.archivo:
