@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from core.seguridad.rollback_manager import RollbackManager
+from core.infra.state_manager import save_checkpoint, load_checkpoint, clear_checkpoint
 from sandbox.sandbox_runner import SandboxClient
 
 logger = logging.getLogger("ura.wrapper")
@@ -28,13 +29,22 @@ class OpenCodeWrapper:
         model: str = "ollama/qwen2.5-coder:14b",
         temperature: float = 0.0,
         penalty_context: str = "",
+        attempt: int = 1,
     ) -> dict[str, Any]:
+        system_msg = (
+            "Eres un ingeniero de software preciso. "
+            "Genera codigo COMPLETO y FUNCIONAL. "
+            "Prohibido usar elipsis, 'rest of the code', 'unchanged', "
+            "o cualquier abreviatura que omita lineas."
+        )
+        if attempt > 1:
+            system_msg += (
+                "\n\n[SYSTEM: RESPUESTA RECHAZADA. PLANIFICA LA SOLUCION "
+                "PASO A PASO ANTES DE ESCRIBIR CODIGO (CoT) Y EVITA "
+                "CODIGO ESPAGUETI.]"
+            )
         messages = [
-            {"role": "system",
-             "content": "Eres un ingeniero de software preciso. "
-                        "Genera código COMPLETO y FUNCIONAL. "
-                        "Prohibido usar elipsis, 'rest of the code', 'unchanged', "
-                        "o cualquier abreviatura que omita lineas."},
+            {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt},
         ]
         if penalty_context:
@@ -85,6 +95,11 @@ class OpenCodeWrapper:
         abs_path = os.path.abspath(target_file)
         rel_path = os.path.relpath(abs_path, self.rollback.repo_path)
 
+        checkpoint = load_checkpoint()
+        if checkpoint and checkpoint.get("target_file") == abs_path:
+            logger.info("[WRAPPER] Checkpoint encontrado, reanudando task=%s attempt=%d",
+                         checkpoint.get("task_id"), checkpoint.get("attempt", 1))
+
         logger.info("[WRAPPER] Inicio generacion para %s (task=%s)", rel_path, task_id)
 
         self.rollback.pre_write(abs_path)
@@ -97,7 +112,7 @@ class OpenCodeWrapper:
                 attempt + 1, MAX_RETRIES, temp, rel_path,
             )
 
-            resp = await self._chat(prompt, model=model, temperature=temp, penalty_context=penalty)
+            resp = await self._chat(prompt, model=model, temperature=temp, penalty_context=penalty, attempt=attempt)
 
             error = resp.get("error", {})
             if error.get("message") == "STREAM_ABORTED_BY_GUARDIAN":
@@ -117,6 +132,7 @@ class OpenCodeWrapper:
                 logger.warning("[WRAPPER] Intento %d respuesta vacia", attempt + 1)
                 continue
 
+            save_checkpoint(task_id, abs_path, content, attempt + 1)
             tmp_path = self.rollback.safe_write(abs_path, content)
             logger.info("[WRAPPER] Escritura temporal OK: %s", tmp_path)
 
@@ -136,14 +152,17 @@ class OpenCodeWrapper:
 
             ok = self.rollback.commit_if_valid(abs_path, task_id)
             if ok:
+                clear_checkpoint()
                 logger.info("[WRAPPER] Commit exitoso para %s", rel_path)
                 return True, content
             else:
                 self.rollback.rollback(abs_path)
+                clear_checkpoint()
                 logger.error("[WRAPPER] Commit fallido, rollback ejecutado para %s", rel_path)
                 return False, ""
 
         self.rollback.rollback(abs_path)
+        clear_checkpoint()
         msg = f"[WRAPPER] 3 intentos agotados para {rel_path}. Rollback final."
         logger.critical(msg)
         return False, msg

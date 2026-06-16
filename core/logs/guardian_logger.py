@@ -23,6 +23,9 @@ def log_event(
     attempts: int = 0,
     penalty: str = "",
     sandbox_errors: list[str] | None = None,
+    complexity: int = 0,
+    temperature: float = 0.0,
+    result_type: str = "",
 ):
     _ensure_log_dir()
     record = {
@@ -34,6 +37,9 @@ def log_event(
         "attempts": attempts,
         "penalty": penalty[:120] if penalty else "",
         "sandbox_errors": sandbox_errors or [],
+        "complexity": complexity,
+        "temperature": temperature,
+        "result_type": result_type,
     }
     line = json.dumps(record, ensure_ascii=False)
     logger.info("GUARDIAN_EVENT: %s", line)
