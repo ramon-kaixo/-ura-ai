@@ -264,3 +264,48 @@ def get_sources(results: list[dict]) -> list[dict]:
 def rag_enabled() -> bool:
     """Verifica si RAG está configurado y disponible."""
     return CONFIG.get("rag", {}).get("enabled", False) and _chromadb_available() and DOCS_DIR.exists()
+
+
+class MemoryEngine:
+    """Wrapper orientado a objetos sobre el RAG de URA.
+    Sin estado global: todo el estado vive en disco/manifest.
+    Compatible hacia atrás: las funciones de módulo siguen funcionando.
+    """
+
+    def __init__(self):
+        self.collection = _get_collection()
+
+    def query(self, question: str, n_results: int = 5) -> list[dict]:
+        return query(question, top_k=n_results)
+
+    def rag_enabled(self) -> bool:
+        return rag_enabled()
+
+    def import_remote_metadata_package(self, path_json_bruto: str) -> bool:
+        import json
+        from core.logs.guardian_logger import log_event
+        try:
+            with open(path_json_bruto) as f:
+                paquete = json.load(f)
+        except Exception as e:
+            log_event("metadata_import_failed", reason=str(e), result_type="failure")
+            return False
+
+        for item in paquete:
+            metadata_clean = {
+                "source": "remote_pipeline_alemania",
+                "tags": ",".join(item.get("tags", [])),
+                "size_bytes": item.get("size_bytes", 0),
+            }
+            try:
+                doc_id = item.get("path", "unknown").replace("/home/ramon/", "")
+                self.collection.upsert(
+                    documents=[item.get("content_summary", "")],
+                    metadatas=[metadata_clean],
+                    ids=[doc_id],
+                )
+            except Exception as e:
+                log_event("chroma_upsert_error", file=item.get("path", ""), reason=str(e), result_type="warning")
+
+        log_event("metadata_package_indexed", reason=f"total_files={len(paquete)}", result_type="success")
+        return True
