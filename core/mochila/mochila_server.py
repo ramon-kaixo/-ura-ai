@@ -48,8 +48,8 @@ CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
 
 class VRAMAwareScheduler:
-    def __init__(self, max_mb: int = 20000, queue_timeout: float = 60.0):
-        self.max_mb = max_mb
+    def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0):
+        self.max_mb = self._detect_max_vram(default_max_mb)
         self.queue_timeout = queue_timeout
         self._queue: List[Tuple[asyncio.Future, int, float, Dict[str, Any]]] = []
         self._active: Dict[str, Dict[str, Any]] = {}
@@ -58,11 +58,40 @@ class VRAMAwareScheduler:
         self._lock = asyncio.Lock()
         self._ollama_client = httpx.AsyncClient(base_url=OLLAMA_SOCKET)
         self._log = logging.getLogger("mochila.vram")
-        self._reconcile_task: asyncio.Task | None = None
+        self._task: asyncio.Task | None = None
+
+    @staticmethod
+    def _detect_max_vram(default_mb: int) -> int:
+        import subprocess
+        try:
+            res = subprocess.run(
+                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, timeout=2
+            )
+            if res.returncode == 0 and res.stdout.strip() and "N/A" not in res.stdout:
+                return int(res.stdout.strip())
+        except Exception:
+            pass
+        return default_mb
 
     def available_mb(self) -> int:
-        used = self._current_mb + sum(v["mb"] for v in self._active.values())
-        return self.max_mb - used
+        return self.max_mb - self._current_mb
+
+    @staticmethod
+    def estimar_vram(body: dict) -> int:
+        if "_vram_mb" in body:
+            return int(body["_vram_mb"])
+        model = body.get("model", "")
+        base_weights = {
+            "qwen2.5-coder:32b": 18000,
+            "qwen2.5-coder:14b": 9000,
+            "qwen2-vl-7b": 6000,
+            "llama3.2:3b": 2500,
+        }
+        base = base_weights.get(model, 512)
+        prompt = body.get("prompt", "") or str(body.get("messages", ""))
+        kv_cache_overhead = int((len(prompt) // 4) * 0.002)
+        return base + kv_cache_overhead
 
     async def sync_vram(self):
         try:
@@ -86,22 +115,18 @@ class VRAMAwareScheduler:
         except Exception:
             pass
 
-    async def reconcile(self):
-        now = time.time()
-        stale = [rid for rid, v in self._active.items()
-                 if rid.startswith("boot-") and now - v["ts"] > 3.0]
-        for rid in stale:
-            self._active.pop(rid, None)
-
     async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict | None = None) -> str | None:
         async with self._lock:
-            if self.available_mb() >= mb:
+            if len(self._active) > 0:
+                return None
+            if self.available_mb() < mb:
+                future = asyncio.get_running_loop().create_future()
+                deadline = time.time() + max(deadline_flex, 5.0)
+                self._queue.append((future, mb, deadline, data or {}))
+            else:
                 req_id = str(uuid.uuid4())
                 self._active[req_id] = {"mb": mb, "ts": time.time(), "model": (data or {}).get("model", "")}
                 return req_id
-            future = asyncio.get_running_loop().create_future()
-            deadline = time.time() + max(deadline_flex, 5.0)
-            self._queue.append((future, mb, deadline, data or {}))
         try:
             req_id = await asyncio.wait_for(future, timeout=deadline_flex + 1.0)
             return req_id
@@ -109,16 +134,25 @@ class VRAMAwareScheduler:
             return None
 
     async def acquire_boot_vram(self, mb: int) -> bool:
-        req_id = f"boot-{uuid.uuid4().hex[:8]}"
-        self._active[req_id] = {"mb": mb, "ts": time.time(), "model": "static_boot_service"}
+        async with self._lock:
+            future = asyncio.get_running_loop().create_future()
+            self._queue.append((future, mb, time.time() + 120.0, {"model": "static_boot_service"}))
+        try:
+            req_id = await asyncio.wait_for(future, timeout=90.0)
+        except asyncio.TimeoutError:
+            return False
         async def _release():
-            await asyncio.sleep(3.0)
-            self._active.pop(req_id, None)
+            try:
+                await asyncio.sleep(3.0)
+            finally:
+                async with self._lock:
+                    self._active.pop(req_id, None)
         asyncio.create_task(_release())
         return True
 
     async def release(self, req_id: str):
-        self._active.pop(req_id, None)
+        async with self._lock:
+            self._active.pop(req_id, None)
 
     async def start_loop(self):
         self._task = asyncio.create_task(self._scheduler_loop())
@@ -131,26 +165,16 @@ class VRAMAwareScheduler:
         while True:
             try:
                 await self.sync_vram()
-                await self.reconcile()
                 async with self._lock:
                     now = time.time()
                     self._queue = [(f, mb, dl, d) for f, mb, dl, d in self._queue if dl > now]
-                    candidate = None
-                    for i, (fut, mb, dl, d) in enumerate(self._queue):
-                        if fut.done():
-                            continue
-                        if self.available_mb() >= mb:
-                            candidate = (fut, mb, dl, d)
-                            self._queue.pop(i)
-                            break
-                if candidate:
-                    fut, mb, deadline, data = candidate
-                    req_id = str(uuid.uuid4())
-                    self._active[req_id] = {"mb": mb, "ts": time.time(), "model": data.get("model", "")}
-                    try:
-                        fut.set_result(req_id)
-                    except asyncio.InvalidStateError:
-                        self._active.pop(req_id, None)
+                    if len(self._active) == 0 and self._queue:
+                        fut, mb, deadline, data = self._queue[0]
+                        if not fut.done() and mb <= self.available_mb():
+                            self._queue.pop(0)
+                            req_id = str(uuid.uuid4())
+                            self._active[req_id] = {"mb": mb, "ts": now, "model": data.get("model", "")}
+                            fut.set_result(req_id)
             except Exception as e:
                 self._log.error("scheduler_loop error: %s", e)
             await asyncio.sleep(0.5)
@@ -380,10 +404,8 @@ async def proxy_gateway(path: str, request: Request):
         body = await request.json() if request.method in ("POST", "PUT") else None
     except Exception:
         pass
-    mb = 2000
-    if body and isinstance(body, dict):
-        mb = body.pop("_vram_mb", 2000)
-    req_id = await scheduler.acquire(mb=mb, deadline_flex=15.0, data={"model": path.split("/")[0] if "/" in path else path})
+    mb = scheduler.estimar_vram(body or {})
+    req_id = await scheduler.acquire(mb=mb, deadline_flex=15.0, data={"model": body.get("model", "") if body else path.split("/")[0] if "/" in path else path})
     if not req_id:
         return JSONResponse(status_code=503, content={"error": "VRAM admission denied", "detail": "No hay suficiente VRAM disponible"})
     try:
@@ -400,7 +422,7 @@ async def proxy_gateway(path: str, request: Request):
                 return JSONResponse(status_code=405, content={"error": "method not allowed"})
         return JSONResponse(content=resp.json(), status_code=resp.status_code)
     except httpx.ConnectError as e:
-        return JSONResponse(status_code=502, content={"error": f"Ollama connect error on UDS {OLLAMA_SOCKET}: {e}"})
+        return JSONResponse(status_code=502, content={"error": f"Ollama connect error: {e}"})
     finally:
         await scheduler.release(req_id)
 
@@ -413,7 +435,7 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
     ruta = Path(body.path)
     if not ruta.exists():
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
-    return pipeline_video(ruta)
+    return {"status": "stub", "detail": "pipeline_video no implementado"}
 
 
 class AnalizarRequest(BaseModel):
