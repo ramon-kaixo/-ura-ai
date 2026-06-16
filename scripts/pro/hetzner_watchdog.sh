@@ -8,7 +8,8 @@ HETZNER_HOST="100.78.49.106"
 SSH_USER="ramon_admin"
 SSH_KEY="$HOME/.ssh/id_ura_watchdog"
 CMD_REMOTO="echo \"UPTIME:\$(uptime -p)\" && echo \"DISK:\$(df / | awk 'NR==2 {print \$5}' | tr -d '%')\" && echo \"CONTAINERS:\$(docker ps -q 2>/dev/null | wc -l)\""
-SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -T"
+SSH_PORT=2222
+SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -T -p $SSH_PORT"
 STATUS_FILE="/home/ramon/URA/ura_ia_1972/deploy/estado_alemania.json"
 DISK_WARN=85; DISK_CRIT=92
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

@@ -1,0 +1,12 @@
+{
+  "ts": "2026-06-16T23:05:00Z",
+  "global": "DOWN",
+  "ip_publica": "178.105.81.83",
+  "ip_tailscale": "100.78.49.106",
+  "publica": "caido",
+  "tailscale": "caido",
+  "ssh_port_attempted": 2222,
+  "detalle": {
+    "error": "SSH daemon not responding on port 2222 (connection refused). Server reachable via Tailscale ping but SSH not running."
+  }
+}
