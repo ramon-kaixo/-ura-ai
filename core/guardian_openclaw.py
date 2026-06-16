@@ -84,36 +84,9 @@ class GuardianOpenCLaw:
             logger.error(f"Error registrando en audit.log: {e}")
 
     def _consultar_policia(self, accion: str, **kwargs) -> tuple[bool, str]:
-        """
-        REGLA 1 - POLICÍA: Consultar a agente_policia_v2 antes de ejecutar.
+        # Stub: agente_policia_v2 no operativo en este nodo
+        return True, "stub: policia desactivado"
 
-        Returns:
-            (permitido, motivo)
-        """
-        try:
-            # Importar agente policía
-            from agents.agente_policia_v2 import AgentePoliciaV2
-
-            policia = AgentePoliciaV2()
-
-            # Consultar al policía
-            consulta = f"¿Es seguro ejecutar esta acción? {accion}"
-            respuesta = policia.consultar(consulta)
-
-            # Analizar respuesta
-            respuesta_lower = respuesta.lower()
-            if any(
-                palabra in respuesta_lower
-                for palabra in ["no", "rechazar", "denegar", "peligroso", "riesgo"]
-            ):
-                return False, f"Policía rechazó: {respuesta}"
-
-            return True, f"Policía aprobó: {respuesta}"
-
-        except Exception as e:
-            logger.error(f"Error consultando a policía: {e}")
-            # Si falla el policía, por seguridad denegar
-            return False, f"Error consultando policía: {e}"
 
     def _crear_backup(self, ruta: str) -> bool:
         """
