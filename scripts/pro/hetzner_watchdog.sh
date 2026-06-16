@@ -7,14 +7,15 @@ set -euo pipefail
 HETZNER_HOST="100.78.49.106"
 SSH_USER="ramon_admin"
 SSH_KEY="$HOME/.ssh/id_ura_watchdog"
-SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+CMD_REMOTO="echo \"UPTIME:\$(uptime -p)\" && echo \"DISK:\$(df / | awk 'NR==2 {print \$5}' | tr -d '%')\" && echo \"CONTAINERS:\$(docker ps -q 2>/dev/null | wc -l)\""
+SSH_BASE="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -T"
 STATUS_FILE="/home/ramon/URA/ura_ia_1972/deploy/estado_alemania.json"
 DISK_WARN=85; DISK_CRIT=92
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 log() { echo "{\"ts\":\"$NOW\",\"component\":\"hetzner_watchdog\",\"event\":\"$1\",\"detail\":${2:-null}}"; }
 
-if OUTPUT=$($SSH_BASE "$SSH_USER@$HETZNER_HOST" "" 2>&1); then
+if OUTPUT=$($SSH_BASE "$SSH_USER@$HETZNER_HOST" "$CMD_REMOTO" 2>&1); then
   DISK_USAGE=$(echo "$OUTPUT" | sed -n 's/^DISK://p')
   UPTIME=$(echo "$OUTPUT" | sed -n 's/^UPTIME://p')
   CONTAINERS=$(echo "$OUTPUT" | sed -n 's/^CONTAINERS://p')
@@ -35,6 +36,7 @@ else
   log "down" "$DETAIL"
 fi
 
+sudo chattr -i "$STATUS_FILE" 2>/dev/null || true
 cat > "$STATUS_FILE" <<EOF2
 {
   "ts": "$NOW",
@@ -46,3 +48,4 @@ cat > "$STATUS_FILE" <<EOF2
   "detalle": $DETAIL
 }
 EOF2
+sudo chattr +i "$STATUS_FILE" 2>/dev/null || true
