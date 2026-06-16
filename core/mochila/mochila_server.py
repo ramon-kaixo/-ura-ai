@@ -26,6 +26,7 @@ from core.memoria.sintetizador import sintetizar
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
 from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.status_endpoint import system_status
+from core.logs.guardian_logger import log_event
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.comprar import fase_comprar
@@ -285,6 +286,7 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
                         payload = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
                         if penalty:
                             payload["error"]["penalty_context"] = penalty
+                        log_event("stream_aborted", model=modelo, file="", reason="vagancy", attempts=0, penalty=penalty)
                         yield b"data: " + json.dumps(payload).encode() + b"\n\n"
                         yield b"data: [DONE]\n\n"
                         return
@@ -486,6 +488,7 @@ async def proxy_gateway(path: str, request: Request):
                                             err = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
                                             if penalty:
                                                 err["error"]["penalty_context"] = penalty
+                                            log_event("stream_aborted", model=body.get("model",""), file=path, reason="vagancy", attempts=0, penalty=penalty)
                                             yield json.dumps(err) + "\n"
                                             return
                                 except json.JSONDecodeError:
