@@ -16,6 +16,8 @@ import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
+from core.logs.guardian_logger import log_event
+
 STATE_FILE = "/tmp/ura_state.json"
 
 logging.basicConfig(
@@ -69,6 +71,56 @@ def restart_service():
         logger.error("systemctl no disponible")
 
 
+vram_critical_cycles = 0
+VRAM_PANIC_MB = 22000
+
+
+def check_vram_pressure():
+    global vram_critical_cycles
+    cmd = [
+        "nvidia-smi", "--query-compute-apps=used_memory",
+        "--format=csv,noheader,nounits",
+    ]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        total_used = 0
+        for line in res.stdout.strip().split("\n"):
+            line = line.strip()
+            if line.isdigit():
+                total_used += int(line)
+
+        if total_used > VRAM_PANIC_MB:
+            vram_critical_cycles += 1
+            log_event(
+                "vram_pressure_high", model="", file="", reason="",
+                attempts=vram_critical_cycles, penalty="",
+                sandbox_errors=[], complexity=0, temperature=0.0,
+                result_type="warning",
+            )
+            logger.warning("VRAM pressure: %d MB used (%d/%d cycles)",
+                           total_used, vram_critical_cycles, 3)
+            if vram_critical_cycles >= 3:
+                log_event(
+                    "vram_panic_restart", model="", file="", reason="",
+                    attempts=3, penalty="",
+                    sandbox_errors=[f"VRAM saturation {total_used} MB > {VRAM_PANIC_MB} MB"],
+                    complexity=0, temperature=0.0, result_type="failure",
+                )
+                logger.critical("VRAM panic: restarting mochila")
+                restart_service()
+                vram_critical_cycles = 0
+        else:
+            vram_critical_cycles = 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, ValueError) as e:
+        log_event(
+            "vram_monitor_error", model="", file="", reason=str(e),
+            attempts=0, penalty="",
+            sandbox_errors=[], complexity=0, temperature=0.0,
+            result_type="failure",
+        )
+        logger.warning("VRAM monitor error: %s", e)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
@@ -84,6 +136,8 @@ def main():
             if fails >= MAX_FAILS:
                 restart_service()
                 fails = 0
+
+        check_vram_pressure()
 
         if not args.daemon:
             break
