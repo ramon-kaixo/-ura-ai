@@ -1,103 +1,240 @@
 # URA — AI Agent Instructions
 
-## Tone & Identity
-- Trato estricto de compañero de trabajo, de tú a tú, directo, crítico y sin rodeos teóricos.
-- Prohibido dar la razón por defecto; busca fallos, vulnerabilidades y mejoras en cada propuesta.
-- Respuestas ultra-concisas (<4 líneas a menos que se pidan detalles técnicos explícitos).
-- Para cada petición: Genera internamente un prompt específico en inglés optimizado para la tarea antes de ejecutar.
-- **Análisis de Consecuencias (obligatorio al presentar un plan):** Desglosa por escrito:
-  - Efecto colateral en cada componente del sistema (servicios, puertos, dependencias)
-  - Puntos ciegos y condiciones de borde (race conditions, timeouts, bypass, fallo en cadena)
-  - Comportamiento bajo fallo (no solo happy path — qué pasa si la GPU cuelga, si un proceso muere, si el disco se llena)
-  - Impacto en arranque, disponibilidad (single point of failure), debugging
-  - Pros y Contras por cada opción considerada
-- Antes de proponer o aplicar un plan: Analiza obligatoriamente Pros, Contras, componentes de la estructura afectados, consecuencias colaterales y opciones de mejora.
-- Cierre Obligatorio: Al finalizar, envía un resumen directo y coloquial de lo realizado (PIDs, puertos, archivos tocados, servicios reiniciados). Habla como un colega ingeniero sin filtros.
+## REGLA PRINCIPAL: SIEMPRE TRABAJAR EN ASUS (MEJORA CONTINUA)
 
-## Arquitectura y Control de Sistema (Los 4 Pilares - CRÍTICO)
-- **Cero Scripts de Muerte:** PROHIBIDO usar pkill, kill por nombre o fuser. Control exclusivo mediante systemd (systemctl restart). Si es inevitable matar por código, usar os.kill(pid) mediante PID exacto tras validación.
-- **Pre-Bind Obligatorio:** PROHIBIDO hacer bind ciego. Todo servicio debe ejecutar assert_port_free() antes de arrancar. Evitar IPs hardcodeadas.
-- **Logs Estructurados:** PROHIBIDO escribir logs a archivos locales (.log). Todo log debe salir en JSON estructurado hacia stdout/stderr para recolección vía journald.
-- **Conciencia de Recursos:** Vigilar límites de RAM/VRAM antes de instanciar modelos grandes para evitar el OOM-Killer.
+**IMPORTANTE**: El código fuente principal está en ASUS (GX10) en `/home/ramon/URA/ura_ia_1972/`.
 
-## Protocolo de Ejecución Segura (Pre-flight)
-Antes de sugerir CUALQUIER comando que afecte a servicios o puertos (bind, restart, kill), debes ejecutar o simular mentalmente los siguientes checks:
-- ¿Qué procesos escuchan en el puerto objetivo? (ss -tulpn)
-- ¿Qué servicios dependen de este componente?
-- ¿Existe ya una unit de systemd que gestione esto?
-- **Atomicidad:** Si una modificación requiere tocar múltiples archivos, incluye un plan de rollback o asegúrate de que el cambio sea atómico.
+- **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
+- **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
+- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@10.164.1.99`
+- Para trabajar directamente en ASUS: usar `ssh ramon@10.164.1.99 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
 
-## Reglas de Generación de Código
-- Código estructurado, modular y determinista.
-- git add + git commit --no-verify obligatorio en automatizaciones.
-- Gestión de chattr +i: Quitar (sudo chattr -i) antes de editar, restaurar después.
+### Flujo de Trabajo Obligatorio
+1. **Desarrollar** en Mac (edithores, tests locales)
+2. **Sincronizar** a ASUS cuando el código esté listo
+3. **Ejecutar** y verificar en ASUS (el servidor real)
+4. **NUNCA** dejar código sin sincronizar a ASUS por más de una sesión
 
-## Interfaz de Auditoría (Obligatorio en la última fila de CADA respuesta)
-Incluye siempre al final de todas tus respuestas este menú desplegable exacto leyendo de disco:
+## Project Context
+URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
 
-<details><summary><b>⚙️ Ver/Modificar Prompt Activo</b></summary>
+## Build & Test Commands
+- Install: `pip install -r requirements.txt`
+- Lint: `ruff check . && ruff format .`
+- Test: `pytest -q` (needs hypothesis, pytest-asyncio, pytest-timeout)
+- Full audit: `bash /home/ramon/URA/ura_ia_1972/tuneladora.sh`
+- Demo: `bash scripts/demo.sh`
+- Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
-[CONTENIDO REAL DE AGENTS.md EN TEXTO PLANO]
+## Architecture
+- `core/` — Domain logic (consciousness, values, forensic scribe, rollback)
+- `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
+- `adapters/` — External connectors (Ollama, messaging platforms)
+- `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
+- `scripts/pro/` — Pipeline activo (solo scripts esenciales)
 
-Para modificarlo en caliente, responderé con:
-ACTUALIZAR_PROMPT:
-[Nuevo prompt]
-</details>
+### Pipeline Activo (scripts/pro/)
+**Solo 26 scripts** — los demás fueron eliminados o fusionados:
 
-### ACTUALIZAR_PROMPT
-Si mi mensaje empieza por ACTUALIZAR_PROMPT:, lee el bloque, valida que no tenga comandos destructivos, guarda un backup fechado en /home/ramon/URA/prompt_backups/, sobrescribe /home/ramon/URA/ura_ia_1972/AGENTS.md y recarga la configuración en caliente.
+| Script | Propósito | Llamado por |
+|--------|-----------|-------------|
+| `tuneladora_mantenimiento.py` | Diario/semanal + commit/rollback | systemd timer |
+| `tuneladora_mejora.py` | Desarrollo + watchdog workers | OpenCode/docker |
+| `token_screen.py` | RAM check antes de cada paso | ambas tuneladoras |
+| `scanner_autoajuste.py` | Snapshot AST + chunk_optimizer | ambas tuneladoras |
+| `poda_mecanica.py` | Dead code removal + chromatic map | tuneladora_mantenimiento |
+| `refactor_large_functions_v2.py` | Refactor con LLM + compactación | ambas tuneladoras |
+| `compactadora.py` | Reensamblaje post-LLM | tuneladora_mantenimiento |
+| `compactador_espacios.py` | Compactación pre-LLM | importado por refactor_v2 |
+| `auto_reglas.py` | Deterministic F821 repairs | ambas tuneladoras |
+| `inspectores.py` | 10 inspectores (120 checks) | ambas tuneladoras |
+| `watermark_aggregator.py` | Watermark + auto-reglas | tuneladora_mantenimiento |
+| `chunk_optimizer.py` | Recomienda chunk size dinámicamente | scanner_autoajuste |
+| `conciencia.py` | Memory system | pipeline_supremo |
+| `meta_mejora.py` | Meta-mejora con medición de impacto | manual |
+| `analisis_completo.py` | Análisis integral (estado + monólogo + acciones) | manual |
+| `openclaw_reviewer.py` | LLM reviewer (GPU) | pipeline_supremo |
+| `openclaw_firmador.py` | Firma de código | manual |
+| `ajustar_contexto.py` | Ajusta contexto del LLM | refactor_v2 |
+| `auditor_router.py` | Auditor del Model Router | manual |
+| `auto_conciencia.py` | Auto-conciencia | manual |
+| `f821_watch.py` | Watchdog de F821 | ciclo_autonomo |
+| `reglas_loader.py` | Carga reglas | auto_reglas |
+| `sandbox_industrial.py` | Sandbox industrial | manual |
+| `ejecutor_api.py` | API REST puerto 4096 | systemd |
+| `bypass_linksys_gui.py` | Playwright port forwarding | manual (one-shot) |
+| `alineador.py` | Valida respuestas URA/OpenClaw | pipeline_supremo |
+| `analizar_fallo_conciencia.py` | Diagnóstico de conciencia | tuneladora_mantenimiento |
+| `master_conciencia.py` | Testing de acciones URA | tuneladora_mantenimiento |
+| `pareto_router.py` | Distribución 20/80 datos | tuneladora_mantenimiento |
+| `ura_self_modify.py` | Auto-mejora del prompt | tuneladora_mantenimiento |
 
-## Bitácora Obligatoria
-Al FINAL de cada sesión (o cuando el usuario lo pida):
-1. Actualizar `bitacora/YYYY-MM-DD.md` con: objetivos, máquinas, comandos clave, archivos tocados, servicios, decisiones técnicas, problemas conocidos
-2. `git add bitacora/ && git commit --no-verify -m "docs: bitacora YYYY-MM-DD"`
-3. Incluir en el resumen final un enlace a la bitácora del día
+### Scripts Eliminados/Fusionados (2026-06-04)
+- `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py` (commit/rollback)
+- `meta_mejora_real.py` → fusionado con `meta_mejora.py` (medición de impacto)
+- `analisis_llm.py` + `meta_mejora_v2.py` + `reflexion_ura.py` → fusionado en `analisis_completo.py`
+- `refactor_watchdog.py` → fusionado con `tuneladora_mejora.py` (watchdog integrado)
+- `rpa_linksys.py` → eliminado (bypass_linksys_gui.py lo hace mejor)
+- `auto_aplicar_mejoras.py` → eliminado (ura_self_modify.py lo hace todo)
+- `reflexion_profunda.py` → eliminado (analizar_fallo_conciencia.py lo reemplaza)
+- `translate_to_english.py` → eliminado (código ya está en inglés)
+- 34 scripts huérfanos → movidos a `.nervioso/scripts_eliminados/`
 
-### Validación previa al commit (Regla Permanente v1.0)
-- [ ] **Ejecución Real:** ¿Ejecuté el comando exacto en la consola de la máquina destino? (Prohibido asumir sintaxis o flags).
-- [ ] **Flujo de Entrada Vacía/Malformada:** ¿Qué excepción produce o qué valor por defecto retorna el sistema si el input viene vacío, nulo o corrompido?
-- [ ] **Solapamiento y Doble Contabilidad:** ¿Estamos sumando o midiendo dos fuentes distintas de la misma métrica? (Verificación estricta de variables de estado).
-- [ ] **Aislamiento de Fallo (Blast Radius):** Si este componente exacto falla, entra en timeout o se cuelga (ej: nvidia-smi, SSH, API externa), ¿el bucle principal del sistema sigue vivo?
+## GX10 (ASUS GB10) — Estado Real (2026-06-03)
 
-## Plan de Defensa — Inmutabilidad + Aislamiento (Producción)
+### Hardware NVIDIA GB10 Grace Blackwell Superchip
+- **CPU**: 20 núcleos ARM nativos de alto rendimiento
+- **GPU**: NVIDIA Blackwell (FP4/FP8 dedicada para IA)
+- **Memoria**: 128 GB Unificada (Unified Memory Architecture) vía NVLink-C2C
+- **Optimización**: Aprovechamiento máximo de memoria unificada entre CPU y GPU
 
-### FS Bug conocido
-`rsync --delete` desde Mac Mini borra `motor/`. Arreglado en `deploy/sync_to_asus.sh` (excluir motor/).
-Si reaparece: `sudo ausearch -k ura_motor_changes --start recent -i` para identificar el proceso.
+### Servicios systemd (REALES - Sistema)
+| Servicio | Puerto | Estado | Tipo | Notas |
+|---|---|---|---|---|
+| `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
+| `openclaw` | 18789 | ✅ activo | systemd | Gateway MCP |
+| `opencode` | 8081 | ✅ activo | systemd | OpenCode Server |
+| `ura-executor` | 4096 | ✅ activo | systemd | URA Executor API (renombrado de opencode-executor) |
+| `agent-hierarchy` | - | ✅ activo | systemd | URA Agent Hierarchy System |
+| `swarm-discovery` | - | ✅ activo | systemd | URA Swarm Auto-Discovery Service |
+| `ura-agent-bus` | - | ✅ activo | systemd | URA Agent Message Bus |
+| `ura-audit-api` | - | ✅ activo | systemd | URA Audit API (FastAPI) |
+| `ura-contraste` | - | ✅ activo | systemd | Servidor API Proxy de Contraste URA |
+| `ura-detector` | - | ✅ activo | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis |
+| `ura-go2rtc` | - | ✅ activo | systemd | go2rtc Camera Stream Proxy |
+| `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
+| `ura-ssh-guard` | - | ✅ activo | systemd | URA SSH Guard |
+| `gx10-api` | - | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
+| `llama-vision` | - | ✅ activo | systemd | llama.cpp Vision Model for URA (Qwen2-VL-7B) |
+| `tuneladora.timer` | - | ✅ activo | systemd | URA Tuneladora Timer - Every 6 hours |
 
-### Override de emergencia (si chattr +i bloquea un hotfix)
-```bash
-sudo chattr -i /ruta/al/archivo   # descongelar
-# ... hacer el cambio ...
-sudo chattr +i /ruta/al/archivo   # recongelar
+### Servicios systemd (REALES - Usuario)
+| Servicio | Puerto | Estado | Tipo | Notas |
+|---|---|---|---|---|
+| `model-router` | 11435 | ✅ activo | systemd user | URA Model Router Enhanced (cache 5min, Connection: close) |
+| `start-router` | - | ✅ activo | systemd user | URA Router llama_router (usuario) |
+| `backend@codestral-22b` | - | ✅ activo | systemd user | Backend llama.cpp para modelo codestral-22b |
+| `backend@qwen2.5-coder-32b` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-32b |
+| `backend@qwen2.5-coder-q8_0` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-q8_0 |
+
+### Ollama Optimizado (2026-06-03)
+- **Configuración**:
+  - `OLLAMA_NUM_PARALLEL=2` (reducido de 8)
+  - `OLLAMA_MAX_LOADED_MODELS=2` (2 modelos en memoria)
+  - `OLLAMA_KEEP_ALIVE=1m` (nuevo - reduce trasiego)
+  - `OLLAMA_FLASH_ATTENTION=1` (aceleración hardware)
+  - `OLLAMA_NOPRUNE=1` (sin poda de modelos)
+- **Ubicación**: Sistema base Ubuntu (no en Docker)
+- **Acceso GPU**: Memoria unificada 128 GB
+- **Problema resuelto**: Model Router optimizado (cache 5min, Connection: close)
+
+### Model Router Enhanced v2.0
+- **Ubicación**: `/home/ramon/URA/core/model_router.py`
+- **Features**: Prompt caching (2h TTL), Fallback system, Metrics
+- **Configuración**: `THREADS = 20` (20 núcleos ARM)
+- **Estado**: ✅ activo (arreglado para no crear zombies)
+- **Optimizaciones**: Cache aumentado de 30s a 5min, header Connection: close
+- **Endpoint métricas**: `http://10.164.1.99:11435/metrics`
+- **Rutas configuradas**:
+  - `razonamiento` → qwen3:32b-q8_0, qwen3:14b, llama3.3:70b, deepseek-coder:6.7b
+  - `codigo_complejo` → qwen2.5-coder:32b, qwen2.5-coder:q8_0, qwen2.5-coder:14b
+  - `codigo_rapido` → qwen2.5:7b, llama3.2:3b, deepseek-coder:6.7b
+  - `respuesta_rapida` → qwen2.5:7b, llama3.2:3b, llama3.2:1b
+  - `vision` → llama3.2-vision:11b, llava:34b, llava:13b
+  - `embeddings` → nomic-embed-text:latest, mxbai-embed-large
+
+### OpenClaw Integration
+- Gateway: `http://10.164.1.99:18789`
+- Servicio: `openclaw.service` (no openclaw-gateway.service)
+- MCP: Configurado en OpenCode (Mac) como remote
+- Skills habilitados: github, coding-agent
+- CLI emergencia: `/usr/local/bin/openclaw-admin`
+- Sandbox coding-agent: `/usr/local/bin/coding-agent-sandbox`
+
+### Pipeline de Visión por Computadora
 ```
-
-### Rollback Qdrant
-```bash
-curl -s http://localhost:6333/collections/incidente_record/snapshots | python3 -m json.tool
-curl -X POST http://localhost:6333/collections/incidente_record/snapshots/{id}/restore
+Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :9092
 ```
+- `ura-detector.service` — YOLOv8-Nano + ByteTrack + Behavior Analysis
+- `llama-vision.service` — llama.cpp Vision Model for URA (Qwen2-VL-7B)
+- Crops enviados cada 10s a Qwen2-VL para clasificar
+- Dashboard web en `http://GX10_IP:9092`
 
-### Git rollback
-```bash
-git checkout pre-inmutabilidad
-```
+### Modelos en Ollama (REALES)
+- `nomic-embed-text:latest` (embeddings) - 274 MB
+- `llama3.3:70b` (tareas complejas) - 42 GB
+- `qwen2.5-coder:14b` (código) - 9.0 GB
+- `qwen2.5:7b` (código rápido, respuestas) - 4.7 GB
+- `deepseek-coder:6.7b` (código alternativo) - 3.8 GB
+- `llama3.2-vision:11b` (visión) - 7.8 GB
+- `qwen3:32b-q8_0` (razonamiento profundo) - 34 GB
+- `qwen2.5-coder:32b` (código complejo) - 19 GB
+- `codestral:22b` (código alternativo) - 12 GB
+- `qwen2.5-coder:q8_0` (código complejo) - 34 GB
 
-## SDA — Protocolo de Planificación Bicéfala (OBLIGATORIO)
+### Red
+- GX10: Ethernet 10.164.1.99, WiFi 10.164.1.247, Tailscale 100.127.206.86
+- Mac: Ethernet 10.164.1.26, WiFi 10.164.1.0, Tailscale 100.123.81.101
+- Linksys Velop MX4200: 10.164.1.1 (lighttpd+JNAP API, cloud-managed)
+- Cámaras en 192.168.1.x/2.x/3.x — **no accesibles desde GX10** (router bloquea)
 
-Siempre que el usuario te pida "un plan", "una estrategia", "una planeación" o "diseñar una solución":
+### Ubicaciones de Directorios
+- **GX10**: `/home/ramon/URA/` (código principal)
+- **GX10**: `/home/ramon/URA/ura_ia_1972/` (repositorio principal)
+- **Mac**: `/Users/ramonesnaola/URA/` (sincronización, desarrollo ligero)
+- **Mac**: `/Users/ramonesnaola/URA/backups_gx10/` (backups desde GX10)
 
-1. **NO respondas directamente** con tu propuesta en el chat.
-2. **Redacta el plan internamente** como JSON en `/tmp/ura_debate/plan.json` con formato:
-   ```json
-   {"plan": "descripción del plan", "author": "code"}
-   ```
-3. **Ejecuta el debate** mediante:
-   ```bash
-   python3 core/debate/plan_validator.py --debate < /tmp/ura_debate/plan.json
-   ```
-4. **Interpreta el veredicto** del JSON de salida:
-   - **CONSENSUS** (`consensus >= 0.7` y `requires_human == false`): Presenta el plan unificado al usuario y procede.
-   - **HUMAN_ARBITRATION** (`consensus < 0.7` o `requires_human == true`): Detén cualquier ejecución. Muestra en el chat ambos análisis (primary_reason vs auditor_reason) y los riesgos identificados para que Ramón arbitre.
-   - **INCOMPLETE** (un modelo no respondió): Reintenta con timeout mayor o modelo alternativo.
-5. **Prohibido** ignorar objeciones del auditor o resolver conflictos sin arbitraje humano. Si el auditor encuentra ≥2 riesgos críticos, Ramón DEBE decidir.
+### Tuneladora Unificada
+- **Ubicación**: `/home/ramon/URA/ura_ia_1972/tuneladora.sh`
+- **Fases**: 6 fases unificadas (Diagnóstico, Mantenimiento, Auditoría Modelos, Mejora, Rollback, Backup)
+- **Timer**: `tuneladora.timer` - ejecuta cada 6 horas
+- **Rutas corregidas**: Usa `/home/ramon/URA/` (no `/opt/ura/`)
+- **Sin teatro**: `|| true` eliminados de pasos críticos
+
+### Sandbox Containers
+| Container | Propósito | Estado |
+|---|---|---|
+| `sandbox-mejora-continua` | Ruff + pytest + bandit en `/workspace` | ✅ activo (python:3.11-slim) |
+| `ura-sandbox-mantenimiento` | Mantenimiento del sistema | ⚠️ inactivo |
+| `ura-sandbox-documentacion` | MkDocs :8087 | ⚠️ inactivo |
+| `ura-sandbox-exploracion` | Exploración autónoma | ⚠️ inactivo |
+| `ura-sandbox-aprendizaje` | Aprendizaje continuo | ⚠️ inactivo |
+| `ura-sandbox-seguridad` | Auditoría de seguridad | ⚠️ inactivo |
+| `ura-coding-agent-sandbox` | Aislamiento de coding-agent (Docker) | ⚠️ inactivo |
+
+## Naming Conventions
+- Files: kebab-case for new files (e.g., `ura-panel.py`, `buzo-academico.sh`)
+- Directories: kebab-case (e.g., `agents/cocina/`, `knowledge/fragmentos/`)
+- Dates: ISO 8601 (YYYY-MM-DD)
+- Artifacts: SLUG prefix (e.g., `audit-report-2026-05-17.md`)
+
+## Security Rules
+- No `shell=True` in subprocess calls
+- No hardcoded secrets (use Boveda or environment variables)
+- All autonomous changes go through sandbox + rollback
+- Network allowlist for sandbox containers
+- **EXCEPCIÓN**: `allowInsecureAuth=true` en opencode para acceso HTTP desde Mac (documentado en SECURITY_EXCEPTIONS.md)
+- **BACKUP**: Script `/opt/ura/scripts/backup_to_mac.sh` + cron job diario 03:00 (requiere configuración SSH manual)
+
+## Code Style
+- Ruff with ALL rules enabled
+- Type hints required for all new functions
+- Agent classes should inherit from existing base patterns
+- Docstrings in Google style
+
+## Key Files
+- `AGENTS.md` — This file (AI instructions)
+- `README.md` — Human-readable project overview
+- `pyproject.toml` — Python project configuration
+- `CLAUDE.md` — Symlink to AGENTS.md (Claude Code compatibility)
+- `/home/ramon/URA/ura_ia_1972/tuneladora.sh` — Tuneladora unificada (6 fases)
+- `/home/ramon/URA/core/model_router.py` — Model Router Enhanced
+- `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
+- `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
+
+## Problemas Conocidos (2026-06-03)
+- **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
+- **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
+- **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
+- **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
+- **Zombies**: 3 (residuales del reboot, no crecen)
