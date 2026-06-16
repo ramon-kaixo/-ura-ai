@@ -232,9 +232,34 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
 - `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
 
-## Problemas Conocidos (2026-06-03)
+## Problemas Conocidos (2026-06-16)
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
 - **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
-- **Zombies**: 3 (residuales del reboot, no crecen)
+- **test_unit.py**: `PromptCache` no acepta `max_size` — el test usa un parámetro que la implementación no soporta (bug preexistente, no afecta funcionalidad)
+
+## Archivos Inmutables (chattr +i)
+**125 archivos** protegidos contra modificación accidental. Regenerar lista con:
+```bash
+lsattr -R /home/ramon/URA/ura_ia_1972 2>/dev/null | grep '^....i' | awk '{print $2}' | sed 's|/home/ramon/URA/ura_ia_1972/||' | sort
+```
+Agrupados por dominio:
+- `core/mochila/` (10): server, router, guardian, providers, rate_limiter, circuit_breaker, etc.
+- `core/memoria/` (15): qdrant_store, ingesto, consulta, ficha, vigilante, extractores, rastreadores
+- `core/debate/` (5): SDA — lockfile, engine, validator, config
+- `core/infra/` (3): heartbeat, state_manager
+- `core/logs/` (2): guardian_logger, __init__
+- `core/seguridad/` (1): rollback_manager
+- `core/cleaner/` (2): cold_refactor
+- `core/guardians/` (2): ast_sentinel
+- `core/utils/` (2): anonymizer
+- `config/` (6): schema, settings, infra, dispositivos, reglas
+- `sandbox/` (1): sandbox_runner
+- `scripts/pro/` (23): tuneladora, watchdogs, auditorias, backups
+- `tests/` (3): conftest, test_mochila, unit_test_runner
+- `app/` (4): main, motor_flujo, gestor_archivos, capturador
+- `mantenimiento/` (3): remote, auto_reparacion, informe_mensual
+- `deploy/` (2): ia-flujo, estado_alemania
+- Root (`/`): AGENTS.md, requirements.txt, PLAN_MAESTRO.md, mochila_engine.py, prompt_injector.py, etc.
+- `storage/mochila_cloud`, `ura-audit/`, `ura-contexto/`, `bitacora/`
