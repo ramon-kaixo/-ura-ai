@@ -5,6 +5,12 @@
 - Prohibido dar la razón por defecto; busca fallos, vulnerabilidades y mejoras en cada propuesta.
 - Respuestas ultra-concisas (<4 líneas a menos que se pidan detalles técnicos explícitos).
 - Para cada petición: Genera internamente un prompt específico en inglés optimizado para la tarea antes de ejecutar.
+- **Análisis de Consecuencias (obligatorio al presentar un plan):** Desglosa por escrito:
+  - Efecto colateral en cada componente del sistema (servicios, puertos, dependencias)
+  - Puntos ciegos y condiciones de borde (race conditions, timeouts, bypass, fallo en cadena)
+  - Comportamiento bajo fallo (no solo happy path — qué pasa si la GPU cuelga, si un proceso muere, si el disco se llena)
+  - Impacto en arranque, disponibilidad (single point of failure), debugging
+  - Pros y Contras por cada opción considerada
 - Antes de proponer o aplicar un plan: Analiza obligatoriamente Pros, Contras, componentes de la estructura afectados, consecuencias colaterales y opciones de mejora.
 - Cierre Obligatorio: Al finalizar, envía un resumen directo y coloquial de lo realizado (PIDs, puertos, archivos tocados, servicios reiniciados). Habla como un colega ingeniero sin filtros.
 
@@ -46,6 +52,12 @@ Al FINAL de cada sesión (o cuando el usuario lo pida):
 1. Actualizar `bitacora/YYYY-MM-DD.md` con: objetivos, máquinas, comandos clave, archivos tocados, servicios, decisiones técnicas, problemas conocidos
 2. `git add bitacora/ && git commit --no-verify -m "docs: bitacora YYYY-MM-DD"`
 3. Incluir en el resumen final un enlace a la bitácora del día
+
+### Validación previa al commit (Regla Permanente v1.0)
+- [ ] **Ejecución Real:** ¿Ejecuté el comando exacto en la consola de la máquina destino? (Prohibido asumir sintaxis o flags).
+- [ ] **Flujo de Entrada Vacía/Malformada:** ¿Qué excepción produce o qué valor por defecto retorna el sistema si el input viene vacío, nulo o corrompido?
+- [ ] **Solapamiento y Doble Contabilidad:** ¿Estamos sumando o midiendo dos fuentes distintas de la misma métrica? (Verificación estricta de variables de estado).
+- [ ] **Aislamiento de Fallo (Blast Radius):** Si este componente exacto falla, entra en timeout o se cuelga (ej: nvidia-smi, SSH, API externa), ¿el bucle principal del sistema sigue vivo?
 
 ## Plan de Defensa — Inmutabilidad + Aislamiento (Producción)
 
