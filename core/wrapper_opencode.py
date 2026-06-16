@@ -138,7 +138,7 @@ class OpenCodeWrapper:
 
             try:
                 sandbox = SandboxClient()
-                sandbox_result = sandbox.run_validation(tmp_path, rel_path)
+                sandbox_result = sandbox.run_validation(tmp_path, rel_path, model=model)
                 if not sandbox_result.get("passed", False):
                     logger.error(
                         "[WRAPPER] Sandbox rechazo para %s: %s",
