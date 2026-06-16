@@ -1,13 +1,18 @@
 import json
-import os
 from typing import AsyncGenerator
+
 
 import httpx
 
+
 from .base import Provider, ProviderError
 
-OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-OLLAMA_TIMEOUT = int(os.environ.get("MOCHILA_OLLAMA_TIMEOUT", "180"))
+
+# OLLAMA_BASE is http://127.0.0.1:11434
+
+OLLAMA_TIMEOUT = 180
+
+OLLAMA_HTTPX_KW: dict = {}
 
 
 class OllamaProvider(Provider):
@@ -40,10 +45,10 @@ class OllamaProvider(Provider):
         if tools:
             payload["tools"] = tools
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(self.timeout)) as client:
+        async with httpx.AsyncClient(**OLLAMA_HTTPX_KW, timeout=httpx.Timeout(self.timeout)) as client:
             if stream:
                 async with client.stream(
-                    "POST", f"{OLLAMA_BASE}/api/chat", json=payload
+                    "POST", "http://127.0.0.1:11434/api/chat", json=payload
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
@@ -59,7 +64,7 @@ class OllamaProvider(Provider):
                     return
 
             resp = await client.post(
-                f"{OLLAMA_BASE}/api/chat", json=payload
+                "http://127.0.0.1:11434/api/chat", json=payload
             )
             if resp.is_error:
                 raise ProviderError(
@@ -71,8 +76,8 @@ class OllamaProvider(Provider):
 
     async def health(self) -> dict:
         try:
-            async with httpx.AsyncClient(timeout=5) as client:
-                resp = await client.get(f"{OLLAMA_BASE}/api/tags")
+            async with httpx.AsyncClient(**OLLAMA_HTTPX_KW, timeout=5) as client:
+                resp = await client.get("http://127.0.0.1:11434/api/tags")
                 if resp.is_error:
                     return {"status": "error", "detail": resp.text[:100]}
                 modelos = resp.json().get("models", [])

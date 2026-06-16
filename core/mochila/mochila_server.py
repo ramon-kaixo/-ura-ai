@@ -4,11 +4,13 @@ import os
 import time
 import uuid
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+import logging
+from typing import AsyncGenerator, List, Tuple, Dict, Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+import httpx
 from pydantic import BaseModel, Field
 
 from core.mochila.circuit_breaker import CircuitBreaker
@@ -17,15 +19,10 @@ from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterPro
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
-from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
-from core.memoria.extractores.video_pipeline import pipeline_video
+from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.analizador import analizar
 from core.memoria.sintetizador import sintetizar
-from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
-from core.mochila.status_endpoint import system_status
-from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
-from core.mochila.status_endpoint import system_status
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
 from core.mochila.status_endpoint import system_status
 from core.memoria.rastreadores.saber import fase_saber
@@ -34,6 +31,8 @@ from core.memoria.rastreadores.comprar import fase_comprar
 from core.memoria.vigilante import generar_parte
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
+
+OLLAMA_SOCKET = "http://127.0.0.1:11434"
 
 PROVIDERS: dict[str, OllamaProvider | OpenRouterProvider | GeminiProvider] = {
     "ollama": OllamaProvider(),
@@ -47,6 +46,116 @@ PROVIDER_TIMEOUTS: dict[str, int] = {"ollama": 180, "openrouter": 60, "gemini": 
     "deepseek": 60}
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
+
+class VRAMAwareScheduler:
+    def __init__(self, max_mb: int = 20000, queue_timeout: float = 60.0):
+        self.max_mb = max_mb
+        self.queue_timeout = queue_timeout
+        self._queue: List[Tuple[asyncio.Future, int, float, Dict[str, Any]]] = []
+        self._active: Dict[str, Dict[str, Any]] = {}
+        self._current_mb = 0
+        self._hot_models: set = set()
+        self._lock = asyncio.Lock()
+        self._ollama_client = httpx.AsyncClient(base_url=OLLAMA_SOCKET)
+        self._log = logging.getLogger("mochila.vram")
+        self._reconcile_task: asyncio.Task | None = None
+
+    def available_mb(self) -> int:
+        used = self._current_mb + sum(v["mb"] for v in self._active.values())
+        return self.max_mb - used
+
+    async def sync_vram(self):
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader",
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=5.0)
+            processes = [int(line.strip().split()[0]) for line in out.decode().splitlines() if line.strip()]
+            self._current_mb = sum(processes) if processes else 0
+        except Exception as e:
+            self._log.warning("sync_vram nvidia-smi fallback: %s", e)
+            self._current_mb = 0
+        try:
+            resp = await self._ollama_client.get("/api/ps")
+            if resp.status_code == 200:
+                data = resp.json()
+                for m in data.get("models", []):
+                    mid = m.get("name", "unknown").split(":")[0]
+                    if m.get("size_vram", 0) > 0:
+                        self._hot_models.add(mid)
+        except Exception:
+            pass
+
+    async def reconcile(self):
+        now = time.time()
+        stale = [rid for rid, v in self._active.items()
+                 if rid.startswith("boot-") and now - v["ts"] > 3.0]
+        for rid in stale:
+            self._active.pop(rid, None)
+
+    async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict | None = None) -> str | None:
+        async with self._lock:
+            if self.available_mb() >= mb:
+                req_id = str(uuid.uuid4())
+                self._active[req_id] = {"mb": mb, "ts": time.time(), "model": (data or {}).get("model", "")}
+                return req_id
+            future = asyncio.get_running_loop().create_future()
+            deadline = time.time() + max(deadline_flex, 5.0)
+            self._queue.append((future, mb, deadline, data or {}))
+        try:
+            req_id = await asyncio.wait_for(future, timeout=deadline_flex + 1.0)
+            return req_id
+        except asyncio.TimeoutError:
+            return None
+
+    async def acquire_boot_vram(self, mb: int) -> bool:
+        req_id = f"boot-{uuid.uuid4().hex[:8]}"
+        self._active[req_id] = {"mb": mb, "ts": time.time(), "model": "static_boot_service"}
+        async def _release():
+            await asyncio.sleep(3.0)
+            self._active.pop(req_id, None)
+        asyncio.create_task(_release())
+        return True
+
+    async def release(self, req_id: str):
+        self._active.pop(req_id, None)
+
+    async def start_loop(self):
+        self._task = asyncio.create_task(self._scheduler_loop())
+
+    async def stop_loop(self):
+        if self._task:
+            self._task.cancel()
+
+    async def _scheduler_loop(self):
+        while True:
+            try:
+                await self.sync_vram()
+                await self.reconcile()
+                async with self._lock:
+                    now = time.time()
+                    self._queue = [(f, mb, dl, d) for f, mb, dl, d in self._queue if dl > now]
+                    candidate = None
+                    for i, (fut, mb, dl, d) in enumerate(self._queue):
+                        if fut.done():
+                            continue
+                        if self.available_mb() >= mb:
+                            candidate = (fut, mb, dl, d)
+                            self._queue.pop(i)
+                            break
+                if candidate:
+                    fut, mb, deadline, data = candidate
+                    req_id = str(uuid.uuid4())
+                    self._active[req_id] = {"mb": mb, "ts": time.time(), "model": data.get("model", "")}
+                    try:
+                        fut.set_result(req_id)
+                    except asyncio.InvalidStateError:
+                        self._active.pop(req_id, None)
+            except Exception as e:
+                self._log.error("scheduler_loop error: %s", e)
+            await asyncio.sleep(0.5)
+
+scheduler = VRAMAwareScheduler()
 
 router = Router(providers=PROVIDERS)
 circuit_breaker = CircuitBreaker()
@@ -142,15 +251,15 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_guardian()
+    await scheduler.start_loop()
     yield
+    await scheduler.stop_loop()
     for p in PROVIDERS.values():
         if hasattr(p, "__aenter__"):
             await p.__aexit__(None, None, None)
 
 
 app = FastAPI(title="Mochila Middleware", version="0.7.0", lifespan=lifespan)
-app.add_middleware(GuardianMiddleware)
-app.add_middleware(GuardianMiddleware)
 app.add_middleware(GuardianMiddleware)
 
 
@@ -258,6 +367,42 @@ async def rate_limit_status(provider: str):
 @app.get("/metrics/cost")
 async def cost_summary():
     return cost_tracker.resumen_hoy()
+
+@app.post("/admin/acquire_boot_vram")
+async def admin_acquire_boot_vram(mb: int):
+    await scheduler.acquire_boot_vram(mb)
+    return {"status": "granted"}
+
+@app.api_route("/api/{path:path}", methods=["GET", "POST"])
+async def proxy_gateway(path: str, request: Request):
+    body = None
+    try:
+        body = await request.json() if request.method in ("POST", "PUT") else None
+    except Exception:
+        pass
+    mb = 2000
+    if body and isinstance(body, dict):
+        mb = body.pop("_vram_mb", 2000)
+    req_id = await scheduler.acquire(mb=mb, deadline_flex=15.0, data={"model": path.split("/")[0] if "/" in path else path})
+    if not req_id:
+        return JSONResponse(status_code=503, content={"error": "VRAM admission denied", "detail": "No hay suficiente VRAM disponible"})
+    try:
+        headers = {"Content-Type": "application/json"}
+        auth = request.headers.get("Authorization")
+        if auth:
+            headers["Authorization"] = auth
+        async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
+            if request.method == "GET":
+                resp = await client.get(request.url.path, params=dict(request.query_params), headers=headers)
+            elif request.method == "POST":
+                resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
+            else:
+                return JSONResponse(status_code=405, content={"error": "method not allowed"})
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except httpx.ConnectError as e:
+        return JSONResponse(status_code=502, content={"error": f"Ollama connect error on UDS {OLLAMA_SOCKET}: {e}"})
+    finally:
+        await scheduler.release(req_id)
 
 class VideoIngestRequest(BaseModel):
     path: str
