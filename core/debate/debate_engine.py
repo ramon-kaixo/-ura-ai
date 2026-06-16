@@ -25,6 +25,7 @@ from pathlib import Path
 import httpx
 
 from core.debate.lockfile import DebateLock
+from core.logs.guardian_logger import log_event
 
 logger = logging.getLogger("ura.debate")
 
@@ -35,6 +36,38 @@ def load_config() -> dict:
     with open(CONFIG_PATH) as f:
         cfg = json.load(f)
     return cfg
+
+
+def validar_esquema_salida(raw_output: str, schema_dict: dict | None = None) -> bool:
+    if not schema_dict:
+        return True
+    try:
+        clean = raw_output.strip()
+        if "```json" in clean:
+            clean = clean.split("```json")[1].split("```")[0].strip()
+        elif "```" in clean:
+            clean = clean.split("```")[1].split("```")[0].strip()
+        data = json.loads(clean)
+        for k, v in schema_dict.items():
+            if k not in data:
+                log_event("schema_validation_failed", model="", file="",
+                          reason=f"Missing key: {k}", attempts=0, penalty="",
+                          sandbox_errors=[], complexity=0, temperature=0.0,
+                          result_type="warning")
+                return False
+            if isinstance(v, type) and not isinstance(data[k], v):
+                log_event("schema_validation_failed", model="", file="",
+                          reason=f"Key {k}: expected {v.__name__}, got {type(data[k]).__name__}",
+                          attempts=0, penalty="", sandbox_errors=[], complexity=0,
+                          temperature=0.0, result_type="warning")
+                return False
+        return True
+    except (json.JSONDecodeError, Exception) as e:
+        log_event("schema_validation_failed", model="", file="",
+                  reason=str(e), attempts=0, penalty="",
+                  sandbox_errors=[], complexity=0, temperature=0.0,
+                  result_type="warning")
+        return False
 
 
 def build_primary_prompt(plan_text: str, context: dict | None = None) -> str:
@@ -116,7 +149,12 @@ async def call_ollama(
         if cleaned.endswith("```"):
             cleaned = cleaned.rsplit("\n", 1)[0] if "\n" in cleaned else cleaned[:-3]
         cleaned = cleaned.strip()
-        return json.loads(cleaned)
+        parsed = json.loads(cleaned)
+        default_schema = {"score": float, "reason": str, "risks": list}
+        if not validar_esquema_salida(cleaned, default_schema):
+            logger.warning("[DEBATE] Schema validation failed for %s", model)
+            return None
+        return parsed
     except httpx.TimeoutException:
         logger.warning("[DEBATE] Timeout en modelo %s", model)
         return None
