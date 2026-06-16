@@ -3,6 +3,8 @@ import logging
 import subprocess
 import time
 
+from core.logs.guardian_logger import log_event
+
 logger = logging.getLogger("ura.sandbox")
 
 SANDBOX_IMAGE = "ura-sandbox:latest"
@@ -30,8 +32,10 @@ class SandboxClient:
             return False
         return True
 
-    def run_validation(self, temp_path: str, original_name: str) -> dict:
+    def run_validation(self, temp_path: str, original_name: str, model: str = "") -> dict:
         if not self._ensure_image():
+            log_event("sandbox_reject", model=model, file=original_name,
+                      reason="Sandbox image build failed", result_type="failure")
             return {"passed": False, "errors": ["Sandbox image build failed"]}
 
         code_path = "/tmp/code"
@@ -52,15 +56,38 @@ class SandboxClient:
                 cmd, capture_output=True, text=True,
                 timeout=SANDBOX_TIMEOUT,
             )
-            if res.returncode == 0 and res.stdout.strip():
-                return json.loads(res.stdout.strip())
+            if res.stdout.strip():
+                try:
+                    result = json.loads(res.stdout.strip())
+                    status = result.get("status", "")
+                    if status == "INJECTION_BLOCKED":
+                        log_event("injection_blocked", model=model, file=original_name,
+                                  reason=result.get("errors", [""])[0][:120], result_type="failure")
+                    elif status == "COMPLEXITY_REFACTOR":
+                        log_event("complexity_reject", model=model, file=original_name,
+                                  reason=result.get("errors", [""])[0][:120], result_type="failure")
+                    elif not result.get("passed", False):
+                        log_event("sandbox_reject", model=model, file=original_name,
+                                  reason=result.get("errors", [""])[0][:120], result_type="failure")
+                    return result
+                except json.JSONDecodeError:
+                    pass
+            err_msg = res.stderr.strip() or f"Exit code {res.returncode}"
+            log_event("sandbox_reject", model=model, file=original_name,
+                      reason=err_msg[:120], result_type="failure")
             return {
                 "passed": False,
-                "errors": [res.stderr.strip() or f"Exit code {res.returncode}"],
+                "errors": [err_msg],
             }
         except subprocess.TimeoutExpired:
+            log_event("sandbox_reject", model=model, file=original_name,
+                      reason="timeout", result_type="failure")
             return {"passed": False, "errors": [f"Sandbox timeout ({SANDBOX_TIMEOUT}s)"]}
         except FileNotFoundError:
+            log_event("sandbox_reject", model=model, file=original_name,
+                      reason="docker_not_found", result_type="failure")
             return {"passed": False, "errors": ["Docker not available"]}
         except json.JSONDecodeError as e:
+            log_event("sandbox_reject", model=model, file=original_name,
+                      reason=f"parse_error: {e}"[:120], result_type="failure")
             return {"passed": False, "errors": [f"Sandbox output parse error: {e}"]}

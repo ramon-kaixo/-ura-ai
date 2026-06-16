@@ -5,6 +5,13 @@ import tempfile
 import os
 from pathlib import Path
 
+try:
+    from linter_advanced import lint_code, InjectionError, RefactorRequiredError
+except ImportError:
+    lint_code = None
+    InjectionError = type("InjectionError", (Exception,), {})
+    RefactorRequiredError = type("RefactorRequiredError", (Exception,), {})
+
 
 def run_validation(temp_path: str, original_name: str) -> dict:
     ext = Path(original_name).suffix.lower()
@@ -13,6 +20,22 @@ def run_validation(temp_path: str, original_name: str) -> dict:
     content = Path(temp_path).read_text()
 
     if ext == ".py":
+        # Linter avanzado: complejidad ciclomatica + filtro de seguridad AST
+        if lint_code:
+            try:
+                lint_code(content)
+            except InjectionError as e:
+                result["errors"] = [str(e)]
+                result["status"] = "INJECTION_BLOCKED"
+                return result
+            except RefactorRequiredError as e:
+                result["errors"] = [str(e)]
+                result["status"] = "COMPLEXITY_REFACTOR"
+                return result
+            except SyntaxError as e:
+                result["errors"] = [str(e)]
+                return result
+
         # Syntax check via ast
         try:
             import ast
