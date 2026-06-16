@@ -281,7 +281,11 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
                 if delta:
                     accumulated_text += delta
                     if not guardian.evaluar_texto_stream(accumulated_text):
-                        yield b"data: " + json.dumps({"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}).encode() + b"\n\n"
+                        penalty = guardian.generar_penalizacion()
+                        payload = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
+                        if penalty:
+                            payload["error"]["penalty_context"] = penalty
+                        yield b"data: " + json.dumps(payload).encode() + b"\n\n"
                         yield b"data: [DONE]\n\n"
                         return
             yield b"data: " + json.dumps(chunk).encode() + b"\n\n"
@@ -450,13 +454,47 @@ async def proxy_gateway(path: str, request: Request):
         auth = request.headers.get("Authorization")
         if auth:
             headers["Authorization"] = auth
-        async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
-            if request.method == "GET":
+        if request.method == "GET":
+            async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
                 resp = await client.get(request.url.path, params=dict(request.query_params), headers=headers)
-            elif request.method == "POST":
-                resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
-            else:
-                return JSONResponse(status_code=405, content={"error": "method not allowed"})
+            return JSONResponse(content=resp.json(), status_code=resp.status_code)
+
+        is_opencode = (body or {}).get("_force_guardian", False) or "opencode" in (body or {}).get("model", "").lower()
+        guardian = OpenCodeGuardian() if is_opencode else None
+        is_gen = path.endswith(("chat", "generate"))
+        is_stream = (body or {}).get("stream", True)
+
+        if is_gen and is_stream:
+            async def _proxy_stream():
+                acc = ""
+                async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:
+                    async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
+                        async for line in resp.aiter_lines():
+                            if not line.strip():
+                                yield line + "\n"
+                                continue
+                            if is_opencode and guardian:
+                                try:
+                                    data = json.loads(line)
+                                    tok = (data.get("response", "")
+                                           or data.get("message", {}).get("content", "")
+                                           or data.get("choices", [{}])[0].get("delta", {}).get("content", ""))
+                                    if tok:
+                                        acc += tok
+                                        if not guardian.evaluar_texto_stream(acc):
+                                            penalty = guardian.generar_penalizacion()
+                                            err = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
+                                            if penalty:
+                                                err["error"]["penalty_context"] = penalty
+                                            yield json.dumps(err) + "\n"
+                                            return
+                                except json.JSONDecodeError:
+                                    pass
+                            yield line + "\n"
+            return StreamingResponse(_proxy_stream(), media_type="application/x-ndjson")
+
+        async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
+            resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
         return JSONResponse(content=resp.json(), status_code=resp.status_code)
     except httpx.ConnectError as e:
         return JSONResponse(status_code=502, content={"error": f"Ollama connect error: {e}"})
