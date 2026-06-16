@@ -24,6 +24,7 @@ from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.analizador import analizar
 from core.memoria.sintetizador import sintetizar
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.status_endpoint import system_status
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.rastreadores.hacer import fase_hacer
@@ -219,6 +220,7 @@ class ChatRequest(BaseModel):
     max_tokens: int = 4096
     temperature: float = 0.0
     task: str | None = None
+    force_guardian: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -258,10 +260,11 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     return None
 
 
-async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, max_tokens, temperature) -> AsyncGenerator[bytes, None]:
+async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, max_tokens, temperature, is_opencode=False, guardian=None) -> AsyncGenerator[bytes, None]:
     provider = PROVIDERS[provider_name]
     timeout_val = PROVIDER_TIMEOUTS.get(provider_name, 60)
     hubo_error = False
+    accumulated_text = ""
     try:
         gen = provider.chat(modelo=modelo, mensajes=mensajes, stream=True, tools=herramientas, max_tokens=max_tokens, temperature=temperature)
         async for chunk in gen:
@@ -273,6 +276,14 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
                 rate_limiter.registrar(provider_name)
                 _procesar_usage(chunk, provider_name, modelo)
                 return
+            if is_opencode and guardian:
+                delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                if delta:
+                    accumulated_text += delta
+                    if not guardian.evaluar_texto_stream(accumulated_text):
+                        yield b"data: " + json.dumps({"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}).encode() + b"\n\n"
+                        yield b"data: [DONE]\n\n"
+                        return
             yield b"data: " + json.dumps(chunk).encode() + b"\n\n"
         yield b"data: [DONE]\n\n"
     except asyncio.TimeoutError:
@@ -354,9 +365,11 @@ async def v1_chat_completions(body: ChatRequest):
     else:
         herramientas = None
 
+    is_opencode = body.force_guardian or "opencode" in body.model.lower()
+    guardian = OpenCodeGuardian() if is_opencode else None
     if body.stream:
         return StreamingResponse(
-            _stream_from_provider(provider_name, modelo, body.messages, herramientas, body.max_tokens, body.temperature),
+            _stream_from_provider(provider_name, modelo, body.messages, herramientas, body.max_tokens, body.temperature, is_opencode=is_opencode, guardian=guardian),
             media_type="text/event-stream",
             headers={"X-Mochila-Provider": provider_name, "X-Mochila-Modelo": modelo, "X-Mochila-Route-Reason": route_reason, "Cache-Control": "no-cache", "Connection": "keep-alive"},
         )
