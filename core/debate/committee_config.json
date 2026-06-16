@@ -2,7 +2,7 @@
   "consensus_threshold": 0.85,
   "ollama_url": "http://127.0.0.1:11434",
   "debate_lock_path": "/tmp/ura_debate.lock",
-  "plan_path": "/tmp/ura_debate/plan.json",
+  "plan_path": "/tmp/ura_debate_plan.json",
   "timeout_per_model": 180,
   "models": {
     "primary": {
@@ -12,7 +12,7 @@
       "max_tokens": 1024
     },
     "auditor": {
-      "name": "llama3.2:3b",
+      "name": "qwen2.5:3b-instruct",
       "role": "auditor_adversarial",
       "temperature": 0.3,
       "max_tokens": 1024
