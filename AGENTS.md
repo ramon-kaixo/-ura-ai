@@ -82,3 +82,22 @@ curl -X POST http://localhost:6333/collections/incidente_record/snapshots/{id}/r
 ```bash
 git checkout pre-inmutabilidad
 ```
+
+## SDA — Protocolo de Planificación Bicéfala (OBLIGATORIO)
+
+Siempre que el usuario te pida "un plan", "una estrategia", "una planeación" o "diseñar una solución":
+
+1. **NO respondas directamente** con tu propuesta en el chat.
+2. **Redacta el plan internamente** como JSON en `/tmp/ura_debate/plan.json` con formato:
+   ```json
+   {"plan": "descripción del plan", "author": "code"}
+   ```
+3. **Ejecuta el debate** mediante:
+   ```bash
+   python3 core/debate/plan_validator.py --debate < /tmp/ura_debate/plan.json
+   ```
+4. **Interpreta el veredicto** del JSON de salida:
+   - **CONSENSUS** (`consensus >= 0.7` y `requires_human == false`): Presenta el plan unificado al usuario y procede.
+   - **HUMAN_ARBITRATION** (`consensus < 0.7` o `requires_human == true`): Detén cualquier ejecución. Muestra en el chat ambos análisis (primary_reason vs auditor_reason) y los riesgos identificados para que Ramón arbitre.
+   - **INCOMPLETE** (un modelo no respondió): Reintenta con timeout mayor o modelo alternativo.
+5. **Prohibido** ignorar objeciones del auditor o resolver conflictos sin arbitraje humano. Si el auditor encuentra ≥2 riesgos críticos, Ramón DEBE decidir.
