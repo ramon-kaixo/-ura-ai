@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
-from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError, GroqProvider, DeepSeekProvider
+from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
@@ -34,16 +34,16 @@ load_dotenv(os.path.expanduser("~/URA/.env"))
 
 OLLAMA_SOCKET = "http://127.0.0.1:11434"
 
-PROVIDERS: dict[str, OllamaProvider | OpenRouterProvider | GeminiProvider] = {
+PROVIDERS: dict[str, Any] = {
     "ollama": OllamaProvider(),
     "openrouter": OpenRouterProvider(),
     "gemini": GeminiProvider(),
-    "groq": GroqProvider(),
-    "deepseek": DeepSeekProvider(),
 }
-PROVIDER_TIMEOUTS: dict[str, int] = {"ollama": 180, "openrouter": 60, "gemini": 60,
-    "groq": 60,
-    "deepseek": 60}
+PROVIDER_TIMEOUTS: dict[str, float] = {
+    "ollama": 120.0,
+    "openrouter": 60.0,
+    "gemini": 30.0,
+}
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
 
