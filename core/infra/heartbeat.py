@@ -7,12 +7,16 @@ Uso:
   python3 core/infra/heartbeat.py --daemon         # bucle cada 30s
 """
 import argparse
+import json
 import logging
+import os
 import subprocess
 import sys
 import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
+
+STATE_FILE = "/tmp/ura_state.json"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,7 +40,19 @@ def check_health() -> bool:
         return False
 
 
+def dump_checkpoint():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE) as f:
+                cp = json.load(f)
+            logger.critical("[HEARTBEAT] Checkpoint pendiente detectado antes de restart: task=%s file=%s",
+                           cp.get("task_id"), cp.get("target_file"))
+        except (json.JSONDecodeError, OSError):
+            logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
+
+
 def restart_service():
+    dump_checkpoint()
     logger.critical("Reiniciando ura-mochila.service...")
     try:
         res = subprocess.run(

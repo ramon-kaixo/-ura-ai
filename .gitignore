@@ -5,10 +5,10 @@ venv/
 .env
 *.env
 logs/
+!core/logs/
 *.log
 .DS_Store
 *.swp
-!core/logs/
 *.swo
 *~
 .swarm/
