@@ -74,8 +74,12 @@ ACTÚA COMO ADVERSARIO:
 3. Señala dependencias externas que podrían fallar
 4. Sé estricto y crítico — tu función es evitar implementaciones prematuras
 
+IMPORTANTE: Solo marca requires_human=true si encuentras DOS O MÁS riesgos críticos
+simultáneos que puedan causar fallo de sistema (ej: VRAM insuficiente + race condition).
+Un solo riesgo menor NO justifica arbitraje humano.
+
 Responde EXACTAMENTE en JSON:
-{{"score": 0.0-1.0, "reason": "explicación de fallos encontrados", "risks": ["fallo1"], "requires_human": true/false}}
+{{"score": 0.0-1.0, "reason": "explicación de fallos encontrados", "risks": ["fallo1", "fallo2"], "requires_human": true/false}}
 """
 
 
