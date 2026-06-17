@@ -6,7 +6,7 @@ Ejecuta contra la BD de Open WebUI en el GX10.
 import subprocess
 import sys
 
-GX10 = "ramon@10.164.1.99"
+GX10 = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
 DB_PATH = "/app/backend/data/webui.db"
 
 

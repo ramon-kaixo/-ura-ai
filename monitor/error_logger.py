@@ -8,6 +8,7 @@ Detecta plataforma automáticamente (Mac vs ASUS).
 """
 
 import json
+import os
 import platform
 import time
 import uuid
@@ -15,9 +16,10 @@ from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
-# Detectar plataforma automáticamente
+# Detectar plataforma automáticamente (sobrescribible via URA_ROOT)
 _system = platform.system().lower()
-_base = Path("/home/ramon/URA") if _system == "linux" else Path("/Users/ramonesnaola/URA")
+_ura_root = os.environ.get("URA_ROOT", "")
+_base = Path(_ura_root) if _ura_root else (Path("/home/ramon/URA") if _system == "linux" else Path("/Users/ramonesnaola/URA"))
 
 DEFAULT_LOG_PATH = _base / "logs" / "ura_errors.log"
 MAX_ENTRIES = 1000

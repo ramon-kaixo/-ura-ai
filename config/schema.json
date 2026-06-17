@@ -31,12 +31,15 @@
     "profiles": {
       "type": "object",
       "required": ["linux_asus", "darwin_mac"],
-      "additionalProperties": false,
+      "minProperties": 2,
       "properties": {
         "linux_asus": {
           "$ref": "#/$defs/profile"
         },
         "darwin_mac": {
+          "$ref": "#/$defs/profile"
+        },
+        "linux_terminal": {
           "$ref": "#/$defs/profile"
         }
       }

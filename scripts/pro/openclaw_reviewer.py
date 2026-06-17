@@ -21,7 +21,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434"))
 MODEL = os.environ.get("REVIEWER_MODEL", "qwen2.5-coder:q8_0")
 TIMEOUT = int(os.environ.get("REVIEWER_TIMEOUT", "180"))
 

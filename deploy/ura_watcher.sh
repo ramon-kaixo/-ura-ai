@@ -5,7 +5,7 @@
 # Ejecutar como daemon o launchd.
 # ============================================================
 
-URA_DIR="/Users/ramonesnaola/URA/ura_ia_1972"
+URA_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
 SYNC_SCRIPT="$URA_DIR/deploy/sync_to_asus.sh"
 IMMUTABLE_SCRIPT="$URA_DIR/deploy/immutable_mac.sh"
 LOG_FILE="$URA_DIR/logs/ura_watcher.log"

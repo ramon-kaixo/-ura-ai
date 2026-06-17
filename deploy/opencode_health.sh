@@ -9,7 +9,7 @@
 # ============================================================
 set -u
 MODE="${1:-text}"
-ASUS_IP="10.164.1.99"
+ASUS_IP="${ASUS_HOST:-10.164.1.99}"
 ASUS_USER="ramon"
 LOG_FILE="${HOME}/URA/logs/opencode_health.log"
 SUPPORT_DIR="${HOME}/Library/Application Support/ai.opencode.desktop"
