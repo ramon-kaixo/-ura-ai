@@ -11,10 +11,20 @@ from typing import Any
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
 
-_OS_MAP = {
-    "linux": "linux_asus",
-    "darwin": "darwin_mac",
-}
+def _detect_profile_key() -> str:
+    """Detecta qué perfil cargar según SO y hostname.
+    
+    linux → linux_asus si hostname contiene 'gx10', si no → linux_terminal
+    darwin → darwin_mac
+    """
+    system = platform.system().lower()
+    if system == "darwin":
+        return "darwin_mac"
+    if system == "linux":
+        host = platform.node().lower()
+        asus_hosts = ("gx10", "gx10-64c3", "asus")
+        return "linux_asus" if any(h in host for h in asus_hosts) else "linux_terminal"
+    raise RuntimeError(f"Sistema operativo no soportado: {system}")
 
 
 def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
@@ -45,11 +55,7 @@ def load_config() -> dict[str, Any]:
     """Carga y fusiona la configuración para el sistema operativo actual."""
     raw = _load_raw_config()
 
-    system = platform.system().lower()
-    profile_key = _OS_MAP.get(system)
-    if profile_key is None:
-        msg = f"Sistema operativo no soportado: {system}"
-        raise RuntimeError(msg)
+    profile_key = _detect_profile_key()
 
     profile = raw.get("profiles", {}).get(profile_key, {})
     if not profile:
@@ -141,7 +147,7 @@ def validate_schema() -> list:
                 if key not in CONFIG[section]:
                     errors.append(f"Falta key '{key}' en seccion '{section}'")
 
-    for profile_name in ("linux_asus", "darwin_mac"):
+    for profile_name in ("linux_asus", "darwin_mac", "linux_terminal"):
         if profile_name not in CONFIG.get("_raw_profiles", {}):
             errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")
 

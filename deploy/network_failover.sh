@@ -57,7 +57,7 @@ fi
 # ────────────────────────────────────────────────────────────
 # Verificar conexión a Mac (Ethernet o Tailscale)
 # ────────────────────────────────────────────────────────────
-if ! ping -c 1 -W 2 10.164.1.26 >/dev/null 2>&1; then
+if ! ping -c 1 -W 2 ${TERMINAL_HOST:-10.164.1.26} >/dev/null 2>&1; then
     if ping -c 1 -W 2 100.123.81.101 >/dev/null 2>&1; then
         echo "⚠ Mac alcanzable solo por Tailscale (Ethernet caído)"
     else

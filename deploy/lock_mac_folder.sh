@@ -5,7 +5,7 @@
 # Git operations siguen funcionando.
 # ============================================================
 
-MAC_DIR="/Users/ramonesnaola/URA/ura_ia_1972"
+MAC_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
 LOCK_FLAG="$MAC_DIR/.URA_LOCKED"
 LOCK_LOG="$MAC_DIR/logs/lock_mac_folder.log"
 

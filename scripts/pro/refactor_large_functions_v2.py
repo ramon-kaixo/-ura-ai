@@ -28,8 +28,8 @@ from compactador_espacios import compactar, descompactar
 
 # Usar model_router (puerto 11435) para enrutamiento inteligente con temperatura por modelo
 # Si no está disponible, cae directo a Ollama (11434)
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11435")
-OLLAMA_FALLBACK_URL = "http://10.164.1.99:11434"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "http://10.164.1.99:11435"))
+OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo

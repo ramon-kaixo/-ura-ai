@@ -5,7 +5,7 @@
 # ==============================================================================
 
 # Variables de Red e Infraestructura
-ASUS_IP="10.164.1.99"
+ASUS_IP="${ASUS_HOST:-10.164.1.99}"
 ASUS_SSH_USER="ramon"
 OPENCODE_PORT="4096"
 CONTEXT_PATH="/home/ramon/.config/opencode/ura_context.json"

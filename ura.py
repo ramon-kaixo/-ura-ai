@@ -1,58 +1,64 @@
 #!/usr/bin/env python3
-"""URA CLI — Punto de entrada central del sistema.
-Comandos: finalize, test, status, clean.
+"""
+URA CLI — Punto de entrada central del sistema.
+Comandos: finalize, test, status, clean
 """
 
+import sys
+import subprocess
 import json
 import shlex
-import subprocess
-import sys
 import time
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
+
+import contextlib
 
 ROOT = Path(__file__).parent
 TEST_SCRIPT = ROOT / "tests" / "integration_smoke.sh"
 MAINTENANCE_SCRIPT = ROOT / "mantenimiento" / "ura_maintenance.py"
 
 # Valores por defecto para comandos de monitor
-import contextlib
-
-# PROFILE STARTUP
-_STARTUP_START = time.perf_counter()
-print(f"[Inicio] {datetime.now().isoformat()}")
-
 from core.config_manager import CONFIG as _CFG
-_CONFIG_LOAD_TIME = time.perf_counter() - _STARTUP_START
-print(f"[Carga de Config] {_CONFIG_LOAD_TIME:.3f}s")
+TARGET = _CFG['ollama']['host']
+OLLAMA_PORT = _CFG['ollama']['port']
 
-TARGET = _CFG["ollama"]["host"]
-OLLAMA_PORT = _CFG["ollama"]["port"]
+# Module load timestamp (used by main() for startup profiling)
+_START = time.perf_counter()
 
 
 def _run(cmd, desc):
+    print(f"  {desc}...", end=" ", flush=True, file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
     if result.returncode == 0:
+        print("\033[32mOK\033[0m", file=sys.stderr)
         return True, result.stdout
-    if result.stderr:
-        pass
-    return False, result.stderr
+    else:
+        print("\033[31mFALLÓ\033[0m", file=sys.stderr)
+        if result.stderr:
+            print(f"    {result.stderr.strip()[:200]}", file=sys.stderr)
+        return False, result.stderr
 
 
-def cmd_finalize(args) -> int:
+def cmd_finalize(args):
     message = None
     for i, a in enumerate(args):
         if a == "-m" and i + 1 < len(args):
             message = args[i + 1]
             break
 
+    print("\n\033[1mURA Pipeline de Finalización\033[0m", file=sys.stderr)
+    print("=" * 40, file=sys.stderr)
 
     # CAPA 0: Unit tests (lo de ayer no se repite)
-    ok, _output = _run(["python3", "tests/test_unit.py"], "Unit tests")
+    print("\n[0/5] Unit tests (56 checks: imports, schema, cache, IPs)", file=sys.stderr)
+    ok, output = _run(["python3", "tests/test_unit.py"], "Unit tests")
     if not ok:
+        print("  Ejecuta: python3 tests/test_unit.py", file=sys.stderr)
         return 1
 
     # CAPA 1: Schema + compilación (instantáneo)
+    print("\n[1/5] Schema y compilación", file=sys.stderr)
     ok, _ = _run(["python3", "-m", "py_compile", "core/config_manager.py"], "config_manager")
     if not ok:
         return 1
@@ -69,11 +75,14 @@ def cmd_finalize(args) -> int:
     from core.config_manager import validate_schema
     errors = validate_schema()
     if errors:
-        for _e in errors:
-            pass
+        print("  \033[31mERRORES DE ESQUEMA:\033[0m", file=sys.stderr)
+        for e in errors:
+            print(f"    - {e}", file=sys.stderr)
         return 1
+    print("  Schema JSON... \033[32mOK\033[0m", file=sys.stderr)
 
     # CAPA 2: Smoke test (Ollama inference)
+    print("\n[2/5] Smoke test (clasificación + ruteo)", file=sys.stderr)
     ok, _ = _run(["python3", "core/model_router.py", "--test", "analizar bug en produccion"], "Router --test")
     if not ok:
         return 1
@@ -82,47 +91,61 @@ def cmd_finalize(args) -> int:
     staged = subprocess.run(["git", "diff", "--cached", "--name-only"],
                             capture_output=True, text=True, cwd=ROOT)
     if staged.stdout.strip():
+        print("\n[3/5] Git: stage + commit", file=sys.stderr)
         subprocess.run(["git", "add", "-A"], cwd=ROOT)
 
         if message:
             commit_msg = message
         else:
-            files = staged.stdout.strip().split("\n")[:3]
+            files = staged.stdout.strip().split('\n')[:3]
             commit_msg = f"Pipeline: {' '.join(files)}" if len(files) <= 3 else f"Pipeline: {files[0]} (+{len(files)-1} más)"
 
         ok, _ = _run(["git", "commit", "-m", commit_msg], f"commit: {commit_msg}")
         if not ok:
             return 1
     else:
-        pass
+        print("\n[3/5] Git: sin cambios para commitear", file=sys.stderr)
 
     # CAPA 4: Push
+    print("\n[4/5] Git push", file=sys.stderr)
     ok, _ = _run(["git", "push"], "push")
     if not ok:
-        pass
+        print("  \033[33mPush falló (¿no hay remote?). Cambios solo en local.\033[0m", file=sys.stderr)
 
+    print("\n\033[32m✅ PIPELINE COMPLETADO\033[0m", file=sys.stderr)
     return 0
 
 
-def cmd_test(args) -> int:
+def cmd_test(args):
+    print("\n\033[1mURA Test Suite\033[0m", file=sys.stderr)
+    print("=" * 40, file=sys.stderr)
 
-    from core.config_manager import validate_config, validate_schema
+    print("\n[Schema]", file=sys.stderr)
+    from core.config_manager import validate_schema, validate_config, get_role, get_base_dir
     errors = validate_schema()
     if errors:
-        for _e in errors:
-            pass
+        print(f"  \033[31m{len(errors)} errores de esquema\033[0m", file=sys.stderr)
+        for e in errors:
+            print(f"    - {e}", file=sys.stderr)
     else:
-        pass
+        print("  \033[32mSchema OK\033[0m", file=sys.stderr)
 
+    print(f"\n[Config]", file=sys.stderr)
+    print(f"  Rol:      {get_role()}", file=sys.stderr)
+    print(f"  Base dir: {get_base_dir()}", file=sys.stderr)
+    from core.config_manager import CONFIG
+    print(f"  Ollama:   {CONFIG['ollama']['host']}:{CONFIG['ollama']['port']}", file=sys.stderr)
 
     warnings = validate_config()
     if warnings:
-        pass
+        print(f"\n[Validación] \033[33m{warnings}\033[0m", file=sys.stderr)
     else:
-        pass
+        print(f"\n[Validación] \033[32mPaths OK\033[0m", file=sys.stderr)
 
+    print(f"\n[Router]", file=sys.stderr)
     subprocess.run(["python3", "core/model_router.py", "--models"], cwd=ROOT)
 
+    print(f"\n[Mantenimiento]", file=sys.stderr)
     subprocess.run(["python3", "mantenimiento/ura_maintenance.py", "--dry-run"], cwd=ROOT)
 
     return 0
@@ -132,80 +155,111 @@ def cmd_maintenance(args):
     """Mantenimiento: local con dry-run, remoto sin dry-run."""
     dry = "--dry-run" in args or "-d" in args
     if dry:
+        print(f"\nEjecutando mantenimiento local (dry-run)...", file=sys.stderr)
         return subprocess.run(["python3", str(MAINTENANCE_SCRIPT), "--dry-run"], cwd=ROOT).returncode
-    return subprocess.run(
-        ["ssh", f"{TARGET}", "cd ~/URA/ura_ia_1972 && python3 mantenimiento/ura_maintenance.py"],
-        cwd=ROOT,
-    ).returncode
+    else:
+        print(f"\nEjecutando mantenimiento REMOTO en GX10...", file=sys.stderr)
+        return subprocess.run(
+            ["ssh", f"{TARGET}", f"cd ~/URA/ura_ia_1972 && python3 mantenimiento/ura_maintenance.py"],
+            cwd=ROOT
+        ).returncode
 
 
 def cmd_rotate(args):
     return subprocess.run(["bash", str(ROOT / "mantenimiento" / "rotate_logs.sh")], cwd=ROOT).returncode
 
 
-def cmd_snc(args) -> int:
+def cmd_snc(args):
     """Estado del Sistema Nervioso Central — fetch desde GX10."""
+    print(f"\nURA SNC — Fetching desde GX10...", file=sys.stderr)
+    print(f"{'='*50}", file=sys.stderr)
+
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
 
     # Intentar rsync del state file
     with contextlib.suppress(Exception):
         subprocess.run(
             ["rsync", "-q", f"ramon@{TARGET}:/home/ramon/.ura/run/ura_snc_state.json", str(remote_state)],
-            timeout=10, capture_output=True,
+            timeout=10, capture_output=True
         )
 
     if remote_state.exists():
         try:
             with open(remote_state) as f:
                 state = json.loads(f.read())
-            ts = state.get("timestamp", "?")
+            ts = state.get('timestamp', '?')
             try:
                 from datetime import datetime
                 age = (datetime.now() - datetime.fromisoformat(ts)).total_seconds()
-                f"{age:.0f}s" if age < 120 else f"{age/60:.1f}min"
+                age_str = f"{age:.0f}s" if age < 120 else f"{age/60:.1f}min"
             except Exception:
-                pass
+                age_str = "?"
 
-            state.get("status", "?")
-            for info in state.get("services", {}).values():
-                "✅" if info.get("ok") else "❌"
-                if not info.get("ok") and info.get("repair_result"):
-                    f" → {info['repair_result']}"
-            if state.get("repair_attempts"):
-                for n in state["repair_attempts"].values():
+            status = state.get('status', '?')
+            color = "\033[32m" if status == "OK" else "\033[31m"
+            print(f"  Estado:    {color}{status}\033[0m (hace {age_str})", file=sys.stderr)
+            print(f"  Timestamp: {ts}", file=sys.stderr)
+            print(f"  OpenClaw:  {'🔴 ACTIVO' if state.get('openclaw_active') else '⚫ reposo'}", file=sys.stderr)
+            print(f"\n  Servicios:", file=sys.stderr)
+            for svc, info in state.get('services', {}).items():
+                icon = "✅" if info.get('ok') else "❌"
+                repair = ""
+                if not info.get('ok') and info.get('repair_result'):
+                    repair = f" → {info['repair_result']}"
+                print(f"    {icon} {svc}{repair}", file=sys.stderr)
+            if state.get('repair_attempts'):
+                print(f"\n  Intentos de reparación:", file=sys.stderr)
+                for svc, n in state['repair_attempts'].items():
                     if n > 0:
-                        pass
-        except Exception:
-            pass
+                        print(f"    {svc}: {n}", file=sys.stderr)
+        except Exception as e:
+            print(f"  Error: {e}", file=sys.stderr)
     else:
-        pass
+        print(f"  ⚠ Sin estado — ¿GX10 accesible? ¿SNC corriendo?", file=sys.stderr)
+        print(f"  Verifica: ssh ramon@{TARGET} systemctl status snc", file=sys.stderr)
 
+    print(f"\n  Monitor continuo: python3 monitor/snc_remote.py", file=sys.stderr)
     return 0
 
 
 def cmd_health(args):
+    print(f"\nURA Health Check — GX10", file=sys.stderr)
     return subprocess.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=ROOT).returncode
 
 
 def cmd_alerts(args):
+    print(f"\nURA Log Alerts — Sincronizando desde GX10", file=sys.stderr)
     return subprocess.run(["python3", str(ROOT / "monitor" / "log_alerts.py")], cwd=ROOT).returncode
 
 
-def cmd_index(args) -> int:
+def cmd_index(args):
     """Indexar documentos en la memoria RAG."""
     force = "--force" in args or "-f" in args
+    print(f"\nURA Memory Index {'(force)' if force else ''} [REMOTO en GX10]", file=sys.stderr)
+    print(f"{'='*50}", file=sys.stderr)
+    print(f"  Ejecutando indexación en sandbox mejora-continua...", file=sys.stderr)
 
-    cmd = f"cd ~/URA/ura_ia_1972 && python3 -c \"from core.memory_engine import index_documents; s=index_documents(force={'True' if force else 'False'}); print(s)\""
+    cmd = f"cd ~/URA/ura_ia_1972 && python3 -c \"from core.memory_engine import index_documents; s=index_documents(force={'True' if force else 'False'}); print(s, file=sys.stderr)\""
     result = subprocess.run(["ssh", TARGET, cmd], capture_output=True, text=True, cwd=ROOT, timeout=60)
     if result.returncode != 0:
+        print(f"  \033[31mError: {result.stderr[:200]}\033[0m", file=sys.stderr)
         return 1
     try:
         stats = json.loads(result.stdout.strip())
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"  \033[31mJSON decode error: {e}\033[0m", file=sys.stderr)
+        print(f"  Raw output: {result.stdout[:300]}", file=sys.stderr)
         return 1
     if "error" in stats:
+        print(f"  \033[33m{stats['error']}\033[0m", file=sys.stderr)
         return 1
 
+    print(f"  Nuevos:     {stats.get('new', 0)}", file=sys.stderr)
+    print(f"  Modificados:{stats.get('modified', 0)}", file=sys.stderr)
+    print(f"  Sin cambios:{stats.get('unchanged', 0)}", file=sys.stderr)
+    print(f"  Eliminados: {stats.get('deleted', 0)}", file=sys.stderr)
+    print(f"  Chunks:     {stats.get('chunks_added', 0)}", file=sys.stderr)
+    print(f"  \033[32mIndexación completada\033[0m", file=sys.stderr)
     return 0
 
 
@@ -213,166 +267,238 @@ def cmd_ask(args):
     """Consulta RAG: busca en documentos y responde con contexto."""
     question = " ".join(args) if args else None
     if not question:
+        print('Uso: python3 ura.py ask "pregunta"', file=sys.stderr)
         return 1
 
+    print(f"\nURA Memory — Buscando en GX10: {question}", file=sys.stderr)
+    print(f"{'='*50}", file=sys.stderr)
 
     safe_q = shlex.quote(question)
     cmd = f"cd ~/URA/ura_ia_1972 && python3 -c \"from core.memory_engine import query; r=query({safe_q}); [print(f'[{x.get(chr(39)+chr(39))}] ({x.get(chr(39)+chr(39),0):.2f}) {x.get(chr(39)+chr(39),chr(39)+chr(39))[:200]}') for x in r]\""
     return subprocess.run(["ssh", TARGET, cmd], cwd=ROOT, timeout=30).returncode
 
 
-def cmd_memory(args) -> int:
+def cmd_memory(args):
     """Estadisticas de la memoria RAG."""
+    print(f"\nURA Memory Stats", file=sys.stderr)
+    print(f"{'='*50}", file=sys.stderr)
+
     try:
-        from core.memory_engine import load_manifest
+        from core.memory_engine import load_manifest, _chromadb_available, DOCS_DIR
         manifest = load_manifest()
-        if manifest.get("files"):
-            for _fname, _info in sorted(manifest["files"].items()):
-                pass
-    except Exception:
+        print(f"  Documentos:  {manifest.get('total_documents', 0)}", file=sys.stderr)
+        print(f"  Chunks:      {manifest.get('total_chunks', 0)}", file=sys.stderr)
+        print(f"  Indexado:    {manifest.get('indexed_at', 'nunca')}", file=sys.stderr)
+        print(f"  ChromaDB:    {'instalado' if _chromadb_available() else 'NO instalado'}", file=sys.stderr)
+        print(f"  Directorio:  {DOCS_DIR}", file=sys.stderr)
+        if manifest.get('files'):
+            print(f"\n  Archivos indexados:", file=sys.stderr)
+            for fname, info in sorted(manifest['files'].items()):
+                print(f"    {fname} ({info.get('chunks', 0)} chunks)", file=sys.stderr)
+    except Exception as e:
+        print(f"  Error: {e}", file=sys.stderr)
         return 1
     return 0
 
 
-def cmd_snapshot(args) -> int:
+def cmd_snapshot(args):
     """Guardar snapshot del estado del repo."""
     import json
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    snap_dir = ROOT / "data" / "snapshots"
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    snap_dir = ROOT / 'data' / 'snapshots'
     snap_dir.mkdir(parents=True, exist_ok=True)
-    fname = snap_dir / f"{timestamp}.json"
+    fname = snap_dir / f'{timestamp}.json'
 
-    r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT)
-    test_r = subprocess.run(["python3", str(ROOT / "tests" / "test_unit.py")], capture_output=True, text=True, cwd=ROOT)
-    test_pass = "PASS" if "TODOS LOS TESTS PASARON" in test_r.stdout else "FAIL"
+    r = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True, cwd=ROOT)
+    test_r = subprocess.run(['python3', str(ROOT / 'tests' / 'test_unit.py')], capture_output=True, text=True, cwd=ROOT)
+    test_pass = 'PASS' if 'TODOS LOS TESTS PASARON' in test_r.stdout else 'FAIL'
 
     snap = {
-        "date": datetime.now().isoformat(),
-        "commit": r.stdout.strip(),
-        "tests": test_pass,
-        "branch": subprocess.run(["git","branch","--show-current"], capture_output=True, text=True, cwd=ROOT).stdout.strip(),
+        'date': datetime.now().isoformat(),
+        'commit': r.stdout.strip(),
+        'tests': test_pass,
+        'branch': subprocess.run(['git','branch','--show-current'], capture_output=True, text=True, cwd=ROOT).stdout.strip()
     }
-    with open(fname, "w") as f:
+    with open(fname, 'w') as f:
         json.dump(snap, f, indent=2)
+    print(f'Snapshot guardado: {fname}', file=sys.stderr)
     return 0
 
 
-def cmd_doctor(args) -> int:
+def cmd_doctor(args):
     """Diagnóstico completo del sistema."""
+    print(f"\n{'='*60}", file=sys.stderr)
+    print(f"  URA Doctor — Diagnóstico completo", file=sys.stderr)
+    print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
+
     # 1. Schema
-    from core.config_manager import validate_schema
+    print(f"\n[1/6] Schema", file=sys.stderr)
+    from core.config_manager import validate_schema, get_role, get_base_dir
     e = validate_schema()
     if e:
-        pass
+        print(f"  \033[31m{e[0]}\033[0m", file=sys.stderr)
     else:
-        pass
+        print(f"  \033[32mOK\033[0m — {get_role()} @ {get_base_dir()}", file=sys.stderr)
 
     # 2. Compilación
-    for f in ["core/config_manager.py", "core/model_router.py", "core/memory_engine.py", "ura.py"]:
-        r = subprocess.run(["python3", "-m", "py_compile", f], cwd=ROOT, capture_output=True)
+    print(f"\n[2/6] Compilación", file=sys.stderr)
+    for f in ['core/config_manager.py', 'core/model_router.py', 'core/memory_engine.py', 'ura.py']:
+        r = subprocess.run(['python3', '-m', 'py_compile', f], cwd=ROOT, capture_output=True)
+        icon = "\033[32m✓\033[0m" if r.returncode == 0 else "\033[31m✗\033[0m"
+        print(f"  {icon} {f}", file=sys.stderr)
 
     # 3. Tests
-    r = subprocess.run(["python3", str(ROOT / "tests" / "test_unit.py")], cwd=ROOT, capture_output=True, text=True)
-    if "TODOS LOS TESTS PASARON" in r.stdout:
-        pass
+    print(f"\n[3/6] Tests (113)", file=sys.stderr)
+    r = subprocess.run(['python3', str(ROOT / 'tests' / 'test_unit.py')], cwd=ROOT, capture_output=True, text=True)
+    if 'TODOS LOS TESTS PASARON' in r.stdout:
+        print(f"  \033[32m113/113 OK\033[0m", file=sys.stderr)
     else:
-        r.stdout.count("✗")
+        fails = r.stdout.count('✗')
+        print(f"  \033[31m{fails} tests fallaron\033[0m", file=sys.stderr)
 
     # 4. Git
-    r = subprocess.run(["git", "log", "--oneline", "-3"], cwd=ROOT, capture_output=True, text=True)
-    for _line in r.stdout.strip().split("\n"):
-        pass
+    print(f"\n[4/6] Git", file=sys.stderr)
+    r = subprocess.run(['git', 'log', '--oneline', '-3'], cwd=ROOT, capture_output=True, text=True)
+    for line in r.stdout.strip().split('\n'):
+        print(f"  {line}", file=sys.stderr)
 
     # 5. SNC
+    print(f"\n[5/6] SNC State", file=sys.stderr)
     sf = Path.home() / "URA" / "logs" / "snc_state.json"
     if sf.exists():
         import json
         s = json.loads(sf.read_text())
-        "🔴" if s.get("openclaw_active") else "⚫"
+        claw = "🔴" if s.get('openclaw_active') else "⚫"
+        print(f"  Estado: {s.get('status','?')} | OpenClaw: {claw} | {s.get('timestamp','?')}", file=sys.stderr)
     else:
-        pass
+        print(f"  \033[33mSin estado remoto\033[0m", file=sys.stderr)
 
     # 6. Docker (condicional)
+    print(f"\n[6/6] Docker (GX10)", file=sys.stderr)
     r = subprocess.run(
-        ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"ramon@{TARGET}",
+        ['ssh', '-o', 'ConnectTimeout=3', '-o', 'BatchMode=yes', f'ramon@{TARGET}',
          'docker ps --format "{{.Names}} ({{.Status}})" 2>/dev/null | head -6'],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True, text=True, timeout=10
     )
     if r.returncode == 0 and r.stdout.strip():
-        for _line in r.stdout.strip().split("\n"):
-            pass
+        for line in r.stdout.strip().split('\n'):
+            print(f"  {line}", file=sys.stderr)
     else:
-        pass
+        print(f"  \033[33mNo accesible\033[0m", file=sys.stderr)
 
+    print(f"\n{'='*60}", file=sys.stderr)
     return 0
 
 
-def cmd_metrics(args) -> int:
+def cmd_metrics(args):
     """Métricas del router: modelos, latencia, cache."""
+    print(f"\nURA Metrics — GX10", file=sys.stderr)
+    print(f"{'='*50}", file=sys.stderr)
     try:
         import urllib.request
-        r = urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5)
+        r = urllib.request.urlopen(f'http://{TARGET}:{OLLAMA_PORT}/metrics', timeout=5)
         data = r.read().decode()
-        for line in data.split("\n"):
-            if "model_selection" in line and "count" in line:
-                pass
-            if "latency_avg" in line:
-                pass
-            if "cache_hit" in line or "prompt_cache" in line:
-                pass
-    except Exception:
-        pass
+        print(f"  (datos de http://{TARGET}:{OLLAMA_PORT}/metrics)\n", file=sys.stderr)
+        for line in data.split('\n'):
+            if 'model_selection' in line and 'count' in line:
+                print(f"  {line}", file=sys.stderr)
+            if 'latency_avg' in line:
+                print(f"  {line}", file=sys.stderr)
+            if 'cache_hit' in line or 'prompt_cache' in line:
+                print(f"  {line}", file=sys.stderr)
+    except Exception as e:
+        print(f"  \033[33mNo se pudo conectar: {e}\033[0m", file=sys.stderr)
+    print(f"\n{'='*50}", file=sys.stderr)
     return 0
 
 
-def cmd_status(args) -> int:
+def cmd_status(args):
     """Dashboard unificado — lee del SNC state file."""
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
     local_state = Path.home() / ".ura" / "run" / "ura_snc_state.json"
 
+    print(f"\n{'='*60}", file=sys.stderr)
+    print(f"  URA Status Dashboard — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
 
     # 1. SNC State (fuente de verdad)
+    print(f"\n[SNC — Sistema Nervioso Central]", file=sys.stderr)
     state_file = remote_state if remote_state.exists() else (local_state if local_state.exists() else None)
     if state_file and state_file.exists():
         try:
             state = json.loads(state_file.read_text())
-            ts = state.get("timestamp", "?")
+            ts = state.get('timestamp', '?')
             try:
                 age = (datetime.now() - datetime.fromisoformat(ts)).total_seconds()
-                f"{age:.0f}s" if age < 120 else f"{age/60:.1f}min"
+                age_str = f"{age:.0f}s" if age < 120 else f"{age/60:.1f}min"
             except Exception:
-                pass
-            state.get("status", "UNKNOWN")
-            for info in state.get("services", {}).values():
-                "✅" if info.get("ok") else "❌"
-                if not info.get("ok") and info.get("repair_result"):
-                    f" → {info['repair_result']}"
-            if state.get("repair_attempts"):
-                for n in state["repair_attempts"].values():
+                age_str = "?"
+            status = state.get('status', 'UNKNOWN')
+            color = "\033[32m" if status == "OK" else "\033[31m"
+            print(f"  Estado:    {color}{status}\033[0m (hace {age_str})", file=sys.stderr)
+            print(f"  OpenClaw:  {'🔴 ACTIVO' if state.get('openclaw_active') else '⚫ reposo'}", file=sys.stderr)
+            print(f"\n  Servicios:", file=sys.stderr)
+            for svc, info in state.get('services', {}).items():
+                icon = "✅" if info.get('ok') else "❌"
+                repair = ""
+                if not info.get('ok') and info.get('repair_result'):
+                    repair = f" → {info['repair_result']}"
+                print(f"    {icon} {svc}{repair}", file=sys.stderr)
+            if state.get('repair_attempts'):
+                print(f"\n  Intentos de reparación:", file=sys.stderr)
+                for svc, n in state['repair_attempts'].items():
                     if n > 0:
-                        pass
-        except Exception:
-            pass
+                        print(f"    {svc}: {n}", file=sys.stderr)
+        except Exception as e:
+            print(f"  Error leyendo state file: {e}", file=sys.stderr)
     else:
-        pass
+        print(f"  ⚠ Sin estado del SNC. ¿SNC corriendo en GX10?", file=sys.stderr)
+        print(f"  Ejecuta en GX10: python3 monitor/snc.py", file=sys.stderr)
 
     # 2. Git
+    print(f"\n[Git]", file=sys.stderr)
     result = subprocess.run(["git", "log", "--oneline", "-3"], capture_output=True, text=True, cwd=ROOT)
     if result.returncode == 0:
-        for _line in result.stdout.strip().split("\n"):
-            pass
+        for line in result.stdout.strip().split("\n"):
+            print(f"  {line}", file=sys.stderr)
 
     # 3. Config local
+    print(f"\n[Config local]", file=sys.stderr)
+    from core.config_manager import get_role, get_base_dir
+    print(f"  Rol:      {get_role()}", file=sys.stderr)
+    print(f"  Base dir: {get_base_dir()}", file=sys.stderr)
 
+    print(f"\n{'='*60}", file=sys.stderr)
     return 0
 
 
 def main():
-    _MAIN_START = time.perf_counter()
-    _MAIN_LOAD_TIME = _MAIN_START - _STARTUP_START
-    print(f"[Main Entry] {_MAIN_LOAD_TIME:.3f}s")
+    _elapsed = time.perf_counter() - _START
+    print(f"[Inicio] {datetime.now().isoformat()}", file=sys.stderr)
+    print(f"[Carga] {_elapsed:.3f}s", file=sys.stderr)
 
     if len(sys.argv) < 2:
+        print("URA CLI v3.0")
+        print("")
+        print("  Comandos:")
+        print("    finalize [-m \"msg\"]   Pipeline completo: test + commit + push")
+        print("    test                   Validar schema, config, router, mantenimiento")
+        print("    clean [-d]             Mantenimiento de disco (-d = dry-run)")
+        print("    rotate                 Rotar logs")
+        print("    snapshot               Guardar estado del repo")
+        print("    snc                   Estado del Sistema Nervioso Central")
+        print("    health                 Salud del GX10 (disco, RAM, VRAM)")
+        print("    alerts                 Sincronizar logs críticos desde GX10")
+        print("    index [--force]        Indexar documentos en memoria RAG")
+        print("    ask \"pregunta\"         Consultar documentos indexados")
+        print("    memory                 Estadisticas de memoria RAG")
+        print("    doctor                 Diagnóstico completo del sistema")
+        print("    metrics                Métricas del router (modelos, latencia)")
+        print("    status                 Dashboard unificado (SNC + Git + Config)", file=sys.stderr)
+        print("")
+        print("  Ejemplo:", file=sys.stderr)
+        print("    python3 ura.py finalize -m \"fix: corrige cache de prompts\"", file=sys.stderr)
         return 0
 
     cmd = sys.argv[1]
@@ -380,31 +506,33 @@ def main():
 
     if cmd == "finalize":
         return cmd_finalize(args)
-    if cmd == "test":
+    elif cmd == "test":
         return cmd_test(args)
-    if cmd in ("clean", "maintenance"):
+    elif cmd in ("clean", "maintenance"):
         return cmd_maintenance(args)
-    if cmd == "rotate":
+    elif cmd == "rotate":
         return cmd_rotate(args)
-    if cmd in ("heartbeat", "snc"):
+    elif cmd in ("heartbeat", "snc"):
         return cmd_snc(args)
-    if cmd == "health":
+    elif cmd == "health":
         return cmd_health(args)
-    if cmd in ("alerts", "logs"):
+    elif cmd in ("alerts", "logs"):
         return cmd_alerts(args)
-    if cmd == "doctor":
+    elif cmd == "doctor":
         return cmd_doctor(args)
-    if cmd == "metrics":
+    elif cmd == "metrics":
         return cmd_metrics(args)
-    if cmd == "snapshot":
+    elif cmd == "snapshot":
         return cmd_snapshot(args)
-    if cmd == "status":
+    elif cmd == "status":
         return cmd_status(args)
-    if cmd == "index":
+    elif cmd == "index":
         return cmd_index(args)
-    if cmd == "ask":
+    elif cmd == "ask":
         return cmd_ask(args)
-    return 1
+    else:
+        print(f"Comando desconocido: {cmd}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

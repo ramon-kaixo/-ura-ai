@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Memory Engine — RAG (Retrieval-Augmented Generation) para URA.
-Indexa documentos locales en ChromaDB y enriquece consultas con contexto.
+Indexa documentos locales en Qdrant y enriquece consultas con contexto.
 Determinista: sin variables globales, todo el estado en disco.
 """
 
@@ -16,22 +16,31 @@ import logging
 from datetime import datetime
 
 from core.config_manager import CONFIG
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger(__name__)
 
 RAG_CONFIG = CONFIG.get("rag", {})
 DATA_DIR = Path(CONFIG["paths"]["data"])
 DOCS_DIR = DATA_DIR / "documentos"
-CHROMA_DIR = DATA_DIR / "chroma_db"
 MANIFEST_PATH = DATA_DIR / ".index_manifest.json"
 CHUNK_SIZE = RAG_CONFIG.get("chunk_size", 500)
 CHUNK_OVERLAP = RAG_CONFIG.get("chunk_overlap", 50)
 TOP_K = RAG_CONFIG.get("top_k", 5)
 SIMILARITY_THRESHOLD = RAG_CONFIG.get("threshold", 0.7)
 
+_qdrant: QdrantClient | None = None
+
+
+def _get_qdrant() -> QdrantClient:
+    global _qdrant
+    if _qdrant is None:
+        _qdrant = QdrantClient.instancia(UraConfig.load())
+    return _qdrant
+
 
 def _sha256(filepath: Path) -> str:
-    """Hash SHA-256 de un archivo (determinista)."""
     h = hashlib.sha256()
     with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -40,7 +49,6 @@ def _sha256(filepath: Path) -> str:
 
 
 def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """Divide texto en chunks con overlap (determinista)."""
     words = text.split()
     if len(words) <= size:
         return [text]
@@ -53,29 +61,11 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
     return chunks
 
 
-def _chromadb_available() -> bool:
-    """Verifica si chromadb está instalado."""
-    import importlib.util
-    return importlib.util.find_spec("chromadb") is not None
-
-
-def _get_collection():
-    """Obtiene o crea la colección ChromaDB."""
-    import chromadb
-    CHROMA_DIR.mkdir(parents=True, exist_ok=True)
-    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    return client.get_or_create_collection(
-        name="ura_documents",
-        metadata={"hnsw:space": "cosine"},
-    )
-
-
 # ============================================================
 # Indexación (determinista: mismo input → mismo índice)
 # ============================================================
 
 def load_manifest() -> dict:
-    """Carga el manifest de indexación."""
     if MANIFEST_PATH.exists():
         try:
             return json.loads(MANIFEST_PATH.read_text())
@@ -85,39 +75,36 @@ def load_manifest() -> dict:
 
 
 def save_manifest(manifest: dict) -> None:
-    """Guarda el manifest (determinista: mismo estado → mismo archivo)."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Verificar espacio en disco antes de escribir
     try:
         import shutil
-        required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2  # 2x margen
+        required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:
             log.error(f"Espacio en disco insuficiente: {free_space} bytes libres, {required_space} bytes requeridos")
-            raise OSError("Espacio en disco insuficiente")
+            msg = "Espacio en disco insuficiente"
+            raise OSError(msg)
     except Exception as e:
-        log.error(f"Error verificando espacio en disco: {e}")
+        log.exception(f"Error verificando espacio en disco: {e}")
         raise
-    
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
 def index_documents(force: bool = False) -> dict:
-    """Indexa todos los documentos en data/documentos/.
-    - Archivos nuevos → chunk + embed
+    """Indexa todos los documentos en data/documentos/ en Qdrant.
+    - Archivos nuevos → chunk + embed (vía Ollama)
     - Archivos modificados (SHA-256 ≠) → re-indexa
     - Archivos sin cambios → no toca (idempotente)
-    - Archivos eliminados → borra chunks de ChromaDB
+    - Archivos eliminados → borra chunks de Qdrant
     Retorna dict con estadísticas.
     """
-    if not _chromadb_available():
-        return {"error": "chromadb no instalado. pip install chromadb"}
+    qdrant = _get_qdrant()
+    if not qdrant.disponible:
+        return {"error": "Qdrant no disponible"}
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
     manifest = load_manifest() if not force else {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
-    collection = _get_collection()
 
     current_files = {}
     for f in DOCS_DIR.rglob("*"):
@@ -131,7 +118,7 @@ def index_documents(force: bool = False) -> dict:
     for rel_path in list(manifest.get("files", {}).keys()):
         if rel_path not in current_files:
             try:
-                collection.delete(where={"source": rel_path})
+                qdrant.eliminar_por_filtro({"source": rel_path})
                 del manifest["files"][rel_path]
                 stats["deleted"] += 1
             except Exception as e:
@@ -147,9 +134,8 @@ def index_documents(force: bool = False) -> dict:
         is_modified = rel_path in manifest.get("files", {})
         if is_modified:
             stats["modified"] += 1
-            # Borrar chunks viejos antes de re-indexar
             with contextlib.suppress(Exception):
-                collection.delete(where={"source": rel_path})
+                qdrant.eliminar_por_filtro({"source": rel_path})
         else:
             stats["new"] += 1
 
@@ -158,39 +144,43 @@ def index_documents(force: bool = False) -> dict:
             filepath = DOCS_DIR / rel_path
             text = filepath.read_text(encoding="utf-8")
         except Exception as e:
-            log.error(f"Error crítico leyendo {rel_path}: {e}")
+            log.exception(f"Error crítico leyendo {rel_path}: {e}")
             continue
 
         chunks = _chunk_text(text)
         if not chunks:
             continue
 
-        # Preparar para ChromaDB
-        ids = [f"{rel_path}_{i}" for i in range(len(chunks))]
-        metadatas = [{
-            "source": rel_path,
-            "chunk_index": i,
-            "total_chunks": len(chunks),
-            "sha256": file_hash,
-            "indexed_at": datetime.now().isoformat(),
-        } for i in range(len(chunks))]
+        # Preparar batch para Qdrant
+        now = datetime.now().isoformat()
+        docs_batch = []
+        for i, chunk_text in enumerate(chunks):
+            doc_id = f"{rel_path}_{i}"
+            metadata = {
+                "source": rel_path,
+                "chunk_index": i,
+                "total_chunks": len(chunks),
+                "sha256": file_hash,
+                "indexed_at": now,
+            }
+            docs_batch.append((doc_id, chunk_text, metadata))
 
         try:
-            collection.add(documents=chunks, ids=ids, metadatas=metadatas)
-            stats["chunks_added"] += len(chunks)
+            guardados = qdrant.guardar_documentos_batch(docs_batch)
+            stats["chunks_added"] += guardados
         except Exception as e:
-            log.error(f"Error crítico indexando {rel_path}: {e}")
+            log.exception(f"Error crítico indexando {rel_path}: {e}")
             continue
 
         manifest["files"][rel_path] = {
             "sha256": file_hash,
             "chunks": len(chunks),
-            "indexed_at": datetime.now().isoformat(),
+            "indexed_at": now,
         }
 
     manifest["indexed_at"] = datetime.now().isoformat()
     manifest["total_documents"] = len(manifest["files"])
-    manifest["total_chunks"] = stats["chunks_added"]  # solo nuevos/modificados
+    manifest["total_chunks"] = stats["chunks_added"]
     save_manifest(manifest)
 
     return stats
@@ -201,45 +191,32 @@ def index_documents(force: bool = False) -> dict:
 # ============================================================
 
 def query(question: str, top_k: int = TOP_K) -> list[dict]:
-    """Busca los chunks más relevantes para una pregunta.
+    """Busca los chunks más relevantes para una pregunta en Qdrant.
     Retorna lista de {content, source, chunk_index, similarity}.
     """
-    if not _chromadb_available():
+    qdrant = _get_qdrant()
+    if not qdrant.disponible:
         return []
 
     try:
-        collection = _get_collection()
-        results = collection.query(
-            query_texts=[question],
-            n_results=min(top_k, 10),
-        )
+        results = qdrant.buscar_documentos(question, limit=min(top_k, 10))
     except Exception as e:
-        log.error(f"Error crítico consultando ChromaDB: {e}")
-        return []
-
-    if not results or not results.get("documents") or not results["documents"][0]:
+        log.exception(f"Error crítico consultando Qdrant: {e}")
         return []
 
     output = []
-    docs = results["documents"][0]
-    metas = results["metadatas"][0] if results.get("metadatas") else []
-    distances = results.get("distances", [[]])[0]
+    for r in results:
+        payload = r.get("payload", {})
+        score = r.get("score", 0)
 
-    for i, doc in enumerate(docs):
-        meta = metas[i] if i < len(metas) else {}
-        dist = distances[i] if i < len(distances) else 0
-
-        # ChromaDB usa distancia L2 por defecto; convertir a similitud aproximada
-        similarity = 1.0 / (1.0 + dist) if dist > 0 else 1.0
-
-        if similarity < SIMILARITY_THRESHOLD:
+        if score < SIMILARITY_THRESHOLD:
             continue
 
         output.append({
-            "content": doc,
-            "source": meta.get("source", "unknown"),
-            "chunk_index": meta.get("chunk_index", 0),
-            "similarity": round(similarity, 4),
+            "content": payload.get("texto", ""),
+            "source": payload.get("source", "unknown"),
+            "chunk_index": payload.get("chunk_index", 0),
+            "similarity": round(score, 4),
         })
 
     return output
@@ -263,49 +240,7 @@ def get_sources(results: list[dict]) -> list[dict]:
 
 def rag_enabled() -> bool:
     """Verifica si RAG está configurado y disponible."""
-    return CONFIG.get("rag", {}).get("enabled", False) and _chromadb_available() and DOCS_DIR.exists()
-
-
-class MemoryEngine:
-    """Wrapper orientado a objetos sobre el RAG de URA.
-    Sin estado global: todo el estado vive en disco/manifest.
-    Compatible hacia atrás: las funciones de módulo siguen funcionando.
-    """
-
-    def __init__(self):
-        self.collection = _get_collection()
-
-    def query(self, question: str, n_results: int = 5) -> list[dict]:
-        return query(question, top_k=n_results)
-
-    def rag_enabled(self) -> bool:
-        return rag_enabled()
-
-    def import_remote_metadata_package(self, path_json_bruto: str) -> bool:
-        import json
-        from core.logs.guardian_logger import log_event
-        try:
-            with open(path_json_bruto) as f:
-                paquete = json.load(f)
-        except Exception as e:
-            log_event("metadata_import_failed", reason=str(e), result_type="failure")
-            return False
-
-        for item in paquete:
-            metadata_clean = {
-                "source": "remote_pipeline_alemania",
-                "tags": ",".join(item.get("tags", [])),
-                "size_bytes": item.get("size_bytes", 0),
-            }
-            try:
-                doc_id = item.get("path", "unknown").replace("/home/ramon/", "")
-                self.collection.upsert(
-                    documents=[item.get("content_summary", "")],
-                    metadatas=[metadata_clean],
-                    ids=[doc_id],
-                )
-            except Exception as e:
-                log_event("chroma_upsert_error", file=item.get("path", ""), reason=str(e), result_type="warning")
-
-        log_event("metadata_package_indexed", reason=f"total_files={len(paquete)}", result_type="success")
-        return True
+    if not CONFIG.get("rag", {}).get("enabled", False):
+        return False
+    qdrant = _get_qdrant()
+    return qdrant.disponible and DOCS_DIR.exists()

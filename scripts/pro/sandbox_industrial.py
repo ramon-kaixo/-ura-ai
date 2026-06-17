@@ -29,7 +29,7 @@ import urllib.request
 from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────────────
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434"))
 MODEL_CLEANER = os.environ.get("MODEL_CLEANER", "qwen2.5:7b")
 MODEL_REFACTOR = os.environ.get("MODEL_REFACTOR", "qwen2.5:7b")
 SANDBOX_CHUNK = int(os.environ.get("SANDBOX_CHUNK", "60"))

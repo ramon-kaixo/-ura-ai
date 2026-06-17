@@ -7,83 +7,30 @@
       "docker_build": 7
     },
     "patrones_clasificacion": {
-      "razonamiento": [
-        "analizar",
-        "planificar",
-        "dise\u00f1ar",
-        "arquitectura",
-        "estrategia",
-        "por qu\u00e9",
-        "explicar",
-        "razonamiento",
-        "l\u00f3gica",
-        "evaluar"
-      ],
-      "codigo_complejo": [
-        "refactor",
-        "arquitectura",
-        "patr\u00f3n",
-        "optimizar c\u00f3digo",
-        "reestructurar",
-        "mejorar",
-        "revisar c\u00f3digo",
-        "debug complejo"
-      ],
-      "codigo_rapido": [
-        "fix",
-        "bug",
-        "error",
-        "corregir",
-        "script",
-        "funci\u00f3n",
-        "implementar",
-        "crear funci\u00f3n",
-        "escribir c\u00f3digo"
-      ],
-      "respuesta_rapida": [
-        "qu\u00e9 es",
-        "definir",
-        "resumir",
-        "clasificar",
-        "listar",
-        "explicar brevemente",
-        "describir"
-      ],
-      "vision": [
-        "imagen",
-        "foto",
-        "gr\u00e1fico",
-        "visual",
-        "analizar imagen",
-        "extraer de imagen",
-        "ocr",
-        "texto en imagen"
-      ],
-      "embeddings": [
-        "embedding",
-        "vector",
-        "similitud",
-        "buscar",
-        "sem\u00e1ntico",
-        "representaci\u00f3n",
-        "codificar"
-      ]
+      "razonamiento": ["analizar", "planificar", "diseñar", "arquitectura", "estrategia", "por qué", "explicar", "razonamiento", "lógica", "evaluar"],
+      "codigo_complejo": ["refactor", "arquitectura", "patrón", "optimizar código", "reestructurar", "mejorar", "revisar código", "debug complejo"],
+      "codigo_rapido": ["fix", "bug", "error", "corregir", "script", "función", "implementar", "crear función", "escribir código"],
+      "respuesta_rapida": ["qué es", "definir", "resumir", "clasificar", "listar", "explicar brevemente", "describir"],
+      "vision": ["imagen", "foto", "gráfico", "visual", "analizar imagen", "extraer de imagen", "ocr", "texto en imagen"],
+      "embeddings": ["embedding", "vector", "similitud", "buscar", "semántico", "representación", "codificar"]
     },
     "model_descriptions": {
-      "razonamiento": "Razonamiento profundo y planificaci\u00f3n",
-      "codigo_complejo": "C\u00f3digo complejo, refactoring, arquitectura",
-      "codigo_rapido": "C\u00f3digo r\u00e1pido, scripts, fixes",
-      "respuesta_rapida": "Respuestas r\u00e1pidas, clasificaci\u00f3n, res\u00famenes",
-      "vision": "An\u00e1lisis de im\u00e1genes y visi\u00f3n",
-      "embeddings": "Generaci\u00f3n de embeddings"
+      "razonamiento": "Razonamiento profundo y planificación",
+      "codigo_complejo": "Código complejo, refactoring, arquitectura",
+      "codigo_rapido": "Código rápido, scripts, fixes",
+      "respuesta_rapida": "Respuestas rápidas, clasificación, resúmenes",
+      "vision": "Análisis de imágenes y visión",
+      "embeddings": "Generación de embeddings"
     }
   },
   "profiles": {
     "linux_asus": {
       "role": "server",
+      "power_mode": "TURBO",
       "hostname": "gx10",
       "ollama": {
         "host": "localhost",
+        "remote_host": "10.164.1.99",
         "port": 11434
       },
       "router": {
@@ -95,107 +42,41 @@
         "logs": "/opt/ura/logs",
         "maintenance_logs": "/opt/ura/logs/maintenance"
       },
-      "ssh": {
-        "user": "ramon",
-        "timeout": 300
-      },
-      "swarm": {
-        "devices_path": "/home/ramon/URA/swarm/known_devices.json"
-      },
+      "ssh": {"user": "ramon", "timeout": 300},
+      "swarm": {"devices_path": "/home/ramon/URA/swarm/known_devices.json"},
       "maintenance": {
-        "thresholds": {
-          "docker_images": 5,
-          "docker_volumes": 3,
-          "cache_size": 1,
-          "log_size": 0.5
-        },
+        "thresholds": {"docker_images": 5, "docker_volumes": 3, "cache_size": 1, "log_size": 0.5},
         "exclude_patterns": [
-          "*.db",
-          "*.sqlite",
-          "*.sqlite-wal",
-          "*.key",
-          "*.pem",
-          "*.crt",
-          "*.env",
-          "*.secret",
-          "*.p12",
-          "*.pfx",
-          "*.jks",
-          "*.keystore",
-          "/home/*/URA/",
-          "/home/*/projects/",
-          "/home/*/Documents/",
-          "/home/*/Desktop/",
-          "/home/*/Downloads/",
-          "/home/*/Pictures/",
-          "/home/*/Music/",
-          "/home/*/Videos/",
-          "/home/*/.ssh/",
-          "/home/*/.gnupg/",
-          "/opt/ura/",
-          "/etc/",
-          "/var/lib/",
-          "/usr/local/",
-          "/home/*/.config/",
-          "/home/*/.local/share/"
+          "*.db", "*.sqlite", "*.sqlite-wal", "*.key", "*.pem", "*.crt",
+          "*.env", "*.secret", "*.p12", "*.pfx", "*.jks", "*.keystore",
+          "/home/*/URA/", "/home/*/projects/", "/home/*/Documents/",
+          "/home/*/Desktop/", "/home/*/Downloads/", "/home/*/Pictures/",
+          "/home/*/Music/", "/home/*/Videos/", "/home/*/.ssh/",
+          "/home/*/.gnupg/", "/opt/ura/", "/etc/", "/var/lib/",
+          "/usr/local/", "/home/*/.config/", "/home/*/.local/share/"
         ],
-        "allowed_temp_dirs": [
-          "/tmp",
-          "/var/tmp"
-        ],
-        "allowed_log_dirs": [
-          "/var/log",
-          "/opt/ura/logs"
-        ]
+        "allowed_temp_dirs": ["/tmp", "/var/tmp"],
+        "allowed_log_dirs": ["/var/log", "/opt/ura/logs"]
       },
       "models": {
-        "razonamiento": [
-          "qwen3:32b-q8_0",
-          "qwen3:14b",
-          "llama3.3:70b",
-          "deepseek-coder:6.7b"
-        ],
-        "codigo_complejo": [
-          "qwen2.5-coder:32b",
-          "qwen2.5-coder:q8_0",
-          "qwen2.5-coder:14b",
-          "qwen3:32b-q8_0"
-        ],
-        "codigo_rapido": [
-          "qwen2.5:7b",
-          "llama3.2:3b",
-          "deepseek-coder:6.7b"
-        ],
-        "respuesta_rapida": [
-          "qwen2.5:7b",
-          "llama3.2:3b",
-          "llama3.2:1b"
-        ],
-        "vision": [
-          "llama3.2-vision:11b",
-          "llava:34b",
-          "llava:13b"
-        ],
-        "embeddings": [
-          "nomic-embed-text:latest",
-          "mxbai-embed-large"
-        ]
+        "razonamiento": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b", "deepseek-coder:6.7b"],
+        "codigo_complejo": ["qwen2.5-coder:32b", "qwen2.5-coder:q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
+        "codigo_rapido": ["qwen2.5:7b", "llama3.2:3b", "deepseek-coder:6.7b"],
+        "respuesta_rapida": ["qwen2.5:7b", "llama3.2:3b", "llama3.2:1b"],
+        "vision": ["llama3.2-vision:11b", "llava:34b", "llava:13b"],
+        "embeddings": ["nomic-embed-text:latest", "mxbai-embed-large"]
       },
       "fallback_model": "qwen2.5:7b",
       "cache_ttl": 7200,
-      "rag": {
-        "enabled": true,
-        "chunk_size": 500,
-        "chunk_overlap": 50,
-        "top_k": 5,
-        "threshold": 0.55
-      }
+      "rag": {"enabled": true, "chunk_size": 500, "chunk_overlap": 50, "top_k": 5, "threshold": 0.55}
     },
     "darwin_mac": {
       "role": "client",
+      "power_mode": "TURBO",
       "hostname": "mac",
       "ollama": {
         "host": "10.164.1.99",
+        "remote_host": "10.164.1.99",
         "port": 11434
       },
       "router": {
@@ -207,89 +88,78 @@
         "logs": "~/URA/logs",
         "maintenance_logs": "~/URA/logs/maintenance"
       },
-      "ssh": {
-        "user": "ramon",
-        "timeout": 300
-      },
-      "swarm": {
-        "devices_path": "~/URA/swarm/known_devices.json"
-      },
+      "ssh": {"user": "ramon", "timeout": 300},
+      "swarm": {"devices_path": "~/URA/swarm/known_devices.json"},
       "maintenance": {
-        "thresholds": {
-          "docker_images": 10,
-          "docker_volumes": 5,
-          "cache_size": 2,
-          "log_size": 1
-        },
+        "thresholds": {"docker_images": 10, "docker_volumes": 5, "cache_size": 2, "log_size": 1},
         "exclude_patterns": [
-          "*.db",
-          "*.sqlite",
-          "*.sqlite-wal",
-          "*.key",
-          "*.pem",
-          "*.crt",
-          "*.env",
-          "*.secret",
-          "*.p12",
-          "*.pfx",
-          "*.jks",
-          "*.keystore",
-          "/System/*",
-          "/Users/*/Library/",
-          "/Users/*/Desktop/",
-          "/Users/*/Documents/",
-          "/Users/*/Downloads/",
-          "/Applications/",
-          "/usr/local/",
-          "/opt/ura/",
-          "/etc/"
+          "*.db", "*.sqlite", "*.sqlite-wal", "*.key", "*.pem", "*.crt",
+          "*.env", "*.secret", "*.p12", "*.pfx", "*.jks", "*.keystore",
+          "/System/*", "/Users/*/Library/", "/Users/*/Desktop/",
+          "/Users/*/Documents/", "/Users/*/Downloads/", "/Applications/",
+          "/usr/local/", "/opt/ura/", "/etc/"
         ],
-        "allowed_temp_dirs": [
-          "/tmp",
-          "/var/folders"
-        ],
-        "allowed_log_dirs": [
-          "/var/log",
-          "~/Library/Logs",
-          "~/URA/logs"
-        ]
+        "allowed_temp_dirs": ["/tmp", "/var/folders"],
+        "allowed_log_dirs": ["/var/log", "~/Library/Logs", "~/URA/logs"]
       },
       "models": {
-        "razonamiento": [
-          "qwen3:32b-q8_0",
-          "qwen3:14b",
-          "llama3.3:70b"
-        ],
-        "codigo_complejo": [
-          "qwen2.5-coder:32b",
-          "qwen3:32b-q8_0"
-        ],
-        "codigo_rapido": [
-          "qwen2.5:7b",
-          "llama3.2:3b"
-        ],
-        "respuesta_rapida": [
-          "qwen2.5:7b",
-          "llama3.2:3b",
-          "llama3.2:1b"
-        ],
-        "vision": [
-          "llama3.2-vision:11b"
-        ],
-        "embeddings": [
-          "nomic-embed-text:latest",
-          "mxbai-embed-large"
-        ]
+        "razonamiento": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b"],
+        "codigo_complejo": ["qwen2.5-coder:32b", "qwen3:32b-q8_0"],
+        "codigo_rapido": ["qwen2.5:7b", "llama3.2:3b"],
+        "respuesta_rapida": ["qwen2.5:7b", "llama3.2:3b", "llama3.2:1b"],
+        "vision": ["llama3.2-vision:11b"],
+        "embeddings": ["nomic-embed-text:latest", "mxbai-embed-large"]
       },
       "fallback_model": "qwen2.5:7b",
       "cache_ttl": 3600,
-      "rag": {
-        "enabled": false,
-        "chunk_size": 500,
-        "chunk_overlap": 50,
-        "top_k": 5,
-        "threshold": 0.7
-      }
+      "rag": {"enabled": false, "chunk_size": 500, "chunk_overlap": 50, "top_k": 5, "threshold": 0.7}
+    },
+    "linux_terminal": {
+      "role": "client",
+      "power_mode": "ECO",
+      "hostname": "terminal",
+      "ollama": {
+        "host": "{{ASUS_HOST}}",
+        "remote_host": "{{ASUS_HOST}}",
+        "port": 11434
+      },
+      "router": {
+        "host": "localhost",
+        "port": 11435
+      },
+      "paths": {
+        "data": "~/URA/data",
+        "logs": "~/URA/logs",
+        "maintenance_logs": "~/URA/logs/maintenance"
+      },
+      "ssh": {"user": "{{USER}}", "timeout": 300},
+      "swarm": {"devices_path": "~/URA/swarm/known_devices.json"},
+      "maintenance": {
+        "thresholds": {"docker_images": 10, "docker_volumes": 5, "cache_size": 2, "log_size": 1},
+        "exclude_patterns": [
+          "*.db", "*.sqlite", "*.sqlite-wal", "*.key", "*.pem", "*.crt",
+          "*.env", "*.secret", "*.p12", "*.pfx", "*.jks", "*.keystore",
+          "/home/*/.ssh/", "/home/*/.gnupg/", "/home/*/.config/", "/etc/",
+          "/var/lib/", "/usr/local/"
+        ],
+        "allowed_temp_dirs": ["/tmp", "/var/tmp"],
+        "allowed_log_dirs": ["/var/log", "~/URA/logs"]
+      },
+      "models": {
+        "razonamiento": ["qwen3:32b-q8_0", "qwen3:14b"],
+        "codigo_complejo": ["qwen2.5-coder:32b", "qwen2.5-coder:14b"],
+        "codigo_rapido": ["qwen2.5:7b", "llama3.2:3b"],
+        "respuesta_rapida": ["qwen2.5:7b", "llama3.2:3b"],
+        "vision": ["llama3.2-vision:11b"],
+        "embeddings": ["nomic-embed-text:latest", "mxbai-embed-large"]
+      },
+      "fallback_model": "qwen2.5:7b",
+      "cache_ttl": 3600,
+      "terminal": {
+        "type": "generic_linux",
+        "tailscale_ip": "100.123.81.101"
+      },
+      "rag": {"enabled": false, "chunk_size": 500, "chunk_overlap": 50, "top_k": 5, "threshold": 0.7}
     }
   }
 }

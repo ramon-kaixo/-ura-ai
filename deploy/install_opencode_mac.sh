@@ -5,7 +5,7 @@
 # ============================================================
 set -e
 
-URA_DIR="/Users/ramonesnaola/URA/ura_ia_1972"
+URA_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
 CONFIG_FILE="$URA_DIR/deploy/lildax_config.json"
 LILDAX_CONFIG_DIR="$HOME/Library/Application Support/lildax"
 LOG_FILE="$URA_DIR/logs/opencode_mac_install.log"
@@ -59,5 +59,5 @@ log "✅ Servicio verificado"
 
 log "=== INSTALACIÓN COMPLETADA ==="
 log "Interfaz web: http://127.0.0.1:4096"
-log "Servidor remoto: http://10.164.1.99:8081"
+log "Servidor remoto: http://${ASUS_HOST:-10.164.1.99}:8081"
 log "Workspace local: $URA_DIR"

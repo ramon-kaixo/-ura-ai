@@ -21,13 +21,25 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
+
+_qdrant = None
+
+def _get_qdrant():
+    global _qdrant
+    if _qdrant is None:
+        _qdrant = QdrantClient.instancia(UraConfig.load())
+    return _qdrant
+
+
 REFLEXIONES = Path("/opt/ura/data/reflexiones.log")
 MEJORAS = Path("/opt/ura/config/prompts/mejoras.txt")
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 PROBAR = Path(__file__).resolve().parent.parent / "probar_sugerencia.py"
 REPO = Path.home() / "URA/ura_ia_1972"
 MCP = "http://127.0.0.1:9091"
-GX10_SSH = ["ssh", "ramon@10.164.1.99"]
+GX10_SSH = ["ssh", os.environ.get("ASUS_SSH", "ramon@10.164.1.99")]
 
 
 def log(msg) -> None:
@@ -79,7 +91,8 @@ print('OK')
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp_f:
         tmp_f.write(code)
         tmp_path = tmp_f.name
-    subprocess.run(["scp", tmp_path, "ramon@10.164.1.99:/tmp/"], capture_output=True)
+    _asus_ssh = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
+    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True)
     subprocess.run(
         [*GX10_SSH, "docker", "cp", f"{tmp_path}", "open-webui:/tmp/"],
         capture_output=True,
@@ -159,6 +172,7 @@ def aplicar_mejora() -> bool:
                 s["aplicada"] = True
                 s["impacto"] = f"{despues_ok - antes_ok} tests extra superados"
                 log(f"  OK MEJORA: {s['impacto']}")
+                guardar_correccion_en_qdrant(s.get("problema", ""), s.get("solucion", ""), s["impacto"])
             else:
                 log("  SIN MEJORA: se revertira")
             with open(SUGERENCIAS, "w") as f:
@@ -166,6 +180,39 @@ def aplicar_mejora() -> bool:
             return True
     log("No hay sugerencias pendientes de aplicar")
     return False
+
+
+def guardar_correccion_en_qdrant(problema: str, solucion: str, impacto: str) -> bool:
+    """Guarda una corrección exitosa en Qdrant para aprendizaje futuro."""
+    try:
+        qdrant = _get_qdrant()
+        if not qdrant.disponible:
+            return False
+        texto = f"Problema: {problema}\nSolucion: {solucion}\nImpacto: {impacto}"
+        metadata = {
+            "tipo": "correccion",
+            "problema": problema[:200],
+            "solucion": solucion[:200],
+            "impacto": impacto[:100],
+            "timestamp": datetime.now().isoformat(),
+        }
+        tx_id = f"correccion_{datetime.now().timestamp()}"
+        return qdrant.guardar_documento(tx_id, texto, metadata)
+    except Exception as e:
+        log(f"Error guardando correccion en Qdrant: {e}")
+        return False
+
+
+def reindexar_transaccion(tx_id: str, texto_corregido: str) -> bool:
+    """Re-indexa una transacción en Qdrant con texto corregido."""
+    try:
+        qdrant = _get_qdrant()
+        if not qdrant.disponible:
+            return False
+        return qdrant.guardar_documento(tx_id, texto_corregido, {"tipo": "reindexado", "timestamp": datetime.now().isoformat()})
+    except Exception as e:
+        log(f"Error reindexando transaccion {tx_id}: {e}")
+        return False
 
 
 def scan_project() -> None:

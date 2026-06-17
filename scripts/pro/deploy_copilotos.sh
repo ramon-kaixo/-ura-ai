@@ -14,7 +14,8 @@ REPO="${HOME}/URA/ura_ia_1972"
 TRAMPA="${REPO}/scripts/pro/trampa_rm.sh"
 
 # Mapa: hostname -> IP/usuario/OS
-MAQUINAS="gx10-64c3:ramon@10.164.1.99:linux
+ASUS_SSH="${ASUS_SSH:-ramon@10.164.1.99}"  # sobrescribible via entorno
+MAQUINAS="gx10-64c3:${ASUS_SSH}:linux
 caja0:barkaixo@100.127.217.113:windows
 desktop-0d7s0tc:barkaixo@100.88.13.84:windows
 mac-mini-bar-san-gregorio:barkaixo@100.109.83.16:macos

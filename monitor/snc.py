@@ -29,7 +29,11 @@ from mac_heartbeat import MacHeartbeat
 _config_path = Path(__file__).parent.parent / "config" / "system_config.json"
 _raw_config = json.loads(_config_path.read_text()) if _config_path.exists() else {}
 _system = platform.system().lower()
-_profile_key = "linux_asus" if _system == "linux" else "darwin_mac"
+if _system == "linux":
+    _host = platform.node().lower()
+    _profile_key = "linux_asus" if any(h in _host for h in ("gx10", "gx10-64c3", "asus")) else "linux_terminal"
+else:
+    _profile_key = "darwin_mac"
 _profile = _raw_config.get("profiles", {}).get(_profile_key, {})
 CONFIG = {**_raw_config.get("global_defaults", {}), **_profile}
 
@@ -149,7 +153,7 @@ def check_mac_unauthorized_writes() -> bool:
     try:
         remote_cmd = "ps aux | grep -E 'vim|nano|emacs|code' | grep -v grep"
         result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=2", "ramon@10.164.1.26", remote_cmd],
+            ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],
             capture_output=True, text=True, timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
@@ -196,8 +200,9 @@ def poll_services(runbook: dict) -> dict:
         if svc_name == "mac_reachability":
             mac_ok = mac_heartbeat.check_mac()
             if not mac_ok:
-                # Fallback: intentar vía Tailscale
-                ts_ok, _ = run_command("ping -c 1 -W 2 100.123.81.101", timeout=3)
+                # Fallback: intentar vía Tailscale (desde config)
+                _mac_ts = _profile.get("terminal", {}).get("tailscale_ip", "100.123.81.101")
+                ts_ok, _ = run_command(f"ping -c 1 -W 2 {_mac_ts}", timeout=3)
                 if ts_ok:
                     mac_ok = True
             state["services"][svc_name] = {
