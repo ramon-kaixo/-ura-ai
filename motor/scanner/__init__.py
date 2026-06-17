@@ -1,8 +1,8 @@
 import os, logging, time, subprocess
 from pathlib import Path
 from datetime import datetime
-from core.state import ScanResult
-from core.config import UraConfig
+from motor.core.state import ScanResult
+from motor.core.config import UraConfig
 from scanner.sliding_window import SlidingWindow
 from scanner.diff_detector import compute_diff
 from scanner.calibration import Calibration

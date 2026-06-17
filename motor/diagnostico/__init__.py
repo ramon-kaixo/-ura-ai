@@ -1,9 +1,9 @@
 import json, logging, subprocess, hashlib
 from datetime import datetime
 from pathlib import Path
-from core.state import ScanResult, DiagnoseResult
-from core.config import UraConfig
-from core.qdrant_client import QdrantClient
+from motor.core.state import ScanResult, DiagnoseResult
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
 from diagnostico.pattern_matcher import buscar_patrones
 from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
 from diagnostico.circuit_breaker import CircuitBreaker

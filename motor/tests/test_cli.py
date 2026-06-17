@@ -2,8 +2,8 @@ import json, sys, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.config import UraConfig
-from core.state import ScanResult
+from motor.core.config import UraConfig
+from motor.core.state import ScanResult
 
 def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
     lines = []
