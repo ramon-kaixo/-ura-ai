@@ -2,9 +2,9 @@ import json, sys, subprocess, socket, logging
 from pathlib import Path
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
-from guard.preflight import ejecutar_preflight
-from guard.verifier import ejecutar_verificacion
-from scanner.calibration import Calibration
+from motor.guard.preflight import ejecutar_preflight
+from motor.guard.verifier import ejecutar_verificacion
+from motor.scanner.calibration import Calibration
 
 log = logging.getLogger("ura.cli")
 ARCHIVO_TRENDS = "trends.ndjson"

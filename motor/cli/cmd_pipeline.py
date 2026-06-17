@@ -1,11 +1,11 @@
 import json, sys, logging
 from pathlib import Path
 from motor.core.config import UraConfig
-from pipeline.orchestrator import Orchestrator
-from scanner import Scanner
-from scanner.calibration import Calibration
+from motor.pipeline.orchestrator import Orchestrator
+from motor.scanner import Scanner
+from motor.scanner.calibration import Calibration
 from motor.core.qdrant_client import QdrantClient
-from diagnostico import Diagnostico
+from motor.diagnostico import Diagnostico
 from motor.core.state import ScanResult
 
 log = logging.getLogger("ura.cli")

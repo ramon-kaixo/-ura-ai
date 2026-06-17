@@ -3,13 +3,13 @@ from pathlib import Path
 from datetime import datetime
 from motor.core.state import ScanResult
 from motor.core.config import UraConfig
-from scanner.sliding_window import SlidingWindow
-from scanner.diff_detector import compute_diff
-from scanner.calibration import Calibration
-from scanner.collector_red import escanear_red
-from scanner.collector_hw_vm import escanear_hw_vm
-from scanner.collector_hw_asus import escanear_hw_asus
-from scanner.collector_asus import escanear_asus
+from motor.scanner.sliding_window import SlidingWindow
+from motor.scanner.diff_detector import compute_diff
+from motor.scanner.calibration import Calibration
+from motor.scanner.collector_red import escanear_red
+from motor.scanner.collector_hw_vm import escanear_hw_vm
+from motor.scanner.collector_hw_asus import escanear_hw_asus
+from motor.scanner.collector_asus import escanear_asus
 
 log = logging.getLogger("ura.scanner")
 

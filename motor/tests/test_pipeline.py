@@ -2,9 +2,9 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from motor.core.config import UraConfig
-from pipeline.orchestrator import Orchestrator
-from scanner.diff_detector import compute_diff
-from diagnostico.correlacion import agrupar_incidentes
+from motor.pipeline.orchestrator import Orchestrator
+from motor.scanner.diff_detector import compute_diff
+from motor.diagnostico.correlacion import agrupar_incidentes
 
 def test_pipeline_orchestrator_init():
     cfg = UraConfig()
