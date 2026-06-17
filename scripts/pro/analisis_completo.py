@@ -25,7 +25,7 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-MODEL_ROUTER = os.environ.get("MODEL_ROUTER_URL", "http://10.164.1.99:11435")
+MODEL_ROUTER = os.environ.get("MODEL_ROUTER_URL", os.environ.get("MODEL_ROUTER_URL", "http://10.164.1.99:11435"))
 LOG = Path.home() / "URA/ura_ia_1972/logs/analisis_completo.log"
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 MONOLOGO = Path("/opt/ura/data/monologo_interno.json")
@@ -71,7 +71,7 @@ def recopilar_estado():
         estado["mac_uptime"] = "error"
     try:
         r = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "ramon@10.164.1.99",
+            ["ssh", "-o", "ConnectTimeout=5", os.environ.get("ASUS_SSH", "ramon@10.164.1.99"),
              "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router"],
             capture_output=True, text=True, timeout=15,
         )

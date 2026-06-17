@@ -4,7 +4,7 @@
 # Gestiona inmutabilidad, validación y sincronización
 # ============================================================
 
-MAC_DIR="/Users/ramonesnaola/URA/ura_ia_1972"
+MAC_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
 IMMUTABLE_SCRIPT="$MAC_DIR/deploy/immutable_mac.sh"
 SYNC_SCRIPT="$MAC_DIR/deploy/sync_to_asus.sh"
 LOG_FILE="$MAC_DIR/logs/sync_workflow.log"
@@ -59,8 +59,8 @@ case "$1" in
         bash "$IMMUTABLE_SCRIPT" status
         echo ""
         echo "Conectividad ASUS:"
-        if ping -c 1 -W 2 10.164.1.99 >/dev/null 2>&1; then
-            echo "  ✓ ASUS alcanzable (10.164.1.99)"
+        if ping -c 1 -W 2 ${ASUS_HOST:-10.164.1.99} >/dev/null 2>&1; then
+            echo "  ✓ ASUS alcanzable (${ASUS_HOST:-10.164.1.99})"
         else
             echo "  ✗ ASUS NO alcanzable"
         fi

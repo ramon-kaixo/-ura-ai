@@ -6,16 +6,18 @@ Información persistida en ~/.ura/run/ura_mac_heartbeat.json.
 """
 
 import json
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
+_TERMINAL_HOST = os.environ.get("TERMINAL_HOST", "")
 try:
     with open(Path(__file__).resolve().parent.parent / "config" / "dispositivos.json") as f:
         cfg = json.load(f)
-    MAC_IP = cfg.get("dispositivos", {}).get("mac-mini-de-ramon", {}).get("ip_cable", "10.164.1.26")
+    MAC_IP = _TERMINAL_HOST or cfg.get("dispositivos", {}).get("mac-mini-de-ramon", {}).get("ip_cable", "10.164.1.26")
 except (FileNotFoundError, json.JSONDecodeError):
-    MAC_IP = "10.164.1.26"
+    MAC_IP = _TERMINAL_HOST or "10.164.1.26"
 PING_TIMEOUT = 2  # segundos
 CONSECUTIVE_FAILURES_THRESHOLD = 3
 _STATE_DIR = Path.home() / ".ura" / "run"
@@ -107,10 +109,10 @@ class MacHeartbeat:
 
     def get_sync_command(self) -> str:
         """Retorna el comando de sincronización manual."""
-        return (
-            "rsync -avz /Users/ramonesnaola/URA/ura_ia_1972/ "
-            "ramon@10.164.1.99:/home/ramon/URA/ura_ia_1972/"
-        )
+        _local = os.environ.get("URA_ROOT", "/Users/ramonesnaola/URA/ura_ia_1972")
+        _remote = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
+        _remote_path = os.environ.get("ASUS_PATH", "/home/ramon/URA/ura_ia_1972")
+        return f"rsync -avz {_local}/ {_remote}:{_remote_path}/"
 
     def get_status(self) -> dict:
         """Retorna estado completo del heartbeat."""

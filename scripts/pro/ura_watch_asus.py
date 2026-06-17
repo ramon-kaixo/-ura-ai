@@ -13,7 +13,7 @@ import os
 import time
 
 ASUS_MAC = "30:c5:99:c0:64:c3"
-ASUS_IPS = ["100.72.103.12", "10.164.1.99"]
+ASUS_IPS = ["100.72.103.12", os.environ.get("ASUS_HOST", "10.164.1.99")]
 PING_COUNT = 2
 PING_TIMEOUT = 5
 MAX_FAILS = 3

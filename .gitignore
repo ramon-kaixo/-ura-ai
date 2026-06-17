@@ -5,7 +5,6 @@ venv/
 .env
 *.env
 logs/
-!core/logs/
 *.log
 .DS_Store
 *.swp
@@ -19,6 +18,22 @@ known_devices.json
 CLAUDE.md
 config/maintenance.json
 mantenimiento/config.json
+
+# Runtime / internal state
+.nervioso/
+.config/
+backup_versiones/
+board.db
+log_sistema.txt
+test.txt
+*.bak
+motor/data/snapshots/
 data/chroma_db/
 data/documentos/
 data/.index_manifest.json
+
+# Artefactos de monitoreo y backups
+motor/data/backup_*.json
+deploy/diagnostico.json
+deploy/trends.ndjson
+.sandbox_packages/

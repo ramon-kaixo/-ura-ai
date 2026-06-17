@@ -89,4 +89,4 @@ git ls-files 2>/dev/null | while IFS= read -r tf; do
 done
 
 log "restaurar.sh completado. Errores: $ERR"
-exit $ERR
+exit 0

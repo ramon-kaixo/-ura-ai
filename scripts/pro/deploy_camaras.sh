@@ -118,7 +118,8 @@ echo "  Script remoto: /opt/ura/scripts/instalar_servidor_camaras.sh" | tee -a "
 echo "" | tee -a "$LOG"
 echo "3. Configurando GX10 para Frigate..." | tee -a "$LOG"
 
-ssh ramon@10.164.1.99 bash << 'ENDGX10' 2>&1 | tee -a "$LOG"
+ASUS_SSH="${ASUS_SSH:-ramon@${ASUS_HOST:-10.164.1.99}}"
+ssh "${ASUS_SSH}" bash << 'ENDGX10' 2>&1 | tee -a "$LOG"
 echo "=== GX10: Configurando respaldo de camaras ==="
 
 # Verificar Frigate

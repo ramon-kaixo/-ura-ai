@@ -16,7 +16,7 @@ log "Solicitando confirmación humana en Mac (timeout ${TIMEOUT}s)..."
 
 # Intentar contactar con claw_listener en el Mac
 CONFIRMATION=$(ssh -o ConnectTimeout=5 -o BatchMode=yes "ramon@${MAC_IP}" \
-    "bash /Users/ramonesnaola/URA/ura_ia_1972/deploy/claw_listener.sh 'PANIC_ALERT' 'GX10 en estado critico. Accion destructiva requerida.'" 2>/dev/null || echo "TIMEOUT")
+    "bash ${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972/deploy/claw_listener.sh 'PANIC_ALERT' 'GX10 en estado critico. Accion destructiva requerida.'" 2>/dev/null || echo "TIMEOUT")
 
 if [ "$CONFIRMATION" = "CONFIRMADO" ]; then
     log "✅ Confirmación recibida del Mac"

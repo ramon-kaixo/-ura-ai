@@ -5,8 +5,9 @@
 # ==============================================================================
 
 # Configuracion de conexiones de red local
-ASUS_SSH="ramon@10.164.1.99"
-ASUS_EXEC="http://10.164.1.99:4096"
+ASUS_HOST="${ASUS_HOST:-10.164.1.99}"
+ASUS_SSH="${ASUS_SSH:-ramon@${ASUS_HOST}}"
+ASUS_EXEC="http://${ASUS_HOST}:4096"
 SYNC_MCP="http://127.0.0.1:9093"
 LOG="${HOME}/URA/ura_ia_1972/logs/redirect_gx10.log"
 mkdir -p "$(dirname "$LOG")"

@@ -54,7 +54,7 @@ for i in 1 2 3 4; do
     MONSTER_THRESHOLD=80 \
     MAX_BATCH_TOKENS=6500 \
     PROMPT_OVERHEAD_TOKENS=800 \
-    OLLAMA_URL=http://10.164.1.99:11434 \
+    OLLAMA_URL=http://${ASUS_HOST:-10.164.1.99}:11434 \
     URA_ROOT="$HOME/URA/ura_ia_1972" \
     PATH="$HOME/.local/bin:$PATH" \
     $PYTHON -B scripts/pro/refactor_large_functions.py \

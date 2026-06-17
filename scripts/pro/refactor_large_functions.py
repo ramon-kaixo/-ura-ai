@@ -16,7 +16,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434"))
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 

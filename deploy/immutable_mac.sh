@@ -4,7 +4,7 @@
 # Gestiona flags uchg en ~/URA/* para impedir ediciones directas.
 # ============================================================
 
-URA_DIR="/Users/ramonesnaola/URA"
+URA_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}"
 LOG_FILE="$URA_DIR/logs/immutable_mac.log"
 LOCK_STATE="$URA_DIR/.URA_IMMUTABLE_STATE"
 

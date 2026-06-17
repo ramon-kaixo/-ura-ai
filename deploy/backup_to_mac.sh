@@ -6,10 +6,10 @@
 set -euo pipefail
 
 MAC_USER="ramonesnaola"
-MAC_IP="10.164.1.26"
-BACKUP_DIR="/Users/ramonesnaola/URA/backups_gx10"
-SOURCE_DIR="/home/ramon/URA"
-LOG_FILE="/home/ramon/URA/logs/backup_to_mac.log"
+MAC_IP="${TERMINAL_HOST:-10.164.1.26}"
+BACKUP_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/backups_gx10"
+SOURCE_DIR="${ASUS_PATH:-/home/ramon/URA}"
+LOG_FILE="${ASUS_PATH:-/home/ramon/URA}/logs/backup_to_mac.log"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 BWLIMIT=${URA_BWLIMIT:-10000}  # 10 MB/s default
 

@@ -89,7 +89,7 @@ class Telemetria:
         # Model Router
         try:
             r = subprocess.run(
-                ["curl", "-s", "--max-time", "2", "http://10.164.1.99:11435/health"],
+                ["curl", "-s", "--max-time", "2", f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health"],
                 capture_output=True,
                 text=True,
                 timeout=3,

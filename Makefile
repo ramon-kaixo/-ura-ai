@@ -3,6 +3,8 @@
 # Herramienta determinista: solo ejecuta lo necesario.
 # ============================================================
 
+ASUS_HOST ?= ramon@10.164.1.99
+
 .PHONY: test lint integration doctor snapshot deploy-snc deploy-all clean helm
 
 # --- Tests ---
@@ -13,7 +15,7 @@ test:
 	@echo ""
 
 integration:
-	@if ssh -o ConnectTimeout=2 -o BatchMode=yes ramon@10.164.1.99 "echo ok" > /dev/null 2>&1; then \
+	@if ssh -o ConnectTimeout=2 -o BatchMode=yes $(ASUS_HOST) "echo ok" > /dev/null 2>&1; then \
 		echo "[make] Integration tests (GX10 accesible)..."; \
 		python3 tests/test_integration.py 2>/dev/null || echo "  ⚠ Tests de integración no disponibles"; \
 	else \
@@ -69,9 +71,9 @@ doctor:
 	fi
 	@echo ""
 	@echo "[6/6] Docker..."
-	@if ssh -o ConnectTimeout=2 -o BatchMode=yes ramon@10.164.1.99 "docker ps --format '{{.Names}}' 2>/dev/null" > /dev/null 2>&1; then \
+	@if ssh -o ConnectTimeout=2 -o BatchMode=yes $(ASUS_HOST) "docker ps --format '{{.Names}}' 2>/dev/null" > /dev/null 2>&1; then \
 		echo "  Containers activos:"; \
-		ssh -o ConnectTimeout=2 -o BatchMode=yes ramon@10.164.1.99 "docker ps --format '    ✓ {{.Names}} ({{.Status}})' 2>/dev/null | head -9"; \
+		ssh -o ConnectTimeout=2 -o BatchMode=yes $(ASUS_HOST) "docker ps --format '    ✓ {{.Names}} ({{.Status}})' 2>/dev/null | head -9"; \
 	else \
 		echo "  ⚠ Docker no accesible en GX10"; \
 	fi
@@ -86,11 +88,11 @@ snapshot:
 
 deploy-snc:
 	@echo "[make] Desplegando SNC en GX10..."
-	@ssh -o ConnectTimeout=5 ramon@10.164.1.99 "mkdir -p /home/ramon/URA/ura_ia_1972/monitor"
-	@scp monitor/snc.py ramon@10.164.1.99:/home/ramon/URA/ura_ia_1972/monitor/
-	@scp deploy/emergency_runbook.json ramon@10.164.1.99:/home/ramon/URA/ura_ia_1972/deploy/
-	@scp deploy/snc.service ramon@10.164.1.99:/etc/systemd/system/
-	@ssh -o ConnectTimeout=5 ramon@10.164.1.99 "systemctl daemon-reload && systemctl enable snc.service && systemctl restart snc.service"
+	@ssh -o ConnectTimeout=5 $(ASUS_HOST) "mkdir -p /home/ramon/URA/ura_ia_1972/monitor"
+	@scp monitor/snc.py $(ASUS_HOST):/home/ramon/URA/ura_ia_1972/monitor/
+	@scp deploy/emergency_runbook.json $(ASUS_HOST):/home/ramon/URA/ura_ia_1972/deploy/
+	@scp deploy/snc.service $(ASUS_HOST):/etc/systemd/system/
+	@ssh -o ConnectTimeout=5 $(ASUS_HOST) "systemctl daemon-reload && systemctl enable snc.service && systemctl restart snc.service"
 	@echo "[make] ✅ SNC desplegado. Verificar: ssh gx10 systemctl status snc"
 
 deploy-all: test deploy-snc

@@ -10,7 +10,7 @@ log() { echo "[BOOTSTRAP] $(date): $1"; }
 check() { if command -v "$1" > /dev/null 2>&1; then echo "  ✓ $1"; else echo "  ✗ $1 — instalando..."; return 1; fi; }
 
 REPO_URL="${1:-git@github.com:ramon/ura_ia_1972.git}"
-REPO_DIR="/home/ramon/URA/ura_ia_1972"
+REPO_DIR="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"
 OLLAMA_HOST="127.0.0.1"
 
 log "=== Fase 1: Dependencias ==="

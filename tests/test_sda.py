@@ -518,4 +518,5 @@ check("TE5: file removed after double release",
 print(f"\n{'='*50}")
 print(f"SDA TEST RESULTS: {PASS} passed, {FAIL} failed of {PASS+FAIL} total")
 print(f"{'='*50}")
-sys.exit(0 if FAIL == 0 else 1)
+if __name__ == "__main__":
+    sys.exit(0 if FAIL == 0 else 1)

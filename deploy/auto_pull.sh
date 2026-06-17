@@ -6,7 +6,7 @@
 # ============================================================
 set -e
 
-REPO_DIR="/home/ramon/URA/ura_ia_1972"
+REPO_DIR="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"
 STATE_FILE="/tmp/ura_last_good_commit"
 LOCK_FILE="/tmp/ura_auto_pull.lock"
 
@@ -70,7 +70,7 @@ else
     fi
 
     # Notificar al Mac
-    ssh -o ConnectTimeout=2 ramon@10.164.1.26 \
+    ssh -o ConnectTimeout=2 ${TERMINAL_USER:-ramon}@${TERMINAL_HOST:-10.164.1.26} \
         "osascript -e 'display notification \"Auto-pull falló. Rollback ejecutado.\" with title \"URA GX10\"'" 2>/dev/null || true
 
     log "⛔ Rollback completado. Sistema en commit seguro."

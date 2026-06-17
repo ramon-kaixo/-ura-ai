@@ -7,9 +7,10 @@
 # ============================================================
 set -e
 
-MAC_DIR="/Users/ramonesnaola/URA/ura_ia_1972"
-ASUS_HOST="ramon@10.164.1.99"
-ASUS_DIR="/home/ramon/URA/ura_ia_1972"
+MAC_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
+ASUS_HOST="${ASUS_HOST:-10.164.1.99}"
+ASUS_SSH="${ASUS_SSH:-ramon@${ASUS_HOST}}"
+ASUS_DIR="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"
 VALIDATE_SCRIPT="$MAC_DIR/deploy/validate_change.sh"
 IMMUTABLE_SCRIPT="$MAC_DIR/deploy/immutable_mac.sh"
 LOG_FILE="$MAC_DIR/logs/sync_to_asus.log"
@@ -51,11 +52,11 @@ fi
 # Verificar que ASUS es alcanzable (check robusto)
 # ============================================================
 # Intento 1: ping rápido
-if ! ping -c 1 -W 2 10.164.1.99 >/dev/null 2>&1; then
+if ! ping -c 1 -W 2 ${ASUS_HOST:-10.164.1.99} >/dev/null 2>&1; then
     log "WARN: Ping rápido falló, intentando SSH check..."
     # Intento 2: SSH check (más tolerante)
     if ! ssh -o ConnectTimeout=5 -o BatchMode=yes "$ASUS_HOST" "echo ok" >/dev/null 2>&1; then
-        abort "ASUS no alcanzable (10.164.1.99) - ni ping ni SSH responden"
+        abort "ASUS no alcanzable (${ASUS_HOST:-10.164.1.99}) - ni ping ni SSH responden"
     fi
     log "OK: SSH check pasó (ping falló pero SSH funciona)"
 fi

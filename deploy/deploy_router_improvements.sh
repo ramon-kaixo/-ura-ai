@@ -4,7 +4,7 @@
 
 set -e
 
-ASUS_DIR="/home/ramon/URA/ura_ia_1972"
+ASUS_DIR="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"
 DEPLOY_DIR="$ASUS_DIR/deploy"
 
 echo "=== DESPLIEGUE DE MEJORAS DE ROBUSTEZ ==="
