@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 
-from core.memory_engine import MemoryEngine, get_sources
+from core.memory_engine import query, get_sources
 
 
 def main():
@@ -18,8 +18,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    me = MemoryEngine()
-    resultados = me.query(args.query, n_results=args.n)
+    resultados = query(args.query, top_k=args.n)
 
     if args.sources:
         fuentes = get_sources(resultados)
