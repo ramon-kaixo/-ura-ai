@@ -1,9 +1,9 @@
 import sys, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from scanner.diff_detector import compute_diff
-from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
-from scanner.calibration import Calibration
+from motor.scanner.diff_detector import compute_diff
+from motor.diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
+from motor.scanner.calibration import Calibration
 from motor.core.config import UraConfig
 
 def test_diff():

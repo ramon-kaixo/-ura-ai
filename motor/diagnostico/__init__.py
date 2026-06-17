@@ -4,10 +4,10 @@ from pathlib import Path
 from motor.core.state import ScanResult, DiagnoseResult
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
-from diagnostico.pattern_matcher import buscar_patrones
-from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
-from diagnostico.circuit_breaker import CircuitBreaker
-from diagnostico.backup_knowledge import backup_incidente
+from motor.diagnostico.pattern_matcher import buscar_patrones
+from motor.diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
+from motor.diagnostico.circuit_breaker import CircuitBreaker
+from motor.diagnostico.backup_knowledge import backup_incidente
 
 log = logging.getLogger("ura.diagnostico")
 
