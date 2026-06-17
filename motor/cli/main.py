@@ -4,10 +4,10 @@ logging.getLogger('httpcore').setLevel(logging.WARNING)
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from motor.core.config import UraConfig
-from cli.cmd_pipeline import cmd_pipeline, cmd_scan, cmd_diagnose, cmd_calibrate
-from cli.cmd_status import cmd_status, cmd_cross, cmd_trend, cmd_graph, cmd_perf, cmd_summarise
-from cli.cmd_diag import cmd_history, cmd_check, cmd_verify, cmd_detect, cmd_learn, cmd_alerta, cmd_health_check
-from cli.cmd_utils import cmd_notify, cmd_qdrant_backup, cmd_bench
+from motor.cli.cmd_pipeline import cmd_pipeline, cmd_scan, cmd_diagnose, cmd_calibrate
+from motor.cli.cmd_status import cmd_status, cmd_cross, cmd_trend, cmd_graph, cmd_perf, cmd_summarise
+from motor.cli.cmd_diag import cmd_history, cmd_check, cmd_verify, cmd_detect, cmd_learn, cmd_alerta, cmd_health_check
+from motor.cli.cmd_utils import cmd_notify, cmd_qdrant_backup, cmd_bench
 
 COMMANDS = {
     "pipeline": cmd_pipeline, "scan": cmd_scan, "diagnose": cmd_diagnose, "calibrate": cmd_calibrate,

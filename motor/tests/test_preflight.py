@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from motor.core.config import UraConfig
-from guard.preflight import ejecutar_preflight, _detectar_configs_duplicadas
+from motor.guard.preflight import ejecutar_preflight, _detectar_configs_duplicadas
 
 def test_preflight_no_dups():
     r = ejecutar_preflight(UraConfig())

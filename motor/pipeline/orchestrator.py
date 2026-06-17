@@ -4,10 +4,10 @@ from pathlib import Path
 from motor.core.config import UraConfig
 from motor.core.state import PipelineResult
 from motor.core.qdrant_client import QdrantClient
-from scanner import Scanner
-from diagnostico import Diagnostico
-from guard.preflight import ejecutar_preflight
-from guard.verifier import ejecutar_verificacion
+from motor.scanner import Scanner
+from motor.diagnostico import Diagnostico
+from motor.guard.preflight import ejecutar_preflight
+from motor.guard.verifier import ejecutar_verificacion
 
 log = logging.getLogger("ura.pipeline")
 ALERT_LOG = logging.getLogger("ura.alerta")
