@@ -3,7 +3,7 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 logging.getLogger('httpcore').setLevel(logging.WARNING)
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from core.config import UraConfig
+from motor.core.config import UraConfig
 from cli.cmd_pipeline import cmd_pipeline, cmd_scan, cmd_diagnose, cmd_calibrate
 from cli.cmd_status import cmd_status, cmd_cross, cmd_trend, cmd_graph, cmd_perf, cmd_summarise
 from cli.cmd_diag import cmd_history, cmd_check, cmd_verify, cmd_detect, cmd_learn, cmd_alerta, cmd_health_check

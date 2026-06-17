@@ -1,6 +1,6 @@
 import json, logging, subprocess, time
-from core.state import VerifyResult
-from core.config import UraConfig
+from motor.core.state import VerifyResult
+from motor.core.config import UraConfig
 
 log = logging.getLogger("ura.guard.verifier")
 

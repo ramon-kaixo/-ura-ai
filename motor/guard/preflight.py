@@ -1,8 +1,8 @@
 import json, logging, hashlib, subprocess
 from datetime import datetime
 from pathlib import Path
-from core.state import PreflightResult
-from core.config import UraConfig, RUTAS_CONFIG_OPENCODE
+from motor.core.state import PreflightResult
+from motor.core.config import UraConfig, RUTAS_CONFIG_OPENCODE
 
 log = logging.getLogger("ura.guard.preflight")
 

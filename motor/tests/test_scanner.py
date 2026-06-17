@@ -4,7 +4,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scanner.diff_detector import compute_diff
 from diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
 from scanner.calibration import Calibration
-from core.config import UraConfig
+from motor.core.config import UraConfig
 
 def test_diff():
     p={"servicios":{"ssh":"ok","docker":"ok"},"recursos":{"ram_pct":45,"disk_pct":60,"load_1m":0.5},

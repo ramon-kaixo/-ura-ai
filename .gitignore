@@ -31,6 +31,7 @@ motor/data/snapshots/
 data/chroma_db/
 data/documentos/
 data/.index_manifest.json
+data/events/
 
 # Artefactos de monitoreo y backups
 motor/data/backup_*.json

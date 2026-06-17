@@ -1,8 +1,8 @@
 import json, sys, subprocess, logging
 from pathlib import Path
 from datetime import datetime
-from core.config import UraConfig
-from core.qdrant_client import QdrantClient
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger("ura.cli")
 ARCHIVO_ESTADO = "estado_alemania.json"
