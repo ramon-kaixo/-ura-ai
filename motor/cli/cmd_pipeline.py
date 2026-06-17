@@ -1,12 +1,12 @@
 import json, sys, logging
 from pathlib import Path
-from core.config import UraConfig
+from motor.core.config import UraConfig
 from pipeline.orchestrator import Orchestrator
 from scanner import Scanner
 from scanner.calibration import Calibration
-from core.qdrant_client import QdrantClient
+from motor.core.qdrant_client import QdrantClient
 from diagnostico import Diagnostico
-from core.state import ScanResult
+from motor.core.state import ScanResult
 
 log = logging.getLogger("ura.cli")
 ARCHIVO_TRENDS = "trends.ndjson"

@@ -1,7 +1,7 @@
 import json, sys, subprocess, socket, logging
 from pathlib import Path
-from core.config import UraConfig
-from core.qdrant_client import QdrantClient
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
 from guard.preflight import ejecutar_preflight
 from guard.verifier import ejecutar_verificacion
 from scanner.calibration import Calibration

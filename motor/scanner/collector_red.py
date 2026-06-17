@@ -1,5 +1,5 @@
 import logging, subprocess, json, socket
-from core.config import UraConfig
+from motor.core.config import UraConfig
 
 log = logging.getLogger("ura.scanner.red")
 
