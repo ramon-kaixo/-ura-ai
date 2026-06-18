@@ -285,7 +285,7 @@ class Scanner:
         return h.hexdigest()[:16]
 
     def _detectar_orphans(self) -> list:
-        """Detecta PIDs huérfanos, imágenes docker dangling y units systemd falladas."""
+        """Detecta PIDs huérfanos, hijos de padres muertos, docker dangling y systemd falladas."""
         orphans = []
         try:
             for p in Path("/var/run").glob("*.pid"):
@@ -297,6 +297,22 @@ class Scanner:
                     log.debug("fallo procesar pid file %s: %s", p, e)
         except Exception as e:
             log.debug("fallo glob /var/run/*.pid: %s", e)
+
+        try:
+            import psutil
+            current_pids = {p.info["pid"] for p in psutil.process_iter(["pid", "ppid", "name"])}
+            for proc in psutil.process_iter(["pid", "ppid", "name"]):
+                ppid = proc.info["ppid"]
+                if ppid != 1 and ppid not in current_pids:
+                    name = proc.info["name"] or "?"
+                    orphans.append({
+                        "tipo": "hijo_huertano",
+                        "pid": proc.info["pid"],
+                        "ppid": ppid,
+                        "name": name,
+                    })
+        except (ImportError, Exception) as e:
+            log.debug("deteccion hijos huerfanos fallo: %s", e)
 
         try:
             r = subprocess.run(["docker", "images", "-f", "dangling=true", "-q"],

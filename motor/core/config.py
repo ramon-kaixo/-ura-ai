@@ -33,7 +33,7 @@ class UraConfig:
     failure_knowledge_path: str = ""
     baseline_path: str = ""
     auto_verify: bool = False
-    schema_version: int = 2
+    schema_version: int = 3
 
     def __post_init__(self):
         """Completa rutas relativas al directorio base del proyecto."""

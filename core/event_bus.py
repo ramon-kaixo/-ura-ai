@@ -59,10 +59,23 @@ def publish(topic: str, data: dict) -> None:
     ensure_publisher()
     try:
         _write_journal(topic, data)
+        if topic == TOPIC_ALERT:
+            _trigger_auto_dump(data)
         payload = json.dumps(data, ensure_ascii=False)
         with _pub_lock: _pub_sock.send_multipart([topic.encode(), payload.encode()])
         log.debug("event_bus: publicado %s", topic)
     except Exception as e: log.warning("event_bus: error %s: %s", topic, e)
+
+
+def _trigger_auto_dump(data: dict) -> None:
+    """Dispara auto-dump reactivo al recibir un evento de alerta."""
+    try:
+        from core.watchdog_funciones import _auto_dump
+        func = data.get("function", data.get("source", "event_bus_alert"))
+        timeout = data.get("timeout", 0)
+        _auto_dump(func, timeout, {"alert_data": data})
+    except Exception as e:
+        log.debug("auto_dump reactivo: %s", e)
 
 def create_subscriber(topics: list[str]) -> Any:
     sock = _get_ctx().socket(zmq.SUB); sock.connect(IPC_PUB)

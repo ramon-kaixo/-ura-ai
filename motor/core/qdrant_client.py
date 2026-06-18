@@ -340,7 +340,7 @@ class QdrantClient:
             return False
 
     def _build_payload(self, incidente: dict) -> dict:
-        """Construye el payload estructurado para Qdrant."""
+        """Construye el payload estructurado para Qdrant (schema v3)."""
         return {
             "timestamp_inicio": incidente.get("ts", datetime.utcnow().isoformat()),
             "timestamp_resolucion": incidente.get("ts_resolucion", ""),
@@ -351,6 +351,12 @@ class QdrantClient:
             "schema_version": self.config.schema_version,
             "hw_ok": incidente.get("hw_ok", True),
             "hw_issues": incidente.get("hw_issues", []),
+            "affected_resources": incidente.get("affected_resources", {}),
+            "cleanup_cmd": incidente.get("cleanup_cmd", ""),
+            "pre_state": incidente.get("pre_state", {}),
+            "trace": incidente.get("trace", ""),
+            "origin_node": incidente.get("origin_node", "ASUS"),
+            "dependency_chain": incidente.get("dependency_chain", []),
         }
 
     def _guardar_rest(self, incidente: dict) -> bool:
