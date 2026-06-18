@@ -173,7 +173,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `qwen2.5-coder:q8_0` (código complejo) - 34 GB
 
 ### Red
-- GX10: Ethernet 10.164.1.99, WiFi 10.164.1.247, Tailscale 100.127.206.86
+- GX10: Ethernet 10.164.1.99, WiFi 10.164.1.247, Tailscale 100.72.103.12
 - Mac: Ethernet 10.164.1.26, WiFi 10.164.1.0, Tailscale 100.123.81.101
 - Linksys Velop MX4200: 10.164.1.1 (lighttpd+JNAP API, cloud-managed)
 - Cámaras en 192.168.1.x/2.x/3.x — **no accesibles desde GX10** (router bloquea)
