@@ -53,8 +53,28 @@ def dump_checkpoint():
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
+def _save_restart_to_qdrant():
+    try:
+        from motor.core.qdrant_client import instancia
+        from motor.core.config import UraConfig
+        cfg = UraConfig()
+        qc = instancia(cfg)
+        if qc and qc.disponible:
+            qc.guardar_incidente({
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "tipo": "ServiceFailure",
+                "subtipo": "heartbeat_restart",
+                "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
+                "origin_node": "ASUS",
+                "exit_code": -1,
+            })
+    except Exception:
+        pass
+
+
 def restart_service():
     dump_checkpoint()
+    _save_restart_to_qdrant()
     logger.critical("Reiniciando ura-mochila.service...")
     try:
         res = subprocess.run(

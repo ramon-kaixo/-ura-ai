@@ -23,7 +23,8 @@ RUTAS_POR_DEFECTO: dict[str, list[dict]] = {
         {"provider": "openrouter", "modelo": "anthropic/claude-sonnet-4"},
     ],
     "rapido": [
-        {"provider": "ollama", "modelo": "qwen2.5:7b"},
+        {"provider": "ollama", "modelo": "qwen2.5:3b"},
+        {"provider": "ollama", "modelo": "qwen2.5-coder:14b-instruct-q8_0"},
         {"provider": "ollama", "modelo": "deepseek-coder:6.7b"},
         {"provider": "openrouter", "modelo": "deepseek/deepseek-v4-flash"},
     ],

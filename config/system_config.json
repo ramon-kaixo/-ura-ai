@@ -59,14 +59,14 @@
         "allowed_log_dirs": ["/var/log", "/opt/ura/logs"]
       },
       "models": {
-        "razonamiento": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b", "deepseek-coder:6.7b"],
-        "codigo_complejo": ["qwen2.5-coder:32b", "qwen2.5-coder:q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
-        "codigo_rapido": ["qwen2.5:7b", "llama3.2:3b", "deepseek-coder:6.7b"],
-        "respuesta_rapida": ["qwen2.5:7b", "llama3.2:3b", "llama3.2:1b"],
-        "vision": ["llama3.2-vision:11b", "llava:34b", "llava:13b"],
+        "razonamiento": ["qwen3:32b-q8_0", "qwen3:14b", "deepseek-coder:6.7b", "llama3:latest"],
+        "codigo_complejo": ["qwen2.5-coder:32b", "qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
+        "codigo_rapido": ["qwen2.5-coder:14b-instruct-q8_0", "llama3.2:3b", "deepseek-coder:6.7b", "qwen2.5:3b"],
+        "respuesta_rapida": ["qwen2.5:3b", "llama3.2:3b"],
+        "vision": ["llama3.2-vision:11b", "llava:latest"],
         "embeddings": ["nomic-embed-text:latest", "mxbai-embed-large"]
       },
-      "fallback_model": "qwen2.5:7b",
+      "fallback_model": "qwen2.5:3b",
       "cache_ttl": 7200,
       "rag": {"enabled": true, "chunk_size": 500, "chunk_overlap": 50, "top_k": 5, "threshold": 0.55}
     },
