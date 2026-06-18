@@ -9,6 +9,7 @@ Uso:
     cleanup.all()  # limpieza completa de todo el sistema
 """
 
+import json
 import logging
 import os
 import signal
@@ -71,18 +72,37 @@ def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
         return False
 
 
-def bind_and_hold(port: int, host: str = "0.0.0.0") -> bool:
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((host, port))
-        s.listen(1)
-        s.close()
-        logger.info("Bind-and-hold %s:%d -> OK (puerto libre)", host, port)
-        return True
-    except OSError as e:
-        logger.warning("Bind-and-hold %s:%d fallo: %s", host, port, e)
-        return False
+EXIT_CODE_DIR = Path("/tmp/ura_exit_codes")
+
+
+def guardar_codigo_exit(service: str, exit_code: int, signal: int = 0) -> None:
+    """Guarda el codigo de salida de un servicio para post-mortem.
+
+    El watermark_aggregator lee estos archivos para clasificar el fallo.
+    """
+    EXIT_CODE_DIR.mkdir(parents=True, exist_ok=True)
+    info = {
+        "service": service,
+        "exit_code": exit_code,
+        "signal": signal,
+        "oom_killed": exit_code == 137 if signal == 0 else False,
+        "segfault": exit_code == 139 if signal == 0 else False,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    path = EXIT_CODE_DIR / f"{service}.json"
+    path.write_text(json.dumps(info, indent=2))
+    logger.warning("Exit code guardado: %s -> %d", service, exit_code)
+
+
+def leer_codigo_exit(service: str) -> dict | None:
+    """Lee el ultimo codigo de salida de un servicio."""
+    path = EXIT_CODE_DIR / f"{service}.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
+    return None
 
 
 def limpiar_locks(locks: list[str] | None = None) -> None:
@@ -183,12 +203,7 @@ def cleanup(
         limpiar_shm()
     resultado["pasos"]["shm"] = True
 
-    # 5. Bind-and-hold (reservar puertos)
-    for port in affected.get("ports", []):
-        ok = bind_and_hold(port)
-        resultado["pasos"][f"bind_{port}"] = ok
-
-    # 6. Verificar VRAM
+    # 5. Verificar VRAM
     if verify:
         vram = check_vram_post_kill()
         resultado["vram"] = vram
@@ -223,7 +238,6 @@ if __name__ == "__main__":
         cleanup_all()
     elif args.port:
         purgar_puerto(args.port)
-        bind_and_hold(args.port)
     elif args.pid:
         kill_proceso(args.pid)
     else:

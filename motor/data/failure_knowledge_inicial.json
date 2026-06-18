@@ -1,7 +1,7 @@
 [
   {
     "_meta": {
-      "schema_version": 3,
+      "schema_version": 301,
       "ts_creacion": "2026-06-10T12:00:00Z",
       "ts_ultima_modificacion": "2026-06-18T04:00:00Z"
     },
@@ -74,11 +74,15 @@
     "pre_state": {},
     "trace": "",
     "origin_node": "ASUS",
-    "dependency_chain": []
+    "dependency_chain": [],
+    "exit_code": -1,
+    "signal": 0,
+    "oom_killed": false,
+    "segfault": false
   },
   {
     "_meta": {
-      "schema_version": 3,
+      "schema_version": 301,
       "ts_creacion": "2026-06-12T15:00:00Z",
       "ts_ultima_modificacion": "2026-06-18T04:00:00Z"
     },
@@ -144,11 +148,15 @@
     "pre_state": {},
     "trace": "",
     "origin_node": "ASUS",
-    "dependency_chain": []
+    "dependency_chain": [],
+    "exit_code": -1,
+    "signal": 0,
+    "oom_killed": false,
+    "segfault": false
   },
   {
     "_meta": {
-      "schema_version": 3,
+      "schema_version": 301,
       "ts_creacion": "2026-06-12T15:00:00Z",
       "ts_ultima_modificacion": "2026-06-18T04:00:00Z"
     },
@@ -214,11 +222,15 @@
     "pre_state": {},
     "trace": "",
     "origin_node": "ASUS",
-    "dependency_chain": []
+    "dependency_chain": [],
+    "exit_code": -1,
+    "signal": 0,
+    "oom_killed": false,
+    "segfault": false
   },
   {
     "_meta": {
-      "schema_version": 3,
+      "schema_version": 301,
       "ts_creacion": "2026-06-15T04:00:00Z",
       "ts_ultima_modificacion": "2026-06-18T04:00:00Z"
     },
@@ -295,6 +307,10 @@
     "pre_state": {},
     "trace": "",
     "origin_node": "ASUS",
-    "dependency_chain": []
+    "dependency_chain": [],
+    "exit_code": -1,
+    "signal": 0,
+    "oom_killed": false,
+    "segfault": false
   }
 ]
