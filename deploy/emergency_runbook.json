@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "description": "Runbook de autoreparación determinista. v2: añadidos tailscale, hetzner, mac multi-path.",
+  "description": "Runbook de autoreparaci\u00f3n determinista. v2: a\u00f1adidos tailscale, hetzner, mac multi-path.",
   "retry_policy": {
     "max_attempts": 3,
     "cooldown_seconds": 10,
@@ -11,14 +11,18 @@
     "ollama": {
       "description": "Servicio de inferencia Ollama",
       "check": "curl -sf --max-time 5 http://localhost:11434/api/tags",
-      "repair": ["systemctl restart ollama"],
+      "repair": [
+        "systemctl restart ollama"
+      ],
       "timeout_after_repair": 15,
       "max_repair_attempts": 3
     },
     "model_router": {
       "description": "Router de modelos URA",
       "check": "curl -sf --max-time 5 http://localhost:11435/health",
-      "repair": ["pkill -HUP -f model_router.py"],
+      "repair": [
+        "pkill -HUP -f model_router.py"
+      ],
       "timeout_after_repair": 10,
       "max_repair_attempts": 2
     },
@@ -44,30 +48,24 @@
       "max_repair_attempts": 2,
       "only_if": "network"
     },
-    "tailscale": {
-      "description": "Servicio Tailscale (VPN) — solo monitorización pasiva",
-      "check": "tailscale status --json | python3 -c 'import json,sys; d=json.load(sys.stdin); peers=[p for p in d.get(\"Peer\",{}).values() if p.get(\"Online\")]; exit(0 if len(peers)>0 else 1)'",
-      "repair": [],
-      "timeout_after_repair": 15,
-      "max_repair_attempts": 0,
-      "log_on_failure": true
-    },
     "containers": {
-      "description": "Contenedores Docker activos (mínimo 3 esperados)",
+      "description": "Contenedores Docker activos (m\u00ednimo 3 esperados)",
       "check": "docker ps --format '{{.Names}}' | wc -l | grep -q '[3-9]'",
-      "repair": ["docker compose -f /home/ramon/URA/ura_ia_1972/deploy/docker/docker-compose.sandbox.yml up -d"],
+      "repair": [
+        "docker compose -f /home/ramon/URA/ura_ia_1972/deploy/docker/docker-compose.sandbox.yml up -d"
+      ],
       "timeout_after_repair": 30,
       "max_repair_attempts": 2
     },
     "openclaw": {
-      "description": "Gateway OpenClaw (solo activación en emergencia)",
+      "description": "Gateway OpenClaw (solo activaci\u00f3n en emergencia)",
       "check": "curl -sf --max-time 5 http://localhost:18789/health",
       "repair": [],
       "activate_on_emergency": true,
       "deactivate_after_stable_seconds": 30
     },
     "hetzner_connectivity": {
-      "description": "Conectividad con hetzner-escudo vía Tailscale",
+      "description": "Conectividad con hetzner-escudo v\u00eda Tailscale",
       "check": "ping -c 1 -W 3 hetzner-escudo",
       "repair": [
         "ping -c 1 -W 3 100.78.49.106",
@@ -78,7 +76,7 @@
       "log_on_failure": true
     },
     "mac_reachability": {
-      "description": "Conectividad con Mac — multi-path (Ethernet 10.164.1.26 → Tailscale 100.123.81.101)",
+      "description": "Conectividad con Mac \u2014 multi-path (Ethernet 10.164.1.26 \u2192 Tailscale 100.123.81.101)",
       "check": "ping -c 1 -W 2 10.164.1.26",
       "repair": [
         "ping -c 1 -W 2 100.123.81.101",
