@@ -121,6 +121,24 @@ def check_vram_pressure():
         logger.warning("VRAM monitor error: %s", e)
 
 
+def check_loop_latency() -> float:
+    async def _measure():
+        import time as _t
+        t0 = _t.monotonic()
+        await asyncio.sleep(0)
+        t1 = _t.monotonic()
+        return (t1 - t0) * 1000
+
+    try:
+        import asyncio
+        return asyncio.run(_measure())
+    except RuntimeError:
+        return 0.0
+
+
+loop_latency_history: list[float] = []
+
+
 def main():
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
@@ -138,6 +156,26 @@ def main():
                 fails = 0
 
         check_vram_pressure()
+
+        global loop_latency_history
+        lat = check_loop_latency()
+        if lat > 0:
+            loop_latency_history.append(lat)
+            if len(loop_latency_history) > 10:
+                loop_latency_history.pop(0)
+            avg_lat = sum(loop_latency_history) / len(loop_latency_history)
+            if lat > 100.0 and avg_lat > 50.0:
+                logger.warning("LOOP LATENCY: %.1fms (avg %.1fms)", lat, avg_lat)
+                try:
+                    from core.event_bus import publish
+                    publish("alert", {
+                        "source": "heartbeat",
+                        "function": "loop_monitor",
+                        "loop_latency_ms": lat,
+                        "loop_avg_ms": round(avg_lat, 1),
+                    })
+                except ImportError:
+                    pass
 
         if not args.daemon:
             break
