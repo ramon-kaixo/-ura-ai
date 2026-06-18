@@ -45,15 +45,12 @@
       "only_if": "network"
     },
     "tailscale": {
-      "description": "Servicio Tailscale (VPN)",
+      "description": "Servicio Tailscale (VPN) — solo monitorización pasiva",
       "check": "tailscale status --json | python3 -c 'import json,sys; d=json.load(sys.stdin); peers=[p for p in d.get(\"Peer\",{}).values() if p.get(\"Online\")]; exit(0 if len(peers)>0 else 1)'",
-      "repair": [
-        "systemctl restart tailscaled",
-        "sleep 3",
-        "tailscale up --accept-routes --exit-node=hetzner-escudo --exit-node-allow-lan-access"
-      ],
+      "repair": [],
       "timeout_after_repair": 15,
-      "max_repair_attempts": 3
+      "max_repair_attempts": 0,
+      "log_on_failure": true
     },
     "containers": {
       "description": "Contenedores Docker activos (mínimo 3 esperados)",
