@@ -15,7 +15,7 @@ repos:
 
       - id: runbook-validate
         name: Validate emergency_runbook.json
-        entry: python3 -c "from monitor.snc import load_runbook; rb=load_runbook(); assert rb['version']=='1.0'; assert len(rb['commands'])>=3"
+        entry: python3 -c "from monitor.snc import load_runbook; rb=load_runbook(); assert rb['version']=='2.0'; assert len(rb['commands'])>=3"
         language: system
         files: ^deploy/emergency_runbook\.json$
         pass_filenames: false

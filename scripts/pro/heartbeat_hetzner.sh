@@ -13,6 +13,5 @@ if ! host "$HETZNER_MAGICDNS" >/dev/null 2>&1; then
 fi
 
 if ! nc -zw3 "$HETZNER_MAGICDNS" "$HETZNER_PORT" 2>/dev/null; then
-    logger -t heartbeat-hetzner "Hetzner unreachable via $HETZNER_MAGICDNS:$HETZNER_PORT — restarting Tailscale"
-    sudo tailscale-up --reset 2>&1 | logger -t heartbeat-hetzner
+    logger -t heartbeat-hetzner "Hetzner unreachable via $HETZNER_MAGICDNS:$HETZNER_PORT — skipped (no auto-reset)"
 fi

@@ -16,8 +16,8 @@ rotate_log() {
 }
 
 panic_reset() {
-    log "PANICO: Sin internet - reseteando exit node"
-    $TAILSCALE up --exit-node= --reset
+    log "PANICO: Sin internet - desconectando exit node"
+    $TAILSCALE up --exit-node=
     sleep 3
     if curl -s --max-time 5 https://google.com -o /dev/null; then
         log "OK: Internet restaurado (sin exit node)"
@@ -28,7 +28,7 @@ panic_reset() {
 
 safe_up() {
     log "Conectando exit node -> $EXIT_NODE"
-    $TAILSCALE up --exit-node="$EXIT_NODE" --exit-node-allow-lan-access --accept-routes --reset
+    $TAILSCALE up --exit-node="$EXIT_NODE" --exit-node-allow-lan-access --accept-routes
     sleep 5
     if curl -s --max-time 5 https://google.com -o /dev/null; then
         log "OK: Exit node activo (via $EXIT_NODE)"

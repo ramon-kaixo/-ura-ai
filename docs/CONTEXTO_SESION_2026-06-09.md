@@ -81,7 +81,7 @@ Incluye `RuleBasedStateMachine` para memoria_fallos y memoria_movimiento (secuen
 ### Tailscale — peers relevantes
 - `mac-mini-de-ramon` 100.123.81.101 ✅ activo
 - `hetzner-escudo` 100.78.49.106 ⚠️ relay (sin conexión directa)
-- `gx10-64c3` 100.127.206.86 (otra interfaz, offline 4d)
+- `gx10-64c3` 100.127.206.86 (zombie — reemplazado por gx10-64c3-1 100.72.103.12)
 
 ---
 

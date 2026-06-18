@@ -31,28 +31,44 @@ LOG_DIR = Path("/opt/ura/logs/tuneladora_mantenimiento")
 REPORT_DIR = Path(str(URA_ROOT) + "/docs/pro/reports")
 NERVIOSO = Path(str(URA_ROOT) + "/.nervioso")
 
+def _get_tailscale_ip() -> str:
+    try:
+        r = subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True, timeout=5)
+        ip = r.stdout.strip()
+        if ip:
+            return ip
+    except Exception:
+        pass
+    return ""
+
+
 def _load_devices(root: Path) -> dict[str, str]:
+    defaults = {
+        "gx10_principal": "10.164.1.99",
+        "gx10_wifi": "10.164.1.247",
+        "gx10_tailscale": "100.72.103.12",
+        "mac_ethernet": "10.164.1.26",
+        "mac_tailscale": "100.123.81.101",
+    }
     try:
         with open(root / "config" / "dispositivos.json") as f:
             cfg = json.load(f)
         d = cfg.get("dispositivos", {})
         gx10 = d.get("gx10-64c3", {})
         mac = d.get("mac-mini-de-ramon", {})
-        return {
-            "gx10_principal": gx10.get("ip_cable", "10.164.1.99"),
-            "gx10_wifi": gx10.get("ip_wifi", "10.164.1.247"),
-            "gx10_tailscale": gx10.get("ip_tailscale", "100.127.206.86"),
-            "mac_ethernet": mac.get("ip_cable", "10.164.1.26"),
-            "mac_tailscale": mac.get("ip_tailscale", "100.123.81.101"),
+        result = {
+            "gx10_principal": gx10.get("ip_cable", defaults["gx10_principal"]),
+            "gx10_wifi": gx10.get("ip_wifi", defaults["gx10_wifi"]),
+            "gx10_tailscale": gx10.get("ip_tailscale", defaults["gx10_tailscale"]),
+            "mac_ethernet": mac.get("ip_cable", defaults["mac_ethernet"]),
+            "mac_tailscale": mac.get("ip_tailscale", defaults["mac_tailscale"]),
         }
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
-        return {
-            "gx10_principal": "10.164.1.99",
-            "gx10_wifi": "10.164.1.247",
-            "gx10_tailscale": "100.127.206.86",
-            "mac_ethernet": "10.164.1.26",
-            "mac_tailscale": "100.123.81.101",
-        }
+        result = dict(defaults)
+    dynamic = _get_tailscale_ip()
+    if dynamic:
+        result["gx10_tailscale"] = dynamic
+    return result
 
 DISPOSITIVOS = _load_devices(URA_ROOT)
 

@@ -1,7 +1,7 @@
 {
   "version": "1.1",
   "descripcion": "Inventario dinámico de dispositivos en el ecosistema URA.",
-  "actualizado": "2026-06-04",
+  "actualizado": "2026-06-18",
   "propietario": "Ramon Esnaola",
   "licencia_servidor": "K0513893926",
   "admin_email": "barkaixo@gmail.com",
@@ -17,7 +17,7 @@
       "gpu": "NVIDIA Blackwell",
       "ip_cable": "10.164.1.99",
       "ip_wifi": "192.168.1.139",
-      "ip_tailscale": "100.127.206.86",
+      "ip_tailscale": "100.72.103.12",
       "puertos": {"ollama": 11434, "model_router": 11435, "opencode": 8081, "openclaw": 18789, "gx10_api": 4096},
       "tareas_asignables": ["refactorizacion", "inferencia_llm", "entrenamiento", "sandbox", "backup"],
       "prioridad_conexion": ["cable", "tailscale"],

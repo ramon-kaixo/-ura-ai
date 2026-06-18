@@ -45,16 +45,6 @@ echo ""
 echo "Failover listo. Kernel elige métrica más baja. Si Ethernet cae → Tailscale → Wi-Fi."
 
 # ────────────────────────────────────────────────────────────
-# También verificar y reparar Tailscale si está caído
-# ────────────────────────────────────────────────────────────
-if ! tailscale status --json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); peers=[p for p in d.get('Peer',{}).values() if p.get('Online')]; exit(0 if len(peers)>0 else 1)" 2>/dev/null; then
-    echo "⚠ Tailscale sin peers — reintentando..."
-    systemctl restart tailscaled 2>/dev/null || true
-    sleep 3
-    tailscale up --accept-routes --exit-node=hetzner-escudo --exit-node-allow-lan-access 2>/dev/null || true
-fi
-
-# ────────────────────────────────────────────────────────────
 # Verificar conexión a Mac (Ethernet o Tailscale)
 # ────────────────────────────────────────────────────────────
 if ! ping -c 1 -W 2 ${TERMINAL_HOST:-10.164.1.26} >/dev/null 2>&1; then
