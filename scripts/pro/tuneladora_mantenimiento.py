@@ -31,24 +31,24 @@ LOG_DIR = Path("/opt/ura/logs/tuneladora_mantenimiento")
 REPORT_DIR = Path(str(URA_ROOT) + "/docs/pro/reports")
 NERVIOSO = Path(str(URA_ROOT) + "/.nervioso")
 
-def _get_tailscale_ip() -> str:
+MAGICDNS_GX10 = "gx10-64c3-1.tail7b3cf3.ts.net"
+MAGICDNS_MAC = "mac-mini-de-ramon.tail7b3cf3.ts.net"
+
+
+def _resolve_host(hostname: str, default: str = "") -> str:
     try:
-        r = subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True, timeout=5)
-        ip = r.stdout.strip()
-        if ip:
-            return ip
-    except Exception:
-        pass
-    return ""
+        return socket.gethostbyname(hostname)
+    except OSError:
+        return default
 
 
 def _load_devices(root: Path) -> dict[str, str]:
     defaults = {
         "gx10_principal": "10.164.1.99",
         "gx10_wifi": "10.164.1.247",
-        "gx10_tailscale": "100.72.103.12",
+        "gx10_tailscale": _resolve_host(MAGICDNS_GX10, "100.72.103.12"),
         "mac_ethernet": "10.164.1.26",
-        "mac_tailscale": "100.123.81.101",
+        "mac_tailscale": _resolve_host(MAGICDNS_MAC, "100.123.81.101"),
     }
     try:
         with open(root / "config" / "dispositivos.json") as f:
@@ -65,7 +65,7 @@ def _load_devices(root: Path) -> dict[str, str]:
         }
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         result = dict(defaults)
-    dynamic = _get_tailscale_ip()
+    dynamic = _resolve_host(MAGICDNS_GX10)
     if dynamic:
         result["gx10_tailscale"] = dynamic
     return result
