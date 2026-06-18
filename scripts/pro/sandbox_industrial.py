@@ -30,8 +30,8 @@ from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────────────
 OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434"))
-MODEL_CLEANER = os.environ.get("MODEL_CLEANER", "qwen2.5:7b")
-MODEL_REFACTOR = os.environ.get("MODEL_REFACTOR", "qwen2.5:7b")
+MODEL_CLEANER = os.environ.get("MODEL_CLEANER", "qwen2.5-coder:14b")
+MODEL_REFACTOR = os.environ.get("MODEL_REFACTOR", "qwen2.5-coder:14b")
 SANDBOX_CHUNK = int(os.environ.get("SANDBOX_CHUNK", "60"))
 SANDBOX_WORKERS = int(os.environ.get("SANDBOX_WORKERS", "0"))  # 0 = auto-detect
 RAM_CEILING_GB = float(os.environ.get("RAM_CEILING_GB", "96.0"))
