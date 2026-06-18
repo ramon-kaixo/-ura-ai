@@ -102,9 +102,9 @@ check("clasificar 'embedding' → embeddings",
       lambda: clasificar_peticion([{"role": "user", "content": "generar embedding"}]) == "embeddings")
 
 # 3b. Selección de modelo (simulado con set de modelos)
-fake_models = {"qwen2.5:7b", "qwen2.5-coder:32b", "llama3.2:3b", "mxbai-embed-large:latest"}
-check("seleccionar 'codigo_rapido' → qwen2.5:7b",
-      lambda: seleccionar_modelo("codigo_rapido", fake_models) == "qwen2.5:7b")
+fake_models = {"qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:32b", "llama3.2:3b", "mxbai-embed-large:latest"}
+check("seleccionar 'codigo_rapido' → qwen2.5-coder:14b-instruct-q8_0",
+      lambda: seleccionar_modelo("codigo_rapido", fake_models) == "qwen2.5-coder:14b-instruct-q8_0")
 check("seleccionar 'codigo_complejo' → qwen2.5-coder:32b",
       lambda: seleccionar_modelo("codigo_complejo", fake_models) == "qwen2.5-coder:32b")
 check("seleccionar 'embeddings' → mxbai-embed-large:latest",

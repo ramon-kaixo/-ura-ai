@@ -98,21 +98,21 @@ def _resolve_ollama_url() -> str:
 OLLAMA_URL = _resolve_ollama_url()
 ROUTER_PORT = 11435
 DEFAULT_TIPO = "respuesta_rapida"
-FALLBACK_MODEL = "qwen2.5:7b"
+FALLBACK_MODEL = "qwen2.5:3b"
 CACHE_TTL = 7200
 
 MODEL_CONFIG = {
     "deepseek-coder:6.7b": {"temperature": 0.2, "top_p": 0.95, "num_predict": 8192},
     "qwen2.5-coder:14b": {"temperature": 0.0, "top_p": 0.9, "num_predict": 8192},
+    "qwen2.5-coder:14b-instruct-q8_0": {"temperature": 0.0, "top_p": 0.9, "num_predict": 8192},
     "qwen2.5-coder:32b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
-    "qwen2.5-coder:q8_0": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
-    "qwen2.5:7b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 4096},
-    "qwen3:32b-q8_0": {"temperature": 0.1, "top_p": 0.9, "num_predict": 16384},
+    "qwen2.5:3b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 4096},
     "qwen3:14b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
-    "llama3.3:70b": {"temperature": 0.2, "top_p": 0.9, "num_predict": 8192},
+    "qwen3:32b-q8_0": {"temperature": 0.1, "top_p": 0.9, "num_predict": 16384},
     "llama3.2:3b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 2048},
-    "llama3.2:1b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 1024},
+    "llama3:latest": {"temperature": 0.2, "top_p": 0.9, "num_predict": 4096},
     "llama3.2-vision:11b": {"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
+    "llava:latest": {"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
     "codestral:22b": {"temperature": 0.1, "top_p": 0.95, "num_predict": 8192},
 }
 
@@ -123,28 +123,28 @@ DEFAULT_MODEL_PARAMS = {"temperature": 0.2, "top_p": 0.9, "num_predict": 4096}
 MODELO_ROUTES = {
     "razonamiento": {
         "descripcion": "Razonamiento profundo y planificacion",
-        "modelos": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b", "deepseek-coder:6.7b"],
-        "fallback": "qwen2.5:7b",
+        "modelos": ["qwen3:32b-q8_0", "qwen3:14b", "deepseek-coder:6.7b", "llama3:latest"],
+        "fallback": "qwen2.5:3b",
     },
     "codigo_complejo": {
         "descripcion": "Codigo complejo, refactoring, arquitectura",
-        "modelos": ["qwen2.5-coder:32b", "qwen2.5-coder:q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
-        "fallback": "qwen2.5:7b",
+        "modelos": ["qwen2.5-coder:32b", "qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
+        "fallback": "qwen2.5:3b",
     },
     "codigo_rapido": {
         "descripcion": "Codigo rapido, scripts, fixes",
-        "modelos": ["qwen2.5:7b", "llama3.2:3b", "deepseek-coder:6.7b"],
+        "modelos": ["qwen2.5-coder:14b-instruct-q8_0", "llama3.2:3b", "deepseek-coder:6.7b", "qwen2.5:3b"],
         "fallback": "llama3.2:3b",
     },
     "respuesta_rapida": {
         "descripcion": "Respuestas rapidas, clasificacion, resumenes",
-        "modelos": ["qwen2.5:7b", "llama3.2:3b", "llama3.2:1b"],
+        "modelos": ["qwen2.5:3b", "llama3.2:3b"],
         "fallback": "llama3.2:3b",
     },
     "vision": {
         "descripcion": "Analisis de imagenes y vision",
-        "modelos": ["llama3.2-vision:11b", "llava:34b", "llava:13b"],
-        "fallback": "llama3.2-vision:11b",
+        "modelos": ["llama3.2-vision:11b", "llava:latest"],
+        "fallback": "llava:latest",
     },
     "embeddings": {
         "descripcion": "Generacion de embeddings",

@@ -119,11 +119,14 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 
 ### Ollama Optimizado (2026-06-03)
 - **Configuración**:
-  - `OLLAMA_NUM_PARALLEL=2` (reducido de 8)
-  - `OLLAMA_MAX_LOADED_MODELS=2` (2 modelos en memoria)
-  - `OLLAMA_KEEP_ALIVE=1m` (nuevo - reduce trasiego)
+  - `OLLAMA_NUM_PARALLEL=1` (serializado para modelos pesados)
+  - `OLLAMA_MAX_LOADED_MODELS=1` (1 modelo en memoria)
+  - `OLLAMA_MAX_QUEUE=2` (backpressure)
+  - `OLLAMA_KEEP_ALIVE=5m` (persistencia en RAM)
   - `OLLAMA_FLASH_ATTENTION=1` (aceleración hardware)
   - `OLLAMA_NOPRUNE=1` (sin poda de modelos)
+  - `OLLAMA_NUM_THREADS=20` (todos los cores)
+  - `MemoryHigh=64G` (límite de RAM para modelos grandes)
 - **Ubicación**: Sistema base Ubuntu (no en Docker)
 - **Acceso GPU**: Memoria unificada 128 GB
 - **Problema resuelto**: Model Router optimizado (cache 5min, Connection: close)
