@@ -1,10 +1,11 @@
 import json
-import sys
+import logging
 import socket
 import subprocess
-import logging
-from pathlib import Path
+import sys
 from datetime import UTC, datetime
+from pathlib import Path
+
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
 
@@ -26,7 +27,7 @@ def cmd_status(config: UraConfig, args=None):
         info.update(json.loads(estado_path.read_text()))
     info["procesos_duplicados"] = []
     try:
-        r = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=5, check=False)
         v = {}
         for l in r.stdout.strip().split("\n"):
             c = l.strip()
@@ -45,11 +46,29 @@ def cmd_cross(config: UraConfig, args=None):
         res["local"].update(json.loads(estado_path.read_text()))
     for name, host in {"alemania": HOST_REMOTO_ALEMANIA}.items():
         try:
-            r = subprocess.run(["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-                                "-o", "StrictHostKeyChecking=accept-new",
-                                "-i", "/home/ramon/.ssh/id_rsa",
-                                host, "sudo", "ura", "--config", "/etc/ura/config.json", "status"],
-                               capture_output=True, text=True, timeout=15)
+            r = subprocess.run(
+                [
+                    "ssh",
+                    "-o",
+                    "ConnectTimeout=5",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    "StrictHostKeyChecking=accept-new",
+                    "-i",
+                    "/home/ramon/.ssh/id_rsa",
+                    host,
+                    "sudo",
+                    "ura",
+                    "--config",
+                    "/etc/ura/config.json",
+                    "status",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
             if r.returncode == 0:
                 res[name] = json.loads(r.stdout)
             else:
@@ -65,9 +84,18 @@ def cmd_trend(config: UraConfig, args=None):
         print(json.dumps({"error": "No hay datos de tendencia"}, indent=2))
         sys.exit(1)
     lines = [json.loads(l) for l in dep.read_text().strip().splitlines() if l.strip()]
-    print(json.dumps({"tendencia": lines[-50:], "total": len(lines),
-                       "health_avg": round(sum(l["health"] for l in lines[-20:])/max(len(lines[-20:]),1), 1),
-                       "ultimo": lines[-1] if lines else None}, indent=2, default=str))
+    print(
+        json.dumps(
+            {
+                "tendencia": lines[-50:],
+                "total": len(lines),
+                "health_avg": round(sum(l["health"] for l in lines[-20:]) / max(len(lines[-20:]), 1), 1),
+                "ultimo": lines[-1] if lines else None,
+            },
+            indent=2,
+            default=str,
+        ),
+    )
 
 
 def cmd_graph(config: UraConfig, args=None):
@@ -103,8 +131,7 @@ def cmd_perf(config: UraConfig, args=None):
         sys.exit(1)
     last = with_perf[-1]["perf"]
     avg = {k: round(sum(p["perf"][k] for p in with_perf[-20:]) / max(len(with_perf[-20:]), 1), 1) for k in last}
-    print(json.dumps({"ok": True, "runs": len(with_perf),
-                       "ultimo": last, "promedio": avg}, indent=2))
+    print(json.dumps({"ok": True, "runs": len(with_perf), "ultimo": last, "promedio": avg}, indent=2))
 
 
 def cmd_summarise(config: UraConfig, args=None):
@@ -128,7 +155,9 @@ def cmd_summarise(config: UraConfig, args=None):
         with_p = [l for l in lines if "perf" in l]
         if with_p:
             p = with_p[-1]["perf"]
-            perf_info = f" scan={p.get('scan_s',0)}s"
+            perf_info = f" scan={p.get('scan_s', 0)}s"
     qdrant = QdrantClient.instancia(config)
     qd_host = "local" if config.qdrant_host in ("localhost", "127.0.0.1") else config.qdrant_host
-    print(f"URA {host}: health={hs} svc={svc_total}({svc_ko}KO) RAM={ram}% DISK={disk}% qdrant={qd_host} qd{'OK' if qdrant.disponible else 'DOWN'}{perf_info} trend={trend_pts}pts")
+    print(
+        f"URA {host}: health={hs} svc={svc_total}({svc_ko}KO) RAM={ram}% DISK={disk}% qdrant={qd_host} qd{'OK' if qdrant.disponible else 'DOWN'}{perf_info} trend={trend_pts}pts",
+    )

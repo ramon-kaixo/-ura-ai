@@ -28,9 +28,11 @@ LOAD_THRESHOLD = 8
 def ssh_run(cmd: str) -> str:
     try:
         result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-             f"{SSH_USER}@{TARGET}", cmd],
-            capture_output=True, text=True, timeout=SSH_TIMEOUT,
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
+            capture_output=True,
+            text=True,
+            timeout=SSH_TIMEOUT,
+            check=False,
         )
         return result.stdout.strip() if result.returncode == 0 else ""
     except Exception:
@@ -42,9 +44,10 @@ def measure_ssh_latency() -> float:
     start = time.time()
     try:
         subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-             f"{SSH_USER}@{TARGET}", "echo ok"],
-            capture_output=True, timeout=5,
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
+            capture_output=True,
+            timeout=5,
+            check=False,
         )
         return (time.time() - start) * 1000
     except Exception:
@@ -55,6 +58,7 @@ def measure_http_latency() -> float:
     """Mide latencia HTTP Ollama en ms."""
     try:
         import urllib.request
+
         start = time.time()
         url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
         req = urllib.request.Request(url)

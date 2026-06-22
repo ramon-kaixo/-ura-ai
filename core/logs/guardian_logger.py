@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger("ura.guardian")
 
@@ -24,14 +24,14 @@ def _publish_to_event_bus(record: dict) -> None:
 
 def _save_to_qdrant(record: dict) -> None:
     try:
-        from motor.core.qdrant_client import instancia
         from motor.core.config import UraConfig
+        from motor.core.qdrant_client import instancia
         cfg = UraConfig()
         qc = instancia(cfg)
         if qc and qc.disponible:
             subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
             qc.guardar_incidente({
-                "ts": record.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                "ts": record.get("timestamp", datetime.now(UTC).isoformat()),
                 "tipo": "ServiceFailure",
                 "subtipo": subtipo[:50],
                 "resumen": f"{record.get('event')}: {record.get('reason', '')[:200]}",
@@ -57,7 +57,7 @@ def log_event(
 ):
     _ensure_log_dir()
     record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "event": event,
         "model": model,
         "file": file,

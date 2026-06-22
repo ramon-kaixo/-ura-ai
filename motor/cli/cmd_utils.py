@@ -1,9 +1,10 @@
 import json
-import sys
-import subprocess
 import logging
-from pathlib import Path
+import subprocess
+import sys
 from datetime import UTC, datetime
+from pathlib import Path
+
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
 
@@ -26,7 +27,12 @@ def cmd_notify(config: UraConfig, args=None):
     if hs < 95 or inc > 0:
         msg = f"URA alerta: health={hs} incidentes={inc}"
         try:
-            subprocess.run(["notify-send", "--urgency=critical", "URA", msg], capture_output=True, timeout=5)
+            subprocess.run(
+                ["notify-send", "--urgency=critical", "URA", msg],
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
         except FileNotFoundError:
             log.debug("notify-send no disponible")
         print(json.dumps({"ok": True, "notified": True, "mensaje": msg}))
@@ -42,10 +48,14 @@ def cmd_qdrant_backup(config: UraConfig, args=None):
     incidents = qdrant.buscar_incidentes(limit=1000)
     backup_path = Path(config.deploy_dir) / f"qdrant_backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     backup_path.parent.mkdir(parents=True, exist_ok=True)
-    backup_path.write_text(json.dumps({"incidentes": incidents, "exported_at": datetime.now(UTC).isoformat() + "Z",
-                                        "total": len(incidents)}, indent=2))
+    backup_path.write_text(
+        json.dumps(
+            {"incidentes": incidents, "exported_at": datetime.now(UTC).isoformat() + "Z", "total": len(incidents)},
+            indent=2,
+        ),
+    )
     print(json.dumps({"ok": True, "path": str(backup_path), "total": len(incidents)}, indent=2))
 
 
-def cmd_bench(config: UraConfig=None, args=None):
+def cmd_bench(config: UraConfig = None, args=None):
     print(json.dumps({"ok": True, "msg": "bench not implemented"}, indent=2))

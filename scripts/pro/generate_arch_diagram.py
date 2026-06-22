@@ -3,8 +3,8 @@
 Salida: docs/architecture.md
 """
 
-import subprocess
 import re
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
@@ -13,7 +13,12 @@ OUTPUT = ROOT / "docs" / "architecture.md"
 
 def get_systemd_services() -> list[dict]:
     services = []
-    r = subprocess.run(["systemctl", "list-units", "--type=service", "--all", "--no-legend"], capture_output=True, text=True)
+    r = subprocess.run(
+        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     for line in r.stdout.splitlines():
         parts = line.split()
         if len(parts) >= 4:
@@ -25,7 +30,12 @@ def get_systemd_services() -> list[dict]:
 
 def get_docker_containers() -> list[dict]:
     containers = []
-    r = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Status}}"], capture_output=True, text=True)
+    r = subprocess.run(
+        ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Status}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     for line in r.stdout.splitlines():
         if "\t" in line:
             name, status = line.split("\t", 1)
@@ -34,7 +44,7 @@ def get_docker_containers() -> list[dict]:
 
 
 def get_git_branches() -> list[str]:
-    r = subprocess.run(["git", "branch", "--list"], capture_output=True, text=True, cwd=ROOT)
+    r = subprocess.run(["git", "branch", "--list"], capture_output=True, text=True, cwd=ROOT, check=False)
     return [b.strip().removeprefix("* ") for b in r.stdout.splitlines() if b.strip()]
 
 
@@ -49,7 +59,9 @@ def generate():
 
     lines = []
     lines.append("# URA Architecture Diagram")
-    lines.append(f"*Auto-generated: {subprocess.run(['date', '-Iseconds'], capture_output=True, text=True).stdout.strip()}*")
+    lines.append(
+        f"*Auto-generated: {subprocess.run(['date', '-Iseconds'], capture_output=True, text=True, check=False).stdout.strip()}*",
+    )
     lines.append("")
     lines.append("```mermaid")
     lines.append("graph TB")
@@ -61,7 +73,7 @@ def generate():
     lines.append("    subgraph SYSTEMD[systemd Services]")
     for s in sorted(ura_services, key=lambda x: x["name"]):
         emoji = "🟢" if s["state"] == "active" else "🔴"
-        lines.append(f"      {s['name'].replace('-','_')}[{emoji} {s['name']}]")
+        lines.append(f"      {s['name'].replace('-', '_')}[{emoji} {s['name']}]")
     lines.append("    end")
     lines.append("")
 
@@ -70,14 +82,14 @@ def generate():
         lines.append("    subgraph DOCKER[Docker Containers]")
         for c in sorted(ura_containers, key=lambda x: x["name"]):
             emoji = "🟢" if "Up" in c["status"] else "🔴"
-            lines.append(f"      docker_{c['name'].replace('-','_')}[{emoji} {c['name']}]")
+            lines.append(f"      docker_{c['name'].replace('-', '_')}[{emoji} {c['name']}]")
         lines.append("    end")
         lines.append("")
 
     # Git branches
     lines.append("    subgraph GIT[Git Repository]")
     for b in sorted(branches):
-        lines.append(f"      branch_{b.replace('/','_').replace('-','_')}[🌿 {b}]")
+        lines.append(f"      branch_{b.replace('/', '_').replace('-', '_')}[🌿 {b}]")
     lines.append("    end")
     lines.append("")
 
@@ -109,11 +121,19 @@ def generate():
     lines.append("|---------|--------|------|")
     for s in sorted(ura_services, key=lambda x: x["name"]):
         emoji = "✅" if s["state"] == "active" else "❌"
-        port = {"ollama": "11434", "opencode": "8081", "qdrant": "6333",
-                "executor": "4096", "ejecutor": "4096", "model-router": "11435",
-                "detector": "9092", "agent-hierarchy": "-", "audit": "8000",
-                "contraste": "8001", "go2rtc": "8554"}.get(
-                    re.sub(r'^ura-', '', s["name"]), "?")
+        port = {
+            "ollama": "11434",
+            "opencode": "8081",
+            "qdrant": "6333",
+            "executor": "4096",
+            "ejecutor": "4096",
+            "model-router": "11435",
+            "detector": "9092",
+            "agent-hierarchy": "-",
+            "audit": "8000",
+            "contraste": "8001",
+            "go2rtc": "8554",
+        }.get(re.sub(r"^ura-", "", s["name"]), "?")
         lines.append(f"| {emoji} {s['name']} | {s['state']} | {port} |")
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

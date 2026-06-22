@@ -23,7 +23,7 @@ import signal
 import threading
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger("ura.watchdog")
@@ -36,7 +36,7 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
 
     Guarda en data/auto_dumps/{timestamp}.json
     """
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     dump = {
         "timestamp": ts,
         "function": function_name,
@@ -49,6 +49,7 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
     # Estado del proceso actual
     try:
         import psutil
+
         proc = psutil.Process()
         dump["process"] = {
             "pid": proc.pid,
@@ -92,12 +93,16 @@ def _trigger_rescue(function_name: str, timeout: float, extra: dict | None = Non
     dump = _auto_dump(function_name, timeout, extra)
     try:
         from core.event_bus import publish
-        publish("alert", {
-            "source": "watchdog_funciones",
-            "function": function_name,
-            "timeout": timeout,
-            "dump_file": str(AUTO_DUMPS_DIR / f"{dump['timestamp'].replace(':', '-')}_{function_name[:60]}.json"),
-        })
+
+        publish(
+            "alert",
+            {
+                "source": "watchdog_funciones",
+                "function": function_name,
+                "timeout": timeout,
+                "dump_file": str(AUTO_DUMPS_DIR / f"{dump['timestamp'].replace(':', '-')}_{function_name[:60]}.json"),
+            },
+        )
     except ImportError:
         logger.warning("event_bus no disponible, dump solo local")
 
@@ -125,7 +130,9 @@ def watchdog(
             kill: dump + intenta matar el hilo
             raise: relanza la excepción
         extra_context: Dict con contexto adicional para el dump
+
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper_sync(*args, **kwargs):
@@ -170,15 +177,17 @@ def watchdog(
         async def wrapper_async(*args, **kwargs):
             try:
                 return await asyncio.wait_for(
-                    func(*args, **kwargs), timeout=timeout,
+                    func(*args, **kwargs),
+                    timeout=timeout,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 _on_timeout(func.__name__, timeout, extra_context)
                 return None
 
         if asyncio.iscoroutinefunction(func):
             return wrapper_async
         return wrapper_sync
+
     return decorator
 
 
@@ -186,7 +195,8 @@ def _on_timeout(function_name: str, timeout: float, extra: dict | None = None) -
     """Maneja el timeout de una función."""
     logger.warning(
         "WATCHDOG TIMEOUT: %s excedio %ds",
-        function_name, timeout,
+        function_name,
+        timeout,
     )
     _trigger_rescue(function_name, timeout, extra)
 
@@ -199,7 +209,9 @@ def check_loop_latency(sample_ms: float = 0) -> float:
 
     Returns:
         Latencia en milisegundos
+
     """
+
     async def _measure():
         t0 = time.monotonic()
         await asyncio.sleep(sample_ms / 1000 if sample_ms > 0 else 0)
@@ -234,14 +246,16 @@ class AsyncLoopMonitor(threading.Thread):
     def run(self):
         logger.info(
             "AsyncLoopMonitor iniciado (interval=%ds, threshold=%dms)",
-            self.interval, self.threshold_ms,
+            self.interval,
+            self.threshold_ms,
         )
         while not self._stop_event.is_set():
             latency = check_loop_latency()
             if latency > self.threshold_ms:
                 logger.warning(
                     "LATENCIA ALTA: event loop %.1fms (umbral %.0fms)",
-                    latency, self.threshold_ms,
+                    latency,
+                    self.threshold_ms,
                 )
                 _trigger_rescue(
                     "AsyncLoopMonitor",
@@ -253,6 +267,7 @@ class AsyncLoopMonitor(threading.Thread):
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser(description="URA Watchdog de Funciones")
     parser.add_argument("--loop-latency", action="store_true", help="Medir latencia del event loop")

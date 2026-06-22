@@ -12,17 +12,15 @@ Lee estado de: /tmp/ura_snc_state.json (escrito por snc.py)
 Registra acciones en: stats.json (Perfil A de memoria)
 """
 
-import sys
-from pathlib import Path
-
-
 import json
 import os
 import shlex
 import signal
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 
 # Paths
 _STATE_DIR = Path.home() / ".ura" / "run"
@@ -100,7 +98,12 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     try:
         args = shlex.split(cmd)
         result = subprocess.run(
-            args, shell=False, capture_output=True, text=True, timeout=timeout,
+            args,
+            shell=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
         )
         return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
     except subprocess.TimeoutExpired:
@@ -119,7 +122,10 @@ def request_human_confirmation(reason: str) -> bool:
     try:
         result = subprocess.run(
             ["bash", str(CONFIRMATION_SCRIPT), "OPENCLAW_ALERT", reason],
-            capture_output=True, text=True, timeout=DEAD_MAN_TIMEOUT,
+            capture_output=True,
+            text=True,
+            timeout=DEAD_MAN_TIMEOUT,
+            check=False,
         )
         confirmed = "CONFIRMADO" in result.stdout
         if confirmed:
@@ -215,7 +221,6 @@ def main() -> None:
     runbook = load_runbook()
     if runbook.get("version") == "0":
         sys.exit(1)
-
 
     try:
         while True:

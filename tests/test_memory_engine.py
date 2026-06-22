@@ -1,10 +1,10 @@
 """Hypothesis property-based tests for URA Memory Engine and core modules."""
 
 from hypothesis import given, settings
-from hypothesis.strategies import text, integers, booleans, lists
+from hypothesis.strategies import booleans, integers, lists, text
 
 from core.chunking import chunk_semantic
-from core.document_quality import detect_language, content_type
+from core.document_quality import content_type, detect_language
 from core.query_cache import AsyncQueryCache
 
 
@@ -26,6 +26,7 @@ def test_chunking_never_empty_for_nonempty_text(text_in: str) -> None:
 @settings(max_examples=50)
 def test_query_cache_roundtrip(entries: list[str], ttl: int) -> None:
     import asyncio
+
     cache = AsyncQueryCache(max_size=len(entries) + 1, ttl=ttl)
 
     async def _run() -> None:

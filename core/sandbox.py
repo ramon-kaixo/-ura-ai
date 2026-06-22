@@ -251,5 +251,4 @@ log.info(f'1 + 1 = {x}')
         # Limpiar
         test_file.unlink()
 
-
     asyncio.run(test())

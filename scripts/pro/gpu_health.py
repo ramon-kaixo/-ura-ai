@@ -45,6 +45,7 @@ def _run_nvidia_smi(*args: str) -> list[str]:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         return r.stdout.splitlines()
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
@@ -61,7 +62,7 @@ def _run_nvidia_smi_q(*fields: str) -> dict[str, str]:
     if not lines or not lines[0].strip():
         return {}
     parts = [p.strip() for p in lines[0].split(",")]
-    return dict(zip(fields, parts))
+    return dict(zip(fields, parts, strict=False))
 
 
 def parse_detail_section(lines: list[str], section: str) -> dict[str, str]:

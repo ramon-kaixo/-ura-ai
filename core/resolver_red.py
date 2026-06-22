@@ -52,6 +52,7 @@ def resolver_dns(hostname: str) -> str | None:
     # 1. DNS local
     try:
         import socket
+
         ip = socket.gethostbyname(hostname)
         if ip and not ip.startswith("127."):
             return ip
@@ -60,9 +61,7 @@ def resolver_dns(hostname: str) -> str | None:
 
     # 2. MagicDNS via tailscale
     try:
-        r = subprocess.run(
-            ["tailscale", "status", "--json"],
-            capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5, check=False)
         if r.returncode == 0:
             data = json.loads(r.stdout)
             peers = data.get("Peer", {})
@@ -89,7 +88,11 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
     try:
         r = subprocess.run(
             ["ping", "-c", "1", "-W", str(int(timeout)), ip],
-            capture_output=True, text=True, timeout=timeout + 1)
+            capture_output=True,
+            text=True,
+            timeout=timeout + 1,
+            check=False,
+        )
         if r.returncode == 0:
             for line in r.stdout.splitlines():
                 if "time=" in line:
@@ -120,28 +123,24 @@ def seleccionar_ruta(hostname: str, inventario: dict | None = None) -> dict:
             break
 
     if not dev:
-        return {"ruta": "desconocido", "ip": None, "latencia_ms": 999,
-                "metodo": "no_encontrado", "ok": False}
+        return {"ruta": "desconocido", "ip": None, "latencia_ms": 999, "metodo": "no_encontrado", "ok": False}
 
     # Intentar cable
     ip_cable = dev.get("ip_cable")
     if ip_cable:
         ok, lat = ping_latencia(ip_cable, timeout=2.0)
         if ok and lat < CABLE_LATENCY_THRESHOLD_MS:
-            return {"ruta": "cable", "ip": ip_cable, "latencia_ms": lat,
-                    "metodo": "directo_fisico", "ok": True}
+            return {"ruta": "cable", "ip": ip_cable, "latencia_ms": lat, "metodo": "directo_fisico", "ok": True}
 
     # Fallback: Tailscale
     ip_ts = dev.get("ip_tailscale")
     if ip_ts:
         ok, lat = ping_latencia(ip_ts, timeout=2.0)
         if ok and lat < TAILSCALE_LATENCY_THRESHOLD_MS:
-            return {"ruta": "tailscale", "ip": ip_ts, "latencia_ms": lat,
-                    "metodo": "tailscale_vpn", "ok": True}
+            return {"ruta": "tailscale", "ip": ip_ts, "latencia_ms": lat, "metodo": "tailscale_vpn", "ok": True}
 
     # DOWN
-    return {"ruta": "down", "ip": None, "latencia_ms": 999,
-            "metodo": "sin_conexion", "ok": False}
+    return {"ruta": "down", "ip": None, "latencia_ms": 999, "metodo": "sin_conexion", "ok": False}
 
 
 def estado_red() -> dict:
@@ -182,6 +181,7 @@ def estado_red() -> dict:
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="DNS Resolver + Network Failover")
     parser.add_argument("--resolver", type=str, help="Resolver hostname a IP")
     parser.add_argument("--ping", type=str, help="Medir latencia a dispositivo")

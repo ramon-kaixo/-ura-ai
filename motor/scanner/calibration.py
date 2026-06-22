@@ -6,12 +6,15 @@ from pathlib import Path
 
 log = logging.getLogger("ura.scanner.calib")
 
+
 class Calibration:
     """Gestión de baseline y detección de anomalías por calibración."""
 
     def __init__(self, config):
         self.config = config
-        self.baseline_path = Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"
+        self.baseline_path = (
+            Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"
+        )
         self._baseline = self._cargar()
 
     def _cargar(self) -> dict:
@@ -34,8 +37,7 @@ class Calibration:
             return []
         anomalias = []
         bl = self._baseline
-        for metric, limite in [("ram_pct", "ram_pct_max"), ("disk_pct", "disk_pct_max"),
-                                ("load_1m", "load_max")]:
+        for metric, limite in [("ram_pct", "ram_pct_max"), ("disk_pct", "disk_pct_max"), ("load_1m", "load_max")]:
             actual = estado.recursos.get(metric, 0) if isinstance(estado.recursos, dict) else 0
             if isinstance(actual, (int, float)) and actual > bl.get(limite, 999):
                 anomalias.append(f"Calib.{metric}={actual} > limite={bl.get(limite, 999)}")
@@ -69,7 +71,10 @@ class Calibration:
             return {"anomalias": [], "ok": True}
         anomalias = []
         for metrica, nombre, warn_factor, crit_factor in [
-            ("ram_pct", "RAM", 1.5, 2.0), ("disk_pct", "Disco", 1.3, 1.8), ("load_1m", "Load", 2.0, 3.0)]:
+            ("ram_pct", "RAM", 1.5, 2.0),
+            ("disk_pct", "Disco", 1.3, 1.8),
+            ("load_1m", "Load", 2.0, 3.0),
+        ]:
             vals = [t.get(metrica, 0) for t in trends if isinstance(t.get(metrica), (int, float))]
             if len(vals) < 3:
                 continue
@@ -79,12 +84,32 @@ class Calibration:
             if desv == 0:
                 desv = media * 0.1
             if actual > media + desv * crit_factor:
-                anomalias.append({"metrica": metrica, "nombre": nombre, "actual": actual,
-                                  "media": round(media, 1), "desv": round(desv, 1),
-                                  "nivel": "critico", "z_score": round((actual - media) / desv, 1)})
+                anomalias.append(
+                    {
+                        "metrica": metrica,
+                        "nombre": nombre,
+                        "actual": actual,
+                        "media": round(media, 1),
+                        "desv": round(desv, 1),
+                        "nivel": "critico",
+                        "z_score": round((actual - media) / desv, 1),
+                    },
+                )
             elif actual > media + desv * warn_factor:
-                anomalias.append({"metrica": metrica, "nombre": nombre, "actual": actual,
-                                  "media": round(media, 1), "desv": round(desv, 1),
-                                  "nivel": "warning", "z_score": round((actual - media) / desv, 1)})
-        return {"anomalias": anomalias, "ok": len(anomalias) == 0,
-                "total_puntos": len(trends), "ultimo": trends[-1] if trends else None}
+                anomalias.append(
+                    {
+                        "metrica": metrica,
+                        "nombre": nombre,
+                        "actual": actual,
+                        "media": round(media, 1),
+                        "desv": round(desv, 1),
+                        "nivel": "warning",
+                        "z_score": round((actual - media) / desv, 1),
+                    },
+                )
+        return {
+            "anomalias": anomalias,
+            "ok": len(anomalias) == 0,
+            "total_puntos": len(trends),
+            "ultimo": trends[-1] if trends else None,
+        }

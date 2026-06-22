@@ -88,6 +88,7 @@ def guardar(data: dict) -> None:
         fcntl.flock(lockfile, fcntl.LOCK_UN)
         lockfile.close()
 
+
 # ── API Pública ──
 
 
@@ -115,9 +116,7 @@ def registrar_error(nivel: int, mensaje: str) -> None:
     )
     # Mantener solo últimos 50 errores
     if len(data["contexto_global"]["errores_acumulados"]) > 50:
-        data["contexto_global"]["errores_acumulados"] = data["contexto_global"][
-            "errores_acumulados"
-        ][-50:]
+        data["contexto_global"]["errores_acumulados"] = data["contexto_global"]["errores_acumulados"][-50:]
     guardar(data)
 
 
@@ -131,9 +130,7 @@ def registrar_arreglo(descripcion: str) -> None:
         },
     )
     if len(data["contexto_global"]["arreglos_aplicados"]) > 50:
-        data["contexto_global"]["arreglos_aplicados"] = data["contexto_global"][
-            "arreglos_aplicados"
-        ][-50:]
+        data["contexto_global"]["arreglos_aplicados"] = data["contexto_global"]["arreglos_aplicados"][-50:]
     guardar(data)
 
 
@@ -188,6 +185,7 @@ def estado() -> dict:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
@@ -199,7 +197,10 @@ def main() -> None:
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("--leer", action="store_true", help="Ver estado general")
     parser.add_argument(
-        "--escribir", nargs=2, metavar=("PROCESO", "ESTADO"), help="Actualizar proceso",
+        "--escribir",
+        nargs=2,
+        metavar=("PROCESO", "ESTADO"),
+        help="Actualizar proceso",
     )
     parser.add_argument("--detalles", type=str, help="JSON detalles para --escribir")
     parser.add_argument(

@@ -1,12 +1,13 @@
+import asyncio
 import hashlib
-import httpx
 import logging
 import os
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Optional
+
+import httpx
 
 from motor.core.config import UraConfig
 
@@ -18,6 +19,7 @@ COLECCION_DOCUMENTOS = "ura_documents"
 COLECCION_TRANSACCIONES = "ura_transacciones"
 VECTOR_SIZE_EMBEDDING = 768
 MODELO_EMBEDDING = "nomic-embed-text"
+
 
 class QdrantClient:
     """Cliente para Qdrant con fallback REST automático."""
@@ -36,6 +38,7 @@ class QdrantClient:
         """Intenta conectar vía cliente nativo; fallback a REST."""
         try:
             from qdrant_client import QdrantClient as QC
+
             self._cliente = QC(host=self.config.qdrant_host, port=self.config.qdrant_port, timeout=3)
             self._cliente.get_collections()
             self.disponible = True
@@ -47,8 +50,7 @@ class QdrantClient:
         except Exception as e_nativo:
             log.debug("cliente nativo qdrant falló: %s", e_nativo)
             try:
-                r = httpx.get(f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections",
-                                 timeout=3)
+                r = httpx.get(f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections", timeout=3)
                 if r.status_code < 500:
                     self._cliente = None
                     self.disponible = True
@@ -69,16 +71,21 @@ class QdrantClient:
                 url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}"
                 r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE, "distance": "Cosine"},
-                                                  "on_disk_payload": True}, timeout=5)
+                    r2 = httpx.put(
+                        url,
+                        json={"vectors": {"size": VECTOR_SIZE, "distance": "Cosine"}, "on_disk_payload": True},
+                        timeout=5,
+                    )
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_INCIDENTES)
             else:
                 from qdrant_client.http.exceptions import UnexpectedResponse
+
                 try:
                     self._cliente.get_collection(COLECCION_INCIDENTES)
                 except UnexpectedResponse:
                     from qdrant_client.http import models
+
                     self._cliente.recreate_collection(
                         collection_name=COLECCION_INCIDENTES,
                         vectors_config=models.VectorParams(size=VECTOR_SIZE, distance=models.Distance.COSINE),
@@ -94,16 +101,24 @@ class QdrantClient:
                 url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_DOCUMENTOS}"
                 r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
-                                                  "on_disk_payload": True}, timeout=5)
+                    r2 = httpx.put(
+                        url,
+                        json={
+                            "vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
+                            "on_disk_payload": True,
+                        },
+                        timeout=5,
+                    )
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_DOCUMENTOS)
             else:
                 from qdrant_client.http.exceptions import UnexpectedResponse
+
                 try:
                     self._cliente.get_collection(COLECCION_DOCUMENTOS)
                 except UnexpectedResponse:
                     from qdrant_client.http import models
+
                     self._cliente.recreate_collection(
                         collection_name=COLECCION_DOCUMENTOS,
                         vectors_config=models.VectorParams(size=VECTOR_SIZE_EMBEDDING, distance=models.Distance.COSINE),
@@ -116,19 +131,29 @@ class QdrantClient:
         """Crea la colección de transacciones si no existe (768-d, Cosine)."""
         try:
             if getattr(self, "_modo_rest", False):
-                url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_TRANSACCIONES}"
+                url = (
+                    f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_TRANSACCIONES}"
+                )
                 r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
-                                                  "on_disk_payload": True}, timeout=5)
+                    r2 = httpx.put(
+                        url,
+                        json={
+                            "vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
+                            "on_disk_payload": True,
+                        },
+                        timeout=5,
+                    )
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_TRANSACCIONES)
             else:
                 from qdrant_client.http.exceptions import UnexpectedResponse
+
                 try:
                     self._cliente.get_collection(COLECCION_TRANSACCIONES)
                 except UnexpectedResponse:
                     from qdrant_client.http import models
+
                     self._cliente.recreate_collection(
                         collection_name=COLECCION_TRANSACCIONES,
                         vectors_config=models.VectorParams(size=VECTOR_SIZE_EMBEDDING, distance=models.Distance.COSINE),
@@ -219,11 +244,21 @@ class QdrantClient:
                 resultados.append([0.0] * VECTOR_SIZE_EMBEDDING)
         return resultados
 
-    def guardar_documento(self, doc_id: str, texto: str, metadata: dict | None = None, collection: str = COLECCION_DOCUMENTOS) -> bool:
+    def guardar_documento(
+        self,
+        doc_id: str,
+        texto: str,
+        metadata: dict | None = None,
+        collection: str = COLECCION_DOCUMENTOS,
+    ) -> bool:
         """Genera embedding y guarda un documento en Qdrant."""
         return self._guardar_documentos([(doc_id, texto, metadata or {})], collection) > 0
 
-    def guardar_documentos_batch(self, docs: list[tuple[str, str, dict]], collection: str = COLECCION_DOCUMENTOS) -> int:
+    def guardar_documentos_batch(
+        self,
+        docs: list[tuple[str, str, dict]],
+        collection: str = COLECCION_DOCUMENTOS,
+    ) -> int:
         """Guarda múltiples documentos en batch (más eficiente).
 
         Args:
@@ -245,7 +280,11 @@ class QdrantClient:
         puntos = []
         for i, (doc_id, texto, metadata) in enumerate(docs):
             payload = {"texto": texto[:5000], "id": doc_id, **metadata}
-            pid = int(hashlib.sha256(doc_id.encode()).hexdigest()[:15], 16) % (2**63) if doc_id else int(hashlib.sha256((texto[:100]).encode()).hexdigest()[:15], 16) % (2**63)
+            pid = (
+                int(hashlib.sha256(doc_id.encode()).hexdigest()[:15], 16) % (2**63)
+                if doc_id
+                else int(hashlib.sha256((texto[:100]).encode()).hexdigest()[:15], 16) % (2**63)
+            )
             puntos.append({"id": pid, "vector": vectores[i], "payload": payload})
         if getattr(self, "_modo_rest", False):
             return self._guardar_documentos_rest(puntos, collection)
@@ -253,6 +292,7 @@ class QdrantClient:
             return 0
         try:
             from qdrant_client.http import models
+
             pts = [models.PointStruct(id=p["id"], vector=p["vector"], payload=p["payload"]) for p in puntos]
             self._cliente.upsert(collection_name=collection, points=pts)
             return len(pts)
@@ -293,8 +333,9 @@ class QdrantClient:
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/search"
             r = httpx.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
             if r.status_code == 200:
-                return [{"payload": p.get("payload", {}), "score": p.get("score", 0)}
-                        for p in r.json().get("result", [])]
+                return [
+                    {"payload": p.get("payload", {}), "score": p.get("score", 0)} for p in r.json().get("result", [])
+                ]
         except Exception as e:
             log.warning("buscar_similitud_rest falló: %s", e)
         return []
@@ -314,12 +355,14 @@ class QdrantClient:
             return False
         try:
             from qdrant_client.http import models
+
             self._cliente.delete(
                 collection_name=collection,
                 points_selector=models.FilterSelector(
                     filter=models.Filter(
-                        must=[models.FieldCondition(key=k, match=models.MatchValue(value=v))
-                              for k, v in filtro.items()],
+                        must=[
+                            models.FieldCondition(key=k, match=models.MatchValue(value=v)) for k, v in filtro.items()
+                        ],
                     ),
                 ),
             )
@@ -364,12 +407,17 @@ class QdrantClient:
             return False
         try:
             from qdrant_client.http import models
+
             payload = self._build_payload(incidente)
             self._cliente.upsert(
                 collection_name=COLECCION_INCIDENTES,
-                points=[models.PointStruct(id=int(hashlib.sha256(payload["timestamp_inicio"].encode()).hexdigest()[:15], 16) % (2**63),
-                                            vector=payload["impacto_memoria"],
-                                            payload=payload)],
+                points=[
+                    models.PointStruct(
+                        id=int(hashlib.sha256(payload["timestamp_inicio"].encode()).hexdigest()[:15], 16) % (2**63),
+                        vector=payload["impacto_memoria"],
+                        payload=payload,
+                    ),
+                ],
             )
             return True
         except Exception as e:
@@ -384,7 +432,7 @@ class QdrantClient:
             "tipo_incidencia": incidente.get("tipo", "Unknown"),
             "subtipo": incidente.get("subtipo", ""),
             "resumen": incidente.get("resumen", ""),
-            "impacto_memoria": incidente.get("impacto_memoria", [0.0]*VECTOR_SIZE),
+            "impacto_memoria": incidente.get("impacto_memoria", [0.0] * VECTOR_SIZE),
             "schema_version": self.config.schema_version,
             "hw_ok": incidente.get("hw_ok", True),
             "hw_issues": incidente.get("hw_issues", []),
@@ -409,7 +457,9 @@ class QdrantClient:
                 "vector": payload["impacto_memoria"],
                 "payload": payload,
             }
-            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points"
+            url = (
+                f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points"
+            )
             r = httpx.put(url, json={"points": [point]}, timeout=5)
             return r.status_code in (200, 201)
         except Exception as e:
@@ -477,14 +527,18 @@ class URAQdrantClient:
         return self._client
 
     async def buscar_vectores(
-        self, coleccion: str, vector: list, limite: int = 5,
+        self,
+        coleccion: str,
+        vector: list,
+        limite: int = 5,
     ) -> dict:
         """Búsqueda vectorial asíncrona sin bloquear el event-loop."""
         client = await self._get_client()
         payload = {"vector": vector, "limit": limite, "with_payload": True}
         try:
             response = await client.post(
-                f"/collections/{coleccion}/points/search", json=payload,
+                f"/collections/{coleccion}/points/search",
+                json=payload,
             )
             response.raise_for_status()
             return response.json()
@@ -496,13 +550,16 @@ class URAQdrantClient:
             return {"result": []}
 
     async def upsert_puntos(
-        self, coleccion: str, puntos: list[dict],
+        self,
+        coleccion: str,
+        puntos: list[dict],
     ) -> int:
         """Inserta o actualiza puntos en Qdrant."""
         client = await self._get_client()
         try:
             response = await client.put(
-                f"/collections/{coleccion}/points", json={"points": puntos},
+                f"/collections/{coleccion}/points",
+                json={"points": puntos},
             )
             response.raise_for_status()
             return len(puntos)
@@ -538,7 +595,11 @@ class URAQdrantClient:
             return False
 
     async def buscar_hibrido(
-        self, coleccion: str, texto_query: str, vector_denso: list, limite: int = 10,
+        self,
+        coleccion: str,
+        texto_query: str,
+        vector_denso: list,
+        limite: int = 10,
     ) -> list[dict]:
         """Búsqueda híbrida dense+sparse con RRF."""
         client = await self._get_client()
@@ -548,7 +609,11 @@ class URAQdrantClient:
         payload = {
             "prefetch": [
                 {"query": vector_denso, "using": "default", "limit": limite * 4},
-                {"query": {"indices": sparse["indices"], "values": sparse["values"]}, "using": "bm25", "limit": limite * 4},
+                {
+                    "query": {"indices": sparse["indices"], "values": sparse["values"]},
+                    "using": "bm25",
+                    "limit": limite * 4,
+                },
             ],
             "query": {"fusion": "rrf"},
             "limit": limite,

@@ -1,8 +1,9 @@
 {
-  "ultima_ejecucion": "2026-06-12T12:47:43.775087",
+  "ultima_ejecucion": "2026-06-22T03:44:08.815162+00:00",
   "nivel": "ligero",
   "resultado": {
-    "ruff_f821": 0,
-    "token_screen": false
+    "ruff_f821": 75,
+    "token_screen": true,
+    "auditoria_score": 85
   }
 }

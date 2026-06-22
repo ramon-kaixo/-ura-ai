@@ -20,6 +20,7 @@ if _sandbox_pkgs.exists():
 # This module was removed during refactoring. Skip if not available.
 try:
     import core.memoria.rastreadores.saber  # noqa: F401
+
     _HAVE_RASTR = True
 except ImportError:
     _HAVE_RASTR = False
@@ -29,10 +30,14 @@ def pytest_collection_modifyitems(items):
     for item in items:
         # Skip file_read tests in docker sandbox (hardcoded /home/ramon/URA path)
         if "test_read_project_file" in item.nodeid:
-            item.add_marker(pytest.mark.skip(
-                reason="Requiere ruta /home/ramon/URA/ura_ia_1972 (solo GX10)"
-            ))
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="Requiere ruta /home/ramon/URA/ura_ia_1972 (solo GX10)",
+                ),
+            )
         if not _HAVE_RASTR and item.nodeid.startswith("tests/test_mochila.py::TestServer"):
-            item.add_marker(pytest.mark.skip(
-                reason="TestServer depende de core.memoria.rastreadores.saber (eliminado)"
-            ))
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="TestServer depende de core.memoria.rastreadores.saber (eliminado)",
+                ),
+            )

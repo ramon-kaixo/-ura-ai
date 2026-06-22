@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Reglas Generator — Auto-aprendizaje desde patrones."""
+
 import json
 import os
 import sys
@@ -20,6 +21,7 @@ from reglas_loader import cargar_reglas, guardar_reglas
 
 # guardar_reglas imported from reglas_loader
 
+
 def _extraer_nombre_f821(mensaje: str) -> str | None:
     """Extrae el nombre del símbolo no definido de un mensaje F821."""
     m = re.search(r"Undefined name `([^`]+)`", mensaje)
@@ -35,6 +37,7 @@ def _es_import_estandar(nombre: str) -> dict | None:
         except Exception:
             pass
     return None
+
 
 def generar_reglas_desde_patrones(watermarks: dict) -> list[dict]:
     """Genera reglas automáticas desde patrones sistémicos."""
@@ -102,4 +105,3 @@ def actualizar_reglas():
 
     guardar_reglas(data_reglas)
     return data_reglas
-

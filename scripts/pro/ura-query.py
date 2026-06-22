@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 
-from core.memory_engine import query, get_sources
+from core.memory_engine import get_sources, query
 
 
 def main():

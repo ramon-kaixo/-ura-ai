@@ -27,7 +27,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────────────
@@ -88,10 +88,17 @@ class Telemetria:
         # Model Router
         try:
             r = subprocess.run(
-                ["curl", "-s", "--max-time", "2", f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health"],
+                [
+                    "curl",
+                    "-s",
+                    "--max-time",
+                    "2",
+                    f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=3,
+                check=False,
             )
             status["model_router"] = "ok" if r.returncode == 0 and "ok" in r.stdout else "down"
         except Exception:
@@ -104,6 +111,7 @@ class Telemetria:
                 capture_output=True,
                 text=True,
                 timeout=3,
+                check=False,
             )
             if r.returncode == 0:
                 data = json.loads(r.stdout)
@@ -138,6 +146,7 @@ class Telemetria:
                 text=True,
                 timeout=30,
                 cwd=str(URA_ROOT),
+                check=False,
             )
             return r.stdout.count("F821")
         except Exception:
@@ -218,9 +227,7 @@ class Conciencia:
             },
         )
         if len(data["contexto_global"]["errores_acumulados"]) > 50:
-            data["contexto_global"]["errores_acumulados"] = data["contexto_global"][
-                "errores_acumulados"
-            ][-50:]
+            data["contexto_global"]["errores_acumulados"] = data["contexto_global"]["errores_acumulados"][-50:]
         cls.escribir(data)
 
     @classmethod
@@ -381,9 +388,10 @@ class AgenteReparador:
                 capture_output=True,
                 timeout=15,
                 cwd=str(URA_ROOT),
+                check=False,
             )
-            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15)
-            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10)
+            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15, check=False)
+            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10, check=False)
             # Verificar que compile
             compile(ruta.read_text(), str(ruta), "exec")
             return True
@@ -400,6 +408,7 @@ class AgenteReparador:
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=False,
             )
             if r.returncode == 0:
                 return True  # Ya está limpio
@@ -431,11 +440,7 @@ class AgenteReparador:
                 fixed = json.loads(resp.read()).get("response", "")
 
             if fixed and "```" in fixed:
-                fixed = (
-                    fixed.split("```python")[1].split("```")[0]
-                    if "```python" in fixed
-                    else fixed.split("```")[1]
-                )
+                fixed = fixed.split("```python")[1].split("```")[0] if "```python" in fixed else fixed.split("```")[1]
 
             ruta.write_text(fixed)
             compile(fixed, str(ruta), "exec")
@@ -452,6 +457,7 @@ class AgenteReparador:
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=False,
             )
 
             payload = json.dumps(
@@ -481,11 +487,7 @@ class AgenteReparador:
                 fixed = json.loads(resp.read())["choices"][0]["message"]["content"]
 
             if fixed and "```" in fixed:
-                fixed = (
-                    fixed.split("```python")[1].split("```")[0]
-                    if "```python" in fixed
-                    else fixed.split("```")[1]
-                )
+                fixed = fixed.split("```python")[1].split("```")[0] if "```python" in fixed else fixed.split("```")[1]
 
             ruta.write_text(fixed)
             compile(fixed, str(ruta), "exec")
@@ -539,6 +541,7 @@ class SelfHealingLoop:
                     text=True,
                     timeout=30,
                     cwd=str(URA_ROOT),
+                    check=False,
                 )
                 data = json.loads(r.stdout)
                 files = {x["filename"] for x in data if "/.venv/" not in x.get("filename", "")}
@@ -563,13 +566,18 @@ class SelfHealingLoop:
 
         # 4. Post-ciclo: ruff fix + auto-reglas
         subprocess.run(
-            [RUFF, "check", "--fix", "."], capture_output=True, timeout=60, cwd=str(URA_ROOT),
+            [RUFF, "check", "--fix", "."],
+            capture_output=True,
+            timeout=60,
+            cwd=str(URA_ROOT),
+            check=False,
         )
         subprocess.run(
             [sys.executable, str(SCRIPTS / "auto_reglas.py"), "--generar"],
             capture_output=True,
             timeout=15,
             cwd=str(URA_ROOT),
+            check=False,
         )
 
         # 5. Actualizar conciencia

@@ -1,6 +1,8 @@
 from pathlib import Path
+
 from motor.core.config import UraConfig
-from motor.guard.preflight import ejecutar_preflight, _detectar_configs_duplicadas
+from motor.guard.preflight import _detectar_configs_duplicadas, ejecutar_preflight
+
 
 def test_preflight_no_dups():
     r = ejecutar_preflight(UraConfig())
@@ -8,15 +10,19 @@ def test_preflight_no_dups():
     assert not r.bloqueado
     print("  ✅ test_preflight_no_dups")
 
+
 def test_preflight_dups():
     with Path("/tmp/test_ura_opennaut_config_dup.json").open("w") as f:
         f.write("{}")
     with Path("/tmp/test_ura_opennaut_config_dup.jsonc").open("w") as f:
         f.write("{}")
-    dups = _detectar_configs_duplicadas.__wrapped__(None) if hasattr(_detectar_configs_duplicadas, "__wrapped__") else []
+    dups = (
+        _detectar_configs_duplicadas.__wrapped__(None) if hasattr(_detectar_configs_duplicadas, "__wrapped__") else []
+    )
     if not dups:
         print("  ⚠️  test_preflight_dups: no hay configs reales duplicadas (ok en entorno limpio)")
     print("  ✅ test_preflight_dups")
+
 
 def test_snapshot_hash():
     cfg = UraConfig()
@@ -24,6 +30,9 @@ def test_snapshot_hash():
     assert "configs" in open(r.snapshot_path).read()
     print("  ✅ test_snapshot_hash")
 
+
 if __name__ == "__main__":
-    test_preflight_no_dups(); test_preflight_dups(); test_snapshot_hash()
+    test_preflight_no_dups()
+    test_preflight_dups()
+    test_snapshot_hash()
     print("🎯 Preflight OK")

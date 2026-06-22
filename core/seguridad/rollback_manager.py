@@ -1,8 +1,9 @@
-import subprocess
-import os
 import logging
+import os
+import subprocess
 
 logger = logging.getLogger("ura-seguridad")
+
 
 class RollbackManager:
     def __init__(self, repo_path="/home/ramon/URA/ura_ia_1972/"):
@@ -16,7 +17,7 @@ class RollbackManager:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return True, res.stdout.strip()
         except subprocess.CalledProcessError as e:

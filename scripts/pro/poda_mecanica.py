@@ -146,7 +146,9 @@ def poda_mecanica(ruta: Path) -> tuple[str, int, int, int]:
 
             subprocess.run(
                 [ruff_bin, "check", "--fix", "--select", "F841,F401,F811", tmp_path],
-                capture_output=True, timeout=15,
+                capture_output=True,
+                timeout=15,
+                check=False,
             )
             codigo_post_ruff = Path(tmp_path).read_text(encoding="utf-8")
             os.unlink(tmp_path)
@@ -292,15 +294,18 @@ def pipeline_poda(ruta: Path, output_dir: Path | None = None) -> dict:
     }
 
 
-
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
+
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
         p = str(py_file)
-        if any(x in p for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]):
+        if any(
+            x in p
+            for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]
+        ):
             continue
         try:
             content = py_file.read_text()
@@ -310,8 +315,10 @@ def scan_project() -> None:
         except Exception:
             pass
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Poda Mecánica + Anclaje Cromático")
     parser.add_argument("archivo", nargs="?", default=None, help="Archivo .py a procesar")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")

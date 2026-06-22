@@ -30,10 +30,28 @@ def _extract_deps(text: str, ext: str) -> list[str]:
         return []
     if ext == ".sh":
         bins = re.findall(r"(?:^|\s)(\w+)(?=\s)", text)
-        return sorted(set(b for b in bins if b in {
-            "curl", "wget", "ssh", "scp", "docker", "git", "python3",
-            "systemctl", "journalctl", "chattr", "grep", "sed", "awk",
-        }))
+        return sorted(
+            set(
+                b
+                for b in bins
+                if b
+                in {
+                    "curl",
+                    "wget",
+                    "ssh",
+                    "scp",
+                    "docker",
+                    "git",
+                    "python3",
+                    "systemctl",
+                    "journalctl",
+                    "chattr",
+                    "grep",
+                    "sed",
+                    "awk",
+                }
+            ),
+        )
     return []
 
 
@@ -82,15 +100,17 @@ def scan(data_root: str) -> list[dict]:
             print(f"[WARN] Saltando {rel}: {e}", file=sys.stderr)
             continue
 
-        items.append({
-            "path": str(fpath),
-            "size_bytes": fpath.stat().st_size,
-            "ext": ext,
-            "tags": _guess_tags(rel),
-            "dependencies": _extract_deps(text, ext),
-            "content_summary": _summarize(text),
-            "hash": _hash_path(rel),
-        })
+        items.append(
+            {
+                "path": str(fpath),
+                "size_bytes": fpath.stat().st_size,
+                "ext": ext,
+                "tags": _guess_tags(rel),
+                "dependencies": _extract_deps(text, ext),
+                "content_summary": _summarize(text),
+                "hash": _hash_path(rel),
+            },
+        )
 
     return items
 

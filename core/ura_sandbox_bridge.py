@@ -191,9 +191,7 @@ class SandboxBridge:
 
         client = OpenClawClient(availability=OpenClawAvailability(mode="stub"))
         normalized = client._normalize(tema, raw)
-        normalized["estado"] = (
-            "ok" if normalized["resultados"] or normalized.get("razonamiento") else "error"
-        )
+        normalized["estado"] = "ok" if normalized["resultados"] or normalized.get("razonamiento") else "error"
         return normalized
 
     # ------------------------------------------------------------ helpers --
@@ -215,7 +213,9 @@ class SandboxBridge:
             return ""
         if proc.returncode != 0:
             logger.warning(
-                "comando no-cero %s: %s", args[0], stderr_b.decode(errors="ignore")[:200],
+                "comando no-cero %s: %s",
+                args[0],
+                stderr_b.decode(errors="ignore")[:200],
             )
             return ""
         return stdout_b.decode(errors="ignore")

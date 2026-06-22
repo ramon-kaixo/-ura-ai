@@ -1,5 +1,5 @@
-
 """Tests de search_logger."""
+
 from core.search_logger import log_query, read_logs
 
 

@@ -1,12 +1,9 @@
 import json
-from typing import AsyncGenerator
-
+from collections.abc import AsyncGenerator
 
 import httpx
 
-
 from .base import Provider, ProviderError
-
 
 # OLLAMA_BASE is http://127.0.0.1:11434
 
@@ -48,7 +45,9 @@ class OllamaProvider(Provider):
         async with httpx.AsyncClient(**OLLAMA_HTTPX_KW, timeout=httpx.Timeout(self.timeout)) as client:
             if stream:
                 async with client.stream(
-                    "POST", "http://127.0.0.1:11434/api/chat", json=payload
+                    "POST",
+                    "http://127.0.0.1:11434/api/chat",
+                    json=payload,
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
@@ -64,7 +63,8 @@ class OllamaProvider(Provider):
                     return
 
             resp = await client.post(
-                "http://127.0.0.1:11434/api/chat", json=payload
+                "http://127.0.0.1:11434/api/chat",
+                json=payload,
             )
             if resp.is_error:
                 raise ProviderError(
@@ -104,7 +104,9 @@ class OllamaProvider(Provider):
                     "type": "function",
                     "function": {
                         "name": tc["function"]["name"],
-                        "arguments": tc["function"].get("arguments", "{}") if isinstance(tc["function"].get("arguments"), str) else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
+                        "arguments": tc["function"].get("arguments", "{}")
+                        if isinstance(tc["function"].get("arguments"), str)
+                        else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
                     },
                 }
                 for i, tc in enumerate(msg["tool_calls"])
@@ -126,9 +128,7 @@ class OllamaProvider(Provider):
             "created": chunk.get("created_at", ""),
             "model": modelo,
             "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-            if done
-            else None,
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0} if done else None,
         }
 
     @staticmethod
@@ -137,14 +137,16 @@ class OllamaProvider(Provider):
             obj = json.loads(content) if isinstance(content, str) else None
             if isinstance(obj, dict) and "name" in obj and "arguments" in obj:
                 args = obj["arguments"]
-                return [{
-                    "id": "call_0",
-                    "type": "function",
-                    "function": {
-                        "name": obj["name"],
-                        "arguments": args if isinstance(args, str) else json.dumps(args, ensure_ascii=False),
+                return [
+                    {
+                        "id": "call_0",
+                        "type": "function",
+                        "function": {
+                            "name": obj["name"],
+                            "arguments": args if isinstance(args, str) else json.dumps(args, ensure_ascii=False),
+                        },
                     },
-                }]
+                ]
         except (json.JSONDecodeError, TypeError):
             pass
         return None
@@ -164,7 +166,9 @@ class OllamaProvider(Provider):
                     "type": "function",
                     "function": {
                         "name": tc["function"]["name"],
-                        "arguments": tc["function"].get("arguments", "{}") if isinstance(tc["function"].get("arguments"), str) else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
+                        "arguments": tc["function"].get("arguments", "{}")
+                        if isinstance(tc["function"].get("arguments"), str)
+                        else json.dumps(tc["function"]["arguments"], ensure_ascii=False),
                     },
                 }
                 for i, tc in enumerate(msg["tool_calls"])
@@ -185,7 +189,7 @@ class OllamaProvider(Provider):
                     "index": 0,
                     "message": message,
                     "finish_reason": finish,
-                }
+                },
             ],
             "usage": {
                 "prompt_tokens": data.get("prompt_eval_count", 0),

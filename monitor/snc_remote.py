@@ -34,10 +34,16 @@ def mac_notify(title: str, message: str) -> None:
     try:
         safe_title = _escape_applescript(title)
         safe_message = _escape_applescript(message)
-        subprocess.run([
-            "osascript", "-e",
-            f'display notification "{safe_message}" with title "{safe_title}" sound name "Basso"',
-        ], timeout=5, capture_output=True)
+        subprocess.run(
+            [
+                "osascript",
+                "-e",
+                f'display notification "{safe_message}" with title "{safe_title}" sound name "Basso"',
+            ],
+            timeout=5,
+            capture_output=True,
+            check=False,
+        )
     except Exception:
         pass
 
@@ -48,6 +54,7 @@ def sync_state() -> dict:
         subprocess.run(
             ["rsync", "-q", f"{SSH_USER}@{TARGET}:{REMOTE_STATE}", str(LOCAL_STATE)],
             timeout=SSH_TIMEOUT,
+            check=False,
         )
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
@@ -57,7 +64,6 @@ def sync_state() -> dict:
 
 
 def main() -> None:
-
 
     try:
         while True:

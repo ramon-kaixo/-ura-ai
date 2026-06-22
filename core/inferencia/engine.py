@@ -7,7 +7,8 @@ InferenciaStreamEngine:
 
 import asyncio
 import logging
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 log = logging.getLogger("ura.inferencia")
 
@@ -39,7 +40,8 @@ class InferenciaStreamEngine:
 
         log.info(
             "Slot GPU asignado para %s. Tokens estimados: %d.",
-            modelo, payload_seguro.get("tokens_estimados", 0),
+            modelo,
+            payload_seguro.get("tokens_estimados", 0),
         )
 
         try:
@@ -58,7 +60,7 @@ class InferenciaStreamEngine:
 
         except Exception as e:
             log.error("Fallo en el flujo de inferencia: %s", e)
-            yield f"\n[Fallo en la respuesta del modelo: {str(e)}]"
+            yield f"\n[Fallo en la respuesta del modelo: {e!s}]"
 
         finally:
             await self.router.liberar_slot_vram(modelo)

@@ -84,9 +84,7 @@ def _get_free_memory_gx10() -> float:
         "gx10",
         "free -g | awk '/^Mem:/{print $3}'",
     ]
-    return (
-        float(_get_ssh_command_output(command).strip()) if _get_ssh_command_output(command) else 0.0
-    )
+    return float(_get_ssh_command_output(command).strip()) if _get_ssh_command_output(command) else 0.0
 
 
 def _get_local_memory_usage() -> float:
@@ -405,13 +403,14 @@ def _ejecutar_ruff_check(sandbox_file_path) -> None:
         capture_output=True,
         text=True,
         timeout=60,
+        check=False,
     )
     if resultado.returncode != 0 and resultado.stdout:
         log(f"      ruff: {resultado.stdout.strip()[:200]}")
 
 
 def _ejecutar_ruff_format(sandbox_file_path) -> None:
-    subprocess.run(["ruff", "format", str(sandbox_file_path)], capture_output=True, timeout=30)
+    subprocess.run(["ruff", "format", str(sandbox_file_path)], capture_output=True, timeout=30, check=False)
 
 
 def _ejecutar_py_compile(sandbox_file_path):
@@ -421,6 +420,7 @@ def _ejecutar_py_compile(sandbox_file_path):
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     return resultado.returncode == 0
 
@@ -432,7 +432,12 @@ def _verificar_compilacion(code_content, sandbox_file_path):
 
 
 def _procesar_resultados(
-    pyc_ok, compile_ok, sandbox_file_path, sandbox_file_path_bak, CHUNKS_FAILED, FILES_FAILED,
+    pyc_ok,
+    compile_ok,
+    sandbox_file_path,
+    sandbox_file_path_bak,
+    CHUNKS_FAILED,
+    FILES_FAILED,
 ) -> bool | None:
     if not pyc_ok or not compile_ok:
         log("❌ Aduana RECHAZADA")
@@ -478,6 +483,7 @@ def _ejecutar_ruff_check(sandbox_file_path: Path) -> None:
         ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],
         capture_output=True,
         timeout=30,
+        check=False,
     )
 
 
@@ -486,6 +492,7 @@ def _ejecutar_ruff_format(sandbox_file_path: Path) -> None:
         ["ruff", "format", str(sandbox_file_path)],
         capture_output=True,
         timeout=30,
+        check=False,
     )
 
 
@@ -521,11 +528,13 @@ def _revisar_ruff_ultimo(original_path: Path) -> None:
         ["ruff", "check", "--fix", "--unsafe-fixes", str(original_path)],
         capture_output=True,
         timeout=30,
+        check=False,
     )
     subprocess.run(
         ["ruff", "format", str(original_path)],
         capture_output=True,
         timeout=30,
+        check=False,
     )
 
 
@@ -541,7 +550,8 @@ def process_sandbox(
     _ejecutar_ruff_format(sandbox_file_path)
     pyc_ok = _ejecutar_py_compile(sandbox_file_path)
     compile_ok = _verificar_compilacion(
-        sandbox_file_path.read_text(encoding="utf-8"), str(sandbox_file_path),
+        sandbox_file_path.read_text(encoding="utf-8"),
+        str(sandbox_file_path),
     )
     if not pyc_ok or not compile_ok:
         return _procesar_resultados(

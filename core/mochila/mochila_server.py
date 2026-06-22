@@ -1,36 +1,37 @@
 import asyncio
 import json
+import logging
 import os
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-import logging
-from typing import AsyncGenerator, List, Tuple, Dict, Any
+from typing import Any
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-import httpx
 from pydantic import BaseModel, Field
 
+from core.logs.guardian_logger import log_event
+from core.memoria.analizador import analizar
+from core.memoria.consulta import consultar as memoria_consultar
+from core.memoria.ingesto import procesar_inbox_completo
+from core.memoria.rastreadores.comprar import fase_comprar
+from core.memoria.rastreadores.hacer import fase_hacer
+from core.memoria.rastreadores.saber import fase_saber
+from core.memoria.sintetizador import sintetizar
+from core.memoria.vigilante import generar_parte
 from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
+from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
+from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
-from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
-from core.memoria.ingesto import procesar_inbox_completo
-from core.memoria.consulta import consultar as memoria_consultar
-from core.memoria.analizador import analizar
-from core.memoria.sintetizador import sintetizar
-from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
-from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.status_endpoint import system_status
-from core.logs.guardian_logger import log_event
-from core.memoria.rastreadores.saber import fase_saber
-from core.memoria.rastreadores.hacer import fase_hacer
-from core.memoria.rastreadores.comprar import fase_comprar
-from core.memoria.vigilante import generar_parte
+from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
 load_dotenv(os.path.expanduser("~/URA/.env"))
 
@@ -49,12 +50,13 @@ PROVIDER_TIMEOUTS: dict[str, float] = {
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
 
+
 class VRAMAwareScheduler:
     def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0):
         self.max_mb = self._detect_max_vram(default_max_mb)
         self.queue_timeout = queue_timeout
-        self._queue: List[Tuple[asyncio.Future, int, float, Dict[str, Any]]] = []
-        self._active: Dict[str, Dict[str, Any]] = {}
+        self._queue: list[tuple[asyncio.Future, int, float, dict[str, Any]]] = []
+        self._active: dict[str, dict[str, Any]] = {}
         self._current_mb = 0
         self._hot_models: set = set()
         self._consecutive_smi_errors = 0
@@ -66,10 +68,14 @@ class VRAMAwareScheduler:
     @staticmethod
     def _detect_max_vram(default_mb: int) -> int:
         import subprocess
+
         try:
             res = subprocess.run(
                 ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
-                capture_output=True, text=True, timeout=2
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=False,
             )
             if res.returncode == 0 and res.stdout.strip() and "N/A" not in res.stdout:
                 return int(res.stdout.strip())
@@ -101,9 +107,14 @@ class VRAMAwareScheduler:
         try:
             proc = await asyncio.wait_for(
                 asyncio.create_subprocess_exec(
-                    "nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader",
-                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL),
-                timeout=0.2)
+                    "nvidia-smi",
+                    "--query-compute-apps=used_memory",
+                    "--format=csv,noheader",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.DEVNULL,
+                ),
+                timeout=0.2,
+            )
             stdout, _ = await proc.communicate()
             if proc.returncode == 0:
                 total = 0
@@ -112,7 +123,7 @@ class VRAMAwareScheduler:
                         total += int(line.strip().split()[0])
                 self._current_mb = total
                 self._consecutive_smi_errors = 0
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._consecutive_smi_errors += 1
             self._log.warning("nvidia-smi timeout (%d/3)", self._consecutive_smi_errors)
             if proc:
@@ -156,7 +167,7 @@ class VRAMAwareScheduler:
         try:
             req_id = await asyncio.wait_for(future, timeout=deadline_flex + 1.0)
             return req_id
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def acquire_boot_vram(self, mb: int) -> bool:
@@ -165,14 +176,16 @@ class VRAMAwareScheduler:
             self._queue.append((future, mb, time.time() + 120.0, {"model": "static_boot_service"}))
         try:
             req_id = await asyncio.wait_for(future, timeout=90.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
+
         async def _release():
             try:
                 await asyncio.sleep(3.0)
             finally:
                 async with self._lock:
                     self._active.pop(req_id, None)
+
         asyncio.create_task(_release())
         return True
 
@@ -204,6 +217,7 @@ class VRAMAwareScheduler:
             except Exception as e:
                 self._log.error("scheduler_loop error: %s", e)
             await asyncio.sleep(0.5)
+
 
 scheduler = VRAMAwareScheduler()
 
@@ -240,38 +254,76 @@ def _generar_id() -> str:
 def _rechazar_si_bloqueado(provider_name: str) -> None:
     if not circuit_breaker.puede_pasar(provider_name):
         h = circuit_breaker.estado(provider_name)
-        raise HTTPException(status_code=503, detail={"error": f"Circuit breaker OPEN para {provider_name}", "state": h["state"]})
+        raise HTTPException(
+            status_code=503,
+            detail={"error": f"Circuit breaker OPEN para {provider_name}", "state": h["state"]},
+        )
     puede, actual, limite = rate_limiter.puede_pasar(provider_name)
     if not puede:
-        raise HTTPException(status_code=429, detail={"error": f"Rate limit excedido para {provider_name}", "current": actual, "limit": limite})
+        raise HTTPException(
+            status_code=429,
+            detail={"error": f"Rate limit excedido para {provider_name}", "current": actual, "limit": limite},
+        )
 
 
 def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> None:
     if respuesta and isinstance(respuesta, dict):
         uso = respuesta.get("usage") or {}
-        cost_tracker.registrar(provider_name, modelo, uso.get("prompt_tokens", 0) or 0, uso.get("completion_tokens", 0) or 0)
+        cost_tracker.registrar(
+            provider_name,
+            modelo,
+            uso.get("prompt_tokens", 0) or 0,
+            uso.get("completion_tokens", 0) or 0,
+        )
 
 
 async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:
     try:
-        async for chunk in provider.chat(modelo=modelo, mensajes=mensajes, stream=False, tools=herramientas, max_tokens=max_tokens, temperature=temperature):
+        async for chunk in provider.chat(
+            modelo=modelo,
+            mensajes=mensajes,
+            stream=False,
+            tools=herramientas,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        ):
             return chunk
     except ProviderError as e:
         raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
     return None
 
 
-async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, max_tokens, temperature, is_opencode=False, guardian=None) -> AsyncGenerator[bytes, None]:
+async def _stream_from_provider(
+    provider_name,
+    modelo,
+    mensajes,
+    herramientas,
+    max_tokens,
+    temperature,
+    is_opencode=False,
+    guardian=None,
+) -> AsyncGenerator[bytes, None]:
     provider = PROVIDERS[provider_name]
     timeout_val = PROVIDER_TIMEOUTS.get(provider_name, 60)
     hubo_error = False
     accumulated_text = ""
     try:
-        gen = provider.chat(modelo=modelo, mensajes=mensajes, stream=True, tools=herramientas, max_tokens=max_tokens, temperature=temperature)
+        gen = provider.chat(
+            modelo=modelo,
+            mensajes=mensajes,
+            stream=True,
+            tools=herramientas,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
         async for chunk in gen:
             if not chunk:
                 continue
-            if chunk.get("choices") and chunk["choices"][0].get("delta", {}) == {} and chunk["choices"][0].get("finish_reason"):
+            if (
+                chunk.get("choices")
+                and chunk["choices"][0].get("delta", {}) == {}
+                and chunk["choices"][0].get("finish_reason")
+            ):
                 yield b"data: [DONE]\n\n"
                 circuit_breaker.registrar_exito(provider_name)
                 rate_limiter.registrar(provider_name)
@@ -286,16 +338,27 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
                         payload = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
                         if penalty:
                             payload["error"]["penalty_context"] = penalty
-                        log_event("stream_aborted", model=modelo, file="", reason="vagancy", attempts=0, penalty=penalty)
+                        log_event(
+                            "stream_aborted",
+                            model=modelo,
+                            file="",
+                            reason="vagancy",
+                            attempts=0,
+                            penalty=penalty,
+                        )
                         yield b"data: " + json.dumps(payload).encode() + b"\n\n"
                         yield b"data: [DONE]\n\n"
                         return
             yield b"data: " + json.dumps(chunk).encode() + b"\n\n"
         yield b"data: [DONE]\n\n"
-    except asyncio.TimeoutError:
+    except TimeoutError:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name, es_timeout=True)
-        yield b"data: " + json.dumps({"error": {"message": f"Timeout ({timeout_val}s)", "type": "timeout_error"}}).encode() + b"\n\n"
+        yield (
+            b"data: "
+            + json.dumps({"error": {"message": f"Timeout ({timeout_val}s)", "type": "timeout_error"}}).encode()
+            + b"\n\n"
+        )
         yield b"data: [DONE]\n\n"
     except ProviderError as e:
         hubo_error = True
@@ -305,7 +368,9 @@ async def _stream_from_provider(provider_name, modelo, mensajes, herramientas, m
     except Exception as e:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name)
-        yield b"data: " + json.dumps({"error": {"message": f"Error: {str(e)}", "type": "internal_error"}}).encode() + b"\n\n"
+        yield (
+            b"data: " + json.dumps({"error": {"message": f"Error: {e!s}", "type": "internal_error"}}).encode() + b"\n\n"
+        )
         yield b"data: [DONE]\n\n"
     finally:
         if not hubo_error:
@@ -375,9 +440,24 @@ async def v1_chat_completions(body: ChatRequest):
     guardian = OpenCodeGuardian() if is_opencode else None
     if body.stream:
         return StreamingResponse(
-            _stream_from_provider(provider_name, modelo, body.messages, herramientas, body.max_tokens, body.temperature, is_opencode=is_opencode, guardian=guardian),
+            _stream_from_provider(
+                provider_name,
+                modelo,
+                body.messages,
+                herramientas,
+                body.max_tokens,
+                body.temperature,
+                is_opencode=is_opencode,
+                guardian=guardian,
+            ),
             media_type="text/event-stream",
-            headers={"X-Mochila-Provider": provider_name, "X-Mochila-Modelo": modelo, "X-Mochila-Route-Reason": route_reason, "Cache-Control": "no-cache", "Connection": "keep-alive"},
+            headers={
+                "X-Mochila-Provider": provider_name,
+                "X-Mochila-Modelo": modelo,
+                "X-Mochila-Route-Reason": route_reason,
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
         )
 
     provider = PROVIDERS[provider_name]
@@ -402,13 +482,29 @@ async def v1_chat_completions(body: ChatRequest):
             except json.JSONDecodeError:
                 fargs = {}
             resultado = await ejecutar_tool(fname, fargs)
-            mensajes_con_tool.append({"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)})
-        respuesta_final = await _chat_no_stream(provider, modelo, mensajes_con_tool, herramientas, body.max_tokens, body.temperature)
+            mensajes_con_tool.append(
+                {"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)},
+            )
+        respuesta_final = await _chat_no_stream(
+            provider,
+            modelo,
+            mensajes_con_tool,
+            herramientas,
+            body.max_tokens,
+            body.temperature,
+        )
         if respuesta_final:
             respuesta = respuesta_final
             _procesar_usage(respuesta_final, provider_name, modelo)
 
-    return JSONResponse(content=respuesta, headers={"X-Mochila-Provider": provider_name, "X-Mochila-Modelo": modelo, "X-Mochila-Route-Reason": route_reason})
+    return JSONResponse(
+        content=respuesta,
+        headers={
+            "X-Mochila-Provider": provider_name,
+            "X-Mochila-Modelo": modelo,
+            "X-Mochila-Route-Reason": route_reason,
+        },
+    )
 
 
 @app.get("/breaker")
@@ -435,10 +531,12 @@ async def rate_limit_status(provider: str):
 async def cost_summary():
     return cost_tracker.resumen_hoy()
 
+
 @app.post("/admin/acquire_boot_vram")
 async def admin_acquire_boot_vram(mb: int):
     await scheduler.acquire_boot_vram(mb)
     return {"status": "granted"}
+
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
 async def proxy_gateway(path: str, request: Request):
@@ -448,9 +546,16 @@ async def proxy_gateway(path: str, request: Request):
     except Exception:
         pass
     mb = scheduler.estimar_vram(body or {})
-    req_id = await scheduler.acquire(mb=mb, deadline_flex=15.0, data={"model": body.get("model", "") if body else path.split("/")[0] if "/" in path else path})
+    req_id = await scheduler.acquire(
+        mb=mb,
+        deadline_flex=15.0,
+        data={"model": body.get("model", "") if body else path.split("/", maxsplit=1)[0] if "/" in path else path},
+    )
     if not req_id:
-        return JSONResponse(status_code=503, content={"error": "VRAM admission denied", "detail": "No hay suficiente VRAM disponible"})
+        return JSONResponse(
+            status_code=503,
+            content={"error": "VRAM admission denied", "detail": "No hay suficiente VRAM disponible"},
+        )
     try:
         headers = {"Content-Type": "application/json"}
         auth = request.headers.get("Authorization")
@@ -467,6 +572,7 @@ async def proxy_gateway(path: str, request: Request):
         is_stream = (body or {}).get("stream", True)
 
         if is_gen and is_stream:
+
             async def _proxy_stream():
                 acc = ""
                 async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:
@@ -478,22 +584,37 @@ async def proxy_gateway(path: str, request: Request):
                             if is_opencode and guardian:
                                 try:
                                     data = json.loads(line)
-                                    tok = (data.get("response", "")
-                                           or data.get("message", {}).get("content", "")
-                                           or data.get("choices", [{}])[0].get("delta", {}).get("content", ""))
+                                    tok = (
+                                        data.get("response", "")
+                                        or data.get("message", {}).get("content", "")
+                                        or data.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                    )
                                     if tok:
                                         acc += tok
                                         if not guardian.evaluar_texto_stream(acc):
                                             penalty = guardian.generar_penalizacion()
-                                            err = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
+                                            err = {
+                                                "error": {
+                                                    "message": "STREAM_ABORTED_BY_GUARDIAN",
+                                                    "type": "vagancy_error",
+                                                },
+                                            }
                                             if penalty:
                                                 err["error"]["penalty_context"] = penalty
-                                            log_event("stream_aborted", model=body.get("model",""), file=path, reason="vagancy", attempts=0, penalty=penalty)
+                                            log_event(
+                                                "stream_aborted",
+                                                model=body.get("model", ""),
+                                                file=path,
+                                                reason="vagancy",
+                                                attempts=0,
+                                                penalty=penalty,
+                                            )
                                             yield json.dumps(err) + "\n"
                                             return
                                 except json.JSONDecodeError:
                                     pass
                             yield line + "\n"
+
             return StreamingResponse(_proxy_stream(), media_type="application/x-ndjson")
 
         async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
@@ -504,12 +625,15 @@ async def proxy_gateway(path: str, request: Request):
     finally:
         await scheduler.release(req_id)
 
+
 class VideoIngestRequest(BaseModel):
     path: str
+
 
 @app.post("/memoria/ingestar/video")
 async def memoria_ingestar_video(body: VideoIngestRequest):
     from pathlib import Path
+
     ruta = Path(body.path)
     if not ruta.exists():
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
@@ -519,6 +643,7 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
 class AnalizarRequest(BaseModel):
     peticion: str
 
+
 @app.post("/memoria/analizar")
 async def memoria_analizar(body: AnalizarRequest):
     return await analizar(body.peticion)
@@ -526,6 +651,7 @@ async def memoria_analizar(body: AnalizarRequest):
 
 class SintesisRequest(BaseModel):
     peticion: str
+
 
 @app.post("/memoria/sintetizar")
 async def memoria_sintetizar(body: SintesisRequest):
@@ -535,13 +661,16 @@ async def memoria_sintetizar(body: SintesisRequest):
 class FaseRequest(BaseModel):
     keywords: str
 
+
 @app.post("/memoria/fase/saber")
 async def memoria_fase_saber(body: FaseRequest):
     return await fase_saber(body.keywords)
 
+
 @app.post("/memoria/fase/hacer")
 async def memoria_fase_hacer(body: FaseRequest):
     return await fase_hacer(body.keywords)
+
 
 @app.post("/memoria/fase/comprar")
 async def memoria_fase_comprar(body: FaseRequest):
@@ -556,6 +685,7 @@ async def memoria_vigilancia_parte():
 @app.get("/status")
 async def system_status_endpoint():
     return await system_status(PROVIDERS, cost_tracker, circuit_breaker, len(TOOL_SCHEMAS), router)
+
 
 @app.get("/metrics")
 async def metrics():
@@ -584,6 +714,7 @@ async def memoria_consultar_endpoint(body: ConsultaRequest):
 async def memoria_health():
     try:
         from core.memoria.qdrant_store import _get_client
+
         client = _get_client()
         info = client.get_collection("ideas")
         return {

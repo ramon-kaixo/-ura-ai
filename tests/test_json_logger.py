@@ -1,7 +1,6 @@
-
 """Tests de json_logger."""
-from core.json_logger import StructuredLogger, JsonFormatter
-import logging
+
+from core.json_logger import JsonFormatter, StructuredLogger
 
 
 def test_json_formatter():

@@ -36,7 +36,7 @@ GUARDIAN = URA_ROOT / "core" / "guardian_disco.py"
 
 def run_step(cmd, timeout=60, json_output=True):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         if json_output and r.stdout:
             return json.loads(r.stdout)
         return {"raw": r.stdout[:200] if r.stdout else "", "returncode": r.returncode}
@@ -46,12 +46,13 @@ def run_step(cmd, timeout=60, json_output=True):
 
 def update_conciencia(proceso, estado, progreso=None) -> None:
     args = [sys.executable, str(SCRIPTS / "conciencia.py"), "--escribir", proceso, estado]
-    subprocess.run(args, capture_output=True, cwd=str(URA_ROOT))
+    subprocess.run(args, capture_output=True, cwd=str(URA_ROOT), check=False)
     if progreso:
         subprocess.run(
             [sys.executable, str(SCRIPTS / "conciencia.py"), "--progreso", progreso],
             capture_output=True,
             cwd=str(URA_ROOT),
+            check=False,
         )
 
 
@@ -65,7 +66,8 @@ def step_guardian():
 def step_token_screen(ruta):
     update_conciencia("token_screen", "activo")
     result = run_step(
-        [sys.executable, str(SCRIPTS / "token_screen.py"), str(ruta), "--json"], timeout=30,
+        [sys.executable, str(SCRIPTS / "token_screen.py"), str(ruta), "--json"],
+        timeout=30,
     )
     update_conciencia("token_screen", "idle" if result.get("ok") else "bloqueado")
     return result
@@ -74,7 +76,8 @@ def step_token_screen(ruta):
 def step_scanner_entrada(ruta):
     update_conciencia("scanner", "entrada")
     result = run_step(
-        [sys.executable, str(SCRIPTS / "scanner_autoajuste.py"), str(ruta), "--json"], timeout=30,
+        [sys.executable, str(SCRIPTS / "scanner_autoajuste.py"), str(ruta), "--json"],
+        timeout=30,
     )
     update_conciencia("scanner", "idle")
     return result
@@ -83,7 +86,8 @@ def step_scanner_entrada(ruta):
 def step_poda(ruta):
     update_conciencia("poda", "activo")
     result = run_step(
-        [sys.executable, str(SCRIPTS / "poda_mecanica.py"), str(ruta), "--json"], timeout=30,
+        [sys.executable, str(SCRIPTS / "poda_mecanica.py"), str(ruta), "--json"],
+        timeout=30,
     )
     update_conciencia("poda", "idle")
     return result
@@ -97,6 +101,7 @@ def step_refactor():
         text=True,
         timeout=3600,
         cwd=str(URA_ROOT),
+        check=False,
     )
     update_conciencia("refactorer", "idle")
     output = r.stdout[-1000:] if r.stdout else ""
@@ -134,7 +139,8 @@ def step_scanner_salida(ruta):
 def step_inspectores(ruta):
     update_conciencia("inspectores", "activo")
     result = run_step(
-        [sys.executable, str(SCRIPTS / "inspectores.py"), str(ruta), "--json"], timeout=60,
+        [sys.executable, str(SCRIPTS / "inspectores.py"), str(ruta), "--json"],
+        timeout=60,
     )
     update_conciencia("inspectores", "idle")
     return result
@@ -143,7 +149,8 @@ def step_inspectores(ruta):
 def step_openclaw(ruta):
     update_conciencia("openclaw", "activo")
     result = run_step(
-        [sys.executable, str(SCRIPTS / "openclaw_reviewer.py"), str(ruta), "--json"], timeout=180,
+        [sys.executable, str(SCRIPTS / "openclaw_reviewer.py"), str(ruta), "--json"],
+        timeout=180,
     )
     update_conciencia("openclaw", "idle")
     return result
@@ -172,15 +179,14 @@ def verificar_consenso_SDA(propuesta_plan: str) -> bool:
         str(SCRIPTS / "plan_validator.py"),
         "--debate",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300)
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300, check=False)
     if proc.returncode == 0:
         return True
-    elif proc.returncode == 2:
+    if proc.returncode == 2:
         print("[SDA WARNING] REQUERIDA ARBITRACION HUMANA. Deteniendo pipeline.")
         return False
-    else:
-        print(f"[SDA ERROR] Fallo interno o rechazo del comite: {proc.stderr[:500]}")
-        return False
+    print(f"[SDA ERROR] Fallo interno o rechazo del comite: {proc.stderr[:500]}")
+    return False
 
 
 # -- Pipeline completo --
@@ -255,15 +261,23 @@ def init_conciencia() -> None:
         [sys.executable, str(SCRIPTS / "conciencia.py"), "--reset"],
         capture_output=True,
         cwd=str(URA_ROOT),
+        check=False,
     )
     for p in [
-        "token_screen", "scanner", "refactorer", "compactadora",
-        "auto_reglas", "inspectores", "openclaw", "alineador",
+        "token_screen",
+        "scanner",
+        "refactorer",
+        "compactadora",
+        "auto_reglas",
+        "inspectores",
+        "openclaw",
+        "alineador",
     ]:
         subprocess.run(
             [sys.executable, str(SCRIPTS / "conciencia.py"), "--escribir", p, "idle"],
             capture_output=True,
             cwd=str(URA_ROOT),
+            check=False,
         )
 
 
@@ -283,7 +297,7 @@ def main() -> None:
         return
 
     if args.status:
-        subprocess.run([sys.executable, str(SCRIPTS / "conciencia.py"), "--leer"])
+        subprocess.run([sys.executable, str(SCRIPTS / "conciencia.py"), "--leer"], check=False)
         return
 
     if args.task:

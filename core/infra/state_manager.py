@@ -1,7 +1,7 @@
-from datetime import UTC
 import json
-import os
 import logging
+import os
+from datetime import UTC
 
 logger = logging.getLogger("ura.state")
 STATE_FILE = "/tmp/ura_state.json"
@@ -29,8 +29,12 @@ def load_checkpoint() -> dict | None:
     try:
         with open(STATE_FILE) as f:
             record = json.load(f)
-        logger.info("[STATE] Checkpoint recuperado: task=%s file=%s attempt=%d",
-                     record.get("task_id"), record.get("target_file"), record.get("attempt"))
+        logger.info(
+            "[STATE] Checkpoint recuperado: task=%s file=%s attempt=%d",
+            record.get("task_id"),
+            record.get("target_file"),
+            record.get("attempt"),
+        )
         return record
     except (json.JSONDecodeError, OSError) as e:
         logger.warning("[STATE] Checkpoint corrupto, ignorando: %s", e)

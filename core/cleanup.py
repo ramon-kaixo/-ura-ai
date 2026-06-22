@@ -58,7 +58,10 @@ def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
     try:
         r = subprocess.run(
             ["fuser", "-k", f"{port}/{protocol}"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if r.returncode == 0:
             logger.info("fuser -k %d/%s -> OK", port, protocol)
@@ -119,7 +122,11 @@ def limpiar_locks(locks: list[str] | None = None) -> None:
 def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
     try:
         r = subprocess.run(
-            ["ipcs", "-m"], capture_output=True, text=True, timeout=5,
+            ["ipcs", "-m"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         for line in r.stdout.split("\n")[3:]:
             parts = line.split()
@@ -127,7 +134,9 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
                 shmid = parts[1]
                 subprocess.run(
                     ["ipcrm", "-m", shmid],
-                    capture_output=True, timeout=3,
+                    capture_output=True,
+                    timeout=3,
+                    check=False,
                 )
                 logger.info("SHM eliminado: id=%s key=%s", shmid, parts[0])
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -143,12 +152,13 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
 def check_vram_post_kill() -> dict:
     try:
         r = subprocess.run(
-            ["nvidia-smi", "--query-compute-apps=used_memory",
-             "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=5,
+            ["nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
-        total = sum(int(line.strip()) for line in r.stdout.strip().split("\n")
-                    if line.strip().isdigit())
+        total = sum(int(line.strip()) for line in r.stdout.strip().split("\n") if line.strip().isdigit())
         if total > 0:
             logger.warning("VRAM post-kill: %d MB todavia en uso", total)
         else:
@@ -173,6 +183,7 @@ def cleanup(
 
     Returns:
         Dict con resultados de cada paso
+
     """
     affected = affected or {}
     resultado = {"fault_id": fault_id, "pasos": {}}
@@ -226,6 +237,7 @@ def cleanup_all() -> dict:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     parser = argparse.ArgumentParser(description="URA Cleanup — Protocolo Matar/Cerrar")
     parser.add_argument("--all", action="store_true", help="Limpieza completa")

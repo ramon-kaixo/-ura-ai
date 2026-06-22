@@ -6,8 +6,11 @@ Lógica:
 - Temperatura 0.0 para infraestructura, 0.3 para el resto
 - Reintento con Qwen 32B si el JSON sigue inválido tras reparar
 """
+
 from __future__ import annotations
+
 import json
+
 from json_repair import repair_json
 
 # Prioridades por temperatura
@@ -36,8 +39,7 @@ def compilar_opinion(
     ruta: str = "",
     reintentos: int = 1,
 ) -> dict | None:
-    """
-    Envía código a un modelo, repara JSON, reintenta si falla.
+    """Envía código a un modelo, repara JSON, reintenta si falla.
 
     Args:
         modelo: Nombre del modelo en Ollama (ej: "llama3.3:70b")
@@ -47,6 +49,7 @@ def compilar_opinion(
 
     Returns:
         Dict con {"vulnerabilidad": ..., "criticidad": ...} o None si falla
+
     """
     temperatura = TEMPERATURA_INFRA if es_infraestructura(ruta) else TEMPERATURA_DEFAULT
     prompt = (
@@ -67,13 +70,17 @@ def compilar_opinion(
 
         try:
             import subprocess
+
             result = subprocess.run(
                 ["ollama", "run", modelo_reintento, prompt],
-                capture_output=True, text=True, timeout=120,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
             )
             raw = result.stdout.strip()
         except Exception as e:
-            delay = (2 ** intento) + __import__("random").uniform(0, 1)
+            delay = (2**intento) + __import__("random").uniform(0, 1)
             print(f"  ✗ Error ejecutando {modelo_reintento}: {e}. Esperando {delay:.1f}s...")
             __import__("time").sleep(delay)
             continue
@@ -90,8 +97,7 @@ def compilar_opinion(
             data["modelo"] = modelo_reintento
             data["temperatura"] = temperatura
             return data
-        else:
-            print("  ⚠ Esquema inválido (faltan campos), reintentando...")
+        print("  ⚠ Esquema inválido (faltan campos), reintentando...")
 
     return None
 

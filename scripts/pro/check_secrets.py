@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """check_secrets.py — Pre-commit hook: detecta secrets hardcodeados."""
+
 import re
 import sys
 

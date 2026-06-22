@@ -1,12 +1,9 @@
 """Tests para detección de anomalías en SNC (monitor/snc.py)."""
-import os
+
 import signal
 import sys
-import threading
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # snc.py usa `from error_logger import ErrorLogger` (import implícito del mismo dir)
 _monitor_dir = str(Path(__file__).resolve().parent.parent / "monitor")
@@ -16,7 +13,6 @@ if _monitor_dir not in sys.path:
 from monitor.snc import (
     _BUCLE_TIMEOUT,
     _CPU_DETECTION_ENABLED,
-    UMBRALES,
     _aislar_bucle,
     _check_umbrales,
     _limpiar_zombies,
@@ -112,24 +108,24 @@ class TestAislarBucle:
 
     def test_sends_sigstop_and_schedules_timer(self):
         _pending_sigcont.clear()
-        with patch("monitor.snc.os.kill") as mock_kill:
-            with patch("monitor.snc.threading.Timer") as mock_timer:
-                with patch("monitor.snc.Path.mkdir"):
-                    with patch("monitor.snc.Path.write_text"):
-                        _aislar_bucle(42, "python3", 95.0)
-                        mock_kill.assert_called_once_with(42, signal.SIGSTOP)
-                        mock_timer.assert_called_once_with(
-                            _BUCLE_TIMEOUT, _sigcont_seguro, args=[42, "python3"]
-                        )
+        with patch("monitor.snc.os.kill") as mock_kill, patch("monitor.snc.threading.Timer") as mock_timer:
+            with patch("monitor.snc.Path.mkdir"):
+                with patch("monitor.snc.Path.write_text"):
+                    _aislar_bucle(42, "python3", 95.0)
+                    mock_kill.assert_called_once_with(42, signal.SIGSTOP)
+                    mock_timer.assert_called_once_with(
+                        _BUCLE_TIMEOUT,
+                        _sigcont_seguro,
+                        args=[42, "python3"],
+                    )
 
     def test_adds_to_pending(self):
         _pending_sigcont.clear()
-        with patch("monitor.snc.os.kill"):
-            with patch("monitor.snc.threading.Timer"):
-                with patch("monitor.snc.Path.mkdir"):
-                    with patch("monitor.snc.Path.write_text"):
-                        _aislar_bucle(42, "python3", 95.0)
-                        assert _pending_sigcont[42] == "python3"
+        with patch("monitor.snc.os.kill"), patch("monitor.snc.threading.Timer"):
+            with patch("monitor.snc.Path.mkdir"):
+                with patch("monitor.snc.Path.write_text"):
+                    _aislar_bucle(42, "python3", 95.0)
+                    assert _pending_sigcont[42] == "python3"
 
 
 class TestSigcontSeguro:
@@ -149,11 +145,10 @@ class TestSigcontSeguro:
 
     def test_skips_if_pid_gone(self):
         _pending_sigcont[42] = "python3"
-        with patch("pathlib.Path.exists", return_value=False):
-            with patch("os.kill") as mock_kill:
-                _sigcont_seguro(42, "python3")
-                mock_kill.assert_not_called()
-                assert 42 not in _pending_sigcont
+        with patch("pathlib.Path.exists", return_value=False), patch("os.kill") as mock_kill:
+            _sigcont_seguro(42, "python3")
+            mock_kill.assert_not_called()
+            assert 42 not in _pending_sigcont
 
     def test_skips_if_process_recycled(self, tmp_path):
         _pending_sigcont[42] = "python3"
@@ -187,6 +182,7 @@ class TestCheckOpenCodeColgado:
 
     def test_returns_pid_when_cpu_high(self):
         with patch("subprocess.run") as mock_run:
+
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]
@@ -202,6 +198,7 @@ class TestCheckOpenCodeColgado:
 
     def test_returns_none_when_cpu_low(self):
         with patch("subprocess.run") as mock_run:
+
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]
@@ -225,7 +222,7 @@ class TestCheckUmbrales:
                 "qdrant": {"ok": True},
                 "model-router": {"ok": True},
                 "tailscaled": {"ok": True},
-            }
+            },
         }
         assert _check_umbrales(state) is False
 
@@ -238,7 +235,7 @@ class TestCheckUmbrales:
                 "model-router": {"ok": True},
                 "tailscaled": {"ok": True},
                 "some-other": {"ok": True},
-            }
+            },
         }
         assert _check_umbrales(state) is True
 
@@ -254,7 +251,7 @@ class TestCheckUmbrales:
                 "s2": {"ok": False},
                 "s3": {"ok": False},
                 "s4": {"ok": False},
-            }
+            },
         }
         assert _check_umbrales(state) is True
 
@@ -268,7 +265,7 @@ class TestCheckUmbrales:
                 "tailscaled": {"ok": True},
                 "s1": {"ok": False},
                 "s2": {"ok": False},
-            }
+            },
         }
         assert _check_umbrales(state) is False
 

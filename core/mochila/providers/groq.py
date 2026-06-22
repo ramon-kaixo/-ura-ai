@@ -1,6 +1,6 @@
 import json
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import httpx
 
@@ -23,23 +23,43 @@ class GroqProvider(Provider):
         return GROQ_TIMEOUT
 
     async def chat(
-        self, modelo: str, mensajes: list, stream: bool = False,
-        tools: list | None = None, max_tokens: int = 4096, temperature: float = 0.0,
+        self,
+        modelo: str,
+        mensajes: list,
+        stream: bool = False,
+        tools: list | None = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.0,
     ) -> AsyncGenerator[dict, None]:
         if not self.api_key:
             raise ProviderError("GROQ_API_KEY no configurada", provider=self.nombre)
 
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        payload = {"model": modelo, "messages": mensajes, "stream": stream, "max_tokens": max_tokens, "temperature": temperature}
+        payload = {
+            "model": modelo,
+            "messages": mensajes,
+            "stream": stream,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
         if tools:
             payload["tools"] = tools
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(self.timeout)) as client:
             if stream:
-                async with client.stream("POST", f"{GROQ_BASE}/chat/completions", json=payload, headers=headers) as resp:
+                async with client.stream(
+                    "POST",
+                    f"{GROQ_BASE}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
-                        raise ProviderError(f"Groq error: {resp.status_code} {text.decode(errors='replace')[:200]}", provider=self.nombre, status_code=resp.status_code)
+                        raise ProviderError(
+                            f"Groq error: {resp.status_code} {text.decode(errors='replace')[:200]}",
+                            provider=self.nombre,
+                            status_code=resp.status_code,
+                        )
                     async for line in resp.aiter_lines():
                         if line.startswith("data: "):
                             data = line[6:].strip()
@@ -51,7 +71,11 @@ class GroqProvider(Provider):
             else:
                 resp = await client.post(f"{GROQ_BASE}/chat/completions", json=payload, headers=headers)
                 if resp.is_error:
-                    raise ProviderError(f"Groq error: {resp.status_code} {resp.text[:200]}", provider=self.nombre, status_code=resp.status_code)
+                    raise ProviderError(
+                        f"Groq error: {resp.status_code} {resp.text[:200]}",
+                        provider=self.nombre,
+                        status_code=resp.status_code,
+                    )
                 yield resp.json()
 
     async def health(self) -> dict:
@@ -64,6 +88,11 @@ class GroqProvider(Provider):
                     return {"status": "error", "detail": resp.text[:100]}
                 data = resp.json()
                 modelos = data.get("data", [])
-                return {"status": "ok", "modelos_disponibles": [m["id"] for m in modelos[:10]], "total_modelos": len(modelos), "latencia_ms": resp.elapsed.total_seconds() * 1000}
+                return {
+                    "status": "ok",
+                    "modelos_disponibles": [m["id"] for m in modelos[:10]],
+                    "total_modelos": len(modelos),
+                    "latencia_ms": resp.elapsed.total_seconds() * 1000,
+                }
         except Exception as e:
             return {"status": "error", "detail": str(e)}

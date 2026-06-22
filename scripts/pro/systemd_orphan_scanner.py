@@ -1,4 +1,5 @@
 from datetime import UTC
+
 #!/usr/bin/env python3
 """systemd_orphan_scanner.py — Detect orphan systemd units (missing ExecStart).
 
@@ -54,9 +55,9 @@ def extract_execstart(path: str) -> str | None:
             for line in f:
                 stripped = line.strip()
                 if stripped.startswith("ExecStart="):
-                    return stripped[len("ExecStart="):].strip()
+                    return stripped[len("ExecStart=") :].strip()
                 if stripped.startswith("ExecStartPre="):
-                    return stripped[len("ExecStartPre="):].strip()
+                    return stripped[len("ExecStartPre=") :].strip()
     except OSError:
         pass
     return None
@@ -86,8 +87,17 @@ def flag_severity(bin_path: str) -> str | None:
 
 def is_ura_unit(name: str) -> bool:
     lower = name.lower()
-    keywords = ["ura", "openclaw", "opencode", "tuneladora", "model-router",
-                "central-router", "backend@", "gx10", "llama"]
+    keywords = [
+        "ura",
+        "openclaw",
+        "opencode",
+        "tuneladora",
+        "model-router",
+        "central-router",
+        "backend@",
+        "gx10",
+        "llama",
+    ]
     return any(k in lower for k in keywords)
 
 
@@ -130,7 +140,9 @@ def _disable_and_delete(unit: str, scope: str) -> None:
     try:
         subprocess.run(
             [SYSTEMCTL, *user_flag, "disable", "--now", unit],
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
     except Exception:
         pass
@@ -140,7 +152,9 @@ def _disable_and_delete(unit: str, scope: str) -> None:
             try:
                 subprocess.run(
                     [SYSTEMCTL, *user_flag, "disable", "--now", timer.name],
-                    capture_output=True, timeout=30,
+                    capture_output=True,
+                    timeout=30,
+                    check=False,
                 )
             except Exception:
                 pass
@@ -162,14 +176,20 @@ def main() -> None:
 
     if as_json:
         import datetime
-        print(json.dumps({
-            "timestamp": datetime.datetime.now(UTC).isoformat(),
-            "scanner": "systemd_orphan_scanner",
-            "total": len(results),
-            "fix": fix,
-            "ura_only": ura_only,
-            "results": results,
-        }, indent=2))
+
+        print(
+            json.dumps(
+                {
+                    "timestamp": datetime.datetime.now(UTC).isoformat(),
+                    "scanner": "systemd_orphan_scanner",
+                    "total": len(results),
+                    "fix": fix,
+                    "ura_only": ura_only,
+                    "results": results,
+                },
+                indent=2,
+            ),
+        )
     else:
         print(f"[systemd_orphan_scanner] Orphans found: {len(results)}")
         for r in results:
