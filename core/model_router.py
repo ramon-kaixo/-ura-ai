@@ -114,7 +114,7 @@ class ConcurrentVRAMGuard:
             return await corrutina_inferencia(*args, **kwargs)
 
     async def adquirir_slot_vram(self, modelo: str, ttl: float | None = None) -> bool:
-        """Adquiere slot de VRAM para streaming. Retorna False si TTL expira."""
+        """Adquiere slot de VRAM para streaming. Retorna False si TTL expira o se cancela."""
         try:
             ttl_actual = ttl if ttl is not None else self._ttl
             await asyncio.wait_for(self._semaphore.acquire(), timeout=ttl_actual)
@@ -125,6 +125,10 @@ class ConcurrentVRAMGuard:
             self._total_timeout += 1
             log.warning("[VRAM] Timeout adquiriendo slot para modelo=%s", modelo)
             return False
+        except asyncio.CancelledError:
+            log.warning("[VRAM] Cancelación durante adquisición de slot para modelo=%s", modelo)
+            # wait_for ya limpió el waiter interno del semáforo
+            raise
 
     async def liberar_slot_vram(self, modelo: str) -> None:
         """Libera slot de VRAM. Se llama SIEMPRE desde finally."""
