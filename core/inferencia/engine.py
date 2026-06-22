@@ -31,7 +31,7 @@ class InferenciaStreamEngine:
             slot_adquirido = await self.router.adquirir_slot_vram(modelo)
         except asyncio.CancelledError:
             log.warning("Inferencia cancelada antes de adquirir slot VRAM para %s.", modelo)
-            return
+            raise
 
         if not slot_adquirido:
             yield "Error 504: Tiempo de espera en cola excedido sin slots de GPU disponibles."
