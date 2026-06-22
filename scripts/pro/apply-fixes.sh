@@ -13,7 +13,7 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BACKUP_DIR="/tmp/ura_fixes_backup"
+BACKUP_DIR="/opt/ura/fixes_backup"
 TIMESTAMP=$(date +%s)
 
 SERVICES=("model-router" "snc")
