@@ -391,23 +391,26 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
     return result[:10]
 
 
-def check_opencode_colgado() -> bool:
+def check_opencode_colgado() -> int | None:
     """Detecta si OpenCode está congelado (CPU alta + sin respuesta).
-    Busca el binario exacto 'opencode' (no -f parcial) para evitar falsos positivos.
+    Retorna el PID si está colgado, None si no lo encuentra o CPU normal.
     """
     try:
         pid = subprocess.run(
             ["pgrep", "-x", "opencode"], capture_output=True, text=True, timeout=5,
         )
         if not pid.stdout.strip():
-            return False
+            return None
+        raw_pid = int(pid.stdout.strip().split()[0])
         cpu = subprocess.run(
-            ["ps", "-p", pid.stdout.strip(), "-o", "%cpu="],
+            ["ps", "-p", str(raw_pid), "-o", "%cpu="],
             capture_output=True, text=True, timeout=5,
         )
-        return float(cpu.stdout.strip()) > UMBRALES["opencode_cpu_umbral"]
+        if float(cpu.stdout.strip()) > UMBRALES["opencode_cpu_umbral"]:
+            return raw_pid
+        return None
     except (ValueError, subprocess.TimeoutExpired, OSError):
-        return False
+        return None
 
 
 def _limpiar_zombies() -> None:
@@ -457,6 +460,8 @@ def _sigcont_seguro(pid: int, nombre_original: str) -> None:
 
 def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
     """Aísla un proceso en bucle: SIGSTOP + volcado /proc."""
+    if pid <= 0:
+        return
     with _pending_lock:
         if pid in _pending_sigcont:
             return
@@ -546,10 +551,11 @@ def main() -> None:
                     _aislar_bucle(pid, nombre, cpu)
 
             # 3. OpenCode colgado → contar ciclos, aislar si persiste
-            if check_opencode_colgado():
+            raw_pid = check_opencode_colgado()
+            if raw_pid is not None:
                 _opencode_ciclos_alta += 1
                 if _opencode_ciclos_alta >= UMBRALES["opencode_ciclos_confirmar"]:
-                    _aislar_bucle(0, "opencode", UMBRALES["opencode_cpu_umbral"])
+                    _aislar_bucle(raw_pid, "opencode", UMBRALES["opencode_cpu_umbral"])
                     _opencode_ciclos_alta = 0
             else:
                 _opencode_ciclos_alta = 0
