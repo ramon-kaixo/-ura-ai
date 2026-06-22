@@ -45,7 +45,7 @@ def load_seen_hashes() -> set:
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
         except Exception:
-            pass
+    pass  # noqa: S110
     return set()
 
 
@@ -70,7 +70,8 @@ def fetch_critical_logs() -> list:
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
-    cmd = "(" + "; ".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
+cmd = "(" + "
+".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
     if output:

@@ -89,7 +89,8 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
 def _trigger_rescue(function_name: str, timeout: float, extra: dict | None = None) -> None:
     """Publica alerta en event_bus + guarda dump.
 
-    Intenta importar event_bus; si falla, solo dump a disco.
+Intenta importar event_bus
+si falla, solo dump a disco.
     """
     dump = _auto_dump(function_name, timeout, extra)
     try:

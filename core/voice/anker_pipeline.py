@@ -64,7 +64,7 @@ class AnkerDeterministicPipeline:
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
         except Exception:
-            pass
+    pass  # noqa: S110
         return None
 
     def _find_default_input(self) -> int | None:
@@ -74,7 +74,7 @@ class AnkerDeterministicPipeline:
                 if dev["max_input_channels"] > 0:
                     return idx
         except Exception:
-            pass
+    pass  # noqa: S110
         return None
 
     # ── Audio callback ─────────────────────────────────────────────

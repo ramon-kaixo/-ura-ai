@@ -65,7 +65,7 @@ class PiperTTSMotor:
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
         except Exception:
-            pass
+    pass  # noqa: S110
         return None
 
     def _execute_piper_and_play(self, text: str) -> None:
@@ -98,7 +98,7 @@ class PiperTTSMotor:
             sd.wait()
 
         except Exception:
-            pass
+    pass  # noqa: S110
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False

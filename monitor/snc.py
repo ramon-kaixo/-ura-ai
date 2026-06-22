@@ -22,6 +22,8 @@ from pathlib import Path
 from error_logger import ErrorLogger
 from mac_heartbeat import MacHeartbeat
 
+from core.bin_paths import PGREP, PKILL, SYSTEMCTL
+
 # notifier está en core/, se importa bajo demanda para evitar circular imports
 
 # Autosuficiente: carga system_config.json directamente (no depende de config_manager)
@@ -324,7 +326,7 @@ def poll_services(runbook: dict) -> dict:
 
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
             subprocess.run(
-                ["pkill", "-TERM", "-f", "openclaw"],
+                [PKILL, "-TERM", "-f", "openclaw"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -415,7 +417,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
     except Exception:
-        pass
+        pass  # noqa: S110
     return result[:10]
 
 
@@ -425,7 +427,7 @@ def check_opencode_colgado() -> int | None:
     """
     try:
         pid = subprocess.run(
-            ["pgrep", "-x", "opencode"],
+            [PGREP, "-x", "opencode"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -539,7 +541,7 @@ def _check_umbrales(state: dict) -> bool:
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
     try:
-        subprocess.run(["systemctl", "start", "ura-maintenance.service"], timeout=30, check=False)
+        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)
         _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
     except subprocess.TimeoutExpired:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")
@@ -602,7 +604,7 @@ def main() -> None:
 
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
-        pass
+        pass  # noqa: S110
     finally:
         PID_FILE.unlink(missing_ok=True)
 
