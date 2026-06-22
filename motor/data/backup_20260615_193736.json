@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-06-15T19:37:36.154438Z",
+  "incidente": {
+    "tipo": "NetworkTopologyFailure",
+    "subtipo": "exit_node_offline",
+    "resumen": "Exit node ca\u00eddo",
+    "ts": "2026-06-15T19:37:35.964653Z"
+  }
+}
