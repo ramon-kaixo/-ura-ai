@@ -54,7 +54,12 @@ fi
 # Capa 3: Semgrep y Pip-Audit (Solo Profunda)
 if [ "$PROFUNDIDAD" == "profundo" ]; then
     $PIP_CMD show semgrep &>/dev/null || $PIP_CMD install -q semgrep
+    # Reglas publicas (python + owasp)
     semgrep scan --config=p/python --config=p/owasp-top-10 --json --output "${REPORT_DIR}/semgrep_report.json" . > /dev/null 2>&1 || true
+    # Reglas personalizadas de infraestructura URA
+    if [ -f "${REPO_DIR}/.semgrep.yml" ]; then
+        semgrep scan --config="${REPO_DIR}/.semgrep.yml" --json --output "${REPORT_DIR}/semgrep_custom_report.json" . > /dev/null 2>&1 || true
+    fi
 
     $PIP_CMD show pip-audit &>/dev/null || $PIP_CMD install -q pip-audit
     pip-audit -r "$REQ_FILE" --format json --output "${REPORT_DIR}/pip_audit_report.json" > /dev/null 2>&1 || true

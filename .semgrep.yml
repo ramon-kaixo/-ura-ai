@@ -1,0 +1,55 @@
+rules:
+  - id: infraestructura-binario-opencode
+    patterns:
+      - pattern-either:
+          - pattern: pgrep -x "opencode-server"
+          - pattern: pgrep -f "opencode-server"
+          - pattern: pgrep -x "code"
+          - pattern: pgrep -f "code"
+    message: "CRITICO: El binario real en produccion se llama 'opencode'. Corrige el comando inmediatamente."
+    languages: [python, bash]
+    severity: ERROR
+
+  - id: bash-permisos-opt-sudo
+    patterns:
+      - pattern-either:
+          - pattern: cp $SRC /opt/$DIR
+          - pattern: mv $SRC /opt/$DIR
+          - pattern: rm /opt/$DIR
+      - pattern-not: sudo cp ...
+      - pattern-not: sudo mv ...
+      - pattern-not: sudo rm ...
+    message: "ADVERTENCIA: Intentando operar en /opt sin 'sudo'. El rollback fallara en produccion por permisos."
+    languages: [bash]
+    severity: ERROR
+
+  - id: asyncio-cancelled-error-tragado
+    patterns:
+      - pattern: |
+          except CancelledError:
+              ...
+              return ...
+      - pattern-not: |
+          except CancelledError:
+              ...
+              raise
+    message: "CRITICO: Has puesto un 'return' en vez de 'raise' al capturar CancelledError. Esto crea tareas zombie en AsyncIO."
+    languages: [python]
+    severity: ERROR
+
+  - id: monitor-cpu-detection-desactivado
+    pattern: _CPU_DETECTION_ENABLED = False
+    message: "AVISO: El flag de deteccion de CPU esta desactivado en produccion. Asegurate de que es intencional."
+    languages: [python]
+    severity: WARNING
+
+  - id: lectura-proc-sin-candado
+    patterns:
+      - pattern: open("/proc/.../status")
+      - pattern-not: |
+          with $LOCK:
+              ...
+              open("/proc/.../status")
+    message: "MEDIO: Lectura de estado de proceso en /proc detectada fuera de un bloque protegido (threading.Lock). Riesgo de condicion de carrera."
+    languages: [python]
+    severity: ERROR
