@@ -25,7 +25,6 @@ USO:
   python3 gpu_health.py --watch      → Loop de monitoreo cada 2s
 """
 
-import json
 import subprocess
 import sys
 import time
@@ -197,18 +196,17 @@ def main() -> None:
                 status = get_full_status()
                 result = detect_bug(status)
                 ts = time.strftime("%H:%M:%S")
-                line = (
+                (
                     f"[{ts}] P{status.get('pstate', '?')} | "
                     f"{status.get('clock_mhz', '?')} MHz | "
                     f"{status.get('power_w', '?')}W | "
                     f"{status.get('temp_c', '?')}°C | "
                     f"{result['verdict']}"
                 )
-                print(line, flush=True)
                 if result["issues"]:
-                    print(f"       ⛔ ISSUES: {'; '.join(result['issues'])}", flush=True)
+                    pass
                 if result["warnings"]:
-                    print(f"       ⚠️  {'; '.join(result['warnings'])}", flush=True)
+                    pass
                 time.sleep(2)
         except KeyboardInterrupt:
             return
@@ -217,39 +215,17 @@ def main() -> None:
     result = detect_bug(status)
 
     if args.json:
-        output = {**status, **result}
-        print(json.dumps(output, indent=2))
+        pass
+    elif result["verdict"] == "BUG":
+        for _i in result["issues"]:
+            pass
+        sys.exit(2)
+    elif result["verdict"] == "WARN":
+        for _w in result["warnings"]:
+            pass
+        sys.exit(1)
     else:
-        print("=== GPU HEALTH CHECK ===")
-        print(f"P-State:       {status.get('pstate', 'N/A')}")
-        print(f"Clock:         {status.get('clock_mhz', 'N/A')} MHz")
-        print(f"Power Draw:    {status.get('power_w', 'N/A')}W")
-        print(f"Temperature:   {status.get('temp_c', 'N/A')}°C")
-        print(f"T.Limit Temp:  {status.get('t_limit_temp', 'N/A')}")
-        print(f"SW Power Cap:  {status.get('sw_power_cap_active', 'N/A')}")
-        print(f"SW Cap accum:  {status.get('sw_power_cap_us', 'N/A')}")
-        print(f"HW Slowdown:   {status.get('hw_slowdown', 'N/A')}")
-        print()
-        if result["verdict"] == "BUG":
-            print("⛔ BUG DETECTADO: GPU atrapada en power cap!")
-            for i in result["issues"]:
-                print(f"   • {i}")
-            print()
-            print(
-                "ACCIÓN: sudo systemctl stop gdm && "
-                "sudo rmmod nvidia_uvm nvidia && "
-                "sudo modprobe nvidia nvidia_uvm && "
-                "sudo systemctl start gdm",
-            )
-            sys.exit(2)
-        elif result["verdict"] == "WARN":
-            print("⚠️  PRECAUCIÓN: Posible power cap incipiente")
-            for w in result["warnings"]:
-                print(f"   • {w}")
-            sys.exit(1)
-        else:
-            print("✅ GPU SALUDABLE — Sin power cap detectado")
-            sys.exit(0)
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 import httpx
@@ -52,7 +52,7 @@ CACHE_MODELS_TS: float = 0
 
 
 class VRAMAwareScheduler:
-    def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0):
+    def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0) -> None:
         self.max_mb = self._detect_max_vram(default_max_mb)
         self.queue_timeout = queue_timeout
         self._queue: list[tuple[asyncio.Future, int, float, dict[str, Any]]] = []
@@ -102,7 +102,7 @@ class VRAMAwareScheduler:
         kv_cache_overhead = int((len(prompt) // 4) * 0.002)
         return base + kv_cache_overhead
 
-    async def sync_vram(self):
+    async def sync_vram(self) -> None:
         proc = None
         try:
             proc = await asyncio.wait_for(
@@ -165,8 +165,7 @@ class VRAMAwareScheduler:
                 self._active[req_id] = {"mb": mb, "ts": time.time(), "model": (data or {}).get("model", "")}
                 return req_id
         try:
-            req_id = await asyncio.wait_for(future, timeout=deadline_flex + 1.0)
-            return req_id
+            return await asyncio.wait_for(future, timeout=deadline_flex + 1.0)
         except TimeoutError:
             return None
 
@@ -179,7 +178,7 @@ class VRAMAwareScheduler:
         except TimeoutError:
             return False
 
-        async def _release():
+        async def _release() -> None:
             try:
                 await asyncio.sleep(3.0)
             finally:
@@ -189,18 +188,18 @@ class VRAMAwareScheduler:
         asyncio.create_task(_release())
         return True
 
-    async def release(self, req_id: str):
+    async def release(self, req_id: str) -> None:
         async with self._lock:
             self._active.pop(req_id, None)
 
-    async def start_loop(self):
+    async def start_loop(self) -> None:
         self._task = asyncio.create_task(self._scheduler_loop())
 
-    async def stop_loop(self):
+    async def stop_loop(self) -> None:
         if self._task:
             self._task.cancel()
 
-    async def _scheduler_loop(self):
+    async def _scheduler_loop(self) -> None:
         while True:
             try:
                 await self.sync_vram()
@@ -208,7 +207,7 @@ class VRAMAwareScheduler:
                     now = time.time()
                     self._queue = [(f, mb, dl, d) for f, mb, dl, d in self._queue if dl > now]
                     if len(self._active) == 0 and self._queue:
-                        fut, mb, deadline, data = self._queue[0]
+                        fut, mb, _deadline, data = self._queue[0]
                         if not fut.done() and mb <= self.available_mb():
                             self._queue.pop(0)
                             req_id = str(uuid.uuid4())
@@ -410,7 +409,7 @@ async def v1_models():
             for m in h["modelos_disponibles"][:50]:
                 models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})
         models.append({"id": f"{name}/auto", "provider": name, "object": "model"})
-    for tipo, ruta in router.rutas.items():
+    for ruta in router.rutas.values():
         for entrada in ruta:
             mid = f"{entrada['provider']}/{entrada['modelo']}"
             if not any(m["id"] == mid for m in models):
@@ -541,10 +540,8 @@ async def admin_acquire_boot_vram(mb: int):
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
 async def proxy_gateway(path: str, request: Request):
     body = None
-    try:
+    with suppress(Exception):
         body = await request.json() if request.method in ("POST", "PUT") else None
-    except Exception:
-        pass
     mb = scheduler.estimar_vram(body or {})
     req_id = await scheduler.acquire(
         mb=mb,

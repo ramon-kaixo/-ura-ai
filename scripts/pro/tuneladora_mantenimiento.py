@@ -307,7 +307,7 @@ def step_auditoria(profundidad: str) -> dict:
     log(f"  Auditoría ({profundidad})...")
     flags = "--quick" if profundidad in ("ligero", "medio") else "--full"
     script = str(URA_ROOT / "scripts/pro/revisor.py")
-    rc, stdout, _ = run([VENV_PYTHON, script, flags], timeout=120)
+    _rc, stdout, _ = run([VENV_PYTHON, script, flags], timeout=120)
     try:
         reporte = json.loads(stdout)
     except (json.JSONDecodeError, ValueError) as e:

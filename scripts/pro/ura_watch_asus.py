@@ -6,6 +6,7 @@ ASUS MAC: 30:c5:99:c0:64:c3
 Check via: Tailscale (100.72.103.12) o Ethernet (10.164.1.99)
 """
 
+import contextlib
 import os
 import socket
 import subprocess
@@ -23,7 +24,6 @@ LOG = "/Users/ramonesnaola/URA/logs/ura_asus_watch.log"
 def log(msg: str) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
-    print(line)
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     with open(LOG, "a") as f:
         f.write(line + "\n")
@@ -62,10 +62,8 @@ def main() -> None:
 
     if alive:
         log("ASUS responde")
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove(FAIL_LOG)
-        except FileNotFoundError:
-            pass
         return
 
     # No responde — incrementar contador

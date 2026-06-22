@@ -27,12 +27,12 @@ def parse_duration(s: str) -> timedelta:
         return timedelta(days=int(s[:-1]))
     if s.endswith("m"):
         return timedelta(minutes=int(s[:-1]))
-    raise ValueError(f"Formato invalido: {s}. Usa ej: 24h, 7d, 30m")
+    msg = f"Formato invalido: {s}. Usa ej: 24h, 7d, 30m"
+    raise ValueError(msg)
 
 
 def load_events(since: datetime | None = None, tail: int | None = None) -> list[dict]:
     if not os.path.exists(GUARDIAN_LOG):
-        print(f"No se encuentra {GUARDIAN_LOG}", file=sys.stderr)
         sys.exit(1)
 
     events = []
@@ -55,7 +55,7 @@ def load_events(since: datetime | None = None, tail: int | None = None) -> list[
     return events
 
 
-def print_drift(events: list[dict]):
+def print_drift(events: list[dict]) -> None:
     by_model = defaultdict(lambda: {"complexities": [], "results": []})
     for e in events:
         model = e.get("model", "unknown")
@@ -66,96 +66,49 @@ def print_drift(events: list[dict]):
         if rtype:
             by_model[model]["results"].append(1 if rtype == "success" else 0)
 
-    print(f"{'=' * 60}")
-    print("  DRIFT REPORT — Complejidad vs Tasa de exito por modelo")
-    print(f"{'=' * 60}")
     for model, data in sorted(by_model.items()):
-        avg_cpx = sum(data["complexities"]) / len(data["complexities"]) if data["complexities"] else 0
-        rate = sum(data["results"]) / len(data["results"]) * 100 if data["results"] else 0
-        print(f"  {model:<35s} avg_complexity={avg_cpx:<5.1f}  success_rate={rate:>5.1f}%")
-    print(f"{'=' * 60}")
+        sum(data["complexities"]) / len(data["complexities"]) if data["complexities"] else 0
+        sum(data["results"]) / len(data["results"]) * 100 if data["results"] else 0
 
 
-def print_injection_report(events: list[dict]):
+def print_injection_report(events: list[dict]) -> None:
     injections = [e for e in events if e.get("event") == "injection_blocked"]
     if not injections:
-        print("No hay eventos de inyeccion bloqueada en el periodo.")
         return
 
     by_model = Counter(e.get("model", "unknown") for e in injections)
     by_file = Counter(e.get("file", "unknown") for e in injections)
 
-    print(f"{'=' * 60}")
-    print("  INJECTION REPORT — Intentos bloqueados por filtro AST")
-    print(f"{'=' * 60}")
-    print(f"  Total bloqueos: {len(injections)}")
-    print()
-    print("  Por modelo:")
-    for model, count in by_model.most_common(5):
-        print(f"    {model:<40s} {count:>4d}")
-    print()
-    print("  Por archivo:")
-    for file, count in by_file.most_common(5):
-        print(f"    {file:<40s} {count:>4d}")
-    print(f"{'=' * 60}")
+    for _model, _count in by_model.most_common(5):
+        pass
+    for _file, _count in by_file.most_common(5):
+        pass
 
 
-def print_stats(events: list[dict], json_output: bool = False):
+def print_stats(events: list[dict], json_output: bool = False) -> None:
     total = len(events)
     if total == 0:
-        print("No hay eventos en el periodo.")
         return
 
-    vagancy = [e for e in events if e.get("event") == "stream_aborted"]
-    syntax_fails = [e for e in events if e.get("event") == "syntax_reject"]
-    sandbox_fails = [e for e in events if e.get("event") == "sandbox_reject"]
-    injections = [e for e in events if e.get("event") == "injection_blocked"]
+    [e for e in events if e.get("event") == "stream_aborted"]
+    [e for e in events if e.get("event") == "syntax_reject"]
+    [e for e in events if e.get("event") == "sandbox_reject"]
+    [e for e in events if e.get("event") == "injection_blocked"]
     commits = [e for e in events if e.get("event") == "commit"]
-    success_rate = (len(commits) / total * 100) if total else 0
-    avg_attempts = sum(e.get("attempts", 1) for e in events) / total if total else 0
-    avg_complexity = sum(e.get("complexity", 0) for e in events) / total if total else 0
+    (len(commits) / total * 100) if total else 0
+    sum(e.get("attempts", 1) for e in events) / total if total else 0
+    sum(e.get("complexity", 0) for e in events) / total if total else 0
     model_counter = Counter(e.get("model", "unknown") for e in events)
     top_models = model_counter.most_common(5)
 
     if json_output:
-        print(
-            json.dumps(
-                {
-                    "total": total,
-                    "vagancy_cuts": len(vagancy),
-                    "syntax_fails": len(syntax_fails),
-                    "sandbox_fails": len(sandbox_fails),
-                    "injection_blocks": len(injections),
-                    "commits": len(commits),
-                    "success_rate_pct": round(success_rate, 1),
-                    "avg_attempts": round(avg_attempts, 2),
-                    "avg_complexity": round(avg_complexity, 1),
-                    "top_models": [{"model": m, "count": c} for m, c in top_models],
-                },
-                indent=2,
-            ),
-        )
         return
 
-    print(f"{'=' * 50}")
-    print(f"  GUARDIAN STATS  —  {total} eventos totales")
-    print(f"{'=' * 50}")
-    print(f"  Tasa de exito:          {success_rate:.1f}%")
-    print(f"  Cortes por vagancia:    {len(vagancy)}")
-    print(f"  Rechazos sintaxis:      {len(syntax_fails)}")
-    print(f"  Rechazos sandbox:       {len(sandbox_fails)}")
-    print(f"  Bloqueos inyeccion:     {len(injections)}")
-    print(f"  Commits exitosos:       {len(commits)}")
-    print(f"  Promedio intentos/task: {avg_attempts:.2f}")
-    print(f"  Complejidad promedio:   {avg_complexity:.1f}")
-    print()
-    print("  Modelos con mas cortes:")
-    for model, count in top_models:
-        print(f"    {model:<40s} {count:>4d}")
-    print(f"{'=' * 50}")
+    for _model, _count in top_models:
+        pass
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Metricas del Guardian Post-Inferencia")
     parser.add_argument("--last", type=str, help="Periodo: 24h, 7d, 30m")
     parser.add_argument("--tail", type=int, help="Ultimas N lineas")

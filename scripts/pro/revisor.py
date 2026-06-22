@@ -9,6 +9,7 @@ Uso:
 """
 
 import argparse
+import contextlib
 import json
 import subprocess
 import sys
@@ -27,10 +28,8 @@ def calcular_tendencias() -> dict:
     for line in lineas:
         parts = line.strip().split("|")
         if len(parts) >= 3:
-            try:
+            with contextlib.suppress(ValueError):
                 scores.append(int(parts[2]))
-            except ValueError:
-                pass
 
     if len(scores) < 2:
         return {"ultimas_10": scores, "direccion": "estable"}
@@ -97,14 +96,12 @@ def main() -> int:
 
     if args.historico:
         tendencia = calcular_tendencias()
-        print(json.dumps(tendencia, indent=2))
         return 0
 
     profundidad = "ligero" if (args.quick or args.diff) else "profundo"
     script_path = Path(__file__).parent / "auditoria.sh"
 
     if not script_path.exists():
-        print(f"Error: no se encuentra {script_path}")
         return 1
 
     result = subprocess.run(
@@ -117,9 +114,7 @@ def main() -> int:
 
     try:
         reporte = json.loads(result.stdout.strip())
-    except (json.JSONDecodeError, ValueError) as e:
-        print(f"Error analizando salida del motor: {e}")
-        print(f"Stdout: {result.stdout[:500]}")
+    except (json.JSONDecodeError, ValueError):
         return 1
 
     tendencia = calcular_tendencias()
@@ -128,7 +123,6 @@ def main() -> int:
     html_file = generar_html(reporte, tendencia)
     reporte["html_report"] = str(html_file)
 
-    print(json.dumps(reporte, indent=2))
 
     # Exit code 78 = configuration error (systemd RestartPreventExitStatus=78)
     if reporte.get("bloqueante", False):

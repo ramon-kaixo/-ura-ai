@@ -6,6 +6,7 @@ para evitar bucles acústicos (auto-escucha del micrófono mientras
 el altavoz Anker S500 emite la respuesta).
 """
 
+import contextlib
 import os
 import subprocess
 import threading
@@ -28,7 +29,7 @@ class PiperTTSMotor:
         self,
         voice: str = DEFAULT_VOICE,
         stt_pipeline: Optional["AnkerDeterministicPipeline"] = None,
-    ):
+    ) -> None:
         self.model_path = str(VOICES_DIR / voice)
         self.config_path = f"{self.model_path}.json"
         self.output_wav = "/tmp/ura_tts_output.wav"
@@ -37,35 +38,38 @@ class PiperTTSMotor:
         self.device_index = self._find_anker_output_device()
 
         if not os.path.exists(self.model_path):
-            raise FileNotFoundError(
+            msg = (
                 f"Modelo de voz no encontrado: {self.model_path}\n"
-                f"Descarga voces desde: https://rhasspy.github.io/piper-samples/",
+                f"Descarga voces desde: https://rhasspy.github.io/piper-samples/"
+            )
+            raise FileNotFoundError(
+                msg,
             )
         if not os.path.exists(self.config_path):
-            raise FileNotFoundError(f"Config {self.config_path} no encontrada")
+            msg = f"Config {self.config_path} no encontrada"
+            raise FileNotFoundError(msg)
         if not os.path.exists(PIPER_BIN):
+            msg = f"piper CLI no encontrado en {PIPER_BIN}. Ejecuta: pip install piper-tts --break-system-packages"
             raise RuntimeError(
-                f"piper CLI no encontrado en {PIPER_BIN}. Ejecuta: pip install piper-tts --break-system-packages",
+                msg,
             )
 
-        size = os.path.getsize(self.model_path)
-        print(f"🗣️ TTS motor listo: {voice} ({size / 1024 / 1024:.0f} MB)")
+        os.path.getsize(self.model_path)
 
     def _find_anker_output_device(self) -> int | None:
-        """Busca el índice físico de salida (output) del Anker S500"""
+        """Busca el índice físico de salida (output) del Anker S500."""
         try:
             devices = sd.query_devices()
             for idx, dev in enumerate(devices):
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
-                    print(f"🔊 Anker S500 (salida) detectado en índice {idx}")
                     return idx
-        except Exception as e:
-            print(f"⚠️ Error escaneando salidas de audio: {e}")
+        except Exception:
+            pass
         return None
 
-    def _execute_piper_and_play(self, text: str):
-        """Hilo secundario: sintetiza con Piper y reproduce en el Anker"""
+    def _execute_piper_and_play(self, text: str) -> None:
+        """Hilo secundario: sintetiza con Piper y reproduce en el Anker."""
         if self.pipeline is not None:
             self.pipeline.is_playing_tts = True
 
@@ -87,26 +91,23 @@ class PiperTTSMotor:
             proc.communicate(input=text)
 
             if not os.path.exists(self.output_wav):
-                print("❌ Piper no generó el archivo de audio.")
                 return
 
             data, fs = sf.read(self.output_wav)
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
-        except Exception as e:
-            print(f"❌ Fallo en reproducción Piper: {e}")
+        except Exception:
+            pass
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False
             if os.path.exists(self.output_wav):
-                try:
+                with contextlib.suppress(BaseException):
                     os.remove(self.output_wav)
-                except:
-                    pass
 
-    def hablar_asincrono(self, text: str):
-        """Punto de entrada principal sin bloqueo para el orquestador"""
+    def hablar_asincrono(self, text: str) -> None:
+        """Punto de entrada principal sin bloqueo para el orquestador."""
         if not text.strip():
             return
         t = threading.Thread(

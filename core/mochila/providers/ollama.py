@@ -51,8 +51,9 @@ class OllamaProvider(Provider):
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
+                        msg = f"Ollama error: {resp.status_code} {text.decode(errors='replace')[:200]}"
                         raise ProviderError(
-                            f"Ollama error: {resp.status_code} {text.decode(errors='replace')[:200]}",
+                            msg,
                             provider=self.nombre,
                             status_code=resp.status_code,
                         )
@@ -67,8 +68,9 @@ class OllamaProvider(Provider):
                 json=payload,
             )
             if resp.is_error:
+                msg = f"Ollama error: {resp.status_code} {resp.text[:200]}"
                 raise ProviderError(
-                    f"Ollama error: {resp.status_code} {resp.text[:200]}",
+                    msg,
                     provider=self.nombre,
                     status_code=resp.status_code,
                 )

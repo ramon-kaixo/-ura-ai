@@ -16,7 +16,7 @@ def _cost_file() -> Path:
 
 
 class CostTracker:
-    def __init__(self, tarifas: dict[str, float] | None = None, cost_file: Path | None = None):
+    def __init__(self, tarifas: dict[str, float] | None = None, cost_file: Path | None = None) -> None:
         self.tarifas = tarifas or TARIFAS
         self._cost_file = cost_file or _cost_file()
         self._cost_file.parent.mkdir(parents=True, exist_ok=True)

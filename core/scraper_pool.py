@@ -9,7 +9,7 @@ _MAX_QUEUE_SIZE = 1000
 
 
 class DomainDecoupledPool:
-    def __init__(self, delay: float = 1.0):
+    def __init__(self, delay: float = 1.0) -> None:
         self.queues: dict[str, asyncio.Queue] = {}
         self.delay = delay
         self._workers: set[asyncio.Task] = set()

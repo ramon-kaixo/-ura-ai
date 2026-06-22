@@ -63,8 +63,7 @@ async def _timer_status(name: str) -> str:
 
 async def _alemania_status() -> dict:
     try:
-        estado = json.loads(Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text())
-        return estado
+        return json.loads(Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text())
     except Exception:
         return {"global": "unknown", "ips": {}, "servicios": {}}
 

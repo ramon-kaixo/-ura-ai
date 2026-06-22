@@ -59,7 +59,7 @@ class InferenciaStreamEngine:
             raise
 
         except Exception as e:
-            log.error("Fallo en el flujo de inferencia: %s", e)
+            log.exception("Fallo en el flujo de inferencia: %s", e)
             yield f"\n[Fallo en la respuesta del modelo: {e!s}]"
 
         finally:

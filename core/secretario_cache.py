@@ -91,9 +91,8 @@ if __name__ == "__main__":
 
     sc = SecretarioCache()
     if len(sys.argv) > 1 and sys.argv[1] == "status":
-        print(json.dumps(sc.estado(), indent=2))
+        pass
     elif len(sys.argv) > 1 and sys.argv[1] == "query":
         coleccion = sys.argv[2] if len(sys.argv) > 2 else "ura_documents"
-        print(json.dumps(sc.buscar_qdrant(coleccion), indent=2))
     else:
-        print("Uso: python3 secretario_cache.py [status|query <collection>]")
+        pass

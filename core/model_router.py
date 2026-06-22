@@ -5,6 +5,7 @@ from path_setup import setup_path
 
 setup_path()
 import asyncio
+import contextlib
 import hashlib
 import http.server
 import json
@@ -25,13 +26,13 @@ try:
 except ImportError:
 
     class _NoOpRateLimiter:
-        def check(self, *args, **kwargs):
+        def check(self, *args, **kwargs) -> bool:
             return True
 
-        def is_allowed(self, *args, **kwargs):
+        def is_allowed(self, *args, **kwargs) -> bool:
             return True
 
-        def wait_if_needed(self, *args, **kwargs):
+        def wait_if_needed(self, *args, **kwargs) -> None:
             pass
 
         def get_metrics(self, *args, **kwargs):
@@ -44,7 +45,7 @@ try:
     from core.auth_layer import validate as auth_validate
 except ImportError:
 
-    def auth_validate(*args, **kwargs):
+    def auth_validate(*args, **kwargs) -> bool:
         return True
 
     def require_auth(*args, **kwargs):
@@ -64,15 +65,13 @@ log = logging.getLogger(__name__)
 BYPASS_FILE = Path("/home/ramon/.openclaw/bypass_config.json")
 
 
-def verificar_politicas_seguridad_preflight():
+def verificar_politicas_seguridad_preflight() -> None:
     """Fuerza el cumplimiento de las tareas 0.3 y 0.6. Detiene el servicio si hay configs inseguras."""
     if BYPASS_FILE.exists():
-        print(f"[ALERTA CRÍTICA] Destruyendo bypass de red inseguro en {BYPASS_FILE}")
         BYPASS_FILE.unlink(missing_ok=True)
     os.environ["URA_AUTH_ENABLED"] = "true"
     token_valido = os.getenv("OPENCLAW_GATEWAY_TOKEN")
     if not token_valido:
-        print("[-] ERROR FULMINANTE: No se ha detectado OPENCLAW_GATEWAY_TOKEN. Abortando startup por seguridad.")
         sys.exit(78)
 
 
@@ -94,7 +93,7 @@ _URLS = get_ollama_urls()
 class ConcurrentVRAMGuard:
     """Semáforo asíncrono con TTL y telemetría para control de VRAM."""
 
-    def __init__(self, max_concurrent_jobs: int = 1, ttl_segundos: float = 30.0):
+    def __init__(self, max_concurrent_jobs: int = 1, ttl_segundos: float = 30.0) -> None:
         self._max_jobs = max_concurrent_jobs
         self._semaphore = asyncio.Semaphore(max_concurrent_jobs)
         self._ttl = ttl_segundos
@@ -183,7 +182,7 @@ async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", cl
 def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     """Sync wrapper de _proxy_con_guardia_vram para usar desde do_POST (sync)."""
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(_proxy_con_guardia_vram(path, body, method, modelo, tipo, client_ip))
     with ThreadPoolExecutor(max_workers=1) as executor:
@@ -855,7 +854,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         return True
 
     def _handle_api_tags(self) -> None:
-        status, headers, body = proxy_request("/api/tags", None, "GET", client_ip=self.client_address[0])
+        status, _headers, body = proxy_request("/api/tags", None, "GET", client_ip=self.client_address[0])
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -926,15 +925,11 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             supervisor_data = json.dumps({"error": "supervisor no accesible"})
         finally:
             if sock:
-                try:
+                with contextlib.suppress(Exception):
                     sock.close()
-                except Exception:
-                    pass
             if ctx:
-                try:
+                with contextlib.suppress(Exception):
                     ctx.term()
-                except Exception:
-                    pass
         self._send_json(json.loads(supervisor_data) if isinstance(supervisor_data, str) else supervisor_data)
 
     def _handle_status(self) -> None:
@@ -963,15 +958,11 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             pass
         finally:
             if sock:
-                try:
+                with contextlib.suppress(Exception):
                     sock.close()
-                except Exception:
-                    pass
             if ctx:
-                try:
+                with contextlib.suppress(Exception):
                     ctx.term()
-                except Exception:
-                    pass
 
         healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
         html += "<div class='card'><h3>Corrutinas</h3>"

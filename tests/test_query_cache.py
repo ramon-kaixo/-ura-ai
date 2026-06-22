@@ -5,10 +5,10 @@ import asyncio
 from core.query_cache import AsyncQueryCache
 
 
-def test_cache_basic():
+def test_cache_basic() -> None:
     cache = AsyncQueryCache(max_size=10, ttl=60)
 
-    async def _run():
+    async def _run() -> None:
         key = cache.compute_key("test_query", use_reranker=False, use_hybrid=False, top_k=5)
         assert key is not None
         assert len(key) == 64  # SHA-256 hex
@@ -31,7 +31,7 @@ def test_cache_basic():
     asyncio.run(_run())
 
 
-def test_cache_key_unique():
+def test_cache_key_unique() -> None:
     cache = AsyncQueryCache()
     k1 = cache.compute_key("test")
     k2 = cache.compute_key("test")
@@ -40,7 +40,7 @@ def test_cache_key_unique():
     assert k1 != k3  # Diferente para diferentes queries
 
 
-def test_cache_key_params():
+def test_cache_key_params() -> None:
     cache = AsyncQueryCache()
     k1 = cache.compute_key("test", use_reranker=True)
     k2 = cache.compute_key("test", use_reranker=False)

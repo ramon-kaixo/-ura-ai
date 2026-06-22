@@ -1,5 +1,3 @@
-from datetime import UTC
-
 #!/usr/bin/env python3
 """systemd_orphan_scanner.py — Detect orphan systemd units (missing ExecStart).
 
@@ -23,7 +21,7 @@ PLUGIN = {
     "needs_file": False,
 }
 
-import json
+import contextlib
 import os
 import shutil
 import subprocess
@@ -137,27 +135,23 @@ def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:
 
 def _disable_and_delete(unit: str, scope: str) -> None:
     user_flag = ["--user"] if scope == "user" else []
-    try:
+    with contextlib.suppress(Exception):
         subprocess.run(
             [SYSTEMCTL, *user_flag, "disable", "--now", unit],
             capture_output=True,
             timeout=30,
             check=False,
         )
-    except Exception:
-        pass
     for d in TIMER_DIRS:
         timer = Path(d) / unit.replace(".service", ".timer")
         if timer.exists():
-            try:
+            with contextlib.suppress(Exception):
                 subprocess.run(
                     [SYSTEMCTL, *user_flag, "disable", "--now", timer.name],
                     capture_output=True,
                     timeout=30,
                     check=False,
                 )
-            except Exception:
-                pass
             timer.unlink(missing_ok=True)
     unit_path = Path(SYSTEM_UNITS if scope == "system" else USER_UNITS) / unit
     if unit_path.exists():
@@ -165,7 +159,7 @@ def _disable_and_delete(unit: str, scope: str) -> None:
 
 
 def main() -> None:
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    [a for a in sys.argv[1:] if not a.startswith("--")]
     flags = set(sys.argv[1:])
 
     fix = "--fix" in flags
@@ -175,30 +169,13 @@ def main() -> None:
     results = scan(fix=fix, ura_only=ura_only)
 
     if as_json:
-        import datetime
+        pass
 
-        print(
-            json.dumps(
-                {
-                    "timestamp": datetime.datetime.now(UTC).isoformat(),
-                    "scanner": "systemd_orphan_scanner",
-                    "total": len(results),
-                    "fix": fix,
-                    "ura_only": ura_only,
-                    "results": results,
-                },
-                indent=2,
-            ),
-        )
     else:
-        print(f"[systemd_orphan_scanner] Orphans found: {len(results)}")
         for r in results:
-            s = r["severity"]
-            icon = "🔴" if s == "HIGH" else "🟡"
-            print(f"  {icon} [{s}] {r['unit']} ({r['scope']}) -> {r['missing']}")
-            print(f"       {r['execstart'][:120]}")
+            r["severity"]
         if fix:
-            print(f"[systemd_orphan_scanner] Fixed {len(results)} units")
+            pass
 
 
 if __name__ == "__main__":

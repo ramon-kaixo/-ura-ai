@@ -11,7 +11,7 @@ DEEPSEEK_TIMEOUT = int(os.environ.get("MOCHILA_DEEPSEEK_TIMEOUT", "60"))
 
 
 class DeepSeekProvider(Provider):
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = os.environ.get("DEEPSEEK_API_KEY", "")
 
     @property
@@ -32,7 +32,8 @@ class DeepSeekProvider(Provider):
         temperature: float = 0.0,
     ) -> AsyncGenerator[dict, None]:
         if not self.api_key:
-            raise ProviderError("DEEPSEEK_API_KEY no configurada", provider=self.nombre)
+            msg = "DEEPSEEK_API_KEY no configurada"
+            raise ProviderError(msg, provider=self.nombre)
 
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         payload = {
@@ -55,8 +56,9 @@ class DeepSeekProvider(Provider):
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
+                        msg = f"DeepSeek error: {resp.status_code} {text.decode(errors='replace')[:200]}"
                         raise ProviderError(
-                            f"DeepSeek error: {resp.status_code} {text.decode(errors='replace')[:200]}",
+                            msg,
                             provider=self.nombre,
                             status_code=resp.status_code,
                         )
@@ -71,8 +73,9 @@ class DeepSeekProvider(Provider):
             else:
                 resp = await client.post(f"{DEEPSEEK_BASE}/chat/completions", json=payload, headers=headers)
                 if resp.is_error:
+                    msg = f"DeepSeek error: {resp.status_code} {resp.text[:200]}"
                     raise ProviderError(
-                        f"DeepSeek error: {resp.status_code} {resp.text[:200]}",
+                        msg,
                         provider=self.nombre,
                         status_code=resp.status_code,
                     )

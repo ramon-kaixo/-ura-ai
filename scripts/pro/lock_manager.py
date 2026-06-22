@@ -46,13 +46,14 @@ def acquire_gpu_lock(lock_file: str = LOCK_FILE, timeout: int = 30):
         except (OSError, BlockingIOError):
             if time.time() - start > timeout:
                 fp.close()
+                msg = f"No se pudo adquirir el cerrojo {lock_file} en {timeout}s (recurso retenido por otro proceso)"
                 raise RuntimeError(
-                    f"No se pudo adquirir el cerrojo {lock_file} en {timeout}s (recurso retenido por otro proceso)",
+                    msg,
                 )
             time.sleep(1)
 
 
-def release_gpu_lock(fp):
+def release_gpu_lock(fp) -> None:
     """Libera el cerrojo (LOCK_UN) y cierra el descriptor.
 
     Args:

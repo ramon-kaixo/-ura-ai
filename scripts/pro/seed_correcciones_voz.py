@@ -52,7 +52,7 @@ CORRECCIONES = [
 ]
 
 
-def seed():
+def seed() -> None:
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.execute("CREATE TABLE IF NOT EXISTS corrections (  wrong_text TEXT PRIMARY KEY,  correct_text TEXT NOT NULL)")
@@ -71,13 +71,11 @@ def seed():
                 (key, val),
             )
             inserted += 1
-        except Exception as e:
-            print(f"  Error: {key} → {val}: {e}")
+        except Exception:
+            pass
 
     conn.commit()
     conn.close()
-    print(f"✅ {inserted} correcciones insertadas, {skipped} omitidas (auto-regex)")
-    print(f"📁 {DB_PATH}")
 
 
 if __name__ == "__main__":

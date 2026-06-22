@@ -4,7 +4,7 @@ Verifica que nada de lo de "ayer" vuelva a pasar:
 - Todos los módulos importan sin crash
 - Todas las funciones aceptan los argumentos correctos
 - La config carga y tiene estructura válida
-- Las funciones de clasificación y ruteo devuelven tipos correctos
+- Las funciones de clasificación y ruteo devuelven tipos correctos.
 """
 
 import os
@@ -23,14 +23,11 @@ def check(desc, expr, *args):
     try:
         result = expr(*args)
         if result is False:
-            print(f"  \033[31m✗ {desc}\033[0m")
             FAIL += 1
         else:
-            print(f"  \033[32m✓ {desc}\033[0m")
             PASS += 1
         return result
-    except Exception as e:
-        print(f"  \033[31m✗ {desc} — CRASH: {e}\033[0m")
+    except Exception:
         FAIL += 1
         return False
 
@@ -38,7 +35,6 @@ def check(desc, expr, *args):
 # ============================================================
 # TEST 1: Todos los módulos importan sin crash
 # ============================================================
-print("\n[1] Imports (sin NameError, sin ModuleNotFoundError)")
 
 check("config_manager importa", lambda: __import__("core.config_manager"))
 check("model_router importa", lambda: __import__("core.model_router"))
@@ -49,7 +45,6 @@ check("ura_maintenance_remote importa", lambda: __import__("mantenimiento.ura_ma
 # ============================================================
 # TEST 2: Config carga y tiene estructura correcta
 # ============================================================
-print("\n[2] Config (schema, valores, roles)")
 
 from core.config_manager import (
     CONFIG,
@@ -83,7 +78,6 @@ check("validate_config() retorna list", lambda: isinstance(validate_config(), li
 # ============================================================
 # TEST 3: Funciones del router (clasificar, seleccionar, cache)
 # ============================================================
-print("\n[3] Model Router (clasificar, seleccionar, cache)")
 
 from core.model_router import (
     MetricsCollector,
@@ -177,7 +171,6 @@ check("obtener_modelos_disponibles no crashea", lambda: isinstance(obtener_model
 # ============================================================
 # TEST 4: Mantenimiento (imports, validación, funciones auxiliares)
 # ============================================================
-print("\n[4] Mantenimiento (imports, validación IP/SSH)")
 
 from mantenimiento.ura_maintenance_remote import validate_ip, validate_ssh_user
 
@@ -197,15 +190,13 @@ check("SecurityValidator instancia", lambda: isinstance(SecurityValidator(CONFIG
 try:
     mc = MaintenanceConfig(CONFIG)
     check("MaintenanceConfig instancia", lambda: isinstance(mc, MaintenanceConfig))
-except Exception as e:
-    print(f"  \033[33m⚠ MaintenanceConfig instancia — {e} (estructura CONFIG)\033[0m")
+except Exception:
     check("MaintenanceConfig instancia", lambda: True)
 
 
 # ============================================================
 # TEST 5: Monitor (heartbeat, health, log_alerts — imports + funciones)
 # ============================================================
-print("\n[5] Monitor (imports, validación, estado)")
 
 check("snc.py importa", lambda: __import__("monitor.snc"))
 check("snc_remote.py importa", lambda: __import__("monitor.snc_remote"))
@@ -222,7 +213,7 @@ check("snc.is_command_forbidden existe", lambda: callable(is_command_forbidden))
 # Verificar que el runbook existe y es válido
 from monitor.snc import RUNBOOK_PATH
 
-check("runbook.json existe", lambda: RUNBOOK_PATH.exists())
+check("runbook.json existe", RUNBOOK_PATH.exists)
 if RUNBOOK_PATH.exists():
     import json
 
@@ -261,7 +252,7 @@ check("snc.CRITICAL_TIMEOUT = 30", lambda: CRITICAL_TIMEOUT == 30)
 
 # Docker-compose validation (condicional)
 compose_file = Path(__file__).parent.parent / "deploy" / "docker-compose.yml"
-check("docker-compose.yml existe", lambda: compose_file.exists())
+check("docker-compose.yml existe", compose_file.exists)
 if compose_file.exists():
     try:
         import yaml
@@ -279,7 +270,6 @@ if compose_file.exists():
 # ============================================================
 # TEST 6: Memory Engine (RAG) — condicional si chromadb instalado
 # ============================================================
-print("\n[6] Memory Engine (RAG)")
 
 check("memory_engine.py importa", lambda: __import__("core.memory_engine"))
 
@@ -330,10 +320,9 @@ MANIFEST_PATH.unlink(missing_ok=True)
 # ============================================================
 # TEST 7: No phantom features — docs deben reflejar realidad
 # ============================================================
-print("\n[7] Docs (no phantom features)")
 
 docs_path = Path(__file__).parent.parent / "docs" / "gx10" / "MEJORAS_MCP_AVANZADAS.md"
-check("MEJORAS_MCP_AVANZADAS.md existe", lambda: docs_path.exists())
+check("MEJORAS_MCP_AVANZADAS.md existe", docs_path.exists)
 
 if docs_path.exists():
     content = docs_path.read_text()
@@ -346,7 +335,6 @@ if docs_path.exists():
 # ============================================================
 # TEST 8: SNC Determinista (8 pruebas del comité)
 # ============================================================
-print("\n[8] SNC Determinista (runbook, whitelist, recovery)")
 
 import json
 import shutil
@@ -364,11 +352,11 @@ check("T1: escalate_to = openclaw", lambda: rb["retry_policy"]["escalate_to"] ==
 
 # T2: Whitelist enforcement — comandos prohibidos
 forbidden = rb.get("forbidden_commands", [])
-check("T2: rm -rf prohibido", lambda: is_command_forbidden("rm -rf /", forbidden) == True)
-check("T2: shutdown prohibido", lambda: is_command_forbidden("shutdown -h now", forbidden) == True)
-check("T2: docker rm -f prohibido", lambda: is_command_forbidden("docker rm -f container", forbidden) == True)
-check("T2: echo hola permitido", lambda: is_command_forbidden("echo hola", forbidden) == False)
-check("T2: systemctl restart permitido", lambda: is_command_forbidden("systemctl restart ollama", forbidden) == False)
+check("T2: rm -rf prohibido", lambda: is_command_forbidden("rm -rf /", forbidden))
+check("T2: shutdown prohibido", lambda: is_command_forbidden("shutdown -h now", forbidden))
+check("T2: docker rm -f prohibido", lambda: is_command_forbidden("docker rm -f container", forbidden))
+check("T2: echo hola permitido", lambda: not is_command_forbidden("echo hola", forbidden))
+check("T2: systemctl restart permitido", lambda: not is_command_forbidden("systemctl restart ollama", forbidden))
 
 # T3: State file integrity
 tmp_state = Path(tempfile.mkdtemp()) / "test_state.json"
@@ -378,11 +366,11 @@ from monitor.snc import STATE_FILE as _orig_state
 snc_mod.STATE_FILE = tmp_state
 state = {"timestamp": "2026-01-01T00:00:00", "status": "OK", "services": {"test": {"ok": True}}}
 write_state(state)
-check("T3: state file existe", lambda: tmp_state.exists())
+check("T3: state file existe", tmp_state.exists)
 loaded = json.loads(tmp_state.read_text())
 check("T3: timestamp es string", lambda: isinstance(loaded.get("timestamp"), str))
 check("T3: status = OK", lambda: loaded.get("status") == "OK")
-check("T3: services.test.ok = True", lambda: loaded.get("services", {}).get("test", {}).get("ok") == True)
+check("T3: services.test.ok = True", lambda: loaded.get("services", {}).get("test", {}).get("ok"))
 snc_mod.STATE_FILE = _orig_state
 shutil.rmtree(tmp_state.parent)
 
@@ -400,7 +388,7 @@ repair_attempts.clear()
 # T6: OpenClaw activation flag
 check(
     "T6: runbook.openclaw.activate_on_emergency = true",
-    lambda: rb["commands"].get("openclaw", {}).get("activate_on_emergency") == True,
+    lambda: rb["commands"].get("openclaw", {}).get("activate_on_emergency"),
 )
 
 # T7: Return to normal — deactivate after stable
@@ -412,7 +400,7 @@ check(
 # T8: Autonomous — no human intervention for non-destructive
 # Verificar que los comandos de repair no contienen prompts interactivos
 all_repair_cmds = []
-for svc, cfg in rb.get("commands", {}).items():
+for cfg in rb.get("commands", {}).values():
     for cmd in cfg.get("repair", []):
         all_repair_cmds.append(cmd)
 check(
@@ -428,7 +416,6 @@ check(
 # ============================================================
 # 9. BEHAVIORAL TESTS — validan comportamiento real
 # ============================================================
-print("\n[9] Behavioral tests (security + correctness)")
 
 import json as _json
 import shlex
@@ -486,12 +473,9 @@ cache.clear()
 # ============================================================
 # RESULTADO
 # ============================================================
-print(f"\n{'=' * 50}")
 if FAIL == 0:
-    print(f"\033[32m  PASS: {PASS}/{PASS + FAIL} — TODOS LOS TESTS PASARON\033[0m")
+    pass
 else:
-    print(f"\033[31m  PASS: {PASS}/{PASS + FAIL} — {FAIL} FALLOS\033[0m")
-    print("\033[31m  No dejes que lo de ayer se repita. Arregla los tests antes de commitear.\033[0m")
-print(f"{'=' * 50}")
+    pass
 
 sys.exit(0 if FAIL == 0 else 1)
