@@ -44,10 +44,11 @@ class TestInferenciaStreamEngine:
     async def test_cancelled_during_acquisition(self, engine, mock_router, mock_client):
         mock_router.adquirir_slot_vram = AsyncMock(side_effect=asyncio.CancelledError())
         tokens = []
-        async for chunk in engine.ejecutar_inferencia_RAG(
-            "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
-        ):
-            tokens.append(chunk)
+        with pytest.raises(asyncio.CancelledError):
+            async for chunk in engine.ejecutar_inferencia_RAG(
+                "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+            ):
+                tokens.append(chunk)
         assert tokens == []
 
     @pytest.mark.asyncio
