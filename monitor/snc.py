@@ -55,9 +55,10 @@ UMBRALES = {
     "opencode_cpu_umbral": 80.0,
     "opencode_ciclos_confirmar": 2,
 }
-_CPU_DETECTION_ENABLED: bool = False  # check_bucle_cpu desactivado: usa CPU acumulada, no delta
-_BUCLE_TIMEOUT: float = 30.0  # segundos hasta SIGCONT automático tras SIGSTOP
-_pending_sigcont: dict[int, str] = {}  # pid → nombre_original, evita timers duplicados
+_CPU_DETECTION_ENABLED: bool = False
+_BUCLE_TIMEOUT: float = 30.0
+_pending_sigcont: dict[int, str] = {}
+_pending_lock = threading.Lock()
 _anomalias: list[dict] = []
 _opencode_ciclos_alta: int = 0
 
@@ -391,10 +392,13 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 
 
 def check_opencode_colgado() -> bool:
-    """Detecta si OpenCode está congelado (CPU alta + sin respuesta)."""
+    """Detecta si OpenCode está congelado (CPU alta + sin respuesta).
+    Busca el binario exacto 'opencode-server' para evitar falsos positivos
+    de pgrep -f sobre rutas/archivos que contengan 'opencode' en el nombre.
+    """
     try:
         pid = subprocess.run(
-            ["pgrep", "-f", "opencode"], capture_output=True, text=True, timeout=5,
+            ["pgrep", "-x", "opencode-server"], capture_output=True, text=True, timeout=5,
         )
         if not pid.stdout.strip():
             return False
@@ -421,10 +425,18 @@ def _limpiar_zombies() -> None:
 
 def _sigcont_seguro(pid: int, nombre_original: str) -> None:
     """SIGCONT solo si el PID sigue detenido y no se recicló."""
+    with _pending_lock:
+        stored = _pending_sigcont.get(pid)
+        if stored is None:
+            return
+        if stored != nombre_original:
+            _pending_sigcont.pop(pid, None)
+            return
     try:
         status = Path(f"/proc/{pid}/status")
         if not status.exists():
-            _pending_sigcont.pop(pid, None)
+            with _pending_lock:
+                _pending_sigcont.pop(pid, None)
             return
         lines = status.read_text(errors="replace").splitlines()
         state = name = ""
@@ -434,24 +446,26 @@ def _sigcont_seguro(pid: int, nombre_original: str) -> None:
             elif line.startswith("Name:"):
                 name = line.split(":", 1)[1].strip()
         if "T" not in state or name != nombre_original:
-            _pending_sigcont.pop(pid, None)
+            with _pending_lock:
+                _pending_sigcont.pop(pid, None)
             return
-    except (OSError, PermissionError):
+        os.kill(pid, signal.SIGCONT)
+    except (OSError, PermissionError, ProcessLookupError):
+        pass
+    with _pending_lock:
         _pending_sigcont.pop(pid, None)
-        return
-    os.kill(pid, signal.SIGCONT)
-    _pending_sigcont.pop(pid, None)
 
 
 def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
     """Aísla un proceso en bucle: SIGSTOP + volcado /proc."""
-    if pid in _pending_sigcont:
-        return  # ya aislado, no duplicar timer
+    with _pending_lock:
+        if pid in _pending_sigcont:
+            return
+        _pending_sigcont[pid] = nombre
     sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")
     sandbox_dir.mkdir(parents=True, exist_ok=True)
     try:
         os.kill(pid, signal.SIGSTOP)
-        _pending_sigcont[pid] = nombre
         threading.Timer(_BUCLE_TIMEOUT, _sigcont_seguro, args=[pid, nombre]).start()
         # Volcar información del proceso
         for subdir in ("status", "maps", "fd", "wchan"):
