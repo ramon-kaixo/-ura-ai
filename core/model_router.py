@@ -75,6 +75,7 @@ class ConcurrentVRAMGuard:
     """Semáforo asíncrono con TTL y telemetría para control de VRAM."""
 
     def __init__(self, max_concurrent_jobs: int = 1, ttl_segundos: float = 30.0):
+        self._max_jobs = max_concurrent_jobs
         self._semaphore = asyncio.Semaphore(max_concurrent_jobs)
         self._ttl = ttl_segundos
         self._total_enqueue: int = 0
@@ -87,11 +88,12 @@ class ConcurrentVRAMGuard:
 
     @property
     def esperando_cola(self) -> int:
-        return self._semaphore._waiters
+        waiters = self._semaphore._waiters
+        return len(waiters) if waiters is not None else 0
 
     def metricas(self) -> dict:
         return {
-            "max_concurrent": self._semaphore._value,
+            "max_concurrent": self._max_jobs,
             "slots_disponibles": self.slots_disponibles,
             "esperando_cola": self.esperando_cola,
             "ttl_segundos": self._ttl,
