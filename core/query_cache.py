@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 
 class AsyncQueryCache:
-    def __init__(self, max_size: int = 128, ttl: int = 300):
+    def __init__(self, max_size: int = 128, ttl: int = 300) -> None:
         self.max_size = max_size
         self.ttl = ttl
         self.cache: OrderedDict[str, tuple[float, list[dict]]] = OrderedDict()

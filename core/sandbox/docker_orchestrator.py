@@ -39,36 +39,36 @@ class ResultadoSandbox:
     error: str | None
     ts: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
 
-    def resumen(s):
-        e = "OK" if s.ok else "FAIL"
-        r = [f"[Sandbox] {e}"] + [f"  Tests: {s.pasados} OK, {s.fallidos} FAIL"] + [f"  {t}" for t in s.fallos]
-        if s.error:
-            r.append(f"  ERROR: {s.error}")
+    def resumen(self):
+        e = "OK" if self.ok else "FAIL"
+        r = [f"[Sandbox] {e}"] + [f"  Tests: {self.pasados} OK, {self.fallidos} FAIL"] + [f"  {t}" for t in self.fallos]
+        if self.error:
+            r.append(f"  ERROR: {self.error}")
         return "\n".join(r)
 
 
 class DockerOrchestrator:
-    def __init__(s, td=TD):
-        s._td = td
+    def __init__(self, td=TD) -> None:
+        self._td = td
 
-    async def validar(s, codigo, nombre):
-        if not s._docker():
+    async def validar(self, codigo, nombre):
+        if not self._docker():
             return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")
         with tempfile.TemporaryDirectory() as d:
-            return await s._run(Path(d), codigo, nombre)
+            return await self._run(Path(d), codigo, nombre)
 
-    async def _run(s, d, cod, nom):
+    async def _run(self, d, cod, nom):
         t0 = asyncio.get_event_loop().time()
         (d / "skills").mkdir()
         (d / "skills" / f"{nom}.py").write_text(cod)
         td = d / "tests"
-        if s._td.exists():
-            shutil.copytree(s._td, td)
+        if self._td.exists():
+            shutil.copytree(self._td, td)
         else:
             td.mkdir()
             (td / "ts.py").write_text("def t(): assert True")
-        (d / "Dockerfile").write_text(s._df(cod, nom))
-        (d / "rv.py").write_text(s._rv(nom))
+        (d / "Dockerfile").write_text(self._df(cod, nom))
+        (d / "rv.py").write_text(self._rv(nom))
         tag = f"us-{hashlib.sha256(cod.encode()).hexdigest()[:8]}"
         try:
             b = await asyncio.create_subprocess_exec("docker", "build", "-t", tag, str(d), stdout=-1, stderr=-1)

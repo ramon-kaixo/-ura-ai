@@ -34,7 +34,7 @@ class JsonFormatter(logging.Formatter):
 class StructuredLogger:
     """Wrapper alrededor de logging.Logger que emite JSON structurado."""
 
-    def __init__(self, name: str, level: int = logging.INFO):
+    def __init__(self, name: str, level: int = logging.INFO) -> None:
         self._logger = logging.getLogger(name)
         self._logger.setLevel(level)
         self._logger.handlers.clear()

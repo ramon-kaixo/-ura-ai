@@ -52,7 +52,6 @@ def check_hardening(service: str) -> dict[str, str]:
 
 def main() -> int:
     services = get_all_services()
-    print(f"Auditando {len(services)} servicios URA...\n")
 
     total = 0
     scored = dict.fromkeys(HARDENING_CHECKS, 0)
@@ -73,20 +72,13 @@ def main() -> int:
                 flags.append(f"  + {check}=custom")
 
         if flags:
-            print(f"{svc}: {score}/{len(HARDENING_CHECKS)}")
-            for f in flags:
-                print(f)
-            print()
+            for _f in flags:
+                pass
         total += score
 
-    print("\n=== Resumen ===")
-    print(f"Puntuación total: {total}/{len(services) * len(HARDENING_CHECKS)}")
-    print(f"Promedio: {total / len(services):.1f}/{len(HARDENING_CHECKS)}" if services else "N/A")
-    print()
     for check, count in sorted(scored.items()):
         pct = count / len(services) * 100 if services else 0
-        bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-        print(f"  {check:30s} {bar} {count}/{len(services)} ({pct:.0f}%)")
+        "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
 
     return 0 if total > 0 else 1
 

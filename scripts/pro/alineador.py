@@ -166,7 +166,6 @@ def main() -> None:
 
     if args.message:
         result = check_deviation(args.message)
-        print(json.dumps(result, indent=2))
         return
 
     if args.scan:

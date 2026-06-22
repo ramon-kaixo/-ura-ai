@@ -79,7 +79,7 @@ def content_type_distribution(records: list[dict]) -> dict[str, float]:
 def freshness_median(records: list[dict]) -> float | None:
     """Median freshness of indexed documents (hours since indexed_at)."""
     ages_hours = []
-    now = datetime.now(UTC)
+    datetime.now(UTC)
     for r in records:
         sims = r.get("similarities", [])
         if sims:

@@ -10,6 +10,7 @@ import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Self
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def _load_patterns() -> list[dict]:
     return []
 
 
-def _save_pattern(change_type: str, files: list[str], error_summary: str, diff: str):
+def _save_pattern(change_type: str, files: list[str], error_summary: str, diff: str) -> None:
     patterns = _load_patterns()
     patterns.append(
         {
@@ -62,15 +63,15 @@ class ChangeGuardian:
     with ChangeGuardian("descripción del cambio") as g:
         # modificar archivos existentes
         ...
-    # Si los tests fallan, revierte SOLO los archivos modificados
+    # Si los tests fallan, revierte SOLO los archivos modificados.
     """
 
-    def __init__(self, description: str, test_timeout: int = 360):
+    def __init__(self, description: str, test_timeout: int = 360) -> None:
         self.description = description
         self.test_timeout = test_timeout
         self._modified_before: list[str] = []
 
-    def __enter__(self) -> "ChangeGuardian":
+    def __enter__(self) -> Self:
         self._modified_before = _get_modified_tracked_files()
         return self
 
@@ -115,7 +116,7 @@ class ChangeGuardian:
         except Exception as e:
             return False, str(e)
 
-    def _rollback(self, reason: str):
+    def _rollback(self, reason: str) -> None:
         logger.warning("❌ Revirtiendo '%s' — %s", self.description, reason[:200])
         _, diff = _git("diff")
 

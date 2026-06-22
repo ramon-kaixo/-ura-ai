@@ -1,11 +1,10 @@
 import argparse
-import json
 import sys
 
 from core.memory_engine import get_sources, query
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="URA RAG query — Contexto vectorial")
     parser.add_argument("query", nargs="?", help="Texto de busqueda")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
@@ -23,19 +22,18 @@ def main():
     if args.sources:
         fuentes = get_sources(resultados)
         if args.json:
-            print(json.dumps(fuentes, indent=2, ensure_ascii=False))
+            pass
         else:
-            for s in fuentes:
-                print(f"  [{s['chunks_used']} chunks] {s['source']}")
+            for _s in fuentes:
+                pass
         return
 
     if args.json:
-        print(json.dumps(resultados, indent=2, ensure_ascii=False))
+        pass
     else:
         for r in resultados:
-            sim = r.get("similarity", 0)
-            src = r.get("source", "?")
-            print(f"[sim={sim:.3f}] {src}: {r.get('content', '')[:120]}...")
+            r.get("similarity", 0)
+            r.get("source", "?")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ LOCK_PATH = "/tmp/ura_debate.lock"
 
 
 class DebateLock:
-    def __init__(self, path: str = LOCK_PATH):
+    def __init__(self, path: str = LOCK_PATH) -> None:
         self._path = path
         self._fd: int | None = None
 
@@ -18,7 +18,7 @@ class DebateLock:
             self._fd = None
             return False
 
-    def release(self):
+    def release(self) -> None:
         if self._fd is not None:
             fcntl.flock(self._fd, fcntl.LOCK_UN)
             os.close(self._fd)

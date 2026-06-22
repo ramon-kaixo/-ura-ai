@@ -26,7 +26,7 @@ except ImportError:
     _HAVE_RASTR = False
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(items) -> None:
     for item in items:
         # Skip file_read tests in docker sandbox (hardcoded /home/ramon/URA path)
         if "test_read_project_file" in item.nodeid:

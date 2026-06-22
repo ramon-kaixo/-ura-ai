@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """benchmark_qdrant.py — 10 pruebas de estrés sobre Qdrant + RAG.
-Ejecutar: python3 scripts/pro/benchmark_qdrant.py
+Ejecutar: python3 scripts/pro/benchmark_qdrant.py.
 """
 
 import logging
@@ -17,26 +17,18 @@ FAIL = 0
 SKIP = 0
 
 
-def check(name: str, ok: bool, detail: str = ""):
+def check(name: str, ok: bool, detail: str = "") -> None:
     global PASS, FAIL, SKIP
     if ok:
-        print(f"  \033[32m✓ {name}\033[0m")
         PASS += 1
     elif ok is None:
-        print(f"  \033[33m⚠ {name} — {detail}\033[0m")
         SKIP += 1
     else:
-        print(f"  \033[31m✗ {name} — {detail}\033[0m")
         FAIL += 1
 
 
-def main():
+def main() -> int:
     global PASS, FAIL, SKIP
-    print("\n\033[1m" + "=" * 50)
-    print("  URA Qdrant Stress Test Suite")
-    print("=" * 50 + "\033[0m")
-    print(f"Started: {datetime.now(UTC).isoformat()}")
-    print()
 
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import COLECCION_DOCUMENTOS, QdrantClient
@@ -44,13 +36,12 @@ def main():
     # ============================================================
     # 1. Singleton thread safety
     # ============================================================
-    print("\n\033[1m[1/10] Singleton thread safety\033[0m")
 
     config = UraConfig.load()
     instances = []
     errors = []
 
-    def _get_instance():
+    def _get_instance() -> None:
         try:
             instances.append(QdrantClient.instancia(config))
         except Exception as e:
@@ -63,7 +54,7 @@ def main():
         t.join()
 
     same = all(i is instances[0] for i in instances)
-    check("10 hilos → misma instancia", same, f"got {len(set(id(i) for i in instances))} distintas")
+    check("10 hilos → misma instancia", same, f"got {len({id(i) for i in instances})} distintas")
     check("0 errores en singleton race", len(errors) == 0, "; ".join(errors[:3]))
 
     qdrant = QdrantClient.instancia(config)
@@ -72,7 +63,6 @@ def main():
     # ============================================================
     # 2. Embedding Ollama
     # ============================================================
-    print("\n\033[1m[2/10] Embedding via Ollama (nomic-embed-text)\033[0m")
 
     t0 = time.perf_counter()
     vec = qdrant.generar_embedding("¿Qué es URA?")
@@ -96,7 +86,6 @@ def main():
     # ============================================================
     # 3. Batch insert (100 docs)
     # ============================================================
-    print("\n\033[1m[3/10] Batch insert 100 documentos\033[0m")
 
     docs = []
     for i in range(100):
@@ -121,7 +110,6 @@ def main():
     # ============================================================
     # 4. Cosine search
     # ============================================================
-    print("\n\033[1m[4/10] Cosine search — recall y precisión\033[0m")
 
     vector_consulta = qdrant.generar_embedding("asistente multi-agente con conciencia")
     results = qdrant.buscar_por_similitud(vector_consulta, COLECCION_DOCUMENTOS, limit=10)
@@ -137,7 +125,6 @@ def main():
     # ============================================================
     # 5. RAG end-to-end
     # ============================================================
-    print("\n\033[1m[5/10] RAG end-to-end (memory_engine.query)\033[0m")
 
     from core.memory_engine import query as rag_query
 
@@ -159,11 +146,10 @@ def main():
     # ============================================================
     # 6. Acceso concurrente (10 threads)
     # ============================================================
-    print("\n\033[1m[6/10] Acceso concurrente (10 threads, 5 queries c/u)\033[0m")
 
     concurrent_errors = []
 
-    def _concurrent_query():
+    def _concurrent_query() -> None:
         try:
             q = QdrantClient.instancia(config)
             for _ in range(5):
@@ -189,7 +175,6 @@ def main():
     # ============================================================
     # 7. REST fallback (simular)
     # ============================================================
-    print("\n\033[1m[7/10] REST fallback path\033[0m")
 
     # Verificar que ambas rutas están implementadas
     has_native = hasattr(qdrant, "_cliente") and qdrant._cliente is not None
@@ -201,7 +186,6 @@ def main():
     # ============================================================
     # 8. 1000 queries — estabilidad de memoria
     # ============================================================
-    print("\n\033[1m[8/10] 1000 queries — estabilidad de memoria\033[0m")
 
     tracemalloc.start()
     snapshot_before = tracemalloc.take_snapshot()
@@ -212,7 +196,7 @@ def main():
     t1 = time.perf_counter()
 
     snapshot_after = tracemalloc.take_snapshot()
-    current, peak = tracemalloc.get_traced_memory()
+    _current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
     stats = snapshot_after.compare_to(snapshot_before, "lineno")
@@ -225,13 +209,12 @@ def main():
     # ============================================================
     # 9. Circuit breaker
     # ============================================================
-    print("\n\033[1m[9/10] Circuit breaker\033[0m")
 
     class CircuitBreaker:
         FALLOS_MAX = 3
         VENTANA_SEG = 300
 
-        def __init__(self, q):
+        def __init__(self, q) -> None:
             self._q, self._f, self._a = q, 0, False
 
         def operacional(self):
@@ -246,7 +229,7 @@ def main():
                     self._a = True
             return ok
 
-        def reset(self):
+        def reset(self) -> None:
             self._f, self._a = 0, False
 
     cb = CircuitBreaker(qdrant)
@@ -259,7 +242,7 @@ def main():
     original_health = qdrant.health
     fail_count = [0]
 
-    def _fake_health():
+    def _fake_health() -> bool:
         fail_count[0] += 1
         return False
 
@@ -272,7 +255,7 @@ def main():
 
     qdrant.health = original_health
 
-    ok_count = sum(1 for r in results_cb if r)
+    sum(1 for r in results_cb if r)
     check(
         "Circuit breaker: abre tras 3 fallos",
         results_cb[0] is False and results_cb[3] is False,
@@ -286,7 +269,6 @@ def main():
     # ============================================================
     # 10. Incidentes round-trip
     # ============================================================
-    print("\n\033[1m[10/10] Incidentes round-trip\033[0m")
 
     incidente = {
         "ts": datetime.now(UTC).isoformat(),
@@ -311,16 +293,11 @@ def main():
     # ============================================================
     # Resumen
     # ============================================================
-    total = PASS + FAIL + SKIP
-    print()
-    print("\033[1m" + "=" * 50)
-    print(f"  RESULTADOS: {PASS}/{total} pasaron")
+    PASS + FAIL + SKIP
     if FAIL:
-        print(f"  \033[31m{FAIL} fallos\033[0m")
+        pass
     if SKIP:
-        print(f"  \033[33m{SKIP} omitidos\033[0m")
-    print("=" * 50 + "\033[0m")
-    print(f"Finished: {datetime.now(UTC).isoformat()}")
+        pass
 
     return 1 if FAIL > 0 else 0
 

@@ -24,7 +24,7 @@ def _gemini_api_key() -> str:
 
 
 class GeminiProvider(Provider):
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = _gemini_api_key()
 
     @property
@@ -45,8 +45,9 @@ class GeminiProvider(Provider):
         temperature: float = 0.0,
     ) -> AsyncGenerator[dict, None]:
         if not self.api_key:
+            msg = "GEMINI_API_KEY no configurada"
             raise ProviderError(
-                "GEMINI_API_KEY no configurada",
+                msg,
                 provider=self.nombre,
             )
 
@@ -74,8 +75,9 @@ class GeminiProvider(Provider):
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
+                        msg = f"Gemini error: {resp.status_code} {text.decode(errors='replace')[:200]}"
                         raise ProviderError(
-                            f"Gemini error: {resp.status_code} {text.decode(errors='replace')[:200]}",
+                            msg,
                             provider=self.nombre,
                             status_code=resp.status_code,
                         )
@@ -97,8 +99,9 @@ class GeminiProvider(Provider):
                     headers=headers,
                 )
                 if resp.is_error:
+                    msg = f"Gemini error: {resp.status_code} {resp.text[:200]}"
                     raise ProviderError(
-                        f"Gemini error: {resp.status_code} {resp.text[:200]}",
+                        msg,
                         provider=self.nombre,
                         status_code=resp.status_code,
                     )

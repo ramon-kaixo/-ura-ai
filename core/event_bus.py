@@ -6,6 +6,7 @@ Expone API sync compatible con callers existentes vía puente ThreadPoolExecutor
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -34,7 +35,7 @@ _suscriptores: dict[str, list[Callable]] = {}
 def _run_async(coro):
     """Puente sync→async: ejecuta una corrutina desde contexto síncrono sin bloquear el event-loop."""
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
     with ThreadPoolExecutor(max_workers=1) as executor:
@@ -169,10 +170,8 @@ async def _close_async() -> None:
         _zmq_ctx = None
     sock_path = IPC_PUB.replace("ipc://", "")
     if os.path.exists(sock_path):
-        try:
+        with contextlib.suppress(Exception):
             os.unlink(sock_path)
-        except Exception:
-            pass
 
 
 # ─── AsyncEventBus — Nueva API async pura para futuros consumidores ───
