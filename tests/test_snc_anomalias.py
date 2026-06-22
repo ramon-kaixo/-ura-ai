@@ -94,6 +94,16 @@ class TestAislarBucle:
     def setup_method(self):
         _pending_sigcont.clear()
 
+    def test_skips_if_pid_zero(self):
+        with patch("monitor.snc.os.kill") as mock_kill:
+            _aislar_bucle(0, "opencode", 95.0)
+            mock_kill.assert_not_called()
+
+    def test_skips_if_pid_negative(self):
+        with patch("monitor.snc.os.kill") as mock_kill:
+            _aislar_bucle(-1, "test", 50.0)
+            mock_kill.assert_not_called()
+
     def test_skips_if_already_pending(self):
         _pending_sigcont[42] = "python3"
         with patch("monitor.snc.os.kill") as mock_kill:
@@ -169,13 +179,13 @@ class TestSigcontSeguro:
 
 
 class TestCheckOpenCodeColgado:
-    def test_returns_false_when_not_running(self):
+    def test_returns_none_when_not_running(self):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.stdout = ""
             result = check_opencode_colgado()
-            assert result is False
+            assert result is None
 
-    def test_returns_true_when_cpu_high(self):
+    def test_returns_pid_when_cpu_high(self):
         with patch("subprocess.run") as mock_run:
             def side_effect(*args, **kwargs):
                 result = MagicMock()
@@ -188,9 +198,9 @@ class TestCheckOpenCodeColgado:
 
             mock_run.side_effect = side_effect
             result = check_opencode_colgado()
-            assert result is True
+            assert result == 1234
 
-    def test_returns_false_when_cpu_low(self):
+    def test_returns_none_when_cpu_low(self):
         with patch("subprocess.run") as mock_run:
             def side_effect(*args, **kwargs):
                 result = MagicMock()
@@ -203,7 +213,7 @@ class TestCheckOpenCodeColgado:
 
             mock_run.side_effect = side_effect
             result = check_opencode_colgado()
-            assert result is False
+            assert result is None
 
 
 class TestCheckUmbrales:
