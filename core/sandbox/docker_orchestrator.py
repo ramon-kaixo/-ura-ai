@@ -136,7 +136,10 @@ class DockerOrchestrator:
     def _df(c, n):
         return textwrap.dedent(f"""FROM {IMG}
 RUN pip install -q pydantic httpx pytest pytest-asyncio
-WORKDIR /ura; COPY skills/ /ura/skills/; COPY tests/ /ura/tests/; COPY rv.py /ura/rv.py
+WORKDIR /ura
+COPY skills/ /ura/skills/
+COPY tests/ /ura/tests/
+COPY rv.py /ura/rv.py
 CMD ["python","-u","rv.py"]""")
 
     @staticmethod
@@ -144,19 +147,24 @@ CMD ["python","-u","rv.py"]""")
         return textwrap.dedent(f"""import sys,json,subprocess,importlib.util
 r={{"ejecuto":False,"pasados":0,"fallidos":0,"fallos_nombres":[],"error":None}}
 try:
-    sp=importlib.util.spec_from_file_location("{n}","/ura/skills/{n}.py"); m=importlib.util.module_from_spec(sp); sp.loader.exec_module(m); r["ejecuto"]=True
+sp=importlib.util.spec_from_file_location("{n}","/ura/skills/{n}.py")
+m=importlib.util.module_from_spec(sp)
+sp.loader.exec_module(m)
+r["ejecuto"]=True
 except Exception as e: r["error"]=str(e); print(json.dumps(r)); sys.exit(1)
 try:
-    sr=subprocess.run(["python","-m","pytest","/ura/tests/","-v","--tb=short"],capture_output=True,text=True,timeout=15)
+    sr=subprocess.run(["python","-m","pytest","/ura/tests/","-v","--tb=short"],capture_output=True,text=True,timeout=15, check=False)
     for l in (sr.stdout or "").splitlines():
         if "passed" in l and "failed" in l:
             p=l.strip().split()
             for i,pi in enumerate(p):
                 if pi=="passed": r["pasados"]=int(p[i-1]) if i else 0
-                elif pi=="failed": r["fallidos"]=int(p[i-1]) if i else 0; break
+elif pi=="failed": r["fallidos"]=int(p[i-1]) if i else 0
+break
         if "FAILED" in l: r["fallos_nombres"].append(l.strip())
 except Exception as e: r["error"]=str(e)
-print(json.dumps(r)); sys.exit(0 if r["fallidos"]==0 else 1)
+print(json.dumps(r))
+sys.exit(0 if r["fallidos"]==0 else 1)
 """)
 
     @staticmethod

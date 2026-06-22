@@ -76,7 +76,7 @@ def _save_restart_to_qdrant() -> None:
                 },
             )
     except Exception:
-        pass
+    pass  # noqa: S110
 
 
 def restart_service() -> None:
@@ -229,7 +229,7 @@ def main() -> None:
                         },
                     )
                 except ImportError:
-                    pass
+    pass  # noqa: S110
 
         if not args.daemon:
             break
