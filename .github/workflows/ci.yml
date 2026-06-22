@@ -38,6 +38,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: pytest -q --cov=core --cov=monitor --cov=motor
+        env:
+          OPENCLAW_GATEWAY_TOKEN: test
+          URA_API_KEY: test
       - run: python3 tests/test_unit.py --quiet
 
   security:
@@ -47,6 +50,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install bandit==1.8.3 safety==3.2.14
+      - run: pip install bandit safety
       - run: pip install -r requirements.txt
       - run: bandit -q -r core/ monitor/ motor/ -x "*/tests/*"

@@ -27,7 +27,12 @@ class InferenciaStreamEngine:
         """Consume el payload del ensamblador y transmite tokens.
         Garantiza liberación del slot VRAM mediante captura de CancelledError.
         """
-        slot_adquirido = await self.router.adquirir_slot_vram(modelo)
+        try:
+            slot_adquirido = await self.router.adquirir_slot_vram(modelo)
+        except asyncio.CancelledError:
+            log.warning("Inferencia cancelada antes de adquirir slot VRAM para %s.", modelo)
+            return
+
         if not slot_adquirido:
             yield "Error 504: Tiempo de espera en cola excedido sin slots de GPU disponibles."
             return

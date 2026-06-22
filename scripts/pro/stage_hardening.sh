@@ -25,8 +25,11 @@ if [ -d "$DROP_DIR" ]; then
     cp -r "$DROP_DIR" "$BACKUP_DIR/dropins"
 fi
 
-# Backup del service file
-cp "/etc/systemd/system/$SERVICE" "$BACKUP_DIR/$(echo $SERVICE | tr / _)" 2>/dev/null || true
+# Backup del service file (resuelve ruta real via systemctl cat)
+SERVICE_FILE_PATH=$(systemctl cat "$SERVICE" 2>/dev/null | head -1 | sed 's/^# //')
+if [ -n "$SERVICE_FILE_PATH" ] && [ -f "$SERVICE_FILE_PATH" ]; then
+    cp "$SERVICE_FILE_PATH" "$BACKUP_DIR/$(basename "$SERVICE_FILE_PATH")"
+fi
 
 echo "2. Aplicando hardening de prueba..."
 sudo mkdir -p "$DROP_DIR"

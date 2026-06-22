@@ -16,6 +16,7 @@ import platform
 import shlex
 import signal
 import subprocess
+import threading
 import time
 from datetime import UTC, datetime
 
@@ -54,6 +55,9 @@ UMBRALES = {
     "opencode_cpu_umbral": 80.0,
     "opencode_ciclos_confirmar": 2,
 }
+_CPU_DETECTION_ENABLED: bool = False  # check_bucle_cpu desactivado: usa CPU acumulada, no delta
+_BUCLE_TIMEOUT: float = 30.0  # segundos hasta SIGCONT automático tras SIGSTOP
+_pending_sigcont: dict[int, str] = {}  # pid → nombre_original, evita timers duplicados
 _anomalias: list[dict] = []
 _opencode_ciclos_alta: int = 0
 
@@ -390,7 +394,7 @@ def check_opencode_colgado() -> bool:
     """Detecta si OpenCode está congelado (CPU alta + sin respuesta)."""
     try:
         pid = subprocess.run(
-            ["pgrep", "-x", "code"], capture_output=True, text=True, timeout=5,
+            ["pgrep", "-f", "opencode"], capture_output=True, text=True, timeout=5,
         )
         if not pid.stdout.strip():
             return False
@@ -415,12 +419,40 @@ def _limpiar_zombies() -> None:
             pass
 
 
+def _sigcont_seguro(pid: int, nombre_original: str) -> None:
+    """SIGCONT solo si el PID sigue detenido y no se recicló."""
+    try:
+        status = Path(f"/proc/{pid}/status")
+        if not status.exists():
+            _pending_sigcont.pop(pid, None)
+            return
+        lines = status.read_text(errors="replace").splitlines()
+        state = name = ""
+        for line in lines:
+            if line.startswith("State:"):
+                state = line.split(":", 1)[1].strip()
+            elif line.startswith("Name:"):
+                name = line.split(":", 1)[1].strip()
+        if "T" not in state or name != nombre_original:
+            _pending_sigcont.pop(pid, None)
+            return
+    except (OSError, PermissionError):
+        _pending_sigcont.pop(pid, None)
+        return
+    os.kill(pid, signal.SIGCONT)
+    _pending_sigcont.pop(pid, None)
+
+
 def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
     """Aísla un proceso en bucle: SIGSTOP + volcado /proc."""
+    if pid in _pending_sigcont:
+        return  # ya aislado, no duplicar timer
     sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")
     sandbox_dir.mkdir(parents=True, exist_ok=True)
     try:
         os.kill(pid, signal.SIGSTOP)
+        _pending_sigcont[pid] = nombre
+        threading.Timer(_BUCLE_TIMEOUT, _sigcont_seguro, args=[pid, nombre]).start()
         # Volcar información del proceso
         for subdir in ("status", "maps", "fd", "wchan"):
             src = Path(f"/proc/{pid}/{subdir}")
@@ -492,11 +524,13 @@ def main() -> None:
             # 1. Zombies → matar directo
             _limpiar_zombies()
 
-            # 2. Bucles CPU → DESACTIVADO: check_bucle_cpu usa CPU acumulada, no delta.
+            # 2. Bucles CPU → DESACTIVADO (_CPU_DETECTION_ENABLED=False):
+            #    check_bucle_cpu usa CPU acumulada, no delta.
             #    Causaba SIGSTOP eterno a model-router y otros procesos longevos.
             #    Pendiente: implementar con delta (/proc/stat snapshots entre ciclos).
-            for pid, nombre, cpu in check_bucle_cpu():
-                _aislar_bucle(pid, nombre, cpu)
+            if _CPU_DETECTION_ENABLED:
+                for pid, nombre, cpu in check_bucle_cpu():
+                    _aislar_bucle(pid, nombre, cpu)
 
             # 3. OpenCode colgado → contar ciclos, aislar si persiste
             if check_opencode_colgado():
