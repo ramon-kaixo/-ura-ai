@@ -1,5 +1,5 @@
 # ============================================================
-# .pre-commit-config.yaml — URA v3.1
+# .pre-commit-config.yaml — URA v3.2
 # Instalar: pip install pre-commit && pre-commit install
 # Ejecutar: pre-commit run --all-files
 # ============================================================
@@ -15,7 +15,7 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
-        args: [--ignore-missing-imports, --python-version=3.11]
+        args: [--python-version=3.12]
         additional_dependencies: [types-requests]
         files: ^(core|monitor|motor)/.*\.py$
 
@@ -26,8 +26,22 @@ repos:
         args: [-q, -x, "*/tests/*"]
         files: ^(core|monitor|motor)/.*\.py$
 
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+        files: \.sh$
+
   - repo: local
     hooks:
+      - id: semgrep
+        name: Semgrep (reglas personalizadas)
+        entry: semgrep scan --config=.semgrep.yml --error --quiet
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: json-schema-config
         name: Validate system_config.json
         entry: python3 -c "from core.config_manager import validate_schema_json; e=validate_schema_json(); [print(x) for x in e]; exit(1 if e else 0)"
@@ -51,7 +65,7 @@ repos:
 
       - id: pytest
         name: Run pytest (core + monitor + motor)
-        entry: pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term --timeout=30
+        entry: bash -c 'OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term --timeout=30'
         language: system
         pass_filenames: false
         always_run: true

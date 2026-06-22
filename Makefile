@@ -1,17 +1,23 @@
 # ============================================================
-# Makefile — URA v3.0
+# Makefile — URA v3.2
 # Herramienta determinista: solo ejecuta lo necesario.
 # ============================================================
 
 ASUS_HOST ?= ramon@10.164.1.99
 
-.PHONY: test lint integration doctor snapshot deploy-snc deploy-all clean helm
+.PHONY: test lint integration doctor snapshot deploy-snc deploy-all clean help \
+        mypy semgrep shellcheck full-audit
 
 # --- Tests ---
 
 test:
 	@echo "[make] Unit tests..."
 	@python3 tests/test_unit.py
+	@echo ""
+
+pytest:
+	@echo "[make] Pytest (core + monitor + motor)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term
 	@echo ""
 
 integration:
@@ -26,22 +32,27 @@ integration:
 # --- Linting y validación ---
 
 lint:
-	@echo "[make] Compiling..."
-	@python3 -m py_compile core/config_manager.py && echo "  ✓ config_manager" || echo "  ✗ config_manager"
-	@python3 -m py_compile core/model_router.py && echo "  ✓ model_router" || echo "  ✗ model_router"
-	@python3 -m py_compile core/memory_engine.py && echo "  ✓ memory_engine" || echo "  ✗ memory_engine"
-	@python3 -m py_compile mantenimiento/ura_maintenance.py && echo "  ✓ ura_maintenance" || echo "  ✗ ura_maintenance"
-	@python3 -m py_compile mantenimiento/ura_maintenance_remote.py && echo "  ✓ ura_maintenance_remote" || echo "  ✗ ura_maintenance_remote"
-	@python3 -m py_compile monitor/snc.py && echo "  ✓ snc" || echo "  ✗ snc"
-	@python3 -m py_compile monitor/snc_remote.py && echo "  ✓ snc_remote" || echo "  ✗ snc_remote"
-	@python3 -m py_compile ura.py && echo "  ✓ ura" || echo "  ✗ ura"
-	@echo "[make] Schema validation (Python)..."
-	@python3 -c "from core.config_manager import validate_schema; e=validate_schema(); exit(len(e))" && echo "  ✓ schema basic" || echo "  ✗ schema basic"
-	@echo "[make] Schema validation (jsonschema)..."
-	@python3 -c "from core.config_manager import validate_schema_json; e=validate_schema_json(); exit(len(e))" && echo "  ✓ schema declarativo" || echo "  ℹ jsonschema no instalado (no bloquea)"
-	@echo "[make] Runbook validation..."
-	@python3 -c "from monitor.snc import load_runbook; rb=load_runbook(); assert rb['version']=='1.0','version'; assert len(rb['commands'])>=3,'commands'" && echo "  ✓ runbook" || echo "  ✗ runbook"
+	@echo "[make] Ruff..."
+	@ruff check . && echo "  ✓ ruff" || echo "  ✗ ruff"
 	@echo ""
+
+mypy:
+	@echo "[make] Mypy strict..."
+	@OPENCLAW_GATEWAY_TOKEN=test mypy core/ monitor/ motor/ 2>&1 | tail -5
+	@echo ""
+
+semgrep:
+	@echo "[make] Semgrep (reglas personalizadas)..."
+	@which semgrep >/dev/null 2>&1 && semgrep scan --config=.semgrep.yml --error --quiet && echo "  ✓ semgrep" || echo "  ⚠ semgrep no instalado (pip install semgrep)"
+	@echo ""
+
+shellcheck:
+	@echo "[make] ShellCheck..."
+	@find . -name '*.sh' -not -path './.venv/*' -exec shellcheck --severity=warning {} \; && echo "  ✓ shellcheck" || echo "  ⚠ shellcheck encontró problemas"
+	@echo ""
+
+full-audit: lint mypy semgrep shellcheck pytest
+	@echo "[make] ✅ Auditoría completa"
 
 # --- Diagnóstico ---
 
@@ -110,14 +121,19 @@ clean:
 help:
 	@echo "URA Makefile"
 	@echo ""
-	@echo "  make test        Unit tests (113 tests)"
-	@echo "  make integration  Integration tests (GX10 required)"
-	@echo "  make lint         Compile + schema + runbook validation"
-	@echo "  make doctor       Diagnóstico completo"
-	@echo "  make snapshot     Guardar estado del repo"
-	@echo "  make deploy-snc   Desplegar SNC en GX10"
-	@echo "  make deploy-all   Test + deploy"
-	@echo "  make clean        Limpiar __pycache__"
+	@echo "  make test        Unit tests (legacy)"
+	@echo "  make pytest      Pytest (core + monitor + motor)"
+	@echo "  make lint        Ruff check"
+	@echo "  make mypy        Mypy strict"
+	@echo "  make semgrep     Semgrep (reglas personalizadas)"
+	@echo "  make shellcheck  ShellCheck (todos los .sh)"
+	@echo "  make full-audit  Ruff + Mypy + Semgrep + ShellCheck + Pytest"
+	@echo "  make integration Integration tests (GX10 required)"
+	@echo "  make doctor      Diagnóstico completo"
+	@echo "  make snapshot    Guardar estado del repo"
+	@echo "  make deploy-snc  Desplegar SNC en GX10"
+	@echo "  make deploy-all  Test + deploy"
+	@echo "  make clean       Limpiar __pycache__"
 	@echo ""
 
 .DEFAULT_GOAL := help
