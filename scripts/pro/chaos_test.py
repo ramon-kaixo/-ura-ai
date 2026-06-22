@@ -209,7 +209,7 @@ async def test_graceful_shutdown(dry_run: bool = False) -> None:
 
     shutdown_ok = False
 
-    def _handler(signum, frame):
+    def _handler(signum, frame) -> None:
         nonlocal shutdown_ok
         shutdown_ok = True
 
@@ -373,15 +373,14 @@ async def main() -> int:
     }
 
     if args.list:
-        print("Tests disponibles:")
-        for name, fn in tests.items():
-            print(f"  {name:<20s} — {fn.__doc__.strip() if fn.__doc__ else ''}")
+        for fn in tests.values():
+            pass
         return 0
 
     dry_run = args.dry_run or not args.execute
 
     if args.all or args.test == "all":
-        for name, fn in tests.items():
+        for fn in tests.values():
             if asyncio.iscoroutinefunction(fn):
                 await fn(dry_run=dry_run)
             else:
@@ -398,7 +397,7 @@ async def main() -> int:
     else:
         # Modo interactivo: ejecutar todos en dry-run
         log.info("Modo: --dry-run (simulación, sin daño). Usa --execute para forzar fallos reales.")
-        for name, fn in tests.items():
+        for fn in tests.values():
             if asyncio.iscoroutinefunction(fn):
                 await fn(dry_run=True)
             else:

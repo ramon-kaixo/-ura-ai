@@ -64,15 +64,13 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
                 try:
                     await stealth_async(page)
                     await page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
-                    content = await page.content()
-                    return content
+                    return await page.content()
                 except Exception:
                     await page.close()
                     try:
                         page = await context.new_page()
                         await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                        content = await page.content()
-                        return content
+                        return await page.content()
                     except Exception:
                         return None
             except ImportError:

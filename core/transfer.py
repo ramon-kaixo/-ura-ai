@@ -125,7 +125,8 @@ def import_batch(tarball: str | Path) -> Iterator[dict]:
     """
     tarball = Path(tarball)
     if not tarball.exists():
-        raise FileNotFoundError(f"Batch not found: {tarball}")
+        msg = f"Batch not found: {tarball}"
+        raise FileNotFoundError(msg)
 
     with tarfile.open(tarball, "r:gz") as tar:
         manifest_data = None
@@ -202,8 +203,7 @@ def list_batches(batch_dir: str | Path | None = None) -> list[Path]:
     batch_dir = Path(batch_dir) if batch_dir else BATCH_DIR
     if not batch_dir.exists():
         return []
-    batches = sorted(batch_dir.glob("ura_batch_*.tar.gz"), reverse=True)
-    return batches
+    return sorted(batch_dir.glob("ura_batch_*.tar.gz"), reverse=True)
 
 
 def cleanup_batches(keep: int = 10, batch_dir: str | Path | None = None) -> int:

@@ -23,7 +23,7 @@ from core.utils.anonymizer import sanitize_text
 
 
 class AnkerMacPipeline:
-    def __init__(self, base_path="/Users/ramonesnaola/URA/ura_ia_1972/", model_size="small"):
+    def __init__(self, base_path="/Users/ramonesnaola/URA/ura_ia_1972/", model_size="small") -> None:
         self.sample_rate = 16000
         self.block_size = 480
         self.db_path = os.path.join(base_path, "config/voice_corrections.db")
@@ -35,16 +35,13 @@ class AnkerMacPipeline:
 
         if torch.backends.mps.is_available():
             self.device = "mps"
-            print("🍏 Aceleración Apple Silicon (Metal/MPS) activa en Mac mini.")
         else:
             self.device = "cpu"
-            print("⚠️ MPS no disponible. Utilizando núcleos de CPU M4.")
 
-        print(f"🤖 Cargando openai-whisper ({model_size}) en backend nativo...")
         self.stt_model = whisper.load_model(model_size, device=self.device)
         self.device_index = self._find_anker_device()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS corrections (
@@ -58,17 +55,16 @@ class AnkerMacPipeline:
         try:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
-                    print(f"🎙️ Anker S500 detectado en índice {idx}")
                     return idx
         except Exception:
             pass
         return None
 
-    def _audio_callback(self, indata, frames, time, status):
+    def _audio_callback(self, indata, frames, time, status) -> None:
         if not self.is_playing_tts:
             self.audio_queue.put(indata.copy())
 
-    def _trigger_macos_notification(self, title: str, message: str, sound: str = "Tink"):
+    def _trigger_macos_notification(self, title: str, message: str, sound: str = "Tink") -> None:
         """Banner nativo macOS asíncrono — sin bloqueo del pipeline."""
         script = f'display notification "{message}" with title "{title}" sound name "{sound}"'
         subprocess.Popen(
@@ -134,8 +130,7 @@ class AnkerMacPipeline:
                         audio_chunks.append(chunk)
                     except queue.Empty:
                         continue
-        except Exception as e:
-            print(f"⚠️ Error en stream de audio (Anker desconectado): {e}")
+        except Exception:
             self.device_index = None
             return "", "", ""
 
@@ -146,8 +141,7 @@ class AnkerMacPipeline:
             full_audio = np.concatenate(audio_chunks, axis=0).flatten()
             result = self.stt_model.transcribe(full_audio, language="es", temperature=0.0, fp16=False)
             raw_text = result["text"].strip()
-        except Exception as e:
-            print(f"⚠️ Fallo en inferencia Whisper MPS: {e}")
+        except Exception:
             return "", "", ""
 
         corrected_text = self._apply_deterministic_rules(raw_text)

@@ -83,10 +83,8 @@ def notify(
     formatted = f"{tag} URA [{level.upper()}]: {message}"
 
     ok = False
-    if "telegram" in channels:
-        if _send_telegram(formatted):
-            ok = True
-    if "pushover" in channels:
-        if _send_pushover(formatted):
-            ok = True
+    if "telegram" in channels and _send_telegram(formatted):
+        ok = True
+    if "pushover" in channels and _send_pushover(formatted):
+        ok = True
     return ok

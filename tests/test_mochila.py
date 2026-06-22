@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import os
 import tempfile
 from pathlib import Path
@@ -17,16 +18,14 @@ from core.mochila.tools import TOOL_SCHEMAS, file_read
 
 
 class TestCircuitBreaker:
-    def setup_method(self):
+    def setup_method(self) -> None:
         import glob
 
         for f in glob.glob("/tmp/test_cb_*.json"):
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(f)
-            except OSError:
-                pass
 
-    def test_init_closed(self):
+    def test_init_closed(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=3,
             recovery_timeout=1,
@@ -36,7 +35,7 @@ class TestCircuitBreaker:
         assert cb.puede_pasar("test") is True
         assert cb.estado("test")["state"] == "closed"
 
-    def test_open_after_threshold(self):
+    def test_open_after_threshold(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=3,
             recovery_timeout=1,
@@ -49,7 +48,7 @@ class TestCircuitBreaker:
         assert cb.estado("test")["state"] == "open"
         assert cb.estado("test")["consecutive_failures"] == 3
 
-    def test_half_open_after_timeout(self):
+    def test_half_open_after_timeout(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=2,
             recovery_timeout=0.05,
@@ -64,7 +63,7 @@ class TestCircuitBreaker:
         assert cb.puede_pasar("test") is True
         assert cb.estado("test")["state"] == "half_open"
 
-    def test_closed_on_success_in_half_open(self):
+    def test_closed_on_success_in_half_open(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=2,
             recovery_timeout=0.05,
@@ -79,7 +78,7 @@ class TestCircuitBreaker:
         assert cb.estado("test")["state"] == "closed"
         assert cb.estado("test")["consecutive_failures"] == 0
 
-    def test_open_again_on_failure_in_half_open(self):
+    def test_open_again_on_failure_in_half_open(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=2,
             recovery_timeout=0.05,
@@ -93,7 +92,7 @@ class TestCircuitBreaker:
         cb.registrar_fallo("test")
         assert cb.estado("test")["state"] == "open"
 
-    def test_timeout_counts_as_failure(self):
+    def test_timeout_counts_as_failure(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=1,
             recovery_timeout=1,
@@ -103,7 +102,7 @@ class TestCircuitBreaker:
         cb.registrar_fallo("test", es_timeout=True)
         assert cb.estado("test")["state"] == "open"
 
-    def test_reset(self):
+    def test_reset(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=1,
             recovery_timeout=1,
@@ -116,7 +115,7 @@ class TestCircuitBreaker:
         assert cb.estado("test")["state"] == "closed"
         assert cb.estado("test")["consecutive_failures"] == 0
 
-    def test_persistence(self):
+    def test_persistence(self) -> None:
         hf = Path(tempfile.mkstemp(suffix=".json")[1])
         hf.unlink(missing_ok=True)
         try:
@@ -131,7 +130,7 @@ class TestCircuitBreaker:
         finally:
             hf.unlink(missing_ok=True)
 
-    def test_multiple_providers(self):
+    def test_multiple_providers(self) -> None:
         cb = CircuitBreaker(
             failure_threshold=1,
             recovery_timeout=1,
@@ -149,15 +148,15 @@ class TestCircuitBreaker:
 
 
 class TestRateLimiter:
-    def test_allows_within_limit(self):
+    def test_allows_within_limit(self) -> None:
         rl = RateLimiter()
         rl.configurar("test", 3)
         for _ in range(3):
-            puede, actual, limite = rl.puede_pasar("test")
+            puede, _actual, _limite = rl.puede_pasar("test")
             assert puede is True
             rl.registrar("test")
 
-    def test_blocks_over_limit(self):
+    def test_blocks_over_limit(self) -> None:
         rl = RateLimiter()
         rl.configurar("test", 2)
         rl.registrar("test")
@@ -167,7 +166,7 @@ class TestRateLimiter:
         assert actual == 2
         assert limite == 2
 
-    def test_window_expires(self):
+    def test_window_expires(self) -> None:
         rl = RateLimiter()
         rl.configurar("test", 1)
         rl.registrar("test")
@@ -184,7 +183,7 @@ class TestRateLimiter:
 
 
 class TestCostTracker:
-    def test_register(self):
+    def test_register(self) -> None:
         cf = Path(tempfile.mkstemp(suffix=".jsonl")[1])
         cf.unlink(missing_ok=True)
         try:
@@ -196,7 +195,7 @@ class TestCostTracker:
         finally:
             cf.unlink(missing_ok=True)
 
-    def test_resumen_hoy_empty(self):
+    def test_resumen_hoy_empty(self) -> None:
         cf = Path(tempfile.mkstemp(suffix=".jsonl")[1])
         cf.unlink(missing_ok=True)
         try:
@@ -207,7 +206,7 @@ class TestCostTracker:
         finally:
             cf.unlink(missing_ok=True)
 
-    def test_resumen_hoy_aggregates(self):
+    def test_resumen_hoy_aggregates(self) -> None:
         cf = Path(tempfile.mkstemp(suffix=".jsonl")[1])
         cf.unlink(missing_ok=True)
         try:
@@ -220,7 +219,7 @@ class TestCostTracker:
         finally:
             cf.unlink(missing_ok=True)
 
-    def test_jsonl_append_only(self):
+    def test_jsonl_append_only(self) -> None:
         cf = Path(tempfile.mkstemp(suffix=".jsonl")[1])
         cf.unlink(missing_ok=True)
         try:
@@ -239,54 +238,54 @@ class TestCostTracker:
 
 
 class TestClasificadorKeyword:
-    def test_codigo(self):
+    def test_codigo(self) -> None:
         c = ClasificadorKeyword()
         assert c.clasificar([{"role": "user", "content": "escribe una funcion en python"}]) == "codigo"
 
-    def test_razonamiento(self):
+    def test_razonamiento(self) -> None:
         c = ClasificadorKeyword()
         assert c.clasificar([{"role": "user", "content": "analiza las ventajas de usar postgresql"}]) == "razonamiento"
 
-    def test_rapido(self):
+    def test_rapido(self) -> None:
         c = ClasificadorKeyword()
         assert c.clasificar([{"role": "user", "content": "hola como estas"}]) == "rapido"
 
-    def test_task_hint_overrides(self):
+    def test_task_hint_overrides(self) -> None:
         c = ClasificadorKeyword()
         assert c.clasificar([{"role": "user", "content": "hola"}], task_hint="codigo") == "codigo"
 
 
 class TestRouter:
-    def test_route_codigo(self):
+    def test_route_codigo(self) -> None:
         r = Router(providers={"ollama": "fake"})
         result = r.route([{"role": "user", "content": "refactoriza esta clase"}])
         assert result.provider == "ollama"
         assert "codigo" in result.route_reason
 
-    def test_route_explicit(self):
+    def test_route_explicit(self) -> None:
         r = Router(providers={"ollama": "fake", "openrouter": "fake"})
         result = r.route([{"role": "user", "content": "hola"}], modelo_hint="openrouter/model-x")
         assert result.provider == "openrouter"
         assert result.modelo == "model-x"
         assert "explicit" in result.route_reason
 
-    def test_route_explicit_ollama_fallback(self):
+    def test_route_explicit_ollama_fallback(self) -> None:
         r = Router(providers={"ollama": "fake"})
         result = r.route([{"role": "user", "content": "hola"}], modelo_hint="model-x")
         assert result.provider == "ollama"
         assert result.modelo == "model-x"
 
-    def test_route_task_hint(self):
+    def test_route_task_hint(self) -> None:
         r = Router(providers={"ollama": "fake", "openrouter": "fake"})
         result = r.route([{"role": "user", "content": "hola"}], task_hint="razonamiento")
         assert "razonamiento" in result.route_reason
 
-    def test_no_provider_available(self):
+    def test_no_provider_available(self) -> None:
         r = Router(providers={})
         with pytest.raises(NoProviderAvailable):
             r.route([{"role": "user", "content": "hola"}])
 
-    def test_route_result_dataclass(self):
+    def test_route_result_dataclass(self) -> None:
         result = RouteResult(provider="ollama", modelo="qwen2.5:7b", route_reason="keyword:rapido")
         assert result.provider == "ollama"
         assert result.modelo == "qwen2.5:7b"
@@ -299,19 +298,19 @@ class TestRouter:
 
 
 class TestFileRead:
-    def test_read_project_file(self):
+    def test_read_project_file(self) -> None:
         result = asyncio.run(file_read("pyproject.toml", max_lines=5))
         assert result["size"] >= 0
 
-    def test_deny_outside_whitelist(self):
+    def test_deny_outside_whitelist(self) -> None:
         result = asyncio.run(file_read("/etc/passwd"))
         assert "denegado" in result.get("error", "").lower()
 
-    def test_file_not_found(self):
+    def test_file_not_found(self) -> None:
         result = asyncio.run(file_read("no_existe_12345.py"))
         assert "no encontrado" in result.get("error", "").lower()
 
-    def test_tool_schemas_valid(self):
+    def test_tool_schemas_valid(self) -> None:
         for schema in TOOL_SCHEMAS:
             assert schema["type"] == "function"
             assert "name" in schema["function"]
@@ -335,14 +334,14 @@ def client():
 
 
 class TestServer:
-    def test_health(self, client):
+    def test_health(self, client) -> None:
         resp = client.get("/health")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "ok"
         assert "ollama" in data["providers"]
 
-    def test_metrics(self, client):
+    def test_metrics(self, client) -> None:
         resp = client.get("/metrics")
         assert resp.status_code == 200
         data = resp.json()
@@ -351,40 +350,40 @@ class TestServer:
         assert "tools_disponibles" in data
         assert data["tools_disponibles"] == 4
 
-    def test_breaker(self, client):
+    def test_breaker(self, client) -> None:
         resp = client.get("/breaker")
         assert resp.status_code == 200
         data = resp.json()
         assert "ollama" in data
         assert data["ollama"]["state"] == "closed"
 
-    def test_breaker_reset(self, client):
+    def test_breaker_reset(self, client) -> None:
         resp = client.post("/breaker/reset/ollama")
         assert resp.status_code == 200
         assert resp.json()["status"] == "reset"
 
-    def test_breaker_reset_unknown(self, client):
+    def test_breaker_reset_unknown(self, client) -> None:
         resp = client.post("/breaker/reset/no_existe")
         assert resp.status_code == 404
 
-    def test_metrics_rate(self, client):
+    def test_metrics_rate(self, client) -> None:
         resp = client.get("/metrics/rate/ollama")
         assert resp.status_code == 200
         data = resp.json()
         assert data["provider"] == "ollama"
 
-    def test_metrics_rate_unknown(self, client):
+    def test_metrics_rate_unknown(self, client) -> None:
         resp = client.get("/metrics/rate/no_existe")
         assert resp.status_code == 404
 
-    def test_metrics_cost(self, client):
+    def test_metrics_cost(self, client) -> None:
         resp = client.get("/metrics/cost")
         assert resp.status_code == 200
         data = resp.json()
         assert "total_cost" in data
         assert "total_tokens" in data
 
-    def test_v1_models(self, client):
+    def test_v1_models(self, client) -> None:
         resp = client.get("/v1/models")
         assert resp.status_code == 200
         data = resp.json()

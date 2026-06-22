@@ -32,5 +32,5 @@ def search(query_str: str, top_k: int = 5) -> list[dict]:
         log.info(f"Búsqueda completada: {len(results)} resultados para '{query_str[:50]}...'")
         return results
     except Exception as e:
-        log.error(f"Error en búsqueda: {e}")
+        log.exception(f"Error en búsqueda: {e}")
         return []

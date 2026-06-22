@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """generate_arch_diagram.py — Genera diagrama Mermaid de la arquitectura URA.
-Salida: docs/architecture.md
+Salida: docs/architecture.md.
 """
 
 import re
@@ -48,7 +48,7 @@ def get_git_branches() -> list[str]:
     return [b.strip().removeprefix("* ") for b in r.stdout.splitlines() if b.strip()]
 
 
-def generate():
+def generate() -> None:
     services = get_systemd_services()
     containers = get_docker_containers()
     branches = get_git_branches()
@@ -138,7 +138,6 @@ def generate():
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("\n".join(lines) + "\n")
-    print(f"Diagrama generado: {OUTPUT}")
 
 
 if __name__ == "__main__":

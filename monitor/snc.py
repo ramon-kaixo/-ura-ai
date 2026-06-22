@@ -454,7 +454,6 @@ def _limpiar_zombies() -> None:
         try:
             os.kill(pid, signal.SIGKILL)
             log_msg = f"💀 Zombie eliminado: PID {pid}"
-            print(log_msg)
             error_logger.log_error(context="SNC", gateway_status="ZOMBIE_KILLED", severity="WARN", message=log_msg)
         except (OSError, PermissionError):
             pass
@@ -523,7 +522,6 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
         (sandbox_dir / "nombre.txt").write_text(nombre)
         (sandbox_dir / "cpu.txt").write_text(f"{cpu}%")
         msg = f"🧊 Aislado: {nombre} PID {pid} ({cpu}% CPU)"
-        print(msg)
         _notify(msg, level="critical")
     except (OSError, PermissionError) as e:
         msg = f"Error aislando {nombre} PID {pid}: {e}"

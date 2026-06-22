@@ -43,7 +43,7 @@ def check_health() -> bool:
         return False
 
 
-def dump_checkpoint():
+def dump_checkpoint() -> None:
     if os.path.exists(STATE_FILE):
         try:
             with open(STATE_FILE) as f:
@@ -57,7 +57,7 @@ def dump_checkpoint():
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
-def _save_restart_to_qdrant():
+def _save_restart_to_qdrant() -> None:
     try:
         from motor.core.config import UraConfig
         from motor.core.qdrant_client import instancia
@@ -79,7 +79,7 @@ def _save_restart_to_qdrant():
         pass
 
 
-def restart_service():
+def restart_service() -> None:
     dump_checkpoint()
     _save_restart_to_qdrant()
     logger.critical("Reiniciando ura-mochila.service...")
@@ -96,16 +96,16 @@ def restart_service():
         else:
             logger.error("Fallo restart: %s", res.stderr.strip())
     except subprocess.TimeoutExpired:
-        logger.error("Timeout al reiniciar servicio")
+        logger.exception("Timeout al reiniciar servicio")
     except FileNotFoundError:
-        logger.error("systemctl no disponible")
+        logger.exception("systemctl no disponible")
 
 
 vram_critical_cycles = 0
 VRAM_PANIC_MB = 22000
 
 
-def check_vram_pressure():
+def check_vram_pressure() -> None:
     global vram_critical_cycles
     cmd = [
         "nvidia-smi",
@@ -189,7 +189,7 @@ def check_loop_latency() -> float:
 loop_latency_history: list[float] = []
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
     args = parser.parse_args()

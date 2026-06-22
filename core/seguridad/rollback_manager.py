@@ -6,14 +6,14 @@ logger = logging.getLogger("ura-seguridad")
 
 
 class RollbackManager:
-    def __init__(self, repo_path="/home/ramon/URA/ura_ia_1972/"):
+    def __init__(self, repo_path="/home/ramon/URA/ura_ia_1972/") -> None:
         self.repo_path = repo_path
         self.temp_suffix = ".ura_tmp"
 
     def _ejecutar_git(self, comando: list[str]) -> tuple[bool, str]:
         try:
             res = subprocess.run(
-                ["git"] + comando,
+                ["git", *comando],
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
@@ -21,7 +21,7 @@ class RollbackManager:
             )
             return True, res.stdout.strip()
         except subprocess.CalledProcessError as e:
-            logger.error(f"[GIT ERROR] Comando: {' '.join(comando)} | Error: {e.stderr}")
+            logger.exception(f"[GIT ERROR] Comando: {' '.join(comando)} | Error: {e.stderr}")
             return False, e.stderr.strip()
 
     def pre_write(self, target_file: str) -> bool:
@@ -42,7 +42,7 @@ class RollbackManager:
             f.write(content)
         return tmp_path
 
-    def rollback(self, target_file: str):
+    def rollback(self, target_file: str) -> None:
         tmp_path = target_file + self.temp_suffix
         rel_path = os.path.relpath(target_file, self.repo_path)
         logger.warning(f"[SECURITY] Ejecutando ROLLBACK en: {rel_path}")

@@ -60,7 +60,7 @@ async def _handle_tools_call(params: dict) -> dict:
         }
 
 
-async def main():
+async def main() -> None:
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
     await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)

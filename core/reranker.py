@@ -17,7 +17,7 @@ _session = None
 _init_lock = threading.Lock()
 
 
-def _ensure_model():
+def _ensure_model() -> None:
     global _tokenizer, _session
     if _session is not None and _tokenizer is not None:
         return
@@ -49,7 +49,7 @@ def _ensure_model():
     )
 
 
-def _export_to_onnx():
+def _export_to_onnx() -> None:
     from huggingface_hub import hf_hub_download
     from transformers import AutoTokenizer
 

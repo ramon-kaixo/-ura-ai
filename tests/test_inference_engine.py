@@ -30,7 +30,7 @@ def engine(mock_router, mock_client):
 
 class TestInferenciaStreamEngine:
     @pytest.mark.asyncio
-    async def test_slot_denied_yields_error(self, engine, mock_router, mock_client):
+    async def test_slot_denied_yields_error(self, engine, mock_router, mock_client) -> None:
         mock_router.adquirir_slot_vram.return_value = False
         tokens = []
         async for chunk in engine.ejecutar_inferencia_RAG(
@@ -43,7 +43,7 @@ class TestInferenciaStreamEngine:
         mock_router.liberar_slot_vram.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_cancelled_during_acquisition(self, engine, mock_router, mock_client):
+    async def test_cancelled_during_acquisition(self, engine, mock_router, mock_client) -> None:
         mock_router.adquirir_slot_vram = AsyncMock(side_effect=asyncio.CancelledError())
         tokens = []
         with pytest.raises(asyncio.CancelledError):
@@ -55,7 +55,7 @@ class TestInferenciaStreamEngine:
         assert tokens == []
 
     @pytest.mark.asyncio
-    async def test_streaming_happy_path(self, engine, mock_router, mock_client):
+    async def test_streaming_happy_path(self, engine, mock_router, mock_client) -> None:
         mock_router.adquirir_slot_vram.return_value = True
 
         async def _mock_chat(*args, **kwargs):
@@ -74,13 +74,13 @@ class TestInferenciaStreamEngine:
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")
 
     @pytest.mark.asyncio
-    async def test_slot_released_on_stream_cancel(self, engine, mock_router, mock_client):
+    async def test_slot_released_on_stream_cancel(self, engine, mock_router, mock_client) -> None:
         mock_router.adquirir_slot_vram.return_value = True
 
         async def _mock_chat(*args, **kwargs):
             yield {"message": {"content": "a"}}
             await asyncio.sleep(0)
-            raise asyncio.CancelledError()
+            raise asyncio.CancelledError
 
         mock_client.chat.return_value = _mock_chat()
         tokens = []
@@ -93,12 +93,13 @@ class TestInferenciaStreamEngine:
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")
 
     @pytest.mark.asyncio
-    async def test_stream_error_yields_error_chunk(self, engine, mock_router, mock_client):
+    async def test_stream_error_yields_error_chunk(self, engine, mock_router, mock_client) -> None:
         mock_router.adquirir_slot_vram.return_value = True
 
         async def _mock_chat(*args, **kwargs):
             yield {"message": {"content": "a"}}
-            raise RuntimeError("connection lost")
+            msg = "connection lost"
+            raise RuntimeError(msg)
 
         mock_client.chat.return_value = _mock_chat()
         tokens = []

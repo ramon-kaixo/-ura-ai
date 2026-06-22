@@ -2,11 +2,11 @@ import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 
-class CircuitState(str, Enum):
+class CircuitState(StrEnum):
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -33,7 +33,7 @@ class CircuitBreaker:
         recovery_timeout: float = 30.0,
         half_open_max_requests: int = 2,
         health_file: Path | None = None,
-    ):
+    ) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.half_open_max_requests = half_open_max_requests
@@ -61,7 +61,7 @@ class CircuitBreaker:
 
     def _persistir(self) -> None:
         raw = {p: asdict(h) for p, h in self._health.items()}
-        for p, d in raw.items():
+        for d in raw.values():
             d["state"] = d["state"].value if isinstance(d["state"], CircuitState) else d["state"]
         tmp = self._health_file.with_suffix(".tmp")
         self._health_file.parent.mkdir(parents=True, exist_ok=True)

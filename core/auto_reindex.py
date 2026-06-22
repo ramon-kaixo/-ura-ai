@@ -207,7 +207,7 @@ async def reindex_stale(dry_run: bool = True) -> dict:
     return stats
 
 
-def main():
+def main() -> None:
     import sys
 
     dry_run = "--execute" not in sys.argv

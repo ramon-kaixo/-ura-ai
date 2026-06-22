@@ -3,7 +3,7 @@
 Verifica:
 - DebateLock: lock/unlock atómico, context manager, limpieza
 - debate_engine: prompts, call_ollama (mock), run_debate (3 veredictos)
-- plan_validator: state files, format_context, exit codes
+- plan_validator: state files, format_context, exit codes.
 """
 
 import asyncio
@@ -22,13 +22,11 @@ def check(desc, expr, *args):
         result = expr(*args)
         if result is False:
             FAIL += 1
-            print(f"  FAIL: {desc}")
         else:
             PASS += 1
         return result
-    except Exception as e:
+    except Exception:
         FAIL += 1
-        print(f"  FAIL: {desc} → {e}")
         return False
 
 
@@ -113,8 +111,7 @@ import httpx
 
 async def _test_call_ollama_timeout():
     client = httpx.AsyncClient()
-    result = await call_ollama(client, "http://nonexistent:11434", "test-model", "test prompt", timeout=0.001)
-    return result
+    return await call_ollama(client, "http://nonexistent:11434", "test-model", "test prompt", timeout=0.001)
 
 
 check("TC5: call_ollama timeout returns None", lambda: asyncio.run(_test_call_ollama_timeout()) is None)
@@ -122,22 +119,21 @@ check("TC5: call_ollama timeout returns None", lambda: asyncio.run(_test_call_ol
 
 async def _test_call_ollama_json_decode_error():
     class MockResponse:
-        def raise_for_status(self):
+        def raise_for_status(self) -> None:
             pass
 
         async def json(self):
             return {"message": {"content": "not json at all"}}
 
     client = httpx.AsyncClient()
-    result = await call_ollama(client, "http://test:11434", "test-model", "test prompt", timeout=5)
-    return result
+    return await call_ollama(client, "http://test:11434", "test-model", "test prompt", timeout=5)
 
 
 # Create a mock transport that returns non-JSON content
 
 
 class MockTransport(httpx.AsyncBaseTransport):
-    def __init__(self, content: str = "not json at all", status: int = 200):
+    def __init__(self, content: str = "not json at all", status: int = 200) -> None:
         self._content = content
         self._status = status
 
@@ -154,15 +150,14 @@ class MockTransport(httpx.AsyncBaseTransport):
 async def _test_ollama_not_json():
     transport = MockTransport('{"message": {"content": "not json at all"}}')
     async with httpx.AsyncClient(transport=transport) as client:
-        result = await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
-    return result
+        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
 
 
 check("TC6: call_ollama bad JSON returns None", lambda: asyncio.run(_test_ollama_not_json()) is None)
 
 
 async def _test_ollama_markdown_json():
-    """Respuesta con markdown code block debe parsearse igual"""
+    """Respuesta con markdown code block debe parsearse igual."""
     transport = MockTransport(
         json.dumps(
             {
@@ -171,8 +166,7 @@ async def _test_ollama_markdown_json():
         ),
     )
     async with httpx.AsyncClient(transport=transport) as client:
-        result = await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
-    return result
+        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
 
 
 r = asyncio.run(_test_ollama_markdown_json())
@@ -183,7 +177,7 @@ check(
 
 
 async def _test_ollama_plain_json():
-    """Respuesta JSON plano (sin markdown)"""
+    """Respuesta JSON plano (sin markdown)."""
     transport = MockTransport(
         json.dumps(
             {
@@ -192,8 +186,7 @@ async def _test_ollama_plain_json():
         ),
     )
     async with httpx.AsyncClient(transport=transport) as client:
-        result = await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
-    return result
+        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
 
 
 r2 = asyncio.run(_test_ollama_plain_json())
@@ -220,7 +213,7 @@ def _make_auditor_response(score: float, risks=None, requires_human=False, reaso
 
 
 class MockTransportFactory:
-    def __init__(self, primary_resp: dict, auditor_resp: dict):
+    def __init__(self, primary_resp: dict, auditor_resp: dict) -> None:
         self.primary = primary_resp
         self.auditor = auditor_resp
         self.call_count = 0
@@ -246,14 +239,14 @@ async def _run_debate_mocked(primary_resp: dict, auditor_resp: dict, threshold: 
     transport = factory.build()
     async with httpx.AsyncClient(transport=transport) as _:
         # We need to monkey-patch the client used in run_debate
-        original = httpx.AsyncClient
+        pass
         # Can't easily inject transport into run_debate's internal client, so let's
         # use a different approach: test the scoring logic directly
     return cfg
 
 
 async def _direct_run_debate_test(primary: dict | None, auditor: dict | None, threshold: float = 0.85) -> dict:
-    """Simula run_debate internamente sin httpx"""
+    """Simula run_debate internamente sin httpx."""
     primary_score = primary.get("score", 0.0) if primary else 0.0
     auditor_score = auditor.get("score", 0.0) if auditor else 0.0
     consensus = min(primary_score, auditor_score)
@@ -488,8 +481,5 @@ check("TE5: file removed after double release", lambda: not os.path.exists("/tmp
 # ============================================================
 # RESULT
 # ============================================================
-print(f"\n{'=' * 50}")
-print(f"SDA TEST RESULTS: {PASS} passed, {FAIL} failed of {PASS + FAIL} total")
-print(f"{'=' * 50}")
 if __name__ == "__main__":
     sys.exit(0 if FAIL == 0 else 1)

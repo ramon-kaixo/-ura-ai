@@ -73,7 +73,7 @@ class Clasificador(Protocol):
 
 
 class ClasificadorKeyword:
-    def __init__(self, patrones: dict[str, list[str]] | None = None):
+    def __init__(self, patrones: dict[str, list[str]] | None = None) -> None:
         self.patrones = patrones or PATRONES_CLASIFICACION
 
     def clasificar(self, mensajes: list, task_hint: str | None = None) -> str:
@@ -102,7 +102,7 @@ class Router:
         providers: dict,
         rutas: dict[str, list[dict]] | None = None,
         clasificador: Clasificador | None = None,
-    ):
+    ) -> None:
         self.providers = providers
         self.rutas = rutas or RUTAS_POR_DEFECTO
         self.clasificador = clasificador or ClasificadorKeyword()
@@ -124,7 +124,8 @@ class Router:
             if p in self.providers:
                 return RouteResult(provider=p, modelo=entrada["modelo"], route_reason=f"keyword:{tipo}")
 
-        raise NoProviderAvailable(f"Ningún provider disponible para tipo={tipo}")
+        msg = f"Ningún provider disponible para tipo={tipo}"
+        raise NoProviderAvailable(msg)
 
     def route(
         self,

@@ -49,7 +49,7 @@ def _generate_variants(query_text: str) -> list[str]:
             for syn in synonyms[word]:
                 if len(variants) >= _MAX_VARIANTS:
                     break
-                variant = " ".join(words[:i] + [syn] + words[i + 1 :])
+                variant = " ".join([*words[:i], syn, *words[i + 1:]])
                 if variant not in seen:
                     variants.append(variant)
                     seen.add(variant)

@@ -25,6 +25,7 @@ import time
 import traceback
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Never
 
 logger = logging.getLogger("ura.watchdog")
 
@@ -111,8 +112,9 @@ class _TimeoutError(Exception):
     """Lanzada cuando una función excede su timeout."""
 
 
-def _timeout_handler(signum, frame):
-    raise _TimeoutError("Function timed out")
+def _timeout_handler(signum, frame) -> Never:
+    msg = "Function timed out"
+    raise _TimeoutError(msg)
 
 
 def watchdog(
@@ -139,7 +141,7 @@ def watchdog(
             # Señal solo funciona en el hilo principal
             if threading.current_thread() is threading.main_thread():
                 old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-                old_alarm = signal.alarm(int(timeout))
+                signal.alarm(int(timeout))
                 try:
                     return func(*args, **kwargs)
                 except _TimeoutError:
@@ -154,7 +156,7 @@ def watchdog(
                 exception = [None]
                 finished = [False]
 
-                def target():
+                def target() -> None:
                     try:
                         result[0] = func(*args, **kwargs)
                     except Exception as e:
@@ -234,16 +236,16 @@ class AsyncLoopMonitor(threading.Thread):
     Si la latencia supera el umbral, publica alerta en event_bus.
     """
 
-    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True):
+    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True) -> None:
         super().__init__(daemon=daemon)
         self.interval = interval
         self.threshold_ms = threshold_ms
         self._stop_event = threading.Event()
 
-    def stop(self):
+    def stop(self) -> None:
         self._stop_event.set()
 
-    def run(self):
+    def run(self) -> None:
         logger.info(
             "AsyncLoopMonitor iniciado (interval=%ds, threshold=%dms)",
             self.interval,
@@ -275,6 +277,5 @@ if __name__ == "__main__":
 
     if args.loop_latency:
         lat = check_loop_latency()
-        print(f"Loop latency: {lat:.2f}ms ({'OK' if lat < 100 else 'DEGRADADO'})")
     else:
         parser.print_help()

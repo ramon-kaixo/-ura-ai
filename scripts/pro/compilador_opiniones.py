@@ -21,10 +21,7 @@ TEMPERATURA_INFRA = 0.0
 
 def es_infraestructura(ruta: str) -> bool:
     """Determina si un archivo es de infraestructura (temperatura 0.0)."""
-    for prefijo in PRIORIDAD_INFRA:
-        if ruta.startswith(prefijo):
-            return True
-    return False
+    return any(ruta.startswith(prefijo) for prefijo in PRIORIDAD_INFRA)
 
 
 def validar_esquema(data: dict) -> bool:
@@ -62,11 +59,7 @@ def compilar_opinion(
     )
 
     for intento in range(reintentos + 1):
-        if intento > 0:
-            modelo_reintento = "qwen2.5-coder:32b"
-            print(f"  ↻ Reintento {intento} con {modelo_reintento}...")
-        else:
-            modelo_reintento = modelo
+        modelo_reintento = "qwen2.5-coder:32b" if intento > 0 else modelo
 
         try:
             import subprocess
@@ -79,9 +72,8 @@ def compilar_opinion(
                 check=False,
             )
             raw = result.stdout.strip()
-        except Exception as e:
+        except Exception:
             delay = (2**intento) + __import__("random").uniform(0, 1)
-            print(f"  ✗ Error ejecutando {modelo_reintento}: {e}. Esperando {delay:.1f}s...")
             __import__("time").sleep(delay)
             continue
 
@@ -89,15 +81,13 @@ def compilar_opinion(
         try:
             reparado = repair_json(raw)
             data = json.loads(reparado)
-        except Exception as e:
-            print(f"  ⚠ json_repair falló ({e}), reintentando...")
+        except Exception:
             continue
 
         if validar_esquema(data):
             data["modelo"] = modelo_reintento
             data["temperatura"] = temperatura
             return data
-        print("  ⚠ Esquema inválido (faltan campos), reintentando...")
 
     return None
 
@@ -107,6 +97,6 @@ if __name__ == "__main__":
     test_code = "def foo(x): return x + 1"
     r = compilar_opinion("qwen2.5-coder:32b", test_code, "core/test.py")
     if r:
-        print(f"  ✅ Opinión compilada: {json.dumps(r, indent=2)}")
+        pass
     else:
-        print("  ✗ No se pudo compilar opinión")
+        pass

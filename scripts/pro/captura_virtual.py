@@ -53,13 +53,9 @@ if __name__ == "__main__":
     c = CapturaVirtual()
     cmd = sys.argv[1:]
     if cmd:
-        print(f"Abriendo: {' '.join(cmd)}")
         proc = c.abrir(cmd)
         time.sleep(3)
         out = c.capturar("lanzamiento")
-        print(f"Captura: {out}" if out else "Falló captura")
         proc.terminate()
     else:
         out = c.capturar("test")
-        print(f"Captura test: {out}" if out else "Fallo captura")
-        print(f"Ventanas: {c.ventanas()}")

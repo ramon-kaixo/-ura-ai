@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rate Limiter para Model Router - Previene abusos por IP"""
+"""Rate Limiter para Model Router - Previene abusos por IP."""
 
 import time
 from collections import defaultdict
@@ -8,7 +8,7 @@ from collections import defaultdict
 class RateLimiter:
     """Rate limiter simple basado en sliding window."""
 
-    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 100, window_seconds: int = 60) -> None:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests: dict[str, list] = defaultdict(list)

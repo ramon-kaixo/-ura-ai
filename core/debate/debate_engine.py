@@ -33,8 +33,7 @@ CONFIG_PATH = Path(__file__).parent / "committee_config.json"
 
 def load_config() -> dict:
     with open(CONFIG_PATH) as f:
-        cfg = json.load(f)
-    return cfg
+        return json.load(f)
 
 
 def validar_esquema_salida(raw_output: str, schema_dict: dict | None = None) -> bool:
@@ -256,7 +255,7 @@ async def run_debate(
     }
 
 
-async def main_async():
+async def main_async() -> int:
     if len(sys.argv) > 1 and sys.argv[1] == "--plan":
         plan_path = sys.argv[2]
         with open(plan_path) as f:
@@ -274,7 +273,7 @@ async def main_async():
     return 0 if result.get("verdict") == "CONSENSUS" else 1
 
 
-def main():
+def main() -> None:
     exit_code = asyncio.run(main_async())
     sys.exit(exit_code)
 

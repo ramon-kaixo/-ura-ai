@@ -4,7 +4,7 @@ from collections import defaultdict
 
 
 class RateLimiter:
-    def __init__(self):
+    def __init__(self) -> None:
         self._ventanas: dict[str, list[float]] = defaultdict(list)
         self._por_defecto = int(os.environ.get("MOCHILA_RATE_LIMIT_DEFAULT", "30"))
         self._limites: dict[str, int] = {}

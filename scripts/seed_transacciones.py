@@ -62,10 +62,8 @@ def _distancia_coseno(a: list[float], b: list[float]) -> float:
 
 
 def main() -> None:
-    print("Conectando a Qdrant...")
     qdrant = QdrantClient.instancia(UraConfig.load())
     if not qdrant.disponible:
-        print("ERROR: Qdrant no disponible")
         sys.exit(1)
 
     guardadas = 0
@@ -92,20 +90,13 @@ def main() -> None:
         ok = qdrant.guardar_documento(tx_id, raw, payload, collection=COLECCION_TRANSACCIONES)
         if ok:
             guardadas += 1
-            print(f"  [{i + 1}/10] {tx_id}: distance={distancia:.4f} {'⚠️' if distancia > 0.3 else '✅'}")
         else:
-            print(f"  [{i + 1}/10] {tx_id}: FALLO al guardar")
+            pass
 
-    media = sum(distancias) / len(distancias) if distancias else 0
-    print()
-    print(f"Guardadas: {guardadas}/10 transacciones")
-    print(f"Distancia media RAW vs STRUCT: {media:.4f}")
-    print(f"Transacciones con alerta (dist > 0.3): {sum(1 for d in distancias if d > 0.3)}/{len(distancias)}")
-    print()
+    sum(distancias) / len(distancias) if distancias else 0
     if guardadas > 0:
-        print("Seed completado. Ahora /v2/interact debería devolver distance < 1.0")
+        pass
     else:
-        print("ERROR: No se guardó ninguna transacción")
         sys.exit(1)
 
 

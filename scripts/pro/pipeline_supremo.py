@@ -183,9 +183,7 @@ def verificar_consenso_SDA(propuesta_plan: str) -> bool:
     if proc.returncode == 0:
         return True
     if proc.returncode == 2:
-        print("[SDA WARNING] REQUERIDA ARBITRACION HUMANA. Deteniendo pipeline.")
         return False
-    print(f"[SDA ERROR] Fallo interno o rechazo del comite: {proc.stderr[:500]}")
     return False
 
 
@@ -210,7 +208,6 @@ def ejecutar(ruta):
     chromatic_map = poda_result.get("mapa_cromatico")
 
     if not verificar_consenso_SDA(f"Refactorizar {ruta.name} en {ruta.parent.name}"):
-        print("[PIPELINE] Abortando: El Comite Local bloqueo el plan.")
         report["resultado"] = "BLOQUEADO_SDA"
         return report
 
@@ -301,10 +298,8 @@ def main() -> None:
         return
 
     if args.task:
-        print(f"[SDA] Evaluando plan: {args.task}")
         ok = verificar_consenso_SDA(args.task)
         if ok:
-            print("[SDA] CONSENSUS alcanzado. Procediendo con pipeline.")
             if args.archivo:
                 ruta = Path(args.archivo)
             else:
@@ -316,10 +311,9 @@ def main() -> None:
                 json.dumps(report, indent=2, ensure_ascii=False),
             )
             if args.json:
-                print(json.dumps(report, indent=2, ensure_ascii=False))
+                pass
             else:
                 resultado = report.get("resultado", "?")
-                print(f"[PIPELINE] Resultado: {resultado}")
                 if resultado in ("BLOQUEADO_SDA", "ROLLBACK", "RECHAZADO"):
                     sys.exit(2)
                 elif resultado == "ESCRIBIR":

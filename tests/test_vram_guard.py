@@ -8,7 +8,7 @@ from core.model_router import ConcurrentVRAMGuard, vram_guard
 
 
 class TestVRAMGuard:
-    def test_metricas_structure(self):
+    def test_metricas_structure(self) -> None:
         m = vram_guard.metricas()
         assert "max_concurrent" in m
         assert "slots_disponibles" in m
@@ -18,12 +18,12 @@ class TestVRAMGuard:
         assert "total_timeout" in m
         assert "total_processed" in m
 
-    def test_slots_disponibles_property(self):
+    def test_slots_disponibles_property(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=2)
         assert g.slots_disponibles == 2
 
     @pytest.mark.asyncio
-    async def test_acquire_release_happy_path(self):
+    async def test_acquire_release_happy_path(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5)
         ok = await g.adquirir_slot_vram("test-model")
         assert ok is True
@@ -32,7 +32,7 @@ class TestVRAMGuard:
         assert g.slots_disponibles == 1
 
     @pytest.mark.asyncio
-    async def test_timeout_returns_false(self):
+    async def test_timeout_returns_false(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=0.1)
         ok1 = await g.adquirir_slot_vram("m1")
         assert ok1 is True
@@ -40,7 +40,7 @@ class TestVRAMGuard:
         assert ok2 is False
 
     @pytest.mark.asyncio
-    async def test_cancelled_error_propagates(self):
+    async def test_cancelled_error_propagates(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5)
         adquirido = await g.adquirir_slot_vram("m1")
         assert adquirido is True
@@ -53,7 +53,7 @@ class TestVRAMGuard:
         await g.liberar_slot_vram("m1")
 
     @pytest.mark.asyncio
-    async def test_metricas_after_operations(self):
+    async def test_metricas_after_operations(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5)
         await g.adquirir_slot_vram("m1")
         await g.liberar_slot_vram("m1")
@@ -63,20 +63,20 @@ class TestVRAMGuard:
         assert m["max_concurrent"] == 1
 
     @pytest.mark.asyncio
-    async def test_ejecutar_inferencia_segura_happy(self):
+    async def test_ejecutar_inferencia_segura_happy(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5)
 
-        async def dummy():
+        async def dummy() -> str:
             return "ok"
 
         result = await g.ejecutar_inferencia_segura(dummy)
         assert result == "ok"
 
     @pytest.mark.asyncio
-    async def test_ejecutar_inferencia_segura_enqueue_metric(self):
+    async def test_ejecutar_inferencia_segura_enqueue_metric(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5)
 
-        async def dummy():
+        async def dummy() -> str:
             return "ok"
 
         result = await g.ejecutar_inferencia_segura(dummy)

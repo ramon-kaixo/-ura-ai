@@ -26,8 +26,9 @@ async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: i
             response = await client.post(url, json=payload)
             if response.status_code in (429, 502, 503, 504):
                 logger.warning("API saturada (HTTP %s). Aplicando backoff...", response.status_code)
+                msg = "Servicio temporalmente indisponible"
                 raise httpx.HTTPStatusError(
-                    "Servicio temporalmente indisponible",
+                    msg,
                     request=response.request,
                     response=response,
                 )
@@ -35,17 +36,18 @@ async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: i
             return response.json()
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             if intento == max_retries - 1:
-                logger.error("Agotados %d reintentos. Fallo: %s", max_retries, e)
+                logger.exception("Agotados %d reintentos. Fallo: %s", max_retries, e)
                 raise
             base_delay = 2**intento
             jitter = random.uniform(0.5, 1.5)
             delay = base_delay * jitter
             logger.info("[Reintento %d/%d] Esperando %.2fs...", intento + 1, max_retries, delay)
             await asyncio.sleep(delay)
+    return None
 
 
 class OpenCodeWrapper:
-    def __init__(self, repo_path: str | None = None):
+    def __init__(self, repo_path: str | None = None) -> None:
         self.rollback = RollbackManager(repo_path=repo_path or "/home/ramon/URA/ura_ia_1972")
         self._http = httpx.AsyncClient(timeout=180.0)
 
@@ -194,5 +196,5 @@ class OpenCodeWrapper:
         logger.critical(msg)
         return False, msg
 
-    async def close(self):
+    async def close(self) -> None:
         await self._http.aclose()

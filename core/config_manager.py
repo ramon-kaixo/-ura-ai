@@ -25,7 +25,8 @@ def _detect_profile_key() -> str:
         host = platform.node().lower()
         asus_hosts = ("gx10", "gx10-64c3", "asus")
         return "linux_asus" if any(h in host for h in asus_hosts) else "linux_terminal"
-    raise RuntimeError(f"Sistema operativo no soportado: {system}")
+    msg = f"Sistema operativo no soportado: {system}"
+    raise RuntimeError(msg)
 
 
 def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:

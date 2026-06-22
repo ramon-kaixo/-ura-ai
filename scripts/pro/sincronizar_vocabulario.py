@@ -36,8 +36,7 @@ def _dump_conn(conn) -> str:
     return "\n".join(lines)
 
 
-def sincronizar():
-    print("🔄 Sincronización bidireccional de vocabulario...")
+def sincronizar() -> None:
 
     # 1. Local → Remoto
     if os.path.exists(DB_LOCAL):
@@ -53,7 +52,6 @@ def sincronizar():
         )
         cmd = f"sqlite3 {DB_ASUS} < {DUMP_REMOTO} && rm {DUMP_REMOTO}"
         subprocess.run(["ssh", ASUS_SSH, cmd], check=True, capture_output=True)
-        print("➡️  Mac → ASUS: OK")
 
     # 2. Remoto → Local
     result = subprocess.run(
@@ -72,13 +70,10 @@ def sincronizar():
         conn.executescript(f.read())
 
     os.remove(DUMP_LOCAL)
-    print("⬅️  ASUS → Mac: OK")
-    print("✅ Bases de datos homogéneas en ambos nodos.")
 
 
 if __name__ == "__main__":
     try:
         sincronizar()
-    except Exception as e:
-        print(f"❌ Error de sincronización: {e}", file=sys.stderr)
+    except Exception:
         sys.exit(1)

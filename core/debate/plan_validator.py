@@ -143,7 +143,7 @@ def format_context_for_prompt(context: dict) -> str:
     return "\n".join(parts)
 
 
-def main():
+def main() -> None:
     context = collect_context()
 
     if len(sys.argv) > 1 and sys.argv[1] == "--debate":

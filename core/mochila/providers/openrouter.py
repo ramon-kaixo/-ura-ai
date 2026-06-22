@@ -11,7 +11,7 @@ OPENROUTER_TIMEOUT = int(os.environ.get("MOCHILA_OPENROUTER_TIMEOUT", "60"))
 
 
 class OpenRouterProvider(Provider):
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
 
     @property
@@ -32,8 +32,9 @@ class OpenRouterProvider(Provider):
         temperature: float = 0.0,
     ) -> AsyncGenerator[dict, None]:
         if not self.api_key:
+            msg = "OPENROUTER_API_KEY no configurada"
             raise ProviderError(
-                "OPENROUTER_API_KEY no configurada",
+                msg,
                 provider=self.nombre,
             )
 
@@ -62,8 +63,9 @@ class OpenRouterProvider(Provider):
                 ) as resp:
                     if resp.is_error:
                         text = await resp.aread()
+                        msg = f"OpenRouter error: {resp.status_code} {text.decode(errors='replace')[:200]}"
                         raise ProviderError(
-                            f"OpenRouter error: {resp.status_code} {text.decode(errors='replace')[:200]}",
+                            msg,
                             provider=self.nombre,
                             status_code=resp.status_code,
                         )
@@ -85,8 +87,9 @@ class OpenRouterProvider(Provider):
                     headers=headers,
                 )
                 if resp.is_error:
+                    msg = f"OpenRouter error: {resp.status_code} {resp.text[:200]}"
                     raise ProviderError(
-                        f"OpenRouter error: {resp.status_code} {resp.text[:200]}",
+                        msg,
                         provider=self.nombre,
                         status_code=resp.status_code,
                     )
