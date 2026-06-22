@@ -37,8 +37,7 @@ preflight() {
     echo ""; echo "=== 🩺 Preflight ==="
     local ok=true
 
-    # ¿Ejecutamos como root?
-    # ¿Ejecutamos como root?
+    # ¿Existen los archivos fuente?
     for svc in "${SERVICES[@]}"; do
         for f in ${SERVICE_FILES[$svc]}; do
             if [[ ! -f "$REPO_DIR/$f" ]]; then
@@ -133,7 +132,7 @@ apply_and_restart() {
     local svc
     for svc in "snc" "model-router"; do
         info "Reiniciando $svc..."
-        if $SUDO systemctl restart "$svc" 2>/dev/null; then
+        if $SUDO systemctl restart "$svc"; then
             if health_check "$svc"; then
                 ok "$svc reiniciado y saludable"
             else
@@ -191,7 +190,7 @@ do_rollback() {
         for f in ${SERVICE_FILES[$svc]}; do
             local backup_file="$latest/$f"
             if [[ -f "$backup_file" ]]; then
-                cp "$backup_file" "$REPO_DIR/$f"
+                $SUDO cp "$backup_file" "$REPO_DIR/$f"
                 ok "$f restaurado"
             else
                 warn "$f no encontrado en backup (se salta)"
@@ -208,7 +207,7 @@ reiniciar_servicios() {
     echo ""; echo "=== 🔄 Reiniciando servicios post-cambio ==="
     for svc in "snc" "model-router"; do
         info "Reiniciando $svc..."
-        $SUDO systemctl restart "$svc" 2>/dev/null || { fail "Fallo al reiniciar $svc"; return 1; }
+        $SUDO systemctl restart "$svc" || { fail "Fallo al reiniciar $svc"; return 1; }
         health_check "$svc" || return 1
     done
 }

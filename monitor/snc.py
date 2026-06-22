@@ -393,12 +393,11 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 
 def check_opencode_colgado() -> bool:
     """Detecta si OpenCode está congelado (CPU alta + sin respuesta).
-    Busca el binario exacto 'opencode-server' para evitar falsos positivos
-    de pgrep -f sobre rutas/archivos que contengan 'opencode' en el nombre.
+    Busca el binario exacto 'opencode' (no -f parcial) para evitar falsos positivos.
     """
     try:
         pid = subprocess.run(
-            ["pgrep", "-x", "opencode-server"], capture_output=True, text=True, timeout=5,
+            ["pgrep", "-x", "opencode"], capture_output=True, text=True, timeout=5,
         )
         if not pid.stdout.strip():
             return False
