@@ -11,7 +11,8 @@ class RateLimiter:
 
 
     def _cargar_config(self, config_file: str | None = None) -> None:
-        import json, os
+        import json
+        import os
         path = config_file or os.path.expanduser("~/.nervioso/rate_limits.json")
         try:
             with open(path) as f:

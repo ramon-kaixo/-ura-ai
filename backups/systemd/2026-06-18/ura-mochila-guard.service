@@ -1,0 +1,9 @@
+[Unit]
+Description=URA File Guard — Restaura SOLO archivos borrados (quirúrgico)
+
+[Service]
+Type=oneshot
+User=ramon
+ExecStart=/bin/bash -c 'cd /home/ramon/URA/ura_ia_1972; for f in core/mochila/__init__.py core/mochila/mochila_server.py core/mochila/tools.py core/mochila/circuit_breaker.py core/mochila/cost_tracker.py core/mochila/rate_limiter.py core/mochila/router.py core/mochila/providers/__init__.py core/mochila/providers/base.py core/mochila/providers/ollama.py core/mochila/providers/openrouter.py core/mochila/providers/gemini.py core/mochila/providers/groq.py core/mochila/providers/deepseek.py core/memoria/__init__.py core/memoria/ficha.py core/memoria/detector.py core/memoria/ingesto.py core/memoria/compresor.py core/memoria/qdrant_store.py core/memoria/bridge.py core/memoria/consulta.py core/memoria/analizador.py core/memoria/sintetizador.py core/memoria/archivo.py core/memoria/vigilante.py core/memoria/limpieza.py core/memoria/detectores.py core/memoria/extractores/__init__.py core/memoria/extractores/html_extractor.py core/memoria/extractores/pdf_extractor.py core/memoria/extractores/imagen_extractor.py core/memoria/extractores/media_extractor.py core/memoria/extractores/office_extractor.py core/memoria/extractores/video_pipeline.py core/memoria/rastreadores/__init__.py core/memoria/rastreadores/saber.py core/memoria/rastreadores/hacer.py core/memoria/rastreadores/comprar.py tests/test_mochila.py; do [ -f "$f" ] || git checkout HEAD -- "$f" 2>/dev/null; done; true'
+StandardOutput=journal
+StandardError=journal

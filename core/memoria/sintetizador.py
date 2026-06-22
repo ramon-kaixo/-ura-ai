@@ -36,7 +36,7 @@ Informe:"""
 
 
 async def sintetizar(peticion: str) -> dict:
-    ideas = buscar_ideas(peticion, limit=15)
+    ideas = await buscar_ideas(peticion, limit=15)
     if not ideas:
         return {
             "peticion": peticion,

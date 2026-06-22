@@ -1,3 +1,4 @@
+from datetime import UTC
 import json
 import os
 import logging
@@ -12,7 +13,7 @@ def save_checkpoint(task_id: str, target_file: str, content: str, attempt: int =
         "target_file": target_file,
         "content": content,
         "attempt": attempt,
-        "timestamp": __import__("datetime").datetime.now().isoformat(),
+        "timestamp": __import__("datetime").datetime.now(UTC).isoformat(),
     }
     try:
         with open(STATE_FILE, "w") as f:

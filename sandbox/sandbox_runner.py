@@ -1,7 +1,6 @@
 import json
 import logging
 import subprocess
-import time
 
 from core.logs.guardian_logger import log_event
 

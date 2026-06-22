@@ -11,7 +11,12 @@
   Firma: Ramon Esnaola (K0513893926)
 """
 
-import contextlib, json, os, subprocess, sys, time
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 try:
@@ -117,7 +122,7 @@ def bypass_linksys():
                 ".bypass-link",
                 ".continue-link",
             ]
-            
+
             # Try to find the bypass link
             found = find_and_click(page, bypass_selectors, timeout=3000)
             if not found:
@@ -148,12 +153,12 @@ def bypass_linksys():
             if password_field:
                 password_field.fill(RECOVERY_KEY)
                 print(f"  Password introducida: {RECOVERY_KEY}")
-                
+
                 # Esperar a que JS cifre el password (RSA) y submit el formulario
                 time.sleep(1)
                 password_field.press("Enter")
                 time.sleep(5)  # Esperar a que cargue el dashboard
-                
+
                 # Verificar si el login fue exitoso
                 page.wait_for_load_state("networkidle", timeout=10000)
                 content = page.content()
@@ -169,7 +174,7 @@ def bypass_linksys():
 
             # ── PASO 4: Navegar a Port Forwarding ──
             print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
-            
+
             # Menu items in order of navigation (Linksys Velop UI)
             menu_items = [
                 ("Security", ["Security", "Seguridad"]),

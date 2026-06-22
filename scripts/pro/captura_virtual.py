@@ -1,6 +1,9 @@
 """captura_virtual.py — Captura programatica en Xvfb :99."""
 from __future__ import annotations
-import os, subprocess, sys, time
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 DISPLAY = ":99"

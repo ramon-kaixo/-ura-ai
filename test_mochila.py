@@ -1,7 +1,6 @@
 """Test mochila_engine."""
-import asyncio, sys, pytest
+import pytest
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mochila_engine import MochilaEngine, FaseID, TipoPipeline
 
 m = MochilaEngine.nueva("https://ejemplo.com/img.jpg", TipoPipeline.IMAGEN, "p")

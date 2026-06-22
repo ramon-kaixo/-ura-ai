@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Model Router Enhanced - Con prompt caching, fallback system, dashboard y POWER_MODE."""
 
+
+from path_setup import setup_path  # noqa: E402
+setup_path()  # noqa: E402
+import asyncio
 import hashlib
 import http.server
 import json
@@ -11,17 +15,17 @@ import time
 import urllib.error
 import urllib.request
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 import sys
-sys.path.insert(0, '/usr/local/bin')
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from router_rate_limiter import rate_limiter
 except ImportError:
     class _NoOpRateLimiter:
         def check(self, *args, **kwargs): return True
+        def is_allowed(self, *args, **kwargs): return True
         def wait_if_needed(self, *args, **kwargs): pass
         def get_metrics(self, *args, **kwargs): return {}
     rate_limiter = _NoOpRateLimiter()
@@ -40,6 +44,23 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+# ===== SEGURIDAD: Preflight de politicas (Tareas 0.3 y 0.6) =====
+BYPASS_FILE = Path("/home/ramon/.openclaw/bypass_config.json")
+
+def verificar_politicas_seguridad_preflight():
+    """Fuerza el cumplimiento de las tareas 0.3 y 0.6. Detiene el servicio si hay configs inseguras."""
+    if BYPASS_FILE.exists():
+        print(f"[ALERTA CRÍTICA] Destruyendo bypass de red inseguro en {BYPASS_FILE}")
+        BYPASS_FILE.unlink(missing_ok=True)
+    os.environ["URA_AUTH_ENABLED"] = "true"
+    token_valido = os.getenv("OPENCLAW_GATEWAY_TOKEN")
+    if not token_valido:
+        print("[-] ERROR FULMINANTE: No se ha detectado OPENCLAW_GATEWAY_TOKEN. Abortando startup por seguridad.")
+        sys.exit(78)
+
+verificar_politicas_seguridad_preflight()
+# ===== FIN PREFLIGHT =====
+
 try:
     from core.config_manager import get_ollama_urls
 except ImportError:
@@ -48,6 +69,93 @@ except ImportError:
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
+
+
+class ConcurrentVRAMGuard:
+    """Semáforo asíncrono con TTL y telemetría para control de VRAM."""
+
+    def __init__(self, max_concurrent_jobs: int = 1, ttl_segundos: float = 30.0):
+        self._semaphore = asyncio.Semaphore(max_concurrent_jobs)
+        self._ttl = ttl_segundos
+        self._total_enqueue: int = 0
+        self._total_timeout: int = 0
+        self._total_processed: int = 0
+
+    @property
+    def slots_disponibles(self) -> int:
+        return self._semaphore._value
+
+    @property
+    def esperando_cola(self) -> int:
+        return self._semaphore._waiters
+
+    def metricas(self) -> dict:
+        return {
+            "max_concurrent": self._semaphore._value,
+            "slots_disponibles": self.slots_disponibles,
+            "esperando_cola": self.esperando_cola,
+            "ttl_segundos": self._ttl,
+            "total_enqueue": self._total_enqueue,
+            "total_timeout": self._total_timeout,
+            "total_processed": self._total_processed,
+        }
+
+    async def ejecutar_inferencia_segura(self, corrutina_inferencia, *args, **kwargs):
+        tiempo_entrada = time.time()
+        self._total_enqueue += 1
+        async with self._semaphore:
+            espera = time.time() - tiempo_entrada
+            if espera > self._ttl:
+                self._total_timeout += 1
+                log.warning("[VRAM] Petición descartada — TTL expirado (esperó %.1fs > %ds)", espera, self._ttl)
+                return {"error": "Timeout en cola de espera", "status_code": 504}
+            self._total_processed += 1
+            log.debug("[VRAM] Slot adquirido tras %.1fs de espera", espera)
+            return await corrutina_inferencia(*args, **kwargs)
+
+    async def adquirir_slot_vram(self, modelo: str, ttl: float | None = None) -> bool:
+        """Adquiere slot de VRAM para streaming. Retorna False si TTL expira."""
+        try:
+            ttl_actual = ttl if ttl is not None else self._ttl
+            await asyncio.wait_for(self._semaphore.acquire(), timeout=ttl_actual)
+            self._total_processed += 1
+            log.debug("[VRAM] Slot adquirido para streaming modelo=%s", modelo)
+            return True
+        except asyncio.TimeoutError:
+            self._total_timeout += 1
+            log.warning("[VRAM] Timeout adquiriendo slot para modelo=%s", modelo)
+            return False
+
+    async def liberar_slot_vram(self, modelo: str) -> None:
+        """Libera slot de VRAM. Se llama SIEMPRE desde finally."""
+        self._semaphore.release()
+        log.debug("[VRAM] Slot liberado para modelo=%s", modelo)
+
+
+vram_guard = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=30.0)
+
+
+async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+    return await vram_guard.ejecutar_inferencia_segura(
+        _proxy_request_async, path, body, method, modelo, tipo, client_ip,
+    )
+
+
+async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
+    log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
+    import asyncio as _asyncio
+    return await _asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
+
+
+def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+    """Sync wrapper de _proxy_con_guardia_vram para usar desde do_POST (sync)."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_proxy_con_guardia_vram(path, body, method, modelo, tipo, client_ip))
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(asyncio.run, _proxy_con_guardia_vram(path, body, method, modelo, tipo, client_ip))
+        return future.result()
 
 
 def _is_local_ip(ip: str) -> bool:
@@ -557,7 +665,7 @@ def _render_dashboard() -> str:
     elif POWER_MODE.upper() == "TURBO":
         power_hint = "Toda la inferencia va a ASUS. Fallback local bloqueado."
     else:
-        power_hint = "Toda la inferencia va al Mac local." 
+        power_hint = "Toda la inferencia va al Mac local."
     if lat < 0:
         latency_class = "value-red"
         asus_latency = "N/A"
@@ -611,238 +719,243 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             cls._cache_ts = time.time()
         return cls._modelos_cache
 
-    def do_GET(self) -> None:
+    def _send_json(self, data: dict, status: int = 200) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
+
+    def _send_html(self, html: str, status: int = 200) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(html.encode("utf-8"))
+
+    def _send_text(self, text: str, status: int = 200) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(text.encode())
+
+    def _check_rate_limit(self) -> bool:
         if not rate_limiter.is_allowed(self.client_address[0]):
-            self.send_response(429)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": "Rate limit: 100 req/min por IP"}).encode())
+            self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
+            return False
+        return True
+
+    def _handle_api_tags(self) -> None:
+        status, headers, body = proxy_request("/api/tags", None, "GET", client_ip=self.client_address[0])
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _handle_api_version(self) -> None:
+        self._send_json({
+            "service": "model_router", "version": "2.2",
+            "ollama": OLLAMA_URL, "port": ROUTER_PORT,
+            "power_mode": POWER_MODE.upper(),
+            "routes": {k: v["descripcion"] for k, v in MODELO_ROUTES.items()},
+            "features": ["prompt_caching", "fallback_system", "metrics",
+                         "adaptive_routing", "per_model_temperature",
+                         "dashboard", "power_mode", "context_checker"],
+        })
+
+    def _handle_health(self) -> None:
+        if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
+            self._send_json({"error": "Forbidden"}, 403)
+            return
+        disponibles = self._get_modelos()
+        ollama_ok = len(disponibles) > 0
+        self._send_json({
+            "status": "ok" if ollama_ok else "degraded",
+            "ollama": "reachable" if ollama_ok else "unreachable",
+            "models_available": len(disponibles),
+            "ollama_url": OLLAMA_URL,
+            "power_mode": POWER_MODE.upper(),
+            "cache_size": len(prompt_cache.cache),
+            "metrics_enabled": True,
+        }, 200 if ollama_ok else 503)
+
+    def _handle_metrics(self) -> None:
+        self._send_text(metrics.get_prometheus_format())
+
+    def _handle_supervisor(self) -> None:
+        if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
+            self._send_json({"error": "Forbidden: X-API-KEY inválido o faltante"}, 403)
+            return
+        supervisor_data = "{}"
+        ctx = None
+        sock = None
+        try:
+            import zmq
+            ctx = zmq.Context()
+            sock = ctx.socket(zmq.REQ)
+            sock.setsockopt(zmq.RCVTIMEO, 3000)
+            sock.connect("ipc:///tmp/ura-supervisor.ipc")
+            sock.send(b"status")
+            supervisor_data = sock.recv().decode()
+        except Exception as e:
+            log.warning(f"Error conectando a supervisor IPC: {e}")
+            supervisor_data = json.dumps({"error": "supervisor no accesible"})
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
+            if ctx:
+                try:
+                    ctx.term()
+                except Exception:
+                    pass
+        self._send_json(json.loads(supervisor_data) if isinstance(supervisor_data, str) else supervisor_data)
+
+    def _handle_status(self) -> None:
+        html = "<html><head><title>URA System Status</title><meta charset='utf-8'><style>"
+        html += "body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}"
+        html += "h1{color:#58a6ff}.ok{color:#3fb950}.err{color:#f85149}"
+        html += ".grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}"
+        html += ".card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px}"
+        html += ".card h3{color:#8b949e;margin:0 0 8px 0;font-size:14px;text-transform:uppercase}"
+        html += "</style></head><body>"
+        html += "<h1>URA System Status</h1><div class='grid'>"
+
+        tasks_data = []
+        ctx = None
+        sock = None
+        try:
+            import zmq
+            ctx = zmq.Context()
+            sock = ctx.socket(zmq.REQ)
+            sock.setsockopt(zmq.RCVTIMEO, 3000)
+            sock.connect("ipc:///tmp/ura-supervisor.ipc")
+            sock.send(b"tasks")
+            tasks_data = json.loads(sock.recv())
+        except Exception:
+            pass
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
+            if ctx:
+                try:
+                    ctx.term()
+                except Exception:
+                    pass
+
+        healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
+        html += "<div class='card'><h3>Corrutinas</h3>"
+        html += f"<div style='font-size:24px;font-weight:bold;color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
+        html += "<div style='margin-top:8px'>"
+        for t in sorted(tasks_data, key=lambda x: x["name"]):
+            ok = not t["done"] and t.get("last_error") is None
+            icon = "●" if ok else "○"
+            color = "#3fb950" if ok else "#f85149"
+            html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
+        html += "</div></div></div>"
+        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
+        html += "</body></html>"
+        self._send_html(html)
+
+    def _handle_api_search(self, query: str) -> None:
+        results = []
+        try:
+            from core.search_engine import search as fts_search
+            results = fts_search(query)
+        except Exception as e:
+            log.warning("search_engine falló: %s", e)
+        self._send_json({"query": query, "results": results, "total": len(results)})
+
+    def _proxy_get(self) -> None:
+        status, headers, body = proxy_request(self.path, None, "GET", client_ip=self.client_address[0])
+        self.send_response(status)
+        self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:
+        if not self._check_rate_limit():
             return
         if self.path in {"/api/tags", "/api/tags/"}:
-            status, headers, body = proxy_request("/api/tags", None, "GET", client_ip=self.client_address[0])
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(body)
+            self._handle_api_tags()
         elif self.path in {"/api/version", "/"}:
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "service": "model_router", "version": "2.2",
-                "ollama": OLLAMA_URL, "port": ROUTER_PORT,
-                "power_mode": POWER_MODE.upper(),
-                "routes": {k: v["descripcion"] for k, v in MODELO_ROUTES.items()},
-                "features": ["prompt_caching", "fallback_system", "metrics",
-                             "adaptive_routing", "per_model_temperature",
-                             "dashboard", "power_mode", "context_checker"],
-            }).encode())
+            self._handle_api_version()
         elif self.path == "/health":
-            if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
-                self.send_response(403)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Forbidden"}).encode())
-                return
-            disponibles = self._get_modelos()
-            ollama_ok = len(disponibles) > 0
-            self.send_response(200 if ollama_ok else 503)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": "ok" if ollama_ok else "degraded",
-                "ollama": "reachable" if ollama_ok else "unreachable",
-                "models_available": len(disponibles),
-                "ollama_url": OLLAMA_URL,
-                "power_mode": POWER_MODE.upper(),
-                "cache_size": len(prompt_cache.cache),
-                "metrics_enabled": True,
-            }).encode())
+            self._handle_health()
         elif self.path == "/metrics":
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
-            self.end_headers()
-            self.wfile.write(metrics.get_prometheus_format().encode())
+            self._handle_metrics()
+        elif self.path == "/vram/status":
+            self._send_json(vram_guard.metricas())
         elif self.path == "/supervisor":
-            if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
-                self.send_response(403)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Forbidden: X-API-KEY inválido o faltante"}).encode())
-                return
-            supervisor_data = "{}"
-            ctx = None
-            sock = None
-            try:
-                import zmq
-                ctx = zmq.Context()
-                sock = ctx.socket(zmq.REQ)
-                sock.setsockopt(zmq.RCVTIMEO, 3000)
-                sock.connect("ipc:///tmp/ura-supervisor.ipc")
-                sock.send(b"status")
-                supervisor_data = sock.recv().decode()
-            except Exception as e:
-                log.warning(f"Error conectando a supervisor IPC: {e}")
-                supervisor_data = json.dumps({"error": "supervisor no accesible"})
-            finally:
-                if sock:
-                    try:
-                        sock.close()
-                    except Exception:
-                        pass
-                if ctx:
-                    try:
-                        ctx.term()
-                    except Exception:
-                        pass
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(supervisor_data.encode())
+            self._handle_supervisor()
         elif self.path == "/status":
-            html = "<html><head><title>URA System Status</title><meta charset='utf-8'><style>"
-            html += "body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}"
-            html += "h1{color:#58a6ff}.ok{color:#3fb950}.err{color:#f85149}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}"
-            html += ".card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px}"
-            html += ".card h3{color:#8b949e;margin:0 0 8px 0;font-size:14px;text-transform:uppercase}"
-            html += "</style></head><body>"
-            html += "<h1>URA System Status</h1><div class='grid'>"
-
-            # Get tasks from IPC
-            tasks_data = []
-            ctx = None
-            sock = None
-            try:
-                import zmq
-                ctx = zmq.Context()
-                sock = ctx.socket(zmq.REQ)
-                sock.setsockopt(zmq.RCVTIMEO, 3000)
-                sock.connect("ipc:///tmp/ura-supervisor.ipc")
-                sock.send(b"tasks")
-                tasks_data = json.loads(sock.recv())
-            except Exception as e:
-                log.warning(f"Error conectando a supervisor IPC (tasks): {e}")
-            finally:
-                if sock:
-                    try:
-                        sock.close()
-                    except Exception:
-                        pass
-                if ctx:
-                    try:
-                        ctx.term()
-                    except Exception:
-                        pass
-
-            healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
-            html += "<div class='card'><h3>Corrutinas</h3>"
-            html += f"<div style='font-size:24px;font-weight:bold;color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
-            html += "<div style='margin-top:8px'>"
-            for t in sorted(tasks_data, key=lambda x: x["name"]):
-                ok = not t["done"] and t.get("last_error") is None
-                icon = "●" if ok else "○"
-                color = "#3fb950" if ok else "#f85149"
-                html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
-            html += "</div></div>"
-
-            html += "</div>"
-            html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
-            html += "</body></html>"
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(html.encode("utf-8"))
+            self._handle_status()
         elif self.path.startswith("/dashboard") and not self.path.startswith("/dashboard.json"):
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(_render_dashboard().encode("utf-8"))
-        elif self.path == "/dashboard.json" or self.path == "/dashboard.json/":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(_dashboard_json(client_ip=self.client_address[0]).encode())
+            self._send_html(_render_dashboard())
+        elif self.path in ("/dashboard.json", "/dashboard.json/"):
+            self._send_json(json.loads(_dashboard_json(client_ip=self.client_address[0])))
         elif self.path.startswith("/api/search"):
             import urllib.parse as _up
             q = _up.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
             if not q:
-                self.send_response(400)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "parametro q requerido"}).encode())
+                self._send_json({"error": "parametro q requerido"}, 400)
                 return
             try:
-                # Buscar en FTS5 (search_engine + indexer combinado)
-                results = []
-                try:
-                    from core.search_engine import search as fts_search
-                    results = fts_search(q)
-                except Exception:
-                    pass
-                # También buscar en el indexer de URA-Search si existe
-                try:
-                    import sys as _sys
-                    _sys.path.insert(0, '/home/ramon/URA/ura_ia_1972')
-                    from ura_search.indexer import search as idx_search
-                    idx_results = idx_search(q)
-                    results.extend(idx_results)
-                except Exception:
-                    pass
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"query": q, "results": results, "total": len(results)}).encode())
+                self._handle_api_search(q)
             except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": str(e)}).encode())
-
+                self._send_json({"error": str(e)}, 500)
         elif self.path.startswith("/v1/"):
-            status, headers, body = proxy_request(self.path, None, "GET", client_ip=self.client_address[0])
-            self.send_response(status)
-            self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
-            self.end_headers()
-            self.wfile.write(body)
+            self._proxy_get()
         else:
-            status, headers, body = proxy_request(self.path, None, "GET", client_ip=self.client_address[0])
-            self.send_response(status)
-            self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
-            self.end_headers()
-            self.wfile.write(body)
+            self._proxy_get()
+
+    def _handle_power_mode(self) -> bool:
+        """ Maneja /power_mode. Retorna True si se procesó (no continuar con routing normal)."""
+        global POWER_MODE
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length)
+        params_str = body.decode() if body else ""
+        mode = ""
+        for part in params_str.split("&"):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                if k == "mode":
+                    mode = v
+        if "mode=" in self.path:
+            mode = self.path.split("mode=")[-1].split("&")[0]
+        if mode and mode.upper() in {"AUTO", "TURBO", "ECO"}:
+            POWER_MODE = mode.upper()
+            log.info("POWER_MODE cambiado a %s por dashboard", POWER_MODE)
+            self._send_json({"status": "ok", "power_mode": POWER_MODE})
+            return True
+        self._send_json({"error": "Modo invalido. Usar AUTO, TURBO o ECO."}, 400)
+        return True
+
+    def _do_proxy_inference(self, data: dict, modelo: str, tipo: str) -> None:
+        """Envía la petición de inferencia a través del proxy con VRAM guard."""
+        data = _apply_model_params(data, modelo)
+        status, headers, resp_body = _proxy_con_vram(
+            self.path, json.dumps(data).encode(), modelo=modelo, tipo=tipo,
+            client_ip=self.client_address[0],
+        )
+        self.send_response(status)
+        self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
+        for k in ["Transfer-Encoding"]:
+            if k in headers:
+                self.send_header(k, headers[k])
+        self.end_headers()
+        self.wfile.write(resp_body)
 
     def do_POST(self) -> None:
-        global POWER_MODE
         if not rate_limiter.is_allowed(self.client_address[0]):
-            self.send_response(429)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": "Rate limit: 100 req/min por IP"}).encode())
+            self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return
         if self.path.startswith("/power_mode"):
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length)
-            params_str = body.decode() if body else ""
-            mode = ""
-            for part in params_str.split("&"):
-                if "=" in part:
-                    k, v = part.split("=", 1)
-                    if k == "mode":
-                        mode = v
-            if "mode=" in self.path:
-                mode = self.path.split("mode=")[-1].split("&")[0]
-            if mode and mode.upper() in {"AUTO", "TURBO", "ECO"}:
-                POWER_MODE = mode.upper()
-                log.info("POWER_MODE cambiado a %s por dashboard", POWER_MODE)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "ok", "power_mode": POWER_MODE}).encode())
-                return
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": "Modo invalido. Usar AUTO, TURBO o ECO."}).encode())
+            self._handle_power_mode()
             return
 
         content_length = int(self.headers.get("Content-Length", 0))
@@ -874,15 +987,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 log.info("[DIRECT] modelo=%s (solicitado explicitamente)", selected)
                 metrics.increment("model_selection", {"tipo": tipo, "mode": "direct"})
                 data["model"] = selected
-                data = _apply_model_params(data, selected)
-                status, headers, resp_body = proxy_request(self.path, json.dumps(data).encode(), modelo=selected, tipo=tipo, client_ip=self.client_address[0])
-                self.send_response(status)
-                self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
-                for k in ["Transfer-Encoding"]:
-                    if k in headers:
-                        self.send_header(k, headers[k])
-                self.end_headers()
-                self.wfile.write(resp_body)
+                self._do_proxy_inference(data, selected, tipo)
                 return
             log.warning("[DIRECT] modelo %s no disponible, redirigiendo a router", original_model)
             metrics.increment("model_unavailable", {"modelo": original_model})
@@ -895,10 +1000,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         if cached and is_chat:
             log.info("[CACHE HIT] tipo=%s", tipo)
             metrics.increment("cache_hit", {"tipo": tipo})
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(cached).encode())
+            self._send_json(cached)
             return
 
         disponibles = self._get_modelos()
@@ -906,9 +1008,8 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         log.info("[ROUTE] tipo=%s → modelo=%s (de %s disponibles)", tipo, selected, len(disponibles))
         metrics.increment("model_selection", {"tipo": tipo, "modelo": selected, "mode": "routed"})
         data["model"] = selected
-        data = _apply_model_params(data, selected)
         new_body = json.dumps(data).encode()
-        status, headers, resp_body = proxy_request(self.path, new_body, modelo=selected, tipo=tipo, client_ip=self.client_address[0])
+        status, headers, resp_body = _proxy_con_vram(self.path, new_body, modelo=selected, tipo=tipo, client_ip=self.client_address[0])
         if status == 200 and is_chat and prompt_text:
             try:
                 response_data = json.loads(resp_body)
@@ -929,6 +1030,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
 def main() -> None:
     import sys
+
     if "--test" in sys.argv:
         idx = sys.argv.index("--test")
         texto = " ".join(sys.argv[idx + 1:]) if idx + 1 < len(sys.argv) else "hola"
@@ -943,7 +1045,7 @@ def main() -> None:
 
     log.info("Model Router Enhanced v2.2 iniciando en puerto %s", ROUTER_PORT)
     log.info("Ollama backend: %s", OLLAMA_URL)
-    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'") 
+    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'")
     log.info("Features: Dashboard, Prompt Caching, Fallback System, Metrics, Context Checker")
 
     disponibles = obtener_modelos_disponibles()
@@ -958,6 +1060,7 @@ def main() -> None:
         log.info("  %-20s → %s (fallback: %s)", tipo, modelo, fallback)
 
     from http.server import ThreadingHTTPServer
+
     server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
     log.info("Escuchando en 127.0.0.1:%s", ROUTER_PORT)
     log.info("Dashboard: http://127.0.0.1:%s/dashboard", ROUTER_PORT)
@@ -966,8 +1069,11 @@ def main() -> None:
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        log.info("Detenido")
+        pass
+    finally:
+        log.info("Cerrando servidor...")
         server.server_close()
+        log.info("Servidor detenido.")
 
 
 if __name__ == "__main__":

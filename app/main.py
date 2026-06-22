@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """main.py — Orquestador principal del sistema URA."""
 from __future__ import annotations
-import asyncio, json, logging, sys
+import asyncio
+import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.capturador import CapturadorTarget
 from app.gestor_archivos import GestorArchivosSeguro

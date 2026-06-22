@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-"""ejecutor_api.py — Endpoint de automatizacion remota para URA.
-Recibe tareas de desarrollo de la Tuneladora y las ejecuta.
-Puerto: 4096 (OpenCode).
-"""
+"""ejecutor_api.py — Endpoint de automatizacion remota para URA."""
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from path_setup import setup_path  # noqa: E402
+setup_path()  # noqa: E402
 import json
 import os
 import subprocess
-import sys
 import threading
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
@@ -36,7 +37,7 @@ def _get_qdrant():
 
 def log_evento(evento, datos=None) -> None:
     import urllib.request
-    payload = {"evento": evento, "timestamp": datetime.utcnow().isoformat(), "data": datos or {}}
+    payload = {"evento": evento, "timestamp": datetime.now(UTC).isoformat(), "data": datos or {}}
     try:
         req = urllib.request.Request(
             f"{MCP_SYNC}/log",
@@ -64,12 +65,12 @@ def escribir_contexto(ctx) -> None:
 
 def ejecutar_tarea(task_desc, target_files):
     ctx = leer_contexto()
-    ctx["opencode_agent"]["ultima_sincronizacion"] = datetime.utcnow().isoformat()
+    ctx["opencode_agent"]["ultima_sincronizacion"] = datetime.now(UTC).isoformat()
     ctx["opencode_agent"]["estado"] = "ejecutando"
     ctx["opencode_agent"]["tarea_actual"] = {
         "descripcion": task_desc,
         "archivos": target_files,
-        "inicio": datetime.utcnow().isoformat(),
+        "inicio": datetime.now(UTC).isoformat(),
     }
     escribir_contexto(ctx)
     log_evento("tarea_iniciada", {"descripcion": task_desc[:50], "archivos": target_files})
@@ -130,7 +131,7 @@ def handle_interact(body: dict) -> dict:
         "raw": raw[:2000],
         "structure": raw_struct[:2000],
         "raw_distance_struct": round(distancia, 4),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
     qdrant.guardar_documento(tx_id, raw, payload)
 
@@ -189,10 +190,46 @@ class ExecutorHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(result).encode())
 
     def do_GET(self) -> None:
+        if self.path == "/health":
+            qdrant = _get_qdrant()
+            healthy = qdrant.disponible
+            self.send_response(200 if healthy else 503)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "status": "ok" if healthy else "degraded",
+                "qdrant": healthy,
+                "ts": time.time(),
+            }).encode())
+            return
+
+        if self.path == "/metrics":
+            qdrant = _get_qdrant()
+            ctx = leer_contexto()
+            status = ctx.get("opencode_agent", {}).get("estado", "idle")
+            metrics = (
+                f'# HELP ura_ejecutor_info Información del ejecutor\n'
+                f'# TYPE ura_ejecutor_info gauge\n'
+                f'ura_ejecutor_info{{status="{status}",qdrant={"1" if qdrant.disponible else "0"}}} 1\n'
+                f'# HELP ura_tasks_completadas Número de tareas completadas\n'
+                f'# TYPE ura_tasks_completadas gauge\n'
+                f'ura_tasks_completadas {len(ctx.get("opencode_agent", {}).get("tareas_completadas", []))}\n'
+                f'# HELP python_info Python runtime info\n'
+                f'# TYPE python_info gauge\n'
+                f'python_info{{version="{sys.version.split()[0]}"}} 1\n'
+            )
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(metrics.encode())
+            return
+
         ctx = leer_contexto()
         status = ctx.get("opencode_agent", {}).get("estado", "idle")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(
             json.dumps(
@@ -210,5 +247,20 @@ class ExecutorHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    import signal
+
+    server = HTTPServer((HOST, PORT), ExecutorHandler)
+
+    def _shutdown(sig, frame) -> None:
+        log.info("Recibida señal %s, apagando servidor...", sig)
+        log_evento("ejecutor_api_stopping", {"reason": f"signal_{sig}"})
+        server.shutdown()
+
+    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, _shutdown)
+
     log_evento("ejecutor_api_iniciado", {"puerto": PORT, "host": HOST})
-    HTTPServer((HOST, PORT), ExecutorHandler).serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        _shutdown(None, None)

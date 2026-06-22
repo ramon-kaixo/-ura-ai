@@ -1,6 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from motor.core.config import UraConfig
 from motor.pipeline.orchestrator import Orchestrator
 from motor.scanner.diff_detector import compute_diff

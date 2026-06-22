@@ -1,5 +1,8 @@
-import json, logging, hashlib, subprocess
-from datetime import datetime
+import json
+import logging
+import hashlib
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from motor.core.state import PreflightResult
 from motor.core.config import UraConfig, RUTAS_CONFIG_OPENCODE
@@ -9,7 +12,7 @@ log = logging.getLogger("ura.guard.preflight")
 def ejecutar_preflight(config: UraConfig) -> PreflightResult:
     """Ejecuta verificación prevuelo: detecta duplicados y toma snapshot."""
     r = PreflightResult()
-    snap = {"timestamp": datetime.utcnow().isoformat()+"Z"}
+    snap = {"timestamp": datetime.now(UTC).isoformat()+"Z"}
     dups = _detectar_configs_duplicadas()
     if dups:
         r.ok = False
@@ -21,7 +24,7 @@ def ejecutar_preflight(config: UraConfig) -> PreflightResult:
     snap["procesos"] = _snapshot_procesos()
     snaps_dir = Path(config.data_dir) / "snapshots"
     snaps_dir.mkdir(parents=True, exist_ok=True)
-    snap_path = snaps_dir / f"preflight_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    snap_path = snaps_dir / f"preflight_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     snap_path.write_text(json.dumps(snap, indent=2))
     r.snapshot_path = str(snap_path)
     log.info("preflight ok, snapshot en %s", snap_path)

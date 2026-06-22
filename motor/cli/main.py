@@ -1,8 +1,8 @@
-import argparse, sys, logging
+import argparse
+import sys
+import logging
 logging.getLogger('httpx').setLevel(logging.WARNING)
 logging.getLogger('httpcore').setLevel(logging.WARNING)
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from motor.core.config import UraConfig
 from motor.cli.cmd_pipeline import cmd_pipeline, cmd_scan, cmd_diagnose, cmd_calibrate
 from motor.cli.cmd_status import cmd_status, cmd_cross, cmd_trend, cmd_graph, cmd_perf, cmd_summarise

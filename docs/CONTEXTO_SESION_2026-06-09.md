@@ -26,7 +26,7 @@ Incluye `RuleBasedStateMachine` para memoria_fallos y memoria_movimiento (secuen
 
 ### 4. OpenClaw Gateway
 - **URL**: `http://10.164.1.99:18789`
-- **Token**: `663d5e6b3b72780013730dbba0c767d4d918d88d48dcd634`
+- **Token**: `V0T9kzrReQyvUlcPGrzlqO-BNVM_xIc1oJN0KZhftrU`
 - **Dashboard**: `http://10.164.1.99:18789/#token=...`
 - **PID**: 456036 + 456100 (mcp)
 - **Conectar desde Mac**: URL directa o SSH tunnel

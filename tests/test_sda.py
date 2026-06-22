@@ -10,10 +10,7 @@ import json
 import os
 import sys
 import tempfile
-import time
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 PASS = 0
 FAIL = 0
@@ -84,7 +81,7 @@ check("T5: release after close no-crash", lambda: (dl6.release(), True)[1])
 # SECTION 2: debate_engine — prompts
 # ============================================================
 from core.debate.debate_engine import build_primary_prompt, build_auditor_prompt
-from core.debate.debate_engine import call_ollama, run_debate, load_config, CONFIG_PATH
+from core.debate.debate_engine import call_ollama, load_config
 
 # TC1: Primary prompt includes plan text
 p = build_primary_prompt("test plan A", {"cpu": "ARM"})
@@ -115,7 +112,6 @@ check("TC4: plan_path = /tmp/ura_debate_plan.json",
 # SECTION 3: debate_engine — call_ollama with mock httpx
 # ============================================================
 import httpx
-from unittest.mock import AsyncMock, patch
 
 
 async def _test_call_ollama_timeout():
@@ -142,7 +138,6 @@ async def _test_call_ollama_json_decode_error():
 
 
 # Create a mock transport that returns non-JSON content
-from unittest.mock import AsyncMock
 
 
 class MockTransport(httpx.AsyncBaseTransport):
@@ -151,7 +146,6 @@ class MockTransport(httpx.AsyncBaseTransport):
         self._status = status
 
     async def handle_async_request(self, request):
-        import io
         content_bytes = self._content.encode()
         stream = httpx.ByteStream(content_bytes)
         return httpx.Response(

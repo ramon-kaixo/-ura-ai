@@ -73,8 +73,8 @@ class VRAMAwareScheduler:
             )
             if res.returncode == 0 and res.stdout.strip() and "N/A" not in res.stdout:
                 return int(res.stdout.strip())
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("mochila: store_event falló: %s", e)
         return default_mb
 
     def available_mb(self) -> int:
@@ -119,8 +119,8 @@ class VRAMAwareScheduler:
                 try:
                     proc.kill()
                     await proc.wait()
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.debug("mochila: rate limit get falló: %s", e)
         except Exception as e:
             self._consecutive_smi_errors += 1
             self._log.warning("nvidia-smi error (%d/3): %s", self._consecutive_smi_errors, e)
@@ -128,8 +128,8 @@ class VRAMAwareScheduler:
                 try:
                     proc.kill()
                     await proc.wait()
-                except Exception:
-                    pass
+                except Exception as e:
+                    log.debug("mochila: rate limit get falló: %s", e)
         if self._consecutive_smi_errors >= 3:
             self._log.critical("nvidia-smi caido persistentemente. Bloqueando VRAM.")
             self._current_mb = self.max_mb
@@ -138,8 +138,8 @@ class VRAMAwareScheduler:
             if resp.status_code == 200:
                 data = resp.json()
                 self._hot_models = {m["name"] for m in data.get("models", [])}
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("mochila: store_event falló: %s", e)
 
     async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict | None = None) -> str | None:
         async with self._lock:

@@ -15,7 +15,6 @@ Registra acciones en: stats.json (Perfil A de memoria)
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
 import os
@@ -23,7 +22,7 @@ import shlex
 import signal
 import subprocess
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Paths
 _STATE_DIR = Path.home() / ".ura" / "run"
@@ -167,7 +166,7 @@ def execute_runbook_action(service_name: str, action: dict, runbook: dict) -> st
             "command": cmd,
             "success": ok,
             "output": output[:200],
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         save_stats()
 
@@ -225,7 +224,7 @@ def main() -> None:
             if is_emergency(state):
                 if stats["activations"] == 0 or stats["last_activation"] is None:
                     stats["activations"] += 1
-                    stats["last_activation"] = datetime.now().isoformat()
+                    stats["last_activation"] = datetime.now(UTC).isoformat()
                     save_stats()
 
                 process_emergency(state, runbook)
