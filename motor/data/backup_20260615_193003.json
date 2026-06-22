@@ -1,9 +1,0 @@
-{
-  "timestamp": "2026-06-15T19:30:03.732091Z",
-  "incidente": {
-    "tipo": "ResourcePressure",
-    "subtipo": "ram",
-    "resumen": "RAM al 100.0%",
-    "ts": "2026-06-15T19:30:03.518898Z"
-  }
-}
