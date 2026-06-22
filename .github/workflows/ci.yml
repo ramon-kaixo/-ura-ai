@@ -1,0 +1,52 @@
+name: URA CI
+
+on:
+  push:
+    branches: [master, plan-refinado, dev/*]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: ruff check . --output-format=github
+      - run: ruff format --check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install mypy==1.18.2
+      - run: pip install -r requirements.txt
+      - run: mypy core/ monitor/ motor/ --ignore-missing-imports
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: pytest -q --cov=core --cov=monitor --cov=motor
+      - run: python3 tests/test_unit.py --quiet
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install bandit==1.8.3 safety==3.2.14
+      - run: pip install -r requirements.txt
+      - run: bandit -q -r core/ monitor/ motor/ -x "*/tests/*"
