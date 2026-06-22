@@ -10,7 +10,7 @@ import logging
 import re
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Configuración
 DEFAULT_CONFIG = {
@@ -24,7 +24,7 @@ DEFAULT_CONFIG = {
 def load_config(config_path: Optional[str] = None) -> dict:
     """Cargar configuración desde archivo"""
     config = DEFAULT_CONFIG.copy()
-    
+
     if config_path and os.path.exists(config_path):
         try:
             with open(config_path, 'r') as f:
@@ -32,7 +32,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
                 config.update(user_config)
         except (json.JSONDecodeError, IOError) as e:
             logging.warning(f"Error cargando config: {e}")
-    
+
     return config
 
 CONFIG = load_config(os.environ.get('URA_MAINTENANCE_REMOTE_CONFIG'))
@@ -79,15 +79,15 @@ def get_swarm_devices() -> dict:
         if not os.path.exists(swarm_path):
             logger.error(f"Archivo de dispositivos no encontrado: {swarm_path}")
             return {}
-        
+
         with open(swarm_path, 'r') as f:
             devices = json.load(f)
-        
+
         # Validar que sea un diccionario
         if not isinstance(devices, dict):
             logger.error("Formato inválido de dispositivos")
             return {}
-        
+
         return devices
     except json.JSONDecodeError as e:
         logger.error(f"Error parseando JSON de dispositivos: {e}")
@@ -100,7 +100,7 @@ def run_remote_maintenance(ip: str, user: str = None) -> dict:
     """Ejecutar mantenimiento en nodo remoto de forma segura"""
     if user is None:
         user = CONFIG['ssh_user']
-    
+
     # Validar entrada
     if not validate_ip(ip):
         return {
@@ -108,29 +108,29 @@ def run_remote_maintenance(ip: str, user: str = None) -> dict:
             'status': 'error',
             'error': 'Invalid IP address format'
         }
-    
+
     if not validate_ssh_user(user):
         return {
             'ip': ip,
             'status': 'error',
             'error': 'Invalid SSH username'
         }
-    
+
     try:
         logger.info(f"Ejecutando mantenimiento en {user}@{ip}")
-        
+
         # Usar subprocess sin shell=True para evitar inyección
         # Copiar script usando scp con argumentos separados
         local_script = '/home/ramon/URA/mantenimiento/ura_maintenance.py'
         remote_script = '/tmp/ura_maintenance.py'
-        
+
         if not os.path.exists(local_script):
             return {
                 'ip': ip,
                 'status': 'error',
                 'error': f'Local script not found: {local_script}'
             }
-        
+
         try:
             subprocess.run(
                 ['scp', local_script, f'{user}@{ip}:{remote_script}'],
@@ -155,7 +155,7 @@ def run_remote_maintenance(ip: str, user: str = None) -> dict:
                 'status': 'error',
                 'error': 'SCP command not found'
             }
-        
+
         # Ejecutar mantenimiento usando ssh sin shell=True
         try:
             result = subprocess.run(
@@ -182,7 +182,7 @@ def run_remote_maintenance(ip: str, user: str = None) -> dict:
                 'status': 'error',
                 'error': 'SSH command not found'
             }
-        
+
         if result.returncode == 0:
             logger.info(f"Mantenimiento completado en {ip}")
             return {
@@ -208,21 +208,21 @@ def run_remote_maintenance(ip: str, user: str = None) -> dict:
 def main():
     """Función principal"""
     logger.info("Iniciando mantenimiento remoto del enjambre")
-    
+
     devices = get_swarm_devices()
     if not devices:
         logger.error("No se encontraron dispositivos en el enjambre")
         return 1
-    
+
     results = []
-    
+
     for ip, device_info in devices.items():
         if device_info.get('status') == 'active':
             result = run_remote_maintenance(ip)
             results.append(result)
         else:
             logger.info(f"Omitiendo dispositivo inactivo: {ip}")
-    
+
     # Guardar resultados
     results_file = LOG_DIR / f"remote_maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     try:
@@ -231,12 +231,12 @@ def main():
         logger.info(f"Resultados guardados en: {results_file}")
     except IOError as e:
         logger.error(f"Error guardando resultados: {e}")
-    
+
     # Resumen
     success = sum(1 for r in results if r['status'] == 'success')
     errors = sum(1 for r in results if r['status'] == 'error')
     logger.info(f"Éxitos: {success}/{len(results)}, Errores: {errors}/{len(results)}")
-    
+
     return 0 if errors == 0 else 1
 
 if __name__ == "__main__":

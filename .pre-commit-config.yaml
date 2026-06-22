@@ -1,13 +1,35 @@
 # ============================================================
-# .pre-commit-config.yaml — URA v3.0
-# Validación declarativa. Instalar: pip install pre-commit && pre-commit install
-# Ejecutar manual: pre-commit run --all-files
+# .pre-commit-config.yaml — URA v3.1
+# Instalar: pip install pre-commit && pre-commit install
+# Ejecutar: pre-commit run --all-files
 # ============================================================
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --python-version=3.11]
+        additional_dependencies: [types-requests]
+        files: ^(core|monitor|motor)/.*\.py$
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: [-q, -x, "*/tests/*"]
+        files: ^(core|monitor|motor)/.*\.py$
+
   - repo: local
     hooks:
       - id: json-schema-config
-        name: Validate system_config.json (jsonschema)
+        name: Validate system_config.json
         entry: python3 -c "from core.config_manager import validate_schema_json; e=validate_schema_json(); [print(x) for x in e]; exit(1 if e else 0)"
         language: system
         files: ^config/system_config\.json$
@@ -27,16 +49,23 @@ repos:
         files: ^(core|mantenimiento|monitor)/.*\.py$
         types: [python]
 
-      - id: unit-tests
-        name: Run unit tests (113 tests)
-        entry: python3 tests/test_unit.py
+      - id: pytest
+        name: Run pytest (core + monitor + motor)
+        entry: pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term --timeout=30
         language: system
         pass_filenames: false
         always_run: true
 
       - id: no-ghost-files
-        name: No ghost files (CLAUDE.md, duplicate configs)
+        name: No ghost files
         entry: bash -c '! test -f CLAUDE.md && ! test -f config/maintenance.json && ! test -f mantenimiento/config.json'
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: no-secrets
+        name: No hardcoded secrets
+        entry: python3 scripts/pro/check_secrets.py
+        language: system
+        files: \.py$
+        pass_filenames: true

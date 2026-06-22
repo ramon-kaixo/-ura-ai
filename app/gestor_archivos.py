@@ -3,11 +3,13 @@
 Proporciona GestorArchivosSeguro con proteccion Directory Traversal.
 """
 from __future__ import annotations
-import os, sys
+import logging
+import os
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.open_claw_reporte import COLA_DIR, get_cola_pendiente
+logger = logging.getLogger(__name__)
+
+from core.open_claw_reporte import get_cola_pendiente
 
 class GestorArchivosSeguro:
     def __init__(self, root_path: str | None = None) -> None:
@@ -23,4 +25,6 @@ class GestorArchivosSeguro:
         try:
             return [d for d in os.listdir(self.root_path)
                     if os.path.isdir(os.path.join(self.root_path, d))]
-        except: return []
+        except Exception:
+            logger.exception("Error listing projects in %s", self.root_path)
+            return []

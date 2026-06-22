@@ -1,0 +1,11 @@
+[Unit]
+Description=URA Hetzner Watchdog — cada 5 minutos
+After=network-online.target tailscaled.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

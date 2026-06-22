@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """uitars_gx10.py — UI-TARS para GX10 con fallback Ollama vision."""
 from __future__ import annotations
-import json, os, shutil, subprocess, sys, time, base64
+import json, logging, os, shutil, subprocess, sys, time, base64
 from datetime import datetime
 from pathlib import Path
 from io import BytesIO
+
+logger = logging.getLogger(__name__)
 
 MAX_PIXEL_AREA = 1280 * 720  # 720p máximo
 
@@ -23,7 +25,9 @@ def iniciar_xvfb() -> bool:
         os.environ["DISPLAY"] = ":99"
         time.sleep(1)
         return True
-    except: return False
+    except Exception:
+        logger.exception("Failed to start Xvfb")
+        return False
 
 def capturar_pantalla() -> str | None:
     try:

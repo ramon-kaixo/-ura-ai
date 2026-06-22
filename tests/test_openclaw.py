@@ -5,15 +5,12 @@ y abre el emergency_runbook.json correctamente.
 """
 
 import json
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 # Setup path
 ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "monitor"))
 
 from monitor.openclaw import (
     DEAD_MAN_TIMEOUT,

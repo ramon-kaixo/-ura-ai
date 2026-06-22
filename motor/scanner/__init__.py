@@ -1,6 +1,9 @@
-import os, logging, time, subprocess
+import os
+import logging
+import time
+import subprocess
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 from motor.core.state import ScanResult
 from motor.core.config import UraConfig
 from motor.scanner.sliding_window import SlidingWindow
@@ -45,7 +48,7 @@ class Scanner:
     def run(self) -> ScanResult:
         """Ejecuta el escaneo completo y devuelve un ScanResult."""
         t0 = time.time()
-        r = ScanResult(timestamp=datetime.utcnow().isoformat()+"Z")
+        r = ScanResult(timestamp=datetime.now(UTC).isoformat()+"Z")
         r.hostname = self._get_hostname()
         r.servicios = self._check_servicios()
         r.recursos = self._check_recursos()

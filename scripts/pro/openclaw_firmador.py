@@ -16,7 +16,7 @@ import contextlib
 import hashlib
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -290,7 +290,7 @@ def reportar_estado_tierra() -> str:
     pct_archivos = (completados / max(total_archivos, 1)) * 100
 
     report = (
-        f"📊 ESTADO DE TIERRA — {datetime.now().isoformat()[:19]}\n"
+        f"📊 ESTADO DE TIERRA — {datetime.now(UTC).isoformat()[:19]}\n"
         f"{'─' * 60}\n"
         f"  Lineas procesadas:  {lineas_procesadas:,} / ~{lineas_totales:,} ({pct_lineas:.1f}%)\n"
         f"  Archivos completados: {completados} / {total_archivos} ({pct_archivos:.1f}%)\n"
@@ -333,7 +333,7 @@ def delta_snapshot(label: str = "ultimo_ciclo") -> str:
     path = DELTA_SNAPSHOT_DIR / f"{label}.json"
     path.write_text(
         json.dumps(
-            {"label": label, "files": snapshot, "timestamp": datetime.now().isoformat()}, indent=2,
+            {"label": label, "files": snapshot, "timestamp": datetime.now(UTC).isoformat()}, indent=2,
         ),
     )
     return str(path)

@@ -5,14 +5,13 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 MCP_URL = "http://127.0.0.1:9091"
 LOG = Path.home() / "URA/ura_ia_1972/logs/auto_conciencia.log"
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 NOTIFICAR = Path("/opt/ura/scripts/notificar.sh")
-LOG.parent.mkdir(parents=True, exist_ok=True)
 
 
 def mcp(nombre, args=None):
@@ -39,7 +38,7 @@ def mcp(nombre, args=None):
 
 def log(msg) -> None:
     with open(LOG, "a") as f:
-        f.write(f"{datetime.now().isoformat()} - {msg}\n")
+        f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
 def sugerir(problema, solucion) -> None:

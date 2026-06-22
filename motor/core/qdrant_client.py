@@ -1,7 +1,11 @@
+import hashlib
+import httpx
 import logging
 import os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from motor.core.config import UraConfig
@@ -25,6 +29,7 @@ class QdrantClient:
         self.config = config
         self.disponible = False
         self._cliente = None
+        self.embedding_semaphore = asyncio.Semaphore(value=1)
         self._conectar()
 
     def _conectar(self) -> None:
@@ -42,8 +47,7 @@ class QdrantClient:
         except Exception as e_nativo:
             log.debug("cliente nativo qdrant falló: %s", e_nativo)
             try:
-                import requests
-                r = requests.get(f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections",
+                r = httpx.get(f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections",
                                  timeout=3)
                 if r.status_code < 500:
                     self._cliente = None
@@ -62,11 +66,10 @@ class QdrantClient:
         """Crea la colección de incidentes si no existe."""
         try:
             if getattr(self, "_modo_rest", False):
-                import requests
                 url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}"
-                r = requests.get(url, timeout=3)
+                r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = requests.put(url, json={"vectors": {"size": VECTOR_SIZE, "distance": "Cosine"},
+                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE, "distance": "Cosine"},
                                                   "on_disk_payload": True}, timeout=5)
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_INCIDENTES)
@@ -88,11 +91,10 @@ class QdrantClient:
         """Crea la colección de documentos si no existe (768-d, Cosine)."""
         try:
             if getattr(self, "_modo_rest", False):
-                import requests
                 url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_DOCUMENTOS}"
-                r = requests.get(url, timeout=3)
+                r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = requests.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
+                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
                                                   "on_disk_payload": True}, timeout=5)
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_DOCUMENTOS)
@@ -114,11 +116,10 @@ class QdrantClient:
         """Crea la colección de transacciones si no existe (768-d, Cosine)."""
         try:
             if getattr(self, "_modo_rest", False):
-                import requests
                 url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_TRANSACCIONES}"
-                r = requests.get(url, timeout=3)
+                r = httpx.get(url, timeout=3)
                 if r.status_code == 404:
-                    r2 = requests.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
+                    r2 = httpx.put(url, json={"vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
                                                   "on_disk_payload": True}, timeout=5)
                     if r2.status_code in (200, 201):
                         log.info("coleccion %s creada (REST)", COLECCION_TRANSACCIONES)
@@ -136,38 +137,77 @@ class QdrantClient:
         except Exception as e:
             log.warning("no se pudo asegurar coleccion transacciones: %s", e)
 
-    def generar_embedding(self, texto: str) -> list[float]:
-        """Genera embedding vía Ollama usando nomic-embed-text."""
+    async def generar_embedding_async(self, texto: str) -> list[float]:
+        """Versión async con semáforo y httpx."""
+        async with self.embedding_semaphore:
+            result = await self.generar_embeddings_batch_async([texto])
+            if not result or all(abs(v) < 1e-6 for v in result[0]):
+                log.error("generar_embedding_async returned zero vector for '%s...'", texto[:50])
+                return [0.0] * VECTOR_SIZE_EMBEDDING
+            return result[0]
+
+    async def generar_embeddings_batch_async(self, textos: list[str]) -> list[list[float]]:
+        """Async version of generar_embeddings_batch using httpx.AsyncClient."""
+        ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
         try:
-            return self.generar_embeddings_batch([texto])[0]
-        except Exception as e:
-            log.exception("error generando embedding: %s", e)
-            return [0.0] * VECTOR_SIZE_EMBEDDING
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                r = await client.post(
+                    f"{ollama_url}/api/embed",
+                    json={"model": MODELO_EMBEDDING, "input": textos},
+                )
+                if r.status_code == 200:
+                    return r.json()["embeddings"]
+        except Exception:
+            pass
+        resultados = []
+        for t in textos:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    r = await client.post(
+                        f"{ollama_url}/api/embeddings",
+                        json={"model": MODELO_EMBEDDING, "prompt": t},
+                    )
+                    r.raise_for_status()
+                    resultados.append(r.json()["embedding"])
+            except Exception as e:
+                log.exception("error generando embedding (old API): %s", e)
+                log.warning("Fallback zero-vector para texto: '%s...'", t[:50])
+                resultados.append([0.0] * VECTOR_SIZE_EMBEDDING)
+        return resultados
+
+    # Sync wrapper — hilo secundario si el loop ya está corriendo
+    def generar_embedding(self, texto: str) -> list[float]:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self.generar_embedding_async(texto))
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, self.generar_embedding_async(texto))
+            return future.result()
 
     def generar_embeddings_batch(self, textos: list[str]) -> list[list[float]]:
         """Genera embeddings para múltiples textos.
         Soporta API nueva (/api/embed) y antigua (/api/embeddings, Ollama <0.3.0).
         """
-        import requests
         ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
         # Intentar API nueva (batch)
         try:
-            r = requests.post(
+            r = httpx.post(
                 f"{ollama_url}/api/embed",
                 json={"model": MODELO_EMBEDDING, "input": textos},
                 timeout=30,
             )
             if r.status_code == 200:
                 return r.json()["embeddings"]
-        except Exception:
-            pass
+        except Exception as e:
+            log.debug("Ollama new API /api/embed falló: %s", e)
 
         # Fallback: API antigua (una llamada por texto, sin batch)
         resultados = []
         for t in textos:
             try:
-                r = requests.post(
+                r = httpx.post(
                     f"{ollama_url}/api/embeddings",
                     json={"model": MODELO_EMBEDDING, "prompt": t},
                     timeout=30,
@@ -205,7 +245,7 @@ class QdrantClient:
         puntos = []
         for i, (doc_id, texto, metadata) in enumerate(docs):
             payload = {"texto": texto[:5000], "id": doc_id, **metadata}
-            pid = abs(hash(doc_id)) if doc_id else abs(hash(texto[:100]))
+            pid = int(hashlib.sha256(doc_id.encode()).hexdigest()[:15], 16) % (2**63) if doc_id else int(hashlib.sha256((texto[:100]).encode()).hexdigest()[:15], 16) % (2**63)
             puntos.append({"id": pid, "vector": vectores[i], "payload": payload})
         if getattr(self, "_modo_rest", False):
             return self._guardar_documentos_rest(puntos, collection)
@@ -222,9 +262,8 @@ class QdrantClient:
 
     def _guardar_documentos_rest(self, puntos: list[dict], collection: str = COLECCION_DOCUMENTOS) -> int:
         try:
-            import requests
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points"
-            r = requests.put(url, json={"points": puntos}, timeout=10)
+            r = httpx.put(url, json={"points": puntos}, timeout=10)
             return len(puntos) if r.status_code in (200, 201) else 0
         except Exception as e:
             log.exception("error guardar documentos batch (REST): %s", e)
@@ -251,9 +290,8 @@ class QdrantClient:
 
     def _buscar_similitud_rest(self, query_vector: list, collection: str, limit: int) -> list:
         try:
-            import requests
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/search"
-            r = requests.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
+            r = httpx.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
             if r.status_code == 200:
                 return [{"payload": p.get("payload", {}), "score": p.get("score", 0)}
                         for p in r.json().get("result", [])]
@@ -292,10 +330,9 @@ class QdrantClient:
 
     def _eliminar_por_filtro_rest(self, filtro: dict, collection: str) -> bool:
         try:
-            import requests
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/delete"
             must = [{"key": k, "match": {"value": v}} for k, v in filtro.items()]
-            r = requests.post(url, json={"filter": {"must": must}}, timeout=5)
+            r = httpx.post(url, json={"filter": {"must": must}}, timeout=5)
             return r.status_code in (200, 201)
         except Exception as e:
             log.warning("eliminar_rest falló: %s", e)
@@ -330,7 +367,7 @@ class QdrantClient:
             payload = self._build_payload(incidente)
             self._cliente.upsert(
                 collection_name=COLECCION_INCIDENTES,
-                points=[models.PointStruct(id=abs(hash(payload["timestamp_inicio"])),
+                points=[models.PointStruct(id=int(hashlib.sha256(payload["timestamp_inicio"].encode()).hexdigest()[:15], 16) % (2**63),
                                             vector=payload["impacto_memoria"],
                                             payload=payload)],
             )
@@ -342,7 +379,7 @@ class QdrantClient:
     def _build_payload(self, incidente: dict) -> dict:
         """Construye el payload estructurado para Qdrant (schema v3.1)."""
         return {
-            "timestamp_inicio": incidente.get("ts", datetime.utcnow().isoformat()),
+            "timestamp_inicio": incidente.get("ts", datetime.now(UTC).isoformat()),
             "timestamp_resolucion": incidente.get("ts_resolucion", ""),
             "tipo_incidencia": incidente.get("tipo", "Unknown"),
             "subtipo": incidente.get("subtipo", ""),
@@ -366,15 +403,14 @@ class QdrantClient:
     def _guardar_rest(self, incidente: dict) -> bool:
         """Guarda incidente vía REST (fallback)."""
         try:
-            import requests
             payload = self._build_payload(incidente)
             point = {
-                "id": abs(hash(payload["timestamp_inicio"])),
+                "id": int(hashlib.sha256(payload["timestamp_inicio"].encode()).hexdigest()[:15], 16) % (2**63),
                 "vector": payload["impacto_memoria"],
                 "payload": payload,
             }
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points"
-            r = requests.put(url, json={"points": [point]}, timeout=5)
+            r = httpx.put(url, json={"points": [point]}, timeout=5)
             return r.status_code in (200, 201)
         except Exception as e:
             log.exception("error guardar incidente (REST): %s", e)
@@ -399,9 +435,8 @@ class QdrantClient:
     def _buscar_rest(self, limit: int = 5) -> list:
         """Busca incidentes vía REST (fallback)."""
         try:
-            import requests
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points/scroll"
-            r = requests.post(url, json={"limit": limit}, timeout=5)
+            r = httpx.post(url, json={"limit": limit}, timeout=5)
             if r.status_code == 200:
                 return [p.get("payload", {}) for p in r.json().get("result", {}).get("points", [])]
         except Exception as e:
@@ -415,3 +450,115 @@ class QdrantClient:
             if cls._instancia is None:
                 cls._instancia = cls(config)
         return cls._instancia
+
+
+class URAQdrantClient:
+    """Cliente Qdrant asíncrono con connection pooling (HTTP/2 keep-alive ready).
+
+    Uso:
+        qdrant = URAQdrantClient()
+        resultados = await qdrant.buscar_vectores("coleccion", vector, limite=5)
+        await qdrant.close()
+    """
+
+    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0):
+        self.base_url = base_url
+        self.timeout = timeout
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Inicialización perezosa con pool de conexiones reutilizable."""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
+            )
+        return self._client
+
+    async def buscar_vectores(
+        self, coleccion: str, vector: list, limite: int = 5,
+    ) -> dict:
+        """Búsqueda vectorial asíncrona sin bloquear el event-loop."""
+        client = await self._get_client()
+        payload = {"vector": vector, "limit": limite, "with_payload": True}
+        try:
+            response = await client.post(
+                f"/collections/{coleccion}/points/search", json=payload,
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            log.error("Error HTTP en Qdrant (%s): %s", e.response.status_code, e.response.text)
+            return {"result": []}
+        except httpx.RequestError as e:
+            log.error("Fallo de red al conectar con Qdrant: %s", e)
+            return {"result": []}
+
+    async def upsert_puntos(
+        self, coleccion: str, puntos: list[dict],
+    ) -> int:
+        """Inserta o actualiza puntos en Qdrant."""
+        client = await self._get_client()
+        try:
+            response = await client.put(
+                f"/collections/{coleccion}/points", json={"points": puntos},
+            )
+            response.raise_for_status()
+            return len(puntos)
+        except Exception as e:
+            log.error("Error upsert en Qdrant: %s", e)
+            return 0
+
+    async def close(self) -> None:
+        """Cierre ordenado del pool de conexiones."""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+
+    # ─── Búsqueda Híbrida: Dense + Sparse + RRF ───
+
+    async def asegurar_coleccion_hibrida(self, coleccion: str) -> bool:
+        """Crea o verifica una colección con soporte dense+sparse."""
+        client = await self._get_client()
+        try:
+            resp = await client.get(f"/collections/{coleccion}")
+            if resp.status_code == 200:
+                return True
+        except Exception:
+            pass
+        payload = {
+            "vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
+            "sparse_vectors": {"bm25": {"index": {"on_disk": True}, "modifier": "idf"}},
+        }
+        try:
+            resp = await client.put(f"/collections/{coleccion}", json=payload)
+            return resp.status_code in (200, 201)
+        except Exception as e:
+            log.error("Error creando colección híbrida: %s", e)
+            return False
+
+    async def buscar_hibrido(
+        self, coleccion: str, texto_query: str, vector_denso: list, limite: int = 10,
+    ) -> list[dict]:
+        """Búsqueda híbrida dense+sparse con RRF."""
+        client = await self._get_client()
+        sparse = generar_sparse_vector(texto_query)
+
+        # Prefetch fusionado con RRF
+        payload = {
+            "prefetch": [
+                {"query": vector_denso, "using": "default", "limit": limite * 4},
+                {"query": {"indices": sparse["indices"], "values": sparse["values"]}, "using": "bm25", "limit": limite * 4},
+            ],
+            "query": {"fusion": "rrf"},
+            "limit": limite,
+            "with_payload": True,
+        }
+        try:
+            resp = await client.post(f"/collections/{coleccion}/points/search", json=payload)
+            resp.raise_for_status()
+            return resp.json().get("result", [])
+        except Exception as e:
+            log.warning("Búsqueda híbrida falló, fallback a densa: %s", e)
+            fallback = await self.buscar_vectores(coleccion, vector_denso, limite)
+            return fallback.get("result", [])

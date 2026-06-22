@@ -1,6 +1,10 @@
-import json, sys, socket, subprocess, logging
+import json
+import sys
+import socket
+import subprocess
+import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
 
@@ -35,7 +39,7 @@ def cmd_status(config: UraConfig, args=None):
 
 
 def cmd_cross(config: UraConfig, args=None):
-    res = {"ts": datetime.utcnow().isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
+    res = {"ts": datetime.now(UTC).isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if estado_path.exists():
         res["local"].update(json.loads(estado_path.read_text()))

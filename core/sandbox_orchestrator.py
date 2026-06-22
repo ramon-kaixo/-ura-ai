@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """Módulo: core/sandbox_orchestrator.py
 Propósito: Orquesta ejecuciones en sandbox: gestiona cola de tareas, log de ejecuciones y rotación de entornos.
@@ -8,9 +9,8 @@ Reglas especiales: Máximo de ejecuciones concurrentes. Rotar logs cada 1000 ent
 import json
 import logging
 import subprocess
-import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, UTC, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,6 @@ URA_HOME = Path.home() / ".ura"
 SANDBOX_LOG_PATH = URA_HOME / "sandbox_log.json"
 SANDBOX_STATE_PATH = URA_HOME / "sandbox_state.json"
 SANDBOXES_DIR = Path(__file__).parent.parent / "sandbox"
-URA_HOME.mkdir(parents=True, exist_ok=True)
 
 CYCLE_NORMAL = 21600  # 6 horas
 CYCLE_ACCELERATED = 3600  # 1 hora
@@ -114,7 +113,7 @@ class SandboxOrchestrator:
         self.last_accelerated_run: float | None = None
         self.pending_critical_changes: list[dict] = []
         self.log: list[dict] = self._load_log()
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
         self._load_state()
         self._ensure_dirs()
 
@@ -162,8 +161,8 @@ class SandboxOrchestrator:
             json.dump(state, f, indent=2)
 
     # ─── Coordinación ───
-    def lock_sandbox(self, sandbox_id: str) -> bool:
-        with self._lock:
+    async def lock_sandbox(self, sandbox_id: str) -> bool:
+        async with self._lock:
             sb = self.sandboxes.get(sandbox_id)
             if not sb or sb["locked"]:
                 return False
@@ -171,8 +170,8 @@ class SandboxOrchestrator:
             sb["status"] = "ejecutando"
             return True
 
-    def release_sandbox(self, sandbox_id: str) -> None:
-        with self._lock:
+    async def release_sandbox(self, sandbox_id: str) -> None:
+        async with self._lock:
             sb = self.sandboxes.get(sandbox_id)
             if sb:
                 sb["locked"] = False
@@ -195,11 +194,11 @@ class SandboxOrchestrator:
         }
 
     # ─── Ejecución por sandbox ───
-    def _run_sandbox(self, sandbox_id: str) -> dict:
+    async def _run_sandbox(self, sandbox_id: str) -> dict:
         sb = self.sandboxes.get(sandbox_id)
         if not sb:
             return {"success": False, "error": f"sandbox {sandbox_id} no existe"}
-        if not self.lock_sandbox(sandbox_id):
+        if not await self.lock_sandbox(sandbox_id):
             return {"success": False, "error": "sandbox bloqueado"}
 
         result = {"success": True, "sandbox": sandbox_id, "herramientas": {}}
@@ -236,14 +235,14 @@ class SandboxOrchestrator:
                 result["herramientas"]["metricas"] = self._tarea_generica("metricas", sandbox_dir)
                 result["herramientas"]["informes"] = self._tarea_generica("informes", sandbox_dir)
 
-            sb["last_run"] = datetime.now().isoformat()
+            sb["last_run"] = datetime.now(UTC).isoformat()
             sb["last_result"] = result["success"]
         except Exception as e:
             result["success"] = False
             result["error"] = str(e)
             sb["status"] = "error"
         finally:
-            self.release_sandbox(sandbox_id)
+            await self.release_sandbox(sandbox_id)
 
         return result
 
@@ -251,7 +250,7 @@ class SandboxOrchestrator:
         """Tarea placeholder hasta implementar la logica real."""
         if sandbox_dir and sandbox_dir.exists():
             log_file = sandbox_dir / f"{nombre.replace(' ', '_')}.log"
-            log_file.write_text(f"{datetime.now().isoformat()} — {nombre} ejecutado\n")
+            log_file.write_text(f"{datetime.now(UTC).isoformat()} — {nombre} ejecutado\n")
         return True
 
     def _check_tool(self, tool: str, arg: str = "--version") -> bool:
@@ -271,12 +270,12 @@ class SandboxOrchestrator:
                 return ROTACION[h]
         return ROTACION[0]
 
-    def _run_full_pipeline(self, accelerated: bool = False) -> dict:
+    async def _run_full_pipeline(self, accelerated: bool = False) -> dict:
         """Ejecuta la rotacion actual de sandboxes (2 a la vez)."""
         cycle_type = "accelerated" if accelerated else "normal"
         run_log = {
             "cycle_type": cycle_type,
-            "started": datetime.now().isoformat(),
+            "started": datetime.now(UTC).isoformat(),
             "results": {},
             "failures": [],
         }
@@ -284,37 +283,35 @@ class SandboxOrchestrator:
         sandboxes_a_ejecutar = self._get_current_rotation()
         threads = []
 
-        def _ejecutar(sid) -> None:
-            res = self._run_sandbox(sid)
-            with self._lock:
+        async def _ejecutar(sid) -> None:
+            res = await self._run_sandbox(sid)
+            async with self._lock:
                 run_log["results"][sid] = res
                 if not res.get("success"):
                     run_log["failures"].append(sid)
 
         for sid in sandboxes_a_ejecutar:
-            t = threading.Thread(target=_ejecutar, args=(sid,), daemon=True)
-            t.start()
+            t = asyncio.create_task(_ejecutar(sid))
             threads.append(t)
 
-        for t in threads:
-            t.join(timeout=300)
+        await asyncio.gather(*threads)
 
-        run_log["finished"] = datetime.now().isoformat()
+        run_log["finished"] = datetime.now(UTC).isoformat()
         run_log["sandboxes_ejecutados"] = sandboxes_a_ejecutar
         self.log.append(run_log)
         self._save_log()
         return run_log
 
-    def run_normal_cycle(self) -> dict:
+    async def run_normal_cycle(self) -> dict:
         """Ciclo normal cada 6h."""
-        result = self._run_full_pipeline(accelerated=False)
+        result = await self._run_full_pipeline(accelerated=False)
         self.last_normal_run = time.time()
         self._save_state()
         return result
 
-    def run_accelerated_cycle(self) -> dict:
+    async def run_accelerated_cycle(self) -> dict:
         """Ciclo acelerado cada 1h."""
-        result = self._run_full_pipeline(accelerated=True)
+        result = await self._run_full_pipeline(accelerated=True)
         self.last_accelerated_run = time.time()
         self._save_state()
         return result
@@ -331,7 +328,7 @@ class SandboxOrchestrator:
                 "event": "accelerated_triggered",
                 "reason": reason,
                 "until": datetime.fromtimestamp(self.accelerated_until, tz=timezone.utc).isoformat(),
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
         self._save_log()
@@ -370,7 +367,7 @@ class SandboxOrchestrator:
             "type": change_type,
             "reason": reason,
             "metadata": metadata or {},
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         self.pending_critical_changes.append(change)
         if not self.accelerated_active:

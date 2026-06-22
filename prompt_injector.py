@@ -1,8 +1,8 @@
 """prompt_injector.py — Aduana de seguridad."""
-import json, re
+import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 from mochila_engine import BASE_DIR
 
 RETRO_DIR = BASE_DIR / "05_RETROALIMENTACION"

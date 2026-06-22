@@ -1,7 +1,6 @@
 """Test Prompt Injector."""
-import sys, pytest
+import pytest
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 import mochila_engine
 mochila_engine.BASE_DIR = Path("/tmp/datos_prueba")
 from prompt_injector import JailbreakGuard

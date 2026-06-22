@@ -1,7 +1,5 @@
 """Test memoria_movimiento."""
-import sys, pytest
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pytest
 from memoria_movimiento import MemoriaMovimiento
 
 class RelojFalso:

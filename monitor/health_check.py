@@ -6,10 +6,9 @@ Mide: disco, RAM, carga CPU, VRAM Ollama, latencia SSH/HTTP.
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config_manager import CONFIG
 
 TARGET = CONFIG["ollama"]["host"]
@@ -203,7 +202,7 @@ def main() -> int:
 
     # Resumen
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         with open(ALERT_FILE, "a") as f:
             f.write(f"[{timestamp}] {'; '.join(all_alerts)}\n")
     else:

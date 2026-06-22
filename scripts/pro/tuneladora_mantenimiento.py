@@ -19,7 +19,7 @@ import os
 import socket
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
@@ -297,6 +297,66 @@ def step_auto_mejora_prompt():
     return rc == 0
 
 
+def step_auditoria(profundidad: str) -> dict:
+    """Ejecuta el escudo de auditoría. Retorna score + reporte + html_path."""
+    log(f"  Auditoría ({profundidad})...")
+    flags = "--quick" if profundidad in ("ligero", "medio") else "--full"
+    script = str(URA_ROOT / "scripts/pro/revisor.py")
+    rc, stdout, _ = run([VENV_PYTHON, script, flags], timeout=120)
+    try:
+        reporte = json.loads(stdout)
+    except (json.JSONDecodeError, ValueError) as e:
+        log(f"  ERROR parseando auditoría: {e}")
+        return {"score": 0, "bloqueante": True, "error": str(e)}
+    score = reporte.get("score", 0)
+    log(f"  Score: {score}/100 | Críticos: {reporte.get('metricas', {}).get('criticos', 0)}")
+    if reporte.get("bloqueante"):
+        log("  ⚠️  SCORE BLOQUEANTE — Revisar reporte antes de continuar")
+    return reporte
+
+
+def step_forense_aislamientos() -> dict:
+    """Lee procesos aislados por el SNC en /tmp/ura_aislados/ y limpia >7 días."""
+    aislados_dir = Path("/tmp/ura_aislados")
+    if not aislados_dir.exists():
+        return {"total": 0, "activos": [], "limpiados": 0}
+
+    ahora = time.time()
+    activos = []
+    limpiados = 0
+
+    for pid_dir in aislados_dir.iterdir():
+        if not pid_dir.is_dir():
+            continue
+        nombre_file = pid_dir / "nombre.txt"
+        nombre = nombre_file.read_text().strip() if nombre_file.exists() else pid_dir.name
+        cpu_file = pid_dir / "cpu.txt"
+        cpu_info = cpu_file.read_text().strip() if cpu_file.exists() else "?"
+
+        # Si el proceso ya no existe (SIGKILL manual), limpiar
+        if not (Path(f"/proc/{pid_dir.name}").exists()):
+            import shutil
+            shutil.rmtree(pid_dir, ignore_errors=True)
+            limpiados += 1
+            log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — proceso ya no existe")
+            continue
+
+        # Si el aislamiento tiene más de 7 días, limpiar
+        if ahora - pid_dir.stat().st_mtime > 604800:
+            import shutil
+            shutil.rmtree(pid_dir, ignore_errors=True)
+            limpiados += 1
+            log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — >7 días")
+            continue
+
+        activos.append({"pid": pid_dir.name, "nombre": nombre, "cpu": cpu_info})
+
+    resultado = {"total": len(activos) + limpiados, "activos": activos, "limpiados": limpiados}
+    if activos:
+        log(f"  ⚠️ {len(activos)} procesos aislados activos: {[a['nombre'] for a in activos]}")
+    return resultado
+
+
 # -- Niveles --
 
 
@@ -310,7 +370,8 @@ def revision_ligera():
     f821 = out.count("F821")
     step_compactadora()
     step_scanner_salida()
-    return {"ruff_f821": f821, "token_screen": token_ok}
+    auditoria = step_auditoria("ligero")
+    return {"ruff_f821": f821, "token_screen": token_ok, "auditoria_score": auditoria.get("score", 0)}
 
 
 def revision_media():
@@ -329,6 +390,7 @@ def revision_media():
     step_scanner_salida()
     inspectores_ok = step_inspectores()
     _rc, out, _ = run([RUFF, "check", "--select", "F821", "."], timeout=60)
+    auditoria = step_auditoria("medio")
     return {
         "health": health,
         "token_screen": token_ok,
@@ -337,6 +399,7 @@ def revision_media():
         "refactor_err": err,
         "inspectores_ok": inspectores_ok,
         "f821_final": out.count("F821"),
+        "auditoria_score": auditoria.get("score", 0),
     }
 
 
@@ -368,13 +431,26 @@ def revision_profunda():
     results["inspectores_ok"] = inspectores_ok
     run([VENV_PYTHON, "scripts/pro/watermark_aggregator.py", "--auto-reglas"], timeout=30)
 
+    # Escudo de auditoría profunda
+    auditoria = step_auditoria("profundo")
+    results["auditoria_score"] = auditoria.get("score", 0)
+    results["auditoria_html"] = auditoria.get("html_report", "")
+    results["auditoria_criticos"] = auditoria.get("metricas", {}).get("criticos", 0)
+
+    # Forense de procesos aislados por el SNC
+    results["aislamientos"] = step_forense_aislamientos()
+
     # Auditoria delta (de ciclo_autonomo)
     f821_ok, _delta_out = audit_delta("pre-profundo")
     _rc, out, _ = run([RUFF, "check", "--select", "F821", "."], timeout=60)
     results["f821_final"] = out.count("F821")
 
-    # Commit o Rollback (de ciclo_autonomo)
-    if f821_ok:
+    # Commit o Rollback — bloqueado por auditoría si score < 50
+    if results.get("auditoria_criticos", 0) > 0 or auditoria.get("bloqueante", False):
+        log("  ⛔ Auditoría bloqueante — commit cancelado, revisar reporte")
+        git_rollback()
+        results["git"] = "blocked_by_auditor"
+    elif f821_ok:
         git_commit_if_stable()
         results["git"] = "committed"
     else:
@@ -391,7 +467,7 @@ def revision_profunda():
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     reporte = {
         "tuneladora": "mantenimiento_profundo",
-        "fecha": datetime.now().isoformat(),
+        "fecha": datetime.now(UTC).isoformat(),
         "health": health,
         "alertas": alertas,
         "dispositivos": {k: "OK" if v else "DOWN" for k, v in dispositivos.items()},
@@ -425,7 +501,7 @@ def main() -> int:
     else:
         resultado = revision_ligera()
     estado = {
-        "ultima_ejecucion": datetime.now().isoformat(),
+        "ultima_ejecucion": datetime.now(UTC).isoformat(),
         "nivel": nivel,
         "resultado": resultado,
     }

@@ -7,7 +7,7 @@ Type=simple
 User=ramon
 WorkingDirectory=/home/ramon/URA/ura_ia_1972
 Environment="OPENCODE_GATEWAY_URL=ws://10.164.1.99:18789"
-Environment="OPENCODE_GATEWAY_TOKEN=663d5e6b3b72780013730dbba0c767d4d918d88d48dcd634"
+Environment="OPENCODE_GATEWAY_TOKEN=V0T9kzrReQyvUlcPGrzlqO-BNVM_xIc1oJN0KZhftrU"
 Environment="OPENCODE_SERVER_USERNAME=ramon"
 Environment="OPENCODE_SERVER_PASSWORD=ura_1972_secure_autonomous"
 ExecStart=/home/ramon/.opencode/bin/opencode web --port 8081 --hostname 0.0.0.0

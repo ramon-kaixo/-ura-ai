@@ -17,9 +17,7 @@ Salida (stdout):
 import asyncio
 import json
 import logging
-import os
 import sys
-import time
 from pathlib import Path
 
 import httpx
@@ -245,7 +243,7 @@ async def main_async():
     with DebateLock():
         result = await run_debate(plan_text, context)
 
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    log.info(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("verdict") == "CONSENSUS" else 1
 
 

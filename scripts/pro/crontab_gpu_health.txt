@@ -1,0 +1,7 @@
+# ==============================================================================
+# AUTOMATIZACIÓN DE AUDITORÍA DE SALUD DE GPU GB10 (BLACKWELL)
+# FRECUENCIA: Cada 30 minutos cronometrados
+# LOG PRUNING: Ignora warnings (Exit 1), alerta y actúa solo en bug crítico (Exit 2)
+# PROTECCIÓN: flock -n en el recovery respeta el lock de la tuneladora
+# ==============================================================================
+*/30 * * * * python3 /home/ramon/URA/ura_ia_1972/scripts/pro/gpu_health.py --json >/dev/null 2>&1; [ $? -eq 2 ] && flock -n /tmp/gpu_health_tuneladora.lock sudo /bin/bash /home/ramon/URA/ura_ia_1972/scripts/pro/gpu_recovery.sh --force

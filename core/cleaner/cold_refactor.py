@@ -34,7 +34,9 @@ class ColdRefactor:
     def _l(s):
         if not DQ.exists(): return []
         try: return json.loads(DQ.read_text(encoding="utf-8"))
-        except: return []
+        except Exception:
+            logger.exception("Failed to load debt queue from %s", DQ)
+            return []
     def estado_deuda(s):
         c=s._l(); p=[e for e in c if not e.get("resuelto")]
         return {"total":len(c),"pend":len(p),"res":len(c)-len(p),"skills":[e["skill_nombre"] for e in p]}

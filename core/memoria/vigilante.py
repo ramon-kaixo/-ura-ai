@@ -1,3 +1,4 @@
+import asyncio
 """Vigilante: re-check de fuentes con cambio de contenido → versionado de ideas."""
 import json
 import logging
@@ -85,10 +86,8 @@ async def revisar_fuente(fuente: dict) -> dict:
 async def procesar_cambios() -> list[dict]:
     """Revisa todas las fuentes vigiladas. Para las que cambiaron,
     comprime y versiona las ideas via Qdrant."""
-    import asyncio
     from core.memoria.compresor import comprimir_a_ideas
-    from core.memoria.qdrant_store import almacenar_ideas, marcar_antiguas, _get_client
-    from qdrant_client import models
+    from core.memoria.qdrant_store import almacenar_ideas, marcar_antiguas
 
     fuentes = cargar_fuentes()
     if not fuentes:
@@ -112,7 +111,7 @@ async def procesar_cambios() -> list[dict]:
                 hash_origen=cambio["hash"],
             )
             if ideas:
-                marcar_antiguas(cambio["url"])
+                await marcar_antiguas(cambio["url"])
                 n = await almacenar_ideas(ideas)
                 cambio["ideas_insertadas"] = n
                 cambio["total_ideas"] = len(ideas)
@@ -126,7 +125,6 @@ async def generar_parte() -> dict:
     """Genera el parte de la ultima pasada de actualizacion."""
     from core.memoria.qdrant_store import _get_client
     from qdrant_client import models
-    import time, json
 
     fuentes = cargar_fuentes()
     if not fuentes:
@@ -140,7 +138,7 @@ async def generar_parte() -> dict:
     for fuente in fuentes:
         url = fuente.get("url", "")
         # Count versions of this source in Qdrant
-        results = client.query_points(
+        results = await asyncio.to_thread(client.query_points,
             "ideas",
             query_filter=models.Filter(must=[models.FieldCondition(key="fuente", match=models.MatchValue(value=url))]),
             limit=50, with_payload=["version", "vigente", "fecha_captura"],

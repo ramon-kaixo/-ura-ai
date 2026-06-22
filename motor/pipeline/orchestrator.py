@@ -1,5 +1,7 @@
-import json, logging, time
-from datetime import datetime
+import json
+import logging
+import time
+from datetime import UTC, datetime
 from pathlib import Path
 from motor.core.config import UraConfig
 from motor.core.state import PipelineResult
@@ -25,7 +27,7 @@ class Orchestrator:
 
     def run(self, dry_run: bool = False) -> PipelineResult:
         """Ejecuta el pipeline completo."""
-        result = PipelineResult(timestamp=datetime.utcnow().isoformat()+"Z")
+        result = PipelineResult(timestamp=datetime.now(UTC).isoformat()+"Z")
         t_total = time.time()
         try:
             result.preflight = ejecutar_preflight(self.config)
