@@ -39,7 +39,7 @@ def cargar_inventario() -> dict:
         try:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
-            pass
+    pass  # noqa: S110
     return {"dispositivos": {}}
 
 

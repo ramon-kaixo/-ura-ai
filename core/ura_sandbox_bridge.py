@@ -79,7 +79,8 @@ class SandboxConfig:
 
 
 class SandboxBridge:
-    """Capa de aislamiento de I/O. Hoy passthrough; el día de la VM, swap automático."""
+"""Capa de aislamiento de I/O. Hoy passthrough
+el día de la VM, swap automático."""
 
     def __init__(self, config: SandboxConfig | None = None) -> None:
         self.config = config or SandboxConfig.from_env()

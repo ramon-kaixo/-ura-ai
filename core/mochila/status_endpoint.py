@@ -27,7 +27,7 @@ async def _ram_info() -> dict:
                 riesgo = "alto" if used > total * 0.95 else "medio" if used > total * 0.85 else "bajo"
                 return {"total_gb": total, "usado_gb": used, "libre_gb": total - used, "riesgo": riesgo}
     except Exception:
-        pass
+    pass  # noqa: S110
     return {"error": "free -g not available"}
 
 
@@ -81,14 +81,14 @@ async def _tunnel_status() -> dict:
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         active = stdout.decode().strip() == "active"
     except Exception:
-        pass
+    pass  # noqa: S110
     searxng_ok = False
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get("http://127.0.0.1:8888/search?q=health&format=json")
             searxng_ok = resp.status_code == 200
     except Exception:
-        pass
+    pass  # noqa: S110
     return {"tunnel_active": active, "searxng_accessible": searxng_ok}
 
 

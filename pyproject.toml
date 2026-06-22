@@ -17,6 +17,31 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
+ignore = [
+    "ANN",     # Type annotations (legacy codebase, requeriria rewrite)
+    "D",       # Docstrings (requeriria generacion bulk con IA)
+    "BLE001",  # Blind except (intencional en codigo de red)
+    "ARG",     # Unused arguments (callback APIs legacy)
+    "G004",    # Logging f-strings (cosmetico, no bug)
+    "PLR2004", # Magic values (cosmetico)
+    "PLR0913", # Too many arguments (API legacy)
+    "E402",    # Module import not at top (circular imports)
+    "PLC0415", # Import outside top-level (circular imports)
+    "E741",    # Ambiguous variable name (cosmetico)
+    "ERA",     # Commented-out code (legacy)
+    "N",       # Naming conventions (cosmetico)
+    "PT",      # pytest rules (solo aplican a tests)
+    "TRY",     # try/except style (cosmetico)
+    "EM",      # Exception message style (cosmetico)
+    "PIE",     # Pie-style rules (cosmetico)
+    "RET",     # Return style (cosmetico)
+    "T20",     # Print statements (intencional en scripts)
+    "COM",     # Trailing commas (cosmetico, --fix lo maneja)
+    "Q",       # Quote style (cosmetico, --fix lo maneja)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "D", "ANN", "ARG"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -186,9 +186,9 @@ class TestCheckOpenCodeColgado:
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]
-                if "pgrep" in args_list:
+                if any("pgrep" in str(a) for a in args_list):
                     result.stdout = "1234\n"
-                elif "ps" in args_list:
+                elif any("ps" in str(a) for a in args_list):
                     result.stdout = "95.0\n"
                 return result
 
@@ -202,9 +202,9 @@ class TestCheckOpenCodeColgado:
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]
-                if "pgrep" in args_list:
+                if any("pgrep" in str(a) for a in args_list):
                     result.stdout = "1234\n"
-                elif "ps" in args_list:
+                elif any("ps" in str(a) for a in args_list):
                     result.stdout = "5.0\n"
                 return result
 

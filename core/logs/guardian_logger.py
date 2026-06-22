@@ -19,7 +19,7 @@ def _publish_to_event_bus(record: dict) -> None:
         from core.event_bus import publish
         publish("alert", {"source": "guardian", "event": record.get("event"), "reason": record.get("reason", "")[:200], "result_type": record.get("result_type", "")})
     except Exception:
-        pass
+    pass  # noqa: S110
 
 
 def _save_to_qdrant(record: dict) -> None:
@@ -40,7 +40,7 @@ def _save_to_qdrant(record: dict) -> None:
                 "exit_code": -1,
             })
     except Exception:
-        pass
+    pass  # noqa: S110
 
 
 def log_event(

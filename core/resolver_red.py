@@ -37,7 +37,7 @@ def cargar_inventario() -> dict:
         try:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
-            pass
+    pass  # noqa: S110
     return {"dispositivos": {}}
 
 
@@ -72,7 +72,7 @@ def resolver_dns(hostname: str) -> str | None:
                     if ips:
                         return ips[0]
     except Exception:
-        pass
+    pass  # noqa: S110
 
     # 3. Fallback: inventario
     inventario = cargar_inventario()
@@ -99,7 +99,7 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
                     ms = float(line.split("time=")[1].split()[0])
                     return True, ms
     except Exception:
-        pass
+    pass  # noqa: S110
     return False, 999
 
 

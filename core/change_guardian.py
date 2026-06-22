@@ -23,7 +23,7 @@ def _ensure_patterns_dir() -> None:
 
 
 def _git(*args) -> tuple[bool, str]:
-    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=ROOT, check=False)
+    result = subprocess.run([GIT, *args], capture_output=True, text=True, cwd=ROOT, check=False)
     return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
 
 
