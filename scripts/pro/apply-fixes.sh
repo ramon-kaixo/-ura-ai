@@ -2,8 +2,8 @@
 # apply-fixes.sh — Despliegue seguro de fixes críticos con health-check y rollback
 #
 # Uso:
-#   ./apply-fixes.sh                    → despliega, verifica, revierte si falla
-#   ./apply-fixes.sh --rollback         → revierte al backup más reciente
+#   sudo ./apply-fixes.sh               → despliega, verifica, revierte si falla
+#   sudo ./apply-fixes.sh --rollback    → revierte al backup más reciente
 #   ./apply-fixes.sh --status           → muestra estado actual de servicios
 #
 # Servicios afectados por los fixes:
@@ -11,6 +11,10 @@
 #   snc          → monitor/snc.py
 #
 set -euo pipefail
+SUDO=""
+if [[ $EUID -ne 0 ]]; then
+    SUDO="sudo"
+fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BACKUP_DIR="/opt/ura/fixes_backup"
@@ -34,11 +38,7 @@ preflight() {
     local ok=true
 
     # ¿Ejecutamos como root?
-    if [[ $EUID -ne 0 ]]; then
-        warn "No eres root — systemctl restart puede fallar sin sudo."
-    fi
-
-    # ¿Existen los archivos fuente?
+    # ¿Ejecutamos como root?
     for svc in "${SERVICES[@]}"; do
         for f in ${SERVICE_FILES[$svc]}; do
             if [[ ! -f "$REPO_DIR/$f" ]]; then
@@ -74,23 +74,23 @@ preflight() {
 do_backup() {
     local tag="$1"
     local dest="$BACKUP_DIR/${tag}_${TIMESTAMP}"
-    mkdir -p "$dest"
+    $SUDO mkdir -p "$dest"
     echo ""; echo "=== 💾 Backup en $dest ==="
     for svc in "${SERVICES[@]}"; do
         for f in ${SERVICE_FILES[$svc]}; do
             local src="$REPO_DIR/$f"
             local dstdir="$dest/$(dirname "$f")"
-            mkdir -p "$dstdir"
-            cp "$src" "$dstdir/"
+            $SUDO mkdir -p "$dstdir"
+            $SUDO cp "$src" "$dstdir/"
             ok "$f respaldado"
         done
     done
     # Backup de tests
-    mkdir -p "$dest/tests"
-    cp "$REPO_DIR"/tests/test_vram_guard.py "$dest/tests/" 2>/dev/null || true
-    cp "$REPO_DIR"/tests/test_inference_engine.py "$dest/tests/" 2>/dev/null || true
-    cp "$REPO_DIR"/tests/test_snc_anomalias.py "$dest/tests/" 2>/dev/null || true
-    echo "$tag" > "$dest/.tag"
+    $SUDO mkdir -p "$dest/tests"
+    $SUDO cp "$REPO_DIR"/tests/test_vram_guard.py "$dest/tests/" 2>/dev/null || true
+    $SUDO cp "$REPO_DIR"/tests/test_inference_engine.py "$dest/tests/" 2>/dev/null || true
+    $SUDO cp "$REPO_DIR"/tests/test_snc_anomalias.py "$dest/tests/" 2>/dev/null || true
+    echo "$tag" | $SUDO tee "$dest/.tag" > /dev/null
     echo "$dest"
 }
 
@@ -133,7 +133,7 @@ apply_and_restart() {
     local svc
     for svc in "snc" "model-router"; do
         info "Reiniciando $svc..."
-        if systemctl restart "$svc" 2>/dev/null; then
+        if $SUDO systemctl restart "$svc" 2>/dev/null; then
             if health_check "$svc"; then
                 ok "$svc reiniciado y saludable"
             else
@@ -141,7 +141,7 @@ apply_and_restart() {
                 return 1
             fi
         else
-            fail "systemctl restart $svc falló"
+            fail "$SUDO systemctl restart $svc falló"
             return 1
         fi
     done
@@ -149,17 +149,21 @@ apply_and_restart() {
     # Health-check adicional: endpoint /health del model-router
     local api_key="${URA_API_KEY:-}"
     if [[ -z "$api_key" ]]; then
-        api_key=$(sudo grep "^URA_API_KEY" /etc/ura/secrets.env 2>/dev/null | cut -d= -f2-)
+        api_key=$($SUDO grep "^URA_API_KEY=" /etc/ura/secrets.env 2>/dev/null | cut -d= -f2-)
     fi
     if [[ -n "$api_key" ]]; then
         local http_code
-        http_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 \
+        http_code=$(timeout 5 curl -s -o /dev/null -w "%{http_code}" \
             -H "X-API-KEY: $api_key" http://127.0.0.1:11435/health 2>/dev/null || echo "000")
         if [[ "$http_code" == "200" ]]; then
             ok "model-router /health responde HTTP 200"
+        elif [[ "$http_code" == "000" ]]; then
+            info "model-router /health no respondio en 5s (Ollama puede estar ocupado)"
         else
-            warn "model-router /health responde HTTP $http_code (no crítico)"
+            info "model-router /health responde HTTP $http_code"
         fi
+    else
+        info "Saltando health-check HTTP (no se encontro URA_API_KEY)"
     fi
 
     return 0
@@ -204,7 +208,7 @@ reiniciar_servicios() {
     echo ""; echo "=== 🔄 Reiniciando servicios post-cambio ==="
     for svc in "snc" "model-router"; do
         info "Reiniciando $svc..."
-        systemctl restart "$svc" 2>/dev/null || { fail "Fallo al reiniciar $svc"; return 1; }
+        $SUDO systemctl restart "$svc" 2>/dev/null || { fail "Fallo al reiniciar $svc"; return 1; }
         health_check "$svc" || return 1
     done
 }
