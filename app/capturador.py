@@ -3,9 +3,8 @@
 Cada maquina captura su propia pantalla. Sin cruce de contextos.
 """
 from __future__ import annotations
-import os, sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import os
+import sys
 
 # Identificacion del nodo via variable de entorno (default: ASUS_GX10)
 NODO = os.getenv("URA_NODE_ENV", "ASUS_GX10")
@@ -29,8 +28,8 @@ class CapturadorTarget:
     def _capturar_vnc(self) -> str | None:
         """Captura desde el monitor virtual de Hetzner via VNC."""
         try:
-            import vncdotool.api, base64
-            from PIL import Image
+            import vncdotool.api
+            import base64
             from io import BytesIO
             client = vncdotool.api.connect("127.0.0.1::5901")
             client.password(os.getenv("VNC_PWD", "ura2026"))
@@ -39,14 +38,14 @@ class CapturadorTarget:
             buf = BytesIO()
             img.save(buf, format="JPEG", quality=50)
             return base64.b64encode(buf.getvalue()).decode()
-        except Exception as e:
+        except Exception:
             return None
 
     def _capturar_mac(self) -> str | None:
         """Captura nativa en Mac con normalizacion Retina."""
         try:
             import base64
-            from PIL import ImageGrab, Image
+            from PIL import ImageGrab
             from io import BytesIO
             img = ImageGrab.grab()
             w, h = img.size
@@ -55,7 +54,7 @@ class CapturadorTarget:
             buf = BytesIO()
             img.save(buf, format="JPEG", quality=50)
             return base64.b64encode(buf.getvalue()).decode()
-        except Exception as e:
+        except Exception:
             return None
 
     def _capturar_headless(self) -> None:

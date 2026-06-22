@@ -16,7 +16,6 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SANDBOX_LOG = Path.home() / ".ura" / "sandbox.log"
-SANDBOX_LOG.parent.mkdir(parents=True, exist_ok=True)
 
 
 class Sandbox:
@@ -234,9 +233,9 @@ if __name__ == "__main__":
 
         # Test 2: test_improvement
         test_code = """
-print('Hola desde el sandbox')
+log.info('Hola desde el sandbox')
 x = 1 + 1
-print(f'1 + 1 = {x}')
+log.info(f'1 + 1 = {x}')
 """
         await sandbox.test_improvement("test_module", test_code)
 

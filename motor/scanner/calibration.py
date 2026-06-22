@@ -1,5 +1,7 @@
-import json, logging, statistics
-from datetime import datetime
+import json
+import logging
+import statistics
+from datetime import UTC, datetime
 from pathlib import Path
 
 log = logging.getLogger("ura.scanner.calib")
@@ -53,7 +55,7 @@ class Calibration:
             bl["ram_pct_max"] = estado.recursos.get("ram_pct", 0) * 1.2
             bl["disk_pct_max"] = estado.recursos.get("disk_pct", 0) * 1.2
             bl["load_max"] = estado.recursos.get("load_1m", 0) * 1.5
-        bl["generated"] = datetime.utcnow().isoformat() + "Z"
+        bl["generated"] = datetime.now(UTC).isoformat() + "Z"
         bl["puntos_trend"] = len(trends) if trends else 0
         self._baseline = bl
         self.baseline_path.parent.mkdir(parents=True, exist_ok=True)

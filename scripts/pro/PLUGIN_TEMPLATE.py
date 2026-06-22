@@ -15,7 +15,7 @@ FASES DISPONIBLES:
 """
 
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 # ══════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@ def mi_logica(archivo=None):
         log(f"  Archivo: {archivo}")
 
     # Tu código aquí
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+    return {"status": "ok", "timestamp": datetime.now(UTC).isoformat()}
 
 
 def main() -> None:

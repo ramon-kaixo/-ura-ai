@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from core.mochila.circuit_breaker import CircuitBreaker, CircuitState
+from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import ClasificadorKeyword, NoProviderAvailable, RouteResult, Router
-from core.mochila.tools import TOOL_SCHEMAS, file_read, ejecutar_tool
+from core.mochila.tools import TOOL_SCHEMAS, file_read
 
 
 # ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@ from core.mochila.tools import TOOL_SCHEMAS, file_read, ejecutar_tool
 
 class TestCircuitBreaker:
     def setup_method(self):
-        import glob, os
+        import glob
         for f in glob.glob("/tmp/test_cb_*.json"):
             try:
                 os.unlink(f)

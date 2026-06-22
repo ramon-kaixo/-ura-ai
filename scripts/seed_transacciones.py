@@ -6,9 +6,7 @@ Ejecutar una vez tras migrar a Qdrant para evitar distance=1.0 en /v2/interact.
 import json
 import sys
 import math
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient, COLECCION_TRANSACCIONES

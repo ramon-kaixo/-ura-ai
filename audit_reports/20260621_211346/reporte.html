@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><title>URA Audit Report</title>
+<meta charset="utf-8"><meta http-equiv="refresh" content="30">
+<style>
+body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}
+h1{color:#58a6ff}.score{font-size:72px;font-weight:bold;color:#ff0000}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin:8px 0}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-bottom:1px solid #30363d}
+th{color:#8b949e;text-transform:uppercase}
+</style></head><body>
+<h1>🛡️ URA Security Audit</h1>
+<div class="card">
+<div class="score">30/100</div>
+<p>Profundidad: <strong>profundo</strong>
+| Tendencia: <strong>mejorando</strong>
+| Bloqueante: <strong>✅ NO</strong></p>
+</div>
+<div class="card"><h2>Métricas</h2>
+<table>
+<tr><th>Críticos</th><td>1</td></tr>
+<tr><th>Altos</th><td>75</td></tr>
+<tr><th>Medios</th><td>0</td></tr>
+<tr><th>Información</th><td>756</td></tr>
+<tr><th>CVEs</th><td>0</td></tr>
+</table></div>
+<div class="card"><h2>Hallazgos</h2>
+<table><tr><th>Archivo</th><th>Tipo</th><th>Fix</th></tr>
+<tr><td>./monitor/snc.py:106</td><td>Bandit B602</td><td>subprocess call with shell=True identified, security issue.</td></tr>
+
+</table></div>
+<p style="color:#484f58">20260621_211346 — report_dir: ./audit_reports/20260621_211346</p>
+</body></html>

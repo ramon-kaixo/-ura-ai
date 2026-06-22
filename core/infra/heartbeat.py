@@ -11,7 +11,6 @@ import json
 import logging
 import os
 import subprocess
-import sys
 import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
@@ -30,6 +29,7 @@ MOCHILA_URL = "http://127.0.0.1:4098"
 HEALTH_PATH = "/health"
 MAX_FAILS = 3
 CHECK_INTERVAL = 30
+_shutdown_flag = False
 
 
 def check_health() -> bool:
@@ -165,7 +165,7 @@ def main():
     args = parser.parse_args()
 
     fails = 0
-    while True:
+    while not _shutdown_flag:
         if check_health():
             fails = 0
         else:
@@ -203,4 +203,14 @@ def main():
 
 
 if __name__ == "__main__":
+    import signal
+
+    def _handle_signal(sig, frame) -> None:
+        global _shutdown_flag
+        logger.info("Recibida señal %s, parando heartbeat...", sig)
+        _shutdown_flag = True
+
+    signal.signal(signal.SIGTERM, _handle_signal)
+    signal.signal(signal.SIGINT, _handle_signal)
+
     main()

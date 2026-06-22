@@ -20,10 +20,10 @@ def validate(api_key: Optional[str]) -> bool:
     """
     if not AUTH_ENABLED:
         return True
-    
+
     if not api_key:
         return False
-    
+
     return api_key == DEFAULT_API_KEY
 
 

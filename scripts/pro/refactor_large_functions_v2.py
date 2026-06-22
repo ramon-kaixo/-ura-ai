@@ -15,14 +15,12 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import time
 import urllib.request
 from pathlib import Path
 
 # Agregar directorio de scripts al path
 SCRIPT_DIR = Path(__file__).parent
-sys.path.insert(0, str(SCRIPT_DIR))
 
 from compactador_espacios import compactar, descompactar
 

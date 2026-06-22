@@ -8,7 +8,7 @@ Información persistida en ~/.ura/run/ura_mac_heartbeat.json.
 import json
 import os
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 _TERMINAL_HOST = os.environ.get("TERMINAL_HOST", "")
@@ -56,7 +56,7 @@ class MacHeartbeat:
     def _save_state(self) -> None:
         """Persiste estado a disco."""
         state = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "mac_ip": self.mac_ip,
             "mac_reachable": self.mac_reachable,
             "consecutive_failures": self.consecutive_failures,
@@ -82,7 +82,7 @@ class MacHeartbeat:
         except Exception:
             reachable = False
 
-        self.last_check = datetime.now().isoformat()
+        self.last_check = datetime.now(UTC).isoformat()
 
         if reachable:
             self.consecutive_failures = 0

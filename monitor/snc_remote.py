@@ -6,12 +6,10 @@ Notifica si GX10 está OFFLINE o en estado CRITICAL.
 
 import json
 import subprocess
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config_manager import CONFIG
 
 TARGET = CONFIG["ollama"]["host"]

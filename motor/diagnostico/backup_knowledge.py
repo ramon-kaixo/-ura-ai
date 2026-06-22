@@ -1,13 +1,14 @@
-import json, logging
+import json
+import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 
 log = logging.getLogger("ura.diagnostico.backup")
 
 def backup_incidente(config, incidente: dict = None) -> str:
     """Guarda backup de un incidente a disco."""
-    dest = Path(config.data_dir) / f"backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-    data = {"timestamp": datetime.utcnow().isoformat()+"Z"}
+    dest = Path(config.data_dir) / f"backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+    data = {"timestamp": datetime.now(UTC).isoformat()+"Z"}
     if incidente:
         data["incidente"] = incidente
     try:

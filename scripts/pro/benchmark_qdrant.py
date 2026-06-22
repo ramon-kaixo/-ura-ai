@@ -3,17 +3,14 @@
 Ejecutar: python3 scripts/pro/benchmark_qdrant.py
 """
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import json
+import sys
+
 import logging
-import os
 import threading
 import time
 import tracemalloc
-from datetime import datetime
+from datetime import UTC, datetime
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
@@ -40,11 +37,11 @@ def main():
     print("\n\033[1m" + "=" * 50)
     print("  URA Qdrant Stress Test Suite")
     print("=" * 50 + "\033[0m")
-    print(f"Started: {datetime.now().isoformat()}")
+    print(f"Started: {datetime.now(UTC).isoformat()}")
     print()
 
     from motor.core.config import UraConfig
-    from motor.core.qdrant_client import QdrantClient, COLECCION_DOCUMENTOS, COLECCION_INCIDENTES
+    from motor.core.qdrant_client import QdrantClient, COLECCION_DOCUMENTOS
 
     # ============================================================
     # 1. Singleton thread safety
@@ -125,7 +122,7 @@ def main():
     vector_consulta = qdrant.generar_embedding("asistente multi-agente con conciencia")
     results = qdrant.buscar_por_similitud(vector_consulta, COLECCION_DOCUMENTOS, limit=10)
 
-    check("Resultados no vacíos", len(results) > 0, f"0 resultados")
+    check("Resultados no vacíos", len(results) > 0, "0 resultados")
     top_score = results[0]["score"] if results else 0
     check("Top score > 0.75", top_score > 0.75, f"score={top_score:.4f}")
 
@@ -270,7 +267,7 @@ def main():
     print("\n\033[1m[10/10] Incidentes round-trip\033[0m")
 
     incidente = {
-        "ts": datetime.utcnow().isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "tipo": "benchmark_test",
         "subtipo": "stress",
         "resumen": "Incidente de prueba del benchmark",
@@ -282,7 +279,7 @@ def main():
     check("Incidente guardado", ok)
 
     incidentes = qdrant.buscar_incidentes(limit=10)
-    check("Incidentes recuperables", len(incidentes) > 0, f"0 incidentes")
+    check("Incidentes recuperables", len(incidentes) > 0, "0 incidentes")
     found = any(i.get("tipo_incidencia") == "benchmark_test" for i in incidentes)
     check("Contiene nuestro incidente de prueba", found)
 
@@ -301,7 +298,7 @@ def main():
     if SKIP:
         print(f"  \033[33m{SKIP} omitidos\033[0m")
     print("=" * 50 + "\033[0m")
-    print(f"Finished: {datetime.now().isoformat()}")
+    print(f"Finished: {datetime.now(UTC).isoformat()}")
 
     return 1 if FAIL > 0 else 0
 

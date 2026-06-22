@@ -1,0 +1,14 @@
+[Unit]
+Description=URA Executor API — Recibe tareas de URA
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/ramon/.config/opencode/ejecutor_api.py
+WorkingDirectory=/home/ramon/.config/opencode
+Restart=always
+RestartSec=10
+User=ramon
+
+[Install]
+WantedBy=multi-user.target

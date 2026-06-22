@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+
 PASS = 0
 FAIL = 0
 
@@ -82,7 +83,7 @@ print("\n[3] Model Router (clasificar, seleccionar, cache)")
 
 from core.model_router import (
     clasificar_peticion, seleccionar_modelo, obtener_modelos_disponibles,
-    PromptCache, MetricsCollector, PATRONES_CLASIFICACION
+    PromptCache, MetricsCollector
 )
 
 # 3a. Clasificación
@@ -312,8 +313,10 @@ if docs_path.exists():
 # ============================================================
 print("\n[8] SNC Determinista (runbook, whitelist, recovery)")
 
-from monitor.snc import load_runbook, is_command_forbidden, run_command, repair_attempts
-import json, tempfile, shutil
+from monitor.snc import repair_attempts
+import json
+import tempfile
+import shutil
 
 # T1: runbook JSON schema
 rb = load_runbook()
@@ -336,7 +339,6 @@ tmp_state = Path(tempfile.mkdtemp()) / "test_state.json"
 from monitor.snc import STATE_FILE as _orig_state
 import monitor.snc as snc_mod
 snc_mod.STATE_FILE = tmp_state
-from monitor.snc import write_state
 state = {"timestamp": "2026-01-01T00:00:00", "status": "OK", "services": {"test": {"ok": True}}}
 write_state(state)
 check("T3: state file existe", lambda: tmp_state.exists())
@@ -412,7 +414,6 @@ check("P0: escape_applescript maneja string limpio",
       lambda: _escape_applescript("hello") == "hello")
 
 # P1-7: clasificar_peticion con 1 arg (arity fix)
-from core.model_router import clasificar_peticion
 check("P1: clasificar_peticion acepta 1 arg",
       lambda: clasificar_peticion([{"role": "user", "content": "analizar bug"}]) in ["razonamiento", "codigo_complejo", "codigo_rapido", "respuesta_rapida", "vision", "embeddings"])
 check("P1: clasificar_peticion retorna string",
@@ -440,7 +441,7 @@ if FAIL == 0:
     print(f"\033[32m  PASS: {PASS}/{PASS+FAIL} — TODOS LOS TESTS PASARON\033[0m")
 else:
     print(f"\033[31m  PASS: {PASS}/{PASS+FAIL} — {FAIL} FALLOS\033[0m")
-    print(f"\033[31m  No dejes que lo de ayer se repita. Arregla los tests antes de commitear.\033[0m")
+    print("\033[31m  No dejes que lo de ayer se repita. Arregla los tests antes de commitear.\033[0m")
 print(f"{'='*50}")
 
 sys.exit(0 if FAIL == 0 else 1)

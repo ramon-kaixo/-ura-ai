@@ -9,14 +9,17 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent.parent
 PATTERNS_FILE = ROOT / "logs" / "failure_patterns.json"
-PATTERNS_FILE.parent.mkdir(exist_ok=True)
+
+
+def _ensure_patterns_dir() -> None:
+    PATTERNS_FILE.parent.mkdir(exist_ok=True)
 
 
 def _git(*args) -> tuple[bool, str]:
@@ -43,13 +46,14 @@ def _save_pattern(change_type: str, files: list[str], error_summary: str, diff: 
     patterns = _load_patterns()
     patterns.append(
         {
-            "fecha": datetime.now().isoformat(),
+            "fecha": datetime.now(UTC).isoformat(),
             "tipo_cambio": change_type,
             "archivos": files,
             "error": error_summary[:500],
             "diff_head": diff[:2000],
         }
     )
+    _ensure_patterns_dir()
     PATTERNS_FILE.write_text(json.dumps(patterns, indent=2, ensure_ascii=False))
     logger.warning("Patrón de fallo registrado: %s en %s", change_type, files)
 

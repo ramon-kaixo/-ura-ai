@@ -105,8 +105,8 @@ def generate():
     lines.append("")
     lines.append("## System Status")
     lines.append("")
-    lines.append(f"| Service | Status | Port |")
-    lines.append(f"|---------|--------|------|")
+    lines.append("| Service | Status | Port |")
+    lines.append("|---------|--------|------|")
     for s in sorted(ura_services, key=lambda x: x["name"]):
         emoji = "✅" if s["state"] == "active" else "❌"
         port = {"ollama": "11434", "opencode": "8081", "qdrant": "6333",

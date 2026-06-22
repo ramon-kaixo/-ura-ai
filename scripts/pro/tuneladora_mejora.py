@@ -17,11 +17,10 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
-sys.path.insert(0, str(SCRIPT_DIR))
 
 from plugin_registry import discover_all, list_plugins, log, run_phase
 
@@ -51,7 +50,7 @@ def main():
 
     reporte = {
         "tuneladora": "mejora_continua",
-        "fecha": datetime.now().isoformat(),
+        "fecha": datetime.now(UTC).isoformat(),
         "plugins_total": len(plugins),
         "fases": {},
         "resultado": "pendiente",

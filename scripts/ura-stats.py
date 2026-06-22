@@ -66,7 +66,7 @@ def print_drift(events: list[dict]):
             by_model[model]["results"].append(1 if rtype == "success" else 0)
 
     print(f"{'='*60}")
-    print(f"  DRIFT REPORT — Complejidad vs Tasa de exito por modelo")
+    print("  DRIFT REPORT — Complejidad vs Tasa de exito por modelo")
     print(f"{'='*60}")
     for model, data in sorted(by_model.items()):
         avg_cpx = sum(data["complexities"]) / len(data["complexities"]) if data["complexities"] else 0
@@ -85,7 +85,7 @@ def print_injection_report(events: list[dict]):
     by_file = Counter(e.get("file", "unknown") for e in injections)
 
     print(f"{'='*60}")
-    print(f"  INJECTION REPORT — Intentos bloqueados por filtro AST")
+    print("  INJECTION REPORT — Intentos bloqueados por filtro AST")
     print(f"{'='*60}")
     print(f"  Total bloqueos: {len(injections)}")
     print()

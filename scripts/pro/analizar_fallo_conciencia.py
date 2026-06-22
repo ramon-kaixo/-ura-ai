@@ -13,14 +13,13 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(os.path.expanduser("~/URA/ura_ia_1972"))
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 NOTIFICAR = Path("/opt/ura/scripts/notificar.sh")
 LOG = REPO / "logs/conciencia.log"
-LOG.parent.mkdir(parents=True, exist_ok=True)
 
 FALLOS_CONOCIDOS = {
     "teclado": {
@@ -48,7 +47,7 @@ FALLOS_CONOCIDOS = {
 
 def log(mensaje) -> None:
     with open(LOG, "a") as f:
-        f.write(f"{datetime.now().isoformat()} - {mensaje}\n")
+        f.write(f"{datetime.now(UTC).isoformat()} - {mensaje}\n")
 
 
 def agregar_sugerencia(problema, solucion) -> None:

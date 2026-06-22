@@ -1,8 +1,8 @@
+import asyncio
 import json
+import random
 import logging
 import os
-import sys
-import time
 from typing import Any
 
 import httpx
@@ -16,6 +16,31 @@ logger = logging.getLogger("ura.wrapper")
 MOCHILA_URL = os.getenv("MOCHILA_URL", "http://127.0.0.1:4098")
 MAX_RETRIES = 3
 TEMPS = [0.0, 0.3, 0.6]
+
+
+async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: int = 5) -> dict:
+    """Petición HTTP con backoff exponencial y jitter. Resuelve Tarea 2.5."""
+    url = f"{MOCHILA_URL}/v1/chat/completions"
+    for intento in range(max_retries):
+        try:
+            response = await client.post(url, json=payload)
+            if response.status_code in (429, 502, 503, 504):
+                logger.warning("API saturada (HTTP %s). Aplicando backoff...", response.status_code)
+                raise httpx.HTTPStatusError(
+                    "Servicio temporalmente indisponible",
+                    request=response.request, response=response,
+                )
+            response.raise_for_status()
+            return response.json()
+        except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            if intento == max_retries - 1:
+                logger.error("Agotados %d reintentos. Fallo: %s", max_retries, e)
+                raise
+            base_delay = 2 ** intento
+            jitter = random.uniform(0.5, 1.5)
+            delay = base_delay * jitter
+            logger.info("[Reintento %d/%d] Esperando %.2fs...", intento + 1, max_retries, delay)
+            await asyncio.sleep(delay)
 
 
 class OpenCodeWrapper:

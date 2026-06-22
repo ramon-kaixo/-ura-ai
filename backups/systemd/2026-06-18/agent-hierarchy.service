@@ -1,0 +1,14 @@
+[Unit]
+Description=URA Agent Hierarchy System
+After=network.target openclaw-gateway.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA
+ExecStart=/usr/bin/python3 /home/ramon/URA/agent_hierarchy.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

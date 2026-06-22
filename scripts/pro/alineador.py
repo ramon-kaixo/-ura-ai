@@ -14,13 +14,12 @@ PLUGIN = {
 
 import json
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 LOG = Path.home() / "URA/ura_ia_1972/logs/alineador.log"
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 MONOLOGO = Path("/opt/ura/data/monologo_interno.json")
-LOG.parent.mkdir(parents=True, exist_ok=True)
 
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import COLECCION_TRANSACCIONES, QdrantClient
@@ -36,7 +35,7 @@ def _get_qdrant():
 
 def log(msg) -> None:
     with open(LOG, "a") as f:
-        f.write(f"{datetime.now().isoformat()} - {msg}\n")
+        f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
 def _distancia_coseno(a: list[float], b: list[float]) -> float:

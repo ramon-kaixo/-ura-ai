@@ -7,8 +7,7 @@ Lógica:
 - Reintento con Qwen 32B si el JSON sigue inválido tras reparar
 """
 from __future__ import annotations
-import json, os, sys, re
-from pathlib import Path
+import json
 from json_repair import repair_json
 
 # Prioridades por temperatura
@@ -74,7 +73,9 @@ def compilar_opinion(
             )
             raw = result.stdout.strip()
         except Exception as e:
-            print(f"  ✗ Error ejecutando {modelo_reintento}: {e}")
+            delay = (2 ** intento) + __import__("random").uniform(0, 1)
+            print(f"  ✗ Error ejecutando {modelo_reintento}: {e}. Esperando {delay:.1f}s...")
+            __import__("time").sleep(delay)
             continue
 
         # Reparar JSON
@@ -90,7 +91,7 @@ def compilar_opinion(
             data["temperatura"] = temperatura
             return data
         else:
-            print(f"  ⚠ Esquema inválido (faltan campos), reintentando...")
+            print("  ⚠ Esquema inválido (faltan campos), reintentando...")
 
     return None
 

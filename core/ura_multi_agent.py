@@ -27,7 +27,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────────────
@@ -36,7 +36,6 @@ URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 SCRIPTS = URA_ROOT / "scripts/pro"
 NERVIOSO = URA_ROOT / ".nervioso"
-NERVIOSO.mkdir(parents=True, exist_ok=True)
 MAX_CICLO_S = 300  # Timeout global del ciclo de auto-mejora (5 minutos)
 
 MODELOS = {
@@ -59,7 +58,7 @@ class Telemetria:
     @staticmethod
     def hardware() -> dict:
         """Estado del hardware."""
-        metrics = {"timestamp": datetime.now().isoformat()}
+        metrics = {"timestamp": datetime.now(UTC).isoformat()}
         try:
             import psutil
 
@@ -203,7 +202,7 @@ class Conciencia:
         data = cls.leer()
         data["procesos"][nombre] = {
             "estado": estado,
-            "ultima_actualizacion": datetime.now().isoformat(),
+            "ultima_actualizacion": datetime.now(UTC).isoformat(),
         }
         cls.escribir(data)
 
@@ -215,7 +214,7 @@ class Conciencia:
             {
                 "nivel": nivel,
                 "mensaje": mensaje,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
         if len(data["contexto_global"]["errores_acumulados"]) > 50:
@@ -511,7 +510,7 @@ class SelfHealingLoop:
     def ejecutar(self, archivo: str | None = None) -> dict:
         """Ejecuta un ciclo completo."""
         inicio = time.monotonic()
-        reporte = {"timestamp": datetime.now().isoformat(), "pasos": []}
+        reporte = {"timestamp": datetime.now(UTC).isoformat(), "pasos": []}
 
         # 1. Telemetría + conciencia
         tele = self.telemetria.reporte_completo()

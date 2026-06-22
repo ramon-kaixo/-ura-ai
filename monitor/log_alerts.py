@@ -10,7 +10,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config_manager import CONFIG
 
 TARGET = CONFIG["ollama"]["host"]

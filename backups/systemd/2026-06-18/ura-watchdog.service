@@ -1,0 +1,7 @@
+[Unit]
+Description=URA Watchdog Service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ramon/ura-fixes/ura-watchdog.sh
+User=ramon

@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import signal
-import socket
 import subprocess
 import time
 from pathlib import Path

@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import UraConfig
@@ -145,7 +145,7 @@ def analizar_reflexiones() -> None:
         log(f"Test lanzado con PID {proc.pid}")
     MEJORAS.parent.mkdir(parents=True, exist_ok=True)
     with open(MEJORAS, "a") as f:
-        f.write(f"\n# {datetime.now().isoformat()}\n# {sugerencia}\n")
+        f.write(f"\n# {datetime.now(UTC).isoformat()}\n# {sugerencia}\n")
 
 
 def aplicar_mejora() -> bool:
@@ -194,7 +194,7 @@ def guardar_correccion_en_qdrant(problema: str, solucion: str, impacto: str) -> 
             "problema": problema[:200],
             "solucion": solucion[:200],
             "impacto": impacto[:100],
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         tx_id = f"correccion_{datetime.now().timestamp()}"
         return qdrant.guardar_documento(tx_id, texto, metadata)
@@ -209,7 +209,7 @@ def reindexar_transaccion(tx_id: str, texto_corregido: str) -> bool:
         qdrant = _get_qdrant()
         if not qdrant.disponible:
             return False
-        return qdrant.guardar_documento(tx_id, texto_corregido, {"tipo": "reindexado", "timestamp": datetime.now().isoformat()})
+        return qdrant.guardar_documento(tx_id, texto_corregido, {"tipo": "reindexado", "timestamp": datetime.now(UTC).isoformat()})
     except Exception as e:
         log(f"Error reindexando transaccion {tx_id}: {e}")
         return False

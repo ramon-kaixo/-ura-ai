@@ -27,6 +27,34 @@ line-ending = "auto"
 minversion = "7.0"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_reports"]
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
+addopts = "-q --cov=core --cov=monitor --cov=motor --cov-report=term --cov-report=xml"
+
+[tool.coverage.run]
+source = ["core", "monitor", "motor"]
+omit = ["*/tests/*", "*/.venv/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+fail_under = 1
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+warn_unused_configs = true
+
+[tool.mutmut]
+paths = ["core", "monitor", "motor"]
+backup = false
+runner = "python3 -m pytest tests/ -x -q"
+dict_sync = false

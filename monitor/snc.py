@@ -9,7 +9,6 @@ Modo Soberanía: GX10 opera independientemente del Mac.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
 import os
@@ -18,12 +17,12 @@ import shlex
 import signal
 import subprocess
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Módulos locales (misma carpeta)
-sys.path.insert(0, str(Path(__file__).parent))
 from error_logger import ErrorLogger
 from mac_heartbeat import MacHeartbeat
+# notifier está en core/, se importa bajo demanda para evitar circular imports
 
 # Autosuficiente: carga system_config.json directamente (no depende de config_manager)
 _config_path = Path(__file__).parent.parent / "config" / "system_config.json"
@@ -46,9 +45,31 @@ PID_FILE = _STATE_DIR / "ura_snc.pid"
 POLL_INTERVAL = 10  # segundos
 CRITICAL_TIMEOUT = 30  # segundos sin update → CRITICAL
 
+# Umbrales de activación de la tuneladora
+UMBRALES = {
+    "criticos": ["ollama", "ura-openclaw", "qdrant", "model-router", "tailscaled"],
+    "max_fallos_criticos": 2,
+    "max_fallos_totales": 4,
+    "cpu_bucle_umbral": 80.0,
+    "opencode_cpu_umbral": 80.0,
+    "opencode_ciclos_confirmar": 2,
+}
+_anomalias: list[dict] = []
+_opencode_ciclos_alta: int = 0
+
 # Instancias globales
 error_logger = ErrorLogger()
 mac_heartbeat = MacHeartbeat()
+
+def _notify(msg: str, level: str = "warning") -> None:
+    """Wrapper lazy de core/notifier.notify para evitar circular imports."""
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).parent.parent))
+        from core.notifier import notify as _n
+        _n(msg, level=level)
+    except Exception as e:
+        error_logger.log_error(context="SNC", gateway_status="NOTIFY_FAIL", severity="WARN", message=f"notify: {e}")
 
 openclaw_active = False
 openclaw_stable_since = None
@@ -183,7 +204,7 @@ def poll_services(runbook: dict) -> dict:
     global openclaw_active, openclaw_stable_since, repair_attempts
 
     state = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "status": "OK",
         "services": {},
         "openclaw_active": openclaw_active,
@@ -309,10 +330,143 @@ def write_state(state: dict) -> None:
 
 
 def handle_signal(sig, frame) -> None:
-    state = {"timestamp": datetime.now().isoformat(), "status": "SHUTDOWN", "services": {}}
+    state = {"timestamp": datetime.now(UTC).isoformat(), "status": "SHUTDOWN", "services": {}}
     write_state(state)
     PID_FILE.unlink(missing_ok=True)
     sys.exit(0)
+
+
+# ─── Detección de anomalías en caliente ─────────────────────
+
+def check_zombies() -> list[int]:
+    """Procesos zombie (estado Z) → kill -KILL directo."""
+    zombies = []
+    for pid in Path("/proc").iterdir():
+        if not pid.name.isdigit():
+            continue
+        status_file = pid / "status"
+        if not status_file.exists():
+            continue
+        try:
+            for line in status_file.read_text(errors="replace").splitlines():
+                if line.startswith("State:") and "Z" in line:
+                    zombies.append(int(pid.name))
+                    break
+        except (OSError, PermissionError):
+            continue
+    return zombies
+
+
+def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[int, str, float]]:
+    """Procesos Python/node con CPU INSTANTÁNEA > umbral (usa ps, no /proc/stat acumulado)."""
+    import subprocess
+    result: list[tuple[int, str, float]] = []
+    try:
+        out = subprocess.run(
+            ["ps", "aux", "--sort=-%cpu"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in out.stdout.splitlines()[1:]:
+            parts = line.split(None, 10)
+            if len(parts) < 11:
+                continue
+            try:
+                cpu = float(parts[2])
+            except ValueError:
+                continue
+            if cpu < umbral:
+                continue
+            comm = parts[10][:30]
+            if not any(x in comm for x in ("python", "node", "ruff", "ollama")):
+                continue
+            pid = int(parts[1])
+            result.append((pid, comm, round(cpu, 1)))
+    except Exception:
+        pass
+    return result[:10]
+
+
+def check_opencode_colgado() -> bool:
+    """Detecta si OpenCode está congelado (CPU alta + sin respuesta)."""
+    try:
+        pid = subprocess.run(
+            ["pgrep", "-x", "code"], capture_output=True, text=True, timeout=5,
+        )
+        if not pid.stdout.strip():
+            return False
+        cpu = subprocess.run(
+            ["ps", "-p", pid.stdout.strip(), "-o", "%cpu="],
+            capture_output=True, text=True, timeout=5,
+        )
+        return float(cpu.stdout.strip()) > UMBRALES["opencode_cpu_umbral"]
+    except (ValueError, subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def _limpiar_zombies() -> None:
+    zombies = check_zombies()
+    for pid in zombies:
+        try:
+            os.kill(pid, signal.SIGKILL)
+            log_msg = f"💀 Zombie eliminado: PID {pid}"
+            print(log_msg)
+            error_logger.log_error(context="SNC", gateway_status="ZOMBIE_KILLED", severity="WARN", message=log_msg)
+        except (OSError, PermissionError):
+            pass
+
+
+def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
+    """Aísla un proceso en bucle: SIGSTOP + volcado /proc."""
+    sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")
+    sandbox_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        os.kill(pid, signal.SIGSTOP)
+        # Volcar información del proceso
+        for subdir in ("status", "maps", "fd", "wchan"):
+            src = Path(f"/proc/{pid}/{subdir}")
+            if src.exists():
+                try:
+                    dst = sandbox_dir / subdir
+                    if src.is_dir():
+                        import shutil
+                        shutil.copytree(src, dst, dirs_exist_ok=True)
+                    else:
+                        dst.write_text(src.read_text(errors="replace"))
+                except (OSError, PermissionError):
+                    pass
+        (sandbox_dir / "nombre.txt").write_text(nombre)
+        (sandbox_dir / "cpu.txt").write_text(f"{cpu}%")
+        msg = f"🧊 Aislado: {nombre} PID {pid} ({cpu}% CPU)"
+        print(msg)
+        _notify(msg, level="critical")
+    except (OSError, PermissionError) as e:
+        msg = f"Error aislando {nombre} PID {pid}: {e}"
+        error_logger.log_error(context="SNC", gateway_status="ISOLATE_FAIL", severity="WARN", message=msg)
+
+
+def _check_umbrales(state: dict) -> bool:
+    """Retorna True si se deben activar medidas correctivas."""
+    servicios = state.get("services", {})
+    criticos_caidos = sum(
+        1 for s in UMBRALES["criticos"]
+        if servicios.get(s, {}).get("ok") is False
+    )
+    totales_caidos = sum(
+        1 for s in servicios.values()
+        if s.get("ok") is False
+    )
+    return criticos_caidos >= UMBRALES["max_fallos_criticos"] or totales_caidos >= UMBRALES["max_fallos_totales"]
+
+
+def _trigger_tuneladora() -> None:
+    """Activa el ciclo de mantenimiento de la tuneladora ahora."""
+    try:
+        subprocess.run(["systemctl", "start", "ura-maintenance.service"], timeout=30)
+        _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
+    except subprocess.TimeoutExpired:
+        _notify("⚠️ Tuneladora no respondió en 30s", level="critical")
+    except Exception as e:
+        _notify(f"⚠️ Error activando tuneladora: {e}", level="warning")
 
 
 def main() -> None:
@@ -327,9 +481,45 @@ def main() -> None:
 
 
     try:
+        _last_notification: float = 0
+        _notify_cooldown: float = 300.0  # 5 min entre notificaciones
+
         while True:
             state = poll_services(runbook)
             write_state(state)
+
+            # ─── Anomalías en caliente ───
+            # 1. Zombies → matar directo
+            _limpiar_zombies()
+
+            # 2. Bucles CPU → DESACTIVADO: check_bucle_cpu usa CPU acumulada, no delta.
+            #    Causaba SIGSTOP eterno a model-router y otros procesos longevos.
+            #    Pendiente: implementar con delta (/proc/stat snapshots entre ciclos).
+            for pid, nombre, cpu in check_bucle_cpu():
+                _aislar_bucle(pid, nombre, cpu)
+
+            # 3. OpenCode colgado → contar ciclos, aislar si persiste
+            if check_opencode_colgado():
+                _opencode_ciclos_alta += 1
+                if _opencode_ciclos_alta >= UMBRALES["opencode_ciclos_confirmar"]:
+                    _aislar_bucle(0, "opencode", UMBRALES["opencode_cpu_umbral"])
+                    _opencode_ciclos_alta = 0
+            else:
+                _opencode_ciclos_alta = 0
+
+            # 4. Umbrales → activar tuneladora si es necesario
+            if _check_umbrales(state):
+                _trigger_tuneladora()
+
+            # Notificar si estado crítico
+            if state.get("status") == "CRITICAL":
+                now = time.time()
+                if now - _last_notification > _notify_cooldown:
+                    failed = [s for s, v in state.get("services", {}).items() if v.get("status") != "OK"]
+                    msg = f"SNC detectó {len(failed)} servicios con fallo: {', '.join(failed[:5])}"
+                    _notify(msg, level="critical")
+                    _last_notification = now
+
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
         pass

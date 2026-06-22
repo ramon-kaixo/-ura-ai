@@ -7,13 +7,14 @@ Determinista: sin variables globales, todo el estado en disco.
 import sys
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import contextlib
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from core.config_manager import CONFIG
 from motor.core.config import UraConfig
@@ -152,7 +153,7 @@ def index_documents(force: bool = False) -> dict:
             continue
 
         # Preparar batch para Qdrant
-        now = datetime.now().isoformat()
+        now = datetime.now(UTC).isoformat()
         docs_batch = []
         for i, chunk_text in enumerate(chunks):
             doc_id = f"{rel_path}_{i}"
@@ -178,7 +179,7 @@ def index_documents(force: bool = False) -> dict:
             "indexed_at": now,
         }
 
-    manifest["indexed_at"] = datetime.now().isoformat()
+    manifest["indexed_at"] = datetime.now(UTC).isoformat()
     manifest["total_documents"] = len(manifest["files"])
     manifest["total_chunks"] = stats["chunks_added"]
     save_manifest(manifest)

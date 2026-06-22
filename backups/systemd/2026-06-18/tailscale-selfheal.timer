@@ -1,0 +1,11 @@
+[Unit]
+Description=Tailscale Self-Healing — cada 30 minutos
+After=tailscaled.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

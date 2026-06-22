@@ -1,5 +1,8 @@
-import json, logging, subprocess, hashlib
-from datetime import datetime
+import json
+import logging
+import subprocess
+import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
 from motor.core.state import ScanResult, DiagnoseResult
 from motor.core.config import UraConfig
@@ -23,7 +26,7 @@ class Diagnostico:
 
     def run(self, scan: ScanResult) -> DiagnoseResult:
         """Ejecuta el pipeline de diagnóstico completo."""
-        r = DiagnoseResult(timestamp=datetime.utcnow().isoformat()+"Z")
+        r = DiagnoseResult(timestamp=datetime.now(UTC).isoformat()+"Z")
         r.snapshot_inicial = self._tomar_snapshot_inicial()
         if not scan.ok:
             r.ok = False
@@ -46,7 +49,7 @@ class Diagnostico:
 
     def _tomar_snapshot_inicial(self) -> dict:
         """Toma un snapshot de configs y procesos al inicio del diagnóstico."""
-        snap = {"timestamp": datetime.utcnow().isoformat()+"Z"}
+        snap = {"timestamp": datetime.now(UTC).isoformat()+"Z"}
         for archivo in RUTAS_CONFIG_OPENCODE:
             p = Path(archivo)
             if p.exists():

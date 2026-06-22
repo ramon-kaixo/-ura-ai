@@ -1,0 +1,16 @@
+[Unit]
+Description=Llama Server Core (qwen2-vl-7b)
+After=ollama.service ura-mochila.service
+
+[Service]
+Type=simple
+User=ramon
+Group=ramon
+ExecStartPre=/usr/bin/curl -s -X POST "http://127.0.0.1:4098/admin/acquire_boot_vram?mb=8000"
+ExecStart=/opt/llama.cpp/build/bin/llama-server --host 127.0.0.1 --port 11436 -m /opt/modelos/qwen2-vl-7b-q4_k_m.gguf --n-gpu-layers 99 -c 8192 --flash-attn 1 --no-jinja --cont-batching
+ExecStopPost=/bin/true
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

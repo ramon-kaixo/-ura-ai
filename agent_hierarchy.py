@@ -9,14 +9,14 @@ import time
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional
 from pathlib import Path
 import subprocess
 
 # Configuration
 ORCHESTRATOR_HOST = "10.164.1.99"
 ORCHESTRATOR_PORT = 18789
-GATEWAY_TOKEN = "663d5e6b3b72780013730dbba0c767d4d918d88d48dcd634"
+GATEWAY_TOKEN = os.environ.get("OPENCLAW_GATEWAY_TOKEN", "")
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
 LOG_FILE = "/home/ramon/URA/agent_hierarchy.log"
@@ -62,12 +62,12 @@ class ActionType(Enum):
 
 class ActionLogger:
     """Logs all agent actions with full audit trail"""
-    
+
     def __init__(self):
         self.log_file = Path(LOG_FILE)
         self.audit_file = Path("/home/ramon/URA/audit_log.jsonl")
-    
-    def log_action(self, agent_id: str, role: AgentRole, action: ActionType, 
+
+    def log_action(self, agent_id: str, role: AgentRole, action: ActionType,
                    details: Dict, result: str, approved_by: Optional[str] = None):
         """Log an action with full audit trail"""
         entry = {
@@ -80,29 +80,29 @@ class ActionLogger:
             "approved_by": approved_by,
             "status": "completed" if result == "success" else "failed"
         }
-        
+
         # Write to audit log
         with open(self.audit_file, 'a') as f:
             f.write(json.dumps(entry) + '\n')
-        
+
         logger.info(f"Action logged: {agent_id} ({role.value}) - {action.value} - {result}")
 
 class QuarantineSystem:
     """Never delete - always move to quarantine"""
-    
+
     def __init__(self):
         self.quarantine_dir = Path(QUARANTINE_DIR)
         self.quarantine_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def quarantine(self, source: str, reason: str, agent_id: str) -> str:
         """Move file/directory to quarantine instead of deleting"""
         source_path = Path(source)
         if not source_path.exists():
             return ""
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         quarantine_path = self.quarantine_dir / f"{source_path.name}_{timestamp}_{agent_id}"
-        
+
         try:
             subprocess.run(['mv', str(source_path), str(quarantine_path)], check=True)
             logger.info(f"Quarantined {source} to {quarantine_path} (reason: {reason})")
@@ -113,15 +113,15 @@ class QuarantineSystem:
 
 class ApprovalSystem:
     """Handles user approval for sensitive operations"""
-    
+
     def __init__(self):
         self.pending_approvals = {}
-    
-    def request_approval(self, agent_id: str, action: ActionType, 
+
+    def request_approval(self, agent_id: str, action: ActionType,
                         details: Dict, screenshot: Optional[str] = None) -> bool:
         """Request user approval for an action"""
         approval_id = f"{agent_id}_{int(time.time())}"
-        
+
         approval_request = {
             "id": approval_id,
             "agent_id": agent_id,
@@ -131,24 +131,24 @@ class ApprovalSystem:
             "timestamp": datetime.now().isoformat(),
             "status": "pending"
         }
-        
+
         self.pending_approvals[approval_id] = approval_request
-        
+
         # Send notification to Mac via socket
         self._send_to_mac(approval_request)
-        
+
         # Wait for response (timeout 5 minutes)
         timeout = 300
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
             if approval_request["status"] in ["approved", "rejected"]:
                 return approval_request["status"] == "approved"
             time.sleep(1)
-        
+
         approval_request["status"] = "timeout"
         return False
-    
+
     def _send_to_mac(self, approval_request: Dict):
         """Send approval request to Mac"""
         try:
@@ -165,7 +165,7 @@ class ApprovalSystem:
 
 class Agent:
     """Base agent class"""
-    
+
     def __init__(self, agent_id: str, role: AgentRole):
         self.agent_id = agent_id
         self.role = role
@@ -173,7 +173,7 @@ class Agent:
         self.quarantine = QuarantineSystem()
         self.approval = ApprovalSystem()
         self.permissions = self._load_permissions()
-    
+
     def _load_permissions(self) -> Dict[ActionType, PermissionLevel]:
         """Load permission levels for this agent role"""
         # Default permissions based on role
@@ -233,60 +233,60 @@ class Agent:
                 ActionType.SYSTEM_CHANGE: PermissionLevel.NONE
             }
         return {}
-    
+
     def check_permission(self, action: ActionType, details: Dict) -> bool:
         """Check if action is permitted and handle approval flow"""
         permission = self.permissions.get(action, PermissionLevel.NONE)
-        
+
         if permission == PermissionLevel.NONE:
             logger.warning(f"Agent {self.agent_id} has no permission for {action.value}")
             return False
-        
+
         if permission == PermissionLevel.AUTONOMOUS:
             return True
-        
+
         if permission == PermissionLevel.NOTIFY:
             # Notify but proceed
             self._notify_action(action, details)
             return True
-        
+
         if permission == PermissionLevel.APPROVE:
             # Request approval
             return self.approval.request_approval(self.agent_id, action, details)
-        
+
         if permission == PermissionLevel.USER_ONLY:
             # User must do this manually
             self._notify_user_only(action, details)
             return False
-        
+
         return False
-    
+
     def _notify_action(self, action: ActionType, details: Dict):
         """Send notification about action"""
         logger.info(f"NOTIFY: {self.agent_id} performing {action.value}")
-    
+
     def _notify_user_only(self, action: ActionType, details: Dict):
         """Notify that user must perform action"""
         logger.warning(f"USER ONLY: {action.value} requires manual user intervention")
 
 class Orchestrator(Agent):
     """Level 1: Orchestrator - coordinates everything, never executes directly"""
-    
+
     def __init__(self):
         super().__init__("orchestrator", AgentRole.ORCHESTRATOR)
         self.agents = {}
         self.critical_agent = None
-    
+
     def register_agent(self, agent: Agent):
         """Register a specialist agent"""
         self.agents[agent.agent_id] = agent
         logger.info(f"Registered agent: {agent.agent_id} ({agent.role.value})")
-    
+
     def set_critical_agent(self, agent: Agent):
         """Set the critical (shadow) agent"""
         self.critical_agent = agent
         logger.info(f"Critical agent set: {agent.agent_id}")
-    
+
     def assign_task(self, task_type: ActionType, details: Dict) -> bool:
         """Assign task to appropriate specialist"""
         # Find appropriate agent for task
@@ -295,29 +295,29 @@ class Orchestrator(Agent):
                 # Critical agent shadows this operation
                 if self.critical_agent:
                     self.critical_agent.shadow_operation(agent.agent_id, task_type, details)
-                
+
                 # Execute task
                 result = agent.execute(task_type, details)
                 return result
-        
+
         logger.error(f"No agent available for task: {task_type.value}")
         return False
 
 class CriticalAgent(Agent):
     """Level 2: Critical - shadows every operation, never deletes"""
-    
+
     def __init__(self):
         super().__init__("critical", AgentRole.CRITICAL)
-    
+
     def shadow_operation(self, target_agent: str, action: ActionType, details: Dict):
         """Shadow an operation performed by another agent"""
         logger.info(f"Shadowing {target_agent} performing {action.value}")
-        
+
         # Monitor for suspicious activity
         if self._is_suspicious(action, details):
             logger.warning(f"SUSPICIOUS ACTIVITY DETECTED: {target_agent} - {action.value}")
             self._halt_operation(target_agent)
-    
+
     def _is_suspicious(self, action: ActionType, details: Dict) -> bool:
         """Check if operation is suspicious"""
         suspicious_patterns = [
@@ -329,13 +329,13 @@ class CriticalAgent(Agent):
             "credit",
             "card"
         ]
-        
+
         for pattern in suspicious_patterns:
             if pattern in json.dumps(details).lower():
                 return True
-        
+
         return False
-    
+
     def _halt_operation(self, target_agent: str):
         """Halt a suspicious operation"""
         logger.critical(f"HALTING OPERATION: {target_agent}")
@@ -343,122 +343,145 @@ class CriticalAgent(Agent):
 
 class InstallerAgent(Agent):
     """Level 3: Installer - installs dependencies, configures environments"""
-    
+
     def __init__(self):
         super().__init__("installer", AgentRole.INSTALLER)
         self.sandbox_dir = Path(SANDBOX_DIR) / "installer"
         self.sandbox_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def execute(self, action: ActionType, details: Dict) -> bool:
         """Execute installation task"""
         if not self.check_permission(action, details):
             return False
-        
+
         if action == ActionType.INSTALL_DEPS:
             return self._install_deps(details)
         elif action == ActionType.CONFIGURE_ENV:
             return self._configure_env(details)
         elif action == ActionType.DELETE_FILE:
             return self._quarantine_file(details)
-        
+
         return False
-    
+
     def _install_deps(self, details: Dict) -> bool:
         """Install dependencies in sandbox"""
         package = details.get("package")
+        if not isinstance(package, str) or not package.strip():
+            logger.error(f"Invalid package name: {package}")
+            return False
+
+        package = package.strip()
+        if package.startswith("-") or package.startswith(".") or package.startswith("/"):
+            logger.error(f"Package name rejected (special char prefix): {package}")
+            return False
+        if package.startswith("--"):
+            logger.error(f"Package name rejected (flag syntax): {package}")
+            return False
+
         logger.info(f"Installing {package} in sandbox")
-        
+
         try:
             cmd = ["npm", "install", package]
             result = subprocess.run(cmd, cwd=self.sandbox_dir, capture_output=True, text=True)
-            
+
             self.logger.log_action(
                 self.agent_id, self.role, ActionType.INSTALL_DEPS,
                 details, "success" if result.returncode == 0 else "failed"
             )
-            
+
             return result.returncode == 0
         except Exception as e:
             logger.error(f"Failed to install {package}: {e}")
             return False
-    
+
     def _configure_env(self, details: Dict) -> bool:
         """Configure environment in sandbox"""
         logger.info(f"Configuring environment: {details}")
         # Implementation
         return True
-    
+
     def _quarantine_file(self, details: Dict) -> bool:
         """Quarantine file instead of deleting"""
         file_path = details.get("path")
         quarantine_path = self.quarantine.quarantine(file_path, "Installer agent deletion", self.agent_id)
-        
+
         self.logger.log_action(
             self.agent_id, self.role, ActionType.DELETE_FILE,
             details, "success" if quarantine_path else "failed"
         )
-        
+
         return bool(quarantine_path)
 
 class FormsAgent(Agent):
     """Level 3: Forms - fills forms, registrations, data"""
-    
+
     def __init__(self):
         super().__init__("forms", AgentRole.FORMS)
-    
+
     def execute(self, action: ActionType, details: Dict) -> bool:
         """Execute form-filling task"""
         if not self.check_permission(action, details):
             return False
-        
+
         if action == ActionType.FILL_FORM:
             return self._fill_form(details)
         elif action == ActionType.ACCESS_PAYMENT:
             return self._handle_payment(details)
-        
+
         return False
-    
+
     def _fill_form(self, details: Dict) -> bool:
         """Fill form (free services - autonomous)"""
         logger.info(f"Filling form: {details}")
         # Implementation
         return True
-    
+
     def _handle_payment(self, details: Dict) -> bool:
         """Handle payment page (prepare everything, wait for user)"""
         logger.info(f"Preparing payment form: {details}")
-        
+
         # Fill everything except payment details
         # Take screenshot
         # Send to user for approval
-        
+
         return True
 
 class ExecutorAgent(Agent):
     """Level 3: Executor - executes code in isolated sandbox"""
-    
+
     def __init__(self):
         super().__init__("executor", AgentRole.EXECUTOR)
         self.sandbox_dir = Path(SANDBOX_DIR) / "executor"
         self.sandbox_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def execute(self, action: ActionType, details: Dict) -> bool:
         """Execute code in sandbox"""
         if not self.check_permission(action, details):
             return False
-        
+
         if action == ActionType.EXECUTE_CODE:
             return self._execute_code(details)
         elif action == ActionType.MOVE_FILE:
             return self._move_file(details)
-        
+
         return False
-    
+
     def _execute_code(self, details: Dict) -> bool:
         """Execute code in isolated sandbox"""
         code = details.get("code")
-        logger.info(f"Executing code in sandbox")
-        
+        if not isinstance(code, str) or not code.strip():
+            logger.error(f"Invalid code block: {type(code).__name__}")
+            return False
+
+        # Block dangerous operations that could escape sandbox
+        dangerous = ["os.system(", "subprocess.run(", "shutil.rmtree(", "__import__('os')", "open('/"]
+        for pattern in dangerous:
+            if pattern in code:
+                logger.warning(f"Code contains dangerous pattern: {pattern} — execution blocked")
+                return False
+
+        logger.info("Executing code in sandbox")
+
         try:
             # Execute in sandboxed environment
             result = subprocess.run(
@@ -468,28 +491,28 @@ class ExecutorAgent(Agent):
                 text=True,
                 timeout=30
             )
-            
+
             self.logger.log_action(
                 self.agent_id, self.role, ActionType.EXECUTE_CODE,
                 details, "success" if result.returncode == 0 else "failed"
             )
-            
+
             return result.returncode == 0
         except Exception as e:
             logger.error(f"Failed to execute code: {e}")
             return False
-    
+
     def _move_file(self, details: Dict) -> bool:
         """Move file (always within sandbox)"""
         source = details.get("source")
         dest = details.get("dest")
-        
+
         # Ensure both paths are within sandbox
-        if not (Path(source).is_relative_to(self.sandbox_dir) and 
+        if not (Path(source).is_relative_to(self.sandbox_dir) and
                 Path(dest).is_relative_to(self.sandbox_dir)):
             logger.error("File operation outside sandbox")
             return False
-        
+
         try:
             subprocess.run(["mv", source, dest], check=True)
             return True
@@ -500,25 +523,25 @@ class ExecutorAgent(Agent):
 def main():
     """Initialize the agent hierarchy"""
     logger.info("Initializing URA Agent Hierarchy System")
-    
+
     # Create agents
     orchestrator = Orchestrator()
     critical = CriticalAgent()
     installer = InstallerAgent()
     forms = FormsAgent()
     executor = ExecutorAgent()
-    
+
     # Register agents
     orchestrator.set_critical_agent(critical)
     orchestrator.register_agent(installer)
     orchestrator.register_agent(forms)
     orchestrator.register_agent(executor)
-    
+
     logger.info("Agent hierarchy initialized successfully")
     logger.info(f"Orchestrator: {orchestrator.agent_id}")
     logger.info(f"Critical: {critical.agent_id}")
     logger.info(f"Specialists: {[a.agent_id for a in orchestrator.agents.values()]}")
-    
+
     # Keep running
     while True:
         time.sleep(60)

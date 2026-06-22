@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 MODEL_ROUTER = os.environ.get("MODEL_ROUTER_URL", os.environ.get("MODEL_ROUTER_URL", "http://10.164.1.99:11435"))
@@ -33,13 +33,11 @@ REFLEXIONES = Path("/opt/ura/data/reflexiones.log")
 ACCIONES = Path("/opt/ura/data/cola_acciones.json")
 MEJORAS = Path("/opt/ura/config/prompts/mejoras.txt")
 
-LOG.parent.mkdir(parents=True, exist_ok=True)
-MEJORAS.parent.mkdir(parents=True, exist_ok=True)
 
 
 def log(msg) -> None:
     with open(LOG, "a") as f:
-        f.write(f"{datetime.now().isoformat()} - {msg}\n")
+        f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
 def llm(prompt, model="auto"):
@@ -142,7 +140,7 @@ def reflexionar_acciones():
         reflexion += " — Alta tasa de fallos"
         sugerencias.append("Revisar herramientas MCP/API y permisos")
     with open(REFLEXIONES, "a") as f:
-        f.write(f"{datetime.now().isoformat()} - {reflexion}\n")
+        f.write(f"{datetime.now(UTC).isoformat()} - {reflexion}\n")
     return {
         "status": "ok",
         "total": len(ultimas),

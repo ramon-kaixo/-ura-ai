@@ -13,7 +13,7 @@ import platform
 import time
 import uuid
 from contextlib import suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Detectar plataforma automáticamente (sobrescribible via URA_ROOT)
@@ -48,7 +48,7 @@ class ErrorLogger:
     ) -> str:
         """Registra un error. Retorna el error_id generado."""
         entry = {
-            "ts": datetime.now().isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "id": error_id or self._generate_error_id(),
             "ctx": context,  # "ASUS" o "MAC"
             "gw": gateway_status,  # "OK", "FAIL", "DISCONNECTED"

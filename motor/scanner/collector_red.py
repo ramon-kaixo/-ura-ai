@@ -1,4 +1,7 @@
-import logging, subprocess, json, socket
+import logging
+import subprocess
+import json
+import socket
 from motor.core.config import UraConfig
 
 log = logging.getLogger("ura.scanner.red")

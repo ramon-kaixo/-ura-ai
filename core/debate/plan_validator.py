@@ -1,3 +1,4 @@
+from datetime import UTC
 #!/usr/bin/env python3
 """plan_validator.py — Inyección de contexto real del sistema en el debate.
 
@@ -129,7 +130,7 @@ def format_context_for_prompt(context: dict) -> str:
     if snc:
         parts.append(f"\n=== MODO SNC: {snc} ===")
 
-    parts.append(f"\n  Timestamp: {__import__('datetime').datetime.now().isoformat()}")
+    parts.append(f"\n  Timestamp: {__import__('datetime').datetime.now(UTC).isoformat()}")
     return "\n".join(parts)
 
 
@@ -147,7 +148,7 @@ def main():
             with DebateLock():
                 return await run_debate(data.get("plan", ""), context)
         result = asyncio.run(_run())
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        log.info(json.dumps(result, ensure_ascii=False, indent=2))
         verdict = result.get("verdict", "")
         if verdict == "CONSENSUS":
             sys.exit(0)
@@ -156,7 +157,7 @@ def main():
         else:
             sys.exit(1)
     else:
-        print(json.dumps(context, ensure_ascii=False, indent=2))
+        log.info(json.dumps(context, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

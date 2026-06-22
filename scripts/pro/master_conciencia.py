@@ -6,7 +6,7 @@ Ejecuta cada accion real y reporta si tuvo exito o no.
 import json
 import sys
 import urllib.request
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 MCP_URL = "http://127.0.0.1:9091"
@@ -17,7 +17,6 @@ try:
 except (FileNotFoundError, json.JSONDecodeError):
     GX10 = os.environ.get("ASUS_HOST", "10.164.1.99")
 LOG = Path.home() / "URA/ura_ia_1972/logs/master_conciencia.log"
-LOG.parent.mkdir(parents=True, exist_ok=True)
 
 TEST_ACTIONS = [
     ("📡 Sistema GX10", {"name": "sistema", "arguments": {}}),
@@ -49,12 +48,12 @@ def test_api(desc, payload, url=MCP_URL):
             else:
                 log += f" → {result.get('error', 'sin respuesta')}"
             with open(LOG, "a") as f:
-                f.write(f"{datetime.now().isoformat()} - {log}\n")
+                f.write(f"{datetime.now(UTC).isoformat()} - {log}\n")
             return ok
     except Exception as e:
         log = f"❌ {desc} → Error: {e}"
         with open(LOG, "a") as f:
-            f.write(f"{datetime.now().isoformat()} - {log}\n")
+            f.write(f"{datetime.now(UTC).isoformat()} - {log}\n")
         return False
 
 

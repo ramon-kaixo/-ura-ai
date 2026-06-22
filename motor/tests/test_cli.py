@@ -1,6 +1,6 @@
-import json, sys, tempfile
+import json
+import tempfile
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from motor.core.config import UraConfig
 from motor.core.state import ScanResult
@@ -109,7 +109,8 @@ def test_diff_detector():
     assert len(anomalias) > 0
 
 def test_status_returns_json():
-    import subprocess, json
+    import subprocess
+    import json
     r = subprocess.run(["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],
                        capture_output=True, text=True, timeout=10)
     if r.returncode == 0 and r.stdout.strip():

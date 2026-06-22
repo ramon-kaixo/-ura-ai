@@ -1,0 +1,14 @@
+[Unit]
+Description=URA Swarm Auto-Discovery Service
+After=network.target openclaw-gateway.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/swarm
+ExecStart=/usr/bin/python3 /home/ramon/URA/swarm/swarm_discovery.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Tailscale Self-Healing — corrige IP y UFW al arranque
+After=tailscaled.service
+Requires=tailscaled.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tailscale-selfheal.sh
+User=ramon
+
+[Install]
+WantedBy=multi-user.target

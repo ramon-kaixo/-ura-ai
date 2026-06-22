@@ -14,7 +14,7 @@ import logging
 import subprocess
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -162,7 +162,7 @@ class ErrorSandbox:
             attempted_solutions=attempted_solutions,
             successful_solution=successful_solution,
             requires_manual_intervention=requires_manual,
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         self.sandbox_log.append(result)

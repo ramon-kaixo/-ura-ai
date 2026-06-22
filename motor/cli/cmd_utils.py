@@ -1,6 +1,9 @@
-import json, sys, subprocess, logging
+import json
+import sys
+import subprocess
+import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
 
@@ -37,9 +40,9 @@ def cmd_qdrant_backup(config: UraConfig, args=None):
         print(json.dumps({"error": "Qdrant no disponible"}, indent=2))
         sys.exit(1)
     incidents = qdrant.buscar_incidentes(limit=1000)
-    backup_path = Path(config.deploy_dir) / f"qdrant_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    backup_path = Path(config.deploy_dir) / f"qdrant_backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     backup_path.parent.mkdir(parents=True, exist_ok=True)
-    backup_path.write_text(json.dumps({"incidentes": incidents, "exported_at": datetime.utcnow().isoformat() + "Z",
+    backup_path.write_text(json.dumps({"incidentes": incidents, "exported_at": datetime.now(UTC).isoformat() + "Z",
                                         "total": len(incidents)}, indent=2))
     print(json.dumps({"ok": True, "path": str(backup_path), "total": len(incidents)}, indent=2))
 

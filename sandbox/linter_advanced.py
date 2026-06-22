@@ -1,5 +1,4 @@
 import ast
-import sys
 
 MAX_COMPLEXITY = 10
 

@@ -1,3 +1,4 @@
+from datetime import UTC
 #!/usr/bin/env python3
 """systemd_orphan_scanner.py — Detect orphan systemd units (missing ExecStart).
 
@@ -162,7 +163,7 @@ def main() -> None:
     if as_json:
         import datetime
         print(json.dumps({
-            "timestamp": datetime.datetime.now().isoformat(),
+            "timestamp": datetime.datetime.now(UTC).isoformat(),
             "scanner": "systemd_orphan_scanner",
             "total": len(results),
             "fix": fix,

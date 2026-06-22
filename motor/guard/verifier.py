@@ -1,4 +1,7 @@
-import json, logging, subprocess, time
+import json
+import logging
+import subprocess
+import time
 from motor.core.state import VerifyResult
 from motor.core.config import UraConfig
 

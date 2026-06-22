@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
@@ -44,7 +44,7 @@ def log(msg: str) -> None:
 def modo_delta() -> int:
     """Modo Delta diario: solo procesar archivos modificados."""
     log("Δ MODO DELTA — Delta-Check activo")
-    log("⏱️  Inicio: " + datetime.now().isoformat()[:19])
+    log("⏱️  Inicio: " + datetime.now(UTC).isoformat()[:19])
 
     # Handshake con Guardian
     index_path = NERVIOSO / "sistema_map.json"
@@ -99,7 +99,6 @@ def modo_delta() -> int:
     log(result.stderr[-200:] if len(result.stderr) > 200 else result.stderr)
 
     # Guardar delta snapshot
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from openclaw_firmador import delta_snapshot
 
     delta_snapshot("ultimo_ciclo")
@@ -166,7 +165,6 @@ def helper4(target: str) -> str:
 
 def helper5() -> None:
     """Helper function to create a delta snapshot for the next cycle."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from openclaw_firmador import delta_snapshot
 
     delta_snapshot("ultimo_ciclo")
@@ -175,7 +173,7 @@ def helper5() -> None:
 def modo_profundo() -> int:
     """Modo Profundo mensual: audit, reset integrity."""
     log("⚠️  MODO PROFUNDO — Audit monthly")
-    log("⏱️  Start: " + datetime.now().isoformat()[:19])
+    log("⏱️  Start: " + datetime.now(UTC).isoformat()[:19])
 
     helper1()
     log("🧹 Delta snapshots cleaned")

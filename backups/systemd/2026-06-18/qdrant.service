@@ -1,0 +1,21 @@
+[Unit]
+Description=URA Qdrant Vector Database
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f ura-qdrant
+ExecStart=/usr/bin/docker run --rm --name ura-qdrant \
+  --memory=2g --memory-reservation=1g \
+  --cpus=1.0 --cpuset-cpus=0 \
+  -p 6333:6333 -p 6334:6334 \
+  -v qdrant_storage:/qdrant/storage \
+  qdrant/qdrant:latest
+ExecStop=/usr/bin/docker stop -t 10 ura-qdrant
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/qdrant.log
+StandardError=append:/var/log/qdrant.log
+
+[Install]
+WantedBy=multi-user.target
