@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""
-URA Agent Hierarchy System
+"""URA Agent Hierarchy System
 Implements the 3-level agent hierarchy with permission levels and quarantine system
 """
 
 import json
-import time
 import logging
+import subprocess
+import time
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Optional
 from pathlib import Path
-import subprocess
 
 # Configuration
 ORCHESTRATOR_HOST = "10.164.1.99"
@@ -25,32 +23,38 @@ APPROVAL_SOCKET = "/tmp/ura_approval.sock"
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(LOG_FILE),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
+
 class PermissionLevel(Enum):
     """Permission levels for agent actions"""
-    NONE = 0      # Sin permiso (nunca puede hacer esto)
+
+    NONE = 0  # Sin permiso (nunca puede hacer esto)
     AUTONOMOUS = 1  # Autónomo (lo hace solo)
-    NOTIFY = 2     # Avisa antes (lo hace pero te notifica)
-    APPROVE = 3    # Requiere tu ok (prepara y espera)
+    NOTIFY = 2  # Avisa antes (lo hace pero te notifica)
+    APPROVE = 3  # Requiere tu ok (prepara y espera)
     USER_ONLY = 4  # Solo tú (nunca delegar)
+
 
 class AgentRole(Enum):
     """Agent roles in the hierarchy"""
+
     ORCHESTRATOR = "orchestrator"
     CRITICAL = "critical"
     INSTALLER = "installer"
     FORMS = "forms"
     EXECUTOR = "executor"
 
+
 class ActionType(Enum):
     """Types of actions agents can perform"""
+
     INSTALL_DEPS = "install_deps"
     CONFIGURE_ENV = "configure_env"
     FILL_FORM = "fill_form"
@@ -60,6 +64,7 @@ class ActionType(Enum):
     ACCESS_PAYMENT = "access_payment"
     SYSTEM_CHANGE = "system_change"
 
+
 class ActionLogger:
     """Logs all agent actions with full audit trail"""
 
@@ -67,8 +72,15 @@ class ActionLogger:
         self.log_file = Path(LOG_FILE)
         self.audit_file = Path("/home/ramon/URA/audit_log.jsonl")
 
-    def log_action(self, agent_id: str, role: AgentRole, action: ActionType,
-                   details: Dict, result: str, approved_by: Optional[str] = None):
+    def log_action(
+        self,
+        agent_id: str,
+        role: AgentRole,
+        action: ActionType,
+        details: dict,
+        result: str,
+        approved_by: str | None = None,
+    ):
         """Log an action with full audit trail"""
         entry = {
             "timestamp": datetime.now().isoformat(),
@@ -78,14 +90,15 @@ class ActionLogger:
             "details": details,
             "result": result,
             "approved_by": approved_by,
-            "status": "completed" if result == "success" else "failed"
+            "status": "completed" if result == "success" else "failed",
         }
 
         # Write to audit log
-        with open(self.audit_file, 'a') as f:
-            f.write(json.dumps(entry) + '\n')
+        with open(self.audit_file, "a") as f:
+            f.write(json.dumps(entry) + "\n")
 
         logger.info(f"Action logged: {agent_id} ({role.value}) - {action.value} - {result}")
+
 
 class QuarantineSystem:
     """Never delete - always move to quarantine"""
@@ -104,12 +117,13 @@ class QuarantineSystem:
         quarantine_path = self.quarantine_dir / f"{source_path.name}_{timestamp}_{agent_id}"
 
         try:
-            subprocess.run(['mv', str(source_path), str(quarantine_path)], check=True)
+            subprocess.run(["mv", str(source_path), str(quarantine_path)], check=True)
             logger.info(f"Quarantined {source} to {quarantine_path} (reason: {reason})")
             return str(quarantine_path)
         except Exception as e:
             logger.error(f"Failed to quarantine {source}: {e}")
             return ""
+
 
 class ApprovalSystem:
     """Handles user approval for sensitive operations"""
@@ -117,8 +131,7 @@ class ApprovalSystem:
     def __init__(self):
         self.pending_approvals = {}
 
-    def request_approval(self, agent_id: str, action: ActionType,
-                        details: Dict, screenshot: Optional[str] = None) -> bool:
+    def request_approval(self, agent_id: str, action: ActionType, details: dict, screenshot: str | None = None) -> bool:
         """Request user approval for an action"""
         approval_id = f"{agent_id}_{int(time.time())}"
 
@@ -129,7 +142,7 @@ class ApprovalSystem:
             "details": details,
             "screenshot": screenshot,
             "timestamp": datetime.now().isoformat(),
-            "status": "pending"
+            "status": "pending",
         }
 
         self.pending_approvals[approval_id] = approval_request
@@ -149,19 +162,25 @@ class ApprovalSystem:
         approval_request["status"] = "timeout"
         return False
 
-    def _send_to_mac(self, approval_request: Dict):
+    def _send_to_mac(self, approval_request: dict):
         """Send approval request to Mac"""
         try:
             # Use OpenClaw to send notification to Mac
             cmd = [
-                "openclaw", "message", "send",
-                "--channel", "telegram",
-                "--target", "ramon",
-                "--message", f"APPROVAL NEEDED: {json.dumps(approval_request, indent=2)}"
+                "openclaw",
+                "message",
+                "send",
+                "--channel",
+                "telegram",
+                "--target",
+                "ramon",
+                "--message",
+                f"APPROVAL NEEDED: {json.dumps(approval_request, indent=2)}",
             ]
-            subprocess.run(cmd, capture_output=True, timeout=30)
+            subprocess.run(cmd, capture_output=True, timeout=30, check=False)
         except Exception as e:
             logger.error(f"Failed to send approval to Mac: {e}")
+
 
 class Agent:
     """Base agent class"""
@@ -174,7 +193,7 @@ class Agent:
         self.approval = ApprovalSystem()
         self.permissions = self._load_permissions()
 
-    def _load_permissions(self) -> Dict[ActionType, PermissionLevel]:
+    def _load_permissions(self) -> dict[ActionType, PermissionLevel]:
         """Load permission levels for this agent role"""
         # Default permissions based on role
         if self.role == AgentRole.ORCHESTRATOR:
@@ -186,9 +205,9 @@ class Agent:
                 ActionType.DELETE_FILE: PermissionLevel.USER_ONLY,
                 ActionType.MOVE_FILE: PermissionLevel.USER_ONLY,
                 ActionType.ACCESS_PAYMENT: PermissionLevel.USER_ONLY,
-                ActionType.SYSTEM_CHANGE: PermissionLevel.USER_ONLY
+                ActionType.SYSTEM_CHANGE: PermissionLevel.USER_ONLY,
             }
-        elif self.role == AgentRole.CRITICAL:
+        if self.role == AgentRole.CRITICAL:
             return {
                 ActionType.INSTALL_DEPS: PermissionLevel.NOTIFY,
                 ActionType.CONFIGURE_ENV: PermissionLevel.NOTIFY,
@@ -197,9 +216,9 @@ class Agent:
                 ActionType.DELETE_FILE: PermissionLevel.NOTIFY,
                 ActionType.MOVE_FILE: PermissionLevel.NOTIFY,
                 ActionType.ACCESS_PAYMENT: PermissionLevel.NOTIFY,
-                ActionType.SYSTEM_CHANGE: PermissionLevel.NOTIFY
+                ActionType.SYSTEM_CHANGE: PermissionLevel.NOTIFY,
             }
-        elif self.role == AgentRole.INSTALLER:
+        if self.role == AgentRole.INSTALLER:
             return {
                 ActionType.INSTALL_DEPS: PermissionLevel.AUTONOMOUS,
                 ActionType.CONFIGURE_ENV: PermissionLevel.APPROVE,
@@ -208,9 +227,9 @@ class Agent:
                 ActionType.DELETE_FILE: PermissionLevel.APPROVE,
                 ActionType.MOVE_FILE: PermissionLevel.AUTONOMOUS,
                 ActionType.ACCESS_PAYMENT: PermissionLevel.NONE,
-                ActionType.SYSTEM_CHANGE: PermissionLevel.APPROVE
+                ActionType.SYSTEM_CHANGE: PermissionLevel.APPROVE,
             }
-        elif self.role == AgentRole.FORMS:
+        if self.role == AgentRole.FORMS:
             return {
                 ActionType.INSTALL_DEPS: PermissionLevel.NONE,
                 ActionType.CONFIGURE_ENV: PermissionLevel.NONE,
@@ -219,9 +238,9 @@ class Agent:
                 ActionType.DELETE_FILE: PermissionLevel.NONE,
                 ActionType.MOVE_FILE: PermissionLevel.NONE,
                 ActionType.ACCESS_PAYMENT: PermissionLevel.APPROVE,
-                ActionType.SYSTEM_CHANGE: PermissionLevel.NONE
+                ActionType.SYSTEM_CHANGE: PermissionLevel.NONE,
             }
-        elif self.role == AgentRole.EXECUTOR:
+        if self.role == AgentRole.EXECUTOR:
             return {
                 ActionType.INSTALL_DEPS: PermissionLevel.NONE,
                 ActionType.CONFIGURE_ENV: PermissionLevel.NONE,
@@ -230,11 +249,11 @@ class Agent:
                 ActionType.DELETE_FILE: PermissionLevel.NONE,
                 ActionType.MOVE_FILE: PermissionLevel.AUTONOMOUS,
                 ActionType.ACCESS_PAYMENT: PermissionLevel.NONE,
-                ActionType.SYSTEM_CHANGE: PermissionLevel.NONE
+                ActionType.SYSTEM_CHANGE: PermissionLevel.NONE,
             }
         return {}
 
-    def check_permission(self, action: ActionType, details: Dict) -> bool:
+    def check_permission(self, action: ActionType, details: dict) -> bool:
         """Check if action is permitted and handle approval flow"""
         permission = self.permissions.get(action, PermissionLevel.NONE)
 
@@ -261,13 +280,14 @@ class Agent:
 
         return False
 
-    def _notify_action(self, action: ActionType, details: Dict):
+    def _notify_action(self, action: ActionType, details: dict):
         """Send notification about action"""
         logger.info(f"NOTIFY: {self.agent_id} performing {action.value}")
 
-    def _notify_user_only(self, action: ActionType, details: Dict):
+    def _notify_user_only(self, action: ActionType, details: dict):
         """Notify that user must perform action"""
         logger.warning(f"USER ONLY: {action.value} requires manual user intervention")
+
 
 class Orchestrator(Agent):
     """Level 1: Orchestrator - coordinates everything, never executes directly"""
@@ -287,7 +307,7 @@ class Orchestrator(Agent):
         self.critical_agent = agent
         logger.info(f"Critical agent set: {agent.agent_id}")
 
-    def assign_task(self, task_type: ActionType, details: Dict) -> bool:
+    def assign_task(self, task_type: ActionType, details: dict) -> bool:
         """Assign task to appropriate specialist"""
         # Find appropriate agent for task
         for agent in self.agents.values():
@@ -303,13 +323,14 @@ class Orchestrator(Agent):
         logger.error(f"No agent available for task: {task_type.value}")
         return False
 
+
 class CriticalAgent(Agent):
     """Level 2: Critical - shadows every operation, never deletes"""
 
     def __init__(self):
         super().__init__("critical", AgentRole.CRITICAL)
 
-    def shadow_operation(self, target_agent: str, action: ActionType, details: Dict):
+    def shadow_operation(self, target_agent: str, action: ActionType, details: dict):
         """Shadow an operation performed by another agent"""
         logger.info(f"Shadowing {target_agent} performing {action.value}")
 
@@ -318,7 +339,7 @@ class CriticalAgent(Agent):
             logger.warning(f"SUSPICIOUS ACTIVITY DETECTED: {target_agent} - {action.value}")
             self._halt_operation(target_agent)
 
-    def _is_suspicious(self, action: ActionType, details: Dict) -> bool:
+    def _is_suspicious(self, action: ActionType, details: dict) -> bool:
         """Check if operation is suspicious"""
         suspicious_patterns = [
             "delete",
@@ -327,7 +348,7 @@ class CriticalAgent(Agent):
             "wipe",
             "payment",
             "credit",
-            "card"
+            "card",
         ]
 
         for pattern in suspicious_patterns:
@@ -341,6 +362,7 @@ class CriticalAgent(Agent):
         logger.critical(f"HALTING OPERATION: {target_agent}")
         # Send alert to orchestrator and user
 
+
 class InstallerAgent(Agent):
     """Level 3: Installer - installs dependencies, configures environments"""
 
@@ -349,21 +371,21 @@ class InstallerAgent(Agent):
         self.sandbox_dir = Path(SANDBOX_DIR) / "installer"
         self.sandbox_dir.mkdir(parents=True, exist_ok=True)
 
-    def execute(self, action: ActionType, details: Dict) -> bool:
+    def execute(self, action: ActionType, details: dict) -> bool:
         """Execute installation task"""
         if not self.check_permission(action, details):
             return False
 
         if action == ActionType.INSTALL_DEPS:
             return self._install_deps(details)
-        elif action == ActionType.CONFIGURE_ENV:
+        if action == ActionType.CONFIGURE_ENV:
             return self._configure_env(details)
-        elif action == ActionType.DELETE_FILE:
+        if action == ActionType.DELETE_FILE:
             return self._quarantine_file(details)
 
         return False
 
-    def _install_deps(self, details: Dict) -> bool:
+    def _install_deps(self, details: dict) -> bool:
         """Install dependencies in sandbox"""
         package = details.get("package")
         if not isinstance(package, str) or not package.strip():
@@ -382,11 +404,14 @@ class InstallerAgent(Agent):
 
         try:
             cmd = ["npm", "install", package]
-            result = subprocess.run(cmd, cwd=self.sandbox_dir, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=self.sandbox_dir, capture_output=True, text=True, check=False)
 
             self.logger.log_action(
-                self.agent_id, self.role, ActionType.INSTALL_DEPS,
-                details, "success" if result.returncode == 0 else "failed"
+                self.agent_id,
+                self.role,
+                ActionType.INSTALL_DEPS,
+                details,
+                "success" if result.returncode == 0 else "failed",
             )
 
             return result.returncode == 0
@@ -394,23 +419,27 @@ class InstallerAgent(Agent):
             logger.error(f"Failed to install {package}: {e}")
             return False
 
-    def _configure_env(self, details: Dict) -> bool:
+    def _configure_env(self, details: dict) -> bool:
         """Configure environment in sandbox"""
         logger.info(f"Configuring environment: {details}")
         # Implementation
         return True
 
-    def _quarantine_file(self, details: Dict) -> bool:
+    def _quarantine_file(self, details: dict) -> bool:
         """Quarantine file instead of deleting"""
         file_path = details.get("path")
         quarantine_path = self.quarantine.quarantine(file_path, "Installer agent deletion", self.agent_id)
 
         self.logger.log_action(
-            self.agent_id, self.role, ActionType.DELETE_FILE,
-            details, "success" if quarantine_path else "failed"
+            self.agent_id,
+            self.role,
+            ActionType.DELETE_FILE,
+            details,
+            "success" if quarantine_path else "failed",
         )
 
         return bool(quarantine_path)
+
 
 class FormsAgent(Agent):
     """Level 3: Forms - fills forms, registrations, data"""
@@ -418,25 +447,25 @@ class FormsAgent(Agent):
     def __init__(self):
         super().__init__("forms", AgentRole.FORMS)
 
-    def execute(self, action: ActionType, details: Dict) -> bool:
+    def execute(self, action: ActionType, details: dict) -> bool:
         """Execute form-filling task"""
         if not self.check_permission(action, details):
             return False
 
         if action == ActionType.FILL_FORM:
             return self._fill_form(details)
-        elif action == ActionType.ACCESS_PAYMENT:
+        if action == ActionType.ACCESS_PAYMENT:
             return self._handle_payment(details)
 
         return False
 
-    def _fill_form(self, details: Dict) -> bool:
+    def _fill_form(self, details: dict) -> bool:
         """Fill form (free services - autonomous)"""
         logger.info(f"Filling form: {details}")
         # Implementation
         return True
 
-    def _handle_payment(self, details: Dict) -> bool:
+    def _handle_payment(self, details: dict) -> bool:
         """Handle payment page (prepare everything, wait for user)"""
         logger.info(f"Preparing payment form: {details}")
 
@@ -446,6 +475,7 @@ class FormsAgent(Agent):
 
         return True
 
+
 class ExecutorAgent(Agent):
     """Level 3: Executor - executes code in isolated sandbox"""
 
@@ -454,19 +484,19 @@ class ExecutorAgent(Agent):
         self.sandbox_dir = Path(SANDBOX_DIR) / "executor"
         self.sandbox_dir.mkdir(parents=True, exist_ok=True)
 
-    def execute(self, action: ActionType, details: Dict) -> bool:
+    def execute(self, action: ActionType, details: dict) -> bool:
         """Execute code in sandbox"""
         if not self.check_permission(action, details):
             return False
 
         if action == ActionType.EXECUTE_CODE:
             return self._execute_code(details)
-        elif action == ActionType.MOVE_FILE:
+        if action == ActionType.MOVE_FILE:
             return self._move_file(details)
 
         return False
 
-    def _execute_code(self, details: Dict) -> bool:
+    def _execute_code(self, details: dict) -> bool:
         """Execute code in isolated sandbox"""
         code = details.get("code")
         if not isinstance(code, str) or not code.strip():
@@ -489,12 +519,16 @@ class ExecutorAgent(Agent):
                 cwd=self.sandbox_dir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                check=False,
             )
 
             self.logger.log_action(
-                self.agent_id, self.role, ActionType.EXECUTE_CODE,
-                details, "success" if result.returncode == 0 else "failed"
+                self.agent_id,
+                self.role,
+                ActionType.EXECUTE_CODE,
+                details,
+                "success" if result.returncode == 0 else "failed",
             )
 
             return result.returncode == 0
@@ -502,14 +536,13 @@ class ExecutorAgent(Agent):
             logger.error(f"Failed to execute code: {e}")
             return False
 
-    def _move_file(self, details: Dict) -> bool:
+    def _move_file(self, details: dict) -> bool:
         """Move file (always within sandbox)"""
         source = details.get("source")
         dest = details.get("dest")
 
         # Ensure both paths are within sandbox
-        if not (Path(source).is_relative_to(self.sandbox_dir) and
-                Path(dest).is_relative_to(self.sandbox_dir)):
+        if not (Path(source).is_relative_to(self.sandbox_dir) and Path(dest).is_relative_to(self.sandbox_dir)):
             logger.error("File operation outside sandbox")
             return False
 
@@ -519,6 +552,7 @@ class ExecutorAgent(Agent):
         except Exception as e:
             logger.error(f"Failed to move file: {e}")
             return False
+
 
 def main():
     """Initialize the agent hierarchy"""
@@ -545,6 +579,7 @@ def main():
     # Keep running
     while True:
         time.sleep(60)
+
 
 if __name__ == "__main__":
     main()

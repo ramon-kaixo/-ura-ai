@@ -66,6 +66,7 @@ class MacHeartbeat:
             tmp = HEARTBEAT_FILE.with_suffix(".tmp")
             tmp.write_text(json.dumps(state, indent=2))
             import os
+
             os.replace(str(tmp), str(HEARTBEAT_FILE))
         except Exception:
             pass
@@ -77,6 +78,7 @@ class MacHeartbeat:
                 ["ping", "-c", "1", "-W", str(self.timeout), self.mac_ip],
                 capture_output=True,
                 timeout=self.timeout + 1,
+                check=False,
             )
             reachable = result.returncode == 0
         except Exception:

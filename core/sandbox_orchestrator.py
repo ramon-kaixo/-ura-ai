@@ -1,4 +1,5 @@
 import asyncio
+
 #!/usr/bin/env python3
 """Módulo: core/sandbox_orchestrator.py
 Propósito: Orquesta ejecuciones en sandbox: gestiona cola de tareas, log de ejecuciones y rotación de entornos.
@@ -10,7 +11,7 @@ import json
 import logging
 import subprocess
 import time
-from datetime import datetime, UTC, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -207,28 +208,34 @@ class SandboxOrchestrator:
         try:
             if sandbox_id == "mantenimiento":
                 result["herramientas"]["limpieza_temp"] = self._tarea_generica(
-                    "limpieza temp", sandbox_dir,
+                    "limpieza temp",
+                    sandbox_dir,
                 )
                 result["herramientas"]["rotacion_logs"] = self._tarea_generica(
-                    "rotacion logs", sandbox_dir,
+                    "rotacion logs",
+                    sandbox_dir,
                 )
                 result["herramientas"]["optimizacion_db"] = self._tarea_generica(
-                    "optimizacion db", sandbox_dir,
+                    "optimizacion db",
+                    sandbox_dir,
                 )
 
             elif sandbox_id == "seguridad":
                 result["herramientas"]["bandit"] = self._check_tool("bandit", "--version")
                 result["herramientas"]["pip_audit"] = self._check_tool("pip-audit", "--version")
                 result["herramientas"]["verificacion_permisos"] = self._tarea_generica(
-                    "verificacion permisos", sandbox_dir,
+                    "verificacion permisos",
+                    sandbox_dir,
                 )
 
             elif sandbox_id == "aprendizaje":
                 result["herramientas"]["embeddings"] = self._tarea_generica(
-                    "generacion embeddings", sandbox_dir,
+                    "generacion embeddings",
+                    sandbox_dir,
                 )
                 result["herramientas"]["indexacion"] = self._tarea_generica(
-                    "indexacion memoria", sandbox_dir,
+                    "indexacion memoria",
+                    sandbox_dir,
                 )
 
             elif sandbox_id == "documentacion":
@@ -256,7 +263,7 @@ class SandboxOrchestrator:
     def _check_tool(self, tool: str, arg: str = "--version") -> bool:
         """Verifica si una herramienta esta disponible."""
         try:
-            r = subprocess.run([tool, arg], capture_output=True, timeout=10)
+            r = subprocess.run([tool, arg], capture_output=True, timeout=10, check=False)
             return r.returncode == 0
         except Exception:
             return False
@@ -327,7 +334,7 @@ class SandboxOrchestrator:
             {
                 "event": "accelerated_triggered",
                 "reason": reason,
-                "until": datetime.fromtimestamp(self.accelerated_until, tz=timezone.utc).isoformat(),
+                "until": datetime.fromtimestamp(self.accelerated_until, tz=UTC).isoformat(),
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
@@ -348,17 +355,22 @@ class SandboxOrchestrator:
                 self._save_state()
                 logger.info("Ciclo acelerado finalizado")
 
-    CRITICAL_CHANGE_TYPES: frozenset = frozenset({
-        "package_install",
-        "systemic_repair",
-        "core_modification",
-        "ollama_model_update",
-        "network_config_change",
-        "external_merge",
-    })
+    CRITICAL_CHANGE_TYPES: frozenset = frozenset(
+        {
+            "package_install",
+            "systemic_repair",
+            "core_modification",
+            "ollama_model_update",
+            "network_config_change",
+            "external_merge",
+        },
+    )
 
     def register_critical_change(
-        self, change_type: str, reason: str = "", metadata: dict | None = None,
+        self,
+        change_type: str,
+        reason: str = "",
+        metadata: dict | None = None,
     ) -> bool:
         if change_type not in self.CRITICAL_CHANGE_TYPES:
             logger.warning(f"Tipo de cambio desconocido: {change_type}")

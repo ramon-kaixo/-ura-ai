@@ -1,9 +1,8 @@
-
 """Tests de path_setup, notifier, json_logger."""
 
-from path_setup import setup_path, get_project_root
-from core.notifier import notify
 from core.json_logger import StructuredLogger
+from core.notifier import notify
+from path_setup import get_project_root, setup_path
 
 
 def test_path_setup_basic():

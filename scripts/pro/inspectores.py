@@ -57,8 +57,15 @@ def generar_id_watermark(tipo: str) -> str:
 
 
 class CheckResult:
-    def __init__(self, check_id: int, nombre: str, passed: bool,
-                 linea: int = 0, tipo: str = "", mensaje: str = "") -> None:
+    def __init__(
+        self,
+        check_id: int,
+        nombre: str,
+        passed: bool,
+        linea: int = 0,
+        tipo: str = "",
+        mensaje: str = "",
+    ) -> None:
         self.check_id = check_id
         self.nombre = nombre
         self.passed = passed
@@ -189,7 +196,11 @@ def check_f821(codigo, lineas, arbol):
     try:
         r = subprocess.run(
             [ruff_bin, "check", "--select", "F821", "--output-format", "concise", "-"],
-            input=codigo, capture_output=True, text=True, timeout=15,
+            input=codigo,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
         )
         if r.returncode != 0:
             for line_ruf in r.stdout.splitlines():
@@ -219,8 +230,8 @@ def check_empty_body(codigo, lineas, arbol):
             if len(body) <= 2:
                 has_pass = any(isinstance(s, ast.Pass) for s in body)
                 has_return_none = any(
-                    isinstance(s, ast.Return) and (s.value is None or
-                    (isinstance(s.value, ast.Constant) and s.value.value is None))
+                    isinstance(s, ast.Return)
+                    and (s.value is None or (isinstance(s.value, ast.Constant) and s.value.value is None))
                     for s in body
                 )
                 if has_pass or has_return_none:
@@ -238,8 +249,7 @@ def check_tipado(codigo, lineas, arbol):
             if isinstance(node.annotation, ast.Name) and isinstance(node.value, ast.Constant):
                 tipo_anotado = node.annotation.id
                 tipo_valor = type(node.value.value).__name__
-                mapa = {"str": "str", "int": "int", "float": "float", "bool": "bool",
-                        "None": "NoneType"}
+                mapa = {"str": "str", "int": "int", "float": "float", "bool": "bool", "None": "NoneType"}
                 if mapa.get(tipo_valor) and mapa[tipo_valor] != tipo_anotado.lower():
                     return False, node.lineno, "TYPE_MISMATCH", f"Anotado {tipo_anotado}, valor es {tipo_valor}"
     return True, 0, "", ""
@@ -275,8 +285,7 @@ def _max_nesting(node, depth=0):
 
 def check_debug_code(codigo, lineas, arbol):
     """Check 10: Código de debug/residual."""
-    patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME",
-                r"import pdb;", r"breakpoint\(\)"]
+    patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME", r"import pdb;", r"breakpoint\(\)"]
     for i, line in enumerate(lineas, 1):
         for pat in patterns:
             if re.search(pat, line, re.IGNORECASE):
@@ -318,146 +327,176 @@ def check_circular_imports(codigo, lineas, arbol):
 
 def crear_inspectores() -> list[Inspector]:
     return [
-        Inspector("INS-01 Sintaxis", [
-            ("Código compila", check_compile),
-            ("Triple quotes balanceadas", check_triple_quotes),
-            ("Sin artifactos git/LLM", check_git_artifacts),
-            ("Sin sintaxis obsoleta", lambda c, l, a: (True, 0, "", "")),
-            ("Paréntesis balanceados", lambda c, l, a: (True, 0, "", "")),
-            ("Corchetes balanceados", lambda c, l, a: (True, 0, "", "")),
-            ("Llaves balanceadas", lambda c, l, a: (True, 0, "", "")),
-            ("Encoding UTF-8 válido", lambda c, l, a: (True, 0, "", "")),
-            ("Sin tabs mixtas", lambda c, l, a: (True, 0, "", "")),
-            ("Sin trailing whitespace", lambda c, l, a: (True, 0, "", "")),
-            ("Sin líneas >120 chars", lambda c, l, a: (True, 0, "", "")),
-            ("Encoding declaration ok", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-02 Imports", [
-            ("F821: undefined names", check_f821),
-            ("F401: imports sin usar", lambda c, l, a: (True, 0, "", "")),
-            ("Imports absolutos", lambda c, l, a: (True, 0, "", "")),
-            ("Sin imports circulares", check_circular_imports),
-            ("Imports estándar primero", lambda c, l, a: (True, 0, "", "")),
-            ("Imports terceros segundo", lambda c, l, a: (True, 0, "", "")),
-            ("Imports locales tercero", lambda c, l, a: (True, 0, "", "")),
-            ("Sin import *", lambda c, l, a: (True, 0, "", "")),
-            ("Alias coherentes", lambda c, l, a: (True, 0, "", "")),
-            ("Sin dependencias rotas", lambda c, l, a: (True, 0, "", "")),
-            ("Typing imports mínimos", lambda c, l, a: (True, 0, "", "")),
-            ("Sin re-imports", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-03 Tipado", [
-            ("Anotaciones tipo consistentes", check_tipado),
-            ("Return type presente", lambda c, l, a: (True, 0, "", "")),
-            ("Argumentos tipados", lambda c, l, a: (True, 0, "", "")),
-            ("Optional vs Union correcto", lambda c, l, a: (True, 0, "", "")),
-            ("Sin Any innecesario", lambda c, l, a: (True, 0, "", "")),
-            ("TypeVars usados correctamente", lambda c, l, a: (True, 0, "", "")),
-            ("Protocols para duck typing", lambda c, l, a: (True, 0, "", "")),
-            ("Literal usado para constantes", lambda c, l, a: (True, 0, "", "")),
-            ("TypedDict para dicts estructurados", lambda c, l, a: (True, 0, "", "")),
-            ("Sin casting innecesario", lambda c, l, a: (True, 0, "", "")),
-            ("isinstance con tipos correctos", lambda c, l, a: (True, 0, "", "")),
-            ("Sin Any en argumentos críticos", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-04 Seguridad", [
-            ("Sin eval/exec", check_security),
-            ("Sin shell=True", check_security),
-            ("Sin pickle inseguro", check_security),
-            ("os.system ausente", check_security),
-            ("subprocess con lista args", lambda c, l, a: (True, 0, "", "")),
-            ("Sin hardcoded secrets", lambda c, l, a: (True, 0, "", "")),
-            ("Input sanitizado", lambda c, l, a: (True, 0, "", "")),
-            ("Path traversal check", lambda c, l, a: (True, 0, "", "")),
-            ("Sin comandos dinámicos", lambda c, l, a: (True, 0, "", "")),
-            ("TemporaryFile seguro", lambda c, l, a: (True, 0, "", "")),
-            ("Sin assert en producción", lambda c, l, a: (True, 0, "", "")),
-            ("Logging seguro", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-05 Rendimiento", [
-            ("Sin bucles innecesarios", lambda c, l, a: (True, 0, "", "")),
-            ("List comprehensions vs bucles", lambda c, l, a: (True, 0, "", "")),
-            ("Generators para grandes datos", lambda c, l, a: (True, 0, "", "")),
-            ("Caching de llamadas costosas", lambda c, l, a: (True, 0, "", "")),
-            ("String concat eficiente", lambda c, l, a: (True, 0, "", "")),
-            ("Sin import dentro de bucle", lambda c, l, a: (True, 0, "", "")),
-            ("Context managers para recursos", lambda c, l, a: (True, 0, "", "")),
-            ("Lazy imports", lambda c, l, a: (True, 0, "", "")),
-            ("Sin getattr dinámico en loops", lambda c, l, a: (True, 0, "", "")),
-            ("Set/dict lookup vs list", lambda c, l, a: (True, 0, "", "")),
-            ("Sin llamadas redundantes", lambda c, l, a: (True, 0, "", "")),
-            ("Comprensión de dict vs loop", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-06 Estilo", [
-            ("Funciones >80 líneas", check_large_functions),
-            ("Anidamiento >4 niveles", check_nesting_depth),
-            ("Debug/residual code", check_debug_code),
-            ("Nombres descriptivos", lambda c, l, a: (True, 0, "", "")),
-            ("Constantes en mayúsculas", lambda c, l, a: (True, 0, "", "")),
-            ("Funciones <30 args", lambda c, l, a: (True, 0, "", "")),
-            ("Docstrings presentes", lambda c, l, a: (True, 0, "", "")),
-            ("Comentarios pertinentes", lambda c, l, a: (True, 0, "", "")),
-            ("Sin código duplicado obvio", lambda c, l, a: (True, 0, "", "")),
-            ("Return types consistentes", lambda c, l, a: (True, 0, "", "")),
-            ("Excepciones específicas", lambda c, l, a: (True, 0, "", "")),
-            ("Sin pass except", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-07 Estructura", [
-            ("Bloques huérfanos", check_dangling_blocks),
-            ("Cuerpo vacío (pass)", check_empty_body),
-            ("Try/except con scope mínimo", lambda c, l, a: (True, 0, "", "")),
-            ("Finally para limpieza", lambda c, l, a: (True, 0, "", "")),
-            ("Context managers preferidos", lambda c, l, a: (True, 0, "", "")),
-            ("Early returns", lambda c, l, a: (True, 0, "", "")),
-            ("Guard clauses", lambda c, l, a: (True, 0, "", "")),
-            ("Sin elif profundos", lambda c, l, a: (True, 0, "", "")),
-            ("Match/case vs if/elif", lambda c, l, a: (True, 0, "", "")),
-            ("Desestructuración usada", lambda c, l, a: (True, 0, "", "")),
-            ("Enums vs constantes", lambda c, l, a: (True, 0, "", "")),
-            ("Dataclasses vs clases manuales", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-08 Lógica", [
-            ("Condiciones no-negadas", lambda c, l, a: (True, 0, "", "")),
-            ("Booleanos vs comparaciones", lambda c, l, a: (True, 0, "", "")),
-            ("Sin side effects inesperados", lambda c, l, a: (True, 0, "", "")),
-            ("Mutabilidad controlada", lambda c, l, a: (True, 0, "", "")),
-            ("Valores default inmutables", lambda c, l, a: (True, 0, "", "")),
-            ("Manejo de None explícito", lambda c, l, a: (True, 0, "", "")),
-            ("Cortocircuitos lógicos", lambda c, l, a: (True, 0, "", "")),
-            ("Range bounds correctos", lambda c, l, a: (True, 0, "", "")),
-            ("Slicing bounds correctos", lambda c, l, a: (True, 0, "", "")),
-            ("División por cero ausente", lambda c, l, a: (True, 0, "", "")),
-            ("Comparación de floats", lambda c, l, a: (True, 0, "", "")),
-            ("Orden de operadores claro", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-09 Concurrencia", [
-            ("Thread safety básico", lambda c, l, a: (True, 0, "", "")),
-            ("Locks usados correctamente", lambda c, l, a: (True, 0, "", "")),
-            ("Sin race conditions obvias", lambda c, l, a: (True, 0, "", "")),
-            ("Timeouts en I/O", lambda c, l, a: (True, 0, "", "")),
-            ("Retry con backoff", lambda c, l, a: (True, 0, "", "")),
-            ("Circuit breaker pattern", lambda c, l, a: (True, 0, "", "")),
-            ("Graceful degradation", lambda c, l, a: (True, 0, "", "")),
-            ("Sin deadlocks", lambda c, l, a: (True, 0, "", "")),
-            ("Pool de conexiones", lambda c, l, a: (True, 0, "", "")),
-            ("Async vs sync correcto", lambda c, l, a: (True, 0, "", "")),
-            ("Sin llamadas bloqueantes en async", lambda c, l, a: (True, 0, "", "")),
-            ("Cancellation handling", lambda c, l, a: (True, 0, "", "")),
-        ]),
-        Inspector("INS-10 Resiliencia", [
-            ("Error handling presente", lambda c, l, a: (True, 0, "", "")),
-            ("Logging de errores", lambda c, l, a: (True, 0, "", "")),
-            ("Fallbacks definidos", lambda c, l, a: (True, 0, "", "")),
-            ("Manejo de timeout", lambda c, l, a: (True, 0, "", "")),
-            ("Validación de inputs", lambda c, l, a: (True, 0, "", "")),
-            ("Sanitización de outputs", lambda c, l, a: (True, 0, "", "")),
-            ("Rollback en error", lambda c, l, a: (True, 0, "", "")),
-            ("Estado consistente post-error", lambda c, l, a: (True, 0, "", "")),
-            ("Métricas de error", lambda c, l, a: (True, 0, "", "")),
-            ("Alertas configurables", lambda c, l, a: (True, 0, "", "")),
-            ("Sin silenciar excepciones", lambda c, l, a: (True, 0, "", "")),
-            ("Recovery automático", lambda c, l, a: (True, 0, "", "")),
-        ]),
+        Inspector(
+            "INS-01 Sintaxis",
+            [
+                ("Código compila", check_compile),
+                ("Triple quotes balanceadas", check_triple_quotes),
+                ("Sin artifactos git/LLM", check_git_artifacts),
+                ("Sin sintaxis obsoleta", lambda c, l, a: (True, 0, "", "")),
+                ("Paréntesis balanceados", lambda c, l, a: (True, 0, "", "")),
+                ("Corchetes balanceados", lambda c, l, a: (True, 0, "", "")),
+                ("Llaves balanceadas", lambda c, l, a: (True, 0, "", "")),
+                ("Encoding UTF-8 válido", lambda c, l, a: (True, 0, "", "")),
+                ("Sin tabs mixtas", lambda c, l, a: (True, 0, "", "")),
+                ("Sin trailing whitespace", lambda c, l, a: (True, 0, "", "")),
+                ("Sin líneas >120 chars", lambda c, l, a: (True, 0, "", "")),
+                ("Encoding declaration ok", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-02 Imports",
+            [
+                ("F821: undefined names", check_f821),
+                ("F401: imports sin usar", lambda c, l, a: (True, 0, "", "")),
+                ("Imports absolutos", lambda c, l, a: (True, 0, "", "")),
+                ("Sin imports circulares", check_circular_imports),
+                ("Imports estándar primero", lambda c, l, a: (True, 0, "", "")),
+                ("Imports terceros segundo", lambda c, l, a: (True, 0, "", "")),
+                ("Imports locales tercero", lambda c, l, a: (True, 0, "", "")),
+                ("Sin import *", lambda c, l, a: (True, 0, "", "")),
+                ("Alias coherentes", lambda c, l, a: (True, 0, "", "")),
+                ("Sin dependencias rotas", lambda c, l, a: (True, 0, "", "")),
+                ("Typing imports mínimos", lambda c, l, a: (True, 0, "", "")),
+                ("Sin re-imports", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-03 Tipado",
+            [
+                ("Anotaciones tipo consistentes", check_tipado),
+                ("Return type presente", lambda c, l, a: (True, 0, "", "")),
+                ("Argumentos tipados", lambda c, l, a: (True, 0, "", "")),
+                ("Optional vs Union correcto", lambda c, l, a: (True, 0, "", "")),
+                ("Sin Any innecesario", lambda c, l, a: (True, 0, "", "")),
+                ("TypeVars usados correctamente", lambda c, l, a: (True, 0, "", "")),
+                ("Protocols para duck typing", lambda c, l, a: (True, 0, "", "")),
+                ("Literal usado para constantes", lambda c, l, a: (True, 0, "", "")),
+                ("TypedDict para dicts estructurados", lambda c, l, a: (True, 0, "", "")),
+                ("Sin casting innecesario", lambda c, l, a: (True, 0, "", "")),
+                ("isinstance con tipos correctos", lambda c, l, a: (True, 0, "", "")),
+                ("Sin Any en argumentos críticos", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-04 Seguridad",
+            [
+                ("Sin eval/exec", check_security),
+                ("Sin shell=True", check_security),
+                ("Sin pickle inseguro", check_security),
+                ("os.system ausente", check_security),
+                ("subprocess con lista args", lambda c, l, a: (True, 0, "", "")),
+                ("Sin hardcoded secrets", lambda c, l, a: (True, 0, "", "")),
+                ("Input sanitizado", lambda c, l, a: (True, 0, "", "")),
+                ("Path traversal check", lambda c, l, a: (True, 0, "", "")),
+                ("Sin comandos dinámicos", lambda c, l, a: (True, 0, "", "")),
+                ("TemporaryFile seguro", lambda c, l, a: (True, 0, "", "")),
+                ("Sin assert en producción", lambda c, l, a: (True, 0, "", "")),
+                ("Logging seguro", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-05 Rendimiento",
+            [
+                ("Sin bucles innecesarios", lambda c, l, a: (True, 0, "", "")),
+                ("List comprehensions vs bucles", lambda c, l, a: (True, 0, "", "")),
+                ("Generators para grandes datos", lambda c, l, a: (True, 0, "", "")),
+                ("Caching de llamadas costosas", lambda c, l, a: (True, 0, "", "")),
+                ("String concat eficiente", lambda c, l, a: (True, 0, "", "")),
+                ("Sin import dentro de bucle", lambda c, l, a: (True, 0, "", "")),
+                ("Context managers para recursos", lambda c, l, a: (True, 0, "", "")),
+                ("Lazy imports", lambda c, l, a: (True, 0, "", "")),
+                ("Sin getattr dinámico en loops", lambda c, l, a: (True, 0, "", "")),
+                ("Set/dict lookup vs list", lambda c, l, a: (True, 0, "", "")),
+                ("Sin llamadas redundantes", lambda c, l, a: (True, 0, "", "")),
+                ("Comprensión de dict vs loop", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-06 Estilo",
+            [
+                ("Funciones >80 líneas", check_large_functions),
+                ("Anidamiento >4 niveles", check_nesting_depth),
+                ("Debug/residual code", check_debug_code),
+                ("Nombres descriptivos", lambda c, l, a: (True, 0, "", "")),
+                ("Constantes en mayúsculas", lambda c, l, a: (True, 0, "", "")),
+                ("Funciones <30 args", lambda c, l, a: (True, 0, "", "")),
+                ("Docstrings presentes", lambda c, l, a: (True, 0, "", "")),
+                ("Comentarios pertinentes", lambda c, l, a: (True, 0, "", "")),
+                ("Sin código duplicado obvio", lambda c, l, a: (True, 0, "", "")),
+                ("Return types consistentes", lambda c, l, a: (True, 0, "", "")),
+                ("Excepciones específicas", lambda c, l, a: (True, 0, "", "")),
+                ("Sin pass except", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-07 Estructura",
+            [
+                ("Bloques huérfanos", check_dangling_blocks),
+                ("Cuerpo vacío (pass)", check_empty_body),
+                ("Try/except con scope mínimo", lambda c, l, a: (True, 0, "", "")),
+                ("Finally para limpieza", lambda c, l, a: (True, 0, "", "")),
+                ("Context managers preferidos", lambda c, l, a: (True, 0, "", "")),
+                ("Early returns", lambda c, l, a: (True, 0, "", "")),
+                ("Guard clauses", lambda c, l, a: (True, 0, "", "")),
+                ("Sin elif profundos", lambda c, l, a: (True, 0, "", "")),
+                ("Match/case vs if/elif", lambda c, l, a: (True, 0, "", "")),
+                ("Desestructuración usada", lambda c, l, a: (True, 0, "", "")),
+                ("Enums vs constantes", lambda c, l, a: (True, 0, "", "")),
+                ("Dataclasses vs clases manuales", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-08 Lógica",
+            [
+                ("Condiciones no-negadas", lambda c, l, a: (True, 0, "", "")),
+                ("Booleanos vs comparaciones", lambda c, l, a: (True, 0, "", "")),
+                ("Sin side effects inesperados", lambda c, l, a: (True, 0, "", "")),
+                ("Mutabilidad controlada", lambda c, l, a: (True, 0, "", "")),
+                ("Valores default inmutables", lambda c, l, a: (True, 0, "", "")),
+                ("Manejo de None explícito", lambda c, l, a: (True, 0, "", "")),
+                ("Cortocircuitos lógicos", lambda c, l, a: (True, 0, "", "")),
+                ("Range bounds correctos", lambda c, l, a: (True, 0, "", "")),
+                ("Slicing bounds correctos", lambda c, l, a: (True, 0, "", "")),
+                ("División por cero ausente", lambda c, l, a: (True, 0, "", "")),
+                ("Comparación de floats", lambda c, l, a: (True, 0, "", "")),
+                ("Orden de operadores claro", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-09 Concurrencia",
+            [
+                ("Thread safety básico", lambda c, l, a: (True, 0, "", "")),
+                ("Locks usados correctamente", lambda c, l, a: (True, 0, "", "")),
+                ("Sin race conditions obvias", lambda c, l, a: (True, 0, "", "")),
+                ("Timeouts en I/O", lambda c, l, a: (True, 0, "", "")),
+                ("Retry con backoff", lambda c, l, a: (True, 0, "", "")),
+                ("Circuit breaker pattern", lambda c, l, a: (True, 0, "", "")),
+                ("Graceful degradation", lambda c, l, a: (True, 0, "", "")),
+                ("Sin deadlocks", lambda c, l, a: (True, 0, "", "")),
+                ("Pool de conexiones", lambda c, l, a: (True, 0, "", "")),
+                ("Async vs sync correcto", lambda c, l, a: (True, 0, "", "")),
+                ("Sin llamadas bloqueantes en async", lambda c, l, a: (True, 0, "", "")),
+                ("Cancellation handling", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
+        Inspector(
+            "INS-10 Resiliencia",
+            [
+                ("Error handling presente", lambda c, l, a: (True, 0, "", "")),
+                ("Logging de errores", lambda c, l, a: (True, 0, "", "")),
+                ("Fallbacks definidos", lambda c, l, a: (True, 0, "", "")),
+                ("Manejo de timeout", lambda c, l, a: (True, 0, "", "")),
+                ("Validación de inputs", lambda c, l, a: (True, 0, "", "")),
+                ("Sanitización de outputs", lambda c, l, a: (True, 0, "", "")),
+                ("Rollback en error", lambda c, l, a: (True, 0, "", "")),
+                ("Estado consistente post-error", lambda c, l, a: (True, 0, "", "")),
+                ("Métricas de error", lambda c, l, a: (True, 0, "", "")),
+                ("Alertas configurables", lambda c, l, a: (True, 0, "", "")),
+                ("Sin silenciar excepciones", lambda c, l, a: (True, 0, "", "")),
+                ("Recovery automático", lambda c, l, a: (True, 0, "", "")),
+            ],
+        ),
     ]
 
 
@@ -517,10 +556,7 @@ class AgregadorInspecciones:
             key = (w.get("tipo", ""), w.get("mensaje", "")[:60])
             ciclos[key] = ciclos.get(key, 0) + 1
 
-        patrones_sistemicos = [
-            {"tipo": k[0], "mensaje": k[1], "apariciones": v}
-            for k, v in ciclos.items() if v >= 3
-        ]
+        patrones_sistemicos = [{"tipo": k[0], "mensaje": k[1], "apariciones": v} for k, v in ciclos.items() if v >= 3]
 
         data = {
             "watermarks": existentes,
@@ -577,10 +613,7 @@ def inspeccionar(ruta: Path) -> dict:
     agregador = AgregadorInspecciones(ruta)
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futuros = {
-            executor.submit(ins.ejecutar, codigo, lineas, arbol): ins.nombre
-            for ins in inspectores
-        }
+        futuros = {executor.submit(ins.ejecutar, codigo, lineas, arbol): ins.nombre for ins in inspectores}
         for futuro in as_completed(futuros):
             nombre = futuros[futuro]
             try:
@@ -597,10 +630,10 @@ def inspeccionar(ruta: Path) -> dict:
     return reporte
 
 
-
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
+
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
@@ -614,8 +647,10 @@ def scan_project() -> None:
         except Exception:
             pass
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="10 Inspectores Paralelos")
     parser.add_argument("archivo", nargs="?", default=None, help="Archivo a inspeccionar")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")

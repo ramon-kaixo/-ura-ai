@@ -141,6 +141,7 @@ def test_file(file_path):
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
         return result.returncode == 0, result.stderr[:200]
     except subprocess.TimeoutExpired:
@@ -183,13 +184,13 @@ def _procesar_aprobados() -> None:
         shutil.move(str(archivo), str(prod_path))
         actualizar_inventario(rel, nuevo_hash, "auto_aprobado")
         inv = cargar_inventario()
-        v_old = (
-            inv["archivos"].get(rel, {}).get("version", "unknown")
-            if rel in inv.get("archivos", {})
-            else "unknown"
-        )
+        v_old = inv["archivos"].get(rel, {}).get("version", "unknown") if rel in inv.get("archivos", {}) else "unknown"
         create_branch(
-            rel, v_old, "auto_aprobado", "agente_sandbox", "Automatic non-critical change",
+            rel,
+            v_old,
+            "auto_aprobado",
+            "agente_sandbox",
+            "Automatic non-critical change",
         )
         log.info(f"Production updated: {rel}")
         pushover(f"Change applied in production: {rel}")

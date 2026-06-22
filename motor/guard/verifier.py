@@ -2,13 +2,15 @@ import json
 import logging
 import subprocess
 import time
-from motor.core.state import VerifyResult
+
 from motor.core.config import UraConfig
+from motor.core.state import VerifyResult
 
 log = logging.getLogger("ura.guard.verifier")
 
 URL_OLLAMA = "http://localhost:11435/v1/chat/completions"
 TIMEOUT_VERIFY = 3
+
 
 def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> VerifyResult:
     """Ejecuta verificación post-cambio preguntando a Ollama."""
@@ -35,14 +37,26 @@ def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> Veri
             log.warning("verifier: fallo sin auto-revert")
     return r
 
+
 def _test_ollama() -> str:
     """Prueba respuesta de Ollama local."""
     try:
         r = subprocess.run(
-            ["curl", "-sf", "-X", "POST", URL_OLLAMA,
-             "-H", "Content-Type: application/json",
-             "-d", '{"model":"test","messages":[{"role":"user","content":"ping"}]}'],
-            capture_output=True, text=True, timeout=10
+            [
+                "curl",
+                "-sf",
+                "-X",
+                "POST",
+                URL_OLLAMA,
+                "-H",
+                "Content-Type: application/json",
+                "-d",
+                '{"model":"test","messages":[{"role":"user","content":"ping"}]}',
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
         )
         if r.returncode == 0:
             try:
@@ -56,9 +70,10 @@ def _test_ollama() -> str:
         log.warning("test_ollama falló: %s", e)
         return ""
 
+
 def _revertir_cambios():
     """Reinicia el servicio opencode para revertir cambios."""
     try:
-        subprocess.run(["systemctl", "restart", "opencode"], timeout=15)
+        subprocess.run(["systemctl", "restart", "opencode"], timeout=15, check=False)
     except Exception as e:
         log.error("revertir cambios falló: %s", e)

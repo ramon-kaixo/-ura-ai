@@ -47,7 +47,9 @@ def llamar_ollama(prompt: str, model: str = MODEL, timeout: int = TIMEOUT) -> st
 
 
 def revisar(
-    codigo_original: str, codigo_refactorizado: str, nombre_archivo: str = "desconocido",
+    codigo_original: str,
+    codigo_refactorizado: str,
+    nombre_archivo: str = "desconocido",
 ) -> dict:
     """Envía código al revisor q8_0 y obtiene veredicto.
 
@@ -137,6 +139,7 @@ def revisar_archivos(ruta_original: Path, ruta_refactorizado: Path) -> dict:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 

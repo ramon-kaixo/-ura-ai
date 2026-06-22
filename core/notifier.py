@@ -24,7 +24,7 @@ def _get_telegram_token() -> str | None:
     if _TELEGRAM_TOKEN is None:
         _TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
         _TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-    return _TELEGRAM_TOKEN if _TELEGRAM_TOKEN else None
+    return _TELEGRAM_TOKEN or None
 
 
 def _send_telegram(message: str) -> bool:

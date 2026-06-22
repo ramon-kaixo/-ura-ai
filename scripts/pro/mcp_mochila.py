@@ -6,7 +6,6 @@ import json
 import sys
 import traceback
 
-
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
 SERVER_NAME = "mochila-tools"

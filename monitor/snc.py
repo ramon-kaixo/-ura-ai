@@ -6,23 +6,22 @@ Incluye: error_logger (log circular), mac_heartbeat (detección Mac).
 Modo Soberanía: GX10 opera independientemente del Mac.
 """
 
-import sys
-from pathlib import Path
-
-
 import json
 import os
 import platform
 import shlex
 import signal
 import subprocess
+import sys
 import threading
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 
 # Módulos locales (misma carpeta)
 from error_logger import ErrorLogger
 from mac_heartbeat import MacHeartbeat
+
 # notifier está en core/, se importa bajo demanda para evitar circular imports
 
 # Autosuficiente: carga system_config.json directamente (no depende de config_manager)
@@ -66,15 +65,19 @@ _opencode_ciclos_alta: int = 0
 error_logger = ErrorLogger()
 mac_heartbeat = MacHeartbeat()
 
+
 def _notify(msg: str, level: str = "warning") -> None:
     """Wrapper lazy de core/notifier.notify para evitar circular imports."""
     try:
         import sys as _sys
+
         _sys.path.insert(0, str(Path(__file__).parent.parent))
         from core.notifier import notify as _n
+
         _n(msg, level=level)
     except Exception as e:
         error_logger.log_error(context="SNC", gateway_status="NOTIFY_FAIL", severity="WARN", message=f"notify: {e}")
+
 
 openclaw_active = False
 openclaw_stable_since = None
@@ -105,16 +108,26 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
     try:
-        needs_shell = any(op in cmd for op in ['|', '&&', '||', ';', '$('])
+        needs_shell = any(op in cmd for op in ["|", "&&", "||", ";", "$("])
         if needs_shell:
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=timeout,
-                executable='/bin/bash',
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                executable="/bin/bash",
+                check=False,
             )
         else:
             args = shlex.split(cmd)
             result = subprocess.run(
-                args, shell=False, capture_output=True, text=True, timeout=timeout,
+                args,
+                shell=False,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
             )
         return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
     except subprocess.TimeoutExpired:
@@ -180,7 +193,10 @@ def check_mac_unauthorized_writes() -> bool:
         remote_cmd = "ps aux | grep -E 'vim|nano|emacs|code' | grep -v grep"
         result = subprocess.run(
             ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if result.returncode == 0 and result.stdout.strip():
             error_logger.log_error(
@@ -197,7 +213,6 @@ def check_mac_unauthorized_writes() -> bool:
             severity="WARN",
             message=f"Error verificando escrituras no autorizadas: {e}",
         )
-        pass
 
     return False
 
@@ -252,7 +267,11 @@ def poll_services(runbook: dict) -> dict:
         if only_if:
             parent_ok = state["services"].get(only_if, {}).get("ok", True)
             if parent_ok:
-                state["services"][svc_name] = {"ok": True, "check": f"skipped (parent {only_if} ok)", "repair_result": "no_repair_needed"}
+                state["services"][svc_name] = {
+                    "ok": True,
+                    "check": f"skipped (parent {only_if} ok)",
+                    "repair_result": "no_repair_needed",
+                }
                 continue
 
         check_cmd = svc_config.get("check", "")
@@ -280,7 +299,8 @@ def poll_services(runbook: dict) -> dict:
                 if openclaw_script.exists():
                     proc = subprocess.Popen(
                         [sys.executable, str(openclaw_script)],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
                     )
                     # No esperamos a que termine, pero registramos el PID para tracking
                     error_logger.log_error(
@@ -305,7 +325,10 @@ def poll_services(runbook: dict) -> dict:
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
             subprocess.run(
                 ["pkill", "-TERM", "-f", "openclaw"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             openclaw_active = False
             openclaw_stable_since = None
@@ -343,6 +366,7 @@ def handle_signal(sig, frame) -> None:
 
 # ─── Detección de anomalías en caliente ─────────────────────
 
+
 def check_zombies() -> list[int]:
     """Procesos zombie (estado Z) → kill -KILL directo."""
     zombies = []
@@ -365,11 +389,15 @@ def check_zombies() -> list[int]:
 def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[int, str, float]]:
     """Procesos Python/node con CPU INSTANTÁNEA > umbral (usa ps, no /proc/stat acumulado)."""
     import subprocess
+
     result: list[tuple[int, str, float]] = []
     try:
         out = subprocess.run(
             ["ps", "aux", "--sort=-%cpu"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         for line in out.stdout.splitlines()[1:]:
             parts = line.split(None, 10)
@@ -397,14 +425,21 @@ def check_opencode_colgado() -> int | None:
     """
     try:
         pid = subprocess.run(
-            ["pgrep", "-x", "opencode"], capture_output=True, text=True, timeout=5,
+            ["pgrep", "-x", "opencode"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if not pid.stdout.strip():
             return None
         raw_pid = int(pid.stdout.strip().split()[0])
         cpu = subprocess.run(
             ["ps", "-p", str(raw_pid), "-o", "%cpu="],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if float(cpu.stdout.strip()) > UMBRALES["opencode_cpu_umbral"]:
             return raw_pid
@@ -479,6 +514,7 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
                     dst = sandbox_dir / subdir
                     if src.is_dir():
                         import shutil
+
                         shutil.copytree(src, dst, dirs_exist_ok=True)
                     else:
                         dst.write_text(src.read_text(errors="replace"))
@@ -497,21 +533,15 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
 def _check_umbrales(state: dict) -> bool:
     """Retorna True si se deben activar medidas correctivas."""
     servicios = state.get("services", {})
-    criticos_caidos = sum(
-        1 for s in UMBRALES["criticos"]
-        if servicios.get(s, {}).get("ok") is False
-    )
-    totales_caidos = sum(
-        1 for s in servicios.values()
-        if s.get("ok") is False
-    )
+    criticos_caidos = sum(1 for s in UMBRALES["criticos"] if servicios.get(s, {}).get("ok") is False)
+    totales_caidos = sum(1 for s in servicios.values() if s.get("ok") is False)
     return criticos_caidos >= UMBRALES["max_fallos_criticos"] or totales_caidos >= UMBRALES["max_fallos_totales"]
 
 
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
     try:
-        subprocess.run(["systemctl", "start", "ura-maintenance.service"], timeout=30)
+        subprocess.run(["systemctl", "start", "ura-maintenance.service"], timeout=30, check=False)
         _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
     except subprocess.TimeoutExpired:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")
@@ -528,7 +558,6 @@ def main() -> None:
     runbook = load_runbook()
     if runbook.get("version") == "0":
         sys.exit(1)
-
 
     try:
         _last_notification: float = 0

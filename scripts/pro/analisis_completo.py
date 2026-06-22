@@ -34,7 +34,6 @@ ACCIONES = Path("/opt/ura/data/cola_acciones.json")
 MEJORAS = Path("/opt/ura/config/prompts/mejoras.txt")
 
 
-
 def log(msg) -> None:
     with open(LOG, "a") as f:
         f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
@@ -42,12 +41,14 @@ def log(msg) -> None:
 
 def llm(prompt, model="auto"):
     try:
-        payload = json.dumps({
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "temperature": 0.3,
-        }).encode()
+        payload = json.dumps(
+            {
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "temperature": 0.3,
+            },
+        ).encode()
         req = urllib.request.Request(
             f"{MODEL_ROUTER}/v1/chat/completions",
             data=payload,
@@ -63,28 +64,46 @@ def llm(prompt, model="auto"):
 def recopilar_estado():
     estado = {}
     try:
-        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5, check=False)
         estado["mac_uptime"] = r.stdout.strip()
     except Exception:
         estado["mac_uptime"] = "error"
     try:
         r = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", os.environ.get("ASUS_SSH", "ramon@10.164.1.99"),
-             "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router"],
-            capture_output=True, text=True, timeout=15,
+            [
+                "ssh",
+                "-o",
+                "ConnectTimeout=5",
+                os.environ.get("ASUS_SSH", "ramon@10.164.1.99"),
+                "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
         )
         estado["gx10"] = r.stdout.strip()
     except Exception:
         estado["gx10"] = "no alcanzable"
     try:
-        r = subprocess.run(["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],
-            capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
         estado["mcp"] = "activo" if r.stdout else "no responde"
     except Exception:
         estado["mcp"] = "no responde"
     try:
-        r = subprocess.run(["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],
-            capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
         estado["openclaw"] = "activo" if "html" in r.stdout.lower() else "no responde"
     except Exception:
         estado["openclaw"] = "no responde"
@@ -156,11 +175,13 @@ def guardar_sugerencia(analisis) -> None:
     if SUGERENCIAS.exists():
         with contextlib.suppress(BaseException):
             sugs = json.loads(SUGERENCIAS.read_text())
-    sugs.append({
-        "timestamp": time.time(),
-        "dominio": "analisis_completo",
-        "analisis": analisis[:500],
-    })
+    sugs.append(
+        {
+            "timestamp": time.time(),
+            "dominio": "analisis_completo",
+            "analisis": analisis[:500],
+        },
+    )
     if len(sugs) > 100:
         sugs = sugs[-50:]
     SUGERENCIAS.parent.mkdir(parents=True, exist_ok=True)
@@ -169,12 +190,14 @@ def guardar_sugerencia(analisis) -> None:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> int:
     import argparse
+
     parser = argparse.ArgumentParser(description="Analisis integral de URA")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     args = parser.parse_args()

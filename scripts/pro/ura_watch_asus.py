@@ -5,9 +5,10 @@ Se ejecuta vía launchd cada 2 minutos.
 ASUS MAC: 30:c5:99:c0:64:c3
 Check via: Tailscale (100.72.103.12) o Ethernet (10.164.1.99)
 """
+
+import os
 import socket
 import subprocess
-import os
 import time
 
 ASUS_MAC = "30:c5:99:c0:64:c3"
@@ -18,6 +19,7 @@ MAX_FAILS = 3
 FAIL_LOG = "/tmp/ura_asus_watch_fail"
 LOG = "/Users/ramonesnaola/URA/logs/ura_asus_watch.log"
 
+
 def log(msg: str) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
@@ -26,12 +28,16 @@ def log(msg: str) -> None:
     with open(LOG, "a") as f:
         f.write(line + "\n")
 
+
 def ping(ip: str) -> bool:
     r = subprocess.run(
         ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],
-        capture_output=True, timeout=10
+        capture_output=True,
+        timeout=10,
+        check=False,
     )
     return r.returncode == 0
+
 
 def send_wol(mac: str) -> bool:
     mac_bytes = bytes.fromhex(mac.replace(":", ""))
@@ -46,6 +52,7 @@ def send_wol(mac: str) -> bool:
         except Exception as e:
             log(f"  WoL error en {broadcast}: {e}")
     return True
+
 
 def main() -> None:
     log("=== ASUS Watch ===")
@@ -79,6 +86,7 @@ def main() -> None:
         send_wol(ASUS_MAC)
         os.remove(FAIL_LOG)
         log("WoL enviado")
+
 
 if __name__ == "__main__":
     main()

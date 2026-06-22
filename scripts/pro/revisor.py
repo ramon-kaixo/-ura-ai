@@ -48,7 +48,7 @@ def generar_html(data: dict, tendencia: dict) -> Path:
 
     hallazgos_html = ""
     for h in data.get("hallazgos", []):
-        hallazgos_html += f"<tr><td>{h.get('archivo','')}:{h.get('linea','')}</td><td>{h.get('tipo','')}</td><td>{h.get('fix','')}</td></tr>\n"
+        hallazgos_html += f"<tr><td>{h.get('archivo', '')}:{h.get('linea', '')}</td><td>{h.get('tipo', '')}</td><td>{h.get('fix', '')}</td></tr>\n"
 
     html = f"""<!DOCTYPE html>
 <html><head><title>URA Audit Report</title>
@@ -63,24 +63,24 @@ th{{color:#8b949e;text-transform:uppercase}}
 </style></head><body>
 <h1>🛡️ URA Security Audit</h1>
 <div class="card">
-<div class="score">{data.get('score', '?')}/100</div>
-<p>Profundidad: <strong>{data.get('profundidad_ejecutada', '?')}</strong>
-| Tendencia: <strong>{tendencia.get('direccion', '?')}</strong>
-| Bloqueante: <strong>{'🚨 SI' if data.get('bloqueante') else '✅ NO'}</strong></p>
+<div class="score">{data.get("score", "?")}/100</div>
+<p>Profundidad: <strong>{data.get("profundidad_ejecutada", "?")}</strong>
+| Tendencia: <strong>{tendencia.get("direccion", "?")}</strong>
+| Bloqueante: <strong>{"🚨 SI" if data.get("bloqueante") else "✅ NO"}</strong></p>
 </div>
 <div class="card"><h2>Métricas</h2>
 <table>
-<tr><th>Críticos</th><td>{data.get('metricas', {}).get('criticos', 0)}</td></tr>
-<tr><th>Altos</th><td>{data.get('metricas', {}).get('altos', 0)}</td></tr>
-<tr><th>Medios</th><td>{data.get('metricas', {}).get('medios', 0)}</td></tr>
-<tr><th>Información</th><td>{data.get('metricas', {}).get('informacion', 0)}</td></tr>
-<tr><th>CVEs</th><td>{data.get('metricas', {}).get('cves', 0)}</td></tr>
+<tr><th>Críticos</th><td>{data.get("metricas", {}).get("criticos", 0)}</td></tr>
+<tr><th>Altos</th><td>{data.get("metricas", {}).get("altos", 0)}</td></tr>
+<tr><th>Medios</th><td>{data.get("metricas", {}).get("medios", 0)}</td></tr>
+<tr><th>Información</th><td>{data.get("metricas", {}).get("informacion", 0)}</td></tr>
+<tr><th>CVEs</th><td>{data.get("metricas", {}).get("cves", 0)}</td></tr>
 </table></div>
 <div class="card"><h2>Hallazgos</h2>
 <table><tr><th>Archivo</th><th>Tipo</th><th>Fix</th></tr>
 {hallazgos_html}
 </table></div>
-<p style="color:#484f58">{data.get('timestamp', '')} — report_dir: {data.get('report_dir', '')}</p>
+<p style="color:#484f58">{data.get("timestamp", "")} — report_dir: {data.get("report_dir", "")}</p>
 </body></html>"""
     html_path.write_text(html)
     return html_path
@@ -109,7 +109,10 @@ def main() -> int:
 
     result = subprocess.run(
         ["bash", str(script_path), "--profundidad", profundidad],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
     )
 
     try:

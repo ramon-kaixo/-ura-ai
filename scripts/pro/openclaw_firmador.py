@@ -150,7 +150,6 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
     """Protocolo de mitigacion atomico."""
     import subprocess
 
-
     # Escribir flag de bloqueo
     (URA_ROOT / ".refactor_blocked").write_text(motivo)
 
@@ -162,7 +161,7 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
         pass
 
     with contextlib.suppress(Exception):
-        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5)
+        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5, check=False)
 
     # Registrar en audit trail
     audit_log = NERVIOSO / "audit_trail.log"
@@ -178,6 +177,7 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
             ["say", "-v", "Jorge", "Alerta. Integridad del código comprometida."],
             capture_output=True,
             timeout=5,
+            check=False,
         )
 
 
@@ -298,9 +298,7 @@ def reportar_estado_tierra() -> str:
     )
     if archivo_en_curso != "ninguno":
         report += f" ({archivo_en_curso}: linea {linea_en_curso}/{total_en_curso})"
-    report += (
-        f"\n  Archivos virgenes:   {virgenes}\n  Archivos con fallo:  {fallidos}\n{'─' * 60}\n"
-    )
+    report += f"\n  Archivos virgenes:   {virgenes}\n  Archivos con fallo:  {fallidos}\n{'─' * 60}\n"
     if fallidos > 0:
         report += f"  ⚠️  RIESGO: {fallidos} archivos con checkpoint fallido\n"
 
@@ -333,7 +331,8 @@ def delta_snapshot(label: str = "ultimo_ciclo") -> str:
     path = DELTA_SNAPSHOT_DIR / f"{label}.json"
     path.write_text(
         json.dumps(
-            {"label": label, "files": snapshot, "timestamp": datetime.now(UTC).isoformat()}, indent=2,
+            {"label": label, "files": snapshot, "timestamp": datetime.now(UTC).isoformat()},
+            indent=2,
         ),
     )
     return str(path)
@@ -390,8 +389,7 @@ def aplicar_delta_check() -> dict:
     total_activos = sum(
         1
         for n in index.get("dependency_graph", {}).values()
-        if "ESPEJO" not in n.get("pipeline_state", "")
-        and "ZOMBIE" not in n.get("pipeline_state", "")
+        if "ESPEJO" not in n.get("pipeline_state", "") and "ZOMBIE" not in n.get("pipeline_state", "")
     )
 
     return {

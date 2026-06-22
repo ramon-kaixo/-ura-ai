@@ -1,6 +1,6 @@
-import os
 import json
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,6 +17,7 @@ RUTAS_CONFIG_OPENCODE = [
     "/home/ramon/URA/ura_ia_1972/opencode.json",
     "/home/ramon/URA/ura_ia_1972/opencode.jsonc",
 ]
+
 
 @dataclass
 class UraConfig:

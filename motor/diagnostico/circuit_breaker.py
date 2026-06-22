@@ -2,6 +2,7 @@ import logging
 
 log = logging.getLogger("ura.diagnostico.circuit")
 
+
 class CircuitBreaker:
     """Circuit breaker para Qdrant: abre tras N fallos consecutivos."""
 

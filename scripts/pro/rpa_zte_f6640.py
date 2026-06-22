@@ -51,7 +51,7 @@ try:
     # ═══════════════════════════════════════════════════════════
     # FASE 1: Abrir navegador y login
     # ═══════════════════════════════════════════════════════════
-    subprocess.run(["open", "-a", "Safari"])
+    subprocess.run(["open", "-a", "Safari"], check=False)
     wait(3)
     pyautogui.hotkey("command", "l")
     wait(0.5)
@@ -101,15 +101,15 @@ try:
     # Formulario típico ZTE: Name, Protocol, WAN Port, LAN IP, LAN Port
     # Navegar con Tab
     press("tab", 2)
-    write("Ramon_Tailscale")      # Name
+    write("Ramon_Tailscale")  # Name
     press("tab")
-    write("UDP")                   # Protocol (seleccionar UDP)
+    write("UDP")  # Protocol (seleccionar UDP)
     press("tab")
-    write("41641")                 # WAN Port
+    write("41641")  # WAN Port
     press("tab")
-    write("192.168.1.139")         # LAN Host IP
+    write("192.168.1.139")  # LAN Host IP
     press("tab")
-    write("41641")                 # LAN Port
+    write("41641")  # LAN Port
     # Buscar botón Apply/Save
     press("tab", 4, 0.15)
     press("enter")
@@ -130,15 +130,15 @@ try:
         click(0.75, y, 2)
 
     press("tab", 2)
-    write("Ramon_STUN")            # Name
+    write("Ramon_STUN")  # Name
     press("tab")
-    write("UDP")                   # Protocol
+    write("UDP")  # Protocol
     press("tab")
-    write("3478")                  # WAN Port
+    write("3478")  # WAN Port
     press("tab")
-    write("192.168.1.139")         # LAN Host IP
+    write("192.168.1.139")  # LAN Host IP
     press("tab")
-    write("3478")                  # LAN Port
+    write("3478")  # LAN Port
     press("tab", 4, 0.15)
     press("enter")
     wait(3)

@@ -23,12 +23,12 @@ from pathlib import Path
 # ══════════════════════════════════════════════════════════════
 
 PLUGIN = {
-    "name": "mi_nuevo_script",        # Nombre único del plugin
-    "phase": "post",                   # pre | refactor | post | always
-    "timeout": 30,                     # Timeout en segundos
-    "args": ["--json"],                # Argumentos fijos al ejecutar
-    "blocking": False,                 # True = aborta si falla
-    "needs_file": True,                # True = recibe archivo como argumento
+    "name": "mi_nuevo_script",  # Nombre único del plugin
+    "phase": "post",  # pre | refactor | post | always
+    "timeout": 30,  # Timeout en segundos
+    "args": ["--json"],  # Argumentos fijos al ejecutar
+    "blocking": False,  # True = aborta si falla
+    "needs_file": True,  # True = recibe archivo como argumento
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -44,7 +44,7 @@ def log(msg) -> None:
 
 def run(cmd, timeout=30):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         return r.returncode, r.stdout, r.stderr
     except Exception as e:
         return -1, "", str(e)

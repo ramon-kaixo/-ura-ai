@@ -70,7 +70,7 @@ def agregar_sugerencia(problema, solucion) -> None:
 
 def notificar(mensaje) -> None:
     if NOTIFICAR.exists():
-        subprocess.run([str(NOTIFICAR), mensaje])
+        subprocess.run([str(NOTIFICAR), mensaje], check=False)
 
 
 def diagnosticar_y_corregir() -> bool:
@@ -84,6 +84,7 @@ def diagnosticar_y_corregir() -> bool:
         capture_output=True,
         text=True,
         timeout=120,
+        check=False,
     )
     test_output = result.stdout + result.stderr
 
@@ -118,7 +119,7 @@ def diagnosticar_y_corregir() -> bool:
         if info["script"] and os.path.exists(info["script"]):
             log(f"Ejecutando script corrector para '{fallo}': {info['script']}")
             try:
-                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30)
+                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30, check=False)
                 log(f"Correccion aplicada para '{fallo}'")
             except Exception as e:
                 log(f"Error ejecutando correccion '{fallo}': {e}")

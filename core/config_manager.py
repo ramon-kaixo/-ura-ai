@@ -11,9 +11,10 @@ from typing import Any
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
 
+
 def _detect_profile_key() -> str:
     """Detecta qué perfil cargar según SO y hostname.
-    
+
     linux → linux_asus si hostname contiene 'gx10', si no → linux_terminal
     darwin → darwin_mac
     """
@@ -39,9 +40,7 @@ def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
 
     maintenance = config.get("maintenance", {})
     if "allowed_log_dirs" in maintenance:
-        maintenance["allowed_log_dirs"] = [
-            str(Path(d).expanduser().resolve()) for d in maintenance["allowed_log_dirs"]
-        ]
+        maintenance["allowed_log_dirs"] = [str(Path(d).expanduser().resolve()) for d in maintenance["allowed_log_dirs"]]
     return config
 
 

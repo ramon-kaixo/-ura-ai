@@ -23,16 +23,17 @@ LOCAL_ALERTS_DIR.mkdir(parents=True, exist_ok=True)
 SEEN_HASHES_FILE = LOCAL_ALERTS_DIR / ".seen_hashes.json"
 MAX_SEEN = 500  # máximo de hashes guardados para evitar crecimiento infinito
 
-PATTERNS = ["ERROR", "CRITICAL", "FATAL", "CRASH", "Traceback", "Exception",
-            "Segfault", "OOM", "Killed", "Panic"]
+PATTERNS = ["ERROR", "CRITICAL", "FATAL", "CRASH", "Traceback", "Exception", "Segfault", "OOM", "Killed", "Panic"]
 
 
 def ssh_run(cmd: str) -> str:
     try:
         result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-             f"{SSH_USER}@{TARGET}", cmd],
-            capture_output=True, text=True, timeout=SSH_TIMEOUT,
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
+            capture_output=True,
+            text=True,
+            timeout=SSH_TIMEOUT,
+            check=False,
         )
         return result.stdout.strip() if result.returncode == 0 else ""
     except Exception:
@@ -105,9 +106,9 @@ def main() -> int:
                 f.write(line + "\n")
         save_seen_hashes(seen)
 
-
         # Agrupar por tipo
         from collections import Counter
+
         types = Counter()
         for line in new_alerts:
             for p in PATTERNS:

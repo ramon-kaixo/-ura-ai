@@ -9,10 +9,11 @@ import asyncio
 import json
 import logging
 import os
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import zmq
 
@@ -43,13 +44,13 @@ def _run_async(coro):
 
 def _journal_path() -> Path:
     EVENTS_DIR.mkdir(parents=True, exist_ok=True)
-    return EVENTS_DIR / f"{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.jsonl"
+    return EVENTS_DIR / f"{datetime.now(UTC).strftime('%Y-%m-%d')}.jsonl"
 
 
 def _write_journal(topic: str, data: dict) -> None:
     try:
         entry = {
-            "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "topic": topic,
             "data": data,
         }
@@ -61,7 +62,7 @@ def _write_journal(topic: str, data: dict) -> None:
 
 def replay_events(date: str | None = None, topic: str | None = None) -> list[dict]:
     if date is None:
-        date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        date = datetime.now(UTC).strftime("%Y-%m-%d")
     p = EVENTS_DIR / f"{date}.jsonl"
     if not p.exists():
         return []
@@ -129,6 +130,7 @@ async def _publish_async(topic: str, payload: str) -> None:
 def _trigger_auto_dump(data: dict) -> None:
     try:
         from core.watchdog_funciones import _auto_dump
+
         func = data.get("function", data.get("source", "event_bus_alert"))
         timeout = data.get("timeout", 0)
         _auto_dump(func, timeout, {"alert_data": data})
@@ -175,6 +177,7 @@ async def _close_async() -> None:
 
 # ─── AsyncEventBus — Nueva API async pura para futuros consumidores ───
 
+
 class AsyncEventBus:
     """Bus de eventos asíncrono con suscripciones y despacho concurrente."""
 
@@ -196,7 +199,6 @@ class AsyncEventBus:
         if not consumidores:
             return
         tareas = [
-            asyncio.to_thread(cb, datos) if not asyncio.iscoroutinefunction(cb) else cb(datos)
-            for cb in consumidores
+            asyncio.to_thread(cb, datos) if not asyncio.iscoroutinefunction(cb) else cb(datos) for cb in consumidores
         ]
         await asyncio.gather(*tareas, return_exceptions=True)
