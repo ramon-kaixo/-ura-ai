@@ -27,23 +27,22 @@ NERVIOSO.mkdir(parents=True, exist_ok=True)
 PUERTOS_TAILSCALE = [
     {"puerto": 41641, "protocolo": "UDP", "descripcion": "Tailscale direct P2P (WireGuard)"},
     {"puerto": 3478, "protocolo": "UDP", "descripcion": "STUN (NAT traversal)"},
-    {"puerto": 443,  "protocolo": "TCP", "descripcion": "HTTPS (fallback DERP relay)"},
+    {"puerto": 443, "protocolo": "TCP", "descripcion": "HTTPS (fallback DERP relay)"},
 ]
 
 # Puertos para Hetzner exit node
 PUERTOS_HETZNER = [
     {"puerto": 11434, "protocolo": "TCP", "descripcion": "Ollama API"},
-    {"puerto": 8081,  "protocolo": "TCP", "descripcion": "OpenCode Server"},
+    {"puerto": 8081, "protocolo": "TCP", "descripcion": "OpenCode Server"},
     {"puerto": 18789, "protocolo": "TCP", "descripcion": "OpenClaw Gateway"},
-    {"puerto": 22,    "protocolo": "TCP", "descripcion": "SSH"},
+    {"puerto": 22, "protocolo": "TCP", "descripcion": "SSH"},
 ]
 
 
 def tailscale_status() -> dict:
     """Obtiene estado de Tailscale en JSON."""
     try:
-        r = subprocess.run(["tailscale", "status", "--json"],
-                          capture_output=True, text=True, timeout=10)
+        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=10, check=False)
         return json.loads(r.stdout) if r.returncode == 0 else {}
     except Exception:
         return {}
@@ -59,8 +58,7 @@ def detectar_relay(peer_name: str | None = None) -> dict:
     """
     status = tailscale_status()
     peers = status.get("Peer", {})
-    resultados = {"usa_relay": False, "conexiones_directas": 0,
-                  "conexiones_relay": 0, "peers": []}
+    resultados = {"usa_relay": False, "conexiones_directas": 0, "conexiones_relay": 0, "peers": []}
 
     for peer in peers.values():
         name = peer.get("DNSName", "").rstrip(".")
@@ -75,12 +73,14 @@ def detectar_relay(peer_name: str | None = None) -> dict:
             elif direct:
                 resultados["conexiones_directas"] += 1
 
-            resultados["peers"].append({
-                "name": name,
-                "relay": relay,
-                "direct_ip": direct,
-                "es_relay": bool(relay),
-            })
+            resultados["peers"].append(
+                {
+                    "name": name,
+                    "relay": relay,
+                    "direct_ip": direct,
+                    "es_relay": bool(relay),
+                },
+            )
 
     return resultados
 
@@ -111,9 +111,22 @@ def test_velocidad_internet() -> dict:
     try:
         t0 = time.monotonic()
         r = subprocess.run(
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code} %{time_total}",
-             "--max-time", "10", "http://httpbin.org/ip"],
-            capture_output=True, text=True, timeout=12)
+            [
+                "curl",
+                "-s",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code} %{time_total}",
+                "--max-time",
+                "10",
+                "http://httpbin.org/ip",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=12,
+            check=False,
+        )
         t1 = time.monotonic()
         result["latencia_ms"] = round((t1 - t0) * 1000, 1)
         result["download_ok"] = r.stdout.startswith("200")
@@ -143,7 +156,7 @@ def auditoria_completa(target: str = "hetzner-escudo") -> dict:
 
     # 3. NAT type
     try:
-        r = subprocess.run(["tailscale", "netcheck"], capture_output=True, text=True, timeout=10)
+        r = subprocess.run(["tailscale", "netcheck"], capture_output=True, text=True, timeout=10, check=False)
         for line in r.stdout.splitlines():
             if "MappingVariesByDestIP" in line:
                 reporte["nat_varia"] = "true" in line.lower()
@@ -189,11 +202,11 @@ def auditoria_completa(target: str = "hetzner-escudo") -> dict:
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Auditor de Router — Detectar relays y firewall")
     parser.add_argument("--target", default="hetzner-escudo", help="Host a auditar")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     args = parser.parse_args()
-
 
     reporte = auditoria_completa(args.target)
 
@@ -202,16 +215,12 @@ def main() -> None:
     else:
         # Tabla de Estado de Conectividad
 
-
         for p in reporte["puertos_test"]:
             "✅" if p["abierto"] else "❌"
-
-
 
         if reporte["accion"] == "ABRIR_PUERTOS":
             for p in PUERTOS_TAILSCALE:
                 pass
-
 
 
 if __name__ == "__main__":

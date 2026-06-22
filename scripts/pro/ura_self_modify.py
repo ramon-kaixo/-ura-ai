@@ -22,12 +22,13 @@ def ejecutar_remoto(python_code, env=None):
     if env:
         for k, v in env.items():
             env_args.extend(["-e", f"{k}={v}"])
-    subprocess.run(["scp", tmp, f"ramon@{GX10.rsplit('@', maxsplit=1)[-1]}:/tmp/"], capture_output=True)
+    subprocess.run(["scp", tmp, f"ramon@{GX10.rsplit('@', maxsplit=1)[-1]}:/tmp/"], capture_output=True, check=False)
     r = subprocess.run(
         ["ssh", GX10, "docker", "exec", *env_args, "open-webui", "python3", tmp],
         capture_output=True,
         text=True,
         timeout=15,
+        check=False,
     )
     Path(tmp).unlink(missing_ok=True)
     return r.stdout, r.stderr
@@ -111,14 +112,17 @@ conn.commit()
 print('OK: tool creada')
 conn.close()
 """
-    out, err = ejecutar_remoto(code, env={
-        "URA_TOOL_ID": tool_id,
-        "URA_TOOL_NAME": _json.dumps(nombre),
-        "URA_TOOL_CODE": _json.dumps(codigo),
-        "URA_TOOL_SPECS": specs,
-        "URA_TOOL_META": meta,
-        "URA_TOOL_NOW": str(now),
-    })
+    out, err = ejecutar_remoto(
+        code,
+        env={
+            "URA_TOOL_ID": tool_id,
+            "URA_TOOL_NAME": _json.dumps(nombre),
+            "URA_TOOL_CODE": _json.dumps(codigo),
+            "URA_TOOL_SPECS": specs,
+            "URA_TOOL_META": meta,
+            "URA_TOOL_NOW": str(now),
+        },
+    )
     return out.strip() or err.strip()
 
 
@@ -129,6 +133,7 @@ def reiniciar():
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     return r.stdout.strip()
 

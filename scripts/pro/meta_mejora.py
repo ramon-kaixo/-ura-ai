@@ -26,6 +26,7 @@ from motor.core.qdrant_client import QdrantClient
 
 _qdrant = None
 
+
 def _get_qdrant():
     global _qdrant
     if _qdrant is None:
@@ -53,6 +54,7 @@ def medir():
         try:
             inicio = time.time()
             import urllib.request
+
             data = json.dumps({"name": t, "arguments": {}}).encode()
             req = urllib.request.Request(
                 f"{MCP}/mcp/call",
@@ -72,7 +74,8 @@ def medir():
 def log_medicion(resultados, etiqueta) -> None:
     ok_count = sum(1 for r in resultados if r["ok"])
     media_ms = sum(r["ms"] for r in resultados if r["ok"]) / max(
-        len([r for r in resultados if r["ok"]]), 1,
+        len([r for r in resultados if r["ok"]]),
+        1,
     )
     log(f"  {etiqueta}: {ok_count}/{len(resultados)} OK, media {media_ms:.0f}ms")
 
@@ -92,18 +95,22 @@ print('OK')
         tmp_f.write(code)
         tmp_path = tmp_f.name
     _asus_ssh = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
-    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True)
+    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True, check=False)
     subprocess.run(
         [*GX10_SSH, "docker", "cp", f"{tmp_path}", "open-webui:/tmp/"],
         capture_output=True,
+        check=False,
     )
     r = subprocess.run(
         [*GX10_SSH, "docker", "exec", "-e", f"URA_PROMPT_ADD={prompt_add}", "open-webui", "python3", tmp_path],
-        capture_output=True, text=True, timeout=15,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
     )
     Path(tmp_path).unlink(missing_ok=True)
     if "OK" in r.stdout:
-        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30)
+        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30, check=False)
         time.sleep(5)
 
 
@@ -132,12 +139,14 @@ def analizar_reflexiones() -> None:
             with open(SUGERENCIAS) as f:
                 sugs = json.load(f)
         idx = len(sugs)
-        sugs.append({
-            "timestamp": datetime.now().timestamp(),
-            "dominio": "meta_mejora",
-            "problema": "Exceso de fallos en acciones de URA",
-            "solucion": "Revisar configuracion de tools, function calling en Open WebUI, y permisos",
-        })
+        sugs.append(
+            {
+                "timestamp": datetime.now().timestamp(),
+                "dominio": "meta_mejora",
+                "problema": "Exceso de fallos en acciones de URA",
+                "solucion": "Revisar configuracion de tools, function calling en Open WebUI, y permisos",
+            },
+        )
         with open(SUGERENCIAS, "w") as f:
             json.dump(sugs, f, indent=2)
         proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])
@@ -209,7 +218,11 @@ def reindexar_transaccion(tx_id: str, texto_corregido: str) -> bool:
         qdrant = _get_qdrant()
         if not qdrant.disponible:
             return False
-        return qdrant.guardar_documento(tx_id, texto_corregido, {"tipo": "reindexado", "timestamp": datetime.now(UTC).isoformat()})
+        return qdrant.guardar_documento(
+            tx_id,
+            texto_corregido,
+            {"tipo": "reindexado", "timestamp": datetime.now(UTC).isoformat()},
+        )
     except Exception as e:
         log(f"Error reindexando transaccion {tx_id}: {e}")
         return False
@@ -217,6 +230,7 @@ def reindexar_transaccion(tx_id: str, texto_corregido: str) -> bool:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 

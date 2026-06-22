@@ -1,27 +1,42 @@
 import argparse
-import sys
 import logging
-logging.getLogger('httpx').setLevel(logging.WARNING)
-logging.getLogger('httpcore').setLevel(logging.WARNING)
+import sys
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+from motor.cli.cmd_diag import cmd_alerta, cmd_check, cmd_detect, cmd_health_check, cmd_history, cmd_learn, cmd_verify
+from motor.cli.cmd_pipeline import cmd_calibrate, cmd_diagnose, cmd_pipeline, cmd_scan
+from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd_summarise, cmd_trend
+from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
-from motor.cli.cmd_pipeline import cmd_pipeline, cmd_scan, cmd_diagnose, cmd_calibrate
-from motor.cli.cmd_status import cmd_status, cmd_cross, cmd_trend, cmd_graph, cmd_perf, cmd_summarise
-from motor.cli.cmd_diag import cmd_history, cmd_check, cmd_verify, cmd_detect, cmd_learn, cmd_alerta, cmd_health_check
-from motor.cli.cmd_utils import cmd_notify, cmd_qdrant_backup, cmd_bench
 
 COMMANDS = {
-    "pipeline": cmd_pipeline, "scan": cmd_scan, "diagnose": cmd_diagnose, "calibrate": cmd_calibrate,
-    "status": cmd_status, "cross": cmd_cross, "trend": cmd_trend, "graph": cmd_graph,
-    "perf": cmd_perf, "summarise": cmd_summarise,
-    "history": cmd_history, "check": cmd_check, "verify": cmd_verify, "detect": cmd_detect,
-    "learn": cmd_learn, "alerta": cmd_alerta, "health-check": cmd_health_check,
-    "qdrant-backup": cmd_qdrant_backup, "notify": cmd_notify, "bench": cmd_bench,
+    "pipeline": cmd_pipeline,
+    "scan": cmd_scan,
+    "diagnose": cmd_diagnose,
+    "calibrate": cmd_calibrate,
+    "status": cmd_status,
+    "cross": cmd_cross,
+    "trend": cmd_trend,
+    "graph": cmd_graph,
+    "perf": cmd_perf,
+    "summarise": cmd_summarise,
+    "history": cmd_history,
+    "check": cmd_check,
+    "verify": cmd_verify,
+    "detect": cmd_detect,
+    "learn": cmd_learn,
+    "alerta": cmd_alerta,
+    "health-check": cmd_health_check,
+    "qdrant-backup": cmd_qdrant_backup,
+    "notify": cmd_notify,
+    "bench": cmd_bench,
 }
 
 
 def _setup_logging(level: str):
-    logging.getLogger('httpx').setLevel(logging.WARNING)
-    logging.getLogger('httpcore').setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
     h = logging.StreamHandler(sys.stderr)
     h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(h)
@@ -40,7 +55,11 @@ def main():
     sub.add_parser("diagnose", help="Solo diagnosticar (requiere scan previo)")
     sub.add_parser("status", help="Estado unificado")
     sp_check = sub.add_parser("check", help="Preflight check / purge")
-    sp_check.add_argument("--purge", action="store_true", help="Purgar huerfanos: stale PIDs, failed units, dangling Docker")
+    sp_check.add_argument(
+        "--purge",
+        action="store_true",
+        help="Purgar huerfanos: stale PIDs, failed units, dangling Docker",
+    )
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")

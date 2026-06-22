@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
+from PIL.ExifTags import GPSTAGS, TAGS
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def _exif_pillow(ruta: Path) -> dict:
                         gps_tag_name = GPSTAGS.get(gps_tag_id, str(gps_tag_id))
                         gps[gps_tag_name] = str(gps_valor)[:100]
                     if "GPSLatitude" in gps and "GPSLongitude" in gps:
-                        resultado["gps"] = f"{gps.get('GPSLatitude','')}, {gps.get('GPSLongitude','')}"
+                        resultado["gps"] = f"{gps.get('GPSLatitude', '')}, {gps.get('GPSLongitude', '')}"
                     elif "GPSLatitude" in gps:
                         resultado["gps"] = str(gps.get("GPSLatitude", ""))
     except Exception as e:
@@ -56,9 +56,22 @@ def _exif_exiftool(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         out = subprocess.run(
-            ["exiftool", "-json", "-DateTimeOriginal", "-Make", "-Model",
-             "-GPSLatitude", "-GPSLongitude", "-ImageWidth", "-ImageHeight", str(ruta)],
-            capture_output=True, text=True, timeout=10,
+            [
+                "exiftool",
+                "-json",
+                "-DateTimeOriginal",
+                "-Make",
+                "-Model",
+                "-GPSLatitude",
+                "-GPSLongitude",
+                "-ImageWidth",
+                "-ImageHeight",
+                str(ruta),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
         )
         if out.returncode != 0 or not out.stdout.strip():
             return resultado
@@ -86,8 +99,10 @@ def _paleta_colores(ruta: Path, k: int = 5) -> list[str]:
         with Image.open(ruta) as img:
             img_rgb = img.convert("RGB")
             img_resized = img_rgb.resize((100, 100))
-        import numpy as np
         from collections import Counter
+
+        import numpy as np
+
         pixels = np.array(img_resized).reshape(-1, 3)
         counter = Counter(map(tuple, pixels))
         return [f"#{r:02x}{g:02x}{b:02x}" for (r, g, b), _ in counter.most_common(k)]
@@ -99,17 +114,24 @@ def _paleta_colores(ruta: Path, k: int = 5) -> list[str]:
 def _describir_imagen(ruta: Path) -> dict:
     try:
         import base64
+
         img_b64 = base64.b64encode(ruta.read_bytes()).decode()
-        resp = httpx.post(OLLAMA, json={
-            "model": VISION_MODEL,
-            "messages": [{
-                "role": "user",
-                "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",
-                "images": [img_b64],
-            }],
-            "stream": False,
-            "options": {"temperature": 0.0, "num_predict": 200},
-        }, timeout=60)
+        resp = httpx.post(
+            OLLAMA,
+            json={
+                "model": VISION_MODEL,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",
+                        "images": [img_b64],
+                    },
+                ],
+                "stream": False,
+                "options": {"temperature": 0.0, "num_predict": 200},
+            },
+            timeout=60,
+        )
         if resp.is_error:
             return {"descripcion": "", "error": f"Ollama {resp.status_code}"}
         data = resp.json()
@@ -123,8 +145,9 @@ def _extraer_iptc(ruta: Path) -> dict:
     """Extrae metadatos IPTC via iptcinfo3 usando record numbers."""
     try:
         from iptcinfo3 import IPTCInfo
+
         info = IPTCInfo(str(ruta))
-        data = info._data if hasattr(info, '_data') else {}
+        data = info._data if hasattr(info, "_data") else {}
 
         def _bytes(val):
             return val.decode() if isinstance(val, bytes) else str(val) if val else ""
@@ -142,6 +165,7 @@ def _extraer_iptc(ruta: Path) -> dict:
     except Exception as e:
         log.warning("iptc falló para %s: %s", ruta.name, e, exc_info=True)
         return {}
+
 
 def extraer_imagen(ruta: Path) -> dict:
     with Image.open(ruta) as img:

@@ -19,7 +19,7 @@ import os
 import socket
 import subprocess
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
@@ -70,6 +70,7 @@ def _load_devices(root: Path) -> dict[str, str]:
         result["gx10_tailscale"] = dynamic
     return result
 
+
 DISPOSITIVOS = _load_devices(URA_ROOT)
 
 
@@ -79,7 +80,7 @@ def log(msg) -> None:
 
 def run(cmd, timeout=120):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         return r.returncode, r.stdout, r.stderr
     except Exception as e:
         return -1, "", str(e)
@@ -156,7 +157,8 @@ def check_dispositivos():
 def step_token_screen():
     log("  Token screen (RAM check)...")
     rc, _, _ = run(
-        [VENV_PYTHON, "scripts/pro/token_screen.py", "--texto", "test", "--json"], timeout=15,
+        [VENV_PYTHON, "scripts/pro/token_screen.py", "--texto", "test", "--json"],
+        timeout=15,
     )
     return rc == 0
 
@@ -253,7 +255,10 @@ def audit_delta(target="pre-mantenimiento"):
 def git_commit_if_stable() -> None:
     log("  Git commit (si F821 estable)...")
     run(["git", "add", "-u"], timeout=30)
-    run(["git", "commit", "-m", f"mantenimiento: {datetime.now().strftime('%Y-%m-%d %H:%M')} — F821 estable"], timeout=30)
+    run(
+        ["git", "commit", "-m", f"mantenimiento: {datetime.now().strftime('%Y-%m-%d %H:%M')} — F821 estable"],
+        timeout=30,
+    )
 
 
 def git_rollback() -> None:
@@ -336,6 +341,7 @@ def step_forense_aislamientos() -> dict:
         # Si el proceso ya no existe (SIGKILL manual), limpiar
         if not (Path(f"/proc/{pid_dir.name}").exists()):
             import shutil
+
             shutil.rmtree(pid_dir, ignore_errors=True)
             limpiados += 1
             log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — proceso ya no existe")
@@ -344,6 +350,7 @@ def step_forense_aislamientos() -> dict:
         # Si el aislamiento tiene más de 7 días, limpiar
         if ahora - pid_dir.stat().st_mtime > 604800:
             import shutil
+
             shutil.rmtree(pid_dir, ignore_errors=True)
             limpiados += 1
             log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — >7 días")

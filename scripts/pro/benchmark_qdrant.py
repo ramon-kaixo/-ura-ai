@@ -3,10 +3,8 @@
 Ejecutar: python3 scripts/pro/benchmark_qdrant.py
 """
 
-
-import sys
-
 import logging
+import sys
 import threading
 import time
 import tracemalloc
@@ -41,7 +39,7 @@ def main():
     print()
 
     from motor.core.config import UraConfig
-    from motor.core.qdrant_client import QdrantClient, COLECCION_DOCUMENTOS
+    from motor.core.qdrant_client import COLECCION_DOCUMENTOS, QdrantClient
 
     # ============================================================
     # 1. Singleton thread safety
@@ -89,7 +87,11 @@ def main():
     t0 = time.perf_counter()
     vecs = qdrant.generar_embeddings_batch(["consulta1", "consulta2", "consulta3", "consulta4", "consulta5"])
     t1 = time.perf_counter()
-    check("Batch 5 correcto", len(vecs) == 5 and all(len(v) == 768 for v in vecs), f"{len(vecs)} vectores, latencia {t1-t0:.2f}s")
+    check(
+        "Batch 5 correcto",
+        len(vecs) == 5 and all(len(v) == 768 for v in vecs),
+        f"{len(vecs)} vectores, latencia {t1 - t0:.2f}s",
+    )
 
     # ============================================================
     # 3. Batch insert (100 docs)
@@ -98,13 +100,15 @@ def main():
 
     docs = []
     for i in range(100):
-        docs.append((
-            f"bench_test_{i}",
-            f"Documento de prueba número {i}. URA es un asistente multi-agente "
-            f"con conciencia artificial y capacidades de mejora continua. "
-            f"Este es el texto del documento benchmark {i}.",
-            {"source": f"benchmark/doc_{i}.md", "batch": "benchmark", "idx": i},
-        ))
+        docs.append(
+            (
+                f"bench_test_{i}",
+                f"Documento de prueba número {i}. URA es un asistente multi-agente "
+                f"con conciencia artificial y capacidades de mejora continua. "
+                f"Este es el texto del documento benchmark {i}.",
+                {"source": f"benchmark/doc_{i}.md", "batch": "benchmark", "idx": i},
+            ),
+        )
 
     t0 = time.perf_counter()
     saved = qdrant.guardar_documentos_batch(docs, COLECCION_DOCUMENTOS)
@@ -141,14 +145,16 @@ def main():
     rag_results = rag_query("asistente multi-agente con conciencia artificial", top_k=5)
     t1 = time.perf_counter()
 
-    check("RAG retorna resultados", len(rag_results) > 0, f"0 resultados, latencia {t1-t0:.2f}s")
+    check("RAG retorna resultados", len(rag_results) > 0, f"0 resultados, latencia {t1 - t0:.2f}s")
     has_content = all("content" in r for r in rag_results)
     check("Resultados con content", has_content, "falta campo 'content'")
     has_source = all("source" in r for r in rag_results)
     check("Resultados con source", has_source, "falta campo 'source'")
-    check("Similarity entre 0 y 1",
-          all(0 <= r.get("similarity", -1) <= 1 for r in rag_results),
-          "similarity fuera de rango")
+    check(
+        "Similarity entre 0 y 1",
+        all(0 <= r.get("similarity", -1) <= 1 for r in rag_results),
+        "similarity fuera de rango",
+    )
 
     # ============================================================
     # 6. Acceso concurrente (10 threads)
@@ -173,8 +179,12 @@ def main():
         t.join()
     t1 = time.perf_counter()
 
-    check("0 errores concurrentes", len(concurrent_errors) == 0, f"{len(concurrent_errors)} errores: {concurrent_errors[:2]}")
-    check("50 queries en < 30s", (t1 - t0) < 30.0, f"{t1-t0:.1f}s")
+    check(
+        "0 errores concurrentes",
+        len(concurrent_errors) == 0,
+        f"{len(concurrent_errors)} errores: {concurrent_errors[:2]}",
+    )
+    check("50 queries en < 30s", (t1 - t0) < 30.0, f"{t1 - t0:.1f}s")
 
     # ============================================================
     # 7. REST fallback (simular)
@@ -208,7 +218,7 @@ def main():
     stats = snapshot_after.compare_to(snapshot_before, "lineno")
     total_diff = sum(s.size_diff for s in stats)
 
-    check("1000 queries completadas", True, f"{t1-t0:.1f}s, {1000/(t1-t0):.1f} qps")
+    check("1000 queries completadas", True, f"{t1 - t0:.1f}s, {1000 / (t1 - t0):.1f} qps")
     check("Fuga < 50 MB", abs(total_diff) < 50_000_000, f"diff={total_diff / 1024 / 1024:.1f} MB")
     check("Peak < 2000 MB", peak < 2_000_000_000, f"peak={peak / 1024 / 1024:.1f} MB")
 
@@ -218,17 +228,26 @@ def main():
     print("\n\033[1m[9/10] Circuit breaker\033[0m")
 
     class CircuitBreaker:
-        FALLOS_MAX = 3; VENTANA_SEG = 300
-        def __init__(self, q): self._q, self._f, self._a = q, 0, False
+        FALLOS_MAX = 3
+        VENTANA_SEG = 300
+
+        def __init__(self, q):
+            self._q, self._f, self._a = q, 0, False
+
         def operacional(self):
-            if self._a: return False
+            if self._a:
+                return False
             ok = self._q.health()
-            if ok: self._f = 0
+            if ok:
+                self._f = 0
             else:
                 self._f += 1
-                if self._f >= self.FALLOS_MAX: self._a = True
+                if self._f >= self.FALLOS_MAX:
+                    self._a = True
             return ok
-        def reset(self): self._f, self._a = 0, False
+
+        def reset(self):
+            self._f, self._a = 0, False
 
     cb = CircuitBreaker(qdrant)
     # Primera llamada debe funcionar (qdrant está disponible)
@@ -254,8 +273,11 @@ def main():
     qdrant.health = original_health
 
     ok_count = sum(1 for r in results_cb if r)
-    check("Circuit breaker: abre tras 3 fallos", results_cb[0] is False and results_cb[3] is False,
-          f"secuencia: {results_cb}")
+    check(
+        "Circuit breaker: abre tras 3 fallos",
+        results_cb[0] is False and results_cb[3] is False,
+        f"secuencia: {results_cb}",
+    )
     # Tras reset, debe volver a funcionar
     cb.reset()
     ok_after_reset = cb.operacional()

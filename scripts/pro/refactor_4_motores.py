@@ -50,6 +50,7 @@ def worker_task(worker_id):
         text=True,
         timeout=WORKER_TIMEOUT,
         cwd=str(URA_ROOT),
+        check=False,
     )
 
 
@@ -66,10 +67,7 @@ def main():
     results = {"ok": 0, "fail": 0, "timeout": 0, "workers": []}
 
     with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
-        futures = {
-            executor.submit(worker_task, wid): wid
-            for wid in range(NUM_WORKERS)
-        }
+        futures = {executor.submit(worker_task, wid): wid for wid in range(NUM_WORKERS)}
 
         for future in as_completed(futures):
             wid = futures[future]
@@ -81,10 +79,12 @@ def main():
                 else:
                     log(f"  \u274c Worker {wid} fall\u00f3 (exit {result.returncode})")
                     results["fail"] += 1
-                results["workers"].append({
-                    "id": wid,
-                    "exit_code": result.returncode,
-                })
+                results["workers"].append(
+                    {
+                        "id": wid,
+                        "exit_code": result.returncode,
+                    },
+                )
             except subprocess.TimeoutExpired:
                 log(f"  \u23f0 Worker {wid} timeout ({WORKER_TIMEOUT}s)")
                 results["timeout"] += 1

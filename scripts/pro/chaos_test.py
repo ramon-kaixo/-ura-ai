@@ -76,6 +76,7 @@ async def test_queue_saturation(dry_run: bool = False) -> None:
         try:
             # Simula una llamada bloqueante a Qdrant via REST
             import httpx
+
             async with httpx.AsyncClient(timeout=3) as client:
                 await client.get(f"{QDRANT_URL}/collections", timeout=2)
         except Exception:
@@ -107,8 +108,8 @@ async def test_ollama_timeout(dry_run: bool = False) -> None:
     # Apuntar a un puerto que no existe para forzar timeout
     os.environ["OLLAMA_URL"] = "http://127.0.0.1:1"
 
-    from motor.core.qdrant_client import QdrantClient
     from motor.core.config import UraConfig
+    from motor.core.qdrant_client import QdrantClient
 
     qdrant = QdrantClient.instancia(UraConfig.load())
     vec = qdrant.generar_embedding("texto de prueba")
@@ -118,8 +119,13 @@ async def test_ollama_timeout(dry_run: bool = False) -> None:
 
     # Verificar que se detectó como zero-vector (el error debe loguearse)
     es_zero = all(abs(v) < 1e-6 for v in vec)
-    check("Zero-vector DETECTADO tras timeout de Ollama (logs: error level)",
-          es_zero, f"norma={sum(v*v for v in vec)**0.5:.4f}" + " — correcto, error ya se loguea en qdrant_client" if es_zero else "")
+    check(
+        "Zero-vector DETECTADO tras timeout de Ollama (logs: error level)",
+        es_zero,
+        f"norma={sum(v * v for v in vec) ** 0.5:.4f}" + " — correcto, error ya se loguea en qdrant_client"
+        if es_zero
+        else "",
+    )
 
 
 # ============================================================
@@ -136,7 +142,10 @@ def test_restart_limits(dry_run: bool = False) -> None:
     for svc in servicios:
         r = subprocess.run(
             ["systemctl", "show", "-p", "StartLimitBurst", svc],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         val = r.stdout.strip().split("=")[-1] if "=" in r.stdout else "ausente"
         if dry_run:
@@ -174,7 +183,7 @@ async def test_port_conflicts(dry_run: bool = False) -> None:
                 check(f"Puerto {port} ({desc})", port == 4097, "OK — migrado correctamente")
             else:
                 check(f"Puerto {port} ({desc})", True, "responde")
-        except (OSError, socket.timeout):
+        except (TimeoutError, OSError):
             if dry_run:
                 warn(f"dry-run: Puerto {port} ({desc}) no responde", "omitir")
             else:
@@ -197,6 +206,7 @@ async def test_graceful_shutdown(dry_run: bool = False) -> None:
 
     # Worker simulado que atrapa SIGTERM
     import signal as sigmod
+
     shutdown_ok = False
 
     def _handler(signum, frame):
@@ -230,8 +240,11 @@ async def test_rest_fallback(dry_run: bool = False) -> None:
     if dry_run:
         warn("dry-run: verificación de código", f"REST fallback: {has_rest}")
     else:
-        check("find_stale_docs con REST fallback", has_rest and has_fallback,
-              "_find_stale_docs_rest implementado" if has_rest else "FALTA implementación REST")
+        check(
+            "find_stale_docs con REST fallback",
+            has_rest and has_fallback,
+            "_find_stale_docs_rest implementado" if has_rest else "FALTA implementación REST",
+        )
 
 
 # ============================================================
@@ -245,17 +258,22 @@ def test_timestamps_utc(dry_run: bool = False) -> None:
     log.info("\n=== Test 7: Timestamps UTC (sin naive) ===")
 
     r = subprocess.run(
-        ["grep", "-rn", 'datetime.now().isoformat()', "--include=*.py",
-         "core/", "motor/", "scripts/pro/", "monitor/"],
-        capture_output=True, text=True, timeout=15,
+        ["grep", "-rn", "datetime.now().isoformat()", "--include=*.py", "core/", "motor/", "scripts/pro/", "monitor/"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
     )
 
     naive_files = [l for l in r.stdout.splitlines() if l.strip()]
     if dry_run:
         warn(f"dry-run: {len(naive_files)} archivos con timestamps naive", "omitir")
     else:
-        check("Sin timestamps naive en el proyecto", len(naive_files) == 0,
-              f"{len(naive_files)} ocurrencias encontradas: {naive_files[:3]}" if naive_files else "OK")
+        check(
+            "Sin timestamps naive en el proyecto",
+            len(naive_files) == 0,
+            f"{len(naive_files)} ocurrencias encontradas: {naive_files[:3]}" if naive_files else "OK",
+        )
 
 
 # ============================================================
@@ -269,17 +287,22 @@ def test_secrets_visible(dry_run: bool = False) -> None:
     log.info("\n=== Test 8: Secretos visibles en código ===")
 
     r = subprocess.run(
-        ["grep", "-rn", "sk-[A-Za-z0-9]\\{20,\\}", "--include=*.py",
-         "core/", "motor/", "scripts/pro/"],
-        capture_output=True, text=True, timeout=15,
+        ["grep", "-rn", "sk-[A-Za-z0-9]\\{20,\\}", "--include=*.py", "core/", "motor/", "scripts/pro/"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
     )
     secrets = [l for l in r.stdout.splitlines() if not l.strip().startswith("Binary")]
 
     if dry_run:
         warn(f"dry-run: {len(secrets)} posibles secrets", "omitir")
     else:
-        check("Sin API keys hardcodeadas en código", len(secrets) == 0,
-              f"{len(secrets)} encontrados: {secrets[:2]}" if secrets else "OK")
+        check(
+            "Sin API keys hardcodeadas en código",
+            len(secrets) == 0,
+            f"{len(secrets)} encontrados: {secrets[:2]}" if secrets else "OK",
+        )
 
 
 # ============================================================
@@ -298,8 +321,7 @@ def test_log_path_consistency(dry_run: bool = False) -> None:
         else:
             warn(f"directorio {writer_dir} no existe", "se creará en primera escritura de search_logger")
 
-    check("Writer y reader apuntan al mismo directorio",
-          writer_dir == reader_dir, f"ambos → {writer_dir}")
+    check("Writer y reader apuntan al mismo directorio", writer_dir == reader_dir, f"ambos → {writer_dir}")
 
 
 # ============================================================
@@ -318,9 +340,11 @@ def test_asyncio_bridge(dry_run: bool = False) -> None:
     has_executor = "ThreadPoolExecutor" in code
     has_run_until = "run_until_complete" in code
 
-    check("Bridge usa ThreadPoolExecutor (no loop.run_until_complete)",
-          has_executor and not has_run_until,
-          "ThreadPoolExecutor presente" if has_executor else "AÚN USA run_until_complete — PELIGRO")
+    check(
+        "Bridge usa ThreadPoolExecutor (no loop.run_until_complete)",
+        has_executor and not has_run_until,
+        "ThreadPoolExecutor presente" if has_executor else "AÚN USA run_until_complete — PELIGRO",
+    )
 
 
 # ============================================================

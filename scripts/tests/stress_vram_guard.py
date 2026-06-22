@@ -14,9 +14,11 @@ Monitorear:
 
 import asyncio
 import time
+
 import httpx
 
 URL_API = "http://127.0.0.1:11435/v1/chat/completions"
+
 
 async def lanzar_peticion_concurrente(id_agente: int, payload: dict):
     inicio_total = time.time()
@@ -34,6 +36,7 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict):
 
         except Exception as e:
             print(f"💥 [Agente {id_agente:2d}] Fallo de red/timeout: {str(e)[:60]}")
+
 
 async def main():
     payload_test = {

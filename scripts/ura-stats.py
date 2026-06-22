@@ -8,12 +8,13 @@ Uso:
   python3 ura-stats.py --drift
   python3 ura-stats.py --injection-report
 """
+
 import argparse
 import json
 import os
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 
@@ -65,14 +66,14 @@ def print_drift(events: list[dict]):
         if rtype:
             by_model[model]["results"].append(1 if rtype == "success" else 0)
 
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print("  DRIFT REPORT — Complejidad vs Tasa de exito por modelo")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for model, data in sorted(by_model.items()):
         avg_cpx = sum(data["complexities"]) / len(data["complexities"]) if data["complexities"] else 0
         rate = sum(data["results"]) / len(data["results"]) * 100 if data["results"] else 0
         print(f"  {model:<35s} avg_complexity={avg_cpx:<5.1f}  success_rate={rate:>5.1f}%")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_injection_report(events: list[dict]):
@@ -84,9 +85,9 @@ def print_injection_report(events: list[dict]):
     by_model = Counter(e.get("model", "unknown") for e in injections)
     by_file = Counter(e.get("file", "unknown") for e in injections)
 
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print("  INJECTION REPORT — Intentos bloqueados por filtro AST")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Total bloqueos: {len(injections)}")
     print()
     print("  Por modelo:")
@@ -96,7 +97,7 @@ def print_injection_report(events: list[dict]):
     print("  Por archivo:")
     for file, count in by_file.most_common(5):
         print(f"    {file:<40s} {count:>4d}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_stats(events: list[dict], json_output: bool = False):
@@ -117,23 +118,28 @@ def print_stats(events: list[dict], json_output: bool = False):
     top_models = model_counter.most_common(5)
 
     if json_output:
-        print(json.dumps({
-            "total": total,
-            "vagancy_cuts": len(vagancy),
-            "syntax_fails": len(syntax_fails),
-            "sandbox_fails": len(sandbox_fails),
-            "injection_blocks": len(injections),
-            "commits": len(commits),
-            "success_rate_pct": round(success_rate, 1),
-            "avg_attempts": round(avg_attempts, 2),
-            "avg_complexity": round(avg_complexity, 1),
-            "top_models": [{"model": m, "count": c} for m, c in top_models],
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "total": total,
+                    "vagancy_cuts": len(vagancy),
+                    "syntax_fails": len(syntax_fails),
+                    "sandbox_fails": len(sandbox_fails),
+                    "injection_blocks": len(injections),
+                    "commits": len(commits),
+                    "success_rate_pct": round(success_rate, 1),
+                    "avg_attempts": round(avg_attempts, 2),
+                    "avg_complexity": round(avg_complexity, 1),
+                    "top_models": [{"model": m, "count": c} for m, c in top_models],
+                },
+                indent=2,
+            ),
+        )
         return
 
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"  GUARDIAN STATS  —  {total} eventos totales")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"  Tasa de exito:          {success_rate:.1f}%")
     print(f"  Cortes por vagancia:    {len(vagancy)}")
     print(f"  Rechazos sintaxis:      {len(syntax_fails)}")
@@ -146,7 +152,7 @@ def print_stats(events: list[dict], json_output: bool = False):
     print("  Modelos con mas cortes:")
     for model, count in top_models:
         print(f"    {model:<40s} {count:>4d}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
 
 def main():
@@ -161,7 +167,7 @@ def main():
     since = None
     tail = None
     if args.last:
-        since = datetime.now(timezone.utc) - parse_duration(args.last)
+        since = datetime.now(UTC) - parse_duration(args.last)
     if args.tail:
         tail = args.tail
 

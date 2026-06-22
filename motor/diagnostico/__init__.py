@@ -1,20 +1,22 @@
+import hashlib
 import json
 import logging
 import subprocess
-import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
-from motor.core.state import ScanResult, DiagnoseResult
+
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
-from motor.diagnostico.pattern_matcher import buscar_patrones
-from motor.diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
-from motor.diagnostico.circuit_breaker import CircuitBreaker
+from motor.core.state import DiagnoseResult, ScanResult
 from motor.diagnostico.backup_knowledge import backup_incidente
+from motor.diagnostico.circuit_breaker import CircuitBreaker
+from motor.diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
+from motor.diagnostico.pattern_matcher import buscar_patrones
 
 log = logging.getLogger("ura.diagnostico")
 
 RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
+
 
 class Diagnostico:
     """Motor de diagnóstico: busca patrones, correlaciona, determina causas raíz."""
@@ -26,7 +28,7 @@ class Diagnostico:
 
     def run(self, scan: ScanResult) -> DiagnoseResult:
         """Ejecuta el pipeline de diagnóstico completo."""
-        r = DiagnoseResult(timestamp=datetime.now(UTC).isoformat()+"Z")
+        r = DiagnoseResult(timestamp=datetime.now(UTC).isoformat() + "Z")
         r.snapshot_inicial = self._tomar_snapshot_inicial()
         if not scan.ok:
             r.ok = False
@@ -38,8 +40,11 @@ class Diagnostico:
         r.incidentes = incidentes
         r.coste_historico = costes
         tags = self._extraer_tags(incidentes, scan)
-        r.correlaciones = agrupar_incidentes(tags, hw_ok=scan.hw_health.get("ok", True),
-                                              hw_issues=scan.hw_health.get("issues", []))
+        r.correlaciones = agrupar_incidentes(
+            tags,
+            hw_ok=scan.hw_health.get("ok", True),
+            hw_issues=scan.hw_health.get("issues", []),
+        )
         r.causas_raiz = self._determinar_causas(r.correlaciones)
         self._guardar_incidente_qdrant(r, scan)
         if r.incidentes:
@@ -49,14 +54,19 @@ class Diagnostico:
 
     def _tomar_snapshot_inicial(self) -> dict:
         """Toma un snapshot de configs y procesos al inicio del diagnóstico."""
-        snap = {"timestamp": datetime.now(UTC).isoformat()+"Z"}
+        snap = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
         for archivo in RUTAS_CONFIG_OPENCODE:
             p = Path(archivo)
             if p.exists():
-                snap[archivo] = {"hash": hashlib.sha256(p.read_bytes()).hexdigest()[:16],
-                                 "size": p.stat().st_size}
+                snap[archivo] = {"hash": hashlib.sha256(p.read_bytes()).hexdigest()[:16], "size": p.stat().st_size}
         try:
-            r = subprocess.run(["ps", "-eo", "pid,comm", "--sort=-pid"], capture_output=True, text=True, timeout=3)
+            r = subprocess.run(
+                ["ps", "-eo", "pid,comm", "--sort=-pid"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=False,
+            )
             snap["procesos"] = [l.strip() for l in r.stdout.strip().split("\n")[:20]]
         except Exception as e:
             log.debug("snapshot procesos falló: %s", e)
@@ -87,7 +97,7 @@ class Diagnostico:
         """Persiste el diagnóstico como incidente en Qdrant."""
         if not diag.incidentes:
             return
-        impacto = [0.0]*7
+        impacto = [0.0] * 7
         if diag.causas_raiz:
             impacto[0] = 1.0
         if not scan.hw_health.get("ok", True):

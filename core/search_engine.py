@@ -2,22 +2,22 @@
 """Search Engine - Búsqueda simple en documentos indexados."""
 
 import logging
-from typing import List, Dict
 
 from core.memory_engine import query, rag_enabled
 
 log = logging.getLogger(__name__)
 
 
-def search(query_str: str, top_k: int = 5) -> List[Dict]:
+def search(query_str: str, top_k: int = 5) -> list[dict]:
     """Busca documentos relevantes para una query.
-    
+
     Args:
         query_str: La query de búsqueda
         top_k: Número máximo de resultados a devolver
-    
+
     Returns:
         Lista de diccionarios con resultados {content, source, chunk_index, similarity}
+
     """
     if not rag_enabled():
         log.warning("RAG no está habilitado")

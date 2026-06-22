@@ -29,7 +29,7 @@ except ImportError:
     sys.exit(1)
 
 pyautogui.FAILSAFE = True  # Mover ratón a esquina para abortar
-pyautogui.PAUSE = 0.5      # Pausa entre acciones
+pyautogui.PAUSE = 0.5  # Pausa entre acciones
 
 EVIDENCIA = Path.home() / "URA" / "ura_ia_1972" / "config" / "evidencia_router.png"
 EVIDENCIA.parent.mkdir(parents=True, exist_ok=True)
@@ -51,7 +51,7 @@ def main() -> None:
     try:
         # ── PASO 1: Abrir Safari ──
         log("PASO 1: Abriendo Safari...")
-        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"])
+        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"], check=False)
         time.sleep(4)
 
         # ── PASO 2: Bypass pantalla app móvil ──
@@ -152,14 +152,13 @@ def main() -> None:
         log(f"  ✅ Evidencia: {EVIDENCIA}")
 
         # ── PASO 9: Cerrar Safari ──
-        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'])
+        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'], check=False)
         log("  Safari cerrado")
 
     except pyautogui.FailSafeException:
         sys.exit(1)
     except Exception:
         sys.exit(1)
-
 
 
 if __name__ == "__main__":

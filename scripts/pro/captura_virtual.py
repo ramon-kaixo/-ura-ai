@@ -1,5 +1,7 @@
 """captura_virtual.py — Captura programatica en Xvfb :99."""
+
 from __future__ import annotations
+
 import os
 import subprocess
 import sys
@@ -8,6 +10,7 @@ from pathlib import Path
 
 DISPLAY = ":99"
 OUT_DIR = Path("/tmp/ura-capturas")
+
 
 class CapturaVirtual:
     def __init__(self, display: str = DISPLAY) -> None:
@@ -19,24 +22,32 @@ class CapturaVirtual:
         ts = int(time.time())
         tmp = OUT_DIR / f".{nombre}_{ts}.png"
         final = OUT_DIR / f"{nombre}_{ts}.png"
-        subprocess.run(["scrot", str(tmp)], env=self.env, capture_output=True, timeout=10)
+        subprocess.run(["scrot", str(tmp)], env=self.env, capture_output=True, timeout=10, check=False)
         if tmp.exists():
             tmp.rename(final)
-        return final if final.exists() else Path("")
+        return final if final.exists() else Path()
 
     def abrir(self, cmd: list[str]) -> subprocess.Popen:
         return subprocess.Popen(cmd, env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def ventanas(self) -> list[str]:
-        r = subprocess.run(["xdotool", "search", "--onlyvisible", "."], env=self.env, capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            ["xdotool", "search", "--onlyvisible", "."],
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
         return [w for w in r.stdout.strip().split("\n") if w]
 
     def cerrar_ventana(self, wid: str) -> None:
-        subprocess.run(["xdotool", "windowkill", wid], env=self.env, capture_output=True, timeout=5)
+        subprocess.run(["xdotool", "windowkill", wid], env=self.env, capture_output=True, timeout=5, check=False)
 
     def limpiar(self) -> None:
         for w in self.ventanas():
             self.cerrar_ventana(w)
+
 
 if __name__ == "__main__":
     c = CapturaVirtual()

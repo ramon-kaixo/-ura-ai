@@ -16,22 +16,26 @@ import pyautogui
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.15
 
+
 def press(key, times=1, delay=0.1) -> None:
     for _ in range(times):
         pyautogui.press(key)
         time.sleep(delay)
 
+
 def write(text, delay=0.05) -> None:
     pyautogui.write(text, interval=delay)
 
+
 def wait(n) -> None:
     time.sleep(n)
+
 
 wait(3)
 
 try:
     # ── 1. Abrir Safari ──
-    subprocess.run(["open", "-a", "Safari"])
+    subprocess.run(["open", "-a", "Safari"], check=False)
     wait(3)
     # Cmd+L para barra de URL
     pyautogui.hotkey("command", "l")

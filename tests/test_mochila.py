@@ -8,17 +8,18 @@ import pytest
 from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
 from core.mochila.rate_limiter import RateLimiter
-from core.mochila.router import ClasificadorKeyword, NoProviderAvailable, RouteResult, Router
+from core.mochila.router import ClasificadorKeyword, NoProviderAvailable, Router, RouteResult
 from core.mochila.tools import TOOL_SCHEMAS, file_read
-
 
 # ---------------------------------------------------------------------------
 # Circuit Breaker
 # ---------------------------------------------------------------------------
 
+
 class TestCircuitBreaker:
     def setup_method(self):
         import glob
+
         for f in glob.glob("/tmp/test_cb_*.json"):
             try:
                 os.unlink(f)
@@ -26,12 +27,22 @@ class TestCircuitBreaker:
                 pass
 
     def test_init_closed(self):
-        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_init.json"))
+        cb = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=1,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_init.json"),
+        )
         assert cb.puede_pasar("test") is True
         assert cb.estado("test")["state"] == "closed"
 
     def test_open_after_threshold(self):
-        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_open.json"))
+        cb = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=1,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_open.json"),
+        )
         for _ in range(3):
             cb.registrar_fallo("test")
         assert cb.puede_pasar("test") is False
@@ -39,7 +50,12 @@ class TestCircuitBreaker:
         assert cb.estado("test")["consecutive_failures"] == 3
 
     def test_half_open_after_timeout(self):
-        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.05, half_open_max_requests=1, health_file=Path("/tmp/test_cb_half.json"))
+        cb = CircuitBreaker(
+            failure_threshold=2,
+            recovery_timeout=0.05,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_half.json"),
+        )
         cb.registrar_fallo("test")
         cb.registrar_fallo("test")
         assert cb.estado("test")["state"] == "open"
@@ -49,7 +65,12 @@ class TestCircuitBreaker:
         assert cb.estado("test")["state"] == "half_open"
 
     def test_closed_on_success_in_half_open(self):
-        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.05, half_open_max_requests=1, health_file=Path("/tmp/test_cb_close_on_success.json"))
+        cb = CircuitBreaker(
+            failure_threshold=2,
+            recovery_timeout=0.05,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_close_on_success.json"),
+        )
         cb.registrar_fallo("test")
         cb.registrar_fallo("test")
         asyncio.run(asyncio.sleep(0.1))
@@ -59,7 +80,12 @@ class TestCircuitBreaker:
         assert cb.estado("test")["consecutive_failures"] == 0
 
     def test_open_again_on_failure_in_half_open(self):
-        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.05, half_open_max_requests=2, health_file=Path("/tmp/test_cb_open_again.json"))
+        cb = CircuitBreaker(
+            failure_threshold=2,
+            recovery_timeout=0.05,
+            half_open_max_requests=2,
+            health_file=Path("/tmp/test_cb_open_again.json"),
+        )
         cb.registrar_fallo("test")
         cb.registrar_fallo("test")
         asyncio.run(asyncio.sleep(0.1))
@@ -68,12 +94,22 @@ class TestCircuitBreaker:
         assert cb.estado("test")["state"] == "open"
 
     def test_timeout_counts_as_failure(self):
-        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_timeout.json"))
+        cb = CircuitBreaker(
+            failure_threshold=1,
+            recovery_timeout=1,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_timeout.json"),
+        )
         cb.registrar_fallo("test", es_timeout=True)
         assert cb.estado("test")["state"] == "open"
 
     def test_reset(self):
-        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_reset.json"))
+        cb = CircuitBreaker(
+            failure_threshold=1,
+            recovery_timeout=1,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_reset.json"),
+        )
         cb.registrar_fallo("test")
         assert cb.estado("test")["state"] == "open"
         cb.reset("test")
@@ -96,7 +132,12 @@ class TestCircuitBreaker:
             hf.unlink(missing_ok=True)
 
     def test_multiple_providers(self):
-        cb = CircuitBreaker(failure_threshold=1, recovery_timeout=1, half_open_max_requests=1, health_file=Path("/tmp/test_cb_multi.json"))
+        cb = CircuitBreaker(
+            failure_threshold=1,
+            recovery_timeout=1,
+            half_open_max_requests=1,
+            health_file=Path("/tmp/test_cb_multi.json"),
+        )
         cb.registrar_fallo("p1")
         assert cb.puede_pasar("p1") is False
         assert cb.puede_pasar("p2") is True
@@ -105,6 +146,7 @@ class TestCircuitBreaker:
 # ---------------------------------------------------------------------------
 # Rate Limiter
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimiter:
     def test_allows_within_limit(self):
@@ -139,6 +181,7 @@ class TestRateLimiter:
 # ---------------------------------------------------------------------------
 # Cost Tracker
 # ---------------------------------------------------------------------------
+
 
 class TestCostTracker:
     def test_register(self):
@@ -193,6 +236,7 @@ class TestCostTracker:
 # ---------------------------------------------------------------------------
 # Router
 # ---------------------------------------------------------------------------
+
 
 class TestClasificadorKeyword:
     def test_codigo(self):
@@ -253,6 +297,7 @@ class TestRouter:
 # Tools
 # ---------------------------------------------------------------------------
 
+
 class TestFileRead:
     def test_read_project_file(self):
         result = asyncio.run(file_read("pyproject.toml", max_lines=5))
@@ -278,10 +323,13 @@ class TestFileRead:
 # Server endpoints (using TestClient)
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def client():
     from fastapi.testclient import TestClient
+
     from core.mochila.mochila_server import app
+
     with TestClient(app) as c:
         yield c
 

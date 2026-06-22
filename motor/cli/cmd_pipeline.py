@@ -1,14 +1,15 @@
 import json
-import sys
 import logging
+import sys
 from pathlib import Path
+
 from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
+from motor.core.state import ScanResult
+from motor.diagnostico import Diagnostico
 from motor.pipeline.orchestrator import Orchestrator
 from motor.scanner import Scanner
 from motor.scanner.calibration import Calibration
-from motor.core.qdrant_client import QdrantClient
-from motor.diagnostico import Diagnostico
-from motor.core.state import ScanResult
 
 log = logging.getLogger("ura.cli")
 ARCHIVO_TRENDS = "trends.ndjson"
@@ -23,9 +24,20 @@ def cmd_pipeline(config: UraConfig, args):
 def cmd_scan(config: UraConfig, args=None):
     sc = Scanner(config)
     r = sc.run()
-    print(json.dumps({"health_score": r.health_score, "servicios": r.servicios,
-                       "recursos": r.recursos, "hw_ok": r.hw_health.get("ok"),
-                       "red": r.red, "duplicados": r.duplicados}, indent=2, default=str))
+    print(
+        json.dumps(
+            {
+                "health_score": r.health_score,
+                "servicios": r.servicios,
+                "recursos": r.recursos,
+                "hw_ok": r.hw_health.get("ok"),
+                "red": r.red,
+                "duplicados": r.duplicados,
+            },
+            indent=2,
+            default=str,
+        ),
+    )
 
 
 def cmd_diagnose(config: UraConfig, args=None):
@@ -33,8 +45,13 @@ def cmd_diagnose(config: UraConfig, args=None):
     diag = Diagnostico(config, qdrant)
     scan = ScanResult(ok=True, timestamp="")
     r = diag.run(scan)
-    print(json.dumps({"ok": r.ok, "incidentes": r.incidentes, "causas_raiz": r.causas_raiz,
-                       "modo_offline": r.modo_offline}, indent=2, default=str))
+    print(
+        json.dumps(
+            {"ok": r.ok, "incidentes": r.incidentes, "causas_raiz": r.causas_raiz, "modo_offline": r.modo_offline},
+            indent=2,
+            default=str,
+        ),
+    )
 
 
 def cmd_calibrate(config: UraConfig, args):

@@ -5,8 +5,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from path_setup import setup_path  # noqa: E402
-setup_path()  # noqa: E402
+from path_setup import setup_path
+
+setup_path()
 import json
 import os
 import subprocess
@@ -14,7 +15,6 @@ import threading
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
 
 CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
@@ -28,6 +28,7 @@ from motor.core.qdrant_client import QdrantClient
 _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
+
 def _get_qdrant():
     global _qdrant
     if _qdrant is None:
@@ -37,6 +38,7 @@ def _get_qdrant():
 
 def log_evento(evento, datos=None) -> None:
     import urllib.request
+
     payload = {"evento": evento, "timestamp": datetime.now(UTC).isoformat(), "data": datos or {}}
     try:
         req = urllib.request.Request(
@@ -78,7 +80,7 @@ def ejecutar_tarea(task_desc, target_files):
     def worker() -> None:
         try:
             cmd = ["opencode", "run-context"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
             output = result.stdout[:1000] if result.stdout else result.stderr[:500]
             ctx = leer_contexto()
             ctx["opencode_agent"]["estado"] = "completado"
@@ -99,9 +101,11 @@ def ejecutar_tarea(task_desc, target_files):
 
 # === Handler /v2/interact ===
 
+
 def _distancia_coseno(a: list[float], b: list[float]) -> float:
     """Distancia coseno entre dos vectores. 0 = idénticos, 1 = ortogonales."""
     import math
+
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))
@@ -197,11 +201,15 @@ class ExecutorHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": "ok" if healthy else "degraded",
-                "qdrant": healthy,
-                "ts": time.time(),
-            }).encode())
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "status": "ok" if healthy else "degraded",
+                        "qdrant": healthy,
+                        "ts": time.time(),
+                    },
+                ).encode(),
+            )
             return
 
         if self.path == "/metrics":
@@ -209,14 +217,14 @@ class ExecutorHandler(BaseHTTPRequestHandler):
             ctx = leer_contexto()
             status = ctx.get("opencode_agent", {}).get("estado", "idle")
             metrics = (
-                f'# HELP ura_ejecutor_info Información del ejecutor\n'
-                f'# TYPE ura_ejecutor_info gauge\n'
+                f"# HELP ura_ejecutor_info Información del ejecutor\n"
+                f"# TYPE ura_ejecutor_info gauge\n"
                 f'ura_ejecutor_info{{status="{status}",qdrant={"1" if qdrant.disponible else "0"}}} 1\n'
-                f'# HELP ura_tasks_completadas Número de tareas completadas\n'
-                f'# TYPE ura_tasks_completadas gauge\n'
-                f'ura_tasks_completadas {len(ctx.get("opencode_agent", {}).get("tareas_completadas", []))}\n'
-                f'# HELP python_info Python runtime info\n'
-                f'# TYPE python_info gauge\n'
+                f"# HELP ura_tasks_completadas Número de tareas completadas\n"
+                f"# TYPE ura_tasks_completadas gauge\n"
+                f"ura_tasks_completadas {len(ctx.get('opencode_agent', {}).get('tareas_completadas', []))}\n"
+                f"# HELP python_info Python runtime info\n"
+                f"# TYPE python_info gauge\n"
                 f'python_info{{version="{sys.version.split()[0]}"}} 1\n'
             )
             self.send_response(200)

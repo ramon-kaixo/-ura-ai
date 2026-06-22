@@ -243,8 +243,9 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                         ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
                         capture_output=True,
                         timeout=30,
+                        check=False,
                     )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
                 log("  Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -260,9 +261,12 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
     subprocess.run(
-        ["ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30,
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+        capture_output=True,
+        timeout=30,
+        check=False,
     )
-    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
     return True
 
 
@@ -325,12 +329,14 @@ def refactor_one(func: dict) -> bool:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Refactoriza funciones grandes con LLM")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     args = parser.parse_args()

@@ -84,9 +84,18 @@ def sync_criticos():
         try:
             # Sync a Mac (cable directo)
             r = subprocess.run(
-                ["rsync", "-avz", "--timeout=10", str(src),
-                 f"ramon@{MAC_IP}:/Users/ramonesnaola/URA/ura_ia_1972/{path}"],
-                capture_output=True, text=True, timeout=30)
+                [
+                    "rsync",
+                    "-avz",
+                    "--timeout=10",
+                    str(src),
+                    f"ramon@{MAC_IP}:/Users/ramonesnaola/URA/ura_ia_1972/{path}",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
             if r.returncode == 0:
                 synced += 1
             else:
@@ -98,19 +107,27 @@ def sync_criticos():
         try:
             r = subprocess.run(
                 ["tailscale", "status", "--json"],
-                capture_output=True, text=True, timeout=5)
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
             peers = json.loads(r.stdout).get("Peer", {})
-            hetzner_online = any("hetzner" in p.get("DNSName", "").lower()
-                                and p.get("Online", False) for p in peers.values())
+            hetzner_online = any(
+                "hetzner" in p.get("DNSName", "").lower() and p.get("Online", False) for p in peers.values()
+            )
         except Exception:
             hetzner_online = False
 
         if hetzner_online:
             try:
                 r = subprocess.run(
-                    ["rsync", "-avz", "--timeout=15", str(src),
-                     f"ramon@{HETZNER}:{src}"],
-                    capture_output=True, text=True, timeout=30)
+                    ["rsync", "-avz", "--timeout=15", str(src), f"ramon@{HETZNER}:{src}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
                 if r.returncode == 0:
                     pass
                 else:
@@ -148,12 +165,19 @@ def check_ram_purge():
 def clasificar_datos() -> dict:
     """Clasifica todos los datos del pipeline en 20% crítico vs 80% pesado."""
     total_criticos = sum(
-        os.path.getsize(URA / p) if (URA / p).exists() else 0
-        for p in DATOS_CRITICOS if not p.endswith("/"))
+        os.path.getsize(URA / p) if (URA / p).exists() else 0 for p in DATOS_CRITICOS if not p.endswith("/")
+    )
     total_pesados_est = sum(
-        int(info["peso"].replace("KB", "000").replace("MB", "000000")
-             .replace("GB", "000000000").replace("~", "").split("/")[0])
-        for info in DATOS_PESADOS.values())
+        int(
+            info["peso"]
+            .replace("KB", "000")
+            .replace("MB", "000000")
+            .replace("GB", "000000000")
+            .replace("~", "")
+            .split("/")[0],
+        )
+        for info in DATOS_PESADOS.values()
+    )
 
     return {
         "criticos_KB": total_criticos // 1024,
@@ -166,12 +190,14 @@ def clasificar_datos() -> dict:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Pareto Router — Distribución 20/80 de datos")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("--clasificar", action="store_true", help="Clasificar datos del pipeline")

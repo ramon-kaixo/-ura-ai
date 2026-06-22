@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Unit Test Suite — URA v3.0
+"""Unit Test Suite — URA v3.0
 Verifica que nada de lo de "ayer" vuelva a pasar:
 - Todos los módulos importan sin crash
 - Todas las funciones aceptan los argumentos correctos
@@ -8,8 +7,8 @@ Verifica que nada de lo de "ayer" vuelva a pasar:
 - Las funciones de clasificación y ruteo devuelven tipos correctos
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -41,10 +40,10 @@ def check(desc, expr, *args):
 # ============================================================
 print("\n[1] Imports (sin NameError, sin ModuleNotFoundError)")
 
-check("config_manager importa", lambda: __import__('core.config_manager'))
-check("model_router importa", lambda: __import__('core.model_router'))
-check("ura_maintenance importa", lambda: __import__('mantenimiento.ura_maintenance'))
-check("ura_maintenance_remote importa", lambda: __import__('mantenimiento.ura_maintenance_remote'))
+check("config_manager importa", lambda: __import__("core.config_manager"))
+check("model_router importa", lambda: __import__("core.model_router"))
+check("ura_maintenance importa", lambda: __import__("mantenimiento.ura_maintenance"))
+check("ura_maintenance_remote importa", lambda: __import__("mantenimiento.ura_maintenance_remote"))
 
 
 # ============================================================
@@ -53,22 +52,27 @@ check("ura_maintenance_remote importa", lambda: __import__('mantenimiento.ura_ma
 print("\n[2] Config (schema, valores, roles)")
 
 from core.config_manager import (
-    CONFIG, get_base_dir, get_ollama_url, get_role, get_hostname,
-    validate_schema, validate_config
+    CONFIG,
+    get_base_dir,
+    get_hostname,
+    get_ollama_url,
+    get_role,
+    validate_config,
+    validate_schema,
 )
 
 check("schema sin errores", lambda: len(validate_schema()) == 0)
-check("role definido", lambda: CONFIG.get('role') in ('client', 'server'))
-check("ollama host definido", lambda: bool(CONFIG['ollama']['host']))
-check("ollama port > 0", lambda: CONFIG['ollama']['port'] > 0)
-check("paths.data definido", lambda: bool(CONFIG['paths']['data']))
-check("paths.logs definido", lambda: bool(CONFIG['paths']['logs']))
-check("fallback_model definido", lambda: bool(CONFIG['fallback_model']))
-check("cache_ttl > 0", lambda: CONFIG['cache_ttl'] > 0)
-check("modelos > 0", lambda: len(CONFIG['models']) >= 4)
-check("maintenance.thresholds", lambda: len(CONFIG['maintenance']['thresholds']) >= 3)
-check("maintenance.exclude_patterns", lambda: len(CONFIG['maintenance']['exclude_patterns']) > 10)
-check("patrones_clasificacion", lambda: len(CONFIG['patrones_clasificacion']) >= 5)
+check("role definido", lambda: CONFIG.get("role") in ("client", "server"))
+check("ollama host definido", lambda: bool(CONFIG["ollama"]["host"]))
+check("ollama port > 0", lambda: CONFIG["ollama"]["port"] > 0)
+check("paths.data definido", lambda: bool(CONFIG["paths"]["data"]))
+check("paths.logs definido", lambda: bool(CONFIG["paths"]["logs"]))
+check("fallback_model definido", lambda: bool(CONFIG["fallback_model"]))
+check("cache_ttl > 0", lambda: CONFIG["cache_ttl"] > 0)
+check("modelos > 0", lambda: len(CONFIG["models"]) >= 4)
+check("maintenance.thresholds", lambda: len(CONFIG["maintenance"]["thresholds"]) >= 3)
+check("maintenance.exclude_patterns", lambda: len(CONFIG["maintenance"]["exclude_patterns"]) > 10)
+check("patrones_clasificacion", lambda: len(CONFIG["patrones_clasificacion"]) >= 5)
 check("get_base_dir() retorna Path", lambda: isinstance(get_base_dir(), Path))
 check("get_ollama_url() retorna str", lambda: isinstance(get_ollama_url(), str))
 check("get_role() retorna str", lambda: isinstance(get_role(), str))
@@ -82,38 +86,59 @@ check("validate_config() retorna list", lambda: isinstance(validate_config(), li
 print("\n[3] Model Router (clasificar, seleccionar, cache)")
 
 from core.model_router import (
-    clasificar_peticion, seleccionar_modelo, obtener_modelos_disponibles,
-    PromptCache, MetricsCollector
+    MetricsCollector,
+    PromptCache,
+    clasificar_peticion,
+    obtener_modelos_disponibles,
+    seleccionar_modelo,
 )
 
 # 3a. Clasificación
-check("clasificar 'analizar' → razonamiento",
-      lambda: clasificar_peticion([{"role": "user", "content": "analizar el problema"}]) == "razonamiento")
-check("clasificar 'fix bug' → codigo_rapido",
-      lambda: clasificar_peticion([{"role": "user", "content": "fix el bug"}]) == "codigo_rapido")
-check("clasificar 'refactorizar' → codigo_complejo",
-      lambda: clasificar_peticion([{"role": "user", "content": "refactorizar la arquitectura"}]) == "codigo_complejo")
-check("clasificar 'qué es X' → respuesta_rapida",
-      lambda: clasificar_peticion([{"role": "user", "content": "qué es un transformer"}]) == "respuesta_rapida")
-check("clasificar vacío → respuesta_rapida (default)",
-      lambda: clasificar_peticion([]) == "respuesta_rapida")
-check("clasificar 'analizar imagen' → vision o razonamiento (empate por 'analizar')",
-      lambda: clasificar_peticion([{"role": "user", "content": "analizar esta imagen"}]) in ("vision", "razonamiento"))
-check("clasificar 'embedding' → embeddings",
-      lambda: clasificar_peticion([{"role": "user", "content": "generar embedding"}]) == "embeddings")
+check(
+    "clasificar 'analizar' → razonamiento",
+    lambda: clasificar_peticion([{"role": "user", "content": "analizar el problema"}]) == "razonamiento",
+)
+check(
+    "clasificar 'fix bug' → codigo_rapido",
+    lambda: clasificar_peticion([{"role": "user", "content": "fix el bug"}]) == "codigo_rapido",
+)
+check(
+    "clasificar 'refactorizar' → codigo_complejo",
+    lambda: clasificar_peticion([{"role": "user", "content": "refactorizar la arquitectura"}]) == "codigo_complejo",
+)
+check(
+    "clasificar 'qué es X' → respuesta_rapida",
+    lambda: clasificar_peticion([{"role": "user", "content": "qué es un transformer"}]) == "respuesta_rapida",
+)
+check("clasificar vacío → respuesta_rapida (default)", lambda: clasificar_peticion([]) == "respuesta_rapida")
+check(
+    "clasificar 'analizar imagen' → vision o razonamiento (empate por 'analizar')",
+    lambda: clasificar_peticion([{"role": "user", "content": "analizar esta imagen"}]) in ("vision", "razonamiento"),
+)
+check(
+    "clasificar 'embedding' → embeddings",
+    lambda: clasificar_peticion([{"role": "user", "content": "generar embedding"}]) == "embeddings",
+)
 
 # 3b. Selección de modelo (simulado con set de modelos)
 fake_models = {"qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:32b", "llama3.2:3b", "mxbai-embed-large:latest"}
-check("seleccionar 'codigo_rapido' → qwen2.5-coder:14b-instruct-q8_0",
-      lambda: seleccionar_modelo("codigo_rapido", fake_models) == "qwen2.5-coder:14b-instruct-q8_0")
-check("seleccionar 'codigo_complejo' → qwen2.5-coder:32b",
-      lambda: seleccionar_modelo("codigo_complejo", fake_models) == "qwen2.5-coder:32b")
-check("seleccionar 'embeddings' → mxbai-embed-large:latest",
-      lambda: seleccionar_modelo("embeddings", fake_models) == "mxbai-embed-large:latest")
-check("seleccionar sin modelos → retorna string (no crashea)",
-      lambda: isinstance(seleccionar_modelo("razonamiento", set()), str))
-check("seleccionar con vacío → fallback o modelo genérico",
-      lambda: seleccionar_modelo("respuesta_rapida", set()) != "")
+check(
+    "seleccionar 'codigo_rapido' → qwen2.5-coder:14b-instruct-q8_0",
+    lambda: seleccionar_modelo("codigo_rapido", fake_models) == "qwen2.5-coder:14b-instruct-q8_0",
+)
+check(
+    "seleccionar 'codigo_complejo' → qwen2.5-coder:32b",
+    lambda: seleccionar_modelo("codigo_complejo", fake_models) == "qwen2.5-coder:32b",
+)
+check(
+    "seleccionar 'embeddings' → mxbai-embed-large:latest",
+    lambda: seleccionar_modelo("embeddings", fake_models) == "mxbai-embed-large:latest",
+)
+check(
+    "seleccionar sin modelos → retorna string (no crashea)",
+    lambda: isinstance(seleccionar_modelo("razonamiento", set()), str),
+)
+check("seleccionar con vacío → fallback o modelo genérico", lambda: seleccionar_modelo("respuesta_rapida", set()) != "")
 
 # 3c. PromptCache (key contextual, sin colisiones)
 cache = PromptCache(ttl=99999)
@@ -121,17 +146,19 @@ msg1 = [{"role": "user", "content": "hola"}]
 msg2 = [{"role": "system", "content": "eres grosero"}, {"role": "user", "content": "hola"}]
 cache.set(str(msg1), "test", {"answer": "hola"})
 cache.set(str(msg2), "test", {"answer": "qué quieres"})
-check("cache: mismo prompt, distinto system → keys diferentes",
-      lambda: cache.get(str(msg1), "test") == {"answer": "hola"})
-check("cache: distinto context → respuesta correcta",
-      lambda: cache.get(str(msg2), "test") == {"answer": "qué quieres"})
+check(
+    "cache: mismo prompt, distinto system → keys diferentes",
+    lambda: cache.get(str(msg1), "test") == {"answer": "hola"},
+)
+check("cache: distinto context → respuesta correcta", lambda: cache.get(str(msg2), "test") == {"answer": "qué quieres"})
 # Mismo mensaje con distinta respuesta → sobreescribe
 cache.set(str(msg1), "test", {"answer": "hola_caliente"})
-check("cache: valor actualizado después de set duplicado",
-      lambda: cache.get(str(msg1), "test") == {"answer": "hola_caliente"})
+check(
+    "cache: valor actualizado después de set duplicado",
+    lambda: cache.get(str(msg1), "test") == {"answer": "hola_caliente"},
+)
 cache.clear()
-check("cache: clear vacía",
-      lambda: cache.get(str(msg1), "test") is None)
+check("cache: clear vacía", lambda: cache.get(str(msg1), "test") is None)
 
 # 3d. MetricsCollector
 m = MetricsCollector()
@@ -144,8 +171,7 @@ check("metrics: latency en output", lambda: "latency_avg" in prom)
 check("metrics: error en output", lambda: "error_timeout" in prom)
 
 # 3e. obtener_modelos_disponibles (puede fallar si Ollama no está, pero no debe crashear)
-check("obtener_modelos_disponibles no crashea",
-      lambda: isinstance(obtener_modelos_disponibles(), (set, list)))
+check("obtener_modelos_disponibles no crashea", lambda: isinstance(obtener_modelos_disponibles(), (set, list)))
 
 
 # ============================================================
@@ -165,7 +191,8 @@ check("validate_ssh_user('') → False", lambda: validate_ssh_user("") is False)
 check("validate_ssh_user('user; rm -rf') → False", lambda: validate_ssh_user("user; rm -rf") is False)
 
 # Verificar que SecurityValidator existe y se puede instanciar
-from mantenimiento.ura_maintenance import SecurityValidator, MaintenanceConfig
+from mantenimiento.ura_maintenance import MaintenanceConfig, SecurityValidator
+
 check("SecurityValidator instancia", lambda: isinstance(SecurityValidator(CONFIG), SecurityValidator))
 try:
     mc = MaintenanceConfig(CONFIG)
@@ -180,22 +207,25 @@ except Exception as e:
 # ============================================================
 print("\n[5] Monitor (imports, validación, estado)")
 
-check("snc.py importa", lambda: __import__('monitor.snc'))
-check("snc_remote.py importa", lambda: __import__('monitor.snc_remote'))
-check("health_check.py importa", lambda: __import__('monitor.health_check'))
-check("log_alerts.py importa", lambda: __import__('monitor.log_alerts'))
+check("snc.py importa", lambda: __import__("monitor.snc"))
+check("snc_remote.py importa", lambda: __import__("monitor.snc_remote"))
+check("health_check.py importa", lambda: __import__("monitor.health_check"))
+check("log_alerts.py importa", lambda: __import__("monitor.log_alerts"))
 
 # Verificar funciones clave de SNC
-from monitor.snc import load_runbook, check_service, is_command_forbidden
+from monitor.snc import check_service, is_command_forbidden, load_runbook
+
 check("snc.load_runbook existe", lambda: callable(load_runbook))
 check("snc.check_service existe", lambda: callable(check_service))
 check("snc.is_command_forbidden existe", lambda: callable(is_command_forbidden))
 
 # Verificar que el runbook existe y es válido
 from monitor.snc import RUNBOOK_PATH
+
 check("runbook.json existe", lambda: RUNBOOK_PATH.exists())
 if RUNBOOK_PATH.exists():
     import json
+
     rb = json.loads(RUNBOOK_PATH.read_text())
     check("runbook tiene version", lambda: "version" in rb)
     check("runbook tiene commands", lambda: "commands" in rb)
@@ -204,11 +234,13 @@ if RUNBOOK_PATH.exists():
     check("runbook: max_attempts = 3", lambda: rb.get("retry_policy", {}).get("max_attempts") == 3)
     check("runbook: forbidden_commands no vacío", lambda: len(rb.get("forbidden_commands", [])) > 5)
 
-from monitor.health_check import measure_ssh_latency, measure_http_latency
+from monitor.health_check import measure_http_latency, measure_ssh_latency
+
 check("health.measure_ssh_latency existe", lambda: callable(measure_ssh_latency))
 check("health.measure_http_latency existe", lambda: callable(measure_http_latency))
 
 from monitor.log_alerts import hash_line, load_seen_hashes, save_seen_hashes
+
 check("alerts.hash_line existe", lambda: callable(hash_line))
 check("alerts.load_seen_hashes existe", lambda: callable(load_seen_hashes))
 check("alerts.save_seen_hashes existe", lambda: callable(save_seen_hashes))
@@ -221,7 +253,8 @@ h3 = hash_line("/opt/ura/logs/x.log:2026-01-01 00:00:01,804 - ERROR - Error dife
 check("hash_line: errores distintos → hash distinto", lambda: h1 != h3)
 
 # Verificar que el SNC puede escribir estado
-from monitor.snc import write_state, POLL_INTERVAL, CRITICAL_TIMEOUT
+from monitor.snc import CRITICAL_TIMEOUT, POLL_INTERVAL, write_state
+
 check("snc.write_state existe", lambda: callable(write_state))
 check("snc.POLL_INTERVAL = 10", lambda: POLL_INTERVAL == 10)
 check("snc.CRITICAL_TIMEOUT = 30", lambda: CRITICAL_TIMEOUT == 30)
@@ -232,10 +265,14 @@ check("docker-compose.yml existe", lambda: compose_file.exists())
 if compose_file.exists():
     try:
         import yaml
+
         with open(compose_file) as f:
             dc = yaml.safe_load(f)
         check("docker-compose tiene services", lambda: "services" in dc)
-        check("docker-compose tiene profiles", lambda: any("profiles" in svc for svc in dc.get("services", {}).values()))
+        check(
+            "docker-compose tiene profiles",
+            lambda: any("profiles" in svc for svc in dc.get("services", {}).values()),
+        )
     except ImportError:
         pass  # pyyaml no instalado, saltar
 
@@ -244,11 +281,9 @@ if compose_file.exists():
 # ============================================================
 print("\n[6] Memory Engine (RAG)")
 
-check("memory_engine.py importa", lambda: __import__('core.memory_engine'))
+check("memory_engine.py importa", lambda: __import__("core.memory_engine"))
 
-from core.memory_engine import (
-    _sha256, _chunk_text, load_manifest, save_manifest, rag_enabled
-)
+from core.memory_engine import _chunk_text, _sha256, load_manifest, rag_enabled, save_manifest
 
 check("_sha256 existe", lambda: callable(_sha256))
 check("_chunk_text existe", lambda: callable(_chunk_text))
@@ -260,36 +295,36 @@ check("rag_enabled existe", lambda: callable(rag_enabled))
 text = " ".join([f"palabra{i}" for i in range(100)])
 chunks1 = _chunk_text(text, size=20, overlap=5)
 chunks2 = _chunk_text(text, size=20, overlap=5)
-check("_chunk_text: determinista (mismo input → mismo output)",
-      lambda: chunks1 == chunks2)
-check("_chunk_text: produce múltiples chunks",
-      lambda: len(chunks1) > 3)
+check("_chunk_text: determinista (mismo input → mismo output)", lambda: chunks1 == chunks2)
+check("_chunk_text: produce múltiples chunks", lambda: len(chunks1) > 3)
 
 # Test SHA-256 determinista
 import tempfile
-tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False)
+
+tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
 tmp.write("test content for hashing")
 tmp.close()
 h1 = _sha256(Path(tmp.name))
 h2 = _sha256(Path(tmp.name))
 os.unlink(tmp.name)
-check("_sha256: determinista (mismo archivo → mismo hash)",
-      lambda: h1 == h2)
-check("_sha256: hash es string hexadecimal",
-      lambda: len(h1) == 64 and all(c in '0123456789abcdef' for c in h1))
+check("_sha256: determinista (mismo archivo → mismo hash)", lambda: h1 == h2)
+check("_sha256: hash es string hexadecimal", lambda: len(h1) == 64 and all(c in "0123456789abcdef" for c in h1))
 
 # Test manifest load/save (determinista)
-manifest = {"indexed_at": "2026-01-01T00:00:00", "total_documents": 5, "total_chunks": 20,
-            "files": {"test.md": {"sha256": "abc123", "chunks": 5, "indexed_at": "2026-01-01T00:00:00"}}}
+manifest = {
+    "indexed_at": "2026-01-01T00:00:00",
+    "total_documents": 5,
+    "total_chunks": 20,
+    "files": {"test.md": {"sha256": "abc123", "chunks": 5, "indexed_at": "2026-01-01T00:00:00"}},
+}
 save_manifest(manifest)
 loaded = load_manifest()
-check("manifest: save + load = idempotente",
-      lambda: loaded["total_documents"] == manifest["total_documents"])
-check("manifest: archivos preservados",
-      lambda: "test.md" in loaded.get("files", {}))
+check("manifest: save + load = idempotente", lambda: loaded["total_documents"] == manifest["total_documents"])
+check("manifest: archivos preservados", lambda: "test.md" in loaded.get("files", {}))
 
 # Limpiar manifest de test
 from core.memory_engine import MANIFEST_PATH
+
 MANIFEST_PATH.unlink(missing_ok=True)
 
 # ============================================================
@@ -313,10 +348,11 @@ if docs_path.exists():
 # ============================================================
 print("\n[8] SNC Determinista (runbook, whitelist, recovery)")
 
-from monitor.snc import repair_attempts
 import json
-import tempfile
 import shutil
+import tempfile
+
+from monitor.snc import repair_attempts
 
 # T1: runbook JSON schema
 rb = load_runbook()
@@ -336,8 +372,9 @@ check("T2: systemctl restart permitido", lambda: is_command_forbidden("systemctl
 
 # T3: State file integrity
 tmp_state = Path(tempfile.mkdtemp()) / "test_state.json"
-from monitor.snc import STATE_FILE as _orig_state
 import monitor.snc as snc_mod
+from monitor.snc import STATE_FILE as _orig_state
+
 snc_mod.STATE_FILE = tmp_state
 state = {"timestamp": "2026-01-01T00:00:00", "status": "OK", "services": {"test": {"ok": True}}}
 write_state(state)
@@ -361,12 +398,16 @@ check("T5: 3 intentos → escalado", lambda: repair_attempts.get("test_svc", 0) 
 repair_attempts.clear()
 
 # T6: OpenClaw activation flag
-check("T6: runbook.openclaw.activate_on_emergency = true",
-      lambda: rb["commands"].get("openclaw", {}).get("activate_on_emergency") == True)
+check(
+    "T6: runbook.openclaw.activate_on_emergency = true",
+    lambda: rb["commands"].get("openclaw", {}).get("activate_on_emergency") == True,
+)
 
 # T7: Return to normal — deactivate after stable
-check("T7: runbook.openclaw.deactivate_after_stable = 30s",
-      lambda: rb["commands"].get("openclaw", {}).get("deactivate_after_stable_seconds") == 30)
+check(
+    "T7: runbook.openclaw.deactivate_after_stable = 30s",
+    lambda: rb["commands"].get("openclaw", {}).get("deactivate_after_stable_seconds") == 30,
+)
 
 # T8: Autonomous — no human intervention for non-destructive
 # Verificar que los comandos de repair no contienen prompts interactivos
@@ -374,10 +415,14 @@ all_repair_cmds = []
 for svc, cfg in rb.get("commands", {}).items():
     for cmd in cfg.get("repair", []):
         all_repair_cmds.append(cmd)
-check("T8: comandos repair sin 'read' interactivo",
-      lambda: not any("read " in c or "confirm" in c.lower() for c in all_repair_cmds))
-check("T8: comandos repair sin 'sudo' interactivo (usa -n)",
-      lambda: not any("sudo " in c and "-n" not in c for c in all_repair_cmds))
+check(
+    "T8: comandos repair sin 'read' interactivo",
+    lambda: not any("read " in c or "confirm" in c.lower() for c in all_repair_cmds),
+)
+check(
+    "T8: comandos repair sin 'sudo' interactivo (usa -n)",
+    lambda: not any("sudo " in c and "-n" not in c for c in all_repair_cmds),
+)
 
 
 # ============================================================
@@ -385,63 +430,68 @@ check("T8: comandos repair sin 'sudo' interactivo (usa -n)",
 # ============================================================
 print("\n[9] Behavioral tests (security + correctness)")
 
-import shlex
 import json as _json
+import shlex
 
 # P0-1: json.loads reemplaza eval de forma segura
-check("P0: json.loads parsea dict string",
-      lambda: _json.loads('{"new": 1, "error": null}') == {"new": 1, "error": None})
-check("P0: json.loads rechaza JSON malformado",
-      lambda: (_json.loads("{bad") if False else True))
+check(
+    "P0: json.loads parsea dict string",
+    lambda: _json.loads('{"new": 1, "error": null}') == {"new": 1, "error": None},
+)
+check("P0: json.loads rechaza JSON malformado", lambda: _json.loads("{bad") if False else True)
 
 # P0-3: shlex.quote previene inyección
-check("P0: shlex.quote contiene input",
-      lambda: "test" in shlex.quote("test"))
-check("P0: shlex.quote escapa comillas simples",
-      lambda: "'; rm -rf /" in shlex.quote("'; rm -rf /"))
-check("P0: shlex.quote contiene input",
-      lambda: "test" in shlex.quote("test"))
+check("P0: shlex.quote contiene input", lambda: "test" in shlex.quote("test"))
+check("P0: shlex.quote escapa comillas simples", lambda: "'; rm -rf /" in shlex.quote("'; rm -rf /"))
+check("P0: shlex.quote contiene input", lambda: "test" in shlex.quote("test"))
 
 # P0-6: osascript escape
 import sys as _sys
+
 _sys.path.insert(0, str(Path(__file__).parent.parent))
 from monitor.snc_remote import _escape_applescript
-check("P0: escape_applescript escapa comillas dobles",
-      lambda: _escape_applescript('He said "hi"') == 'He said \\"hi\\"')
-check("P0: escape_applescript escapa backslashes",
-      lambda: _escape_applescript('path\\to') == 'path\\\\to')
-check("P0: escape_applescript maneja string limpio",
-      lambda: _escape_applescript("hello") == "hello")
+
+check(
+    "P0: escape_applescript escapa comillas dobles",
+    lambda: _escape_applescript('He said "hi"') == 'He said \\"hi\\"',
+)
+check("P0: escape_applescript escapa backslashes", lambda: _escape_applescript("path\\to") == "path\\\\to")
+check("P0: escape_applescript maneja string limpio", lambda: _escape_applescript("hello") == "hello")
 
 # P1-7: clasificar_peticion con 1 arg (arity fix)
-check("P1: clasificar_peticion acepta 1 arg",
-      lambda: clasificar_peticion([{"role": "user", "content": "analizar bug"}]) in ["razonamiento", "codigo_complejo", "codigo_rapido", "respuesta_rapida", "vision", "embeddings"])
-check("P1: clasificar_peticion retorna string",
-      lambda: isinstance(clasificar_peticion([{"role": "user", "content": "hola"}]), str))
+check(
+    "P1: clasificar_peticion acepta 1 arg",
+    lambda: (
+        clasificar_peticion([{"role": "user", "content": "analizar bug"}])
+        in ["razonamiento", "codigo_complejo", "codigo_rapido", "respuesta_rapida", "vision", "embeddings"]
+    ),
+)
+check(
+    "P1: clasificar_peticion retorna string",
+    lambda: isinstance(clasificar_peticion([{"role": "user", "content": "hola"}]), str),
+)
 
 # P1-11: PromptCache funciona sin max_size (unbounded)
 from core.model_router import PromptCache
+
 cache = PromptCache(ttl=99999)
 cache.set("p1", "test", {"v": 1})
 cache.set("p2", "test", {"v": 2})
 cache.set("p3", "test", {"v": 3})
-check("P1: PromptCache almacena entradas",
-      lambda: cache.get("p1", "test") == {"v": 1})
-check("P1: PromptCache respeta TTL (get inexistente)",
-      lambda: PromptCache(ttl=0).get("x", "test") is None)
+check("P1: PromptCache almacena entradas", lambda: cache.get("p1", "test") == {"v": 1})
+check("P1: PromptCache respeta TTL (get inexistente)", lambda: PromptCache(ttl=0).get("x", "test") is None)
 cache.clear()
-
 
 
 # ============================================================
 # RESULTADO
 # ============================================================
-print(f"\n{'='*50}")
+print(f"\n{'=' * 50}")
 if FAIL == 0:
-    print(f"\033[32m  PASS: {PASS}/{PASS+FAIL} — TODOS LOS TESTS PASARON\033[0m")
+    print(f"\033[32m  PASS: {PASS}/{PASS + FAIL} — TODOS LOS TESTS PASARON\033[0m")
 else:
-    print(f"\033[31m  PASS: {PASS}/{PASS+FAIL} — {FAIL} FALLOS\033[0m")
+    print(f"\033[31m  PASS: {PASS}/{PASS + FAIL} — {FAIL} FALLOS\033[0m")
     print("\033[31m  No dejes que lo de ayer se repita. Arregla los tests antes de commitear.\033[0m")
-print(f"{'='*50}")
+print(f"{'=' * 50}")
 
 sys.exit(0 if FAIL == 0 else 1)

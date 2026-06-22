@@ -119,7 +119,9 @@ def compactar_archivo(ruta: Path) -> dict:
     mapa_path = nervioso / f"{ruta.stem}_anchors.json"
     mapa_path.write_text(
         json.dumps(
-            {"archivo": str(ruta), "anchors": anchors, "stats": stats}, indent=2, ensure_ascii=False,
+            {"archivo": str(ruta), "anchors": anchors, "stats": stats},
+            indent=2,
+            ensure_ascii=False,
         ),
     )
 

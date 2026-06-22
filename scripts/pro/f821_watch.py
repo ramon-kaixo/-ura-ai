@@ -48,6 +48,7 @@ def run_ruff() -> list[dict]:
         text=True,
         timeout=120,
         cwd=str(URA_ROOT),
+        check=False,
     )
     if result.returncode not in (0, 1):
         return []
@@ -104,7 +105,6 @@ def compare(target_label: str) -> None:
     delta = prev_total - curr_total
     (delta / prev_total * 100) if prev_total > 0 else 0
 
-
     resolved = set(target.get("file_counts", {}).keys()) - current_files
     if resolved:
         for _f in sorted(resolved)[:10]:
@@ -127,7 +127,6 @@ def report() -> None:
         rel = os.path.relpath(v.get("filename", "?"), str(URA_ROOT))
         files[rel] = files.get(rel, 0) + 1
 
-
     by_count = sorted(files.items(), key=lambda x: -x[1])
     for _fname, _cnt in by_count[:20]:
         pass
@@ -137,6 +136,7 @@ def report() -> None:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 

@@ -1,6 +1,6 @@
-
 """Tests de event_bus y notifier."""
-from core.event_bus import replay_events, publish, AsyncEventBus
+
+from core.event_bus import AsyncEventBus, replay_events
 
 
 def test_event_bus_imports():
@@ -15,6 +15,7 @@ def test_async_event_bus_creates():
 
 def test_async_event_bus_suscribir():
     import asyncio
+
     bus = AsyncEventBus()
 
     async def _run():

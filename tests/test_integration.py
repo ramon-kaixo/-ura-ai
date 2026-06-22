@@ -28,9 +28,11 @@ def gx10_accessible() -> bool:
     """Verifica si GX10 es accesible vía SSH."""
     try:
         result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
-             f"{SSH_USER}@{TARGET}", "echo ok"],
-            capture_output=True, text=True, timeout=5,
+            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         return result.returncode == 0 and "ok" in result.stdout
     except Exception:
@@ -78,13 +80,16 @@ def main() -> int:
                 return "models" in data
         except Exception:
             return False
+
     check("Ollama /api/tags responde", ollama_health)
 
     # Test 3: Router POST
     def router_chat():
         try:
             url = f"http://{TARGET}:{ROUTER_PORT}/api/chat"
-            data = json.dumps({"model": "auto", "messages": [{"role": "user", "content": "di hola"}], "stream": False}).encode()
+            data = json.dumps(
+                {"model": "auto", "messages": [{"role": "user", "content": "di hola"}], "stream": False},
+            ).encode()
             req = urllib.request.Request(url, data=data, method="POST")
             req.add_header("Content-Type", "application/json")
             with urllib.request.urlopen(req, timeout=60) as resp:
@@ -92,34 +97,57 @@ def main() -> int:
                 return "message" in resp_data or "response" in resp_data
         except Exception:
             return False
+
     check("Router /api/chat responde con mensaje", router_chat)
 
     # Test 4: SNC state file
     def snc_state():
         try:
             result = subprocess.run(
-                ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
-                 f"{SSH_USER}@{TARGET}", "cat /tmp/ura_snc_state.json 2>/dev/null || echo '{}'"],
-                capture_output=True, text=True, timeout=5,
+                [
+                    "ssh",
+                    "-o",
+                    "ConnectTimeout=3",
+                    "-o",
+                    "BatchMode=yes",
+                    f"{SSH_USER}@{TARGET}",
+                    "cat /tmp/ura_snc_state.json 2>/dev/null || echo '{}'",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             state = json.loads(result.stdout.strip() or "{}")
             return "status" in state and "timestamp" in state
         except Exception:
             return False
+
     check("SNC state file existe y tiene status+timestamp", snc_state)
 
     # Test 5: Health check
     def health_check():
         try:
             result = subprocess.run(
-                ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
-                 f"{SSH_USER}@{TARGET}", "df -h / | tail -1 | awk '{print $5}'"],
-                capture_output=True, text=True, timeout=5,
+                [
+                    "ssh",
+                    "-o",
+                    "ConnectTimeout=3",
+                    "-o",
+                    "BatchMode=yes",
+                    f"{SSH_USER}@{TARGET}",
+                    "df -h / | tail -1 | awk '{print $5}'",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             pct = result.stdout.strip().replace("%", "")
             return int(pct) > 0 and int(pct) < 100
         except Exception:
             return False
+
     check("Disco del GX10 reporta uso válido", health_check)
 
     if FAIL == 0:

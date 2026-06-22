@@ -6,14 +6,15 @@ Uso:
   python3 core/infra/heartbeat.py                  # una ejecucion
   python3 core/infra/heartbeat.py --daemon         # bucle cada 30s
 """
+
 import argparse
 import json
 import logging
 import os
 import subprocess
 import time
-from urllib.request import urlopen, Request
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
 
@@ -47,27 +48,33 @@ def dump_checkpoint():
         try:
             with open(STATE_FILE) as f:
                 cp = json.load(f)
-            logger.critical("[HEARTBEAT] Checkpoint pendiente detectado antes de restart: task=%s file=%s",
-                           cp.get("task_id"), cp.get("target_file"))
+            logger.critical(
+                "[HEARTBEAT] Checkpoint pendiente detectado antes de restart: task=%s file=%s",
+                cp.get("task_id"),
+                cp.get("target_file"),
+            )
         except (json.JSONDecodeError, OSError):
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
 def _save_restart_to_qdrant():
     try:
-        from motor.core.qdrant_client import instancia
         from motor.core.config import UraConfig
+        from motor.core.qdrant_client import instancia
+
         cfg = UraConfig()
         qc = instancia(cfg)
         if qc and qc.disponible:
-            qc.guardar_incidente({
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "tipo": "ServiceFailure",
-                "subtipo": "heartbeat_restart",
-                "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
-                "origin_node": "ASUS",
-                "exit_code": -1,
-            })
+            qc.guardar_incidente(
+                {
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "tipo": "ServiceFailure",
+                    "subtipo": "heartbeat_restart",
+                    "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
+                    "origin_node": "ASUS",
+                    "exit_code": -1,
+                },
+            )
     except Exception:
         pass
 
@@ -79,7 +86,10 @@ def restart_service():
     try:
         res = subprocess.run(
             ["systemctl", "restart", "ura-mochila.service"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
         )
         if res.returncode == 0:
             logger.info("ura-mochila.service reiniciado exitosamente")
@@ -98,11 +108,12 @@ VRAM_PANIC_MB = 22000
 def check_vram_pressure():
     global vram_critical_cycles
     cmd = [
-        "nvidia-smi", "--query-compute-apps=used_memory",
+        "nvidia-smi",
+        "--query-compute-apps=used_memory",
         "--format=csv,noheader,nounits",
     ]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
         total_used = 0
         for line in res.stdout.strip().split("\n"):
             line = line.strip()
@@ -112,19 +123,30 @@ def check_vram_pressure():
         if total_used > VRAM_PANIC_MB:
             vram_critical_cycles += 1
             log_event(
-                "vram_pressure_high", model="", file="", reason="",
-                attempts=vram_critical_cycles, penalty="",
-                sandbox_errors=[], complexity=0, temperature=0.0,
+                "vram_pressure_high",
+                model="",
+                file="",
+                reason="",
+                attempts=vram_critical_cycles,
+                penalty="",
+                sandbox_errors=[],
+                complexity=0,
+                temperature=0.0,
                 result_type="warning",
             )
-            logger.warning("VRAM pressure: %d MB used (%d/%d cycles)",
-                           total_used, vram_critical_cycles, 3)
+            logger.warning("VRAM pressure: %d MB used (%d/%d cycles)", total_used, vram_critical_cycles, 3)
             if vram_critical_cycles >= 3:
                 log_event(
-                    "vram_panic_restart", model="", file="", reason="",
-                    attempts=3, penalty="",
+                    "vram_panic_restart",
+                    model="",
+                    file="",
+                    reason="",
+                    attempts=3,
+                    penalty="",
                     sandbox_errors=[f"VRAM saturation {total_used} MB > {VRAM_PANIC_MB} MB"],
-                    complexity=0, temperature=0.0, result_type="failure",
+                    complexity=0,
+                    temperature=0.0,
+                    result_type="failure",
                 )
                 logger.critical("VRAM panic: restarting mochila")
                 restart_service()
@@ -133,9 +155,15 @@ def check_vram_pressure():
             vram_critical_cycles = 0
     except (subprocess.TimeoutExpired, FileNotFoundError, ValueError) as e:
         log_event(
-            "vram_monitor_error", model="", file="", reason=str(e),
-            attempts=0, penalty="",
-            sandbox_errors=[], complexity=0, temperature=0.0,
+            "vram_monitor_error",
+            model="",
+            file="",
+            reason=str(e),
+            attempts=0,
+            penalty="",
+            sandbox_errors=[],
+            complexity=0,
+            temperature=0.0,
             result_type="failure",
         )
         logger.warning("VRAM monitor error: %s", e)
@@ -144,6 +172,7 @@ def check_vram_pressure():
 def check_loop_latency() -> float:
     async def _measure():
         import time as _t
+
         t0 = _t.monotonic()
         await asyncio.sleep(0)
         t1 = _t.monotonic()
@@ -151,6 +180,7 @@ def check_loop_latency() -> float:
 
     try:
         import asyncio
+
         return asyncio.run(_measure())
     except RuntimeError:
         return 0.0
@@ -188,12 +218,16 @@ def main():
                 logger.warning("LOOP LATENCY: %.1fms (avg %.1fms)", lat, avg_lat)
                 try:
                     from core.event_bus import publish
-                    publish("alert", {
-                        "source": "heartbeat",
-                        "function": "loop_monitor",
-                        "loop_latency_ms": lat,
-                        "loop_avg_ms": round(avg_lat, 1),
-                    })
+
+                    publish(
+                        "alert",
+                        {
+                            "source": "heartbeat",
+                            "function": "loop_monitor",
+                            "loop_latency_ms": lat,
+                            "loop_avg_ms": round(avg_lat, 1),
+                        },
+                    )
                 except ImportError:
                     pass
 

@@ -11,7 +11,6 @@ El semáforo is_playing_tts aisla el micrófono durante la respuesta.
 import sys
 import time
 
-
 from core.utils.anonymizer import sanitize_text
 from core.voice.anker_pipeline import AnkerDeterministicPipeline
 from core.voice.tts_piper import PiperTTSMotor

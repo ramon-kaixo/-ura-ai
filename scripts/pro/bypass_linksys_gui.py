@@ -20,12 +20,16 @@ import time
 from pathlib import Path
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import sync_playwright
 except ImportError:
-    print("Playwright no instalado. Ejecuta: pip install --break-system-packages playwright && python3 -m playwright install chromium")
+    print(
+        "Playwright no instalado. Ejecuta: pip install --break-system-packages playwright && python3 -m playwright install chromium",
+    )
     sys.exit(1)
 
 URA_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _load_config():
     dispositivos = URA_ROOT / "config" / "dispositivos.json"
@@ -44,6 +48,7 @@ def _load_config():
     licencia = cfg.get("licencia_servidor", "K0513893926")
     owner = cfg.get("propietario", "Ramon Esnaola")
     return router_ip, asus_wifi, asus_cable, email, licencia, owner
+
 
 CONFIG = _load_config()
 if CONFIG:
@@ -69,7 +74,7 @@ EVIDENCIA.parent.mkdir(parents=True, exist_ok=True)
 
 PUERTOS_A_ABRIR = [
     {"nombre": "Tailscale_WireGuard", "externo": 41641, "interno": 41641, "protocolo": "UDP"},
-    {"nombre": "Tailscale_STUN",      "externo": 3478,  "interno": 3478, "protocolo": "UDP"},
+    {"nombre": "Tailscale_STUN", "externo": 3478, "interno": 3478, "protocolo": "UDP"},
 ]
 
 
@@ -92,12 +97,15 @@ def bypass_linksys():
     print("=" * 60)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=[
-            '--ignore-certificate-errors',
-            '--ignore-ssl-errors',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-        ])
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--ignore-certificate-errors",
+                "--ignore-ssl-errors",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+            ],
+        )
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
 
@@ -248,6 +256,7 @@ def bypass_linksys():
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--screenshot", action="store_true", help="Solo screenshot (sin modificar)")
     args = parser.parse_args()
@@ -256,4 +265,4 @@ if __name__ == "__main__":
 
     # Ejecutar auditor post-configuración
     print("\n🔍 Ejecutando auditor de router...")
-    subprocess.run([sys.executable, "scripts/pro/auditor_router.py"], cwd="/home/ramon/URA/ura_ia_1972")
+    subprocess.run([sys.executable, "scripts/pro/auditor_router.py"], cwd="/home/ramon/URA/ura_ia_1972", check=False)

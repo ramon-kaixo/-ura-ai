@@ -44,7 +44,7 @@ def check_complexity(tree: ast.AST) -> list[str]:
             if cc > MAX_COMPLEXITY:
                 errors.append(
                     f"FUNCION '{node.name}': complejidad ciclomatica {cc} "
-                    f"supera el maximo {MAX_COMPLEXITY}. RefactorRequiredError."
+                    f"supera el maximo {MAX_COMPLEXITY}. RefactorRequiredError.",
                 )
     return errors
 
@@ -62,16 +62,14 @@ def check_injections(tree: ast.AST) -> list[str]:
 
             if call_str in BLOCKED_CALLS:
                 errors.append(
-                    f"LINEA {node.lineno}: {BLOCKED_CALLS[call_str]} "
-                    f"(llamada: {call_str})"
+                    f"LINEA {node.lineno}: {BLOCKED_CALLS[call_str]} (llamada: {call_str})",
                 )
 
             if call_str == "open" and len(node.args) >= 2:
                 mode_arg = node.args[1]
                 if isinstance(mode_arg, ast.Constant) and "w" in str(mode_arg.value):
                     errors.append(
-                        f"LINEA {node.lineno}: open() en modo escritura "
-                        f"prohibido en codigo generado"
+                        f"LINEA {node.lineno}: open() en modo escritura prohibido en codigo generado",
                     )
     return errors
 

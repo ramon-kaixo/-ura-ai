@@ -183,14 +183,14 @@ def verificar_mapa_cromatico(
     if rojas_reales < rojas_esperadas * 0.5:
         return False, (
             f"🔴 Colapso cromático: {rojas_reales} rojas vs {rojas_esperadas} esperadas "
-            f"(-{int((1-rojas_reales/rojas_esperadas)*100)}%). "
+            f"(-{int((1 - rojas_reales / rojas_esperadas) * 100)}%). "
             "El refactor eliminó demasiadas instrucciones lógicas."
         )
 
     if rojas_reales > rojas_esperadas * 2:
         return False, (
             f"🔴 Explosión cromática: {rojas_reales} rojas vs {rojas_esperadas} esperadas "
-            f"(+{int((rojas_reales/rojas_esperadas-1)*100)}%). "
+            f"(+{int((rojas_reales / rojas_esperadas - 1) * 100)}%). "
             "El refactor creó demasiadas instrucciones nuevas."
         )
 
@@ -264,11 +264,15 @@ def compactar(
         # Ruff fix post-escritura
         subprocess.run(
             ["ruff", "check", "--fix", "--unsafe-fixes", str(ruta_original)],
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         subprocess.run(
             ["ruff", "format", str(ruta_original)],
-            capture_output=True, timeout=30,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
 
     return {
@@ -285,12 +289,14 @@ def compactar(
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Compactadora Determinista")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("--metadata", help="JSON con metadata del fragmentador")

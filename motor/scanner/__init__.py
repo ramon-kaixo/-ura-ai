@@ -1,18 +1,19 @@
-import os
 import logging
-import time
+import os
 import subprocess
-from pathlib import Path
+import time
 from datetime import UTC, datetime
-from motor.core.state import ScanResult
+from pathlib import Path
+
 from motor.core.config import UraConfig
-from motor.scanner.sliding_window import SlidingWindow
-from motor.scanner.diff_detector import compute_diff
+from motor.core.state import ScanResult
 from motor.scanner.calibration import Calibration
-from motor.scanner.collector_red import escanear_red
-from motor.scanner.collector_hw_vm import escanear_hw_vm
-from motor.scanner.collector_hw_asus import escanear_hw_asus
 from motor.scanner.collector_asus import escanear_asus
+from motor.scanner.collector_hw_asus import escanear_hw_asus
+from motor.scanner.collector_hw_vm import escanear_hw_vm
+from motor.scanner.collector_red import escanear_red
+from motor.scanner.diff_detector import compute_diff
+from motor.scanner.sliding_window import SlidingWindow
 
 log = logging.getLogger("ura.scanner")
 
@@ -20,6 +21,7 @@ SERVICIOS_SYSTEMD = ["sshd", "docker", "opencode"]
 SERVICIOS_DOCKER = ["qdrant", "n8n", "searxng", "vane", "agent-search"]
 DOCKER_ALIASES = {"vane": "perplexica-vane-1", "agent-search": "agent-search-agent-search-1"}
 RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
+
 
 class Scanner:
     """Escáner principal del sistema: servicios, recursos, red y hardware."""
@@ -34,7 +36,7 @@ class Scanner:
     def _es_fisico() -> bool:
         """Determina si el hardware es físico (no VM)."""
         try:
-            r = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=5)
+            r = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=5, check=False)
             return "none" in r.stdout.strip()
         except Exception as e:
             log.debug("systemd-detect-virt falló: %s", e)
@@ -48,7 +50,7 @@ class Scanner:
     def run(self) -> ScanResult:
         """Ejecuta el escaneo completo y devuelve un ScanResult."""
         t0 = time.time()
-        r = ScanResult(timestamp=datetime.now(UTC).isoformat()+"Z")
+        r = ScanResult(timestamp=datetime.now(UTC).isoformat() + "Z")
         r.hostname = self._get_hostname()
         r.servicios = self._check_servicios()
         r.recursos = self._check_recursos()
@@ -73,14 +75,21 @@ class Scanner:
         r.systemd_failed = self._detectar_systemd_failed()
         r.snapshot_hash = self._tomar_snapshot_hash()
         r.ok = True
-        log.info("scan %.2fs score=%.1f diff=%d orphans=%d failed=%d",
-                 time.time()-t0, r.health_score, r.diff_total, len(r.orphans), len(r.systemd_failed))
+        log.info(
+            "scan %.2fs score=%.1f diff=%d orphans=%d failed=%d",
+            time.time() - t0,
+            r.health_score,
+            r.diff_total,
+            len(r.orphans),
+            len(r.systemd_failed),
+        )
         return r
 
     def _get_hostname(self):
         """Obtiene el hostname del sistema."""
         try:
             import socket
+
             return socket.gethostname()
         except Exception as e:
             log.warning("no se pudo obtener hostname: %s", e)
@@ -91,7 +100,13 @@ class Scanner:
         s = {}
         for svc in SERVICIOS_SYSTEMD:
             try:
-                r = subprocess.run(["systemctl", "is-active", svc], capture_output=True, text=True, timeout=5)
+                r = subprocess.run(
+                    ["systemctl", "is-active", svc],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
                 out = r.stdout.strip()
                 s[svc] = "not_found" if out in ("unknown", "inactive") and not self._unit_exists(svc) else out
             except FileNotFoundError:
@@ -109,8 +124,13 @@ class Scanner:
     def _unit_exists(self, name: str) -> bool:
         """Verifica si existe una unit systemd."""
         try:
-            r = subprocess.run(["systemctl", "list-units", "--all", "--type=service",
-                               f"{name}.service", "--no-legend"], capture_output=True, text=True, timeout=5)
+            r = subprocess.run(
+                ["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
             return bool(r.stdout.strip())
         except Exception as e:
             log.debug("systemctl list-units %s falló: %s", name, e)
@@ -121,7 +141,10 @@ class Scanner:
         try:
             r = subprocess.run(
                 ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
-                capture_output=True, text=True, timeout=10
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
             )
             return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
         except Exception as e:
@@ -132,6 +155,7 @@ class Scanner:
         """Recolecta métricas de RAM, disco, CPU y zombies."""
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             disk = psutil.disk_usage("/")
             return {
@@ -205,8 +229,13 @@ class Scanner:
         """Cuenta contenedores docker por estado."""
         c = {"total": 0, "running": 0, "exited": 0}
         try:
-            r = subprocess.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
-                               capture_output=True, text=True, timeout=10)
+            r = subprocess.run(
+                ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
             for line in r.stdout.strip().split("\n"):
                 if not line:
                     continue
@@ -242,11 +271,15 @@ class Scanner:
         fallados = sum(1 for s in r.servicios.values() if s not in ("active", "ok", "not_found"))
         score -= fallados * 10
         ram = r.recursos.get("ram_pct", 0)
-        if ram > 90: score -= 15
-        elif ram > 80: score -= 10
+        if ram > 90:
+            score -= 15
+        elif ram > 80:
+            score -= 10
         disk = r.recursos.get("disk_pct", 0)
-        if disk > 90: score -= 15
-        elif disk > 80: score -= 10
+        if disk > 90:
+            score -= 15
+        elif disk > 80:
+            score -= 10
         score -= r.recursos.get("zombies", 0) * 5
         score -= r.red.get("latencia_ms", 0) / 20
         score -= len(r.flapping) * 5
@@ -259,7 +292,7 @@ class Scanner:
         """Detecta procesos duplicados (opencode, node, docker)."""
         d = {}
         try:
-            r = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True, timeout=5)
+            r = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True, timeout=5, check=False)
             vistos = {}
             for line in r.stdout.strip().split("\n"):
                 args = line.strip()
@@ -278,6 +311,7 @@ class Scanner:
     def _tomar_snapshot_hash(self) -> str:
         """Calcula hash SHA256 de los archivos de configuración de opencode."""
         import hashlib
+
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
@@ -303,23 +337,31 @@ class Scanner:
 
         try:
             import psutil
+
             current_pids = {p.info["pid"] for p in psutil.process_iter(["pid", "ppid", "name"])}
             for proc in psutil.process_iter(["pid", "ppid", "name"]):
                 ppid = proc.info["ppid"]
                 if ppid != 1 and ppid not in current_pids:
                     name = proc.info["name"] or "?"
-                    orphans.append({
-                        "tipo": "hijo_huertano",
-                        "pid": proc.info["pid"],
-                        "ppid": ppid,
-                        "name": name,
-                    })
+                    orphans.append(
+                        {
+                            "tipo": "hijo_huertano",
+                            "pid": proc.info["pid"],
+                            "ppid": ppid,
+                            "name": name,
+                        },
+                    )
         except (ImportError, Exception) as e:
             log.debug("deteccion hijos huerfanos fallo: %s", e)
 
         try:
-            r = subprocess.run(["docker", "images", "-f", "dangling=true", "-q"],
-                               capture_output=True, text=True, timeout=10)
+            r = subprocess.run(
+                ["docker", "images", "-f", "dangling=true", "-q"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
             dangling = [i for i in r.stdout.strip().split("\n") if i]
             if dangling:
                 orphans.append({"tipo": "docker_dangling", "cantidad": len(dangling)})
@@ -327,10 +369,16 @@ class Scanner:
             log.debug("deteccion docker dangling falló: %s", e)
 
         try:
-            r = subprocess.run(["systemctl", "list-units", "--state=failed", "--no-legend"],
-                               capture_output=True, text=True, timeout=10)
-            failed = [l.split()[0].lstrip("●").strip() or l.split()[1]
-                      for l in r.stdout.strip().split("\n") if l.strip()]
+            r = subprocess.run(
+                ["systemctl", "list-units", "--state=failed", "--no-legend"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            failed = [
+                l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()
+            ]
             if failed:
                 orphans.append({"tipo": "systemd_failed", "unidades": failed[:10]})
         except Exception as e:
@@ -341,10 +389,14 @@ class Scanner:
     def _detectar_systemd_failed(self) -> list:
         """Devuelve lista de unidades systemd en estado failed."""
         try:
-            r = subprocess.run(["systemctl", "list-units", "--state=failed", "--no-legend"],
-                               capture_output=True, text=True, timeout=10)
-            return [l.split()[0].lstrip("●").strip() or l.split()[1]
-                    for l in r.stdout.strip().split("\n") if l.strip()]
+            r = subprocess.run(
+                ["systemctl", "list-units", "--state=failed", "--no-legend"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            return [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
         except Exception as e:
             log.debug("systemctl list-failed falló: %s", e)
             return []

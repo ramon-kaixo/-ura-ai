@@ -1,5 +1,5 @@
-
 """Tests de scraper_pool."""
+
 from core.scraper_pool import DomainDecoupledPool
 
 

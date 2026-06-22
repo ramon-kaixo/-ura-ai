@@ -14,7 +14,7 @@ import logging
 import subprocess
 import time
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,7 @@ class ErrorSandbox:
             "auto_intervention": False,
             "log_to_file": True,
         }
+
     def _load_knowledge_base(self) -> dict:
         """Cargar base de conocimiento de errores."""
         try:
@@ -200,25 +201,31 @@ class ErrorSandbox:
                         capture_output=True,
                         text=True,
                         timeout=5,
+                        check=False,
                     )
                     if result.stdout.strip():
                         pid = result.stdout.strip().split("\n")[0]
-                        subprocess.run(["kill", "-9", pid], timeout=5)
+                        subprocess.run(["kill", "-9", pid], timeout=5, check=False)
                         time.sleep(1)
                         return True
 
             elif "Reiniciar Ollama" in solution:
-                subprocess.run(["pkill", "-9", "ollama"], timeout=5)
+                subprocess.run(["pkill", "-9", "ollama"], timeout=5, check=False)
                 time.sleep(2)
                 subprocess.Popen(
-                    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    ["ollama", "serve"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
                 time.sleep(3)
                 return True
 
             elif "Iniciar Redis" in solution:
                 subprocess.run(
-                    ["brew", "services", "start", "redis"], capture_output=True, timeout=10,
+                    ["brew", "services", "start", "redis"],
+                    capture_output=True,
+                    timeout=10,
+                    check=False,
                 )
                 time.sleep(2)
                 return True
@@ -251,11 +258,16 @@ def main() -> None:
     """Punto de entrada CLI."""
     parser = argparse.ArgumentParser(description="URA - Sandbox de Errores")
     parser.add_argument(
-        "--analyze", nargs=2, metavar=("ALERT_ID", "ERROR_TYPE"), help="Analizar error",
+        "--analyze",
+        nargs=2,
+        metavar=("ALERT_ID", "ERROR_TYPE"),
+        help="Analizar error",
     )
     parser.add_argument("--log", action="store_true", help="Mostrar log del sandbox")
     parser.add_argument(
-        "--manual", action="store_true", help="Mostrar errores que requieren intervención",
+        "--manual",
+        action="store_true",
+        help="Mostrar errores que requieren intervención",
     )
     parser.add_argument("--verbose", action="store_true", help="Modo verboso")
 

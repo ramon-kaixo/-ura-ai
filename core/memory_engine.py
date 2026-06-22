@@ -7,14 +7,13 @@ Determinista: sin variables globales, todo el estado en disco.
 import sys
 from pathlib import Path
 
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import contextlib
 import hashlib
 import json
 import logging
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from core.config_manager import CONFIG
 from motor.core.config import UraConfig
@@ -66,6 +65,7 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
 # Indexación (determinista: mismo input → mismo índice)
 # ============================================================
 
+
 def load_manifest() -> dict:
     if MANIFEST_PATH.exists():
         try:
@@ -79,6 +79,7 @@ def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     try:
         import shutil
+
         required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:
@@ -105,7 +106,9 @@ def index_documents(force: bool = False) -> dict:
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
-    manifest = load_manifest() if not force else {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
+    manifest = (
+        load_manifest() if not force else {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
+    )
 
     current_files = {}
     for f in DOCS_DIR.rglob("*"):
@@ -191,6 +194,7 @@ def index_documents(force: bool = False) -> dict:
 # Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
 # ============================================================
 
+
 def query(question: str, top_k: int = TOP_K) -> list[dict]:
     """Busca los chunks más relevantes para una pregunta en Qdrant.
     Retorna lista de {content, source, chunk_index, similarity}.
@@ -213,12 +217,14 @@ def query(question: str, top_k: int = TOP_K) -> list[dict]:
         if score < SIMILARITY_THRESHOLD:
             continue
 
-        output.append({
-            "content": payload.get("texto", ""),
-            "source": payload.get("source", "unknown"),
-            "chunk_index": payload.get("chunk_index", 0),
-            "similarity": round(score, 4),
-        })
+        output.append(
+            {
+                "content": payload.get("texto", ""),
+                "source": payload.get("source", "unknown"),
+                "chunk_index": payload.get("chunk_index", 0),
+                "similarity": round(score, 4),
+            },
+        )
 
     return output
 

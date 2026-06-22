@@ -1,14 +1,14 @@
 import asyncio
 import json
-import random
 import logging
 import os
+import random
 from typing import Any
 
 import httpx
 
+from core.infra.state_manager import clear_checkpoint, load_checkpoint, save_checkpoint
 from core.seguridad.rollback_manager import RollbackManager
-from core.infra.state_manager import save_checkpoint, load_checkpoint, clear_checkpoint
 from sandbox.sandbox_runner import SandboxClient
 
 logger = logging.getLogger("ura.wrapper")
@@ -28,7 +28,8 @@ async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: i
                 logger.warning("API saturada (HTTP %s). Aplicando backoff...", response.status_code)
                 raise httpx.HTTPStatusError(
                     "Servicio temporalmente indisponible",
-                    request=response.request, response=response,
+                    request=response.request,
+                    response=response,
                 )
             response.raise_for_status()
             return response.json()
@@ -36,7 +37,7 @@ async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: i
             if intento == max_retries - 1:
                 logger.error("Agotados %d reintentos. Fallo: %s", max_retries, e)
                 raise
-            base_delay = 2 ** intento
+            base_delay = 2**intento
             jitter = random.uniform(0.5, 1.5)
             delay = base_delay * jitter
             logger.info("[Reintento %d/%d] Esperando %.2fs...", intento + 1, max_retries, delay)
@@ -86,7 +87,9 @@ class OpenCodeWrapper:
 
         accumulated = ""
         async with self._http.stream(
-            "POST", f"{MOCHILA_URL}/v1/chat/completions", json=body
+            "POST",
+            f"{MOCHILA_URL}/v1/chat/completions",
+            json=body,
         ) as resp:
             async for line in resp.aiter_lines():
                 if not line.strip():
@@ -99,11 +102,7 @@ class OpenCodeWrapper:
                         chunk = json.loads(data)
                         if "error" in chunk:
                             return chunk
-                        delta = (
-                            chunk.get("choices", [{}])[0]
-                            .get("delta", {})
-                            .get("content", "")
-                        )
+                        delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
                         accumulated += delta
                     except json.JSONDecodeError:
                         continue
@@ -122,8 +121,11 @@ class OpenCodeWrapper:
 
         checkpoint = load_checkpoint()
         if checkpoint and checkpoint.get("target_file") == abs_path:
-            logger.info("[WRAPPER] Checkpoint encontrado, reanudando task=%s attempt=%d",
-                         checkpoint.get("task_id"), checkpoint.get("attempt", 1))
+            logger.info(
+                "[WRAPPER] Checkpoint encontrado, reanudando task=%s attempt=%d",
+                checkpoint.get("task_id"),
+                checkpoint.get("attempt", 1),
+            )
 
         logger.info("[WRAPPER] Inicio generacion para %s (task=%s)", rel_path, task_id)
 
@@ -134,7 +136,10 @@ class OpenCodeWrapper:
             temp = TEMPS[attempt]
             logger.info(
                 "[WRAPPER] Intento %d/%d temp=%.1f para %s",
-                attempt + 1, MAX_RETRIES, temp, rel_path,
+                attempt + 1,
+                MAX_RETRIES,
+                temp,
+                rel_path,
             )
 
             resp = await self._chat(prompt, model=model, temperature=temp, penalty_context=penalty, attempt=attempt)
@@ -144,15 +149,12 @@ class OpenCodeWrapper:
                 penalty = error.get("penalty_context", "")
                 logger.warning(
                     "[WRAPPER] Intento %d abortado por guardian. Penalty=%s",
-                    attempt + 1, penalty[:60],
+                    attempt + 1,
+                    penalty[:60],
                 )
                 continue
 
-            content = (
-                resp.get("choices", [{}])[0]
-                .get("message", {})
-                .get("content", resp.get("response", ""))
-            )
+            content = resp.get("choices", [{}])[0].get("message", {}).get("content", resp.get("response", ""))
             if not content.strip():
                 logger.warning("[WRAPPER] Intento %d respuesta vacia", attempt + 1)
                 continue
@@ -167,7 +169,8 @@ class OpenCodeWrapper:
                 if not sandbox_result.get("passed", False):
                     logger.error(
                         "[WRAPPER] Sandbox rechazo para %s: %s",
-                        rel_path, sandbox_result.get("errors"),
+                        rel_path,
+                        sandbox_result.get("errors"),
                     )
                     self.rollback.rollback(abs_path)
                     return False, f"Sandbox: {sandbox_result.get('errors', ['unknown'])}"
@@ -180,11 +183,10 @@ class OpenCodeWrapper:
                 clear_checkpoint()
                 logger.info("[WRAPPER] Commit exitoso para %s", rel_path)
                 return True, content
-            else:
-                self.rollback.rollback(abs_path)
-                clear_checkpoint()
-                logger.error("[WRAPPER] Commit fallido, rollback ejecutado para %s", rel_path)
-                return False, ""
+            self.rollback.rollback(abs_path)
+            clear_checkpoint()
+            logger.error("[WRAPPER] Commit fallido, rollback ejecutado para %s", rel_path)
+            return False, ""
 
         self.rollback.rollback(abs_path)
         clear_checkpoint()

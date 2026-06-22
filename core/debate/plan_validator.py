@@ -1,4 +1,5 @@
 from datetime import UTC
+
 #!/usr/bin/env python3
 """plan_validator.py — Inyección de contexto real del sistema en el debate.
 
@@ -38,11 +39,17 @@ def get_service_status(service: str) -> dict:
     try:
         res = subprocess.run(
             ["systemctl", "is-active", service],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         pid = subprocess.run(
             ["systemctl", "show", service, "-p", "MainPID"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         pid_str = pid.stdout.strip().replace("MainPID=", "")
         return {
@@ -57,9 +64,11 @@ def get_service_status(service: str) -> dict:
 def get_vram() -> dict | None:
     try:
         res = subprocess.run(
-            ["nvidia-smi", "--query-gpu=memory.total,memory.used,memory.free",
-             "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=5,
+            ["nvidia-smi", "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if res.returncode != 0:
             return None
@@ -140,13 +149,15 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--debate":
         data = json.loads(sys.stdin.read())
         data["context"] = context
-        from core.debate.debate_engine import run_debate
         import asyncio
+
+        from core.debate.debate_engine import run_debate
         from core.debate.lockfile import DebateLock
 
         async def _run():
             with DebateLock():
                 return await run_debate(data.get("plan", ""), context)
+
         result = asyncio.run(_run())
         log.info(json.dumps(result, ensure_ascii=False, indent=2))
         verdict = result.get("verdict", "")

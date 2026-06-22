@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 try:
-    from linter_advanced import lint_code, InjectionError, RefactorRequiredError
+    from linter_advanced import InjectionError, RefactorRequiredError, lint_code
 except ImportError:
     lint_code = None
     InjectionError = type("InjectionError", (Exception,), {})
@@ -37,6 +37,7 @@ def run_validation(temp_path: str, original_name: str) -> dict:
         # Syntax check via ast
         try:
             import ast
+
             ast.parse(content)
         except SyntaxError as e:
             result["errors"].append(f"SyntaxError: {e}")
@@ -46,7 +47,10 @@ def run_validation(temp_path: str, original_name: str) -> dict:
         try:
             res = subprocess.run(
                 [sys.executable, "-c", f"import ast; ast.parse(open('{temp_path}').read())"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
             )
             if res.returncode != 0:
                 result["errors"].append(res.stderr.strip() or res.stdout.strip())
@@ -58,7 +62,10 @@ def run_validation(temp_path: str, original_name: str) -> dict:
     elif ext == ".sh":
         res = subprocess.run(
             ["bash", "-n", temp_path],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         if res.returncode != 0:
             result["errors"].append(res.stderr.strip())
@@ -74,6 +81,7 @@ def run_validation(temp_path: str, original_name: str) -> dict:
     elif ext in (".yaml", ".yml"):
         try:
             import yaml
+
             yaml.safe_load(content)
         except ImportError:
             # fallback: check colon presence as weak heuristic

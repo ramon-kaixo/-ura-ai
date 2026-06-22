@@ -4,7 +4,6 @@ import time
 from datetime import date
 from pathlib import Path
 
-
 TARIFAS: dict[str, float] = {
     "ollama": 0.0,
     "openrouter": 0.0,

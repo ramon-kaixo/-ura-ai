@@ -54,8 +54,8 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
                         {
                             "key": "fecha_publicacion",
                             "range": {"lt": cutoff},
-                        }
-                    ]
+                        },
+                    ],
                 },
                 "with_payload": True,
             }

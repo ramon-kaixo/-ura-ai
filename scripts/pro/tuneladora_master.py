@@ -54,6 +54,7 @@ def modo_delta() -> int:
             [sys.executable, "scripts/openclaw_indexer.py", "scan"],
             capture_output=True,
             timeout=120,
+            check=False,
         )
 
     delta_snap = NERVIOSO / "delta_snapshots" / "ultimo_ciclo.json"
@@ -66,8 +67,7 @@ def modo_delta() -> int:
         total = sum(
             1
             for n in deps.values()
-            if "ESPEJO" not in n.get("pipeline_state", "")
-            and "ZOMBIE" not in n.get("pipeline_state", "")
+            if "ESPEJO" not in n.get("pipeline_state", "") and "ZOMBIE" not in n.get("pipeline_state", "")
         )
         cambiados = sum(
             1
@@ -92,6 +92,7 @@ def modo_delta() -> int:
         capture_output=True,
         text=True,
         timeout=86400,
+        check=False,
     )
 
     elapsed = time.time() - t0
@@ -139,7 +140,10 @@ def helper1() -> None:
 def helper2() -> None:
     """Helper function to rebuild the nervous system from scratch."""
     subprocess.run(
-        [sys.executable, "scripts/openclaw_indexer.py", "scan"], capture_output=True, timeout=120,
+        [sys.executable, "scripts/openclaw_indexer.py", "scan"],
+        capture_output=True,
+        timeout=120,
+        check=False,
     )
 
 
@@ -149,6 +153,7 @@ def helper3(label: str) -> None:
         [sys.executable, "scripts/pro/f821_watch.py", "snapshot", "--label", label],
         capture_output=True,
         timeout=60,
+        check=False,
     )
 
 
@@ -159,6 +164,7 @@ def helper4(target: str) -> str:
         capture_output=True,
         text=True,
         timeout=60,
+        check=False,
     )
     return "OK" if cmp.returncode == 0 else "REG RESION"
 
@@ -186,6 +192,7 @@ def modo_profundo() -> int:
         capture_output=True,
         text=True,
         timeout=300,
+        check=False,
     )
     f821_count = ruff.stdout.count("F821")
     f841_count = ruff.stdout.count("F841")
@@ -201,6 +208,7 @@ def modo_profundo() -> int:
         capture_output=True,
         text=True,
         timeout=86400,
+        check=False,
     )
 
     elapsed = time.time() - t0

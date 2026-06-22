@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-URA Change Guardian — Guardián de cambios con rollback automático
+"""URA Change Guardian — Guardián de cambios con rollback automático
 Solo revierte archivos que YA existían y fueron modificados.
 NUNCA borra archivos nuevos — solo deshace modificaciones.
 """
@@ -9,7 +8,7 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -23,7 +22,7 @@ def _ensure_patterns_dir() -> None:
 
 
 def _git(*args) -> tuple[bool, str]:
-    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=ROOT)
+    result = subprocess.run(["git", *args], capture_output=True, text=True, cwd=ROOT, check=False)
     return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
 
 
@@ -51,7 +50,7 @@ def _save_pattern(change_type: str, files: list[str], error_summary: str, diff: 
             "archivos": files,
             "error": error_summary[:500],
             "diff_head": diff[:2000],
-        }
+        },
     )
     _ensure_patterns_dir()
     PATTERNS_FILE.write_text(json.dumps(patterns, indent=2, ensure_ascii=False))
@@ -59,12 +58,11 @@ def _save_pattern(change_type: str, files: list[str], error_summary: str, diff: 
 
 
 class ChangeGuardian:
-    """
-    Uso:
-        with ChangeGuardian("descripción del cambio") as g:
-            # modificar archivos existentes
-            ...
-        # Si los tests fallan, revierte SOLO los archivos modificados
+    """Uso:
+    with ChangeGuardian("descripción del cambio") as g:
+        # modificar archivos existentes
+        ...
+    # Si los tests fallan, revierte SOLO los archivos modificados
     """
 
     def __init__(self, description: str, test_timeout: int = 360):
@@ -106,6 +104,7 @@ class ChangeGuardian:
                 text=True,
                 timeout=self.test_timeout,
                 cwd=ROOT,
+                check=False,
             )
             output = result.stdout + result.stderr
             passed = result.returncode == 0
@@ -131,8 +130,7 @@ class ChangeGuardian:
 
 
 def validate_and_clean(description: str = "cambio manual") -> bool:
-    """
-    Ejecuta tests ahora. Si fallan, revierte SOLO archivos modificados.
+    """Ejecuta tests ahora. Si fallan, revierte SOLO archivos modificados.
     Devuelve True si OK, False si revirtió.
     """
     guardian = ChangeGuardian(description)

@@ -27,6 +27,7 @@ from reglas_loader import cargar_reglas, guardar_reglas
 
 WATERMARKS_PATH = Path(os.environ.get("WATERMARKS_PATH", ".nervioso/watermarks.json"))
 
+
 def aplicar_reglas_a_archivo(ruta) -> dict:
     if isinstance(ruta, str):
         ruta = Path(ruta)
@@ -85,25 +86,30 @@ def estado() -> dict:
     }
 
 
-
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
+
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
         p = str(py_file)
-        if any(x in p for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]):
+        if any(
+            x in p
+            for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]
+        ):
             continue
         try:
             content = py_file.read_text()
             import ast
+
             ast.parse(content)
             results[p] = {"status": "parsed_ok"}
         except SyntaxError:
             results[p] = {"status": "syntax_error"}
         except Exception:
             results[p] = {"status": "error"}
+
 
 def main() -> None:
     import argparse
@@ -147,4 +153,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

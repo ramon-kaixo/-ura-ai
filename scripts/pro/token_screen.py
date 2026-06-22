@@ -34,12 +34,12 @@ except ImportError:
 
 MODEL_LIMITS: dict[str, int] = {
     "deepseek-coder:6.7b": 32768,
-    "qwen2.5-coder:14b":   32768,
-    "qwen2.5-coder:32b":   32768,
-    "qwen2.5-coder:q8_0":  32768,
-    "qwen3:32b-q8_0":      32768,
-    "llama3.3:70b":          4096,
-    "default":              32768,
+    "qwen2.5-coder:14b": 32768,
+    "qwen2.5-coder:32b": 32768,
+    "qwen2.5-coder:q8_0": 32768,
+    "qwen3:32b-q8_0": 32768,
+    "llama3.3:70b": 4096,
+    "default": 32768,
 }
 
 MIN_FREE_RAM_MB = 8192
@@ -72,7 +72,10 @@ def estimar_tokens(texto: str) -> int:
 
 
 def ajustar_contexto(
-    tokens_reales: int, modelo: str = "default", factor: float = 1.5, min_tokens: int = 2048,
+    tokens_reales: int,
+    modelo: str = "default",
+    factor: float = 1.5,
+    min_tokens: int = 2048,
 ) -> int:
     """Calcula el límite óptimo de contexto para el LLM."""
     max_modelo = MODEL_LIMITS.get(modelo, MODEL_LIMITS["default"])
@@ -103,10 +106,14 @@ def screen(codigo: str, modelo: str = "deepseek-coder:6.7b") -> dict:
     # Código vacío
     if not codigo or not isinstance(codigo, str) or not codigo.strip():
         return {
-            "ok": False, "warning": "Código vacío",
-            "tokens_reales": 0, "contexto_ajustado": 0,
-            "ram_libre_mb": _free_ram_mb(), "ram_pct": 0,
-            "modelo": modelo, "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "ok": False,
+            "warning": "Código vacío",
+            "tokens_reales": 0,
+            "contexto_ajustado": 0,
+            "ram_libre_mb": _free_ram_mb(),
+            "ram_pct": 0,
+            "modelo": modelo,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
 
     ram_libre = _free_ram_mb()
@@ -131,9 +138,12 @@ def screen(codigo: str, modelo: str = "deepseek-coder:6.7b") -> dict:
             return {
                 "ok": False,
                 "warning": f"RAM insuficiente: {ram_libre}MB libre (<{MIN_FREE_RAM_MB}MB)",
-                "tokens_reales": tokens, "contexto_ajustado": ctx,
-                "ram_libre_mb": ram_libre, "ram_pct": ram_pct,
-                "modelo": modelo, "ram_total_mb": ram_total,
+                "tokens_reales": tokens,
+                "contexto_ajustado": ctx,
+                "ram_libre_mb": ram_libre,
+                "ram_pct": ram_pct,
+                "modelo": modelo,
+                "ram_total_mb": ram_total,
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
             }
 
@@ -144,18 +154,22 @@ def screen(codigo: str, modelo: str = "deepseek-coder:6.7b") -> dict:
         warning = f"Tokens ({tokens}) cerca del límite ({max_modelo})"
 
     return {
-        "ok": True, "warning": warning,
-        "tokens_reales": tokens, "contexto_ajustado": ctx,
-        "ram_libre_mb": ram_libre, "ram_pct": ram_pct,
-        "modelo": modelo, "ram_total_mb": ram_total,
+        "ok": True,
+        "warning": warning,
+        "tokens_reales": tokens,
+        "contexto_ajustado": ctx,
+        "ram_libre_mb": ram_libre,
+        "ram_pct": ram_pct,
+        "modelo": modelo,
+        "ram_total_mb": ram_total,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
     }
-
 
 
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
+
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
@@ -169,8 +183,10 @@ def scan_project() -> None:
         except Exception:
             pass
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Token Screen + RAM Guardian")
     parser.add_argument("archivo", nargs="?", help="Archivo .py a analizar")
     parser.add_argument("--texto", type=str, help="Texto directo (sin archivo)")
@@ -202,8 +218,7 @@ def main() -> None:
     if args.json or not result["ok"]:
         pass
     else:
-        int((1 - result["contexto_ajustado"] / max(
-            MODEL_LIMITS.get(result["modelo"], 32768), 1)) * 100)
+        int((1 - result["contexto_ajustado"] / max(MODEL_LIMITS.get(result["modelo"], 32768), 1)) * 100)
 
     sys.exit(0 if result["ok"] else 1)
 

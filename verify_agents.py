@@ -8,6 +8,7 @@ AGENTES_DIR = Path("~/URA/ura_ia_1972/agents/").expanduser()
 OUTPUT_DIR = Path("~/Desktop/").expanduser()
 TELEGRAM_SCRIPT = "/opt/ura/scripts/telegram_notify.sh"
 
+
 def verificar_agente(ruta_agente):
     """Verifica un agente usando subprocess para evitar import side effects."""
     nombre = ruta_agente.name
@@ -16,7 +17,7 @@ def verificar_agente(ruta_agente):
         "estado": "❌ ROTO",
         "errores": [],
         "funciones": [],
-        "arreglado": False
+        "arreglado": False,
     }
 
     # Ignorar __init__.py
@@ -30,7 +31,8 @@ def verificar_agente(ruta_agente):
             ["python3", "-m", "py_compile", str(ruta_agente)],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
+            check=False,
         )
 
         if result.returncode != 0:
@@ -39,10 +41,15 @@ def verificar_agente(ruta_agente):
 
         # Extraer funciones usando ast
         result = subprocess.run(
-            ["python3", "-c", f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])"],
+            [
+                "python3",
+                "-c",
+                f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])",
+            ],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
+            check=False,
         )
 
         if result.returncode == 0:
@@ -66,6 +73,7 @@ def verificar_agente(ruta_agente):
         resultado["errores"].append(f"Error general: {e}")
 
     return resultado
+
 
 def generar_informe(resultados):
     """Genera el informe en formato Markdown."""
@@ -91,16 +99,17 @@ def generar_informe(resultados):
     for resultado in resultados:
         contenido += f"### {resultado['nombre']}\n"
         contenido += f"**Estado:** {resultado['estado']}\n"
-        if resultado['funciones']:
+        if resultado["funciones"]:
             contenido += f"**Funciones:** {', '.join(resultado['funciones'][:5])}\n"
-        if resultado['errores']:
+        if resultado["errores"]:
             contenido += "**Errores:**\n"
-            for error in resultado['errores']:
+            for error in resultado["errores"]:
                 contenido += f"  - {error}\n"
         contenido += "\n"
 
     ruta_informe.write_text(contenido)
     return ruta_informe
+
 
 def enviar_telegram(mensaje):
     """Envía notificación por Telegram."""
@@ -111,6 +120,7 @@ def enviar_telegram(mensaje):
     except Exception:
         pass
     return False
+
 
 def main():
     print(f"🔍 Verificando agentes en {AGENTES_DIR}...")
@@ -144,6 +154,7 @@ def main():
     print("✅ Notificación enviada")
 
     print(f"\n📄 Informe completo: {ruta_informe}")
+
 
 if __name__ == "__main__":
     main()

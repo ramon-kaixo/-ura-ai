@@ -107,6 +107,7 @@ def snapshot(ruta: Path) -> dict:
             capture_output=True,
             text=True,
             timeout=15,
+            check=False,
         )
         info["f821_count"] = len(json.loads(r.stdout)) if r.stdout.strip() else 0
     except Exception:
@@ -164,10 +165,7 @@ def diff(entrada: dict, salida: dict) -> dict:
 
     # Divergencia de tokens
     if resultado["tokens_entrada"] > 0:
-        delta_tok = (
-            abs(resultado["tokens_salida"] - resultado["tokens_entrada"])
-            / resultado["tokens_entrada"]
-        )
+        delta_tok = abs(resultado["tokens_salida"] - resultado["tokens_entrada"]) / resultado["tokens_entrada"]
         if delta_tok > 0.5:
             resultado["alertas"].append(f"Tokens divergen {delta_tok * 100:.0f}%")
             if resultado["accion"] != "ROLLBACK":
@@ -199,7 +197,10 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
     # 1. Ruff fix (indentación, sintaxis básica)
     try:
         subprocess.run(
-            [RUFF, "check", "--fix", "--unsafe-fixes", str(ruta)], capture_output=True, timeout=30,
+            [RUFF, "check", "--fix", "--unsafe-fixes", str(ruta)],
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         reparaciones.append("ruff --fix --unsafe-fixes")
     except Exception:
@@ -207,7 +208,7 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
 
     # 2. Ruff format
     try:
-        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15)
+        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15, check=False)
         reparaciones.append("ruff format")
     except Exception:
         pass
@@ -220,6 +221,7 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
             text=True,
             timeout=15,
             cwd=str(Path(__file__).parent.parent.parent.parent),
+            check=False,
         )
         reparaciones.append("auto_reglas")
     except Exception:
@@ -280,18 +282,22 @@ def escanear(ruta: Path) -> dict:
     return {"modo": "ENTRADA", "snapshot": entrada}
 
 
-
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
+
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
         p = str(py_file)
-        if any(x in p for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]):
+        if any(
+            x in p
+            for x in ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]
+        ):
             continue
         try:
             import ast
+
             content = py_file.read_text()
             tree = ast.parse(content)
             funcs = sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
@@ -299,6 +305,7 @@ def scan_project() -> None:
             results[p] = {"functions": funcs, "classes": classes, "lines": len(content.splitlines())}
         except Exception:
             pass
+
 
 def main() -> None:
     import argparse
@@ -320,9 +327,7 @@ def main() -> None:
 
     if args.diff:
         # Modo SALIDA: comparar
-        snap_path = (
-            Path(".nervioso") / f"snapshot_{ruta.name.replace('/', '_').replace('.', '_')}.json"
-        )
+        snap_path = Path(".nervioso") / f"snapshot_{ruta.name.replace('/', '_').replace('.', '_')}.json"
         if not snap_path.exists():
             sys.exit(1)
         entrada = json.loads(snap_path.read_text())
@@ -346,9 +351,7 @@ def main() -> None:
         token_pct = 0
         if resultado.get("tokens_entrada", 0) > 0:
             token_pct = (
-                abs(resultado["tokens_salida"] - resultado["tokens_entrada"])
-                / resultado["tokens_entrada"]
-                * 100
+                abs(resultado["tokens_salida"] - resultado["tokens_entrada"]) / resultado["tokens_entrada"] * 100
             )
 
         try:
@@ -365,6 +368,7 @@ def main() -> None:
                 text=True,
                 timeout=10,
                 cwd=str(Path(__file__).parent.parent.parent.parent),
+                check=False,
             )
             if r_opt.returncode == 0:
                 opt = json.loads(r_opt.stdout)

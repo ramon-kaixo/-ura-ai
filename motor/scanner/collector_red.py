@@ -1,13 +1,15 @@
-import logging
-import subprocess
 import json
+import logging
 import socket
+import subprocess
+
 from motor.core.config import UraConfig
 
 log = logging.getLogger("ura.scanner.red")
 
 HOST_PING = "8.8.8.8"
 HOST_DNS = "google.com"
+
 
 def escanear_red(config: UraConfig) -> dict:
     """Escanea conectividad de red, tailscale y peers."""
@@ -32,29 +34,43 @@ def escanear_red(config: UraConfig) -> dict:
         r["peer_gateway_timems"] = _latencia(config.asus_host)
     return r
 
+
 def _get_gateway() -> str:
     """Obtiene la IP del gateway por defecto."""
     try:
-        r = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, timeout=5, check=False)
         parts = r.stdout.strip().split()
         return parts[2] if len(parts) >= 3 else ""
     except Exception as e:
         log.debug("gateway falló: %s", e)
         return ""
 
+
 def _ping(host: str) -> bool:
     """Ping básico a un host."""
     try:
-        r = subprocess.run(["ping", "-c1", "-W2" if __import__("sys").platform != "darwin" else "-t2", host], capture_output=True, timeout=5)
+        r = subprocess.run(
+            ["ping", "-c1", "-W2" if __import__("sys").platform != "darwin" else "-t2", host],
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
         return r.returncode == 0
     except Exception as e:
         log.debug("ping %s falló: %s", host, e)
         return False
 
+
 def _latencia(host: str) -> int:
     """Mide latencia en ms a un host via ping."""
     try:
-        r = subprocess.run(["ping", "-c1", "-W3" if __import__("sys").platform != "darwin" else "-t3", host], capture_output=True, text=True, timeout=6)
+        r = subprocess.run(
+            ["ping", "-c1", "-W3" if __import__("sys").platform != "darwin" else "-t3", host],
+            capture_output=True,
+            text=True,
+            timeout=6,
+            check=False,
+        )
         for line in r.stdout.split("\n"):
             if "time=" in line:
                 ms = line.split("time=")[1].split(" ")[0]
@@ -64,20 +80,22 @@ def _latencia(host: str) -> int:
         log.debug("latencia %s falló: %s", host, e)
         return 999
 
+
 def _iface_up(iface: str) -> bool:
     """Verifica si una interfaz de red está levantada."""
     try:
-        r = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True, timeout=3)
+        r = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True, timeout=3, check=False)
         return "UP" in r.stdout and "LOWER_UP" in r.stdout
     except Exception as e:
         log.debug("iface_up %s falló: %s", iface, e)
         return False
 
+
 def _tailscale_status() -> dict:
     """Obtiene estado de peers Tailscale."""
     peers = {}
     try:
-        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5, check=False)
         data = json.loads(r.stdout)
         for k, v in data.get("Peer", {}).items():
             peers[v.get("DNSName", k).rstrip(".")] = {
@@ -88,6 +106,7 @@ def _tailscale_status() -> dict:
     except Exception as e:
         log.debug("tailscale status falló: %s", e)
     return peers
+
 
 def _check_exit_node(peers: dict) -> bool:
     """Determina si el exit node de Tailscale está online."""

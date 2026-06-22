@@ -61,9 +61,9 @@ async def delete_points_before(collection: str, before_ts: str) -> int:
                         {
                             "key": "fecha_publicacion",
                             "range": {"lt": before_ts},
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             },
         )
         r.raise_for_status()
@@ -102,7 +102,13 @@ async def main(dry_run: bool = True) -> dict:
                     "deleted": points_before - points_after,
                     "result": result,
                 }
-                log.info("  %s: eliminados %d puntos (antes=%d, después=%d)", col, stats[col]["deleted"], points_before, points_after)
+                log.info(
+                    "  %s: eliminados %d puntos (antes=%d, después=%d)",
+                    col,
+                    stats[col]["deleted"],
+                    points_before,
+                    points_after,
+                )
             except Exception as e:
                 log.warning("  %s: error: %s", col, e)
                 stats[col] = {"error": str(e)}
@@ -112,6 +118,7 @@ async def main(dry_run: bool = True) -> dict:
 
 if __name__ == "__main__":
     import asyncio
+
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     dry_run = "--apply" not in sys.argv

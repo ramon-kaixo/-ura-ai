@@ -66,13 +66,15 @@ def detectar_patrones(data: dict, umbral: int = 3) -> list[dict]:
     for clave, count in contador.most_common():
         if count >= umbral:
             d = detalles[clave]
-            patrones.append({
-                "tipo": d["tipo"],
-                "mensaje": d["mensaje"],
-                "apariciones": count,
-                "archivos": list(set(d["archivos"])),
-                "diagnostico": _diagnosticar(d["tipo"]),
-            })
+            patrones.append(
+                {
+                    "tipo": d["tipo"],
+                    "mensaje": d["mensaje"],
+                    "apariciones": count,
+                    "archivos": list(set(d["archivos"])),
+                    "diagnostico": _diagnosticar(d["tipo"]),
+                },
+            )
 
     return patrones
 
@@ -141,12 +143,14 @@ def estado() -> dict:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Agregador de Watermarks")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("--marcar-reparado", type=str, help="ID del watermark a marcar reparado")
@@ -173,7 +177,10 @@ def main() -> None:
         with contextlib.suppress(Exception):
             subprocess.run(
                 ["python3", "scripts/pro/auto_reglas.py", "--generar"],
-                capture_output=True, text=True, timeout=15,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
             )
 
     if args.json:

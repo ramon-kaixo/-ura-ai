@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Reglas Applier — Aplica reparaciones deterministas."""
+
 import json
 import os
 import re
@@ -7,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 REGLAS_PATH = Path(os.environ.get("REGLAS_PATH", ".nervioso/reglas_auto.json"))
+
 
 def detectar_f821_en_codigo(codigo: str, archivo: str) -> list[dict]:
     """Detecta F821 en código usando ruff (rápido) o AST fallback."""
@@ -17,6 +19,7 @@ def detectar_f821_en_codigo(codigo: str, archivo: str) -> list[dict]:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         if r.stdout.strip():
             try:
@@ -52,6 +55,7 @@ def _es_import_estandar(nombre: str) -> dict | None:
         except Exception:
             pass
     return None
+
 
 def aplicar_regla_a_codigo(codigo: str, regla: dict) -> tuple[str, bool]:
     """Aplica una regla de reparación al código.
@@ -116,4 +120,3 @@ def aplicar_regla_a_codigo(codigo: str, regla: dict) -> tuple[str, bool]:
         return "\n".join(lines), True
 
     return codigo, False
-

@@ -26,6 +26,7 @@ from motor.core.qdrant_client import COLECCION_TRANSACCIONES, QdrantClient
 
 _qdrant = None
 
+
 def _get_qdrant():
     global _qdrant
     if _qdrant is None:
@@ -117,7 +118,8 @@ def check_monologo() -> bool:
 
     if ok_count == 0 and total > 0:
         agregar_sugerencia(
-            "Master Conciencia: 0 acciones exitosas", "Revisar servidor MCP y tools de Open WebUI",
+            "Master Conciencia: 0 acciones exitosas",
+            "Revisar servidor MCP y tools de Open WebUI",
         )
         return False
 
@@ -148,12 +150,14 @@ def agregar_sugerencia(problema, solucion) -> None:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Alineador URA/OpenClaw")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("--message", type=str, help="Verificar desviacion de un mensaje")

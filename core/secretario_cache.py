@@ -35,7 +35,8 @@ class SecretarioCache:
         payload = {
             "id": f"mac_{datetime.now().timestamp()}",
             "raw": raw,
-            "structure": structure or {"intent": "consulta", "complexity": "simple", "domain": "general", "entities": []},
+            "structure": structure
+            or {"intent": "consulta", "complexity": "simple", "domain": "general", "entities": []},
         }
         try:
             req = urllib.request.Request(
@@ -87,6 +88,7 @@ class SecretarioCache:
 
 if __name__ == "__main__":
     import sys
+
     sc = SecretarioCache()
     if len(sys.argv) > 1 and sys.argv[1] == "status":
         print(json.dumps(sc.estado(), indent=2))

@@ -38,10 +38,7 @@ def discover_all():
 
 def run_phase(phase, context=None, file_path=None):
     plugins = discover_all()
-    phase_plugins = {
-        name: p for name, p in plugins.items()
-        if p.get("phase") == phase or p.get("phase") == "always"
-    }
+    phase_plugins = {name: p for name, p in plugins.items() if p.get("phase") == phase or p.get("phase") == "always"}
 
     if not phase_plugins:
         log(f"Fase '{phase}': sin plugins")
@@ -72,6 +69,7 @@ def run_phase(phase, context=None, file_path=None):
                 text=True,
                 timeout=plugin.get("timeout", 30),
                 cwd=str(SCRIPT_DIR.parent.parent),
+                check=False,
             )
             elapsed = round(time.time() - t0, 2)
 

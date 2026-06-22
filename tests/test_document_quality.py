@@ -1,7 +1,6 @@
-
 """Tests de document_quality."""
-from core.document_quality import detect_language, content_type
-from core.document_quality import source_reliability, doc_id_from_text
+
+from core.document_quality import content_type, detect_language, doc_id_from_text, source_reliability
 
 
 def test_detect_language_spanish():

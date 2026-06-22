@@ -6,6 +6,7 @@ Flujo:
   2. Por cada una, envía al LLM pidiendo dividir en funciones más pequeñas
   3. Aplica el cambio, verifica sintaxis, ejecuta ruff fix
 """
+
 import ast
 import json
 import os
@@ -32,8 +33,6 @@ SKIPPED = 0
 ERRORS = 0
 
 
-
-
 def _ajustar_contexto(tokens_funcion: int, max_modelo: int = 100000, factor: float = 1.5) -> int:
     """Ajusta num_predict dinámicamente para acelerar inferencia."""
     optimo = int(max(tokens_funcion * factor, 2048))
@@ -42,6 +41,8 @@ def _ajustar_contexto(tokens_funcion: int, max_modelo: int = 100000, factor: flo
 
 def _estimar_tokens(codigo: str) -> int:
     return max(len(codigo) // 4, 1)
+
+
 def log(msg: str) -> None:
     pass
 
@@ -50,13 +51,15 @@ def llm(prompt: str, model: str | None = None) -> str:
     model = model or MODEL
     n_tokens = _estimar_tokens(prompt)
     n_predict = _ajustar_contexto(n_tokens)
-    payload = json.dumps({
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "keep_alive": -1,
-        "options": {"temperature": 0.1, "num_predict": n_predict},
-    }).encode()
+    payload = json.dumps(
+        {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "keep_alive": -1,
+            "options": {"temperature": 0.1, "num_predict": n_predict},
+        },
+    ).encode()
     req = urllib.request.Request(
         f"{OLLAMA_URL}/api/generate",
         data=payload,
@@ -86,13 +89,15 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
                     if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
                         n_lines = node.end_lineno - node.lineno
                         if n_lines > threshold:
-                            large.append({
-                                "file": py_path,
-                                "function": node.name,
-                                "lines": n_lines,
-                                "lineno": node.lineno,
-                                "end_lineno": node.end_lineno,
-                            })
+                            large.append(
+                                {
+                                    "file": py_path,
+                                    "function": node.name,
+                                    "lines": n_lines,
+                                    "lineno": node.lineno,
+                                    "end_lineno": node.end_lineno,
+                                },
+                            )
         except (SyntaxError, UnicodeDecodeError, ValueError):
             pass
     return large
@@ -163,7 +168,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     # Simple replacement: swap old function lines with new code
     # The LLM should return code at the same indentation level as the original
-    result = lines[:lineno - 1] + new_lines + lines[end_lineno:]
+    result = lines[: lineno - 1] + new_lines + lines[end_lineno:]
     new_content = "\n".join(result)
 
     try:
@@ -176,7 +181,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
         fix_code = clean_llm_response(fix_resp)
         if fix_code:
             fix_lines = fix_code.splitlines()
-            fix_result = lines[:lineno - 1] + fix_lines + lines[end_lineno:]
+            fix_result = lines[: lineno - 1] + fix_lines + lines[end_lineno:]
             fix_content = "\n".join(fix_result)
             try:
                 compile(fix_content, file_path, "exec")
@@ -185,8 +190,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                     if not backup.exists():
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
-                    subprocess.run(["ruff", "check", "--fix", "--unsafe-fixes", file_path], capture_output=True, timeout=30)
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30)
+                    subprocess.run(
+                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+                        capture_output=True,
+                        timeout=30,
+                        check=False,
+                    )
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
                 log("  ✅ Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -202,10 +212,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
 
-    subprocess.run(["ruff", "check", "--fix", "--unsafe-fixes", file_path],
-                   capture_output=True, timeout=30)
-    subprocess.run(["ruff", "format", file_path],
-                   capture_output=True, timeout=30)
+    subprocess.run(
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
     return True
 
 
@@ -244,7 +257,7 @@ def main() -> None:
             SKIPPED += 1
             continue
 
-        func_source = "\n".join(Path(fname).read_text(encoding="utf-8").splitlines()[lineno - 1:end_lineno])
+        func_source = "\n".join(Path(fname).read_text(encoding="utf-8").splitlines()[lineno - 1 : end_lineno])
         prompt = build_refactor_prompt(func_name, func_source, n_lines)
 
         log("  🤖 LLM...")

@@ -1,16 +1,19 @@
 """Endpoint unificado de estado del sistema — async."""
 
+import asyncio
 import json
 from pathlib import Path
 
-import asyncio
 import httpx
 
 
 async def _ram_info() -> dict:
     try:
         proc = await asyncio.create_subprocess_exec(
-            "free", "-g", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            "free",
+            "-g",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
     except FileNotFoundError:
         return {"error": "free not available"}
@@ -31,9 +34,12 @@ async def _ram_info() -> dict:
 def _fs_bug_status() -> dict:
     repo = Path("/home/ramon/URA/ura_ia_1972")
     critical = [
-        "core/mochila/mochila_server.py", "core/mochila/tools.py",
-        "core/memoria/ficha.py", "core/memoria/ingesto.py",
-        "core/memoria/compresor.py", "core/memoria/qdrant_store.py",
+        "core/mochila/mochila_server.py",
+        "core/mochila/tools.py",
+        "core/memoria/ficha.py",
+        "core/memoria/ingesto.py",
+        "core/memoria/compresor.py",
+        "core/memoria/qdrant_store.py",
         "tests/test_mochila.py",
     ]
     missing = sum(1 for f in critical if not (repo / f).exists())
@@ -43,8 +49,11 @@ def _fs_bug_status() -> dict:
 async def _timer_status(name: str) -> str:
     try:
         proc = await asyncio.create_subprocess_exec(
-            "systemctl", "is-active", name,
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            "systemctl",
+            "is-active",
+            name,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         return stdout.decode().strip()
@@ -64,8 +73,11 @@ async def _tunnel_status() -> dict:
     active = False
     try:
         proc = await asyncio.create_subprocess_exec(
-            "systemctl", "is-active", "ura-hetzner-tunnel",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            "systemctl",
+            "is-active",
+            "ura-hetzner-tunnel",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         active = stdout.decode().strip() == "active"

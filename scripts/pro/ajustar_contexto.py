@@ -72,12 +72,14 @@ def analizar_archivo(ruta: Path) -> dict:
 
 def scan_project() -> None:
     from pathlib import Path as _Path
+
     root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Ajuste Dinámico de Contexto")
     parser.add_argument("--scan", action="store_true", help="Escanear todo el proyecto")
     parser.add_argument("archivo", nargs="?", help="Archivo a analizar")

@@ -21,7 +21,10 @@ HARDENING_CHECKS = [
 def get_all_services() -> list[str]:
     result = subprocess.run(
         ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
     )
     services = []
     for line in result.stdout.splitlines():
@@ -34,7 +37,10 @@ def get_all_services() -> list[str]:
 def check_hardening(service: str) -> dict[str, str]:
     result = subprocess.run(
         ["systemctl", "show", service],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
     )
     props = {}
     for line in result.stdout.splitlines():
@@ -49,7 +55,7 @@ def main() -> int:
     print(f"Auditando {len(services)} servicios URA...\n")
 
     total = 0
-    scored = {s: 0 for s in HARDENING_CHECKS}
+    scored = dict.fromkeys(HARDENING_CHECKS, 0)
 
     for svc in services:
         props = check_hardening(svc)

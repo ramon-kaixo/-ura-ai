@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Model Router Enhanced - Con prompt caching, fallback system, dashboard y POWER_MODE."""
 
+from path_setup import setup_path
 
-from path_setup import setup_path  # noqa: E402
-setup_path()  # noqa: E402
+setup_path()
 import asyncio
 import hashlib
 import http.server
 import json
 import logging
 import os
+import sys
 import threading
 import time
 import urllib.error
@@ -18,25 +19,40 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
-import sys
 
 try:
     from router_rate_limiter import rate_limiter
 except ImportError:
+
     class _NoOpRateLimiter:
-        def check(self, *args, **kwargs): return True
-        def is_allowed(self, *args, **kwargs): return True
-        def wait_if_needed(self, *args, **kwargs): pass
-        def get_metrics(self, *args, **kwargs): return {}
+        def check(self, *args, **kwargs):
+            return True
+
+        def is_allowed(self, *args, **kwargs):
+            return True
+
+        def wait_if_needed(self, *args, **kwargs):
+            pass
+
+        def get_metrics(self, *args, **kwargs):
+            return {}
+
     rate_limiter = _NoOpRateLimiter()
 
 try:
-    from core.auth_layer import validate as auth_validate, require_auth
+    from core.auth_layer import require_auth
+    from core.auth_layer import validate as auth_validate
 except ImportError:
-    def auth_validate(*args, **kwargs): return True
+
+    def auth_validate(*args, **kwargs):
+        return True
+
     def require_auth(*args, **kwargs):
-        def decorator(f): return f
+        def decorator(f):
+            return f
+
         return decorator
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,6 +62,7 @@ log = logging.getLogger(__name__)
 
 # ===== SEGURIDAD: Preflight de politicas (Tareas 0.3 y 0.6) =====
 BYPASS_FILE = Path("/home/ramon/.openclaw/bypass_config.json")
+
 
 def verificar_politicas_seguridad_preflight():
     """Fuerza el cumplimiento de las tareas 0.3 y 0.6. Detiene el servicio si hay configs inseguras."""
@@ -58,14 +75,17 @@ def verificar_politicas_seguridad_preflight():
         print("[-] ERROR FULMINANTE: No se ha detectado OPENCLAW_GATEWAY_TOKEN. Abortando startup por seguridad.")
         sys.exit(78)
 
+
 verificar_politicas_seguridad_preflight()
 # ===== FIN PREFLIGHT =====
 
 try:
     from core.config_manager import get_ollama_urls
 except ImportError:
+
     def get_ollama_urls() -> dict[str, str]:
         return {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
+
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
@@ -123,7 +143,7 @@ class ConcurrentVRAMGuard:
             self._total_processed += 1
             log.debug("[VRAM] Slot adquirido para streaming modelo=%s", modelo)
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._total_timeout += 1
             log.warning("[VRAM] Timeout adquiriendo slot para modelo=%s", modelo)
             return False
@@ -143,13 +163,20 @@ vram_guard = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=30.0)
 
 async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     return await vram_guard.ejecutar_inferencia_segura(
-        _proxy_request_async, path, body, method, modelo, tipo, client_ip,
+        _proxy_request_async,
+        path,
+        body,
+        method,
+        modelo,
+        tipo,
+        client_ip,
     )
 
 
 async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
     import asyncio as _asyncio
+
     return await _asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
@@ -167,11 +194,25 @@ def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip="")
 def _is_local_ip(ip: str) -> bool:
     """Detecta si una IP pertenece a la red local."""
     local_prefixes = (
-        "127.", "10.", "192.168.",
-        "172.16.", "172.17.", "172.18.", "172.19.",
-        "172.20.", "172.21.", "172.22.", "172.23.",
-        "172.24.", "172.25.", "172.26.", "172.27.",
-        "172.28.", "172.29.", "172.30.", "172.31.",
+        "127.",
+        "10.",
+        "192.168.",
+        "172.16.",
+        "172.17.",
+        "172.18.",
+        "172.19.",
+        "172.20.",
+        "172.21.",
+        "172.22.",
+        "172.23.",
+        "172.24.",
+        "172.25.",
+        "172.26.",
+        "172.27.",
+        "172.28.",
+        "172.29.",
+        "172.30.",
+        "172.31.",
     )
     return ip.startswith(local_prefixes)
 
@@ -268,9 +309,39 @@ MODELO_ROUTES = {
 }
 
 PATRONES_CLASIFICACION = {
-    "razonamiento": ["analizar", "planificar", "disenar", "arquitectura", "estrategia", "por que", "explicar", "razonamiento", "logica", "evaluar"],
-    "codigo_complejo": ["refactor", "arquitectura", "patron", "optimizar codigo", "reestructurar", "mejorar", "revisar codigo", "debug complejo"],
-    "codigo_rapido": ["fix", "bug", "error", "corregir", "script", "funcion", "implementar", "crear funcion", "escribir codigo"],
+    "razonamiento": [
+        "analizar",
+        "planificar",
+        "disenar",
+        "arquitectura",
+        "estrategia",
+        "por que",
+        "explicar",
+        "razonamiento",
+        "logica",
+        "evaluar",
+    ],
+    "codigo_complejo": [
+        "refactor",
+        "arquitectura",
+        "patron",
+        "optimizar codigo",
+        "reestructurar",
+        "mejorar",
+        "revisar codigo",
+        "debug complejo",
+    ],
+    "codigo_rapido": [
+        "fix",
+        "bug",
+        "error",
+        "corregir",
+        "script",
+        "funcion",
+        "implementar",
+        "crear funcion",
+        "escribir codigo",
+    ],
     "respuesta_rapida": ["que es", "definir", "resumir", "clasificar", "listar", "explicar brevemente", "describir"],
     "vision": ["imagen", "foto", "grafico", "visual", "analizar imagen", "extraer de imagen", "ocr", "texto en imagen"],
     "embeddings": ["embedding", "vector", "similitud", "buscar", "semantico", "representacion", "codificar"],
@@ -339,16 +410,23 @@ def _check_context_size(messages: list[dict] | list | str | None) -> dict[str, A
     if isinstance(messages, str):
         text = messages
     elif isinstance(messages, list):
-        text = " ".join(
-            msg.get("content", "") if isinstance(msg, dict) else str(msg)
-            for msg in messages
-        )
+        text = " ".join(msg.get("content", "") if isinstance(msg, dict) else str(msg) for msg in messages)
     chars = len(text)
     tokens = _estimate_tokens(text)
     if tokens >= _CONTEXT_SUMMARY_THRESHOLD:
-        return {"tokens": tokens, "chars": chars, "level": "critical", "message": f"Contexto muy grande ({tokens} tokens). Se recomienda resumir antes de enviar."}
+        return {
+            "tokens": tokens,
+            "chars": chars,
+            "level": "critical",
+            "message": f"Contexto muy grande ({tokens} tokens). Se recomienda resumir antes de enviar.",
+        }
     if tokens >= _CONTEXT_WARN_THRESHOLD:
-        return {"tokens": tokens, "chars": chars, "level": "warn", "message": f"Contexto grande ({tokens} tokens). Considera reducir el prompt."}
+        return {
+            "tokens": tokens,
+            "chars": chars,
+            "level": "warn",
+            "message": f"Contexto grande ({tokens} tokens). Considera reducir el prompt.",
+        }
     return {"tokens": tokens, "chars": chars, "level": "ok", "message": f"Contexto normal ({tokens} tokens)."}
 
 
@@ -440,9 +518,7 @@ prompt_cache = PromptCache()
 def clasificar_peticion(messages: list) -> str:
     if not messages:
         return DEFAULT_TIPO
-    texto_completo = " ".join(
-        msg.get("content", "") for msg in messages if isinstance(msg.get("content"), str)
-    ).lower()
+    texto_completo = " ".join(msg.get("content", "") for msg in messages if isinstance(msg.get("content"), str)).lower()
     scores = dict.fromkeys(PATRONES_CLASIFICACION, 0)
     for tipo, patrones in PATRONES_CLASIFICACION.items():
         for patron in patrones:
@@ -528,7 +604,14 @@ def seleccionar_modelo(tipo: str, disponibles: set) -> str:
     return route["modelos"][-1]
 
 
-def proxy_request(path: str, body: bytes | None, method: str = "POST", modelo: str = "", tipo: str = "", client_ip: str = "") -> tuple:
+def proxy_request(
+    path: str,
+    body: bytes | None,
+    method: str = "POST",
+    modelo: str = "",
+    tipo: str = "",
+    client_ip: str = "",
+) -> tuple:
     global OLLAMA_URL
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = _URLS["primary"] if resolved_mode == "TURBO" else _URLS["fallback"]
@@ -663,9 +746,9 @@ def _render_dashboard() -> str:
         lat = _asus_latency_ms
         lat_updated = time.strftime("%H:%M:%S", time.localtime(_asus_latency_updated)) if _asus_latency_updated else ""
     status_class = "status-remote" if backend_label == "ASUS Remoto" else "status-local"
-    auto_sel = 'selected' if POWER_MODE.upper() == "AUTO" else ''
-    turbo_sel = 'selected' if POWER_MODE.upper() == "TURBO" else ''
-    eco_sel = 'selected' if POWER_MODE.upper() == "ECO" else ''
+    auto_sel = "selected" if POWER_MODE.upper() == "AUTO" else ""
+    turbo_sel = "selected" if POWER_MODE.upper() == "TURBO" else ""
+    eco_sel = "selected" if POWER_MODE.upper() == "ECO" else ""
     if POWER_MODE.upper() == "AUTO":
         power_hint = "Clientes locales → ASUS | Remotos → Local"
     elif POWER_MODE.upper() == "TURBO":
@@ -685,13 +768,32 @@ def _render_dashboard() -> str:
         asus_latency = f"{lat} ms"
         latency_updated = lat_updated
     fallback_class = "value-green" if fb_count == 0 else "value-yellow" if fb_count < 5 else "value-red"
-    return _DASHBOARD_HTML.replace("{sc}", status_class).replace("{bl}", backend_label).replace("{bu}", OLLAMA_URL).replace("{lc}", latency_class).replace("{al}", asus_latency).replace("{lu}", latency_updated).replace("{fc}", fallback_class).replace("{fbc}", str(fb_count)).replace("{asel}", auto_sel).replace("{tsel}", turbo_sel).replace("{esel}", eco_sel).replace("{ph}", power_hint)
+    return (
+        _DASHBOARD_HTML.replace("{sc}", status_class)
+        .replace("{bl}", backend_label)
+        .replace("{bu}", OLLAMA_URL)
+        .replace("{lc}", latency_class)
+        .replace("{al}", asus_latency)
+        .replace("{lu}", latency_updated)
+        .replace("{fc}", fallback_class)
+        .replace("{fbc}", str(fb_count))
+        .replace("{asel}", auto_sel)
+        .replace("{tsel}", turbo_sel)
+        .replace("{esel}", eco_sel)
+        .replace("{ph}", power_hint)
+    )
 
 
 def _dashboard_json(client_ip: str = "") -> str:
     _update_asus_latency()
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
-    backend_label = "ASUS Remoto" if resolved_mode == "TURBO" else "Local Mac" if resolved_mode == "ECO" else _get_active_backend_label()
+    backend_label = (
+        "ASUS Remoto"
+        if resolved_mode == "TURBO"
+        else "Local Mac"
+        if resolved_mode == "ECO"
+        else _get_active_backend_label()
+    )
     fb_count = _fallback_count_last_hour()
     with _asus_latency_lock:
         lat = _asus_latency_ms
@@ -701,15 +803,17 @@ def _dashboard_json(client_ip: str = "") -> str:
     for m in sorted(disponibles)[:50]:
         tasks = [k for k, v in MODELO_ROUTES.items() if m in v["modelos"]]
         models_info.append({"name": m, "tasks": tasks or ["disponible"]})
-    return json.dumps({
-        "backend_label": backend_label,
-        "backend_url": OLLAMA_URL,
-        "power_mode": POWER_MODE.upper(),
-        "asus_latency_ms": lat,
-        "latency_updated": lat_updated,
-        "fallback_count_1h": fb_count,
-        "models": models_info,
-    })
+    return json.dumps(
+        {
+            "backend_label": backend_label,
+            "backend_url": OLLAMA_URL,
+            "power_mode": POWER_MODE.upper(),
+            "asus_latency_ms": lat,
+            "latency_updated": lat_updated,
+            "fallback_count_1h": fb_count,
+            "models": models_info,
+        },
+    )
 
 
 class RouterHandler(http.server.BaseHTTPRequestHandler):
@@ -758,15 +862,26 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _handle_api_version(self) -> None:
-        self._send_json({
-            "service": "model_router", "version": "2.2",
-            "ollama": OLLAMA_URL, "port": ROUTER_PORT,
-            "power_mode": POWER_MODE.upper(),
-            "routes": {k: v["descripcion"] for k, v in MODELO_ROUTES.items()},
-            "features": ["prompt_caching", "fallback_system", "metrics",
-                         "adaptive_routing", "per_model_temperature",
-                         "dashboard", "power_mode", "context_checker"],
-        })
+        self._send_json(
+            {
+                "service": "model_router",
+                "version": "2.2",
+                "ollama": OLLAMA_URL,
+                "port": ROUTER_PORT,
+                "power_mode": POWER_MODE.upper(),
+                "routes": {k: v["descripcion"] for k, v in MODELO_ROUTES.items()},
+                "features": [
+                    "prompt_caching",
+                    "fallback_system",
+                    "metrics",
+                    "adaptive_routing",
+                    "per_model_temperature",
+                    "dashboard",
+                    "power_mode",
+                    "context_checker",
+                ],
+            },
+        )
 
     def _handle_health(self) -> None:
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
@@ -774,15 +889,18 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             return
         disponibles = self._get_modelos()
         ollama_ok = len(disponibles) > 0
-        self._send_json({
-            "status": "ok" if ollama_ok else "degraded",
-            "ollama": "reachable" if ollama_ok else "unreachable",
-            "models_available": len(disponibles),
-            "ollama_url": OLLAMA_URL,
-            "power_mode": POWER_MODE.upper(),
-            "cache_size": len(prompt_cache.cache),
-            "metrics_enabled": True,
-        }, 200 if ollama_ok else 503)
+        self._send_json(
+            {
+                "status": "ok" if ollama_ok else "degraded",
+                "ollama": "reachable" if ollama_ok else "unreachable",
+                "models_available": len(disponibles),
+                "ollama_url": OLLAMA_URL,
+                "power_mode": POWER_MODE.upper(),
+                "cache_size": len(prompt_cache.cache),
+                "metrics_enabled": True,
+            },
+            200 if ollama_ok else 503,
+        )
 
     def _handle_metrics(self) -> None:
         self._send_text(metrics.get_prometheus_format())
@@ -796,6 +914,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         sock = None
         try:
             import zmq
+
             ctx = zmq.Context()
             sock = ctx.socket(zmq.REQ)
             sock.setsockopt(zmq.RCVTIMEO, 3000)
@@ -833,6 +952,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         sock = None
         try:
             import zmq
+
             ctx = zmq.Context()
             sock = ctx.socket(zmq.REQ)
             sock.setsockopt(zmq.RCVTIMEO, 3000)
@@ -871,6 +991,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         results = []
         try:
             from core.search_engine import search as fts_search
+
             results = fts_search(query)
         except Exception as e:
             log.warning("search_engine falló: %s", e)
@@ -906,6 +1027,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._send_json(json.loads(_dashboard_json(client_ip=self.client_address[0])))
         elif self.path.startswith("/api/search"):
             import urllib.parse as _up
+
             q = _up.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
             if not q:
                 self._send_json({"error": "parametro q requerido"}, 400)
@@ -920,7 +1042,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._proxy_get()
 
     def _handle_power_mode(self) -> bool:
-        """ Maneja /power_mode. Retorna True si se procesó (no continuar con routing normal)."""
+        """Maneja /power_mode. Retorna True si se procesó (no continuar con routing normal)."""
         global POWER_MODE
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
@@ -945,7 +1067,10 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         """Envía la petición de inferencia a través del proxy con VRAM guard."""
         data = _apply_model_params(data, modelo)
         status, headers, resp_body = _proxy_con_vram(
-            self.path, json.dumps(data).encode(), modelo=modelo, tipo=tipo,
+            self.path,
+            json.dumps(data).encode(),
+            modelo=modelo,
+            tipo=tipo,
             client_ip=self.client_address[0],
         )
         self.send_response(status)
@@ -1015,7 +1140,13 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         metrics.increment("model_selection", {"tipo": tipo, "modelo": selected, "mode": "routed"})
         data["model"] = selected
         new_body = json.dumps(data).encode()
-        status, headers, resp_body = _proxy_con_vram(self.path, new_body, modelo=selected, tipo=tipo, client_ip=self.client_address[0])
+        status, headers, resp_body = _proxy_con_vram(
+            self.path,
+            new_body,
+            modelo=selected,
+            tipo=tipo,
+            client_ip=self.client_address[0],
+        )
         if status == 200 and is_chat and prompt_text:
             try:
                 response_data = json.loads(resp_body)
@@ -1039,7 +1170,7 @@ def main() -> None:
 
     if "--test" in sys.argv:
         idx = sys.argv.index("--test")
-        texto = " ".join(sys.argv[idx + 1:]) if idx + 1 < len(sys.argv) else "hola"
+        texto = " ".join(sys.argv[idx + 1 :]) if idx + 1 < len(sys.argv) else "hola"
         messages = [{"role": "user", "content": texto}]
         tipo = clasificar_peticion(messages)
         disponibles = obtener_modelos_disponibles()
@@ -1085,4 +1216,5 @@ def main() -> None:
 if __name__ == "__main__":
     import sys
     import urllib.parse
+
     main()

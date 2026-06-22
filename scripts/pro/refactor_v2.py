@@ -69,6 +69,7 @@ def ollama_refactor(fi, model):
             capture_output=True,
             text=True,
             timeout=FUNC_TIMEOUT,
+            check=False,
         )
         if r.returncode == 0 and r.stdout.strip():
             return r.stdout.strip()
@@ -164,7 +165,6 @@ def main() -> None:
     tt = round(time.time() - t0, 1)
     ts = sum(r["success"] for r in all_res)
     tf = sum(r["failed"] for r in all_res)
-
 
     report = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),

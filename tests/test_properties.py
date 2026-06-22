@@ -1,10 +1,11 @@
 """Hypothesis property-based tests for URA core modules."""
-from hypothesis import given, settings
-from hypothesis.strategies import text, integers, lists, booleans
 
-from core.query_cache import AsyncQueryCache
+from hypothesis import given, settings
+from hypothesis.strategies import booleans, integers, text
+
 from core.chunking import chunk_semantic
 from core.document_quality import detect_language
+from core.query_cache import AsyncQueryCache
 
 
 @given(text(max_size=500))

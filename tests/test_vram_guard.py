@@ -1,4 +1,5 @@
 """Tests para ConcurrentVRAMGuard (core/model_router.py)."""
+
 import asyncio
 
 import pytest

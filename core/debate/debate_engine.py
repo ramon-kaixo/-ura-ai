@@ -14,6 +14,7 @@ Salida (stdout):
    "primary_reason": "...", "auditor_reason": "...", "verdict": "CONSENSUS",
    "plan_unified": "..."}
 """
+
 import asyncio
 import json
 import logging
@@ -48,23 +49,47 @@ def validar_esquema_salida(raw_output: str, schema_dict: dict | None = None) -> 
         data = json.loads(clean)
         for k, v in schema_dict.items():
             if k not in data:
-                log_event("schema_validation_failed", model="", file="",
-                          reason=f"Missing key: {k}", attempts=0, penalty="",
-                          sandbox_errors=[], complexity=0, temperature=0.0,
-                          result_type="warning")
+                log_event(
+                    "schema_validation_failed",
+                    model="",
+                    file="",
+                    reason=f"Missing key: {k}",
+                    attempts=0,
+                    penalty="",
+                    sandbox_errors=[],
+                    complexity=0,
+                    temperature=0.0,
+                    result_type="warning",
+                )
                 return False
             if isinstance(v, type) and not isinstance(data[k], v):
-                log_event("schema_validation_failed", model="", file="",
-                          reason=f"Key {k}: expected {v.__name__}, got {type(data[k]).__name__}",
-                          attempts=0, penalty="", sandbox_errors=[], complexity=0,
-                          temperature=0.0, result_type="warning")
+                log_event(
+                    "schema_validation_failed",
+                    model="",
+                    file="",
+                    reason=f"Key {k}: expected {v.__name__}, got {type(data[k]).__name__}",
+                    attempts=0,
+                    penalty="",
+                    sandbox_errors=[],
+                    complexity=0,
+                    temperature=0.0,
+                    result_type="warning",
+                )
                 return False
         return True
     except (json.JSONDecodeError, Exception) as e:
-        log_event("schema_validation_failed", model="", file="",
-                  reason=str(e), attempts=0, penalty="",
-                  sandbox_errors=[], complexity=0, temperature=0.0,
-                  result_type="warning")
+        log_event(
+            "schema_validation_failed",
+            model="",
+            file="",
+            reason=str(e),
+            attempts=0,
+            penalty="",
+            sandbox_errors=[],
+            complexity=0,
+            temperature=0.0,
+            result_type="warning",
+        )
         return False
 
 
@@ -178,7 +203,8 @@ async def run_debate(
     async with httpx.AsyncClient() as client:
         tasks = [
             call_ollama(
-                client, ollama_url,
+                client,
+                ollama_url,
                 primary_cfg["name"],
                 build_primary_prompt(plan_text, context),
                 temperature=primary_cfg["temperature"],
@@ -186,7 +212,8 @@ async def run_debate(
                 timeout=timeout,
             ),
             call_ollama(
-                client, ollama_url,
+                client,
+                ollama_url,
                 auditor_cfg["name"],
                 build_auditor_prompt(plan_text, context),
                 temperature=auditor_cfg["temperature"],

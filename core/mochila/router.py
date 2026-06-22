@@ -32,14 +32,38 @@ RUTAS_POR_DEFECTO: dict[str, list[dict]] = {
 
 PATRONES_CLASIFICACION: dict[str, list[str]] = {
     "codigo": [
-        "refactor", "funcion", "clase", "import", "def ", "bug", "fix",
-        "test", "type", "codigo", "implementa", "bash", "script",
-        "terminal", "git", "commit", "push", "pip",
+        "refactor",
+        "funcion",
+        "clase",
+        "import",
+        "def ",
+        "bug",
+        "fix",
+        "test",
+        "type",
+        "codigo",
+        "implementa",
+        "bash",
+        "script",
+        "terminal",
+        "git",
+        "commit",
+        "push",
+        "pip",
     ],
     "razonamiento": [
-        "analiza", "compara", "evalua", "planea", "arquitectura",
-        "estrategia", "diseno", "sistema", "impacto", "pros y contras",
-        "recomienda", "que es mejor",
+        "analiza",
+        "compara",
+        "evalua",
+        "planea",
+        "arquitectura",
+        "estrategia",
+        "diseno",
+        "sistema",
+        "impacto",
+        "pros y contras",
+        "recomienda",
+        "que es mejor",
     ],
 }
 
@@ -64,13 +88,12 @@ class ClasificadorKeyword:
 
         if puntuaciones.get("codigo", 0) > puntuaciones.get("razonamiento", 0):
             return "codigo"
-        elif puntuaciones.get("razonamiento", 0) > puntuaciones.get("codigo", 0):
+        if puntuaciones.get("razonamiento", 0) > puntuaciones.get("codigo", 0):
             return "razonamiento"
         return "rapido"
 
 
-class NoProviderAvailable(Exception):
-    ...
+class NoProviderAvailable(Exception): ...
 
 
 class Router:
@@ -90,7 +113,11 @@ class Router:
                 p, m = modelo_especifico.split("/", 1)
                 if p in self.providers:
                     return RouteResult(provider=p, modelo=m, route_reason=f"explicit:{modelo_especifico}")
-            return RouteResult(provider="ollama", modelo=modelo_especifico, route_reason=f"explicit:{modelo_especifico}")
+            return RouteResult(
+                provider="ollama",
+                modelo=modelo_especifico,
+                route_reason=f"explicit:{modelo_especifico}",
+            )
 
         for entrada in self.rutas.get(tipo, self.rutas["rapido"]):
             p = entrada["provider"]

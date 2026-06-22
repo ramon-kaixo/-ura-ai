@@ -52,11 +52,22 @@ def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> Tuple[int, 
     """
     try:
         r = subprocess.run(
-            ["ssh", "-o", "StrictHostKeyChecking=no",
-             "-o", "ConnectTimeout=5",
-             "-o", "BatchMode=yes",  # Sin prompts de password
-             f"{TAILSCALE_SSH_USER}@{hostname}", comando],
-            capture_output=True, text=True, timeout=timeout)
+            [
+                "ssh",
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "ConnectTimeout=5",
+                "-o",
+                "BatchMode=yes",  # Sin prompts de password
+                f"{TAILSCALE_SSH_USER}@{hostname}",
+                comando,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
         return r.returncode, r.stdout, r.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "timeout"
@@ -98,8 +109,7 @@ def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
 
     if not candidato:
         # Fallback: usar localhost (self)
-        return {"asignado_a": "localhost", "tarea": tarea, "ok": True,
-                "metodo": "local_fallback"}
+        return {"asignado_a": "localhost", "tarea": tarea, "ok": True, "metodo": "local_fallback"}
 
     hostname = candidato[0]
     dev = candidato[1]
@@ -161,10 +171,15 @@ def estado_dispositivos() -> dict:
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Ingestador de Red Global (Tailscale SSH)")
     parser.add_argument("--status", action="store_true", help="Estado de todos los dispositivos")
-    parser.add_argument("--enviar", nargs=2, metavar=("TAREA", "DISPOSITIVO"),
-                       help="Enviar tarea a un dispositivo específico")
+    parser.add_argument(
+        "--enviar",
+        nargs=2,
+        metavar=("TAREA", "DISPOSITIVO"),
+        help="Enviar tarea a un dispositivo específico",
+    )
     parser.add_argument("--distribuir", type=str, help="Distribuir tarea al mejor dispositivo")
     parser.add_argument("--ssh", type=str, help="Tailscale SSH a un hostname")
     parser.add_argument("--json", action="store_true")
@@ -176,8 +191,10 @@ def main() -> None:
 
     if args.enviar:
         tarea, dispositivo = args.enviar
-        exit_code, _out, _err = tailscale_ssh(dispositivo,
-            rf"echo 'Tarea {tarea} ejecutada en \$(hostname)' && hostname")
+        exit_code, _out, _err = tailscale_ssh(
+            dispositivo,
+            rf"echo 'Tarea {tarea} ejecutada en \$(hostname)' && hostname",
+        )
         sys.exit(0 if exit_code == 0 else 1)
 
     if args.distribuir:

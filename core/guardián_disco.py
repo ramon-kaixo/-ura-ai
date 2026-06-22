@@ -30,8 +30,18 @@ CONFIG_PATH = NERVIOSO / "guardian_config.json"
 # ── Config default ──
 DEFAULT_CONFIG = {
     "patrones": ["*.py", "*.json", "*.sh", "*.yaml", "*.yml", "*.md", "*.env", "*.toml"],
-    "excluir": [".venv", "__pycache__", ".git", "backups", ".tox", ".mypy_cache",
-                ".ruff_cache", "node_modules", "site-packages", "GX10"],
+    "excluir": [
+        ".venv",
+        "__pycache__",
+        ".git",
+        "backups",
+        ".tox",
+        ".mypy_cache",
+        ".ruff_cache",
+        "node_modules",
+        "site-packages",
+        "GX10",
+    ],
     "hash_truncar": 64,  # SHA-256 completo
 }
 
@@ -125,8 +135,10 @@ def guardar_historial(cambios: list, total: int) -> None:
 
 # ── Main ──
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Guardián de Disco SHA-256 v2.0")
     parser.add_argument("--scan", action="store_true", help="Escanear y comparar con snapshot")
     parser.add_argument("--init", action="store_true", help="Crear snapshot inicial")
@@ -139,8 +151,7 @@ def main() -> None:
     if args.verify:
         archivo, hash_esp = args.verify
         ok = verificar_escritura(archivo, hash_esp, config)
-        {"archivo": archivo, "hash_esperado": hash_esp,
-                  "existe": Path(URA, archivo).exists(), "coincide": ok}
+        {"archivo": archivo, "hash_esperado": hash_esp, "existe": Path(URA, archivo).exists(), "coincide": ok}
         if args.json or ok:
             pass
         else:
@@ -166,8 +177,7 @@ def main() -> None:
             # Solo comparar si hay snapshot previo
             cambios = comparar(anterior_snap, actual)
         else:
-            cambios = [{"file": f, "status": "INICIAL", "hash": h}
-                       for f, h in sorted(actual.items())]
+            cambios = [{"file": f, "status": "INICIAL", "hash": h} for f, h in sorted(actual.items())]
 
         snapshot = {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -195,7 +205,6 @@ def main() -> None:
                 pass
             else:
                 pass
-
 
 
 if __name__ == "__main__":

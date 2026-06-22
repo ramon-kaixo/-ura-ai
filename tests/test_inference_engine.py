@@ -1,4 +1,5 @@
 """Tests para InferenciaStreamEngine (core/inferencia/engine.py)."""
+
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
@@ -33,7 +34,8 @@ class TestInferenciaStreamEngine:
         mock_router.adquirir_slot_vram.return_value = False
         tokens = []
         async for chunk in engine.ejecutar_inferencia_RAG(
-            "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+            "modelo-test",
+            {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
             tokens.append(chunk)
         assert tokens
@@ -46,7 +48,8 @@ class TestInferenciaStreamEngine:
         tokens = []
         with pytest.raises(asyncio.CancelledError):
             async for chunk in engine.ejecutar_inferencia_RAG(
-                "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+                "modelo-test",
+                {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
             ):
                 tokens.append(chunk)
         assert tokens == []
@@ -63,7 +66,8 @@ class TestInferenciaStreamEngine:
         mock_client.chat.return_value = _mock_chat()
         tokens = []
         async for chunk in engine.ejecutar_inferencia_RAG(
-            "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+            "modelo-test",
+            {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
             tokens.append(chunk)
         assert tokens == ["a", "b", "c"]
@@ -82,7 +86,8 @@ class TestInferenciaStreamEngine:
         tokens = []
         with pytest.raises(asyncio.CancelledError):
             async for chunk in engine.ejecutar_inferencia_RAG(
-                "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+                "modelo-test",
+                {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
             ):
                 tokens.append(chunk)
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")
@@ -98,7 +103,8 @@ class TestInferenciaStreamEngine:
         mock_client.chat.return_value = _mock_chat()
         tokens = []
         async for chunk in engine.ejecutar_inferencia_RAG(
-            "modelo-test", {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10}
+            "modelo-test",
+            {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
             tokens.append(chunk)
         assert "Fallo" in tokens[-1]
