@@ -17,14 +17,14 @@ repos:
       - id: mypy
         args: [--python-version=3.12]
         additional_dependencies: [types-requests]
-        files: ^(core|monitor|motor)/.*\.py$
+        files: ^(core|monitor|motor|agents|scripts/pro)/.*\.py$
 
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.3
     hooks:
       - id: bandit
         args: [-q, -x, "*/tests/*"]
-        files: ^(core|monitor|motor)/.*\.py$
+        files: ^(core|monitor|motor|agents|scripts/pro)/.*\.py$
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
@@ -60,7 +60,7 @@ repos:
         name: Compile core Python files
         entry: python3 -m py_compile
         language: system
-        files: ^(core|mantenimiento|monitor)/.*\.py$
+        files: ^(core|mantenimiento|monitor|motor|agents|scripts/pro)/.*\.py$
         types: [python]
 
       - id: pytest
