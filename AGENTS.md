@@ -27,14 +27,33 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
 ## Architecture
-- `core/` — Domain logic (consciousness, values, forensic scribe, rollback)
+- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `config.py` (UraConfig) + `qdrant_client.py` (proxy hacia motor/)
 - `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
 - `adapters/` — External connectors (Ollama, messaging platforms)
 - `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
+- `knowledge/engine/` — Knowledge Engine (Fases 0-7). Almacenamiento, indexado, lineage, memoria, vectorial, FTS5
 - `scripts/pro/` — Pipeline activo (solo scripts esenciales)
 
+## Fases
+
+| Fase | Estado | Entrega |
+|------|--------|---------|
+| 0–6 | ✅ Cerradas | FTS5, edges, background queue, autorecuperación, reconcile |
+| **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
+| **8** | 📋 **Pendiente** | Hardening, Cobertura y Documentación. Backlog: 9 items. `docs/architecture/FASE8_DESIGN.md` |
+
+### Backlog Fase 8 (desde PHASE7_CLOSEOUT.md v3.0)
+
+| Stream | Items | Prioridad |
+|--------|-------|-----------|
+| Cobertura tests | B02, B03, B04, B08 | Alta |
+| Defensas | M04, M05, M06 | Alta/Media |
+| Documentación | M02, M07, M08, M09 | Baja |
+
+Ver `docs/architecture/FASE8_DESIGN.md` para diseño, plan de pruebas y criterios de aceptación.
+
 ### Pipeline Activo (scripts/pro/)
-**Solo 26 scripts** — los demás fueron eliminados o fusionados:
+**Solo 27 scripts** — los demás fueron eliminados o fusionados:
 
 | Script | Propósito | Llamado por |
 |--------|-----------|-------------|
@@ -47,7 +66,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | `compactadora.py` | Reensamblaje post-LLM | tuneladora_mantenimiento |
 | `compactador_espacios.py` | Compactación pre-LLM | importado por refactor_v2 |
 | `auto_reglas.py` | Deterministic F821 repairs | ambas tuneladoras |
-| `inspectores.py` | 10 inspectores (120 checks) | ambas tuneladoras |
+| `inspectores.py` | 10 inspectores (120 checks), blocking mode | ambas tuneladoras |
 | `watermark_aggregator.py` | Watermark + auto-reglas | tuneladora_mantenimiento |
 | `chunk_optimizer.py` | Recomienda chunk size dinámicamente | scanner_autoajuste |
 | `conciencia.py` | Memory system | pipeline_supremo |
@@ -62,14 +81,13 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | `reglas_loader.py` | Carga reglas | auto_reglas |
 | `sandbox_industrial.py` | Sandbox industrial | manual |
 | `ejecutor_api.py` | API REST puerto 4096 | systemd |
-| `bypass_linksys_gui.py` | Playwright port forwarding | manual (one-shot) |
 | `alineador.py` | Valida respuestas URA/OpenClaw | pipeline_supremo |
 | `analizar_fallo_conciencia.py` | Diagnóstico de conciencia | tuneladora_mantenimiento |
 | `master_conciencia.py` | Testing de acciones URA | tuneladora_mantenimiento |
 | `pareto_router.py` | Distribución 20/80 datos | tuneladora_mantenimiento |
 | `ura_self_modify.py` | Auto-mejora del prompt | tuneladora_mantenimiento |
 
-### Scripts Eliminados/Fusionados (2026-06-04)
+### Scripts Eliminados/Fusionados (2026-06-24)
 - `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py` (commit/rollback)
 - `meta_mejora_real.py` → fusionado con `meta_mejora.py` (medición de impacto)
 - `analisis_llm.py` + `meta_mejora_v2.py` + `reflexion_ura.py` → fusionado en `analisis_completo.py`
@@ -78,9 +96,10 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - `auto_aplicar_mejoras.py` → eliminado (ura_self_modify.py lo hace todo)
 - `reflexion_profunda.py` → eliminado (analizar_fallo_conciencia.py lo reemplaza)
 - `translate_to_english.py` → eliminado (código ya está en inglés)
+- `ia-flujo.service` → eliminado (app/flujo_constante.py nunca existió)
 - 34 scripts huérfanos → movidos a `.nervioso/scripts_eliminados/`
 
-## GX10 (ASUS GB10) — Estado Real (2026-06-03)
+## GX10 (ASUS GB10) — Estado Real (2026-06-24)
 
 ### Hardware NVIDIA GB10 Grace Blackwell Superchip
 - **CPU**: 20 núcleos ARM nativos de alto rendimiento
@@ -92,14 +111,14 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
-| `openclaw` | 18789 | ✅ activo | systemd | Gateway MCP |
+| `ura-openclaw` | 18789 | ✅ activo | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G) |
 | `opencode` | 8081 | ✅ activo | systemd | OpenCode Server |
 | `ura-executor` | 4096 | ✅ activo | systemd | URA Executor API (renombrado de opencode-executor) |
 | `agent-hierarchy` | - | ✅ activo | systemd | URA Agent Hierarchy System |
 | `swarm-discovery` | - | ✅ activo | systemd | URA Swarm Auto-Discovery Service |
 | `ura-agent-bus` | - | ✅ activo | systemd | URA Agent Message Bus |
 | `ura-audit-api` | - | ✅ activo | systemd | URA Audit API (FastAPI) |
-| `ura-contraste` | - | ✅ activo | systemd | Servidor API Proxy de Contraste URA |
+| `ura-contraste` | 8002 | ✅ activo | systemd | Proxy de Contraste + Telemetría POS (POST /api/v1/telemetry + GET /metrics) |
 | `ura-detector` | - | ✅ activo | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis |
 | `ura-go2rtc` | - | ✅ activo | systemd | go2rtc Camera Stream Proxy |
 | `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
@@ -146,13 +165,46 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
   - `vision` → llama3.2-vision:11b, llava:34b, llava:13b
   - `embeddings` → nomic-embed-text:latest, mxbai-embed-large
 
-### OpenClaw Integration
+### OpenClaw Integration (Systemd — 2026-06-20)
 - Gateway: `http://10.164.1.99:18789`
-- Servicio: `openclaw.service` (no openclaw-gateway.service)
+- Servicio: **`ura-openclaw.service`** (systemd nativo con hardening)
+  - `CPUQuota=40%`, `MemoryHigh=1.5G`, `MemoryMax=2G`
+  - `PrivateTmp=true`, `ProtectSystem=full`
+  - `Restart=on-failure` con `RestartSec=10`
+  - `ExecStartPre`: curl retry 30x a Ollama (espera cold-boot de LLM, 42GB)
+  - `TimeoutStartSec=180`: evita SIGKILL del systemd durante carga de pesos GPU
+- Binario: `/usr/bin/node /usr/lib/node_modules/openclaw/dist/index.js gateway --port 18789`
 - MCP: Configurado en OpenCode (Mac) como remote
 - Skills habilitados: github, coding-agent
 - CLI emergencia: `/usr/local/bin/openclaw-admin`
 - Sandbox coding-agent: `/usr/local/bin/coding-agent-sandbox`
+- **Orquestación visual**: n8n (Docker) consume API OpenClaw para tareas multi-agente
+- **Métricas**: Prometheus (Docker) lee latencia/tokens de Open WebUI + ura-audit-api
+
+### URA Contrast Proxy + Telemetría POS (Port 8002)
+- **Servicio**: `ura-contraste.service` (systemd, tipo simple, User=ramon)
+- **Binario**: `/home/ramon/.local/bin/uvicorn proxy_contraste:app --host 0.0.0.0 --port 8002`
+- **⚠️ Prerrequisito externo**: `proxy_contraste.py` vive en `/opt/ura/agents/` fuera del repo. No está en el repositorio por contener tokens de acceso (Bearer). Instalación manual requerida.
+- **Environment**: `/etc/ura/fix-path.conf` (PYTHONPATH=/opt/ura/agents, PATH con ~/.local/bin)
+- **Endpoints**:
+  - `GET /health` — Health check básico
+  - `POST /v1/chat/completions` — Proxy de contraste (OpenAI/Anthropic, Bearer auth)
+  - `POST /api/v1/telemetry` — Ingesta de telemetría POS (Bearer token, Pydantic validated)
+  - `GET /metrics` — Exposición Prometheus OpenMetrics nativo
+- **Autenticación**: Bearer token `URA_SECRET_NODE_TOKEN_HASH_XYZ` en cabecera Authorization
+- **Flujo de datos**: `PowerShell (caja0) → Bearer → proxy_contraste:8002 → Prometheus scrape → alert.rules`
+- **Dependencias**: `tailscaled.service` (resolución MagicDNS para caja0)
+- **Deploy**: `scripts/deploy/ura-contraste.service` + `scripts/deploy/fix-path.conf` + `scripts/deploy/transition_contraste.sh`
+
+### Prometheus + Alertas (Docker)
+- **Servicio**: `ura-prometheus` (Docker, container `prom/prometheus:latest`)
+- **Red**: bridge (172.17.0.0/16), mapeo puerto 127.0.0.1:9093:9090
+- **Config**: `/home/ramon/docker/prometheus/prometheus.yml`
+- **Reglas**: `/home/ramon/docker/prometheus/alert.rules`
+- **Alertas activas**:
+  - `NodoPerifericoDesconectado` (critical) — `time() - nodo_last_seen_timestamp_seconds > 90` por 1m
+  - `ServiceDown` (critical) — detecta servicios URA caídos
+- **UFW**: Regla `allow from 172.17.0.0/16 to any port 8002` para scrape desde Docker
 
 ### Pipeline de Visión por Computadora
 ```
@@ -205,6 +257,17 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 | `ura-sandbox-seguridad` | Auditoría de seguridad | ⚠️ inactivo |
 | `ura-coding-agent-sandbox` | Aislamiento de coding-agent (Docker) | ⚠️ inactivo |
 
+## Core Modification Rule (ADR-007)
+The core (`core/`) is NOT frozen, but modifications require an ADR with:
+- **Justification of necessity**: must demonstrate the change cannot be achieved via Protocol, EventBus subscriber, or external adapter
+- **Migration + rollback plan**: every core change must be reversible
+- **Degradation**: system must work without the modification
+- **Mandatory second-party review**: no autonomous core modifications
+- **Semantic freezing**: observable behavior of existing functions may not change, even if signature stays the same
+- ✅ Allowed: Adding optional fields to `UraConfig`, new event topics, hooks/callbacks (backward-compatible, degradable)
+- ❌ Prohibited: Refactoring/renaming existing symbols, changing method signatures, changing observable behavior, deleting functionality, modifications achievable via Protocol/EventBus instead
+- See `docs/architecture/ADR-007-REGLA_NUCLEO.md` for the full policy
+
 ## Naming Conventions
 - Files: kebab-case for new files (e.g., `ura-panel.py`, `buzo-academico.sh`)
 - Directories: kebab-case (e.g., `agents/cocina/`, `knowledge/fragmentos/`)
@@ -232,15 +295,37 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `CLAUDE.md` — Symlink to AGENTS.md (Claude Code compatibility)
 - `/home/ramon/URA/ura_ia_1972/tuneladora.sh` — Tuneladora unificada (6 fases)
 - `/home/ramon/URA/core/model_router.py` — Model Router Enhanced
+- `docs/architecture/FASE8_DESIGN.md` — Fase 8 design document (live)
+- `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
 - `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
 - `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
+- `core/config.py` — UraConfig (copia local para romper dependencia circular con motor/)
+- `core/qdrant_client.py` — Proxy hacia motor.core.qdrant_client (misma razón)
+- `scripts/pro/lock_manager.py` — Cerrojo GPU (flock/fcntl para colisión tuneladora/crontab)
+- `scripts/pro/gpu_health.py` — Detector power cap GB10 (15W/650MHz)
+- `scripts/pro/gpu_recovery.sh` — Recuperación automática de drivers NVIDIA (regex `^P(0|2|8|12)$`)
+- `scripts/pro/tailscale-acls.json` — Política de aislamiento perimetral Tailscale
+- `scripts/pro/ura-telemetry-pos.ps1` — Agente de telemetría para caja0 (Windows POS)
+- `scripts/pro/crontab_gpu_health.txt` — Crontab de auditoría GPU cada 30 min
+- `scripts/deploy/fix-path.conf` — Environment file para ura-contraste.service
+- `scripts/deploy/ura-contraste.service` — Unidad systemd oficial del proxy de contraste
+- `scripts/deploy/transition_contraste.sh` — Script de transición watchdog→systemd (auto-deploy)
+- `deploy/ura-openclaw.service` — Unidad systemd oficial de OpenClaw (con hardening)
+- `deploy/ura-router-health.service` — Health check del Model Router
+- `deploy/rotate-logs.service` — Rotación de logs vía logrotate
+- `deploy/rotate_logs.timer` — Timer semanal para rotate-logs.service
+- `scripts/watchdog_contraste.py` — Watchdog temporal (fallback si systemd no disponible)
+- `scripts/start_contraste.sh` — Arranque manual proxy_contraste + watchdog
+- `/home/ramon/docker/prometheus/alert.rules` — Regla NodoPerifericoDesconectado
+- `/etc/ura/fix-path.conf` — Environment file desplegado del servicio
 
-## Problemas Conocidos (2026-06-03)
+## Problemas Conocidos (2026-06-24)
+- **ia-flujo.service**: Archivo con flag immutable (`chattr +i`) en deploy/. Pendiente: `sudo chattr -i deploy/ia-flujo.service && rm $_`
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
 - **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
-- **Zombies**: 3 (residuales del reboot, no crecen)
+- **Zombies**: 0 (limpiados durante reparación)
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
