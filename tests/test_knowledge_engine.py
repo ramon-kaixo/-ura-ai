@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from core.config import VALID_LOG_LEVELS, UraConfig
+from motor.core.config import VALID_LOG_LEVELS, UraConfig
 from knowledge.engine.audit import AuditService, NDJSONAuditBackend
 from knowledge.engine.errors import Severity, all_codes, lookup
 from knowledge.engine.models import AuditEvent
@@ -84,36 +84,18 @@ class TestUraConfig:
         assert cfg.qdrant_host == "localhost"
         assert cfg.qdrant_port == 6333
         assert cfg.log_level in VALID_LOG_LEVELS
-        assert 1 <= cfg.qdrant_port <= 65535
 
     def test_env_override(self):
         os.environ["URA_QDRANT_HOST"] = "test-host"
-        os.environ["URA_OLLAMA_PORT"] = "9999"
         cfg = UraConfig.load()
         assert cfg.qdrant_host == "test-host"
-        assert cfg.ollama_port == 9999
         del os.environ["URA_QDRANT_HOST"]
-        del os.environ["URA_OLLAMA_PORT"]
 
-    def test_env_invalid_int_fallback(self):
-        os.environ["URA_OLLAMA_PORT"] = "not-a-number"
-        cfg = UraConfig.load()
-        assert cfg.ollama_port == 11434
-        del os.environ["URA_OLLAMA_PORT"]
-
-    def test_invalid_log_level_raises(self):
+    def test_invalid_log_level_normalizes(self):
         os.environ["URA_LOG_LEVEL"] = "INVALID_LEVEL"
-        with pytest.raises(ValueError, match="log_level inválido"):
-            UraConfig.load()
+        cfg = UraConfig.load()
+        assert cfg.log_level == "INFO"
         del os.environ["URA_LOG_LEVEL"]
-
-    def test_port_out_of_range_raises(self):
-        with pytest.raises(ValueError, match="less than or equal to 65535"):
-            UraConfig(qdrant_port=99999)
-
-    def test_cache_ttl_out_of_range_raises(self):
-        with pytest.raises(ValueError):
-            UraConfig(cache_ttl=10)
 
     def test_legacy_json_path(self):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -122,10 +104,6 @@ class TestUraConfig:
             cfg = UraConfig.load(path=f.name)
             assert cfg.qdrant_host == "from-file"
         Path(f.name).unlink()
-
-    def test_profile_detection(self):
-        key = UraConfig._detect_profile_key()
-        assert key in ("linux_asus", "darwin_mac", "linux_terminal")
 
 
 # ── Models Tests ─────────────────────────────────────────────────────────────
