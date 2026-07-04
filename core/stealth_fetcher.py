@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import random
 
 import httpx
+
+log = logging.getLogger("ura.stealth_fetcher")
 
 USER_AGENTS = [
 "Mozilla/5.0 (Windows NT 10.0
@@ -58,6 +61,7 @@ async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
                 return None
             return resp.text
     except Exception:
+        log.exception("fetch_plain failed for %s", url)
         return None
 
 
@@ -83,12 +87,14 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
                     await page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
                     return await page.content()
                 except Exception:
+                    log.warning("stealth goto failed for %s, falling back", url)
                     await page.close()
                     try:
                         page = await context.new_page()
                         await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
                         return await page.content()
                     except Exception:
+                        log.warning("fallback goto also failed for %s", url)
                         return None
             except ImportError:
                 return None
@@ -99,6 +105,7 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
     except ImportError:
         return None
     except Exception:
+        log.exception("fetch_stealth failed for %s", url)
         return None
 
 

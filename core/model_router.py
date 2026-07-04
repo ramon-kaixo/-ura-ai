@@ -1016,6 +1016,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             sock.send(b"tasks")
             tasks_data = json.loads(sock.recv())
         except Exception:
+            log.exception("Failed to fetch supervisor tasks")
             pass  # noqa: S110
         finally:
             if sock:
