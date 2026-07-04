@@ -1,5 +1,0 @@
-[Unit]
-Description=URA auditd watchdog — check every 5 min
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/ura-auditd-watchdog.sh
