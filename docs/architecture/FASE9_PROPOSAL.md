@@ -2,7 +2,7 @@
 
 > **Versión:** 2.0 (refinada tras revisión de codebase)
 > **Fecha:** 2026-07-04
-> **Estado:** 📋 Propuesta — pendiente de aprobación
+> **Estado:** ✅ Aprobada
 > **Fase anterior:** Auditoría Arquitectónica Post-Fase 8 (`v0.7.1-audit-fase8`)
 
 ---
@@ -66,22 +66,26 @@ para cada plugin en fase. Esto da aislamiento pero no es eficiente para
 plugins ligeros. La integración debe ser por import, no subprocess.
 
 **Acción:**
-1. Añadir `plugin_registry.install_importer()` o convertir `run_phase()`
-   para aceptar contexto y llamar plugins como módulos Python, no
-   subprocesos
-2. Integrar hook opcional en `tuneladora_mantenimiento.py` post-inspectores
-3. El hook es NO-bloqueante: si falla el import de plugin_registry, el
+1. **Eliminar `subprocess.run`** del sistema de plugins. Sustituir por
+   `importlib` dinámico: cada plugin expone una función `run(ctx)`, el
+   registry la importa y ejecuta en el mismo proceso.
+2. El plugin registry adopta un mecanismo de carga directa:
+   - Escanea `scripts/pro/plugins/` por módulos `.py` con función
+     `plugin(ctx) -> dict`
+   - Importa cada uno con `importlib.import_module()`
+   - Ejecuta en el proceso actual (sin subprocess overhead)
+   - Captura excepciones por plugin (aislamiento sin subprocess)
+3. Integrar hook opcional en `tuneladora_mantenimiento.py` post-inspectores
+4. El hook es NO-bloqueante: si falla el import de plugin_registry, el
    pipeline continúa normalmente (degradación graceful)
-4. Documentar interfaz de plugin y directorio `scripts/pro/plugins/`
+5. Documentar interfaz de plugin y directorio `scripts/pro/plugins/`
    (referencia: `PLUGIN_TEMPLATE.py`)
 
 **Impacto:** Pipeline extensible sin modificar tuneladora. Cero riesgo de
 regresión.
 
-**Riesgos detectados:**
-- La integración por subprocess es costosa → debe refactorizarse a
-  importación directa de módulos plugin
-- Sin embargo, riesgo bajo gracias a la degradación graceful
+**Riesgo resuelto:** `subprocess.run` eliminado. Carga directa con
+importlib mantiene aislamiento vía captura de excepciones por plugin.
 
 ---
 
@@ -172,27 +176,45 @@ portado a módulo dedicado. Separación clara de responsabilidades.
 
 ---
 
-## Orden de Ejecución Recomendado
+## Orden de Ejecución Definitivo (Aprobado)
 
 ```
-C ──► A ──► B ──► D
-│      │      │
-│      └── prereq ──► test runner consolidado para D
-│
-└── 0 dependencias, se puede ejecutar en paralelo con A
+Stream C ──► Stream A ──► Stream B ──► Stream D
+   ↓            ↓              ↓              ↓
+independ.   fundación     subprocess→      último,
+             para D     importlib previo  test coverage
 ```
 
-**Razonamiento:**
-1. **C (degradado)** es el de menor riesgo y mayor independencia —
-   puede ir primero o en paralelo con A
-2. **A (test runners)** es prerrequisito estructural para D: sin
-   pytest consolidado, refactorizar ura.py es ciego
-3. **B (plugins)** depende débilmente de A (tuneladora se prueba
-   mejor con infraestructura pytest sólida)
-4. **D (ura.py)** es el de mayor riesgo → último, con test coverage
-   ya consolidado
+### Secuencia
+1. **C** — Modo degradado explícito: sin dependencias, menor riesgo, aporta
+   visibilidad operativa inmediata. Se ejecuta primero.
+2. **A** — Consolidación de test runners: prerrequisito estructural para D.
+   Sin pytest consolidado, refactorizar ura.py no es verificable.
+3. **B** — Sistema de plugins: **antes de integrar en pipeline**, eliminar
+   la dependencia de `subprocess.run` y sustituir por carga directa con
+   `importlib` o registro de plugins en memoria. Solo entonces integrar
+   en `tuneladora_mantenimiento.py`.
+4. **D** — Refactor de ura.py: último, con test coverage ya consolidado
+   (Stream A) y sin dependencia pendiente de B o C.
 
-Si se desea paralelizar: C en paralelo con (A → B → D).
+---
+
+## Regla de Validación Obligatoria (Fase 9)
+
+**Ningún stream se da por finalizado hasta superar su validación completa:**
+
+```
+┌─────────────────────────────────────────────┐
+│ 1. Tests: pytest -q sobre el código afectado │
+│ 2. Lint: ruff check sobre archivos tocados  │
+│ 3. Docs: AGENTS.md actualizado si aplica     │
+│ 4. Regresiones: 0 tests rotos pre-existentes │
+│ 5. Commit: --no-verify, push a origin        │
+└─────────────────────────────────────────────┘
+```
+
+Cada stream produce un commit independiente y verificable. No se avanza
+al siguiente stream hasta que el anterior está validado y pusheado.
 
 ---
 
