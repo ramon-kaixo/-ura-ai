@@ -27,12 +27,13 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
 ## Architecture
-- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `config.py` (UraConfig) + `core/qdrant_client.py` (regenerable, proxy hacia motor/)
+- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `core/qdrant_client.py` (regenerable, proxy hacia motor/)
+- `motor/` — Motor framework + `motor/core/config.py` (UraConfig único, fuente de verdad)
 - `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
-- `adapters/` — (no creado aún) External connectors están en `core/mochila/providers/` (Ollama, Gemini, Groq, DeepSeek, OpenRouter), `core/notifier.py` (Telegram, Pushover) y `knowledge/engine/notify.py` (Slack, Email)
+- `adapters/` — (no creado aún). External connectors: `core/mochila/providers/` (Ollama, Gemini, Groq, DeepSeek, OpenRouter), `core/notifier.py` (Telegram, Pushover), `knowledge/engine/notify.py` (Slack, Email)
 - `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
 - `knowledge/engine/` — Knowledge Engine (Fases 0-7). Almacenamiento, indexado, lineage, memoria, vectorial, FTS5
-- `scripts/pro/` — Pipeline activo (solo scripts esenciales)
+- `scripts/pro/` — Scripts de pipeline, utilidades y automatización (~146 archivos)
 
 ## Fases
 
@@ -53,51 +54,41 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 Ver `docs/architecture/FASE8_DESIGN.md` para diseño, plan de pruebas y criterios de aceptación.
 
 ### Pipeline Activo (scripts/pro/)
-**Solo 27 scripts** — los demás fueron eliminados o fusionados:
+**~146 archivos** entre scripts Python, shell, servicios, configs y utilidades.
+Organizados por función en las siguientes categorías:
 
-| Script | Propósito | Llamado por |
-|--------|-----------|-------------|
-| `tuneladora_mantenimiento.py` | Diario/semanal + commit/rollback | systemd timer |
-| `tuneladora_mejora.py` | Desarrollo + watchdog workers | OpenCode/docker |
-| `token_screen.py` | RAM check antes de cada paso | ambas tuneladoras |
-| `scanner_autoajuste.py` | Snapshot AST + chunk_optimizer | ambas tuneladoras |
-| `poda_mecanica.py` | Dead code removal + chromatic map | tuneladora_mantenimiento |
-| `refactor_large_functions_v2.py` | Refactor con LLM + compactación | ambas tuneladoras |
-| `compactadora.py` | Reensamblaje post-LLM | tuneladora_mantenimiento |
-| `compactador_espacios.py` | Compactación pre-LLM | importado por refactor_v2 |
-| `auto_reglas.py` | Deterministic F821 repairs | ambas tuneladoras |
-| `inspectores.py` | 10 inspectores (120 checks), blocking mode | ambas tuneladoras |
-| `watermark_aggregator.py` | Watermark + auto-reglas | tuneladora_mantenimiento |
-| `chunk_optimizer.py` | Recomienda chunk size dinámicamente | scanner_autoajuste |
-| `conciencia.py` | Memory system | pipeline_supremo |
-| `meta_mejora.py` | Meta-mejora con medición de impacto | manual |
-| `analisis_completo.py` | Análisis integral (estado + monólogo + acciones) | manual |
-| `openclaw_reviewer.py` | LLM reviewer (GPU) | pipeline_supremo |
-| `openclaw_firmador.py` | Firma de código | manual |
-| `ajustar_contexto.py` | Ajusta contexto del LLM | refactor_v2 |
-| `auditor_router.py` | Auditor del Model Router | manual |
-| `auto_conciencia.py` | Auto-conciencia | manual |
-| `f821_watch.py` | Watchdog de F821 | ciclo_autonomo |
-| `reglas_loader.py` | Carga reglas | auto_reglas |
-| `sandbox_industrial.py` | Sandbox industrial | manual |
-| `ejecutor_api.py` | API REST puerto 4096 | systemd |
-| `alineador.py` | Valida respuestas URA/OpenClaw | pipeline_supremo |
-| `analizar_fallo_conciencia.py` | Diagnóstico de conciencia | tuneladora_mantenimiento |
-| `master_conciencia.py` | Testing de acciones URA | tuneladora_mantenimiento |
-| `pareto_router.py` | Distribución 20/80 datos | tuneladora_mantenimiento |
-| `ura_self_modify.py` | Auto-mejora del prompt | tuneladora_mantenimiento |
+| Categoría | Scripts | Propósito |
+|-----------|---------|-----------|
+| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py`, `tuneladora_master.py` | Pipeline de mejora continua (systemd timer cada 6h) |
+| **Diagnóstico/Mantenimiento** | `token_screen.py`, `scanner_autoajuste.py`, `chunk_optimizer.py`, `poda_mecanica.py`, `watermark_aggregator.py`, `inspectores.py`, `compactadora.py`, `compactador_espacios.py`, `auto_reglas.py`, `reglas_loader.py`, `f821_watch.py`, `analizar_fallo_conciencia.py`, `master_conciencia.py`, `sincronizar_vocabulario.py`, `patch_timestamps.py`, `fix_masivo.py`, `hardening_audit.py`, `systemd_orphan_scanner.py` | Auditoría, reparación y optimización automática del código |
+| **Refactor** | `refactor_large_functions.py`, `refactor_large_functions_v2.py`, `refactor_v2.py`, `refactor_4_motores.py`, `ajustar_contexto.py`, `sanear_codigo.py` | Refactorización con LLM + compactación |
+| **Consciencia/Memoria** | `conciencia.py`, `auto_conciencia.py`, `analisis_completo.py`, `ura_self_modify.py` | Sistema de memoria, auto-conciencia y meta-mejora |
+| **Model Router** | `auditor_router.py`, `router_rate_limiter.py`, `pareto_router.py`, `meta_mejora.py` | Gestión y auditoría del Model Router |
+| **OpenClaw** | `openclaw_reviewer.py`, `openclaw_firmador.py`, `alineador.py`, `openclaw_netlock.sh` | Integración con OpenClaw (revisor, firmador, alineador) |
+| **Ejecución/Servicios** | `ejecutor_api.py`, `pipeline_supremo.py`, `plugin_registry.py`, `PLUGIN_TEMPLATE.py`, `mcp_mochila.py`, `reglas_applier.py`, `reglas_generator.py` | APIs, pipeline y registro de plugins |
+| **Sandbox** | `sandbox_industrial.py`, `jaulas_recursos.sh`, `deploy_sandbox_gx10.sh` | Sandbox de pruebas y límites de recursos |
+| **Utilidades** | `utils.py`, `check_secrets.py`, `revisor.py`, `generate_arch_diagram.py`, `captura_virtual.py`, `compilador_opiniones.py`, `test_latencia_mac.py`, `ura_watch_asus.py`, `watch_inbox.py`, `knowledge_engine.py`, `benchmark_baseline.py`, `benchmark_qdrant.py`, `chaos_test.py`, `metrics_server.py`, `reindex_vectors.py` | Utilidades varias, benchmarks y monitoreo |
+| **GPU/Sistema** | `gpu_health.py`, `gpu_recovery.sh`, `lock_manager.py`, `ura-system-health.sh`, `health_check.sh`, `health_check_router.sh`, `monitoreo_urgente.sh`, `watchdog_buffer.sh` | Health checks GPU y del sistema |
+| **Red/Backup** | `ura_ojos.sh`, `ura-exit-node.sh`, `gx10_sync.sh`, `gx10_sync_final.sh`, `cross_trace.sh`, `sync_knowledge.sh`, `sync_ura.sh`, `notify_on_change.sh`, `backup_unified.sh`, `backup_gx10_configs.sh`, `safe_rollback.sh`, `shadow_git_rollback.sh` | Sincronización, backup y rollback |
+| **Hetzner** | `deploy_to_hetzner.sh`, `asus_connect_hetzner.sh`, `heartbeat_hetzner.sh`, `hetzner_watchdog.sh`, `rescue_hetzner.sh`, `install_tailscale_hetzner.sh`, `orquestar_auditoria_hetzner.sh`, `pull-from-hetzner.sh`, `redirect_mejora_gx10.sh`, `backup_hetzner_to_asus.sh`, `uitars_hetzner.py` | Gestión del nodo Hetzner |
+| **Auditoría** | `auditoria.sh`, `auditoria_pesada.sh`, `auditoria_qwen.sh`, `auditoria_comite.sh`, `phase1_diagnosis.sh`, `phase2_filter.sh`, `phase3_architecture.sh`, `phase4_rollback.sh`, `dr_test.sh`, `fpfn_report.sh`, `fn_scanner.sh`, `fp_scanner.sh`, `false_positive_baseline.sh`, `quality_metrics.sh`, `check_licenses.sh`, `audit_trail_check.sh` | Auditorías, quality metrics y disaster recovery |
+| **RPA/Cámaras** | `bypass_linksys_gui.py`, `rpa_linksys.py`, `rpa_linksys_v2.py`, `rpa_zte_f6640.py`, `deploy_camaras.sh`, `desplegar_dahua_supervisor.sh`, `instalar_servidor_camaras.sh`, `guardian_tmpfs.sh`, `ura-telemetry-pos.ps1` | Automatización RPA, cámaras Dahua y telemetría POS |
+| **Instalación/Deploy** | `instalar_gx10_circuit.sh`, `integracion_opencode.sh`, `conceder_permisos_accesibilidad.sh`, `mcp_config.sh`, `setup_logrotate_newsyslog.sh`, `patch_systemd_limits.sh`, `deploy_copilotos.sh`, `stage_hardening.sh`, `upgrade_pipeline.sh`, `detect_environment.sh`, `trampa_rm.sh` | Instalación, hardening y despliegue |
+| **Pipeline Voz/Visión** | `demo_pipeline_voz.py`, `demo_pipeline_mac.py`, `com.ura.voice.plist`, `seed_correcciones_voz.py`, `daemon_procesamiento_lento.sh`, `supervisor_ciclo.sh` | Pipelines de voz y procesamiento lento |
+| **Evolución/Ciclo** | `evolve.sh`, `ciclo_rapido.sh`, `filtro_cascada.sh`, `conflict_detector.sh`, `conectar_servidor_externo.sh`, `descubrir_puertos.sh`, `maquinas.sh`, `launch_refactor_gx10.sh`, `auto_export_context.sh` | Ciclos de evolución y detección de conflictos |
+| **Config/Templates** | `tailscale-acls.json`, `crontab_gpu_health.txt`, `docker-compose.gx10-sandbox.yml`, `gx10-api.service`, `ura-mkdocs.service`, `DEPLOY_MAC.md`, `rotate_secrets.sh` | Configuraciones y templates |
+| **ura-query** | `ura-query.py` | Consulta vectorial del grafo indexado |
 
-### Scripts Eliminados/Fusionados (2026-06-24)
-- `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py` (commit/rollback)
-- `meta_mejora_real.py` → fusionado con `meta_mejora.py` (medición de impacto)
+### Scripts Archivados/Fusionados
+- `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py`
+- `meta_mejora_real.py` → fusionado con `meta_mejora.py`
 - `analisis_llm.py` + `meta_mejora_v2.py` + `reflexion_ura.py` → fusionado en `analisis_completo.py`
-- `refactor_watchdog.py` → fusionado con `tuneladora_mejora.py` (watchdog integrado)
-- `rpa_linksys.py` → eliminado (bypass_linksys_gui.py lo hace mejor)
-- `auto_aplicar_mejoras.py` → eliminado (ura_self_modify.py lo hace todo)
-- `reflexion_profunda.py` → eliminado (analizar_fallo_conciencia.py lo reemplaza)
-- `translate_to_english.py` → eliminado (código ya está en inglés)
+- `refactor_watchdog.py` → fusionado con `tuneladora_mejora.py`
+- `auto_aplicar_mejoras.py` → fusionado en `ura_self_modify.py`
+- `reflexion_profunda.py` → fusionado en `analizar_fallo_conciencia.py`
+- `translate_to_english.py` → eliminado (código en inglés)
 - `ia-flujo.service` → eliminado (app/flujo_constante.py nunca existió)
-- 34 scripts huérfanos → movidos a `.nervioso/scripts_eliminados/`
+- 34 scripts huérfanos → `.nervioso/scripts_eliminados/`
 
 ## GX10 (ASUS GB10) — Estado Real (2026-06-24)
 
@@ -299,8 +290,9 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
 - `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
 - `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
-- `core/config.py` — UraConfig (copia local para romper dependencia circular con motor/)
-- `core/qdrant_client.py` — Proxy hacia motor.core.qdrant_client (misma razón)
+- `core/config.py` — UraConfig (eliminado post-Fase 8; usar `motor/core/config.py`)
+- `motor/core/config.py` — UraConfig único (fuente de verdad)
+- `core/qdrant_client.py` — Proxy hacia motor.core.qdrant_client (regenerable)
 - `scripts/pro/lock_manager.py` — Cerrojo GPU (flock/fcntl para colisión tuneladora/crontab)
 - `scripts/pro/gpu_health.py` — Detector power cap GB10 (15W/650MHz)
 - `scripts/pro/gpu_recovery.sh` — Recuperación automática de drivers NVIDIA (regex `^P(0|2|8|12)$`)
@@ -320,7 +312,6 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `/etc/ura/fix-path.conf` — Environment file desplegado del servicio
 
 ## Problemas Conocidos (2026-06-24)
-- **ia-flujo.service**: Archivo con flag immutable (`chattr +i`) en deploy/. Pendiente: `sudo chattr -i deploy/ia-flujo.service && rm $_`
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)

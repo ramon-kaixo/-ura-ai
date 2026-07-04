@@ -17,8 +17,10 @@ Problemas concretos detectados:
    de que Capa 11 publique eventos en el bus del núcleo ni viceversa.
 2. **Sin camino de vuelta**: El EventBus es unidireccional (core → Capa 11).
    Capa 11 no puede influenciar al núcleo.
-3. **Config duplicada**: `core/config.py` (UraConfig) no tiene el path de la
-   knowledge DB. Cada módulo de Capa 11 lo resuelve por su cuenta.
+3. ~~**Config duplicada**: `core/config.py` (UraConfig) no tenía el path de la
+   knowledge DB. Cada módulo de Capa 11 lo resolvía por su cuenta.~~
+   ✅ **Resuelto en fase de cierre post-Fase 8**: `core/config.py` eliminado,
+   `motor/core/config.py` es la única implementación de `UraConfig`.
 4. **Sin hooks de compilación**: El compilador no puede leer KnowledgeAssets
    para resolver referencias ni disparar re-extracción cuando un documento cambia.
 
