@@ -159,13 +159,18 @@ class QdrantVectorStore:
             return 0
 
     def list_ids(
-        self, limit: int = 100, offset: str | None = None
+        self,
+        limit: int = 100,
+        offset: str | None = None,
+        timeout: float | None = None,
     ) -> tuple[list[str], str | None]:
         """Enumera asset_ids vía scroll API de Qdrant.
 
         Args:
             limit: Máximo de IDs por página (default 100).
             offset: Cursor de paginación (UUID hex). None = primera página.
+            timeout: Timeout en segundos para la llamada scroll.
+                     None = usa el timeout por defecto del cliente HTTP.
 
         Returns:
             Tuple de (ids, next_offset). next_offset=None = última página.
@@ -183,6 +188,7 @@ class QdrantVectorStore:
             resp = self._client.post(
                 f"/collections/{self._collection}/points/scroll",
                 json=body,
+                timeout=timeout,
             )
             resp.raise_for_status()
             data = resp.json()

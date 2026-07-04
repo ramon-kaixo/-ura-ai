@@ -36,7 +36,7 @@ de Fase 7 (PHASE7_CLOSEOUT.md v3.0), con identificadores estables.
 - CA-B02: `tests/benchmark_fase7.py` incluye test que verifica que ninguna
   medición usa `conn.execute()` u otros accesos SQL directos
 - CA-B03: `tests/benchmark_fase7.py` incluye test que verifica que cada
-  target de benchmark tiene un SLA documentado en `docs/architecture/SLA.md`
+  target de benchmark tiene un SLA documentado en `docs/SLA.md`
 - CA-B04: cada medición en benchmark tiene un target numérico validado
   contra el SLA documentado
 - CA-B08: existe script o workflow para ejecutar benchmark en GX10 y
