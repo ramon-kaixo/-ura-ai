@@ -1,9 +1,0 @@
-[Unit]
-Description=URA Network Scanner Timer
-
-[Timer]
-OnBootSec=30s
-OnUnitActiveSec=2min
-
-[Install]
-WantedBy=timers.target

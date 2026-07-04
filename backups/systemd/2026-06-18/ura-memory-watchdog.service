@@ -1,7 +1,0 @@
-[Unit]
-Description=URA Memory Pressure Watchdog
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/ura-memory-watchdog.sh
-User=ramon
