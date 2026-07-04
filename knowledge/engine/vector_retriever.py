@@ -117,8 +117,7 @@ class VectorAugmentedRetriever:
 
         return resolved
 
-    def reconcile(self, dry_run: bool = True,
-                  batch_size: int = 100) -> dict[str, int]:
+    def reconcile(self, dry_run: bool = True, batch_size: int = 100) -> dict[str, int]:
         """Reconcilia AssetStore con VectorStore.
 
         Para cada asset en AssetStore, verifica si existe en VectorStore.
@@ -131,8 +130,7 @@ class VectorAugmentedRetriever:
         Returns:
             Dict con stats: to_upsert, to_delete, upserted, deleted.
         """
-        stats: dict[str, int] = {"to_upsert": 0, "to_delete": 0,
-                                 "upserted": 0, "deleted": 0}
+        stats: dict[str, int] = {"to_upsert": 0, "to_delete": 0, "upserted": 0, "deleted": 0}
 
         if self._embedder is None or self._vector_store is None:
             return stats
@@ -183,7 +181,7 @@ class VectorAugmentedRetriever:
         # Eliminar vectores huérfanos
         orphan_ids = sorted(delete_candidates)
         for i in range(0, len(orphan_ids), batch_size):
-            batch = orphan_ids[i:i + batch_size]
+            batch = orphan_ids[i : i + batch_size]
             deleted = self._vector_store.delete(batch)
             stats["deleted"] += deleted
 
@@ -192,25 +190,32 @@ class VectorAugmentedRetriever:
     def _get_vector_ids(self) -> set[str]:
         """Obtiene IDs de todos los vectores en el store mediante list_ids()."""
         ids: set[str] = set()
+        seen_offsets: set[str] = set()
         try:
             next_offset: str | None = None
             while True:
                 batch, next_offset = self._vector_store.list_ids(
-                    limit=100, offset=next_offset,
+                    limit=100,
+                    offset=next_offset,
                 )
                 if not batch:
                     break
                 ids.update(batch)
                 if not next_offset:
                     break
+                if next_offset in seen_offsets:
+                    logger.warning(
+                        "Duplicate next_offset=%s in _get_vector_ids, breaking loop to prevent infinite pagination",
+                        next_offset,
+                    )
+                    break
+                seen_offsets.add(next_offset)
         except Exception as exc:
             logger.warning("Error getting vector IDs: %s, returning empty set", exc)
             return set()
         return ids
 
-    def _upsert_batch(self, assets: list[KnowledgeAsset],
-                      text_previews: list[str],
-                      stats: dict[str, int]) -> None:
+    def _upsert_batch(self, assets: list[KnowledgeAsset], text_previews: list[str], stats: dict[str, int]) -> None:
         """Embedde y upsert un batch de assets."""
         try:
             vectors = self._embedder.embed(text_previews)

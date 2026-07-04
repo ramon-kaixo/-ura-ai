@@ -156,13 +156,13 @@ Identificadores estables: **B01-B08** (benchmark), **A01-A11** (adversarial),
 | ID | Hallazgo | Tipo | Severidad | Estado | Evidencia (archivo:línea) |
 |----|----------|------|-----------|--------|---------------------------|
 | **B01** | Benchmark FTS5 usa conn.execute() en setup, no en medición | Metodológico | — | ✅ **Corregido** | `benchmark_fase7.py:100` → `search_assets()` |
-| **B02** | Sin test que verifique solo APIs públicas en benchmark | Cobertura tests | — | 🔵 **Backlog** | `benchmark_fase7.py` |
-| **B03** | Sin test de integridad targets benchmark vs SLAs | Cobertura tests | — | 🔵 **Backlog** | `benchmark_fase7.py` |
-| **B04** | Sin verificación targets benchmark vs SLAs documentados | Cobertura tests | — | 🔵 **Backlog** | `benchmark_fase7.py` |
+| **B02** | Sin test que verifique solo APIs públicas en benchmark | Cobertura tests | — | ✅ **Corregido (Fase 8)** | `benchmark_fase7.py` — B02 `_verify_no_direct_sql()` |
+| **B03** | Sin test de integridad targets benchmark vs SLAs | Cobertura tests | — | ✅ **Corregido (Fase 8)** | `benchmark_fase7.py` — B03 `_verify_targets_in_sla()` |
+| **B04** | Sin verificación targets benchmark vs SLAs documentados | Cobertura tests | — | ✅ **Corregido (Fase 8)** | `benchmark_fase7.py` — B04 `_verify_targets_match_sla()` |
 | **B05** | SQL directo en E2E (falso positivo) | Falso positivo | — | ❌ **Descartado** | `e2e_fase7.py:200-238` — todas las ops van por ExtractionService |
 | **B06** | Benchmark lineage usa conn.execute() en setup | Metodológico | — | ✅ **Corregido** | `benchmark_fase7.py:223` → `get_upstream()` |
 | **B07** | Zona gris setup/medición en E2E benchmark | Metodológico | — | ✅ **Corregido** | `benchmark_fase7.py` — verificado sin SQL en mediciones |
-| **B08** | Sin benchmark GX10 real en CI | Cobertura tests | — | 🔵 **Backlog** | `benchmark_fase7.py` |
+| **B08** | Sin benchmark GX10 real en CI | Cobertura tests | — | ✅ **Corregido (Fase 8)** | `scripts/pro/benchmark_baseline.py` — baseline comparison tool |
 | | | | | | |
 | **A01** | conn.close() con UnboundLocalError si open_db() falla | Bug funcional | P0 | ✅ **Corregido** | `asset_store.py:209-231` |
 | **A02** | Mismo patrón en memory_store.py | Bug funcional | P0 | ✅ **Corregido** | `memory_store.py:179-201` |
@@ -177,14 +177,14 @@ Identificadores estables: **B01-B08** (benchmark), **A01-A11** (adversarial),
 | **A11** | check_available() sin backoff en 4xx | Bug funcional | P0 | ✅ **Corregido** | `vector_qdrant.py:221-222` |
 | | | | | | |
 | **M01** | Backfill edges sin idempotencia | Robustez | P1 | ✅ **Corregido** | `v13_to_v14.sql:35,68,90` → DELETE+INSERT |
-| **M02** | _get_vector_ids() no documentado en contratos | Documentación | — | 🔵 **Backlog** | CONTRACTS_FROZEN.md |
+| **M02** | _get_vector_ids() no documentado en contratos | Documentación | — | ✅ **Corregido (Fase 8)** | CONTRACTS_FROZEN.md §6.6 |
 | **M03** | except Exception silencia errores que no son "no such table" | Robustez | P1 | ✅ **Corregido** | `lineage_store.py:77-80` |
-| **M04** | next_offset sin guard en _get_vector_ids() | Defensivo | — | 🔵 **Backlog** | `vector_retriever.py:196-205` |
-| **M05** | scroll API sin timeout en list_ids() | Defensivo | — | 🔵 **Backlog** | `vector_qdrant.py:161-180` |
-| **M06** | proc.wait() sin timeout | Defensivo | — | 🔵 **Backlog** | `extraction_service.py:245-260` |
-| **M07** | Modo degradado sin FTS5 no documentado | Documentación | — | 🔵 **Backlog** | FASE7_DESIGN.md |
-| **M08** | list_ids() omitido en VectorStore Protocol raíz | Documentación | — | 🔵 **Backlog** | CONTRACTS_FROZEN.md |
-| **M09** | Fase 7 no listada en README.md | Documentación | — | 🔵 **Backlog** | README.md |
+| **M04** | next_offset sin guard en _get_vector_ids() | Defensivo | — | ✅ **Corregido (Fase 8)** | `vector_retriever.py:207-213` — `seen_offsets` guard loop |
+| **M05** | scroll API sin timeout en list_ids() | Defensivo | — | ✅ **Corregido (Fase 8)** | `vector_qdrant.py:161-189` — `timeout` param en scroll |
+| **M06** | proc.wait() sin timeout | Defensivo | — | ❌ **Descartado** | Falso positivo — `extraction_service.py` creado con timeout ya presente en commit `9112322` |
+| **M07** | Modo degradado sin FTS5 no documentado | Documentación | — | ✅ **Corregido (Fase 8)** | FASE7_DESIGN.md §10 — heading + alcance ampliado |
+| **M08** | list_ids() omitido en VectorStore Protocol raíz | Documentación | — | ✅ **Corregido (Fase 8)** | CONTRACTS_FROZEN.md §1.2 — `list_ids()` añadido al Protocol |
+| **M09** | Fase 7 no listada en README.md | Documentación | — | ✅ **Corregido (Fase 8)** | `README.md` — creado con tabla de fases |
 | | | | | | |
 | **H1** | _get_vector_ids() loop infinito con >100 vectores | Bug funcional | 🔴 Crítico | ✅ **Corregido** | `vector_retriever.py:188` + `vector_base.py:64` + `vector_qdrant.py:161` |
 
@@ -196,11 +196,11 @@ Identificadores estables: **B01-B08** (benchmark), **A01-A11** (adversarial),
 | ✅ **Corregido (P1)** | 6 | A04, A06, A08, A09, M01, M03 |
 | ✅ **Corregido (benchmark)** | 3 | B01, B06, B07 |
 | ✅ **Corregido (crítico)** | 1 | H1 |
-| 🔵 **Backlog** | 9 | B02-B04, B08, M02, M04-M07 |
-| ❌ **Descartado** | 2 | B05, A10 |
-| **Total corregido** | **16** | |
-| **Total backlog** | **9** | |
-| **Total descartado** | **2** | |
+| ✅ **Corregido (Fase 8)** | 10 | B02, B03, B04, B08, M02, M04, M05, M07, M08, M09 |
+| ❌ **Descartado** | 3 | B05, A10, M06 |
+| 🔵 **Backlog** | 0 | — |
+| **Total corregido** | **26** | |
+| **Total descartado** | **3** | |
 
 Benchmarks refactorizados para APIs públicas (B01, B06, B07).
 16 correcciones totales: 6 P0 + 6 P1 + 3 benchmark + 1 crítico original.

@@ -63,6 +63,13 @@ class VectorStore(Protocol):
     def count(self) -> int:
         """Número total de vectores. 0 si no disponible."""
 
+    def list_ids(
+        self, limit: int = 100, offset: str | None = None
+    ) -> tuple[list[str], str | None]:
+        """Enumera asset_ids almacenados, paginados.
+        Retorna (ids, next_offset). next_offset=None = última página.
+        """
+
     @property
     def available(self) -> bool:
         """True si el almacén está operativo."""
@@ -246,6 +253,21 @@ class VectorAugmentedRetriever:
 | Columna nueva | Tabla | Propósito |
 |---------------|-------|-----------|
 | `result_data` | `op_jobs` | Comunicación subprocess → worker (JSON) |
+
+### 6.6 VectorAugmentedRetriever — _get_vector_ids
+
+```python
+class VectorAugmentedRetriever:
+    # ... métodos de Fase 6+7 sin cambios ...
+
+    def _get_vector_ids(self) -> set[str]:
+        """Obtiene IDs de todos los vectores vía list_ids() paginada.
+
+        Internamente llama a VectorStore.list_ids() en un loop
+        de paginación. Mantiene seen_offsets para detectar y romper
+        loops infinitos. Retorna set vacío si VectorStore falla.
+        """
+```
 
 ---
 

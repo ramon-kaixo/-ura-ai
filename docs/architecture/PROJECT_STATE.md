@@ -1,13 +1,13 @@
 # Knowledge Engine — Project State
 
-> **Versión:** 0.6.0  
-> **Fase actual:** — (todas completadas)  
-> **Última actualización:** 2026-07-03  
-> **Tests:** 461 relevantes — 0 nuevos fallos — 10 preexistentes (test_knowledge_engine: migration fixtures) — 4 error colección (test_openclaw, test_snc_anomalias, test_unit, test_vram_guard)  
+> **Versión:** 0.7.0  
+> **Fase actual:** 8 — Cerrada (todas completadas)  
+> **Última actualización:** 2026-07-04  
+> **Tests:** 471+ pasados — 0 nuevos fallos — 10 preexistentes (test_knowledge_engine: migration fixtures) — 4 error colección (test_openclaw, test_snc_anomalias, test_unit, test_vram_guard)  
 > **Schema:** v14 (FTS5 op_assets/op_memory + op_lineage_edges + op_jobs.result_data)  
 > **Determinismo:** sha256-v2  
 > **API:** REST FastAPI :4097 — OpenAPI en `/docs`  
-> **Últimas auditorías:** `PHASE7_CLOSEOUT.md` v3.0 — Fase 7 cerrada (H1 + 12 correcciones P0/P1 + 2 benchmark + 9 backlog + 2 descartados). `PHASE6_CLOSEOUT.md` — Fase 6 cerrada. `CONTRACTS_FROZEN.md` — v2.0 (Fase 6+7).  
+> **Últimas auditorías:** `PHASE7_CLOSEOUT.md` v3.0 — Fase 7 cerrada (H1 + 12 correcciones P0/P1 + 2 benchmark + 2 descartados). `PHASE6_CLOSEOUT.md` — Fase 6 cerrada. `CONTRACTS_FROZEN.md` — v2.0 (Fase 6+7). Fase 8 cerrada: 10 correcciones (cobertura tests + defensas + documentación).  
 
 ---
 
@@ -237,6 +237,10 @@ Fase L: Chaos             — SIGTERM/KILL, WAL corrupt, disco lleno
                                     1 🔴 corregido (H1 loop infinito) + 12 correcciones P0/P1,
                                     16 corregidos + 9 backlog + 2 descartados — 461 tests passing
                                     — PHASE7_CLOSEOUT.md v3.0 — 2026-07-04
+    Fase 8: Hardening + Docs     — Cobertura tests (B02-B04, B08), defensas (M04, M05),
+                                    documentación (M02, M07-M09), 1 descartado (M06 — falso positivo)
+                                    — 10 correcciones, 0 backlog remanente — 471+ tests pasados
+                                    — 2026-07-04
 ```
 
 ### Pendientes
@@ -251,6 +255,10 @@ Fase L: Chaos             — SIGTERM/KILL, WAL corrupt, disco lleno
 Fase 7: Optimizaciones           — ✅ Cerrada (PHASE7_CLOSEOUT.md v3.0)
                                   Schema v14, 461 tests, 6/6 benchmarks
                                   1 🔴 + 12 P0/P1 + 3 benchmark = 16 corregidos, 9 backlog
+Fase 8: Hardening + Docs         — ✅ Cerrada
+                                  10 correcciones (B02-B04, B08, M02, M04, M05, M07-M09)
+                                  1 descartado (M06 — falso positivo)
+                                  0 backlog remanente. 471+ tests pasados.
 ```
 
 ---
@@ -300,7 +308,7 @@ Fase 7: Optimizaciones           — ✅ Cerrada (PHASE7_CLOSEOUT.md v3.0)
 | `AUDIT_FASE5_GLOBAL.md` | Auditoría global Fase 5 — 5 defectos corregidos, 2 documentados |
 | `AUDIT_CONTRATOS_FASE6.md` | Auditoría de contratos públicos Fase 6 — 3 defectos bloqueantes corregidos |
 | `AUDIT_CONTRATOS_FASE6_V2.md` | Auditoría de contratos v2 — pre-implementación |
-| `CONTRACTS_FROZEN.md` | Interfaces congeladas de Fase 6 — Embedder, VectorStore, VectorAugmentedRetriever |
+| `CONTRACTS_FROZEN.md` | Interfaces congeladas de Fase 6+7+8 — Embedder, VectorStore, VectorAugmentedRetriever |
 | `PREGUNTAS_INCOMODAS.md` | Análisis crítico post-Fase 5 — 10 preguntas incómodas |
 | `AUDIT_PDFEXTRACTOR.md` | Auditoría PdfExtractor |
 | `AUDIT_IMAGEEXTRACTOR.md` | Auditoría ImageExtractor |

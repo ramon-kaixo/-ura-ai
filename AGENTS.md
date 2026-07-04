@@ -40,15 +40,15 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 |------|--------|---------|
 | 0–6 | ✅ Cerradas | FTS5, edges, background queue, autorecuperación, reconcile |
 | **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
-| **8** | 📋 **Pendiente** | Hardening, Cobertura y Documentación. Backlog: 9 items. `docs/architecture/FASE8_DESIGN.md` |
+| **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
 
 ### Backlog Fase 8 (desde PHASE7_CLOSEOUT.md v3.0)
 
-| Stream | Items | Prioridad |
-|--------|-------|-----------|
-| Cobertura tests | B02, B03, B04, B08 | Alta |
-| Defensas | M04, M05, M06 | Alta/Media |
-| Documentación | M02, M07, M08, M09 | Baja |
+| Stream | Items | Prioridad | Estado |
+|--------|-------|-----------|--------|
+| Cobertura tests | B02, B03, B04, B08 | Alta | ✅ Cerrado |
+| Defensas | M04, M05, M06 | Alta/Media | ✅ Cerrado |
+| Documentación | M02, M07, M08, M09 | Baja | ✅ Cerrado |
 
 Ver `docs/architecture/FASE8_DESIGN.md` para diseño, plan de pruebas y criterios de aceptación.
 

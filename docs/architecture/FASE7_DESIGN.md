@@ -1334,7 +1334,11 @@ No hay rollback trivial una vez que los triggers están activos (no se puede des
 
 ---
 
-## 10. Degradación graceful
+## 10. Degradación graceful (Modo Degradado)
+
+> **Alcance:** Esta sección documenta el comportamiento de todos los componentes
+> del Knowledge Engine cuando FTS5 no está disponible (schema v13 previo a
+> migración, o `OperationalError` en tiempo de ejecución).
 
 | Componente | Degradado = ? | Comportamiento |
 |---|---|---|

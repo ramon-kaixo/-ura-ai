@@ -246,10 +246,8 @@ class TestMemoryStoreSearchFts5:
     def test_search_fts5(self, memory_db: SQLiteMemoryStore):
         from knowledge.engine.memory_store import MemoryRecord
 
-        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="ML Notes",
-                                     content="machine learning concepts"))
-        memory_db.save(MemoryRecord(memory_id="m2", kind="note", title="Cooking",
-                                     content="recipes"))
+        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="ML Notes", content="machine learning concepts"))
+        memory_db.save(MemoryRecord(memory_id="m2", kind="note", title="Cooking", content="recipes"))
 
         results = memory_db.search("machine", limit=10)
         assert len(results) == 1
@@ -258,8 +256,7 @@ class TestMemoryStoreSearchFts5:
     def test_search_fts5_case_folding(self, memory_db: SQLiteMemoryStore):
         from knowledge.engine.memory_store import MemoryRecord
 
-        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="Learning Python",
-                                     content="python is great"))
+        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="Learning Python", content="python is great"))
         results = memory_db.search("LEARNING", limit=10)
         assert len(results) == 1
 
@@ -285,8 +282,7 @@ class TestMemoryStoreSearchFts5:
         """)
         conn.commit()
         conn.close()
-        store.save(MemoryRecord(memory_id="m1", kind="note", title="ML Notes",
-                                 content="machine learning"))
+        store.save(MemoryRecord(memory_id="m1", kind="note", title="ML Notes", content="machine learning"))
         results = store.search("machine", limit=10)
         assert len(results) == 1
 
@@ -368,9 +364,7 @@ class TestFts5Triggers:
         asset_db.save_asset(a1)
         conn = sqlite3.connect(str(asset_db._db_path))
         conn.row_factory = sqlite3.Row
-        row = conn.execute(
-            "SELECT title FROM op_assets_fts WHERE id = ?", ("a1",)
-        ).fetchone()
+        row = conn.execute("SELECT title FROM op_assets_fts WHERE id = ?", ("a1",)).fetchone()
         conn.close()
         assert row is not None
         assert row["title"] == "Test Title"
@@ -381,9 +375,7 @@ class TestFts5Triggers:
         asset_db.save_asset(a1)
         conn = sqlite3.connect(str(asset_db._db_path))
         conn.row_factory = sqlite3.Row
-        row = conn.execute(
-            "SELECT title, body FROM op_assets_fts WHERE id = ?", ("a1",)
-        ).fetchone()
+        row = conn.execute("SELECT title, body FROM op_assets_fts WHERE id = ?", ("a1",)).fetchone()
         conn.close()
         assert row is not None
         assert row["title"] == "Test Title"
@@ -392,8 +384,7 @@ class TestFts5Triggers:
     def test_memory_backfill(self, memory_db: SQLiteMemoryStore):
         from knowledge.engine.memory_store import MemoryRecord
 
-        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="Original",
-                                     content="content"))
+        memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="Original", content="content"))
         conn = sqlite3.connect(str(memory_db._db_path))
         conn.row_factory = sqlite3.Row
         count = conn.execute("SELECT count(*) as c FROM op_memory_fts").fetchone()["c"]
@@ -700,7 +691,10 @@ class TestListIds:
 
         vector_store.list_ids.side_effect = mock_list_ids
         retriever = VectorAugmentedRetriever(
-            graph, asset_store, embedder, vector_store,
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
         )
         result = retriever._get_vector_ids()
 
@@ -708,6 +702,37 @@ class TestListIds:
         assert calls == 3
         assert "asset_0" in result
         assert "asset_249" in result
+
+    def test_get_vector_ids_duplicate_offset(self, caplog):
+        """_get_vector_ids() rompe el loop si next_offset se repite (M04)."""
+        graph = MagicMock()
+        asset_store = MagicMock()
+        embedder = MagicMock()
+        embedder.vector_size = 384
+        vector_store = MagicMock()
+
+        calls = 0
+
+        def mock_list_ids(limit=100, offset=None):
+            nonlocal calls
+            calls += 1
+            ids = [f"asset_{calls * 100 + i}" for i in range(100)]
+            return ids, "cursor_stuck"
+
+        vector_store.list_ids.side_effect = mock_list_ids
+        retriever = VectorAugmentedRetriever(
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
+        )
+
+        with caplog.at_level("WARNING"):
+            result = retriever._get_vector_ids()
+
+        assert len(result) == 200
+        assert calls == 2
+        assert "Duplicate next_offset=cursor_stuck" in caplog.text
 
     def test_get_vector_ids_empty(self):
         """_get_vector_ids() con store vacío retorna set vacío."""
@@ -718,7 +743,10 @@ class TestListIds:
         vector_store.list_ids.return_value = ([], None)
 
         retriever = VectorAugmentedRetriever(
-            graph, asset_store, embedder, vector_store,
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
         )
         result = retriever._get_vector_ids()
         assert result == set()
@@ -732,7 +760,10 @@ class TestListIds:
         vector_store.list_ids.side_effect = Exception("degraded")
 
         retriever = VectorAugmentedRetriever(
-            graph, asset_store, embedder, vector_store,
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
         )
         result = retriever._get_vector_ids()
         assert result == set()
@@ -746,10 +777,7 @@ class TestListIds:
         vector_store = MagicMock()
 
         # 250 assets en AssetStore
-        many_assets = [
-            _make_asset(f"a{i}", title=f"Asset {i}")
-            for i in range(250)
-        ]
+        many_assets = [_make_asset(f"a{i}", title=f"Asset {i}") for i in range(250)]
         # list_assets devuelve en batches de 100
         asset_store.list_assets.side_effect = [
             many_assets[0:100],
@@ -763,7 +791,10 @@ class TestListIds:
         vector_store.list_ids.return_value = ([], None)
 
         retriever = VectorAugmentedRetriever(
-            graph, asset_store, embedder, vector_store,
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
         )
         stats = retriever.reconcile(dry_run=True)
 
@@ -785,13 +816,18 @@ class TestListIds:
         asset_store.list_assets.side_effect = [assets, []]
 
         indexed_ids = {f"a{i}" for i in range(30)}
+
         def mock_list_ids(limit=100, offset=None):
             return list(indexed_ids), None
+
         vector_store.list_ids.side_effect = mock_list_ids
         embedder.embed.return_value = [[0.1] * 384]
 
         retriever = VectorAugmentedRetriever(
-            graph, asset_store, embedder, vector_store,
+            graph,
+            asset_store,
+            embedder,
+            vector_store,
         )
         stats = retriever.reconcile(dry_run=True)
 
