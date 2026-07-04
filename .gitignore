@@ -40,3 +40,4 @@ ura_ia_1972/
 reporte_final.json
 models/
 *.*:*
+scripts/deploy/fix-path.conf
