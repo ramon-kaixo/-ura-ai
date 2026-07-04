@@ -1,0 +1,13 @@
+[Unit]
+Description=URA Log Rotation Service
+Documentation=https://github.com/anomalyco/ura
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/sbin/logrotate /etc/logrotate.d/ura
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
