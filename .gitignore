@@ -38,4 +38,5 @@ backup_versiones/
 ura_ia_1972/
 *.tmp
 reporte_final.json
+models/
 *.*:*
