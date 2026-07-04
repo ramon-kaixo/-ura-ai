@@ -25,6 +25,17 @@
 - Notificación: 24h antes vía Telegram
 - Excepción: parches de seguridad críticos sin ventana
 
+## Rendimiento Knowledge Engine (Fase 7)
+
+| Operación | Benchmark | Objetivo |
+|-----------|-----------|----------|
+| FTS5 search (1 asset) — `FTS5 1 asset` | `tests/benchmark_fase7.py` | < 10ms |
+| FTS5 search (1000 assets) — `FTS5 1000 assets` | `tests/benchmark_fase7.py` | < 50ms |
+| FTS5 memory search (10 records) — `FTS5 memory 10 records` | `tests/benchmark_fase7.py` | < 10ms |
+| Lineage edge lookup — `Lineage edge lookup` | `tests/benchmark_fase7.py` | < 5ms |
+| Migration v13→v14 — `Migration v13→v14` | `tests/benchmark_fase7.py` | < 100ms |
+| Pipeline E2E (2 docs) — `E2E Fase 7 (2 docs)` | `tests/benchmark_fase7.py` | < 2000ms |
+
 ## Responsabilidades
 
 - **Uptime**: scripts/pro/health_check.sh cada 5 min
