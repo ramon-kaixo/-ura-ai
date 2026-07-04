@@ -35,7 +35,7 @@ _COLLECTION = "ura_documents"
 def _get_qdrant() -> Any | None:
     """Retorna el singleton de QdrantClient o None si no está disponible."""
     try:
-        from core.config import UraConfig
+        from motor.core.config import UraConfig
         from motor.core.qdrant_client import QdrantClient as MotorQdrant
 
         config = UraConfig()
