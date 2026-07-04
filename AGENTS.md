@@ -27,9 +27,9 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
 ## Architecture
-- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `config.py` (UraConfig) + `qdrant_client.py` (proxy hacia motor/)
+- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `config.py` (UraConfig) + `core/qdrant_client.py` (regenerable, proxy hacia motor/)
 - `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
-- `adapters/` — External connectors (Ollama, messaging platforms)
+- `adapters/` — (no creado aún) External connectors están en `core/mochila/providers/` (Ollama, Gemini, Groq, DeepSeek, OpenRouter), `core/notifier.py` (Telegram, Pushover) y `knowledge/engine/notify.py` (Slack, Email)
 - `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
 - `knowledge/engine/` — Knowledge Engine (Fases 0-7). Almacenamiento, indexado, lineage, memoria, vectorial, FTS5
 - `scripts/pro/` — Pipeline activo (solo scripts esenciales)
