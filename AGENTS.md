@@ -58,16 +58,16 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima |
 | T09 | ~80+ bloques `except: pass` sin auditar | Media |
 
-### Fase 9 — Propuesta (Pendiente de Aprobación)
+### Fase 9 — Propuesta (Aprobada)
 
-Ver `docs/architecture/FASE9_PROPOSAL.md` para streams A–E con impacto funcional o arquitectónico.
+Ver `docs/architecture/FASE9_PROPOSAL.md` para streams A–D con impacto funcional o arquitectónico.
 
 | Stream | Descripción | Esfuerzo |
 |--------|-------------|----------|
 | A | Consolidación de test runners (unificar duplicados, pytest estándar) | 2-3h |
 | B | Integración de sistema de plugins en pipeline | 3-4h |
 | C | Modo degradado explícito con flag global y endpoint /api/v1/status | 2-3h |
-| D | Refactor de ura.py → delegar en motor.cli.main | 3-5h |
+| D | Refactor de ura.py → extraer lógica a motor/cli/cmd_ura.py | 3-5h |
 
 **Criterio:** Solo trabajo con impacto funcional o arquitectónico. La deuda técnica residual (T01–T09) queda fuera de Fase 9 y se aborda como backlog independiente.
 
