@@ -1,0 +1,17 @@
+[Unit]
+Description=Servicio URA Proxy Contraste (Uvicorn)
+After=network.target tailscaled.service
+PartOf=ura-openclaw.service
+
+[Service]
+Type=simple
+User=ramon
+Group=ramon
+WorkingDirectory=/opt/ura/agents
+EnvironmentFile=/etc/ura/fix-path.conf
+ExecStart=/home/ramon/.local/bin/uvicorn proxy_contraste:app --host 0.0.0.0 --port 8002 --workers 1
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

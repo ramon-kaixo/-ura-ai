@@ -1,0 +1,37 @@
+{
+  "version": "sha256-v2",
+  "algorithm": "SHA-256",
+  "serialization": {
+    "method": "json.dumps",
+    "sort_keys": true,
+    "separators": null,
+    "ensure_ascii": true
+  },
+  "nodes": {
+    "table": "kg_nodes",
+    "order_by": "id",
+    "columns": ["id", "type", "path", "content_sha256", "body", "frontmatter", "quality", "confidence"],
+    "excluded_columns": ["embed_hash", "semantic", "updated_at"]
+  },
+  "edges": {
+    "table": "kg_edges",
+    "order_by": "src, dst, relation",
+    "columns": ["src", "dst", "relation"]
+  },
+  "output": {
+    "encoding": "hex",
+    "length": 64,
+    "storage_column": "determinism_hash",
+    "algorithm_column": "determinism_algorithm"
+  },
+  "versions": {
+    "sha256-v1": {
+      "description": "Original",
+      "changes": "Included embed_hash column"
+    },
+    "sha256-v2": {
+      "description": "Current",
+      "changes": "Excluded embed_hash (always NULL)"
+    }
+  }
+}

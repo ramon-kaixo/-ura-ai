@@ -1,0 +1,30 @@
+[Unit]
+Description=Servicio OpenClaw Nativo - Entorno de Produccion
+After=network-online.target ollama.service
+Wants=network-online.target ollama.service
+PartOf=ollama.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon
+ExecStartPre=/usr/bin/curl --silent --fail --retry 30 --retry-delay 5 http://127.0.0.1:11434/api/tags
+ExecStartPre=-/usr/bin/fuser -k 18789/tcp
+ExecStart=/usr/bin/node /usr/lib/node_modules/openclaw/dist/index.js gateway --port 18789
+ExecStop=/bin/kill -s QUIT $MAINPID
+TimeoutStartSec=180
+
+Restart=on-failure
+RestartPreventExitStatus=78
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+CPUQuota=40%
+MemoryHigh=1.5G
+MemoryMax=2G
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
