@@ -42,16 +42,34 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | 0–6 | ✅ Cerradas | FTS5, edges, background queue, autorecuperación, reconcile |
 | **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
 | **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
+| **Auditoría Post-Fase 8** | ✅ **Cerrada** | Saneamiento arquitectónico: unificación config, eliminación código muerto, actualización docs. Tag `v0.7.1-audit-fase8`. `docs/architecture/AUDIT_FASE8_CLOSEOUT.md` |
 
-### Backlog Fase 8 (desde PHASE7_CLOSEOUT.md v3.0)
+### Backlog Deuda Técnica (No Bloqueante)
 
-| Stream | Items | Prioridad | Estado |
-|--------|-------|-----------|--------|
-| Cobertura tests | B02, B03, B04, B08 | Alta | ✅ Cerrado |
-| Defensas | M04, M05, M06 | Alta/Media | ✅ Cerrado |
-| Documentación | M02, M07, M08, M09 | Baja | ✅ Cerrado |
+| ID | Ítem | Prioridad |
+|----|------|-----------|
+| T01 | `core/synonyms.json` con `chattr +i` en disco | Mínima |
+| T02 | `scripts/pro/sanear_codigo.py:50` syntax error | Baja |
+| T03 | 12 archivos .py con caracteres no-ASCII en nombre | Baja |
+| T04 | 5 tests CLI fallan por dependencias del entorno | Baja |
+| T05 | FTS schema verifier falso positivo (tablas extrañas) | Media |
+| T06 | ~2.356 lint errors pre-existentes (ruff all rules) | Baja |
+| T07 | `adapters/` directorio nunca creado | Informativa |
+| T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima |
+| T09 | ~80+ bloques `except: pass` sin auditar | Media |
 
-Ver `docs/architecture/FASE8_DESIGN.md` para diseño, plan de pruebas y criterios de aceptación.
+### Fase 9 — Propuesta (Pendiente de Aprobación)
+
+Ver `docs/architecture/FASE9_PROPOSAL.md` para streams A–E con impacto funcional o arquitectónico.
+
+| Stream | Descripción | Esfuerzo |
+|--------|-------------|----------|
+| A | Consolidación de test runners (unificar duplicados, pytest estándar) | 2-3h |
+| B | Integración de sistema de plugins en pipeline | 3-4h |
+| C | Modo degradado explícito con flag global y endpoint /api/v1/status | 2-3h |
+| D | Refactor de ura.py → delegar en motor.cli.main | 3-5h |
+
+**Criterio:** Solo trabajo con impacto funcional o arquitectónico. La deuda técnica residual (T01–T09) queda fuera de Fase 9 y se aborda como backlog independiente.
 
 ### Pipeline Activo (scripts/pro/)
 **~146 archivos** entre scripts Python, shell, servicios, configs y utilidades.
