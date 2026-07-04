@@ -1,7 +1,0 @@
-[Unit]
-Description=URA Cleanup — purge stale files, rotate logs
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/ura-cleanup.sh
-Nice=19
-IOSchedulingClass=idle
