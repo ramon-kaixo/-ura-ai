@@ -22,6 +22,7 @@
 
 import contextlib
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -30,6 +31,8 @@ import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+
+log = logging.getLogger("ura.multi_agent")
 
 # ── Configuración ──────────────────────────────────────────────────────────
 
@@ -103,6 +106,7 @@ class Telemetria:
             )
             status["model_router"] = "ok" if r.returncode == 0 and "ok" in r.stdout else "down"
         except Exception:
+            log.exception("Error checking model router health")
             status["model_router"] = "down"
 
         # Ollama
@@ -120,6 +124,7 @@ class Telemetria:
             else:
                 status["ollama"] = "down"
         except Exception:
+            log.exception("Error checking Ollama health")
             status["ollama"] = "down"
 
         return status
@@ -151,6 +156,7 @@ class Telemetria:
             )
             return r.stdout.count("F821")
         except Exception:
+            log.exception("Error counting F821")
             return -1
 
     def reporte_completo(self) -> dict:
@@ -178,7 +184,8 @@ class Conciencia:
             try:
                 return json.loads(cls.PATH.read_text())
             except Exception:
-    pass  # noqa: S110
+                log.exception("Error reading conciencia.json")
+                pass  # noqa: S110
         return cls._nuevo()
 
     @classmethod
@@ -340,6 +347,7 @@ class AgenteEjecutor:
                         proc.terminate()
                         proc.wait(timeout=5)
                     except Exception:
+                        log.exception("Error terminating worker process")
                         with contextlib.suppress(Exception):
                             proc.kill()
 
@@ -393,6 +401,7 @@ class AgenteReparador:
             compile(ruta.read_text(), str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_1 repair for %s", ruta)
             return False
 
     def _nivel_2(self, ruta: Path, modelo: str) -> bool:
@@ -443,6 +452,7 @@ class AgenteReparador:
             compile(fixed, str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_2 repair for %s", ruta)
             return False
 
     def _nivel_3(self, ruta: Path) -> bool:
@@ -490,6 +500,7 @@ class AgenteReparador:
             compile(fixed, str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_3 repair for %s", ruta)
             return False
 
 

@@ -17,9 +17,12 @@
 
 import hashlib
 import json
+import logging
 import sys
 import time
 from pathlib import Path
+
+log = logging.getLogger("ura.guardian_disco")
 
 URA = Path("/home/ramon/URA/ura_ia_1972")
 NERVIOSO = URA / ".nervioso"
@@ -75,7 +78,7 @@ def escanear(config: dict) -> dict:
                 rel = str(f.relative_to(URA))
                 actual[rel] = calcular_hash(f, config["hash_truncar"])
             except (PermissionError, OSError):
-                pass
+                log.debug("Skipping inaccessible file: %s", f)
     return actual
 
 

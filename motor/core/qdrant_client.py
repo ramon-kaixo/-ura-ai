@@ -183,6 +183,7 @@ class QdrantClient:
                 if r.status_code == 200:
                     return r.json()["embeddings"]
         except Exception:
+            log.exception("Embedding batch failed")
             pass
         resultados = []
         for t in textos:
@@ -582,6 +583,7 @@ class URAQdrantClient:
             if resp.status_code == 200:
                 return True
         except Exception:
+            log.exception("Collection existence check failed")
             pass
         payload = {
             "vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},

@@ -21,10 +21,13 @@ Estrategia de resolución:
 """
 
 import json
+import logging
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+log = logging.getLogger("ura.resolver_red")
 
 URA = Path(__file__).resolve().parent.parent  # /home/ramon/URA/ura_ia_1972
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -37,7 +40,8 @@ def cargar_inventario() -> dict:
         try:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
-    pass  # noqa: S110
+            log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+            pass  # noqa: S110
     return {"dispositivos": {}}
 
 
@@ -72,7 +76,8 @@ def resolver_dns(hostname: str) -> str | None:
                     if ips:
                         return ips[0]
     except Exception:
-    pass  # noqa: S110
+        log.exception("Error querying Tailscale status for %s", hostname)
+        pass  # noqa: S110
 
     # 3. Fallback: inventario
     inventario = cargar_inventario()
@@ -99,7 +104,8 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
                     ms = float(line.split("time=")[1].split()[0])
                     return True, ms
     except Exception:
-    pass  # noqa: S110
+        log.exception("Error pinging %s", ip)
+        pass  # noqa: S110
     return False, 999
 
 

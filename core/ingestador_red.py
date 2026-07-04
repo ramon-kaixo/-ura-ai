@@ -19,11 +19,14 @@ Estrategia de distribución de tareas:
 """
 
 import json
+import logging
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+log = logging.getLogger("ura.ingestador_red")
 
 URA = Path(__file__).resolve().parent.parent
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -39,7 +42,8 @@ def cargar_inventario() -> dict:
         try:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
-    pass  # noqa: S110
+            log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+            pass  # noqa: S110
     return {"dispositivos": {}}
 
 
