@@ -14,7 +14,7 @@
 | 10.2 | Corregir `core/logs/guardian_logger.py:22` | 🔴 Crítica | ✅ Completado |
 | 10.3 | Resolver 10 tests de KE (FTS5 verifier + migration + qdrant_sync) | 🟡 Alta | ✅ Completado |
 | 10.4 | Resolver 9 tests CLI (`ModuleNotFoundError: scanner/diagnostico/guard`) | 🟡 Alta | ✅ Completado |
-| 10.5 | Unificar subprocess → `SubprocessExecutor` | 🟡 Alta | ⏳ Pendiente |
+| 10.5 | Unificar subprocess → `SubprocessExecutor` (27 calls en 8 archivos motor/) | 🟡 Alta | ✅ Completado |
 | 10.6 | Incrementar cobertura (DegradedMode, PluginRegistry, Executor) | 🟢 Media | ⏳ Pendiente |
 | 10.7 | Reducir deuda lint crítica (C901, S603/S607, PTH123, DTZ005) | 🟢 Media | ⏳ Pendiente |
 
@@ -171,3 +171,47 @@ justificado (bloqueaba todo el pipeline de tests).
 - ✅ `motor/tests/test_cli.py`: 10 passed (antes 9 failed)
 - ✅ Full pytest: 468 passed, 0 failures (antes 19 failed / 449 passed)
 - ✅ Baseline: functionalidad mejorada (468 tests pasando vs 449 en baseline)
+
+### 2026-07-05 — F10-05: Unificar 27 llamadas subprocess → SubprocessExecutor
+
+**Archivos modificados (8):**
+- `motor/scanner/__init__.py` (9 calls) — systemd-detect-virt, systemctl, docker, ps
+- `motor/scanner/collector_red.py` (5 calls) — ip route, ping, ip link, tailscale
+- `motor/scanner/collector_hw_vm.py` (3 calls) — dmesg, lsmod, journalctl
+- `motor/scanner/collector_asus.py` (4 calls) — curl (x3), ssh
+- `motor/scanner/collector_hw_asus.py` (2 calls) — sudo smartctl, tegrastats
+- `motor/guard/preflight.py` (1 call) — ps
+- `motor/guard/verifier.py` (2 calls) — curl, systemctl restart
+- `motor/diagnostico/__init__.py` (1 call) — ps
+
+**Clasificación:**
+| Grupo | Descripción | Archivos |
+|-------|-------------|----------|
+| (1) Migrados | 27 subprocess.run → SubprocessExecutor | 8 archivos motor/ |
+| (2) Permanece | test_cli.py (test de integración CLI) | 1 archivo |
+| (3) Eliminado | N/A — sin código muerto detectado | 0 |
+
+**Patrón de migración:** Cada archivo obtiene un `_executor = SubprocessExecutor()` a nivel de módulo. Las llamadas cambian de:
+```python
+r = subprocess.run(cmd, capture_output=True, text=True, timeout=N, check=False)
+```
+a:
+```python
+r = _executor.run(cmd, timeout=N)
+```
+
+**Equivalencias verificadas:**
+- `r.returncode` ↔ `r.returncode` (mismo nombre)
+- `r.stdout`/`r.stderr` ↔ `r.stdout`/`r.stderr` (mismo nombre, siempre str)
+- `r.returncode == 0` ↔ `r.ok` (equivalente booleano)
+- `check=False` → implícito (executor nunca lanza excepción por returncode)
+- `capture_output=True` → implícito
+- `text=True` → implícito
+- `FileNotFoundError` → capturado por executor internamente, retorna `ProcessResult(ok=False)`
+
+**Validación:**
+- ✅ py_compile: 0 errores en los 8 archivos
+- ✅ Ruff: 0 errores nuevos (solo pre-existentes)
+- ✅ Full pytest: 468 passed, 0 failures (sin regresiones)
+- ✅ Static method `Scanner._es_fisico()` accede correctamente a `_executor` module-level
+- ✅ Baseline: idéntico resultado (468 passed) — 0 regresiones funcionales

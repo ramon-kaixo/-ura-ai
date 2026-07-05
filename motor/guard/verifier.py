@@ -1,12 +1,13 @@
 import json
 import logging
-import subprocess
 import time
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.state import VerifyResult
 
 log = logging.getLogger("ura.guard.verifier")
+_executor = SubprocessExecutor()
 
 URL_OLLAMA = "http://localhost:11435/v1/chat/completions"
 TIMEOUT_VERIFY = 3
@@ -41,7 +42,7 @@ def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> Veri
 def _test_ollama() -> str:
     """Prueba respuesta de Ollama local."""
     try:
-        r = subprocess.run(
+        r = _executor.run(
             [
                 "curl",
                 "-sf",
@@ -53,12 +54,9 @@ def _test_ollama() -> str:
                 "-d",
                 '{"model":"test","messages":[{"role":"user","content":"ping"}]}',
             ],
-            capture_output=True,
-            text=True,
             timeout=10,
-            check=False,
         )
-        if r.returncode == 0:
+        if r.ok:
             try:
                 data = json.loads(r.stdout)
                 if "choices" in data:
@@ -74,6 +72,6 @@ def _test_ollama() -> str:
 def _revertir_cambios():
     """Reinicia el servicio opencode para revertir cambios."""
     try:
-        subprocess.run(["systemctl", "restart", "opencode"], timeout=15, check=False)
+        _executor.run(["systemctl", "restart", "opencode"], timeout=15)
     except Exception as e:
         log.error("revertir cambios falló: %s", e)
