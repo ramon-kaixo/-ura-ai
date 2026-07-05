@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
+ura = "ura:main"
 ura-snc = "monitor.snc:main"
 ura-openclaw = "monitor.openclaw:main"
 ura-router = "core.model_router:main"
@@ -50,7 +51,7 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["tests"]
+testpaths = ["tests", "motor/tests"]
 python_files = ["test_*.py"]
 norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_reports"]
 filterwarnings = ["ignore::DeprecationWarning"]

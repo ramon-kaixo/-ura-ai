@@ -68,13 +68,28 @@ Ver `docs/architecture/FASE9_PROPOSAL.md` para especificación completa.
 |--------|-------------|----------|--------|
 | C | Modo degradado explícito (DegradedMode, /api/v1/status) | 2-3h | ✅ COMPLETADO |
 | B | Modularidad: executor.py, plugin system via importlib, kill shell=True | 8-13h | ✅ COMPLETADO |
-| D | Refactor CLI: extraer ura.py a motor/cli/, console_scripts | 3-5h | Pendiente |
-| A | Calidad: unificar runners, reorganizar tests, Makefile | 2-3h | Pendiente |
-| E | Validación final: baseline, benchmarks, smoke tests, tag | 1-2h | Pendiente |
+| D | Refactor CLI: extraer ura.py a motor/cli/, console_scripts | 3-5h | ✅ COMPLETADO |
+| A | Calidad: unificar runners, reorganizar tests, Makefile | 2-3h | ✅ COMPLETADO |
+| E | Validación final: baseline, benchmarks, smoke tests, tag | 1-2h | ✅ COMPLETADO |
 
 **Regla:** `ura.py` se mantiene como wrapper durante Fase 9 (no se elimina).
 **Cobertura:** No se fuerza umbral mínimo hasta que la cobertura real haya mejorado.
 **Criterio:** Solo trabajo con impacto funcional o arquitectónico. Deuda técnica residual fuera.
+
+### Stream E — Checklist de Validación Final (Obligatorio)
+
+| # | Check | Criterio |
+|---|-------|----------|
+| E.1 | Compilación completa | `py_compile` 0 errores en todos los módulos tocados |
+| E.2 | Ruff sin errores nuevos | `ruff check` — 0 errores nuevos vs baseline |
+| E.3 | Pytest con nuevo recuento | `pytest -q` — mismo resultado que baseline (sin regresiones) |
+| E.4 | Smoke tests CLI | `ura.py help/status/doctor/finalize --help` funcionan |
+| E.5 | Smoke tests API | `ejecutor_api` endpoints /health, /api/v1/status responden |
+| E.6 | Descubrimiento de plugins | `PluginRegistry.scan()` encuentra plugins sin errores |
+| E.7 | Verificación de DegradedMode | `DegradedMode` inicializa, degrada, restaura correctamente |
+| E.8 | Comparación con baseline | diff de tests vs baseline commit (`0d5aed7`) |
+| E.9 | Working tree limpio | `git status` sin cambios sin commitear |
+| E.10 | Documentación sincronizada | AGENTS.md + FASE9_PROPOSAL.md reflejan estado real |
 
 ### Pipeline Activo (scripts/pro/)
 **~146 archivos** entre scripts Python, shell, servicios, configs y utilidades.

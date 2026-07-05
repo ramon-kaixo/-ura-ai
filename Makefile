@@ -11,8 +11,8 @@ ASUS_HOST ?= ramon@10.164.1.99
 # --- Tests ---
 
 test:
-	@echo "[make] Unit tests..."
-	@python3 tests/test_unit.py
+	@echo "[make] Unit tests (pytest)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term
 	@echo ""
 
 pytest:
@@ -121,7 +121,7 @@ clean:
 help:
 	@echo "URA Makefile"
 	@echo ""
-	@echo "  make test        Unit tests (legacy)"
+	@echo "  make test        Pytest (core + monitor + motor)"
 	@echo "  make pytest      Pytest (core + monitor + motor)"
 	@echo "  make lint        Ruff check"
 	@echo "  make mypy        Mypy strict"
