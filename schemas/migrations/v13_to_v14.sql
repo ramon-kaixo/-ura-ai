@@ -71,7 +71,23 @@ SELECT rowid, memory_id, title, content
 FROM op_memory;
 
 -- ============================================================
--- PASO 3: op_lineage_edges (desnormalizada)
+-- PASO 3: Asegurar tabla op_lineage (puede faltar en migraciones)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS op_lineage (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type   TEXT NOT NULL,
+    event_time   TEXT NOT NULL,
+    run_id       TEXT,
+    job_name     TEXT,
+    namespace    TEXT,
+    input_ids    TEXT NOT NULL DEFAULT '[]',
+    output_ids   TEXT NOT NULL DEFAULT '[]',
+    metadata     TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_op_lineage_run ON op_lineage(run_id);
+
+-- ============================================================
+-- PASO 4: op_lineage_edges (desnormalizada)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS op_lineage_edges (
     src         TEXT NOT NULL,
@@ -95,6 +111,6 @@ FROM op_lineage e,
      json_each(e.output_ids) AS je2;
 
 -- ============================================================
--- PASO 4: op_jobs.result_data
+-- PASO 5: op_jobs.result_data
 -- ============================================================
 ALTER TABLE op_jobs ADD COLUMN result_data TEXT;

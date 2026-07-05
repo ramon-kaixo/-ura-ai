@@ -160,7 +160,15 @@ def _sync_upsert(client: Any, doc: Document) -> bool:
         return True
 
     try:
-        client.guardar_documentos_batch(_COLLECTION, points)
+        docs = [
+            (
+                p["payload"]["doc_id"],
+                p["payload"]["text"],
+                {k: v for k, v in p["payload"].items() if k not in ("doc_id", "text")},
+            )
+            for p in points
+        ]
+        client.guardar_documentos_batch(docs, _COLLECTION)
         return True
     except Exception as exc:
         log.warning("Error upsert %s: %s", doc.doc_id, exc)
