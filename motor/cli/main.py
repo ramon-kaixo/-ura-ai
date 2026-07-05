@@ -4,9 +4,26 @@ import sys
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 from motor.cli.cmd_diag import cmd_alerta, cmd_check, cmd_detect, cmd_health_check, cmd_history, cmd_learn, cmd_verify
 from motor.cli.cmd_pipeline import cmd_calibrate, cmd_diagnose, cmd_pipeline, cmd_scan
 from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd_summarise, cmd_trend
+from motor.cli.cmd_ura import cmd_alerts as ura_cmd_alerts
+from motor.cli.cmd_ura import (
+    cmd_ask,
+    cmd_dashboard,
+    cmd_doctor,
+    cmd_finalize,
+    cmd_health,
+    cmd_index,
+    cmd_maintenance,
+    cmd_memory,
+    cmd_metrics,
+    cmd_rotate,
+    cmd_snapshot,
+    cmd_snc,
+    cmd_test,
+)
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
 
@@ -33,6 +50,26 @@ COMMANDS = {
     "bench": cmd_bench,
 }
 
+URA_COMMANDS: dict[str, object] = {
+    "finalize": cmd_finalize,
+    "test": cmd_test,
+    "snapshot": cmd_snapshot,
+    "maintenance": cmd_maintenance,
+    "clean": cmd_maintenance,
+    "rotate": cmd_rotate,
+    "health": cmd_health,
+    "alerts": ura_cmd_alerts,
+    "logs": ura_cmd_alerts,
+    "snc": cmd_snc,
+    "heartbeat": cmd_snc,
+    "doctor": cmd_doctor,
+    "metrics": cmd_metrics,
+    "dashboard": cmd_dashboard,
+    "index": cmd_index,
+    "ask": cmd_ask,
+    "memory": cmd_memory,
+}
+
 
 def _setup_logging(level: str):
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -44,7 +81,7 @@ def _setup_logging(level: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
+    parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -53,13 +90,9 @@ def main():
     sp.add_argument("--dry-run", action="store_true", help="No ejecutar escaneo real")
     sub.add_parser("scan", help="Solo escanear")
     sub.add_parser("diagnose", help="Solo diagnosticar (requiere scan previo)")
-    sub.add_parser("status", help="Estado unificado")
+    sub.add_parser("status", help="Estado unificado (Knowledge Engine)")
     sp_check = sub.add_parser("check", help="Preflight check / purge")
-    sp_check.add_argument(
-        "--purge",
-        action="store_true",
-        help="Purgar huerfanos: stale PIDs, failed units, dangling Docker",
-    )
+    sp_check.add_argument("--purge", action="store_true", help="Purgar huerfanos")
     sub.add_parser("verify", help="Verificación post-cambio")
     sub.add_parser("history", help="Historial de incidentes desde Qdrant")
     sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
@@ -74,16 +107,25 @@ def main():
     sub.add_parser("learn", help="Analizar tendencias y extraer conocimiento")
     sub.add_parser("notify", help="Enviar notificación si hay alertas activas")
     sub.add_parser("bench", help="Benchmark de rendimiento del pipeline")
-
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
+
+    for name in ("finalize", "test", "snapshot", "maintenance", "clean",
+                  "rotate", "health", "alerts", "logs", "snc", "heartbeat",
+                  "doctor", "metrics", "dashboard", "index", "ask", "memory"):
+        s = sub.add_parser(name)
+        s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
 
     args = parser.parse_args()
     _setup_logging(args.log_level)
     config = UraConfig.load(args.config)
     config.log_level = args.log_level
 
-    COMMANDS[args.command](config, args)
+    if args.command in COMMANDS:
+        COMMANDS[args.command](config, args)
+    elif args.command in URA_COMMANDS:
+        raw_args = getattr(args, "raw", [])
+        sys.exit(URA_COMMANDS[args.command](config, raw_args))
 
 
 if __name__ == "__main__":
