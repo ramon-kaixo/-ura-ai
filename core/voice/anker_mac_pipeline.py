@@ -67,8 +67,8 @@ class AnkerMacPipeline:
     def _trigger_macos_notification(self, title: str, message: str, sound: str = "Tink") -> None:
         """Banner nativo macOS asíncrono — sin bloqueo del pipeline."""
         script = f'display notification "{message}" with title "{title}" sound name "{sound}"'
-        subprocess.Popen(
-            ["osascript", "-e", script],
+        subprocess.Popen(  # noqa: S603  -- script construido internamente con título/mensaje/sonido fijos
+            ["osascript", "-e", script],  # noqa: S607  -- script construido internamente con título/mensaje/sonido fijos
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

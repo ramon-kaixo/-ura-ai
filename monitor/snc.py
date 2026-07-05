@@ -319,7 +319,8 @@ def poll_services(runbook: dict) -> dict:
                 # Lanzar openclaw.py como proceso independiente
                 openclaw_script = Path(__file__).parent / "openclaw.py"
                 if openclaw_script.exists():
-                    proc = subprocess.Popen(  # noqa: S603  -- sys.executable + script conocido
+                    proc = subprocess.Popen(  # noqa: S603
+                        [sys.executable, str(openclaw_script)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                     )
@@ -344,7 +345,8 @@ def poll_services(runbook: dict) -> dict:
             openclaw_stable_since = None
 
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
-            subprocess.run(  # noqa: S603,S607  -- PKILL constante
+            subprocess.run(  # noqa: S603,S607
+                [PKILL, "-TERM", "-f", "openclaw"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -412,7 +414,8 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 
     result: list[tuple[int, str, float]] = []
     try:
-        out = subprocess.run(  # noqa: S603,S607  -- ps constante
+        out = subprocess.run(  # noqa: S603
+            ["ps", "aux", "--sort=-%cpu"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -443,7 +446,8 @@ def check_opencode_colgado() -> int | None:
     Retorna el PID si está colgado, None si no lo encuentra o CPU normal.
     """
     try:
-        pid = subprocess.run(  # noqa: S603,S607  -- pgrep constante
+        pid = subprocess.run(  # noqa: S603
+            [PGREP, "-x", "opencode"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -452,7 +456,8 @@ def check_opencode_colgado() -> int | None:
         if not pid.stdout.strip():
             return None
         raw_pid = int(pid.stdout.strip().split()[0])
-        cpu = subprocess.run(  # noqa: S603,S607  -- ps con PID interno
+        cpu = subprocess.run(  # noqa: S603
+            ["ps", "-p", str(raw_pid), "-o", "%cpu="],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,

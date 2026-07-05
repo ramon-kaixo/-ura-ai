@@ -34,8 +34,9 @@ def mac_notify(title: str, message: str) -> None:
     try:
         safe_title = _escape_applescript(title)
         safe_message = _escape_applescript(message)
-        subprocess.run(  # noqa: S603,S607  -- osascript con argumentos escapados
-            [
+        subprocess.run(  # noqa: S603  -- osascript con título/mensaje escapados
+            [  # noqa: S607
+                "osascript",
                 "osascript",
                 "-e",
                 f'display notification "{safe_message}" with title "{safe_title}" sound name "Basso"',
@@ -51,8 +52,8 @@ def mac_notify(title: str, message: str) -> None:
 def sync_state() -> dict:
     """Sincroniza el state file desde GX10 vía rsync."""
     try:
-        subprocess.run(  # noqa: S603,S607  -- rsync con rutas configuradas
-            ["rsync", "-q", f"{SSH_USER}@{TARGET}:{REMOTE_STATE}", str(LOCAL_STATE)],
+        subprocess.run(  # noqa: S603  -- rsync con rutas de configuración interna
+            ["rsync", "-q", f"{SSH_USER}@{TARGET}:{REMOTE_STATE}", str(LOCAL_STATE)],  # noqa: S607
             timeout=SSH_TIMEOUT,
             check=False,
         )

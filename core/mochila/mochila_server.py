@@ -71,7 +71,7 @@ class VRAMAwareScheduler:
 
         try:
             res = subprocess.run(
-                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],  # noqa: S607  -- comando constante
                 capture_output=True,
                 text=True,
                 timeout=2,

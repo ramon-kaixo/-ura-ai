@@ -56,8 +56,8 @@ def kill_proceso(pid: int, nombre: str = "") -> bool:
 
 def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
     try:
-        r = subprocess.run(
-            ["fuser", "-k", f"{port}/{protocol}"],
+        r = subprocess.run(  # noqa: S603  -- puertos internos desde constantes del módulo
+            ["fuser", "-k", f"{port}/{protocol}"],  # noqa: S607  -- puertos internos desde constantes del módulo
             capture_output=True,
             text=True,
             timeout=5,
@@ -122,7 +122,7 @@ def limpiar_locks(locks: list[str] | None = None) -> None:
 def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
     try:
         r = subprocess.run(
-            ["ipcs", "-m"],
+            ["ipcs", "-m"],  # noqa: S607  -- comando constante
             capture_output=True,
             text=True,
             timeout=5,
@@ -132,8 +132,8 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
             parts = line.split()
             if len(parts) >= 5 and parts[4].startswith(prefix):
                 shmid = parts[1]
-                subprocess.run(
-                    ["ipcrm", "-m", shmid],
+                subprocess.run(  # noqa: S603  -- shmid desde salida de ipcs, interno
+                    ["ipcrm", "-m", shmid],  # noqa: S607  -- shmid desde salida de ipcs, interno
                     capture_output=True,
                     timeout=3,
                     check=False,
@@ -152,7 +152,7 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
 def check_vram_post_kill() -> dict:
     try:
         r = subprocess.run(
-            ["nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader,nounits"],  # noqa: S607  -- comando constante
             capture_output=True,
             text=True,
             timeout=5,

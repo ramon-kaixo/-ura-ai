@@ -81,7 +81,7 @@ class PiperTTSMotor:
                 "--output-file",
                 self.output_wav,
             ]
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # noqa: S603  -- PIPER_BIN desde env fallback, rutas internas
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -123,7 +123,7 @@ class PiperTTSMotor:
             self.pipeline.is_playing_tts = True
         try:
             cmd = [PIPER_BIN, "--model", self.model_path, "--output-file", output_path]
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # noqa: S603  -- mismo patrón
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
