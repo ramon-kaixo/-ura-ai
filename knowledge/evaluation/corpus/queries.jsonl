@@ -1,0 +1,200 @@
+{"qid": "sys_001", "query": "How do I configure the Qdrant client in URA?", "domain": "system"}
+{"qid": "sys_002", "query": "What is DegradedMode and how does it work?", "domain": "system"}
+{"qid": "sys_003", "query": "How to check if a subsystem is degraded?", "domain": "system"}
+{"qid": "sys_004", "query": "Explain the purpose of PluginRegistry", "domain": "system"}
+{"qid": "sys_005", "query": "How does EventBus publish work?", "domain": "system"}
+{"qid": "sys_006", "query": "What topics does the EventBus support?", "domain": "system"}
+{"qid": "sys_007", "query": "How to subscribe to pipeline events?", "domain": "system"}
+{"qid": "sys_008", "query": "What is the difference between publish and emit_sync?", "domain": "system"}
+{"qid": "sys_009", "query": "How to configure UraConfig?", "domain": "system"}
+{"qid": "sys_010", "query": "What services does URA run on systemd?", "domain": "system"}
+{"qid": "sys_011", "query": "How to check URA system health?", "domain": "system"}
+{"qid": "sys_012", "query": "What is the SubprocessExecutor used for?", "domain": "system"}
+{"qid": "sys_013", "query": "How to run a command with SubprocessExecutor?", "domain": "system"}
+{"qid": "sys_014", "query": "How does the Model Router work?", "domain": "system"}
+{"qid": "sys_015", "query": "What models are configured in Ollama?", "domain": "system"}
+{"qid": "sys_016", "query": "How to instrument the EventBus with metrics?", "domain": "system"}
+{"qid": "sys_017", "query": "What health checks does the system support?", "domain": "system"}
+{"qid": "sys_018", "query": "How to check readiness of system dependencies?", "domain": "system"}
+{"qid": "sys_019", "query": "How does PipelineExecutor handle stage failures?", "domain": "system"}
+{"qid": "sys_020", "query": "How does rollback work in a pipeline?", "domain": "system"}
+{"qid": "sys_021", "query": "What is the HookManager circuit breaker?", "domain": "system"}
+{"qid": "sys_022", "query": "How to register plugin hooks?", "domain": "system"}
+{"qid": "sys_023", "query": "What happens when a hook fails 3 times?", "domain": "system"}
+{"qid": "sys_024", "query": "How to load a legacy F9 plugin in RegistryV2?", "domain": "system"}
+{"qid": "sys_025", "query": "How does plugin dependency resolution work?", "domain": "system"}
+{"qid": "sys_026", "query": "What is the PluginManifest format?", "domain": "system"}
+{"qid": "sys_027", "query": "How to validate plugin API compatibility?", "domain": "system"}
+{"qid": "sys_028", "query": "What is the MOTOR_API_VERSION?", "domain": "system"}
+{"qid": "sys_029", "query": "How to set up Prometheus alerting for URA?", "domain": "system"}
+{"qid": "sys_030", "query": "What alerts are defined in the Prometheus rules?", "domain": "system"}
+{"qid": "sys_031", "query": "How does the contrast proxy work?", "domain": "system"}
+{"qid": "sys_032", "query": "What is the purpose of the knowledge engine?", "domain": "system"}
+{"qid": "sys_033", "query": "How to configure the FTS5 index?", "domain": "system"}
+{"qid": "sys_034", "query": "What is the UraConfig data_dir used for?", "domain": "system"}
+{"qid": "sys_035", "query": "How to set up the sandbox container?", "domain": "system"}
+{"qid": "sys_036", "query": "How does the tuneladora pipeline work?", "domain": "system"}
+{"qid": "sys_037", "query": "What phases does the tuneladora execute?", "domain": "system"}
+{"qid": "sys_038", "query": "How to deploy a plugin in URA?", "domain": "system"}
+{"qid": "sys_039", "query": "What is the difference between RegistryV2 and PluginRegistry?", "domain": "system"}
+{"qid": "sys_040", "query": "How to check the status of all system services?", "domain": "system"}
+{"qid": "sys_041", "query": "What metrics are collected by the MetricsRegistry?", "domain": "system"}
+{"qid": "sys_042", "query": "How to create a custom Counter metric?", "domain": "system"}
+{"qid": "sys_043", "query": "What is the Timer context manager used for?", "domain": "system"}
+{"qid": "sys_044", "query": "How to observe histogram buckets?", "domain": "system"}
+{"qid": "sys_045", "query": "What is the purpose of the readiness registry?", "domain": "system"}
+{"qid": "sys_046", "query": "How to set a component as unhealthy?", "domain": "system"}
+{"qid": "sys_047", "query": "What happens when a pipeline stage is optional?", "domain": "system"}
+{"qid": "sys_048", "query": "How to cancel a pipeline stage via hook?", "domain": "system"}
+{"qid": "sys_049", "query": "What is the circuit breaker pattern in hooks?", "domain": "system"}
+{"qid": "sys_050", "query": "How does the compatibility matrix work?", "domain": "system"}
+{"qid": "sys_051", "query": "What happens if plugin api_version is incompatible?", "domain": "system"}
+{"qid": "sys_052", "query": "How to add a new EventBus topic?", "domain": "system"}
+{"qid": "sys_053", "query": "What is the format of topic constants?", "domain": "system"}
+{"qid": "sys_054", "query": "How to use fnmatch patterns in subscriptions?", "domain": "system"}
+{"qid": "sys_055", "query": "How does the HTTP adapter expose metrics?", "domain": "system"}
+{"qid": "sys_056", "query": "What endpoints does the observability HTTP adapter provide?", "domain": "system"}
+{"qid": "sys_057", "query": "How to check if the system is ready?", "domain": "system"}
+{"qid": "sys_058", "query": "What does a degraded health status mean?", "domain": "system"}
+{"qid": "sys_059", "query": "How to register a component for health checks?", "domain": "system"}
+{"qid": "sys_060", "query": "How does the global health aggregation work?", "domain": "system"}
+{"qid": "sys_061", "query": "What is the SubprocessExecutor timeout behavior?", "domain": "system"}
+{"qid": "sys_062", "query": "How does process execution error handling work?", "domain": "system"}
+{"qid": "sys_063", "query": "What is the ProcessResult dataclass?", "domain": "system"}
+{"qid": "sys_064", "query": "How to configure plugin dependencies?", "domain": "system"}
+{"qid": "sys_065", "query": "What is the lifecycle of a plugin?", "domain": "system"}
+{"qid": "sys_066", "query": "How to implement on_load in a plugin?", "domain": "system"}
+{"qid": "sys_067", "query": "How to implement rollback in a plugin?", "domain": "system"}
+{"qid": "sys_068", "query": "What is the PipelineDefinition format?", "domain": "system"}
+{"qid": "sys_069", "query": "How to define a pipeline stage in YAML?", "domain": "system"}
+{"qid": "sys_070", "query": "What validation does PipelineLoader perform?", "domain": "system"}
+{"qid": "code_001", "query": "How to run all URA tests with pytest?", "domain": "code"}
+{"qid": "code_002", "query": "What tests cover the EventBus?", "domain": "code"}
+{"qid": "code_003", "query": "How to add a new test for PluginRegistryV2?", "domain": "code"}
+{"qid": "code_004", "query": "What ruff rules are enabled for the project?", "domain": "code"}
+{"qid": "code_005", "query": "How to fix DTZ005 datetime warnings?", "domain": "code"}
+{"qid": "code_006", "query": "What is the S603 security rule about?", "domain": "code"}
+{"qid": "code_007", "query": "How to annotate noqa with justification?", "domain": "code"}
+{"qid": "code_008", "query": "How to migrate subprocess calls to SubprocessExecutor?", "domain": "code"}
+{"qid": "code_009", "query": "How to create a mock plugin for testing?", "domain": "code"}
+{"qid": "code_010", "query": "How to test hook cancellation?", "domain": "code"}
+{"qid": "code_011", "query": "How to write a benchmark test for pipelines?", "domain": "code"}
+{"qid": "code_012", "query": "How to test DegradedMode concurrency?", "domain": "code"}
+{"qid": "code_013", "query": "How to measure test coverage?", "domain": "code"}
+{"qid": "code_014", "query": "What is the test pattern for EventBus?", "domain": "code"}
+{"qid": "code_015", "query": "How to create a temp plugin directory for tests?", "domain": "code"}
+{"qid": "code_016", "query": "How to test plugin manifest parsing?", "domain": "code"}
+{"qid": "code_017", "query": "How to verify YAML pipeline loading in tests?", "domain": "code"}
+{"qid": "code_018", "query": "How to write a test for MetricsRegistry?", "domain": "code"}
+{"qid": "code_019", "query": "How to test HealthRegistry snapshot?", "domain": "code"}
+{"qid": "code_020", "query": "How to assert ReadinessRegistry state changes?", "domain": "code"}
+{"qid": "code_021", "query": "How to test instrumentation wrapping?", "domain": "code"}
+{"qid": "code_022", "query": "How to verify EventBus event counts in tests?", "domain": "code"}
+{"qid": "code_023", "query": "How to test before_stage hook cancellation?", "domain": "code"}
+{"qid": "code_024", "query": "How to write an integration test for pipeline rollback?", "domain": "code"}
+{"qid": "code_025", "query": "How to test circular dependency detection in plugins?", "domain": "code"}
+{"qid": "code_026", "query": "How to test API version incompatibility?", "domain": "code"}
+{"qid": "code_027", "query": "What is the pattern for testing exception isolation?", "domain": "code"}
+{"qid": "code_028", "query": "How to test SubprocessExecutor timeout?", "domain": "code"}
+{"qid": "code_029", "query": "How to test async command execution?", "domain": "code"}
+{"qid": "code_030", "query": "How to write integration tests for RegistryV2?", "domain": "code"}
+{"qid": "code_031", "query": "How to test plugin unload and cleanup?", "domain": "code"}
+{"qid": "code_032", "query": "How to verify EventBus pattern subscriptions?", "domain": "code"}
+{"qid": "code_033", "query": "How to test concurrent hook execution?", "domain": "code"}
+{"qid": "code_034", "query": "How to test pipeline with optional stages?", "domain": "code"}
+{"qid": "code_035", "query": "How to verify context propagation in pipelines?", "domain": "code"}
+{"qid": "code_036", "query": "How to write custom assertions for snapshot metrics?", "domain": "code"}
+{"qid": "code_037", "query": "How to test gauge inc/dec operations?", "domain": "code"}
+{"qid": "code_038", "query": "How to verify histogram bucket distribution?", "domain": "code"}
+{"qid": "code_039", "query": "How to mock EventBus for testing?", "domain": "code"}
+{"qid": "code_040", "query": "How to create fixture for PluginRegistryV2?", "domain": "code"}
+{"qid": "code_041", "query": "How to test HttpAdapter without FastAPI?", "domain": "code"}
+{"qid": "code_042", "query": "How to skip tests conditionally based on imports?", "domain": "code"}
+{"qid": "code_043", "query": "How to structure test files for F11 components?", "domain": "code"}
+{"qid": "code_044", "query": "How to test plugin discover with subdirectories?", "domain": "code"}
+{"qid": "code_045", "query": "How to verify loaded plugin count after instrumentation?", "domain": "code"}
+{"qid": "code_046", "query": "What is the convention for test file naming?", "domain": "code"}
+{"qid": "code_047", "query": "How to use pytest tmp_path for plugin files?", "domain": "code"}
+{"qid": "code_048", "query": "How to write a test for PipelineLoader validation?", "domain": "code"}
+{"qid": "code_049", "query": "How to test the compatibility check functions?", "domain": "code"}
+{"qid": "code_050", "query": "How to write a test for SemVer parsing?", "domain": "code"}
+{"qid": "code_051", "query": "How to test plugin dependency range resolution?", "domain": "code"}
+{"qid": "code_052", "query": "How to verify duplicate plugin name handling?", "domain": "code"}
+{"qid": "code_053", "query": "How to test legacy F9 plugin compatibility?", "domain": "code"}
+{"qid": "code_054", "query": "How to test that ruff lint passes for new code?", "domain": "code"}
+{"qid": "code_055", "query": "How to ensure py_compile passes for all modules?", "domain": "code"}
+{"qid": "code_056", "query": "How to check for regressions in test suite?", "domain": "code"}
+{"qid": "code_057", "query": "How to run targeted tests for a specific module?", "domain": "code"}
+{"qid": "code_058", "query": "How to test the pipeline benchmark assertion?", "domain": "code"}
+{"qid": "code_059", "query": "How to verify EventBus reset clears all subscribers?", "domain": "code"}
+{"qid": "code_060", "query": "How to test publish_async non-blocking behavior?", "domain": "code"}
+{"qid": "code_061", "query": "How to test emit_sync exception isolation?", "domain": "code"}
+{"qid": "code_062", "query": "How to verify priority ordering of subscribers?", "domain": "code"}
+{"qid": "code_063", "query": "How to test plugin with custom hooks?", "domain": "code"}
+{"qid": "code_064", "query": "How to test rollback method on PluginBase?", "domain": "code"}
+{"qid": "code_065", "query": "How to verify context propagation in pipeline executor?", "domain": "code"}
+{"qid": "know_001", "query": "How does the knowledge engine index documents?", "domain": "knowledge"}
+{"qid": "know_002", "query": "What is the FTS5 schema for the knowledge base?", "domain": "knowledge"}
+{"qid": "know_003", "query": "How to search documents using FTS5?", "domain": "knowledge"}
+{"qid": "know_004", "query": "How does Qdrant store vector embeddings?", "domain": "knowledge"}
+{"qid": "know_005", "query": "What is cosine similarity in Qdrant?", "domain": "knowledge"}
+{"qid": "know_006", "query": "How to configure chunk size for indexing?", "domain": "knowledge"}
+{"qid": "know_007", "query": "What embedding model does URA use?", "domain": "knowledge"}
+{"qid": "know_008", "query": "How to run a similarity search in Qdrant?", "domain": "knowledge"}
+{"qid": "know_009", "query": "What is the recall metric for retrieval?", "domain": "knowledge"}
+{"qid": "know_010", "query": "How is nDCG calculated for search results?", "domain": "knowledge"}
+{"qid": "know_011", "query": "What is the purpose of reranking?", "domain": "knowledge"}
+{"qid": "know_012", "query": "How does hybrid retrieval work?", "domain": "knowledge"}
+{"qid": "know_013", "query": "What is semantic chunking?", "domain": "knowledge"}
+{"qid": "know_014", "query": "How does query expansion improve search?", "domain": "knowledge"}
+{"qid": "know_015", "query": "What is the MRR metric in information retrieval?", "domain": "knowledge"}
+{"qid": "know_016", "query": "How to evaluate search quality metrics?", "domain": "knowledge"}
+{"qid": "know_017", "query": "What is the difference between Recall and Precision?", "domain": "knowledge"}
+{"qid": "know_018", "query": "How to collect relevance judgments for evaluation?", "domain": "knowledge"}
+{"qid": "know_019", "query": "What is the benchmark corpus used for?", "domain": "knowledge"}
+{"qid": "know_020", "query": "How to measure search latency P50 and P95?", "domain": "knowledge"}
+{"qid": "know_021", "query": "What is the coverage of the document index?", "domain": "knowledge"}
+{"qid": "know_022", "query": "How to calculate throughput for search queries?", "domain": "knowledge"}
+{"qid": "know_023", "query": "What is a good Recall@10 score?", "domain": "knowledge"}
+{"qid": "know_024", "query": "How to interpret nDCG uplift after reranking?", "domain": "knowledge"}
+{"qid": "know_025", "query": "What is the baseline KE 1.x retrieval method?", "domain": "knowledge"}
+{"qid": "know_026", "query": "How does KE 1.x chunk documents?", "domain": "knowledge"}
+{"qid": "know_027", "query": "What are the limitations of token-based chunking?", "domain": "knowledge"}
+{"qid": "know_028", "query": "How does the benchmark_ke.py script work?", "domain": "knowledge"}
+{"qid": "know_029", "query": "What metrics does the benchmark produce?", "domain": "knowledge"}
+{"qid": "know_030", "query": "How to generate the KE baseline?", "domain": "knowledge"}
+{"qid": "know_031", "query": "What is MAP and when is it used?", "domain": "knowledge"}
+{"qid": "know_032", "query": "How to improve retrieval accuracy?", "domain": "knowledge"}
+{"qid": "know_033", "query": "What documents are in the URA knowledge base?", "domain": "knowledge"}
+{"qid": "know_034", "query": "How to add new documents to the index?", "domain": "knowledge"}
+{"qid": "know_035", "query": "How to check if a document is indexed?", "domain": "knowledge"}
+{"qid": "know_036", "query": "What is the Qdrant collection configuration?", "domain": "knowledge"}
+{"qid": "know_037", "query": "What distance metric does Qdrant use?", "domain": "knowledge"}
+{"qid": "know_038", "query": "How to filter search results by metadata?", "domain": "knowledge"}
+{"qid": "know_039", "query": "What is the timeout for Qdrant queries?", "domain": "knowledge"}
+{"qid": "know_040", "query": "How does the background queue process indexing?", "domain": "knowledge"}
+{"qid": "know_041", "query": "How to optimize FTS5 search performance?", "domain": "knowledge"}
+{"qid": "know_042", "query": "What is the chunk overlap strategy?", "domain": "knowledge"}
+{"qid": "know_043", "query": "How to evaluate cross-encoder reranking?", "domain": "knowledge"}
+{"qid": "know_044", "query": "What is the cold cache latency for search?", "domain": "knowledge"}
+{"qid": "know_045", "query": "How does warm cache affect query latency?", "domain": "knowledge"}
+{"qid": "know_046", "query": "What is the relation between chunk size and recall?", "domain": "knowledge"}
+{"qid": "know_047", "query": "How to measure search result diversity?", "domain": "knowledge"}
+{"qid": "know_048", "query": "What is the 'no context' rate in search?", "domain": "knowledge"}
+{"qid": "know_049", "query": "How to detect when a query lacks relevant context?", "domain": "knowledge"}
+{"qid": "know_050", "query": "What is the fragmentation problem in retrieval?", "domain": "knowledge"}
+{"qid": "know_051", "query": "How to verify the KE baseline reproducibility?", "domain": "knowledge"}
+{"qid": "know_052", "query": "What makes a search result high quality?", "domain": "knowledge"}
+{"qid": "know_053", "query": "How to define relevance grades for documents?", "domain": "knowledge"}
+{"qid": "know_054", "query": "What is graded relevance vs binary relevance?", "domain": "knowledge"}
+{"qid": "know_055", "query": "How to structure an evaluation corpus?", "domain": "knowledge"}
+{"qid": "know_056", "query": "What fields are in the queries.jsonl format?", "domain": "knowledge"}
+{"qid": "know_057", "query": "How to reference documents in relevance judgments?", "domain": "knowledge"}
+{"qid": "know_058", "query": "What is the role of golden passages in evaluation?", "domain": "knowledge"}
+{"qid": "know_059", "query": "How to ensure corpus stability across versions?", "domain": "knowledge"}
+{"qid": "know_060", "query": "What metadata should the evaluation corpus include?", "domain": "knowledge"}
+{"qid": "know_061", "query": "How to validate corpus integrity?", "domain": "knowledge"}
+{"qid": "know_062", "query": "How to detect duplicate query IDs?", "domain": "knowledge"}
+{"qid": "know_063", "query": "How to ensure all relevance scores are valid?", "domain": "knowledge"}
+{"qid": "know_064", "query": "What is the expected throughput for KE 1.x?", "domain": "knowledge"}
+{"qid": "know_065", "query": "How to document baseline results?", "domain": "knowledge"}
