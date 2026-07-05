@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("benchmark_ke")
 
 HERE = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(HERE))
 CORPUS_DIR = HERE / "knowledge" / "evaluation" / "corpus"
 RESULTS_DIR = HERE / "knowledge" / "evaluation" / "results"
 
@@ -122,42 +123,48 @@ def load_corpus(corpus_dir: Path) -> tuple[list[Query], dict[str, list[Relevance
 # ── KE 1.x retrieval (real and mock) ─────────────────────────────────────────
 
 class KERetrieval:
-    """Interface for KE 1.x retrieval. Default implementation tries actual KE."""
+    """Interface for KE 1.x retrieval. Uses Qdrant vector search when available."""
 
     def __init__(self) -> None:
-        self._engine = None
+        self._client = None
         self._try_load_ke()
+        self._mode = "ke1"
 
     def _try_load_ke(self) -> None:
         try:
-            from knowledge.engine.search import SearchEngine
-            self._engine = SearchEngine()
-            log.info("KE 1.x SearchEngine cargado correctamente")
-        except ImportError:
-            log.warning("KE 1.x no disponible — usando mock")
-            self._engine = None
+            from motor.core.config import UraConfig
+            from motor.core.qdrant_client import QdrantClient
+            cfg = UraConfig()
+            self._client = QdrantClient.instancia(cfg)
+            if self._client.disponible:
+                log.info("KE 1.x QdrantClient disponible")
+            else:
+                log.warning("QdrantClient no disponible — usando mock")
+                self._client = None
         except Exception as e:
             log.warning("KE 1.x error en carga: %s — usando mock", e)
-            self._engine = None
+            self._client = None
 
     @property
     def available(self) -> bool:
-        return self._engine is not None
+        return self._client is not None
 
     def search(self, query: str, k: int = 10) -> list[RetrievalResult]:
-        if self._engine is not None:
+        if self._client is not None:
             return self._search_real(query, k)
         return self._search_mock(query, k)
 
     def _search_real(self, query: str, k: int = 10) -> list[RetrievalResult]:
         try:
-            results = self._engine.search(query, top_k=k)
-            return [
-                RetrievalResult(doc_id=r.get("id", r.get("doc_id", f"doc_{i}")), score=r.get("score", 0.0), rank=i)
-                for i, r in enumerate(results)
-            ]
+            raw = self._client.buscar_documentos(query, limit=k)
+            results = []
+            for i, r in enumerate(raw):
+                payload = r.get("payload", {})
+                doc_id = payload.get("id") or payload.get("source") or f"qdrant_{i}"
+                results.append(RetrievalResult(doc_id=str(doc_id), score=float(r.get("score", 0.0)), rank=i))
+            return results
         except Exception as e:
-            log.warning("KE search falló: %s — mock fallback", e)
+            log.warning("KE 1.x search falló: %s — mock fallback", e)
             return self._search_mock(query, k)
 
     def _search_mock(self, query: str, k: int = 10) -> list[RetrievalResult]:
@@ -289,7 +296,7 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
 
     retriever = KERetrieval()
     if dry_run:
-        retriever._engine = None  # noqa: SLF001  # force mock
+        retriever._client = None  # force mock
 
     query_results: list[QueryResult] = []
     all_latencies: list[float] = []
