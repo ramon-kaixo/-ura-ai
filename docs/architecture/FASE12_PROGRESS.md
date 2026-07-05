@@ -120,3 +120,69 @@
 
 **Decisión:** Resultados reportados — pendiente de decisión sobre criterios de aceptación.
 
+### 2026-07-05 — Bloque 1b-R: Refinamiento (5 estrategias × 13 configuraciones)
+
+**Estrategias evaluadas:**
+1. RRF (k=20, 60, 100)
+2. Weighted RRF (k_vec=40/k_lex=100, k_vec=60/k_lex=120)
+3. Score normalization + weighted fusion (α=0.7/0.8/0.9)
+4. Dynamic fusion (threshold 0.75/0.80/0.85, α variable)
+5. Parallel retrieval (α=0.7/0.8)
+6. BM25-as-complement (append unique BM25 docs after vector ranking)
+
+**Resultados:** Ninguna de las 13 configuraciones supera simultáneamente MAP ≥ 0.9423 y nDCG ≥ 0.8346.
+
+| Estrategia | R@10 | MAP | nDCG | P95 | NoCtx | ¿Pasa? |
+|-----------|------|-----|------|-----|-------|--------|
+| Score α=0.7 β=0.3 | **0.8708** | 0.6444 | 0.6498 | 200ms | 0.5% | ❌ MAP |
+| Dynamic θ=0.75 α=0.7 | 0.8575 | **0.6910** | **0.6715** | **120ms** | 0.5% | ❌ MAP |
+| RRF k=60 | 0.8675 | 0.6148 | 0.6285 | 100ms | 100%* | ❌ MAP |
+| Vector-only (baseline) | 0.6700 | **0.9423** | **0.8346** | 196ms | 21.5% | ✅ |
+
+*\*RRF no-context erroneo: los scores de RRF no son comparables directamente con el umbral 0.6.*
+
+**Causa raíz:** El corpus tiene 12 documentos, y vector search ya alcanza MAP casi perfecto (0.94). BM25 encuentra 682 documentos únicos adicionales en todas las consultas, pero solo el 31.7% son relevantes. El 68.3% restante es ruido que diluye MAP y nDCG. Ninguna estrategia de fusión puede filtrar ese ruido sin reranking.
+
+**Conclusión:** Para este corpus, BM25 no añade señal suficiente sobre vector search. La solución natural es reranking (Bloque 1c), que puede filtrar los falsos positivos de BM25 preservando las ganancias de recall.
+
+**Recomendación:** Proceder a Bloque 1c (Reranking) con cross-encoder, que puede corregir el ranking y potencialmente cumplir todos los criterios simultáneamente.
+
+### 2026-07-05 — Bloque 1c: Reranking (LLM via Ollama)
+
+**Implementado:** `motor/intelligence/reranking/` — BaseReranker (ABC), NoOpReranker (passthrough), LLMReranker (Ollama).
+
+**Benchmark (10 queries, top-3 reranked con qwen2.5:7b):**
+
+| Métrica | Vector-only | Hybrid | Hybrid+LLM | Δ vs Hybrid | ¿Acepta? |
+|---------|-------------|--------|------------|-------------|----------|
+| R@10 | 0.6700 | 0.8708 | **0.3500*** | -59.8% | ❌ |
+| MAP | 0.9423 | 0.6444 | **0.3056*** | -52.5% | ❌ |
+| nDCG | 0.8346 | 0.6498 | **0.4001*** | -38.4% | ❌ |
+| P50 | 91ms | 94ms | **36.778ms** | +39.124% | ❌ |
+| P95 | 196ms | 200ms | **96.667ms** | +48.233% | ❌ |
+| NoCtx | 21.5% | 0.5% | **50.0%** | +49.5pp | ❌ |
+
+*\*Muestra pequeña (10 queries) con timeouts de Ollama.*
+
+**Problemas detectados:**
+1. **Latencia inaceptable:** 44s por query (~15s por doc). El LLM (`qwen2.5:7b`) está diseñado para generación, no para scoring rápido.
+2. **Timeouts frecuentes:** Ollama con cola de requests genera timeouts cuando el modelo está ocupado.
+3. **Cobertura:** 50% no-context porque los timeouts devuelven score=0.
+4. **Reordenamiento:** El LLM asigna scores diferenciados (0.0-0.8) pero las latencias impiden uso práctico.
+
+**Causa raíz:** Un LLM generativo de 7B parámetros no es adecuado como cross-encoder para reranking en tiempo real. El overhead de inferencia (~8s por llamada) es 1000x mayor que el tiempo de búsqueda vectorial (~8ms).
+
+**Alternativas técnicas:**
+1. **Cross-encoder dedicado (recomendado):** Modelos como `cross-encoder/ms-marco-MiniLM-L-6-v2` via `sentence-transformers` pueden puntuar un par (query, doc) en 10-50ms. Son específicamente entrenados para reranking. Requiere instalar `sentence-transformers` y descargar el modelo (~80MB).
+2. **Bi-encoder + late interaction (ColBERT):** Más ligero que cross-encoder, permite interacción entre query y documento sin inferencia por pares.
+3. **LLM más pequeño:** `llama3.2:3b` o `qwen2.5:3b` reducirían latencia pero seguirían siendo ~2-3s por par.
+4. **Batch scoring:** Enviar todos los candidatos en una sola llamada LLM para que puntúe en lote (reduce overhead de llamadas HTTP).
+
+**Conclusión:** El reranking via LLM generativo no es viable en producción con las restricciones de latencia actuales. Para cumplir los criterios de aceptación se necesita un cross-encoder especializado (alternativa 1). Sin embargo, el beneficio cualitativo del LLM es claro: los scores asignados (0.8 para relevantes, 0.2-0.0 para irrelevantes) discriminan mejor que similitud coseno.
+
+**Decisión:** El reranking LLM se marca como **experimental/opcional**. Para continuar con F12, se recomienda:
+- **Aceptar Hybrid como la mejor opción disponible** (aunque no cumpla MAP/nDCG)
+- **O instalar cross-encoder dedicado y re-evaluar** antes de pasar a Bloque 2
+
+
+
