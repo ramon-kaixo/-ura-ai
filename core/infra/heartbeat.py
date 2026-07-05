@@ -85,7 +85,7 @@ def restart_service() -> None:
     logger.critical("Reiniciando ura-mochila.service...")
     try:
         res = subprocess.run(
-            ["systemctl", "restart", "ura-mochila.service"],
+            ["systemctl", "restart", "ura-mochila.service"],  # noqa: S607  -- comando constante
             capture_output=True,
             text=True,
             timeout=30,
@@ -113,7 +113,7 @@ def check_vram_pressure() -> None:
         "--format=csv,noheader,nounits",
     ]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)  # noqa: S603  -- comando constante
         total_used = 0
         for line in res.stdout.strip().split("\n"):
             line = line.strip()

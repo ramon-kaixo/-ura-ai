@@ -92,7 +92,7 @@ def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:  # noqa: S60
     import shutil
 
     git_path = shutil.which("git") or "/usr/bin/git"
-    return subprocess.run(
+    return subprocess.run(  # noqa: S603  -- git wrapper interno, args desde callers del módulo
         [git_path, *args],
         capture_output=True, text=True,
         cwd=cwd,
@@ -340,7 +340,7 @@ def restore_source(
     # Clonar desde bundle
     dest_dir.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(  # noqa: S603,S607
-        ["git", "clone", str(bundle_path), str(dest_dir)],
+        ["git", "clone", str(bundle_path), str(dest_dir)],  # noqa: S607  -- paths validados con _resolve_within
         capture_output=True, text=True, check=False,
     )
     if result.returncode != 0:

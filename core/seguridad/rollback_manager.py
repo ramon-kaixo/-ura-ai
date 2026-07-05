@@ -12,8 +12,8 @@ class RollbackManager:
 
     def _ejecutar_git(self, comando: list[str]) -> tuple[bool, str]:
         try:
-            res = subprocess.run(
-                ["git", *comando],
+            res = subprocess.run(  # noqa: S603  -- comando desde callers internos
+                ["git", *comando],  # noqa: S607  -- comando desde callers internos
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,

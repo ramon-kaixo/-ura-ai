@@ -228,8 +228,8 @@ def _run_ci() -> StageResult:
                 duration_ms=(time.monotonic() - t0) * 1000,
                 error=f"CI script not found: {script}",
             )
-        r = subprocess.run(  # noqa: S603,S607
-            ["bash", str(script)],
+        r = subprocess.run(  # noqa: S603  -- script desde CI config, no input externo
+            ["bash", str(script)],  # noqa: S607
             capture_output=True, text=True, timeout=300,
         )
         return StageResult(

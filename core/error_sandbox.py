@@ -196,8 +196,8 @@ class ErrorSandbox:
             if "Matar proceso" in solution:
                 if "port" in context:
                     # Intentar matar proceso que ocupa el puerto
-                    result = subprocess.run(
-                        ["lsof", "-ti", f":{context['port']}"],
+                    result = subprocess.run(  # noqa: S603  -- puerto desde contexto interno
+                        ["lsof", "-ti", f":{context['port']}"],  # noqa: S607  -- puerto desde contexto interno
                         capture_output=True,
                         text=True,
                         timeout=5,
@@ -205,15 +205,15 @@ class ErrorSandbox:
                     )
                     if result.stdout.strip():
                         pid = result.stdout.strip().split("\n")[0]
-                        subprocess.run(["kill", "-9", pid], timeout=5, check=False)
+                        subprocess.run(["kill", "-9", pid], timeout=5, check=False)  # noqa: S603,S607  -- PID desde salida de lsof, interno
                         time.sleep(1)
                         return True
 
             elif "Reiniciar Ollama" in solution:
-                subprocess.run(["pkill", "-9", "ollama"], timeout=5, check=False)
+                subprocess.run(["pkill", "-9", "ollama"], timeout=5, check=False)  # noqa: S607  -- comando constante
                 time.sleep(2)
                 subprocess.Popen(
-                    ["ollama", "serve"],
+                    ["ollama", "serve"],  # noqa: S607  -- comando constante
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
@@ -222,7 +222,7 @@ class ErrorSandbox:
 
             elif "Iniciar Redis" in solution:
                 subprocess.run(
-                    ["brew", "services", "start", "redis"],
+                    ["brew", "services", "start", "redis"],  # noqa: S607  -- comando constante
                     capture_output=True,
                     timeout=10,
                     check=False,

@@ -61,8 +61,8 @@ def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
 def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
-        result = subprocess.run(
-            ["ffprobe", "-v", "quiet", "-print_format", "json",
+        result = subprocess.run(  # noqa: S603  -- URL desde detector config, ffprobe no ejecuta shell
+            ["ffprobe", "-v", "quiet", "-print_format", "json",  # noqa: S607  -- URL desde detector config, ffprobe no ejecuta shell
              "-show_format", url],
             capture_output=True, text=True, timeout=30,
         )

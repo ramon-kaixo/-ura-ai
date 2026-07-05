@@ -43,8 +43,8 @@ def measure_ssh_latency() -> float:
     """Mide latencia SSH en ms."""
     start = time.time()
     try:
-        subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
+        subprocess.run(  # noqa: S603  -- constante, solo mide latencia SSH
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],  # noqa: S607
             capture_output=True,
             timeout=5,
             check=False,
