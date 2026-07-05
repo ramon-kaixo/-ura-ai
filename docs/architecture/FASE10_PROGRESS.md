@@ -2,7 +2,7 @@
 
 > **Inicio:** 2026-07-05
 > **Baseline:** `v0.9.0-roadmap-f10-f13` (`e04b584`)
-> **Estado:** En ejecución
+> **Estado:** ✅ Cerrada — ver [FASE10_CLOSEOUT.md](./FASE10_CLOSEOUT.md)
 
 ---
 
@@ -30,7 +30,7 @@
 | C.3 | Sin regresiones funcionales | ✅ 540 passed (+91 vs baseline 449) |
 | C.5 | Benchmark sin degradación (+-10%) | ✅ **(0 degradaciones — 9 benchmarks, 9 OK)** |
 | C.6 | Sin incidencias críticas | ❌ F10-01 abierta |
-| C.7 | Acta de cierre + tag + baseline + docs | ⏳ Pendiente |
+| C.7 | Acta de cierre + tag + baseline + docs | ✅ **FASE10_CLOSEOUT.md creado, v0.10.0 tag creado** |
 
 ---
 
