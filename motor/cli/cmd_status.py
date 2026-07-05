@@ -1,12 +1,12 @@
 import json
 import logging
 import socket
-import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger("ura.cli")
@@ -14,6 +14,7 @@ ARCHIVO_ESTADO = "estado_alemania.json"
 ARCHIVO_TRENDS = "trends.ndjson"
 HOST_REMOTO_ALEMANIA = "ramon_admin@178.105.81.83"
 PROCESOS_DUPLICADOS_CLAVE = ("opencode", "python3")
+_executor = SubprocessExecutor()
 
 
 def cmd_status(config: UraConfig, args=None):
@@ -27,7 +28,7 @@ def cmd_status(config: UraConfig, args=None):
         info.update(json.loads(estado_path.read_text()))
     info["procesos_duplicados"] = []
     try:
-        r = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=5, check=False)
+        r = _executor.run(["ps", "-eo", "comm="], timeout=5)
         v = {}
         for l in r.stdout.strip().split("\n"):
             c = l.strip()
@@ -46,28 +47,12 @@ def cmd_cross(config: UraConfig, args=None):
         res["local"].update(json.loads(estado_path.read_text()))
     for name, host in {"alemania": HOST_REMOTO_ALEMANIA}.items():
         try:
-            r = subprocess.run(
-                [
-                    "ssh",
-                    "-o",
-                    "ConnectTimeout=5",
-                    "-o",
-                    "BatchMode=yes",
-                    "-o",
-                    "StrictHostKeyChecking=accept-new",
-                    "-i",
-                    "/home/ramon/.ssh/id_rsa",
-                    host,
-                    "sudo",
-                    "ura",
-                    "--config",
-                    "/etc/ura/config.json",
-                    "status",
-                ],
-                capture_output=True,
-                text=True,
+            r = _executor.run(
+                ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+                 "-o", "StrictHostKeyChecking=accept-new",
+                 "-i", "/home/ramon/.ssh/id_rsa", host,
+                 "sudo", "ura", "--config", "/etc/ura/config.json", "status"],
                 timeout=15,
-                check=False,
             )
             if r.returncode == 0:
                 res[name] = json.loads(r.stdout)

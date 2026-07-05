@@ -15,8 +15,8 @@
 | 10.3 | Resolver 10 tests de KE (FTS5 verifier + migration + qdrant_sync) | 🟡 Alta | ✅ Completado |
 | 10.4 | Resolver 9 tests CLI (`ModuleNotFoundError: scanner/diagnostico/guard`) | 🟡 Alta | ✅ Completado |
 | 10.5 | Unificar subprocess → `SubprocessExecutor` (27 calls en 8 archivos motor/) | 🟡 Alta | ✅ Completado |
-| 10.6 | Incrementar cobertura (DegradedMode, PluginRegistry, Executor) | 🟢 Media | ⏳ Pendiente |
-| 10.7 | Reducir deuda lint crítica (DTZ005, invalid-syntax, S603/S607) | 🟢 Media | ✅ Completado |
+| 10.6 | Reducir deuda lint crítica (DTZ005, invalid-syntax, S603/S607) | 🟡 Alta | ✅ Completado (DTZ005 ✅, invalid-syntax ✅, S603/S607: -57, 380 restantes como deuda T09) |
+| 10.7 | Incrementar cobertura (DegradedMode, PluginRegistry, Executor) | 🟢 Media | ⏳ Pendiente |
 
 ---
 
@@ -236,3 +236,54 @@ r = _executor.run(cmd, timeout=N)
 **Validación:** ✅ py_compile 0 errores, ruff invalid-syntax = 0 (antes 194), pytest 468 passed
 
 **Impacto total F10-05:** 49 DTZ005 + 194 invalid-syntax = **243 errores de lint eliminados**. S603/S607 aumentaron de 406 a 437 porque los 13 archivos ahora se parsean correctamente y revelan subprocess preexistentes.
+
+### 2026-07-05 — F10-05-c: Migrar motor/cli/ a SubprocessExecutor (42 violaciones S603/S607)
+
+**Cambio:** Sustituir `subprocess.run()` por `SubprocessExecutor.run()` en los 4 archivos CLI:
+
+| Archivo | Calls migrados |
+|---------|---------------|
+| `motor/cli/cmd_ura.py` | 18 (incluyendo `_run()` helper) |
+| `motor/cli/cmd_diag.py` | 4 (journalctl, systemctl, docker) |
+| `motor/cli/cmd_status.py` | 3 (ps, ssh remoto) |
+| `motor/cli/cmd_utils.py` | 1 (notify-send) |
+
+**Validación:** ✅ py_compile 0 errores, ruff S603/S607 = 0 en motor/cli/, pytest 468 passed
+
+### 2026-07-05 — F10-05-d: Anotar con noqa comandos constantes seguros (15 violaciones S603/S607)
+
+**Criterio:** Solo se anotaron comandos con argumentos 100% constantes o configurados (git, ffmpeg, ps, pgrep, systemctl, ping, osascript con escape, rsync con rutas configuradas). NO se anotaron wrappers dinámicos (ssh_run, _run_safe, _run_pipeline) que requieren revisión de diseño.
+
+| Archivo | Líneas |
+|---------|--------|
+| `knowledge/engine/archiver.py` | 2 (git wrapper + git clone) |
+| `knowledge/engine/compiler.py` | 1 (git rev-parse HEAD) |
+| `knowledge/engine/extractors/video.py` | 1 (ffmpeg con paths de corpus) |
+| `knowledge/engine/pipeline.py` | 1 (bash script desde config) |
+| `motor/core/executor.py` | 1 (wrapper intencionado, por diseño) |
+| `monitor/mac_heartbeat.py` | 1 (ping a IP configurada) |
+| `monitor/snc.py` | 6 (Popen, PKILL, ps, pgrep, systemctl) |
+| `monitor/snc_remote.py` | 2 (osascript escapado, rsync configurado) |
+
+**Validación:** ✅ py_compile 0 errores, ruff S603/S607 = 380 (antes 437, reducción de 57), pytest 468 passed
+
+### Estado final F10-05
+
+| Categoría | Baseline | Actual | Delta |
+|-----------|----------|--------|-------|
+| DTZ005 | 49 | **0** | -49 |
+| invalid-syntax | 194 | **0** | -194 |
+| S603/S607 total | 437 | **380** | -57 |
+| De los cuales: producción (knowledge/, monitor/) | 78 | 61 | -17 |
+| De los cuales: CLI (motor/cli/) | 42 | **0** | -42 |
+| De los cuales: core/ | 53 | 52 | -1 |
+| De los cuales: scripts/, tests/, otros | 264 | 267 | +3 (por noqa) |
+
+**Total eliminado:** 300 errores de lint. Sin regresiones (468 tests, 0 failures).
+
+**Restante:** 380 S603/S607 distribuidos en:
+- 61 producción (wrappers dinámicos legacy: ssh_run, _run_safe, _run_pipeline en knowledge/monitor)
+- 267 scripts/tests/otros (deuda T09, fuera del alcance de producción)
+- 52 core/ (anotados o wrappers legacy en ura_multi_agent.py)
+
+**Recomendación:** Los 380 restantes requieren refactor arquitectónico (rediseñar wrappers ssh_run, _run_safe, _run_pipeline) que excede el alcance de F10-05. Marcar como deuda técnica póstuma para Fase 11+.
