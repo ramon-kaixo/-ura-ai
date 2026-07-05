@@ -58,6 +58,23 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima |
 | T09 | ~80+ bloques `except: pass` sin auditar | Media |
 
+### Regla Global de No Regresión
+
+Ninguna fase podrá degradar rendimiento, calidad o funcionalidad respecto al
+baseline de la fase anterior sin documentarlo y justificarlo en el Closeout.
+
+### Regla Transversal (Fases 10–13)
+
+No abrir una fase nueva sin haber cerrado la anterior mediante:
+
+| Paso | Requisito |
+|------|-----------|
+| Validación completa | Checklist de cierre (compilación, lint, tests, smoke) |
+| Actualización de documentación | AGENTS.md + propuesta de fase reflejan estado real |
+| Comparación con baseline | 0 regresiones funcionales vs commit/tag de inicio |
+| Tag de versión | `git tag -a vX.Y.Z-faseN` |
+| Acta de cierre | `docs/architecture/FASEN_CLOSEOUT.md` actual |
+
 ### Fase 9 — Plan de Ejecución (Aprobado, v3.0)
 
 Ver `docs/architecture/FASE9_PROPOSAL.md` para especificación completa.
@@ -355,6 +372,54 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
 - **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
 - **Zombies**: 0 (limpiados durante reparación)
+
+## Roadmap (Fases 10–13)
+
+| Fase | Objetivo | Resultado Clave | Estado |
+|------|----------|-----------------|--------|
+| **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | 📋 Propuesta |
+| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | 🔮 Planificado |
+| **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | 🔮 Planificado |
+| **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | 🔮 Planificado |
+
+### Detalle por Fase
+
+**Fase 10 — Estabilización**
+- Resolver 19 tests fallidos (10 knowledge_engine + 9 motor/test_cli)
+- Eliminar `sys.exit(78)` en `core/model_router.py`
+- Corregir `core/logs/guardian_logger.py`
+- Unificar últimos usos de `subprocess` → `SubprocessExecutor`
+- Incrementar cobertura con tests reales
+- Reducir deuda crítica de lint (C901, S603/S607, PTH123, DTZ005)
+- **Salida:** CI verde, 0 tests fallidos, sin issues conocidos
+- Ver `docs/architecture/FASE10_PROPOSAL.md`
+
+**Fase 11 — Plataforma (Capacidades del Motor)**
+- Plugins instalables (plugin.yaml, registro desde disco, dependencias, ciclo de vida)
+- Sistema de hooks y eventos (EventBus, tópicos, hooks de pipeline/sistema/CLI)
+- Pipelines dinámicos configurable en YAML con etapas reutilizables
+- Observabilidad técnica: `/metrics`, `/health`, `/ready`
+- Plugin SDK mínimo, template, documentación de API
+- **Regla:** Todo módulo nuevo como plugin (no script suelto)
+- **Salida:** Toda nueva funcionalidad extensible mediante plugins/eventos, sin modificar el núcleo
+- Ver `docs/architecture/FASE11_PROPOSAL.md`
+
+**Fase 12 — Inteligencia**
+- KE 2.0: ranking híbrido, reranking, chunking semántico, expansión de consultas
+- Memoria contextual: episódica, semántica, compresión, olvido dirigido
+- Sistema multiagente: Planner, Researcher, Memory, Executor, Validator, Supervisor
+- Consenso entre agentes, autoevaluación, aprendizaje de patrones
+- **Salida:** KE 2.0 operativo con métricas objetivas de mejora
+- Ver `docs/architecture/FASE12_PROPOSAL.md`
+
+**Fase 13 — Producción**
+- Docker oficial + docker-compose
+- Instalación vía `pip install ura`
+- Observabilidad operativa: Prometheus, Grafana, alertas, tracing, logs estructurados
+- Documentación para usuarios: README, QUICKSTART, API OpenAPI, CLI, plugins
+- CI/CD completa: GitHub Actions, releases automáticos, pruebas de integración
+- **Salida:** Instalación reproducible, despliegue automatizado, monitoreo completo, documentación para externos
+- Ver `docs/architecture/FASE13_PROPOSAL.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
