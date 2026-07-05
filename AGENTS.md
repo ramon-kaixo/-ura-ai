@@ -395,12 +395,25 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **Salida:** CI verde, 0 tests fallidos, 0 regresiones
 - `docs/architecture/FASE10_CLOSEOUT.md`
 
-**Fase 11 — Plataforma (Capacidades del Motor)**
-- Plugins instalables (plugin.yaml, registro desde disco, dependencias, ciclo de vida)
-- Sistema de hooks y eventos (EventBus, tópicos, hooks de pipeline/sistema/CLI)
-- Pipelines dinámicos configurable en YAML con etapas reutilizables
-- Observabilidad técnica: `/metrics`, `/health`, `/ready`
-- Plugin SDK mínimo, template, documentación de API
+**Fase 11 — Plataforma (Capacidades del Motor)** ▶️ Activa
+
+**Orden:** Contract-first (Bloque 0 → Bloque 1 → Bloque 2 → Bloque 3)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **0** | Contratos: ADRs (4) + PLUGIN_API.md | ✅ Completado |
+| **1** | Infraestructura: EventBus, plugin manifest, RegistryV2, hooks, CLI | ⏳ Pendiente |
+| **2** | Pipelines dinámicos: engine YAML, etapas base, CLI | 🔮 Planificado |
+| **3** | Observabilidad: /metrics, /health, /ready, métricas de plugins | 🔮 Planificado |
+
+**ADRs activos:**
+- `ADR-011-01`: Contrato de API de plugins (plugin.yaml, PluginBase mejorado)
+- `ADR-011-02`: EventBus tipado (tópicos, payloads, sync/async, patrones)
+- `ADR-011-03`: Hooks desacoplados vía EventBus (cadena, circuit breaker)
+- `ADR-011-04`: Versionado SemVer y matriz de compatibilidad
+
+**Documentación técnica:** `docs/plugins/PLUGIN_API.md`
+
 - **Regla:** Todo módulo nuevo como plugin (no script suelto)
 - **Salida:** Toda nueva funcionalidad extensible mediante plugins/eventos, sin modificar el núcleo
 - Ver `docs/architecture/FASE11_PROPOSAL.md`

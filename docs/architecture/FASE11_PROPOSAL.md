@@ -1,9 +1,9 @@
 # Propuesta — Fase 11: Plataforma (Capacidades del Motor)
 
-> **Versión:** 1.0
+> **Versión:** 2.0 (contrato-primero)
 > **Fecha:** 2026-07-05
-> **Estado:** 🔮 Planificado
-> **Fase anterior:** Fase 10 (Estabilización)
+> **Estado:** 🟡 En ejecución (bloque contratos completado)
+> **Fase anterior:** Fase 10 (Estabilización) — ✅ Cerrada v0.10.0
 > **Objetivo:** Convertir el programa monolítico en una plataforma extensible
 
 ---
@@ -12,13 +12,13 @@
 
 | # | Requisito | Criterio |
 |---|-----------|----------|
-| G.1 | Fase 10 cerrada | Tag `vX.Y.Z-fase10` existente |
-| G.2 | Closeout aprobado | `docs/architecture/FASE10_CLOSEOUT.md` existe y refleja estado real |
-| G.3 | Baseline generado | Commit del tag Fase 10 documentado como baseline de Fase 11 |
-| G.4 | Sin incidencias críticas | `pytest` 0 failures, `sys.exit(78)` eliminado, `guardian_logger.py` corregido |
-| G.5 | CI verde | Todos los hooks de pre-commit pasan sin errores nuevos |
+| G.1 | Fase 10 cerrada | ✅ `v0.10.0` |
+| G.2 | Closeout aprobado | ✅ `FASE10_CLOSEOUT.md` |
+| G.3 | Baseline generado | ✅ `e04b584` (v0.10.0) |
+| G.4 | Sin incidencias críticas | ✅ 540/0 pytest, sys.exit eliminado, guardian_logger corregido |
+| G.5 | CI verde | ✅ Verificado |
 
-**Decisión:** Go ✅ / No-Go ❌
+**Decisión:** Go ✅
 
 ---
 
@@ -93,9 +93,47 @@ comparación para la fase siguiente.
 
 | # | Criterio | Estado |
 |---|----------|--------|
-| E.1 | Fase 10 cerrada y etiquetada | Pendiente |
-| E.2 | `pytest` 0 failures | Pendiente |
-| E.3 | CI completamente verde | Pendiente |
+| E.1 | Fase 10 cerrada y etiquetada | ✅ **v0.10.0** |
+| E.2 | `pytest` 0 failures | ✅ **540 passed, 0 failures** |
+| E.3 | CI completamente verde | ✅ **Verificado** |
+
+---
+
+## Orden de Ejecución (Contract-First)
+
+Basado en la recomendación de closeout de F10, F11 se ejecuta en 3 bloques:
+
+### Bloque 0 — Contratos y ADRs (⚠️ Obligatorio antes de implementar)
+
+| # | Artefacto | Estado | Depende de |
+|---|-----------|--------|------------|
+| 0.1 | ADR-011-01: Plugin API Contract | ✅ Completado | — |
+| 0.2 | ADR-011-02: EventBus Typed Contract | ✅ Completado | — |
+| 0.3 | ADR-011-03: Hooks System | ✅ Completado | ADR-011-02 |
+| 0.4 | ADR-011-04: Plugin Versioning & Compatibility | ✅ Completado | ADR-011-01 |
+| 0.5 | PLUGIN_API.md — Spec técnica | ✅ Completado | ADRs 011-01/02/03/04 |
+| 0.6 | Tag `v0.11.0-f11-contracts` | ⏳ Pendiente | 0.1-0.5 |
+
+Tras Bloque 0, se implementan las funcionalidades en orden:
+
+### Bloque 1 — Infraestructura (implementación)
+
+1. EventBus (`motor/events/bus.py`, `topics.py`, `payloads.py`)
+2. Plugin manifest (`motor/plugin/manifest.py`, parser plugin.yaml)
+3. PluginRegistryV2 (carga con manifest + compatibilidad)
+4. Hooks system (registro automático + circuit breaker)
+5. CLI: `plugin install/list/enable/disable`
+
+### Bloque 2 — Pipelines Dinámicos
+
+1. Pipeline engine (carga YAML, ejecuta etapas)
+2. Etapas base (IngestStage, TransformStage, IndexStage, SearchStage)
+3. CLI: `pipeline run/list/logs`
+
+### Bloque 3 — Observabilidad Técnica
+
+1. `/metrics`, `/health`, `/ready` endpoints
+2. Métricas de plugins, executor, DegradedMode
 
 ---
 
