@@ -10,7 +10,7 @@ import contextlib
 import logging
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class Sandbox:
     def _log(self, event_type: str, details: str) -> None:
         """Registrar evento en log del sandbox."""
         try:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             with open(SANDBOX_LOG, "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp}] [{event_type}] {details}\n")
         except Exception as e:
@@ -151,7 +151,7 @@ class Sandbox:
                 return None
 
             # Crear nombre único para backup
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             backup_name = f"{source.stem}_{timestamp}{source.suffix}"
             backup_path = self.backup_dir / backup_name
 
@@ -202,7 +202,7 @@ class Sandbox:
 
         """
         try:
-            cutoff = datetime.now().timestamp() - (days * 86400)
+            cutoff = datetime.now(UTC).timestamp() - (days * 86400)
 
             for backup in self.backup_dir.iterdir():
                 if backup.is_file() and backup.stat().st_mtime < cutoff:

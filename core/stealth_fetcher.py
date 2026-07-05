@@ -7,26 +7,26 @@ import httpx
 log = logging.getLogger("ura.stealth_fetcher")
 
 USER_AGENTS = [
-"Mozilla/5.0 (Windows NT 10.0
-Win64
-x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-"Mozilla/5.0 (Macintosh
-Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-"Mozilla/5.0 (Windows NT 10.0
-Win64
-x64
-rv:127.0) Gecko/20100101 Firefox/127.0",
-"Mozilla/5.0 (X11
-Linux aarch64
-rv:127.0) Gecko/20100101 Firefox/127.0",
-"Mozilla/5.0 (Macintosh
-Intel Mac OS X 10.15
-rv:127.0) Gecko/20100101 Firefox/127.0",
-"Mozilla/5.0 (Windows NT 10.0
-Win64
-x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
-"Mozilla/5.0 (X11
-Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+"Mozilla/5.0 (Windows NT 10.0 "
+"Win64 "
+"x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+"Mozilla/5.0 (Macintosh "
+"Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+"Mozilla/5.0 (Windows NT 10.0 "
+"Win64 "
+"x64 "
+"rv:127.0) Gecko/20100101 Firefox/127.0",
+"Mozilla/5.0 (X11 "
+"Linux aarch64 "
+"rv:127.0) Gecko/20100101 Firefox/127.0",
+"Mozilla/5.0 (Macintosh "
+"Intel Mac OS X 10.15 "
+"rv:127.0) Gecko/20100101 Firefox/127.0",
+"Mozilla/5.0 (Windows NT 10.0 "
+"Win64 "
+"x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
+"Mozilla/5.0 (X11 "
+"Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
 ]
 
 DEFAULT_TIMEOUT = 30
@@ -39,12 +39,12 @@ def _random_ua() -> str:
 def _default_headers() -> dict:
     return {
         "User-Agent": _random_ua(),
-"Accept": "text/html,application/xhtml+xml,application/xml
-q=0.9,*/*
-q=0.8",
-"Accept-Language": "es-ES,es
-q=0.9,en
-q=0.8",
+"Accept": "text/html,application/xhtml+xml,application/xml "
+"q=0.9,*/* "
+"q=0.8",
+"Accept-Language": "es-ES,es "
+"q=0.9,en "
+"q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
         "DNT": "1",
         "Connection": "keep-alive",

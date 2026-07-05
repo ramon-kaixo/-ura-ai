@@ -37,7 +37,7 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 
 def fix_multiline_statements(path: Path) -> int:
-"""E702: split statements joined with
+    """E702: split statements joined with
 """
     content = path.read_text()
     count = 0
@@ -47,8 +47,7 @@ def fix_multiline_statements(path: Path) -> int:
     for line in lines:
         if ";" in line and not line.strip().startswith("#"):
             # Check if it's actually multiple statements
-parts = line.split("
-")
+            parts = line.split(";")
             if len(parts) > 1:
                 # Only fix if all parts look like simple statements
                 stripped = [p.strip() for p in parts]
@@ -90,7 +89,7 @@ def fix_magic_values(path: Path) -> int:
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
     except Exception:
-    pass  # noqa: S110
+        pass  # noqa: S110
 
     return count
 
@@ -111,8 +110,8 @@ def main():
 
     total_before = subprocess.run(
         ["ruff", "check", *DIRS],
-        capture_output=True, text=True, timeout=60,
-    , check=False)
+        capture_output=True, text=True, timeout=60, check=False,
+    )
     before_count = len([l for l in total_before.stderr.split("\n") if "Found" in l])
 
     fixes = {
@@ -145,8 +144,8 @@ def main():
 
     after = subprocess.run(
         ["ruff", "check", *DIRS],
-        capture_output=True, text=True, timeout=60,
-    , check=False)
+        capture_output=True, text=True, timeout=60, check=False,
+    )
     after_count = len([l for l in after.stderr.split("\n") if "Found" in l])
 
     print(f"Fixers aplicados: {total_fixed}")

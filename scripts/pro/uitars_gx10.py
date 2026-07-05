@@ -2,7 +2,7 @@
 """uitars_gx10.py — UI-TARS para GX10 con fallback Ollama vision."""
 from __future__ import annotations
 import json, logging, os, shutil, subprocess, sys, time, base64
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from io import BytesIO
 
@@ -83,7 +83,7 @@ def main():
     resultado = analizar_con_ollama(imagen, "Describe esta interfaz en detalle")
     print(f"  Resultado: {resultado.texto[:200]}")
     print(f"  Modelo: {resultado.modelo}")
-    path = REPORTS_DIR / f"uitars_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    path = REPORTS_DIR / f"uitars_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"modo": modo, "resultado": resultado.texto}, indent=2))
     print(f"  Reporte: {path}")
 

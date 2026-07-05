@@ -87,7 +87,7 @@ def run(cmd, timeout=120):
 
 
 def detectar_nivel() -> str:
-    now = datetime.now()
+    now = datetime.now(UTC)
     hora, dia = now.hour, now.weekday()
     if dia == 0 and 2 <= hora <= 4:
         return "profundo"
@@ -256,7 +256,7 @@ def git_commit_if_stable() -> None:
     log("  Git commit (si F821 estable)...")
     run(["git", "add", "-u"], timeout=30)
     run(
-        ["git", "commit", "-m", f"mantenimiento: {datetime.now().strftime('%Y-%m-%d %H:%M')} — F821 estable"],
+        ["git", "commit", "-m", f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')} — F821 estable"],
         timeout=30,
     )
 
@@ -484,7 +484,7 @@ def revision_profunda():
         "f821_final": results["f821_final"],
         "git": results["git"],
     }
-    reporte_path = REPORT_DIR / f"reporte_semanal_{datetime.now().strftime('%Y%m%d')}.json"
+    reporte_path = REPORT_DIR / f"reporte_semanal_{datetime.now(UTC).strftime('%Y%m%d')}.json"
     reporte_path.write_text(json.dumps(reporte, indent=2, ensure_ascii=False))
     results["reporte"] = str(reporte_path)
     return results

@@ -32,7 +32,7 @@ os.chdir(str(URA_ROOT))
 def log(msg: str) -> None:
     """Escribe al log de la tuneladora."""
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
     try:
         with open(LOG_FILE, "a") as f:
@@ -119,7 +119,7 @@ def modo_delta() -> int:
         f"  💾 Delta snapshot: guardado para proximo ciclo\n"
         f"  🌱 Proximo ciclo: en 24h (modo Delta)\n"
         f"══════════════════════════════════════\n"
-        f"  Fin: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"  Fin: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}"
     )
     log(reporte)
 
@@ -198,7 +198,7 @@ def modo_profundo() -> int:
     f841_count = ruff.stdout.count("F841")
     log(f"  ruff: {f821_count} F821, {f841_count} F841")
 
-    helper3(f"profundo-{datetime.now().strftime('%Y%m')}")
+    helper3(f"profundo-{datetime.now(UTC).strftime('%Y%m')}")
 
     log("🚀 Starting full refactoring (--force-all)...")
     t0 = time.time()
@@ -216,7 +216,7 @@ def modo_profundo() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    f821_result = helper4(f"profundo-{datetime.now().strftime('%Y%m')}")
+    f821_result = helper4(f"profundo-{datetime.now(UTC).strftime('%Y%m')}")
 
     helper5()
 
@@ -230,7 +230,7 @@ def modo_profundo() -> int:
         f" 💾 Nervous system: rebuilt\n"
         f" 🌱 Next cycle: mode Delta daily\n"
         f"══════════════════════════════════════\n"
-        f" End: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f" End: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}"
     )
     log(reporte)
 
@@ -238,7 +238,7 @@ def modo_profundo() -> int:
 
 
 def main() -> None:
-    DIA = datetime.now().day
+    DIA = datetime.now(UTC).day
 
     if "--force-all" in sys.argv or DIA == 1:
         sys.exit(modo_profundo())

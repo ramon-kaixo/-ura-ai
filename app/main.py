@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -24,7 +24,7 @@ class Orquestador:
 
     async def ciclo(self) -> dict:
         logger.info("Ciclo de orquestacion")
-        r = {"timestamp": datetime.now().isoformat(), "acciones": [], "errores": [], "estado": "OK"}
+        r = {"timestamp": datetime.now(UTC).isoformat(), "acciones": [], "errores": [], "estado": "OK"}
         try:
             captura = self.capturador.capturar()
             if captura: r["acciones"].append("captura_ok")
@@ -35,7 +35,7 @@ class Orquestador:
             r["cola"] = cola
         except Exception as e:
             r["errores"].append(str(e))
-        path = REPORTS / f"orquestacion_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        path = REPORTS / f"orquestacion_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
         path.write_text(json.dumps(r, indent=2))
         return r
 

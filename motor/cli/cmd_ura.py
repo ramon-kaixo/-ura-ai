@@ -6,7 +6,7 @@ import shlex
 import subprocess
 import sys
 import urllib.request
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import UraConfig
@@ -129,7 +129,7 @@ def cmd_test(config: UraConfig, args):
 
 
 def cmd_snapshot(config: UraConfig, args):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     snap_dir = ROOT / "data" / "snapshots"
     snap_dir.mkdir(parents=True, exist_ok=True)
     fname = snap_dir / f"{timestamp}.json"
@@ -142,7 +142,7 @@ def cmd_snapshot(config: UraConfig, args):
     test_pass = "PASS" if "TODOS LOS TESTS PASARON" in test_r.stdout else "FAIL"
 
     snap = {
-        "date": datetime.now().isoformat(),
+        "date": datetime.now(UTC).isoformat(),
         "commit": r.stdout.strip(),
         "tests": test_pass,
         "branch": subprocess.run(
@@ -201,7 +201,7 @@ def cmd_snc(config: UraConfig, args):
                 state = json.loads(f.read())
             ts = state.get("timestamp", "?")
             try:
-                age = (datetime.now() - datetime.fromisoformat(ts)).total_seconds()
+                age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 age_str = f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
             except Exception:
                 age_str = "?"
@@ -237,7 +237,7 @@ def cmd_doctor(config: UraConfig, args):
     """Diagnóstico completo del sistema."""
     print(f"\n{'=' * 60}", file=sys.stderr)
     print("  URA Doctor — Diagnóstico completo", file=sys.stderr)
-    print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
+    print(f"  {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
     print(f"{'=' * 60}", file=sys.stderr)
 
     print("\n[1/6] Schema", file=sys.stderr)
@@ -318,7 +318,7 @@ def cmd_dashboard(config: UraConfig, args):
     local_state = Path.home() / ".ura" / "run" / "ura_snc_state.json"
 
     print(f"\n{'=' * 60}", file=sys.stderr)
-    print(f"  URA Status Dashboard — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
+    print(f"  URA Status Dashboard — {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}", file=sys.stderr)
     print(f"{'=' * 60}", file=sys.stderr)
 
     print("\n[SNC — Sistema Nervioso Central]", file=sys.stderr)
@@ -328,7 +328,7 @@ def cmd_dashboard(config: UraConfig, args):
             state = json.loads(state_file.read_text())
             ts = state.get("timestamp", "?")
             try:
-                age = (datetime.now() - datetime.fromisoformat(ts)).total_seconds()
+                age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 age_str = f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
             except Exception:
                 age_str = "?"

@@ -9,7 +9,7 @@ import json
 import logging
 import re
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Configuración
@@ -52,7 +52,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(LOG_DIR / f"remote_maintenance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+        logging.FileHandler(LOG_DIR / f"remote_maintenance_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.log"),
         logging.StreamHandler(),
     ],
 )
@@ -231,7 +231,7 @@ def main():
             logger.info(f"Omitiendo dispositivo inactivo: {ip}")
 
     # Guardar resultados
-    results_file = LOG_DIR / f"remote_maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    results_file = LOG_DIR / f"remote_maintenance_results_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     try:
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2)

@@ -27,12 +27,12 @@ def fix_exe_shebang() -> int:
                     count += 1
                     print(f"  +x {f.relative_to(REPO)}")
                 except PermissionError:
-    pass  # noqa: S110
+                    pass  # noqa: S110
     return count
 
 
 def fix_e702_semicolons() -> int:
-"""E702: split x=1
+    """E702: split x=1
 y=2 into two lines."""
     count = 0
     for dirname in DIRS:
@@ -44,8 +44,7 @@ y=2 into two lines."""
             changed = False
             for line in content.split("\n"):
                 if ";" in line and not line.strip().startswith(("#", "import ", "from ")):
-parts = line.split("
-")
+                    parts = line.split(";")
                     parts = [p.strip() for p in parts]
                     if len(parts) > 1 and all(not p.startswith(("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")) for p in parts):
                         new_content.extend(parts)
