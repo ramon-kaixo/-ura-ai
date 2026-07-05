@@ -1,11 +1,11 @@
 import json
 import logging
 import socket
-import subprocess
 import sys
 from pathlib import Path
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.qdrant_client import QdrantClient
 from motor.guard.preflight import ejecutar_preflight
 from motor.guard.verifier import ejecutar_verificacion
@@ -14,6 +14,7 @@ from motor.scanner.calibration import Calibration
 log = logging.getLogger("ura.cli")
 ARCHIVO_TRENDS = "trends.ndjson"
 ARCHIVO_ESTADO = "estado_alemania.json"
+_executor = SubprocessExecutor()
 
 
 def cmd_history(config: UraConfig, args=None):
@@ -118,23 +119,12 @@ def cmd_learn(config: UraConfig, args=None):
 
 
 def cmd_alerta(config: UraConfig = None, args=None):
-    r = subprocess.run(
+    r = _executor.run(
         [
-            "journalctl",
-            "-u",
-            "ura-pipeline.service",
-            "--no-pager",
-            "-p",
-            "err",
-            "--since",
-            "1 hour ago",
-            "-o",
-            "short-iso",
+            "journalctl", "-u", "ura-pipeline.service",
+            "--no-pager", "-p", "err", "--since", "1 hour ago", "-o", "short-iso",
         ],
-        capture_output=True,
-        text=True,
         timeout=10,
-        check=False,
     )
     alerts = [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
     print(json.dumps({"alertas": alerts[-20:], "total": len(alerts)}, indent=2, default=str))
@@ -144,7 +134,7 @@ def cmd_health_check(config: UraConfig, args=None):
     checks = []
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:
-            r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True, timeout=5, check=False)
+            r = _executor.run(["systemctl", "is-active", unit], timeout=5)
             ok = "active" in r.stdout or r.stdout.strip() in ("inactive",)
             checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})
         except Exception as e:
@@ -171,12 +161,9 @@ def cmd_health_check(config: UraConfig, args=None):
         },
     )
     try:
-        r = subprocess.run(
+        r = _executor.run(
             ["docker", "ps", "-q", "--filter", "name=qdrant"],
-            capture_output=True,
-            text=True,
             timeout=5,
-            check=False,
         )
         checks.append(
             {

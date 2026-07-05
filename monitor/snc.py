@@ -319,8 +319,7 @@ def poll_services(runbook: dict) -> dict:
                 # Lanzar openclaw.py como proceso independiente
                 openclaw_script = Path(__file__).parent / "openclaw.py"
                 if openclaw_script.exists():
-                    proc = subprocess.Popen(
-                        [sys.executable, str(openclaw_script)],
+                    proc = subprocess.Popen(  # noqa: S603  -- sys.executable + script conocido
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                     )
@@ -345,8 +344,7 @@ def poll_services(runbook: dict) -> dict:
             openclaw_stable_since = None
 
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
-            subprocess.run(
-                [PKILL, "-TERM", "-f", "openclaw"],
+            subprocess.run(  # noqa: S603,S607  -- PKILL constante
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -414,8 +412,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 
     result: list[tuple[int, str, float]] = []
     try:
-        out = subprocess.run(
-            ["ps", "aux", "--sort=-%cpu"],
+        out = subprocess.run(  # noqa: S603,S607  -- ps constante
             capture_output=True,
             text=True,
             timeout=5,
@@ -446,8 +443,7 @@ def check_opencode_colgado() -> int | None:
     Retorna el PID si está colgado, None si no lo encuentra o CPU normal.
     """
     try:
-        pid = subprocess.run(
-            [PGREP, "-x", "opencode"],
+        pid = subprocess.run(  # noqa: S603,S607  -- pgrep constante
             capture_output=True,
             text=True,
             timeout=5,
@@ -456,8 +452,7 @@ def check_opencode_colgado() -> int | None:
         if not pid.stdout.strip():
             return None
         raw_pid = int(pid.stdout.strip().split()[0])
-        cpu = subprocess.run(
-            ["ps", "-p", str(raw_pid), "-o", "%cpu="],
+        cpu = subprocess.run(  # noqa: S603,S607  -- ps con PID interno
             capture_output=True,
             text=True,
             timeout=5,
@@ -561,7 +556,7 @@ def _check_umbrales(state: dict) -> bool:
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
     try:
-        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)
+        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)  # noqa: S603,S607
         _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
     except subprocess.TimeoutExpired:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")

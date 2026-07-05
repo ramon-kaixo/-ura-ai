@@ -181,7 +181,7 @@ def compile_source(
             from knowledge.engine.snapshot_store import save_snapshot
             import subprocess
 
-            commit = subprocess.run(
+            commit = subprocess.run(  # noqa: S603,S607
                 ["git", "rev-parse", "HEAD"],
                 capture_output=True, text=True, cwd=source_dir, check=False,
             ).stdout.strip() or "HEAD"

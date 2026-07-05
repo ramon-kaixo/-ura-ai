@@ -88,7 +88,7 @@ def _ensure_dir(path: Path) -> Path:
     return path
 
 
-def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:
+def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:  # noqa: S603,S607
     import shutil
 
     git_path = shutil.which("git") or "/usr/bin/git"
@@ -339,7 +339,7 @@ def restore_source(
 
     # Clonar desde bundle
     dest_dir.mkdir(parents=True, exist_ok=True)
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603,S607
         ["git", "clone", str(bundle_path), str(dest_dir)],
         capture_output=True, text=True, check=False,
     )
