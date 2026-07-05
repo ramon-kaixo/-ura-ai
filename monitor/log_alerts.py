@@ -7,7 +7,7 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from core.config_manager import CONFIG
@@ -45,7 +45,7 @@ def load_seen_hashes() -> set:
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
         except Exception:
-    pass  # noqa: S110
+            pass  # noqa: S110
     return set()
 
 
@@ -70,8 +70,7 @@ def fetch_critical_logs() -> list:
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
-cmd = "(" + "
-".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
+    cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
     if output:
@@ -100,7 +99,7 @@ def main() -> int:
             duplicates += 1
 
     if new_alerts:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         alert_file = LOCAL_ALERTS_DIR / f"gx10_critical_{timestamp}.log"
         with open(alert_file, "w") as f:
             for line in new_alerts:

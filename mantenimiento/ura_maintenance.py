@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -83,7 +83,7 @@ except (PermissionError, OSError):
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.warning(f"Using fallback log directory: {LOG_DIR}")
 
-LOG_FILE = LOG_DIR / f"maintenance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+LOG_FILE = LOG_DIR / f"maintenance_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.log"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -193,7 +193,7 @@ class SystemCleaner:
             {
                 "operation": operation,
                 "size_freed_gb": size_freed,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
         self.space_freed += size_freed
@@ -367,7 +367,7 @@ class LinuxCleaner(SystemCleaner):
                         for file in files:
                             file_path = os.path.join(root, file)
                             try:
-                                file_age = (datetime.now().timestamp() - os.path.getmtime(file_path)) / 86400
+                                file_age = (datetime.now(UTC).timestamp() - os.path.getmtime(file_path)) / 86400
                                 if file_age > retention_days and file.endswith(".log"):
                                     if self.safe_remove(file_path):
                                         size = os.path.getsize(file_path) / (1024**3)
@@ -567,7 +567,7 @@ class MacCleaner(SystemCleaner):
                 if log_dir.exists():
                     for log_file in log_dir.rglob("*.log"):
                         try:
-                            file_age = (datetime.now().timestamp() - log_file.stat().st_mtime) / 86400
+                            file_age = (datetime.now(UTC).timestamp() - log_file.stat().st_mtime) / 86400
                             if file_age > retention_days:
                                 if self.safe_remove(str(log_file)):
                                     size = log_file.stat().st_size / (1024**3)
@@ -639,7 +639,7 @@ class MaintenanceOrchestrator:
             "final_usage": final_usage,
             "space_freed_gb": self.cleaner.space_freed,
             "operations": self.cleaner.operations,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Guardar resultados
@@ -649,7 +649,7 @@ class MaintenanceOrchestrator:
 
     def _save_results(self):
         """Guardar resultados en archivo JSON"""
-        results_file = LOG_DIR / f"maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        results_file = LOG_DIR / f"maintenance_results_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
         try:
             with open(results_file, "w") as f:
                 json.dump(self.results, f, indent=2)

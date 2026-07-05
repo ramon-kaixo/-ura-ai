@@ -7,7 +7,7 @@ import json
 import logging
 import subprocess
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
@@ -83,7 +83,7 @@ class ActionLogger:
     ):
         """Log an action with full audit trail"""
         entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "agent_id": agent_id,
             "role": role.value,
             "action": action.value,
@@ -113,7 +113,7 @@ class QuarantineSystem:
         if not source_path.exists():
             return ""
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         quarantine_path = self.quarantine_dir / f"{source_path.name}_{timestamp}_{agent_id}"
 
         try:
@@ -141,7 +141,7 @@ class ApprovalSystem:
             "action": action.value,
             "details": details,
             "screenshot": screenshot,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "pending",
         }
 

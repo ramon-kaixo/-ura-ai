@@ -101,7 +101,7 @@ def check_disk() -> list:
                 if gb < DISK_THRESHOLD_GB:
                     alerts.append(f"Disco {mount}: solo {gb:.1f}GB libres")
             except ValueError:
-    pass  # noqa: S110
+                pass  # noqa: S110
     return alerts, stats
 
 
@@ -130,7 +130,7 @@ def check_ram() -> list:
                 if avail_num < RAM_THRESHOLD_GB:
                     alerts.append(f"RAM baja: {avail_num:.1f}G disponibles")
             except ValueError:
-    pass  # noqa: S110
+                pass  # noqa: S110
     return alerts, stats
 
 
@@ -208,8 +208,7 @@ def main() -> int:
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
         timestamp = datetime.now(UTC).isoformat()
         with open(ALERT_FILE, "a") as f:
-f.write(f"[{timestamp}] {'
-'.join(all_alerts)}\n")
+            f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:
         pass
 

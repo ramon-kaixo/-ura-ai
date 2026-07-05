@@ -7,7 +7,7 @@ Notifica si GX10 está OFFLINE o en estado CRITICAL.
 import json
 import subprocess
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from core.config_manager import CONFIG
@@ -45,7 +45,7 @@ def mac_notify(title: str, message: str) -> None:
             check=False,
         )
     except Exception:
-    pass  # noqa: S110
+        pass  # noqa: S110
 
 
 def sync_state() -> dict:
@@ -59,7 +59,7 @@ def sync_state() -> dict:
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
     except Exception:
-    pass  # noqa: S110
+        pass  # noqa: S110
     return {}
 
 
@@ -75,7 +75,7 @@ def main() -> None:
                 ts = state.get("timestamp", "")
                 try:
                     ts_dt = datetime.fromisoformat(ts)
-                    age = (datetime.now() - ts_dt).total_seconds()
+                    age = (datetime.now(UTC) - ts_dt).total_seconds()
                 except Exception:
                     age = 999
 
@@ -91,7 +91,7 @@ def main() -> None:
 
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
-    pass  # noqa: S110
+        pass  # noqa: S110
 
 
 if __name__ == "__main__":

@@ -65,7 +65,7 @@ def load_state() -> dict:
         if STATE_FILE.exists():
             return json.loads(STATE_FILE.read_text())
     except Exception:
-    pass  # noqa: S110
+        pass  # noqa: S110
     return {"status": "UNKNOWN", "services": {}, "openclaw_active": False}
 
 
@@ -77,7 +77,7 @@ def save_stats() -> None:
         tmp.write_text(json.dumps(stats, indent=2))
         os.replace(str(tmp), str(STATS_FILE))
     except Exception:
-    pass  # noqa: S110
+        pass  # noqa: S110
 
 
 def is_emergency(state: dict) -> bool:
@@ -240,7 +240,7 @@ def main() -> None:
 
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
-    pass  # noqa: S110
+        pass  # noqa: S110
     finally:
         PID_FILE.unlink(missing_ok=True)
         save_stats()
