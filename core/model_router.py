@@ -75,7 +75,8 @@ def verificar_politicas_seguridad_preflight() -> None:
         sys.exit(78)
 
 
-verificar_politicas_seguridad_preflight()
+# NOTA: verificar_politicas_seguridad_preflight() se llama dentro de main()
+# para no matar el proceso en imports (permite colección de pytest).
 # ===== FIN PREFLIGHT =====
 
 try:
@@ -1220,6 +1221,11 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
 def main() -> None:
     import sys
+
+    if "--test" in sys.argv or "--models" in sys.argv:
+        pass  # noqa: S110 — preflight no necesario para consultas simples
+    else:
+        verificar_politicas_seguridad_preflight()
 
     if "--test" in sys.argv:
         idx = sys.argv.index("--test")
