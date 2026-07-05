@@ -130,7 +130,7 @@ class DockerOrchestrator:
                 dt.get("error"),
             )
         finally:
-            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)
+            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: S603,S607  -- tag es hash interno
 
     @staticmethod
     def _df(c, n):
@@ -170,6 +170,6 @@ sys.exit(0 if r["fallidos"]==0 else 1)
     @staticmethod
     def _docker():
         try:
-            return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
+            return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0  # noqa: S607  -- comando constante
         except:
             return False

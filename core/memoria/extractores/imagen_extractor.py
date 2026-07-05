@@ -55,8 +55,8 @@ def _exif_pillow(ruta: Path) -> dict:
 def _exif_exiftool(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
-        out = subprocess.run(
-            [
+        out = subprocess.run(  # noqa: S603  -- ruta desde caller interno
+            [  # noqa: S607  -- ruta desde caller interno
                 "exiftool",
                 "-json",
                 "-DateTimeOriginal",

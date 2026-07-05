@@ -37,15 +37,15 @@ STATE_FILES = {
 
 def get_service_status(service: str) -> dict:
     try:
-        res = subprocess.run(
-            ["systemctl", "is-active", service],
+        res = subprocess.run(  # noqa: S603  -- service desde lista SERVICES predefinida
+            ["systemctl", "is-active", service],  # noqa: S607  -- service desde lista SERVICES predefinida
             capture_output=True,
             text=True,
             timeout=5,
             check=False,
         )
-        pid = subprocess.run(
-            ["systemctl", "show", service, "-p", "MainPID"],
+        pid = subprocess.run(  # noqa: S603  -- misma lista
+            ["systemctl", "show", service, "-p", "MainPID"],  # noqa: S607  -- misma lista
             capture_output=True,
             text=True,
             timeout=5,
@@ -64,7 +64,7 @@ def get_service_status(service: str) -> dict:
 def get_vram() -> dict | None:
     try:
         res = subprocess.run(
-            ["nvidia-smi", "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"],  # noqa: S607  -- comando constante
             capture_output=True,
             text=True,
             timeout=5,

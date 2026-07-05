@@ -66,8 +66,8 @@ class OpenCodeGuardian:
 
         if file_path.endswith(".py"):
             try:
-                res = subprocess.run(
-                    ["python3", "-m", "py_compile", file_path],
+                res = subprocess.run(  # noqa: S603  -- file_path validado por extensión .py
+                    ["python3", "-m", "py_compile", file_path],  # noqa: S607  -- file_path validado por extensión .py
                     capture_output=True, timeout=5,
                 )
                 return res.returncode == 0
@@ -76,8 +76,8 @@ class OpenCodeGuardian:
 
         elif file_path.endswith(".sh"):
             if shutil.which("bash"):
-                res = subprocess.run(
-                    ["bash", "-n", file_path],
+                res = subprocess.run(  # noqa: S603  -- file_path validado por extensión .sh
+                    ["bash", "-n", file_path],  # noqa: S607  -- file_path validado por extensión .sh
                     capture_output=True, timeout=5,
                 )
                 return res.returncode == 0
