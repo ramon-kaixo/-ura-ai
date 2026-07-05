@@ -1,7 +1,9 @@
 import logging
-import subprocess
+
+from motor.core.executor import SubprocessExecutor
 
 log = logging.getLogger("ura.scanner.hw_vm")
+_executor = SubprocessExecutor()
 
 
 def escanear_hw_vm() -> dict:
@@ -20,13 +22,7 @@ def escanear_hw_vm() -> dict:
 def _dmesg_errors() -> list:
     """Obtiene errores del kernel de la última hora."""
     try:
-        r = subprocess.run(
-            ["dmesg", "--level=err", "--since", "1 hour ago"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
+        r = _executor.run(["dmesg", "--level=err", "--since", "1 hour ago"], timeout=5)
         lines = [l for l in r.stdout.strip().split("\n") if l and "usb" not in l.lower()]
         return lines[-5:] if lines else []
     except Exception as e:
@@ -54,7 +50,7 @@ def _io_stats() -> dict:
 def _virtio_check() -> bool:
     """Verifica si el módulo virtio está cargado."""
     try:
-        r = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=3, check=False)
+        r = _executor.run(["lsmod"], timeout=3)
         return "virtio" in r.stdout
     except Exception as e:
         log.debug("virtio check falló: %s", e)
@@ -64,7 +60,7 @@ def _virtio_check() -> bool:
 def _journal_integrity() -> int:
     """Verifica integridad del journald."""
     try:
-        r = subprocess.run(["journalctl", "--verify"], capture_output=True, text=True, timeout=10, check=False)
+        r = _executor.run(["journalctl", "--verify"], timeout=10)
         return r.stdout.count("PASS") if "PASS" in r.stdout else 0
     except Exception as e:
         log.debug("journalctl --verify falló: %s", e)

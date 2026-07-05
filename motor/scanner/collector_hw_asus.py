@@ -1,8 +1,10 @@
 import glob
 import logging
-import subprocess
+
+from motor.core.executor import SubprocessExecutor
 
 log = logging.getLogger("ura.scanner.hw_asus")
+_executor = SubprocessExecutor()
 
 RUTA_THERMAL = "/sys/class/thermal/thermal_zone*/temp"
 
@@ -22,7 +24,7 @@ def escanear_hw_asus(temp_gpu=None) -> dict:
 def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
     """Verifica estado SMART del disco."""
     try:
-        r = subprocess.run(["sudo", "smartctl", "-H", disk], capture_output=True, text=True, timeout=10, check=False)
+        r = _executor.run(["sudo", "smartctl", "-H", disk], timeout=10)
         return "PASSED" in r.stdout
     except Exception as e:
         log.warning("smartctl fallo en %s: %s", disk, e)
@@ -45,13 +47,7 @@ def _thermal_zones() -> dict:
 def _temp_gpu_orin() -> float:
     """Obtiene temperatura GPU via tegrastats."""
     try:
-        r = subprocess.run(
-            ["tegrastats", "--interval", "1000", "--count", "1"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
+        r = _executor.run(["tegrastats", "--interval", "1000", "--count", "1"], timeout=5)
         m = __import__("re").search(r"GPU@(\d+)mW", r.stdout)
         if m:
             return int(m.group(1))
