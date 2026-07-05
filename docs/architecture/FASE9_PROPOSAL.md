@@ -87,20 +87,16 @@ Usa SSH para 4 comandos (index, ask, maintenance, snc). Depende de
 
 | Sub-paso | Descripción | Archivos |
 |----------|-------------|----------|
-| D.1 | Extraer funciones comando a `motor/cli/cmd_ura.py` (tabla de despacho) | 1 nuevo |
-| D.2 | Crear `motor/cli/cmd_knowledge.py` para index, ask, memory | 1 nuevo |
-| D.3 | Crear `motor/cli/cmd_maintenance.py` para clean, rotate, snapshot | 1 nuevo |
-| D.4 | Extender `cmd_pipeline.py`, `cmd_diag.py`, `cmd_status.py` con comandos de ura.py | 3 modificados |
-| D.5 | Registrar en `motor/cli/main.py` argparse (nuevos subcomandos) | 1 modificado |
-| D.6 | Añadir console_scripts: `ura = motor.cli.main:main` en pyproject.toml | 1 modificado |
-| D.7 | Reducir `ura.py` a wrapper (~50 líneas) que delega en `motor.cli.main` | 1 modificado |
-| D.8 | Tests unitarios para cada `cmd_*` con mocking de subprocess | varios nuevos |
+| D.1 | Extraer funciones comando a `motor/cli/cmd_ura.py` (módulo único) | 1 nuevo |
+| D.2 | Registrar en `motor/cli/main.py` argparse + COMMANDS + URA_COMMANDS | 1 modificado |
+| D.3 | Reducir `ura.py` a wrapper (~52 líneas) que delega en `motor.cli.main` | 1 modificado |
+| D.4 | Añadir console_scripts: `ura = ura:main` en pyproject.toml | 1 modificado |
 
 **Regla:** `ura.py` se mantiene como wrapper durante toda la Fase 9. Solo
 se elimina tras validación en Fase E + varias iteraciones de compatibilidad.
 
-**Impacto:** `ura.py` de 583→~50 líneas. 16 comandos portados a módulos
-dedicados. `ura <comando>` desde PATH. Arquitectura mantenible.
+**Impacto:** `ura.py` de 583→52 líneas. 17 comandos portados a `motor/cli/cmd_ura.py`.
+`ura <comando>` desde PATH (console_scripts). Arquitectura mantenible.
 
 ---
 
@@ -119,13 +115,13 @@ se rompe esa dependencia.
 
 | Sub-paso | Descripción | Archivos |
 |----------|-------------|----------|
-| A.1 | Fusionar `test_unit.py` + `unit_test_runner.py` en un solo archivo pytest | 2→1 |
-| A.2 | Fusionar `test_memory_engine.py` + `test_properties.py` (~80% overlap) en `test_hypothesis.py` | 2→1 |
+| A.1 | Fusionar `test_unit.py` + `unit_test_runner.py` (superset, merge diferencias) | 2→1 |
+| A.2 | Fusionar `test_memory_engine.py` + `test_properties.py` → `test_hypothesis.py` | 2→1 |
 | A.3 | Mover 5 tests huérfanos de raíz a `tests/` | 5 movidos |
 | A.4 | Añadir `"motor/tests"` a `testpaths` en pyproject.toml | 1 modificado |
 | A.5 | Unificar `make test` → `make pytest` en Makefile | 1 modificado |
-| A.6 | Eliminar referencias a tests inexistentes en `scripts/pro/phase*_diagnosis*.sh` | 5 modificados |
-| A.7 | Limpiar `motor/tests/conftest.py` si está vacío | 1 modificado |
+| A.6 | Eliminar referencias a tests inexistentes en `scripts/pro/phase1_diagnosis.sh` | 1 modificado |
+| A.7 | Limpiar `motor/tests/conftest.py` (vacío → eliminado) | 1 eliminado |
 
 **Cobertura:** NO se fuerza un umbral mínimo (ej. 30%) durante esta fase.
 Primero se aumenta cobertura real, luego se endurece el límite.
@@ -139,17 +135,18 @@ no es verificable objetivamente.
 
 **Acción:**
 
-| Sub-paso | Descripción |
-|----------|-------------|
-| E.1 | Benchmark antes/después: tiempos, memoria, CPU |
-| E.2 | Smoke tests: imports, py_compile, todos los módulos cargables |
-| E.3 | Comparación contra baseline de Fase 9 |
-| E.4 | Verificar 0 regresiones funcionales |
-| E.5 | Actualizar ADR-007 si aplica |
-| E.6 | Actualizar AGENTS.md con nuevo estado |
-| E.7 | Actualizar README.md si aplica |
-| E.8 | Tag de cierre (`v0.8.0-fase9`) y release notes |
-| E.9 | Push a origin |
+| # | Check | Criterio |
+|---|-------|----------|
+| E.1 | Compilación completa | `py_compile` 0 errores en todos los módulos tocados |
+| E.2 | Ruff sin errores nuevos | `ruff check` — 0 errores nuevos vs baseline |
+| E.3 | Pytest con nuevo recuento | `pytest -q` — mismo resultado que baseline (sin regresiones) |
+| E.4 | Smoke tests CLI | `ura.py help/status/doctor/finalize --help` funcionan |
+| E.5 | Smoke tests API | `ejecutor_api` endpoints /health, /api/v1/status responden |
+| E.6 | Descubrimiento de plugins | `PluginRegistry.discover()` encuentra plugins sin errores |
+| E.7 | Verificación de DegradedMode | `DegradedMode` inicializa, degrada, restaura correctamente |
+| E.8 | Comparación con baseline | diff de tests vs baseline commit (`0d5aed7`) |
+| E.9 | Working tree limpio | `git status` sin cambios sin commitear |
+| E.10 | Documentación sincronizada | AGENTS.md + FASE9_PROPOSAL.md reflejan estado real |
 
 **Impacto:** Cierre verificable. Baseline actualizado. Trazabilidad completa.
 
@@ -168,25 +165,34 @@ El orden anterior era `C → A → B → D`. La auditoría descubrió que
 Si A se ejecuta antes que D, `ura.py` se rompe.
 
 El nuevo orden `C → B → D → A → E`:
-1. **C** ya está completado — sin dependencias
-2. **B** crea infraestructura (`executor.py`, `plugin/`) que D necesita
-3. **D** se ejecuta antes que A, evitando el conflicto A↔D
-4. **A** al final: captura todos los tests nuevos de B y D
-5. **E** validación final: baseline, benchmarks, tag
+1. **C** — completado (DegradedMode, /api/v1/status)
+2. **B** — completado (executor.py, plugin/, shell=True eliminado)
+3. **D** — completado (ura.py→wrapper, motor/cli/cmd_ura.py, console_scripts)
+4. **A** — completado (tests fusionados, Makefile, tests huérfanos movidos)
+5. **E** — validación final: checklist de 10 puntos
 
 ### Dependencias Reales
 
 ```
 ┌───┐
-│ C │ ← sin dependencias (COMPLETADO)
+│ C │ ← ✅ COMPLETADO
 └───┘
   │
 ┌─▼──┐
-│ B  │ ← sin dependencias de otros streams
+│ B  │ ← ✅ COMPLETADO
 └─┬──┘
-  │ B → D: D usa executor.py de B
+  │
 ┌─▼──┐
-│ D  │ ← D necesita B (executor), pero NO necesita A
+│ D  │ ← ✅ COMPLETADO
+└─┬──┘
+  │
+┌─▼──┐
+│ A  │ ← ✅ COMPLETADO
+└─┬──┘
+  │
+┌─▼──┐
+│ E  │ ← EJECUTÁNDOSE
+└───┘
 └─┬──┘
   │ D → A: D elimina dependencia de test_unit.py, liberando A
 ┌─▼──┐

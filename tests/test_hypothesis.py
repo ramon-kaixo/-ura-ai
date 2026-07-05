@@ -1,4 +1,4 @@
-"""Hypothesis property-based tests for URA Memory Engine and core modules."""
+"""Hypothesis property-based tests for URA core modules (merged from test_memory_engine + test_properties)."""
 
 from hypothesis import given, settings
 from hypothesis.strategies import booleans, integers, lists, text
@@ -16,7 +16,6 @@ def test_chunking_never_empty_for_nonempty_text(text_in: str) -> None:
     chunks = chunk_semantic(text_in)
     assert len(chunks) >= 1, f"chunk_semantic returned empty for: {text_in[:50]}"
     assert all(len(c) > 0 for c in chunks), "Chunks must not be empty"
-    # Total content should be preserved (approximately)
     original_words = len(text_in.split())
     chunked_words = sum(len(c.split()) for c in chunks)
     assert chunked_words <= original_words or chunked_words >= original_words * 0.5
@@ -49,7 +48,7 @@ def test_query_cache_roundtrip(entries: list[str], ttl: int) -> None:
     asyncio.run(_run())
 
 
-@given(text(max_size=200))
+@given(text(max_size=300))
 @settings(max_examples=50)
 def test_language_detection_stable(text_in: str) -> None:
     if not text_in.strip():
@@ -69,12 +68,12 @@ def test_content_type_never_empty(text_in: str) -> None:
 
 @given(text(max_size=100), booleans(), booleans(), integers(min_value=1, max_value=20))
 @settings(max_examples=50)
-def test_cache_key_unique(query: str, reranker: bool, hybrid: bool, top_k: int) -> None:
+def test_cache_key_properties(query: str, reranker: bool, hybrid: bool, top_k: int) -> None:
     cache = AsyncQueryCache()
     key1 = cache.compute_key(query, use_reranker=reranker, use_hybrid=hybrid, top_k=top_k)
+    assert len(key1) == 64, "Cache key must be 64 characters"
     key2 = cache.compute_key(query, use_reranker=reranker, use_hybrid=hybrid, top_k=top_k)
     assert key1 == key2, "Cache key not deterministic"
-    # Different params should produce different keys
     key3 = cache.compute_key(query, use_reranker=not reranker, use_hybrid=hybrid, top_k=top_k)
     if reranker != (not reranker):
         assert key1 != key3, "Cache key collision on use_reranker"
