@@ -11,7 +11,7 @@
 | ID | Objetivo | Prioridad | Estado |
 |----|----------|-----------|--------|
 | 10.1 | Eliminar `sys.exit(78)` en imports (`core/model_router.py:78`) | 🔴 Crítica | ✅ Completado |
-| 10.2 | Corregir `core/logs/guardian_logger.py:22` | 🔴 Crítica | ⏳ Pendiente |
+| 10.2 | Corregir `core/logs/guardian_logger.py:22` | 🔴 Crítica | ✅ Completado |
 | 10.3 | Resolver 10 tests de KE (tablas extrañas FTS5) | 🟡 Alta | ⏳ Pendiente |
 | 10.4 | Resolver 9 tests CLI (`ModuleNotFoundError: ml`) | 🟡 Alta | ⏳ Pendiente |
 | 10.5 | Unificar subprocess → `SubprocessExecutor` | 🟡 Alta | ⏳ Pendiente |
@@ -85,6 +85,21 @@
 - ✅ Server start con token: inicia correctamente
 - ✅ pytest: 19 failed, 449 passed (0 regresiones)
 - ✅ `test_vram_guard.py` ahora colecciona correctamente (antes bloqueado)
+
+### 2026-07-05 — F10-02: Corregir syntax error en `guardian_logger.py`
+
+**Archivo:** `core/logs/guardian_logger.py`
+**Cambio:** Dos bloques `except Exception:` tenían el `pass` al mismo nivel de indentación que `except`. Corregido: 4 espacios más (8 total) dentro de cada bloque.
+
+**Validación:**
+- ✅ `py_compile`: OK (antes: `IndentationError`)
+- ✅ Ruff: 9 errores (todos pre-existentes, 0 nuevos)
+- ✅ pytest: 19 failed / 449 passed (0 regresiones)
+- ✅ `test_sda.py` ahora colecciona correctamente (antes bloqueado)
+
+**Observación:** `test_sda.py` ahora se colecciona sin errores. Sigue excluido del
+pytest general por consistencia con el baseline, pero se podrá incluir
+progresivamente en próximas tareas.
 
 ---
 
