@@ -133,7 +133,7 @@ Los módulos tocados por cambios recientes (`motor/core/config.py`,
 
 ## Regla de Validación para cada Stream
 
-Cada stream (C → A → B → D) se cierra únicamente tras:
+Cada stream (C → B → D → A → E) se cierra únicamente tras:
 
 1. **Tests**: `pytest -q` sobre el código afectado pasa
 2. **Lint**: `ruff check` sobre archivos tocados sin errores nuevos
@@ -143,3 +143,43 @@ Cada stream (C → A → B → D) se cierra únicamente tras:
 
 El informe de cierre de cada stream debe comparar explícitamente el estado
 contra este baseline y documentar cualquier mejora o regresión.
+
+---
+
+## Cambios respecto al baseline — Stream C + B
+
+### Nuevos archivos (9)
+| Archivo | Stream | Propósito |
+|---------|--------|-----------|
+| `motor/core/state.py` (62 líneas añadidas) | C | `DegradedMode` singleton thread-safe |
+| `motor/core/executor.py` (210 líneas) | B | `SubprocessExecutor`, `BaseExecutor`, `ProcessResult` |
+| `motor/plugin/__init__.py` | B | Plugin system package |
+| `motor/plugin/base.py` (133 líneas) | B | `PluginBase`, `PluginMeta`, `PluginResult`, AST metadata reader |
+| `motor/plugin/registry.py` (220 líneas) | B | `PluginRegistry` con carga lazy + DegradedMode |
+| `docs/architecture/DEGRADED_MODE.md` | C | Documentación del modo degradado |
+| `docs/architecture/FASE9_PROPOSAL.md` (actualizado) | C+B | Plan v3.0 con nuevo orden |
+
+### Archivos modificados (10)
+| Archivo | Cambio |
+|---------|--------|
+| `core/mochila/providers/ollama.py` | +DegradedMode en health() |
+| `core/mochila/providers/gemini.py` | +DegradedMode en health() |
+| `core/mochila/providers/groq.py` | +DegradedMode en health() |
+| `core/mochila/providers/deepseek.py` | +DegradedMode en health() |
+| `core/mochila/providers/openrouter.py` | +DegradedMode en health() |
+| `motor/core/qdrant_client.py` | +DegradedMode en _conectar() y health() |
+| `knowledge/engine/qdrant_sync.py` | +DegradedMode en _get_qdrant() |
+| `scripts/pro/ejecutor_api.py` | +endpoint /api/v1/status, +import time fix |
+| `monitor/snc.py` | shell=True → pipe explícito |
+| `core/ura_multi_agent.py` | curl → httpx en red() |
+
+### Archivos eliminados (1)
+| Archivo | Razón |
+|---------|-------|
+| `cli/__init__.py` | Dead code (importaba cli.gatekeeper inexistente) |
+
+### Regresiones
+0 tests rotos. 33 tests existentes pasan igual que en baseline.
+
+### Lint
+0 errores nuevos. Los errores pre-existentes (~2.377) no se han modificado.

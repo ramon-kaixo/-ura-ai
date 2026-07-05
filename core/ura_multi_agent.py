@@ -88,38 +88,25 @@ class Telemetria:
     @staticmethod
     def red() -> dict:
         """Estado de la red y servicios."""
+        import httpx
+
         status = {}
         # Model Router
         try:
-            r = subprocess.run(
-                [
-                    "curl",
-                    "-s",
-                    "--max-time",
-                    "2",
-                    f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health",
-                ],
-                capture_output=True,
-                text=True,
+            r = httpx.get(
+                f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health",
                 timeout=3,
-                check=False,
             )
-            status["model_router"] = "ok" if r.returncode == 0 and "ok" in r.stdout else "down"
+            status["model_router"] = "ok" if r.status_code < 500 and "ok" in r.text else "down"
         except Exception:
             log.exception("Error checking model router health")
             status["model_router"] = "down"
 
         # Ollama
         try:
-            r = subprocess.run(
-                ["curl", "-s", "--max-time", "2", f"{OLLAMA_URL}/api/tags"],
-                capture_output=True,
-                text=True,
-                timeout=3,
-                check=False,
-            )
-            if r.returncode == 0:
-                data = json.loads(r.stdout)
+            r = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+            if r.status_code < 500:
+                data = r.json()
                 status["ollama"] = f"{len(data.get('models', []))} modelos"
             else:
                 status["ollama"] = "down"
@@ -185,7 +172,7 @@ class Conciencia:
                 return json.loads(cls.PATH.read_text())
             except Exception:
                 log.exception("Error reading conciencia.json")
-                pass  # noqa: S110
+                pass
         return cls._nuevo()
 
     @classmethod
