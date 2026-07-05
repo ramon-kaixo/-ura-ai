@@ -1,10 +1,11 @@
 # Propuesta — Fase 12: Inteligencia
 
-> **Versión:** 1.0
+> **Versión:** 2.0 (calidad-primero)
 > **Fecha:** 2026-07-05
-> **Estado:** 🔮 Planificado
-> **Fase anterior:** Fase 11 (Plataforma)
-> **Objetivo:** Hacer inteligente el motor construido en Fase 11
+> **Estado:** 🟡 En ejecución (bloque contratos completado)
+> **Fase anterior:** Fase 11 (Plataforma) — ✅ Cerrada v0.11.0
+> **Objetivo:** Hacer inteligente el motor construido en Fase 11, midiendo
+> calidad del resultado, no solo integridad del sistema.
 
 ---
 
@@ -12,13 +13,13 @@
 
 | # | Requisito | Criterio |
 |---|-----------|----------|
-| G.1 | Fase 11 cerrada | Tag `vX.Y.Z-fase11` existente |
-| G.2 | Closeout aprobado | `docs/architecture/FASE11_CLOSEOUT.md` existe |
-| G.3 | Baseline generado | Commit del tag Fase 11 documentado como baseline de Fase 12 |
-| G.4 | Plataforma validada | Plugins instalables, EventBus, pipelines dinámicos, `/metrics \| /health \| /ready` operativos |
-| G.5 | Sin regresiones | Mismos tests verdes que Fase 10 |
+| G.1 | Fase 11 cerrada | ✅ `v0.11.0` |
+| G.2 | Closeout aprobado | ✅ `FASE11_CLOSEOUT.md` |
+| G.3 | Baseline generado | ✅ `v0.11.0` |
+| G.4 | Plataforma validada | ✅ Plugins, EventBus, pipelines, observabilidad |
+| G.5 | Sin regresiones | ✅ **662 tests verdes** |
 
-**Decisión:** Go ✅ / No-Go ❌
+**Decisión:** Go ✅
 
 ---
 
@@ -93,9 +94,39 @@ comparación para la fase siguiente.
 
 | # | Criterio | Estado |
 |---|----------|--------|
-| E.1 | Fase 11 cerrada y etiquetada | Pendiente |
-| E.2 | Sistema de hooks y eventos operativo | Pendiente |
-| E.3 | Pipelines dinámicos funcionales | Pendiente |
+| E.1 | Fase 11 cerrada y etiquetada | ✅ `v0.11.0` |
+| E.2 | Sistema de hooks y eventos operativo | ✅ |
+| E.3 | Pipelines dinámicos funcionales | ✅ |
+| E.4 | Contrato de calidad definido | ✅ ADR-012-01 |
+| E.5 | Corpus de evaluación creado (≥200 consultas) | ⏳ Pendiente |
+| E.6 | Baseline KE 1.x medido | ⏳ Pendiente |
+
+---
+
+## Orden de Ejecución (Calidad-Primero)
+
+A diferencia de fases anteriores, el orden de implementación sigue una
+**dependencia descendente**: primero el motor de conocimiento, después la
+memoria, después los agentes. Cada etapa tiene **métricas de calidad**
+definidas en ADR-012-01 que deben cumplirse antes de avanzar.
+
+### Bloque 0 — Contrato de Calidad
+
+| # | Artefacto | Estado |
+|---|-----------|--------|
+| 0.1 | ADR-012-01: Contrato de Calidad | ✅ Aprobado |
+| 0.2 | Corpus de evaluación (≥200 consultas) | ⏳ Pendiente |
+| 0.3 | Benchmark KE 1.x (baseline) | ⏳ Pendiente |
+| 0.4 | `scripts/pro/benchmark_ke_quality.py` | ⏳ Pendiente |
+
+### Bloque 1 — Knowledge Engine Core
+Chunking semántico → Retrieval híbrido → Reranking
+
+### Bloque 2 — Context Memory
+Memoria episódica → Memoria semántica → Compresión → Olvido dirigido
+
+### Bloque 3 — Multi-Agent Runtime
+Consenso → Agentes (Planner, Researcher, Executor, Validator) → Supervisor
 
 ---
 
