@@ -57,7 +57,7 @@ def agregar_sugerencia(problema, solucion) -> None:
             sugerencias = json.load(f)
     sugerencias.append(
         {
-            "timestamp": datetime.now().timestamp(),
+            "timestamp": datetime.now(UTC).timestamp(),
             "dominio": "conciencia",
             "problema": problema,
             "solucion": solucion,

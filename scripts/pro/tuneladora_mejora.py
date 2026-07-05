@@ -26,7 +26,7 @@ from plugin_registry import discover_all, list_plugins, log, run_phase
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
 LOG_DIR = Path("/tmp/tuneladora_mejora")
-REPORT_FILE = LOG_DIR / f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+REPORT_FILE = LOG_DIR / f"report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
 
 
 def main():

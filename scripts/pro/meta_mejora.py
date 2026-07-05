@@ -141,7 +141,7 @@ def analizar_reflexiones() -> None:
         idx = len(sugs)
         sugs.append(
             {
-                "timestamp": datetime.now().timestamp(),
+                "timestamp": datetime.now(UTC).timestamp(),
                 "dominio": "meta_mejora",
                 "problema": "Exceso de fallos en acciones de URA",
                 "solucion": "Revisar configuracion de tools, function calling en Open WebUI, y permisos",
@@ -205,7 +205,7 @@ def guardar_correccion_en_qdrant(problema: str, solucion: str, impacto: str) -> 
             "impacto": impacto[:100],
             "timestamp": datetime.now(UTC).isoformat(),
         }
-        tx_id = f"correccion_{datetime.now().timestamp()}"
+        tx_id = f"correccion_{datetime.now(UTC).timestamp()}"
         return qdrant.guardar_documento(tx_id, texto, metadata)
     except Exception as e:
         log(f"Error guardando correccion en Qdrant: {e}")

@@ -6,7 +6,7 @@ Envuelve cualquier acción de OpenClaw con reglas de seguridad.
 
 import logging
 import shutil
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -75,7 +75,7 @@ class GuardianOpenCLaw:
     def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = ""):
         """Registrar acción en log de auditoría."""
         try:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:
                 f.write(
                     f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n"
@@ -102,7 +102,7 @@ class GuardianOpenCLaw:
                 return False
 
             # Crear timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
             # Determinar nombre de backup
             if ruta_path.is_file():
@@ -261,7 +261,7 @@ class GuardianOpenCLaw:
             Dict con resultado de la ejecución
         """
         self.stats["total_acciones"] += 1
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
         logger.info(f"[{timestamp}] Ejecutando acción: {accion}")
 

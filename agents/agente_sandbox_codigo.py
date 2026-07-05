@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 SANDBOX_PENDIENTES = Path.home() / "URA" / "sandbox" / "pendientes"
@@ -102,24 +102,24 @@ def actualizar_inventario(rel, h, ver) -> None:
     if rel in inv["archivos"]:
         inv["archivos"][rel]["hash_md5"] = h
         inv["archivos"][rel]["version"] = ver
-        inv["archivos"][rel]["ultima_modificacion"] = datetime.now().isoformat()
+        inv["archivos"][rel]["ultima_modificacion"] = datetime.now(UTC).isoformat()
         INVENTARIO.write_text(json.dumps(inv, indent=2, ensure_ascii=False))
     else:
         inv["archivos"][rel] = {
             "hash_md5": h,
             "version": ver,
-            "ultima_modificacion": datetime.now().isoformat(),
+            "ultima_modificacion": datetime.now(UTC).isoformat(),
         }
         INVENTARIO.write_text(json.dumps(inv, indent=2, ensure_ascii=False))
 
 
 def create_branch(rel, v_old, v_new, origin, reason):
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     name = f"change_{ts}_{rel.replace('/', '_')}.json"
     (BRANCHES / name).write_text(
         json.dumps(
             {
-                "date": datetime.now().isoformat(),
+                "date": datetime.now(UTC).isoformat(),
                 "agent_origin": origin,
                 "reason": reason,
                 "file": rel,
@@ -176,7 +176,7 @@ def _procesar_aprobados() -> None:
         prod_path = PRODUCCION / rel
 
         if prod_path.exists():
-            backup_path = BACKUP / f"{rel}.{datetime.now().strftime('%Y%m%d_%H%M')}"
+            backup_path = BACKUP / f"{rel}.{datetime.now(UTC).strftime('%Y%m%d_%H%M')}"
             shutil.copy2(str(prod_path), str(backup_path))
             log.info(f"Backup: {rel} → backup_versiones")
 

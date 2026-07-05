@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 AGENTES_DIR = Path("~/URA/ura_ia_1972/agents/").expanduser()
@@ -77,11 +77,11 @@ def verificar_agente(ruta_agente):
 
 def generar_informe(resultados):
     """Genera el informe en formato Markdown."""
-    fecha = datetime.now().strftime("%Y%m%d_%H%M%S")
+    fecha = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     ruta_informe = OUTPUT_DIR / f"VERIFICACION_AGENTES_{fecha}.md"
 
     contenido = "# Verificación de Agentes URA\n"
-    contenido += f"**Fecha:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    contenido += f"**Fecha:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}\n"
     contenido += f"**Total agentes:** {len(resultados)}\n\n"
 
     # Resumen

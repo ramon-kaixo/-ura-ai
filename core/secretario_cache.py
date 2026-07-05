@@ -9,7 +9,7 @@ import json
 import os
 import urllib.request
 from collections import OrderedDict
-from datetime import datetime
+from datetime import UTC, datetime
 
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", "http://10.164.1.99:4096")
 QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
@@ -33,7 +33,7 @@ class SecretarioCache:
             return self._cache[cache_key]
 
         payload = {
-            "id": f"mac_{datetime.now().timestamp()}",
+            "id": f"mac_{datetime.now(UTC).timestamp()}",
             "raw": raw,
             "structure": structure
             or {"intent": "consulta", "complexity": "simple", "domain": "general", "entities": []},

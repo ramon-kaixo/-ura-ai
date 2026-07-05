@@ -5,14 +5,14 @@ import ast
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
 
 
 def log(msg) -> None:
-    datetime.now().strftime("%H:%M:%S")
+    datetime.now(UTC).strftime("%H:%M:%S")
 
 
 def discover_all():
