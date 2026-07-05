@@ -58,18 +58,23 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima |
 | T09 | ~80+ bloques `except: pass` sin auditar | Media |
 
-### Fase 9 — Propuesta (Aprobada)
+### Fase 9 — Plan de Ejecución (Aprobado, v3.0)
 
-Ver `docs/architecture/FASE9_PROPOSAL.md` para streams A–D con impacto funcional o arquitectónico.
+Ver `docs/architecture/FASE9_PROPOSAL.md` para especificación completa.
 
-| Stream | Descripción | Esfuerzo |
-|--------|-------------|----------|
-| A | Consolidación de test runners (unificar duplicados, pytest estándar) | 2-3h |
-| B | Integración de sistema de plugins en pipeline | 3-4h |
-| C | Modo degradado explícito con flag global y endpoint /api/v1/status | 2-3h |
-| D | Refactor de ura.py → extraer lógica a motor/cli/cmd_ura.py | 3-5h |
+**Orden de ejecución:** C → B → D → A → E (revisado: B antes que D, A al final)
 
-**Criterio:** Solo trabajo con impacto funcional o arquitectónico. La deuda técnica residual (T01–T09) queda fuera de Fase 9 y se aborda como backlog independiente.
+| Stream | Descripción | Esfuerzo | Estado |
+|--------|-------------|----------|--------|
+| C | Modo degradado explícito (DegradedMode, /api/v1/status) | 2-3h | ✅ COMPLETADO |
+| B | Modularidad: executor.py, plugin system via importlib, kill shell=True | 8-13h | ✅ COMPLETADO |
+| D | Refactor CLI: extraer ura.py a motor/cli/, console_scripts | 3-5h | Pendiente |
+| A | Calidad: unificar runners, reorganizar tests, Makefile | 2-3h | Pendiente |
+| E | Validación final: baseline, benchmarks, smoke tests, tag | 1-2h | Pendiente |
+
+**Regla:** `ura.py` se mantiene como wrapper durante Fase 9 (no se elimina).
+**Cobertura:** No se fuerza umbral mínimo hasta que la cobertura real haya mejorado.
+**Criterio:** Solo trabajo con impacto funcional o arquitectónico. Deuda técnica residual fuera.
 
 ### Pipeline Activo (scripts/pro/)
 **~146 archivos** entre scripts Python, shell, servicios, configs y utilidades.

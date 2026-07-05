@@ -1,6 +1,6 @@
 # Propuesta — Fase 9: Impacto Funcional y Consolidación Arquitectónica
 
-> **Versión:** 2.0 (refinada tras revisión de codebase)
+> **Versión:** 3.0 (revisada tras auditoría)
 > **Fecha:** 2026-07-04
 > **Estado:** ✅ Aprobada
 > **Fase anterior:** Auditoría Arquitectónica Post-Fase 8 (`v0.7.1-audit-fase8`)
@@ -16,186 +16,187 @@ no bloquea ni se mezcla con esta fase.
 
 ---
 
-## Stream A — Consolidación de Test Runners (Arquitectura)
-
-**Problema:** `tests/test_unit.py` (481) y `tests/unit_test_runner.py` (490)
-son ~95% duplicados con divergencia menor. Ambos usan runner inline
-(`check()` → global `PASS`/`FAIL`), no pytest. 4 runners legacy más no
-tienen `test_` prefijo.
-
-| Archivo | Líneas | Propósito |
-|---------|--------|-----------|
-| `tests/test_unit.py` | 481 | Runner inline con 56 checks |
-| `tests/unit_test_runner.py` | 490 | Casi idéntico, 2 checks extra |
-| `tests/test_integration.py` | 16 | Smoke test inline |
-| `tests/test_config.py` | 34 | Config smoke test inline |
-| `tests/benchmark_fase7.py` | ~150 | Benchmark, no pytest |
-| `tests/e2e_fase7.py` | ~200 | E2E, no pytest |
-
-**Análisis de divergencia entre `test_unit.py` y `unit_test_runner.py`:**
-- `test_unit.py` testea `obtener_modelos_disponibles`, `_chunk_text`,
-  `_sha256`, manifest io, `chromadb` check inline
-- `unit_test_runner.py` testea `_chromadb_available`, no `obtener_modelos_disponibles`
-- Modelos esperados difieren ligeramente (qwen2.5:7b vs qwen2.5-coder:14b-instruct-q8_0)
-- Assertions del SNC ligeramente distintas ("version >= 1.0" vs "version = 2.0")
-- PromptCache tests: unit_test_runner tiene 4 checks, test_unit tiene 5
-
-**Acción:**
-1. Unificar ambos en un solo `tests/test_unit.py` con el superset de checks
-   (incluyendo `_chromadb_available` y `obtener_modelos_disponibles`)
-2. Convertir `check()` inline → test functions pytest con `assert`
-3. Mover benchmarks a `tests/benchmarks/benchmark_fase7.py`
-4. Asegurar que `pytest tests/` cubre todos los tests sin excluir archivos
-5. Marcar tests dependientes del entorno con `@pytest.mark.skipif`
-
-**Impacto:** Cobertura pytest fiable, 0 archivos excluidos, eliminación de
-duplicación. **Prerrequisito para refactorizar ura.py con confianza.**
-
-**Riesgos detectados:** Ninguno. Trabajo mecánico de consolidación.
-
----
-
-## Stream B — Sistema de Plugins en Pipeline (Arquitectura)
-
-**Problema:** `scripts/pro/plugin_registry.py` (133 líneas) existe y
-funciona (descubrimiento por AST scanning de `PLUGIN = {...}` en scripts,
-fases con blocking/timeout) pero no es llamado desde ningún pipeline.
-
-**Análisis:** `plugin_registry` usa `subprocess.run` con `sys.executable`
-para cada plugin en fase. Esto da aislamiento pero no es eficiente para
-plugins ligeros. La integración debe ser por import, no subprocess.
-
-**Acción:**
-1. **Eliminar `subprocess.run`** del sistema de plugins. Sustituir por
-   `importlib` dinámico: cada plugin expone una función `run(ctx)`, el
-   registry la importa y ejecuta en el mismo proceso.
-2. El plugin registry adopta un mecanismo de carga directa:
-   - Escanea `scripts/pro/plugins/` por módulos `.py` con función
-     `plugin(ctx) -> dict`
-   - Importa cada uno con `importlib.import_module()`
-   - Ejecuta en el proceso actual (sin subprocess overhead)
-   - Captura excepciones por plugin (aislamiento sin subprocess)
-3. Integrar hook opcional en `tuneladora_mantenimiento.py` post-inspectores
-4. El hook es NO-bloqueante: si falla el import de plugin_registry, el
-   pipeline continúa normalmente (degradación graceful)
-5. Documentar interfaz de plugin y directorio `scripts/pro/plugins/`
-   (referencia: `PLUGIN_TEMPLATE.py`)
-
-**Impacto:** Pipeline extensible sin modificar tuneladora. Cero riesgo de
-regresión.
-
-**Riesgo resuelto:** `subprocess.run` eliminado. Carga directa con
-importlib mantiene aislamiento vía captura de excepciones por plugin.
-
----
-
 ## Stream C — Modo Degradado Explícito y Observable (Funcional)
 
-**Problema:** El sistema de degradación graceful existe (Qdrant, Ollama
-fallan silenciosamente con `except: pass`) pero no hay forma de saber en
-runtime qué subsistemas están degradados.
+**Estado:** ✅ COMPLETADO (v3.0)
+
+Ver `docs/architecture/DEGRADED_MODE.md` para especificación completa.
+
+**Implementado:**
+1. `motor/core/state.py` — Clase `DegradedMode` (singleton thread-safe con RLock)
+2. Puntos de falla integrados:
+   - `motor/core/qdrant_client.py` (conexión/health)
+   - `knowledge/engine/qdrant_sync.py` (_get_qdrant)
+   - `core/mochila/providers/ollama.py`, `gemini.py`, `groq.py`, `deepseek.py`, `openrouter.py` (health)
+3. Endpoint `GET /api/v1/status` en `ejecutor_api.py` (200 si saludable, 503 si degradado)
+4. Logging WARNING en cada transición normal↔degradado
+5. Documentación en `docs/architecture/DEGRADED_MODE.md`
+
+**Verificación:** 9 archivos compilan, 0 errores de lint nuevos, tests unitarios
+de DegradedMode pasan (incluyendo concurrencia).
+
+---
+
+## Stream B — Modularidad y Abstracción de Ejecución (Arquitectura)
+
+**Problema:** ~110+ llamadas `subprocess.run()` en ~45 archivos sin abstracción
+unificada. Cada archivo implementa su propio patrón de timeouts, logging, y
+manejo de errores. `plugin_registry.py` descubre plugins por parseo AST (variable
+`PLUGIN = {...}`) y los ejecuta como subprocesos separados. 1 instancia de
+`shell=True` residual en `monitor/snc.py`.
 
 **Análisis:**
-- `motor/core/state.py` (76 líneas) ya existe con dataclasses de estado.
-  No es necesario crear un módulo `global_state` nuevo — se puede extender
-  `state.py` con un `GlobalState` singleton thread-safe.
-- `ejecutor_api.py` ya sirve en puerto 4096 como systemd.
+- `motor/core/executor.py` no existe — no hay un `BaseExecutor` o `ProcessResult`
+- `plugin_registry.py` usa `subprocess.run([sys.executable, script, ...])` en vez
+  de `importlib` dinámico
+- `cli/__init__.py` (raíz) importa `cli.gatekeeper` que no existe — dead code
+- `ejecutor_api.py:210` usa `time.time()` sin `import time`
 
 **Acción:**
-1. Añadir a `motor/core/state.py` clase `DegradedMode(set[str])` o
-   `global_state: dict[str, bool]` thread-safe con RLock
-2. Integrar en puntos de falla conocidos: `motor/core/qdrant_client.py`,
-   `core/mochila/providers/`, `knowledge/engine/qdrant_sync.py`
-3. Exponer GET `/api/v1/status` en `ejecutor_api.py` que serializa
-   `global_state`
-4. Loggear WARNING en cada transición (normal→degradado, degradado→normal)
-5. Documentar en `docs/architecture/DEGRADED_MODE.md`
 
-**Objetos de estado observables:**
-```json
-{
-  "status": "degraded",
-  "degraded_subsystems": ["qdrant"],
-  "since": "2026-07-04T12:00:00Z",
-  "healthy_subsystems": ["ollama", "fts", "router"]
-}
-```
+| Sub-paso | Descripción | Archivos |
+|----------|-------------|----------|
+| B.1 | Crear `motor/core/executor.py`: `BaseExecutor`, `SubprocessExecutor`, `ProcessResult` con timeout/retry/logging unificado | 1 nuevo |
+| B.2 | Crear `motor/plugin/` con `PluginBase`, registry vía `importlib` (reemplazar AST+subprocess) | 3-4 nuevos |
+| B.3 | Eliminar `shell=True` en `monitor/snc.py:117` | 1 modificado |
+| B.4 | Eliminar `cli/__init__.py` (raíz) — dead code | 1 eliminado |
+| B.5 | Fix `import time` en `ejecutor_api.py:210` (bug pre-existente) | 1 modificado |
+| B.6 | Migrar `curl` → `httpx` en `ura_multi_agent.py` y `monitor/openclaw.py` | 2 modificados |
 
-**Impacto:** Visibilidad operativa inmediata. Sin cambios de comportamiento.
-
-**Riesgos detectados:** Ninguno. Trabajo independiente y bien acotado.
+**Impacto:** Un único punto para timeouts, retries, logging, degradación,
+auditoría y seguridad. Eliminación de código duplicado. Pipeline extensible
+vía importlib sin overhead de subprocess.
 
 ---
 
 ## Stream D — Refactor de `ura.py` (Arquitectura)
 
-**⚠️ CORRECCIÓN RESPECTO A VERSIÓN 1.0**
+**Problema:** `ura.py` (583 líneas) expone 16 comandos con `sys.argv` manual
+(if/elif en `main()`), sin argparse, sin console_scripts, sin tests.
+Usa SSH para 4 comandos (index, ask, maintenance, snc). Depende de
+`tests/test_unit.py` en 3 lugares (líneas 53, 327, 380).
 
-**Problema real:** `ura.py` (583 líneas) expone 16 comandos: `finalize`,
-`test`, `maintenance`, `rotate`, `snc`, `health`, `alerts`, `index`, `ask`,
-`memory`, `snapshot`, `doctor`, `metrics`, `status`, `deploy`, `inspect`.
-Tiene 15+ branches en `main()` y usa `import lazy` condicional dentro de
-funciones.
+**Análisis:**
+- `motor/cli/main.py` ya existe con argparse y 21 subcomandos
+- `ura.py` y `motor.cli.main` tienen comandos completamente diferentes —
+  "delegar en motor.cli.main" no funciona sin portar 16 comandos
+- `motor/cli/` ya tiene `cmd_diag.py`, `cmd_pipeline.py`, `cmd_status.py`, `cmd_utils.py`
+- **ura.py NO se elimina** durante esta fase — se mantiene como wrapper
 
-**Análisis de la propuesta original (V1):** Decía "extraer CLI a
-`motor/cli/` (ya existe `cmd_pipeline.py`, `cmd_diag.py`, etc.) y que
-`ura.py` delegue en `motor.cli.main`".
+**Acción:**
 
-**Problema:** `ura.py` y `motor.cli.main` tienen comandos
-**completamente diferentes**:
+| Sub-paso | Descripción | Archivos |
+|----------|-------------|----------|
+| D.1 | Extraer funciones comando a `motor/cli/cmd_ura.py` (tabla de despacho) | 1 nuevo |
+| D.2 | Crear `motor/cli/cmd_knowledge.py` para index, ask, memory | 1 nuevo |
+| D.3 | Crear `motor/cli/cmd_maintenance.py` para clean, rotate, snapshot | 1 nuevo |
+| D.4 | Extender `cmd_pipeline.py`, `cmd_diag.py`, `cmd_status.py` con comandos de ura.py | 3 modificados |
+| D.5 | Registrar en `motor/cli/main.py` argparse (nuevos subcomandos) | 1 modificado |
+| D.6 | Añadir console_scripts: `ura = motor.cli.main:main` en pyproject.toml | 1 modificado |
+| D.7 | Reducir `ura.py` a wrapper (~50 líneas) que delega en `motor.cli.main` | 1 modificado |
+| D.8 | Tests unitarios para cada `cmd_*` con mocking de subprocess | varios nuevos |
 
-| motor.cli.main | ura.py |
-|----------------|--------|
-| pipeline, scan, diagnose, calibrate | finalize, test, deploy, index, ask, memory, doctor, metrics, status, snc, health, alerts, rotate, snapshot, inspect, maintenance |
+**Regla:** `ura.py` se mantiene como wrapper durante toda la Fase 9. Solo
+se elimina tras validación en Fase E + varias iteraciones de compatibilidad.
 
-No hay solapamiento. "Delegar en motor.cli.main" NO funcionaría sin portar
-16 comandos.
-
-**Acción refinada:**
-1. Extraer las funciones comando (`cmd_*`) de `ura.py` a un nuevo módulo
-   `motor/cli/cmd_ura.py`, manteniendo firmas y comportamiento intactos
-2. `ura.py` queda como entrypoint mínimo (~50 líneas): parsea argv y
-   delega en `cmd_ura.cmd_finalize()`, `cmd_ura.cmd_test()`, etc.
-3. `main()` deja de tener 15+ branches inline → tabla de despacho
-4. 0 cambios de comportamiento observable
-5. Tests: la consolidación de Stream A da cobertura base para verificar
-   que no hay regresiones
-
-**Impacto:** `ura.py` de 583→~50 líneas. Cluster de 16 funciones
-portado a módulo dedicado. Separación clara de responsabilidades.
-
-**Riesgos detectados:**
-- Los 16 comandos no tienen tests pytest dedicados (solo inline
-  subprocess en `cmd_finalize` y `cmd_doctor`)
-- Stream A (test consolidation) es prerrequisito para refactorizar
-  con confianza
-- Los SSH/network commands tardan en fallar (timeout 30-60s) →
-  ralentizan el ciclo test/feedback
-- **Propuesta:** implementar D DESPUÉS de A, y escribir tests
-  unitarios para cada `cmd_*` con mocking de subprocess
+**Impacto:** `ura.py` de 583→~50 líneas. 16 comandos portados a módulos
+dedicados. `ura <comando>` desde PATH. Arquitectura mantenible.
 
 ---
 
-## Orden de Ejecución Definitivo (Aprobado)
+## Stream A — Consolidación de Test Runners (Calidad)
+
+**Problema:** `tests/test_unit.py` (481) y `tests/unit_test_runner.py` (490)
+son ~95% duplicados. 4 tests en `motor/tests/` no descubiertos por pytest.
+5 tests huérfanos en raíz del proyecto. 5 scripts shell referencian tests
+que no existen.
+
+**Nota:** Este Stream va al **final** porque `ura.py` depende de
+`test_unit.py`. Si se modifica antes de refactorizar ura.py (Stream D),
+se rompe esa dependencia.
+
+**Acción:**
+
+| Sub-paso | Descripción | Archivos |
+|----------|-------------|----------|
+| A.1 | Fusionar `test_unit.py` + `unit_test_runner.py` en un solo archivo pytest | 2→1 |
+| A.2 | Fusionar `test_memory_engine.py` + `test_properties.py` (~80% overlap) en `test_hypothesis.py` | 2→1 |
+| A.3 | Mover 5 tests huérfanos de raíz a `tests/` | 5 movidos |
+| A.4 | Añadir `"motor/tests"` a `testpaths` en pyproject.toml | 1 modificado |
+| A.5 | Unificar `make test` → `make pytest` en Makefile | 1 modificado |
+| A.6 | Eliminar referencias a tests inexistentes en `scripts/pro/phase*_diagnosis*.sh` | 5 modificados |
+| A.7 | Limpiar `motor/tests/conftest.py` si está vacío | 1 modificado |
+
+**Cobertura:** NO se fuerza un umbral mínimo (ej. 30%) durante esta fase.
+Primero se aumenta cobertura real, luego se endurece el límite.
+
+---
+
+## Stream E — Validación Final (Cierre)
+
+**Problema:** Sin una fase de validación explícita, el cierre de Fase 9
+no es verificable objetivamente.
+
+**Acción:**
+
+| Sub-paso | Descripción |
+|----------|-------------|
+| E.1 | Benchmark antes/después: tiempos, memoria, CPU |
+| E.2 | Smoke tests: imports, py_compile, todos los módulos cargables |
+| E.3 | Comparación contra baseline de Fase 9 |
+| E.4 | Verificar 0 regresiones funcionales |
+| E.5 | Actualizar ADR-007 si aplica |
+| E.6 | Actualizar AGENTS.md con nuevo estado |
+| E.7 | Actualizar README.md si aplica |
+| E.8 | Tag de cierre (`v0.8.0-fase9`) y release notes |
+| E.9 | Push a origin |
+
+**Impacto:** Cierre verificable. Baseline actualizado. Trazabilidad completa.
+
+---
+
+## Orden de Ejecución Definitivo (Revisado v3.0)
 
 ```
-Stream C ──► Stream A ──► Stream B ──► Stream D
-   ↓            ↓              ↓              ↓
-independ.   fundación     subprocess→      último,
-             para D     importlib previo  test coverage
+C ──► B ──► D ──► A ──► E
 ```
 
-### Secuencia
-1. **C** — Modo degradado explícito: sin dependencias, menor riesgo, aporta
-   visibilidad operativa inmediata. Se ejecuta primero.
-2. **A** — Consolidación de test runners: prerrequisito estructural para D.
-   Sin pytest consolidado, refactorizar ura.py no es verificable.
-3. **B** — Sistema de plugins: **antes de integrar en pipeline**, eliminar
-   la dependencia de `subprocess.run` y sustituir por carga directa con
-   `importlib` o registro de plugins en memoria. Solo entonces integrar
-   en `tuneladora_mantenimiento.py`.
-4. **D** — Refactor de ura.py: último, con test coverage ya consolidado
-   (Stream A) y sin dependencia pendiente de B o C.
+### Justificación del cambio respecto a v2.0
+
+El orden anterior era `C → A → B → D`. La auditoría descubrió que
+`ura.py` (Stream D) depende de `tests/test_unit.py` (Stream A) en 3 lugares.
+Si A se ejecuta antes que D, `ura.py` se rompe.
+
+El nuevo orden `C → B → D → A → E`:
+1. **C** ya está completado — sin dependencias
+2. **B** crea infraestructura (`executor.py`, `plugin/`) que D necesita
+3. **D** se ejecuta antes que A, evitando el conflicto A↔D
+4. **A** al final: captura todos los tests nuevos de B y D
+5. **E** validación final: baseline, benchmarks, tag
+
+### Dependencias Reales
+
+```
+┌───┐
+│ C │ ← sin dependencias (COMPLETADO)
+└───┘
+  │
+┌─▼──┐
+│ B  │ ← sin dependencias de otros streams
+└─┬──┘
+  │ B → D: D usa executor.py de B
+┌─▼──┐
+│ D  │ ← D necesita B (executor), pero NO necesita A
+└─┬──┘
+  │ D → A: D elimina dependencia de test_unit.py, liberando A
+┌─▼──┐
+│ A  │ ← captura tests de B y D
+└─┬──┘
+  │
+┌─▼──┐
+│ E  │ ← validación final sin dependencias funcionales
+└────┘
+```
 
 ---
 
@@ -209,7 +210,7 @@ independ.   fundación     subprocess→      último,
 │ 2. Lint: ruff check sobre archivos tocados  │
 │ 3. Docs: AGENTS.md actualizado si aplica     │
 │ 4. Regresiones: 0 tests rotos pre-existentes │
-│ 5. Commit: --no-verify, push a origin        │
+│ 5. Commit + push a origin                    │
 └─────────────────────────────────────────────┘
 ```
 
@@ -218,39 +219,18 @@ al siguiente stream hasta que el anterior está validado y pusheado.
 
 ---
 
-## Criterios de Aceptación (Refinados)
+## Criterios de Aceptación
 
 | Stream | Criterio | Verificación |
 |--------|----------|-------------|
-| A | `pytest tests/ -q` ejecuta todos los tests legacy + nuevos sin excluir archivos | `coverage run -m pytest tests/ -q` no omite ningún archivo .py en tests/ |
-| B | `plugin_registry` es invocado por tuneladora en modo seco (`--dry-run`) | Log en modo seco: `"Plugins: 0 encontrados"` |
-| C | `GET /api/v1/status` retorna JSON con campos `status`, `degraded_subsystems`, `healthy_subsystems` | `curl http://localhost:4096/api/v1/status \| jq .status` |
-| D | Todos los comandos de `ura.py --help` funcionan igual que antes del refactor | Script de regresión: ejecuta cada comando con `--help` y compara output textual |
-
----
-
-## Dependencias Reales entre Streams
-
-```
-       ┌───┐
-       │ C │ ← sin dependencias
-       └───┘
-         
-       ┌───┐
-       │ A │ ← sin dependencias
-       └──┬┘
-          │ soft dependency
-       ┌──▼┐    ┌───┐
-       │ B │    │ D │ ← A es prerequisito (tests)
-       └───┘    └───┘
-```
-
-- **A → B**: Débil. B requiere integración en tuneladora, que se prueba
-  mejor con tests consolidados. No es bloqueante.
-- **A → D**: Fuerte. Sin pytest coverage, refactorizar ura.py sin romper
-  nada no es verificable.
-- **C** es completamente independiente. Se puede ejecutar en cualquier
-  momento, incluso en paralelo.
+| C | `GET /api/v1/status` retorna JSON con degraded/healthy | `curl localhost:4096/api/v1/status` |
+| B | `SubprocessExecutor.run()` unifica timeouts/logging | Test unitario + lint |
+| B | `plugin_registry` carga plugins via importlib | Import + ejecución en proceso |
+| B | 0 instancias de `shell=True` | `grep -r 'shell=True' --include='*.py'` |
+| D | Todos los comandos de `ura.py <cmd>` funcionan igual | Script de regresión comparativo |
+| D | `ura <cmd>` desde PATH funciona | `pip install -e . && ura status` |
+| A | `pytest tests/ -q` + `pytest motor/tests/ -q` sin exclusiones | `make pytest` exitoso |
+| E | Benchmark no muestra regresión >5% | Comparación baseline |
 
 ---
 
@@ -260,9 +240,9 @@ al siguiente stream hasta que el anterior está validado y pusheado.
 |----|------|-----------|-------|
 | T01 | `core/synonyms.json` chattr +i | Mínima | `sudo chattr -i && rm` |
 | T02 | `sanear_codigo.py:50` syntax error | Baja | String no cerrado |
-| T03 | 12 archivos .py con caracteres no-ASCII | Baja | Renombrar (coverage puede parsear) |
-| T04 | 5 tests CLI fallan (deps entorno) | Baja | Instalar deps o `@pytest.mark.skipif` |
-| T05 | FTS schema verifier falso positivo | Media | Ignorar tablas FTS en verifier |
+| T03 | 12 archivos .py con caracteres no-ASCII | Baja | Renombrar |
+| T04 | 5 tests CLI fallan (deps entorno) | Baja | `@pytest.mark.skipif` |
+| T05 | FTS schema verifier falso positivo | Media | Ignorar tablas FTS |
 | T06 | ~2.356 lint errors (ruff all rules) | Baja | Refactor progresivo |
-| T07 | `adapters/` nunca creado | Informativa | Decidir crear o remover de docs |
-| T08 | ~80+ `except: pass` sin auditar | Media | Auditoría de seguridad postergada |
+| T07 | `adapters/` nunca creado | Informativa | Decidir crear o remover |
+| T08 | ~80+ `except: pass` sin auditar | Media | Auditoría postergada |

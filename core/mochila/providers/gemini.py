@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.state import DegradedMode
+
 from .base import Provider, ProviderError
 
 GEMINI_BASE = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
@@ -108,7 +110,9 @@ class GeminiProvider(Provider):
                 yield resp.json()
 
     async def health(self) -> dict:
+        dm = DegradedMode.instancia()
         if not self.api_key:
+            dm.mark_degraded("gemini_provider")
             return {"status": "no_configurado", "detail": "GEMINI_API_KEY no configurada"}
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -117,9 +121,11 @@ class GeminiProvider(Provider):
                     headers={"Authorization": f"Bearer {self.api_key}"},
                 )
                 if resp.is_error:
+                    dm.mark_degraded("gemini_provider")
                     return {"status": "error", "detail": resp.text[:100]}
                 data = resp.json()
                 modelos = data.get("data", [])
+                dm.mark_healthy("gemini_provider")
                 return {
                     "status": "ok",
                     "modelos_disponibles": [m["id"].replace("models/", "") for m in modelos[:10]],
@@ -127,4 +133,5 @@ class GeminiProvider(Provider):
                     "latencia_ms": resp.elapsed.total_seconds() * 1000,
                 }
         except Exception as e:
+            dm.mark_degraded("gemini_provider")
             return {"status": "error", "detail": str(e)}

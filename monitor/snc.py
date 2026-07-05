@@ -105,27 +105,47 @@ def load_runbook() -> dict:
         return {"version": "0", "commands": {}, "retry_policy": {}}
 
 
+def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
+    """Ejecuta un pipeline shell (|) sin shell=True.
+    Divide por |, ejecuta cada segmento, conectando stdout→stdin."""
+    segments = [shlex.split(seg.strip()) for seg in cmd.split("|")]
+    if len(segments) == 1:
+        return subprocess.run(segments[0], capture_output=True, text=True, timeout=timeout, check=False)
+    prev_proc = None
+    for i, args in enumerate(segments):
+        stdin = prev_proc.stdout if prev_proc else None
+        prev_proc = subprocess.Popen(
+            args,
+            stdin=stdin,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        if i > 0:
+            stdin.close()  # type: ignore[union-attr]
+    if prev_proc is None:
+        raise ValueError(f"No se pudo ejecutar pipeline: {cmd}")
+    stdout, stderr = prev_proc.communicate(timeout=timeout)
+    return subprocess.CompletedProcess(
+        args=segments[-1],
+        returncode=prev_proc.returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+
 def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
-    """Ejecuta un comando. Usa shell=True solo si hay operadores shell.
+    """Ejecuta un comando. Sin shell=True: usa PIPE para pipelines.
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
     try:
-        needs_shell = any(op in cmd for op in ["|", "&&", "||", ";", "$("])
-        if needs_shell:
-            result = subprocess.run(
-                cmd,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                executable="/bin/bash",
-                check=False,
-            )
+        has_pipe = "|" in cmd
+        if has_pipe:
+            result = _run_pipeline(cmd, timeout)
         else:
             args = shlex.split(cmd)
             result = subprocess.run(
                 args,
-                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
@@ -417,7 +437,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
     except Exception:
-        pass  # noqa: S110
+        pass
     return result[:10]
 
 
@@ -604,7 +624,7 @@ def main() -> None:
 
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
-        pass  # noqa: S110
+        pass
     finally:
         PID_FILE.unlink(missing_ok=True)
 
