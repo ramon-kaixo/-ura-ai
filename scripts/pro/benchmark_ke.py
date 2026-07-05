@@ -291,12 +291,56 @@ def compute_ndcg(retrieved: list[str], relevance_map: dict[str, int], k: int) ->
 
 # ── Main benchmark ───────────────────────────────────────────────────────────
 
+def validate_corpus_indexed(
+    relevance_map: dict[str, list[Relevance]],
+    retriever: KERetrieval,
+) -> list[str]:
+    errors: list[str] = []
+    all_doc_ids: set[str] = set()
+    for rels in relevance_map.values():
+        for r in rels:
+            all_doc_ids.add(r.doc_id)
+
+    if not all_doc_ids:
+        errors.append("No hay doc_ids en el corpus para validar")
+        return errors
+
+    found = 0
+    for doc_id in sorted(all_doc_ids):
+        results = retriever.search(doc_id.replace("_", " "), k=1)
+        if results and results[0].score >= 0.1:
+            found += 1
+        else:
+            errors.append(f"Documento no encontrado en KE index: {doc_id}")
+
+    coverage = found / len(all_doc_ids)
+    if coverage < 0.95:
+        errors.append(f"Coverage documental insuficiente: {coverage:.1%} (min 95%)")
+
+    if errors:
+        log.warning("Validación corpus: %d/%d documentos encontrados (%.1f%%)", found, len(all_doc_ids), coverage * 100)
+    else:
+        log.info("Validación corpus: %d/%d documentos encontrados (%.1f%%) — OK", found, len(all_doc_ids), coverage * 100)
+    return errors
+
+
 def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, PLR0915, FBT001, FBT002
     queries, relevance_map = load_corpus(corpus_dir)
 
     retriever = KERetrieval()
     if dry_run:
         retriever._client = None  # force mock
+
+    if not dry_run and retriever.available:
+        validation_errors = validate_corpus_indexed(relevance_map, retriever)
+        if validation_errors:
+            for e in validation_errors:
+                log.error("VALIDACIÓN: %s", e)
+            raise RuntimeError(
+                f"Corpus validation failed: {len(validation_errors)} errors. "
+                "Index golden documents first with: python3 scripts/pro/index_golden_docs.py"
+            )
+        log.info("Validación corpus superada — ejecutando benchmark")
 
     query_results: list[QueryResult] = []
     all_latencies: list[float] = []
@@ -632,7 +676,12 @@ def main() -> int:
     print(f"  Dry run: {args.dry_run}")
     print()
 
-    results = run_benchmark(corpus_dir, results_dir, dry_run=args.dry_run)
+    try:
+        results = run_benchmark(corpus_dir, results_dir, dry_run=args.dry_run)
+    except RuntimeError as e:
+        log.error("Benchmark abortado: %s", e)
+        print(f"\n  ERROR: {e}", file=__import__("sys").stdout)
+        return 1
     print_results(results)
 
     if args.save or not args.dry_run:
