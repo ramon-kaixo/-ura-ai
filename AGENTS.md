@@ -377,22 +377,23 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 
 | Fase | Objetivo | Resultado Clave | Estado |
 |------|----------|-----------------|--------|
-| **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | 📋 Propuesta |
-| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | 🔮 Planificado |
+| **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | ✅ Cerrada (v0.10.0) |
+| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ▶️ Activa |
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | 🔮 Planificado |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | 🔮 Planificado |
 
 ### Detalle por Fase
 
-**Fase 10 — Estabilización**
-- Resolver 19 tests fallidos (10 knowledge_engine + 9 motor/test_cli)
-- Eliminar `sys.exit(78)` en `core/model_router.py`
-- Corregir `core/logs/guardian_logger.py`
-- Unificar últimos usos de `subprocess` → `SubprocessExecutor`
-- Incrementar cobertura con tests reales
-- Reducir deuda crítica de lint (C901, S603/S607, PTH123, DTZ005)
-- **Salida:** CI verde, 0 tests fallidos, sin issues conocidos
-- Ver `docs/architecture/FASE10_PROPOSAL.md`
+**Fase 10 — Estabilización** ✅ Cerrada (v0.10.0)
+- ✅ 19 tests fallidos → 0 (540 passed)
+- ✅ `sys.exit(78)` movido a main()
+- ✅ `guardian_logger.py` SyntaxError corregido
+- ✅ 27 subprocess → SubprocessExecutor migrados
+- ✅ 67 tests nuevos (DegradedMode, PluginRegistry, Executor)
+- ✅ Deuda lint: DTZ005 0, invalid-syntax 0, S603/S607 producción 0
+- ✅ Benchmarks: 0 degradaciones
+- **Salida:** CI verde, 0 tests fallidos, 0 regresiones
+- `docs/architecture/FASE10_CLOSEOUT.md`
 
 **Fase 11 — Plataforma (Capacidades del Motor)**
 - Plugins instalables (plugin.yaml, registro desde disco, dependencias, ciclo de vida)
