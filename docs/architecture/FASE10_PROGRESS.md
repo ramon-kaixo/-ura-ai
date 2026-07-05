@@ -16,7 +16,7 @@
 | 10.4 | Resolver 9 tests CLI (`ModuleNotFoundError: scanner/diagnostico/guard`) | 🟡 Alta | ✅ Completado |
 | 10.5 | Unificar subprocess → `SubprocessExecutor` (27 calls en 8 archivos motor/) | 🟡 Alta | ✅ Completado |
 | 10.6 | Reducir deuda lint crítica (DTZ005, invalid-syntax, S603/S607) | 🟡 Alta | ✅ Completado (DTZ005 → 0, invalid-syntax → 0, S603/S607 producción → 0) |
-| 10.7 | Incrementar cobertura (DegradedMode, PluginRegistry, Executor) | 🟢 Media | ⏳ Pendiente |
+| 10.7 | Incrementar cobertura (DegradedMode, PluginRegistry, Executor) | 🟢 Media | ✅ Completado |
 
 ---
 
@@ -24,9 +24,9 @@
 
 | # | Criterio | Estado |
 |---|----------|--------|
-| C.1 | `pytest` 0 failures | ✅ **(0 failures — 468 passed!)** |
+| C.1 | `pytest` 0 failures | ✅ **(0 failures — 540 passed!)** |
 | C.2 | `py_compile` 0 errores | ✅ Verificado |
-| C.3 | Sin regresiones funcionales | ✅ 468 passed (19 más que baseline de 449) |
+| C.3 | Sin regresiones funcionales | ✅ 540 passed (+91 vs baseline 449) |
 | C.5 | Benchmark sin degradación (+-10%) | ⚠️ Pendiente verificar |
 | C.6 | Sin incidencias críticas | ❌ F10-01 abierta |
 | C.7 | Acta de cierre + tag + baseline + docs | ⏳ Pendiente |
@@ -319,3 +319,38 @@ r = _executor.run(cmd, timeout=N)
 **Restante:** 319 S603/S607 — todos en scripts (170), tests (118), dynamic wrappers monitor (12), agent_hierarchy/agents/sandbox (19). Deuda T09 documentada para F11+.
 
 **F10-05 cerrado.** ✅
+
+---
+
+### 2026-07-05 — F10-06: Cobertura (DegradedMode, PluginRegistry, SubprocessExecutor)
+
+**Cambio:** 67 tests nuevos en 4 archivos:
+
+| Archivo | Tests | Componente |
+|---------|-------|------------|
+| `tests/test_degraded_mode.py` | 19 | DegradedMode singleton, transiciones, concurrencia, idempotencia |
+| `tests/test_plugin_registry.py` | 26 | PluginRegistry descubrimiento, carga lazy, ejecución, DegradedMode |
+| `tests/test_subprocess_executor.py` | 18 | SubprocessExecutor sync/async, timeout, errores, cwd |
+| `tests/test_integration_f10.py` | 6 | Integración triple DegradedMode+PluginRegistry+Executor |
+
+**Escenarios cubiertos:**
+
+| Componente | Escenarios |
+|------------|------------|
+| DegradedMode | singleton, estado inicial, degradación primera/segunda llamada, is_degraded, múltiples subsistemas independientes, status serializable, status ordenado, recuperación, recovery→redegrade, recuperación parcial, idempotencia (healthy→healthy), concurrencia 100 hilos, mark_healthy de inexistente |
+| PluginRegistry | discover ruta vacía, archivo válido, archivo individual, ignora __init__, ignora no-.py, múltiples directorios, nombre duplicado, get_meta inexistente, get_meta sin cargar, plugin sin __plugin__ (fallback), lazy load, cache, get inexistente, run_phase ok, always incluido en todas las fases, fase vacía, run_one inexistente, run_one específico, import failure→DegradedMode, execution failure→DegradedMode, recovery tras éxito, fallo aislado no afecta otros, sin subclase PluginBase, excepción en constructor |
+| SubprocessExecutor | comando exitoso, stdout, stderr, returncode≠0, timeout, comando inexistente, cwd, cmd capturado, duration, error en failure, async exitoso, async timeout, async comando inexistente, async returncode, async stdout+stderr, executor usado por motors, gracefully handle empty cmd |
+| Integración | DegradedMode+PluginRegistry: fallo reflejado, recuperación, mezcla. DegradedMode+Executor: independencia. PluginRegistry+Executor: plugin usa executor. Triple: ciclo completo con 2 plugins, executor independiente pese a fallos |
+
+**Cobertura:**
+
+| Componente | Coverage |
+|------------|----------|
+| `motor/core/state.py` (DegradedMode) | **100%** |
+| `motor/plugin/registry.py` (PluginRegistry) | **95%** |
+| `motor/core/executor.py` (SubprocessExecutor) | **93%** |
+| `motor/plugin/base.py` (PluginBase) | **74%** |
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 nuevos, pytest 540 passed (0 failures, baseline 449).
+
+**F10-06 cerrado.** ✅
