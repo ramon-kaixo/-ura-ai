@@ -48,6 +48,9 @@ def check_schema(conn: sqlite3.Connection) -> list[str]:
         "op_lineage",
         "op_governance",
         "op_memory",
+        "op_assets_fts",
+        "op_memory_fts",
+        "op_lineage_edges",
     }
     system_tables = {
         "sqlite_sequence",
@@ -57,8 +60,11 @@ def check_schema(conn: sqlite3.Connection) -> list[str]:
         "kg_nodes_fts_docsize",
         "kg_nodes_fts_idx",
     }
+    # Auto-ignorar tablas compañeras de FTS5 (creadas automáticamente por SQLite)
+    fts_companion_suffixes = ("_fts_config", "_fts_content", "_fts_data", "_fts_docsize", "_fts_idx")
+    auto_ignore = {t for t in tables if t.endswith(fts_companion_suffixes)}
     missing = expected - tables
-    extra = tables - expected - system_tables
+    extra = tables - expected - system_tables - auto_ignore
     if missing:
         issues.append(f"Faltan tablas: {sorted(missing)}")
     if extra:
