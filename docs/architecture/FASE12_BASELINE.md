@@ -1,9 +1,9 @@
 # Fase 12 — Baseline KE 1.x
 
-> **Generado:** 2026-07-05T17:00:56Z
-> **Commit:** `a775223c831c796607368df6766e1c26a1a131ea`
-> **Tag:** `v0.12.0-f12-contracts`
-> **KE version:** 1.x (mock)
+> **Generado:** 2026-07-05T17:16:06Z
+> **Commit:** `9fe87c9459137cdfe3a71f594821e3dcdd4e7d2d`
+> **Tag:** `v0.12.0-f12-baseline`
+> **KE version:** 1.x (real)
 
 ---
 
@@ -29,37 +29,37 @@
 
 | Métrica | Valor |
 |---------|-------|
-| Recall@1 | 0.055 |
-| Recall@5 | 0.09 |
-| Recall@10 | 0.09 |
-| Precision@5 | 0.098 |
-| MRR | 0.3808 |
-| MAP | 0.0735 |
-| nDCG@10 | 0.1273 |
+| Recall@1 | 0.0 |
+| Recall@5 | 0.0 |
+| Recall@10 | 0.0 |
+| Precision@5 | 0.0 |
+| MRR | 0.0 |
+| MAP | 0.0 |
+| nDCG@10 | 0.0 |
 
 ## Latencia
 
 | Métrica | Valor |
 |---------|-------|
-| P50 | 0.01ms |
-| P95 | 0.01ms |
-| P99 | 0.03ms |
-| Throughput | 159479.32 qps |
+| P50 | 102.53ms |
+| P95 | 179.07ms |
+| P99 | 268.33ms |
+| Throughput | 8.75 qps |
 
 ## Cobertura
 
 | Métrica | Valor |
 |---------|-------|
-| Tasa sin contexto | 13.500000% |
-| Cobertura documental | 66.670000% |
+| Tasa sin contexto | 50.500000% |
+| Cobertura documental | 0.000000% |
 
 ## Desglose por dominio
 
 | Dominio | nDCG | Consultas |
 |---------|------|-----------|
-| code | 0.2141 | 65 |
-| knowledge | 0.1124 | 65 |
-| system | 0.0606 | 70 |
+| code | 0.0 | 65 |
+| knowledge | 0.0 | 65 |
+| system | 0.0 | 70 |
 
 ---
 
