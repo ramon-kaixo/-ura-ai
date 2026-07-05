@@ -402,7 +402,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
 | **0** | Contratos: ADRs (4) + PLUGIN_API.md | ✅ Completado |
-| **1** | Infraestructura: EventBus, plugin manifest, RegistryV2, hooks, CLI | ⏳ Pendiente |
+| **1** | Infraestructura: EventBus, plugin manifest, RegistryV2, hooks, tests | ✅ Completado |
 | **2** | Pipelines dinámicos: engine YAML, etapas base, CLI | 🔮 Planificado |
 | **3** | Observabilidad: /metrics, /health, /ready, métricas de plugins | 🔮 Planificado |
 
