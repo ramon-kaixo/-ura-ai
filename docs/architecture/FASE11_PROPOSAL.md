@@ -2,7 +2,7 @@
 
 > **Versión:** 2.0 (contrato-primero)
 > **Fecha:** 2026-07-05
-> **Estado:** 🟡 En ejecución (bloque contratos completado)
+> **Estado:** 🟡 En ejecución (bloques 1-3 completados)
 > **Fase anterior:** Fase 10 (Estabilización) — ✅ Cerrada v0.10.0
 > **Objetivo:** Convertir el programa monolítico en una plataforma extensible
 
@@ -154,7 +154,34 @@ Tras Bloque 0, se implementan las funcionalidades en orden:
 **No implementado (explícitamente diferido):**
 - DAG, paralelismo, scheduler, persistencia, reintentos, distribución
 
-### Bloque 3 — Observabilidad Técnica (⏳ Pendiente)
+### Bloque 3 — Observabilidad Técnica ✅ Completado
+
+**Registries implementados:**
+
+| Componente | Archivo | Capacidades |
+|------------|---------|-------------|
+| MetricsRegistry | `motor/observability/metrics.py` | Counter, Gauge, Histogram, Timer — thread-safe, labels, buckets, snapshot |
+| HealthRegistry | `motor/observability/health.py` | healthy/degraded/unhealthy por componente, timestamp, estado global agregado |
+| ReadinessRegistry | `motor/observability/readiness.py` | ready/not ready por dependencia, agregación booleana |
+| Instrumentation | `motor/observability/instrumentation.py` | Wrapping de EventBus, RegistryV2, PipelineExecutor, HookManager, SubprocessExecutor |
+
+**Métricas instrumentadas:**
+
+| Componente | Métricas |
+|------------|----------|
+| EventBus | eventos publicados (por tópico), fallos, duración de publish/emit_sync |
+| SubprocessExecutor | procesos lanzados (por cmd), timeouts, errores, duración |
+| PipelineExecutor | pipelines ejecutados/completados/fallidos, etapas, rollbacks, duración |
+| PluginRegistryV2 | plugins cargados, fallos de carga (por plugin), current loaded gauge, duración de carga |
+| HookManager | hooks registrados |
+
+**Health checks:** eventbus, plugins, pipeline, hooks, subprocess — todos registrados y actualizados.
+
+**HTTP adapter:** `motor/observability/http.py` — `create_router()` devuelve `APIRouter` de FastAPI con `/metrics`, `/health`, `/ready`.
+
+**No implementado (explícitamente diferido):** Prometheus, Grafana, alertas, exportación a OpenMetrics.
+
+**Tests (25 casos):** counter/gauge/histogram/timer operaciones, registro singleton, health agregación, readiness, instrumentación de EventBus/Subprocess/Pipeline, health checks.
 
 1. Pipeline engine (carga YAML, ejecuta etapas)
 2. Etapas base (IngestStage, TransformStage, IndexStage, SearchStage)
