@@ -13,12 +13,20 @@ Uso:
 """
 
 from motor.plugin.base import PluginBase, PluginEntry, PluginMeta, PluginResult
+from motor.plugin.manifest import ManifestError, PluginManifest, find_manifest, parse_manifest
 from motor.plugin.registry import PluginRegistry
+from motor.plugin.registry_v2 import PluginEntryV2, PluginRegistryV2
 
 __all__ = [
+    "ManifestError",
     "PluginBase",
     "PluginEntry",
+    "PluginEntryV2",
+    "PluginManifest",
     "PluginMeta",
     "PluginRegistry",
+    "PluginRegistryV2",
     "PluginResult",
+    "find_manifest",
+    "parse_manifest",
 ]
