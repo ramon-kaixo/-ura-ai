@@ -42,7 +42,7 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
 
 
 def test_detect_no_trends():
-    from scanner.calibration import Calibration
+    from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
     cal = Calibration(cfg)
@@ -52,7 +52,7 @@ def test_detect_no_trends():
 
 
 def test_detect_with_trends():
-    from scanner.calibration import Calibration
+    from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
     cal = Calibration(cfg)
@@ -67,7 +67,7 @@ def test_detect_with_trends():
 
 
 def test_calibration_with_trends():
-    from scanner.calibration import Calibration
+    from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
     cfg.data_dir = tempfile.mkdtemp()
@@ -89,7 +89,7 @@ def test_calibration_with_trends():
 
 
 def test_pattern_matcher_empty():
-    from diagnostico.pattern_matcher import buscar_patrones
+    from motor.diagnostico.pattern_matcher import buscar_patrones
 
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "active", "docker": "active"}
@@ -106,7 +106,7 @@ def test_pattern_matcher_empty():
 
 
 def test_pattern_matcher_failure():
-    from diagnostico.pattern_matcher import buscar_patrones
+    from motor.diagnostico.pattern_matcher import buscar_patrones
 
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "failed", "docker": "active"}
@@ -128,7 +128,7 @@ def test_pattern_matcher_failure():
 
 
 def test_correlacion():
-    from diagnostico.correlacion import agrupar_incidentes
+    from motor.diagnostico.correlacion import agrupar_incidentes
 
     tags = ["ServiceFailure", "docker"]
     r = agrupar_incidentes(tags, hw_ok=True, hw_issues=[])
@@ -136,14 +136,14 @@ def test_correlacion():
 
 
 def test_sliding_window():
-    from scanner.sliding_window import SlidingWindow
+    from motor.scanner.sliding_window import SlidingWindow
 
     sw = SlidingWindow()
     assert sw is not None
 
 
 def test_diff_detector():
-    from scanner.diff_detector import compute_diff
+    from motor.scanner.diff_detector import compute_diff
 
     actual = {
         "servicios": {"sshd": "active", "docker": "inactive"},
@@ -179,7 +179,7 @@ def test_status_returns_json():
 
 
 def test_preflight_module():
-    from guard.preflight import ejecutar_preflight
+    from motor.guard.preflight import ejecutar_preflight
 
     cfg = UraConfig()
     r = ejecutar_preflight(cfg)
