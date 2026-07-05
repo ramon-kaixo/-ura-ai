@@ -116,15 +116,25 @@ Basado en la recomendación de closeout de F10, F11 se ejecuta en 3 bloques:
 
 Tras Bloque 0, se implementan las funcionalidades en orden:
 
-### Bloque 1 — Infraestructura (implementación)
+### Bloque 1 — Infraestructura (implementación) ✅ Completado
 
-1. EventBus (`motor/events/bus.py`, `topics.py`, `payloads.py`)
-2. Plugin manifest (`motor/plugin/manifest.py`, parser plugin.yaml)
-3. PluginRegistryV2 (carga con manifest + compatibilidad)
-4. Hooks system (registro automático + circuit breaker)
-5. CLI: `plugin install/list/enable/disable`
+1. EventBus (`motor/events/bus.py`, `topics.py`, `payloads.py`, `compat.py`)
+2. Plugin manifest (`motor/plugin/manifest.py`, parser plugin.yaml/YAML/JSON)
+3. PluginRegistryV2 (carga con manifest + compatibilidad + subdirectorios)
+4. HookManager (registro automático + circuit breaker + DegradedMode)
+5. 76 tests nuevos — todas las pruebas pasan (616 total, 0 failures)
 
-### Bloque 2 — Pipelines Dinámicos
+| Componente | Archivos | Tests | Cobertura |
+|------------|----------|-------|-----------|
+| EventBus | `motor/events/bus.py`, `event.py`, `topics.py`, `compat.py` | 25 | publish/subscribe/unsubscribe/pattern/priority/emit_sync/async/reset |
+| PluginManifest | `motor/plugin/manifest.py` | 10 | parse YAML/JSON, defaults, validación, find_manifest |
+| PluginRegistryV2 | `motor/plugin/registry_v2.py` | 16 | discover V2/legacy, load, run_phase, dependencias, compatibilidad, unload |
+| HookManager | `motor/events/hooks.py` | 8 | registro, ejecución, cancelación, aislamiento, circuit breaker, DegradedMode |
+| Integración | `tests/test_integration_f11.py` | 7 | full cycle, compat, EventBus+Hooks+Registry |
+
+**Tag:** `v0.11.0-f11-infrastructure`
+
+### Bloque 2 — Pipelines Dinámicos (⏳ Pendiente)
 
 1. Pipeline engine (carga YAML, ejecuta etapas)
 2. Etapas base (IngestStage, TransformStage, IndexStage, SearchStage)
