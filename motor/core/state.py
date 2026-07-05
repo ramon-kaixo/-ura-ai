@@ -1,4 +1,69 @@
+import logging
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from threading import RLock
+
+log = logging.getLogger("ura.state")
+
+
+class DegradedMode:
+    """Singleton thread-safe que rastrea subsistemas en modo degradado.
+
+    Uso:
+        dm = DegradedMode()
+        dm.mark_degraded("qdrant")
+        dm.mark_healthy("qdrant")
+        dm.is_degraded("qdrant")
+        dm.status()  # -> {"degraded": ["qdrant"], "since": {"qdrant": "2024-..."}}
+    """
+
+    _instancia: "DegradedMode | None" = None
+    _lock: RLock = RLock()
+
+    def __init__(self) -> None:
+        self._degraded: dict[str, datetime] = {}
+        self._local_lock: RLock = RLock()
+
+    def mark_degraded(self, subsystem: str) -> bool:
+        """Marca un subsistema como degradado. Retorna True si ya lo estaba."""
+        with self._local_lock:
+            if subsystem in self._degraded:
+                return True
+            self._degraded[subsystem] = datetime.now(UTC)
+            log.warning("DegradedMode: %s marcado como DEGRADADO", subsystem)
+            return False
+
+    def mark_healthy(self, subsystem: str) -> bool:
+        """Marca un subsistema como saludable. Retorna True si ya lo estaba."""
+        with self._local_lock:
+            if subsystem not in self._degraded:
+                return True
+            del self._degraded[subsystem]
+            log.warning("DegradedMode: %s recuperado — SALUDABLE", subsystem)
+            return False
+
+    def is_degraded(self, subsystem: str) -> bool:
+        with self._local_lock:
+            return subsystem in self._degraded
+
+    def status(self) -> dict:
+        """Estado serializable para API /api/v1/status."""
+        with self._local_lock:
+            degraded = sorted(self._degraded.keys())
+            since = {k: v.isoformat() for k, v in self._degraded.items()}
+            return {
+                "global": len(degraded) > 0,
+                "degraded": degraded,
+                "since": since,
+                "healthy": len(degraded) == 0,
+            }
+
+    @classmethod
+    def instancia(cls) -> "DegradedMode":
+        with cls._lock:
+            if cls._instancia is None:
+                cls._instancia = cls()
+        return cls._instancia
 
 
 @dataclass

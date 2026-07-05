@@ -3,6 +3,8 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.state import DegradedMode
+
 from .base import Provider, ProviderError
 
 # OLLAMA_BASE is http://127.0.0.1:11434
@@ -77,18 +79,22 @@ class OllamaProvider(Provider):
             yield self._to_openai(resp.json(), modelo)
 
     async def health(self) -> dict:
+        dm = DegradedMode.instancia()
         try:
             async with httpx.AsyncClient(**OLLAMA_HTTPX_KW, timeout=5) as client:
                 resp = await client.get("http://127.0.0.1:11434/api/tags")
                 if resp.is_error:
+                    dm.mark_degraded("ollama_provider")
                     return {"status": "error", "detail": resp.text[:100]}
                 modelos = resp.json().get("models", [])
+                dm.mark_healthy("ollama_provider")
                 return {
                     "status": "ok",
                     "modelos_disponibles": [m["name"] for m in modelos],
                     "latencia_ms": resp.elapsed.total_seconds() * 1000,
                 }
         except Exception as e:
+            dm.mark_degraded("ollama_provider")
             return {"status": "error", "detail": str(e)}
 
     @staticmethod

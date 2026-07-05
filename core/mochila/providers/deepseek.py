@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.state import DegradedMode
+
 from .base import Provider, ProviderError
 
 DEEPSEEK_BASE = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
@@ -82,15 +84,19 @@ class DeepSeekProvider(Provider):
                 yield resp.json()
 
     async def health(self) -> dict:
+        dm = DegradedMode.instancia()
         if not self.api_key:
+            dm.mark_degraded("deepseek_provider")
             return {"status": "no_configurado", "detail": "DEEPSEEK_API_KEY no configurada"}
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(f"{DEEPSEEK_BASE}/models", headers={"Authorization": f"Bearer {self.api_key}"})
                 if resp.is_error:
+                    dm.mark_degraded("deepseek_provider")
                     return {"status": "error", "detail": resp.text[:100]}
                 data = resp.json()
                 modelos = data.get("data", [])
+                dm.mark_healthy("deepseek_provider")
                 return {
                     "status": "ok",
                     "modelos_disponibles": [m["id"] for m in modelos[:10]],
@@ -98,4 +104,5 @@ class DeepSeekProvider(Provider):
                     "latencia_ms": resp.elapsed.total_seconds() * 1000,
                 }
         except Exception as e:
+            dm.mark_degraded("deepseek_provider")
             return {"status": "error", "detail": str(e)}

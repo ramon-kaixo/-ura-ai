@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import threading
+import time
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -24,6 +25,7 @@ PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
 # Qdrant + embedding para /v2/interact
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
+from motor.core.state import DegradedMode
 
 _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -231,6 +233,23 @@ class ExecutorHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
             self.wfile.write(metrics.encode())
+            return
+
+        if self.path == "/api/v1/status":
+            degraded = DegradedMode.instancia().status()
+            qdrant = _get_qdrant()
+            result = {
+                "servicio": "OpenCode Executor API",
+                "degraded_mode": degraded,
+                "qdrant": qdrant.disponible if qdrant else False,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+            status_code = 200 if not degraded["global"] else 503
+            self.send_response(status_code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode())
             return
 
         ctx = leer_contexto()

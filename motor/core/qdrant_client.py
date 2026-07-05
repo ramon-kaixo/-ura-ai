@@ -10,6 +10,7 @@ from typing import Optional
 import httpx
 
 from motor.core.config import UraConfig
+from motor.core.state import DegradedMode
 
 log = logging.getLogger("ura.qdrant")
 
@@ -46,6 +47,7 @@ class QdrantClient:
             self._asegurar_coleccion()
             self._asegurar_coleccion_documentos()
             self._asegurar_coleccion_transacciones()
+            DegradedMode.instancia().mark_healthy("qdrant")
             log.info("qdrant conectado (cliente nativo)")
         except Exception as e_nativo:
             log.debug("cliente nativo qdrant falló: %s", e_nativo)
@@ -58,10 +60,12 @@ class QdrantClient:
                     self._asegurar_coleccion()
                     self._asegurar_coleccion_documentos()
                     self._asegurar_coleccion_transacciones()
+                    DegradedMode.instancia().mark_healthy("qdrant")
                     log.info("qdrant conectado (REST fallback)")
                     return
             except Exception as e_rest:
                 log.warning("fallback REST qdrant falló: %s", e_rest)
+            DegradedMode.instancia().mark_degraded("qdrant")
             log.warning("qdrant no disponible en %s:%s", self.config.qdrant_host, self.config.qdrant_port)
 
     def _asegurar_coleccion(self) -> None:
@@ -384,18 +388,24 @@ class QdrantClient:
 
     def health(self) -> bool:
         """Devuelve True si Qdrant responde."""
+        dm = DegradedMode.instancia()
         if not self.disponible:
+            dm.mark_degraded("qdrant")
             return False
         if getattr(self, "_modo_rest", False):
+            dm.mark_healthy("qdrant")
             return True
         if not self._cliente:
+            dm.mark_degraded("qdrant")
             return False
         try:
             self._cliente.get_collections()
+            dm.mark_healthy("qdrant")
             return True
         except Exception as e:
             log.warning("health check qdrant falló: %s", e)
             self.disponible = False
+            dm.mark_degraded("qdrant")
             return False
 
     def guardar_incidente(self, incidente: dict) -> bool:

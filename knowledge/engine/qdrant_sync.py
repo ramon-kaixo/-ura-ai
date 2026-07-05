@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any
 from knowledge.engine.chunker import chunk_document
 from knowledge.engine.connection import open_db
 from knowledge.engine.models import MAX_SYNC_ATTEMPTS
+from motor.core.state import DegradedMode
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,6 +35,7 @@ _COLLECTION = "ura_documents"
 
 def _get_qdrant() -> Any | None:
     """Retorna el singleton de QdrantClient o None si no está disponible."""
+    dm = DegradedMode.instancia()
     try:
         from motor.core.config import UraConfig
         from motor.core.qdrant_client import QdrantClient as MotorQdrant
@@ -41,10 +43,13 @@ def _get_qdrant() -> Any | None:
         config = UraConfig()
         inst = MotorQdrant.instancia(config)
         if not hasattr(inst, "generar_embeddings_batch"):
+            dm.mark_degraded("qdrant_sync")
             return None
+        dm.mark_healthy("qdrant_sync")
         return inst
     except Exception as exc:
         log.debug("Qdrant no disponible: %s", exc)
+        dm.mark_degraded("qdrant_sync")
         return None
 
 
