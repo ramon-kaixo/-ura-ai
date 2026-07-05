@@ -378,8 +378,8 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | Fase | Objetivo | Resultado Clave | Estado |
 |------|----------|-----------------|--------|
 | **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | ✅ Cerrada (v0.10.0) |
-| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ▶️ Activa |
-| **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | 🔮 Planificado |
+| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
+| **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ▶️ Activa |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | 🔮 Planificado |
 
 ### Detalle por Fase
