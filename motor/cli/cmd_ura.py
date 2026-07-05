@@ -3,24 +3,25 @@
 import contextlib
 import json
 import shlex
-import subprocess
 import sys
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 TARGET = "10.164.1.99"
 OLLAMA_PORT = 11434
 MAINTENANCE_SCRIPT = ROOT / "mantenimiento" / "ura_maintenance.py"
+_executor = SubprocessExecutor()
 
 
 def _run(cmd, desc):
     print(f"  {desc}...", end=" ", flush=True, file=sys.stderr)
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, check=False)
-    if result.returncode == 0:
+    result = _executor.run(cmd, cwd=str(ROOT))
+    if result.ok:
         print("\033[32mOK\033[0m", file=sys.stderr)
         return True, result.stdout
     print("\033[31mFALLÓ\033[0m", file=sys.stderr)
@@ -66,13 +67,10 @@ def cmd_finalize(config: UraConfig, args):
     if not ok:
         return 1
 
-    staged = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
-        capture_output=True, text=True, cwd=ROOT, check=False,
-    )
+    staged = _executor.run(["git", "diff", "--cached", "--name-only"], cwd=str(ROOT))
     if staged.stdout.strip():
         print("\n[3/5] Git: stage + commit", file=sys.stderr)
-        subprocess.run(["git", "add", "-A"], cwd=ROOT, check=False)
+        _executor.run(["git", "add", "-A"], cwd=str(ROOT))
         if message:
             commit_msg = message
         else:
@@ -122,9 +120,9 @@ def cmd_test(config: UraConfig, args):
         print("\n[Validación] \033[32mPaths OK\033[0m", file=sys.stderr)
 
     print("\n[Router]", file=sys.stderr)
-    subprocess.run(["python3", "core/model_router.py", "--models"], cwd=ROOT, check=False)
+    _executor.run(["python3", "core/model_router.py", "--models"], cwd=str(ROOT))
     print("\n[Mantenimiento]", file=sys.stderr)
-    subprocess.run(["python3", "mantenimiento/ura_maintenance.py", "--dry-run"], cwd=ROOT, check=False)
+    _executor.run(["python3", "mantenimiento/ura_maintenance.py", "--dry-run"], cwd=str(ROOT))
     return 0
 
 
@@ -134,10 +132,10 @@ def cmd_snapshot(config: UraConfig, args):
     snap_dir.mkdir(parents=True, exist_ok=True)
     fname = snap_dir / f"{timestamp}.json"
 
-    r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT, check=False)
-    test_r = subprocess.run(
+    r = _executor.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT))
+    test_r = _executor.run(
         ["python3", str(ROOT / "tests" / "test_unit.py")],
-        capture_output=True, text=True, cwd=ROOT, check=False,
+        cwd=str(ROOT),
     )
     test_pass = "PASS" if "TODOS LOS TESTS PASARON" in test_r.stdout else "FAIL"
 
@@ -145,9 +143,9 @@ def cmd_snapshot(config: UraConfig, args):
         "date": datetime.now(UTC).isoformat(),
         "commit": r.stdout.strip(),
         "tests": test_pass,
-        "branch": subprocess.run(
+        "branch": _executor.run(
             ["git", "branch", "--show-current"],
-            capture_output=True, text=True, cwd=ROOT, check=False,
+            cwd=str(ROOT),
         ).stdout.strip(),
     }
     with open(fname, "w") as f:
@@ -160,26 +158,26 @@ def cmd_maintenance(config: UraConfig, args):
     dry = "--dry-run" in args or "-d" in args
     if dry:
         print("\nEjecutando mantenimiento local (dry-run)...", file=sys.stderr)
-        return subprocess.run(["python3", str(MAINTENANCE_SCRIPT), "--dry-run"], cwd=ROOT, check=False).returncode
+        return _executor.run(["python3", str(MAINTENANCE_SCRIPT), "--dry-run"], cwd=str(ROOT)).returncode
     print("\nEjecutando mantenimiento REMOTO en GX10...", file=sys.stderr)
-    return subprocess.run(
-        ["ssh", f"{TARGET}", "cd ~/URA/ura_ia_1972 && python3 mantenimiento/ura_maintenance.py"],
-        cwd=ROOT, check=False,
+    return _executor.run(
+        ["ssh", TARGET, "cd ~/URA/ura_ia_1972 && python3 mantenimiento/ura_maintenance.py"],
+        cwd=str(ROOT),
     ).returncode
 
 
 def cmd_rotate(config: UraConfig, args):
-    return subprocess.run(["bash", str(ROOT / "mantenimiento" / "rotate_logs.sh")], cwd=ROOT, check=False).returncode
+    return _executor.run(["bash", str(ROOT / "mantenimiento" / "rotate_logs.sh")], cwd=str(ROOT)).returncode
 
 
 def cmd_health(config: UraConfig, args):
     print("\nURA Health Check — GX10", file=sys.stderr)
-    return subprocess.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=ROOT, check=False).returncode
+    return _executor.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=str(ROOT)).returncode
 
 
 def cmd_alerts(config: UraConfig, args):
     print("\nURA Log Alerts — Sincronizando desde GX10", file=sys.stderr)
-    return subprocess.run(["python3", str(ROOT / "monitor" / "log_alerts.py")], cwd=ROOT, check=False).returncode
+    return _executor.run(["python3", str(ROOT / "monitor" / "log_alerts.py")], cwd=str(ROOT)).returncode
 
 
 def cmd_snc(config: UraConfig, args):
@@ -190,9 +188,9 @@ def cmd_snc(config: UraConfig, args):
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
 
     with contextlib.suppress(Exception):
-        subprocess.run(
+        _executor.run(
             ["rsync", "-q", f"ramon@{TARGET}:/home/ramon/.ura/run/ura_snc_state.json", str(remote_state)],
-            timeout=10, capture_output=True, check=False,
+            timeout=10,
         )
 
     if remote_state.exists():
@@ -250,14 +248,14 @@ def cmd_doctor(config: UraConfig, args):
 
     print("\n[2/6] Compilación", file=sys.stderr)
     for f in ["core/config_manager.py", "core/model_router.py", "core/memory_engine.py", "ura.py"]:
-        r = subprocess.run(["python3", "-m", "py_compile", f], cwd=ROOT, capture_output=True, check=False)
-        icon = "\033[32m✓\033[0m" if r.returncode == 0 else "\033[31m✗\033[0m"
+        r = _executor.run(["python3", "-m", "py_compile", f], cwd=str(ROOT))
+        icon = "\033[32m✓\033[0m" if r.ok else "\033[31m✗\033[0m"
         print(f"  {icon} {f}", file=sys.stderr)
 
     print("\n[3/6] Tests (113)", file=sys.stderr)
-    r = subprocess.run(
+    r = _executor.run(
         ["python3", str(ROOT / "tests" / "test_unit.py")],
-        cwd=ROOT, capture_output=True, text=True, check=False,
+        cwd=str(ROOT),
     )
     if "TODOS LOS TESTS PASARON" in r.stdout:
         print("  \033[32m113/113 OK\033[0m", file=sys.stderr)
@@ -266,7 +264,7 @@ def cmd_doctor(config: UraConfig, args):
         print(f"  \033[31m{fails} tests fallaron\033[0m", file=sys.stderr)
 
     print("\n[4/6] Git", file=sys.stderr)
-    r = subprocess.run(["git", "log", "--oneline", "-3"], cwd=ROOT, capture_output=True, text=True, check=False)
+    r = _executor.run(["git", "log", "--oneline", "-3"], cwd=str(ROOT))
     for line in r.stdout.strip().split("\n"):
         print(f"  {line}", file=sys.stderr)
 
@@ -280,10 +278,10 @@ def cmd_doctor(config: UraConfig, args):
         print("  \033[33mSin estado remoto\033[0m", file=sys.stderr)
 
     print("\n[6/6] Docker (GX10)", file=sys.stderr)
-    r = subprocess.run(
+    r = _executor.run(
         ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"ramon@{TARGET}",
          'docker ps --format "{{.Names}} ({{.Status}})" 2>/dev/null | head -6'],
-        capture_output=True, text=True, timeout=10, check=False,
+        timeout=10,
     )
     if r.returncode == 0 and r.stdout.strip():
         for line in r.stdout.strip().split("\n"):
@@ -355,7 +353,7 @@ def cmd_dashboard(config: UraConfig, args):
         print("  Ejecuta en GX10: python3 monitor/snc.py", file=sys.stderr)
 
     print("\n[Git]", file=sys.stderr)
-    result = subprocess.run(["git", "log", "--oneline", "-3"], capture_output=True, text=True, cwd=ROOT, check=False)
+    result = _executor.run(["git", "log", "--oneline", "-3"], cwd=str(ROOT))
     if result.returncode == 0:
         for line in result.stdout.strip().split("\n"):
             print(f"  {line}", file=sys.stderr)
@@ -382,7 +380,7 @@ def cmd_index(config: UraConfig, args):
         f"s=index_documents(force={flag}); print(s, file=sys.stderr)"
     )
     cmd = f"cd ~/URA/ura_ia_1972 && python3 -c \"{inner}\""
-    result = subprocess.run(["ssh", TARGET, cmd], capture_output=True, text=True, cwd=ROOT, timeout=60, check=False)
+    result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=60)
     if result.returncode != 0:
         print(f"  \033[31mError: {result.stderr[:200]}\033[0m", file=sys.stderr)
         return 1
@@ -423,7 +421,7 @@ def cmd_ask(config: UraConfig, args):
         "{x.get(chr(39)+chr(39), chr(39)+chr(39))[:200]}\")"
     )
     cmd = f"cd ~/URA/ura_ia_1972/ && python3 -c \"{inner_py}\""
-    return subprocess.run(["ssh", TARGET, cmd], cwd=ROOT, timeout=30, check=False).returncode
+    return _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=30).returncode
 
 
 def cmd_memory(config: UraConfig, args):

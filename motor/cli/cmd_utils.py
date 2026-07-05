@@ -1,16 +1,17 @@
 import json
 import logging
-import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger("ura.cli")
 ARCHIVO_ESTADO = "estado_alemania.json"
 ARCHIVO_DIAGNOSTICO = "diagnostico.json"
+_executor = SubprocessExecutor()
 
 
 def cmd_notify(config: UraConfig, args=None):
@@ -27,11 +28,9 @@ def cmd_notify(config: UraConfig, args=None):
     if hs < 95 or inc > 0:
         msg = f"URA alerta: health={hs} incidentes={inc}"
         try:
-            subprocess.run(
+            _executor.run(
                 ["notify-send", "--urgency=critical", "URA", msg],
-                capture_output=True,
                 timeout=5,
-                check=False,
             )
         except FileNotFoundError:
             log.debug("notify-send no disponible")

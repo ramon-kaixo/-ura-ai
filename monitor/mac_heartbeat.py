@@ -74,8 +74,7 @@ class MacHeartbeat:
     def check_mac(self) -> bool:
         """Hace ping a Mac. Retorna True si responde."""
         try:
-            result = subprocess.run(
-                ["ping", "-c", "1", "-W", str(self.timeout), self.mac_ip],
+            result = subprocess.run(  # noqa: S603,S607  -- ping a IP configurada, argumentos constantes
                 capture_output=True,
                 timeout=self.timeout + 1,
                 check=False,
