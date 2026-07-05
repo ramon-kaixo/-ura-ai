@@ -1,8 +1,10 @@
 import logging
 import os
-import subprocess
+
+from motor.core.executor import SubprocessExecutor
 
 log = logging.getLogger("ura.scanner.asus")
+_executor = SubprocessExecutor()
 
 PUERTO_OLLAMA = 11434
 PUERTO_QDRANT = 6333
@@ -27,13 +29,8 @@ def escanear_asus(config) -> dict:
 def _check_ollama(host: str) -> bool:
     """Verifica si Ollama responde en el host remoto."""
     try:
-        r = subprocess.run(
-            ["curl", "-sf", f"http://{host}:{PUERTO_OLLAMA}/api/tags"],
-            capture_output=True,
-            timeout=5,
-            check=False,
-        )
-        return r.returncode == 0
+        r = _executor.run(["curl", "-sf", f"http://{host}:{PUERTO_OLLAMA}/api/tags"], timeout=5)
+        return r.ok
     except Exception as e:
         log.debug("ollama check %s falló: %s", host, e)
         return False
@@ -42,13 +39,8 @@ def _check_ollama(host: str) -> bool:
 def _check_qdrant(host: str) -> bool:
     """Verifica si Qdrant responde en el host remoto."""
     try:
-        r = subprocess.run(
-            ["curl", "-sf", f"http://{host}:{PUERTO_QDRANT}/collections"],
-            capture_output=True,
-            timeout=5,
-            check=False,
-        )
-        return r.returncode == 0
+        r = _executor.run(["curl", "-sf", f"http://{host}:{PUERTO_QDRANT}/collections"], timeout=5)
+        return r.ok
     except Exception as e:
         log.debug("qdrant check %s falló: %s", host, e)
         return False
@@ -57,13 +49,8 @@ def _check_qdrant(host: str) -> bool:
 def _check_whisper(host: str) -> bool:
     """Verifica si Whisper responde en el host remoto."""
     try:
-        r = subprocess.run(
-            ["curl", "-sf", f"http://{host}:{PUERTO_WHISPER}/health"],
-            capture_output=True,
-            timeout=5,
-            check=False,
-        )
-        return r.returncode == 0
+        r = _executor.run(["curl", "-sf", f"http://{host}:{PUERTO_WHISPER}/health"], timeout=5)
+        return r.ok
     except Exception as e:
         log.debug("whisper check %s falló: %s", host, e)
         return False
@@ -74,13 +61,7 @@ def _check_temp(host: str) -> float:
     try:
         ssh_user = os.environ.get("URA_SSH_USER", "")
         target = f"{ssh_user}@{host}" if ssh_user else host
-        r = subprocess.run(
-            ["ssh", *OPCIONES_SSH, target, "cat /sys/class/thermal/thermal_zone0/temp"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
+        r = _executor.run(["ssh", *OPCIONES_SSH, target, "cat /sys/class/thermal/thermal_zone0/temp"], timeout=5)
         return round(int(r.stdout.strip()) / 1000, 1) if r.stdout.strip() else 0
     except Exception as e:
         log.warning("temp remota fallo %s: %s", host, e)

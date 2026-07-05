@@ -1,11 +1,12 @@
 import json
 import logging
 import socket
-import subprocess
 
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 
 log = logging.getLogger("ura.scanner.red")
+_executor = SubprocessExecutor()
 
 HOST_PING = "8.8.8.8"
 HOST_DNS = "google.com"
@@ -38,7 +39,7 @@ def escanear_red(config: UraConfig) -> dict:
 def _get_gateway() -> str:
     """Obtiene la IP del gateway por defecto."""
     try:
-        r = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, timeout=5, check=False)
+        r = _executor.run(["ip", "route", "show", "default"], timeout=5)
         parts = r.stdout.strip().split()
         return parts[2] if len(parts) >= 3 else ""
     except Exception as e:
@@ -49,13 +50,8 @@ def _get_gateway() -> str:
 def _ping(host: str) -> bool:
     """Ping básico a un host."""
     try:
-        r = subprocess.run(
-            ["ping", "-c1", "-W2" if __import__("sys").platform != "darwin" else "-t2", host],
-            capture_output=True,
-            timeout=5,
-            check=False,
-        )
-        return r.returncode == 0
+        r = _executor.run(["ping", "-c1", "-W2" if __import__("sys").platform != "darwin" else "-t2", host], timeout=5)
+        return r.ok
     except Exception as e:
         log.debug("ping %s falló: %s", host, e)
         return False
@@ -64,13 +60,7 @@ def _ping(host: str) -> bool:
 def _latencia(host: str) -> int:
     """Mide latencia en ms a un host via ping."""
     try:
-        r = subprocess.run(
-            ["ping", "-c1", "-W3" if __import__("sys").platform != "darwin" else "-t3", host],
-            capture_output=True,
-            text=True,
-            timeout=6,
-            check=False,
-        )
+        r = _executor.run(["ping", "-c1", "-W3" if __import__("sys").platform != "darwin" else "-t3", host], timeout=6)
         for line in r.stdout.split("\n"):
             if "time=" in line:
                 ms = line.split("time=")[1].split(" ")[0]
@@ -84,7 +74,7 @@ def _latencia(host: str) -> int:
 def _iface_up(iface: str) -> bool:
     """Verifica si una interfaz de red está levantada."""
     try:
-        r = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True, timeout=3, check=False)
+        r = _executor.run(["ip", "link", "show", iface], timeout=3)
         return "UP" in r.stdout and "LOWER_UP" in r.stdout
     except Exception as e:
         log.debug("iface_up %s falló: %s", iface, e)
@@ -95,7 +85,7 @@ def _tailscale_status() -> dict:
     """Obtiene estado de peers Tailscale."""
     peers = {}
     try:
-        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5, check=False)
+        r = _executor.run(["tailscale", "status", "--json"], timeout=5)
         data = json.loads(r.stdout)
         for k, v in data.get("Peer", {}).items():
             peers[v.get("DNSName", k).rstrip(".")] = {

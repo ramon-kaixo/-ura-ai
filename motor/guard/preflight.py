@@ -1,14 +1,15 @@
 import hashlib
 import json
 import logging
-import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
 from motor.core.config import RUTAS_CONFIG_OPENCODE, UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.state import PreflightResult
 
 log = logging.getLogger("ura.guard.preflight")
+_executor = SubprocessExecutor()
 
 
 def ejecutar_preflight(config: UraConfig) -> PreflightResult:
@@ -52,13 +53,7 @@ def _snapshot_configs() -> dict:
 def _snapshot_procesos() -> list:
     """Snapshot de los primeros 30 procesos del sistema."""
     try:
-        r = subprocess.run(
-            ["ps", "-eo", "pid,comm", "--no-headers"],
-            capture_output=True,
-            text=True,
-            timeout=3,
-            check=False,
-        )
+        r = _executor.run(["ps", "-eo", "pid,comm", "--no-headers"], timeout=3)
         return [l.strip() for l in r.stdout.strip().split("\n") if l.strip()][:30]
     except Exception as e:
         log.debug("snapshot procesos falló: %s", e)
