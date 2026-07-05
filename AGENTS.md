@@ -418,12 +418,24 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **Salida:** Toda nueva funcionalidad extensible mediante plugins/eventos, sin modificar el núcleo
 - Ver `docs/architecture/FASE11_PROPOSAL.md`
 
-**Fase 12 — Inteligencia**
-- KE 2.0: ranking híbrido, reranking, chunking semántico, expansión de consultas
-- Memoria contextual: episódica, semántica, compresión, olvido dirigido
-- Sistema multiagente: Planner, Researcher, Memory, Executor, Validator, Supervisor
-- Consenso entre agentes, autoevaluación, aprendizaje de patrones
-- **Salida:** KE 2.0 operativo con métricas objetivas de mejora
+**Fase 12 — Inteligencia** ▶️ Activa
+
+**Orden:** KE Core → Context Memory → Multi-Agent Runtime
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **0** | Contrato: ADR-012-01 (métricas, corpus, baseline KE 1.x) | ✅ Completado |
+| **1** | KE Core: chunking semántico, retrieval híbrido, reranking | ⏳ Pendiente |
+| **2** | Context Memory: episódica, semántica, compresión, olvido | 🔮 Planificado |
+| **3** | Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Supervisor | 🔮 Planificado |
+
+**Contrato de calidad:**
+- `ADR-012-01` define métricas (Recall@k, Precision@k, MRR, nDCG, latencias)
+- Corpus de ≥200 consultas como requisito de entrada
+- Baseline KE 1.x medido antes de cualquier desarrollo
+- Toda mejora validada contra el corpus antes de aceptarse
+
+- **Salida:** KE 2.0 operativo con métricas objetivas de mejora documentadas
 - Ver `docs/architecture/FASE12_PROPOSAL.md`
 
 **Fase 13 — Producción**
