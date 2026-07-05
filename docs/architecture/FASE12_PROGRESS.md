@@ -80,3 +80,43 @@
 - `docs/architecture/FASE12_BASELINE.md` — baseline real de KE 1.x
 - `knowledge/evaluation/results/baseline_results.json` — resultados reales
 - `tests/test_evaluation_corpus.py` — 29 tests
+- `docs/architecture/ADR-012-01-QUALITY_CONTRACT.md` (creado previamente)
+
+### 2026-07-05 — Bloque 1a: Semantic Chunking ✅ Aprobado
+
+**Implementado:** `motor/intelligence/chunking.py` — SemanticChunker con split por títulos, solapamiento configurable, límites por tokens.
+
+**Golden docs:** 12 documentos de referencia en `knowledge/evaluation/golden_docs/` — indexados en Qdrant (KE 1.x: single chunk, KE 2.0: 50 chunks semánticos).
+
+| Métrica | KE 1.x | KE 2.0 | Delta |
+|---------|--------|--------|-------|
+| Recall@10 | 0.5358 | **0.6700** | +25.0% ✅ |
+| MRR | 0.5527 | **0.7595** | +37.4% ✅ |
+| nDCG@10 | 0.4510 | **0.8346** | +85.1% ✅ |
+| P95 | 178.65ms | **195.57ms** | +9.5% ✅ |
+| No-context | 27.00% | **21.50%** | -5.5pp ✅ |
+
+**✅ Aceptado — continuar con Retrieval Híbrido**
+
+### 2026-07-05 — Bloque 1b: Retrieval Híbrido (Vectorial + BM25) ✅ Implementado
+
+**Componentes nuevos:**
+- `motor/intelligence/retrieval/vector.py` — VectorRetriever (Qdrant)
+- `motor/intelligence/retrieval/lexical.py` — LexicalRetriever (BM25 in-memory)
+- `motor/intelligence/retrieval/hybrid.py` — HybridRetriever (score = α·vector + β·lexical)
+
+**Benchmark comparativo (α=0.7, β=0.3 como mejor configuración):**
+
+| Métrica | Chunking base | Híbrido | Delta | Aceptación |
+|---------|---------------|---------|-------|------------|
+| Recall@10 | 0.6700 | **0.8708** | **+30.0%** | ✅ |
+| MRR | 0.7595 | **0.7938** | +4.5% | ✅ |
+| MAP | 0.9423 | **0.6444** | -31.6% | ❌ |
+| nDCG@10 | 0.8346 | **0.6498** | -22.1% | ❌ |
+| Latency P95 | 195.57ms | **648.85ms** | +231.8% | ❌ |
+| No-context | 21.50% | **0.50%** | -97.7% | ✅ |
+
+**Análisis:** El híbrido mejora significativamente Recall@10 (+30%) y reduce el no-context rate a casi cero. Sin embargo, MAP y nDCG bajan porque BM25 introduce documentos con coincidencia léxica pero baja relevancia semántica, diluyendo la precisión. La latencia aumenta al ejecutar dos retrievers.
+
+**Decisión:** Resultados reportados — pendiente de decisión sobre criterios de aceptación.
+
