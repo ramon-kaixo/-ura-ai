@@ -134,7 +134,27 @@ Tras Bloque 0, se implementan las funcionalidades en orden:
 
 **Tag:** `v0.11.0-f11-infrastructure`
 
-### Bloque 2 — Pipelines Dinámicos (⏳ Pendiente)
+### Bloque 2 — Pipelines Dinámicos ✅ Completado
+
+**MVP implementado:**
+
+| Componente | Archivo | Capacidades |
+|------------|---------|-------------|
+| PipelineDefinition | `motor/pipeline/definition.py` | Etapas, configuración, opcionalidad |
+| PipelineLoader | `motor/pipeline/loader.py` | Carga YAML/JSON, validación de esquema, resolución de plugins |
+| PipelineExecutor | `motor/pipeline/executor.py` | Ejecución secuencial, before/after hooks, cancelación, rollback, eventos |
+
+**Eventos emitidos:**
+- `pipeline.before_stage` / `pipeline.after_stage` — hooks para cada etapa
+- `pipeline.before_pipeline` / `pipeline.after_pipeline` — hooks globales
+- `pipeline.started` / `pipeline.completed` / `pipeline.failed` — ciclo de vida
+
+**Tests (21 casos):** pipeline correcto, plugin inexistente, etapa con excepción, rollback, etapa opcional, cancelación via hook, eventos EventBus, propagación de contexto, benchmark (< 100ms para 5 etapas).
+
+**No implementado (explícitamente diferido):**
+- DAG, paralelismo, scheduler, persistencia, reintentos, distribución
+
+### Bloque 3 — Observabilidad Técnica (⏳ Pendiente)
 
 1. Pipeline engine (carga YAML, ejecuta etapas)
 2. Etapas base (IngestStage, TransformStage, IndexStage, SearchStage)
