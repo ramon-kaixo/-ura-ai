@@ -381,7 +381,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
-| **14** | Robustez | CI/CD real, pruebas carga/resiliencia, migración legacy, documentación operativa | 🔮 Planificado |
+| **14** | Robustez | Load & Stress, resiliencia, E2E, profiling, RC Audit | 🔮 Planificado |
 
 ### Detalle por Fase
 
@@ -450,20 +450,25 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **1100 tests, 0 failures. Sin dependencias circulares.**
 - Ver `docs/architecture/FASE13_CLOSEOUT.md`
 
-**Fase 14 — Robustez** 🔮 Planificado
+**Fase 14 — Robustez** ▶️ Planificación activa
 
-**Orden:** Bloque 1 (CI/CD) → Bloque 2 (Carga/Resiliencia) → Bloque 3 (Migración Legacy) → Bloque 4 (Documentación)
+**Objetivo:** Validación operativa para Release Candidate. No añadir nuevas funcionalidades.
+Solo medir, validar, documentar.
+
+**Orden:** Load & Stress → Resiliencia → E2E → Profiling → RC Audit
 
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
-| **1** | CI/CD real (GitHub Actions, Docker build, smoke tests) | 🔮 Planificado |
-| **2** | Pruebas de carga, stress, soak + resiliencia (Qdrant, Ollama, red) | 🔮 Planificado |
-| **3** | Migración legacy (core/, knowledge/), fusión ABCs, saneamiento ruff | 🔮 Planificado |
-| **4** | Documentación operativa (README badges, CONTRIBUTING, LICENSE, OpenAPI) | 🔮 Planificado |
+| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput | 🔮 Planificado |
+| **2** | Resiliencia: Qdrant caído, Ollama timeout, timeouts de agentes, cancelaciones, recuperación automática, degradación elegante | 🔮 Planificado |
+| **3** | End-to-End: flujo completo con componentes reales (≥70% reales, no mocks) | 🔮 Planificado |
+| **4** | Profiling: memory leaks, CPU, MemoryStore growth, latencia sostenida (5 escenarios, hasta 3h de profiling) | 🔮 Planificado |
+| **5** | RC Audit: `docs/architecture/RC_READINESS.md` con decisión objetiva (RC / RC-condicionado / No-RC) | 🔮 Planificado |
 
-- **Salida:** Proyecto clasificable como **producción** con confianza
+- **Regla:** No modificar el sistema para que pase los tests. Documentar fallos como hallazgos.
+- **Esfuerzo estimado:** 33-50h
+- **Salida:** Evidencia objetiva de robustez para decidir si el proyecto alcanza clasificación Release Candidate
 - Ver `docs/architecture/FASE14_PROPOSAL.md`
-- Documentos generados en cierre transversal: `SYSTEM_ARCHITECTURE_v1.md`, `TECHNICAL_DEBT.md`, `API_INVENTORY.md`, `CONFIGURATION.md`, `BENCHMARKS.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
