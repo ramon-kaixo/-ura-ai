@@ -381,6 +381,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
+| **14** | Robustez | CI/CD real, pruebas carga/resiliencia, migración legacy, documentación operativa | 🔮 Planificado |
 
 ### Detalle por Fase
 
@@ -448,6 +449,21 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - ✅ Deuda F12 (KE↔Memory, orchestrator, LLM extractor, feature flags)
 - **1100 tests, 0 failures. Sin dependencias circulares.**
 - Ver `docs/architecture/FASE13_CLOSEOUT.md`
+
+**Fase 14 — Robustez** 🔮 Planificado
+
+**Orden:** Bloque 1 (CI/CD) → Bloque 2 (Carga/Resiliencia) → Bloque 3 (Migración Legacy) → Bloque 4 (Documentación)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **1** | CI/CD real (GitHub Actions, Docker build, smoke tests) | 🔮 Planificado |
+| **2** | Pruebas de carga, stress, soak + resiliencia (Qdrant, Ollama, red) | 🔮 Planificado |
+| **3** | Migración legacy (core/, knowledge/), fusión ABCs, saneamiento ruff | 🔮 Planificado |
+| **4** | Documentación operativa (README badges, CONTRIBUTING, LICENSE, OpenAPI) | 🔮 Planificado |
+
+- **Salida:** Proyecto clasificable como **producción** con confianza
+- Ver `docs/architecture/FASE14_PROPOSAL.md`
+- Documentos generados en cierre transversal: `SYSTEM_ARCHITECTURE_v1.md`, `TECHNICAL_DEBT.md`, `API_INVENTORY.md`, `CONFIGURATION.md`, `BENCHMARKS.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
