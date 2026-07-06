@@ -1,4 +1,11 @@
 from motor.intelligence.agents.base import Agent
+from motor.intelligence.agents.consensus import (
+    ConsensusResult,
+    MajorityVoting,
+    UnanimousVoting,
+    VotingEngine,
+    VotingStrategy,
+)
 from motor.intelligence.agents.executor import ExecutorAgent
 from motor.intelligence.agents.message import AgentMessage, AgentResult, AgentRole, AgentStatus, AgentTask
 from motor.intelligence.agents.planner import PlannerAgent
@@ -14,10 +21,15 @@ __all__ = [
     "AgentRole",
     "AgentStatus",
     "AgentTask",
+    "ConsensusResult",
     "ExecutorAgent",
+    "MajorityVoting",
     "MultiAgentRuntime",
     "PlannerAgent",
     "ResearcherAgent",
     "SupervisorAgent",
+    "UnanimousVoting",
     "ValidatorAgent",
+    "VotingEngine",
+    "VotingStrategy",
 ]
