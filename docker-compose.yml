@@ -1,0 +1,84 @@
+version: "3.9"
+
+name: ura
+
+x-ura-common: &ura-common
+  build: .
+  image: ura:latest
+  restart: unless-stopped
+  environment: &ura-env
+    URA_LOG_LEVEL: ${URA_LOG_LEVEL:-INFO}
+    URA_HOST: ${URA_HOST:-0.0.0.0}
+    URA_PORT: ${URA_PORT:-8000}
+    URA_OLLAMA_URL: ${URA_OLLAMA_URL:-http://ollama:11434}
+    URA_QDRANT_URL: ${URA_QDRANT_URL:-http://qdrant:6333}
+    URA_CONFIG_FILE: /app/deploy/system_config.json
+  volumes:
+    - ura_data:/data
+    - ura_config:/app/deploy
+  depends_on:
+    qdrant:
+      condition: service_healthy
+  networks:
+    - ura_net
+
+services:
+  ura:
+    <<: *ura-common
+    ports:
+      - "${URA_PORT:-8000}:${URA_PORT:-8000}"
+
+  ura-worker:
+    <<: *ura-common
+    profiles: ["worker"]
+    command: ["ura", "pipeline", "run"]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ura_net
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ura_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ura_data:
+  ura_config:
+  qdrant_data:
+  ollama_data:
+
+networks:
+  ura_net:
+    driver: bridge
