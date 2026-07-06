@@ -42,3 +42,6 @@ models/
 *.*:*
 scripts/deploy/fix-path.conf
 benchmark_f10_baseline.json
+build/
+*.egg-info/
+dist/
