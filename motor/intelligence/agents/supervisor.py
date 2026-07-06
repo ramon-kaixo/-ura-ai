@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import Callable  # noqa: TC003
 from typing import Any
 
 from motor.intelligence.agents.base import Agent
@@ -31,8 +32,8 @@ class SupervisorAgent(Agent):
         start = time.monotonic()
         self.status = AgentStatus.BUSY
         try:
-            result = self._coordinate(task.objective, task.context)
-            self.status = AgentStatus.COMPLETED
+            is_cancelled = task.context.get("_cancellation_check", lambda: False)
+            result = self._coordinate(task.objective, task.context, is_cancelled)
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -41,7 +42,6 @@ class SupervisorAgent(Agent):
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
-            self.status = AgentStatus.ERROR
             log.warning("SupervisorAgent error: %s", exc)
             return AgentResult(
                 task_id=task.id,
@@ -50,12 +50,21 @@ class SupervisorAgent(Agent):
                 error=str(exc),
                 duration_ms=(time.monotonic() - start) * 1000,
             )
+        finally:
+            self.status = AgentStatus.IDLE
 
-    def _coordinate(self, objective: str, context: dict) -> dict[str, Any]:
+    def _coordinate(
+        self, objective: str, context: dict[str, Any],
+        is_cancelled: Callable[[], bool] | None = None,
+    ) -> dict[str, Any]:
         steps: list[dict[str, Any]] = []
         subtasks = context.get("subtasks", [])
 
         for sub in subtasks:
+            if is_cancelled and is_cancelled():
+                steps.append({"step": sub.get("objective", "?"), "status": "cancelled", "reason": "workflow_cancelled"})
+                break
+
             role = sub.get("agent_role")
             agent = self._find_agent(role)
             if agent is None:
@@ -71,6 +80,10 @@ class SupervisorAgent(Agent):
             )
 
             for attempt in range(MAX_RETRIES + 1):
+                if is_cancelled and is_cancelled():
+                    steps.append({"step": task.objective, "status": "cancelled",
+                            "attempt": attempt + 1, "reason": "workflow_cancelled"})
+                    break
                 try:
                     result = agent.run(task)
                     if result.success:

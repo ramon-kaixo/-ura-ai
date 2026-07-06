@@ -2,7 +2,7 @@
 
 > **Inicio:** 2026-07-05
 > **Baseline:** `v0.11.0` (Fase 11)
-> **Estado:** En ejecución
+> **Estado:** ✅ Cerrada — ver [FASE12_CLOSEOUT.md](./FASE12_CLOSEOUT.md)
 
 ---
 

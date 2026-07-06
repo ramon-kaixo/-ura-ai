@@ -15,14 +15,17 @@ from motor.intelligence.agents.supervisor import SupervisorAgent
 
 log = logging.getLogger("ura.agent.runtime")
 
+_MAX_COMPLETED = 1000
+
 
 class MultiAgentRuntime:
-    def __init__(self) -> None:
+    def __init__(self, max_completed_workflows: int = _MAX_COMPLETED) -> None:
         self._agents: dict[str, Agent] = {}
         self._workflows: dict[str, dict[str, Any]] = {}
         self._lock = threading.RLock()
         self._planner = PlannerAgent()
         self._supervisor = SupervisorAgent()
+        self._max_completed = max_completed_workflows
 
     def register(self, agent: Agent) -> str:
         with self._lock:
@@ -47,6 +50,11 @@ class MultiAgentRuntime:
         with self._lock:
             return [a for a in self._agents.values() if capability in a.capabilities]
 
+    def _is_cancelled(self, workflow_id: str) -> bool:
+        with self._lock:
+            wf2 = self._workflows.get(workflow_id)
+            return wf2 is not None and wf2.get("status") == "cancelled"
+
     def execute_workflow(
         self,
         objective: str,
@@ -62,19 +70,31 @@ class MultiAgentRuntime:
                 "objective": objective, "status": "running",
             }
 
+        def _mk_check(wf): return lambda: self._is_cancelled(wf)
+        cancel_check = _mk_check(workflow_id)
+
         try:
+            if cancel_check():
+                return self._complete(workflow_id, False, "cancelled", start)
+
             plan_task = AgentTask(objective=objective, agent_role=AgentRole.PLANNER, context=context, timeout=timeout)
             plan_result = self._planner.run(plan_task)
 
             if not plan_result.success:
                 return self._complete(workflow_id, False, plan_result.error, start)
 
+            if cancel_check():
+                return self._complete(workflow_id, False, "cancelled", start)
+
             subtasks = plan_result.output.get("subtasks", [])
-            supervisor_context = {**context, "subtasks": subtasks}
+            supervisor_context = {**context, "subtasks": subtasks, "_cancellation_check": cancel_check}
 
             supervisor_task = AgentTask(objective=objective, agent_role=AgentRole.SUPERVISOR,
                 context=supervisor_context, timeout=timeout)
             supervisor_result = self._supervisor.run(supervisor_task)
+
+            if cancel_check():
+                return self._complete(workflow_id, False, "cancelled", start)
 
             return self._complete(workflow_id, supervisor_result.success, "", start,
                 {"plan": plan_result.output, "supervisor": supervisor_result.output})
@@ -107,7 +127,9 @@ class MultiAgentRuntime:
         elapsed = (time.monotonic() - start) * 1000
         with self._lock:
             if wf_id in self._workflows:
-                self._workflows[wf_id]["status"] = "completed" if success else "failed"
+                status = "cancelled" if error == "cancelled" else ("completed" if success else "failed")
+                self._workflows[wf_id]["status"] = status
+            self._trim_workflows()
         output = {"workflow_id": wf_id}
         if extra:
             output.update(extra)
@@ -115,3 +137,16 @@ class MultiAgentRuntime:
             task_id=wf_id, agent_id="runtime", success=success,
             output=output, error=error, duration_ms=round(elapsed, 2),
         )
+
+    def _trim_workflows(self) -> None:
+        done_statuses = ("completed", "failed", "cancelled")
+        completed = [(k, v) for k, v in self._workflows.items() if v.get("status") in done_statuses]
+        if len(completed) <= self._max_completed:
+            return
+        completed.sort(key=lambda p: p[1].get("_completed_at", ""))
+        overflow = len(completed) - self._max_completed
+        for i in range(min(overflow, len(completed))):
+            wf_id = completed[i][0]
+            # Preserve progress on active workflows
+            if self._workflows[wf_id].get("status") != "running":
+                del self._workflows[wf_id]

@@ -25,7 +25,6 @@ class ValidatorAgent(Agent):
         self.status = AgentStatus.BUSY
         try:
             valid, issues = self._validate(task.objective, task.input_data)
-            self.status = AgentStatus.COMPLETED
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -34,7 +33,6 @@ class ValidatorAgent(Agent):
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
-            self.status = AgentStatus.ERROR
             log.warning("ValidatorAgent error: %s", exc)
             return AgentResult(
                 task_id=task.id,
@@ -43,6 +41,8 @@ class ValidatorAgent(Agent):
                 error=str(exc),
                 duration_ms=(time.monotonic() - start) * 1000,
             )
+        finally:
+            self.status = AgentStatus.IDLE
 
     def _validate(self, objective: str, input_data: dict) -> tuple[bool, list[str]]:
         issues: list[str] = []

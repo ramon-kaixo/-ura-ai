@@ -28,7 +28,6 @@ class ResearcherAgent(Agent):
         self.status = AgentStatus.BUSY
         try:
             context = self._gather_context(task.objective, task.context)
-            self.status = AgentStatus.COMPLETED
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -37,7 +36,6 @@ class ResearcherAgent(Agent):
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
-            self.status = AgentStatus.ERROR
             log.warning("ResearcherAgent error: %s", exc)
             return AgentResult(
                 task_id=task.id,
@@ -46,6 +44,8 @@ class ResearcherAgent(Agent):
                 error=str(exc),
                 duration_ms=(time.monotonic() - start) * 1000,
             )
+        finally:
+            self.status = AgentStatus.IDLE
 
     def _gather_context(self, objective: str, context: dict) -> dict[str, Any]:
         results: dict[str, Any] = {"query": objective, "sources": []}
