@@ -1,12 +1,13 @@
-"""ExecutorAgent — ejecuta tareas usando SubprocessExecutor y pipelines."""
+"""ExecutorAgent — ejecuta tareas usando un BaseExecutor inyectado."""
 
 from __future__ import annotations
 
 import logging
 import time
 import uuid
+from typing import Any
 
-from motor.core.executor import SubprocessExecutor
+from motor.core.executor import BaseExecutor, SubprocessExecutor
 from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentRole, AgentStatus, AgentTask
 
@@ -14,20 +15,19 @@ log = logging.getLogger("ura.agent.executor")
 
 
 class ExecutorAgent(Agent):
-    def __init__(self, agent_id: str = "") -> None:
+    def __init__(self, agent_id: str = "", executor: BaseExecutor | None = None) -> None:
         self.id = agent_id or uuid.uuid4().hex[:12]
         self.name = "executor"
         self.role = AgentRole.EXECUTOR
         self.capabilities = ["execute", "run", "compute"]
         self.status = AgentStatus.IDLE
-        self._subprocess = SubprocessExecutor()
+        self._executor: BaseExecutor = executor or SubprocessExecutor()
 
     def run(self, task: AgentTask) -> AgentResult:
         start = time.monotonic()
         self.status = AgentStatus.BUSY
         try:
             output = self._execute(task.objective, task.input_data)
-            self.status = AgentStatus.COMPLETED
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -36,7 +36,6 @@ class ExecutorAgent(Agent):
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
-            self.status = AgentStatus.ERROR
             log.warning("ExecutorAgent error: %s", exc)
             return AgentResult(
                 task_id=task.id,
@@ -45,10 +44,12 @@ class ExecutorAgent(Agent):
                 error=str(exc),
                 duration_ms=(time.monotonic() - start) * 1000,
             )
+        finally:
+            self.status = AgentStatus.IDLE
 
-    def _execute(self, objective: str, input_data: dict) -> dict:
+    def _execute(self, objective: str, input_data: dict[str, Any]) -> dict[str, Any]:
         cmd = input_data.get("cmd", ["echo", "executed:", objective])
-        result = self._subprocess.run(cmd, timeout=input_data.get("timeout", 30))
+        result = self._executor.run(cmd, timeout=input_data.get("timeout", 30))
         output = {
             "objective": objective,
             "stdout": result.stdout[:500],

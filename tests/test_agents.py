@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import concurrent.futures
-import time
 
 import pytest
 
@@ -142,9 +141,9 @@ class TestResearcherAgent:
         assert "query" in result.output
 
     def test_research_with_stores(self):
-        from motor.intelligence.memory.semantic import SemanticMemoryStore
+        from motor.intelligence.memory.episodic import Episode, EpisodeStore
         from motor.intelligence.memory.retrieval import ContextRetriever
-        from motor.intelligence.memory.episodic import EpisodeStore, Episode
+        from motor.intelligence.memory.semantic import SemanticMemoryStore
 
         store = EpisodeStore()
         store.store(Episode(payload="EventBus allows publish/subscribe", session_id="s1"))
@@ -168,7 +167,7 @@ class TestSupervisorAgent:
 
         task = AgentTask(
             objective="echo test",
-            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}]},
+            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}]},  # noqa: E501
         )
         result = sup.run(task)
         assert result.success
@@ -189,7 +188,7 @@ class TestSupervisorAgent:
 
         task = AgentTask(
             objective="fail",
-            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "fail", "input_data": {"cmd": ["bash", "-c", "exit 1"]}}]},
+            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "fail", "input_data": {"cmd": ["bash", "-c", "exit 1"]}}]},  # noqa: E501
         )
         result = sup.run(task)
         assert not result.success
@@ -240,8 +239,7 @@ class TestMultiAgentRuntime:
     def test_cancel(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
-        wf_id = "test_cancel"
-        # Execute and cancel immediately
+
         result = runtime.execute_workflow("echo test", timeout=30)
         runtime.cancel(result.task_id)
         wf = runtime.get_workflow(result.task_id)
@@ -289,7 +287,7 @@ class TestMultiAgentRuntime:
 class TestAgentABC:
     def test_cannot_instantiate(self):
         with pytest.raises(TypeError):
-            Agent()  # noqa: E202
+            Agent()
 
     def test_can_handle(self):
         agent = ExecutorAgent()
@@ -312,6 +310,100 @@ class TestIntegration:
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
 
-        result = runtime.execute_workflow("execute custom command", {"user": "test", "cmd": ["echo", "context_works"]}, timeout=30)
+        result = runtime.execute_workflow("execute custom command",
+            {"user": "test", "cmd": ["echo", "context_works"]}, timeout=30)
         assert result.success
         assert result.duration_ms > 0
+
+
+class TestMockExecutorInjection:
+    def test_custom_executor_injected(self):
+        from motor.core.executor import BaseExecutor, ProcessResult
+
+        class FakeExecutor(BaseExecutor):
+            def __init__(self):
+                self.calls = []
+
+            def run(self, cmd, timeout=30, cwd=None, env=None):
+                self.calls.append(cmd)
+                return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="fake_output")
+
+            async def arun(self, cmd, timeout=30, cwd=None, env=None):
+                return self.run(cmd, timeout, cwd, env)
+
+        fake = FakeExecutor()
+        agent = ExecutorAgent(executor=fake)
+        task = AgentTask(objective="test", input_data={"cmd": ["test_cmd"]})
+        result = agent.run(task)
+        assert result.success
+        assert "fake_output" in result.output.get("stdout", "")
+        assert fake.calls == [["test_cmd"]]
+
+    def test_status_resets_to_idle(self):
+        from motor.core.executor import BaseExecutor, ProcessResult
+
+        class QuickFake(BaseExecutor):
+            def run(self, cmd, timeout=30, cwd=None, env=None):
+                return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="ok")
+
+            async def arun(self, cmd, timeout=30, cwd=None, env=None):
+                return self.run(cmd, timeout, cwd, env)
+
+        agent = ExecutorAgent(executor=QuickFake())
+        assert agent.status == AgentStatus.IDLE
+        task = AgentTask(objective="test", input_data={"cmd": ["echo"]})
+        agent.run(task)
+        assert agent.status == AgentStatus.IDLE
+
+
+class TestCancellation:
+    def test_cancel_before_execution(self):
+        runtime = MultiAgentRuntime()
+        runtime.register(ExecutorAgent())
+        wf_result = runtime.execute_workflow("echo")
+        runtime.cancel(wf_result.task_id)
+        wf = runtime.get_workflow(wf_result.task_id)
+        assert wf is not None
+        assert wf["status"] in ("completed", "cancelled", "failed")
+
+    def test_cancel_mid_workflow(self):
+        runtime = MultiAgentRuntime()
+        runtime.register(ExecutorAgent())
+        # Execute and cancel - should not raise
+        result = runtime.execute_workflow("echo test", timeout=5)
+        runtime.cancel(result.task_id)
+        wf = runtime.get_workflow(result.task_id)
+        assert wf is not None
+
+
+class TestWorkflowCleanup:
+    def test_fifo_cleanup(self):
+        runtime = MultiAgentRuntime(max_completed_workflows=3)
+        runtime.register(ExecutorAgent())
+        for i in range(5):
+            runtime.execute_workflow(f"echo {i}", timeout=5)
+        wfs = runtime.list_workflows()
+        # Max 3 completed + 0 running = should have at most 4 (3 completed + 1 that just turned non-running)
+        assert len(wfs) <= 4
+
+
+class TestStatusRestoration:
+    def test_planner_status_restored(self):
+        agent = PlannerAgent()
+        agent.run(AgentTask(objective="echo test"))
+        assert agent.status == AgentStatus.IDLE
+
+    def test_executor_status_restored(self):
+        agent = ExecutorAgent()
+        agent.run(AgentTask(objective="echo test", input_data={"cmd": ["echo", "ok"]}))
+        assert agent.status == AgentStatus.IDLE
+
+    def test_validator_status_restored(self):
+        agent = ValidatorAgent()
+        agent.run(AgentTask(objective="validate", input_data={"result": {"success": True}}))
+        assert agent.status == AgentStatus.IDLE
+
+    def test_supervisor_status_restored(self):
+        agent = SupervisorAgent()
+        agent.run(AgentTask(objective="coordinate", context={"subtasks": []}))
+        assert agent.status == AgentStatus.IDLE
