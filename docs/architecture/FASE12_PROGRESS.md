@@ -294,6 +294,105 @@
 - CompressionScheduler sin timer real (solo run_once)
 - Las políticas son intercambiables vía `compressor.policy = new_policy`
 
+### 2026-07-05 — Bloque 2.5: Olvido Dirigido ✅
+
+**Componentes implementados:**
+
+| Componente | Archivo | Funcionalidad |
+|-----------|---------|---------------|
+| `ForgettingPolicy` (ABC) | `motor/intelligence/memory/forgetting.py` | `should_forget(record, context) → (bool, reason)` |
+| `NeverForgetPolicy` | ídem | Never forgets |
+| `TTLForgetPolicy` | ídem | Forget when TTL expired |
+| `ImportanceForgetPolicy` | ídem | Forget when importance < min + age > min_age |
+| `ConfidenceForgetPolicy` | ídem | Forget when confidence < min |
+| `HybridForgetPolicy` | ídem | Combina TTL + importance + confidence, modo any/all |
+| `ForgettingEngine` | ídem | Evaluates episodes + facts, respects protection/pins/references, dry-run |
+| `ForgettingResult` | ídem | episodes_removed, facts_removed, protected/pinned/referenced_skipped, traceability |
+| `ForgettingScheduler` | ídem | enable/disable/run_once |
+| `ProtectionRules` | ídem | protect/pin/unprotect/unpin records |
+
+**Protecciones:**
+- `protect()` → nunca se elimina (override total)
+- `pin()` → nunca se elimina por políticas de olvido
+- Episodios referenciados por SummaryRecord → preservados automáticamente
+- Soporte dry-run / simulate para evaluar impacto antes de eliminar
+
+**Tests (28):** ProtectionRules (protect/pin/unprotect), TTLForgetPolicy (expired/fresh/semantic), ImportanceForgetPolicy (low+old/high), ConfidenceForgetPolicy (low/high), HybridForgetPolicy (any/all/never), Engine (empty/delete/dry-run/protected/pinned/referenced/facts/simulate/stats/idempotent), Scheduler (enable/run), benchmark < 500ms, ForgettingResult.
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 errores, pytest 28/28 (842 total, 0 failures).
+
+---
+
+## Revisión Arquitectónica — Bloque 2 (Memory)
+
+### Diagrama de Arquitectura
+
+```
+motor/intelligence/memory/
+│
+├── record.py         ← MemoryRecord, MemoryType (contrato unificado)
+├── base.py           ← MemoryStore (ABC)
+│
+├── episodic.py       ← Episode, EpisodeStore, SessionMemory
+│
+├── semantic.py       ← SemanticFact, SemanticMemoryStore, consolidate_episodes()
+│
+├── extractor.py      ← FactExtractor (ABC), RuleBasedFactExtractor
+│
+├── retrieval.py      ← ContextRetriever, ContextQuery, ContextResult
+│
+├── compression.py    ← MemoryCompressor, 4 políticas, SummaryRecord
+│
+└── forgetting.py     ← ForgettingEngine, 5 políticas, ProtectionRules
+```
+
+### Separación de responsabilidades
+
+| Capa | Responsabilidad | Depende de |
+|------|----------------|------------|
+| MemoryRecord | Contrato unificado | — |
+| MemoryStore | Interfaz abstracta | record |
+| Epic Memory | Almacenar episodios | record, base |
+| Sem. Memory | Almacenar hechos | record, base, episodic |
+| Extraction | Episodio → hechos | episodic, semantic |
+| Retrieval | Buscar episodios | episodic |
+| Compression | Resumir episodios | episodic |
+| Forgetting | Eliminar registros | episodic, semantic, compression |
+
+**No hay dependencias circulares.** Cada capa solo importa de capas inferiores.
+
+### Interfaces extensibles
+
+| Interface | Implementaciones | Future-ready |
+|-----------|-----------------|--------------|
+| `MemoryStore` | EpisodeStore, SemanticMemoryStore | Sí |
+| `FactExtractor` | RuleBasedFactExtractor | ✅ LLM |
+| `CompressionPolicy` | 4 políticas | ✅ |
+| `ForgettingPolicy` | 5 políticas | ✅ |
+
+### Preparación para KE 2.0 y Multi-Agent Runtime
+
+| Componente | Estado |
+|-----------|--------|
+| KE 2.0 puede usar `MemoryRecord` como contrato de entrada | ✅ |
+| KE 2.0 puede usar `ContextRetriever` para búsqueda híbrida | ✅ |
+| Agentes pueden usar `SessionMemory` para contexto conversacional | ✅ |
+| Agentes pueden usar `SemanticMemoryStore` para hechos compartidos | ✅ |
+| Supervisor puede usar `ForgettingEngine` para limpieza | ✅ |
+| Consenso puede usar `MemoryRecord.references` para trazabilidad | ✅ |
+
+### Deuda técnica documentada
+
+| ID | Ítem | Prioridad | Notas |
+|----|------|-----------|-------|
+| M-01 | `_semantic_score()` stub en ContextRetriever | Baja | Completar cuando embeddings estén disponibles |
+| M-02 | Consolidación episódica → semántica no automática | Media | Requiere orquestador (F13) |
+| M-03 | Compresión extractiva sin LLM | Media | Resúmenes son concatenación + dedup |
+| M-04 | ForgettingEngine accede a `_episodes` directamente | Baja | Refactorizar cuando EpisodeStore tenga `get_all()` |
+| M-05 | Sin integración con KE 2.0 existente | Media | Diferido a bloque específico |
+| M-06 | CompressionScheduler sin timer real | Baja | Solo infraestructura run_once |
+
+
 
 
 
