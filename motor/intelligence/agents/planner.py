@@ -22,7 +22,6 @@ class PlannerAgent(Agent):
         self.status = AgentStatus.BUSY
         try:
             subtasks = self._decompose(task.objective, task.context)
-            self.status = AgentStatus.COMPLETED
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -31,7 +30,6 @@ class PlannerAgent(Agent):
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
-            self.status = AgentStatus.ERROR
             return AgentResult(
                 task_id=task.id,
                 agent_id=self.id,
@@ -39,6 +37,8 @@ class PlannerAgent(Agent):
                 error=str(exc),
                 duration_ms=(time.monotonic() - start) * 1000,
             )
+        finally:
+            self.status = AgentStatus.IDLE
 
     def _decompose(self, objective: str, context: dict) -> list[dict]:
         keywords = {
