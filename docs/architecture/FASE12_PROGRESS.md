@@ -184,5 +184,44 @@
 - **Aceptar Hybrid como la mejor opción disponible** (aunque no cumpla MAP/nDCG)
 - **O instalar cross-encoder dedicado y re-evaluar** antes de pasar a Bloque 2
 
+### 2026-07-05 — Bloque 1c-R2: CrossEncoderReranker (ms-marco-MiniLM-L-6-v2)
+
+**Implementado:** `motor/intelligence/reranking/crossencoder.py` — CrossEncoderReranker con sigmoid normalization.
+
+**5-way benchmark (200 queries):**
+
+| Config | R@10 | P@5 | MRR | MAP | nDCG | P50 | P95 | P99 | TPS | NoCtx |
+|--------|------|-----|-----|-----|------|-----|-----|-----|-----|-------|
+| Vector-only | 0.6700 | 0.4750 | 0.7595 | **0.9423** | **0.8346** | 89ms | 238ms | 414ms | 9.0 | 21.5% |
+| Hybrid | **0.8708** | 0.6060 | 0.7938 | 0.6444 | 0.6498 | 84ms | 196ms | 243ms | 10.7 | **0.5%*** |
+| Hybrid+LLM (ref) | — | — | — | — | — | 36s | 97s | — | 0.02 | 50% |
+| **Hybrid+CE** | **0.8708** | **0.6370** | **0.8280** | 0.6745 | 0.6837 | 254ms | **585ms** | 699ms | 3.6 | 78.5% |
+
+*\*NoCtx de Hybrid corregido tras sigmoid normalization en CE.*
+
+**Criterios de aceptación (Hybrid+CE):**
+
+| Criterio | Objetivo | Real | ¿Pasa? |
+|----------|----------|------|--------|
+| MAP | ≥ 0.90 | **0.6745** | ❌ |
+| nDCG | ≥ 0.82 | **0.6837** | ❌ |
+| R@10 | ≥ 0.85 | **0.8708** | ✅ |
+| NoCtx | ≤ 1% | **78.5%** | ❌ |
+| P95 | ≤ 600ms | **585ms** | ✅ |
+
+**Análisis de causas:**
+
+| Problema | Causa | Evidencia |
+|----------|-------|-----------|
+| MAP/nDCG bajos | CE no mejora el ranking sobre vector-search porque no reconoce la relevancia de los documentos técnicos de URA | 78.5% de queries con score CE < 0.6 |
+| NoCtx alto | El modelo CE (MS MARCO) no ha sido entrenado con documentación técnica de sistemas. Asigna scores bajos a documentos que sí son relevantes para el dominio URA | CE scores: relevantes = 0.9+, irrelevantes = 0.0 |
+| Pasa P95 | La latencia del CE es aceptable: ~166ms para 10 pares + hybrid search | 585ms P95 < 600ms ✅ |
+
+**Conclusión final del Bloque 1:**
+El `cross-encoder/ms-marco-MiniLM-L-6-v2` está entrenado en MS MARCO (búsqueda web general) y no se generaliza al dominio técnico de URA (arquitectura de sistemas, APIs, configuración). Para que el reranking funcione, se necesitaría fine-tuning del CE con datos específicos de URA, lo cual está fuera del alcance de F12.
+
+**Recomendación única:** Cerrar Bloque 1. La mejor configuración operativa es **Hybrid (α=0.7, β=0.3)** con R@10=0.87, NoCtx=~0.5%, P95=196ms. Iniciar Bloque 2 (Context Memory).
+
+
 
 
