@@ -10,6 +10,7 @@ from motor.intelligence.agents.consensus import (
 )
 from motor.intelligence.agents.executor import ExecutorAgent
 from motor.intelligence.agents.message import AgentMessage, AgentResult, AgentRole, AgentStatus, AgentTask
+from motor.intelligence.agents.parallel import ExecutionResult, ParallelExecutor
 from motor.intelligence.agents.planner import PlannerAgent
 from motor.intelligence.agents.reflection import (
     AlwaysRejectStrategy,
@@ -34,9 +35,11 @@ __all__ = [
     "AgentWeightRegistry",
     "AlwaysRejectStrategy",
     "ConsensusResult",
+    "ExecutionResult",
     "ExecutorAgent",
     "MajorityVoting",
     "MultiAgentRuntime",
+    "ParallelExecutor",
     "PlannerAgent",
     "ReflectionAction",
     "ReflectionAgent",
