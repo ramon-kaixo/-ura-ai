@@ -466,8 +466,8 @@ Solo medir, validar, documentar.
 |--------|-----------|--------|
 | **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | ✅ COMPLETADO |
 | **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | ✅ COMPLETADO |
-| **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | 🔮 Planificado |
-| **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | 🔮 Planificado |
+| **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | ✅ COMPLETADO |
+| **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | ✅ COMPLETADO |
 | **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | 🔮 Planificado |
 
 - **Regla:** No modificar el sistema para que pase los tests. No corregir fallos durante la fase. Documentar fallos como hallazgos.
