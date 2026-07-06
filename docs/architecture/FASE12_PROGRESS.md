@@ -259,6 +259,42 @@
 - Sin embeddings vectoriales para búsqueda semántica (diferido a integración con KE 2.0)
 - Consolidación manual (no automática) — el orquestador debe llamar a `consolidate_episodes()`
 
+### 2026-07-05 — Bloque 2.4: Compresión de Memoria ✅
+
+**Componentes implementados:**
+
+| Componente | Archivo | Funcionalidad |
+|-----------|---------|---------------|
+| `CompressionPolicy` (ABC) | `motor/intelligence/memory/compression.py` | `should_run()`, `select_candidates()`, `delete_originals` |
+| `NeverCompress` | ídem | No comprime nunca |
+| `AgeBasedCompression` | ídem | Comprime episodios > max_age_days |
+| `SizeBasedCompression` | ídem | Comprime cuando episodios > max_episodes |
+| `HybridCompressionPolicy` | ídem | Combina edad y tamaño, elimina duplicados |
+| `SummaryRecord` | ídem | id, source_episode_ids, summary extractivo, confidence/importance/tags |
+| `MemoryCompressor` | ídem | Agrupa por sesión, genera resúmenes extractivos, política intercambiable |
+| `CompressionResult` | ídem | summaries_created, episodes_compressed/deleted, elapsed_ms |
+| `CompressionScheduler` | ídem | enable/disable/run_once (solo infraestructura) |
+
+**Algoritmo de compresión extractiva:**
+1. Seleccionar candidatos según política
+2. Agrupar por session_id
+3. Por cada grupo: orden cronológico, deduplicar payloads, concatenar con timestamp
+4. Calcular confidence/importance promedio
+5. Unir tags
+6. Almacenar SummaryRecord con referencias a episodios originales
+7. Opcional: eliminar originales según política
+
+**Tests (24):** NeverCompress, SizeBasedCompression (threshold, delete/keep), AgeBasedCompression, Hybrid, SummaryRecord auto-id, CompressionResult defaults, compressor empty store, summary references/content/multiple sessions/confidence/importance, policy swappable, idempotencia, get_summary, clear_summaries, summary tags, CompressionScheduler, benchmark < 500ms (500 episodes), thread safety.
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 errores, pytest 24/24 (814 total, 0 failures).
+
+**Riesgos/deuda:**
+- Compresión extractiva simple (concatenación + dedup) — no hay verdadera síntesis
+- Sin LLM para resúmenes abstractivos (diferido a F13+)
+- CompressionScheduler sin timer real (solo run_once)
+- Las políticas son intercambiables vía `compressor.policy = new_policy`
+
+
 
 
 
