@@ -438,12 +438,26 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **Salida:** KE 2.0 operativo con métricas objetivas de mejora documentadas
 - Ver `docs/architecture/FASE12_PROPOSAL.md`
 
-**Fase 13 — Producción**
-- Docker oficial + docker-compose
-- Instalación vía `pip install ura`
-- Observabilidad operativa: Prometheus, Grafana, alertas, tracing, logs estructurados
-- Documentación para usuarios: README, QUICKSTART, API OpenAPI, CLI, plugins
-- CI/CD completa: GitHub Actions, releases automáticos, pruebas de integración
+**Fase 13 — Producción** 🔮 Planificado
+
+**Orden:** Contratos → Consenso → Infraestructura → Observabilidad → CI/CD → Documentación → Deuda F12
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **0** | ADR-013-01 (Consensus) + ADR-013-02 (Deploy/Observability) | ✅ Completado |
+| **1** | Consenso: VotingEngine, WeightedConsensus, ReflectionAgent, ParallelExecutor | ⏳ Pendiente |
+| **2** | Infraestructura: Docker, docker-compose, install.sh, entrypoint | 🔮 Planificado |
+| **3** | Observabilidad: OpenMetrics exporter, Grafana dashboard, alertas, logs JSON | 🔮 Planificado |
+| **4** | CI/CD: GitHub Actions, pip package, release workflow, smoke tests | 🔮 Planificado |
+| **5** | Documentación: README, QUICKSTART, CLI, PLUGIN_DEV, OpenAPI | 🔮 Planificado |
+| **6** | Deuda F12: cross-encoder fine-tuning, LLM extractor, consolidación, KE+Memory | 🔮 Planificado |
+
+**ADRs activos:**
+- `ADR-013-01`: Consensus Protocol (votación ponderada entre agentes)
+- `ADR-013-02`: Deployment & Observability (Docker, pip, Prometheus, docs)
+
+**Dependencias:** Plugin System, EventBus, Pipeline, Memory, Retrieval, Multi-Agent Runtime, Observability Core
+
 - **Salida:** Instalación reproducible, despliegue automatizado, monitoreo completo, documentación para externos
 - Ver `docs/architecture/FASE13_PROPOSAL.md`
 
