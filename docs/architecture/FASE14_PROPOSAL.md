@@ -458,6 +458,52 @@ Si Not RC Ready:
 
 ---
 
+## Gobernanza de F14
+
+### Regla de evidencia
+
+Todo resultado de F14 debe ser reproducible. Cada benchmark, prueba de carga,
+prueba de resiliencia y perfil deberá almacenar automáticamente:
+
+- fecha y hora
+- commit SHA (`git rev-parse HEAD`)
+- versión (`git describe --tags --always`)
+- configuración utilizada (UraConfig dump)
+- hardware (CPU, RAM, GPU, OS via `platform` + `psutil`)
+- sistema operativo (`platform.platform()`)
+- duración
+- resultados en JSON
+- resultados en CSV
+- veredicto PASS/FAIL
+
+Los informes Markdown deben generarse a partir de esos datos y **no contener
+métricas escritas manualmente**. Cualquier métrica en un informe Markdown debe
+tener su origen en un archivo JSON/CSV generado automáticamente.
+
+### Regla de auditoría
+
+Si durante F14 aparece un defecto:
+1. **No corregirlo inmediatamente.**
+2. Registrarlo como hallazgo (archivo `motor/data/f14/findings.json`).
+3. Evaluar su impacto: ¿bloquea la continuación de las pruebas?
+4. Si no bloquea, continuar las pruebas. Documentar el hallazgo.
+5. Solo corregir un defecto si **impide continuar con la validación**
+   (ej: el sistema no arranca, los benchmarks no pueden ejecutarse).
+   En ese caso, documentar la corrección como excepción justificada.
+
+### Criterio de cierre de F14
+
+La decisión final deberá basarse **exclusivamente** en la evidencia recopilada
+durante la fase. No podrá declararse "RC Ready" sin cumplir **todos** los
+criterios definidos en RC_READINESS.md.
+
+### Congelación del plan
+
+A partir de este commit, el plan F14 queda congelado. No se aceptan más
+modificaciones a la planificación. El esfuerzo se dirige a la ejecución.
+
+---
+
 ## Decisión
 
 **No comenzar implementación sin aprobación explícita.**
