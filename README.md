@@ -1,71 +1,170 @@
-# URA — Universal Research Agent
+# URA — Multi-Agent Desktop Assistant
 
-Multi-agent desktop assistant with specialized agents, a consciousness coordinator,
-a self-improving sandbox, and an autonomous swarm of research buzzers.
+URA is a modular multi-agent system with semantic retrieval, episodic/semantic memory,
+a consensus-driven agent runtime, and full observability — designed for extensibility.
 
-## System Requirements
+```
+                                        ┌──────────────┐
+                                        │   Ollama     │
+                                        │  (LLM + emb) │
+                                        └──────┬───────┘
+                                               │
+┌──────┐    ┌──────────┐    ┌──────────┐    ┌──┴────────┐    ┌──────────┐
+│ User │───▶│ Runtime  │───▶│ Planner  │───▶│ Supervisor│───▶│ Agents   │
+│ CLI  │    │          │    │          │    │           │    │ (exec,   │
+│ API  │    │          │    │          │    │           │    │  research)│
+└──────┘    └──────────┘    └──────────┘    └───────────┘    └──────────┘
+                            ┌──────────┐    ┌──────────┐    ┌──────────┐
+                            │ Memory   │    │ Retrieval│    │ Metrics  │
+                            │ (episodic│    │ (hybrid) │    │ + Logging│
+                            │  semantic│    │ + BM25   │    │ /health  │
+                            └──────────┘    └──────────┘    └──────────┘
+```
 
-- **Hardware**: NVIDIA GB10 (Grace Blackwell) with 128 GB unified memory recommended.
-  Also runs on Linux x86_64 (VM or bare metal) with 16 GB+ RAM.
-- **OS**: Ubuntu 22.04+ / Debian 12+
-- **Dependencies**: Python 3.11+, Ollama, Tailscale (for multi-node), systemd
+## Features
+
+- **Multi-Agent Runtime**: Planner, Researcher, Executor, Validator, Supervisor, Reflection
+- **Consensus Engine**: Majority, Unanimous, Weighted voting with configurable strategies
+- **Memory System**: Episodic (sessions, TTL, SQLite), Semantic (facts, dedup, versioned)
+- **Hybrid Retrieval**: Vector (Qdrant) + BM25 with weighted fusion and reranking
+- **Observability**: Prometheus metrics, JSON logging, Grafana dashboard, health checks
+- **Semantic Chunking**: Document splitting by structure (headings, paragraphs, overlap)
+- **Docker**: Multi-stage image, docker-compose with Qdrant + optional Ollama
+- **CI/CD**: GitHub Actions, PyPI package, wheel/sdist
+
+## Installation
+
+### Quick (pip)
+
+```bash
+pip install ura
+ura --help
+```
+
+### From source
+
+```bash
+git clone https://github.com/ramon-kaixo/-ura-ai.git
+cd ura-ai
+pip install -e ".[dev]"
+```
+
+### Docker
+
+```bash
+docker compose up -d
+# With Ollama:
+docker compose --profile ollama up -d
+```
 
 ## Quick Start
 
+See [QUICKSTART.md](docs/QUICKSTART.md) for a complete 10-minute guide.
+
 ```bash
-# 1. Clone and enter
-git clone https://github.com/ramon-kaixo/-ura-ai.git
-cd ura-ai
+# Run a basic workflow
+ura "search for EventBus documentation"
 
-# 2. Create virtualenv and install
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+# Check system health
+curl localhost:8000/health
 
-# 3. Configure
-cp scripts/deploy/fix-path.conf.example /etc/ura/fix-path.conf
-# Edit /etc/ura/fix-path.conf with your paths
-
-# 4. Run the tuneladora (maintenance + improvement pipeline)
-bash tuneladora.sh
-
-# 5. Or start individual services
-python3 scripts/pro/ejecutor_api.py   # API REST (port 4096)
-python3 core/model_router.py          # Model Router (port 11435)
+# View metrics
+curl localhost:8000/metrics
 ```
+
+## Project Structure
+
+```
+ura-ai/
+├── motor/
+│   ├── intelligence/
+│   │   ├── agents/         → Agent ABC, Runtime, Planner, Executor, etc.
+│   │   ├── retrieval/      → Vector, BM25, Hybrid retrievers
+│   │   ├── reranking/      → NoOp, LLM, CrossEncoder rerankers
+│   │   ├── chunking.py     → SemanticChunker
+│   │   └── memory/         → Episodic, Semantic, Compression, Forgetting
+│   ├── events/             → EventBus, hooks, topics, compat
+│   ├── pipeline/           → Dynamic pipeline executor
+│   ├── plugin/             → Plugin system, manifests, registry
+│   └── observability/      → Metrics, logging, health, exporter
+├── deploy/
+│   ├── grafana/            → Dashboard JSON
+│   └── prometheus/         → Alerting rules
+├── tests/                  → 1065+ tests
+├── Dockerfile
+├── docker-compose.yml
+└── pyproject.toml
+```
+
+## Configuration
+
+Configuration is via environment variables or `.env` file:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `URA_OLLAMA_URL` | `http://localhost:11434` | Ollama endpoint |
+| `URA_QDRANT_URL` | `http://localhost:6333` | Qdrant endpoint |
+| `URA_LOG_LEVEL` | `INFO` | Log level |
+| `URA_PORT` | `8000` | HTTP server port |
+| `URA_HOST` | `0.0.0.0` | HTTP bind address |
+
+## Running
+
+```bash
+# Development
+python -m uvicorn motor.observability.http:app --reload
+
+# Production
+python entrypoint.sh
+
+# Docker
+docker compose up -d
+```
+
+## Testing
+
+```bash
+pip install -e ".[dev]"
+pytest -q --tb=line tests/ motor/tests/
+```
+
+## Docker
+
+```bash
+docker build -t ura .
+docker run -p 8000:8000 ura
+```
+
+## Observability
+
+| Endpoint | Description |
+|----------|-------------|
+| `/health` | Health check (JSON) |
+| `/ready` | Readiness check |
+| `/metrics` | Prometheus OpenMetrics |
+
+## Roadmap
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| F10 | Stabilization | ✅ Closed |
+| F11 | Platform (plugins, events, pipeline) | ✅ Closed |
+| F12 | Intelligence (retrieval, memory, agents) | ✅ Closed |
+| F13 | Production (Docker, CI/CD, docs) | 🟡 Active |
+| F14 | Consensus, advanced agents, fine-tuning | 🔮 Planned |
 
 ## Architecture
 
-```
-ura_ia_1972/
-├── core/           Domain logic (consciousness, event bus, memory, security, providers)
-├── agents/         Specialized agents (organized by domain)
-├── knowledge/      Long-term memory, Knowledge Engine (Fases 0-7)
-├── motor/          CLI, pipeline, scanner, diagnostics (active pipeline)
-├── scripts/        Shell scripts, deployment, pro pipeline
-├── monitor/        System monitoring and heartbeats
-├── docs/           Architecture docs, ADRs, design documents
-├── deploy/         systemd service units
-├── tests/          Pytest and legacy test runners
-└── config/         Machine-specific device inventory and profiles
-```
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
 
-## Main Commands
+## ADRs
 
-| Command | Purpose |
-|---------|---------|
-| `bash tuneladora.sh` | Unified maintenance + improvement pipeline |
-| `python3 -m motor.cli.main status` | System status and health check |
-| `python3 core/model_router.py` | Enhanced Model Router with caching |
-| `python3 scripts/pro/ejecutor_api.py` | URA Executor REST API |
+All Architecture Decision Records are in [docs/architecture/](docs/architecture/).
 
-## Phases
+## Contributing
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| 0–6 | ✅ Closed | FTS5, edges, background queue, autorecovery, reconcile |
-| 7 | ✅ Closed (v0.6.0-fase7) | Production optimizations |
-| 8 | ✅ Closed (v0.7.0-fase8) | Hardening, coverage, documentation |
+See [PLUGIN_DEV.md](docs/PLUGIN_DEV.md) for the plugin API and extension points.
 
-See `AGENTS.md` for detailed architecture, service inventory, and AI agent instructions.
-See `docs/architecture/` for design documents and ADRs.
+## License
+
+MIT
