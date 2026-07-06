@@ -380,7 +380,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | ✅ Cerrada (v0.10.0) |
 | **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
-| **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | 🔮 Planificado |
+| **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
 
 ### Detalle por Fase
 
@@ -438,28 +438,16 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **Salida:** KE 2.0 operativo con métricas objetivas de mejora documentadas
 - Ver `docs/architecture/FASE12_PROPOSAL.md`
 
-**Fase 13 — Producción** 🔮 Planificado
+**Fase 13 — Producción** ✅ Cerrada (v0.13.0)
 
-**Orden:** Contratos → Consenso → Infraestructura → Observabilidad → CI/CD → Documentación → Deuda F12
-
-| Bloque | Contenido | Estado |
-|--------|-----------|--------|
-| **0** | ADR-013-01 (Consensus) + ADR-013-02 (Deploy/Observability) | ✅ Completado |
-| **1** | Consenso: VotingEngine, WeightedConsensus, ReflectionAgent, ParallelExecutor | ⏳ Pendiente |
-| **2** | Infraestructura: Docker, docker-compose, install.sh, entrypoint | 🔮 Planificado |
-| **3** | Observabilidad: OpenMetrics exporter, Grafana dashboard, alertas, logs JSON | 🔮 Planificado |
-| **4** | CI/CD: GitHub Actions, pip package, release workflow, smoke tests | 🔮 Planificado |
-| **5** | Documentación: README, QUICKSTART, CLI, PLUGIN_DEV, OpenAPI | 🔮 Planificado |
-| **6** | Deuda F12: cross-encoder fine-tuning, LLM extractor, consolidación, KE+Memory | 🔮 Planificado |
-
-**ADRs activos:**
-- `ADR-013-01`: Consensus Protocol (votación ponderada entre agentes)
-- `ADR-013-02`: Deployment & Observability (Docker, pip, Prometheus, docs)
-
-**Dependencias:** Plugin System, EventBus, Pipeline, Memory, Retrieval, Multi-Agent Runtime, Observability Core
-
-- **Salida:** Instalación reproducible, despliegue automatizado, monitoreo completo, documentación para externos
-- Ver `docs/architecture/FASE13_PROPOSAL.md`
+- ✅ Consensus Engine (4 sub-bloques: Voting, Weighted, Reflection, Parallel)
+- ✅ Docker + docker-compose + install.sh + entrypoint.sh
+- ✅ Observabilidad (JSON logging, Prometheus exporter, dashboards, alerts)
+- ✅ CI/CD (GitHub Actions, pip package, release workflow)
+- ✅ Documentación (README, QUICKSTART, CLI, PLUGIN_DEV, ARCHITECTURE)
+- ✅ Deuda F12 (KE↔Memory, orchestrator, LLM extractor, feature flags)
+- **1100 tests, 0 failures. Sin dependencias circulares.**
+- Ver `docs/architecture/FASE13_CLOSEOUT.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
