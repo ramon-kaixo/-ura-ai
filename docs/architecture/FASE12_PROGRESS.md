@@ -201,6 +201,35 @@
 - Sesiones en memoria volátil (no persistidas)
 - Sin integración con KE ni embeddings (diferido a 2.2)
 
+### 2026-07-05 — Bloque 2.2: Recuperación Contextual ✅
+
+**Componentes implementados:**
+
+| Componente | Archivo | Funcionalidad |
+|-----------|---------|---------------|
+| `ContextQuery` | `motor/intelligence/memory/retrieval.py` | text, session_id, tags, memory_type, k, offset, weights |
+| `ContextResult` | ídem | episode + semantic_score + recency_score + importance_score + confidence_score + score |
+| `ContextResultList` | ídem | results + total + elapsed_ms + to_dict() |
+| `ContextRetriever` | ídem | search() con scoring híbrido, filtros, límites |
+
+**Scoring híbrido:**
+- `semantic`: similitud coseno (stub — requiere embeddings, default 0)
+- `recency`: 1.0 (más reciente) → 0.0 (más antiguo), normalizado por max_age
+- `importance`: normalizado por max_importance del lote
+- `confidence`: normalizado por max_confidence del lote
+
+**Tests (27):** session filter, tags filter, ranking por importancia, recencia, combinado, límites, offset, expirados, auto-delete, sin embeddings (degradación elegante), custom weights, latencia benchmark (< 50ms con 1000 episodios), thread safety.
+
+**Benchmark:** Latencia media 10 búsquedas en 1000 episodios: ✅ < 50ms.
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 errores, pytest 27/27 (756 total, 0 failures).
+
+**Riesgos/deuda:**
+- `_semantic_score()` es stub — implementar cuando embeddings estén disponibles
+- No hay integración con KE 2.0 (diferida a bloque específico)
+- `MemoryType` filter no implementado en `_collect_candidates` (se añade cuando haya tipos múltiples)
+
+
 
 
 
