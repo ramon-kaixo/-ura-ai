@@ -1,0 +1,70 @@
+# URA — Prometheus alerting rules
+# Load with: --rules=/etc/prometheus/ura_alerts.yml
+
+groups:
+  - name: ura
+    interval: 30s
+    rules:
+
+      - alert: HighErrorRate
+        expr: rate(ura_workflow_failures_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High workflow failure rate"
+          description: "Workflow failures are above 0.1/s (current: {{ $value }}/s)"
+
+      - alert: StuckWorkflow
+        expr: ura_workflows_active > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many active workflows"
+          description: "Active workflows: {{ $value }}"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(ura_workflow_duration_seconds_bucket[5m])) by (le)) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High workflow latency P95"
+          description: "Latency P95 is {{ $value }}s (threshold 30s)"
+
+      - alert: HighNoContext
+        expr: rate(ura_no_context_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Elevated no-context rate"
+          description: "No-context rate: {{ $value }}/s"
+
+      - alert: MemoryGrowth
+        expr: ura_episodic_records_total > 10000
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Episodic memory growing"
+          description: "Episodic records: {{ $value }} (threshold 10000)"
+
+      - alert: AgentFailures
+        expr: rate(ura_agent_failures_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated agent failure rate"
+          description: "Agent failures: {{ $value }}/s"
+
+      - alert: QdrantDown
+        expr: up{job="qdrant"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Qdrant is unreachable"
+          description: "Qdrant has been down for more than 1 minute"
