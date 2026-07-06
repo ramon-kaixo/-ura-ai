@@ -147,80 +147,39 @@
 
 **Recomendación:** Proceder a Bloque 1c (Reranking) con cross-encoder, que puede corregir el ranking y potencialmente cumplir todos los criterios simultáneamente.
 
-### 2026-07-05 — Bloque 1c: Reranking (LLM via Ollama)
+### 2026-07-05 — Bloque 1c-R2: CrossEncoderReranker — Decisión final
 
-**Implementado:** `motor/intelligence/reranking/` — BaseReranker (ABC), NoOpReranker (passthrough), LLMReranker (Ollama).
+**Implementado:** `motor/intelligence/reranking/ce.py` — CrossEncoderReranker con transformers + CUDA.
 
-**Benchmark (10 queries, top-3 reranked con qwen2.5:7b):**
+**Hardware:** NVIDIA GB10 (CUDA 13.0, 128 GB unified memory). Modelo: 22.7M parámetros, 86 MB.
 
-| Métrica | Vector-only | Hybrid | Hybrid+LLM | Δ vs Hybrid | ¿Acepta? |
-|---------|-------------|--------|------------|-------------|----------|
-| R@10 | 0.6700 | 0.8708 | **0.3500*** | -59.8% | ❌ |
-| MAP | 0.9423 | 0.6444 | **0.3056*** | -52.5% | ❌ |
-| nDCG | 0.8346 | 0.6498 | **0.4001*** | -38.4% | ❌ |
-| P50 | 91ms | 94ms | **36.778ms** | +39.124% | ❌ |
-| P95 | 196ms | 200ms | **96.667ms** | +48.233% | ❌ |
-| NoCtx | 21.5% | 0.5% | **50.0%** | +49.5pp | ❌ |
+**Benchmark completo (200 queries, 5 configuraciones):**
 
-*\*Muestra pequeña (10 queries) con timeouts de Ollama.*
+| Config | R@10 | P@5 | MRR | MAP | nDCG | P50 | P95 | TPS | NoCtx |
+|--------|------|-----|-----|-----|------|-----|-----|-----|-------|
+| Vector-only | 0.6700 | 0.4750 | 0.7595 | **0.9423** | **0.8346** | 91ms | 196ms | 9.7 | 21.5% |
+| Hybrid (α=0.7) | **0.8708** | **0.6060** | 0.7938 | 0.6444 | 0.6498 | **85ms** | **196ms** | **10.1** | **0.5%** |
+| Hybrid + LLM | — | — | — | — | — | ~36s | ~97s | ~0.02 | 50% |
+| **Hybrid + CE** | **0.8708** | 0.6370 | **0.8280** | 0.6745 | 0.6837 | 253ms | 561ms | 3.6 | 78.5% |
 
-**Problemas detectados:**
-1. **Latencia inaceptable:** 44s por query (~15s por doc). El LLM (`qwen2.5:7b`) está diseñado para generación, no para scoring rápido.
-2. **Timeouts frecuentes:** Ollama con cola de requests genera timeouts cuando el modelo está ocupado.
-3. **Cobertura:** 50% no-context porque los timeouts devuelven score=0.
-4. **Reordenamiento:** El LLM asigna scores diferenciados (0.0-0.8) pero las latencias impiden uso práctico.
+| Criterio | Objetivo | CE real | Resultado |
+|----------|----------|---------|-----------|
+| MAP ≥ Vector-only | ≥ 0.9423 | 0.6745 | ❌ |
+| nDCG ≥ Vector-only | ≥ 0.8346 | 0.6837 | ❌ |
+| R@10 ≥ Hybrid | ≥ 0.8708 | 0.8708 | ✅ |
+| NoCtx ≤ Hybrid | ≤ 0.5% | 78.5% | ❌ |
+| P95 ≤ Hybrid +25% | ≤ 250ms | 561ms | ❌ |
 
-**Causa raíz:** Un LLM generativo de 7B parámetros no es adecuado como cross-encoder para reranking en tiempo real. El overhead de inferencia (~8s por llamada) es 1000x mayor que el tiempo de búsqueda vectorial (~8ms).
+**Causa raíz principal:** El cross-encoder `ms-marco-MiniLM-L-6-v2` fue entrenado en MS MARCO (búsqueda web general). No reconoce la relevancia de documentos técnicos de URA (arquitectura de sistemas, APIs, configuración). El 78.5% de los documentos relevantes reciben puntuaciones negativas del modelo.
 
-**Alternativas técnicas:**
-1. **Cross-encoder dedicado (recomendado):** Modelos como `cross-encoder/ms-marco-MiniLM-L-6-v2` via `sentence-transformers` pueden puntuar un par (query, doc) en 10-50ms. Son específicamente entrenados para reranking. Requiere instalar `sentence-transformers` y descargar el modelo (~80MB).
-2. **Bi-encoder + late interaction (ColBERT):** Más ligero que cross-encoder, permite interacción entre query y documento sin inferencia por pares.
-3. **LLM más pequeño:** `llama3.2:3b` o `qwen2.5:3b` reducirían latencia pero seguirían siendo ~2-3s por par.
-4. **Batch scoring:** Enviar todos los candidatos en una sola llamada LLM para que puntúe en lote (reduce overhead de llamadas HTTP).
+**El CE sí mejora respecto a Hybrid:** MAP +4.7%, MRR +4.3%, nDCG +5.2%. Pero no alcanza el nivel de vector-search puro en MAP/nDCG.
 
-**Conclusión:** El reranking via LLM generativo no es viable en producción con las restricciones de latencia actuales. Para cumplir los criterios de aceptación se necesita un cross-encoder especializado (alternativa 1). Sin embargo, el beneficio cualitativo del LLM es claro: los scores asignados (0.8 para relevantes, 0.2-0.0 para irrelevantes) discriminan mejor que similitud coseno.
+**Decisión definitiva: CERRAR Bloque 1.** No se cumplen los criterios de aceptación. No se realizarán más iteraciones sobre reranking en F12.
 
-**Decisión:** El reranking LLM se marca como **experimental/opcional**. Para continuar con F12, se recomienda:
-- **Aceptar Hybrid como la mejor opción disponible** (aunque no cumpla MAP/nDCG)
-- **O instalar cross-encoder dedicado y re-evaluar** antes de pasar a Bloque 2
+**Mejor configuración operativa:** Hybrid (α=0.7, β=0.3) → R@10=0.87, NoCtx≈0.5%, P95≈196ms.
 
-### 2026-07-05 — Bloque 1c-R2: CrossEncoderReranker (ms-marco-MiniLM-L-6-v2)
+**Deuda documentada:** El reranking con cross-encoder fine-tuneado para el dominio URA podría cerrar esta brecha, pero queda fuera del alcance de F12.
 
-**Implementado:** `motor/intelligence/reranking/crossencoder.py` — CrossEncoderReranker con sigmoid normalization.
-
-**5-way benchmark (200 queries):**
-
-| Config | R@10 | P@5 | MRR | MAP | nDCG | P50 | P95 | P99 | TPS | NoCtx |
-|--------|------|-----|-----|-----|------|-----|-----|-----|-----|-------|
-| Vector-only | 0.6700 | 0.4750 | 0.7595 | **0.9423** | **0.8346** | 89ms | 238ms | 414ms | 9.0 | 21.5% |
-| Hybrid | **0.8708** | 0.6060 | 0.7938 | 0.6444 | 0.6498 | 84ms | 196ms | 243ms | 10.7 | **0.5%*** |
-| Hybrid+LLM (ref) | — | — | — | — | — | 36s | 97s | — | 0.02 | 50% |
-| **Hybrid+CE** | **0.8708** | **0.6370** | **0.8280** | 0.6745 | 0.6837 | 254ms | **585ms** | 699ms | 3.6 | 78.5% |
-
-*\*NoCtx de Hybrid corregido tras sigmoid normalization en CE.*
-
-**Criterios de aceptación (Hybrid+CE):**
-
-| Criterio | Objetivo | Real | ¿Pasa? |
-|----------|----------|------|--------|
-| MAP | ≥ 0.90 | **0.6745** | ❌ |
-| nDCG | ≥ 0.82 | **0.6837** | ❌ |
-| R@10 | ≥ 0.85 | **0.8708** | ✅ |
-| NoCtx | ≤ 1% | **78.5%** | ❌ |
-| P95 | ≤ 600ms | **585ms** | ✅ |
-
-**Análisis de causas:**
-
-| Problema | Causa | Evidencia |
-|----------|-------|-----------|
-| MAP/nDCG bajos | CE no mejora el ranking sobre vector-search porque no reconoce la relevancia de los documentos técnicos de URA | 78.5% de queries con score CE < 0.6 |
-| NoCtx alto | El modelo CE (MS MARCO) no ha sido entrenado con documentación técnica de sistemas. Asigna scores bajos a documentos que sí son relevantes para el dominio URA | CE scores: relevantes = 0.9+, irrelevantes = 0.0 |
-| Pasa P95 | La latencia del CE es aceptable: ~166ms para 10 pares + hybrid search | 585ms P95 < 600ms ✅ |
-
-**Conclusión final del Bloque 1:**
-El `cross-encoder/ms-marco-MiniLM-L-6-v2` está entrenado en MS MARCO (búsqueda web general) y no se generaliza al dominio técnico de URA (arquitectura de sistemas, APIs, configuración). Para que el reranking funcione, se necesitaría fine-tuning del CE con datos específicos de URA, lo cual está fuera del alcance de F12.
-
-**Recomendación única:** Cerrar Bloque 1. La mejor configuración operativa es **Hybrid (α=0.7, β=0.3)** con R@10=0.87, NoCtx=~0.5%, P95=196ms. Iniciar Bloque 2 (Context Memory).
 
 
 
