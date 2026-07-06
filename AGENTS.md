@@ -425,7 +425,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
 | **0** | Contrato: ADR-012-01 (métricas, corpus, baseline KE 1.x) | ✅ Completado |
-| **1** | KE Core: chunking semántico, retrieval híbrido, reranking | ⏳ Pendiente |
+| **1** | KE Core: chunking semántico, retrieval híbrido, reranking | ✅ Completado (Hybrid: R@10=0.87, NoCtx=0.5%) |
 | **2** | Context Memory: episódica, semántica, compresión, olvido | 🔮 Planificado |
 | **3** | Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Supervisor | 🔮 Planificado |
 
