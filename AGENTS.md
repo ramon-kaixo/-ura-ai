@@ -459,7 +459,7 @@ Solo medir, validar, documentar.
 
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
-| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | 🔮 Planificado |
+| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | ✅ COMPLETADO |
 | **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | 🔮 Planificado |
 | **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | 🔮 Planificado |
 | **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | 🔮 Planificado |
