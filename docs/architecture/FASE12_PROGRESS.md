@@ -229,6 +229,37 @@
 - No hay integración con KE 2.0 (diferida a bloque específico)
 - `MemoryType` filter no implementado en `_collect_candidates` (se añade cuando haya tipos múltiples)
 
+### 2026-07-05 — Bloque 2.3: Memoria Semántica ✅
+
+**Componentes implementados:**
+
+| Componente | Archivo | Funcionalidad |
+|-----------|---------|---------------|
+| `FactExtractor` (ABC) | `motor/intelligence/memory/extractor.py` | Interfaz abstracta: `extract(episode) → list[SemanticFact]` |
+| `RuleBasedFactExtractor` | ídem | Extracción determinista por patrones regex (attribute, relation, event, error, statement) |
+| `SemanticFact` | `motor/intelligence/memory/semantic.py` | subject, predicate, object, fact_type, confidence, importance, version, source_episode_ids, merge(), key() |
+| `SemanticMemoryStore` | ídem | CRUD, dedup por key, search(text/tags/type/entity), versionado, merge, SQLite persistencia |
+| `consolidate_episodes()` | ídem | Toma episodios + extractor + store → extrae y almacena |
+
+**Extracción (reglas):**
+- `"La temperatura es 42"` → fact(subject="temperatura", predicate="es", object="42")
+- `"El servidor contiene 64GB"` → fact(subject="servidor", predicate="tiene", object="64GB")
+- `"Error: timeout"` → fact(subject="sistema", predicate="error", object="timeout")
+- `"El modulo dice que funciona"` → fact(subject="modulo", predicate="dice", object="funciona")
+
+**Deduplicación:** Por `subject|predicate|object`. Merge actualiza confidence/importance al máximo, incrementa versión, consolida source_ids y tags.
+
+**Tests (34):** extractor interface, rule patterns (atributo, relación, error, statement), confidence/importance propagation, source episode linking, fact auto-id/timestamps, key, merge (versión, confidence, tags), store CRUD, dedup, search(text/tags/type/entity), limits, empty, clear, consolidation, dedup en consolidación, SQLite persistence, thread safety.
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 errores, pytest 34/34 (790 total, 0 failures).
+
+**Riesgos/deuda:**
+- Extracción basada en reglas — limitada a patrones predefinidos. No detecta relaciones complejas (diferido a LLM)
+- `FactExtractor` desacoplado — permite intercambiar RuleBased → LLM sin tocar SemanticMemory
+- Sin embeddings vectoriales para búsqueda semántica (diferido a integración con KE 2.0)
+- Consolidación manual (no automática) — el orquestador debe llamar a `consolidate_episodes()`
+
+
 
 
 
