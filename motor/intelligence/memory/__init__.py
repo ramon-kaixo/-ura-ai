@@ -12,6 +12,18 @@ from motor.intelligence.memory.compression import (
 )
 from motor.intelligence.memory.episodic import Episode, EpisodeStore, EpisodeStoreConfig, SessionMemory
 from motor.intelligence.memory.extractor import FactExtractor, RuleBasedFactExtractor
+from motor.intelligence.memory.forgetting import (
+    ConfidenceForgetPolicy,
+    ForgettingEngine,
+    ForgettingPolicy,
+    ForgettingResult,
+    ForgettingScheduler,
+    HybridForgetPolicy,
+    ImportanceForgetPolicy,
+    NeverForgetPolicy,
+    ProtectionRules,
+    TTLForgetPolicy,
+)
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
 from motor.intelligence.memory.retrieval import ContextQuery, ContextResult, ContextResultList, ContextRetriever
 from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore, consolidate_episodes
@@ -21,6 +33,7 @@ __all__ = [
     "CompressionPolicy",
     "CompressionResult",
     "CompressionScheduler",
+    "ConfidenceForgetPolicy",
     "ContextQuery",
     "ContextResult",
     "ContextResultList",
@@ -29,20 +42,30 @@ __all__ = [
     "EpisodeStore",
     "EpisodeStoreConfig",
     "FactExtractor",
+    "ForgettingEngine",
+    "ForgettingPolicy",
+    "ForgettingResult",
+    "ForgettingScheduler",
     "HybridCompressionPolicy",
+    "HybridForgetPolicy",
+    "ImportanceForgetPolicy",
     "MemoryCompressor",
     "MemoryRecord",
     "MemoryStore",
     "MemoryType",
     "NeverCompress",
+    "NeverForgetPolicy",
+    "ProtectionRules",
     "RuleBasedFactExtractor",
     "SemanticFact",
     "SemanticMemoryStore",
     "SessionMemory",
     "SizeBasedCompression",
     "SummaryRecord",
+    "TTLForgetPolicy",
     "consolidate_episodes",
 ]
+
 
 
 
