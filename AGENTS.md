@@ -366,12 +366,17 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `/home/ramon/docker/prometheus/alert.rules` — Regla NodoPerifericoDesconectado
 - `/etc/ura/fix-path.conf` — Environment file desplegado del servicio
 
-## Problemas Conocidos (2026-06-24)
+## Problemas Conocidos (2026-07-06)
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
 - **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
 - **Zombies**: 0 (limpiados durante reparación)
+- **F14-F01**: Flag `no new privileges` impide detener servicios systemd (Ollama) sin sudo. R02/R10 no pudieron probarse completamente en Bloque 2.
+- **F14-F02**: `MultiAgentRuntime.cancel()` requiere `workflow_id` obligatorio — API inconsistente.
+- **F14-F03**: `EpisodeStore` no recrea BD SQLite automáticamente tras corrupción (R06 data loss).
+- **F14-F04**: Qdrant recovery time ~30.2s excede umbral de 30s en R01/R09 — borderline.
+- **F14-F05**: `HybridRetriever` retorna éxito sin Qdrant disponible — posible fallback a memoria no documentado.
 
 ## Roadmap (Fases 10–13)
 
@@ -450,7 +455,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **1100 tests, 0 failures. Sin dependencias circulares.**
 - Ver `docs/architecture/FASE13_CLOSEOUT.md`
 
-**Fase 14 — Robustez** ▶️ Planificación activa
+**Fase 14 — Robustez** ▶️ Activa
 
 **Objetivo:** Validación operativa para Release Candidate. No añadir nuevas funcionalidades.
 Solo medir, validar, documentar.
@@ -460,7 +465,7 @@ Solo medir, validar, documentar.
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
 | **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | ✅ COMPLETADO |
-| **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | 🔮 Planificado |
+| **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | ✅ COMPLETADO |
 | **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | 🔮 Planificado |
 | **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | 🔮 Planificado |
 | **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | 🔮 Planificado |
