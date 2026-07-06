@@ -1,0 +1,72 @@
+{
+  "title": "URA — System Overview",
+  "version": 1,
+  "uid": "ura-system-overview",
+  "panels": [
+    {
+      "title": "Workflows (last 30m)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "rate(ura_workflows_total[5m])", "legendFormat": "total"},
+        {"expr": "ura_workflows_active", "legendFormat": "active"}
+      ],
+      "description": "Workflow throughput and active count"
+    },
+    {
+      "title": "Workflow Duration (P50/P95/P99)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(ura_workflow_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P50"},
+        {"expr": "histogram_quantile(0.95, sum(rate(ura_workflow_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P95"},
+        {"expr": "histogram_quantile(0.99, sum(rate(ura_workflow_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P99"}
+      ],
+      "description": "Workflow latency percentiles"
+    },
+    {
+      "title": "Agent Executions",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {"expr": "rate(ura_agent_executions_total[5m])", "legendFormat": "executions"},
+        {"expr": "rate(ura_agent_failures_total[5m])", "legendFormat": "failures"}
+      ],
+      "description": "Agent execution rate"
+    },
+    {
+      "title": "Memory Records",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"expr": "ura_episodic_records_total", "legendFormat": "episodic"},
+        {"expr": "ura_semantic_records_total", "legendFormat": "semantic"}
+      ],
+      "description": "Memory store sizes"
+    },
+    {
+      "title": "Retrieval Latency (P95)",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(ura_retrieval_latency_seconds_bucket[5m])) by (le))", "legendFormat": "retrieval"},
+        {"expr": "histogram_quantile(0.95, sum(rate(ura_reranking_latency_seconds_bucket[5m])) by (le))", "legendFormat": "reranking"}
+      ],
+      "description": "Retrieval and reranking latency"
+    },
+    {
+      "title": "Errors & No-Context",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "targets": [
+        {"expr": "rate(ura_workflow_failures_total[5m])", "legendFormat": "workflow failures"},
+        {"expr": "rate(ura_no_context_total[5m])", "legendFormat": "no-context"}
+      ],
+      "description": "Error rates"
+    }
+  ],
+  "time": {"from": "now-30m", "to": "now"},
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "tags": ["ura", "production"]
+}
