@@ -459,13 +459,13 @@ Solo medir, validar, documentar.
 
 | Bloque | Contenido | Estado |
 |--------|-----------|--------|
-| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput | 🔮 Planificado |
-| **2** | Resiliencia: Qdrant caído, Ollama timeout, timeouts de agentes, cancelaciones, recuperación automática, degradación elegante | 🔮 Planificado |
-| **3** | End-to-End: flujo completo con componentes reales (≥70% reales, no mocks) | 🔮 Planificado |
-| **4** | Profiling: memory leaks, CPU, MemoryStore growth, latencia sostenida (5 escenarios, hasta 3h de profiling) | 🔮 Planificado |
-| **5** | RC Audit: `docs/architecture/RC_READINESS.md` con decisión objetiva (RC / RC-condicionado / No-RC) | 🔮 Planificado |
+| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | 🔮 Planificado |
+| **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | 🔮 Planificado |
+| **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | 🔮 Planificado |
+| **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | 🔮 Planificado |
+| **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | 🔮 Planificado |
 
-- **Regla:** No modificar el sistema para que pase los tests. Documentar fallos como hallazgos.
+- **Regla:** No modificar el sistema para que pase los tests. No corregir fallos durante la fase. Documentar fallos como hallazgos.
 - **Esfuerzo estimado:** 33-50h
 - **Salida:** Evidencia objetiva de robustez para decidir si el proyecto alcanza clasificación Release Candidate
 - Ver `docs/architecture/FASE14_PROPOSAL.md`
