@@ -180,6 +180,28 @@
 
 **Deuda documentada:** El reranking con cross-encoder fine-tuneado para el dominio URA podría cerrar esta brecha, pero queda fuera del alcance de F12.
 
+### 2026-07-05 — Bloque 2.1: Memoria Episódica ✅
+
+**Componentes implementados:**
+
+| Componente | Archivo | Capacidades |
+|------------|---------|-------------|
+| `Episode` | `motor/intelligence/memory/episodic.py` | Dataclass con id, timestamp, TTL, importancia, tags, referencias, metadatos |
+| `EpisodeStore` | ídem | CRUD, get_by_session, get_by_time_range, get_recent, delete_expired, trim, SQLite persistencia |
+| `SessionMemory` | ídem | create_session, add_episode, get_history, close_session |
+| `EpisodeStoreConfig` | ídem | max_episodes (10K), default_ttl (7d), persist_path |
+
+**Tests (38):** store/get/delete, expired, count, session retrieval, time range, chronological ordering, pagination, trimming, thread safety (100 hilos), serialization roundtrip, SQLite persistence, SessionMemory lifecycle.
+
+**Validación:** ✅ py_compile 0 errores, ruff 0 errores, pytest 38/38 (729 total, 0 failures).
+
+**Riesgos/deuda:**
+- SQLite `refs` columna renombrada (no usar `references` — palabra reservada)
+- `Episode` es independiente de `MemoryRecord` (no hereda) — se convierte via `to_record()`/`from_record()`
+- Sesiones en memoria volátil (no persistidas)
+- Sin integración con KE ni embeddings (diferido a 2.2)
+
+
 
 
 
