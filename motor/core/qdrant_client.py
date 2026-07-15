@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import logging
-import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -10,6 +9,7 @@ from typing import Optional
 import httpx
 
 from motor.core.config import UraConfig
+from motor.core.llm import embed as llm_embed, embed_async as llm_embed_async
 from motor.core.state import DegradedMode
 
 log = logging.getLogger("ura.qdrant")
@@ -176,34 +176,8 @@ class QdrantClient:
             return result[0]
 
     async def generar_embeddings_batch_async(self, textos: list[str]) -> list[list[float]]:
-        """Async version of generar_embeddings_batch using httpx.AsyncClient."""
-        ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                r = await client.post(
-                    f"{ollama_url}/api/embed",
-                    json={"model": MODELO_EMBEDDING, "input": textos},
-                )
-                if r.status_code == 200:
-                    return r.json()["embeddings"]
-        except Exception:
-            log.exception("Embedding batch failed")
-            pass
-        resultados = []
-        for t in textos:
-            try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    r = await client.post(
-                        f"{ollama_url}/api/embeddings",
-                        json={"model": MODELO_EMBEDDING, "prompt": t},
-                    )
-                    r.raise_for_status()
-                    resultados.append(r.json()["embedding"])
-            except Exception as e:
-                log.exception("error generando embedding (old API): %s", e)
-                log.warning("Fallback zero-vector para texto: '%s...'", t[:50])
-                resultados.append([0.0] * VECTOR_SIZE_EMBEDDING)
-        return resultados
+        """Version async usando motor.core.llm.embed_async()."""
+        return await llm_embed_async(textos, model=MODELO_EMBEDDING)
 
     # Sync wrapper — hilo secundario si el loop ya está corriendo
     def generar_embedding(self, texto: str) -> list[float]:
@@ -216,38 +190,8 @@ class QdrantClient:
             return future.result()
 
     def generar_embeddings_batch(self, textos: list[str]) -> list[list[float]]:
-        """Genera embeddings para múltiples textos.
-        Soporta API nueva (/api/embed) y antigua (/api/embeddings, Ollama <0.3.0).
-        """
-        ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-
-        # Intentar API nueva (batch)
-        try:
-            r = httpx.post(
-                f"{ollama_url}/api/embed",
-                json={"model": MODELO_EMBEDDING, "input": textos},
-                timeout=30,
-            )
-            if r.status_code == 200:
-                return r.json()["embeddings"]
-        except Exception as e:
-            log.debug("Ollama new API /api/embed falló: %s", e)
-
-        # Fallback: API antigua (una llamada por texto, sin batch)
-        resultados = []
-        for t in textos:
-            try:
-                r = httpx.post(
-                    f"{ollama_url}/api/embeddings",
-                    json={"model": MODELO_EMBEDDING, "prompt": t},
-                    timeout=30,
-                )
-                r.raise_for_status()
-                resultados.append(r.json()["embedding"])
-            except Exception as e:
-                log.exception("error generando embedding (old API): %s", e)
-                resultados.append([0.0] * VECTOR_SIZE_EMBEDDING)
-        return resultados
+        """Genera embeddings sync usando motor.core.llm.embed()."""
+        return llm_embed(textos, model=MODELO_EMBEDDING)
 
     def guardar_documento(
         self,

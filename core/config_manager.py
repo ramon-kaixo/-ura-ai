@@ -4,12 +4,16 @@ Detecta automáticamente Linux (Asus GX10) vs Darwin (Mac) y carga el perfil cor
 """
 
 import json
+import logging
 import os
 import platform
 from pathlib import Path
 from typing import Any
 
+log = logging.getLogger(__name__)
+
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
+_LOCAL_CONFIG_PATH = Path(__file__).parent.parent / "config.local.json"
 
 
 def _detect_profile_key() -> str:
@@ -65,6 +69,15 @@ def load_config() -> dict[str, Any]:
     config: dict[str, Any] = {}
     config.update(raw.get("global_defaults", {}))
     config.update(profile)
+
+    # Sobrescribir con configuración local (no requiere sudo en GX10)
+    if _LOCAL_CONFIG_PATH.exists():
+        try:
+            local = json.loads(_LOCAL_CONFIG_PATH.read_text())
+            config.update(local)
+            log.info("config local aplicada desde %s", _LOCAL_CONFIG_PATH)
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("error al cargar config local %s: %s", _LOCAL_CONFIG_PATH, e)
 
     # Guardar referencia a perfiles raw para validate_schema()
     config["_raw_profiles"] = raw.get("profiles", {})
@@ -128,6 +141,7 @@ _REQUIRED_KEYS = {
     "models": ["razonamiento", "codigo_complejo", "codigo_rapido", "respuesta_rapida"],
     "fallback_model": str,
     "cache_ttl": int,
+    "llm": ["provider"],
 }
 
 
