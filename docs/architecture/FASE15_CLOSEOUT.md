@@ -105,8 +105,31 @@ La sección `llm` se lee desde `config.local.json` en la raíz del proyecto
 }
 ```
 
-Si `llm` no está presente, se usa el mecanismo anterior (`fallback_model` + `rag.*`).
-Ambos producen el mismo comportamiento funcional.
+### Prioridad
+
+1. `config.local.json` tiene la máxima prioridad — sobrescribe cualquier clave
+   de `system_config.json`.
+2. `system_config.json` proporciona la configuración base (perfil, ollama.*,
+   fallback_model, rag.*).
+3. Si `config.local.json` no existe → comportamiento idéntico al anterior a F15.
+4. Si `config.local.json` existe pero no contiene `llm` → mismo comportamiento.
+
+### Orden de carga en código
+
+`config_manager.py:load_config()`:
+```
+global_defaults ← system_config.json
+    ↓
+profile (linux_asus) ← system_config.json
+    ↓
+local override ← config.local.json  (si existe)
+    ↓
+motor/core/llm/ollama.py: LLM_CFG = CONFIG.get("llm", {})
+    con fallback secuencial a rag.* y fallback_model
+```
+
+Ambos escenarios (con o sin `config.local.json`) producen el mismo comportamiento
+funcional (verificado por test de compatibilidad backward).
 
 ## Release
 
