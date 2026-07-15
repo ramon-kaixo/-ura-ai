@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 
 from core.config_manager import CONFIG
 from motor.core.config import UraConfig
+from motor.core.llm import generate as llm_generate
 from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger(__name__)
@@ -251,3 +252,44 @@ def rag_enabled() -> bool:
         return False
     qdrant = _get_qdrant()
     return qdrant.disponible and DOCS_DIR.exists()
+
+
+def _build_context(results: list[dict], max_chars: int = 8000) -> str:
+    """Construye un string de contexto a partir de los resultados de query()."""
+    parts: list[str] = []
+    for i, r in enumerate(results):
+        content = r.get("content", "")
+        if not content:
+            continue
+        source = r.get("source", "unknown")
+        score = r.get("similarity", 0)
+        parts.append(f"[{i + 1}] (fuente: {source}, similitud: {score:.2f})\n{content}")
+    result = "\n\n".join(parts)
+    if len(result) > max_chars:
+        result = result[:max_chars]
+    return result
+
+
+def _generate(context: str, question: str) -> str:
+    """Wrapper temporal: delega en motor.core.llm.generate().
+    Se eliminará cuando toda la migración esté validada."""
+    if not context:
+        return "No se encontraron documentos relevantes para generar una respuesta."
+    prompt = (
+        "Eres un asistente experto. Responde la pregunta basándote exclusivamente "
+        "en el contexto proporcionado. Si el contexto no contiene la respuesta, "
+        "di que no tienes información suficiente.\n\n"
+        f"Contexto:\n{context}\n\n"
+        f"Pregunta: {question}\n\n"
+        "Respuesta:"
+    )
+    return llm_generate(prompt)
+
+
+def ask(question: str, top_k: int | None = None) -> str:
+    """RAG completo: recupera documentos relevantes y genera una respuesta.
+    Retorna la respuesta generada por el LLM.
+    """
+    docs = query(question, top_k=top_k or TOP_K)
+    context = _build_context(docs)
+    return _generate(context, question)
