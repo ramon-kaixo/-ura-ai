@@ -455,7 +455,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **1100 tests, 0 failures. Sin dependencias circulares.**
 - Ver `docs/architecture/FASE13_CLOSEOUT.md`
 
-**Fase 14 — Robustez** ▶️ Activa
+**Fase 14 — Robustez** ✅ Cerrada (v0.14.8-b5)
 
 **Objetivo:** Validación operativa para Release Candidate. No añadir nuevas funcionalidades.
 Solo medir, validar, documentar.
@@ -468,12 +468,16 @@ Solo medir, validar, documentar.
 | **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | ✅ COMPLETADO |
 | **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | ✅ COMPLETADO |
 | **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | ✅ COMPLETADO |
-| **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | 🔮 Planificado |
+| **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | ✅ COMPLETADO |
 
 - **Regla:** No modificar el sistema para que pase los tests. No corregir fallos durante la fase. Documentar fallos como hallazgos.
 - **Esfuerzo estimado:** 33-50h
 - **Salida:** Evidencia objetiva de robustez para decidir si el proyecto alcanza clasificación Release Candidate
 - Ver `docs/architecture/FASE14_PROPOSAL.md`
+- **Resultado:** `RC Ready with Conditions` — 7/10 PASS, 0 FAIL, 3 PARTIAL.
+  5 condiciones no bloqueantes resueltas antes de versión estable. Esfuerzo estimado: 5.5-8.5h.
+- **Tags:** `v0.14.6-b3` (Bloque 3), `v0.14.7-b4` (Bloque 4), `v0.14.8-b5` (Bloque 5)
+- Ver `docs/architecture/RC_READINESS.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
