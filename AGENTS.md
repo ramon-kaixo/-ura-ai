@@ -46,6 +46,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | **15** | ✅ **Cerrada** | Migración HTTP (Ollama) — `core/debate/debate_engine.py`, `core/ura_multi_agent.py`. Tag `v0.15.0-fase15`. Ver `docs/architecture/FASE16_PROPOSAL.md` |
 | **16** | ✅ **Cerrada** | Empaquetado y Deuda — eliminar dependencias rotas, tests actualizados. Tag `v0.16.0-fase16` |
 | **17** | ✅ **Cerrada** | Configuración Unificada — UraConfig como vista de CONFIG. 0 new ruff, 0 pytest regressions. Tag `v0.17.0-fase17`. Ver `docs/architecture/FASE17_PROPOSAL.md` |
+| **17.5** | ✅ **Cerrada** | Gestión de Secretos — `motor/core/secrets.py`, 15 consumidores migrados, auditoría automática. Tag `v0.17.5-f17.5`. Ver `docs/architecture/SECRETS.md` |
 
 ### Backlog Deuda Técnica (No Bloqueante)
 
@@ -502,6 +503,15 @@ Solo medir, validar, documentar.
 - B6.5: `scripts/pro/audit_config.py` con 3 comprobaciones automáticas
 - 0 nuevos errores Ruff, 0 regresiones Pytest, audit 0 problemas
 - Ver `docs/architecture/FASE17_PROPOSAL.md`
+
+**Fase 17.5 — Gestión de Secretos** ✅ Cerrada (v0.17.5-f17.5)
+- `motor/core/secrets.py` con `get_secret`, `require_secret`, `has_secret`, `list_available`
+- Backends: env vars / `/etc/ura/secrets.env` / default (preparado para Secret Manager futuro)
+- 15 consumidores migrados en 4 grupos: motor/, knowledge/, core/, scripts/
+- `scripts/pro/audit_secrets.py` — detección automática de secretos hardcodeados
+- `docs/architecture/SECRETS.md` y `docs/architecture/SECRETS_AUDIT.md`
+- Ruff delta: -99 errores en archivos tocados (0 nuevos)
+- Ver `docs/architecture/SECRETS.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
