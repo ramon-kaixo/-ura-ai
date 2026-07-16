@@ -6,6 +6,7 @@ de evaluación con métricas estándar (Recall@K, Precision@K, MRR, MAP, nDCG@K)
 
 from motor.core.evaluation.corpus import EvaluationCorpus, EvaluationQuery
 from motor.core.evaluation.evaluator import EvaluationEngine, EvaluationRun, RetrievalResult
+from motor.core.evaluation.experiment import Experiment, ExperimentConfig, ExperimentResult
 from motor.core.evaluation.metrics import (
     map_at_k,
     mrr,
@@ -19,6 +20,9 @@ __all__ = [
     "EvaluationEngine",
     "EvaluationQuery",
     "EvaluationRun",
+    "Experiment",
+    "ExperimentConfig",
+    "ExperimentResult",
     "RetrievalResult",
     "map_at_k",
     "mrr",
