@@ -38,6 +38,7 @@ class LLMRouter:
         retry_backoff_base: float = 1.0,
         retry_backoff_max: float = 30.0,
         fallback_enabled: bool = True,
+        fallback_max_providers: int = 3,
         health_cache_ttl: float = 30.0,
     ) -> None:
         from motor.core.llm.registry import registry as default_registry
@@ -49,6 +50,7 @@ class LLMRouter:
         self._retry_backoff_base = retry_backoff_base
         self._retry_backoff_max = retry_backoff_max
         self._fallback_enabled = fallback_enabled
+        self._fallback_max_providers = fallback_max_providers
         self._health_cache_ttl = health_cache_ttl
 
         # Circuit breakers por proveedor (inicialización perezosa)
@@ -191,29 +193,32 @@ class LLMRouter:
     def _call_with_fallback(
         self, prov_obj: Any, method: str, task: str, primary: str, *args, **kwargs,
     ) -> tuple[Any, str | None]:
-        from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
-
         result = self._call_with_retry(prov_obj, method, task, primary, *args, **kwargs)
         if not _is_error_result(result) or not self._fallback_enabled:
             return result, primary
 
-        # Fallback a otro proveedor
         available = self._list_available(exclude=primary)
         if not available:
             return result, primary
 
-        # Probar disponibles en orden
-        for fallback_name in available:
+        # Buscar el primer proveedor alternativo disponible (CB no OPEN),
+        # limitado a fallback_max_providers. Sin cadena: solo se intenta 1.
+        for fallback_name in available[: self._fallback_max_providers]:
             cb = self._get_cb(fallback_name)
-            try:
-                cb.call(lambda: None)  # solo verifica disponibilidad del CB
-            except CircuitBreakerOpenError:
+            if not cb.is_available:
                 continue
 
             fallback_obj = self._registry.get(fallback_name)
             log.info("llm_fallback  primary=%s fallback=%s op=%s", primary, fallback_name, task)
             fallback_result = self._call_with_retry(fallback_obj, method, task, fallback_name, *args, **kwargs)
-            return fallback_result, fallback_name
+            if not _is_error_result(fallback_result):
+                return fallback_result, fallback_name
+            # Fallback falló — no encadenar, retornar error del primario
+            log.warning(
+                "llm_fallback  primary=%s fallback=%s op=%s error=fallback_failed",
+                primary, fallback_name, task,
+            )
+            return result, primary
 
         return result, primary
 
