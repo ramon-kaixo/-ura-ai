@@ -34,6 +34,20 @@ def _log_call(provider: str, model: str, latency_ms: float, error: str | None = 
 class OllamaProvider(BaseLLMProvider):
     """Proveedor LLM que conecta con Ollama vía API HTTP."""
 
+    @property
+    def capabilities(self) -> dict[str, Any]:
+        return {
+            "chat": True,
+            "embeddings": True,
+            "streaming": True,
+            "tools": True,
+            "json_mode": True,
+            "multimodal": False,
+            "vision": True,
+            "max_context": 32768,
+            "max_output": 4096,
+        }
+
     def __init__(self) -> None:
         self._provider_name = "ollama"
         _cfg = CONFIG.get("llm", {})
