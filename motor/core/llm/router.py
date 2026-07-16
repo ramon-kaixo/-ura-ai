@@ -154,7 +154,7 @@ class LLMRouter:
 
     # ── Retry + CB ──────────────────────────────────────────
 
-    def _call_with_retry(self, prov_obj: Any, method: str, task: str, provider_name: str, *args, **kwargs) -> Any:
+    def _call_with_retry(self, prov_obj: Any, method: str, task: str, provider_name: str, *args, **kwargs) -> Any:  # noqa: C901
         from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
         from motor.core.llm.observability import metrics
 
