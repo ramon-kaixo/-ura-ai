@@ -5,7 +5,9 @@ Mide por separado:
   1. generate()  — latencia p50/p95/p99, throughput, tokens/s
   2. embed()     — latencia p50/p95/p99, throughput
 
-Uso exclusivo de la API pública motor.core.llm.
+Permite seleccionar proveedor con --provider.
+
+Uso exclusivo de la API pública motor.core.llm (generar/embed via router).
 Sin duplicación de llamadas HTTP.
 
 Interpretación de métricas:
@@ -16,7 +18,7 @@ Interpretación de métricas:
         interpretarse junto con el número de iteraciones.
 
 Uso:
-  python3 scripts/pro/benchmark_llm.py [--iterations N] [--output ruta.json]
+  python3 scripts/pro/benchmark_llm.py [--iterations N] [--provider ollama|openai] [--output ruta.json]
 """
 
 import argparse
@@ -29,7 +31,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from motor.core.llm import embed, generate
+from motor.core.llm.registry import registry as _reg
+from motor.core.llm.router import LLMRouter
 
 logging.basicConfig(level=logging.WARNING, format="%(message)s")
 log = logging.getLogger("benchmark_llm")
@@ -53,7 +56,7 @@ def _estimar_tokens(texto: str) -> int:
     return max(1, len(texto) // 4)
 
 
-def bench_generate(n: int) -> dict:
+def bench_generate(n: int, router: LLMRouter, provider: str | None = None) -> dict:
     latencias: list[float] = []
     tokens_generados: list[int] = []
     exitosos = 0
@@ -62,7 +65,7 @@ def bench_generate(n: int) -> dict:
     for i in range(n):
         t0 = time.monotonic()
         try:
-            respuesta = generate(PROMPT)
+            respuesta = router.generate(PROMPT, provider=provider)
             elapsed = (time.monotonic() - t0) * 1000
             if respuesta and not respuesta.startswith("Error:"):
                 latencias.append(elapsed)
@@ -82,7 +85,7 @@ def bench_generate(n: int) -> dict:
     tiempo_total_seg = sum(latencias) / 1000
     return {
         "funcion": "generate",
-        "modelo": "qwen2.5:3b",
+        "proveedor": provider or "default",
         "iteraciones": n,
         "exitosos": exitosos,
         "fallos": fallos,
@@ -99,7 +102,7 @@ def bench_generate(n: int) -> dict:
     }
 
 
-def bench_embed(n: int) -> dict:
+def bench_embed(n: int, router: LLMRouter, provider: str | None = None) -> dict:
     latencias: list[float] = []
     exitosos = 0
     fallos = 0
@@ -107,7 +110,7 @@ def bench_embed(n: int) -> dict:
     for i in range(n):
         t0 = time.monotonic()
         try:
-            vectores = embed(TEXTS)
+            vectores = router.embed(TEXTS, provider=provider)
             elapsed = (time.monotonic() - t0) * 1000
             if vectores and len(vectores) == len(TEXTS) and any(abs(v) > 1e-6 for v in vectores[0]):
                 latencias.append(elapsed)
@@ -125,7 +128,7 @@ def bench_embed(n: int) -> dict:
     tiempo_total_seg = sum(latencias) / 1000
     return {
         "funcion": "embed",
-        "modelo": "nomic-embed-text",
+        "proveedor": provider or "default",
         "textos_por_call": len(TEXTS),
         "iteraciones": n,
         "exitosos": exitosos,
@@ -170,7 +173,7 @@ def _mostrar(resultados: list[dict]) -> None:
             continue
         print(f"\n  {r['funcion']}")
         print(linea)
-        print(f"  modelo        {r.get('modelo', '?')}")
+        print(f"  proveedor     {r.get('proveedor', '?')}")
         print(f"  iteraciones   {r['iteraciones']}  ({r['exitosos']} exitosas, {r['fallos']} fallos)")
         if r.get("textos_por_call"):
             print(f"  batch size    {r['textos_por_call']} textos")
@@ -190,25 +193,31 @@ def _mostrar(resultados: list[dict]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark motor.core.llm")
     parser.add_argument("--iterations", type=int, default=50, help="iteraciones por función (default: 50)")
+    parser.add_argument("--provider", type=str, default="", help="proveedor (ollama, openai, ...)")
     parser.add_argument("--output", type=str, default="", help="ruta JSON de salida")
     args = parser.parse_args()
     n = args.iterations
+    provider = args.provider or None
+
+    router = LLMRouter(registry=_reg)
 
     print(f"\n{'=' * 68}")
     print("  Benchmark — motor.core.llm")
     print(f"  {n} iteraciones por función")
+    if provider:
+        print(f"  proveedor     {provider}")
     print(f"{'=' * 68}\n")
 
     resultados: list[dict] = []
 
     print("  [1/2] generate() ...", end=" ", flush=True)
-    r1 = bench_generate(n)
+    r1 = bench_generate(n, router, provider=provider)
     resultados.append(r1)
     estado = "✅" if "error" not in r1 else "❌"
     print(f"{estado}  ({r1.get('exitosos', 0)}/{r1.get('iteraciones', 0)})")
 
     print("  [2/2] embed()    ...", end=" ", flush=True)
-    r2 = bench_embed(n)
+    r2 = bench_embed(n, router, provider=provider)
     resultados.append(r2)
     estado = "✅" if "error" not in r2 else "❌"
     print(f"{estado}  ({r2.get('exitosos', 0)}/{r2.get('iteraciones', 0)})")
