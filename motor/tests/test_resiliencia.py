@@ -282,6 +282,131 @@ class TestRetry:
         assert "Error" in result  # ValueError is not transient, no retry
 
 
+# ── H3: Política de retry por código HTTP ─────
+
+class TestRetryPolicy:
+    """Valida que cada código HTTP recibe el tratamiento correcto de retry."""
+
+    @staticmethod
+    def _make_provider(status_code: int, fail_times: int = 999) -> BaseLLMProvider:
+        """Crea un proveedor que falla `fail_times` veces con HTTPStatusError."""
+
+        class _MockHTTPError(BaseLLMProvider):
+            _calls: int = 0
+
+            def generate(self, prompt, model=None, options=None):
+                self._calls += 1
+                if self._calls <= fail_times:
+                    import httpx
+
+                    response = httpx.Response(status_code=status_code)
+                    request = httpx.Request("POST", "http://test")
+                    raise httpx.HTTPStatusError(
+                        f"HTTP {status_code}", request=request, response=response,
+                    )
+                return "ok_after_retry"
+
+            def embed(self, texts, model=None): return [[0.0]]
+            async def embed_async(self, texts, model=None): return [[0.0]]
+            def health(self): return {"status": "ok"}
+
+        return _MockHTTPError()
+
+    def _assert_no_retry(self, status_code: int) -> None:
+        """Verifica que el código NO se reintenta (1 sola llamada, error directo)."""
+        prov = self._make_provider(status_code)
+        reg = ProviderRegistry()
+        reg.register("p", prov, default=True)
+        router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
+        result = router.generate("test")
+        assert "Error:" in str(result), f"Expected error for {status_code}, got {result}"
+        assert prov._calls == 1, f"Expected 1 call for {status_code}, got {prov._calls}"
+
+    def _assert_retry(self, status_code: int) -> None:
+        """Verifica que el código SÍ se reintenta (falla 3 veces, luego error final)."""
+        prov = self._make_provider(status_code, fail_times=3)
+        reg = ProviderRegistry()
+        reg.register("p", prov, default=True)
+        router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
+        result = router.generate("test")
+        assert "Error:" in str(result), f"Expected error for {status_code}, got {result}"
+        # Debería haber al menos 2 llamadas (intento + retry)
+        assert prov._calls >= 2, f"Expected >=2 calls for {status_code}, got {prov._calls}"
+
+    def _assert_retry_then_succeed(self, status_code: int) -> None:
+        """Verifica que el código se reintenta y eventualmente tiene éxito."""
+        prov = self._make_provider(status_code, fail_times=1)
+        reg = ProviderRegistry()
+        reg.register("p", prov, default=True)
+        router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
+        result = router.generate("test")
+        assert "Error:" not in str(result), f"Expected success for {status_code}, got {result}"
+        assert prov._calls == 2, f"Expected 2 calls (1 fail + 1 success) for {status_code}, got {prov._calls}"
+
+    # 4xx no recuperables → 0 retries
+    def test_no_retry_on_400(self) -> None:
+        self._assert_no_retry(400)
+
+    def test_no_retry_on_401(self) -> None:
+        self._assert_no_retry(401)
+
+    def test_no_retry_on_403(self) -> None:
+        self._assert_no_retry(403)
+
+    def test_no_retry_on_404(self) -> None:
+        self._assert_no_retry(404)
+
+    # 429 rate limiting → SÍ se reintenta
+    def test_retry_on_429(self) -> None:
+        self._assert_retry_then_succeed(429)
+
+    # 5xx transitorios → SÍ se reintentan
+    def test_retry_on_500(self) -> None:
+        self._assert_retry_then_succeed(500)
+
+    def test_retry_on_502(self) -> None:
+        self._assert_retry_then_succeed(502)
+
+    def test_retry_on_503(self) -> None:
+        self._assert_retry_then_succeed(503)
+
+    def test_retry_on_504(self) -> None:
+        self._assert_retry_then_succeed(504)
+
+    # Timeout → SÍ se reintenta
+    def test_retry_on_timeout(self) -> None:
+        class _MockTimeout(BaseLLMProvider):
+            _calls: int = 0
+            def generate(self, prompt, model=None, options=None):
+                self._calls += 1
+                import httpx
+                raise httpx.TimeoutException("timeout", request=httpx.Request("POST", "http://test"))
+            def embed(self, texts, model=None): return [[0.0]]
+            async def embed_async(self, texts, model=None): return [[0.0]]
+            def health(self): return {"status": "ok"}
+
+        prov = _MockTimeout()
+        reg = ProviderRegistry()
+        reg.register("t", prov, default=True)
+        router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
+        result = router.generate("test")
+        assert "Error:" in str(result), f"Expected error for timeout, got {result}"
+        assert prov._calls == 3, f"Expected 3 calls for timeout, got {prov._calls}"
+
+    # ValidationError (ValueError) → 0 retries
+    def test_no_retry_on_validation_error(self) -> None:
+        reg = ProviderRegistry()
+        reg.register("f", _MockFail(), default=True)
+        router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3)
+        result = router.generate("test")
+        assert "Error:" in str(result)
+        # Con _MockFail (call count no es accesible), verificamos que el resultado es error
+
+    # Modelo inexistente (404) → 0 retries (mismo test que no_retry_on_404)
+    def test_no_retry_on_model_not_found(self) -> None:
+        self._assert_no_retry(404)
+
+
 # ── B4: Fallback ─────────────────────────
 
 class TestFallback:
