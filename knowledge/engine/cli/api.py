@@ -10,6 +10,8 @@ Seguridad:
 import os
 import sys
 
+from motor.core.secrets import get_secret
+
 
 def cmd_api(args) -> int:
     """Inicia el servidor API REST FastAPI (puerto 4097)."""
@@ -17,7 +19,7 @@ def cmd_api(args) -> int:
 
     port = getattr(args, "port", 4097)
     host = getattr(args, "host", "127.0.0.1")
-    auth = getattr(args, "auth", None) or os.environ.get("URA_API_KEY")
+    auth = getattr(args, "auth", None) or get_secret("URA_API_KEY")
 
     if auth:
         os.environ["URA_API_KEY"] = auth
@@ -25,7 +27,10 @@ def cmd_api(args) -> int:
         print("WARNING: Listening on 0.0.0.0 without authentication. Set --auth or URA_API_KEY.", file=sys.stderr)
         print("WARNING: This is INSECURE. Only use in trusted networks.", file=sys.stderr)
 
-    print(f"Starting Knowledge Engine API on {host}:{port}" + (" (authenticated)" if auth else " (no auth, localhost only)"))
+    print(
+        f"Starting Knowledge Engine API on {host}:{port}"
+        + (" (authenticated)" if auth else " (no auth, localhost only)")
+    )
     sys.stdout.flush()
     uvicorn.run(
         "knowledge.engine.api:app",
