@@ -562,9 +562,145 @@ Añadir sección `llm.providers` en `system_config.json` para configurar cada pr
 
 ---
 
+### A2 — API Pública del Proyecto (Ampliación transversal)
+
+> **Ampliación de:** F18–F23
+> **Prioridad:** Alta
+> **Ejecución:** Después de A1, antes de F19
+
+**Objetivo:** Definir explícitamente qué paquetes forman parte de la API pública y cuáles son internos. Evitar que consumidores externos (scripts, tests, integraciones) dependan de módulos que puedan cambiar sin aviso.
+
+**Alcance:**
+
+1. **PUBLIC_API.md:**
+   - Lista de módulos públicos soportados: `motor.core.llm`, `motor.core.config`, `core.config_manager`, `motor.pipeline`, `motor.intelligence.retrieval`, `motor.intelligence.reranking`, etc.
+   - Lista de módulos internos (sin garantía de estabilidad): `motor.intelligence.agents.*`, `knowledge.engine.*`, `core.memoria.*`, `core.mochila.*`, `scripts.*`, etc.
+   - Criterio de clasificación: un módulo es público si tiene tests que verifican su API y documentación asociada.
+
+2. **Política de compatibilidad:**
+   - Los módulos públicos siguen SemVer: cambios incompatibles requieren major version bump.
+   - Los módulos internos pueden cambiar en cualquier minor/patch sin aviso.
+   - Un módulo interno puede promoverse a público mediante ADR.
+
+3. **Tests de validación:**
+   - Test que verifica que ningún test/script importa directamente módulos marcados como internos.
+   - Si un script necesita un módulo interno, debe hacerlo con un comentario `# noqa: INTERNAL` explícito.
+
+**Archivos afectados:**
+- `docs/api/PUBLIC_API.md` — nuevo archivo.
+- `pyproject.toml` — posible configuración de exportaciones públicas.
+
+**Riesgos:** Bajo. Solo documentación y clasificación.
+
+**Criterios de aceptación:**
+- `PUBLIC_API.md` existe y lista todos los módulos del proyecto.
+- Ningún consumidor externo depende de módulos internos (verificado por test).
+- Toda documentación futura referencia únicamente la API pública.
+
+**Validación:** Revisión humana, test de imports.
+
+---
+
+### A3 — Política de Deprecación (Ampliación transversal)
+
+> **Ampliación de:** F17–F23
+> **Prioridad:** Alta
+> **Ejecución:** Después de A2, antes de F19. Idealmente antes de F17-B2 para que las decisiones de deprecación tengan marco de referencia.
+
+**Objetivo:** Formalizar el ciclo de vida de eliminación de componentes legacy antes de que F17-B2 (deprecación de `config.local.json`) y F23 (limpieza) necesiten aplicarlo.
+
+**Alcance:**
+
+1. **Ciclo de deprecación documentado:**
+   - **Fase 1 — Deprecated**: Se emite `DeprecationWarning` (o `FutureWarning`) en tiempo de uso. El componente sigue funcionando. Se anuncia en release notes y docstring. Duración: al menos 2 versiones minor.
+   - **Fase 2 — Unmaintained**: El componente existe pero no recibe correcciones. Se emite warning más severo (`PendingDeprecationWarning`). Duración: 1 versión minor.
+   - **Fase 3 — Removed**: El componente se elimina. Si alguien lo necesita, debe usar la versión anterior.
+
+2. **Casos de aplicación inmediata en el roadmap:**
+   | Elemento | Deprecated en | Eliminación |
+   |----------|---------------|-------------|
+   | `config.local.json` | F17-B2 | F23-B1 |
+   | `get_ollama_urls` alias | F17-B3 | F23-B1 |
+   | `_ollama_url()` helper | F17-B3 | F23-B1 |
+   | `UraConfig.load(path=...)` | F17-B5.1 | F23-B1 |
+   | `config/loader.py` | F17-B6 | F23-B2 |
+   | `_REQUIRED_KEYS` legacy keys | F17-B6 | F23-B2 |
+
+3. **Regla general:**
+   - Ningún elemento pasa de "activo" a "eliminado" sin pasar por "deprecated" al menos una versión.
+   - Excepción: seguridad (vulnerabilidades críticas) puede saltarse la fase deprecated con ADR urgente.
+
+**Archivos afectados:**
+- `docs/architecture/DEPRECATION_POLICY.md` — nuevo archivo.
+- `AGENTS.md` — referencia a la política.
+
+**Riesgos:** Bajo. Política documental.
+
+**Criterios de aceptación:**
+- `DEPRECATION_POLICY.md` existe y define las 3 fases.
+- Cada elemento legacy del roadmap tiene una fecha/fase de deprecación y eliminación asignadas.
+- Los warnings de deprecación usan la categoría correcta de `warnings`.
+
+**Validación:** Revisión humana.
+
+---
+
+### A4 — Benchmarks Automáticos (Ampliación transversal)
+
+> **Ampliación de:** F20–F23
+> **Prioridad:** Alta
+> **Ejecución:** Después de F20 (necesita baseline de rendimiento)
+
+**Objetivo:** Convertir los benchmarks existentes en un criterio objetivo de aceptación para cada cambio. Cualquier modificación que degrade el rendimiento por encima del umbral se rechaza automáticamente.
+
+**Alcance:**
+
+1. **Benchmarks unificados:**
+   - **RAG**: retrieval (recuperación) + reranking + generación. Métricas: latencia p50/p95/p99, throughput, Recall@k.
+   - **LLM**: `generate()` con distintos modelos y tamaños de prompt. Métricas: tokens/s, latencia, tasa de error.
+   - **Embeddings**: `embed()` con distintos lotes. Métricas: textos/s, latencia.
+
+2. **Ejecución automática:**
+   - Comando único: `ura benchmark` (o `python3 -m motor.benchmark`).
+   - Almacena resultado en `motor/data/benchmarks/<commit-hash>.json`.
+   - Compara automáticamente contra el baseline de la rama `main`.
+
+3. **Umbrales máximos de regresión:**
+   | Métrica | Regresión máxima permitida |
+   |---------|:--------------------------:|
+   | Latencia p50 (LLM) | +15% |
+   | Latencia p95 (LLM) | +20% |
+   | Latencia p50 (RAG) | +15% |
+   | Throughput (RAG) | -10% |
+   | Recall@10 (RAG) | -0.02 |
+   | Textos/s (embeddings) | -15% |
+
+4. **Integración en CI:**
+   - Los benchmarks se ejecutan en cada PR (o al menos antes de mergear a main).
+   - Si algún umbral se supera, el PR se marca como "performance regression" y requiere revisión.
+   - El informe JSON se adjunta como artefacto.
+
+**Archivos afectados:**
+- `motor/benchmark/` — nuevo paquete con runners unificados.
+- `motor/cli/cmd_benchmark.py` — nuevo comando `ura benchmark` (o integrar en CLI existente).
+- `motor/data/benchmarks/` — directorio de resultados.
+- `pyproject.toml` — posible script `benchmark` en `[project.scripts]`.
+
+**Riesgos:** Medio. Los benchmarks pueden ser frágiles en entornos con GPU compartida o modelos variables.
+
+**Criterios de aceptación:**
+- `ura benchmark` se ejecuta sin errores y produce un JSON con todas las métricas.
+- La comparación contra baseline funciona: si no hay baseline, lo crea.
+- Los umbrales están documentados y son configurables.
+- Al menos un benchmark de cada tipo (RAG, LLM, embeddings) se ejecuta correctamente.
+
+**Validación:** Ejecución manual de `ura benchmark` + inspección del JSON.
+
+---
+
 ### F19 — Observabilidad y Fallback Automático
 
-> **Depende de:** F18, A1
+> **Depende de:** F18, A1, A2
 
 **Objetivo:** Poder explicar exactamente qué hace URA en cada petición: qué proveedor, qué modelo, latencia, tokens, coste, errores. Añadir circuit breaker para failover entre proveedores.
 
@@ -810,7 +946,8 @@ Implementar el contrato de F18 para:
 - `AGENTS.md` refleja el estado real del proyecto.
 - ADRs relevantes actualizados (especialmente ADR-007 sobre el core).
 - `CONFIGURATION.md` describe la arquitectura final.
-- `API.md` documenta `motor.core.llm` y sus proveedores.
+- `API.md` / `PUBLIC_API.md` documenta la API pública.
+- `DEPRECATION_POLICY.md` describe el ciclo de vida legacy.
 
 **B4 — Auditoría final automática:**
 - Extender `scripts/audit_config.py` (de F17-B6.5) para que verifique:
@@ -823,6 +960,22 @@ Implementar el contrato de F18 para:
 **B5 — Tag v1.0.0-rc:**
 - `git tag -a v1.0.0-rc1 -m "v1.0.0-rc1 — Release Candidate"`
 - Crear release notes con resumen de F17→F23.
+
+**B6 — Criterios de salida hacia v1.0.0-rc:**
+Antes de etiquetar la RC, deben cumplirse todos estos criterios:
+
+| Área | Criterio | Verificado por |
+|------|----------|----------------|
+| Configuración | Fuente única de verdad (`system_config.json`) | B6.5, F23-B4 |
+| LLM | API congelada y versionada (`motor.core.llm.__version__ == "1.0"`) | A1 |
+| Observabilidad | Cobertura completa (LLM, embeddings, RAG, request_id) | F19-B1..B4 |
+| Secretos | Sin credenciales en código (todo vía `core/secrets.py` o env vars) | F17.5 |
+| Rendimiento | Sin regresiones frente a baseline (umbrales A4) | A4 |
+| Calidad | Golden tests ≥90% passing, métricas RAG estables | F21 |
+| Documentación | ADRs, `PUBLIC_API.md`, `DEPRECATION_POLICY.md`, `AGENTS.md` sincronizados | A2, A3, F23-B3 |
+| Deuda técnica | Sin elementos legacy activos (`config.local.json`, loaders duplicados, helpers legacy) | F23-B1, B2, B4 |
+
+Si algún criterio no se cumple, la RC se retrasa hasta que se corrija. No se etiqueta una RC con deuda técnica conocida.
 
 **Archivos afectados:** Varios (limpieza).
 
@@ -847,22 +1000,27 @@ Implementar el contrato de F18 para:
 | **Alta** | **F17.5** | Gestión de secretos | 2-4h | F17 | Pendiente |
 | **Alta** | **F18** | Cliente multiproveedor (Ollama + OpenAI) | 15-20h | F17, F17.5 | Pendiente |
 | **Alta** | *A1* | *Contrato estable de motor.core.llm* | *4-6h* | *F18* | *Pendiente* |
-| **Alta** | **F19** | Observabilidad, fallback y circuit breakers | 15-20h | F18, A1 | Pendiente |
+| **Alta** | *A2* | *API pública del proyecto* | *3-5h* | *F18, A1* | *Pendiente* |
+| **Alta** | *A3* | *Política de deprecación* | *2-3h* | *F17* | *Pendiente* |
+| **Alta** | **F19** | Observabilidad, fallback y circuit breakers | 15-20h | F18, A1, A2 | Pendiente |
 | **Media** | **F20** | Rendimiento y profiling | 15-25h | F19 | Pendiente |
-| **Media** | **F21** | Calidad RAG/LLM | 20-30h | F19, F20 | Pendiente |
-| **Media** | **F22** | Proveedores adicionales | 15-25h | F18, F19, F20, A1 | Pendiente |
-| **Baja** | **F23** | Limpieza y v1.0.0-rc | 8-15h | F17-F22 | Pendiente |
-| | | **Total** | **107-166h** | | |
+| **Media** | *A4* | *Benchmarks automáticos* | *6-10h* | *F20* | *Pendiente* |
+| **Media** | **F21** | Calidad RAG/LLM | 20-30h | F19, F20, A4 | Pendiente |
+| **Media** | **F22** | Proveedores adicionales | 15-25h | F18, F19, F20, A1, A2 | Pendiente |
+| **Baja** | **F23** | Limpieza y v1.0.0-rc | 8-15h | F17-F22, A3, A4 | Pendiente |
+| | | **Total** | **118-184h** | | |
 
 ### Orden Estratégico
 
 1. **F17 + F17.5**: Consolidar arquitectura y secretos antes de tocar proveedores.
 2. **F18**: Router básico con los 2 proveedores más usados. Sin fallback, sin métricas.
-3. **A1**: Congelar contrato de `motor.core.llm` antes de que F19 y F22 añadan más superficie. Sin esto, observabilidad y nuevos proveedores introducirán API drifting.
-4. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback y contrato estable para instrumentar).
-5. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
-6. **F21**: Calidad (necesitas pipeline rápido de F20 para golden tests viables).
-7. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
-8. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales).
+3. **A1 + A2**: Congelar contrato de `motor.core.llm` (A1) y definir API pública del proyecto (A2) antes de que F19 y F22 añadan más superficie. Sin esto, observabilidad y nuevos proveedores introducirán API drifting.
+4. **A3**: Formalizar política de deprecación temprano, antes de que F17-B2 comience a deprecar elementos. Las decisiones de deprecación necesitan un marco de referencia.
+5. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback, contrato estable para instrumentar, y API pública documentada para exportar métricas).
+6. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
+7. **A4**: Benchmarks automáticos sobre el baseline de F20. Sin esto, F21 no tiene umbrales objetivos.
+8. **F21**: Calidad (necesitas pipeline rápido de F20 + benchmarks de A4 para golden tests y detección de regresiones).
+9. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
+10. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales, con criterios de salida verificados).
 
-Este orden minimiza el riesgo: primero arquitectura, después capacidades, luego contrato, observabilidad, rendimiento, calidad, cobertura de proveedores, y finalmente limpieza pre-release.
+Este orden minimiza el riesgo: primero arquitectura, después capacidades, luego contratos, gobernanza, observabilidad, rendimiento, benchmarks, calidad, cobertura de proveedores, y finalmente limpieza pre-release con criterios objetivos.
