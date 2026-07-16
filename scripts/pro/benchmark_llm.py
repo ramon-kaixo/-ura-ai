@@ -259,12 +259,92 @@ def _mostrar_observabilidad(resultados: dict | None = None) -> None:
             print(f"    {prov}: {data['ok']} ok, {data['fail']} fail, {data['total']} total")
 
 
+def _run_monitored_benchmark(  # noqa: PLR0915
+    n: int, provider: str | None, baseline_path: str, output: str,
+) -> int:
+    """Ejecuta benchmark con monitor de rendimiento activo integrado en el router."""
+    from motor.core.llm.registry import registry as _reg
+
+    router = LLMRouter(registry=_reg, monitor_enabled=True)
+
+    # Cargar baseline previa si se especificó
+    if baseline_path:
+        p = Path(baseline_path)
+        if p.exists():
+            router._monitor.baseline.load(str(p))  # noqa: SLF001
+            print(f"  Baseline cargado desde {baseline_path}")
+
+    print(f"\n{'=' * 68}")
+    print("  Benchmark Continuo — motor.core.llm")
+    print(f"  {n} iteraciones por función")
+    if provider:
+        print(f"  proveedor     {provider}")
+    print(f"{'=' * 68}\n")
+
+    resultados: list[dict] = []
+
+    print("  [1/2] generate() ...", end=" ", flush=True)
+    r1 = bench_generate(n, router, provider=provider)
+    resultados.append(r1)
+    estado = "✅" if "error" not in r1 else "❌"
+    print(f"{estado}  ({r1.get('exitosos', 0)}/{r1.get('iteraciones', 0)})")
+
+    print("  [2/2] embed()    ...", end=" ", flush=True)
+    r2 = bench_embed(n, router, provider=provider)
+    resultados.append(r2)
+    estado = "✅" if "error" not in r2 else "❌"
+    print(f"{estado}  ({r2.get('exitosos', 0)}/{r2.get('iteraciones', 0)})")
+
+    _mostrar(resultados)
+    _mostrar_observabilidad(resultados)
+
+    # Reporte del monitor desde el router
+    monitor = router._monitor  # noqa: SLF001
+    if monitor:
+        report = monitor.get_report()
+        issues = monitor.get_recent_issues(10)
+        print("\n  Monitor de Rendimiento:")
+        print(f"    operaciones     {report['total_operations']}")
+        print(f"    hotspots        {report['total_hotspots']}")
+        print(f"    regresiones     {report['total_regressions']}")
+        print(f"    throughput      {report['throughput_ops_per_sec']} ops/s")
+        if issues:
+            print(f"    issues recientes: {len(issues)}")
+
+        # Guardar baseline
+        if output:
+            base_path = Path(output)
+            monitor.baseline.save(str(base_path))
+            print(f"\n  Baseline guardado → {base_path}")
+
+            # Snapshot final
+            snap = {
+                "resultados": _to_output(resultados),
+                "monitor_report": report,
+                "issues": issues,
+            }
+            snap_path = base_path.parent / f"{base_path.stem}_snapshot.json"
+            Path(snap_path).write_text(json.dumps(snap, indent=2) + "\n")
+            print(f"  Snapshot guardado → {snap_path}")
+
+            if issues:
+                hotspot_path = base_path.parent / f"{base_path.stem}_hotspots.json"
+                Path(hotspot_path).write_text(json.dumps(issues, indent=2) + "\n")
+                print(f"  Hotspots guardados → {hotspot_path}")
+
+    print(f"\n{'=' * 68}\n")
+    return 0 if all("error" not in r for r in resultados) else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark motor.core.llm")
     parser.add_argument("--iterations", type=int, default=50, help="iteraciones por función (default: 50)")
     parser.add_argument("--provider", type=str, default="", help="proveedor (ollama, openai, ...)")
     parser.add_argument("--output", type=str, default="", help="ruta JSON de salida")
     parser.add_argument("--resilience", action="store_true", help="benchmark de resiliencia (retry/fallback)")
+    parser.add_argument("--monitor", action="store_true", help="benchmark con monitor de rendimiento")
+    parser.add_argument("--baseline-load", type=str, default="", help="cargar baseline previa desde JSON")
+    parser.add_argument("--baseline-save", type=str, default="", help="guardar baseline a JSON")
     args = parser.parse_args()
 
     if args.resilience:
@@ -280,6 +360,13 @@ def main() -> int:
             print(f"\n  JSON guardado → {args.output}")
         print(f"\n{'=' * 68}\n")
         return 0
+
+    if args.monitor:
+        save_path = args.baseline_save or args.output or ""
+        return _run_monitored_benchmark(
+            args.iterations, args.provider or None,
+            args.baseline_load, save_path,
+        )
 
     n = args.iterations
     provider = args.provider or None
