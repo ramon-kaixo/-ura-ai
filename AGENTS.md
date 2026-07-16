@@ -43,6 +43,9 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
 | **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
 | **Auditoría Post-Fase 8** | ✅ **Cerrada** | Saneamiento arquitectónico: unificación config, eliminación código muerto, actualización docs. Tag `v0.7.1-audit-fase8`. `docs/architecture/AUDIT_FASE8_CLOSEOUT.md` |
+| **15** | ✅ **Cerrada** | Migración HTTP (Ollama) — `core/debate/debate_engine.py`, `core/ura_multi_agent.py`. Tag `v0.15.0-fase15`. Ver `docs/architecture/FASE16_PROPOSAL.md` |
+| **16** | ✅ **Cerrada** | Empaquetado y Deuda — eliminar dependencias rotas, tests actualizados. Tag `v0.16.0-fase16` |
+| **17** | ✅ **Cerrada** | Configuración Unificada — UraConfig como vista de CONFIG. 0 new ruff, 0 pytest regressions. Tag `v0.17.0-fase17`. Ver `docs/architecture/FASE17_PROPOSAL.md` |
 
 ### Backlog Deuda Técnica (No Bloqueante)
 
@@ -478,6 +481,27 @@ Solo medir, validar, documentar.
   5 condiciones no bloqueantes resueltas antes de versión estable. Esfuerzo estimado: 5.5-8.5h.
 - **Tags:** `v0.14.6-b3` (Bloque 3), `v0.14.7-b4` (Bloque 4), `v0.14.8-b5` (Bloque 5)
 - Ver `docs/architecture/RC_READINESS.md`
+
+**Fase 15 — Migración HTTP (Ollama)** ✅ Cerrada (F16-B1..B4 → F16-B4.2)
+- Migración de llamadas HTTP directas a Ollama hacia `generate()` + `health()` del motor
+- `core/debate/debate_engine.py`, `core/ura_multi_agent.py` migrados
+- 0 HTTP directo a Ollama en `core/`, `motor/`, `knowledge/`
+- Ver `docs/architecture/FASE16_PROPOSAL.md`
+
+**Fase 16 — Empaquetado y Deuda** ✅ Cerrada (F16-B5..B7)
+- Eliminación de dependencias rotas (`import httpx`), tests actualizados
+- Tag `v0.16.0-fase16`
+
+**Fase 17 — Configuración Unificada** ✅ Cerrada (v0.17.0-fase17)
+- Unificación de UraConfig como vista tipada de CONFIG (Opción A de convergencia)
+- B1: Auditoría CONFIG_AUDIT.md (36 consumidores, 7 defectos)
+- B2: Deprecación de `config.local.json`
+- B3: Corrección de `get_ollama_urls()` y eliminación de duplicados
+- B5.1: Refactor de `UraConfig.load()` con helpers y prioridad legacy→CONFIG→env
+- B6-D04: Migración de `secretario_cache.py` a UraConfig
+- B6.5: `scripts/pro/audit_config.py` con 3 comprobaciones automáticas
+- 0 nuevos errores Ruff, 0 regresiones Pytest, audit 0 problemas
+- Ver `docs/architecture/FASE17_PROPOSAL.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
