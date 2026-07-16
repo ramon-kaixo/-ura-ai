@@ -82,17 +82,15 @@ class OllamaProvider(BaseLLMProvider):
             error = "connection_error"
             _log_call(self._provider_name, model_name, latency_ms, error)
             return "Error: No se pudo conectar con el servicio de generación."
-        except Exception as e:
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = "unexpected"
-            _log_call(self._provider_name, model_name, latency_ms, error)
-            log.exception("error inesperado en generate")
-            return f"Error inesperado: {e}"
+            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log.warning("error inesperado en generate")
+            return "Error: Error interno del proveedor."
 
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         model_name = model or self._embedding_model
         t0 = time.monotonic()
-        error: str | None = None
         try:
             r = httpx.post(
                 f"{self._url}/api/embed",
@@ -104,16 +102,14 @@ class OllamaProvider(BaseLLMProvider):
                 result = r.json()["embeddings"]
                 _log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(result))
                 return result
-        except httpx.RequestError as e:
+        except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = str(e)
-            _log_call(self._provider_name, model_name, latency_ms, error)
-            log.warning("Ollama /api/embed falló (batch), intentando individual: %s", e)
-        except Exception as e:
+            _log_call(self._provider_name, model_name, latency_ms, "request_error")
+            log.warning("Ollama /api/embed batch falló, intentando individual")
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = str(e)
-            _log_call(self._provider_name, model_name, latency_ms, error)
-            log.warning("Ollama /api/embed falló (batch, except), intentando individual: %s", e)
+            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log.warning("Ollama /api/embed batch falló (except), intentando individual")
 
         resultados: list[list[float]] = []
         for t in texts:
@@ -125,15 +121,14 @@ class OllamaProvider(BaseLLMProvider):
                 )
                 r.raise_for_status()
                 resultados.append(r.json()["embedding"])
-            except Exception as e:
-                log.exception("error generando embedding (old API): %s", e)
+            except Exception:
+                log.warning("error generando embedding (old API), continuando")
                 resultados.append([0.0] * 768)
         return resultados
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         model_name = model or self._embedding_model
         t0 = time.monotonic()
-        error: str | None = None
         try:
             async with httpx.AsyncClient(timeout=float(self._timeout)) as client:
                 r = await client.post(
@@ -148,16 +143,14 @@ class OllamaProvider(BaseLLMProvider):
                         async_=True, batch_size=len(texts), vectors=len(result),
                     )
                     return result
-        except httpx.RequestError as e:
+        except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = str(e)
-            _log_call(self._provider_name, model_name, latency_ms, error, async_=True)
-            log.warning("Ollama /api/embed async falló (batch), intentando individual: %s", e)
-        except Exception as e:
+            _log_call(self._provider_name, model_name, latency_ms, "request_error", async_=True)
+            log.warning("Ollama /api/embed async batch falló, intentando individual")
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = str(e)
-            _log_call(self._provider_name, model_name, latency_ms, error, async_=True)
-            log.warning("Ollama /api/embed async falló (batch, except), intentando individual: %s", e)
+            _log_call(self._provider_name, model_name, latency_ms, "unexpected", async_=True)
+            log.warning("Ollama /api/embed async batch falló (except), intentando individual")
 
         resultados: list[list[float]] = []
         for t in texts:
@@ -169,8 +162,8 @@ class OllamaProvider(BaseLLMProvider):
                     )
                     r.raise_for_status()
                     resultados.append(r.json()["embedding"])
-            except Exception as e:
-                log.exception("error generando embedding async (old API): %s", e)
+            except Exception:
+                log.warning("error generando embedding async (old API), continuando")
                 resultados.append([0.0] * 768)
         return resultados
 
@@ -197,6 +190,5 @@ class OllamaProvider(BaseLLMProvider):
             }
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            error = str(e)
-            _log_call(self._provider_name, "health", latency_ms, error)
+            _log_call(self._provider_name, "health", latency_ms, "health_error")
             return {"provider": self._provider_name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
