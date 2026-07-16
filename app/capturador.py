@@ -2,12 +2,17 @@
 """app/capturador.py — Captura aislada por nodo (ASUS/HETZNER/MAC).
 Cada maquina captura su propia pantalla. Sin cruce de contextos.
 """
+
 from __future__ import annotations
+
 import os
 import sys
 
+from motor.core.secrets import get_secret
+
 # Identificacion del nodo via variable de entorno (default: ASUS_GX10)
 NODO = os.getenv("URA_NODE_ENV", "ASUS_GX10")
+
 
 class CapturadorTarget:
     """Capturador aislado por nodo. Cada maquina solo ve su pantalla."""
@@ -28,11 +33,13 @@ class CapturadorTarget:
     def _capturar_vnc(self) -> str | None:
         """Captura desde el monitor virtual de Hetzner via VNC."""
         try:
-            import vncdotool.api
             import base64
             from io import BytesIO
+
+            import vncdotool.api
+
             client = vncdotool.api.connect("127.0.0.1::5901")
-            client.password(os.getenv("VNC_PWD", "ura2026"))
+            client.password(get_secret("VNC_PWD", "ura2026"))
             img = client.captureScreen()
             client.disconnect()
             buf = BytesIO()
@@ -45,8 +52,10 @@ class CapturadorTarget:
         """Captura nativa en Mac con normalizacion Retina."""
         try:
             import base64
-            from PIL import ImageGrab
             from io import BytesIO
+
+            from PIL import ImageGrab
+
             img = ImageGrab.grab()
             w, h = img.size
             if w > 1920 or h > 1080:
@@ -72,15 +81,19 @@ class CapturadorTarget:
 class CapturadorPantallaSeguro(CapturadorTarget):
     pass
 
+
 def capturar_pantalla():
     """Funcion de acceso directo (compatibilidad)."""
     c = CapturadorTarget()
     return c.capturar()
 
+
 def normalizar_coordenadas(x: int, y: int) -> tuple[int, int]:
     c = CapturadorTarget()
     return c.normalizar_coordenadas(x, y)
 
+
 def analizar_con_ollama(imagen_b64: str | None = None, prompt: str = "") -> str:
     from scripts.pro.uitars_gx10 import analizar_con_ollama as _ollama
+
     return _ollama(imagen_b64, prompt)
