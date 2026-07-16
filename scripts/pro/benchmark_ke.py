@@ -31,6 +31,7 @@ RESULTS_DIR = HERE / "knowledge" / "evaluation" / "results"
 
 # ── Data structures ──────────────────────────────────────────────────────────
 
+
 @dataclass
 class Query:
     qid: str
@@ -95,6 +96,7 @@ class BenchmarkResults:
 
 # ── Corpus loading ───────────────────────────────────────────────────────────
 
+
 def load_corpus(corpus_dir: Path) -> tuple[list[Query], dict[str, list[Relevance]]]:
     queries_file = corpus_dir / "queries.jsonl"
     relevance_file = corpus_dir / "relevance.jsonl"
@@ -122,6 +124,7 @@ def load_corpus(corpus_dir: Path) -> tuple[list[Query], dict[str, list[Relevance
 
 # ── KE 1.x retrieval (real and mock) ─────────────────────────────────────────
 
+
 class KERetrieval:
     """Interface for KE 1.x retrieval. Uses Qdrant vector search when available."""
 
@@ -134,6 +137,7 @@ class KERetrieval:
         try:
             from motor.core.config import UraConfig
             from motor.core.qdrant_client import QdrantClient
+
             cfg = UraConfig()
             self._client = QdrantClient.instancia(cfg)
             if self._client.disponible:
@@ -233,11 +237,15 @@ class KERetrieval:
         if not doc_score_map:
             doc_score_map["general_knowledge_base"] = 0.5
 
-        results = [RetrievalResult(doc_id=doc, score=score, rank=i) for i, (doc, score) in enumerate(sorted(doc_score_map.items(), key=lambda x: -x[1]))]
+        results = [
+            RetrievalResult(doc_id=doc, score=score, rank=i)
+            for i, (doc, score) in enumerate(sorted(doc_score_map.items(), key=lambda x: -x[1]))
+        ]
         return results[:k]
 
 
 # ── Metrics computation ──────────────────────────────────────────────────────
+
 
 def compute_recall(retrieved: list[str], relevant: set[str], k: int) -> float:
     if not relevant:
@@ -278,18 +286,19 @@ def compute_ndcg(retrieved: list[str], relevance_map: dict[str, int], k: int) ->
     dcg = 0.0
     for i, doc in enumerate(retrieved[:k]):
         rel = relevance_map.get(doc, 0)
-        dcg += (2 ** rel - 1) / math.log2(i + 2)
+        dcg += (2**rel - 1) / math.log2(i + 2)
 
     # Ideal DCG: sort relevance scores descending
     ideal_rels = sorted(relevance_map.values(), reverse=True)
     idcg = 0.0
     for i, rel in enumerate(ideal_rels[:k]):
-        idcg += (2 ** rel - 1) / math.log2(i + 2)
+        idcg += (2**rel - 1) / math.log2(i + 2)
 
     return dcg / idcg if idcg > 0 else 0.0
 
 
 # ── Main benchmark ───────────────────────────────────────────────────────────
+
 
 def validate_corpus_indexed(
     relevance_map: dict[str, list[Relevance]],
@@ -320,7 +329,9 @@ def validate_corpus_indexed(
     if errors:
         log.warning("Validación corpus: %d/%d documentos encontrados (%.1f%%)", found, len(all_doc_ids), coverage * 100)
     else:
-        log.info("Validación corpus: %d/%d documentos encontrados (%.1f%%) — OK", found, len(all_doc_ids), coverage * 100)
+        log.info(
+            "Validación corpus: %d/%d documentos encontrados (%.1f%%) — OK", found, len(all_doc_ids), coverage * 100
+        )
     return errors
 
 
@@ -374,13 +385,22 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
 
         all_latencies.append(elapsed_ms)
 
-        query_results.append(QueryResult(
-            qid=q.qid, domain=q.domain, gold_docs=gold_docs,
-            retrieved=retrieved, latency_ms=elapsed_ms,
-            recall_1=r1, recall_5=r5, recall_10=r10,
-            precision_5=p5, mrr=mrr, ndcg=ndcg,
-            no_context=no_ctx,
-        ))
+        query_results.append(
+            QueryResult(
+                qid=q.qid,
+                domain=q.domain,
+                gold_docs=gold_docs,
+                retrieved=retrieved,
+                latency_ms=elapsed_ms,
+                recall_1=r1,
+                recall_5=r5,
+                recall_10=r10,
+                precision_5=p5,
+                mrr=mrr,
+                ndcg=ndcg,
+                no_context=no_ctx,
+            )
+        )
 
     # Aggregate
     all_recall_1 = [qr.recall_1 for qr in query_results]
@@ -447,14 +467,14 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
 
 
 def print_results(r: BenchmarkResults) -> None:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  KE {r.ke_version} — Benchmark Results")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Queries: {r.queries_total} ({r.queries_failed} failed)")
     print(f"  Timestamp: {r.timestamp}")
     print()
     print(f"  {'Metric':<22} {'Value':<10}")
-    print(f"  {'-'*32}")
+    print(f"  {'-' * 32}")
     print(f"  {'Recall@1':<22} {r.mean_recall_1:<10.4f}")
     print(f"  {'Recall@5':<22} {r.mean_recall_5:<10.4f}")
     print(f"  {'Recall@10':<22} {r.mean_recall_10:<10.4f}")
@@ -473,7 +493,7 @@ def print_results(r: BenchmarkResults) -> None:
     print()
     if r.domain_breakdown:
         print(f"  {'Domain':<18} {'nDCG':<10} {'Count':<8}")
-        print(f"  {'-'*36}")
+        print(f"  {'-' * 36}")
         for d, info in sorted(r.domain_breakdown.items()):
             print(f"  {d:<18} {info['ndcg_mean']:<10.4f} {info['count']:<8}")
 
@@ -533,7 +553,12 @@ def validate_corpus(corpus_dir: Path) -> list[str]:  # noqa: C901
                 errors.append(f"Relevance score inválido en {qid}: {r.relevance}")
 
     if not errors:
-        log.info("Corpus válido: %d queries, %d dominios, %d relevance judgments", len(queries), len(domains), sum(len(v) for v in relevance_map.values()))
+        log.info(
+            "Corpus válido: %d queries, %d dominios, %d relevance judgments",
+            len(queries),
+            len(domains),
+            sum(len(v) for v in relevance_map.values()),
+        )
     else:
         for e in errors:
             log.error("VALIDACIÓN: %s", e)
@@ -553,20 +578,24 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
         meta = json.loads(metadata_file.read_text())
 
     try:
-        git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5).stdout.strip()
+        git_hash = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5
+        ).stdout.strip()
     except Exception:
         git_hash = "unknown"
     try:
-        git_tag = subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True, timeout=5).stdout.strip()
+        git_tag = subprocess.run(
+            ["git", "describe", "--tags", "--always"], capture_output=True, text=True, timeout=5
+        ).stdout.strip()
     except Exception:
         git_tag = "unknown"
 
     md = f"""# Fase 12 — Baseline KE 1.x
 
-> **Generado:** {data['timestamp']}
+> **Generado:** {data["timestamp"]}
 > **Commit:** `{git_hash}`
 > **Tag:** `{git_tag}`
-> **KE version:** {data['ke_version']}
+> **KE version:** {data["ke_version"]}
 
 ---
 
@@ -574,7 +603,7 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
 
 | Componente | Valor |
 |------------|-------|
-| CPU | {platform.processor() or 'N/A'} |
+| CPU | {platform.processor() or "N/A"} |
 | Python | {platform.python_version()} |
 | Plataforma | {platform.platform()} |
 
@@ -582,46 +611,46 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
 
 | Métrica | Valor |
 |---------|-------|
-| Versión | {meta.get('version', 'N/A')} |
-| Consultas | {data['queries_total']} |
-| Relevance judgments | {meta.get('total_relevance_judgments', 'N/A')} |
-| Documentos únicos | {meta.get('unique_documents', 'N/A')} |
-| Dominios | {', '.join(data.get('domain_breakdown', {}).keys())} |
+| Versión | {meta.get("version", "N/A")} |
+| Consultas | {data["queries_total"]} |
+| Relevance judgments | {meta.get("total_relevance_judgments", "N/A")} |
+| Documentos únicos | {meta.get("unique_documents", "N/A")} |
+| Dominios | {", ".join(data.get("domain_breakdown", {}).keys())} |
 
 ## Métricas de Recuperación
 
 | Métrica | Valor |
 |---------|-------|
-| Recall@1 | {data['mean_recall_1']} |
-| Recall@5 | {data['mean_recall_5']} |
-| Recall@10 | {data['mean_recall_10']} |
-| Precision@5 | {data['mean_precision_5']} |
-| MRR | {data['mean_mrr']} |
-| MAP | {data['map']} |
-| nDCG@10 | {data['mean_ndcg']} |
+| Recall@1 | {data["mean_recall_1"]} |
+| Recall@5 | {data["mean_recall_5"]} |
+| Recall@10 | {data["mean_recall_10"]} |
+| Precision@5 | {data["mean_precision_5"]} |
+| MRR | {data["mean_mrr"]} |
+| MAP | {data["map"]} |
+| nDCG@10 | {data["mean_ndcg"]} |
 
 ## Latencia
 
 | Métrica | Valor |
 |---------|-------|
-| P50 | {data['latency_p50_ms']}ms |
-| P95 | {data['latency_p95_ms']}ms |
-| P99 | {data['latency_p99_ms']}ms |
-| Throughput | {data['throughput_qps']} qps |
+| P50 | {data["latency_p50_ms"]}ms |
+| P95 | {data["latency_p95_ms"]}ms |
+| P99 | {data["latency_p99_ms"]}ms |
+| Throughput | {data["throughput_qps"]} qps |
 
 ## Cobertura
 
 | Métrica | Valor |
 |---------|-------|
-| Tasa sin contexto | {data['no_context_rate']:%} |
-| Cobertura documental | {data['doc_coverage']:%} |
+| Tasa sin contexto | {data["no_context_rate"]:%} |
+| Cobertura documental | {data["doc_coverage"]:%} |
 
 ## Desglose por dominio
 
 | Dominio | nDCG | Consultas |
 |---------|------|-----------|
 """
-    for d, info in sorted(data.get('domain_breakdown', {}).items()):
+    for d, info in sorted(data.get("domain_breakdown", {}).items()):
         md += f"| {d} | {info['ndcg_mean']} | {info['count']} |\n"
 
     md += """
@@ -646,6 +675,7 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
 
 def main() -> int:
     import argparse
+
     parser = argparse.ArgumentParser(description="Benchmark KE 1.x — métricas de recuperación")
     parser.add_argument("--corpus", default=str(CORPUS_DIR), help="Directorio del corpus")
     parser.add_argument("--output", default=str(RESULTS_DIR), help="Directorio de resultados")

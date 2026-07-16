@@ -40,8 +40,14 @@ class TestContextQuery:
 
 class TestContextResult:
     def test_explanation(self):
-        r = ContextResult(episode=Episode(), semantic_score=0.8, recency_score=0.7,
-                          importance_score=0.6, confidence_score=0.5, score=0.65)
+        r = ContextResult(
+            episode=Episode(),
+            semantic_score=0.8,
+            recency_score=0.7,
+            importance_score=0.6,
+            confidence_score=0.5,
+            score=0.65,
+        )
         assert "sem=0.80" in r.explanation
         assert "rec=0.70" in r.explanation
         assert "imp=0.60" in r.explanation
@@ -141,15 +147,30 @@ class TestContextRetrieverRanking:
         store = EpisodeStore()
         now = datetime.now(UTC)
         # episode: high importance but old
-        store.store(Episode(
-            timestamp=(now - timedelta(hours=10)).isoformat(),
-            payload="important_old", importance=0.9, confidence=0.5))
-        store.store(Episode(
-            timestamp=(now - timedelta(minutes=5)).isoformat(),
-            payload="medium_recent", importance=0.5, confidence=0.5))
-        store.store(Episode(
-            timestamp=(now - timedelta(seconds=10)).isoformat(),
-            payload="recent_low", importance=0.2, confidence=0.5))
+        store.store(
+            Episode(
+                timestamp=(now - timedelta(hours=10)).isoformat(),
+                payload="important_old",
+                importance=0.9,
+                confidence=0.5,
+            )
+        )
+        store.store(
+            Episode(
+                timestamp=(now - timedelta(minutes=5)).isoformat(),
+                payload="medium_recent",
+                importance=0.5,
+                confidence=0.5,
+            )
+        )
+        store.store(
+            Episode(
+                timestamp=(now - timedelta(seconds=10)).isoformat(),
+                payload="recent_low",
+                importance=0.2,
+                confidence=0.5,
+            )
+        )
         # Default weights: recency=0.35, importance=0.35, confidence=0.30
         # With confidence equal, the combined score depends on recency + importance
         retriever = ContextRetriever(store)
@@ -265,6 +286,7 @@ class TestContextRetrieverBenchmark:
 class TestContextRetrieverThreadSafety:
     def test_concurrent_search(self):
         import concurrent.futures
+
         store = EpisodeStore()
         for i in range(100):
             store.store(Episode(payload=f"e{i}", importance=0.5, confidence=0.5))

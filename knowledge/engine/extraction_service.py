@@ -41,8 +41,7 @@ _MAX_CONCURRENT_PER_EXTRACTOR = 1
 
 def _get_semaphore(extractor_id: str) -> threading.BoundedSemaphore:
     if extractor_id not in _EXTRACTION_SEMAPHORES:
-        _EXTRACTION_SEMAPHORES[extractor_id] = \
-            threading.BoundedSemaphore(_MAX_CONCURRENT_PER_EXTRACTOR)
+        _EXTRACTION_SEMAPHORES[extractor_id] = threading.BoundedSemaphore(_MAX_CONCURRENT_PER_EXTRACTOR)
     return _EXTRACTION_SEMAPHORES[extractor_id]
 
 
@@ -54,8 +53,7 @@ class MetadataExtractionService:
         result = service.extract(AssetSource("filesystem", "/path/to/doc.md"))
     """
 
-    def __init__(self, db_path: Path, registry: ExtractorRegistry | None = None,
-                 store: AssetStore | None = None):
+    def __init__(self, db_path: Path, registry: ExtractorRegistry | None = None, store: AssetStore | None = None):
         self._db_path = db_path
         self._registry = registry or get_registry()
         self._store: AssetStore = store or SQLiteAssetStore(db_path)
@@ -84,9 +82,7 @@ class MetadataExtractionService:
                 return str(cur.lastrowid)
             except sqlite3.IntegrityError:
                 conn.rollback()
-                row = conn.execute(
-                    "SELECT id FROM op_jobs WHERE dedup_key = ?", (dedup,)
-                ).fetchone()
+                row = conn.execute("SELECT id FROM op_jobs WHERE dedup_key = ?", (dedup,)).fetchone()
                 if row is not None:
                     return str(row["id"])
                 # Caso raro: carrera donde se insertó entre el error y la consulta
@@ -107,8 +103,7 @@ class MetadataExtractionService:
         conn = open_db(self._db_path)
         try:
             row = conn.execute(
-                "SELECT status, error, result_data, started_at, completed_at "
-                "FROM op_jobs WHERE id = ?", (int(job_id),)
+                "SELECT status, error, result_data, started_at, completed_at FROM op_jobs WHERE id = ?", (int(job_id),)
             ).fetchone()
             if not row:
                 return {"status": "not_found"}
@@ -123,8 +118,15 @@ class MetadataExtractionService:
         self._worker_stop.clear()
         self._worker_thread = threading.Thread(
             target=_worker_loop,
-            args=(self._db_path, self._registry, self._store, self._worker_stop,
-                  self._running_jobs, self._jobs_lock, _MAX_BACKGROUND_WORKERS),
+            args=(
+                self._db_path,
+                self._registry,
+                self._store,
+                self._worker_stop,
+                self._running_jobs,
+                self._jobs_lock,
+                _MAX_BACKGROUND_WORKERS,
+            ),
             daemon=True,
         )
         self._worker_thread.start()
@@ -169,24 +171,33 @@ class MetadataExtractionService:
                 continue
             if result.asset:
                 saved = self._store.save_asset(result.asset)
-                results.append({
-                    "extractor": extractor.id,
-                    "version": extractor.version,
-                    "asset_id": result.asset.asset_id,
-                    "saved": saved,
-                    "duration_ms": result.duration_ms,
-                })
-                log.info("Extracted %s with %s (v%s) in %.0fms",
-                         source.location, extractor.id, extractor.version, result.duration_ms)
+                results.append(
+                    {
+                        "extractor": extractor.id,
+                        "version": extractor.version,
+                        "asset_id": result.asset.asset_id,
+                        "saved": saved,
+                        "duration_ms": result.duration_ms,
+                    }
+                )
+                log.info(
+                    "Extracted %s with %s (v%s) in %.0fms",
+                    source.location,
+                    extractor.id,
+                    extractor.version,
+                    result.duration_ms,
+                )
                 if saved:
                     try:
-                        get_bus().publish(MetadataExtracted(
-                            asset_id=result.asset.asset_id,
-                            asset_type=result.asset.asset_type,
-                            extractor=extractor.id,
-                            success=True,
-                            duration_ms=result.duration_ms,
-                        ))
+                        get_bus().publish(
+                            MetadataExtracted(
+                                asset_id=result.asset.asset_id,
+                                asset_type=result.asset.asset_type,
+                                extractor=extractor.id,
+                                success=True,
+                                duration_ms=result.duration_ms,
+                            )
+                        )
                     except Exception as exc:
                         log.warning("Failed to publish MetadataExtracted: %s", exc)
 
@@ -238,9 +249,15 @@ def _guess_mime(location: str) -> str:
     return mime_map.get(ext, "application/octet-stream")
 
 
-def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: AssetStore,  # noqa: C901, PLR0912, PLR0915
-                 stop: threading.Event, running_jobs: dict, jobs_lock: threading.Lock,
-                 max_workers: int = 1):
+def _worker_loop(
+    db_path: Path,
+    registry: ExtractorRegistry,
+    store: AssetStore,  # noqa: C901, PLR0912, PLR0915
+    stop: threading.Event,
+    running_jobs: dict,
+    jobs_lock: threading.Lock,
+    max_workers: int = 1,
+):
     """Loop principal del worker. Se ejecuta en un hilo DAEMON del proceso principal."""
     while not stop.is_set():
         conn = None
@@ -249,7 +266,8 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: AssetStore, 
             begin_immediate(conn, timeout=1.0)
 
             try:
-                row = conn.execute("""
+                row = conn.execute(
+                    """
                     UPDATE op_jobs
                     SET status = 'running', started_at = datetime('now')
                     WHERE id IN (
@@ -262,13 +280,16 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: AssetStore, 
                         LIMIT 1
                     )
                     RETURNING id, payload
-                """, (_MAX_RUNNING_INTERVAL,)).fetchone()
+                """,
+                    (_MAX_RUNNING_INTERVAL,),
+                ).fetchone()
             except sqlite3.OperationalError:
                 conn.rollback()
                 conn.close()
                 conn = open_db(db_path)
                 begin_immediate(conn, timeout=1.0)
-                c = conn.execute("""
+                c = conn.execute(
+                    """
                     SELECT id, payload FROM op_jobs
                     WHERE job_type = 'extraction'
                       AND (status = 'pending'
@@ -276,7 +297,9 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: AssetStore, 
                                AND started_at < datetime('now', ?)))
                     ORDER BY priority DESC, created_at ASC
                     LIMIT 1
-                """, (_MAX_RUNNING_INTERVAL,))
+                """,
+                    (_MAX_RUNNING_INTERVAL,),
+                )
                 sel = c.fetchone()
                 if not sel:
                     conn.rollback()
@@ -345,13 +368,15 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: AssetStore, 
                     continue
 
                 try:
-                    get_bus().publish(MetadataExtracted(
-                        asset_id=result["asset_id"],
-                        asset_type=AssetType(result["asset_type"]),
-                        extractor=extractor_id,
-                        success=True,
-                        duration_ms=result["duration_ms"],
-                    ))
+                    get_bus().publish(
+                        MetadataExtracted(
+                            asset_id=result["asset_id"],
+                            asset_type=AssetType(result["asset_type"]),
+                            extractor=extractor_id,
+                            success=True,
+                            duration_ms=result["duration_ms"],
+                        )
+                    )
                 except Exception as exc:
                     log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
 
@@ -406,8 +431,7 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
         if result.asset and not result.errors:
             saved = store.save_asset(result.asset)
             if saved:
-                _write_job_done(conn, job_id, result.asset.asset_id,
-                                result.asset.asset_type.value, result.duration_ms)
+                _write_job_done(conn, job_id, result.asset.asset_id, result.asset.asset_type.value, result.duration_ms)
             else:
                 _write_job_fail(conn, job_id, "AssetStore.save_asset() returned False")
         else:
@@ -431,13 +455,17 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
 def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):
     begin_immediate(conn)
     conn.execute(
-        "UPDATE op_jobs SET status = 'done', completed_at = datetime('now'), "
-        "result_data = ? WHERE id = ?",
-        (json.dumps({
-            "asset_id": asset_id,
-            "asset_type": asset_type,
-            "duration_ms": duration_ms,
-        }), job_id),
+        "UPDATE op_jobs SET status = 'done', completed_at = datetime('now'), result_data = ? WHERE id = ?",
+        (
+            json.dumps(
+                {
+                    "asset_id": asset_id,
+                    "asset_type": asset_type,
+                    "duration_ms": duration_ms,
+                }
+            ),
+            job_id,
+        ),
     )
     conn.commit()
 
@@ -467,9 +495,7 @@ def _mark_job_failed(db_path, job_id, error):
 def _read_job_result(db_path, job_id):
     conn = open_db(db_path)
     try:
-        row = conn.execute(
-            "SELECT status, result_data, error FROM op_jobs WHERE id = ?", (job_id,)
-        ).fetchone()
+        row = conn.execute("SELECT status, result_data, error FROM op_jobs WHERE id = ?", (job_id,)).fetchone()
         if not row:
             return None
         result = {"status": row["status"]}

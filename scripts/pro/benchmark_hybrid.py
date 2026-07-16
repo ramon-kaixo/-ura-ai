@@ -57,7 +57,7 @@ def compute_metrics(retrieved, gold_set, gold_relevance, k=10):
     mrr = next((1.0 / (i + 1) for i, d in enumerate(ids) if d in gold_set), 0.0)
     dcg = sum((2 ** gold_relevance.get(d, 0) - 1) / math.log2(i + 2) for i, d in enumerate(ids[:k]))
     ideal = sorted(gold_relevance.values(), reverse=True)
-    idcg_val = sum((2 ** rel_v - 1) / math.log2(i + 2) for i, rel_v in enumerate(ideal[:k]))
+    idcg_val = sum((2**rel_v - 1) / math.log2(i + 2) for i, rel_v in enumerate(ideal[:k]))
     ndcg = dcg / idcg_val if idcg_val > 0 else 0.0
     hits = 0
     ap_sum = 0.0
@@ -120,11 +120,11 @@ def run_config(name, retriever, queries, relevance_map):
 
 
 def print_comp(name, results, baseline, metrics):
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  {name}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"{'Metric':<22} {'Actual':<12} {'Baseline':<12} {'Delta':<10} {'Pass?':<10}")
-    print(f"{'-'*66}")
+    print(f"{'-' * 66}")
     for metric in metrics:
         v = results[metric]
         b = baseline.get(metric)
@@ -164,8 +164,20 @@ def main():
         ("BM25 puro", LexicalRetriever()),
     ]
 
-    metrics = ["Recall@1", "Recall@5", "Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10",
-               "Latency P50 (ms)", "Latency P95 (ms)", "Latency P99 (ms)", "Throughput (qps)", "No-context rate"]
+    metrics = [
+        "Recall@1",
+        "Recall@5",
+        "Recall@10",
+        "Precision@5",
+        "MRR",
+        "MAP",
+        "nDCG@10",
+        "Latency P50 (ms)",
+        "Latency P95 (ms)",
+        "Latency P99 (ms)",
+        "Throughput (qps)",
+        "No-context rate",
+    ]
 
     # First run pure configs to get their retrievers for hybrid
     all_results = {}
@@ -188,23 +200,41 @@ def main():
         key=lambda r: r["Recall@10"],
     )
     accept = True
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  Acceptance Criteria (vs semantic chunking baseline)")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     checks = [
-        ("Recall@10 ≥ baseline", best_hybrid["Recall@10"] >= CHUNKING_BASELINE["Recall@10"],
-         f"{best_hybrid['Recall@10']:.4f} >= {CHUNKING_BASELINE['Recall@10']:.4f}"),
-        ("MRR ≥ baseline", best_hybrid["MRR"] >= CHUNKING_BASELINE["MRR"],
-         f"{best_hybrid['MRR']:.4f} >= {CHUNKING_BASELINE['MRR']:.4f}"),
-        ("MAP ≥ baseline", best_hybrid["MAP"] >= CHUNKING_BASELINE["MAP"],
-         f"{best_hybrid['MAP']:.4f} >= {CHUNKING_BASELINE['MAP']:.4f}"),
-        ("nDCG@10 ≥ baseline", best_hybrid["nDCG@10"] >= CHUNKING_BASELINE["nDCG@10"],
-         f"{best_hybrid['nDCG@10']:.4f} >= {CHUNKING_BASELINE['nDCG@10']:.4f}"),
-        ("P95 ≤ chunking +15%", best_hybrid["Latency P95 (ms)"] <= CHUNKING_BASELINE["Latency P95 (ms)"] * 1.15,
-         f"{best_hybrid['Latency P95 (ms)']:.2f} <= {CHUNKING_BASELINE['Latency P95 (ms)'] * 1.15:.2f}"),
-        ("No-context ≤ baseline", best_hybrid["No-context rate"] <= CHUNKING_BASELINE["No-context rate"],
-         f"{best_hybrid['No-context rate']:.2%} <= {CHUNKING_BASELINE['No-context rate']:.2%}"),
+        (
+            "Recall@10 ≥ baseline",
+            best_hybrid["Recall@10"] >= CHUNKING_BASELINE["Recall@10"],
+            f"{best_hybrid['Recall@10']:.4f} >= {CHUNKING_BASELINE['Recall@10']:.4f}",
+        ),
+        (
+            "MRR ≥ baseline",
+            best_hybrid["MRR"] >= CHUNKING_BASELINE["MRR"],
+            f"{best_hybrid['MRR']:.4f} >= {CHUNKING_BASELINE['MRR']:.4f}",
+        ),
+        (
+            "MAP ≥ baseline",
+            best_hybrid["MAP"] >= CHUNKING_BASELINE["MAP"],
+            f"{best_hybrid['MAP']:.4f} >= {CHUNKING_BASELINE['MAP']:.4f}",
+        ),
+        (
+            "nDCG@10 ≥ baseline",
+            best_hybrid["nDCG@10"] >= CHUNKING_BASELINE["nDCG@10"],
+            f"{best_hybrid['nDCG@10']:.4f} >= {CHUNKING_BASELINE['nDCG@10']:.4f}",
+        ),
+        (
+            "P95 ≤ chunking +15%",
+            best_hybrid["Latency P95 (ms)"] <= CHUNKING_BASELINE["Latency P95 (ms)"] * 1.15,
+            f"{best_hybrid['Latency P95 (ms)']:.2f} <= {CHUNKING_BASELINE['Latency P95 (ms)'] * 1.15:.2f}",
+        ),
+        (
+            "No-context ≤ baseline",
+            best_hybrid["No-context rate"] <= CHUNKING_BASELINE["No-context rate"],
+            f"{best_hybrid['No-context rate']:.2%} <= {CHUNKING_BASELINE['No-context rate']:.2%}",
+        ),
     ]
     for label, passed, detail in checks:
         print(f"  {'✅' if passed else '❌'} {label}: {detail}")

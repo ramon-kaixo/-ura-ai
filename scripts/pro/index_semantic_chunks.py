@@ -4,10 +4,8 @@ Uses a separate Qdrant collection (ura_docs_semantic) to coexist with KE 1.x."""
 
 from __future__ import annotations
 
-import json
 import logging
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -32,6 +30,7 @@ def main() -> int:
     # Create collection if not exists
     try:
         from qdrant_client.http import models
+
         if qc._cliente:
             collections = [c.name for c in qc._cliente.get_collections().collections]
             if KE2_COLLECTION not in collections:
@@ -68,6 +67,7 @@ def main() -> int:
             vector = qc.generar_embedding(texto)
             if qc._cliente:
                 from qdrant_client.http import models
+
                 point_id = hash(chunk.chunk_id) % (10**12)
                 qc._cliente.upsert(
                     collection_name=KE2_COLLECTION,
@@ -96,7 +96,12 @@ def main() -> int:
             else:
                 log.warning("  %s: NOT FOUND", doc_id)
 
-    log.info("KE 2.0 coverage: %d/%d = %.1f%%", found, len(list(DOCS_DIR.glob("*.md"))), found / len(list(DOCS_DIR.glob("*.md"))) * 100)
+    log.info(
+        "KE 2.0 coverage: %d/%d = %.1f%%",
+        found,
+        len(list(DOCS_DIR.glob("*.md"))),
+        found / len(list(DOCS_DIR.glob("*.md"))) * 100,
+    )
     return 0
 
 

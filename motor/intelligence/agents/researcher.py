@@ -34,12 +34,14 @@ class ResearcherAgent(Agent):
         try:
             from motor.intelligence.memory.episodic import EpisodeStore
             from motor.intelligence.memory.retrieval import ContextRetriever
+
             if self._context_retriever is None:
                 self._context_retriever = ContextRetriever(EpisodeStore())
         except Exception:
             pass
         try:
             from motor.intelligence.memory.semantic import SemanticMemoryStore
+
             if self._memory_store is None:
                 self._memory_store = SemanticMemoryStore()
         except Exception:
@@ -82,6 +84,7 @@ class ResearcherAgent(Agent):
         # Try context retriever (episodic memory)
         if self._context_retriever:
             from motor.intelligence.memory.retrieval import ContextQuery
+
             query = ContextQuery(text=objective, k=5)
             episodes = self._context_retriever.search(query)
             if episodes:

@@ -8,7 +8,6 @@ USO: python3 tests/e2e_fase7.py
 
 from __future__ import annotations
 
-import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -21,9 +20,6 @@ from knowledge.engine.lineage_store import SQLiteLineageStore
 from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
 from knowledge.engine.migrations import (
     SCHEMA_VERSION,
-    get_schema_version,
-    migrate_db,
-    verify_migration,
 )
 from knowledge.engine.ontology.internal import AssetSource, AssetType, KnowledgeAsset
 from knowledge.engine.vector_ollama import OllamaEmbedder
@@ -74,12 +70,7 @@ def main() -> int:
     # Verificar que las tablas de Fase 7 existen
     conn = sqlite3.connect(str(db))
     conn.row_factory = sqlite3.Row
-    tables = {
-        r["name"]
-        for r in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
-    }
+    tables = {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     conn.close()
 
     check("op_assets_fts existe", "op_assets_fts" in tables)
@@ -114,8 +105,7 @@ def main() -> int:
 
     results = store.search_assets("testing", limit=10)
     check_gt("search_assets FTS5 returns results", len(results), 1)
-    check_eq("search_assets finds correct asset",
-             results[0].asset_id, "e2e_doc_1" if results else "none")
+    check_eq("search_assets finds correct asset", results[0].asset_id, "e2e_doc_1" if results else "none")
 
     results_all = store.search_assets("end to end", limit=10)
     check_gt("search_assets multi-word", len(results_all), 1)
@@ -129,22 +119,27 @@ def main() -> int:
     # ── Paso 4: Memory FTS5 search ──────────────────────────────────────
     print("\n═══ 4. Memory FTS5 search ═══")
     mem_store = SQLiteMemoryStore(db)
-    mem_store.save(MemoryRecord(
-        memory_id="mem_e2e_1", kind="note",
-        title="Meeting notes about FTS5",
-        content="Discussed FTS5 implementation for Fase 7",
-    ))
-    mem_store.save(MemoryRecord(
-        memory_id="mem_e2e_2", kind="note",
-        title="Shopping list",
-        content="milk, eggs, bread",
-    ))
+    mem_store.save(
+        MemoryRecord(
+            memory_id="mem_e2e_1",
+            kind="note",
+            title="Meeting notes about FTS5",
+            content="Discussed FTS5 implementation for Fase 7",
+        )
+    )
+    mem_store.save(
+        MemoryRecord(
+            memory_id="mem_e2e_2",
+            kind="note",
+            title="Shopping list",
+            content="milk, eggs, bread",
+        )
+    )
 
     mem_results = mem_store.search("FTS5", limit=10)
     check_gt("memory search FTS5 returns results", len(mem_results), 1)
     if mem_results:
-        check_eq("memory search finds correct record",
-                 mem_results[0].memory_id, "mem_e2e_1")
+        check_eq("memory search finds correct record", mem_results[0].memory_id, "mem_e2e_1")
 
     mem_empty = mem_store.search("nonexistent_xyzzy", limit=10)
     check_eq("memory search no match", mem_empty, [])
@@ -200,8 +195,7 @@ def main() -> int:
     gr_results = retriever.retrieve_assets("testing", limit=10)
     check_gt("retrieve_assets returns results", len(gr_results), 1)
     if gr_results:
-        check_eq("retrieve_assets finds correct asset",
-                 gr_results[0].asset_id, "e2e_doc_1")
+        check_eq("retrieve_assets finds correct asset", gr_results[0].asset_id, "e2e_doc_1")
 
     gr_results2 = retriever.retrieve_assets("Pasta", limit=10)
     check_gt("retrieve_assets case-insensitive", len(gr_results2), 1)
@@ -223,6 +217,7 @@ def main() -> int:
     # ── Paso 9: Reconcile (dry-run) ─────────────────────────────────────
     print("\n═══ 9. Reconcile (dry-run) ═══")
     from unittest.mock import MagicMock
+
     graph = MagicMock()
     asset_store_mock = MagicMock()
     embedder_mock = MagicMock()

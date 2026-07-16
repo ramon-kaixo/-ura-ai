@@ -1,4 +1,5 @@
 """Agente Hostelería — analiza tendencias, recetas y gestión hostelera."""
+
 import re
 
 
@@ -13,10 +14,12 @@ def process(text: str, meta: dict) -> dict:
     }
 
     # Detectar tema
-    temas = {"cocina": ["receta", "cocina", "chef", "plato", "ingrediente"],
-             "gestion": ["gestion", "clientes", "plantilla", "turnos", "reservas"],
-             "tendencias": ["tendencia", "moda", "nuevo", "innovacion", "foodie"],
-             "normativa": ["normativa", "terraza", "aforo", "sanidad", "municipal"]}
+    temas = {
+        "cocina": ["receta", "cocina", "chef", "plato", "ingrediente"],
+        "gestion": ["gestion", "clientes", "plantilla", "turnos", "reservas"],
+        "tendencias": ["tendencia", "moda", "nuevo", "innovacion", "foodie"],
+        "normativa": ["normativa", "terraza", "aforo", "sanidad", "municipal"],
+    }
     for tema, keywords in temas.items():
         if any(k in text.lower() for k in keywords):
             result["tema_principal"] = tema

@@ -15,8 +15,9 @@ import json
 from typing import Any
 
 
-def software_version(name: str, version: str, release_date: str,
-                     description: str = "", bugs: list[dict] | None = None) -> dict:
+def software_version(
+    name: str, version: str, release_date: str, description: str = "", bugs: list[dict] | None = None
+) -> dict:
     """Schema.org SoftwareVersion template."""
     entity: dict[str, Any] = {
         "@context": "https://schema.org",
@@ -40,8 +41,13 @@ def software_version(name: str, version: str, release_date: str,
     return entity
 
 
-def bug_report(identifier: str, description: str, status: str = "OPEN",
-               severity: str = "medium", affected_versions: list[str] | None = None) -> dict:
+def bug_report(
+    identifier: str,
+    description: str,
+    status: str = "OPEN",
+    severity: str = "medium",
+    affected_versions: list[str] | None = None,
+) -> dict:
     """Schema.org BugReport template."""
     entity: dict[str, Any] = {
         "@context": "https://schema.org",
@@ -73,8 +79,14 @@ def organization(name: str, url: str = "") -> dict:
     return o
 
 
-def dcat_dataset(name: str, description: str = "", fmt: str = "text/markdown",
-                 access_url: str = "", creator: str = "", issued: str = "") -> dict:
+def dcat_dataset(
+    name: str,
+    description: str = "",
+    fmt: str = "text/markdown",
+    access_url: str = "",
+    creator: str = "",
+    issued: str = "",
+) -> dict:
     """DCAT Dataset template."""
     d: dict[str, Any] = {
         "@context": "https://www.w3.org/ns/dcat",
@@ -119,8 +131,7 @@ def asset_to_jsonld(asset: Any) -> str:
         entity["license"] = asset.metadata["license"]
     if asset.relationships:
         entity["mentions"] = [
-            {"@id": f"ura:asset:{r.target_id}", "description": r.relation}
-            for r in asset.relationships
+            {"@id": f"ura:asset:{r.target_id}", "description": r.relation} for r in asset.relationships
         ]
 
     return json.dumps(entity, indent=2, ensure_ascii=False)

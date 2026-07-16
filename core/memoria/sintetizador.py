@@ -1,5 +1,5 @@
 """Sintetizador: ideas de Qdrant → informe estructurado con fuentes."""
-import json
+
 import logging
 
 import httpx
@@ -51,7 +51,7 @@ async def sintetizar(peticion: str) -> dict:
         tipo = idea.get("tipo", "dato")
         coste = f" ({idea.get('coste')})" if idea.get("coste") else ""
         herramienta = f" [{idea.get('herramienta')}]" if idea.get("herramienta") else ""
-        linea = f"{i+1}. [{tipo}{coste}{herramienta}] {idea['idea']}"
+        linea = f"{i + 1}. [{tipo}{coste}{herramienta}] {idea['idea']}"
         if fuente:
             linea += f" -- fuente: {fuente}"
         ideas_texto.append(linea)
@@ -63,12 +63,15 @@ async def sintetizar(peticion: str) -> dict:
 
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(OLLAMA, json={
-                "model": MODELO_SINTESIS,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": False,
-                "options": {"temperature": 0.3, "num_predict": 2048},
-            })
+            resp = await client.post(
+                OLLAMA,
+                json={
+                    "model": MODELO_SINTESIS,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                    "options": {"temperature": 0.3, "num_predict": 2048},
+                },
+            )
 
         if resp.is_error:
             informe = f"Error generando informe: HTTP {resp.status_code}"

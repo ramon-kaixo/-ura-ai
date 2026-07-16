@@ -118,7 +118,10 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
             resp = await client.post(
                 DUCKDUCKGO_URL,
                 data={"q": query},
-                headers={"User-Agent": "Mozilla/5.0 (compatible; URA/1.0)", "Content-Type": "application/x-www-form-urlencoded"},
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; URA/1.0)",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
                 follow_redirects=True,
             )
             if resp.is_error:
@@ -147,8 +150,6 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
             return {"query": query, "total_results": len(results), "results": results}
     except Exception as e:
         return {"error": str(e), "query": query}
-
-
 
 
 async def web_search(query: str, max_results: int = 5) -> dict:
@@ -189,7 +190,10 @@ async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
             return {
                 "query": query,
                 "total_results": len(results),
-                "results": [{"title": r.get("title", ""), "url": r.get("url", ""), "snippet": r.get("content", "")} for r in results],
+                "results": [
+                    {"title": r.get("title", ""), "url": r.get("url", ""), "snippet": r.get("content", "")}
+                    for r in results
+                ],
             }
     except httpx.TimeoutException:
         return {"error": "SearXNG timeout", "query": query}
@@ -210,8 +214,10 @@ async def page_read(url: str, max_chars: int = 50000) -> dict:
                 return {"error": f"Content-Type no soportado: {content_type}", "url": url}
             texto = _extraer_texto(resp.text, max_chars)
             return {
-                "url": url, "status": resp.status_code,
-                "content_length": len(resp.text), "extracted_length": len(texto),
+                "url": url,
+                "status": resp.status_code,
+                "content_length": len(resp.text),
+                "extracted_length": len(texto),
                 "content": texto,
             }
     except httpx.TimeoutException:
@@ -238,7 +244,12 @@ async def file_read(path: str, max_lines: int = 200) -> dict:
                     lineas.append(f"... ({max_lines} lineas mostradas)")
                     break
                 lineas.append(linea.rstrip("\n"))
-        return {"path": str(ruta.resolve()), "lines": len(lineas), "size": ruta.stat().st_size, "content": "\n".join(lineas)}
+        return {
+            "path": str(ruta.resolve()),
+            "lines": len(lineas),
+            "size": ruta.stat().st_size,
+            "content": "\n".join(lineas),
+        }
     except OSError as e:
         return {"error": str(e), "path": path}
 
@@ -260,6 +271,7 @@ async def ejecutar_tool(name: str, arguments: dict) -> dict:
 async def crawl_web(url: str, max_chars: int = 50000) -> dict:
     try:
         from crawl4ai import AsyncWebCrawler
+
         async with AsyncWebCrawler(verbose=False) as crawler:
             result = await crawler.arun(url=url)
             if result.success:

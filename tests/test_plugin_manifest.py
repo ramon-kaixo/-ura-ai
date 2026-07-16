@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from motor.plugin.manifest import (
     PluginManifest,
@@ -60,7 +59,9 @@ class TestParseManifest:
 
     def test_parse_with_dependencies(self, tmp_path: Path):
         f = tmp_path / "plugin.yaml"
-        f.write_text("name: dep-test\ndependencies:\n  plugins:\n    - name: base\n      version: '>=1.0.0'\n  python:\n    - 'requests>=2.28'\n")
+        f.write_text(
+            "name: dep-test\ndependencies:\n  plugins:\n    - name: base\n      version: '>=1.0.0'\n  python:\n    - 'requests>=2.28'\n"
+        )
         manifest = parse_manifest(f)
         assert manifest is not None
         assert manifest.dependencies["plugins"][0]["name"] == "base"

@@ -63,6 +63,7 @@ class TestWorkflows:
 
     def test_ci_steps(self):
         import yaml
+
         with open(ROOT / ".github/workflows/ci.yml") as f:
             data = yaml.safe_load(f)
         jobs = data.get("jobs", {})
@@ -71,6 +72,7 @@ class TestWorkflows:
 
     def test_ci_matrix(self):
         import yaml
+
         with open(ROOT / ".github/workflows/ci.yml") as f:
             data = yaml.safe_load(f)
         test_job = data["jobs"]["test"]
@@ -81,6 +83,7 @@ class TestWorkflows:
 
     def test_release_triggers_on_tag(self):
         import yaml
+
         with open(ROOT / ".github/workflows/release.yml") as f:
             data = yaml.safe_load(f)
         # PyYAML parses 'on:' as True; GH Actions handles it correctly
@@ -91,6 +94,7 @@ class TestWorkflows:
 
     def test_release_has_build_step(self):
         import yaml
+
         with open(ROOT / ".github/workflows/release.yml") as f:
             data = yaml.safe_load(f)
         steps = data["jobs"]["release"]["steps"]
@@ -99,6 +103,7 @@ class TestWorkflows:
 
     def test_ci_cancels_duplicates(self):
         import yaml
+
         with open(ROOT / ".github/workflows/ci.yml") as f:
             data = yaml.safe_load(f)
         assert "concurrency" in data
@@ -106,6 +111,7 @@ class TestWorkflows:
 
     def test_lint_job_has_ruff(self):
         import yaml
+
         with open(ROOT / ".github/workflows/ci.yml") as f:
             data = yaml.safe_load(f)
         steps = data["jobs"]["lint"]["steps"]
@@ -114,6 +120,7 @@ class TestWorkflows:
 
     def test_build_uploads_artifact(self):
         import yaml
+
         with open(ROOT / ".github/workflows/ci.yml") as f:
             data = yaml.safe_load(f)
         steps = data["jobs"]["build"]["steps"]
@@ -125,7 +132,9 @@ class TestBuild:
     def test_wheel_generable(self):
         result = subprocess.run(
             [sys.executable, "-m", "build", "--wheel", str(ROOT)],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr
         wheels = list((ROOT / "dist").glob("*.whl"))
@@ -136,7 +145,9 @@ class TestBuild:
     def test_sdist_generable(self):
         result = subprocess.run(
             [sys.executable, "-m", "build", "--sdist", str(ROOT)],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr
         sdists = list((ROOT / "dist").glob("*.tar.gz"))
@@ -149,7 +160,9 @@ class TestInstallation:
     def test_editable_install(self):
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", "-e", str(ROOT), "--break-system-packages"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         err_lower = result.stderr.lower()
         skip_msgs = ["externally-managed", "read-only", "sistema de archivos de solo lectura"]
@@ -160,7 +173,9 @@ class TestInstallation:
     def test_import_ura(self):
         result = subprocess.run(
             [sys.executable, "-c", "import ura; print('OK')"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             pytest.skip("ura module not installed")

@@ -385,16 +385,16 @@ class ArchiveManifest:
     """
 
     version: str = "1.0"
-    kind: str = "source"            # "source" | "vectors" | "cold"
+    kind: str = "source"  # "source" | "vectors" | "cold"
     source_commit: str = ""
     created_at: str = ""
     archive_path: str = ""
     compressed_size: int = 0
     uncompressed_size: int = 0
     content_sha256: str = ""
-    file_count: int = 0              # solo para source
-    model_id: str = ""               # solo para vectors
-    embed_dim: int = 0               # solo para vectors
+    file_count: int = 0  # solo para source
+    model_id: str = ""  # solo para vectors
+    embed_dim: int = 0  # solo para vectors
     retention_days: int = 90
 
     @classmethod
@@ -406,9 +406,9 @@ class ArchiveManifest:
 
 
 ARCHIVE_RETENTION_DAYS: dict[str, int] = {
-    "source": 90,    # warm: source bundles se mantienen 90 días
-    "vectors": 90,   # warm: dumps de Qdrant se mantienen 90 días
-    "cold": 365,     # cold: backup remoto completo se mantiene 1 año
+    "source": 90,  # warm: source bundles se mantienen 90 días
+    "vectors": 90,  # warm: dumps de Qdrant se mantienen 90 días
+    "cold": 365,  # cold: backup remoto completo se mantiene 1 año
 }
 
 
@@ -424,11 +424,11 @@ class AuditEvent:
     Todos los campos son serializables a JSON sin pérdida.
     """
 
-    action: str           # "read" | "compile" | "archive" | "search" | …
-    actor: str            # "reader" | "compiler" | "archiver" | "cli" | …
-    entity_type: str      # "document" | "graph" | "archive" | …
-    entity_id: str        # doc_id, commit hash, archive manifest, …
-    result: str           # "success" | "failure"
+    action: str  # "read" | "compile" | "archive" | "search" | …
+    actor: str  # "reader" | "compiler" | "archiver" | "cli" | …
+    entity_type: str  # "document" | "graph" | "archive" | …
+    entity_id: str  # doc_id, commit hash, archive manifest, …
+    result: str  # "success" | "failure"
     correlation_id: str
-    timestamp: str        # ISO 8601: datetime.now(UTC).isoformat()
+    timestamp: str  # ISO 8601: datetime.now(UTC).isoformat()
     metadata: dict[str, Any] = field(default_factory=dict)

@@ -1,5 +1,4 @@
-"""Tests for extractors (Fase 5).
-"""
+"""Tests for extractors (Fase 5)."""
 
 import hashlib
 import shutil
@@ -96,9 +95,16 @@ class TestPdfExtractor:
         result = ext.extract(AssetSource("filesystem", str(pdf_sample)))
         meta = result.asset.metadata
         for required in [
-            "pages", "content_sha256", "size", "has_text",
-            "text_length", "text_preview",
-            "_extractor", "_extractor_version", "extracted_at", "wraps",
+            "pages",
+            "content_sha256",
+            "size",
+            "has_text",
+            "text_length",
+            "text_preview",
+            "_extractor",
+            "_extractor_version",
+            "extracted_at",
+            "wraps",
         ]:
             assert required in meta, f"Missing metadata field: {required}"
 
@@ -168,6 +174,7 @@ def image_sample_jpg(tmp_path: Path) -> Path:
     """Crea una imagen JPEG de prueba."""
     pytest.importorskip("PIL")
     from PIL import Image
+
     img = Image.new("RGB", (100, 100), color="red")
     p = tmp_path / "sample.jpg"
     img.save(str(p), "JPEG")
@@ -179,6 +186,7 @@ def image_sample_png(tmp_path: Path) -> Path:
     """Crea una imagen PNG de prueba."""
     pytest.importorskip("PIL")
     from PIL import Image
+
     img = Image.new("RGBA", (50, 50), color="blue")
     p = tmp_path / "sample.png"
     img.save(str(p), "PNG")
@@ -215,9 +223,16 @@ class TestImageExtractor:
         result = ext.extract(AssetSource("filesystem", str(image_sample_jpg)))
         meta = result.asset.metadata
         for required in [
-            "width", "height", "format", "mode",
-            "content_sha256", "size",
-            "_extractor", "_extractor_version", "extracted_at", "wraps",
+            "width",
+            "height",
+            "format",
+            "mode",
+            "content_sha256",
+            "size",
+            "_extractor",
+            "_extractor_version",
+            "extracted_at",
+            "wraps",
         ]:
             assert required in meta, f"Missing metadata field: {required}"
 
@@ -287,6 +302,7 @@ def office_sample_docx(tmp_path: Path) -> Path:
     """Crea un documento DOCX de prueba."""
     pytest.importorskip("docx")
     import docx
+
     doc = docx.Document()
     doc.add_paragraph("Hello from DOCX test")
     doc.add_paragraph("Second paragraph with more content")
@@ -302,6 +318,7 @@ def office_sample_pptx(tmp_path: Path) -> Path:
     """Crea una presentación PPTX de prueba."""
     pytest.importorskip("pptx")
     from pptx import Presentation
+
     prs = Presentation()
     sl = prs.slides.add_slide(prs.slide_layouts[0])
     sl.shapes.title.text = "Test Slide Content"
@@ -338,8 +355,15 @@ class TestOfficeExtractor:
         ext = OfficeExtractor()
         result = ext.extract(AssetSource("filesystem", str(office_sample_docx)))
         meta = result.asset.metadata
-        for required in ["paragraph_count", "word_count", "format",
-                          "content_sha256", "size", "_extractor", "extracted_at"]:
+        for required in [
+            "paragraph_count",
+            "word_count",
+            "format",
+            "content_sha256",
+            "size",
+            "_extractor",
+            "extracted_at",
+        ]:
             assert required in meta, f"Missing: {required}"
 
     def test_determinism(self, office_sample_docx: Path):
@@ -352,6 +376,7 @@ class TestOfficeExtractor:
 
     def test_degradation_no_docx(self, tmp_path: Path, monkeypatch):
         import knowledge.engine.extractors.office as office_mod
+
         monkeypatch.setattr(office_mod, "_HAS_DOCX", False)
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -431,12 +456,20 @@ class TestAudioExtractor:
         ext = AudioExtractor()
         result = ext.extract(AssetSource("filesystem", str(audio_sample_wav)))
         meta = result.asset.metadata
-        for required in ["format", "size", "content_sha256",
-                          "_extractor", "_extractor_version", "extracted_at", "wraps"]:
+        for required in [
+            "format",
+            "size",
+            "content_sha256",
+            "_extractor",
+            "_extractor_version",
+            "extracted_at",
+            "wraps",
+        ]:
             assert required in meta, f"Missing: {required}"
 
     def test_ffprobe_metadata(self, audio_sample_wav: Path):
         import shutil
+
         if not shutil.which("ffprobe"):
             pytest.skip("ffprobe binary not found")
         from knowledge.engine.extractors.audio import AudioExtractor
@@ -489,9 +522,15 @@ def video_sample_mov(tmp_path: Path) -> Path:
         pytest.skip("ffmpeg not available")
     p = tmp_path / "test.mov"
     cmd = [
-        "ffmpeg", "-y", "-f", "lavfi", "-i",
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
         "testsrc=duration=0.5:size=64x64:rate=10",
-        "-f", "mov", str(p),
+        "-f",
+        "mov",
+        str(p),
     ]
     subprocess.run(cmd, capture_output=True, timeout=30, check=False)
     if not p.exists():
@@ -516,8 +555,15 @@ class TestVideoExtractor:
         ext = VideoExtractor()
         result = ext.extract(AssetSource("filesystem", str(video_sample_mov)))
         meta = result.asset.metadata
-        for required in ["format", "size", "content_sha256",
-                          "_extractor", "_extractor_version", "extracted_at", "wraps"]:
+        for required in [
+            "format",
+            "size",
+            "content_sha256",
+            "_extractor",
+            "_extractor_version",
+            "extracted_at",
+            "wraps",
+        ]:
             assert required in meta, f"Missing: {required}"
 
     def test_determinism(self, video_sample_mov: Path):
@@ -556,7 +602,7 @@ class TestVideoExtractor:
 
 class TestWebExtractor:
     def test_ssrf_block_file_scheme(self):
-        from knowledge.engine.extractors.web import WebExtractor, URLSchemeBlocked
+        from knowledge.engine.extractors.web import WebExtractor
 
         ext = WebExtractor()
         result = ext.extract(AssetSource("api", "file:///etc/passwd"))
@@ -604,6 +650,7 @@ class TestWebExtractor:
 
     def test_degradation_no_httpx(self, monkeypatch):
         import knowledge.engine.extractors.web as web_mod
+
         monkeypatch.setattr(web_mod, "_HAS_HTTPX", False)
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -630,7 +677,9 @@ class TestGitExtractor:
         repo.mkdir()
         (repo / "README.md").write_text("# Test Repo")
         subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
-        subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(
+            ["git", "config", "user.email", "test@test.com"], cwd=str(repo), capture_output=True, check=False
+        )
         subprocess.run(["git", "config", "user.name", "Test"], cwd=str(repo), capture_output=True, check=False)
         subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
         subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=str(repo), capture_output=True, check=False)
@@ -661,8 +710,15 @@ class TestGitExtractor:
         ext = GitExtractor()
         result = ext.extract(AssetSource("filesystem", str(repo)))
         meta = result.asset.metadata
-        for required in ["commit_count", "tag_count", "current_branch",
-                          "_extractor", "_extractor_version", "extracted_at", "wraps"]:
+        for required in [
+            "commit_count",
+            "tag_count",
+            "current_branch",
+            "_extractor",
+            "_extractor_version",
+            "extracted_at",
+            "wraps",
+        ]:
             assert required in meta, f"Missing: {required}"
         assert meta["tag_count"] >= 1
         assert meta["commit_count"] >= 1
@@ -715,6 +771,7 @@ class TestGitExtractor:
 
     def test_exceeds_max_size(self, tmp_path: Path, monkeypatch):
         import knowledge.engine.extractors.git as git_mod
+
         monkeypatch.setattr(git_mod, "MAX_CLONE_SIZE", 1)
         repo = tmp_path / "largerepo"
         repo.mkdir()
@@ -725,6 +782,7 @@ class TestGitExtractor:
         subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
         subprocess.run(["git", "commit", "-m", "big"], cwd=str(repo), capture_output=True, check=False)
         from knowledge.engine.extractors.git import GitExtractor
+
         ext = GitExtractor()
         result = ext.extract(AssetSource("filesystem", str(repo)))
         assert len(result.errors) > 0

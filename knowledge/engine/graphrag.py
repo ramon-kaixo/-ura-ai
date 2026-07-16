@@ -66,6 +66,7 @@ class ContextBundle:
 @dataclass
 class RetrievalResult:
     """Resultado de una recuperación individual."""
+
     asset_id: str
     score: float
     title: str = ""
@@ -88,8 +89,7 @@ _RANKING_WEIGHTS = {
 _DEFAULT_QUALITY = 0.5
 
 
-def _compute_score(query: str, asset: KnowledgeAsset | None = None,
-                   memory: Any = None, max_days: int = 365) -> float:
+def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any = None, max_days: int = 365) -> float:
     """Score heurístico 0.0-1.0. Sin IA."""
     score = 0.0
     query_lower = query.lower()
@@ -114,6 +114,7 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None,
         try:
             from datetime import UTC, datetime
             from dateutil import parser
+
             dt = parser.parse(updated)
             days_ago = (datetime.now(UTC) - dt).days
             if days_ago < max_days:
@@ -138,18 +139,22 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None,
 class GraphRetriever(Protocol):
     """Contrato para recuperadores de contexto del Knowledge Graph."""
 
-    def retrieve_assets(self, query: str, limit: int = 10,
-                        asset_type: AssetType | None = None) -> list[RetrievalResult]: ...
-    def retrieve_memory(self, query: str, limit: int = 10,
-                        kind: str | None = None) -> list[RetrievalResult]: ...
+    def retrieve_assets(
+        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+    ) -> list[RetrievalResult]: ...
+    def retrieve_memory(self, query: str, limit: int = 10, kind: str | None = None) -> list[RetrievalResult]: ...
     def retrieve_lineage(self, asset_id: str) -> list[dict[str, Any]]: ...
     def retrieve_governance(self, asset_id: str) -> list[dict[str, Any]]: ...
-    def retrieve_neighbors(self, asset_id: str, depth: int = 2,
-                           max_nodes: int = 100) -> list[dict[str, Any]]: ...
-    def build_context(self, query: str, max_assets: int = 10,
-                      max_memories: int = 5, include_lineage: bool = True,
-                      include_governance: bool = True,
-                      neighbor_depth: int = 0) -> ContextBundle: ...
+    def retrieve_neighbors(self, asset_id: str, depth: int = 2, max_nodes: int = 100) -> list[dict[str, Any]]: ...
+    def build_context(
+        self,
+        query: str,
+        max_assets: int = 10,
+        max_memories: int = 5,
+        include_lineage: bool = True,
+        include_governance: bool = True,
+        neighbor_depth: int = 0,
+    ) -> ContextBundle: ...
 
 
 # ── SQLiteGraphRetriever ───────────────────────────────────────────────────
@@ -172,54 +177,59 @@ class SQLiteGraphRetriever:
     def _get_asset_store(self):
         if self._asset_store is None:
             from knowledge.engine.asset_store import SQLiteAssetStore
+
             self._asset_store = SQLiteAssetStore(self._db_path)
         return self._asset_store
 
     def _get_memory_store(self):
         if self._memory_store is None:
             from knowledge.engine.memory_store import SQLiteMemoryStore
+
             self._memory_store = SQLiteMemoryStore(self._db_path)
         return self._memory_store
 
     def _get_lineage_store(self):
         if self._lineage_store is None:
             from knowledge.engine.lineage_store import SQLiteLineageStore
+
             self._lineage_store = SQLiteLineageStore(self._db_path)
         return self._lineage_store
 
     def _get_governance_store(self):
         if self._governance_store is None:
             from knowledge.engine.governance_store import SQLiteGovernanceStore
+
             self._governance_store = SQLiteGovernanceStore(self._db_path)
         return self._governance_store
 
-    def retrieve_assets(self, query: str, limit: int = 10,
-                        asset_type: AssetType | None = None) -> list[RetrievalResult]:
+    def retrieve_assets(
+        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+    ) -> list[RetrievalResult]:
         """Recupera assets relevantes para una consulta.
 
         Usa search_assets() (FTS5) con fallback a LIKE. Reordena por score heurístico.
         """
         store = self._get_asset_store()
-        assets = store.search_assets(query=query, limit=limit * 3,
-                                     asset_type=asset_type)
+        assets = store.search_assets(query=query, limit=limit * 3, asset_type=asset_type)
 
         results: list[RetrievalResult] = []
         for a in assets:
             score = _compute_score(query, asset=a)
             title = a.metadata.get("title", "")
-            results.append(RetrievalResult(
-                asset_id=a.asset_id,
-                score=score,
-                title=title,
-                kind=a.asset_type.value,
-                snippet=a.metadata.get("content_sha256", "")[:64],
-            ))
+            results.append(
+                RetrievalResult(
+                    asset_id=a.asset_id,
+                    score=score,
+                    title=title,
+                    kind=a.asset_type.value,
+                    snippet=a.metadata.get("content_sha256", "")[:64],
+                )
+            )
 
         results.sort(key=lambda r: r.score, reverse=True)
         return results[:limit]
 
-    def retrieve_memory(self, query: str, limit: int = 10,
-                        kind: str | None = None) -> list[RetrievalResult]:
+    def retrieve_memory(self, query: str, limit: int = 10, kind: str | None = None) -> list[RetrievalResult]:
         """Recupera registros de memoria relevantes."""
         store = self._get_memory_store()
         records = store.search(query, kind=kind, limit=limit * 2)
@@ -227,14 +237,16 @@ class SQLiteGraphRetriever:
         results: list[RetrievalResult] = []
         for r in records:
             score = _compute_score(query, memory=r)
-            results.append(RetrievalResult(
-                asset_id=r.memory_id,
-                score=score,
-                title=r.title,
-                kind=r.kind,
-                snippet=r.content[:200],
-                metadata={"tags": list(r.tags), "related_assets": list(r.related_assets)},
-            ))
+            results.append(
+                RetrievalResult(
+                    asset_id=r.memory_id,
+                    score=score,
+                    title=r.title,
+                    kind=r.kind,
+                    snippet=r.content[:200],
+                    metadata={"tags": list(r.tags), "related_assets": list(r.related_assets)},
+                )
+            )
 
         results.sort(key=lambda r: r.score, reverse=True)
         return results[:limit]
@@ -245,12 +257,14 @@ class SQLiteGraphRetriever:
         up = store.get_upstream(asset_id)
         down = store.get_downstream(asset_id)
         events = store.get_lineage(asset_id)
-        return [{
-            "asset_id": asset_id,
-            "upstream": up,
-            "downstream": down,
-            "events": len(events),
-        }]
+        return [
+            {
+                "asset_id": asset_id,
+                "upstream": up,
+                "downstream": down,
+                "events": len(events),
+            }
+        ]
 
     def retrieve_governance(self, asset_id: str) -> list[dict[str, Any]]:
         """Recupera políticas de gobernanza de un asset."""
@@ -258,8 +272,7 @@ class SQLiteGraphRetriever:
         policies = store.get_policies(asset_id)
         return [dict(p) for p in policies]
 
-    def retrieve_neighbors(self, asset_id: str, depth: int = 2,
-                           max_nodes: int = 100) -> list[dict[str, Any]]:
+    def retrieve_neighbors(self, asset_id: str, depth: int = 2, max_nodes: int = 100) -> list[dict[str, Any]]:
         """Recupera vecinos en el grafo hasta *depth* niveles.
 
         Usa BFS con detección de ciclos (visited set).
@@ -299,10 +312,15 @@ class SQLiteGraphRetriever:
 
         return neighbors
 
-    def build_context(self, query: str, max_assets: int = 10,
-                      max_memories: int = 5, include_lineage: bool = True,
-                      include_governance: bool = True,
-                      neighbor_depth: int = 0) -> ContextBundle:
+    def build_context(
+        self,
+        query: str,
+        max_assets: int = 10,
+        max_memories: int = 5,
+        include_lineage: bool = True,
+        include_governance: bool = True,
+        neighbor_depth: int = 0,
+    ) -> ContextBundle:
         """Construye un ContextBundle completo para una consulta.
 
         Flujo:
@@ -338,10 +356,21 @@ class SQLiteGraphRetriever:
 
         return ContextBundle(
             query=query,
-            assets=[{"asset_id": a.asset_id, "score": a.score, "title": a.title,
-                      "kind": a.kind, "snippet": a.snippet} for a in assets],
-            memories=[{"memory_id": m.asset_id, "score": m.score, "title": m.title,
-                        "kind": m.kind, "snippet": m.snippet, "metadata": m.metadata} for m in memories],
+            assets=[
+                {"asset_id": a.asset_id, "score": a.score, "title": a.title, "kind": a.kind, "snippet": a.snippet}
+                for a in assets
+            ],
+            memories=[
+                {
+                    "memory_id": m.asset_id,
+                    "score": m.score,
+                    "title": m.title,
+                    "kind": m.kind,
+                    "snippet": m.snippet,
+                    "metadata": m.metadata,
+                }
+                for m in memories
+            ],
             lineage=lineage,
             governance=governance,
             neighbors=neighbors,

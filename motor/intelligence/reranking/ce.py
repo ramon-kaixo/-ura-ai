@@ -89,8 +89,11 @@ class CrossEncoderReranker(BaseReranker):
         for i in range(0, len(pairs), self._batch_size):
             batch = pairs[i : i + self._batch_size]
             features = self._tokenizer(
-                batch, padding=True, truncation=True,
-                return_tensors="pt", max_length=512,
+                batch,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=512,
             ).to(self._device)
             with torch.no_grad():
                 logits = self._model(**features).logits

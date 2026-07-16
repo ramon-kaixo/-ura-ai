@@ -40,12 +40,14 @@ def compute_metrics(retrieved, gold_set, gold_rel, k=10):
     mrr = next((1.0 / (i + 1) for i, d in enumerate(ids) if d in gold_set), 0.0)
     dcg = sum((2 ** gold_rel.get(d, 0) - 1) / math.log2(i + 2) for i, d in enumerate(ids))
     ideal = sorted(gold_rel.values(), reverse=True)
-    idcg = sum((2 ** r - 1) / math.log2(i + 2) for i, r in enumerate(ideal[:k]))
+    idcg = sum((2**r - 1) / math.log2(i + 2) for i, r in enumerate(ideal[:k]))
     ndcg = dcg / idcg if idcg else 0.0
-    hits = 0; ap_sum = 0.0
+    hits = 0
+    ap_sum = 0.0
     for i, d in enumerate(ids):
         if d in gold_set:
-            hits += 1; ap_sum += hits / (i + 1)
+            hits += 1
+            ap_sum += hits / (i + 1)
     ap = ap_sum / rel if rel else 0.0
     return r1, r5, r10, p5, mrr, ndcg, ap
 
@@ -75,10 +77,16 @@ def run_config(name, retriever_fn, queries, rel_map):
             total_no_ctx += 1
 
         m = compute_metrics(results, gs, gr)
-        all_r1.append(m[0]); all_r5.append(m[1]); all_r10.append(m[2])
-        all_p5.append(m[3]); all_mrr.append(m[4]); all_ndcg.append(m[5]); all_ap.append(m[6])
+        all_r1.append(m[0])
+        all_r5.append(m[1])
+        all_r10.append(m[2])
+        all_p5.append(m[3])
+        all_mrr.append(m[4])
+        all_ndcg.append(m[5])
+        all_ap.append(m[6])
 
-    slat = sorted(all_lat); n = len(slat)
+    slat = sorted(all_lat)
+    n = len(slat)
     return {
         "Recall@1": round(statistics.mean(all_r1), 4),
         "Recall@5": round(statistics.mean(all_r5), 4),
@@ -103,9 +111,11 @@ def main():
     from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.reranking.reranker import CrossEncoderReranker
 
-    cfg = UraConfig(); qc = QdrantClient.instancia(cfg)
+    cfg = UraConfig()
+    qc = QdrantClient.instancia(cfg)
     if not qc.disponible:
-        log.error("Qdrant not available"); return 1
+        log.error("Qdrant not available")
+        return 1
 
     queries, rel_map = load_queries()
     log.warning("Loaded %d queries", len(queries))
@@ -126,54 +136,60 @@ def main():
         results[name] = run_config(name, fn, queries, rel_map)
 
     # Print comparison
-    metrics = ["Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10",
-               "P50", "P95", "P99", "Throughput", "No-context"]
-    print(f"\n{'='*100}")
+    metrics = ["Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10", "P50", "P95", "P99", "Throughput", "No-context"]
+    print(f"\n{'=' * 100}")
     print(f"  {'Metric':<18} {'Vector':<12} {'Hybrid':<12} {'Hyb+Rerank':<12} {'ΔH→HR':<10} {'Pass?':<8}")
-    print(f"{'='*100}")
+    print(f"{'=' * 100}")
 
     v = results["Vector only"]
     h = results["Hybrid (α=0.7)"]
     hr = results["Hybrid+Reranker"]
 
     for m in metrics:
-        vv = v[m]; hv = h[m]; hrv = hr[m]
+        vv = v[m]
+        hv = h[m]
+        hrv = hr[m]
         dh = round((hrv - hv) / hv * 100, 1) if hv else 0
         print(f"  {m:<18} {vv:<12.4f} {hv:<12.4f} {hrv:<12.4f} {dh:>+8.1f}%")
 
     # Acceptance criteria
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  Acceptance Criteria (Hybrid+Reranker vs targets)")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     accept = True
     checks = [
-        ("MAP ≥ Vector-only", hr["MAP"] >= v["MAP"],
-         f"{hr['MAP']:.4f} >= {v['MAP']:.4f}"),
-        ("nDCG ≥ Vector-only", hr["nDCG@10"] >= v["nDCG@10"],
-         f"{hr['nDCG@10']:.4f} >= {v['nDCG@10']:.4f}"),
-        ("Recall@10 ≥ Hybrid", hr["Recall@10"] >= h["Recall@10"],
-         f"{hr['Recall@10']:.4f} >= {h['Recall@10']:.4f}"),
-        ("No-context ≤ Hybrid", hr["No-context"] <= h["No-context"],
-         f"{hr['No-context']:.2%} <= {h['No-context']:.2%}"),
-        ("P95 ≤ Hybrid +25%", hr["P95"] <= h["P95"] * 1.25,
-         f"{hr['P95']:.2f} <= {h['P95']*1.25:.2f}"),
+        ("MAP ≥ Vector-only", hr["MAP"] >= v["MAP"], f"{hr['MAP']:.4f} >= {v['MAP']:.4f}"),
+        ("nDCG ≥ Vector-only", hr["nDCG@10"] >= v["nDCG@10"], f"{hr['nDCG@10']:.4f} >= {v['nDCG@10']:.4f}"),
+        ("Recall@10 ≥ Hybrid", hr["Recall@10"] >= h["Recall@10"], f"{hr['Recall@10']:.4f} >= {h['Recall@10']:.4f}"),
+        (
+            "No-context ≤ Hybrid",
+            hr["No-context"] <= h["No-context"],
+            f"{hr['No-context']:.2%} <= {h['No-context']:.2%}",
+        ),
+        ("P95 ≤ Hybrid +25%", hr["P95"] <= h["P95"] * 1.25, f"{hr['P95']:.2f} <= {h['P95'] * 1.25:.2f}"),
     ]
     for label, passed, detail in checks:
         print(f"  {'✅' if passed else '❌'} {label}: {detail}")
         if not passed:
             accept = False
 
-    print(f"\n  {'✅ APROBADO — continuar con Memoria Contextual' if accept else '❌ RECHAZADO — analizar cuello de botella'}")
+    print(
+        f"\n  {'✅ APROBADO — continuar con Memoria Contextual' if accept else '❌ RECHAZADO — analizar cuello de botella'}"
+    )
 
     # If failed, analyze
     if not accept:
         print(f"\n  Cuello de botella detectado:")
         if hr["MAP"] < v["MAP"]:
-            print(f"    - MAP: {v['MAP']:.4f} → {hr['MAP']:.4f} ({((hr['MAP']-v['MAP'])/v['MAP']*100):.1f}%)")
+            print(f"    - MAP: {v['MAP']:.4f} → {hr['MAP']:.4f} ({((hr['MAP'] - v['MAP']) / v['MAP'] * 100):.1f}%)")
         if hr["nDCG@10"] < v["nDCG@10"]:
-            print(f"    - nDCG: {v['nDCG@10']:.4f} → {hr['nDCG@10']:.4f} ({((hr['nDCG@10']-v['nDCG@10'])/v['nDCG@10']*100):.1f}%)")
+            print(
+                f"    - nDCG: {v['nDCG@10']:.4f} → {hr['nDCG@10']:.4f} ({((hr['nDCG@10'] - v['nDCG@10']) / v['nDCG@10'] * 100):.1f}%)"
+            )
         if hr["Recall@10"] < h["Recall@10"]:
-            print(f"    - R@10: {h['Recall@10']:.4f} → {hr['Recall@10']:.4f} ({((hr['Recall@10']-h['Recall@10'])/h['Recall@10']*100):.1f}%)")
+            print(
+                f"    - R@10: {h['Recall@10']:.4f} → {hr['Recall@10']:.4f} ({((hr['Recall@10'] - h['Recall@10']) / h['Recall@10'] * 100):.1f}%)"
+            )
 
     return 0 if accept else 1
 

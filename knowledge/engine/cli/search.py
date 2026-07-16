@@ -1,9 +1,8 @@
 """CLI: read, search, related."""
 
 import sys
-from pathlib import Path
 
-from knowledge.engine.cli.main import _get_conn, _resolve_db_path
+from knowledge.engine.cli.main import _resolve_db_path
 from knowledge.engine.reader import KnowledgeReader
 
 

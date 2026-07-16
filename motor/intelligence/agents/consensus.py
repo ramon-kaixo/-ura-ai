@@ -28,12 +28,10 @@ class ConsensusResult:
 
 class VotingStrategy(ABC):
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
-    def aggregate(self, results: list[AgentResult]) -> ConsensusResult:
-        ...
+    def aggregate(self, results: list[AgentResult]) -> ConsensusResult: ...
 
 
 class MajorityVoting(VotingStrategy):
@@ -43,8 +41,12 @@ class MajorityVoting(VotingStrategy):
     def aggregate(self, results: list[AgentResult]) -> ConsensusResult:
         if not results:
             return ConsensusResult(
-                success=False, outcome={}, votes=[], vote_counts={},
-                total_votes=0, strategy=self.name(),
+                success=False,
+                outcome={},
+                votes=[],
+                vote_counts={},
+                total_votes=0,
+                strategy=self.name(),
             )
         tally: dict[str, list[AgentResult]] = {}
         for r in results:
@@ -61,8 +63,11 @@ class MajorityVoting(VotingStrategy):
             winner_key = winners[0]
             outcome = tally[winner_key][0].output
             return ConsensusResult(
-                success=True, outcome=outcome, votes=results,
-                vote_counts=vote_counts, total_votes=total,
+                success=True,
+                outcome=outcome,
+                votes=results,
+                vote_counts=vote_counts,
+                total_votes=total,
                 strategy=self.name(),
             )
         if len(winners) > 1:
@@ -71,13 +76,19 @@ class MajorityVoting(VotingStrategy):
             outcome["_tie"] = True
             outcome["_tied_keys"] = winners
             return ConsensusResult(
-                success=False, outcome=outcome, votes=results,
-                vote_counts=vote_counts, total_votes=total,
+                success=False,
+                outcome=outcome,
+                votes=results,
+                vote_counts=vote_counts,
+                total_votes=total,
                 strategy=self.name(),
             )
         return ConsensusResult(
-            success=False, outcome={}, votes=results,
-            vote_counts=vote_counts, total_votes=total,
+            success=False,
+            outcome={},
+            votes=results,
+            vote_counts=vote_counts,
+            total_votes=total,
             strategy=self.name(),
         )
 
@@ -92,14 +103,21 @@ class UnanimousVoting(VotingStrategy):
     def aggregate(self, results: list[AgentResult]) -> ConsensusResult:
         if not results:
             return ConsensusResult(
-                success=False, outcome={}, votes=[], vote_counts={},
-                total_votes=0, strategy=self.name(),
+                success=False,
+                outcome={},
+                votes=[],
+                vote_counts={},
+                total_votes=0,
+                strategy=self.name(),
             )
         if len(results) == 1:
             return ConsensusResult(
-                success=True, outcome=results[0].output, votes=results,
+                success=True,
+                outcome=results[0].output,
+                votes=results,
                 vote_counts={self._result_key(results[0]): 1},
-                total_votes=1, strategy=self.name(),
+                total_votes=1,
+                strategy=self.name(),
             )
         first_key = self._result_key(results[0])
         tally: dict[str, list[AgentResult]] = {}
@@ -112,14 +130,20 @@ class UnanimousVoting(VotingStrategy):
 
         if is_unanimous:
             return ConsensusResult(
-                success=True, outcome=results[0].output, votes=results,
-                vote_counts=vote_counts, total_votes=len(results),
+                success=True,
+                outcome=results[0].output,
+                votes=results,
+                vote_counts=vote_counts,
+                total_votes=len(results),
                 strategy=self.name(),
             )
         outcome = {"_tie": True, "_unanimous_failed": True, "_vote_groups": len(tally)}
         return ConsensusResult(
-            success=False, outcome=outcome, votes=results,
-            vote_counts=vote_counts, total_votes=len(results),
+            success=False,
+            outcome=outcome,
+            votes=results,
+            vote_counts=vote_counts,
+            total_votes=len(results),
             strategy=self.name(),
         )
 
@@ -203,8 +227,13 @@ class WeightedConsensus(VotingStrategy):
     def aggregate(self, results: list[AgentResult]) -> ConsensusResult:
         if not results:
             return ConsensusResult(
-                success=False, outcome={}, votes=[], vote_counts={},
-                total_votes=0, strategy=self.name(), weighted=True,
+                success=False,
+                outcome={},
+                votes=[],
+                vote_counts={},
+                total_votes=0,
+                strategy=self.name(),
+                weighted=True,
             )
 
         tally: dict[str, float] = {}
@@ -233,9 +262,13 @@ class WeightedConsensus(VotingStrategy):
             else:
                 outcome = {}
             return ConsensusResult(
-                success=True, outcome=outcome, votes=results,
-                vote_counts=vote_counts, total_votes=total,
-                strategy=self.name(), weighted=True,
+                success=True,
+                outcome=outcome,
+                votes=results,
+                vote_counts=vote_counts,
+                total_votes=total,
+                strategy=self.name(),
+                weighted=True,
                 weight_details=weight_details,
             )
 
@@ -249,16 +282,24 @@ class WeightedConsensus(VotingStrategy):
             outcome["_tie"] = True
             outcome["_tied_keys"] = winners
             return ConsensusResult(
-                success=False, outcome=outcome, votes=results,
-                vote_counts=vote_counts, total_votes=total,
-                strategy=self.name(), weighted=True,
+                success=False,
+                outcome=outcome,
+                votes=results,
+                vote_counts=vote_counts,
+                total_votes=total,
+                strategy=self.name(),
+                weighted=True,
                 weight_details=weight_details,
             )
 
         return ConsensusResult(
-            success=False, outcome={}, votes=results,
-            vote_counts=vote_counts, total_votes=total,
-            strategy=self.name(), weighted=True,
+            success=False,
+            outcome={},
+            votes=results,
+            vote_counts=vote_counts,
+            total_votes=total,
+            strategy=self.name(),
+            weighted=True,
             weight_details=weight_details,
         )
 

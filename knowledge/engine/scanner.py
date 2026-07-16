@@ -30,8 +30,15 @@ def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError
         if not path.is_file():
             continue
         if path.is_symlink():
-            skipped.append(CompileError(code="KE210", document=str(path.relative_to(source_dir)),
-                stage="scanner", message=f"Enlace simbólico omitido: {path.name}", category="permanent"))
+            skipped.append(
+                CompileError(
+                    code="KE210",
+                    document=str(path.relative_to(source_dir)),
+                    stage="scanner",
+                    message=f"Enlace simbólico omitido: {path.name}",
+                    category="permanent",
+                )
+            )
             continue
         stat = path.stat()
         rel = str(path.relative_to(source_dir))

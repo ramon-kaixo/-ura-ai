@@ -47,7 +47,6 @@ class ReadinessRegistry:
             return {
                 "ready": ready,
                 "dependencies": {
-                    name: {"ready": e.ready, "reason": e.reason}
-                    for name, e in self._dependencies.items()
+                    name: {"ready": e.ready, "reason": e.reason} for name, e in self._dependencies.items()
                 },
             }

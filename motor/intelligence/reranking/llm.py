@@ -8,13 +8,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-import httpx
-
+from motor.core.llm import generate
 from motor.intelligence.reranking.base import BaseReranker
 
 log = logging.getLogger("ura.reranker.llm")
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "qwen2.5:7b"
 GOLDEN_DIR = Path(__file__).resolve().parent.parent.parent.parent / "knowledge" / "evaluation" / "golden_docs"
 
@@ -23,13 +21,9 @@ class LLMReranker(BaseReranker):
     def __init__(
         self,
         model: str = MODEL,
-        ollama_url: str = OLLAMA_URL,
-        timeout: int = 30,
         top_k: int = 10,
     ) -> None:
         self._model = model
-        self._url = ollama_url
-        self._timeout = timeout
         self._top_k = top_k
         self._doc_cache: dict[str, str] = {}
         self._load_docs()
@@ -47,7 +41,7 @@ class LLMReranker(BaseReranker):
         if not candidates:
             return candidates
 
-        to_rerank = candidates[:self._top_k]
+        to_rerank = candidates[: self._top_k]
         scored: list[dict[str, Any]] = []
 
         for doc in to_rerank:
@@ -69,22 +63,14 @@ class LLMReranker(BaseReranker):
         return scored
 
     def _score(self, query: str, doc_id: str, text: str) -> float:
-        prompt = (
-            f"Query: {query}\n\n"
-            f"Document: {text[:2000]}\n\n"
-            "Rate relevance 0-10. Only respond with a single number."
-        )
+        prompt = f"Query: {query}\n\nDocument: {text[:2000]}\n\nRate relevance 0-10. Only respond with a single number."
 
         try:
-            resp = httpx.post(
-                self._url,
-                json={"model": self._model, "prompt": prompt, "stream": False, "options": {"num_predict": 10}},
-                timeout=self._timeout,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            raw = data.get("response", "0").strip()
-            score = self._parse_score(raw)
+            raw = generate(prompt, model=self._model, options={"num_predict": 10})
+            if raw.startswith("Error:"):
+                log.warning("LLM scoring falló para %s: %s", doc_id, raw)
+                return 0.0
+            score = self._parse_score(raw.strip())
             log.debug("LLM score for %s: %.2f", doc_id, score)
             return score
         except Exception as e:

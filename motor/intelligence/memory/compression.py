@@ -46,17 +46,14 @@ class CompressionResult:
 
 class CompressionPolicy(ABC):
     @abstractmethod
-    def should_run(self, store: EpisodeStore) -> bool:
-        ...
+    def should_run(self, store: EpisodeStore) -> bool: ...
 
     @abstractmethod
-    def select_candidates(self, store: EpisodeStore) -> list[Episode]:
-        ...
+    def select_candidates(self, store: EpisodeStore) -> list[Episode]: ...
 
     @property
     @abstractmethod
-    def delete_originals(self) -> bool:
-        ...
+    def delete_originals(self) -> bool: ...
 
 
 class NeverCompress(CompressionPolicy):
@@ -81,10 +78,7 @@ class AgeBasedCompression(CompressionPolicy):
 
     def select_candidates(self, store: EpisodeStore) -> list[Episode]:
         cutoff = datetime.now(UTC) - self._max_age
-        return [
-            ep for ep in store.get_recent(k=10000)
-            if datetime.fromisoformat(ep.timestamp) < cutoff
-        ]
+        return [ep for ep in store.get_recent(k=10000) if datetime.fromisoformat(ep.timestamp) < cutoff]
 
     @property
     def delete_originals(self) -> bool:
@@ -164,6 +158,7 @@ class MemoryCompressor:
 
     def compress(self) -> CompressionResult:
         import time
+
         start = time.monotonic()
         result = CompressionResult()
 

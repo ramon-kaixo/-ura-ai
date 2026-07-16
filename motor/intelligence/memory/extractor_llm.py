@@ -6,15 +6,13 @@ import json
 import logging
 import time
 
-import httpx
-
+from motor.core.llm import generate
 from motor.intelligence.memory.episodic import Episode
 from motor.intelligence.memory.extractor import FactExtractor
 from motor.intelligence.memory.semantic import SemanticFact
 
 log = logging.getLogger("ura.extractor.llm")
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "qwen2.5:7b"
 
 
@@ -22,12 +20,8 @@ class LLMFactExtractor(FactExtractor):
     def __init__(
         self,
         model: str = MODEL,
-        ollama_url: str = OLLAMA_URL,
-        timeout: int = 30,
     ) -> None:
         self._model = model
-        self._url = ollama_url
-        self._timeout = timeout
 
     def extract(self, episode: Episode) -> list[SemanticFact]:
         if not episode.payload:
@@ -35,15 +29,11 @@ class LLMFactExtractor(FactExtractor):
         prompt = self._build_prompt(episode.payload)
         start = time.monotonic()
         try:
-            resp = httpx.post(
-                self._url,
-                json={"model": self._model, "prompt": prompt, "stream": False, "options": {"num_predict": 500}},
-                timeout=self._timeout,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+            raw = generate(prompt, model=self._model, options={"num_predict": 500})
+            if raw.startswith("Error:"):
+                log.warning("LLM extraction failed for %s: %s", episode.id[:8], raw)
+                return []
             elapsed = (time.monotonic() - start) * 1000
-            raw = data.get("response", "[]")
             facts = self._parse_response(raw, episode)
             log.debug("LLM extracted %d facts from episode %s (%.0fms)", len(facts), episode.id[:8], elapsed)
             return facts
@@ -97,6 +87,7 @@ class LLMFactExtractor(FactExtractor):
 
     def _fallback_parse(self, raw: str) -> list[dict]:
         import re
+
         items: list[dict] = []
         for match in re.finditer(r"\{\s*\"subject\"\s*:\s*\"([^\"]+)\"", raw):
             items.append({"subject": match.group(1)})

@@ -184,12 +184,8 @@ class WebExtractor:
                 description = meta_desc["content"].strip()
 
             body_text = soup.get_text(separator=" ", strip=True)
-            images = [
-                img.get("src", "") for img in soup.find_all("img") if img.get("src")
-            ]
-            links = [
-                a.get("href", "") for a in soup.find_all("a", href=True) if a["href"].startswith("http")
-            ]
+            images = [img.get("src", "") for img in soup.find_all("img") if img.get("src")]
+            links = [a.get("href", "") for a in soup.find_all("a", href=True) if a["href"].startswith("http")]
 
             metadata: dict[str, Any] = {
                 "url": final_url,
@@ -209,8 +205,13 @@ class WebExtractor:
                 "extracted_at": now,
             }
 
-            log.info("Extracted web page: %s (%d chars, %d images, %d links)",
-                      final_url, len(body_text), len(images), len(links))
+            log.info(
+                "Extracted web page: %s (%d chars, %d images, %d links)",
+                final_url,
+                len(body_text),
+                len(images),
+                len(links),
+            )
 
         asset = KnowledgeAsset(
             asset_id=content_sha256[:16],
@@ -297,11 +298,13 @@ def _check_ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address, hostnam
 
 def _hash_url_stub(url: str) -> str:
     import hashlib
+
     return hashlib.sha256(url.encode()).hexdigest()
 
 
 def hashlib_content(content: bytes) -> str:
     import hashlib
+
     return hashlib.sha256(content).hexdigest()
 
 

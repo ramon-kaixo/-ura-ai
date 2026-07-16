@@ -77,16 +77,13 @@ class GuardianOpenCLaw:
         try:
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:
-                f.write(
-                    f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n"
-                )
+                f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:
             logger.error(f"Error registrando en audit.log: {e}")
 
     def _consultar_policia(self, accion: str, **kwargs) -> tuple[bool, str]:
         # Stub: agente_policia_v2 no operativo en este nodo
         return True, "stub: policia desactivado"
-
 
     def _crear_backup(self, ruta: str) -> bool:
         """
@@ -211,13 +208,9 @@ class GuardianOpenCLaw:
         """
         try:
             if precio:
-                mensaje = (
-                    f"El paquete '{paquete}' cuesta ${precio}. ¿Autorizar instalación? (s/n): "
-                )
+                mensaje = f"El paquete '{paquete}' cuesta ${precio}. ¿Autorizar instalación? (s/n): "
             else:
-                mensaje = (
-                    f"El paquete '{paquete}' requiere autorización. ¿Autorizar instalación? (s/n): "
-                )
+                mensaje = f"El paquete '{paquete}' requiere autorización. ¿Autorizar instalación? (s/n): "
 
             respuesta = input(mensaje).strip().lower()
             return respuesta == "s" or respuesta == "si" or respuesta == "sí"
@@ -267,10 +260,7 @@ class GuardianOpenCLaw:
 
         # REGLA 4 - CONTROL DE INSTALACIÓN
         accion_lower = accion.lower()
-        if any(
-            cmd in accion_lower
-            for cmd in ["brew install", "pip install", "npm install", "apt install"]
-        ):
+        if any(cmd in accion_lower for cmd in ["brew install", "pip install", "npm install", "apt install"]):
             # Extraer nombre del paquete
             partes = accion.split()
             if len(partes) >= 3:

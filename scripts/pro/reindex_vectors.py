@@ -26,10 +26,10 @@ log = logging.getLogger("reindex_vectors")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Reindexa assets en VectorStore")
-    parser.add_argument("--db", default="/home/ramon/URA/ura_ia_1972/data/ura.db",
-                        type=Path, help="Ruta a la BD SQLite")
-    parser.add_argument("--execute", action="store_true",
-                        help="Ejecutar realmente (dry-run por defecto)")
+    parser.add_argument(
+        "--db", default="/home/ramon/URA/ura_ia_1972/data/ura.db", type=Path, help="Ruta a la BD SQLite"
+    )
+    parser.add_argument("--execute", action="store_true", help="Ejecutar realmente (dry-run por defecto)")
     parser.add_argument("--batch", type=int, default=100, help="Tamaño de batch")
     args = parser.parse_args()
 
@@ -44,8 +44,7 @@ def main() -> None:
     asset_store = SQLiteAssetStore(db_path)
     retriever = VectorAugmentedRetriever(graph, asset_store, embedder, vector_store)
 
-    log.info("Reconciliando AssetStore ↔ VectorStore (dry_run=%s, batch=%d)",
-             not args.execute, args.batch)
+    log.info("Reconciliando AssetStore ↔ VectorStore (dry_run=%s, batch=%d)", not args.execute, args.batch)
     stats = retriever.reconcile(dry_run=not args.execute, batch_size=args.batch)
 
     log.info("Resultados:")

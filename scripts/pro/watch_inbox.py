@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Watchdog de inbox: detecta archivos nuevos → ingestar con retry + backoff."""
+
 import asyncio
 import hashlib
 import logging
-import sys
-import time
 from pathlib import Path
 
 import httpx
@@ -62,12 +61,12 @@ async def process_file(path: Path) -> bool:
 
             if resp.status_code == 503:
                 log.warning(f"{path.name} → breaker OPEN (intento {attempt}/{MAX_RETRIES})")
-                await asyncio.sleep(BACKOFF_BASE ** attempt)
+                await asyncio.sleep(BACKOFF_BASE**attempt)
                 continue
 
             if resp.status_code == 429:
                 log.warning(f"{path.name} → rate limit (intento {attempt}/{MAX_RETRIES})")
-                await asyncio.sleep(BACKOFF_BASE ** attempt * 2)
+                await asyncio.sleep(BACKOFF_BASE**attempt * 2)
                 continue
 
             last_error = f"HTTP {resp.status_code}"
@@ -81,7 +80,7 @@ async def process_file(path: Path) -> bool:
             log.warning(f"{path.name} → {last_error} (intento {attempt}/{MAX_RETRIES})")
 
         if attempt < MAX_RETRIES:
-            await asyncio.sleep(BACKOFF_BASE ** attempt)
+            await asyncio.sleep(BACKOFF_BASE**attempt)
 
     log.error(f"{path.name} → AGOTADOS {MAX_RETRIES} intentos: {last_error}")
     return False

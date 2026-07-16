@@ -185,6 +185,7 @@ class TestReflectionAgent:
         class CustomStrategy(ReflectionStrategy):
             def reflect(self, result, iteration):
                 return ReflectionDecision(action=ReflectionAction.ACCEPT, reason="custom", iteration=iteration)
+
         agent = ReflectionAgent(strategy=CustomStrategy(), max_iterations=1)
         result = _result(True, {"a": 1})
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
@@ -207,6 +208,7 @@ class TestReflectionAgent:
         class StopStrategy(ReflectionStrategy):
             def reflect(self, result, iteration):
                 return ReflectionDecision(action=ReflectionAction.STOP, reason="stop", iteration=iteration)
+
         agent = ReflectionAgent(strategy=StopStrategy(), max_iterations=5)
         result = _result(True, {"a": 1})
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
@@ -234,6 +236,7 @@ class TestReflectionAgent:
 class TestThreadSafety:
     def test_concurrent_reflection(self):
         import concurrent.futures
+
         agent = ReflectionAgent(max_iterations=3, min_confidence=1.0)
         results = [_result(True, {"confidence": 0.5}) for _ in range(20)]
         tasks = [AgentTask(objective="reflect", input_data={"initial_result": r}) for r in results]

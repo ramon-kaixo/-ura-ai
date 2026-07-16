@@ -4,7 +4,6 @@ Run once to populate Qdrant with the 12 reference documents."""
 
 from __future__ import annotations
 
-import json
 import logging
 import sys
 from pathlib import Path
@@ -42,7 +41,6 @@ URA runs multiple systemd services on the GX10 NVIDIA GB10 hardware.
 - `ura-detector`: YOLOv8 Detector + ByteTrack + Behavior Analysis
 
 All services are managed by systemd with automatic restart policies.""",
-
     "ura_config_reference": """# URA Configuration Reference
 
 The `UraConfig` class in `motor/core/config.py` is the single source of truth for configuration.
@@ -68,7 +66,6 @@ Default config lives in deploy/system_config.json.
 - `URA_DATA_DIR`: Override data directory
 - `MOCHILA_COST_FILE`: Cost tracker file path
 - `MOCHILA_HEALTH_FILE`: Provider health file path""",
-
     "systemd_service_guide": """# Systemd Service Management for URA
 
 URA uses systemd for service lifecycle management on the GX10.
@@ -96,7 +93,6 @@ Systemd service health is monitored via:
 - `systemctl is-active <service>`
 - `systemctl show <service> -p MainPID`
 - Custom health scripts in scripts/pro/""",
-
     "test_patterns_guide": """# URA Test Patterns Guide
 
 Tests in URA follow specific patterns for different components.
@@ -115,7 +111,6 @@ Tests in URA follow specific patterns for different components.
 - No `skip`, `xfail`, or disabled tests
 - Private member access in tests: add `# ruff: noqa: SLF001` at file level
 - Test file naming: test_<component>.py""",
-
     "pytest_configuration": """# Pytest Configuration for URA
 
 URA uses pytest 9.0.3 with specific configuration.
@@ -140,7 +135,6 @@ Some tests are excluded from the default run:
 - pytest-asyncio 1.4.0
 - pytest-timeout
 - hypothesis 6.153.2""",
-
     "mock_plugin_fixtures": """# Mock Plugins for Testing
 
 Creating mock plugins for tests follows a standard pattern.
@@ -191,7 +185,6 @@ class _CancellingPlugin(PluginBase):
     def on_pre_ingest(self, event):
         return None  # cancels the operation
 ```""",
-
     "knowledge_engine_docs": """# URA Knowledge Engine Overview
 
 The Knowledge Engine (KE) is URA's document indexing and retrieval system.
@@ -214,7 +207,6 @@ The KE has multiple components:
 4. Embedded using nomic-embed-text via Ollama
 5. Stored in Qdrant vector database
 6. FTS5 index in SQLite for lexical search""",
-
     "fts5_schema_docs": """# FTS5 Schema for URA Knowledge Base
 
 URA uses SQLite FTS5 for full-text search capabilities.
@@ -240,7 +232,6 @@ The FTS5 content table references `kg_nodes` which stores:
 - title: Document title
 - metadata: JSON metadata
 - embedding_id: Reference to Qdrant vector""",
-
     "qdrant_store_docs": """# Qdrant Vector Store in URA
 
 URA uses Qdrant as its vector database for semantic search.
@@ -265,7 +256,6 @@ URA uses Qdrant as its vector database for semantic search.
 
 Search is performed via cosine similarity between query embedding and stored vectors.
 Results include payload metadata and similarity score.""",
-
     "search_engine_docs": """# URA Search Engine
 
 URA provides multiple search modes through the KnowledgeReader.
@@ -292,7 +282,6 @@ Configured via `VectorAugmentedRetriever` with configurable RRF k parameter.
 - `mode='lexical'`: FTS5 only
 - `mode='semantic'`: Qdrant only (when available)
 - `mode='hybrid'`: Both (when both indices available)""",
-
     "retrieval_methods_guide": """# Retrieval Methods in URA
 
 URA supports multiple retrieval strategies for finding relevant documents.
@@ -320,7 +309,6 @@ Available via VectorAugmentedRetriever class.
 - MRR: Mean Reciprocal Rank of first relevant result
 - nDCG: Normalized Discounted Cumulative Gain
 - MAP: Mean Average Precision across all queries""",
-
     "query_optimization_docs": """# Query Optimization in URA
 
 Optimizing search queries improves retrieval quality and user experience.

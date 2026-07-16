@@ -6,7 +6,6 @@ import pytest
 
 from motor.events.bus import EventBus
 from motor.events.event import EventPayload, Event
-from motor.events.topics import SYSTEM_STARTED, SYSTEM_SHUTDOWN
 
 
 class TestEventBusPublish:

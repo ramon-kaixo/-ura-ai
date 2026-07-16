@@ -45,6 +45,7 @@ class Instrumentation:
                     raise
                 finally:
                     self.metrics.timer("eventbus_publish_duration_seconds").record(time.monotonic() - start)
+
             return wrapped
 
         def _wrap_emit_sync(original: Callable) -> Callable:
@@ -59,6 +60,7 @@ class Instrumentation:
                     raise
                 finally:
                     self.metrics.timer("eventbus_emitsync_duration_seconds").record(time.monotonic() - start)
+
             return wrapped
 
         _wrap(bus, "publish", _wrap_publish)
@@ -81,6 +83,7 @@ class Instrumentation:
                     self.metrics.counter("plugins_load_failures_total", labels={"plugin": name}).inc()
                 self.metrics.timer("plugins_load_duration_ms").record(duration)
                 return result
+
             return wrapped
 
         _wrap(registry, "_load", _wrap_get)
@@ -116,6 +119,7 @@ class Instrumentation:
                     self.metrics.counter("pipeline_failed_total").inc()
 
                 return result
+
             return wrapped
 
         _wrap(executor, "execute", _wrap_execute)
@@ -129,6 +133,7 @@ class Instrumentation:
             def wrapped(plugin_name: str, plugin: Any) -> None:  # type: ignore[explicit-any]
                 original(plugin_name, plugin)
                 self.metrics.counter("hooks_registered_total", labels={"plugin": plugin_name}).inc()
+
             return wrapped
 
         _wrap(hook_manager, "register_plugin_hooks", _wrap_register)
@@ -151,6 +156,7 @@ class Instrumentation:
                 if not result.ok:
                     self.metrics.counter("subprocess_errors_total", labels={"cmd": cmd_name}).inc()
                 return result
+
             return wrapped
 
         _wrap(executor, "run", _wrap_run)

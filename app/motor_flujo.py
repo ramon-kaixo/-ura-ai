@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """motor_flujo.py — Motor de flujo con control de RAM y spool en disco."""
+
 from __future__ import annotations
-import asyncio, gc, json, logging, sys
+import asyncio, gc, json, logging
 from pathlib import Path
-from typing import Any
 
 import psutil
 
@@ -12,22 +12,29 @@ logger = logging.getLogger("MotorFlujo")
 
 SPOOL_DIR = str(Path.home() / "URA" / "storage" / "spool")
 
+
 class ControladorMemoria:
     """Componente 1: Evalua la salud del hardware."""
+
     def __init__(self, umbral_ram_pct: float = 85.0) -> None:
         self.umbral_ram_pct = umbral_ram_pct
+
     def tiene_luz_verde(self) -> bool:
         return psutil.virtual_memory().percent < self.umbral_ram_pct
 
+
 class AlforjaSpooler:
     """Cola FIFO en disco. Zero RAM impact."""
+
     def __init__(self, ruta_spool: str = SPOOL_DIR) -> None:
         self.path = Path(ruta_spool)
         self.path.mkdir(parents=True, exist_ok=True)
+
     def guardar_tarea(self, tarea: dict) -> None:
         tid = tarea.get("id", "unknown")
         (self.path / f"task_{tid}.json").write_text(json.dumps(tarea, ensure_ascii=False))
         logger.info(f"[ALFORJA] Tarea {tid} desviada a disco")
+
     def obtener_siguiente_tarea(self) -> dict | None:
         archivos = sorted(self.path.glob("task_*.json"))
         if not archivos:
@@ -40,8 +47,10 @@ class AlforjaSpooler:
             logger.error(f"[ALFORJA] Error leyendo spool: {e}")
             return None
 
+
 class CajaRegistradora:
     """Procesamiento con purga de memoria."""
+
     async def ejecutar(self, tarea: dict) -> None:
         try:
             logger.info(f"[CAJA] Ejecutando: {tarea.get('id')}")
@@ -49,8 +58,10 @@ class CajaRegistradora:
         finally:
             gc.collect()
 
+
 class AsignadorCanales:
     """Orquestador con prioridad: spool > cola RAM > sleep."""
+
     def __init__(self) -> None:
         self.ram = ControladorMemoria()
         self.spool = AlforjaSpooler()
@@ -90,6 +101,7 @@ class AsignadorCanales:
     def arrancar(self) -> None:
         self._bucle = asyncio.create_task(self.bucle_procesamiento())
 
+
 async def main() -> None:
     a = AsignadorCanales()
     a.arrancar()
@@ -97,6 +109,7 @@ async def main() -> None:
         await a.inyectar_tarea({"id": f"TX_{i}", "payload": "datos"})
         await asyncio.sleep(0.02)
     await asyncio.sleep(5)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

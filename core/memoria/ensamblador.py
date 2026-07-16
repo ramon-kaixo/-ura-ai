@@ -16,7 +16,7 @@ class ContextWindowGuard:
 
     def _estimar_tokens_atomico(self, texto: str) -> int:
         """Ratio dinámico: 2.0 para código denso, 3.8 para prosa/instrucciones."""
-        caracteres_criticos = sum(texto.count(c) for c in ['{', '}', '[', ']', '_', '=', '/', '\\'])
+        caracteres_criticos = sum(texto.count(c) for c in ["{", "}", "[", "]", "_", "=", "/", "\\"])
         ratio = 2.0 if caracteres_criticos > 5 else 3.8
         return int(len(texto) / ratio) + self.OVERHEAD_MSG
 
@@ -69,8 +69,7 @@ class ContextWindowGuard:
 
         # 5. Construcción final
         texto_contexto = "\n\n".join(
-            f"--- DOCUMENTO ---\n{ch['datos'].get('payload', {}).get('texto', '')}"
-            for ch in chunks_evaluados
+            f"--- DOCUMENTO ---\n{ch['datos'].get('payload', {}).get('texto', '')}" for ch in chunks_evaluados
         )
         prompt_base = f"CONTEXTO:\n{texto_contexto}\n\nPREGUNTA:\n{query}"
 
@@ -79,5 +78,11 @@ class ContextWindowGuard:
         mensajes_finales.append({"role": "user", "content": prompt_base})
 
         total = coste_fijo_total + tokens_chunks + tokens_historial
-        log.info("Prompt: ~%d/%d tokens (chunks=%d, historial=%d).", total, self.limite_entrada_tokens, tokens_chunks, tokens_historial)
+        log.info(
+            "Prompt: ~%d/%d tokens (chunks=%d, historial=%d).",
+            total,
+            self.limite_entrada_tokens,
+            tokens_chunks,
+            tokens_historial,
+        )
         return {"messages": mensajes_finales, "tokens_estimados": total}

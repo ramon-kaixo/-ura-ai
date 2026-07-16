@@ -121,8 +121,16 @@ def cmd_learn(config: UraConfig, args=None):
 def cmd_alerta(config: UraConfig = None, args=None):
     r = _executor.run(
         [
-            "journalctl", "-u", "ura-pipeline.service",
-            "--no-pager", "-p", "err", "--since", "1 hour ago", "-o", "short-iso",
+            "journalctl",
+            "-u",
+            "ura-pipeline.service",
+            "--no-pager",
+            "-p",
+            "err",
+            "--since",
+            "1 hour ago",
+            "-o",
+            "short-iso",
         ],
         timeout=10,
     )

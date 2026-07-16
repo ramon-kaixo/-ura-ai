@@ -75,13 +75,13 @@ def bench_plugin_discover(num_plugins: int = 10) -> float:
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)
         for i in range(num_plugins):
-            content = f'''
+            content = f"""
 __plugin__ = {{"name": "bp{i}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         return {{"i": {i}}}
-'''
+"""
             (d / f"bp{i}.py").write_text(textwrap.dedent(content))
 
         start = time.monotonic()
@@ -94,6 +94,7 @@ class _P(PluginBase):
 def bench_subprocess_executor(runs: int = 100) -> float:
     """Tiempo de SubprocessExecutor.run() para N ejecuciones."""
     from motor.core.executor import SubprocessExecutor
+
     executor = SubprocessExecutor()
     start = time.monotonic()
     for _ in range(runs):
@@ -105,6 +106,7 @@ def bench_subprocess_executor(runs: int = 100) -> float:
 def bench_degraded_mode_ops(ops: int = 1000) -> float:
     """Tiempo de DegradedMode mark_degraded + mark_healthy para N ops."""
     from motor.core.state import DegradedMode
+
     dm = DegradedMode()
     start = time.monotonic()
     for i in range(ops):
@@ -117,14 +119,20 @@ def bench_degraded_mode_ops(ops: int = 1000) -> float:
 def bench_pytest() -> float:
     """Tiempo total de pytest (tests relevantes)."""
     cmd = [
-        sys.executable, "-m", "pytest", "-q", "--tb=line",
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=line",
         "--ignore=tests/test_unit.py",
         "--ignore=tests/test_openclaw.py",
         "--ignore=tests/test_vram_guard.py",
         "--ignore=tests/test_sda.py",
         "--ignore=tests/test_snc_anomalias.py",
-        "tests/", "motor/tests/",
-        "-p", "no:cov",
+        "tests/",
+        "motor/tests/",
+        "-p",
+        "no:cov",
     ]
     t, _, _ = _subp(cmd, timeout=120)
     return t
@@ -232,6 +240,7 @@ def print_table(rows: list[dict]) -> None:
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="F10-07: Benchmarks Fase 10")
     parser.add_argument("--runs", type=int, default=5, help="Número de ejecuciones (default 5)")
     parser.add_argument("--save-baseline", action="store_true", help="Guardar resultados como nuevo baseline")
@@ -253,7 +262,11 @@ def main():
         # NOTA: CLI help (<100ms) fue una estimación, no medición real.
         # El valor real se mide como import_time + overhead argparse (~80ms).
         baseline = {
-            "CLI help": {"mean": 280, "unit": "ms", "note": "Estimado en FASE10_BASELINE.md como <100ms. Real incluye import+argparse."},
+            "CLI help": {
+                "mean": 280,
+                "unit": "ms",
+                "note": "Estimado en FASE10_BASELINE.md como <100ms. Real incluye import+argparse.",
+            },
             "CLI doctor": {"mean": 500, "unit": "ms"},
             "pytest (all)": {"mean": 29320, "unit": "ms"},
             "PluginRegistry discover (10)": {"mean": 200, "unit": "ms"},

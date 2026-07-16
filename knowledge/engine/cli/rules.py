@@ -1,13 +1,13 @@
 """CLI: rules list|eval, deduce."""
 
 import sys
-from pathlib import Path
 
 from knowledge.engine.cli.main import _resolve_db_path
 
 
 def cmd_rules_list(args) -> int:
     from knowledge.engine.rules import list_rules
+
     rules = list_rules()
     print(f"{'ID':6s} {'Severidad':10s} {'Nombre':30s} {'Descripción'}")
     print("-" * 80)
@@ -38,12 +38,17 @@ def cmd_rules_eval(args) -> int:
     documents = []
     for r in rows:
         fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
-        documents.append({
-            "id": r["id"], "path": r["path"], "type": r["type"],
-            "title": fm.get("title", ""), "tags": fm.get("tags", []),
-            "body": r["body"] or "",
-            "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-        })
+        documents.append(
+            {
+                "id": r["id"],
+                "path": r["path"],
+                "type": r["type"],
+                "title": fm.get("title", ""),
+                "tags": fm.get("tags", []),
+                "body": r["body"] or "",
+                "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
+            }
+        )
 
     filter_id = args.doc_id if hasattr(args, "doc_id") and args.doc_id else None
     if filter_id:

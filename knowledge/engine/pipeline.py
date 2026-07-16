@@ -70,9 +70,7 @@ def _run_snapshot(
     try:
         from knowledge.engine.scanner import scan_incremental
 
-        changed, snapshot, skipped, deleted = scan_incremental(
-            previous_snapshot, source_dir
-        )
+        changed, snapshot, skipped, deleted = scan_incremental(previous_snapshot, source_dir)
         return StageResult(
             stage=Stage.SNAPSHOT,
             success=True,
@@ -224,13 +222,16 @@ def _run_ci() -> StageResult:
         script = Path(__file__).resolve().parent.parent.parent / "scripts" / "ci.sh"
         if not script.exists():
             return StageResult(
-                stage=Stage.CI, success=False,
+                stage=Stage.CI,
+                success=False,
                 duration_ms=(time.monotonic() - t0) * 1000,
                 error=f"CI script not found: {script}",
             )
         r = subprocess.run(  # noqa: S603  -- script desde CI config, no input externo
             ["bash", str(script)],  # noqa: S607
-            capture_output=True, text=True, timeout=300,
+            capture_output=True,
+            text=True,
+            timeout=300,
         )
         return StageResult(
             stage=Stage.CI,
@@ -241,7 +242,8 @@ def _run_ci() -> StageResult:
         )
     except Exception as exc:
         return StageResult(
-            stage=Stage.CI, success=False,
+            stage=Stage.CI,
+            success=False,
             duration_ms=(time.monotonic() - t0) * 1000,
             error=str(exc),
         )
@@ -256,9 +258,7 @@ def _run_rule_eval(db_path: Path) -> StageResult:
         import json
 
         conn = open_db(db_path)
-        rows = conn.execute(
-            "SELECT id, type, path, frontmatter, body FROM kg_nodes"
-        ).fetchall()
+        rows = conn.execute("SELECT id, type, path, frontmatter, body FROM kg_nodes").fetchall()
         edges = conn.execute("SELECT src, dst FROM kg_edges").fetchall()
         conn.close()
 
@@ -267,14 +267,16 @@ def _run_rule_eval(db_path: Path) -> StageResult:
         documents = []
         for r in rows:
             fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
-            documents.append({
-                "id": r["id"],
-                "path": r["path"],
-                "title": fm.get("title", ""),
-                "tags": fm.get("tags", []),
-                "body": r["body"] or "",
-                "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-            })
+            documents.append(
+                {
+                    "id": r["id"],
+                    "path": r["path"],
+                    "title": fm.get("title", ""),
+                    "tags": fm.get("tags", []),
+                    "body": r["body"] or "",
+                    "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
+                }
+            )
 
         evaluator = RuleEvaluator()
         findings = evaluator.evaluate(documents, all_node_ids, all_targets)
@@ -346,23 +348,28 @@ class Pipeline:
             Stage.ARCHIVE: lambda: _run_archive(self._source_dir, self._db_path, self._archive_dir),
             Stage.QDRANT: lambda: _run_qdrant(self._db_path),
             Stage.RULE_EVAL: lambda: _run_rule_eval(self._db_path),
-        Stage.CI: lambda: _run_ci(),
+            Stage.CI: lambda: _run_ci(),
         }
 
         for stage in all_stages:
             runner = runners.get(stage)
             if runner is None:
-                results.append(StageResult(
-                    stage=stage, success=False,
-                    duration_ms=0, error=f"Unknown stage: {stage}",
-                ))
+                results.append(
+                    StageResult(
+                        stage=stage,
+                        success=False,
+                        duration_ms=0,
+                        error=f"Unknown stage: {stage}",
+                    )
+                )
                 continue
             log.info("Pipeline stage: %s", stage)
             result = runner()
             results.append(result)
             log.info(
                 "Stage %s: %s (%dms)",
-                stage, "OK" if result.success else "FAIL",
+                stage,
+                "OK" if result.success else "FAIL",
                 result.duration_ms,
             )
 

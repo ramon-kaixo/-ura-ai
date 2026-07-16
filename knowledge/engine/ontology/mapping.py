@@ -1,16 +1,14 @@
 """Mapping — conversión entre KnowledgeAsset y formatos externos.
 
-  - KnowledgeAsset → Schema.org JSON-LD
-  - KnowledgeAsset → DCAT
-  - KnowledgeAsset → W3C Prov
-  - KnowledgeAsset → OpenLineage event
+- KnowledgeAsset → Schema.org JSON-LD
+- KnowledgeAsset → DCAT
+- KnowledgeAsset → W3C Prov
+- KnowledgeAsset → OpenLineage event
 """
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime
-from typing import Any
 
 from knowledge.engine.ontology.internal import KnowledgeAsset
 
@@ -44,8 +42,7 @@ def to_prov(asset: KnowledgeAsset) -> dict:
     }
 
 
-def to_openlineage(asset: KnowledgeAsset, job_name: str = "metadata_extract",
-                   run_id: str = "") -> dict:
+def to_openlineage(asset: KnowledgeAsset, job_name: str = "metadata_extract", run_id: str = "") -> dict:
     """KnowledgeAsset → OpenLineage event (formato reducido).
 
     Para eventos completos, usar LineageStore con el schema completo OpenLineage.

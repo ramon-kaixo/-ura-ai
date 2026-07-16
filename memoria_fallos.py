@@ -1,4 +1,5 @@
 """memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)"""
+
 from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
@@ -7,12 +8,14 @@ from datetime import datetime, timezone
 MAX_FALLOS = 5
 UMBRAL_PATRON = 3
 
+
 @dataclass
 class Fallo:
     tipo: str
     mensaje: str
     arreglo: str | None = None
     timestamp: str = field(default_factory=lambda: datetime.now(tz=timezone.utc).isoformat())
+
 
 class MemoriaFallos:
     def __init__(self, nombre_pieza: str, max_fallos: int = MAX_FALLOS, umbral_patron: int = UMBRAL_PATRON) -> None:
@@ -54,4 +57,10 @@ class MemoriaFallos:
         tipos: dict[str, int] = {}
         for f in self._fallos:
             tipos[f.tipo] = tipos.get(f.tipo, 0) + 1
-        return {"pieza": self.nombre_pieza, "n_fallos": len(self._fallos), "tipos": tipos, "patron": self.hay_patron_activo(), "arreglos": list(self._arreglos.keys())}
+        return {
+            "pieza": self.nombre_pieza,
+            "n_fallos": len(self._fallos),
+            "tipos": tipos,
+            "patron": self.hay_patron_activo(),
+            "arreglos": list(self._arreglos.keys()),
+        }

@@ -199,7 +199,6 @@ class AnkerDeterministicPipeline:
 if __name__ == "__main__":
     pipeline = AnkerDeterministicPipeline(model_size="tiny")
 
-
     sr = SAMPLE_RATE
     t = np.linspace(0, 2, int(sr * 2), endpoint=False)
     test_audio = (np.sin(440 * 2 * np.pi * t) * 0.1).astype(np.float32)
@@ -214,4 +213,3 @@ if __name__ == "__main__":
     pipeline.learn_correction("hemby", "GB10")
     pipeline.learn_correction("codex", "ura_codex")
     pipeline.learn_correction("qdrant", "Qdrant")
-

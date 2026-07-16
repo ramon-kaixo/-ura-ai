@@ -1,7 +1,6 @@
 """CLI: agent list, run."""
 
 import sys
-from pathlib import Path
 
 from knowledge.engine.cli.main import _resolve_db_path
 

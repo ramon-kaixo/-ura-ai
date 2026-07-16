@@ -15,8 +15,7 @@ class Agent(ABC):
     status: AgentStatus = AgentStatus.IDLE
 
     @abstractmethod
-    def run(self, task: AgentTask) -> AgentResult:
-        ...
+    def run(self, task: AgentTask) -> AgentResult: ...
 
     def can_handle(self, task: AgentTask) -> bool:
         return task.agent_role == self.role

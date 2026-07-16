@@ -1,4 +1,5 @@
 """Analizador: trocea peticiones y decide fases (Saber/Hacer/Comprar)."""
+
 import json
 import logging
 
@@ -47,12 +48,15 @@ async def analizar(peticion: str) -> dict:
 
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(OLLAMA, json={
-                "model": MODELO_ANALISIS,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": False,
-                "options": {"temperature": 0.0, "num_predict": 512},
-            })
+            resp = await client.post(
+                OLLAMA,
+                json={
+                    "model": MODELO_ANALISIS,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                    "options": {"temperature": 0.0, "num_predict": 512},
+                },
+            )
 
         if resp.is_error:
             return {"error": f"Ollama {resp.status_code}", "peticion": peticion}
@@ -66,7 +70,7 @@ async def analizar(peticion: str) -> dict:
             start = content.find("{")
             end = content.rfind("}")
             if start >= 0 and end > start:
-                plan = json.loads(content[start:end + 1])
+                plan = json.loads(content[start : end + 1])
             else:
                 plan = {"fases": ["saber", "hacer"], "tema_principal": peticion, "palabras_clave": [peticion]}
 

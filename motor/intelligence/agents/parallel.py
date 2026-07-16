@@ -142,7 +142,7 @@ class ParallelExecutor:
                 remaining = len(tasks) - len(result.results) - result.cancelled
                 result.timed_out += remaining
                 items = list(future_map.values())
-                for _, remaining_task in items[len(result.results):]:
+                for _, remaining_task in items[len(result.results) :]:
                     result.errors.append(f"Task {remaining_task.id}: timed_out")
 
         result.elapsed_ms = (time.monotonic() - start) * 1000
@@ -151,21 +151,30 @@ class ParallelExecutor:
     def _run_single(self, agent_id: str, task: AgentTask, wf_id: str) -> AgentResult:
         if self.is_cancelled(wf_id):
             return AgentResult(
-                task_id=task.id, agent_id=agent_id,
-                success=False, output={}, error="cancelled",
+                task_id=task.id,
+                agent_id=agent_id,
+                success=False,
+                output={},
+                error="cancelled",
             )
         agent = self._find_agent(agent_id) if self._find_agent else None
         if agent is None:
             return AgentResult(
-                task_id=task.id, agent_id=agent_id,
-                success=False, output={}, error=f"agent_not_found:{agent_id}",
+                task_id=task.id,
+                agent_id=agent_id,
+                success=False,
+                output={},
+                error=f"agent_not_found:{agent_id}",
             )
         try:
             return agent.run(task)
         except Exception as exc:
             return AgentResult(
-                task_id=task.id, agent_id=agent_id,
-                success=False, output={}, error=str(exc),
+                task_id=task.id,
+                agent_id=agent_id,
+                success=False,
+                output={},
+                error=str(exc),
             )
 
     def close(self) -> None:

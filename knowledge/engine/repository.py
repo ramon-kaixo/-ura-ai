@@ -16,7 +16,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Protocol
 
-from knowledge.engine.models import CompileResult, Document, GraphNode, Relation, SearchResult
+from knowledge.engine.models import Document, Relation, SearchResult
 
 log = logging.getLogger("ura.knowledge.repository")
 
@@ -144,14 +144,16 @@ class SQLiteKnowledgeRepository:
         docs = []
         for r in rows:
             fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
-            docs.append({
-                "id": r["id"],
-                "path": r["path"],
-                "title": fm.get("title", ""),
-                "tags": fm.get("tags", []),
-                "body": r["body"] or "",
-                "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-            })
+            docs.append(
+                {
+                    "id": r["id"],
+                    "path": r["path"],
+                    "title": fm.get("title", ""),
+                    "tags": fm.get("tags", []),
+                    "body": r["body"] or "",
+                    "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
+                }
+            )
         return docs, node_ids, targets
 
     def health_check(self) -> dict[str, Any]:

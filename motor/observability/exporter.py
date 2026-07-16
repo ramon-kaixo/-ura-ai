@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 
 from motor.observability.metrics import MetricsRegistry
 
@@ -38,7 +37,7 @@ def format_prometheus(registry: MetricsRegistry) -> str:
         lines.append(f"{name}_count {hist['count']}")
         lines.append(f"{name}_sum {hist['sum']}")
         for bucket, count in hist.get("buckets", {}).items():
-            lines.append(f"{name}_bucket{{le=\"{bucket}\"}} {count}")
+            lines.append(f'{name}_bucket{{le="{bucket}"}} {count}')
 
     for timer in snapshot.get("timers", []):
         name = _sanitize(timer["name"])
@@ -47,7 +46,7 @@ def format_prometheus(registry: MetricsRegistry) -> str:
         lines.append(f"{name}_count {timer['count']}")
         lines.append(f"{name}_sum {timer['sum']}")
         for bucket, count in timer.get("buckets", {}).items():
-            lines.append(f"{name}_bucket{{le=\"{bucket}\"}} {count}")
+            lines.append(f'{name}_bucket{{le="{bucket}"}} {count}')
 
     return "\n".join(lines) + "\n"
 

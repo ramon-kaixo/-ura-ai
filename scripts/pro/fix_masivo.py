@@ -3,10 +3,10 @@
 
 Ejecutar: python3 scripts/pro/fix_masivo.py
 """
+
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
@@ -33,7 +33,7 @@ def fix_exe_shebang() -> int:
 
 def fix_e702_semicolons() -> int:
     """E702: split x=1
-y=2 into two lines."""
+    y=2 into two lines."""
     count = 0
     for dirname in DIRS:
         for f in Path(REPO / dirname).rglob("*.py"):
@@ -46,7 +46,12 @@ y=2 into two lines."""
                 if ";" in line and not line.strip().startswith(("#", "import ", "from ")):
                     parts = line.split(";")
                     parts = [p.strip() for p in parts]
-                    if len(parts) > 1 and all(not p.startswith(("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")) for p in parts):
+                    if len(parts) > 1 and all(
+                        not p.startswith(
+                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+                        )
+                        for p in parts
+                    ):
                         new_content.extend(parts)
                         changed = True
                         count += 1
@@ -75,7 +80,7 @@ def fix_s603_check_false() -> int:
                 continue
             content = f.read_text()
             new_content = re.sub(
-                r'(subprocess\.run\([^)]*)(\)\s*[\n#])',
+                r"(subprocess\.run\([^)]*)(\)\s*[\n#])",
                 lambda m: m.group(1) + ", check=False" + m.group(2) if "check=" not in m.group(1) else m.group(0),
                 content,
             )
@@ -111,8 +116,8 @@ def fix_s110_try_except_pass() -> int:
             content = f.read_text()
             # Replace bare `except: pass` with `except: pass  # noqa: S110`
             new_content = re.sub(
-                r'(except\s+\w*\s*:)\s*\n\s*pass',
-                r'\1\n    pass  # noqa: S110',
+                r"(except\s+\w*\s*:)\s*\n\s*pass",
+                r"\1\n    pass  # noqa: S110",
                 content,
             )
             if new_content != content:
@@ -160,7 +165,9 @@ def main():
     # Count final
     result = subprocess.run(
         ["ruff", "check", *[str(REPO / d) for d in DIRS], "--statistics"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     lines = result.stdout.strip().split("\n")
     if lines:

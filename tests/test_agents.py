@@ -167,7 +167,11 @@ class TestSupervisorAgent:
 
         task = AgentTask(
             objective="echo test",
-            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}]},  # noqa: E501
+            context={
+                "subtasks": [
+                    {"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}
+                ]
+            },  # noqa: E501
         )
         result = sup.run(task)
         assert result.success
@@ -188,7 +192,15 @@ class TestSupervisorAgent:
 
         task = AgentTask(
             objective="fail",
-            context={"subtasks": [{"agent_role": AgentRole.EXECUTOR, "objective": "fail", "input_data": {"cmd": ["bash", "-c", "exit 1"]}}]},  # noqa: E501
+            context={
+                "subtasks": [
+                    {
+                        "agent_role": AgentRole.EXECUTOR,
+                        "objective": "fail",
+                        "input_data": {"cmd": ["bash", "-c", "exit 1"]},
+                    }
+                ]
+            },  # noqa: E501
         )
         result = sup.run(task)
         assert not result.success
@@ -310,8 +322,9 @@ class TestIntegration:
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
 
-        result = runtime.execute_workflow("execute custom command",
-            {"user": "test", "cmd": ["echo", "context_works"]}, timeout=30)
+        result = runtime.execute_workflow(
+            "execute custom command", {"user": "test", "cmd": ["echo", "context_works"]}, timeout=30
+        )
         assert result.success
         assert result.duration_ms > 0
 

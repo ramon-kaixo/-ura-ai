@@ -1,4 +1,5 @@
 import asyncio
+
 """Vigilante: re-check de fuentes con cambio de contenido → versionado de ideas."""
 import json
 import logging
@@ -121,6 +122,7 @@ async def procesar_cambios() -> list[dict]:
     guardar_fuentes(fuentes)
     return cambios
 
+
 async def generar_parte() -> dict:
     """Genera el parte de la ultima pasada de actualizacion."""
     from core.memoria.qdrant_store import _get_client
@@ -138,10 +140,12 @@ async def generar_parte() -> dict:
     for fuente in fuentes:
         url = fuente.get("url", "")
         # Count versions of this source in Qdrant
-        results = await asyncio.to_thread(client.query_points,
+        results = await asyncio.to_thread(
+            client.query_points,
             "ideas",
             query_filter=models.Filter(must=[models.FieldCondition(key="fuente", match=models.MatchValue(value=url))]),
-            limit=50, with_payload=["version", "vigente", "fecha_captura"],
+            limit=50,
+            with_payload=["version", "vigente", "fecha_captura"],
         )
         versions = [p.payload for p in results.points if p.payload]
         activas = [v for v in versions if v.get("vigente")]

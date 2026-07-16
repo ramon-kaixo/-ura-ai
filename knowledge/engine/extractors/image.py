@@ -126,14 +126,12 @@ class ImageExtractor:
                 width, height = img.size
                 if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
                     raise ImageSizeError(
-                        f"Image dimensions too large: {width}x{height} "
-                        f"(max {MAX_IMAGE_DIMENSION}px per side)"
+                        f"Image dimensions too large: {width}x{height} (max {MAX_IMAGE_DIMENSION}px per side)"
                     )
 
                 if width * height > MAX_IMAGE_PIXELS:
                     raise ImageSizeError(
-                        f"Image too large: {width}x{height} = {width * height}px "
-                        f"(max {MAX_IMAGE_PIXELS}px)"
+                        f"Image too large: {width}x{height} = {width * height}px (max {MAX_IMAGE_PIXELS}px)"
                     )
 
                 if width * height >= MAX_IMAGE_PIXELS // 2:
@@ -165,10 +163,22 @@ class ImageExtractor:
 
         for tag_id, value in exif_data.items():
             tag_name = ExifTags.TAGS.get(tag_id, "")
-            if tag_name in ("Make", "Model", "DateTimeOriginal", "Orientation",
-                            "Software", "XResolution", "YResolution", "Flash",
-                            "ISOSpeedRatings", "FNumber", "ExposureTime",
-                            "FocalLength", "LensModel", "WhiteBalance"):
+            if tag_name in (
+                "Make",
+                "Model",
+                "DateTimeOriginal",
+                "Orientation",
+                "Software",
+                "XResolution",
+                "YResolution",
+                "Flash",
+                "ISOSpeedRatings",
+                "FNumber",
+                "ExposureTime",
+                "FocalLength",
+                "LensModel",
+                "WhiteBalance",
+            ):
                 metadata[f"exif_{tag_name.lower()}"] = str(value)
 
         gps_info = exif_data.get_ifd(0x8825)

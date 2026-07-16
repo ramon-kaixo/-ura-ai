@@ -1,8 +1,8 @@
 """Detectores multi-tipo para la Reactualización Total."""
+
 import blake3
 import logging
 import subprocess
-from pathlib import Path
 
 import httpx
 
@@ -27,7 +27,8 @@ def detector_github_releases(repo_url: str, version_anterior: str = "") -> dict:
         owner_repo = repo_url.replace("https://github.com/", "").rstrip("/")
         resp = httpx.get(
             f"https://api.github.com/repos/{owner_repo}/releases/latest",
-            timeout=15, headers={"Accept": "application/vnd.github.v3+json"},
+            timeout=15,
+            headers={"Accept": "application/vnd.github.v3+json"},
         )
         if resp.status_code == 404:
             return {"cambio": False, "error": "Sin releases"}
@@ -62,21 +63,33 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
         result = subprocess.run(  # noqa: S603  -- URL desde detector config, ffprobe no ejecuta shell
-            ["ffprobe", "-v", "quiet", "-print_format", "json",  # noqa: S607  -- URL desde detector config, ffprobe no ejecuta shell
-             "-show_format", url],
-            capture_output=True, text=True, timeout=30,
+            [
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",  # noqa: S607  -- URL desde detector config, ffprobe no ejecuta shell
+                "-show_format",
+                url,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode != 0:
             return {"cambio": False, "error": "FFprobe failed"}
         import json
+
         data = json.loads(result.stdout)
         fmt = data.get("format", {})
-        meta_nuevo = json.dumps({
-            "duration": round(float(fmt.get("duration", 0)), 1),
-            "size": fmt.get("size", ""),
-            "bit_rate": fmt.get("bit_rate", ""),
-            "format_name": fmt.get("format_name", ""),
-        })
+        meta_nuevo = json.dumps(
+            {
+                "duration": round(float(fmt.get("duration", 0)), 1),
+                "size": fmt.get("size", ""),
+                "bit_rate": fmt.get("bit_rate", ""),
+                "format_name": fmt.get("format_name", ""),
+            }
+        )
         return {"cambio": meta_nuevo != metadatos_anteriores, "metadatos": meta_nuevo}
     except Exception as e:
         return {"cambio": False, "error": str(e)}

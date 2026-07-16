@@ -22,25 +22,31 @@ CONFIG_CHANGED = "config.changed"
 
 HOOK_PREFIX = "plugin.hook."
 
-HOOK_PIPELINE = frozenset({
-    "pre_ingest",
-    "post_ingest",
-    "pre_search",
-    "post_search",
-    "pre_index",
-    "post_index",
-})
+HOOK_PIPELINE = frozenset(
+    {
+        "pre_ingest",
+        "post_ingest",
+        "pre_search",
+        "post_search",
+        "pre_index",
+        "post_index",
+    }
+)
 
-HOOK_SYSTEM = frozenset({
-    "on_startup",
-    "on_shutdown",
-    "on_degraded",
-    "on_restore",
-})
+HOOK_SYSTEM = frozenset(
+    {
+        "on_startup",
+        "on_shutdown",
+        "on_degraded",
+        "on_restore",
+    }
+)
 
-HOOK_CLI = frozenset({
-    "pre_command",
-    "post_command",
-})
+HOOK_CLI = frozenset(
+    {
+        "pre_command",
+        "post_command",
+    }
+)
 
 ALL_HOOKS = HOOK_PIPELINE | HOOK_SYSTEM | HOOK_CLI

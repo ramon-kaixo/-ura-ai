@@ -6,10 +6,7 @@ Los envuelve mediante metadata["wraps"] = "document:{doc_id}".
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
 
 from knowledge.engine._compat import StrEnum
@@ -17,6 +14,7 @@ from knowledge.engine._compat import StrEnum
 
 class AssetType(StrEnum):
     """Tipos de activos de conocimiento. Extensible."""
+
     MARKDOWN = "markdown"
     VIDEO = "video"
     IMAGE = "image"
@@ -42,6 +40,7 @@ class AssetSource:
     kind: "filesystem" | "github" | "api" | "upload" | "compile" | "audit"
     location: path absoluto, URL, o identificador único.
     """
+
     kind: str
     location: str
     fetched_at: str = ""
@@ -50,6 +49,7 @@ class AssetSource:
 @dataclass(frozen=True)
 class AssetRelationship:
     """Relación dirigida entre dos KnowledgeAssets."""
+
     target_id: str
     relation: str  # "fixes" | "depends_on" | "references" | "generates" | …
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -83,8 +83,7 @@ class KnowledgeAsset:
             "metadata": self.metadata,
             "source": {"kind": self.source.kind, "location": self.source.location},
             "relationships": [
-                {"target_id": r.target_id, "relation": r.relation, "metadata": r.metadata}
-                for r in self.relationships
+                {"target_id": r.target_id, "relation": r.relation, "metadata": r.metadata} for r in self.relationships
             ],
             "quality": self.quality,
             "created_at": self.created_at,

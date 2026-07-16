@@ -9,23 +9,31 @@ import statistics
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import logging
+
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 log = logging.getLogger("benchmark_rerank")
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "knowledge" / "evaluation" / "corpus"
 
 VECTOR_BASELINE = {
-    "Recall@10": 0.6700, "MRR": 0.7595, "MAP": 0.9423, "nDCG@10": 0.8346,
-    "P95": 195.57, "No-context rate": 0.215,
+    "Recall@10": 0.6700,
+    "MRR": 0.7595,
+    "MAP": 0.9423,
+    "nDCG@10": 0.8346,
+    "P95": 195.57,
+    "No-context rate": 0.215,
 }
 HYBRID_BASELINE = {
-    "Recall@10": 0.8708, "MRR": 0.7938, "MAP": 0.6444, "nDCG@10": 0.6498,
-    "P95": 200.27, "No-context rate": 0.005,
+    "Recall@10": 0.8708,
+    "MRR": 0.7938,
+    "MAP": 0.6444,
+    "nDCG@10": 0.6498,
+    "P95": 200.27,
+    "No-context rate": 0.005,
 }
 
 
@@ -49,7 +57,7 @@ def compute(retrieved, gold_set, gold_rel, k=10):
     mrr = next((1.0 / (i + 1) for i, d in enumerate(ids) if d in gold_set), 0.0)
     dcg = sum((2 ** gold_rel.get(d, 0) - 1) / math.log2(i + 2) for i, d in enumerate(ids))
     ideal = sorted(gold_rel.values(), reverse=True)
-    idcg_val = sum((2 ** r - 1) / math.log2(i + 2) for i, r in enumerate(ideal[:k]))
+    idcg_val = sum((2**r - 1) / math.log2(i + 2) for i, r in enumerate(ideal[:k]))
     ndcg = dcg / idcg_val if idcg_val > 0 else 0.0
     hits, ap_sum = 0, 0.0
     for i, d in enumerate(ids):
@@ -80,8 +88,11 @@ def run(name, retriever_fn, queries, rel_map, reranker=None):
             no_ctx += 1
 
         m = compute(results, gs, gr)
-        all_r10.append(m[0]); all_p5.append(m[1]); all_mrr.append(m[2])
-        all_ndcg.append(m[3]); all_ap.append(m[4])
+        all_r10.append(m[0])
+        all_p5.append(m[1])
+        all_mrr.append(m[2])
+        all_ndcg.append(m[3])
+        all_ap.append(m[4])
 
     slat = sorted(all_lat)
     n = len(slat)
@@ -131,7 +142,9 @@ def main():
         all_results[name] = run(name, fn, queries, rel_map)
 
     # Hybrid + NoOpReranker
-    all_results["Hybrid + NoOp"] = run("Hybrid+NoOp", lambda q, k: hybrid.search(q, k), queries, rel_map, reranker=NoOpReranker())
+    all_results["Hybrid + NoOp"] = run(
+        "Hybrid+NoOp", lambda q, k: hybrid.search(q, k), queries, rel_map, reranker=NoOpReranker()
+    )
 
     # Hybrid + LLMReranker (only first 50 queries due to time)
     log.warning("LLMReranker: ejecutando primeras 50 queries (costoso)...")
@@ -139,24 +152,31 @@ def main():
     small_rel = {k: v for k, v in rel_map.items() if any(q["qid"] == k for q in small_queries)}
     llm = LLMReranker(top_k=5)
     all_results["Hybrid + LLM"] = run(
-        "Hybrid+LLM", lambda q, k: hybrid.search(q, k),
-        small_queries, small_rel, reranker=llm,
+        "Hybrid+LLM",
+        lambda q, k: hybrid.search(q, k),
+        small_queries,
+        small_rel,
+        reranker=llm,
     )
 
     metrics = ["Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10", "P50", "P95", "P99", "Throughput", "No-context"]
-    print(f"\n{'='*100}")
-    print(f"  {'Config':<25} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}")
-    print(f"{'='*100}")
+    print(f"\n{'=' * 100}")
+    print(
+        f"  {'Config':<25} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
+    )
+    print(f"{'=' * 100}")
     for name in ["Vector only", "Hybrid (NoOp reranker)", "Hybrid + NoOp", "Hybrid + LLM"]:
         r = all_results.get(name)
         if r is None:
             continue
-        print(f"  {name:<25} {r['Recall@10']:<8.4f} {r['Precision@5']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG@10']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['P99']:<8.2f} {r['Throughput']:<8.2f} {r['No-context']:<8.2%}")
+        print(
+            f"  {name:<25} {r['Recall@10']:<8.4f} {r['Precision@5']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG@10']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['P99']:<8.2f} {r['Throughput']:<8.2f} {r['No-context']:<8.2%}"
+        )
 
     # Acceptance for Hybrid+Reranker vs criteria
-    print(f"\n{'='*100}")
+    print(f"\n{'=' * 100}")
     print(f"  Acceptance Criteria (Hybrid + Reranker)")
-    print(f"{'='*100}")
+    print(f"{'=' * 100}")
 
     for reranker_name in ["Hybrid + NoOp", "Hybrid + LLM"]:
         r = all_results.get(reranker_name)
@@ -164,16 +184,31 @@ def main():
             continue
         print(f"\n  {reranker_name}:")
         checks = [
-            ("MAP >= Vector-only", r["MAP"] >= VECTOR_BASELINE["MAP"],
-             f"{r['MAP']:.4f} >= {VECTOR_BASELINE['MAP']:.4f}"),
-            ("nDCG >= Vector-only", r["nDCG@10"] >= VECTOR_BASELINE["nDCG@10"],
-             f"{r['nDCG@10']:.4f} >= {VECTOR_BASELINE['nDCG@10']:.4f}"),
-            ("R@10 >= Hybrid", r["Recall@10"] >= HYBRID_BASELINE["Recall@10"],
-             f"{r['Recall@10']:.4f} >= {HYBRID_BASELINE['Recall@10']:.4f}"),
-            ("No-context <= Hybrid", r["No-context"] <= HYBRID_BASELINE["No-context rate"],
-             f"{r['No-context']:.2%} <= {HYBRID_BASELINE['No-context rate']:.2%}"),
-            ("P95 <= Hybrid +25%", r["P95"] <= HYBRID_BASELINE["P95"] * 1.25,
-             f"{r['P95']:.2f} <= {HYBRID_BASELINE['P95'] * 1.25:.2f}"),
+            (
+                "MAP >= Vector-only",
+                r["MAP"] >= VECTOR_BASELINE["MAP"],
+                f"{r['MAP']:.4f} >= {VECTOR_BASELINE['MAP']:.4f}",
+            ),
+            (
+                "nDCG >= Vector-only",
+                r["nDCG@10"] >= VECTOR_BASELINE["nDCG@10"],
+                f"{r['nDCG@10']:.4f} >= {VECTOR_BASELINE['nDCG@10']:.4f}",
+            ),
+            (
+                "R@10 >= Hybrid",
+                r["Recall@10"] >= HYBRID_BASELINE["Recall@10"],
+                f"{r['Recall@10']:.4f} >= {HYBRID_BASELINE['Recall@10']:.4f}",
+            ),
+            (
+                "No-context <= Hybrid",
+                r["No-context"] <= HYBRID_BASELINE["No-context rate"],
+                f"{r['No-context']:.2%} <= {HYBRID_BASELINE['No-context rate']:.2%}",
+            ),
+            (
+                "P95 <= Hybrid +25%",
+                r["P95"] <= HYBRID_BASELINE["P95"] * 1.25,
+                f"{r['P95']:.2f} <= {HYBRID_BASELINE['P95'] * 1.25:.2f}",
+            ),
         ]
         all_pass = True
         for label, passed, detail in checks:

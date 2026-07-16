@@ -1,4 +1,5 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
+
 import logging
 import threading
 import uuid
@@ -165,9 +166,15 @@ async def buscar_ideas(
         must.append({"key": "coste", "match": {"value": coste}})
 
     async with httpx.AsyncClient(timeout=15) as _ac_hc:
-        resp = await _ac_hc.post(f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{COLLECTION}/points/search",
-            json={"vector": {"name": "texto", "vector": query_vec}, "limit": limit,
-                  "filter": {"must": must}, "with_payload": True})
+        resp = await _ac_hc.post(
+            f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{COLLECTION}/points/search",
+            json={
+                "vector": {"name": "texto", "vector": query_vec},
+                "limit": limit,
+                "filter": {"must": must},
+                "with_payload": True,
+            },
+        )
         resp.raise_for_status()
 
         return [

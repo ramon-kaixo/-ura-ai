@@ -1,8 +1,5 @@
 """CLI: metadata — lineage, gobernanza y memoria."""
 
-import json
-import uuid
-
 from knowledge.engine.cli.main import _resolve_db_path
 
 
@@ -62,6 +59,7 @@ def cmd_metadata_policy(args) -> int:
 def cmd_memory_create(args) -> int:
     from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
     import uuid
+
     db_path = _resolve_db_path(args)
     kind = args.kind
     title = args.title
@@ -70,40 +68,60 @@ def cmd_memory_create(args) -> int:
     mid = uuid.uuid4().hex[:16]
     r = MemoryRecord(memory_id=mid, kind=kind, title=title, content=content, tags=tuple(t.strip() for t in tags))
     ok = SQLiteMemoryStore(db_path).save(r)
-    print(f"Memory created: {mid}" if ok else "Error"); return 0 if ok else 1
+    print(f"Memory created: {mid}" if ok else "Error")
+    return 0 if ok else 1
+
 
 def cmd_memory_list(args) -> int:
     from knowledge.engine.memory_store import SQLiteMemoryStore
+
     db_path = _resolve_db_path(args)
     kind = getattr(args, "kind", None)
     limit = getattr(args, "limit", 100)
     rs = SQLiteMemoryStore(db_path).list(kind=kind, limit=limit)
-    if not rs: print("No memories."); return 0
-    for r in rs: print(f"  [{r.kind:15s}] {r.memory_id:20s} {r.title[:50]}")
+    if not rs:
+        print("No memories.")
+        return 0
+    for r in rs:
+        print(f"  [{r.kind:15s}] {r.memory_id:20s} {r.title[:50]}")
     return 0
+
 
 def cmd_memory_show(args) -> int:
     from knowledge.engine.memory_store import SQLiteMemoryStore
+
     db_path = _resolve_db_path(args)
     r = SQLiteMemoryStore(db_path).get(args.memory_id)
-    if not r: print(f"Not found: {args.memory_id}"); return 1
-    print(f"ID: {r.memory_id}\nKind: {r.kind}\nTitle: {r.title}\nContent: {r.content[:500]}\nTags: {', '.join(r.tags)}\nAssets: {', '.join(r.related_assets)}")
+    if not r:
+        print(f"Not found: {args.memory_id}")
+        return 1
+    print(
+        f"ID: {r.memory_id}\nKind: {r.kind}\nTitle: {r.title}\nContent: {r.content[:500]}\nTags: {', '.join(r.tags)}\nAssets: {', '.join(r.related_assets)}"
+    )
     return 0
+
 
 def cmd_memory_search(args) -> int:
     from knowledge.engine.memory_store import SQLiteMemoryStore
+
     db_path = _resolve_db_path(args)
     kind = getattr(args, "kind", None)
-    rs = SQLiteMemoryStore(db_path).search(args.query, kind=kind, limit=getattr(args,"limit",10))
-    if not rs: print("No results."); return 0
-    for r in rs: print(f"  [{r.kind:15s}] {r.memory_id:20s} {r.title[:40]} {r.content[:80]}")
+    rs = SQLiteMemoryStore(db_path).search(args.query, kind=kind, limit=getattr(args, "limit", 10))
+    if not rs:
+        print("No results.")
+        return 0
+    for r in rs:
+        print(f"  [{r.kind:15s}] {r.memory_id:20s} {r.title[:40]} {r.content[:80]}")
     return 0
+
 
 def cmd_memory_link(args) -> int:
     from knowledge.engine.memory_store import SQLiteMemoryStore
+
     db_path = _resolve_db_path(args)
     ok = SQLiteMemoryStore(db_path).link_asset(args.memory_id, args.asset_id)
-    print(f"Linked {args.asset_id} to {args.memory_id}" if ok else "Error"); return 0 if ok else 1
+    print(f"Linked {args.asset_id} to {args.memory_id}" if ok else "Error")
+    return 0 if ok else 1
 
 
 def cmd_metadata_retrieve(args) -> int:

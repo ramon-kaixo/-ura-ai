@@ -42,49 +42,105 @@ class UnsafeExpressionError(ValueError):
 
 
 # Nodos AST permitidos (whitelist estricta)
-_ALLOWED_AST_NODES = frozenset({
-    # Top-level
-    ast.Expression, ast.Module,
-    # Literals
-    ast.Constant, ast.List, ast.Tuple, ast.Dict, ast.Set,
-    # Names / Attribute (sin dunder)
-    ast.Name, ast.Load, ast.Attribute,
-    # Operadores unarios
-    ast.UnaryOp, ast.UAdd, ast.USub, ast.Not,
-    # Operadores binarios
-    ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div,
-    ast.FloorDiv, ast.Mod, ast.Pow,
-    # Comparación
-    ast.Compare, ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
-    ast.In, ast.NotIn, ast.Is, ast.IsNot,
-    # Booleanos
-    ast.BoolOp, ast.And, ast.Or,
-    # Ternario
-    ast.IfExp,
-    # Subscript / Slice
-    ast.Subscript, ast.Slice,
-    # Call (solo funciones whitelisted)
-    ast.Call,
-    # List/Dict/Set comprehension (NO GeneratorExp)
-    ast.ListComp, ast.comprehension,
-})
+_ALLOWED_AST_NODES = frozenset(
+    {
+        # Top-level
+        ast.Expression,
+        ast.Module,
+        # Literals
+        ast.Constant,
+        ast.List,
+        ast.Tuple,
+        ast.Dict,
+        ast.Set,
+        # Names / Attribute (sin dunder)
+        ast.Name,
+        ast.Load,
+        ast.Attribute,
+        # Operadores unarios
+        ast.UnaryOp,
+        ast.UAdd,
+        ast.USub,
+        ast.Not,
+        # Operadores binarios
+        ast.BinOp,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        # Comparación
+        ast.Compare,
+        ast.Eq,
+        ast.NotEq,
+        ast.Lt,
+        ast.LtE,
+        ast.Gt,
+        ast.GtE,
+        ast.In,
+        ast.NotIn,
+        ast.Is,
+        ast.IsNot,
+        # Booleanos
+        ast.BoolOp,
+        ast.And,
+        ast.Or,
+        # Ternario
+        ast.IfExp,
+        # Subscript / Slice
+        ast.Subscript,
+        ast.Slice,
+        # Call (solo funciones whitelisted)
+        ast.Call,
+        # List/Dict/Set comprehension (NO GeneratorExp)
+        ast.ListComp,
+        ast.comprehension,
+    }
+)
 
 # Nodos EXPLÍCITAMENTE PROHIBIDOS (por claridad, aunque no están en _ALLOWED)
 _BLOCKED_AST_NODES = (
-    "Lambda", "Yield", "YieldFrom", "Await", "AsyncFor",
-    "GeneratorExp", "SetComp", "DictComp",
+    "Lambda",
+    "Yield",
+    "YieldFrom",
+    "Await",
+    "AsyncFor",
+    "GeneratorExp",
+    "SetComp",
+    "DictComp",
     "NamedExpr",  # walrus :=
-    "Match", "MatchValue", "MatchSingleton", "MatchSequence",
-    "MatchMapping", "MatchClass", "MatchStar", "MatchAs", "MatchOr",
+    "Match",
+    "MatchValue",
+    "MatchSingleton",
+    "MatchSequence",
+    "MatchMapping",
+    "MatchClass",
+    "MatchStar",
+    "MatchAs",
+    "MatchOr",
     "JoinedStr",  # f-strings
     "Starred",
-    "Delete", "With", "AsyncWith",
-    "Raise", "Try", "TryStar",
-    "Assert", "Import", "ImportFrom",
-    "Global", "Nonlocal",
-    "Pass", "Break", "Continue",
-    "While", "For", "AsyncFor",
-    "FunctionDef", "AsyncFunctionDef",
+    "Delete",
+    "With",
+    "AsyncWith",
+    "Raise",
+    "Try",
+    "TryStar",
+    "Assert",
+    "Import",
+    "ImportFrom",
+    "Global",
+    "Nonlocal",
+    "Pass",
+    "Break",
+    "Continue",
+    "While",
+    "For",
+    "AsyncFor",
+    "FunctionDef",
+    "AsyncFunctionDef",
     "ClassDef",
 )
 
@@ -115,8 +171,12 @@ _FUNCTION_WHITELIST: dict[str, Any] = {
 }
 
 _CONSTANT_WHITELIST = {
-    "True": True, "False": False, "None": None,
-    "true": True, "false": False, "null": None,
+    "True": True,
+    "False": False,
+    "None": None,
+    "true": True,
+    "false": False,
+    "null": None,
 }
 
 
@@ -138,42 +198,30 @@ class _SafeEvalChecker(ast.NodeVisitor):
 
         # 1. Verificar nodo permitido
         if node_type not in _ALLOWED_AST_NODES:
-            raise UnsafeExpressionError(
-                f"Nodo no permitido: {type_name}"
-            )
+            raise UnsafeExpressionError(f"Nodo no permitido: {type_name}")
 
         # 2. Verificar profundidad máxima
         if self._depth > _MAX_AST_DEPTH:
-            raise UnsafeExpressionError(
-                f"Profundidad máxima excedida ({_MAX_AST_DEPTH})"
-            )
+            raise UnsafeExpressionError(f"Profundidad máxima excedida ({_MAX_AST_DEPTH})")
 
         # 3. Verificar número máximo de nodos
         if self._nodes > _MAX_AST_NODES:
-            raise UnsafeExpressionError(
-                f"Número máximo de nodos excedido ({_MAX_AST_NODES})"
-            )
+            raise UnsafeExpressionError(f"Número máximo de nodos excedido ({_MAX_AST_NODES})")
 
         # 4. Bloquear dunder methods (__class__, __bases__, etc.)
         if isinstance(node, ast.Attribute):
             if node.attr.startswith("_"):
-                raise UnsafeExpressionError(
-                    f"Acceso a atributo privado/dunder no permitido: {node.attr}"
-                )
+                raise UnsafeExpressionError(f"Acceso a atributo privado/dunder no permitido: {node.attr}")
 
         # 5. Verificar llamadas a función
         if isinstance(node, ast.Call):
             self._calls += 1
             if self._calls > _MAX_FUNCTION_CALLS:
-                raise UnsafeExpressionError(
-                    f"Máximo de llamadas a funciones excedido ({_MAX_FUNCTION_CALLS})"
-                )
+                raise UnsafeExpressionError(f"Máximo de llamadas a funciones excedido ({_MAX_FUNCTION_CALLS})")
             func = node.func
             if isinstance(func, ast.Name):
                 if func.id not in _FUNCTION_WHITELIST and func.id not in _CONSTANT_WHITELIST:
-                    raise UnsafeExpressionError(
-                        f"Función no permitida: {func.id}"
-                    )
+                    raise UnsafeExpressionError(f"Función no permitida: {func.id}")
 
         # 6. Registrar nombres usados
         if isinstance(node, ast.Name):
@@ -208,9 +256,7 @@ def safe_eval(
         para ser portable a Windows/hilos).
     """
     if len(expression) > _MAX_EXPRESSION_LENGTH:
-        raise UnsafeExpressionError(
-            f"Expresión demasiado larga: {len(expression)} > {_MAX_EXPRESSION_LENGTH}"
-        )
+        raise UnsafeExpressionError(f"Expresión demasiado larga: {len(expression)} > {_MAX_EXPRESSION_LENGTH}")
 
     tree = ast.parse(expression, mode="eval")
     checker = _SafeEvalChecker()
@@ -328,41 +374,56 @@ class BuiltinRule:
 _BUILTIN_RULES: list[BuiltinRule] = [
     BuiltinRule(
         metadata=RuleMetadata(
-            id="R001", version="1", severity="WARN",
+            id="R001",
+            version="1",
+            severity="WARN",
             description="Documento sin título en frontmatter",
-            category="quality", cost="O(1)",
+            category="quality",
+            cost="O(1)",
         ),
         expression="not bool(doc.get('title', ''))",
     ),
     BuiltinRule(
         metadata=RuleMetadata(
-            id="R002", version="1", severity="INFO",
+            id="R002",
+            version="1",
+            severity="INFO",
             description="Documento sin tags de clasificación",
-            category="quality", cost="O(1)",
+            category="quality",
+            cost="O(1)",
         ),
         expression="not bool(doc.get('tags', []))",
     ),
     BuiltinRule(
         metadata=RuleMetadata(
-            id="R003", version="1", severity="WARN",
+            id="R003",
+            version="1",
+            severity="WARN",
             description="Cuerpo del documento vacío",
-            category="quality", cost="O(1)",
+            category="quality",
+            cost="O(1)",
         ),
         expression="not bool(doc.get('body', ''))",
     ),
     BuiltinRule(
         metadata=RuleMetadata(
-            id="R004", version="1", severity="ERROR",
+            id="R004",
+            version="1",
+            severity="ERROR",
             description="Enlace a nodo inexistente en el grafo",
-            category="integrity", cost="O(n)",
+            category="integrity",
+            cost="O(n)",
         ),
         expression="any(r not in ctx.get('all_node_ids', set()) for r in doc.get('relations', []))",
     ),
     BuiltinRule(
         metadata=RuleMetadata(
-            id="R005", version="1", severity="INFO",
+            id="R005",
+            version="1",
+            severity="INFO",
             description="Documento sin relaciones entrantes ni salientes",
-            category="coverage", cost="O(1)",
+            category="coverage",
+            cost="O(1)",
         ),
         expression="len(doc.get('relations', [])) == 0 and doc.get('id', '') not in ctx.get('all_relation_targets', set())",
     ),

@@ -22,9 +22,11 @@ class PipelineLoader:
 
         if path.suffix in (".yaml", ".yml"):
             import yaml
+
             data = yaml.safe_load(source)
         elif path.suffix == ".json":
             import json
+
             data = json.loads(source)
         else:
             raise ValueError(f"Pipeline format not supported: {path.suffix}")
@@ -38,13 +40,15 @@ class PipelineLoader:
         stages_raw = data.get("stages", [])
         stages = []
         for s in stages_raw:
-            stages.append(StageDefinition(  # noqa: PERF401  -- legibilidad sobre micro-optimización
-                name=str(s.get("name", "")),
-                plugin=str(s.get("plugin", "")),
-                config=s.get("config", {}),
-                timeout=int(s.get("timeout", 30)),
-                optional=bool(s.get("optional", False)),
-            ))
+            stages.append(
+                StageDefinition(  # noqa: PERF401  -- legibilidad sobre micro-optimización
+                    name=str(s.get("name", "")),
+                    plugin=str(s.get("plugin", "")),
+                    config=s.get("config", {}),
+                    timeout=int(s.get("timeout", 30)),
+                    optional=bool(s.get("optional", False)),
+                )
+            )
         return PipelineDefinition(
             name=str(data.get("name", "")),
             version=str(data.get("version", "")),

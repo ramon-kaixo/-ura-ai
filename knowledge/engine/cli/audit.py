@@ -47,12 +47,16 @@ def cmd_audit_db(args) -> int:
         report("FAIL", "integrity", f"Corruption detected: {integrity}")
     print()
 
-    orphan_src = conn.execute("SELECT COUNT(*) as c FROM kg_edges e LEFT JOIN kg_nodes n ON e.src = n.id WHERE n.id IS NULL").fetchone()["c"]
+    orphan_src = conn.execute(
+        "SELECT COUNT(*) as c FROM kg_edges e LEFT JOIN kg_nodes n ON e.src = n.id WHERE n.id IS NULL"
+    ).fetchone()["c"]
     if orphan_src:
         report("FAIL", "orphan_edges", f"{orphan_src} edges with missing source node")
     else:
         report("OK", "orphan_edges", "No orphan edge sources")
-    orphan_dst = conn.execute("SELECT COUNT(*) as c FROM kg_edges e LEFT JOIN kg_nodes n ON e.dst = n.id WHERE n.id IS NULL").fetchone()["c"]
+    orphan_dst = conn.execute(
+        "SELECT COUNT(*) as c FROM kg_edges e LEFT JOIN kg_nodes n ON e.dst = n.id WHERE n.id IS NULL"
+    ).fetchone()["c"]
     if orphan_dst:
         report("FAIL", "orphan_edges", f"{orphan_dst} edges with missing target node")
     else:
@@ -68,7 +72,9 @@ def cmd_audit_db(args) -> int:
         report("FAIL", "active_version", f"{versions} active version rows (expected 1)")
     print()
 
-    stuck = conn.execute("SELECT COUNT(*) as c FROM op_jobs WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')").fetchone()["c"]
+    stuck = conn.execute(
+        "SELECT COUNT(*) as c FROM op_jobs WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
+    ).fetchone()["c"]
     if stuck:
         report("FAIL", "stuck_jobs", f"{stuck} jobs stuck in 'running' for >30min")
     else:
@@ -90,7 +96,9 @@ def cmd_audit_db(args) -> int:
         report("OK", "wal_size", "No WAL file (fully checkpointed)")
     print()
 
-    pending = conn.execute("SELECT COUNT(*) as c FROM op_vector_sync WHERE status IN ('pending', 'failed')").fetchone()["c"]
+    pending = conn.execute("SELECT COUNT(*) as c FROM op_vector_sync WHERE status IN ('pending', 'failed')").fetchone()[
+        "c"
+    ]
     if pending:
         report("WARN", "pending_sync", f"{pending} pending sync operations")
     else:
@@ -99,6 +107,7 @@ def cmd_audit_db(args) -> int:
 
     try:
         from knowledge.engine.audit import get_audit
+
         audit = get_audit()
         if audit.backend:
             health = audit.backend.health_check()
@@ -113,8 +122,9 @@ def cmd_audit_db(args) -> int:
     print()
 
     import shutil
+
     usage = shutil.disk_usage(db_path.parent)
-    free_gb = usage.free / (1024 ** 3)
+    free_gb = usage.free / (1024**3)
     if free_gb < 1:
         report("FAIL", "disk_space", f"Only {free_gb:.1f} GB free on device")
     elif free_gb < 5:

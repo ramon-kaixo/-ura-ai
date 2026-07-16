@@ -185,11 +185,21 @@ class TestJSONLFormat:
 class TestBenchmarkResults:
     def test_results_has_all_metrics(self):
         r = BenchmarkResults(
-            queries_total=200, queries_failed=0,
-            mean_recall_1=0.5, mean_recall_5=0.6, mean_recall_10=0.7,
-            mean_precision_5=0.4, mean_mrr=0.8, mean_ndcg=0.75, map=0.65,
-            latency_p50=10, latency_p95=50, latency_p99=100,
-            throughput_qps=100, no_context_rate=0.05, doc_coverage=0.8,
+            queries_total=200,
+            queries_failed=0,
+            mean_recall_1=0.5,
+            mean_recall_5=0.6,
+            mean_recall_10=0.7,
+            mean_precision_5=0.4,
+            mean_mrr=0.8,
+            mean_ndcg=0.75,
+            map=0.65,
+            latency_p50=10,
+            latency_p95=50,
+            latency_p99=100,
+            throughput_qps=100,
+            no_context_rate=0.05,
+            doc_coverage=0.8,
         )
         assert r.queries_total == 200
         assert r.mean_recall_10 == 0.7

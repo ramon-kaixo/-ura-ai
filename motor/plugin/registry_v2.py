@@ -146,6 +146,7 @@ class PluginRegistryV2:
         log.debug("[registry_v2] Carga legacy: %s", entry.path)
 
         from motor.plugin.registry import PluginRegistry
+
         legacy = PluginRegistry()
         legacy._entries = {}  # noqa: SLF001  -- puente de compatibilidad hacia PluginRegistry legacy
         legacy._dm = self._dm  # noqa: SLF001  -- puente de compatibilidad hacia PluginRegistry legacy
@@ -160,10 +161,13 @@ class PluginRegistryV2:
         name = manifest.name
 
         from motor.events.compat import check_api_compatibility
+
         if not check_api_compatibility(manifest.api_version, MOTOR_API_VERSION):
             log.warning(
                 "[registry_v2] %s: API incompatible (plugin=%s, motor=%s)",
-                name, manifest.api_version, MOTOR_API_VERSION,
+                name,
+                manifest.api_version,
+                MOTOR_API_VERSION,
             )
             self._dm.mark_degraded(f"plugin:{name}")
             return None
@@ -217,8 +221,10 @@ class PluginRegistryV2:
             if self._bus is not None:
                 from motor.events.event import PluginLoaded
                 from motor.events.topics import PLUGIN_LOADED
+
                 self._bus.publish(
-                    PLUGIN_LOADED, PluginLoaded(name=name, version=manifest.version),
+                    PLUGIN_LOADED,
+                    PluginLoaded(name=name, version=manifest.version),
                     source="registry_v2",
                 )
 
@@ -269,8 +275,10 @@ class PluginRegistryV2:
         if self._bus is not None:
             from motor.events.event import PluginUnloaded
             from motor.events.topics import PLUGIN_UNLOADED
+
             self._bus.publish(
-                PLUGIN_UNLOADED, PluginUnloaded(name=name),
+                PLUGIN_UNLOADED,
+                PluginUnloaded(name=name),
                 source="registry_v2",
             )
 
@@ -303,10 +311,15 @@ class PluginRegistryV2:
             plugin = self._load(name)
             if plugin is None:
                 elapsed = (time.monotonic() - start) * 1000
-                results.append(PluginResult(
-                    ok=False, plugin=name, phase=phase,
-                    error="Plugin load failed", duration_ms=elapsed,
-                ))
+                results.append(
+                    PluginResult(
+                        ok=False,
+                        plugin=name,
+                        phase=phase,
+                        error="Plugin load failed",
+                        duration_ms=elapsed,
+                    )
+                )
                 continue
 
             try:

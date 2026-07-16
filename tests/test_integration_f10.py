@@ -88,7 +88,7 @@ class TestDegradedModeSubprocessExecutorIntegration:
 
 class TestPluginRegistrySubprocessExecutorIntegration:
     def test_plugin_can_use_executor(self, tmp_path: Path):
-        content = '''
+        content = """
 __plugin__ = {"name": "executor_plugin_f10", "phase": "always"}
 from motor.plugin.base import PluginBase
 from motor.core.executor import SubprocessExecutor
@@ -98,7 +98,7 @@ class _P(PluginBase):
         executor = SubprocessExecutor()
         result = executor.run(["echo", "from_plugin"])
         return {"stdout": result.stdout.strip()}
-'''
+"""
         f = tmp_path / "executor_plugin.py"
         f.write_text(content)
         registry = PluginRegistry()
@@ -119,7 +119,7 @@ class TestTripleIntegration:
         dm = DegradedMode.instancia()
         executor = SubprocessExecutor()
 
-        good_content = '''
+        good_content = """
 __plugin__ = {"name": "good_triple_f10", "phase": "pre"}
 from motor.plugin.base import PluginBase
 from motor.core.executor import SubprocessExecutor
@@ -129,10 +129,10 @@ class _P(PluginBase):
         executor = SubprocessExecutor()
         result = executor.run(["echo", "hello_triple"])
         return {"stdout": result.stdout.strip()}
-'''
-        bad_content = '''__plugin__ = {"name": "bad_triple_f10", "phase": "pre"}
+"""
+        bad_content = """__plugin__ = {"name": "bad_triple_f10", "phase": "pre"}
 import nonexistent_module_xyz_triple_f10
-'''
+"""
         (tmp_path / "good.py").write_text(good_content)
         (tmp_path / "bad.py").write_text(bad_content)
 

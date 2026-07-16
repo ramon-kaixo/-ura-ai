@@ -27,19 +27,21 @@ class PluginManifest:
     tags: list = field(default_factory=list)
 
 
-MANIFEST_SCHEMA = frozenset({
-    "api_version",
-    "name",
-    "version",
-    "description",
-    "author",
-    "entry_point",
-    "dependencies",
-    "lifecycle",
-    "hooks",
-    "phases",
-    "tags",
-})
+MANIFEST_SCHEMA = frozenset(
+    {
+        "api_version",
+        "name",
+        "version",
+        "description",
+        "author",
+        "entry_point",
+        "dependencies",
+        "lifecycle",
+        "hooks",
+        "phases",
+        "tags",
+    }
+)
 
 REQUIRED_FIELDS = frozenset({"name"})
 
@@ -61,6 +63,7 @@ def parse_manifest(path: Path) -> PluginManifest | None:
 def _parse_yaml(source: str, path: Path) -> PluginManifest | None:
     try:
         import yaml
+
         data = yaml.safe_load(source)
     except ImportError:
         log.warning("PyYAML no disponible — no se puede leer %s", path)
@@ -76,6 +79,7 @@ def _parse_yaml(source: str, path: Path) -> PluginManifest | None:
 
 def _parse_json(source: str, path: Path) -> PluginManifest | None:
     import json
+
     try:
         data = json.loads(source)
     except Exception as exc:

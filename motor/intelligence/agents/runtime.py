@@ -67,10 +67,13 @@ class MultiAgentRuntime:
 
         with self._lock:
             self._workflows[workflow_id] = {
-                "objective": objective, "status": "running",
+                "objective": objective,
+                "status": "running",
             }
 
-        def _mk_check(wf): return lambda: self._is_cancelled(wf)
+        def _mk_check(wf):
+            return lambda: self._is_cancelled(wf)
+
         cancel_check = _mk_check(workflow_id)
 
         try:
@@ -89,15 +92,21 @@ class MultiAgentRuntime:
             subtasks = plan_result.output.get("subtasks", [])
             supervisor_context = {**context, "subtasks": subtasks, "_cancellation_check": cancel_check}
 
-            supervisor_task = AgentTask(objective=objective, agent_role=AgentRole.SUPERVISOR,
-                context=supervisor_context, timeout=timeout)
+            supervisor_task = AgentTask(
+                objective=objective, agent_role=AgentRole.SUPERVISOR, context=supervisor_context, timeout=timeout
+            )
             supervisor_result = self._supervisor.run(supervisor_task)
 
             if cancel_check():
                 return self._complete(workflow_id, False, "cancelled", start)
 
-            return self._complete(workflow_id, supervisor_result.success, "", start,
-                {"plan": plan_result.output, "supervisor": supervisor_result.output})
+            return self._complete(
+                workflow_id,
+                supervisor_result.success,
+                "",
+                start,
+                {"plan": plan_result.output, "supervisor": supervisor_result.output},
+            )
 
         except Exception as exc:
             log.exception("Workflow %s failed", workflow_id)
@@ -134,8 +143,12 @@ class MultiAgentRuntime:
         if extra:
             output.update(extra)
         return AgentResult(
-            task_id=wf_id, agent_id="runtime", success=success,
-            output=output, error=error, duration_ms=round(elapsed, 2),
+            task_id=wf_id,
+            agent_id="runtime",
+            success=success,
+            output=output,
+            error=error,
+            duration_ms=round(elapsed, 2),
         )
 
     def _trim_workflows(self) -> None:

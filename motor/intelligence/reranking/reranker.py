@@ -15,8 +15,7 @@ GOLDEN_DIR = Path(__file__).resolve().parent.parent.parent.parent / "knowledge" 
 
 class BaseReranker(ABC):
     @abstractmethod
-    def rerank(self, query: str, candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        ...
+    def rerank(self, query: str, candidates: list[dict[str, Any]]) -> list[dict[str, Any]]: ...
 
 
 class NoOpReranker(BaseReranker):
@@ -40,9 +39,11 @@ class CrossEncoderReranker(BaseReranker):
 
     def _load_model(self) -> None:
         import os
+
         os.environ.setdefault("HF_HOME", "/tmp/hf_cache")  # noqa: S108  -- cache hugginface en /tmp (no datos sensibles)
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
             self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)
             self._model.eval()
@@ -69,8 +70,13 @@ class CrossEncoderReranker(BaseReranker):
 
         start = time.monotonic()
         import torch
+
         inputs = self._tokenizer(
-            pairs, padding=True, truncation=True, return_tensors="pt", max_length=512,
+            pairs,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+            max_length=512,
         )
         with torch.no_grad():
             outputs = self._model(**inputs)

@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import time
-
-import pytest
 
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.extractor import RuleBasedFactExtractor
@@ -10,7 +7,6 @@ from motor.intelligence.memory.extractor_llm import LLMFactExtractor
 from motor.intelligence.memory.orchestrator import MemoryOrchestrator
 from motor.intelligence.memory.semantic import SemanticMemoryStore
 from motor.intelligence.pipeline import (
-    create_retrieval_pipeline,
     disable_reranker,
     enable_reranker,
     reranker_enabled,
@@ -62,6 +58,7 @@ class TestMemoryOrchestrator:
 class TestLLMFactExtractor:
     def test_implements_interface(self):
         from motor.intelligence.memory.extractor import FactExtractor
+
         extractor = LLMFactExtractor()
         assert isinstance(extractor, FactExtractor)
 
@@ -80,6 +77,7 @@ class TestRerankerFeatureFlag:
         class FakeReranker:
             def rerank(self, query, candidates):
                 return candidates
+
         enable_reranker(FakeReranker())
         assert reranker_enabled()
         disable_reranker()
@@ -87,6 +85,7 @@ class TestRerankerFeatureFlag:
 
     def test_search_with_reranker_disabled(self):
         from motor.intelligence.retrieval.lexical import LexicalRetriever
+
         disable_reranker()
         lex = LexicalRetriever()
         results = search_with_reranker("test", lex, k=5)
@@ -105,6 +104,7 @@ class TestIntegration:
 
         agent = ResearcherAgent(memory_store=None, context_retriever=retriever)
         from motor.intelligence.agents.message import AgentTask
+
         result = agent.run(AgentTask(objective="EventBus"))
         assert result.success
         assert result.output.get("sources") == ["episodic_memory"]
@@ -112,6 +112,7 @@ class TestIntegration:
     def test_full_pipeline(self):
         from motor.intelligence.agents.executor import ExecutorAgent
         from motor.intelligence.agents.runtime import MultiAgentRuntime
+
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
         result = runtime.execute_workflow("echo test", timeout=10)

@@ -120,9 +120,7 @@ class SQLiteLineageStore:
         conn = None
         try:
             conn = open_db(self._db_path)
-            rows = conn.execute(
-                "SELECT DISTINCT src FROM op_lineage_edges WHERE dst = ?", (asset_id,)
-            ).fetchall()
+            rows = conn.execute("SELECT DISTINCT src FROM op_lineage_edges WHERE dst = ?", (asset_id,)).fetchall()
             return [r["src"] for r in rows]
         except sqlite3.OperationalError:
             return None
@@ -135,9 +133,7 @@ class SQLiteLineageStore:
         conn = None
         try:
             conn = open_db(self._db_path)
-            rows = conn.execute(
-                "SELECT DISTINCT dst FROM op_lineage_edges WHERE src = ?", (asset_id,)
-            ).fetchall()
+            rows = conn.execute("SELECT DISTINCT dst FROM op_lineage_edges WHERE src = ?", (asset_id,)).fetchall()
             return [r["dst"] for r in rows]
         except sqlite3.OperationalError:
             return None
@@ -183,7 +179,9 @@ class SQLiteLineageStore:
         downstream: set[str] = set()
         for ev in events:
             try:
-                outputs = json.loads(ev["output_ids"]) if isinstance(ev["output_ids"], str) else ev.get("output_ids", [])
+                outputs = (
+                    json.loads(ev["output_ids"]) if isinstance(ev["output_ids"], str) else ev.get("output_ids", [])
+                )
                 for out in outputs:
                     if out != asset_id:
                         downstream.add(out)

@@ -35,17 +35,14 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Metadata del entorno ──────────────────────────────────────────────
 
+
 def gather_environment() -> dict[str, Any]:
-    git_hash = (
-        subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True
-        ).stdout.strip()
-        or "unknown"
-    )
+    git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"
     git_tag = (
         subprocess.run(
             ["git", "describe", "--tags", "--always"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         ).stdout.strip()
         or "unknown"
     )
@@ -61,9 +58,11 @@ def gather_environment() -> dict[str, Any]:
         "ram_available_gb": round(psutil.virtual_memory().available / 1e9, 1),
     }
 
+
 ENV = gather_environment()
 
 # ── Monitor de sistema ────────────────────────────────────────────────
+
 
 class SystemMonitor:
     def __init__(self) -> None:
@@ -80,9 +79,10 @@ class SystemMonitor:
         }
         try:
             r = subprocess.run(
-                ["docker", "stats", "ura-qdrant", "--no-stream",
-                 "--format", "{{.MemUsage}}"],
-                capture_output=True, text=True, timeout=5,
+                ["docker", "stats", "ura-qdrant", "--no-stream", "--format", "{{.MemUsage}}"],
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             out = r.stdout.strip()
             if out:
@@ -129,9 +129,11 @@ MONITOR = SystemMonitor()
 
 # ── Helpers de import ─────────────────────────────────────────────────
 
+
 def _import_qdrant():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient as QC
+
     config = UraConfig(qdrant_host="localhost", qdrant_port=6333)
     return QC(config)
 
@@ -140,6 +142,7 @@ def _import_hybrid_retriever():
     from motor.intelligence.retrieval.vector import VectorRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.hybrid import HybridRetriever
+
     qdrant = _import_qdrant()
     vr = VectorRetriever(qdrant_client=qdrant)
     lr = LexicalRetriever()
@@ -147,6 +150,7 @@ def _import_hybrid_retriever():
 
 
 # ── L01: Runtime ──────────────────────────────────────────────────────
+
 
 def benchmark_l01(levels: list[int]) -> dict[str, Any]:
     from motor.intelligence.agents.runtime import MultiAgentRuntime
@@ -178,19 +182,23 @@ def benchmark_l01(levels: list[int]) -> dict[str, Any]:
         all_latencies.extend(latencies)
         p = percentiles(latencies)
         snap = MONITOR.snapshot()
-        results.append({
-            "level": n_wf,
-            "workflows": n_wf,
-            "duration_s": round(total_s, 2),
-            "throughput_wfs": round(n_wf / total_s, 2) if total_s > 0 else 0,
-            "latency_ms": p,
-            "cpu_percent": snap["cpu_percent"],
-            "rss_mb": snap["rss_mb"],
-            "errors": errors,
-            "timeouts": 0,
-        })
-        print(f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
-              f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB")
+        results.append(
+            {
+                "level": n_wf,
+                "workflows": n_wf,
+                "duration_s": round(total_s, 2),
+                "throughput_wfs": round(n_wf / total_s, 2) if total_s > 0 else 0,
+                "latency_ms": p,
+                "cpu_percent": snap["cpu_percent"],
+                "rss_mb": snap["rss_mb"],
+                "errors": errors,
+                "timeouts": 0,
+            }
+        )
+        print(
+            f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
+            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+        )
 
     return {
         "benchmark_id": "L01",
@@ -204,14 +212,21 @@ def benchmark_l01(levels: list[int]) -> dict[str, Any]:
 
 # ── L02: Retrieval ────────────────────────────────────────────────────
 
+
 def benchmark_l02(levels: list[int]) -> dict[str, Any]:
     hr = _import_hybrid_retriever()
     results = []
     all_latencies = []
     test_queries = [
-        "qué es ura", "cómo funciona el pipeline", "memoria episódica",
-        "consenso multiagente", "observabilidad", "plugin system",
-        "recuperación ante fallos", "basededatos vectorial", "búsqueda híbrida",
+        "qué es ura",
+        "cómo funciona el pipeline",
+        "memoria episódica",
+        "consenso multiagente",
+        "observabilidad",
+        "plugin system",
+        "recuperación ante fallos",
+        "basededatos vectorial",
+        "búsqueda híbrida",
         "ejecución paralela",
     ]
 
@@ -235,18 +250,22 @@ def benchmark_l02(levels: list[int]) -> dict[str, Any]:
         all_latencies.extend(latencies)
         p = percentiles(latencies)
         snap = MONITOR.snapshot()
-        results.append({
-            "level": n_q,
-            "queries": n_q,
-            "duration_s": round(total_s, 2),
-            "throughput_qps": round(n_q / total_s, 2) if total_s > 0 else 0,
-            "latency_ms": p,
-            "cpu_percent": snap["cpu_percent"],
-            "rss_mb": snap["rss_mb"],
-            "errors": errors,
-        })
-        print(f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
-              f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB")
+        results.append(
+            {
+                "level": n_q,
+                "queries": n_q,
+                "duration_s": round(total_s, 2),
+                "throughput_qps": round(n_q / total_s, 2) if total_s > 0 else 0,
+                "latency_ms": p,
+                "cpu_percent": snap["cpu_percent"],
+                "rss_mb": snap["rss_mb"],
+                "errors": errors,
+            }
+        )
+        print(
+            f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
+            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+        )
 
     return {
         "benchmark_id": "L02",
@@ -259,6 +278,7 @@ def benchmark_l02(levels: list[int]) -> dict[str, Any]:
 
 
 # ── L03: Memory ───────────────────────────────────────────────────────
+
 
 def benchmark_l03(levels: list[int]) -> dict[str, Any]:
     from motor.intelligence.memory.episodic import EpisodeStore, EpisodeStoreConfig, Episode
@@ -300,20 +320,24 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
         p = percentiles(latencies)
         snap = MONITOR.snapshot()
         total_ops = n_ep + 1
-        results.append({
-            "level": n_ep,
-            "episodes": n_ep,
-            "duration_s": round(sum(latencies) / 1000 + search_latency / 1000, 2),
-            "throughput_ops": round(total_ops / (sum(latencies) / 1000 + search_latency / 1000), 2),
-            "latency_store_ms": p,
-            "search_latency_ms": round(search_latency, 1),
-            "search_results": len(results_found),
-            "cpu_percent": snap["cpu_percent"],
-            "rss_mb": snap["rss_mb"],
-            "errors": errors,
-        })
-        print(f"    → p95_store={p['p95']:.0f}ms  search={search_latency:.0f}ms  "
-              f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB")
+        results.append(
+            {
+                "level": n_ep,
+                "episodes": n_ep,
+                "duration_s": round(sum(latencies) / 1000 + search_latency / 1000, 2),
+                "throughput_ops": round(total_ops / (sum(latencies) / 1000 + search_latency / 1000), 2),
+                "latency_store_ms": p,
+                "search_latency_ms": round(search_latency, 1),
+                "search_results": len(results_found),
+                "cpu_percent": snap["cpu_percent"],
+                "rss_mb": snap["rss_mb"],
+                "errors": errors,
+            }
+        )
+        print(
+            f"    → p95_store={p['p95']:.0f}ms  search={search_latency:.0f}ms  "
+            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+        )
 
     return {
         "benchmark_id": "L03",
@@ -327,9 +351,13 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
 
 # ── L04: Consensus ────────────────────────────────────────────────────
 
+
 def benchmark_l04(levels: list[int]) -> dict[str, Any]:
     from motor.intelligence.agents.consensus import (
-        VotingEngine, MajorityVoting, WeightedConsensus, AgentWeightRegistry,
+        VotingEngine,
+        MajorityVoting,
+        WeightedConsensus,
+        AgentWeightRegistry,
     )
     from motor.intelligence.agents.base import AgentResult
 
@@ -374,19 +402,23 @@ def benchmark_l04(levels: list[int]) -> dict[str, Any]:
         p = percentiles(latencies)
         snap = MONITOR.snapshot()
         total_s = sum(latencies) / 1000
-        results.append({
-            "level": n_agents,
-            "agents": n_agents,
-            "rounds": n_rounds,
-            "duration_s": round(total_s, 4),
-            "throughput_votes": round(n_rounds / total_s, 2) if total_s > 0 else 0,
-            "latency_ms": p,
-            "cpu_percent": snap["cpu_percent"],
-            "rss_mb": snap["rss_mb"],
-            "errors": errors,
-        })
-        print(f"    → {total_s:.3f}s  p95={p['p95']:.1f}ms  "
-              f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB")
+        results.append(
+            {
+                "level": n_agents,
+                "agents": n_agents,
+                "rounds": n_rounds,
+                "duration_s": round(total_s, 4),
+                "throughput_votes": round(n_rounds / total_s, 2) if total_s > 0 else 0,
+                "latency_ms": p,
+                "cpu_percent": snap["cpu_percent"],
+                "rss_mb": snap["rss_mb"],
+                "errors": errors,
+            }
+        )
+        print(
+            f"    → {total_s:.3f}s  p95={p['p95']:.1f}ms  "
+            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+        )
 
     return {
         "benchmark_id": "L04",
@@ -399,6 +431,7 @@ def benchmark_l04(levels: list[int]) -> dict[str, Any]:
 
 
 # ── L05: Saturación ───────────────────────────────────────────────────
+
 
 def benchmark_l05() -> dict[str, Any]:
     hr = _import_hybrid_retriever()
@@ -433,15 +466,17 @@ def benchmark_l05() -> dict[str, Any]:
         errors += stage_errors
         stage_p = percentiles(stage_latencies)
         snap = MONITOR.snapshot()
-        results.append({
-            "stage": stage,
-            "concurrent_queries": n_concurrent,
-            "stage_duration_s": round(stage_duration, 2),
-            "latency_ms": stage_p,
-            "errors": stage_errors,
-            "cpu_percent": snap["cpu_percent"],
-            "rss_mb": snap["rss_mb"],
-        })
+        results.append(
+            {
+                "stage": stage,
+                "concurrent_queries": n_concurrent,
+                "stage_duration_s": round(stage_duration, 2),
+                "latency_ms": stage_p,
+                "errors": stage_errors,
+                "cpu_percent": snap["cpu_percent"],
+                "rss_mb": snap["rss_mb"],
+            }
+        )
 
         if baseline_p95 is None and stage_p["p95"] > 0:
             baseline_p95 = stage_p["p95"]
@@ -453,14 +488,15 @@ def benchmark_l05() -> dict[str, Any]:
                 "baseline_p95_ms": baseline_p95,
                 "stage": stage,
             }
-            print(f"    ⚠️  Degradación en carga={n_concurrent}  "
-                  f"p95={stage_p['p95']:.0f}ms (2× baseline={baseline_p95:.0f}ms)")
+            print(
+                f"    ⚠️  Degradación en carga={n_concurrent}  "
+                f"p95={stage_p['p95']:.0f}ms (2× baseline={baseline_p95:.0f}ms)"
+            )
 
         if stage_errors > n_concurrent * 0.3:
             saturation_load = n_concurrent
             saturation_time = round(time.monotonic() - t0, 1)
-            print(f"    ❌ Saturación en carga={n_concurrent}  "
-                  f"{stage_errors} errores")
+            print(f"    ❌ Saturación en carga={n_concurrent}  {stage_errors} errores")
             break
 
         stage += 1
@@ -478,7 +514,8 @@ def benchmark_l05() -> dict[str, Any]:
             "time_s": saturation_time,
             "behavior": "errors_above_threshold" if saturation_load else "no_saturation",
         },
-        "degradation_point": degradation_point or {
+        "degradation_point": degradation_point
+        or {
             "load": None,
             "latency_p95_ms": None,
             "baseline_p95_ms": baseline_p95,
@@ -488,6 +525,7 @@ def benchmark_l05() -> dict[str, Any]:
 
 
 # ── I/O ───────────────────────────────────────────────────────────────
+
 
 def save_results(data: dict[str, Any]) -> Path:
     bid = data["benchmark_id"]
@@ -511,15 +549,19 @@ def save_results(data: dict[str, Any]) -> Path:
 
 # ── CLI ───────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="F14 Load & Stress Test")
     parser.add_argument(
-        "--benchmark", "-b",
+        "--benchmark",
+        "-b",
         choices=["L01", "L02", "L03", "L04", "L05", "all"],
         default="all",
     )
     parser.add_argument(
-        "--levels", "-l", default=None,
+        "--levels",
+        "-l",
+        default=None,
         help="Niveles separados por coma (default por benchmark)",
     )
     args = parser.parse_args()
@@ -544,9 +586,9 @@ def main() -> None:
 
     all_ok = True
     for bid, (fn, default_levels) in to_run:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  🏋️  Benchmark {bid}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         try:
             levels = custom_levels if custom_levels else default_levels
             if bid == "L05":
@@ -572,9 +614,9 @@ def main() -> None:
             print(f"  ❌ ERROR en {bid}: {e}")
             all_ok = False
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {'✅' if all_ok else '⚠️'} Todos los benchmarks {'completados' if all_ok else 'con errores'}.")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     sys.exit(0 if all_ok else 1)
 
 

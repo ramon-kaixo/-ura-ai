@@ -1,4 +1,5 @@
 """Middleware del Guardian para la Mochila."""
+
 import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -19,13 +20,14 @@ class GuardianMiddleware(BaseHTTPMiddleware):
             accion = f"{method} {path}"
             resultado = guardian.ejecutar(accion, path=path, method=method)
             if not resultado.get("permitido", True):
-                log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon','')}")
-                return JSONResponse(status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado})
+                log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon', '')}")
+                return JSONResponse(
+                    status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
+                )
         return await call_next(request)
-
 
 
 def init_guardian():
     estado = guardian.estado()
-    log.info(f"GuardianOpenClaw: {len(estado.get('reglas',[]))} reglas activas")
+    log.info(f"GuardianOpenClaw: {len(estado.get('reglas', []))} reglas activas")
     return {"guardian": estado}

@@ -83,9 +83,7 @@ def setup_logging() -> None:
     root = logging.getLogger()
     # No duplicar filtros/formatters si ya está configurado
     for handler in root.handlers:
-        already_json = any(
-            isinstance(fmt, JSONFormatter) for fmt in [handler.formatter]
-        )
+        already_json = any(isinstance(fmt, JSONFormatter) for fmt in [handler.formatter])
         if already_json:
             return
 

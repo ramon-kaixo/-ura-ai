@@ -47,13 +47,18 @@ def cmd_finalize(config: UraConfig, args):
         return 1
 
     print("\n[1/5] Schema y compilación", file=sys.stderr)
-    for f in ["core/config_manager.py", "core/model_router.py",
-              "mantenimiento/ura_maintenance.py", "mantenimiento/ura_maintenance_remote.py"]:
+    for f in [
+        "core/config_manager.py",
+        "core/model_router.py",
+        "mantenimiento/ura_maintenance.py",
+        "mantenimiento/ura_maintenance_remote.py",
+    ]:
         ok, _ = _run(["python3", "-m", "py_compile", f], f.split("/")[-1])
         if not ok:
             return 1
 
     from core.config_manager import validate_schema
+
     errors = validate_schema()
     if errors:
         print("  \033[31mERRORES DE ESQUEMA:\033[0m", file=sys.stderr)
@@ -76,8 +81,7 @@ def cmd_finalize(config: UraConfig, args):
         else:
             files = staged.stdout.strip().split("\n")[:3]
             commit_msg = (
-                f"Pipeline: {' '.join(files)}" if len(files) <= 3
-                else f"Pipeline: {files[0]} (+{len(files) - 1} más)"
+                f"Pipeline: {' '.join(files)}" if len(files) <= 3 else f"Pipeline: {files[0]} (+{len(files) - 1} más)"
             )
         ok, _ = _run(["git", "commit", "-m", commit_msg], f"commit: {commit_msg}")
         if not ok:
@@ -100,6 +104,7 @@ def cmd_test(config: UraConfig, args):
 
     print("\n[Schema]", file=sys.stderr)
     from core.config_manager import get_base_dir, get_role, validate_config, validate_schema
+
     errors = validate_schema()
     if errors:
         print(f"  \033[31m{len(errors)} errores de esquema\033[0m", file=sys.stderr)
@@ -112,6 +117,7 @@ def cmd_test(config: UraConfig, args):
     print(f"  Rol:      {get_role()}", file=sys.stderr)
     print(f"  Base dir: {get_base_dir()}", file=sys.stderr)
     from core.config_manager import CONFIG
+
     print(f"  Ollama:   {CONFIG['ollama']['host']}:{CONFIG['ollama']['port']}", file=sys.stderr)
     warnings = validate_config()
     if warnings:
@@ -240,6 +246,7 @@ def cmd_doctor(config: UraConfig, args):
 
     print("\n[1/6] Schema", file=sys.stderr)
     from core.config_manager import get_base_dir, get_role, validate_schema
+
     e = validate_schema()
     if e:
         print(f"  \033[31m{e[0]}\033[0m", file=sys.stderr)
@@ -279,8 +286,15 @@ def cmd_doctor(config: UraConfig, args):
 
     print("\n[6/6] Docker (GX10)", file=sys.stderr)
     r = _executor.run(
-        ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"ramon@{TARGET}",
-         'docker ps --format "{{.Names}} ({{.Status}})" 2>/dev/null | head -6'],
+        [
+            "ssh",
+            "-o",
+            "ConnectTimeout=3",
+            "-o",
+            "BatchMode=yes",
+            f"ramon@{TARGET}",
+            'docker ps --format "{{.Names}} ({{.Status}})" 2>/dev/null | head -6',
+        ],
         timeout=10,
     )
     if r.returncode == 0 and r.stdout.strip():
@@ -360,6 +374,7 @@ def cmd_dashboard(config: UraConfig, args):
 
     print("\n[Config local]", file=sys.stderr)
     from core.config_manager import get_base_dir, get_role
+
     print(f"  Rol:      {get_role()}", file=sys.stderr)
     print(f"  Base dir: {get_base_dir()}", file=sys.stderr)
 
@@ -376,10 +391,9 @@ def cmd_index(config: UraConfig, args):
 
     flag = "True" if force else "False"
     inner = (
-        "from core.memory_engine import index_documents; "
-        f"s=index_documents(force={flag}); print(s, file=sys.stderr)"
+        f"from core.memory_engine import index_documents; s=index_documents(force={flag}); print(s, file=sys.stderr)"
     )
-    cmd = f"cd ~/URA/ura_ia_1972 && python3 -c \"{inner}\""
+    cmd = f'cd ~/URA/ura_ia_1972 && python3 -c "{inner}"'
     result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=60)
     if result.returncode != 0:
         print(f"  \033[31mError: {result.stderr[:200]}\033[0m", file=sys.stderr)
@@ -404,24 +418,27 @@ def cmd_index(config: UraConfig, args):
 
 
 def cmd_ask(config: UraConfig, args):
-    """Consulta RAG: busca en documentos y responde con contexto."""
+    """RAG completo: recupera documentos y genera respuesta con LLM."""
     question = " ".join(args) if args else None
     if not question:
         print('Uso: python3 ura.py ask "pregunta"', file=sys.stderr)
         return 1
 
-    print(f"\nURA Memory — Buscando en GX10: {question}", file=sys.stderr)
+    print(f"\nURA RAG — Consultando en GX10: {question}", file=sys.stderr)
     print(f"{'=' * 50}", file=sys.stderr)
 
     safe_q = shlex.quote(question)
     inner_py = (
-        "from core.memory_engine import query; r=query(" + safe_q + "); "
-        "for x in r: print(f\"[{x.get(chr(39)+chr(39))}] "
-        "({x.get(chr(39)+chr(39), 0):.2f}) "
-        "{x.get(chr(39)+chr(39), chr(39)+chr(39))[:200]}\")"
+        "from core.memory_engine import ask; print(ask(" + safe_q + "))"
     )
-    cmd = f"cd ~/URA/ura_ia_1972/ && python3 -c \"{inner_py}\""
-    return _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=30).returncode
+    cmd = f'cd ~/URA/ura_ia_1972/ && python3 -c "{inner_py}"'
+    result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=120)
+    if result.ok and result.stdout:
+        print(result.stdout.strip())
+        return 0
+    if result.stderr:
+        print(result.stderr.strip()[:500], file=sys.stderr)
+    return result.returncode or 1
 
 
 def cmd_memory(config: UraConfig, args):
@@ -430,6 +447,7 @@ def cmd_memory(config: UraConfig, args):
     print(f"{'=' * 50}", file=sys.stderr)
     try:
         from core.memory_engine import DOCS_DIR, _chromadb_available, load_manifest
+
         manifest = load_manifest()
         print(f"  Documentos:  {manifest.get('total_documents', 0)}", file=sys.stderr)
         print(f"  Chunks:      {manifest.get('total_chunks', 0)}", file=sys.stderr)

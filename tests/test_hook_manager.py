@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from motor.core.state import DegradedMode
 from motor.events.bus import EventBus

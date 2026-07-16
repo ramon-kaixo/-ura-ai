@@ -17,17 +17,14 @@ import csv
 import json
 import os
 import platform
-import signal
 import subprocess
 import sys
 import threading
 import time
-import tracemalloc
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import psutil
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_PROJECT_ROOT))
@@ -41,22 +38,23 @@ ENV = {
     "hostname": platform.node(),
     "platform": platform.platform(),
     "python": platform.python_version(),
-    "commit_sha": subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, text=True
-    ).stdout.strip() or "unknown",
-    "version": subprocess.run(
-        ["git", "describe", "--tags", "--always"], capture_output=True, text=True
-    ).stdout.strip() or "unknown",
+    "commit_sha": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    or "unknown",
+    "version": subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True).stdout.strip()
+    or "unknown",
     "cpu_cores": os.cpu_count() or 0,
 }
 
 
 # ─── Helpers de sistema ──────────────────────────────────────────────
 
+
 def qdrant_running() -> bool:
     r = subprocess.run(
         ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     return "ura-qdrant" in r.stdout
 
@@ -65,7 +63,9 @@ def ollama_running() -> bool:
     try:
         r = subprocess.run(
             ["systemctl", "is-active", "ollama"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         return "active" in r.stdout
     except Exception:
@@ -81,7 +81,8 @@ def qdrant_health() -> bool:
     try:
         r = subprocess.run(
             ["curl", "-sf", "http://localhost:6333/health"],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         return r.returncode == 0
     except Exception:
@@ -92,7 +93,8 @@ def ollama_health() -> bool:
     try:
         r = subprocess.run(
             ["curl", "-sf", "http://localhost:11434/api/tags"],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         return r.returncode == 0
     except Exception:
@@ -119,12 +121,14 @@ def wait_for_ollama(timeout: int = 60) -> float:
 
 # ─── Import de componentes (bajo demanda) ────────────────────────────
 
+
 def _make_hybrid_retriever():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.retrieval.vector import VectorRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.hybrid import HybridRetriever
+
     config = UraConfig(qdrant_host="localhost", qdrant_port=6333)
     qdrant = QdrantClient(config)
     vr = VectorRetriever(qdrant_client=qdrant)
@@ -134,6 +138,7 @@ def _make_hybrid_retriever():
 
 def _make_runtime():
     from motor.intelligence.agents.runtime import MultiAgentRuntime
+
     return MultiAgentRuntime()
 
 
@@ -150,9 +155,13 @@ def scenario_r01() -> dict[str, Any]:
 
     if not qdrant_running():
         return {
-            "id": "R01", "fault": fault, "expected": expected,
+            "id": "R01",
+            "fault": fault,
+            "expected": expected,
             "observed": "Qdrant ya no estaba disponible antes del test. SKIP.",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "SKIP",
         }
 
@@ -160,9 +169,13 @@ def scenario_r01() -> dict[str, Any]:
         hr = _make_hybrid_retriever()
     except Exception as e:
         return {
-            "id": "R01", "fault": fault, "expected": expected,
+            "id": "R01",
+            "fault": fault,
+            "expected": expected,
             "observed": f"Error al construir retriever: {e}. El sistema no pudo inicializar.",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -226,9 +239,13 @@ def scenario_r02() -> dict[str, Any]:
 
     if not ollama_running():
         return {
-            "id": "R02", "fault": fault, "expected": expected,
+            "id": "R02",
+            "fault": fault,
+            "expected": expected,
             "observed": "Ollama ya no estaba disponible. SKIP.",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "SKIP",
         }
 
@@ -236,9 +253,13 @@ def scenario_r02() -> dict[str, Any]:
         rt = _make_runtime()
     except Exception as e:
         return {
-            "id": "R02", "fault": fault, "expected": expected,
+            "id": "R02",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo crear runtime: {e}",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -254,7 +275,9 @@ def scenario_r02() -> dict[str, Any]:
         result = rt.execute_workflow("test con ollama caído", timeout=15)
         observed = f"Workflow retornó success=False (esperado). Resultado: {result.success}, error='{result.error}'"
         if still_running:
-            observed += " | ⚠️ NOTA: Ollama no se detuvo realmente (no new privileges flag impide systemctl stop sin sudo)"
+            observed += (
+                " | ⚠️ NOTA: Ollama no se detuvo realmente (no new privileges flag impide systemctl stop sin sudo)"
+            )
         verdict = "PARTIAL"
     except Exception as e:
         observed = f"Excepción: {type(e).__name__}: {e}"
@@ -293,9 +316,13 @@ def scenario_r03() -> dict[str, Any]:
         rt = _make_runtime()
     except Exception as e:
         return {
-            "id": "R03", "fault": fault, "expected": expected,
+            "id": "R03",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo crear runtime: {e}",
-            "auto_recovery": True, "recovery_time_s": 0, "data_loss": False,
+            "auto_recovery": True,
+            "recovery_time_s": 0,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -345,9 +372,13 @@ def scenario_r04() -> dict[str, Any]:
         rt = _make_runtime()
     except Exception as e:
         return {
-            "id": "R04", "fault": fault, "expected": expected,
+            "id": "R04",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo crear runtime: {e}",
-            "auto_recovery": True, "recovery_time_s": 0, "data_loss": False,
+            "auto_recovery": True,
+            "recovery_time_s": 0,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -415,9 +446,13 @@ def scenario_r05() -> dict[str, Any]:
         rt = _make_runtime()
     except Exception as e:
         return {
-            "id": "R05", "fault": fault, "expected": expected,
+            "id": "R05",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo crear runtime: {e}",
-            "auto_recovery": True, "recovery_time_s": 0, "data_loss": False,
+            "auto_recovery": True,
+            "recovery_time_s": 0,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -540,9 +575,13 @@ def scenario_r07() -> dict[str, Any]:
         rt = _make_runtime()
     except Exception as e:
         return {
-            "id": "R07", "fault": fault, "expected": expected,
+            "id": "R07",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo crear runtime: {e}",
-            "auto_recovery": True, "recovery_time_s": 0, "data_loss": False,
+            "auto_recovery": True,
+            "recovery_time_s": 0,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -565,7 +604,7 @@ def scenario_r07() -> dict[str, Any]:
         auto_recovery = True
     except Exception as e:
         observed += f"Workflow falló bajo presión: {type(e).__name__}: {e}"
-        auto_recovery = (type(e).__name__ != "MemoryError")
+        auto_recovery = type(e).__name__ != "MemoryError"
 
     # Liberar memoria
     del big_objects
@@ -655,9 +694,13 @@ def scenario_r09() -> dict[str, Any]:
 
     if not qdrant_running():
         return {
-            "id": "R09", "fault": fault, "expected": expected,
+            "id": "R09",
+            "fault": fault,
+            "expected": expected,
             "observed": "Qdrant ya no disponible antes del test. SKIP.",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "SKIP",
         }
 
@@ -667,9 +710,13 @@ def scenario_r09() -> dict[str, Any]:
         hr = _make_hybrid_retriever()
     except Exception as e:
         return {
-            "id": "R09", "fault": fault, "expected": expected,
+            "id": "R09",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudo construir retriever: {e}",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -729,9 +776,13 @@ def scenario_r10() -> dict[str, Any]:
 
     if not qdrant_running() or not ollama_running():
         return {
-            "id": "R10", "fault": fault, "expected": expected,
+            "id": "R10",
+            "fault": fault,
+            "expected": expected,
             "observed": "Qdrant u Ollama ya no disponibles. SKIP.",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "SKIP",
         }
 
@@ -741,9 +792,13 @@ def scenario_r10() -> dict[str, Any]:
         hr = _make_hybrid_retriever()
     except Exception as e:
         return {
-            "id": "R10", "fault": fault, "expected": expected,
+            "id": "R10",
+            "fault": fault,
+            "expected": expected,
             "observed": f"No se pudieron construir componentes: {e}",
-            "auto_recovery": False, "recovery_time_s": -1, "data_loss": False,
+            "auto_recovery": False,
+            "recovery_time_s": -1,
+            "data_loss": False,
             "veredict": "FAIL",
         }
 
@@ -820,8 +875,14 @@ ALL_SCENARIOS = {
 }
 
 CSV_FIELDS = [
-    "id", "fault", "expected", "observed", "auto_recovery",
-    "recovery_time_s", "data_loss", "veredict",
+    "id",
+    "fault",
+    "expected",
+    "observed",
+    "auto_recovery",
+    "recovery_time_s",
+    "data_loss",
+    "veredict",
 ]
 
 
@@ -867,11 +928,15 @@ def save_results(results: list[dict[str, Any]]):
 
 # ─── CLI ──────────────────────────────────────────────────────────────
 
+
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="F14 Resilience Tests")
     parser.add_argument(
-        "--scenario", "-s", default=None,
+        "--scenario",
+        "-s",
+        default=None,
         help="Escenarios separados por coma (default: todos)",
     )
     args = parser.parse_args()
@@ -889,31 +954,37 @@ def main():
     results = []
     for sid, fn in to_run.items():
         print(f"\n  📍 Escenario {sid}")
-        print(f"  {'─'*40}")
+        print(f"  {'─' * 40}")
         try:
             r = fn()
             results.append(r)
             v = r.get("veredict", "?")
             icon = {"PASS": "✅", "FAIL": "❌", "PARTIAL": "⚠️", "SKIP": "⏭️"}.get(v, "❓")
-            print(f"  {icon} {sid}: {v} — recovery={r.get('recovery_time_s','?')}s, "
-                  f"data_loss={r.get('data_loss','?')}")
+            print(
+                f"  {icon} {sid}: {v} — recovery={r.get('recovery_time_s', '?')}s, data_loss={r.get('data_loss', '?')}"
+            )
         except Exception as e:
-            results.append({
-                "id": sid, "fault": "unknown", "expected": "unknown",
-                "observed": f"Error de ejecución: {type(e).__name__}: {e}",
-                "auto_recovery": False, "recovery_time_s": -1,
-                "data_loss": False, "veredict": "FAIL",
-            })
+            results.append(
+                {
+                    "id": sid,
+                    "fault": "unknown",
+                    "expected": "unknown",
+                    "observed": f"Error de ejecución: {type(e).__name__}: {e}",
+                    "auto_recovery": False,
+                    "recovery_time_s": -1,
+                    "data_loss": False,
+                    "veredict": "FAIL",
+                }
+            )
             print(f"  ❌ {sid}: FAIL — {e}")
 
     data = save_results(results)
     s = data["summary"]
-    print(f"\n{'='*60}")
-    print(f"  Resumen: {s['PASS']} PASS / {s['FAIL']} FAIL / "
-          f"{s['PARTIAL']} PARTIAL / {s['SKIP']} SKIP")
+    print(f"\n{'=' * 60}")
+    print(f"  Resumen: {s['PASS']} PASS / {s['FAIL']} FAIL / {s['PARTIAL']} PARTIAL / {s['SKIP']} SKIP")
     print(f"  Auto-recovery: {s['auto_recovery_count']}/{s['total']}")
     print(f"  Data loss: {s['data_loss_count']}/{s['total']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Conclusión global
     non_skip = s["total"] - s["SKIP"]

@@ -57,27 +57,34 @@ class PlannerAgent(Agent):
 
         for keyword, role in keywords.items():
             if keyword in obj_lower:
-                subtasks.append({
-                    "agent_role": role,
+                subtasks.append(
+                    {
+                        "agent_role": role,
+                        "objective": objective,
+                        "priority": 0,
+                        "timeout": 30,
+                    }
+                )
+
+        if not subtasks:
+            subtasks.append(
+                {
+                    "agent_role": AgentRole.EXECUTOR,
                     "objective": objective,
                     "priority": 0,
                     "timeout": 30,
-                })
-
-        if not subtasks:
-            subtasks.append({
-                "agent_role": AgentRole.EXECUTOR,
-                "objective": objective,
-                "priority": 0,
-                "timeout": 30,
-            })
+                }
+            )
 
         if AgentRole.RESEARCHER in [s["agent_role"] for s in subtasks]:
-            subtasks.insert(0, {
-                "agent_role": AgentRole.RESEARCHER,
-                "objective": f"Gather context for: {objective}",
-                "priority": 0,
-                "timeout": 30,
-            })
+            subtasks.insert(
+                0,
+                {
+                    "agent_role": AgentRole.RESEARCHER,
+                    "objective": f"Gather context for: {objective}",
+                    "priority": 0,
+                    "timeout": 30,
+                },
+            )
 
         return subtasks

@@ -104,6 +104,7 @@ class TestHybridCompressionPolicy:
 class TestSummaryRecord:
     def test_auto_id(self):
         from motor.intelligence.memory.compression import SummaryRecord
+
         sr = SummaryRecord(source_episode_ids=["e1"], summary="test")
         assert sr.id != ""
         assert sr.created_at != ""
@@ -242,6 +243,7 @@ class TestCompressionScheduler:
 class TestCompressionBenchmark:
     def test_compression_under_500ms(self):
         import time
+
         store = EpisodeStore()
         for i in range(500):
             store.store(Episode(payload=f"Episode {i} content", session_id=f"s{i % 5}"))
@@ -255,6 +257,7 @@ class TestCompressionBenchmark:
 class TestThreadSafety:
     def test_concurrent_compress(self):
         import concurrent.futures
+
         store = EpisodeStore()
         for i in range(100):
             store.store(Episode(payload=f"E{i}", session_id=f"s{i % 3}"))
