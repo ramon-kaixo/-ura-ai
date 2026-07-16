@@ -148,16 +148,17 @@ class EvaluationEngine:
             }
             per_query.append(q_result)
 
+        nq = len(per_query) if per_query else 1
         aggregated: dict[str, float] = {
-            f"recall@{k}": sum(q["recall"] for q in per_query) / len(per_query),
-            f"precision@{k}": sum(q["precision"] for q in per_query) / len(per_query),
-            "mrr": sum(q["mrr"] for q in per_query) / len(per_query),
-            f"ndcg@{k}": sum(q["ndcg"] for q in per_query) / len(per_query),
+            f"recall@{k}": sum(q["recall"] for q in per_query) / nq,
+            f"precision@{k}": sum(q["precision"] for q in per_query) / nq,
+            "mrr": sum(q["mrr"] for q in per_query) / nq,
+            f"ndcg@{k}": sum(q["ndcg"] for q in per_query) / nq,
             "map": map_at_k(query_pairs, k) if query_pairs else 0.0,
         }
 
         latency_stats = {
-            "mean_ms": round(sum(latencies) / len(latencies), 1) if latencies else 0.0,
+            "mean_ms": round(sum(latencies) / max(1, len(latencies)), 1),
             "min_ms": round(min(latencies), 1) if latencies else 0.0,
             "max_ms": round(max(latencies), 1) if latencies else 0.0,
         }
