@@ -44,6 +44,7 @@ class LLMRouter:
         health_cache_ttl: float = 30.0,
         profiling_enabled: bool = False,
         hotspot_threshold_ms: float = 0.0,
+        baseline_enabled: bool = False,
     ) -> None:
         from motor.core.llm.registry import registry as default_registry
 
@@ -70,6 +71,12 @@ class LLMRouter:
             self._detector = HotspotDetector(threshold_ms=hotspot_threshold_ms)
         else:
             self._detector = None
+        if baseline_enabled:
+            from motor.core.llm.baseline import PerformanceBaseline
+
+            self._baseline = PerformanceBaseline()
+        else:
+            self._baseline = None
 
         # Circuit breakers por proveedor (inicialización perezosa)
         self._circuit_breakers: dict[str, Any] = {}
@@ -153,8 +160,16 @@ class LLMRouter:
                 result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
                 if self._profiler:
                     profile = self._profiler.stop(provider_name, task)
-                if profile and self._detector:
-                    self._detector.evaluate_from_profile(profile)
+                if profile:
+                    if self._detector:
+                        self._detector.evaluate_from_profile(profile)
+                    if self._baseline:
+                        self._baseline.record(
+                            provider_name, task,
+                            wall_time_ms=profile.wall_time_ms,
+                            cpu_time_ms=profile.cpu_time_ms,
+                            peak_memory_bytes=profile.peak_memory_bytes,
+                        )
                 latency_ms = (time.monotonic() - t0) * 1000
 
                 tokens = None
