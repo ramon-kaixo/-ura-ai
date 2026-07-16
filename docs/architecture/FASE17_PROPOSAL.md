@@ -511,9 +511,60 @@ Añadir sección `llm.providers` en `system_config.json` para configurar cada pr
 
 ---
 
+### A1 — Contrato Estable de `motor.core.llm` (Ampliación transversal)
+
+> **Ampliación de:** F18–F23
+> **Prioridad:** Alta
+> **Ejecución:** Inmediatamente después de F18, antes de F19
+
+**Objetivo:** Congelar la API pública de `motor.core.llm` antes de que F19 (observabilidad) y F22 (más proveedores) añadan superficie de contacto. Garantizar que ningún consumidor accede a implementaciones internas.
+
+**Problema:** Sin un contrato explícito, cada nuevo proveedor puede introducir variaciones sutiles en la API (parámetros opcionales, órdenes distintos, tipos de retorno ligeramente diferentes). La observabilidad de F19 envolverá `motor.core.llm` — si la API no es estable, las métricas serán frágiles.
+
+**Alcance:**
+
+1. **API pública documentada:**
+   - `generate(prompt: str, model: str, options: dict | None = None) -> str`
+   - `generate_stream(prompt: str, model: str, options: dict | None = None) -> Iterator[str]`
+   - `embed(texts: list[str], model: str) -> list[list[float]]`
+   - `embed_async(texts: list[str], model: str) -> list[list[float]]`
+   - `health() -> dict`
+   - Documentar en `docs/api/motor-core-llm.md`.
+
+2. **Tests de contrato:**
+   - Test parametrizado que verifica que cada proveedor existente implementa exactamente la misma firma.
+   - Test que verifica que ningún consumidor importa clases internas (ej: `from motor.core.llm.ollama import OllamaProvider`).
+
+3. **Versionado del contrato:**
+   - El contrato (ABC/Protocolo) tiene un `__version__ = "1.0"`.
+   - Cualquier cambio en la API pública incrementa la versión.
+   - Los consumidores pueden declarar `requires = "motor.core.llm >= 1.0"`.
+
+4. **Compatibilidad hacia atrás:**
+   - Si un consumidor usa la API antigua (ej: llama a `generate()` sin `model`), debe seguir funcionando al menos una versión.
+   - Deprecation warning con `FutureWarning` para APIs obsoletas.
+
+**Archivos afectados:**
+- `motor/core/llm/__init__.py` — exportar el contrato y versión.
+- `motor/core/llm/protocol.py` — nuevo archivo con el ABC/Protocolo.
+- `docs/api/motor-core-llm.md` — nuevo archivo de documentación.
+- Cada proveedor existente — implementar el protocolo explícitamente.
+
+**Riesgos:** Bajo. Cambios solo en la capa de interfaz, no en lógica de negocio.
+
+**Criterios de aceptación:**
+- Ningún consumidor accede a implementaciones internas de `motor.core.llm` (verificado por grep).
+- Toda inferencia pasa por `motor.core.llm.generate()` o `motor.core.llm.embed()`.
+- Tests de contrato pasan para todos los proveedores existentes.
+- `motor.core.llm.__version__` está definido y es `"1.0"`.
+
+**Validación:** `py_compile`, `ruff`, `pytest -q`, `grep` de imports internos.
+
+---
+
 ### F19 — Observabilidad y Fallback Automático
 
-> **Depende de:** F18
+> **Depende de:** F18, A1
 
 **Objetivo:** Poder explicar exactamente qué hace URA en cada petición: qué proveedor, qué modelo, latencia, tokens, coste, errores. Añadir circuit breaker para failover entre proveedores.
 
@@ -790,26 +841,28 @@ Implementar el contrato de F18 para:
 
 ## Resumen del Roadmap
 
-| Fase | Objetivo | Esfuerzo | Depende de |
-|------|----------|:--------:|------------|
-| **F17** | Configuración unificada | 13-21h | F16 |
-| **F17.5** | Gestión de secretos | 2-4h | F17 |
-| **F18** | Cliente multiproveedor (Ollama + OpenAI) | 15-20h | F17, F17.5 |
-| **F19** | Observabilidad + Fallback | 15-20h | F18 |
-| **F20** | Optimización de rendimiento | 15-25h | F19 |
-| **F21** | Calidad y validación continua | 20-30h | F19, F20 |
-| **F22** | Proveedores adicionales | 15-25h | F18, F19, F20 |
-| **F23** | Limpieza y v1.0.0-rc | 8-15h | F17-F22 |
-| **Total** | | **103-160h** | |
+| Prioridad | Fase | Objetivo | Esfuerzo | Depende de | Estado |
+|:---------:|------|---------|:--------:|------------|:------:|
+| **Alta** | **F17** | Configuración unificada | 13-21h | F16 | Pendiente |
+| **Alta** | **F17.5** | Gestión de secretos | 2-4h | F17 | Pendiente |
+| **Alta** | **F18** | Cliente multiproveedor (Ollama + OpenAI) | 15-20h | F17, F17.5 | Pendiente |
+| **Alta** | *A1* | *Contrato estable de motor.core.llm* | *4-6h* | *F18* | *Pendiente* |
+| **Alta** | **F19** | Observabilidad, fallback y circuit breakers | 15-20h | F18, A1 | Pendiente |
+| **Media** | **F20** | Rendimiento y profiling | 15-25h | F19 | Pendiente |
+| **Media** | **F21** | Calidad RAG/LLM | 20-30h | F19, F20 | Pendiente |
+| **Media** | **F22** | Proveedores adicionales | 15-25h | F18, F19, F20, A1 | Pendiente |
+| **Baja** | **F23** | Limpieza y v1.0.0-rc | 8-15h | F17-F22 | Pendiente |
+| | | **Total** | **107-166h** | | |
 
 ### Orden Estratégico
 
 1. **F17 + F17.5**: Consolidar arquitectura y secretos antes de tocar proveedores.
 2. **F18**: Router básico con los 2 proveedores más usados. Sin fallback, sin métricas.
-3. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback).
-4. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
-5. **F21**: Calidad (necesitas pipeline rápido de F20 para golden tests viables).
-6. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
-7. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales).
+3. **A1**: Congelar contrato de `motor.core.llm` antes de que F19 y F22 añadan más superficie. Sin esto, observabilidad y nuevos proveedores introducirán API drifting.
+4. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback y contrato estable para instrumentar).
+5. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
+6. **F21**: Calidad (necesitas pipeline rápido de F20 para golden tests viables).
+7. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
+8. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales).
 
-Este orden minimiza el riesgo: primero arquitectura, después capacidades, luego observabilidad, rendimiento, calidad, cobertura de proveedores, y finalmente limpieza pre-release.
+Este orden minimiza el riesgo: primero arquitectura, después capacidades, luego contrato, observabilidad, rendimiento, calidad, cobertura de proveedores, y finalmente limpieza pre-release.
