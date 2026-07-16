@@ -19,6 +19,8 @@ import sys
 import time
 from pathlib import Path
 
+from motor.core.secrets import get_secret
+
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
     from playwright.sync_api import sync_playwright
@@ -59,7 +61,7 @@ else:
 
 ROUTER = f"http://{ROUTER_IP}"
 ASUS_IP = ASUS_WIFI
-RECOVERY_KEY = os.environ.get("ROUTER_PASSWORD", "")
+RECOVERY_KEY = get_secret("ROUTER_PASSWORD", "")
 if not RECOVERY_KEY:
     RECOVERY_KEY = "41161"
 
@@ -155,7 +157,12 @@ def bypass_linksys() -> bool:
                 # Verificar si el login fue exitoso
                 page.wait_for_load_state("networkidle", timeout=10000)
                 content = page.content()
-                if "logOff" in content or "banner" in content or "error" in content.lower() or "incorrect" in content.lower():
+                if (
+                    "logOff" in content
+                    or "banner" in content
+                    or "error" in content.lower()
+                    or "incorrect" in content.lower()
+                ):
                     pass
                 else:
                     pass
