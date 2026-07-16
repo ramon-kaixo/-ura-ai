@@ -295,7 +295,7 @@ class TestBaseProviderContract:
 
         abstractos = []
         for name, method in BaseLLMProvider.__dict__.items():
-            if hasattr(method, "__isabstractmethod__"):
+            if getattr(method, "__isabstractmethod__", False):
                 abstractos.append(name)
         assert sorted(abstractos) == sorted(["generate", "embed", "embed_async", "health"])
 

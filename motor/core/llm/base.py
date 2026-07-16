@@ -9,9 +9,43 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Any
 
+DEFAULT_PROVIDER_CAPABILITIES: dict[str, Any] = {
+    "chat": True,
+    "embeddings": True,
+    "streaming": False,
+    "tools": False,
+    "json_mode": False,
+    "multimodal": False,
+    "vision": False,
+    "max_context": 4096,
+    "max_output": 1024,
+}
+
 
 class BaseLLMProvider(ABC):
     """Contrato abstracto para proveedores de lenguaje."""
+
+    @property
+    def capabilities(self) -> dict[str, Any]:
+        """Capacidades declarativas del proveedor.
+
+        Retorna dict con claves: chat, embeddings, streaming, tools,
+        json_mode, multimodal, vision, max_context, max_output.
+        Cada proveedor puede sobrescribir para declarar sus capacidades.
+        """
+        return dict(DEFAULT_PROVIDER_CAPABILITIES)
+
+    def supports(self, capability: str) -> bool:
+        """Verifica si el proveedor soporta una capacidad."""
+        caps = self.capabilities
+        if capability not in caps:
+            return False
+        value = caps[capability]
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value > 0
+        return bool(value)
 
     @abstractmethod
     def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
@@ -111,7 +145,14 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:  # noqa: 
         if sig:
             errors.append(f"embed: {sig}")
 
-    # 6. Comportamiento: generate retorna str
+    # 6. Capacidades
+    caps = instance.capabilities
+    if not isinstance(caps, dict):
+        errors.append("capabilities debe ser un dict")
+    if "chat" not in caps:
+        errors.append("Falta capacidad 'chat'")
+
+    # 7. Comportamiento: generate retorna str
     try:
         result = instance.generate("test")
         if not isinstance(result, str):
@@ -119,7 +160,7 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:  # noqa: 
     except Exception as e:
         errors.append(f"generate('test') lanzó excepción: {e}")
 
-    # 7. Comportamiento: embed retorna list
+    # 8. Comportamiento: embed retorna list
     try:
         result = instance.embed(["test"])
         if not isinstance(result, list):

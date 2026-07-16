@@ -42,6 +42,20 @@ def _log_call(provider: str, model: str, latency_ms: float, error: str | None = 
 class OpenAIProvider(BaseLLMProvider):
     """Proveedor LLM compatible con OpenAI API."""
 
+    @property
+    def capabilities(self) -> dict[str, Any]:
+        return {
+            "chat": True,
+            "embeddings": True,
+            "streaming": True,
+            "tools": True,
+            "json_mode": True,
+            "multimodal": True,
+            "vision": True,
+            "max_context": 128000,
+            "max_output": 16384,
+        }
+
     def __init__(self) -> None:
         self._provider_name = "openai"
         self._api_key = get_secret("OPENAI_API_KEY")

@@ -400,6 +400,65 @@ class LLMRouter:
             self._health_remove_cache(name)
             return {"provider": name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
 
+    # ── Capability negotiation ───────────────────────────────
+
+    def find_providers_by_capability(self, capability: str) -> list[str]:
+        """Retorna lista de proveedores registrados que soportan una capacidad."""
+        result: list[str] = []
+        for name in self._registry.list():
+            try:
+                prov = self._registry.get(name)
+                if prov.supports(capability):
+                    result.append(name)
+            except Exception:
+                log.debug("find_providers_by_capability: error checking %s", name)
+                continue
+        return result
+
+    def select_provider_by_capability(
+        self, capability: str, preferred: str | None = None,
+    ) -> str:
+        """Selecciona un proveedor que soporte la capacidad requerida.
+
+        Args:
+            capability: Capacidad requerida (chat, streaming, vision, etc.)
+            preferred: Proveedor preferido (opcional).
+
+        Returns:
+            Nombre del proveedor seleccionado.
+
+        Raises:
+            RuntimeError: Si ningún proveedor soporta la capacidad.
+        """
+        if preferred:
+            try:
+                prov = self._registry.get(preferred)
+                if prov.supports(capability):
+                    return preferred
+            except (KeyError, Exception):
+                log.debug("preferred provider %s not available for %s", preferred, capability)
+
+        # Buscar entre los registrados
+        capable = self.find_providers_by_capability(capability)
+        if capable:
+            return capable[0]
+
+        raise RuntimeError(
+            f"No provider supports capability '{capability}'. "
+            f"Available: {list(self._registry.list())}"
+        )
+
+    def generate_with_capability(
+        self,
+        prompt: str,
+        capability: str = "chat",
+        model: str | None = None,
+        options: dict | None = None,
+    ) -> str:
+        """Genera texto usando un proveedor que soporte la capacidad indicada."""
+        provider_name = self.select_provider_by_capability(capability)
+        return self.generate(prompt, model=model, options=options, provider=provider_name)
+
     # ── Internos ────────────────────────────────────────────
 
     def _resolve_name(self, task: str, provider: str | None) -> str:
