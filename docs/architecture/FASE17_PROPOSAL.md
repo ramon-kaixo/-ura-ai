@@ -998,10 +998,10 @@ Si algún criterio no se cumple, la RC se retrasa hasta que se corrija. No se et
 |:---------:|------|---------|:--------:|------------|:------:|
 | **Alta** | **F17** | Configuración unificada | 13-21h | F16 | Pendiente |
 | **Alta** | **F17.5** | Gestión de secretos | 2-4h | F17 | Pendiente |
+| **Alta** | *A3* | *Política de deprecación* | *2-3h* | *F17* | *Pendiente* |
 | **Alta** | **F18** | Cliente multiproveedor (Ollama + OpenAI) | 15-20h | F17, F17.5 | Pendiente |
 | **Alta** | *A1* | *Contrato estable de motor.core.llm* | *4-6h* | *F18* | *Pendiente* |
 | **Alta** | *A2* | *API pública del proyecto* | *3-5h* | *F18, A1* | *Pendiente* |
-| **Alta** | *A3* | *Política de deprecación* | *2-3h* | *F17* | *Pendiente* |
 | **Alta** | **F19** | Observabilidad, fallback y circuit breakers | 15-20h | F18, A1, A2 | Pendiente |
 | **Media** | **F20** | Rendimiento y profiling | 15-25h | F19 | Pendiente |
 | **Media** | *A4* | *Benchmarks automáticos* | *6-10h* | *F20* | *Pendiente* |
@@ -1010,7 +1010,19 @@ Si algún criterio no se cumple, la RC se retrasa hasta que se corrija. No se et
 | **Baja** | **F23** | Limpieza y v1.0.0-rc | 8-15h | F17-F22, A3, A4 | Pendiente |
 | | | **Total** | **118-184h** | | |
 
-### Orden Estratégico
+### Orden de Ejecución
+
+| Paso | Componentes | Depende de |
+|:----:|-------------|------------|
+| **1** | **F17 + F17.5 + A3** — Arquitectura, secretos y política de deprecación | F16 |
+| **2** | **F18** — Router Ollama + OpenAI | Paso 1 |
+| **3** | **A1 + A2** — Contrato LLM + API pública | Paso 2 |
+| **4** | **F19** — Observabilidad + fallback | Paso 3 |
+| **5** | **F20** — Rendimiento | Paso 4 |
+| **6** | **A4** — Benchmarks automáticos | Paso 5 |
+| **7** | **F21** — Calidad RAG/LLM | Pasos 5, 6 |
+| **8** | **F22** — Proveedores adicionales | Pasos 2, 4, 5 |
+| **9** | **F23** — Limpieza + v1.0.0-rc | Pasos 1-8 |
 
 1. **F17 + F17.5 + A3**: Consolidar arquitectura, secretos y política de deprecación de una vez. A3 (política) debe ir antes de F17-B2 para que las decisiones de deprecación tengan marco de referencia desde el inicio. Las tres comparten dependencia de F16 y no requieren componentes posteriores.
 2. **F18**: Router básico con los 2 proveedores más usados. Sin fallback, sin métricas.
