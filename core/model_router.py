@@ -79,13 +79,7 @@ def verificar_politicas_seguridad_preflight() -> None:
 # para no matar el proceso en imports (permite colección de pytest).
 # ===== FIN PREFLIGHT =====
 
-try:
-    from core.config_manager import get_ollama_urls
-except ImportError:
-
-    def get_ollama_urls() -> dict[str, str]:
-        return {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
-
+from core.config_manager import get_ollama_urls
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()

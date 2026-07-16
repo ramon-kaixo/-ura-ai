@@ -72,10 +72,13 @@ def load_config() -> dict[str, Any]:
 
     # Sobrescribir con configuración local (no requiere sudo en GX10)
     if _LOCAL_CONFIG_PATH.exists():
+        log.warning(
+            "config.local.json encontrado — DEPRECATED. Será eliminado en F23. "
+            "Migre las claves a system_config.json.",
+        )
         try:
             local = json.loads(_LOCAL_CONFIG_PATH.read_text())
             config.update(local)
-            log.info("config local aplicada desde %s", _LOCAL_CONFIG_PATH)
         except (json.JSONDecodeError, OSError) as e:
             log.warning("error al cargar config local %s: %s", _LOCAL_CONFIG_PATH, e)
 
@@ -96,6 +99,21 @@ def get_base_dir() -> Path:
 def get_ollama_url() -> str:
     """Devuelve la URL completa de Ollama para este nodo."""
     return f"http://{CONFIG['ollama']['host']}:{CONFIG['ollama']['port']}"
+
+
+def get_ollama_urls() -> dict[str, str]:
+    """Devuelve URLs primaria y de fallback de Ollama.
+    
+    La primaria usa host/port local del perfil activo.
+    El fallback usa remote_host si existe, o la misma URL.
+    """
+    ollama = CONFIG.get("ollama", {})
+    host = ollama.get("host", "localhost")
+    port = ollama.get("port", 11434)
+    remote = ollama.get("remote_host", host)
+    primary = f"http://{host}:{port}"
+    fallback = f"http://{remote}:{port}"
+    return {"primary": primary, "fallback": fallback}
 
 
 def get_role() -> str:
