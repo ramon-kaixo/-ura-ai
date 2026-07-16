@@ -32,12 +32,14 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+from motor.core.llm import generate as _generate
+from motor.core.llm import health as _health
+
 log = logging.getLogger("ura.multi_agent")
 
 # ── Configuración ──────────────────────────────────────────────────────────
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 SCRIPTS = URA_ROOT / "scripts/pro"
 NERVIOSO = URA_ROOT / ".nervioso"
 MAX_CICLO_S = 300  # Timeout global del ciclo de auto-mejora (5 minutos)
@@ -49,6 +51,7 @@ MODELOS = {
     "reparador_potente": "qwen3:32b-q8_0",
     "revisor": "qwen2.5-coder:14b-instruct-q8_0",
 }
+
 
 RUFF = str(URA_ROOT / ".venv/bin/ruff")
 
@@ -104,10 +107,10 @@ class Telemetria:
 
         # Ollama
         try:
-            r = httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)
-            if r.status_code < 500:
-                data = r.json()
-                status["ollama"] = f"{len(data.get('models', []))} modelos"
+            result = _health()
+            if result.get("status") == "ok":
+                modelos = result.get("modelos_disponibles", [])
+                status["ollama"] = f"{len(modelos)} modelos"
             else:
                 status["ollama"] = "down"
         except Exception:
@@ -298,7 +301,8 @@ class AgenteEjecutor:
             env["REFACTOR_MODEL"] = self.MODELO
             env["REFACTOR_MODEL_FALLBACK"] = "qwen2.5-coder:14b"
             env["MIN_LINES"] = "80"
-            env["OLLAMA_URL"] = OLLAMA_URL
+            from core.config_manager import get_ollama_url
+            env["OLLAMA_URL"] = get_ollama_url()
             env["URA_ROOT"] = str(URA_ROOT)
 
             proc = subprocess.Popen(  # noqa: S603  -- sys.executable + ruta interna
@@ -414,23 +418,11 @@ class AgenteReparador:
                 f"Devuelve SOLO el código reparado."
             )
 
-            payload = json.dumps(
-                {
-                    "model": modelo,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.0, "num_predict": 4096},
-                },
-            ).encode()
-            import urllib.request
-
-            req = urllib.request.Request(
-                f"{OLLAMA_URL}/api/generate",
-                data=payload,
-                headers={"Content-Type": "application/json"},
+            fixed = _generate(
+                prompt,
+                model=modelo,
+                options={"temperature": 0.0, "num_predict": 4096},
             )
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                fixed = json.loads(resp.read()).get("response", "")
 
             if fixed and "```" in fixed:
                 fixed = fixed.split("```python")[1].split("```")[0] if "```python" in fixed else fixed.split("```")[1]
