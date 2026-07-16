@@ -47,7 +47,7 @@ class TestAPIExportada:
             "CONFIG", "log", "logging",
             "OllamaProvider", "OpenAIProvider",
             "ollama", "openai", "base", "registry",
-            "router", "circuit_breaker", "observability", "profiler",
+            "router", "circuit_breaker", "observability", "profiler", "detector",
             "provider_name",
         }
         extras = exports_no_publicos - esperados
