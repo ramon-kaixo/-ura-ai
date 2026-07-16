@@ -42,6 +42,7 @@ class LLMRouter:
         fallback_enabled: bool = True,
         fallback_max_providers: int = 3,
         health_cache_ttl: float = 30.0,
+        profiling_enabled: bool = False,
     ) -> None:
         from motor.core.llm.registry import registry as default_registry
 
@@ -54,6 +55,13 @@ class LLMRouter:
         self._fallback_enabled = fallback_enabled
         self._fallback_max_providers = fallback_max_providers
         self._health_cache_ttl = health_cache_ttl
+        self._profiling_enabled = profiling_enabled
+        if profiling_enabled:
+            from motor.core.llm.profiler import LLMProfiler
+
+            self._profiler = LLMProfiler(enabled=True)
+        else:
+            self._profiler = None
 
         # Circuit breakers por proveedor (inicialización perezosa)
         self._circuit_breakers: dict[str, Any] = {}
@@ -126,11 +134,16 @@ class LLMRouter:
         last_error: str | None = None
         attempts = 1
         max_attempts = self._retry_max_attempts if self._retry_enabled else 1
+        model = kwargs.get("model")
 
         for attempt in range(max_attempts):
             t0 = time.monotonic()
             try:
+                if self._profiler:
+                    self._profiler.start(provider_name, task, model)
                 result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
+                if self._profiler:
+                    self._profiler.stop(provider_name, task)
                 latency_ms = (time.monotonic() - t0) * 1000
 
                 tokens = None
@@ -319,8 +332,12 @@ class LLMRouter:
 
         t0 = time.monotonic()
         cb = self._get_cb(name)
+        if self._profiler:
+            self._profiler.start(name, "health")
         try:
             result = cb.call(prov.health)
+            if self._profiler:
+                self._profiler.stop(name, "health")
             latency_ms = (time.monotonic() - t0) * 1000
             metrics.record(name, "health", latency_ms, success=True)
             result["latency_ms"] = latency_ms
