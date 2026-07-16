@@ -5,6 +5,7 @@ Circuit breaker, retry, fallback, observabilidad, health monitor.
 
 from __future__ import annotations
 
+import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import patch
@@ -781,6 +782,82 @@ class TestLogging:
         with patch("motor.core.llm.router.log") as mock_log:
             router.generate("test")
             assert mock_log.warning.called
+
+
+# ── H6: Logging hardening ───────────────
+
+class TestLoggingSafety:
+    """Verifica que los logs no exponen información sensible y contienen
+    únicamente los campos estructurados previstos."""
+
+    SENSITIVE_PROMPT = "Mi clave API es sk-abc12345 y mi password es secreto"
+
+    def test_logs_do_not_contain_prompt(self, caplog: pytest.LogCaptureFixture) -> None:
+        reg = ProviderRegistry()
+        reg.register("ok", _MockOK(), default=True)
+        router = LLMRouter(registry=reg)
+        with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
+            router.generate(self.SENSITIVE_PROMPT)
+        for record in caplog.records:
+            msg = record.getMessage()
+            assert self.SENSITIVE_PROMPT not in msg, (
+                f"Prompt leaked in log: {msg[:200]}"
+            )
+            assert "sk-abc12345" not in msg, f"API key leaked in log: {msg[:200]}"
+
+    def test_logs_do_not_contain_api_key(self, caplog: pytest.LogCaptureFixture) -> None:
+        key_prompt = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz"
+        reg = ProviderRegistry()
+        reg.register("ok", _MockOK(), default=True)
+        router = LLMRouter(registry=reg)
+        with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
+            router.generate(key_prompt)
+        for record in caplog.records:
+            msg = record.getMessage()
+            assert "sk-proj" not in msg, f"API key leaked in log: {msg[:200]}"
+
+    def test_logs_do_not_contain_embeddings(self, caplog: pytest.LogCaptureFixture) -> None:
+        reg = ProviderRegistry()
+        reg.register("ok", _MockOK(), default=True)
+        router = LLMRouter(registry=reg)
+        with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
+            router.embed(["texto sensible"])
+        for record in caplog.records:
+            msg = record.getMessage()
+            assert "texto sensible" not in msg, f"Embedding input leaked in log: {msg[:200]}"
+            assert "0.0" not in msg or "latency" in msg, (
+                f"Vector data may have leaked: {msg[:200]}"
+            )
+
+    def test_logs_do_not_contain_raw_request(self, caplog: pytest.LogCaptureFixture) -> None:
+        raw_prompt = "raw sensitive request content"
+        reg = ProviderRegistry()
+        reg.register("ok", _MockOK(), default=True)
+        router = LLMRouter(registry=reg)
+        with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
+            router.generate(raw_prompt)
+        for record in caplog.records:
+            msg = record.getMessage()
+            assert raw_prompt not in msg, f"Raw request leaked in log: {msg[:200]}"
+
+    def test_logs_contain_expected_fields(self, caplog: pytest.LogCaptureFixture) -> None:
+        reg = ProviderRegistry()
+        reg.register("ok", _MockOK(), default=True)
+        router = LLMRouter(registry=reg)
+        with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
+            router.generate("test prompt")
+        # Buscar al menos un registro con formato llm_call
+        llm_records = [
+            r for r in caplog.records
+            if "llm_call" in r.getMessage()
+        ]
+        assert len(llm_records) >= 1, "No se encontraron registros llm_call"
+
+        record = llm_records[0]
+        msg = record.getMessage()
+        fields = ["provider", "op", "latency_ms", "attempt", "cb"]
+        missing = [f for f in fields if f not in msg]
+        assert not missing, f"Campos faltantes en log: {missing}. Mensaje: {msg}"
 
 
 # ── Regresión ─────────────────────────
