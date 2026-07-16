@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.secrets import get_secret
 from motor.core.state import DegradedMode
 
 from .base import Provider, ProviderError
@@ -14,7 +15,7 @@ DEEPSEEK_TIMEOUT = int(os.environ.get("MOCHILA_DEEPSEEK_TIMEOUT", "60"))
 
 class DeepSeekProvider(Provider):
     def __init__(self) -> None:
-        self.api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        self.api_key = get_secret("DEEPSEEK_API_KEY", "")
 
     @property
     def nombre(self) -> str:

@@ -5,25 +5,26 @@ Soporta Telegram y Pushover. Los tokens se cargan desde variables de entorno
 """
 
 import logging
-import os
 from typing import Literal
 
 import httpx
+
+from motor.core.secrets import get_secret
 
 log = logging.getLogger("ura.notifier")
 
 _TELEGRAM_TOKEN: str | None = None
 _TELEGRAM_CHAT_ID: str | None = None
 
-PUSHOVER_USER = os.environ.get("PUSHOVER_USER_KEY", "")
-PUSHOVER_TOKEN = os.environ.get("PUSHOVER_APP_TOKEN", "")
+PUSHOVER_USER = get_secret("PUSHOVER_USER_KEY", "")
+PUSHOVER_TOKEN = get_secret("PUSHOVER_APP_TOKEN", "")
 
 
 def _get_telegram_token() -> str | None:
     global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID
     if _TELEGRAM_TOKEN is None:
-        _TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
-        _TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+        _TELEGRAM_TOKEN = get_secret("TELEGRAM_TOKEN", "")
+        _TELEGRAM_CHAT_ID = get_secret("TELEGRAM_CHAT_ID", "")
     return _TELEGRAM_TOKEN or None
 
 

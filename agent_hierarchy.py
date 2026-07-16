@@ -5,16 +5,19 @@ Implements the 3-level agent hierarchy with permission levels and quarantine sys
 
 import json
 import logging
+import os
 import subprocess
 import time
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
+from motor.core.secrets import get_secret
+
 # Configuration
 ORCHESTRATOR_HOST = "10.164.1.99"
 ORCHESTRATOR_PORT = 18789
-GATEWAY_TOKEN = os.environ.get("OPENCLAW_GATEWAY_TOKEN", "")
+GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
 LOG_FILE = "/home/ramon/URA/agent_hierarchy.log"
