@@ -26,9 +26,11 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from email.message import EmailMessage
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.request import Request, urlopen
 from urllib.parse import urlparse
+
+from motor.core.secrets import get_secret
 
 log = logging.getLogger("ura.knowledge.notify")
 
@@ -37,8 +39,12 @@ _MAX_RETRIES = 3
 _BACKOFF_BASE_S = 1.0
 _BACKOFF_MAX_S = 10.0
 _PRIVATE_NETWORKS = [
-    "127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
-    "::1/128", "fc00::/7",
+    "127.0.0.0/8",
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "::1/128",
+    "fc00::/7",
 ]
 
 
@@ -72,14 +78,25 @@ def _validate_url(url: str) -> str:
 def _should_retry(exception: Exception) -> bool:
     """Determina si un error es transitorio y merece reintento."""
     # Verificar por tipo de excepción
-    if isinstance(exception, (ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError, TimeoutError, ConnectionError)):
+    if isinstance(
+        exception, (ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError, TimeoutError, ConnectionError)
+    ):
         return True
     # Buscar palabras clave en el mensaje
     msg = str(exception).lower()
     transitorios = [
-        "timeout", "timed out", "refused", "reset", "broken pipe",
-        "temporarily unavailable", "connection refused",
-        "429", "500", "502", "503", "504",
+        "timeout",
+        "timed out",
+        "refused",
+        "reset",
+        "broken pipe",
+        "temporarily unavailable",
+        "connection refused",
+        "429",
+        "500",
+        "502",
+        "503",
+        "504",
     ]
     if any(t in msg for t in transitorios):
         return True
@@ -88,7 +105,7 @@ def _should_retry(exception: Exception) -> bool:
 
 def _backoff(attempt: int) -> None:
     """Backoff exponencial con jitter."""
-    delay = min(_BACKOFF_BASE_S * (2 ** attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)
+    delay = min(_BACKOFF_BASE_S * (2**attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)
     time.sleep(delay)
 
 
@@ -135,18 +152,30 @@ class Notification:
 
 def format_compile_event(reason: str, docs_changed: int, docs_total: int, errors: int) -> Notification:
     sev = "success" if errors == 0 else "error"
-    return Notification(title=f"Compile: {reason}", message=f"{docs_changed} changed, {docs_total} total",
-        severity=sev, fields=[("Changed", str(docs_changed)), ("Total", str(docs_total)), ("Errors", str(errors))])
+    return Notification(
+        title=f"Compile: {reason}",
+        message=f"{docs_changed} changed, {docs_total} total",
+        severity=sev,
+        fields=[("Changed", str(docs_changed)), ("Total", str(docs_total)), ("Errors", str(errors))],
+    )
 
 
 def format_archive_event(kind: str, commit: str, files: int) -> Notification:
-    return Notification(title=f"Archive: {kind}", message=f"Commit {commit[:12]}, {files} files",
-        severity="info", fields=[("Kind", kind), ("Commit", commit[:12]), ("Files", str(files))])
+    return Notification(
+        title=f"Archive: {kind}",
+        message=f"Commit {commit[:12]}, {files} files",
+        severity="info",
+        fields=[("Kind", kind), ("Commit", commit[:12]), ("Files", str(files))],
+    )
 
 
 def format_search_event(query: str, results: int, latency_ms: float) -> Notification:
-    return Notification(title=f"Search: {query[:50]}", message=f"{results} results in {latency_ms:.0f}ms",
-        severity="info", fields=[("Query", query[:50]), ("Results", str(results)), ("Latency", f"{latency_ms:.0f}ms")])
+    return Notification(
+        title=f"Search: {query[:50]}",
+        message=f"{results} results in {latency_ms:.0f}ms",
+        severity="info",
+        fields=[("Query", query[:50]), ("Results", str(results)), ("Latency", f"{latency_ms:.0f}ms")],
+    )
 
 
 # ── Notifier Protocol ─────────────────────────────────────────────────────
@@ -226,13 +255,17 @@ class SlackNotifier:
         try:
             _validate_url(self._url)
             colors = {"info": "#2196F3", "warning": "#FF9800", "error": "#F44336", "success": "#4CAF50"}
-            payload = {"attachments": [{
-                "color": colors.get(notification.severity, "#2196F3"),
-                "title": notification.title,
-                "text": notification.message,
-                "fields": [{"title": k, "value": v, "short": True} for k, v in notification.fields],
-                "footer": "Knowledge Engine",
-            }]}
+            payload = {
+                "attachments": [
+                    {
+                        "color": colors.get(notification.severity, "#2196F3"),
+                        "title": notification.title,
+                        "text": notification.message,
+                        "fields": [{"title": k, "value": v, "short": True} for k, v in notification.fields],
+                        "footer": "Knowledge Engine",
+                    }
+                ]
+            }
             data = json.dumps(payload).encode()
             req = Request(self._url, data=data, headers={"Content-Type": "application/json"}, method="POST")
             with urlopen(req, timeout=_TIMEOUT_S) as resp:
@@ -257,7 +290,7 @@ class EmailNotifier:
         self._host = os.environ.get("URA_SMTP_HOST", "")
         self._port = int(os.environ.get("URA_SMTP_PORT", "587"))
         self._user = os.environ.get("URA_SMTP_USER", "")
-        self._password = os.environ.get("URA_SMTP_PASS", "")
+        self._password = get_secret("URA_SMTP_PASS", "")
         self._from = os.environ.get("URA_EMAIL_FROM", "ura@localhost")
         self._to = os.environ.get("URA_EMAIL_TO", "")
         # Sanitize for logging — nunca loguear password

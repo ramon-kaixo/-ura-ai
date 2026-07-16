@@ -34,7 +34,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security
+from motor.core.secrets import get_secret
+
+from fastapi import FastAPI, HTTPException, Request, Response, Security
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
@@ -44,12 +46,14 @@ _MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024  # 10 MB
 
 log = logging.getLogger("ura.knowledge.api")
 
-DEFAULT_DB_PATH = Path(os.environ.get("URA_KNOWLEDGE_DB", "")) or Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
+DEFAULT_DB_PATH = (
+    Path(os.environ.get("URA_KNOWLEDGE_DB", "")) or Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
+)
 DEFAULT_SOURCE_DIR = Path(os.environ.get("URA_SOURCE_DIR", "")) or Path.home() / "URA" / "ura_ia_1972" / "source"
 
 # ── Autenticación opcional ────────────────────────────────────────────────
 
-_API_KEY: str | None = os.environ.get("URA_API_KEY")
+_API_KEY: str | None = get_secret("URA_API_KEY")
 
 if _API_KEY:
     log.info("API authentication enabled (URA_API_KEY set)")
@@ -67,6 +71,7 @@ else:
     async def _verify_api_key() -> None:  # type: ignore[misc]
         """No-op: autenticación desactivada."""
         return None
+
 
 # Límites
 _MAX_SEARCH_LIMIT = 100
@@ -142,7 +147,7 @@ state = AppState()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from knowledge.engine.connection import open_db
-    from knowledge.engine.migrations import SCHEMA_VERSION, get_schema_version
+    from knowledge.engine.migrations import get_schema_version
 
     conn = open_db(state.db_path)
     version = get_schema_version(conn)
@@ -174,7 +179,10 @@ async def _body_size_middleware(request: Request, call_next):
     # Verificar Content-Length antes de leer el body
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > _MAX_REQUEST_BODY_SIZE:
-        return JSONResponse(status_code=413, content={"error": "Request too large", "detail": f"Max {_MAX_REQUEST_BODY_SIZE // 1024 // 1024}MB"})
+        return JSONResponse(
+            status_code=413,
+            content={"error": "Request too large", "detail": f"Max {_MAX_REQUEST_BODY_SIZE // 1024 // 1024}MB"},
+        )
     return await _auth_middleware_inner(request, call_next)
 
 
@@ -186,7 +194,9 @@ async def _auth_middleware_inner(request: Request, call_next):
     elif _API_KEY:
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
-            return JSONResponse(status_code=401, content={"error": "Authentication required", "detail": "Bearer token required"})
+            return JSONResponse(
+                status_code=401, content={"error": "Authentication required", "detail": "Bearer token required"}
+            )
         token = auth.removeprefix("Bearer ")
         if token != _API_KEY:
             return JSONResponse(status_code=403, content={"error": "Forbidden", "detail": "Invalid API key"})
@@ -261,8 +271,7 @@ async def compile_endpoint(incremental: bool = False):
             from knowledge.engine.compiler import compile_incremental
 
             result = await asyncio.wait_for(
-                asyncio.get_event_loop().run_in_executor(None, compile_incremental,
-                    state.source_dir, state.db_path),
+                asyncio.get_event_loop().run_in_executor(None, compile_incremental, state.source_dir, state.db_path),
                 timeout=300,
             )
             return CompileResponse(
@@ -273,8 +282,9 @@ async def compile_endpoint(incremental: bool = False):
             )
 
         n = await asyncio.wait_for(
-            asyncio.get_event_loop().run_in_executor(None, lambda: request_compile("api",
-                source_dir=state.source_dir, db_path=state.db_path)),
+            asyncio.get_event_loop().run_in_executor(
+                None, lambda: request_compile("api", source_dir=state.source_dir, db_path=state.db_path)
+            ),
             timeout=300,
         )
         if n == 0:
@@ -448,9 +458,7 @@ async def top_rated_api(limit: int = 10):
 
     results = top_rated(state.db_path, limit=limit)
     return {
-        "results": [
-            {"doc_id": fb.doc_id, "rating": fb.rating, "timestamp": fb.timestamp} for fb in results
-        ],
+        "results": [{"doc_id": fb.doc_id, "rating": fb.rating, "timestamp": fb.timestamp} for fb in results],
         "total": len(results),
     }
 
@@ -469,8 +477,12 @@ async def get_lineage_api(asset_id: str):
                 "event_type": ev["event_type"],
                 "event_time": ev["event_time"],
                 "job_name": ev["job_name"],
-                "inputs": json.loads(ev["input_ids"]) if isinstance(ev.get("input_ids"), str) else ev.get("input_ids", []),
-                "outputs": json.loads(ev["output_ids"]) if isinstance(ev.get("output_ids"), str) else ev.get("output_ids", []),
+                "inputs": json.loads(ev["input_ids"])
+                if isinstance(ev.get("input_ids"), str)
+                else ev.get("input_ids", []),
+                "outputs": json.loads(ev["output_ids"])
+                if isinstance(ev.get("output_ids"), str)
+                else ev.get("output_ids", []),
             }
             for ev in events
         ],
