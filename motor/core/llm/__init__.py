@@ -33,6 +33,12 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         providers.append((AnthropicProvider, "anthropic"))
     except Exception:  # noqa: S110
         pass
+    try:
+        from motor.core.llm.gemini import GeminiProvider
+
+        providers.append((GeminiProvider, "gemini"))
+    except Exception:  # noqa: S110
+        pass
     return providers
 
 log = logging.getLogger(__name__)
@@ -60,6 +66,13 @@ elif provider_name == "anthropic":
     registry.register("anthropic", _default, default=True)
     registry.register("ollama", OllamaProvider())
     log.info("LLM provider set to anthropic (from config)")
+elif provider_name == "gemini":
+    from motor.core.llm.gemini import GeminiProvider
+
+    _default = GeminiProvider()
+    registry.register("gemini", _default, default=True)
+    registry.register("ollama", OllamaProvider())
+    log.info("LLM provider set to gemini (from config)")
 else:
     _default = OllamaProvider()
     registry.register("ollama", _default, default=True)
