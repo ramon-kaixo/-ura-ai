@@ -451,6 +451,134 @@ class TestFallback:
             router.generate("test")
             assert mock_log.info.called
 
+    # ── H4: Fallback hardening ────────────────
+
+    def test_fallback_skips_open_provider(self) -> None:
+        """Un proveedor con CB OPEN no debe ser elegido como fallback."""
+        reg = ProviderRegistry()
+        reg.register("a", _MockFail(), default=True)
+        reg.register("b_open", _MockOK())
+        reg.register("c", _MockOK())
+
+        router = LLMRouter(registry=reg, fallback_enabled=True)
+
+        # Insertar un CB con threshold bajo para abrirlo manualmente
+        from motor.core.llm.circuit_breaker import CircuitBreaker
+
+        cb_b = CircuitBreaker("b_open", failure_threshold=1, recovery_timeout=999)
+
+        class _Transient(Exception):
+            pass
+        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        def _fail_b() -> None:
+            raise _Transient("fail")
+
+        with pytest.raises(_Transient):
+            cb_b.call(_fail_b)
+        assert cb_b.state == CircuitState.OPEN
+        assert not cb_b.is_available
+
+        router._circuit_breakers["b_open"] = cb_b
+
+        # Fallback debe saltar b_open e ir a c
+        result = router.generate("test")
+        assert result == "ok", f"Expected c to handle, got {result}"
+        assert router._resolve_name("generate", None) == "a"  # primary
+
+    def test_fallback_no_chain(self) -> None:
+        """Si el fallback falla, no se encadena a un tercer proveedor."""
+        class _MockAlsoFail(BaseLLMProvider):
+            _calls: int = 0
+            def generate(self, prompt, model=None, options=None):
+                self._calls += 1
+                raise ValueError("also fail")
+            def embed(self, texts, model=None): return [[0.0]]
+            async def embed_async(self, texts, model=None): return [[0.0]]
+            def health(self): return {"status": "ok"}
+
+        class _MockThird(BaseLLMProvider):
+            _calls: int = 0
+            def generate(self, prompt, model=None, options=None):
+                self._calls += 1
+                return "third_ok"
+            def embed(self, texts, model=None): return [[0.0]]
+            async def embed_async(self, texts, model=None): return [[0.0]]
+            def health(self): return {"status": "ok"}
+
+        reg = ProviderRegistry()
+        reg.register("a", _MockFail(), default=True)
+        reg.register("b", _MockAlsoFail())
+        reg.register("c", _MockThird())
+        router = LLMRouter(registry=reg, fallback_enabled=True, fallback_max_providers=3)
+
+        _, provider_used = router._call_with_fallback(
+            reg.get("a"), "generate", "generate", "a", "test",
+        )
+        assert provider_used == "a", f"Expected primary error, got fallback {provider_used}"
+        assert reg.get("c")._calls == 0, "c should not be called (no chain)"
+
+    def test_fallback_does_not_reset_cb(self) -> None:
+        """El fallback no debe resetear el CB del proveedor alternativo."""
+        reg = ProviderRegistry()
+        reg.register("a", _MockFail(), default=True)
+        reg.register("b", _MockOK())
+        router = LLMRouter(registry=reg, fallback_enabled=True)
+
+        from motor.core.llm.circuit_breaker import CircuitBreaker
+
+        cb_b = CircuitBreaker("b", failure_threshold=1, recovery_timeout=999)
+
+        class _Transient(Exception):
+            pass
+        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        def _fail_b() -> None:
+            raise _Transient("fail")
+
+        with pytest.raises(_Transient):
+            cb_b.call(_fail_b)
+        assert cb_b.state == CircuitState.OPEN
+
+        router._circuit_breakers["b"] = cb_b
+
+        state_before = cb_b.state
+        result = router.generate("test")
+        state_after = cb_b.state
+
+        assert state_after == state_before, (
+            f"Fallback should not modify CB state of provider b: "
+            f"{state_before} → {state_after}"
+        )
+        assert "Error" in result, "Fallback should fail (only provider is OPEN b)"
+
+    def test_fallback_max_providers(self) -> None:
+        """Verificar que fallback_max_providers limita los intentos."""
+        class _MockFailWithCounter(BaseLLMProvider):
+            _calls: int = 0
+            def generate(self, prompt, model=None, options=None):
+                self._calls += 1
+                raise ValueError("fail")
+            def embed(self, texts, model=None): return [[0.0]]
+            async def embed_async(self, texts, model=None): return [[0.0]]
+            def health(self): return {"status": "ok"}
+
+        # Registrar múltiples fallbacks que también fallan
+        reg = ProviderRegistry()
+        reg.register("a", _MockFailWithCounter(), default=True)
+        for name in ("b", "c", "d", "e"):
+            reg.register(name, _MockFailWithCounter())
+
+        router = LLMRouter(registry=reg, fallback_enabled=True, fallback_max_providers=2)
+
+        router.generate("test")
+        # fallback_max_providers=2 significa que se prueban hasta 2 proveedores
+        # Cada _call_with_retry llama a generate 1 vez (no retry porque ValueError no es transitorio)
+        # Total: a (1) + b (1) + c (1 si fallback_max=2) = 3 calls max
+        for name in ("d", "e"):
+            p = reg.get(name)
+            assert p._calls == 0, f"{name} should not be called (limit=2)"
+
 
 # ── B1: Observabilidad ─────────────────────────
 
