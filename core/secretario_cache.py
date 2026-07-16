@@ -12,8 +12,28 @@ from collections import OrderedDict
 from datetime import UTC, datetime
 
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", "http://10.164.1.99:4096")
-QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
-QDRANT_PORT = int(os.environ.get("URA_QDRANT_PORT", "6333"))
+
+
+def _get_qdrant_host() -> str:
+    """Obtiene host de Qdrant desde UraConfig, con fallback a env var."""
+    try:
+        from motor.core.config import UraConfig
+
+        c = UraConfig.load()
+        return c.qdrant_host or os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
+    except Exception:
+        return os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
+
+
+def _get_qdrant_port() -> int:
+    """Obtiene puerto de Qdrant desde UraConfig, con fallback a env var."""
+    try:
+        from motor.core.config import UraConfig
+
+        c = UraConfig.load()
+        return c.qdrant_port or int(os.environ.get("URA_QDRANT_PORT", "6333"))
+    except Exception:
+        return int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
 LRU_MAX = 20
 
@@ -61,7 +81,7 @@ class SecretarioCache:
     def buscar_qdrant(self, coleccion: str, limit: int = 10) -> list:
         """Consulta read-only a Qdrant en ASUS vía REST."""
         try:
-            url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{coleccion}/points/scroll"
+            url = f"http://{_get_qdrant_host()}:{_get_qdrant_port()}/collections/{coleccion}/points/scroll"
             req = urllib.request.Request(
                 url,
                 data=json.dumps({"limit": limit}).encode(),
@@ -82,7 +102,7 @@ class SecretarioCache:
             "cache_size": len(self._cache),
             "cache_max": LRU_MAX,
             "asus_url": ASUS_EXEC_URL,
-            "qdrant": f"{QDRANT_HOST}:{QDRANT_PORT}",
+            "qdrant": f"{_get_qdrant_host()}:{_get_qdrant_port()}",
         }
 
 
