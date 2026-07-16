@@ -99,11 +99,11 @@ class OpenAIProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             _log_call(self._provider_name, model_name, latency_ms, "connection_error")
             return "Error: No se pudo conectar con el servicio."
-        except Exception as e:
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
             _log_call(self._provider_name, model_name, latency_ms, "unexpected")
-            log.exception("error inesperado en generate")
-            return f"Error inesperado: {e}"
+            log.warning("error inesperado en generate")
+            return "Error: Error interno del proveedor."
 
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         model_name = model or self._embedding_model
@@ -124,11 +124,11 @@ class OpenAIProvider(BaseLLMProvider):
                 batch_size=len(texts), vectors=len(embeddings),
             )
             return embeddings
-        except Exception as e:
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, str(e))
+            _log_call(self._provider_name, model_name, latency_ms, "embed_error")
             if model_name == self._embedding_model:
-                log.warning("OpenAI embed falló, reintentando uno por uno: %s", e)
+                log.warning("OpenAI embed falló, reintentando uno por uno")
             resultados: list[list[float]] = []
             for t in texts:
                 try:
@@ -141,7 +141,7 @@ class OpenAIProvider(BaseLLMProvider):
                     r.raise_for_status()
                     resultados.append(r.json()["data"][0]["embedding"])
                 except Exception:
-                    log.exception("error generando embedding individual")
+                    log.warning("error generando embedding individual, continuando")
                     resultados.append([0.0] * 1536)
             return resultados
 
@@ -164,10 +164,10 @@ class OpenAIProvider(BaseLLMProvider):
                     async_=True, batch_size=len(texts), vectors=len(embeddings),
                 )
                 return embeddings
-        except Exception as e:
+        except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, str(e), async_=True)
-            log.warning("OpenAI embed_async falló batch, reintentando individual: %s", e)
+            _log_call(self._provider_name, model_name, latency_ms, "embed_error", async_=True)
+            log.warning("OpenAI embed_async batch falló, reintentando individual")
             resultados: list[list[float]] = []
             for t in texts:
                 try:
@@ -180,7 +180,7 @@ class OpenAIProvider(BaseLLMProvider):
                         r.raise_for_status()
                         resultados.append(r.json()["data"][0]["embedding"])
                 except Exception:
-                    log.exception("error generando embedding async individual")
+                    log.warning("error generando embedding async individual, continuando")
                     resultados.append([0.0] * 1536)
             return resultados
 
@@ -209,5 +209,5 @@ class OpenAIProvider(BaseLLMProvider):
             }
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, "health", latency_ms, str(e))
+            _log_call(self._provider_name, "health", latency_ms, "health_error")
             return {"provider": self._provider_name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
