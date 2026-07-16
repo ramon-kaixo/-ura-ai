@@ -691,6 +691,77 @@ class TestHealthMonitor:
         router.health()
         assert call_count == 2  # Cache expired
 
+    # ── H5: Health cache hardening ────────────
+
+    def test_health_cache_concurrent(self) -> None:
+        """N hilos llaman health() simultáneamente.
+        Verificar que el proveedor no es llamado más veces de las necesarias."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        call_count = 0
+
+        class _CountingHealth(BaseLLMProvider):
+            def generate(self, *a, **kw): return ""
+            def embed(self, *a, **kw): return [[]]
+            async def embed_async(self, *a, **kw): return [[]]
+            def health(self):
+                nonlocal call_count
+                call_count += 1
+                return {"status": "ok"}
+
+        reg = ProviderRegistry()
+        reg.register("c", _CountingHealth(), default=True)
+        router = LLMRouter(registry=reg, health_cache_ttl=999)
+
+        n_threads = 10
+        with ThreadPoolExecutor(max_workers=n_threads) as pool:
+            futures = [pool.submit(router.health) for _ in range(n_threads)]
+            results = [f.result() for f in as_completed(futures)]
+
+        # Todos reciben respuesta
+        assert len(results) == n_threads
+        assert all(r["status"] == "ok" for r in results)
+
+        # El proveedor debe ser llamado <= 3 veces (idealmente 1, pero
+        # la ventana de concurrencia puede permitir 2-3)
+        assert call_count <= 3, (
+            f"Expected <= 3 calls, got {call_count}. "
+            "Cache deduplication may be degraded."
+        )
+
+    def test_health_cache_invalidate(self) -> None:
+        """Invalidación explícita fuerza una nueva llamada al proveedor."""
+        call_count = 0
+
+        class _CountingHealth(BaseLLMProvider):
+            def generate(self, *a, **kw): return ""
+            def embed(self, *a, **kw): return [[]]
+            async def embed_async(self, *a, **kw): return [[]]
+            def health(self):
+                nonlocal call_count
+                call_count += 1
+                return {"status": "ok"}
+
+        reg = ProviderRegistry()
+        reg.register("c", _CountingHealth(), default=True)
+        router = LLMRouter(registry=reg, health_cache_ttl=999)
+
+        router.health()
+        assert call_count == 1  # Primera llamada
+
+        router.health()
+        assert call_count == 1  # Cache hit
+
+        # Invalidar específicamente
+        router.invalidate_health_cache("c")
+        router.health()
+        assert call_count == 2  # Cache invalidado, nueva llamada
+
+        # Invalidar todo
+        router.invalidate_health_cache()
+        router.health()
+        assert call_count == 3  # Cache global invalidado, nueva llamada
+
 
 # ── B6: Logging ─────────────────────────
 
