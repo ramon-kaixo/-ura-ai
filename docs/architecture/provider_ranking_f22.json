@@ -1,0 +1,132 @@
+{
+  "benchmark": "multi-provider",
+  "iterations": 2,
+  "providers": {
+    "ollama": {
+      "generate": {
+        "p50_ms": 3694.779632962309,
+        "p95_ms": 3694.779632962309,
+        "p99_ms": 3694.779632962309,
+        "throughput": 0.5198787483638911,
+        "tokens_per_second": 0,
+        "errors": 0
+      },
+      "embed": {
+        "p50_ms": 3694.779632962309,
+        "p95_ms": 3694.779632962309,
+        "p99_ms": 3694.779632962309,
+        "throughput": 0.5198787483638911,
+        "errors": 0
+      }
+    },
+    "openai": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    },
+    "anthropic": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    },
+    "gemini": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    },
+    "openrouter": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    },
+    "lmstudio": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    },
+    "vllm": {
+      "generate": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "tokens_per_second": 0,
+        "errors": 2
+      },
+      "embed": {
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "p99_ms": 0,
+        "throughput": 0,
+        "errors": 2
+      }
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "provider": "ollama",
+      "latency_p50_ms": 3694.779632962309
+    }
+  ]
+}
