@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.secrets import get_secret
 from motor.core.state import DegradedMode
 
 from .base import Provider, ProviderError
@@ -14,7 +15,7 @@ GROQ_TIMEOUT = int(os.environ.get("MOCHILA_GROQ_TIMEOUT", "60"))
 
 class GroqProvider(Provider):
     def __init__(self) -> None:
-        self.api_key = os.environ.get("GROQ_API_KEY", "")
+        self.api_key = get_secret("GROQ_API_KEY", "")
 
     @property
     def nombre(self) -> str:

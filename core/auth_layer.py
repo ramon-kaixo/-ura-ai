@@ -3,8 +3,10 @@
 
 import os
 
+from motor.core.secrets import get_secret
+
 # API key por defecto (debe sobreescribirse en producción)
-DEFAULT_API_KEY = os.environ.get("URA_API_KEY", "ura_1972_secure_default")
+DEFAULT_API_KEY = get_secret("URA_API_KEY", "ura_1972_secure_default")
 AUTH_ENABLED = os.environ.get("URA_AUTH_ENABLED", "true").lower() == "true"
 
 

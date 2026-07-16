@@ -21,6 +21,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from motor.core.secrets import get_secret
+
 try:
     from router_rate_limiter import rate_limiter
 except ImportError:
@@ -70,7 +72,7 @@ def verificar_politicas_seguridad_preflight() -> None:
     if BYPASS_FILE.exists():
         BYPASS_FILE.unlink(missing_ok=True)
     os.environ["URA_AUTH_ENABLED"] = "true"
-    token_valido = os.getenv("OPENCLAW_GATEWAY_TOKEN")
+    token_valido = get_secret("OPENCLAW_GATEWAY_TOKEN")
     if not token_valido:
         sys.exit(78)
 
