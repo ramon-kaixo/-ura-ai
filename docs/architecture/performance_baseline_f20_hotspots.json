@@ -1,0 +1,67 @@
+[
+  {
+    "provider": "ollama",
+    "operation": "generate",
+    "wall_time_ms": 4476.9,
+    "cpu_time_ms": 589.1,
+    "peak_memory_kb": 5396.3,
+    "is_hotspot": true,
+    "regressions": []
+  },
+  {
+    "provider": "ollama",
+    "operation": "generate",
+    "wall_time_ms": 2075.2,
+    "cpu_time_ms": 74.9,
+    "peak_memory_kb": 5404.7,
+    "is_hotspot": true,
+    "regressions": []
+  },
+  {
+    "provider": "ollama",
+    "operation": "embed",
+    "wall_time_ms": 2425.5,
+    "cpu_time_ms": 78.9,
+    "peak_memory_kb": 5482.9,
+    "is_hotspot": true,
+    "regressions": []
+  },
+  {
+    "provider": "ollama",
+    "operation": "embed",
+    "wall_time_ms": 461.3,
+    "cpu_time_ms": 102.5,
+    "peak_memory_kb": 5560.2,
+    "is_hotspot": false,
+    "regressions": [
+      {
+        "provider": "ollama",
+        "operation": "embed",
+        "metric": "wall_time_p50",
+        "baseline_value": 271.4,
+        "current_value": 461.3,
+        "ratio": 1.7,
+        "threshold": 1.5
+      }
+    ]
+  },
+  {
+    "provider": "ollama",
+    "operation": "embed",
+    "wall_time_ms": 455.6,
+    "cpu_time_ms": 101.1,
+    "peak_memory_kb": 5565.7,
+    "is_hotspot": false,
+    "regressions": [
+      {
+        "provider": "ollama",
+        "operation": "embed",
+        "metric": "wall_time_p50",
+        "baseline_value": 276.0,
+        "current_value": 455.6,
+        "ratio": 1.65,
+        "threshold": 1.5
+      }
+    ]
+  }
+]
