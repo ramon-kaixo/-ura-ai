@@ -70,26 +70,30 @@ class StateDeductor:
         for n in nodes:
             nid = n["id"]
             if src_counts.get(nid, 0) == 0 and dst_counts.get(nid, 0) == 0:
-                results.append(Deduction(
-                    kind="orphan",
-                    subject_id=nid,
-                    description=f"Documento sin relaciones: {n.get('path', nid)}",
-                    confidence=0.9,
-                    metadata={"type": n.get("type", "")},
-                ))
+                results.append(
+                    Deduction(
+                        kind="orphan",
+                        subject_id=nid,
+                        description=f"Documento sin relaciones: {n.get('path', nid)}",
+                        confidence=0.9,
+                        metadata={"type": n.get("type", "")},
+                    )
+                )
 
         # 2. Cobertura por tipo
         if nodes:
             total = len(nodes)
             for dtype, count in sorted(type_counts.items()):
                 coverage = count / total
-                results.append(Deduction(
-                    kind="coverage",
-                    subject_id=dtype,
-                    description=f"Cobertura {dtype}: {count}/{total} ({coverage:.0%})",
-                    confidence=1.0,
-                    metadata={"count": count, "total": total, "ratio": coverage},
-                ))
+                results.append(
+                    Deduction(
+                        kind="coverage",
+                        subject_id=dtype,
+                        description=f"Cobertura {dtype}: {count}/{total} ({coverage:.0%})",
+                        confidence=1.0,
+                        metadata={"count": count, "total": total, "ratio": coverage},
+                    )
+                )
 
         # 3. Documentos más referenciados (hub nodes)
         if dst_counts:
@@ -98,15 +102,17 @@ class StateDeductor:
             for nid, refs in dst_counts.items():
                 if refs >= threshold and refs > 1:
                     node = node_map.get(nid, {})
-                    results.append(Deduction(
-                        kind="dependency",
-                        subject_id=nid,
-                        description=f"Nodo central: {refs} referencias entrantes",
-                        confidence=min(refs / max_refs, 1.0),
-                        metadata={
-                            "inbound_refs": refs,
-                            "path": node.get("path", ""),
-                        },
-                    ))
+                    results.append(
+                        Deduction(
+                            kind="dependency",
+                            subject_id=nid,
+                            description=f"Nodo central: {refs} referencias entrantes",
+                            confidence=min(refs / max_refs, 1.0),
+                            metadata={
+                                "inbound_refs": refs,
+                                "path": node.get("path", ""),
+                            },
+                        )
+                    )
 
         return results

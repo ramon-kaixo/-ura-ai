@@ -54,13 +54,11 @@ def ejecutar_nodo_voz() -> None:
     signal.signal(signal.SIGTERM, _liberar_y_salir)
     signal.signal(signal.SIGINT, _liberar_y_salir)
 
-
     try:
         pipeline = AnkerMacPipeline(base_path=BASE_PATH)
         motor_tts = PiperTTSMotor(stt_pipeline=pipeline)
     except Exception:
         sys.exit(1)
-
 
     while True:
         if pipeline.device_index is None:
@@ -72,7 +70,6 @@ def ejecutar_nodo_voz() -> None:
 
         if not clean:
             continue
-
 
         try:
             from agents.laia_agent import procesar_bucle_ura
@@ -86,7 +83,6 @@ def ejecutar_nodo_voz() -> None:
 
         if not respuesta:
             continue
-
 
         pipeline.is_playing_tts = True
         motor_tts.hablar_asincrono(respuesta)

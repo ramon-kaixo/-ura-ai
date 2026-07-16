@@ -10,8 +10,7 @@ from motor.intelligence.memory.semantic import SemanticFact
 
 class FactExtractor(ABC):
     @abstractmethod
-    def extract(self, episode: Episode) -> list[SemanticFact]:
-        ...
+    def extract(self, episode: Episode) -> list[SemanticFact]: ...
 
 
 class RuleBasedFactExtractor(FactExtractor):
@@ -29,7 +28,12 @@ class RuleBasedFactExtractor(FactExtractor):
         return facts
 
     def _make_fact(
-        self, episode: Episode, subject: str, predicate: str, object_value: str, fact_type: str,
+        self,
+        episode: Episode,
+        subject: str,
+        predicate: str,
+        object_value: str,
+        fact_type: str,
     ) -> SemanticFact:
         return SemanticFact(
             subject=subject.strip(),
@@ -45,6 +49,7 @@ class RuleBasedFactExtractor(FactExtractor):
 
     def _find_patterns(self, text: str) -> list[tuple[str, str, str, str]]:
         import re
+
         results: list[tuple[str, str, str, str]] = []
 
         patterns = [

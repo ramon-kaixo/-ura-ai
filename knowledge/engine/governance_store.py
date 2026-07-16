@@ -124,8 +124,7 @@ class SQLiteGovernanceStore:
         try:
             conn = open_db(self._db_path)
             rows = conn.execute(
-                "SELECT id, asset_id, policy, actor, created_at FROM op_governance "
-                "ORDER BY created_at DESC LIMIT ?",
+                "SELECT id, asset_id, policy, actor, created_at FROM op_governance ORDER BY created_at DESC LIMIT ?",
                 (limit,),
             ).fetchall()
             return [dict(r) for r in rows]

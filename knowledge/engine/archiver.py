@@ -54,14 +54,10 @@ def _resolve_within(path: Path, allowed: Path, label: str = "path") -> Path:
     if not resolved.exists():
         parent = Path(path).parent.resolve()
         if not str(parent).startswith(str(allowed.resolve())):
-            raise PathTraversalError(
-                f"{label}: {path} (resuelto: {parent}) está fuera de {allowed}"
-            )
+            raise PathTraversalError(f"{label}: {path} (resuelto: {parent}) está fuera de {allowed}")
 
     if not str(resolved).startswith(str(allowed.resolve())):
-        raise PathTraversalError(
-            f"{label}: {path} (resuelto: {resolved}) está fuera de {allowed}"
-        )
+        raise PathTraversalError(f"{label}: {path} (resuelto: {resolved}) está fuera de {allowed}")
     return resolved
 
 
@@ -73,10 +69,7 @@ def _validate_source_dir(source_dir: Path, allowed_root: Path | None = None) -> 
     """
     resolved = source_dir.resolve()
     if allowed_root is not None and not str(resolved).startswith(str(allowed_root.resolve())):
-        raise PathTraversalError(
-            f"source_dir: {source_dir} (resuelto: {resolved}) "
-            f"está fuera de {allowed_root}"
-        )
+        raise PathTraversalError(f"source_dir: {source_dir} (resuelto: {resolved}) está fuera de {allowed_root}")
     return resolved
 
 
@@ -94,7 +87,8 @@ def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:  # noqa: S60
     git_path = shutil.which("git") or "/usr/bin/git"
     return subprocess.run(  # noqa: S603  -- git wrapper interno, args desde callers del módulo
         [git_path, *args],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
         cwd=cwd,
         check=False,
     )
@@ -123,6 +117,7 @@ def archive_source(
     Si source_dir no es un repo git, la operación falla.
     """
     import time as _time
+
     _t0 = _time.monotonic()
     if source_dir is None:
         source_dir = _PROJECT_ROOT / "source"
@@ -134,10 +129,7 @@ def archive_source(
     # 1. Verificar que es un repo git y obtener el commit actual
     result = _git_cmd("rev-parse", "HEAD", cwd=source_dir)
     if result.returncode != 0:
-        raise ValueError(
-            f"source_dir no es un repositorio git: {source_dir}\n"
-            f"stderr: {result.stderr.strip()}"
-        )
+        raise ValueError(f"source_dir no es un repositorio git: {source_dir}\nstderr: {result.stderr.strip()}")
     commit = result.stdout.strip()
 
     # 2. Contar archivos tracked
@@ -147,13 +139,15 @@ def archive_source(
     # 3. Crear bundle
     bundle_path = _archive_path(archive_dir, "source", timestamp)
     result = _git_cmd(
-        "bundle", "create", str(bundle_path), "--all", "--quiet",
+        "bundle",
+        "create",
+        str(bundle_path),
+        "--all",
+        "--quiet",
         cwd=source_dir,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"Error creando git bundle: {result.stderr.strip()}"
-        )
+        raise RuntimeError(f"Error creando git bundle: {result.stderr.strip()}")
 
     compressed_size = bundle_path.stat().st_size
 
@@ -185,7 +179,10 @@ def archive_source(
         json.dump(manifest.to_dict(), f, indent=2, ensure_ascii=False)
     log.info(
         "Source archived: commit=%s bundle=%s size=%d files=%d sha256=%s",
-        commit[:12], bundle_path.name, compressed_size, file_count,
+        commit[:12],
+        bundle_path.name,
+        compressed_size,
+        file_count,
         content_sha256[:16],
     )
 
@@ -202,8 +199,13 @@ def archive_source(
                 " compressed_size, content_sha256, retention_days) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (
-                    "source", commit, str(manifest_path), str(bundle_path),
-                    compressed_size, content_sha256, manifest.retention_days,
+                    "source",
+                    commit,
+                    str(manifest_path),
+                    str(bundle_path),
+                    compressed_size,
+                    content_sha256,
+                    manifest.retention_days,
                 ),
             )
             conn.commit()
@@ -293,7 +295,8 @@ def verify_archive(
     if actual_hash != manifest.content_sha256:
         log.error(
             "SHA-256 mismatch: esperado=%s real=%s",
-            manifest.content_sha256[:16], actual_hash[:16],
+            manifest.content_sha256[:16],
+            actual_hash[:16],
         )
         return False
 
@@ -341,7 +344,9 @@ def restore_source(
     dest_dir.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(  # noqa: S603,S607
         ["git", "clone", str(bundle_path), str(dest_dir)],  # noqa: S607  -- paths validados con _resolve_within
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if result.returncode != 0:
         raise RuntimeError(f"Error restaurando desde bundle: {result.stderr.strip()}")
@@ -350,14 +355,13 @@ def restore_source(
     if manifest.source_commit:
         result = _git_cmd("checkout", manifest.source_commit, cwd=dest_dir)
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Error haciendo checkout de {manifest.source_commit}: {result.stderr.strip()}"
-            )
+            raise RuntimeError(f"Error haciendo checkout de {manifest.source_commit}: {result.stderr.strip()}")
 
     log.info(
         "Source restored: commit=%s bundle=%s dest=%s",
         manifest.source_commit[:12] if manifest.source_commit else "none",
-        bundle_path.name, dest_dir,
+        bundle_path.name,
+        dest_dir,
     )
     return manifest.source_commit
 

@@ -1,4 +1,5 @@
 """Agente Diseño — analiza carteles, imagenes y diseño visual."""
+
 import re
 
 

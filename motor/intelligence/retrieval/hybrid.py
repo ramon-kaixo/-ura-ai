@@ -42,10 +42,16 @@ class HybridRetriever:
         for r in vector_results:
             doc_id = r["doc_id"]
             norm = r["score"] / v_max if v_max > 0 else 0
-            entry = score_map.setdefault(doc_id, {
-                "doc_id": doc_id, "vector_score": 0.0, "lexical_score": 0.0,
-                "vector_rank": 999, "lexical_rank": 999,
-            })
+            entry = score_map.setdefault(
+                doc_id,
+                {
+                    "doc_id": doc_id,
+                    "vector_score": 0.0,
+                    "lexical_score": 0.0,
+                    "vector_rank": 999,
+                    "lexical_rank": 999,
+                },
+            )
             entry["vector_score"] = norm
             entry["vector_rank"] = r["rank"]
 
@@ -54,19 +60,22 @@ class HybridRetriever:
         for r in lexical_results:
             doc_id = r["doc_id"]
             norm = r["score"] / l_max if l_max > 0 else 0
-            entry = score_map.setdefault(doc_id, {
-                "doc_id": doc_id, "vector_score": 0.0, "lexical_score": 0.0,
-                "vector_rank": 999, "lexical_rank": 999,
-            })
+            entry = score_map.setdefault(
+                doc_id,
+                {
+                    "doc_id": doc_id,
+                    "vector_score": 0.0,
+                    "lexical_score": 0.0,
+                    "vector_rank": 999,
+                    "lexical_rank": 999,
+                },
+            )
             entry["lexical_score"] = norm
             entry["lexical_rank"] = r["rank"]
 
         # Compute hybrid scores
         for entry in score_map.values():
-            entry["hybrid_score"] = (
-                self._alpha * entry["vector_score"]
-                + self._beta * entry["lexical_score"]
-            )
+            entry["hybrid_score"] = self._alpha * entry["vector_score"] + self._beta * entry["lexical_score"]
             entry["source"] = "hybrid"
 
         # Sort by hybrid score descending

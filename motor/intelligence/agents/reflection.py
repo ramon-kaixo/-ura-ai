@@ -35,8 +35,7 @@ class ReflectionDecision:
 
 class ReflectionStrategy(ABC):
     @abstractmethod
-    def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision:
-        ...
+    def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision: ...
 
 
 class RuleBasedReflectionStrategy(ReflectionStrategy):
@@ -144,13 +143,19 @@ class ReflectionAgent(Agent):
         initial = task.input_data.get("initial_result")
         if initial is None:
             return AgentResult(
-                task_id=task.id, agent_id=self.id,
-                success=False, output={}, error="no_initial_result_provided",
+                task_id=task.id,
+                agent_id=self.id,
+                success=False,
+                output={},
+                error="no_initial_result_provided",
             )
         if not isinstance(initial, AgentResult):
             return AgentResult(
-                task_id=task.id, agent_id=self.id,
-                success=False, output={}, error="initial_result_not_agent_result",
+                task_id=task.id,
+                agent_id=self.id,
+                success=False,
+                output={},
+                error="initial_result_not_agent_result",
             )
 
         history: list[ReflectionDecision] = []
@@ -162,7 +167,8 @@ class ReflectionAgent(Agent):
 
             if decision.action == ReflectionAction.STOP:
                 return AgentResult(
-                    task_id=task.id, agent_id=self.id,
+                    task_id=task.id,
+                    agent_id=self.id,
                     success=current.success,
                     output={
                         "final": current.output,
@@ -176,7 +182,8 @@ class ReflectionAgent(Agent):
 
             if decision.action == ReflectionAction.ACCEPT and self._stop_on_accept:
                 return AgentResult(
-                    task_id=task.id, agent_id=self.id,
+                    task_id=task.id,
+                    agent_id=self.id,
                     success=current.success,
                     output={
                         "final": current.output,
@@ -190,7 +197,8 @@ class ReflectionAgent(Agent):
 
             if decision.action == ReflectionAction.ACCEPT and decision.confidence >= self._min_confidence:
                 return AgentResult(
-                    task_id=task.id, agent_id=self.id,
+                    task_id=task.id,
+                    agent_id=self.id,
                     success=current.success,
                     output={
                         "final": current.output,
@@ -204,7 +212,8 @@ class ReflectionAgent(Agent):
 
             if decision.action == ReflectionAction.REJECT:
                 return AgentResult(
-                    task_id=task.id, agent_id=self.id,
+                    task_id=task.id,
+                    agent_id=self.id,
                     success=False,
                     output={
                         "final": current.output,
@@ -220,7 +229,8 @@ class ReflectionAgent(Agent):
                 revised = self._revise(current, decision)
                 if revised is None:
                     return AgentResult(
-                        task_id=task.id, agent_id=self.id,
+                        task_id=task.id,
+                        agent_id=self.id,
                         success=current.success,
                         output={
                             "final": current.output,
@@ -235,7 +245,8 @@ class ReflectionAgent(Agent):
 
         final_decision = history[-1] if history else ReflectionDecision(reason="max_iterations_reached")
         return AgentResult(
-            task_id=task.id, agent_id=self.id,
+            task_id=task.id,
+            agent_id=self.id,
             success=current.success,
             output={
                 "final": current.output,

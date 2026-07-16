@@ -441,31 +441,29 @@ class TestQdrantAutoRecovery:
 
 
 @pytest.fixture
-def mock_ollama_client():
-    with patch("knowledge.engine.vector_ollama.httpx.Client") as m:
-        instance = MagicMock()
-        m.return_value = instance
-        yield instance
+def mock_ollama_health():
+    with patch("knowledge.engine.vector_ollama._health") as m:
+        yield m
 
 
 class TestOllamaAutoRecovery:
-    def test_check_available_resets_degraded(self, mock_ollama_client):
+    def test_check_available_resets_degraded(self, mock_ollama_health):
         embedder = OllamaEmbedder()
         embedder._degraded = True
         embedder._last_check = 0.0
-        mock_ollama_client.get.return_value.status_code = 200
+        mock_ollama_health.return_value = {"status": "ok", "modelos_disponibles": [], "latency_ms": 5}
         assert embedder.check_available()
         assert embedder.available
 
-    def test_check_available_failure_backoff(self, mock_ollama_client):
+    def test_check_available_failure_backoff(self, mock_ollama_health):
         embedder = OllamaEmbedder()
         embedder._degraded = True
         embedder._last_check = 0.0
-        mock_ollama_client.get.side_effect = httpx.HTTPError("fail")
+        mock_ollama_health.return_value = {"status": "error", "detail": "fail", "latency_ms": 100}
         assert not embedder.check_available()
         assert embedder._backoff > 1.0
 
-    def test_available_returns_boolean(self, mock_ollama_client):
+    def test_available_returns_boolean(self, mock_ollama_health):
         embedder = OllamaEmbedder()
         assert embedder.available
         embedder._degraded = True

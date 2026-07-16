@@ -38,15 +38,17 @@ class VectorRetriever:
         qdrant_latency = (time.monotonic() - qdrant_start) * 1000
 
         results = []
-        for h in (hits.points if hits else []):
+        for h in hits.points if hits else []:
             payload = h.payload or {}
             doc_id = payload.get("source") or payload.get("id", str(h.id))
-            results.append({
-                "doc_id": doc_id,
-                "score": h.score,
-                "rank": len(results),
-                "latency_ms": round(emb_latency + qdrant_latency, 2),
-                "source": "vector",
-                "payload": payload,
-            })
+            results.append(
+                {
+                    "doc_id": doc_id,
+                    "score": h.score,
+                    "rank": len(results),
+                    "latency_ms": round(emb_latency + qdrant_latency, 2),
+                    "source": "vector",
+                    "payload": payload,
+                }
+            )
         return results

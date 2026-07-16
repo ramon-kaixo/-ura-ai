@@ -47,9 +47,7 @@ def record_determinism_hash(db_path: Path, run_id: int) -> None:
         ).fetchall()
         node_data = [dict(r) for r in rows]
 
-        edges = conn.execute(
-            "SELECT src, dst, relation FROM kg_edges ORDER BY src, dst, relation"
-        ).fetchall()
+        edges = conn.execute("SELECT src, dst, relation FROM kg_edges ORDER BY src, dst, relation").fetchall()
         edge_data = [dict(e) for e in edges]
 
         canonical = json.dumps(
@@ -61,9 +59,7 @@ def record_determinism_hash(db_path: Path, run_id: int) -> None:
         content_hash = hashlib.sha256(canonical.encode()).hexdigest()
 
         conn.execute(
-            "UPDATE kg_active_version "
-            "SET determinism_hash = ?, determinism_algorithm = ? "
-            "WHERE singleton = 1",
+            "UPDATE kg_active_version SET determinism_hash = ?, determinism_algorithm = ? WHERE singleton = 1",
             (content_hash, _ALGORITHM_VERSION),
         )
         conn.commit()
@@ -83,9 +79,7 @@ def get_determinism_hash(db_path: Path) -> str | None:
     """Retorna el determinism_hash del último compile."""
     try:
         conn = open_db(db_path)
-        row = conn.execute(
-            "SELECT determinism_hash FROM kg_active_version WHERE singleton = 1"
-        ).fetchone()
+        row = conn.execute("SELECT determinism_hash FROM kg_active_version WHERE singleton = 1").fetchone()
         conn.close()
         return row[0] if row else None
     except Exception:
@@ -101,9 +95,7 @@ def get_determinism_algorithm(db_path: Path) -> str:
     """
     try:
         conn = open_db(db_path)
-        row = conn.execute(
-            "SELECT determinism_algorithm FROM kg_active_version WHERE singleton = 1"
-        ).fetchone()
+        row = conn.execute("SELECT determinism_algorithm FROM kg_active_version WHERE singleton = 1").fetchone()
         conn.close()
         if row and row[0]:
             return row[0]

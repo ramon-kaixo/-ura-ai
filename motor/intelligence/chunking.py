@@ -148,7 +148,7 @@ class SemanticChunker:
                     offset=offset,
                     length=len(text),
                     section=section,
-                    texto=text[:self._char_limit()],
+                    texto=text[: self._char_limit()],
                 )
             ]
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 
 from motor.observability.exporter import format_prometheus
 from motor.observability.logging import (
@@ -13,7 +12,7 @@ from motor.observability.logging import (
     set_workflow_id,
     get_workflow_id,
 )
-from motor.observability.metrics import Counter, Gauge, Histogram, MetricsRegistry, Timer
+from motor.observability.metrics import MetricsRegistry
 
 
 class TestJSONLogging:
@@ -39,6 +38,7 @@ class TestJSONLogging:
 
     def test_json_serializes_exception(self):
         import sys
+
         try:
             raise ValueError("test error")
         except ValueError:
@@ -63,6 +63,7 @@ class TestCorrelationID:
 
     def test_empty_default(self):
         import motor.observability.logging as obs_logging
+
         obs_logging._context.correlation_id = ""
         assert get_correlation_id() == ""
 
@@ -139,6 +140,7 @@ class TestPrometheusExporter:
 class TestMetricsThreadSafety:
     def test_concurrent_counters(self):
         import concurrent.futures
+
         reg = MetricsRegistry()
         c = reg.counter("ura_concurrent")
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as exe:
@@ -148,6 +150,7 @@ class TestMetricsThreadSafety:
 
     def test_concurrent_histogram(self):
         import concurrent.futures
+
         reg = MetricsRegistry()
         h = reg.histogram("ura_concurrent_hist")
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as exe:
@@ -160,6 +163,7 @@ class TestMetricsThreadSafety:
 class TestDashboard:
     def test_dashboard_valid_json(self):
         import json
+
         with open("deploy/grafana/dashboard.json") as f:
             data = json.load(f)
         assert "title" in data
@@ -168,6 +172,7 @@ class TestDashboard:
 
     def test_dashboard_has_ura_tag(self):
         import json
+
         with open("deploy/grafana/dashboard.json") as f:
             data = json.load(f)
         assert "ura" in data.get("tags", [])
@@ -176,6 +181,7 @@ class TestDashboard:
 class TestAlertRules:
     def test_alerts_valid_yaml(self):
         import yaml
+
         with open("deploy/prometheus/alerts.yml") as f:
             data = yaml.safe_load(f)
         assert "groups" in data
@@ -183,6 +189,7 @@ class TestAlertRules:
 
     def test_alerts_have_names(self):
         import yaml
+
         with open("deploy/prometheus/alerts.yml") as f:
             data = yaml.safe_load(f)
         for group in data["groups"]:

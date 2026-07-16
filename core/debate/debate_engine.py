@@ -21,10 +21,9 @@ import logging
 import sys
 from pathlib import Path
 
-import httpx
-
 from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event
+from motor.core.llm import generate
 
 logger = logging.getLogger("ura.debate")
 
@@ -139,32 +138,21 @@ Responde EXACTAMENTE en JSON:
 
 
 async def call_ollama(
-    client: httpx.AsyncClient,
-    ollama_url: str,
     model: str,
     prompt: str,
     temperature: float = 0.1,
     max_tokens: int = 2048,
-    timeout: int = 120,
 ) -> dict | None:
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": False,
-        "options": {
-            "temperature": temperature,
-            "num_predict": max_tokens,
-        },
-    }
     try:
-        resp = await client.post(
-            f"{ollama_url}/api/chat",
-            json=payload,
-            timeout=timeout,
+        raw = await asyncio.to_thread(
+            generate,
+            prompt,
+            model=model,
+            options={"temperature": temperature, "num_predict": max_tokens},
         )
-        resp.raise_for_status()
-        data = resp.json()
-        raw = data.get("message", {}).get("content", "")
+        if raw.startswith("Error:"):
+            logger.warning("[DEBATE] Error en modelo %s: %s", model, raw)
+            return None
         cleaned = raw.strip()
         if cleaned.startswith("```"):
             cleaned = cleaned.split("\n", 1)[-1] if "\n" in cleaned else cleaned[3:]
@@ -177,10 +165,7 @@ async def call_ollama(
             logger.warning("[DEBATE] Schema validation failed for %s", model)
             return None
         return parsed
-    except httpx.TimeoutException:
-        logger.warning("[DEBATE] Timeout en modelo %s", model)
-        return None
-    except (json.JSONDecodeError, httpx.HTTPStatusError) as e:
+    except (json.JSONDecodeError, Exception) as e:
         logger.warning("[DEBATE] Error en %s: %s", model, e)
         return None
 
@@ -193,34 +178,25 @@ async def run_debate(
     if config is None:
         config = load_config()
 
-    ollama_url = config["ollama_url"]
     primary_cfg = config["models"]["primary"]
     auditor_cfg = config["models"]["auditor"]
     threshold = config["consensus_threshold"]
-    timeout = config["timeout_per_model"]
 
-    async with httpx.AsyncClient() as client:
-        tasks = [
-            call_ollama(
-                client,
-                ollama_url,
-                primary_cfg["name"],
-                build_primary_prompt(plan_text, context),
-                temperature=primary_cfg["temperature"],
-                max_tokens=primary_cfg["max_tokens"],
-                timeout=timeout,
-            ),
-            call_ollama(
-                client,
-                ollama_url,
-                auditor_cfg["name"],
-                build_auditor_prompt(plan_text, context),
-                temperature=auditor_cfg["temperature"],
-                max_tokens=auditor_cfg["max_tokens"],
-                timeout=timeout,
-            ),
-        ]
-        results = await asyncio.gather(*tasks)
+    tasks = [
+        call_ollama(
+            primary_cfg["name"],
+            build_primary_prompt(plan_text, context),
+            temperature=primary_cfg["temperature"],
+            max_tokens=primary_cfg["max_tokens"],
+        ),
+        call_ollama(
+            auditor_cfg["name"],
+            build_auditor_prompt(plan_text, context),
+            temperature=auditor_cfg["temperature"],
+            max_tokens=auditor_cfg["max_tokens"],
+        ),
+    ]
+    results = await asyncio.gather(*tasks)
 
     primary_result, auditor_result = results
 
@@ -269,7 +245,7 @@ async def main_async() -> int:
     with DebateLock():
         result = await run_debate(plan_text, context)
 
-    log.info(json.dumps(result, ensure_ascii=False, indent=2))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("verdict") == "CONSENSUS" else 1
 
 

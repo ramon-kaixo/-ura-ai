@@ -97,13 +97,33 @@ def generate() -> str:
 
         if ver == "PARTIAL":
             if sid in ("R01", "R09") and rid and rid > 30:
-                findings.append((sid, f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10."))
+                findings.append(
+                    (
+                        sid,
+                        f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10.",
+                    )
+                )
             if sid == "R02":
-                findings.append((sid, "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente."))
+                findings.append(
+                    (
+                        sid,
+                        "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente.",
+                    )
+                )
             if sid == "R06" and dl:
-                findings.append((sid, "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco."))
+                findings.append(
+                    (
+                        sid,
+                        "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco.",
+                    )
+                )
             if sid == "R10":
-                findings.append((sid, "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado."))
+                findings.append(
+                    (
+                        sid,
+                        "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado.",
+                    )
+                )
 
     for sid, desc in findings:
         out(f"- **{sid}:** {desc}")
@@ -139,11 +159,21 @@ def generate() -> str:
     out()
     out("### Recomendaciones")
     out()
-    out("1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker).")
-    out("2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`.")
-    out("3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`.")
-    out("4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional.")
-    out("5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado.")
+    out(
+        "1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker)."
+    )
+    out(
+        "2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`."
+    )
+    out(
+        "3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`."
+    )
+    out(
+        "4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional."
+    )
+    out(
+        "5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado."
+    )
 
     return "\n".join(lines)
 

@@ -253,8 +253,13 @@ class ForgettingEngine:
         with self._lock:
             result = self._evaluate_episodes(result, context, dry_run)
             result = self._evaluate_facts(result, context, dry_run)
-            result.total_evaluated = (result.episodes_removed + result.facts_removed
-            + result.protected_skipped + result.pinned_skipped + result.referenced_skipped)
+            result.total_evaluated = (
+                result.episodes_removed
+                + result.facts_removed
+                + result.protected_skipped
+                + result.pinned_skipped
+                + result.referenced_skipped
+            )
 
         result.elapsed_ms = (time.monotonic() - start) * 1000
         return result
@@ -287,13 +292,17 @@ class ForgettingEngine:
                 if not dry_run:
                     ctx.episode_store.delete(ep.id)
                 result.episodes_removed += 1
-                result.details.append(ForgettingEvent(
-                    record_id=ep.id, record_type="episode", reason=reason,
-                    policy=self._policies[0].name() if self._policies else "unknown",
-                    timestamp=datetime.now(UTC).isoformat(),
-                    importance=ep.importance,
-                    age_days=_age_seconds(ep.timestamp) / ONE_DAY,
-                ))
+                result.details.append(
+                    ForgettingEvent(
+                        record_id=ep.id,
+                        record_type="episode",
+                        reason=reason,
+                        policy=self._policies[0].name() if self._policies else "unknown",
+                        timestamp=datetime.now(UTC).isoformat(),
+                        importance=ep.importance,
+                        age_days=_age_seconds(ep.timestamp) / ONE_DAY,
+                    )
+                )
             if len(batch) >= self._batch_size:
                 break
         return result
@@ -320,13 +329,17 @@ class ForgettingEngine:
                 if not dry_run:
                     self._semantic_store.delete(fact.id)
                 result.facts_removed += 1
-                result.details.append(ForgettingEvent(
-                    record_id=fact.id, record_type="semantic_fact", reason=reason,
-                    policy=self._policies[0].name() if self._policies else "unknown",
-                    timestamp=datetime.now(UTC).isoformat(),
-                    importance=fact.importance,
-                    age_days=0.0,
-                ))
+                result.details.append(
+                    ForgettingEvent(
+                        record_id=fact.id,
+                        record_type="semantic_fact",
+                        reason=reason,
+                        policy=self._policies[0].name() if self._policies else "unknown",
+                        timestamp=datetime.now(UTC).isoformat(),
+                        importance=fact.importance,
+                        age_days=0.0,
+                    )
+                )
         return result
 
     def stats(self) -> dict[str, Any]:

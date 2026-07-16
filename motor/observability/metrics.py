@@ -27,8 +27,11 @@ class Counter:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
-                "type": "counter", "name": self.name, "description": self.description,
-                "value": self._value, "labels": dict(self._labels),
+                "type": "counter",
+                "name": self.name,
+                "description": self.description,
+                "value": self._value,
+                "labels": dict(self._labels),
             }
 
 
@@ -59,8 +62,11 @@ class Gauge:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
-                "type": "gauge", "name": self.name, "description": self.description,
-                "value": self._value, "labels": dict(self._labels),
+                "type": "gauge",
+                "name": self.name,
+                "description": self.description,
+                "value": self._value,
+                "labels": dict(self._labels),
             }
 
 
@@ -87,8 +93,11 @@ class Histogram:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
-                "type": "histogram", "name": self.name, "description": self.description,
-                "count": self._count, "sum": round(self._sum, 3),
+                "type": "histogram",
+                "name": self.name,
+                "description": self.description,
+                "count": self._count,
+                "sum": round(self._sum, 3),
                 "buckets": {str(k): v for k, v in self._counts.items()},
             }
 

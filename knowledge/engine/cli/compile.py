@@ -50,7 +50,9 @@ def cmd_status(args) -> int:
         return 1
     conn = _get_conn(db_path)
     try:
-        version = conn.execute("SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1").fetchone()
+        version = conn.execute(
+            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1"
+        ).fetchone()
         doc_count = conn.execute("SELECT COUNT(*) as c FROM kg_nodes").fetchone()["c"]
         edge_count = conn.execute("SELECT COUNT(*) as c FROM kg_edges").fetchone()["c"]
         error_count = conn.execute("SELECT COUNT(*) as c FROM op_compile_errors WHERE severity='ERROR'").fetchone()["c"]
@@ -87,6 +89,7 @@ def cmd_compile(args) -> int:
     db_path = _resolve_db_path(args)
     source_dir = Path(args.source_dir).resolve() if hasattr(args, "source_dir") and args.source_dir else None
     from knowledge.engine.orchestrator import request_compile
+
     n = request_compile("cli", source_dir=source_dir, db_path=db_path)
     if n:
         print("Compile OK (with flock protection)")

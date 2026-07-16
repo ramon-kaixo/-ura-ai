@@ -1,4 +1,5 @@
 """Rutas absolutas de binarios del sistema para subprocess seguros."""
+
 import shutil
 
 BASH = shutil.which("bash") or "/usr/bin/bash"

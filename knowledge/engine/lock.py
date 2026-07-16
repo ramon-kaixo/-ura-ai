@@ -35,9 +35,7 @@ def compile_lock(lock_path: Path = _DEFAULT_LOCK_FILE):
         lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR, 0o644)
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except (OSError, BlockingIOError):
-        raise LockAcquisitionError(
-            f"Compile ya en ejecución (lock: {lock_path})"
-        ) from None
+        raise LockAcquisitionError(f"Compile ya en ejecución (lock: {lock_path})") from None
     try:
         yield
     finally:

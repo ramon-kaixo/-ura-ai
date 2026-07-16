@@ -1,4 +1,5 @@
 """Agente Programación — analiza documentación técnica y código."""
+
 import re
 
 
@@ -19,8 +20,18 @@ def process(text: str, meta: dict) -> dict:
             result["lenguajes"].append(lang)
 
     # Detectar frameworks
-    frameworks = ["fastapi", "django", "react", "vue", "langchain", "ollama",
-                  "pytorch", "tensorflow", "docker", "kubernetes"]
+    frameworks = [
+        "fastapi",
+        "django",
+        "react",
+        "vue",
+        "langchain",
+        "ollama",
+        "pytorch",
+        "tensorflow",
+        "docker",
+        "kubernetes",
+    ]
     for fw in frameworks:
         if fw in text.lower():
             result["frameworks"].append(fw)

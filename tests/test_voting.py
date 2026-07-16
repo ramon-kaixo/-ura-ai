@@ -83,6 +83,7 @@ class TestAgentWeightRegistry:
 
     def test_thread_safety(self):
         import concurrent.futures
+
         reg = AgentWeightRegistry()
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as exe:
             futures = [exe.submit(reg.set_weight, f"a{i}", float(i)) for i in range(100)]
@@ -271,12 +272,19 @@ class TestWeightedCompatibility:
 class TestConsensusResultExtended:
     def test_weighted_flag(self):
         r = ConsensusResult(
-            success=True, outcome={}, votes=[], vote_counts={},
-            total_votes=0, strategy="weighted", weighted=True,
+            success=True,
+            outcome={},
+            votes=[],
+            vote_counts={},
+            total_votes=0,
+            strategy="weighted",
+            weighted=True,
         )
         assert r.weighted
 
+
 # ── Legacy tests (must remain passing) ─────────────────────────────────────
+
 
 class _helper:
     @staticmethod
@@ -286,22 +294,31 @@ class _helper:
 
 class TestMajorityVotingLegacy:
     def test_unanimous_wins(self):
-        r = MajorityVoting().aggregate([
-            _helper.result(True, {"a": 1}), _helper.result(True, {"a": 1}),
-        ])
+        r = MajorityVoting().aggregate(
+            [
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
+            ]
+        )
         assert r.success
 
     def test_majority_wins(self):
-        r = MajorityVoting().aggregate([
-            _helper.result(True, {"a": 1}), _helper.result(True, {"a": 1}),
-            _helper.result(True, {"a": 2}),
-        ])
+        r = MajorityVoting().aggregate(
+            [
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
+            ]
+        )
         assert r.success
 
     def test_tie_detected(self):
-        r = MajorityVoting().aggregate([
-            _helper.result(True, {"a": 1}), _helper.result(True, {"a": 2}),
-        ])
+        r = MajorityVoting().aggregate(
+            [
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
+            ]
+        )
         assert not r.success
         assert r.outcome.get("_tie") is True
 
@@ -316,15 +333,21 @@ class TestMajorityVotingLegacy:
 
 class TestUnanimousVotingLegacy:
     def test_all_agree(self):
-        r = UnanimousVoting().aggregate([
-            _helper.result(True, {"a": 1}), _helper.result(True, {"a": 1}),
-        ])
+        r = UnanimousVoting().aggregate(
+            [
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
+            ]
+        )
         assert r.success
 
     def test_disagrees(self):
-        r = UnanimousVoting().aggregate([
-            _helper.result(True, {"a": 1}), _helper.result(True, {"a": 2}),
-        ])
+        r = UnanimousVoting().aggregate(
+            [
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
+            ]
+        )
         assert not r.success
 
     def test_single(self):
@@ -349,5 +372,6 @@ class TestVotingEngineLegacy:
 
     def test_unknown_raises(self):
         import pytest
+
         with pytest.raises(ValueError):
             VotingEngine().vote_with([], "nope")

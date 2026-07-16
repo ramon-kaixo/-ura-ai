@@ -116,8 +116,11 @@ class SemanticMemoryStore:
             d = dict(zip(cols, row, strict=False))
             try:
                 fact = SemanticFact(
-                    id=d["id"], subject=d["subject"], predicate=d["predicate"],
-                    object_value=d["obj"], fact_type=d.get("fact_type", "relation"),
+                    id=d["id"],
+                    subject=d["subject"],
+                    predicate=d["predicate"],
+                    object_value=d["obj"],
+                    fact_type=d.get("fact_type", "relation"),
                     confidence=float(d.get("confidence", 0.5)),
                     importance=float(d.get("importance", 0.5)),
                     created_at=d.get("created_at", ""),
@@ -169,7 +172,8 @@ class SemanticMemoryStore:
         if text:
             text_lower = text.lower()
             results = [
-                f for f in results
+                f
+                for f in results
                 if text_lower in f.subject.lower()
                 or text_lower in f.predicate.lower()
                 or text_lower in f.object_value.lower()
@@ -185,9 +189,7 @@ class SemanticMemoryStore:
         if entity:
             entity_lower = entity.lower()
             results = [
-                f for f in results
-                if entity_lower in f.subject.lower()
-                or entity_lower in f.object_value.lower()
+                f for f in results if entity_lower in f.subject.lower() or entity_lower in f.object_value.lower()
             ]
 
         results.sort(key=lambda f: (f.importance, f.confidence), reverse=True)
@@ -226,11 +228,19 @@ class SemanticMemoryStore:
                     created_at, updated_at, version, source_ids, tags, metadata)
                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
-                    fact.id, fact.subject, fact.predicate, fact.object_value,
-                    fact.fact_type, fact.confidence, fact.importance,
-                    fact.created_at, fact.updated_at, fact.version,
+                    fact.id,
+                    fact.subject,
+                    fact.predicate,
+                    fact.object_value,
+                    fact.fact_type,
+                    fact.confidence,
+                    fact.importance,
+                    fact.created_at,
+                    fact.updated_at,
+                    fact.version,
                     json.dumps(fact.source_episode_ids),
-                    json.dumps(fact.tags), json.dumps(fact.metadata),
+                    json.dumps(fact.tags),
+                    json.dumps(fact.metadata),
                 ),
             )
             self._conn.commit()

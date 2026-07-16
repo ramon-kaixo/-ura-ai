@@ -36,11 +36,13 @@ def enqueue_archive_job(
     el INSERT es ignorado (dedup_key).
     """
     dedup_key = hashlib.sha256(str(source_dir).encode()).hexdigest()[:16]
-    payload = json.dumps({
-        "source_dir": str(source_dir),
-        "db_path": str(db_path),
-        "correlation_id": correlation_id,
-    })
+    payload = json.dumps(
+        {
+            "source_dir": str(source_dir),
+            "db_path": str(db_path),
+            "correlation_id": correlation_id,
+        }
+    )
     try:
         conn = open_db(db_path)
         begin_immediate(conn)
@@ -80,8 +82,7 @@ def process_archive_jobs(
         _recover_stale_jobs(conn)
 
         jobs = conn.execute(
-            "SELECT id, payload FROM op_jobs "
-            "WHERE job_type = 'archive_source' AND status = 'pending'"
+            "SELECT id, payload FROM op_jobs WHERE job_type = 'archive_source' AND status = 'pending'"
         ).fetchall()
 
         for job in jobs:
@@ -126,8 +127,7 @@ def process_archive_jobs(
                 record_archive(kind="source", status="failed")
                 begin_immediate(conn)
                 conn.execute(
-                    "UPDATE op_jobs SET status = 'failed', error = ?, "
-                    "completed_at = datetime('now') WHERE id = ?",
+                    "UPDATE op_jobs SET status = 'failed', error = ?, completed_at = datetime('now') WHERE id = ?",
                     (str(exc), job_id),
                 )
             conn.commit()

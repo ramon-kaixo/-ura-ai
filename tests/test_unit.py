@@ -273,7 +273,21 @@ if compose_file.exists():
 
 check("memory_engine.py importa", lambda: __import__("core.memory_engine"))
 
-from core.memory_engine import _chromadb_available, _chunk_text, _sha256, load_manifest, rag_enabled, save_manifest
+from core.memory_engine import (
+    _build_context,
+    _chromadb_available,
+    _chunk_text,
+    _generate,
+    _sha256,
+    ask,
+    load_manifest,
+    rag_enabled,
+    save_manifest,
+    OLLAMA_URL,
+    RAG_MODEL,
+    TEMPERATURE,
+    MAX_TOKENS,
+)
 
 check("_sha256 existe", lambda: callable(_sha256))
 check("_chunk_text existe", lambda: callable(_chunk_text))
@@ -323,6 +337,50 @@ if available:
     pass
 else:
     pass
+
+# ============================================================
+# TEST 6b: Memory Engine — RAG Generación (ask)
+# ============================================================
+
+check("ask existe", lambda: callable(ask))
+check("_build_context existe", lambda: callable(_build_context))
+check("_generate existe", lambda: callable(_generate))
+
+# _build_context con resultados
+ctx_results = [
+    {"content": "URA es un asistente multi-agente.", "source": "doc1.md", "similarity": 0.95},
+    {"content": "Usa Qdrant para búsqueda vectorial.", "source": "doc2.md", "similarity": 0.87},
+]
+ctx = _build_context(ctx_results)
+check("_build_context: genera string", lambda: isinstance(ctx, str))
+check("_build_context: contiene contenido del primer resultado", lambda: "asistente multi-agente" in ctx)
+check("_build_context: contiene contenido del segundo resultado", lambda: "búsqueda vectorial" in ctx)
+check("_build_context: contiene fuente del primer resultado", lambda: "doc1.md" in ctx)
+check("_build_context: contiene similitud", lambda: "0.95" in ctx)
+
+# _build_context con lista vacía
+check("_build_context: lista vacía retorna string vacío", lambda: _build_context([]) == "")
+
+# _build_context con max_chars limitado
+ctx_short = _build_context(ctx_results, max_chars=30)
+check("_build_context: max_chars limita longitud", lambda: len(ctx_short) <= 30)
+
+# _build_context con resultados sin content
+ctx_no_content = _build_context([{"source": "x.md", "similarity": 0.5}])
+check("_build_context: resultado vacío no rompe", lambda: isinstance(ctx_no_content, str))
+
+# _generate con contexto vacío
+gen_empty = _generate("", "pregunta de prueba")
+check("_generate: contexto vacío retorna mensaje", lambda: "No se encontraron documentos" in gen_empty)
+
+# ask retorna string
+check("ask retorna string", lambda: isinstance(ask("test", top_k=1), str))
+
+# Config constants existen y son del tipo correcto
+check("OLLAMA_URL es string", lambda: isinstance(OLLAMA_URL, str))
+check("RAG_MODEL es string", lambda: isinstance(RAG_MODEL, str))
+check("TEMPERATURE es float o int", lambda: isinstance(TEMPERATURE, (int, float)))
+check("MAX_TOKENS es int", lambda: isinstance(MAX_TOKENS, int))
 
 # ============================================================
 # TEST 7: No phantom features — docs deben reflejar realidad

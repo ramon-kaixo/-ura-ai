@@ -30,12 +30,14 @@ log = logging.getLogger("ura.knowledge.eventbus")
 @dataclass(frozen=True)
 class Event:
     """Base class for all events."""
+
     pass
 
 
 @dataclass(frozen=True)
 class CompileCompleted(Event):
     """Publicado cuando un compile termina exitosamente."""
+
     reason: str
     documents_changed: int
     documents_total: int
@@ -46,6 +48,7 @@ class CompileCompleted(Event):
 @dataclass(frozen=True)
 class MemoryCreated(Event):
     """Publicado cuando se crea un registro de memoria."""
+
     memory_id: str
     kind: str
     title: str
@@ -55,6 +58,7 @@ class MemoryCreated(Event):
 @dataclass(frozen=True)
 class MemoryUpdated(Event):
     """Publicado cuando se actualiza un registro de memoria."""
+
     memory_id: str
     kind: str
 
@@ -62,6 +66,7 @@ class MemoryUpdated(Event):
 @dataclass(frozen=True)
 class MemoryLinked(Event):
     """Publicado cuando se vincula un asset a un registro de memoria."""
+
     memory_id: str
     asset_id: str
 
@@ -69,6 +74,7 @@ class MemoryLinked(Event):
 @dataclass(frozen=True)
 class ArchiveCompleted(Event):
     """Publicado cuando un archive termina."""
+
     kind: str
     commit: str
     file_count: int
@@ -78,6 +84,7 @@ class ArchiveCompleted(Event):
 @dataclass(frozen=True)
 class SearchPerformed(Event):
     """Publicado cuando se realiza una búsqueda."""
+
     query: str
     docs_returned: int
     correlation_id: str = ""
@@ -89,6 +96,7 @@ class MetadataExtracted(Event):
 
     Fase 6 — Backend Vectorial: el suscriptor vectorial se engancha aquí.
     """
+
     asset_id: str
     asset_type: AssetType
     extractor: str
@@ -126,9 +134,7 @@ class EventBus:
         """Elimina un handler."""
         with self._lock:
             if event_type in self._subscribers:
-                self._subscribers[event_type] = [
-                    h for h in self._subscribers[event_type] if h is not handler
-                ]
+                self._subscribers[event_type] = [h for h in self._subscribers[event_type] if h is not handler]
 
     def publish(self, event: Event) -> None:
         """Publica un evento a todos los suscriptores.
@@ -144,7 +150,9 @@ class EventBus:
             except Exception as exc:
                 log.error(
                     "Event handler %s failed for %s: %s",
-                    handler.__name__, event_type.__name__, exc,
+                    handler.__name__,
+                    event_type.__name__,
+                    exc,
                 )
 
     def clear(self) -> None:

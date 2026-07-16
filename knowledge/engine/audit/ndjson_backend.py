@@ -60,9 +60,7 @@ class NDJSONAuditBackend:
         Retorna True si se adquirió, False si no (non-blocking).
         """
         try:
-            self._lock_fd = os.open(
-                str(self._lock_file), os.O_CREAT | os.O_RDWR, 0o644
-            )
+            self._lock_fd = os.open(str(self._lock_file), os.O_CREAT | os.O_RDWR, 0o644)
             fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return True
         except (OSError, BlockingIOError):
@@ -186,11 +184,7 @@ class NDJSONAuditBackend:
 
         Útil para tests y recuperación. No usar en read path.
         """
-        path = (
-            self._file
-            if segment == 0
-            else self._file.with_suffix(f".ndjson.{segment}")
-        )
+        path = self._file if segment == 0 else self._file.with_suffix(f".ndjson.{segment}")
         if not path.exists():
             return []
         events: list[AuditEvent] = []
@@ -238,6 +232,7 @@ class NDJSONAuditBackend:
             conn.execute("PRAGMA synchronous=OFF")
             begin_immediate(conn)
             import time as _time
+
             _t0 = _time.monotonic()
             with processing.open() as f:
                 for line in f:
@@ -276,6 +271,7 @@ class NDJSONAuditBackend:
         # Métrica de duración
         try:
             from knowledge.engine.metrics import audit_ingest_duration_seconds
+
             audit_ingest_duration_seconds.observe(_time.monotonic() - _t0)
         except Exception:
             pass

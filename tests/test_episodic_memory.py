@@ -187,6 +187,7 @@ class TestEpisodeStore:
 
     def test_thread_safety(self):
         import concurrent.futures
+
         store = EpisodeStore()
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as exe:
             futures = [exe.submit(store.store, Episode(payload=f"t{i}")) for i in range(100)]

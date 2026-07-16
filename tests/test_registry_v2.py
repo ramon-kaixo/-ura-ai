@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from motor.plugin.base import PluginBase
 from motor.plugin.manifest import PluginManifest
@@ -13,9 +12,9 @@ def _make_legacy_plugin(path: Path, name: str) -> Path:
     f = path / f"{name}.py"
     f.write_text(
         f'__plugin__ = {{"name": "{name}", "phase": "pre"}}\n'
-        f'from motor.plugin.base import PluginBase\n'
-        f'class _P(PluginBase):\n'
-        f'    def execute(self, context):\n'
+        f"from motor.plugin.base import PluginBase\n"
+        f"class _P(PluginBase):\n"
+        f"    def execute(self, context):\n"
         f'        return {{"name": "{name}"}}\n'
     )
     return f

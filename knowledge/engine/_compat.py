@@ -17,4 +17,5 @@ else:
 
     class StrEnum(str, Enum):  # type: ignore[no-redef]
         """StrEnum polyfill para Python 3.10."""
+
         pass
