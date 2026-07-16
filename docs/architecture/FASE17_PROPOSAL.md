@@ -116,7 +116,7 @@ config/system_config.json        ← única fuente de verdad en disco
 
 **Alcance:**
 1. En `core/config_manager.py`:
-   - Añadir `logging.warning("config.local.json encontrado — DEPRECATED. Será eliminado en F18.")` cuando el archivo exista y se cargue.
+    - Añadir `logging.warning("config.local.json encontrado — DEPRECATED. Será eliminado en F23.")` cuando el archivo exista y se cargue.
    - El archivo se sigue cargando (compatibilidad), pero con aviso.
 2. Documentar la deprecación en el docstring de `load_config()` y en el closeout de F15.
 3. No eliminar `_LOCAL_CONFIG_PATH` ni la lógica de carga — eso ocurre en B6.
@@ -605,7 +605,7 @@ Añadir sección `llm.providers` en `system_config.json` para configurar cada pr
 
 > **Ampliación de:** F17–F23
 > **Prioridad:** Alta
-> **Ejecución:** Después de A2, antes de F19. Idealmente antes de F17-B2 para que las decisiones de deprecación tengan marco de referencia.
+> **Ejecución:** Durante F17, antes de B2, para que las decisiones de deprecación tengan marco de referencia desde el inicio.
 
 **Objetivo:** Formalizar el ciclo de vida de eliminación de componentes legacy antes de que F17-B2 (deprecación de `config.local.json`) y F23 (limpieza) necesiten aplicarlo.
 
@@ -1012,15 +1012,14 @@ Si algún criterio no se cumple, la RC se retrasa hasta que se corrija. No se et
 
 ### Orden Estratégico
 
-1. **F17 + F17.5**: Consolidar arquitectura y secretos antes de tocar proveedores.
+1. **F17 + F17.5 + A3**: Consolidar arquitectura, secretos y política de deprecación de una vez. A3 (política) debe ir antes de F17-B2 para que las decisiones de deprecación tengan marco de referencia desde el inicio. Las tres comparten dependencia de F16 y no requieren componentes posteriores.
 2. **F18**: Router básico con los 2 proveedores más usados. Sin fallback, sin métricas.
 3. **A1 + A2**: Congelar contrato de `motor.core.llm` (A1) y definir API pública del proyecto (A2) antes de que F19 y F22 añadan más superficie. Sin esto, observabilidad y nuevos proveedores introducirán API drifting.
-4. **A3**: Formalizar política de deprecación temprano, antes de que F17-B2 comience a deprecar elementos. Las decisiones de deprecación necesitan un marco de referencia.
-5. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback, contrato estable para instrumentar, y API pública documentada para exportar métricas).
-6. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
-7. **A4**: Benchmarks automáticos sobre el baseline de F20. Sin esto, F21 no tiene umbrales objetivos.
-8. **F21**: Calidad (necesitas pipeline rápido de F20 + benchmarks de A4 para golden tests y detección de regresiones).
-9. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
-10. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales, con criterios de salida verificados).
+4. **F19**: Observabilidad + circuit breaker (necesitas métricas para decidir fallback, contrato estable para instrumentar, y API pública documentada para exportar métricas).
+5. **F20**: Rendimiento (necesitas métricas baseline de F19 para medir mejora).
+6. **A4**: Benchmarks automáticos sobre el baseline de F20. Sin esto, F21 no tiene umbrales objetivos.
+7. **F21**: Calidad (necesitas pipeline rápido de F20 + benchmarks de A4 para golden tests y detección de regresiones).
+8. **F22**: Resto de proveedores (después de tener calidad + rendimiento estables).
+9. **F23**: Limpieza final y RC (después de cerrar todas las fases funcionales, con criterios de salida verificados).
 
-Este orden minimiza el riesgo: primero arquitectura, después capacidades, luego contratos, gobernanza, observabilidad, rendimiento, benchmarks, calidad, cobertura de proveedores, y finalmente limpieza pre-release con criterios objetivos.
+Este orden minimiza el riesgo: primero arquitectura + gobernanza, después capacidades, luego contratos, observabilidad, rendimiento, benchmarks, calidad, cobertura de proveedores, y finalmente limpieza pre-release con criterios objetivos.
