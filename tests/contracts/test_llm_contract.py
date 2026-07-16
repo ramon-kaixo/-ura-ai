@@ -45,10 +45,10 @@ class TestAPIExportada:
         esperados = {
             "generate", "embed", "embed_async", "health",
             "CONFIG", "log", "logging",
-            "OllamaProvider", "OpenAIProvider",
-            "ollama", "openai", "base", "registry",
+            "OllamaProvider", "OpenAIProvider", "AnthropicProvider",
+            "ollama", "openai", "anthropic", "base", "registry",
             "router", "circuit_breaker", "observability", "profiler", "detector", "baseline", "monitor",
-            "provider_name",
+            "provider_name", "Any", "cls", "name",
         }
         extras = exports_no_publicos - esperados
         assert not extras, f"Export(s) no declarado(s): {sorted(extras)}"
