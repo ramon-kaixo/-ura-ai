@@ -45,8 +45,8 @@ class TestAPIExportada:
         esperados = {
             "generate", "embed", "embed_async", "health",
             "CONFIG", "log", "logging",
-            "OllamaProvider", "OpenAIProvider", "AnthropicProvider", "GeminiProvider",
-            "ollama", "openai", "anthropic", "gemini", "base", "registry",
+            "OllamaProvider", "OpenAIProvider", "AnthropicProvider", "GeminiProvider", "OpenRouterProvider",
+            "ollama", "openai", "anthropic", "gemini", "openrouter", "base", "registry",
             "router", "circuit_breaker", "observability", "profiler", "detector", "baseline", "monitor",
             "provider_name", "Any", "cls", "name",
         }

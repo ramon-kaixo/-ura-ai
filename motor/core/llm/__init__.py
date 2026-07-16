@@ -39,6 +39,12 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         providers.append((GeminiProvider, "gemini"))
     except Exception:  # noqa: S110
         pass
+    try:
+        from motor.core.llm.openrouter import OpenRouterProvider
+
+        providers.append((OpenRouterProvider, "openrouter"))
+    except Exception:  # noqa: S110
+        pass
     return providers
 
 log = logging.getLogger(__name__)
@@ -73,6 +79,13 @@ elif provider_name == "gemini":
     registry.register("gemini", _default, default=True)
     registry.register("ollama", OllamaProvider())
     log.info("LLM provider set to gemini (from config)")
+elif provider_name == "openrouter":
+    from motor.core.llm.openrouter import OpenRouterProvider
+
+    _default = OpenRouterProvider()
+    registry.register("openrouter", _default, default=True)
+    registry.register("ollama", OllamaProvider())
+    log.info("LLM provider set to openrouter (from config)")
 else:
     _default = OllamaProvider()
     registry.register("ollama", _default, default=True)
