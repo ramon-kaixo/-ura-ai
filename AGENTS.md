@@ -67,6 +67,22 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 Ninguna fase podrá degradar rendimiento, calidad o funcionalidad respecto al
 baseline de la fase anterior sin documentarlo y justificarlo en el Closeout.
 
+### Fase 18 — Cliente Multiproveedor (✅ Cerrada, v0.18.0-fase18)
+
+| Bloque | Archivos | Estado |
+|--------|----------|--------|
+| B1 | `docs/architecture/F18_CONSUMERS.md` — 8 consumidores auditados | ✅ |
+| B2 | `motor/core/llm/base.py` (BaseLLMProvider ABC), `ollama.py` refactorizado | ✅ |
+| B3 | `motor/core/llm/registry.py` — ProviderRegistry | ✅ |
+| B4 | `motor/core/llm/router.py` — LLMRouter | ✅ |
+| B5 | `motor/core/llm/openai.py` — OpenAIProvider | ✅ |
+| B6 | Config `llm.provider` en CONFIG + selection en `__init__.py` | ✅ |
+| B7 | 26 golden tests en `motor/tests/test_llm_providers.py` | ✅ |
+| B8 | `benchmark_llm.py` — flag `--provider` | ✅ |
+| B9 | Validación final + tag `v0.18.0-fase18` | ✅ |
+
+**Logro:** API `motor.core.llm` congelada. 8 consumidores sin cambios. Registry + Router operativos. OpenAI listo para usar con `OPENAI_API_KEY`.
+
 ### Regla Transversal (Fases 10–13)
 
 No abrir una fase nueva sin haber cerrado la anterior mediante:
