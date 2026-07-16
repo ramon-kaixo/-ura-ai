@@ -58,17 +58,13 @@ def begin_immediate(
                 raise
             _inc_busy_retry()
             if time.monotonic() >= deadline:
-                raise sqlite3.OperationalError(
-                    f"Could not acquire BEGIN IMMEDIATE after {timeout}s"
-                ) from e
+                raise sqlite3.OperationalError(f"Could not acquire BEGIN IMMEDIATE after {timeout}s") from e
             time.sleep(_BUSY_RETRY_MS / 1000.0)
 
 
 def _inc_busy_retry() -> None:
     """Incrementa el contador de reintentos SQLITE_BUSY (best effort)."""
     try:
-        from prometheus_client import Counter
-
         from knowledge.engine.metrics import sqlite_busy_retries_total
 
         sqlite_busy_retries_total.inc()

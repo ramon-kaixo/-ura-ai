@@ -11,7 +11,6 @@ DEFAULT_DB_PATH = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge
 SCHEMA_FILE = Path(__file__).resolve().parent.parent.parent.parent / "schemas" / "knowledge_graph.sql"
 
 
-
 def _resolve_db_path(args) -> Path:
     if hasattr(args, "db_path") and args.db_path:
         return Path(args.db_path)
@@ -50,8 +49,15 @@ def build_parser() -> argparse.ArgumentParser:
     from knowledge.engine.cli.docs import cmd_docs_generate
     from knowledge.engine.cli.notify import cmd_notify_test
     from knowledge.engine.cli.metadata import (
-        cmd_memory_create, cmd_memory_link, cmd_memory_list, cmd_memory_search, cmd_memory_show,
-        cmd_metadata_context, cmd_metadata_lineage, cmd_metadata_policy, cmd_metadata_retrieve,
+        cmd_memory_create,
+        cmd_memory_link,
+        cmd_memory_list,
+        cmd_memory_search,
+        cmd_memory_show,
+        cmd_metadata_context,
+        cmd_metadata_lineage,
+        cmd_metadata_policy,
+        cmd_metadata_retrieve,
     )
 
     parser = argparse.ArgumentParser(description="URA Knowledge Engine")
@@ -80,7 +86,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_search = sub.add_parser("search", help="Full-text search documents")
     p_search.add_argument("query", help="FTS5 query string")
-    p_search.add_argument("--mode", default="lexical", choices=["lexical", "hybrid"], help="Search mode (default: lexical)")
+    p_search.add_argument(
+        "--mode", default="lexical", choices=["lexical", "hybrid"], help="Search mode (default: lexical)"
+    )
     p_search.add_argument("--type", help="Filter by doc type")
     p_search.add_argument("--limit", type=int, default=10, help="Max results (default: 10)")
     p_search.set_defaults(func=cmd_search)
@@ -206,13 +214,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem = meta_sub.add_parser("memory", help="Memory operations (conversations, decisions, incidents)")
     mem_sub = p_mem.add_subparsers(dest="memory_cmd", required=True)
     p_mem_create = mem_sub.add_parser("create", help="Create a memory record")
-    p_mem_create.add_argument("kind", choices=["conversation","decision","incident","learning","note"], help="Memory kind")
+    p_mem_create.add_argument(
+        "kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Memory kind"
+    )
     p_mem_create.add_argument("title", help="Title")
     p_mem_create.add_argument("content", help="Content")
     p_mem_create.add_argument("--tags", help="Comma-separated tags")
     p_mem_create.set_defaults(func=cmd_memory_create)
     p_mem_list = mem_sub.add_parser("list", help="List memories")
-    p_mem_list.add_argument("--kind", choices=["conversation","decision","incident","learning","note"], help="Filter by kind")
+    p_mem_list.add_argument(
+        "--kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Filter by kind"
+    )
     p_mem_list.add_argument("--limit", type=int, default=100, help="Max results")
     p_mem_list.set_defaults(func=cmd_memory_list)
     p_mem_show = mem_sub.add_parser("show", help="Show a memory record")
@@ -220,7 +232,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_show.set_defaults(func=cmd_memory_show)
     p_mem_search = mem_sub.add_parser("search", help="Search memories")
     p_mem_search.add_argument("query", help="Search query")
-    p_mem_search.add_argument("--kind", choices=["conversation","decision","incident","learning","note"], help="Filter by kind")
+    p_mem_search.add_argument(
+        "--kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Filter by kind"
+    )
     p_mem_search.add_argument("--limit", type=int, default=10, help="Max results")
     p_mem_search.set_defaults(func=cmd_memory_search)
     p_mem_link = mem_sub.add_parser("link", help="Link an asset to a memory")

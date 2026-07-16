@@ -8,6 +8,7 @@ Cada agente recibe:
 
 El agente NO tiene red. NO puede escribir fuera de --output.
 """
+
 import argparse
 import json
 import sys
@@ -39,6 +40,7 @@ def main() -> None:
     # Escribir resultado
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+
 
 if __name__ == "__main__":
     main()

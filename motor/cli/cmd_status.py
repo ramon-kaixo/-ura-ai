@@ -48,10 +48,23 @@ def cmd_cross(config: UraConfig, args=None):
     for name, host in {"alemania": HOST_REMOTO_ALEMANIA}.items():
         try:
             r = _executor.run(
-                ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
-                 "-o", "StrictHostKeyChecking=accept-new",
-                 "-i", "/home/ramon/.ssh/id_rsa", host,
-                 "sudo", "ura", "--config", "/etc/ura/config.json", "status"],
+                [
+                    "ssh",
+                    "-o",
+                    "ConnectTimeout=5",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    "StrictHostKeyChecking=accept-new",
+                    "-i",
+                    "/home/ramon/.ssh/id_rsa",
+                    host,
+                    "sudo",
+                    "ura",
+                    "--config",
+                    "/etc/ura/config.json",
+                    "status",
+                ],
                 timeout=15,
             )
             if r.returncode == 0:

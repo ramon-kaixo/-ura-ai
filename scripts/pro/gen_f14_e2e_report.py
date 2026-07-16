@@ -29,6 +29,7 @@ def generate() -> str:
     scenarios = data.get("scenarios", [])
 
     lines = []
+
     def out(s=""):
         lines.append(s)
 

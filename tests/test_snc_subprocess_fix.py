@@ -66,6 +66,7 @@ class TestCheckOpencodeColgado:
 
     def test_returns_pid_when_cpu_high(self):
         with patch("subprocess.run") as mock_run:
+
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]
@@ -81,6 +82,7 @@ class TestCheckOpencodeColgado:
 
     def test_returns_none_when_cpu_low(self):
         with patch("subprocess.run") as mock_run:
+
             def side_effect(*args, **kwargs):
                 result = MagicMock()
                 args_list = args[0]

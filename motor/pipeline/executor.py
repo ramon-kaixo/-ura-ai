@@ -64,8 +64,10 @@ class PipelineExecutor:
                     self._rollback(pipeline, completed, context)
                     elapsed = (time.monotonic() - start) * 1000
                     result = PipelineResult(
-                        ok=False, name=pipeline.name,
-                        stages=completed, error=stage_result.error,
+                        ok=False,
+                        name=pipeline.name,
+                        stages=completed,
+                        error=stage_result.error,
                         duration_ms=elapsed,
                     )
                     self._bus.publish(
@@ -83,8 +85,10 @@ class PipelineExecutor:
 
             elapsed = (time.monotonic() - start) * 1000
             result = PipelineResult(
-                ok=True, name=pipeline.name,
-                stages=completed, duration_ms=elapsed,
+                ok=True,
+                name=pipeline.name,
+                stages=completed,
+                duration_ms=elapsed,
             )
             self._bus.publish(
                 PIPELINE_COMPLETED,
@@ -98,8 +102,10 @@ class PipelineExecutor:
             log.exception("Pipeline %s failed with exception", pipeline.name)
             self._rollback(pipeline, completed, context)
             result = PipelineResult(
-                ok=False, name=pipeline.name,
-                stages=completed, error=str(exc),
+                ok=False,
+                name=pipeline.name,
+                stages=completed,
+                error=str(exc),
                 duration_ms=elapsed,
             )
             self._bus.publish(
@@ -126,7 +132,9 @@ class PipelineExecutor:
         if plugin is None:
             log.warning("Stage '%s': plugin '%s' not found", stage.name, stage.plugin)
             return StageResult(
-                name=stage.name, plugin=stage.plugin, ok=False,
+                name=stage.name,
+                plugin=stage.plugin,
+                ok=False,
                 error=f"Plugin '{stage.plugin}' not found",
             )
 
@@ -137,13 +145,17 @@ class PipelineExecutor:
                 )
                 if result is None:
                     return StageResult(
-                        name=stage.name, plugin=stage.plugin, ok=False,
+                        name=stage.name,
+                        plugin=stage.plugin,
+                        ok=False,
                         error="Cancelled by plugin.on_before_stage",
                     )
             except Exception as exc:
                 log.warning("Stage '%s': on_before_stage raised: %s", stage.name, exc)
                 return StageResult(
-                    name=stage.name, plugin=stage.plugin, ok=False,
+                    name=stage.name,
+                    plugin=stage.plugin,
+                    ok=False,
                     error=f"Plugin on_before_stage error: {exc}",
                 )
 
@@ -168,7 +180,9 @@ class PipelineExecutor:
 
             output_dict = output if isinstance(output, dict) else {}
             return StageResult(
-                name=stage.name, plugin=stage.plugin, ok=True,
+                name=stage.name,
+                plugin=stage.plugin,
+                ok=True,
                 output=output_dict,
             )
 

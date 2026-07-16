@@ -109,25 +109,31 @@ class KnowledgeGraphAgent(Agent):
         from knowledge.engine.connection import open_db
 
         db_conn = open_db(self._db_path)
-        rows = db_conn.execute(
-            "SELECT type, COUNT(*) as c FROM kg_nodes GROUP BY type ORDER BY c DESC"
-        ).fetchall()
+        rows = db_conn.execute("SELECT type, COUNT(*) as c FROM kg_nodes GROUP BY type ORDER BY c DESC").fetchall()
         db_conn.close()
 
         if not rows:
-            findings.append(AgentFinding(
-                agent_id=self._id, kind="audit", severity="ERROR",
-                title="Grafo vacío",
-                description="No hay documentos en el grafo de conocimiento",
-            ))
+            findings.append(
+                AgentFinding(
+                    agent_id=self._id,
+                    kind="audit",
+                    severity="ERROR",
+                    title="Grafo vacío",
+                    description="No hay documentos en el grafo de conocimiento",
+                )
+            )
             return findings
 
         for row in rows:
-            findings.append(AgentFinding(
-                agent_id=self._id, kind="audit", severity="INFO",
-                title=f"Tipo: {row['type']}",
-                description=f"{row['c']} documentos de tipo '{row['type']}'",
-            ))
+            findings.append(
+                AgentFinding(
+                    agent_id=self._id,
+                    kind="audit",
+                    severity="INFO",
+                    title=f"Tipo: {row['type']}",
+                    description=f"{row['c']} documentos de tipo '{row['type']}'",
+                )
+            )
 
         return findings
 
@@ -137,32 +143,37 @@ class KnowledgeGraphAgent(Agent):
         from knowledge.engine.connection import open_db
 
         db_conn = open_db(self._db_path)
-        row = db_conn.execute(
-            "SELECT COUNT(*) as c FROM kg_nodes WHERE type = ?", (doc_type,)
-        ).fetchone()
+        row = db_conn.execute("SELECT COUNT(*) as c FROM kg_nodes WHERE type = ?", (doc_type,)).fetchone()
         total = db_conn.execute("SELECT COUNT(*) as c FROM kg_nodes").fetchone()["c"]
         db_conn.close()
 
         count = row["c"] if row else 0
         if count == 0:
-            findings.append(AgentFinding(
-                agent_id=self._id, kind="coverage", severity="WARN",
-                title=f"Sin documentos de tipo '{doc_type}'",
-                description=f"No hay documentos de tipo '{doc_type}' en el grafo ({total} docs totales)",
-            ))
+            findings.append(
+                AgentFinding(
+                    agent_id=self._id,
+                    kind="coverage",
+                    severity="WARN",
+                    title=f"Sin documentos de tipo '{doc_type}'",
+                    description=f"No hay documentos de tipo '{doc_type}' en el grafo ({total} docs totales)",
+                )
+            )
         else:
-            findings.append(AgentFinding(
-                agent_id=self._id, kind="coverage", severity="INFO",
-                title=f"Cobertura '{doc_type}': {count}/{total}",
-                description=f"{count} documentos de tipo '{doc_type}' de {total} totales",
-            ))
+            findings.append(
+                AgentFinding(
+                    agent_id=self._id,
+                    kind="coverage",
+                    severity="INFO",
+                    title=f"Cobertura '{doc_type}': {count}/{total}",
+                    description=f"{count} documentos de tipo '{doc_type}' de {total} totales",
+                )
+            )
         return findings
 
     def _check_consistency(self, reader) -> list[AgentFinding]:
         """Verifica consistencia del grafo (edges rotos, huérfanos)."""
         from knowledge.engine.connection import open_db
         from knowledge.engine.deduction import StateDeductor
-        import json
 
         db_conn = open_db(self._db_path)
         rows = db_conn.execute("SELECT id, type, path FROM kg_nodes").fetchall()
@@ -177,14 +188,16 @@ class KnowledgeGraphAgent(Agent):
 
         findings: list[AgentFinding] = []
         for d in deductions:
-            findings.append(AgentFinding(
-                agent_id=self._id,
-                kind=d.kind,
-                severity="WARN" if d.kind in ("orphan",) else "INFO",
-                title=f"{d.kind}: {d.subject_id}",
-                description=d.description,
-                doc_id=d.subject_id if d.kind == "orphan" else "",
-            ))
+            findings.append(
+                AgentFinding(
+                    agent_id=self._id,
+                    kind=d.kind,
+                    severity="WARN" if d.kind in ("orphan",) else "INFO",
+                    title=f"{d.kind}: {d.subject_id}",
+                    description=d.description,
+                    doc_id=d.subject_id if d.kind == "orphan" else "",
+                )
+            )
         return findings
 
 

@@ -3,6 +3,7 @@
 
 Uso: python3 scripts/pro/sanear_codigo.py [--check-only]
 """
+
 import re
 import subprocess
 import sys
@@ -17,9 +18,7 @@ def fix_logging_fstrings(path: Path) -> int:
     content = path.read_text()
     count = 0
     # Pattern: log.(info|warning|error|debug|critical)(f"...")
-    pattern = re.compile(
-        r'(logger?|log)\.(info|warning|error|debug|critical)\(f"([^"]*)"([^)]*)\)'
-    )
+    pattern = re.compile(r'(logger?|log)\.(info|warning|error|debug|critical)\(f"([^"]*)"([^)]*)\)')
     fixed = pattern.sub(
         lambda m: f'{m.group(1)}.{m.group(2)}("{m.group(3)}"{m.group(4)})',
         content,
@@ -37,8 +36,7 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 
 def fix_multiline_statements(path: Path) -> int:
-    """E702: split statements joined with
-"""
+    """E702: split statements joined with"""
     content = path.read_text()
     count = 0
     # Simple case: x = 1; y = 2  -> split into two lines
@@ -51,7 +49,13 @@ def fix_multiline_statements(path: Path) -> int:
             if len(parts) > 1:
                 # Only fix if all parts look like simple statements
                 stripped = [p.strip() for p in parts]
-                if all(s and not s.startswith(("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")) for s in stripped):
+                if all(
+                    s
+                    and not s.startswith(
+                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+                    )
+                    for s in stripped
+                ):
                     new_lines.extend(stripped)
                     count += 1
                     continue
@@ -110,7 +114,10 @@ def main():
 
     total_before = subprocess.run(
         ["ruff", "check", *DIRS],
-        capture_output=True, text=True, timeout=60, check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
     )
     before_count = len([l for l in total_before.stderr.split("\n") if "Found" in l])
 
@@ -144,7 +151,10 @@ def main():
 
     after = subprocess.run(
         ["ruff", "check", *DIRS],
-        capture_output=True, text=True, timeout=60, check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
     )
     after_count = len([l for l in after.stderr.split("\n") if "Found" in l])
 

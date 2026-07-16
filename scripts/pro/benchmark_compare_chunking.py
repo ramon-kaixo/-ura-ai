@@ -66,11 +66,11 @@ def compute_metrics(retrieved_docs, gold_set, gold_relevance, k=10):
     dcg = 0.0
     for i, doc in enumerate(retrieved_ids[:k]):
         rel = gold_relevance.get(doc, 0)
-        dcg += (2 ** rel - 1) / math.log2(i + 2)
+        dcg += (2**rel - 1) / math.log2(i + 2)
     ideal = sorted(gold_relevance.values(), reverse=True)
     idcg = 0.0
     for i, rel in enumerate(ideal[:k]):
-        idcg += (2 ** rel - 1) / math.log2(i + 2)
+        idcg += (2**rel - 1) / math.log2(i + 2)
     ndcg = dcg / idcg if idcg > 0 else 0.0
     ap = 0.0
     hits = 0
@@ -156,11 +156,11 @@ def main():
 
     # Print comparison table
     versions = list(all_results.keys())
-    print(f"\n{'='*75}")
+    print(f"\n{'=' * 75}")
     print(f"  KE 1.x vs KE 2.0 — Chunking Comparison")
-    print(f"{'='*75}")
+    print(f"{'=' * 75}")
     print(f"{'Metric':<22} {'KE 1.x':<12} {'KE 2.0':<12} {'Delta':<10} {'Pass?':<10}")
-    print(f"{'-'*66}")
+    print(f"{'-' * 66}")
 
     for metric in ["Recall@1", "Recall@5", "Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10"]:
         v1 = all_results[versions[0]][metric]
@@ -170,7 +170,7 @@ def main():
         passed = pct > 0 or (v1 == 0 and v2 > 0)
         print(f"{metric:<22} {v1:<12.4f} {v2:<12.4f} {pct:>+7.1f}%  {'✅' if passed else '❌'}")
 
-    print(f"{'-'*66}")
+    print(f"{'-' * 66}")
 
     for metric in ["Latency P50 (ms)", "Latency P95 (ms)", "Latency P99 (ms)"]:
         v1 = all_results[versions[0]][metric]
@@ -215,9 +215,9 @@ def main():
     else:
         accepts.append(f"❌ No-context rate aumenta: {nctx_ke2:.2%} > {nctx_ke1:.2%}")
 
-    print(f"\n{'='*75}")
+    print(f"\n{'=' * 75}")
     print("  Acceptance Criteria")
-    print(f"{'='*75}")
+    print(f"{'=' * 75}")
     for a in accepts:
         print(f"  {a}")
 

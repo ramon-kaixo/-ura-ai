@@ -61,9 +61,7 @@ class VectorStore(Protocol):
         """
         ...
 
-    def list_ids(
-        self, limit: int = 100, offset: str | None = None
-    ) -> tuple[list[str], str | None]:
+    def list_ids(self, limit: int = 100, offset: str | None = None) -> tuple[list[str], str | None]:
         """Enumera asset_ids almacenados, paginados.
 
         Args:

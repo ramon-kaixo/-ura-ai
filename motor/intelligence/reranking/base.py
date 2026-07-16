@@ -12,5 +12,4 @@ class BaseReranker(ABC):
         self,
         query: str,
         candidates: list[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        ...
+    ) -> list[dict[str, Any]]: ...

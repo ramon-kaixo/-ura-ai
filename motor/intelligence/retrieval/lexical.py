@@ -48,11 +48,13 @@ class LexicalRetriever:
         for rank, idx in enumerate(top_indices):
             if scores[idx] <= 0:
                 continue
-            results.append({
-                "doc_id": self._docs[idx]["doc_id"],
-                "score": float(scores[idx]),
-                "rank": rank,
-                "latency_ms": round((time.monotonic() - start) * 1000, 2),
-                "source": "lexical",
-            })
+            results.append(
+                {
+                    "doc_id": self._docs[idx]["doc_id"],
+                    "score": float(scores[idx]),
+                    "rank": rank,
+                    "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                    "source": "lexical",
+                }
+            )
         return results

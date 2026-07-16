@@ -52,6 +52,7 @@ class TestTTLForgetPolicy:
         ep = store._episodes.get(eid)
         policy = TTLForgetPolicy()
         from motor.intelligence.memory.forgetting import ForgettingContext
+
         ctx = ForgettingContext(store, SemanticMemoryStore(), [], set(), set())
         should, _ = policy.should_forget(ep, ctx)
         assert should
@@ -69,6 +70,7 @@ class TestTTLForgetPolicy:
         fact = SemanticFact(subject="s", predicate="p", object_value="o")
         policy = TTLForgetPolicy()
         from motor.intelligence.memory.forgetting import ForgettingContext
+
         ctx = ForgettingContext(EpisodeStore(), SemanticMemoryStore(), [], set(), set())
         should, _ = policy.should_forget(fact, ctx)
         assert not should
@@ -266,6 +268,7 @@ class TestForgettingScheduler:
 class TestForgettingBenchmark:
     def test_under_500ms(self):
         import time
+
         store = EpisodeStore()
         for i in range(500):
             ts = (datetime.now(UTC) - timedelta(days=i % 10)).isoformat()
@@ -280,5 +283,6 @@ class TestForgettingBenchmark:
 class TestForgettingResult:
     def test_total_removed(self):
         from motor.intelligence.memory.forgetting import ForgettingResult
+
         r = ForgettingResult(episodes_removed=3, facts_removed=2)
         assert r.total_removed == 5

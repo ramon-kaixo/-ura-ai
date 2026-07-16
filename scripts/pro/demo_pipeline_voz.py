@@ -24,7 +24,6 @@ def ejecutar_bucle_seguro() -> None:
     except RuntimeError:
         sys.exit(1)
 
-
     try:
         while True:
             if pipeline_stt.device_index is None:
@@ -35,7 +34,6 @@ def ejecutar_bucle_seguro() -> None:
 
             if not corrected_text:
                 continue
-
 
             clean_text = sanitize_text(corrected_text)
 

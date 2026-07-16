@@ -123,7 +123,6 @@ def main() -> int:
     html_file = generar_html(reporte, tendencia)
     reporte["html_report"] = str(html_file)
 
-
     # Exit code 78 = configuration error (systemd RestartPreventExitStatus=78)
     if reporte.get("bloqueante", False):
         return 78

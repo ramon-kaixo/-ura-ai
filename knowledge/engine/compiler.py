@@ -181,10 +181,16 @@ def compile_source(
             from knowledge.engine.snapshot_store import save_snapshot
             import subprocess
 
-            commit = subprocess.run(  # noqa: S603  -- comando git constante
-                ["git", "rev-parse", "HEAD"],  # noqa: S607
-                capture_output=True, text=True, cwd=source_dir, check=False,
-            ).stdout.strip() or "HEAD"
+            commit = (
+                subprocess.run(  # noqa: S603  -- comando git constante
+                    ["git", "rev-parse", "HEAD"],  # noqa: S607
+                    capture_output=True,
+                    text=True,
+                    cwd=source_dir,
+                    check=False,
+                ).stdout.strip()
+                or "HEAD"
+            )
             save_snapshot(snapshot, commit)
         except Exception as exc:
             log.warning("No se pudo persistir snapshot: %s", exc)

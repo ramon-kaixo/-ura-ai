@@ -204,29 +204,22 @@ def _set_db_gauges(db_path: Path | None) -> None:
         row = conn.execute("SELECT COUNT(*) as c FROM op_compiler_runs").fetchone()
         db_compile_runs.set(row["c"] if row else 0)
 
-        row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_compile_errors WHERE severity='ERROR'"
-        ).fetchone()
+        row = conn.execute("SELECT COUNT(*) as c FROM op_compile_errors WHERE severity='ERROR'").fetchone()
         db_compile_errors.set(row["c"] if row else 0)
 
-        row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_vector_sync "
-            "WHERE status IN ('pending', 'failed')"
-        ).fetchone()
+        row = conn.execute("SELECT COUNT(*) as c FROM op_vector_sync WHERE status IN ('pending', 'failed')").fetchone()
         db_pending_sync.set(row["c"] if row else 0)
 
         version = conn.execute("PRAGMA user_version").fetchone()
         db_schema_version.set(version[0] if version else 0)
 
         row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_jobs "
-            "WHERE job_type = 'compile' AND status IN ('pending', 'running')"
+            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'compile' AND status IN ('pending', 'running')"
         ).fetchone()
         compile_queue_length.set(row["c"] if row else 0)
 
         row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_jobs "
-            "WHERE job_type = 'archive_source' AND status IN ('pending', 'running')"
+            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'archive_source' AND status IN ('pending', 'running')"
         ).fetchone()
         archive_queue_length.set(row["c"] if row else 0)
 
@@ -285,8 +278,14 @@ def _reset_for_testing() -> None:
     compile_queue_length = Gauge("ke_compile_queue_length", "")
     archive_queue_length = Gauge("ke_archive_queue_length", "")
     audit_write_failures = Counter("ke_audit_write_failures_total", "")
-    compile_lock_wait_seconds = Histogram("ke_compile_lock_wait_seconds", "", buckets=(0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0))
+    compile_lock_wait_seconds = Histogram(
+        "ke_compile_lock_wait_seconds", "", buckets=(0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0)
+    )
     sqlite_busy_retries_total = Counter("ke_sqlite_busy_retries_total", "")
     job_retry_total = Counter("ke_job_retry_total", "", ["job_type", "reason"])
-    archive_duration_seconds = Histogram("ke_archive_duration_seconds", "", buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0))
-    audit_ingest_duration_seconds = Histogram("ke_audit_ingest_duration_seconds", "", buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0))
+    archive_duration_seconds = Histogram(
+        "ke_archive_duration_seconds", "", buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0)
+    )
+    audit_ingest_duration_seconds = Histogram(
+        "ke_audit_ingest_duration_seconds", "", buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
+    )

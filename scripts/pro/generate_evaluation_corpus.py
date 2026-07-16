@@ -226,6 +226,7 @@ def generate_corpus() -> None:
     base_dir += "/knowledge/evaluation/corpus"
 
     import os
+
     os.makedirs(base_dir, exist_ok=True)
 
     # Write queries.jsonl
@@ -262,15 +263,31 @@ def generate_corpus() -> None:
                 topic_map.setdefault(qid, []).extend(["qdrant", "knowledge"])
             elif "degraded" in qid.lower() or "health" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["degraded", "system", "observability"])
-            elif "event" in qid.lower() or "publish" in qid.lower() or "subscribe" in qid.lower() or "topic" in qid.lower():
+            elif (
+                "event" in qid.lower()
+                or "publish" in qid.lower()
+                or "subscribe" in qid.lower()
+                or "topic" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["eventbus", "hooks"])
             elif "pipeline" in qid.lower() or "stage" in qid.lower() or "rollback" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["pipeline", "hooks"])
-            elif "plugin" in qid.lower() or "registry" in qid.lower() or "manifest" in qid.lower() or "compat" in qid.lower():
+            elif (
+                "plugin" in qid.lower()
+                or "registry" in qid.lower()
+                or "manifest" in qid.lower()
+                or "compat" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["plugin"])
             elif "hook" in qid.lower() or "circuit" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["hooks", "observability"])
-            elif "metric" in qid.lower() or "counter" in qid.lower() or "gauge" in qid.lower() or "histogram" in qid.lower() or "timer" in qid.lower():
+            elif (
+                "metric" in qid.lower()
+                or "counter" in qid.lower()
+                or "gauge" in qid.lower()
+                or "histogram" in qid.lower()
+                or "timer" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["metrics", "observability"])
             elif "readiness" in qid.lower() or "component" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["observability", "system"])
@@ -308,7 +325,12 @@ def generate_corpus() -> None:
         elif qid.startswith("know"):
             if "chunk" in qid.lower() or "embedding" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["chunking", "knowledge"])
-            elif "search" in qid.lower() or "retriev" in qid.lower() or "recall" in qid.lower() or "precision" in qid.lower():
+            elif (
+                "search" in qid.lower()
+                or "retriev" in qid.lower()
+                or "recall" in qid.lower()
+                or "precision" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["search", "knowledge", "benchmark"])
             elif "rerank" in qid.lower() or "cross" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["search", "benchmark"])
@@ -316,11 +338,18 @@ def generate_corpus() -> None:
                 topic_map.setdefault(qid, []).extend(["knowledge", "search"])
             elif "qdrant" in qid.lower() or "vector" in qid.lower() or "collection" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["knowledge", "qdrant"])
-            elif "latency" in qid.lower() or "p50" in qid.lower() or "p95" in qid.lower() or "throughput" in qid.lower():
+            elif (
+                "latency" in qid.lower() or "p50" in qid.lower() or "p95" in qid.lower() or "throughput" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["benchmark", "search"])
             elif "ndcg" in qid.lower() or "mrr" in qid.lower() or "map" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["benchmark", "search"])
-            elif "corpus" in qid.lower() or "benchmark" in qid.lower() or "baseline" in qid.lower() or "evaluat" in qid.lower():
+            elif (
+                "corpus" in qid.lower()
+                or "benchmark" in qid.lower()
+                or "baseline" in qid.lower()
+                or "evaluat" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["benchmark", "knowledge"])
             elif "relevance" in qid.lower() or "grade" in qid.lower() or "golden" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["benchmark", "search"])
@@ -344,9 +373,17 @@ def generate_corpus() -> None:
                     if doc not in seen_docs:
                         seen_docs.add(doc)
                         grade = random.choice([2, 3]) if topic == topics[0] else random.choice([1, 2])
-                        f.write(json.dumps({
-                            "qid": qid, "doc_id": doc, "relevance": grade,
-                        }, ensure_ascii=False) + "\n")
+                        f.write(
+                            json.dumps(
+                                {
+                                    "qid": qid,
+                                    "doc_id": doc,
+                                    "relevance": grade,
+                                },
+                                ensure_ascii=False,
+                            )
+                            + "\n"
+                        )
 
     # Metadata
     domain_counts: dict[str, int] = {}
@@ -355,10 +392,13 @@ def generate_corpus() -> None:
         domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
     total_rel = len(open(f"{base_dir}/relevance.jsonl").readlines())
-    unique_docs = len(set(
-        line.split('"doc_id":')[1].split('"')[1]
-        for line in open(f"{base_dir}/relevance.jsonl") if '"doc_id":' in line
-    ))
+    unique_docs = len(
+        set(
+            line.split('"doc_id":')[1].split('"')[1]
+            for line in open(f"{base_dir}/relevance.jsonl")
+            if '"doc_id":' in line
+        )
+    )
 
     metadata = {
         "version": "1.0.0",

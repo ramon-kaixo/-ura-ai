@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """URA CLI — Punto de entrada central (wrapper hacia motor/cli/main.py)."""
+
 import sys
 
 from motor.cli.main import main as _motor_main

@@ -1,7 +1,5 @@
 """CLI: notify — test de notificaciones."""
 
-import sys
-
 from knowledge.engine.notify import (
     WebhookNotifier,
     SlackNotifier,

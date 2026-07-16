@@ -34,7 +34,6 @@ def aplicar_parche_utc() -> None:
         if "datetime.now(UTC).isoformat()" not in contenido:
             continue
 
-
         # Asegurar importación de UTC
         if "from datetime import UTC, datetime, UTC" not in contenido and "from datetime import" in contenido:
             contenido = contenido.replace(

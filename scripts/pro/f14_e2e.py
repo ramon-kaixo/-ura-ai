@@ -43,13 +43,15 @@ findings: list[dict] = []
 
 
 def record_finding(scenario_id: str, description: str, impact: str):
-    findings.append({
-        "id": f"F14-{scenario_id}",
-        "scenario": scenario_id,
-        "description": description,
-        "impact": impact,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    findings.append(
+        {
+            "id": f"F14-{scenario_id}",
+            "scenario": scenario_id,
+            "description": description,
+            "impact": impact,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 def load_env():
@@ -101,8 +103,12 @@ def auto_recovery_time(check_fn, timeout=60, interval=1) -> float:
 
 def qdrant_running() -> bool:
     try:
-        r = subprocess.run(["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
-                           capture_output=True, text=True, timeout=5)
+        r = subprocess.run(
+            ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
         return "ura-qdrant" in r.stdout
     except Exception:
         return False
@@ -110,8 +116,7 @@ def qdrant_running() -> bool:
 
 def ollama_running() -> bool:
     try:
-        r = subprocess.run(["systemctl", "is-active", "ollama"],
-                           capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["systemctl", "is-active", "ollama"], capture_output=True, text=True, timeout=5)
         return "active" in r.stdout
     except Exception:
         return False
@@ -265,15 +270,16 @@ def case_e03() -> dict:
     t0 = time.monotonic()
     try:
         from motor.pipeline.orchestrator import Orchestrator
+
         config = UraConfig.load()
         orch = Orchestrator(config)
         result = orch.run(dry_run=True)
         observed.append(f"Pipeline completado: ok={result.ok}")
-        if hasattr(result, 'scan') and result.scan:
+        if hasattr(result, "scan") and result.scan:
             observed.append(f"Health score: {getattr(result.scan, 'health_score', 'N/A')}")
-        if hasattr(result, 'diagnose') and result.diagnose:
+        if hasattr(result, "diagnose") and result.diagnose:
             observed.append(f"Incidentes: {getattr(result.diagnose, 'incidentes', 'N/A')}")
-        if hasattr(result, 'preflight') and result.preflight:
+        if hasattr(result, "preflight") and result.preflight:
             observed.append(f"Dependencias: {'ok' if getattr(result.preflight, 'all_ok', False) else 'fallos'}")
     except Exception as e:
         observed.append(f"Pipeline falló: {e}")
@@ -281,9 +287,11 @@ def case_e03() -> dict:
         record_finding("E03", f"Pipeline Orchestrator.run() exception: {e}", "alto")
 
     if "Read-only file system" in "; ".join(observed):
-        record_finding("E03",
+        record_finding(
+            "E03",
             "Pipeline Orchestrator intenta escribir en /opt/motor/data/snapshots/ que es read-only. El pipeline no completa preflight.",
-            "alto")
+            "alto",
+        )
 
     duration = round(time.monotonic() - t0, 2)
     res = capture_resources()
@@ -320,6 +328,7 @@ def case_e04() -> dict:
     try:
         bus = EventBus()
         from motor.plugin import PluginRegistryV2
+
         registry = PluginRegistryV2(eventbus=bus)
 
         plugin_dirs = [str(d.resolve()) for d in [Path("scripts/pro"), Path("motor/plugin")] if d.exists()]
@@ -340,6 +349,7 @@ def case_e04() -> dict:
             observed.append("No se encontraron plugins — se usará plugin temporal")
 
             from motor.plugin import PluginBase
+
             class TempPlugin(PluginBase):
                 def execute(self, context=None):
                     return {"result": "ok", "plugin": "temp"}
@@ -508,8 +518,15 @@ def case_e06() -> dict:
 
 
 def case_e07() -> dict:
-    real = ["MultiAgentRuntime", "PlannerAgent", "ResearcherAgent", "ExecutorAgent",
-            "ValidatorAgent", "Consensus (VotingEngine)", "Observability"]
+    real = [
+        "MultiAgentRuntime",
+        "PlannerAgent",
+        "ResearcherAgent",
+        "ExecutorAgent",
+        "ValidatorAgent",
+        "Consensus (VotingEngine)",
+        "Observability",
+    ]
     mock = []
     justification = ""
 
@@ -523,6 +540,7 @@ def case_e07() -> dict:
         for role_name in ["planner", "supervisor"]:
             try:
                 from motor.intelligence.agents import AgentRole
+
                 role = getattr(AgentRole, role_name.upper(), None)
                 if role:
                     agents = runtime.find_by_role(role)
@@ -553,8 +571,9 @@ def case_e07() -> dict:
             AgentResult(task_id="3", agent_id="executor", success=True, output={"answer": "no"}),
         ]
         consensus = engine.vote(agent_results)
-        observed.append(f"Consenso: strategy={consensus.strategy}, outcome={consensus.outcome}, "
-                        f"votes={consensus.vote_counts}")
+        observed.append(
+            f"Consenso: strategy={consensus.strategy}, outcome={consensus.outcome}, votes={consensus.vote_counts}"
+        )
     except Exception as e:
         observed.append(f"Error en E07: {e}")
         errors += 1
@@ -633,8 +652,9 @@ def case_e08() -> dict:
         gauge_count = len(m_snap.get("gauges", []))
         hist_count = len(m_snap.get("histograms", []))
         timer_count = len(m_snap.get("timers", []))
-        observed.append(f"Métricas: {counter_count} counters, {gauge_count} gauges, "
-                        f"{hist_count} histograms, {timer_count} timers")
+        observed.append(
+            f"Métricas: {counter_count} counters, {gauge_count} gauges, {hist_count} histograms, {timer_count} timers"
+        )
 
         prom = format_prometheus(metrics)
         observed.append(f"Prometheus output: {len(prom.splitlines())} líneas")
@@ -734,21 +754,31 @@ def save_results(results: list[dict], env: dict, git_info: dict):
 
     csv_path = DATA_DIR / f"e2e_{timestamp}.csv"
     with open(csv_path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=[
-            "id", "veredict", "duration_s", "errors", "real_pct",
-            "observed", "mock_justification",
-        ])
+        w = csv.DictWriter(
+            f,
+            fieldnames=[
+                "id",
+                "veredict",
+                "duration_s",
+                "errors",
+                "real_pct",
+                "observed",
+                "mock_justification",
+            ],
+        )
         w.writeheader()
         for r in results:
-            w.writerow({
-                "id": r["id"],
-                "veredict": r["veredict"],
-                "duration_s": r.get("duration_s", 0),
-                "errors": r.get("errors", 0),
-                "real_pct": r.get("real_pct", 0),
-                "observed": r.get("observed", ""),
-                "mock_justification": r.get("mock_justification", ""),
-            })
+            w.writerow(
+                {
+                    "id": r["id"],
+                    "veredict": r["veredict"],
+                    "duration_s": r.get("duration_s", 0),
+                    "errors": r.get("errors", 0),
+                    "real_pct": r.get("real_pct", 0),
+                    "observed": r.get("observed", ""),
+                    "mock_justification": r.get("mock_justification", ""),
+                }
+            )
     print(f"  📄 CSV:  {csv_path}")
 
     if findings:

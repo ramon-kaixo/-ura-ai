@@ -44,9 +44,11 @@ _HAS_FFMPEG = shutil.which("ffmpeg") is not None
 _HAS_OPENCV = _check_import("cv2", "opencv-python")
 _HAS_WHISPER = _check_import("whisper", "openai-whisper")
 
+
 def _get_whisper_model() -> Any:
     if not hasattr(_get_whisper_model, "model"):
         import whisper
+
         _get_whisper_model.model = whisper.load_model("base")
     return _get_whisper_model.model
 
@@ -133,8 +135,14 @@ class VideoExtractor:
     @staticmethod
     def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
         cmd = [
-            "ffprobe", "-v", "quiet", "-print_format", "json",
-            "-show_format", "-show_streams", path_str,
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            "-show_streams",
+            path_str,
         ]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
@@ -149,8 +157,10 @@ class VideoExtractor:
 
             if fmt:
                 for key, mk in (
-                    ("duration", "duration_sec"), ("bit_rate", "bitrate"),
-                    ("format_name", "container"), ("size", "size_bytes"),
+                    ("duration", "duration_sec"),
+                    ("bit_rate", "bitrate"),
+                    ("format_name", "container"),
+                    ("size", "size_bytes"),
                 ):
                     val = fmt.get(key)
                     if val is not None:
@@ -160,8 +170,10 @@ class VideoExtractor:
                 codec_type = stream.get("codec_type")
                 if codec_type == "video":
                     for key, mk in (
-                        ("codec_name", "video_codec"), ("width", "width"),
-                        ("height", "height"), ("r_frame_rate", "fps"),
+                        ("codec_name", "video_codec"),
+                        ("width", "width"),
+                        ("height", "height"),
+                        ("r_frame_rate", "fps"),
                         ("bit_rate", "video_bitrate"),
                     ):
                         val = stream.get(key)
@@ -169,7 +181,8 @@ class VideoExtractor:
                             metadata[f"video_{mk}"] = val
                 elif codec_type == "audio":
                     for key, mk in (
-                        ("codec_name", "audio_codec"), ("sample_rate", "audio_sample_rate"),
+                        ("codec_name", "audio_codec"),
+                        ("sample_rate", "audio_sample_rate"),
                         ("channels", "audio_channels"),
                     ):
                         val = stream.get(key)
@@ -196,10 +209,19 @@ class VideoExtractor:
         thumbnails: list[str] = []
         for pct in THUMBNAIL_TIMES:
             seek = duration * pct
-            thumb_path = str(thumb_dir / f"{base}_{int(pct*100)}.jpg")
+            thumb_path = str(thumb_dir / f"{base}_{int(pct * 100)}.jpg")
             cmd = [
-                "ffmpeg", "-y", "-ss", str(seek), "-i", path_str,
-                "-vframes", "1", "-q:v", "2", thumb_path,
+                "ffmpeg",
+                "-y",
+                "-ss",
+                str(seek),
+                "-i",
+                path_str,
+                "-vframes",
+                "1",
+                "-q:v",
+                "2",
+                thumb_path,
             ]
             try:
                 subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603,S607

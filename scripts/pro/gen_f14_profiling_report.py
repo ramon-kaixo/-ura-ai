@@ -36,6 +36,7 @@ def generate() -> str:
     all_findings = get_findings()
 
     lines = []
+
     def out(s=""):
         lines.append(s)
 
@@ -72,7 +73,7 @@ def generate() -> str:
     out(f"- **PASS:** {passes}")
     out(f"- **PARTIAL:** {partials}")
     out(f"- **FAIL:** {fails}")
-    out(f"- **Duración total:** {total_dur}s ({total_dur/60:.0f}min)")
+    out(f"- **Duración total:** {total_dur}s ({total_dur / 60:.0f}min)")
     out(f"- **Anomalías detectadas:** {total_anomalies}")
     out()
 
@@ -95,13 +96,15 @@ def generate() -> str:
 
         rss = sm.get("rss_mb", {})
         if rss:
-            out(f"| RSS min/max/mean/p95 | {rss.get('min','?')}/{rss.get('max','?')}/{rss.get('mean','?')}/{rss.get('p95','?')} MB |")
+            out(
+                f"| RSS min/max/mean/p95 | {rss.get('min', '?')}/{rss.get('max', '?')}/{rss.get('mean', '?')}/{rss.get('p95', '?')} MB |"
+            )
         cpu = sm.get("cpu_percent", {})
         if cpu:
-            out(f"| CPU min/max/mean | {cpu.get('min','?')}/{cpu.get('max','?')}/{cpu.get('mean','?')} % |")
+            out(f"| CPU min/max/mean | {cpu.get('min', '?')}/{cpu.get('max', '?')}/{cpu.get('mean', '?')} % |")
         thr = sm.get("num_threads", {})
         if thr:
-            out(f"| Threads min/max/mean | {thr.get('min','?')}/{thr.get('max','?')}/{thr.get('mean','?')} |")
+            out(f"| Threads min/max/mean | {thr.get('min', '?')}/{thr.get('max', '?')}/{thr.get('mean', '?')} |")
 
         anomalies = s.get("anomalies", [])
         if anomalies:

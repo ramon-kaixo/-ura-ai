@@ -50,7 +50,9 @@ class TestParallelExecutor:
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
-        tasks = [(a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"t{i}"]})) for i, a in enumerate(agents)]
+        tasks = [
+            (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"t{i}"]})) for i, a in enumerate(agents)
+        ]
         result = executor.execute(tasks)
         assert result.completed == 3
         assert result.total_tasks == 3
@@ -59,7 +61,9 @@ class TestParallelExecutor:
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
-        tasks = [(a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"msg_{i}"]})) for i, a in enumerate(agents)]
+        tasks = [
+            (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"msg_{i}"]})) for i, a in enumerate(agents)
+        ]
         result = executor.execute(tasks)
         assert len(result.results) == 3
 
@@ -130,7 +134,10 @@ class TestParallelExecutor:
             cancel_on_error=True,
         )
         failing = AgentTask(objective="fail", input_data={"cmd": ["bash", "-c", "exit 1"]})
-        tasks = [(agents[0].id, failing), (agents[1].id, AgentTask(objective="echo", input_data={"cmd": ["echo", "ok"]}))]
+        tasks = [
+            (agents[0].id, failing),
+            (agents[1].id, AgentTask(objective="echo", input_data={"cmd": ["echo", "ok"]})),
+        ]
         result = executor.execute(tasks)
         # fail_on_error cancels remaining after first failure
         assert result.total_tasks == 2
@@ -183,7 +190,9 @@ class TestExecutionOrder:
         agents = [ExecutorAgent(), ExecutorAgent(), ExecutorAgent()]
         registry = {a.id: a for a in agents}
         executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
-        tasks = [(a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", str(i)]})) for i, a in enumerate(agents)]
+        tasks = [
+            (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", str(i)]})) for i, a in enumerate(agents)
+        ]
         result = executor.execute(tasks)
         assert len(result.results) == 3
 
@@ -191,6 +200,7 @@ class TestExecutionOrder:
 class TestThreadSafety:
     def test_concurrent_cancel(self):
         import concurrent.futures
+
         executor = ParallelExecutor()
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as exe:
             futures = [exe.submit(executor.cancel, f"w{i}") for i in range(100)]

@@ -44,7 +44,6 @@ async def main() -> None:
         "temperature": 0.1,
     }
 
-
     inicio_script = time.time()
     tareas = [lanzar_peticion_concurrente(i, payload_test) for i in range(1, 7)]
     await asyncio.gather(*tareas)

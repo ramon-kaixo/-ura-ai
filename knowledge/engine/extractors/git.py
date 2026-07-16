@@ -107,9 +107,7 @@ class GitExtractor:
 
                 repo_size = self._repo_size(work_dir)
                 if repo_size > MAX_CLONE_SIZE:
-                    raise GitLimitError(
-                        f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})"
-                    )
+                    raise GitLimitError(f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})")
 
                 metadata["size"] = repo_size
                 metadata["_extractor"] = self.id
@@ -183,20 +181,21 @@ class GitExtractor:
             metadata["current_branch"] = branch.strip()
 
         # Commits recientes
-        log_output = _git_cmd(repo_path, ["log", f"--max-count={MAX_COMMITS}",
-                                            "--format=%H|%an|%ae|%ai|%s"])
+        log_output = _git_cmd(repo_path, ["log", f"--max-count={MAX_COMMITS}", "--format=%H|%an|%ae|%ai|%s"])
         if log_output:
             commits = []
             for line in log_output.strip().split("\n"):
                 if "|" in line:
                     parts = line.split("|", 4)
-                    commits.append({
-                        "hash": parts[0][:8],
-                        "author": parts[1],
-                        "email": parts[2],
-                        "date": parts[3],
-                        "message": parts[4] if len(parts) > 4 else "",
-                    })
+                    commits.append(
+                        {
+                            "hash": parts[0][:8],
+                            "author": parts[1],
+                            "email": parts[2],
+                            "date": parts[3],
+                            "message": parts[4] if len(parts) > 4 else "",
+                        }
+                    )
             metadata["commits"] = commits
             metadata["commit_count"] = len(commits)
 
@@ -210,8 +209,7 @@ class GitExtractor:
         # Branches
         branches_output = _git_cmd(repo_path, ["branch", "-a"])
         if branches_output:
-            branches = [b.strip().replace("* ", "").strip()
-                        for b in branches_output.strip().split("\n") if b.strip()]
+            branches = [b.strip().replace("* ", "").strip() for b in branches_output.strip().split("\n") if b.strip()]
             metadata["branches"] = branches
             metadata["branch_count"] = len(branches)
 
@@ -220,15 +218,20 @@ class GitExtractor:
         if readme:
             metadata["readme_preview"] = readme[:500]
 
-        log.info("Extracted git metadata from %s (%d commits, %d tags, %d branches)",
-                  repo_path, metadata.get("commit_count", 0),
-                  metadata.get("tag_count", 0), metadata.get("branch_count", 0))
+        log.info(
+            "Extracted git metadata from %s (%d commits, %d tags, %d branches)",
+            repo_path,
+            metadata.get("commit_count", 0),
+            metadata.get("tag_count", 0),
+            metadata.get("branch_count", 0),
+        )
 
         return metadata
 
     @staticmethod
     def _hash_git_repo(metadata: dict[str, Any]) -> str:
         import hashlib
+
         h = hashlib.sha256()
         commits = metadata.get("commits", [])
         for c in commits[:10]:
@@ -253,8 +256,14 @@ class GitExtractor:
 def _git_cmd(repo_path: str, args: list[str]) -> str | None:
     cmd = ["git", *args]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False,  # noqa: S603 — args are hardcoded
-                                 cwd=repo_path)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,  # noqa: S603 — args are hardcoded
+            cwd=repo_path,
+        )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout
         return None

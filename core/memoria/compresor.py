@@ -1,7 +1,7 @@
 """Compresor de ideas: texto extraído → LLM → ideas estructuradas."""
+
 import json
 import logging
-from typing import Any
 
 import httpx
 
@@ -44,7 +44,9 @@ Texto:
 JSON:"""
 
 
-async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = "") -> list[Idea]:
+async def comprimir_a_ideas(
+    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
+) -> list[Idea]:
     if not texto.strip():
         return []
 
@@ -55,12 +57,15 @@ async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "",
     ideas: list[Idea] = []
 
     async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.post(OLLAMA_URL, json={
-            "model": modelo,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "options": {"temperature": 0.0, "num_predict": 2048},
-        })
+        resp = await client.post(
+            OLLAMA_URL,
+            json={
+                "model": modelo,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "options": {"temperature": 0.0, "num_predict": 2048},
+            },
+        )
 
     if resp.is_error:
         log.error(f"Ollama error comprimiendo: {resp.status_code}")
@@ -76,7 +81,7 @@ async def comprimir_a_ideas(texto: str, fuente: str = "", hash_origen: str = "",
         end = content.rfind("]")
         if start >= 0 and end > start:
             try:
-                raw = json.loads(content[start:end + 1])
+                raw = json.loads(content[start : end + 1])
             except json.JSONDecodeError:
                 log.warning(f"No se pudo parsear JSON del compresor: {content[:200]}")
                 return ideas

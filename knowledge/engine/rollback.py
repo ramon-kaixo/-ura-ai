@@ -13,7 +13,6 @@ Uso:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -34,7 +33,7 @@ class Savepoint:
 @contextmanager
 def transaction(db_path: Path, name: str = "tx"):
     """Context manager para transacciones con rollback.
-    
+
     Uso:
         with transaction(db_path, "compile") as tx:
             tx.savepoint("pre_write", {"graph_version": 5})
@@ -46,7 +45,7 @@ def transaction(db_path: Path, name: str = "tx"):
 
     conn = open_db(db_path)
     begin_immediate(conn)
-    
+
     tx = TransactionManager(conn, name)
     try:
         yield tx
@@ -123,8 +122,6 @@ class CompileRollback:
         if not self._snapshot_path.exists():
             return False
         try:
-            from knowledge.engine.connection import open_db
-
             shutil.copy2(self._snapshot_path, self._db_path)
             self._copy_wal(self._snapshot_path, self._db_path)
             self._snapshot_path.unlink(missing_ok=True)

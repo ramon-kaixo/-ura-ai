@@ -104,53 +104,24 @@ check("TC4: auditor is qwen2.5:3b-instruct", lambda: cfg["models"]["auditor"]["n
 check("TC4: plan_path = /tmp/ura_debate_plan.json", lambda: cfg.get("plan_path") == "/tmp/ura_debate_plan.json")
 
 # ============================================================
-# SECTION 3: debate_engine — call_ollama with mock httpx
+# SECTION 3: debate_engine — call_ollama with mock generate
 # ============================================================
-import httpx
+from unittest.mock import patch
 
 
 async def _test_call_ollama_timeout():
-    client = httpx.AsyncClient()
-    return await call_ollama(client, "http://nonexistent:11434", "test-model", "test prompt", timeout=0.001)
+    with patch("core.debate.debate_engine.generate") as mock_gen:
+        mock_gen.return_value = "Error: La generación excedió el tiempo de espera."
+        return await call_ollama("test-model", "test prompt")
 
 
 check("TC5: call_ollama timeout returns None", lambda: asyncio.run(_test_call_ollama_timeout()) is None)
 
 
-async def _test_call_ollama_json_decode_error():
-    class MockResponse:
-        def raise_for_status(self) -> None:
-            pass
-
-        async def json(self):
-            return {"message": {"content": "not json at all"}}
-
-    client = httpx.AsyncClient()
-    return await call_ollama(client, "http://test:11434", "test-model", "test prompt", timeout=5)
-
-
-# Create a mock transport that returns non-JSON content
-
-
-class MockTransport(httpx.AsyncBaseTransport):
-    def __init__(self, content: str = "not json at all", status: int = 200) -> None:
-        self._content = content
-        self._status = status
-
-    async def handle_async_request(self, request):
-        content_bytes = self._content.encode()
-        stream = httpx.ByteStream(content_bytes)
-        return httpx.Response(
-            status_code=self._status,
-            headers={"content-type": "application/json"},
-            stream=stream,
-        )
-
-
 async def _test_ollama_not_json():
-    transport = MockTransport('{"message": {"content": "not json at all"}}')
-    async with httpx.AsyncClient(transport=transport) as client:
-        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
+    with patch("core.debate.debate_engine.generate") as mock_gen:
+        mock_gen.return_value = "not json at all"
+        return await call_ollama("m", "p")
 
 
 check("TC6: call_ollama bad JSON returns None", lambda: asyncio.run(_test_ollama_not_json()) is None)
@@ -158,15 +129,9 @@ check("TC6: call_ollama bad JSON returns None", lambda: asyncio.run(_test_ollama
 
 async def _test_ollama_markdown_json():
     """Respuesta con markdown code block debe parsearse igual."""
-    transport = MockTransport(
-        json.dumps(
-            {
-                "message": {"content": '```json\n{"score": 0.9, "reason": "ok", "risks": []}\n```'},
-            },
-        ),
-    )
-    async with httpx.AsyncClient(transport=transport) as client:
-        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
+    with patch("core.debate.debate_engine.generate") as mock_gen:
+        mock_gen.return_value = '```json\n{"score": 0.9, "reason": "ok", "risks": []}\n```'
+        return await call_ollama("m", "p")
 
 
 r = asyncio.run(_test_ollama_markdown_json())
@@ -178,15 +143,9 @@ check(
 
 async def _test_ollama_plain_json():
     """Respuesta JSON plano (sin markdown)."""
-    transport = MockTransport(
-        json.dumps(
-            {
-                "message": {"content": json.dumps({"score": 0.3, "reason": "bad", "risks": ["x"]})},
-            },
-        ),
-    )
-    async with httpx.AsyncClient(transport=transport) as client:
-        return await call_ollama(client, "http://test:11434", "m", "p", timeout=5)
+    with patch("core.debate.debate_engine.generate") as mock_gen:
+        mock_gen.return_value = json.dumps({"score": 0.3, "reason": "bad", "risks": ["x"]})
+        return await call_ollama("m", "p")
 
 
 r2 = asyncio.run(_test_ollama_plain_json())
@@ -218,11 +177,12 @@ class MockTransportFactory:
         self.auditor = auditor_resp
         self.call_count = 0
 
-    def build(self) -> MockTransport:
+    def build(self):
         resp = self.primary if self.call_count == 0 else self.auditor
         self.call_count += 1
         content = json.dumps({"message": {"content": json.dumps(resp)}})
-        return MockTransport(content)
+        # This factory is preserved for reference but no longer active
+        return content
 
 
 async def _run_debate_mocked(primary_resp: dict, auditor_resp: dict, threshold: float = 0.85) -> dict:

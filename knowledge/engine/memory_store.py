@@ -200,8 +200,7 @@ class SQLiteMemoryStore:
         except sqlite3.OperationalError:
             return self._search_like(query, kind, limit)
 
-    def _search_like(self, query: str, kind: str | None = None,
-                     limit: int = 10) -> list[MemoryRecord]:
+    def _search_like(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
         """Fallback LIKE original."""
         conn = open_db(self._db_path)
         pattern = f"%{query}%"
@@ -272,6 +271,7 @@ class SQLiteMemoryStore:
                 return json.loads(val) if isinstance(val, str) else val
             except (json.JSONDecodeError, TypeError):
                 return default if default is not None else ([] if isinstance(default, list) else {})
+
         # sqlite3.Row supports dict-like access with []
         related = _safe_json(row["related_assets"] if row["related_assets"] else "[]", [])
         tags = _safe_json(row["tags"] if row["tags"] else "[]", [])

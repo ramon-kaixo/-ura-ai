@@ -8,9 +8,11 @@ from pathlib import Path
 
 REPORT_PATH = Path("docs/architecture/RC_READINESS.md")
 
+
 def load_latest(pattern: str) -> dict:
     files = sorted(Path().glob(pattern))
     return json.loads(files[-1].read_text()) if files else {}
+
 
 def get_git_tag() -> str:
     try:
@@ -30,6 +32,7 @@ def generate() -> str:
     all_findings = json.loads(findings_path.read_text()) if findings_path.exists() else []
 
     lines = []
+
     def out(s=""):
         lines.append(s)
 
@@ -61,7 +64,7 @@ def generate() -> str:
         return p, pr, f
 
     for block_id, block_name, scs, dur in [
-        ("1", "Load & Stress", ["L01","L02","L03","L04","L05"], "—"),
+        ("1", "Load & Stress", ["L01", "L02", "L03", "L04", "L05"], "—"),
         ("2", "Resiliencia", sc_r, "~3min"),
         ("3", "End-to-End", sc_e, "~13s"),
         ("4", "Profiling", sc_p, "50min"),
@@ -73,16 +76,17 @@ def generate() -> str:
             out(f"| **{block_id}** | {block_name} | 5 | 0 | 0 | {dur} |")
 
     out()
-    out("**Resultado consolidado:** 10 criterios evaluados → "
-        "7 PASS, 3 PARTIAL, 0 FAIL")
+    out("**Resultado consolidado:** 10 criterios evaluados → 7 PASS, 3 PARTIAL, 0 FAIL")
     out()
     out("**Clasificación final:** RC Ready with Conditions")
     out()
-    out("El sistema demuestra estabilidad estructural, sin crashes, "
+    out(
+        "El sistema demuestra estabilidad estructural, sin crashes, "
         "sin memory leaks detectados, con recuperación automática en "
         "9/10 escenarios de resiliencia y flujo E2E completo validado "
         "con componentes reales. Sin embargo, persisten 5 hallazgos "
-        "no bloqueantes que deben resolverse antes de una versión estable.")
+        "no bloqueantes que deben resolverse antes de una versión estable."
+    )
     out()
 
     # ── Environment ─────────────────────────────────────────────────
@@ -109,7 +113,9 @@ def generate() -> str:
     out("|---|-----------|-----------|:------:|:------:|--------------------|")
 
     rq01_verdict = "PASS"
-    rq01_evidence = "L01: 10/100/1000 wf sin degradación. L02: Retrieval p95=156ms. L05: Sin saturación hasta 200 qps concurrentes."
+    rq01_evidence = (
+        "L01: 10/100/1000 wf sin degradación. L02: Retrieval p95=156ms. L05: Sin saturación hasta 200 qps concurrentes."
+    )
     rq01_note = "Microbenchmarks (runtime sin agentes registrados). Throughput real con LLM será menor."
     rq02_verdict = "PASS"
     rq02_evidence = "L01: p95<1ms. L02: p95=156ms. L03: p95 store<1ms. L04: p95<1ms (en memoria)."
@@ -161,30 +167,48 @@ def generate() -> str:
     out()
 
     findings_classified = [
-        ("F14-F03", "EpisodeStore no recrea BD automáticamente tras corrupción",
-         "Condición para RC",
-         "El store no detecta BD faltante. Episodios en memoria sobreviven, pero persistencia no se restaura.",
-         "Añadir `auto_create=True` en EpisodeStore, o capturar excepción y recrear DB."),
-        ("F14-F05", "HybridRetriever retorna éxito sin Qdrant disponible",
-         "Condición para RC",
-         "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",
-         "Auditar el fallback del HybridRetriever y documentar el comportamiento."),
-        ("F14-F06", "Pipeline Orchestrator escribe en /opt/motor/data/snapshots/ (read-only)",
-         "Condición para RC",
-         "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",
-         "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight."),
-        ("F14-F01", "Flag 'no new privileges' impide systemctl stop sin sudo",
-         "Condición para RC",
-         "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",
-         "Añadir regla polkit para que el usuario ramon pueda detener ollama sin sudo."),
-        ("F14-F02", "MultiAgentRuntime.cancel() requiere workflow_id obligatorio",
-         "Condición para RC",
-         "La API de cancelación es inconsistente: requiere workflow_id sin opción de cancelación global.",
-         "Hacer workflow_id opcional (None = cancelar todos) o añadir método cancel_all()."),
-        ("F14-F04", "Qdrant recovery time ~30.2s excede umbral de 30s",
-         "Informativo",
-         "Recuperación de Qdrant tarda 0.2s más del umbral. Atribuible al warm-up del contenedor Docker en GX10.",
-         "Ajustar umbral de recovery_time a 35s en GX10, o investigar warm-up de Qdrant."),
+        (
+            "F14-F03",
+            "EpisodeStore no recrea BD automáticamente tras corrupción",
+            "Condición para RC",
+            "El store no detecta BD faltante. Episodios en memoria sobreviven, pero persistencia no se restaura.",
+            "Añadir `auto_create=True` en EpisodeStore, o capturar excepción y recrear DB.",
+        ),
+        (
+            "F14-F05",
+            "HybridRetriever retorna éxito sin Qdrant disponible",
+            "Condición para RC",
+            "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",
+            "Auditar el fallback del HybridRetriever y documentar el comportamiento.",
+        ),
+        (
+            "F14-F06",
+            "Pipeline Orchestrator escribe en /opt/motor/data/snapshots/ (read-only)",
+            "Condición para RC",
+            "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",
+            "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight.",
+        ),
+        (
+            "F14-F01",
+            "Flag 'no new privileges' impide systemctl stop sin sudo",
+            "Condición para RC",
+            "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",
+            "Añadir regla polkit para que el usuario ramon pueda detener ollama sin sudo.",
+        ),
+        (
+            "F14-F02",
+            "MultiAgentRuntime.cancel() requiere workflow_id obligatorio",
+            "Condición para RC",
+            "La API de cancelación es inconsistente: requiere workflow_id sin opción de cancelación global.",
+            "Hacer workflow_id opcional (None = cancelar todos) o añadir método cancel_all().",
+        ),
+        (
+            "F14-F04",
+            "Qdrant recovery time ~30.2s excede umbral de 30s",
+            "Informativo",
+            "Recuperación de Qdrant tarda 0.2s más del umbral. Atribuible al warm-up del contenedor Docker en GX10.",
+            "Ajustar umbral de recovery_time a 35s en GX10, o investigar warm-up de Qdrant.",
+        ),
     ]
 
     out("| ID | Descripción | Severidad | Impacto | Acción recomendada |")
@@ -221,25 +245,36 @@ def generate() -> str:
 
     out("### Condiciones para RC Completo")
     out()
-    out("Para alcanzar clasificación RC Ready, deben resolverse las siguientes "
-        "5 condiciones antes de una versión estable:")
+    out(
+        "Para alcanzar clasificación RC Ready, deben resolverse las siguientes "
+        "5 condiciones antes de una versión estable:"
+    )
     out()
     conditions = [
-        ("**F14-F03 — EpisodeStore auto-recovery.**",
-         "Añadir recreación automática de BD SQLite si el archivo no existe al inicializar. "
-         "Esfuerzo estimado: 1-2h."),
-        ("**F14-F05 — Fallback documentado en HybridRetriever.**",
-         "Auditar el comportamiento del retriever cuando Qdrant no responde. "
-         "Documentar o corregir el fallback. Esfuerzo estimado: 2-3h."),
-        ("**F14-F06 — Pipeline snap_path configurable.**",
-         "Hacer que el directorio de snapshots del preflight sea configurable vía UraConfig "
-         "y use un path escribible por defecto. Esfuerzo estimado: 1h."),
-        ("**F14-F01 — Polkit para systemctl user.**",
-         "Configurar regla polkit que permita al usuario ramon ejecutar "
-         "systemctl start/stop ollama sin sudo. Esfuerzo estimado: 0.5h."),
-        ("**F14-F02 — Cancelación opcional en Runtime.**",
-         "Hacer workflow_id opcional en cancel() o añadir cancel_all(). "
-         "Esfuerzo estimado: 1-2h."),
+        (
+            "**F14-F03 — EpisodeStore auto-recovery.**",
+            "Añadir recreación automática de BD SQLite si el archivo no existe al inicializar. "
+            "Esfuerzo estimado: 1-2h.",
+        ),
+        (
+            "**F14-F05 — Fallback documentado en HybridRetriever.**",
+            "Auditar el comportamiento del retriever cuando Qdrant no responde. "
+            "Documentar o corregir el fallback. Esfuerzo estimado: 2-3h.",
+        ),
+        (
+            "**F14-F06 — Pipeline snap_path configurable.**",
+            "Hacer que el directorio de snapshots del preflight sea configurable vía UraConfig "
+            "y use un path escribible por defecto. Esfuerzo estimado: 1h.",
+        ),
+        (
+            "**F14-F01 — Polkit para systemctl user.**",
+            "Configurar regla polkit que permita al usuario ramon ejecutar "
+            "systemctl start/stop ollama sin sudo. Esfuerzo estimado: 0.5h.",
+        ),
+        (
+            "**F14-F02 — Cancelación opcional en Runtime.**",
+            "Hacer workflow_id opcional en cancel() o añadir cancel_all(). Esfuerzo estimado: 1-2h.",
+        ),
     ]
     for title, desc in conditions:
         out(f"1. {title} {desc}")

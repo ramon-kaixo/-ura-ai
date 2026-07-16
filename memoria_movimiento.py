@@ -1,9 +1,11 @@
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)"""
+
 from __future__ import annotations
 import time
 from dataclasses import dataclass
 
 TIEMPO_MAX = 30.0
+
 
 @dataclass
 class Cubo:
@@ -12,6 +14,7 @@ class Cubo:
     momento_salida: float
     volvio: bool = False
     momento_vuelta: float | None = None
+
 
 class MemoriaMovimiento:
     def __init__(self, nombre_nodo: str, tiempo_max_s: float = TIEMPO_MAX) -> None:
@@ -46,4 +49,10 @@ class MemoriaMovimiento:
 
     def resumen(self) -> dict:
         rotos = self.cubos_sin_volver()
-        return {"nodo": self.nombre_nodo, "en_viaje": len(self._cubos), "sano": len(rotos) == 0, "atascados": [c.id_cubo for c in rotos], "nodos": [c.nodo_destino for c in rotos]}
+        return {
+            "nodo": self.nombre_nodo,
+            "en_viaje": len(self._cubos),
+            "sano": len(rotos) == 0,
+            "atascados": [c.id_cubo for c in rotos],
+            "nodos": [c.nodo_destino for c in rotos],
+        }

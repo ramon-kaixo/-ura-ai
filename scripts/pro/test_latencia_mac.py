@@ -36,12 +36,10 @@ def testear() -> None:
 
     latencia_inferencia = t_total - duracion
 
-
     if latencia_inferencia < 0.5:
         pass
     else:
         pass
-
 
 
 if __name__ == "__main__":

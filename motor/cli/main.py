@@ -110,9 +110,25 @@ def main():
     cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
     cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
 
-    for name in ("finalize", "test", "snapshot", "maintenance", "clean",
-                  "rotate", "health", "alerts", "logs", "snc", "heartbeat",
-                  "doctor", "metrics", "dashboard", "index", "ask", "memory"):
+    for name in (
+        "finalize",
+        "test",
+        "snapshot",
+        "maintenance",
+        "clean",
+        "rotate",
+        "health",
+        "alerts",
+        "logs",
+        "snc",
+        "heartbeat",
+        "doctor",
+        "metrics",
+        "dashboard",
+        "index",
+        "ask",
+        "memory",
+    ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
 

@@ -6,7 +6,6 @@ import os
 import stat
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -56,18 +55,21 @@ class TestDockerCompose:
 
     def test_has_ura_service(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         assert "ura" in cfg.get("services", {})
 
     def test_has_qdrant(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         assert "qdrant" in cfg.get("services", {})
 
     def test_has_ollama_profile(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         ollama = cfg.get("services", {}).get("ollama", {})
@@ -75,6 +77,7 @@ class TestDockerCompose:
 
     def test_persistent_volumes(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         volumes = cfg.get("volumes", {})
@@ -83,12 +86,14 @@ class TestDockerCompose:
 
     def test_network_defined(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         assert "ura_net" in cfg.get("networks", {})
 
     def test_healthcheck_qdrant(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         qdrant = cfg["services"]["qdrant"]
@@ -96,11 +101,14 @@ class TestDockerCompose:
 
     def test_env_vars_structured(self):
         import yaml
+
         with open(ROOT / "docker-compose.yml") as f:
             cfg = yaml.safe_load(f)
         ura = cfg["services"]["ura"]
         env = ura.get("environment", {}) or {}
-        assert "URA_OLLAMA_URL" in str(env) or any("OLLAMA" in str(e) for e in (env if isinstance(env, list) else [env]))
+        assert "URA_OLLAMA_URL" in str(env) or any(
+            "OLLAMA" in str(e) for e in (env if isinstance(env, list) else [env])
+        )
 
 
 class TestEnvExample:

@@ -119,7 +119,9 @@ class Scanner:
     def _unit_exists(self, name: str) -> bool:
         """Verifica si existe una unit systemd."""
         try:
-            r = _executor.run(["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"], timeout=5)
+            r = _executor.run(
+                ["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"], timeout=5
+            )
             return bool(r.stdout.strip())
         except Exception as e:
             log.debug("systemctl list-units %s falló: %s", name, e)

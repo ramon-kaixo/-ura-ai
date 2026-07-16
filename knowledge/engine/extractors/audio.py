@@ -37,9 +37,11 @@ MAX_AUDIO_SIZE = 500 * 1024 * 1024
 _HAS_FFPROBE = shutil.which("ffprobe") is not None
 _HAS_WHISPER = _check_import("whisper", "openai-whisper")
 
+
 def _get_whisper_model() -> Any:
     if not hasattr(_get_whisper_model, "model"):
         import whisper
+
         _get_whisper_model.model = whisper.load_model("base")
     return _get_whisper_model.model
 
@@ -122,8 +124,10 @@ class AudioExtractor:
     def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
         cmd = [
             "ffprobe",
-            "-v", "quiet",
-            "-print_format", "json",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
             "-show_format",
             "-show_streams",
             path_str,

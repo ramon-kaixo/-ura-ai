@@ -21,6 +21,7 @@ from motor.plugin.registry_v2 import PluginRegistryV2
 
 # ── Test plugin helpers ──────────────────────────────────────────────────────
 
+
 class _SimplePlugin(PluginBase):
     def __init__(self, name: str = "simple") -> None:
         super().__init__()
@@ -72,11 +73,11 @@ class _ContextPlugin(PluginBase):
 
 def _discover_and_stage_plugin(registry: PluginRegistryV2, plugin: PluginBase, name: str) -> None:
     import tempfile
+
     d = Path(tempfile.mkdtemp()) / name
     d.mkdir(parents=True)
     (d / "plugin.yaml").write_text(
-        f"name: {name}\nversion: '1.0.0'\napi_version: '1.0.0'\n"
-        f"entry_point: '{type(plugin).__name__}'\n",
+        f"name: {name}\nversion: '1.0.0'\napi_version: '1.0.0'\nentry_point: '{type(plugin).__name__}'\n",
     )
     init_code = (
         f"from motor.plugin.base import PluginBase\n"
@@ -90,6 +91,7 @@ def _discover_and_stage_plugin(registry: PluginRegistryV2, plugin: PluginBase, n
 
 
 # ── Test PipelineDefinition ──────────────────────────────────────────────────
+
 
 class TestPipelineDefinition:
     def test_create_minimal(self):
@@ -113,6 +115,7 @@ class TestPipelineDefinition:
 
 # ── Test PipelineLoader ──────────────────────────────────────────────────────
 
+
 class TestPipelineLoader:
     def test_load_yaml(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
@@ -134,8 +137,7 @@ class TestPipelineLoader:
     def test_load_stage_config(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
         f.write_text(
-            "name: cfg-pipe\nstages:\n  - name: s1\n    plugin: p1\n"
-            "    config:\n      key: value\n      count: 3\n",
+            "name: cfg-pipe\nstages:\n  - name: s1\n    plugin: p1\n    config:\n      key: value\n      count: 3\n",
         )
         loader = PipelineLoader(PluginRegistryV2())
         p = loader.load(str(f))
@@ -173,6 +175,7 @@ class TestPipelineLoader:
 
 
 # ── Test PipelineExecutor ────────────────────────────────────────────────────
+
 
 class TestPipelineExecutor:
     def _setup(self) -> tuple[PipelineExecutor, PluginRegistryV2, EventBus]:
@@ -350,6 +353,7 @@ class TestPipelineBenchmark:
             stages.append(StageDefinition(name=f"s{i}", plugin=f"plugin_{i}"))
 
         import time
+
         p = PipelineDefinition(name="bench", stages=stages)
         start = time.monotonic()
         result = executor.execute(p)

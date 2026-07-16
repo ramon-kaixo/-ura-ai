@@ -8,6 +8,7 @@ from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
 
 # ── Test FactExtractor ────────────────────────────────────────────────────
 
+
 class TestFactExtractorInterface:
     def test_interface_cannot_instantiate(self):
         with pytest.raises(TypeError):
@@ -56,6 +57,7 @@ class TestRuleBasedFactExtractor:
 
 # ── Test SemanticFact ──────────────────────────────────────────────────────
 
+
 class TestSemanticFact:
     def test_auto_id(self):
         f = SemanticFact(subject="s", predicate="p", object_value="o")
@@ -101,6 +103,7 @@ class TestSemanticFact:
 
 
 # ── Test SemanticMemoryStore ──────────────────────────────────────────────
+
 
 class TestSemanticMemoryStore:
     def test_store_and_get(self):
@@ -193,6 +196,7 @@ class TestSemanticMemoryStore:
 
 # ── Test Consolidation ────────────────────────────────────────────────────
 
+
 class TestConsolidation:
     def test_consolidate_episodes(self):
         store = SemanticMemoryStore()
@@ -224,6 +228,7 @@ class TestConsolidation:
 
 # ── Test Persistence ──────────────────────────────────────────────────────
 
+
 class TestPersistence:
     def test_sqlite_roundtrip(self, tmp_path):
         db_path = str(tmp_path / "semantic.db")
@@ -237,9 +242,11 @@ class TestPersistence:
 
 # ── Test Thread Safety ────────────────────────────────────────────────────
 
+
 class TestThreadSafety:
     def test_concurrent_store(self):
         import concurrent.futures
+
         store = SemanticMemoryStore()
         n = 100
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as exe:
@@ -252,6 +259,7 @@ class TestThreadSafety:
 
     def test_concurrent_search(self):
         import concurrent.futures
+
         store = SemanticMemoryStore()
         for i in range(50):
             store.store(SemanticFact(subject=f"s{i}", predicate="p", object_value="o"))

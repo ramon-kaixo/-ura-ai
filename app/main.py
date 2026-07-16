@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """main.py — Orquestador principal del sistema URA."""
+
 from __future__ import annotations
 import asyncio
 import json
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 REPORTS = Path.home() / "URA" / "reports"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
+
 class Orquestador:
     def __init__(self) -> None:
         self.capturador = CapturadorTarget()
@@ -27,7 +29,8 @@ class Orquestador:
         r = {"timestamp": datetime.now(UTC).isoformat(), "acciones": [], "errores": [], "estado": "OK"}
         try:
             captura = self.capturador.capturar()
-            if captura: r["acciones"].append("captura_ok")
+            if captura:
+                r["acciones"].append("captura_ok")
         except Exception as e:
             r["errores"].append(str(e))
         try:
@@ -39,10 +42,12 @@ class Orquestador:
         path.write_text(json.dumps(r, indent=2))
         return r
 
+
 async def main():
     o = Orquestador()
     r = await o.ciclo()
     print(json.dumps(r, indent=2))
+
 
 if __name__ == "__main__":
     asyncio.run(main())

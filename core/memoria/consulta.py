@@ -1,4 +1,5 @@
 """Consulta unificada: memoria Qdrant + web fallback + LLM respuesta."""
+
 import asyncio
 import logging
 import time
@@ -93,7 +94,10 @@ class CPUReRanker:
         return score_base
 
     async def reordenar_resultados(
-        self, query: str, documentos: list[dict], top_n: int = 3,
+        self,
+        query: str,
+        documentos: list[dict],
+        top_n: int = 3,
     ) -> list[dict]:
         if not documentos:
             return []
@@ -115,7 +119,10 @@ class PipelineConsultaRAG:
         self.reranker = reranker or CPUReRanker()
 
     async def recuperar_contexto_optimo(
-        self, query: str, coleccion: str, vector_denso: list,
+        self,
+        query: str,
+        coleccion: str,
+        vector_denso: list,
     ) -> list[dict]:
         candidatos_rrf = await self.qdrant.buscar_hibrido(coleccion, query, vector_denso, limite=10)
         inicio_rerank = time.time()

@@ -24,7 +24,6 @@ import uuid
 from pathlib import Path
 
 from knowledge.engine.compiler import compile_source
-from knowledge.engine.determinism import get_determinism_hash, record_determinism_hash
 from knowledge.engine.jobs import compile_worker as jobs_compile_worker
 from knowledge.engine.jobs import enqueue_archive_job, process_archive_jobs
 from knowledge.engine.lock import LockAcquisitionError, compile_lock
@@ -137,9 +136,7 @@ def compile_worker(db_path: Path | None = None, source_dir: Path | None = None) 
     if source_dir is None:
         source_dir = Path(__file__).resolve().parent.parent.parent / "source"
     if db_path is None:
-        db_path = (
-            Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
-        )
+        db_path = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
 
     n = jobs_compile_worker(db_path, source_dir)
     process_archive_jobs(db_path, "worker")

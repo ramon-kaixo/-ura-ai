@@ -140,10 +140,15 @@ class OfficeExtractor:
 
         cp = doc.core_properties
         for key, attr in (
-            ("title", "title"), ("author", "author"), ("subject", "subject"),
-            ("category", "category"), ("comments", "comments"),
-            ("keywords", "keywords"), ("last_modified_by", "last_modified_by"),
-            ("created", "created_at"), ("modified", "modified_at"),
+            ("title", "title"),
+            ("author", "author"),
+            ("subject", "subject"),
+            ("category", "category"),
+            ("comments", "comments"),
+            ("keywords", "keywords"),
+            ("last_modified_by", "last_modified_by"),
+            ("created", "created_at"),
+            ("modified", "modified_at"),
         ):
             val = getattr(cp, attr, None)
             if val:
@@ -215,8 +220,17 @@ class OfficeExtractor:
         prs = Presentation(str(path))
 
         cp = prs.core_properties
-        for key in ("title", "author", "subject", "keywords", "comments", "category",
-                     "last_modified_by", "created", "modified"):
+        for key in (
+            "title",
+            "author",
+            "subject",
+            "keywords",
+            "comments",
+            "category",
+            "last_modified_by",
+            "created",
+            "modified",
+        ):
             val = getattr(cp, key, None)
             if val and str(val).strip():
                 metadata[f"office_{key}"] = str(val)
