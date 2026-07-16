@@ -12,9 +12,28 @@ realizarse mediante router + registry (ver F18).
 """
 
 import logging
+from typing import Any
 
 from motor.core.llm.ollama import OllamaProvider
 from motor.core.llm.registry import registry
+
+
+def _get_optional_providers() -> list[tuple[Any, str]]:
+    """Retorna lista de (provider_class, provider_name) para registro opcional."""
+    providers: list[tuple[Any, str]] = []
+    try:
+        from motor.core.llm.openai import OpenAIProvider
+
+        providers.append((OpenAIProvider, "openai"))
+    except Exception:  # noqa: S110
+        pass
+    try:
+        from motor.core.llm.anthropic import AnthropicProvider
+
+        providers.append((AnthropicProvider, "anthropic"))
+    except Exception:  # noqa: S110
+        pass
+    return providers
 
 log = logging.getLogger(__name__)
 
@@ -34,15 +53,22 @@ if provider_name == "openai":
     registry.register("openai", _default, default=True)
     registry.register("ollama", OllamaProvider())
     log.info("LLM provider set to openai (from config)")
+elif provider_name == "anthropic":
+    from motor.core.llm.anthropic import AnthropicProvider
+
+    _default = AnthropicProvider()
+    registry.register("anthropic", _default, default=True)
+    registry.register("ollama", OllamaProvider())
+    log.info("LLM provider set to anthropic (from config)")
 else:
     _default = OllamaProvider()
     registry.register("ollama", _default, default=True)
-    try:
-        from motor.core.llm.openai import OpenAIProvider
-
-        registry.register("openai", OpenAIProvider())
-    except Exception as exc:
-        log.info("OpenAI provider not available: %s", exc)
+    for _prov_cls in _get_optional_providers():
+        try:
+            cls, name = _prov_cls
+            registry.register(name, cls())
+        except Exception as exc:
+            log.debug("%s not available: %s", name, exc)
 
 generate = _default.generate
 embed = _default.embed
