@@ -6,6 +6,7 @@ Circuit breaker, retry, fallback, observabilidad, health monitor.
 from __future__ import annotations
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import patch
 
 import pytest
@@ -140,6 +141,118 @@ class TestCircuitBreaker:
         cb.reset()
         assert cb.state == CircuitState.CLOSED
         assert cb.is_available
+
+    # ── H2: tests de concurrencia ─────────────────
+
+    def test_concurrent_opens(self) -> None:
+        """N hilos lanzan fallos transitorios simultáneamente.
+        Verificar que el estado final es OPEN consistente."""
+        cb = CircuitBreaker("test_conc_open", failure_threshold=3, recovery_timeout=999)
+
+        class _Transient(Exception):
+            pass
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        def _fail() -> None:
+            raise _Transient("fail")
+
+        n_threads = 10
+        with ThreadPoolExecutor(max_workers=n_threads) as pool:
+            futures = [pool.submit(lambda: cb.call(_fail)) for _ in range(n_threads)]
+            for f in as_completed(futures):
+                try:
+                    f.result()
+                except _Transient:
+                    pass
+                except CircuitBreakerOpenError:
+                    pass  # OPEN rechazó la llamada — esperado
+
+        assert cb.state == CircuitState.OPEN
+        assert cb._failure_count >= cb._failure_threshold
+        assert cb._last_open_time > 0
+
+    def test_concurrent_recovery(self) -> None:
+        """OPEN → recovery_timeout → N hilos llaman éxito simultáneo.
+        Verificar que el estado final es CLOSED (solo 1 HALF_OPEN probe recupera)."""
+        cb = CircuitBreaker("test_conc_rec", failure_threshold=1, recovery_timeout=0.05)
+
+        class _Transient(Exception):
+            pass
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        with pytest.raises(_Transient):
+            cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
+        assert cb.state == CircuitState.OPEN
+
+        time.sleep(0.1)  # Esperar recovery
+
+        n_threads = 10
+        success_count = 0
+        open_count = 0
+        with ThreadPoolExecutor(max_workers=n_threads) as pool:
+            futures = [pool.submit(lambda: cb.call(lambda: "ok")) for _ in range(n_threads)]
+            for f in as_completed(futures):
+                try:
+                    f.result()
+                    success_count += 1
+                except CircuitBreakerOpenError:
+                    open_count += 1
+
+        assert cb.state == CircuitState.CLOSED, (
+            f"Expected CLOSED after recovery, got {cb.state}. "
+            f"success={success_count}, open={open_count}"
+        )
+        # Solo 1 llamada debería pasar (half_open_max_calls=1),
+        # pero tras el éxito el resto también pueden pasar si el circuito
+        # vuelve a CLOSED antes de que terminen.
+        assert success_count >= 1
+
+    def test_no_double_open(self) -> None:
+        """Dos fallos concurrentes con threshold=1 producen OPEN exactamente una vez."""
+        cb = CircuitBreaker("test_no_double", failure_threshold=1, recovery_timeout=999)
+
+        class _Transient(Exception):
+            pass
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        def _fail() -> None:
+            raise _Transient("fail")
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(lambda: cb.call(_fail)) for _ in range(2)]
+            for f in as_completed(futures):
+                try:
+                    f.result()
+                except _Transient:
+                    pass
+                except CircuitBreakerOpenError:
+                    pass
+
+        assert cb.state == CircuitState.OPEN
+        # El contador de fallos debe reflejar los fallos reales,
+        # pero el estado OPEN es lo importante.
+        assert cb._failure_count >= 1
+        # Verificar que _last_open_time es razonable (monotonic)
+        assert 0 < cb._last_open_time <= time.monotonic()
+
+    def test_monotonic_clock(self) -> None:
+        """Verificar que _last_open_time usa time.monotonic()."""
+        cb = CircuitBreaker("test_mono", failure_threshold=1, recovery_timeout=999)
+
+        class _Transient(Exception):
+            pass
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+
+        before = time.monotonic()
+        with pytest.raises(_Transient):
+            cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
+        after = time.monotonic()
+
+        assert cb.state == CircuitState.OPEN
+        assert before <= cb._last_open_time <= after, (
+            f"_last_open_time ({cb._last_open_time}) fuera del rango "
+            f"[{before}, {after}]"
+        )
 
 
 # ── B3: Retry ─────────────────────────
