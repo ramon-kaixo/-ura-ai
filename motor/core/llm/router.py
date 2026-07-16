@@ -43,6 +43,7 @@ class LLMRouter:
         fallback_max_providers: int = 3,
         health_cache_ttl: float = 30.0,
         profiling_enabled: bool = False,
+        hotspot_threshold_ms: float = 0.0,
     ) -> None:
         from motor.core.llm.registry import registry as default_registry
 
@@ -62,6 +63,13 @@ class LLMRouter:
             self._profiler = LLMProfiler(enabled=True)
         else:
             self._profiler = None
+        self._hotspot_threshold_ms = hotspot_threshold_ms
+        if hotspot_threshold_ms > 0:
+            from motor.core.llm.detector import HotspotDetector
+
+            self._detector = HotspotDetector(threshold_ms=hotspot_threshold_ms)
+        else:
+            self._detector = None
 
         # Circuit breakers por proveedor (inicialización perezosa)
         self._circuit_breakers: dict[str, Any] = {}
@@ -139,11 +147,14 @@ class LLMRouter:
         for attempt in range(max_attempts):
             t0 = time.monotonic()
             try:
+                profile = None
                 if self._profiler:
                     self._profiler.start(provider_name, task, model)
                 result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
                 if self._profiler:
-                    self._profiler.stop(provider_name, task)
+                    profile = self._profiler.stop(provider_name, task)
+                if profile and self._detector:
+                    self._detector.evaluate_from_profile(profile)
                 latency_ms = (time.monotonic() - t0) * 1000
 
                 tokens = None
@@ -332,12 +343,15 @@ class LLMRouter:
 
         t0 = time.monotonic()
         cb = self._get_cb(name)
+        profile = None
         if self._profiler:
             self._profiler.start(name, "health")
         try:
             result = cb.call(prov.health)
             if self._profiler:
-                self._profiler.stop(name, "health")
+                profile = self._profiler.stop(name, "health")
+            if profile and self._detector:
+                self._detector.evaluate_from_profile(profile)
             latency_ms = (time.monotonic() - t0) * 1000
             metrics.record(name, "health", latency_ms, success=True)
             result["latency_ms"] = latency_ms
