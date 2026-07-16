@@ -7,7 +7,9 @@ Toda llamada queda instrumentada con métricas y logging estructurado.
 from __future__ import annotations
 
 import logging
+import threading
 import time
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -56,8 +58,9 @@ class LLMRouter:
         # Circuit breakers por proveedor (inicialización perezosa)
         self._circuit_breakers: dict[str, Any] = {}
 
-        # Caché de health
-        self._health_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+        # Caché de health (thread-safe)
+        self._health_cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
+        self._health_lock = threading.Lock()
 
     @property
     def registry(self) -> ProviderRegistry:
@@ -263,31 +266,71 @@ class LLMRouter:
         prov = self._resolve("embed", provider)
         return await prov.embed_async(texts, model=model)
 
+    def invalidate_health_cache(self, provider_name: str | None = None) -> None:
+        """Invalida la caché de salud. Si provider_name es None, invalida todo."""
+        with self._health_lock:
+            if provider_name:
+                self._health_cache.pop(provider_name, None)
+            else:
+                self._health_cache.clear()
+
+    def _health_get_cached(self, name: str) -> dict[str, Any] | None:
+        """Retorna entrada de caché válida o None. Thread-safe."""
+        self._health_lock.acquire()
+        try:
+            entry = self._health_cache.get(name)
+            if entry is not None:
+                cached_at, cached_result = entry
+                if cached_result is not None and time.monotonic() - cached_at < self._health_cache_ttl:
+                    return cached_result
+                if cached_result is None:
+                    # Otra llamada en curso — esperar con backoff
+                    for _ in range(20):
+                        self._health_lock.release()
+                        time.sleep(0.005)
+                        self._health_lock.acquire()
+                        entry2 = self._health_cache.get(name)
+                        if entry2 is not None and entry2[1] is not None:
+                            return entry2[1]
+                    # Timeout — continuar, la otra llamada probablemente falló
+            # Marcar "en curso"
+            self._health_cache[name] = (0.0, None)
+            return None
+        finally:
+            with suppress(RuntimeError):
+                self._health_lock.release()
+
+    def _health_store_cache(self, name: str, result: dict[str, Any]) -> None:
+        with self._health_lock:
+            self._health_cache[name] = (time.monotonic(), result)
+
+    def _health_remove_cache(self, name: str) -> None:
+        with self._health_lock:
+            self._health_cache.pop(name, None)
+
     def health(self, *, provider: str | None = None) -> dict[str, Any]:
         prov = self._resolve("health", provider)
         name = self._resolve_name("health", provider)
         from motor.core.llm.observability import metrics
 
+        cached = self._health_get_cached(name)
+        if cached is not None:
+            return cached
+
         t0 = time.monotonic()
-
-        # Cache
-        if name in self._health_cache:
-            cached_at, cached_result = self._health_cache[name]
-            if time.monotonic() - cached_at < self._health_cache_ttl:
-                return cached_result
-
         cb = self._get_cb(name)
         try:
             result = cb.call(prov.health)
             latency_ms = (time.monotonic() - t0) * 1000
             metrics.record(name, "health", latency_ms, success=True)
             result["latency_ms"] = latency_ms
-            self._health_cache[name] = (time.monotonic(), result)
+            self._health_store_cache(name, result)
             return result
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error_str = _classify_error(e)
             metrics.record(name, "health", latency_ms, success=False, error=error_str)
+            self._health_remove_cache(name)
             return {"provider": name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
 
     # ── Internos ────────────────────────────────────────────
