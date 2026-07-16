@@ -45,6 +45,7 @@ class LLMRouter:
         profiling_enabled: bool = False,
         hotspot_threshold_ms: float = 0.0,
         baseline_enabled: bool = False,
+        monitor_enabled: bool = False,
     ) -> None:
         from motor.core.llm.registry import registry as default_registry
 
@@ -77,6 +78,18 @@ class LLMRouter:
             self._baseline = PerformanceBaseline()
         else:
             self._baseline = None
+        if monitor_enabled:
+            from motor.core.llm.monitor import PerformanceMonitor
+
+            self._monitor = PerformanceMonitor(
+                hotspot_threshold_ms=hotspot_threshold_ms or 2000.0,
+            )
+            # El monitor reemplaza los componentes individuales
+            self._profiler = None
+            self._detector = None
+            self._baseline = None
+        else:
+            self._monitor = None
 
         # Circuit breakers por proveedor (inicialización perezosa)
         self._circuit_breakers: dict[str, Any] = {}
@@ -154,22 +167,26 @@ class LLMRouter:
         for attempt in range(max_attempts):
             t0 = time.monotonic()
             try:
-                profile = None
-                if self._profiler:
-                    self._profiler.start(provider_name, task, model)
-                result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
-                if self._profiler:
-                    profile = self._profiler.stop(provider_name, task)
-                if profile:
-                    if self._detector:
-                        self._detector.evaluate_from_profile(profile)
-                    if self._baseline:
-                        self._baseline.record(
-                            provider_name, task,
-                            wall_time_ms=profile.wall_time_ms,
-                            cpu_time_ms=profile.cpu_time_ms,
-                            peak_memory_bytes=profile.peak_memory_bytes,
-                        )
+                if self._monitor:
+                    self._monitor.start_operation(provider_name, task, model)
+                    result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
+                    self._monitor.finish_operation(provider_name, task)
+                else:
+                    if self._profiler:
+                        self._profiler.start(provider_name, task, model)
+                    result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
+                    if self._profiler:
+                        profile = self._profiler.stop(provider_name, task)
+                        if profile:
+                            if self._detector:
+                                self._detector.evaluate_from_profile(profile)
+                            if self._baseline:
+                                self._baseline.record(
+                                    provider_name, task,
+                                    wall_time_ms=profile.wall_time_ms,
+                                    cpu_time_ms=profile.cpu_time_ms,
+                                    peak_memory_bytes=profile.peak_memory_bytes,
+                                )
                 latency_ms = (time.monotonic() - t0) * 1000
 
                 tokens = None
@@ -358,15 +375,19 @@ class LLMRouter:
 
         t0 = time.monotonic()
         cb = self._get_cb(name)
-        profile = None
-        if self._profiler:
-            self._profiler.start(name, "health")
         try:
-            result = cb.call(prov.health)
-            if self._profiler:
-                profile = self._profiler.stop(name, "health")
-            if profile and self._detector:
-                self._detector.evaluate_from_profile(profile)
+            if self._monitor:
+                self._monitor.start_operation(name, "health")
+                result = cb.call(prov.health)
+                self._monitor.finish_operation(name, "health")
+            else:
+                if self._profiler:
+                    self._profiler.start(name, "health")
+                result = cb.call(prov.health)
+                if self._profiler:
+                    profile = self._profiler.stop(name, "health")
+                    if profile and self._detector:
+                        self._detector.evaluate_from_profile(profile)
             latency_ms = (time.monotonic() - t0) * 1000
             metrics.record(name, "health", latency_ms, success=True)
             result["latency_ms"] = latency_ms
