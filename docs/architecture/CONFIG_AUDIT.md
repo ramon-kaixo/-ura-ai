@@ -207,13 +207,39 @@ CONFIG = load_config() → 3 niveles:
 
 ---
 
-## 8. Plan de Migración Propuesto
+## 8. Decisión de Convergencia (B4)
 
-Basado en la matriz de solapamiento (solo 2 campos compartidos), la convergencia es más simple de lo esperado:
+### Mecanismo seleccionado: Opción A
 
-1. **Mantener ambos archivos** (`system_config.json` como CONFIG, y campos UraConfig en `/etc/ura/config.json` o env vars).
-2. **Unificar en la dataclass**: `UraConfig.load()` internamente llama a `config_manager.load_config()` para obtener `CONFIG`, y solo para los campos compartidos (`data_dir`, `log_level`) lee de CONFIG. Para el resto, mantiene su lógica actual.
-3. **Los 12 campos exclusivos de UraConfig** no necesitan moverse a CONFIG — son ortogonales. Se documentan como "configuración de infraestructura del motor" vs "configuración operativa".
-4. **Eliminar duplicación**: Los 2 campos compartidos deben tener el mismo valor por defecto en ambos sistemas.
+`UraConfig.load()` internamente llama a `config_manager.load_config()` para obtener `CONFIG`.
+Solo los campos compartidos (`data_dir`, `log_level`) se derivan de CONFIG.
+Los 12 campos exclusivos de UraConfig mantienen su lógica actual (defaults + env vars).
+
+```
+config/system_config.json        ← fuente de verdad operativa
+            │
+   core/config_manager.py         ← carga CONFIG dict
+            │
+     motor/core/config.py         ← UraConfig.load() llama a load_config()
+      UraConfig (dataclass)       ← campos compartidos desde CONFIG,
+                                     campos propios desde defaults/env
+            │
+       Resto del proyecto
+```
+
+### Reglas de prioridad
+
+| Fuente | Prioridad | Ámbito |
+|--------|:---------:|--------|
+| Env var `URA_*` | 1 (máxima) | Campos UraConfig (qdrant_host, etc.) |
+| `CONFIG` (de system_config.json) | 2 | Campos compartidos (data_dir, log_level) |
+| Defaults de dataclass | 3 (mínima) | Cualquier campo no cubierto arriba |
+
+### Plan de migración
+
+1. **Refactor UraConfig.load()**: llamar a `config_manager.load_config()`, tomar `data_dir` y `log_level` de CONFIG. Mantener env vars para el resto.
+2. **Sincronizar defaults**: `data_dir` y `log_level` deben tener el mismo valor por defecto en ambos sistemas.
+3. **Migrar consumidores**: 36 archivos divididos en 6 grupos progresivos (guard → scanner → pipeline → cli → knowledge → scripts).
+4. **Validar cada grupo**: py_compile + ruff + pytest antes de pasar al siguiente.
 
 Los consumidores se migran progresivamente: primero los que solo usan `UraConfig()` sin argumentos (mayoría), luego los que usan `UraConfig.load()` o `UraConfig(qdrant_host=...)`.
