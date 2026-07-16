@@ -190,15 +190,99 @@ def _mostrar(resultados: list[dict]) -> None:
             print(f"  tokens/call   {r['tokens_medios_por_call']:6.0f}")
 
 
+def _bench_resilience() -> dict:  # noqa: C901
+    """Mide latencia de retry y fallback con proveedores mock."""
+    from motor.core.llm.base import BaseLLMProvider
+    from motor.core.llm.registry import ProviderRegistry
+
+    class _MockRetry(BaseLLMProvider):
+        _count: int = 0
+        def generate(self, prompt, model=None, options=None):
+            self._count += 1
+            if self._count < 3:
+                raise TimeoutError("transient")
+            return "ok"
+        def embed(self, texts, model=None): return [[0.0]]
+        async def embed_async(self, texts, model=None): return [[0.0]]
+        def health(self): return {"status": "ok"}
+
+    class _MockFail(BaseLLMProvider):
+        def generate(self, prompt, model=None, options=None): raise ValueError("fail")
+        def embed(self, texts, model=None): return [[0.0]]
+        async def embed_async(self, texts, model=None): return [[0.0]]
+        def health(self): return {"status": "ok"}
+
+    class _MockOK(BaseLLMProvider):
+        def generate(self, prompt, model=None, options=None): return "ok"
+        def embed(self, texts, model=None): return [[0.0]]
+        async def embed_async(self, texts, model=None): return [[0.0]]
+        def health(self): return {"status": "ok"}
+
+    resultados: dict[str, dict] = {}
+
+    # Retry
+    reg_r = ProviderRegistry()
+    reg_r.register("r", _MockRetry(), default=True)
+    router_r = LLMRouter(registry=reg_r, retry_enabled=True, retry_max_attempts=5, retry_backoff_base=0.001)
+    t0 = time.monotonic()
+    r = router_r.generate("test")
+    retry_latency = (time.monotonic() - t0) * 1000
+    resultados["retry"] = {"ok": r == "ok", "latency_ms": round(retry_latency, 1), "calls": 3}
+
+    # Fallback
+    reg_f = ProviderRegistry()
+    reg_f.register("a", _MockFail(), default=True)
+    reg_f.register("b", _MockOK())
+    router_f = LLMRouter(registry=reg_f, fallback_enabled=True)
+    t0 = time.monotonic()
+    r = router_f.generate("test")
+    fb_latency = (time.monotonic() - t0) * 1000
+    resultados["fallback"] = {"ok": r == "ok", "latency_ms": round(fb_latency, 1), "from": "a", "to": "b"}
+
+    # Sin fallback (error)
+    router_nf = LLMRouter(registry=reg_f, fallback_enabled=False)
+    t0 = time.monotonic()
+    r = router_nf.generate("test")
+    nf_latency = (time.monotonic() - t0) * 1000
+    resultados["no_fallback"] = {"ok": "Error" in r, "latency_ms": round(nf_latency, 1)}
+
+    return resultados
+
+
+def _mostrar_observabilidad(resultados: dict | None = None) -> None:
+    from motor.core.llm.observability import metrics
+
+    stats = metrics.summary()
+    if stats:
+        print("  Observabilidad (acumulado):")
+        for prov, data in stats.items():
+            print(f"    {prov}: {data['ok']} ok, {data['fail']} fail, {data['total']} total")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark motor.core.llm")
     parser.add_argument("--iterations", type=int, default=50, help="iteraciones por función (default: 50)")
     parser.add_argument("--provider", type=str, default="", help="proveedor (ollama, openai, ...)")
     parser.add_argument("--output", type=str, default="", help="ruta JSON de salida")
+    parser.add_argument("--resilience", action="store_true", help="benchmark de resiliencia (retry/fallback)")
     args = parser.parse_args()
+
+    if args.resilience:
+        print(f"\n{'=' * 68}")
+        print("  Benchmark — Resiliencia (Retry / Fallback)")
+        print(f"{'=' * 68}\n")
+        resultados = _bench_resilience()
+        for name, data in resultados.items():
+            estado = "✅" if data["ok"] else "❌"
+            print(f"  {name}: {estado}  latency={data['latency_ms']}ms")
+        if args.output:
+            Path(args.output).write_text(json.dumps(resultados, indent=2) + "\n")
+            print(f"\n  JSON guardado → {args.output}")
+        print(f"\n{'=' * 68}\n")
+        return 0
+
     n = args.iterations
     provider = args.provider or None
-
     router = LLMRouter(registry=_reg)
 
     print(f"\n{'=' * 68}")
@@ -223,6 +307,7 @@ def main() -> int:
     print(f"{estado}  ({r2.get('exitosos', 0)}/{r2.get('iteraciones', 0)})")
 
     _mostrar(resultados)
+    _mostrar_observabilidad(resultados)
 
     if args.output:
         out = _to_output(resultados)
