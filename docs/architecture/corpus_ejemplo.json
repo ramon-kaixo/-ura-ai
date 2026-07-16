@@ -1,0 +1,102 @@
+{
+  "name": "ejemplo",
+  "queries": [
+    {
+      "query_id": "q1",
+      "query_text": "sistemas de recuperacion de informacion",
+      "relevant_docs": [
+        "d5",
+        "d1",
+        "d3"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q2",
+      "query_text": "modelos de lenguaje grandes",
+      "relevant_docs": [
+        "d4",
+        "d2"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q3",
+      "query_text": "bases de datos vectoriales",
+      "relevant_docs": [
+        "d7",
+        "d6",
+        "d3"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q4",
+      "query_text": "embeddings y representacion semantica",
+      "relevant_docs": [
+        "d1",
+        "d8",
+        "d4"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q5",
+      "query_text": "procesamiento de lenguaje natural",
+      "relevant_docs": [
+        "d5",
+        "d9",
+        "d2"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q6",
+      "query_text": "busqueda por similitud",
+      "relevant_docs": [
+        "d6",
+        "d3"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q7",
+      "query_text": "indexacion invertida",
+      "relevant_docs": [
+        "d1",
+        "d7"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q8",
+      "query_text": "algoritmos de ranking",
+      "relevant_docs": [
+        "d9",
+        "d8",
+        "d4"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q9",
+      "query_text": "sistemas de recomendacion",
+      "relevant_docs": [
+        "d5",
+        "d10",
+        "d6"
+      ],
+      "relevance_scores": {}
+    },
+    {
+      "query_id": "q10",
+      "query_text": "analisis de texto",
+      "relevant_docs": [
+        "d7",
+        "d10",
+        "d2"
+      ],
+      "relevance_scores": {}
+    }
+  ]
+}

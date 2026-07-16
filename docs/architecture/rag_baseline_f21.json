@@ -1,0 +1,31 @@
+{
+  "name": "rag-baseline-f21",
+  "created_at": 1784224959.4505577,
+  "updated_at": 1784224959.4505818,
+  "baselines": {
+    "bm25.recall@10": 1.0,
+    "bm25.precision@10": 0.27,
+    "bm25.mrr": 0.545,
+    "bm25.ndcg@10": 0.6086781258685748,
+    "bm25.map": 0.460595238095238,
+    "bm25.latency_p50": 0.0,
+    "bm25.latency_p95": 0.0,
+    "bm25.throughput": 7000.0,
+    "semantic.recall@10": 1.0,
+    "semantic.precision@10": 0.27,
+    "semantic.mrr": 0.5366666666666666,
+    "semantic.ndcg@10": 0.606833383453485,
+    "semantic.map": 0.45999999999999996,
+    "semantic.latency_p50": 0.0,
+    "semantic.latency_p95": 0.0,
+    "semantic.throughput": 15000.0,
+    "hybrid.recall@10": 1.0,
+    "hybrid.precision@10": 0.27,
+    "hybrid.mrr": 0.5366666666666666,
+    "hybrid.ndcg@10": 0.6095093571485455,
+    "hybrid.map": 0.4633730158730159,
+    "hybrid.latency_p50": 0.0,
+    "hybrid.latency_p95": 0.0,
+    "hybrid.throughput": 23000.0
+  }
+}
