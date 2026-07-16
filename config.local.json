@@ -5,6 +5,23 @@
     "embedding_model": "nomic-embed-text",
     "temperature": 0.3,
     "max_tokens": 1024,
-    "timeout": 120
+    "timeout": 120,
+    "providers": {
+      "ollama": {
+        "model": null,
+        "embedding_model": null,
+        "timeout": null,
+        "temperature": null,
+        "max_tokens": null
+      },
+      "openai": {
+        "model": "gpt-4o-mini",
+        "embedding_model": "text-embedding-3-small",
+        "timeout": 120,
+        "temperature": 0.3,
+        "max_tokens": 1024,
+        "base_url": "https://api.openai.com/v1"
+      }
+    }
   }
 }
