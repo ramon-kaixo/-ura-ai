@@ -103,7 +103,7 @@ def get_ollama_url() -> str:
 
 def get_ollama_urls() -> dict[str, str]:
     """Devuelve URLs primaria y de fallback de Ollama.
-    
+
     La primaria usa host/port local del perfil activo.
     El fallback usa remote_host si existe, o la misma URL.
     """
