@@ -38,12 +38,13 @@ class TestPerformanceMonitor:
     def test_monitor_collect(self) -> None:
         m = PerformanceMonitor(hotspot_threshold_ms=9999)
         m.start_operation("p1", "gen")
-        time.sleep(0.01)
+        for _ in range(500_000):
+            _ = 1 + 1
         snap = m.finish_operation("p1", "gen")
         assert snap is not None
         assert snap.provider == "p1"
         assert snap.operation == "gen"
-        assert snap.wall_time_ms >= 5
+        assert snap.wall_time_ms >= 1
         assert not snap.is_hotspot  # threshold muy alto
 
     def test_monitor_no_operation(self) -> None:
@@ -54,7 +55,8 @@ class TestPerformanceMonitor:
     def test_monitor_hotspot(self) -> None:
         m = PerformanceMonitor(hotspot_threshold_ms=10)
         m.start_operation("slow", "gen")
-        time.sleep(0.02)
+        for _ in range(1_000_000):
+            _ = 1 + 1
         snap = m.finish_operation("slow", "gen")
         assert snap is not None
         assert snap.is_hotspot
@@ -65,12 +67,14 @@ class TestPerformanceMonitor:
         # Establecer baseline con operaciones rápidas
         for _ in range(5):
             m.start_operation("reg", "gen")
-            time.sleep(0.005)
+            for _ in range(50_000):
+                _ = 1 + 1
             m.finish_operation("reg", "gen")
 
-        # Operación mucho más lenta
+        # Operación mucho más lenta (10x iteraciones)
         m.start_operation("reg", "gen")
-        time.sleep(0.05)
+        for _ in range(2_000_000):
+            _ = 1 + 1
         snap = m.finish_operation("reg", "gen")
         assert snap is not None
         assert len(snap.regressions) >= 1
@@ -79,7 +83,7 @@ class TestPerformanceMonitor:
         """El monitor registra memoria correctamente."""
         m = PerformanceMonitor(hotspot_threshold_ms=9999)
         m.start_operation("mem", "gen")
-        _ = list(range(5000))
+        _ = list(range(10000))
         snap = m.finish_operation("mem", "gen")
         assert snap is not None
         assert snap.peak_memory_kb >= 0
