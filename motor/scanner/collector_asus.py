@@ -1,7 +1,7 @@
 import logging
-import os
 
 from motor.core.executor import SubprocessExecutor
+from motor.core.secrets import get_secret
 
 log = logging.getLogger("ura.scanner.asus")
 _executor = SubprocessExecutor()
@@ -59,7 +59,7 @@ def _check_whisper(host: str) -> bool:
 def _check_temp(host: str) -> float:
     """Obtiene temperatura GPU vía SSH remoto."""
     try:
-        ssh_user = os.environ.get("URA_SSH_USER", "")
+        ssh_user = get_secret("URA_SSH_USER", "")
         target = f"{ssh_user}@{host}" if ssh_user else host
         r = _executor.run(["ssh", *OPCIONES_SSH, target, "cat /sys/class/thermal/thermal_zone0/temp"], timeout=5)
         return round(int(r.stdout.strip()) / 1000, 1) if r.stdout.strip() else 0
