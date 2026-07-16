@@ -37,13 +37,8 @@ class LLMRouter:
         registry: ProviderRegistry | None = None,
         routes: dict[str, str] | None = None,
     ) -> None:
-        from motor.core.llm.registry import ProviderRegistry as PR
         from motor.core.llm.registry import registry as default_registry
 
-        if registry is not None and not isinstance(registry, PR):
-            raise TypeError(
-                f"LLMRouter expected ProviderRegistry, got {type(registry).__name__}"
-            )
         self._registry = default_registry if registry is None else registry
         self._routes = {**DEFAULT_ROUTES, **(routes or {})}
 
