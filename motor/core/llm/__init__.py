@@ -45,6 +45,12 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         providers.append((OpenRouterProvider, "openrouter"))
     except Exception:  # noqa: S110
         pass
+    try:
+        from motor.core.llm.lmstudio import LMStudioProvider
+
+        providers.append((LMStudioProvider, "lmstudio"))
+    except Exception:  # noqa: S110
+        pass
     return providers
 
 log = logging.getLogger(__name__)
@@ -86,6 +92,13 @@ elif provider_name == "openrouter":
     registry.register("openrouter", _default, default=True)
     registry.register("ollama", OllamaProvider())
     log.info("LLM provider set to openrouter (from config)")
+elif provider_name == "lmstudio":
+    from motor.core.llm.lmstudio import LMStudioProvider
+
+    _default = LMStudioProvider()
+    registry.register("lmstudio", _default, default=True)
+    registry.register("ollama", OllamaProvider())
+    log.info("LLM provider set to lmstudio (from config)")
 else:
     _default = OllamaProvider()
     registry.register("ollama", _default, default=True)
