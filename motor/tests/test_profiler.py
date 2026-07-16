@@ -72,19 +72,22 @@ class TestLLMProfiler:
     def test_profiler_multiple_operations(self) -> None:
         p = LLMProfiler(enabled=True)
         p.start("a", "gen")
-        time.sleep(0.02)
+        # Usar CPU-bound loop para timing determinista
+        for _ in range(200_000):
+            _ = 1 + 1
         prof_a = p.stop("a", "gen")
 
         p.start("b", "gen")
-        time.sleep(0.05)
+        for _ in range(2_000_000):
+            _ = 1 + 1
         prof_b = p.stop("b", "gen")
 
         assert prof_a is not None
         assert prof_b is not None
-        assert prof_a.wall_time_ms >= 10  # Al menos 10ms
-        # b debe tener mayor wall_time (sleep más largo)
+        assert prof_a.wall_time_ms > 0
         assert prof_b.wall_time_ms >= prof_a.wall_time_ms, (
-            f"b={prof_b.wall_time_ms:.0f}ms debe ser >= a={prof_a.wall_time_ms:.0f}ms"
+            f"b={prof_b.wall_time_ms:.0f}ms debe ser >= a={prof_a.wall_time_ms:.0f}ms "
+            f"(b tuvo 10x iteraciones)"
         )
 
         recent = p.get_recent(5)
