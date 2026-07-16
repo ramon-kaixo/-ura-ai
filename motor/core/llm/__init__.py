@@ -51,6 +51,12 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         providers.append((LMStudioProvider, "lmstudio"))
     except Exception:  # noqa: S110
         pass
+    try:
+        from motor.core.llm.vllm import VLLMProvider
+
+        providers.append((VLLMProvider, "vllm"))
+    except Exception:  # noqa: S110
+        pass
     return providers
 
 log = logging.getLogger(__name__)
@@ -99,6 +105,13 @@ elif provider_name == "lmstudio":
     registry.register("lmstudio", _default, default=True)
     registry.register("ollama", OllamaProvider())
     log.info("LLM provider set to lmstudio (from config)")
+elif provider_name == "vllm":
+    from motor.core.llm.vllm import VLLMProvider
+
+    _default = VLLMProvider()
+    registry.register("vllm", _default, default=True)
+    registry.register("ollama", OllamaProvider())
+    log.info("LLM provider set to vllm (from config)")
 else:
     _default = OllamaProvider()
     registry.register("ollama", _default, default=True)
