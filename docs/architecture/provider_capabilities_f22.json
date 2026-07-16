@@ -1,0 +1,79 @@
+{
+  "ollama": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "multimodal": false,
+    "vision": true,
+    "max_context": 32768,
+    "max_output": 4096
+  },
+  "openai": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "multimodal": true,
+    "vision": true,
+    "max_context": 128000,
+    "max_output": 16384
+  },
+  "anthropic": {
+    "chat": true,
+    "embeddings": false,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "multimodal": true,
+    "vision": true,
+    "max_context": 200000,
+    "max_output": 8192
+  },
+  "gemini": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "multimodal": true,
+    "vision": true,
+    "max_context": 1048576,
+    "max_output": 8192
+  },
+  "openrouter": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "multimodal": true,
+    "vision": true,
+    "max_context": 128000,
+    "max_output": 8192
+  },
+  "lmstudio": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": false,
+    "json_mode": true,
+    "multimodal": false,
+    "vision": false,
+    "max_context": 8192,
+    "max_output": 2048
+  },
+  "vllm": {
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": false,
+    "json_mode": true,
+    "multimodal": false,
+    "vision": false,
+    "max_context": 32768,
+    "max_output": 4096
+  }
+}
