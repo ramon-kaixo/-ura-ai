@@ -19,6 +19,7 @@ Interpretación de métricas:
 
 Uso:
   python3 scripts/pro/benchmark_llm.py [--iterations N] [--provider ollama|openai] [--output ruta.json]
+  python3 scripts/pro/benchmark_llm.py --all-providers [--iterations N] [--output ruta.json]
 """
 
 import argparse
@@ -336,7 +337,113 @@ def _run_monitored_benchmark(  # noqa: PLR0915
     return 0 if all("error" not in r for r in resultados) else 1
 
 
-def main() -> int:
+def _bench_all_providers(n: int, output: str) -> int:  # noqa: PLR0915
+    """Benchmark todos los proveedores registrados en el Registry."""
+    providers = list(_reg.list())
+    if not providers:
+        print("  No hay proveedores registrados.")
+        return 1
+
+    resultados: dict[str, dict] = {}
+    router = LLMRouter(registry=_reg)
+
+    print(f"\n{'=' * 68}")
+    print(f"  Benchmark Multi-Proveedor ({len(providers)} proveedores)")
+    print(f"  {n} iteraciones por función")
+    print(f"{'=' * 68}\n")
+
+    for prov_name in providers:
+        print(f"  [{prov_name}] generate() ...", end=" ", flush=True)
+        r = bench_generate(n, router, provider=prov_name)
+        resultados[f"{prov_name}_generate"] = r
+        estado = "✅" if "error" not in r else "❌"
+        ok = r.get("exitosos", 0)
+        total = r.get("iteraciones", 0)
+        print(f"{estado}  ({ok}/{total})")
+
+    print()
+    for prov_name in providers:
+        print(f"  [{prov_name}] embed()    ...", end=" ", flush=True)
+        r = bench_embed(n, router, provider=prov_name)
+        resultados[f"{prov_name}_embed"] = r
+        estado = "✅" if "error" not in r else "❌"
+        ok = r.get("exitosos", 0)
+        total = r.get("iteraciones", 0)
+        print(f"{estado}  ({ok}/{total})")
+
+    # Mostrar tabla
+    print(f"\n{'=' * 68}")
+    print("  Resultados por Proveedor")
+    print(f"{'=' * 68}")
+    print(f"  {'Proveedor':<15} {'Función':<10} {'P50':>8} {'P95':>8} {'P99':>8} {'T/s':>6} {'Err':>4}")
+    print(f"{'=' * 68}")
+    for prov_name in providers:
+        r_gen = resultados.get(f"{prov_name}_generate", {})
+        r_emb = resultados.get(f"{prov_name}_embed", {})
+        for func, r in [("generate", r_gen), ("embed", r_emb)]:
+            if "error" in r:
+                print(f"  {prov_name:<15} {func:<10} {'ERROR':>8} {r.get('error', ''):>20}")
+                continue
+            p50 = r.get("latencia_p50_ms", 0)
+            p95 = r.get("latencia_p95_ms", 0)
+            p99 = r.get("latencia_p99_ms", 0)
+            tps = r.get("tokens_por_segundo", 0) if func == "generate" else 0
+            err = r.get("fallos", 0)
+            print(f"  {prov_name:<15} {func:<10} {p50:>8.0f} {p95:>8.0f} {p99:>8.0f} {tps:>6.0f} {err:>4}")
+
+    # Ranking
+    print(f"\n{'=' * 68}")
+    print("  Ranking por Latencia P50 (generate)")
+    print(f"{'=' * 68}")
+    ranking = sorted(
+        [
+            (p, resultados[f"{p}_generate"].get("latencia_p50_ms", 99999))
+            for p in providers
+            if "error" not in resultados.get(f"{p}_generate", {})
+        ],
+        key=lambda x: x[1],
+    )
+    for rank, (prov, lat) in enumerate(ranking, 1):
+        print(f"  #{rank:<3} {prov:<15} {lat:>8.0f} ms")
+
+    # Exportar
+    if output:
+        out = {
+            "benchmark": "multi-provider",
+            "iterations": n,
+            "providers": {
+                p: {
+                    "generate": {
+                        "p50_ms": resultados.get(f"{p}_generate", {}).get("latencia_p50_ms", 0),
+                        "p95_ms": resultados.get(f"{p}_generate", {}).get("latencia_p95_ms", 0),
+                        "p99_ms": resultados.get(f"{p}_generate", {}).get("latencia_p99_ms", 0),
+                        "throughput": resultados.get(f"{p}_generate", {}).get("throughput_qps", 0),
+                        "tokens_per_second": resultados.get(f"{p}_generate", {}).get("tokens_por_segundo", 0),
+                        "errors": resultados.get(f"{p}_generate", {}).get("fallos", 0),
+                    },
+                    "embed": {
+                        "p50_ms": resultados.get(f"{p}_embed", {}).get("latencia_p50_ms", 0),
+                        "p95_ms": resultados.get(f"{p}_embed", {}).get("latencia_p95_ms", 0),
+                        "p99_ms": resultados.get(f"{p}_embed", {}).get("latencia_p99_ms", 0),
+                        "throughput": resultados.get(f"{p}_embed", {}).get("throughput_qps", 0),
+                        "errors": resultados.get(f"{p}_embed", {}).get("fallos", 0),
+                    },
+                }
+                for p in providers
+            },
+            "ranking": [
+                {"rank": r, "provider": p, "latency_p50_ms": l}
+                for r, (p, l) in enumerate(ranking, 1)
+            ],
+        }
+        Path(output).write_text(json.dumps(out, indent=2) + "\n")
+        print(f"\n  Resultados exportados → {output}")
+
+    print(f"\n{'=' * 68}\n")
+    return 0
+
+
+def main() -> int:  # noqa: PLR0915
     parser = argparse.ArgumentParser(description="Benchmark motor.core.llm")
     parser.add_argument("--iterations", type=int, default=50, help="iteraciones por función (default: 50)")
     parser.add_argument("--provider", type=str, default="", help="proveedor (ollama, openai, ...)")
@@ -345,6 +452,7 @@ def main() -> int:
     parser.add_argument("--monitor", action="store_true", help="benchmark con monitor de rendimiento")
     parser.add_argument("--baseline-load", type=str, default="", help="cargar baseline previa desde JSON")
     parser.add_argument("--baseline-save", type=str, default="", help="guardar baseline a JSON")
+    parser.add_argument("--all-providers", action="store_true", help="benchmark todos los proveedores registrados")
     args = parser.parse_args()
 
     if args.resilience:
@@ -360,6 +468,9 @@ def main() -> int:
             print(f"\n  JSON guardado → {args.output}")
         print(f"\n{'=' * 68}\n")
         return 0
+
+    if args.all_providers:
+        return _bench_all_providers(n=args.iterations, output=args.output)
 
     if args.monitor:
         save_path = args.baseline_save or args.output or ""
