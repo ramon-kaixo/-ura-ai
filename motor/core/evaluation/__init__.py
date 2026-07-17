@@ -4,6 +4,7 @@ Framework para evaluar configuraciones de retrieval contra corpus
 de evaluación con métricas estándar (Recall@K, Precision@K, MRR, MAP, nDCG@K).
 """
 
+from motor.core.evaluation.continuous import ContinuousEvaluationResult, ContinuousEvaluator
 from motor.core.evaluation.corpus import EvaluationCorpus, EvaluationQuery
 from motor.core.evaluation.evaluator import EvaluationEngine, EvaluationRun, RetrievalResult
 from motor.core.evaluation.experiment import Experiment, ExperimentConfig, ExperimentResult
@@ -20,7 +21,6 @@ from motor.core.evaluation.regression import (
     RegressionFinding,
     RegressionReport,
 )
-from motor.core.evaluation.continuous import ContinuousEvaluationResult, ContinuousEvaluator
 
 __all__ = [
     "ContinuousEvaluationResult",
