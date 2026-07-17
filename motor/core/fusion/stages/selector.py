@@ -47,7 +47,7 @@ class MemoryCandidateSelectionStage(BaseStage):
 
     @property
     def stage(self) -> FusionStage:
-        return FusionStage.CANDIDATE_SELECTION
+        return FusionStage.SELECTION
 
     @property
     def name(self) -> str:
