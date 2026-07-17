@@ -558,3 +558,39 @@ def test_benchmark_recovery_budget(tmp_path: str) -> None:
     assert m2.timeline.size == 10100
     assert t < 3.0, f"Recovery budget exceeded: {t:.2f}s"
     m2.close()
+
+
+# ═══════════════════════════════════════════════════
+# OBS-03: Compatibilidad cruzada
+# ═══════════════════════════════════════════════════
+
+
+def test_cross_compatibility_snapshot_journal(tmp_path: str) -> None:
+    """Generar snapshot + journal de referencia y validar carga."""
+    snap = os.path.join(tmp_path, "ref_snap.json")
+    journal = os.path.join(tmp_path, "ref_journal.jsonl")
+
+    import hashlib
+
+    m1 = Memory(snapshot_path=snap, journal_path=journal)
+    _populate(m1, 100)
+    m1.snapshot("ref_v1")
+    _populate(m1, 10)
+    checksum_before = hashlib.sha256(
+        str(sorted(m1.timeline.entries.keys())).encode()
+    ).hexdigest()
+    m1.close()
+
+    # Cargar con nueva instancia
+    m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
+    checksum_after = hashlib.sha256(
+        str(sorted(m2.timeline.entries.keys())).encode()
+    ).hexdigest()
+
+    assert checksum_before == checksum_after, "Cross-compatibility failure"
+    assert m2.timeline.size == 110
+
+    # Verificar que los archivos existen (pueden conservarse como artefactos)
+    assert os.path.exists(snap)
+    assert os.path.exists(journal)
+    m2.close()
