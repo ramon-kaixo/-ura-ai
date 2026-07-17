@@ -45,18 +45,29 @@ class Journal:
             self._count += 1
 
     def read_all(self) -> list[dict]:
+        """Lee todas las líneas del journal, omitiendo las corruptas."""
         if not self._path or not os.path.exists(self._path):
             return []
-        with open(self._path, encoding="utf-8") as f:
-            return [json.loads(line) for line in f if line.strip()]
+        result: list[dict] = []
+        with open(self._path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    result.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue  # línea corrupta: omitir
+        return result
 
     def rotate(self, new_path: str) -> None:
         with self._lock:
             if self._file is not None:
                 self._file.close()
-            if os.path.exists(self._path):
+            if self._path and os.path.exists(self._path):
                 os.rename(self._path, new_path)
-            self._file = open(self._path, "a", encoding="utf-8")
+            if self._path:
+                self._file = open(self._path, "a", encoding="utf-8")
             self._count = 0
 
     def close(self) -> None:
