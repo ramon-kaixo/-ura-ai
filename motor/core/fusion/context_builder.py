@@ -1,15 +1,20 @@
 """ContextBuilder — construye contexto para LLM desde FactIndex (F25-A3).
 
-Flujo:
-FactIndex → Query → Facts → Formatted Context → Prompt
+Flujo: FactIndex → Query → Facts (solo vigentes) → Formatted Context → Prompt
+
+Reglas:
+- Solo incluye Facts de la versión vigente (no obsoletos, no tombstones)
+- Nunca consulta SemanticFact ni FactHistory directamente
+- Una única fuente de lectura: FactIndex
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.fusion.fact_index import FactIndex
+    from motor.core.fusion.models import VersionState
 
 _DEFAULT_MAX_FACTS = 50
 
@@ -56,10 +61,16 @@ class ContextBuilder:
     # ── helpers ──────────────────────────────────────
 
     def _collect_facts(self, query: str, include_entities: list[str] | None) -> list:
-        """Recolecta facts desde el índice por entidad o desde la consulta."""
+        """Recolecta facts vigentes desde el índice por entidad o consulta.
+
+        Solo incluye Facts de la versión vigente. Versiones obsoletas
+        (SUPERSEDED, ROLLED_BACK, TOMBSTONE) se excluyen automáticamente.
+        """
         idx = self._index
         if idx is None:
             return []
+
+        from motor.core.fusion.models import VersionState
 
         seen: set[str] = set()
         result: list = []
@@ -73,12 +84,26 @@ class ContextBuilder:
         for entity in entities:
             matches = idx.lookup_entity(entity)
             for entry in matches:
+                if not self._is_current_version(entry, VersionState):
+                    continue
                 fid = self._entry_id(entry)
                 if fid not in seen:
                     seen.add(fid)
                     result.append(entry)
 
         return result
+
+    @staticmethod
+    def _is_current_version(entry: Any, vs: type) -> bool:
+        """Verifica que el entry sea de la versión vigente.
+
+        Para (Fact, FactVersion): solo CURRENT.
+        Para KnowledgeFact (legacy): siempre se considera vigente.
+        """
+        if isinstance(entry, tuple):
+            _, version = entry
+            return getattr(version, "state", None) == vs.CURRENT
+        return True
 
     @staticmethod
     def _entry_id(entry) -> str:

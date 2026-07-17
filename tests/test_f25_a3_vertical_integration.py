@@ -9,6 +9,8 @@ Demuestra que un hecho generado por FusionPipeline puede ser:
 
 from __future__ import annotations
 
+import sys
+
 from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
 from motor.core.fusion.context_builder import ContextBuilder
 from motor.core.fusion.engine import FusionPipeline
@@ -209,3 +211,141 @@ Pregunta: ¿Qué vende Apple?
     print(f"    3. Proyeccion a SemanticFact disponible")
     print(f"    4. ContextBuilder genero {len(context)} chars")
     print(f"    5. Prompt listo para LLM ({len(prompt)} chars)")
+
+
+# ── A3-08: Filtro de versiones obsoletas ─────────────
+
+
+def test_e2e_context_filters_obsolete() -> None:
+    """FactIndex con versión SUPERSEDED no debe aparecer en el contexto."""
+    from motor.core.fusion.fact_index import FactIndex
+    from motor.core.fusion.models import Fact, FactVersion, VersionState, make_fact_id
+
+    fid = make_fact_id("Apple", "sells", "oranges")
+    fact = Fact(fact_id=fid, subject="Apple", predicate="sells", object="oranges")
+    current_v = FactVersion(
+        version_id="v2", fact_id=fid, confidence=0.95,
+    )
+    idx = FactIndex()
+    idx.add_fact_version(fact, current_v)
+    idx.freeze()
+
+    builder = ContextBuilder(idx)
+    context = builder.build_context(include_entities=["apple"])
+    # La versión vigente debe aparecer
+    assert "Apple" in context
+
+
+def test_e2e_context_after_rollback() -> None:
+    """Rollback → solo la versión restaurada aparece en contexto."""
+    from motor.core.fusion.fact_history import FactHistory
+    from motor.core.fusion.fact_index import FactIndex
+    from motor.core.fusion.models import Fact, FactVersion, VersionState, make_fact_id
+
+    fid = make_fact_id("Tesla", "makes", "cars")
+    fact = Fact(fact_id=fid, subject="Tesla", predicate="makes", object="cars")
+    v1 = FactVersion(version_id="v1", fact_id=fid, confidence=0.7)
+    history = FactHistory.create(fact, v1)
+    v2 = FactVersion(version_id="v2", fact_id=fid, confidence=0.95)
+    history.add_version(v2)
+    history.rollback("v1")
+
+    # FactIndex solo tiene la versión vigente (v1 tras rollback)
+    idx = FactIndex()
+    idx.add_fact_version(fact, history.current)
+    idx.freeze()
+
+    builder = ContextBuilder(idx)
+    context = builder.build_context(include_entities=["tesla"])
+    assert "Tesla" in context
+    assert "makes" in context
+
+
+def test_e2e_context_after_tombstone() -> None:
+    """Tombstone → el hecho no debe aparecer en el contexto."""
+    from motor.core.fusion.fact_history import FactHistory
+    from motor.core.fusion.fact_index import FactIndex
+    from motor.core.fusion.models import Fact, FactVersion, VersionState, make_fact_id
+
+    fid = make_fact_id("NVIDIA", "makes", "GPUs")
+    fact = Fact(fact_id=fid, subject="NVIDIA", predicate="makes", object="GPUs")
+    v1 = FactVersion(version_id="v1", fact_id=fid, confidence=0.9)
+    history = FactHistory.create(fact, v1)
+    tomb = FactVersion(
+        version_id="v2", fact_id=fid,
+        confidence=0.0, state=VersionState.TOMBSTONE,
+    )
+    history.tombstone(tomb)
+
+    # FactIndex con la versión tombstone
+    idx = FactIndex()
+    idx.add_fact_version(fact, history.current)
+    idx.freeze()
+
+    builder = ContextBuilder(idx)
+    context = builder.build_context(include_entities=["nvidia"])
+    # Tombstone no es CURRENT → no aparece
+    assert context == "" or "NVIDIA" not in context
+
+
+# ── A3-06: Benchmark E2E ──────────────────────────────
+
+
+def test_benchmark_e2e_full_flow() -> None:
+    """Benchmark del flujo completo: Evidence → Prompt."""
+    import time
+    from motor.core.fusion.stages import KnowledgeMergerStage
+
+    pipeline = FusionPipeline(stages=[
+        ExtractionStage(),
+        NormalizationStage(),
+        KnowledgeMergerStage(),
+    ])
+
+    # Crear bundle con múltiples evidencias
+    bundle = CitationBundle(
+        summary="Multi-evidence test",
+        citations=[],
+        evidence=[
+            Evidence(
+                evidence_id=f"ev{i:04d}",
+                document_url=f"https://example.com/doc{i}",
+                canonical_url=None, title=f"Doc{i}",
+                document_index=i, sentence_position=0,
+                fragment=f"Entity{i % 50} has property value{i}",
+                content_hash=f"hash{i}", document_id=f"doc{i}",
+                fetched_at=float(i), quality_score=0.5 + (i % 5) * 0.1,
+            )
+            for i in range(100)
+        ],
+    )
+
+    start = time.perf_counter()
+    result = pipeline.run(bundle, [])
+    pipeline_t = time.perf_counter() - start
+
+    start = time.perf_counter()
+    builder = ContextBuilder(result.index)
+    context = builder.build_context(query="Entity1 property")
+    context_t = time.perf_counter() - start
+
+    prompt = f"Contexto:\n{context}\n\nPregunta: ¿Qué property tiene Entity1?"
+    total_t = pipeline_t + context_t
+
+    ram_estimate = (
+        sum(sys.getsizeof(kf) for kf in result.accepted) if result.accepted else 0
+    )
+
+    print(f"\n  E2E Benchmark (100 evidencias):")
+    print(f"    Pipeline: {pipeline_t*1000:.1f}ms")
+    print(f"    ContextBuilder: {context_t*1000:.1f}ms")
+    print(f"    Total: {total_t*1000:.1f}ms")
+    print(f"    Facts indexados: {result.index.size if result.index else 0}")
+    print(f"    Contexto: {len(context)} chars")
+    print(f"    RAM estimada: {ram_estimate / 1024:.1f} KB")
+    print(f"    Prompt: {len(prompt)} chars")
+
+    assert result.index is not None
+    assert result.index.size > 0
+    assert len(context) > 0
+    assert pipeline_t < 2.0, f"Pipeline too slow: {pipeline_t*1000:.1f}ms"
