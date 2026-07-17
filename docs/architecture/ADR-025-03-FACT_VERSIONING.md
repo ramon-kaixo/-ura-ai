@@ -47,22 +47,71 @@ Cada `FactVersion` tiene un `version_id` único y una referencia opcional a la v
 ```
 DELETE lógico: versión marcada como obsolete (tombstone)
 DELETE físico: eliminación del Fact completo + todas sus versiones
-ROLLBACK: reasignar current a una versión anterior
+ROLLBACK: reasignar current a una versión anterior (NO reescribe historia)
 ```
 
-### VersionId
+**Regla de rollback:** Rollback NO crea una nueva versión. Solo reasigna `FactHistory.current` a una versión existente. No se reescribe ni se elimina historia. Las versiones posteriores a la restaurada permanecen en `FactHistory.versions` accesibles vía `timeline()`.
+
+```
+Ejemplo:
+  v1 (current) ← rollback desde v3
+  v2
+  v3 (current original)
+
+Después de rollback a v1:
+  v1 (current) ← restaurada
+  v2              ← sigue existiendo en timeline()
+  v3              ← sigue existiendo en timeline()
+  current = v1, no se pierde ninguna versión
+```
+
+### Tombstone en FactIndex
+
+El tombstone (versión marcada como OBSOLETE) **SÍ** participa en FactIndex
+hasta que ocurra DELETE físico. Esto permite:
+
+- Consultar "¿este fact existió?" (trazabilidad)
+- Detectar ciclos de create/delete/create
+- Implementar soft-delete sin pérdida de información
+
+```python
+@dataclass
+class FactTombstone:
+    fact_id: str
+    removed_at: float
+    reason: RemovalReason  # DELETED | OBSOLETE | SUPERSEDED | ROLLED_BACK
+    version_id: str | None  # versión que justifica la eliminación
+```
+
+### FactHistory y DELETE físico
+
+DELETE físico elimina el Fact + FactHistory completo. Después del DELETE físico:
+- FactHistory ya no existe (no mantiene referencias)
+- FactIndex debe eliminar todas las referencias al fact_id
+- Las FactVersion se destruyen en cascada
+- No hay forma de recuperar el hecho (consistencia)```
+
+### VersionId — independencia del orden de inserción
 
 ```python
 def make_version_id(fact_id: str, timestamp: float, content_hash: str) -> str:
     """ID determinista de versión.
 
-    Participan:
+    Participan en el hash:
     - fact_id (identidad del hecho)
-    - timestamp (cuándo se creó)
+    - timestamp (cuándo se creó, debe pasarse explícitamente)
     - content_hash (qué contiene — confidence + evidence_ids + provenance)
 
-    Esto garantiza que mismo hecho + mismo contenido + mismo instante
-    → mismo version_id (reproducibilidad).
+    NO participan:
+    - El orden de inserción en FactHistory
+    - El número de versión (ordinal)
+    - El estado de current en FactHistory
+    - Cualquier estado temporal del sistema
+
+    Esto garantiza:
+    - Mismo hecho + mismo contenido + mismo instante → mismo version_id
+    - version_id es independiente de cuándo/dónde se inserte en el historial
+    - version_id no cambia aunque se reordene el historial
     """
     raw = f"{fact_id}:{int(timestamp)}:{content_hash}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
