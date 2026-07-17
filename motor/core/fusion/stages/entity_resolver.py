@@ -50,11 +50,28 @@ class CachePolicy(StrEnum):
       (1 sola definición o UNKNOWN). Las multi-entry no se cachean.
     - ALL: cachea todo, incluyendo el contexto en la clave.
     - DISABLED: sin caché.
+
+    La conversión desde string es case-sensitive (los valores del enum
+    están en minúscula). Usar from_string() para conversión segura.
     """
 
     DETERMINISTIC_ONLY = "deterministic_only"
     ALL = "all"
     DISABLED = "disabled"
+
+    @classmethod
+    def from_string(cls, value: str) -> CachePolicy:
+        """Convierte una cadena a CachePolicy.
+
+        Case-sensitive. Lanza ValueError si la cadena no es válida.
+        """
+        try:
+            return cls(value)
+        except ValueError as err:
+                valid = ", ".join(f"'{m.value}'" for m in cls)
+                raise ValueError(
+                    f"Invalid cache policy: '{value}'. Valid values: {valid}"
+                ) from err
 
 
 # ── Registro de entidades (inyectable) ───────────────────
@@ -462,7 +479,10 @@ class ContextualEntityResolver(EntityResolver):
     ) -> None:
         self._registry = registry if registry is not None else _DEFAULT_REGISTRY
         self._scorer = scorer if scorer is not None else KeywordScorer()
-        self._cache_policy = CachePolicy(cache_policy) if isinstance(cache_policy, str) else cache_policy
+        if isinstance(cache_policy, str):
+            self._cache_policy = CachePolicy.from_string(cache_policy)
+        else:
+            self._cache_policy = cache_policy
         self._cache = LRUCache(maxsize=cache_maxsize)
 
     @property
