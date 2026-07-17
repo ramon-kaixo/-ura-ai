@@ -19,7 +19,8 @@ Esto impide un modelo de versionado limpio y fuerza referencias cruzadas frágil
 
 ## Decisión
 
-Separar el modelo en tres capas conceptuales con tipos diferenciados:
+Separar el modelo en tres capas conceptuales con tipos diferenciados.
+Cada capa tiene su propia identidad, independiente de las demás.
 
 ```
 Fact (identidad inmatable)
@@ -37,7 +38,17 @@ Fact (identidad inmatable)
         └── supersedes: VersionId → VersionId (opcional, árbol)
 ```
 
-### Capa 1 — Fact (identidad)
+### Identidad por capa
+
+| Capa | ¿Qué identifica? | ID | Inmutable | Dependencia |
+|------|-----------------|----|-----------|-------------|
+| **Fact** | Un hecho de conocimiento único | `fact_id` | ✅ Sí | Independiente |
+| **FactVersion** | Una versión concreta de un Fact | `version_id` | ✅ Sí | Depende de Fact (vía `fact_id`) |
+| **FactHistory** | El historial de un Fact | `fact_id` (1:1 con Fact) | ❌ Mutable | Depende de Fact + contiene FactVersions |
+
+**Regla:** `FactVersion` **nunca puede existir sin** `FactHistory`. Toda versión pertence a un historial. No hay versiones huérfanas.
+
+### Capa 1 — Fact (identidad del hecho)
 
 ```python
 @dataclass(frozen=True)
@@ -48,6 +59,7 @@ class Fact:
     - fact_id se deriva exclusivamente de (normalized_subject, normalized_predicate, normalized_object).
     - Ningún otro atributo participa en la identidad.
     - Un Fact no tiene confianza, evidencia ni versión — solo identidad.
+    - La identidad de un Fact no cambia nunca.
     """
     fact_id: str
     subject: str       # canónico (post entity resolution)
@@ -55,16 +67,18 @@ class Fact:
     object: str        # canónico
 ```
 
-### Capa 2 — FactVersion (contenido)
+### Capa 2 — FactVersion (identidad de la versión)
 
 ```python
 @dataclass(frozen=True)
 class FactVersion:
     """Una versión concreta de un hecho en un instante.
 
-    - Pertenece exactamente a un Fact (vía fact_id).
+    - Pertenece exactamente a un Fact (vía fact_id). NO puede existir sin él.
     - Diferentes versiones del mismo Fact comparten el mismo fact_id.
-    - La versión vigente es la de mayor version_id (semver) o la última añadida.
+    - version_id es independiente del orden de inserción en FactHistory.
+    - La versión vigente es FactHistory.current, no la de mayor version_id.
+    - La identidad de una versión (version_id) no cambia nunca.
     """
     version_id: str
     fact_id: str
@@ -72,19 +86,21 @@ class FactVersion:
     evidence_ids: tuple[str, ...]
     provenance: tuple[str, ...]
     created_at: float
-    supersedes: str | None = None   # version_id que reemplaza (opcional)
+    supersedes: str | None = None   # version_id que reemplaza (opcional, DAG)
 ```
 
-### Capa 3 — FactHistory (historial)
+### Capa 3 — FactHistory (identidad del historial)
 
 ```python
 @dataclass
 class FactHistory:
     """Historial completo de versiones de un Fact.
 
-    - Mantiene orden de inserción (dict desde Python 3.7).
-    - `current` apunta a la versión vigente.
+    - Existe exclusivamente para su Fact (relación 1:1).
+    - `current` apunta a la versión vigente (puede cambiar con rollback).
     - Las versiones forman una cadena lineal (o árbol si hay forks).
+    - La identidad del historial es la de su Fact (fact_id).
+    - Si el Fact se elimina (DELETE físico), el FactHistory también se elimina.
     """
     fact_id: str
     current: str                    # version_id vigente
@@ -110,11 +126,14 @@ class FactHistory:
 ### Invariantes
 
 ```
-I1. fact_id = SHA-256(normalized_subject, normalized_predicate, normalized_object)[:16]
+I1. fact_id = SHA-256(normalize(subject), normalize(predicate), normalize(object))[:16]
 I2. ∀ v ∈ FactHistory.versions : v.fact_id == FactHistory.fact_id
 I3. FactHistory.current ∈ FactHistory.versions.keys()
 I4. La cadena supersedes no contiene ciclos (DAG)
 I5. Una versión no puede cambiar de Fact (fact_id es inmutable en FactVersion)
+I6. Toda FactVersion pertenece exactamente a un FactHistory
+I7. No existen FactVersion sin FactHistory (no hay versiones huérfanas)
+I8. DELETE físico de Fact elimina cascada: Fact + FactHistory + todas sus FactVersion
 ```
 
 ## Relación con el modelo actual

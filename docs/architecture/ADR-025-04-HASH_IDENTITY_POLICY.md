@@ -22,20 +22,27 @@ determinismo si no se pasa explícitamente.
 
 ### Política de normalización para IDs
 
+Existe **una única implementación canónica** de normalización de identidad.
+Todos los puntos donde se calcule un fact_id deben usar exactamente esta función.
+No se permite reimplementar ni modificar localmente la normalización.
+
 ```
 fact_id = SHA-256(
     normalize(subject) + ":" +
     normalize(predicate) + ":" +
-    normalize(object) + ":" +
-    "v" + str(version)
+    normalize(object)
 )[:16]
 ```
 
-Donde `normalize(s)` se define como:
+Nota: **version NO participa en fact_id**. La versión distingue instancias del
+mismo Fact, no identidades diferentes. La inclusión de version en el ID actual
+(`make_fact_id(..., version=1)`) es un error de diseño que se corrige en R07.
+
+**Única implementación canónica:**
 
 ```python
 def normalize_identity(text: str) -> str:
-    """Normalización para identidad de hechos.
+    """Normalización para identidad de hechos. ÚNICA IMPLEMENTACIÓN CANÓNICA.
 
     Aplica a subject, predicate y object para calcular fact_id.
     - lowercase + strip
@@ -43,6 +50,12 @@ def normalize_identity(text: str) -> str:
     - puntuación no esencial eliminada
     - NO resuelve sinónimos (CEO → Chief Executive Officer)
     - NO resuelve entidades (Apple → E0001)
+
+    Esta función debe usarse en TODOS los puntos donde se calcule un fact_id:
+    - KnowledgeMerger
+    - FactHistory.create()
+    - Tests de identidad
+    - Scripts de migración
     """
     text = text.strip().lower()
     text = re.sub(r"\s+", " ", text)
@@ -108,23 +121,51 @@ def make_fact_id(subject, predicate, obj) -> str:
 
 **Justificación del truncado a 16 caracteres hex (64 bits):**
 
-| Métrica | Valor |
-|---------|-------|
-| Bits de hash | 64 (16 hex × 4 bits) |
-| Probabilidad de colisión (n=10⁶, N=2⁶⁴) | ~2.7 × 10⁻⁵ |
-| Probabilidad de colisión (n=10⁹, N=2⁶⁴) | ~2.7% |
-| Tamaño objetivo del proyecto | < 10⁸ facts |
-| Riesgo aceptado para 10⁸ facts | ~5.4 × 10⁻⁵ |
+La probabilidad de colisión para un hash de n bits con k elementos es:
 
-**Decisión:** Mantener truncado a 16 hex. Si el proyecto supera 10⁸ facts,
-migrar a 32 hex (128 bits) con un version_id compuesto (fact_id + extensión).
+```
+P(colisión) ≈ 1 - exp(-k² / (2 × 2ⁿ))
+```
+
+| Volumen de facts | Bits | Probabilidad de colisión | Riesgo |
+|-----------------|------|--------------------------|--------|
+| 10⁴ (10K) | 64 | ~2.7 × 10⁻¹¹ | Despreciable |
+| 10⁶ (1M) | 64 | ~2.7 × 10⁻⁷ | Despreciable |
+| 10⁸ (100M) | 64 | ~2.7 × 10⁻³ | Aceptable |
+| 10⁹ (1B) | 64 | ~2.7 × 10⁻¹ | **No aceptable** |
+| 10⁸ (100M) | 128 | ~2.7 × 10⁻¹¹ | Despreciable |
+
+**Volumen máximo esperado del proyecto:** < 10⁸ facts.
+
+**Decisión:** Mantener truncado a 16 hex (64 bits). Para 10⁸ facts,
+P(colisión) ≈ 2.7 × 10⁻³, riesgo aceptable para un proyecto en etapa
+de desarrollo.
+
+**Plan de migración para ampliación de ID:**
+
+Si el proyecto supera 10⁸ facts:
+
+1. Añadir un segundo segmento de 16 hex al fact_id: `fact_id_ext = SHA-256(raw)[16:32]`
+2. El ID completo pasa a ser `fact_id + fact_id_ext` (32 hex, 128 bits)
+3. Los IDs existentes (16 hex) se interpretan como prefijo del nuevo formato
+4. FactIndex.get() acepta tanto 16 como 32 hex (comprobación de longitud)
+5. No hay breaking change en la API (los IDs antiguos siguen funcionando)
+6. `FactHistory.fact_id` se actualiza progresivamente (lazy migration)
 
 **Justificación formal:**
-El truncado a 64 bits es suficiente para el tamaño objetivo del proyecto
-(< 10⁸ facts). La probabilidad de colisión es inferior a 10⁻⁴, comparable
-a la tolerancia de errores de hardware. Si se supera este umbral, se
-añade un segundo segmento de 64 bits manteniendo compatibilidad hacia atrás
-(IDs existentes siguen siendo válidos como prefijos).
+El truncado a 64 bits es suficiente para < 10⁸ facts con P(colisión) < 0.003,
+comparable a la tolerancia de errores de hardware. Si se supera este umbral,
+se añade un segundo segmento manteniendo compatibilidad hacia atrás sin cambios
+en la API pública.
+
+**Hipótesis de crecimiento:**
+
+| Año | Facts acumulados | Riesgo de colisión | Acción requerida |
+|-----|-----------------|-------------------|------------------|
+| 2026 | < 10⁶ | 10⁻⁷ | Ninguna |
+| 2027 | < 10⁷ | 10⁻⁵ | Ninguna |
+| 2028 | < 10⁸ | 10⁻³ | Evaluar migración |
+| 2029+ | > 10⁸ | > 10⁻³ | Migrar a 128 bits |
 
 ## Consecuencias
 
