@@ -1,132 +1,162 @@
 {
   "benchmark": "multi-provider",
-  "iterations": 2,
+  "iterations": 1,
   "providers": {
     "ollama": {
       "generate": {
-        "p50_ms": 3694.779632962309,
-        "p95_ms": 3694.779632962309,
-        "p99_ms": 3694.779632962309,
-        "throughput": 0.5198787483638911,
-        "tokens_per_second": 0,
+        "p50_ms": 1251.8524168990552,
+        "p95_ms": 1251.8524168990552,
+        "p99_ms": 1251.8524168990552,
+        "throughput": 0.7988162074864104,
+        "tokens_per_second": 65.50292901388565,
         "errors": 0
       },
       "embed": {
-        "p50_ms": 3694.779632962309,
-        "p95_ms": 3694.779632962309,
-        "p99_ms": 3694.779632962309,
-        "throughput": 0.5198787483638911,
+        "p50_ms": 2260.2944769896567,
+        "p95_ms": 2260.2944769896567,
+        "p99_ms": 2260.2944769896567,
+        "throughput": 0.44242022894814875,
         "errors": 0
       }
     },
     "openai": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 2351.9010739400983,
+        "p95_ms": 2351.9010739400983,
+        "p99_ms": 2351.9010739400983,
+        "throughput": 0.42518795160236805,
+        "tokens_per_second": 30.6135325153705,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     },
     "anthropic": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 1154.4689079746604,
+        "p95_ms": 1154.4689079746604,
+        "p99_ms": 1154.4689079746604,
+        "throughput": 0.8661991614432887,
+        "tokens_per_second": 56.30294549381376,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     },
     "gemini": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 1584.0415919665247,
+        "p95_ms": 1584.0415919665247,
+        "p99_ms": 1584.0415919665247,
+        "throughput": 0.6312965550093541,
+        "tokens_per_second": 39.77168296558931,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     },
     "openrouter": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 1956.9595949724317,
+        "p95_ms": 1956.9595949724317,
+        "p99_ms": 1956.9595949724317,
+        "throughput": 0.5109967536218281,
+        "tokens_per_second": 37.30276301439344,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     },
     "lmstudio": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 2338.5563569609076,
+        "p95_ms": 2338.5563569609076,
+        "p99_ms": 2338.5563569609076,
+        "throughput": 0.4276142403083068,
+        "tokens_per_second": 30.78822530219809,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     },
     "vllm": {
       "generate": {
-        "p50_ms": 0,
-        "p95_ms": 0,
-        "p99_ms": 0,
-        "throughput": 0,
-        "tokens_per_second": 0,
-        "errors": 2
+        "p50_ms": 1845.5128739587963,
+        "p95_ms": 1845.5128739587963,
+        "p99_ms": 1845.5128739587963,
+        "throughput": 0.5418547950060664,
+        "tokens_per_second": 42.26467401047318,
+        "errors": 0
       },
       "embed": {
         "p50_ms": 0,
         "p95_ms": 0,
         "p99_ms": 0,
         "throughput": 0,
-        "errors": 2
+        "errors": 1
       }
     }
   },
   "ranking": [
     {
       "rank": 1,
+      "provider": "anthropic",
+      "latency_p50_ms": 1154.4689079746604
+    },
+    {
+      "rank": 2,
       "provider": "ollama",
-      "latency_p50_ms": 3694.779632962309
+      "latency_p50_ms": 1251.8524168990552
+    },
+    {
+      "rank": 3,
+      "provider": "gemini",
+      "latency_p50_ms": 1584.0415919665247
+    },
+    {
+      "rank": 4,
+      "provider": "vllm",
+      "latency_p50_ms": 1845.5128739587963
+    },
+    {
+      "rank": 5,
+      "provider": "openrouter",
+      "latency_p50_ms": 1956.9595949724317
+    },
+    {
+      "rank": 6,
+      "provider": "lmstudio",
+      "latency_p50_ms": 2338.5563569609076
+    },
+    {
+      "rank": 7,
+      "provider": "openai",
+      "latency_p50_ms": 2351.9010739400983
     }
   ]
 }
