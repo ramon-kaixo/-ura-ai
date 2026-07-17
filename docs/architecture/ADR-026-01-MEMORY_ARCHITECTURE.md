@@ -68,9 +68,21 @@ class MemoryEntry:
 
 @dataclass(frozen=True)
 class FactRef:
+    """Referencia inmutable a una versión concreta de un Fact.
+
+    Contiene exactamente:
+    - fact_id: identidad del Fact (F25)
+    - version_id: versión concreta (F25)
+    - subject, predicate, object: desnormalizados para consulta
+      sin cruzar a F25 (copia del Fact, no fuente de verdad)
+
+    NO contiene history_id (se deriva de fact_id).
+    NO contiene el FactVersion completo (solo referencia).
+    Las referencias son inmutables y no actualizables.
+    """
     fact_id: str
     version_id: str
-    subject: str        # desnormalizado para consulta sin cruzar a F25
+    subject: str
     predicate: str
     object: str
 ```
@@ -200,6 +212,24 @@ MemoryEntry.timestamp representa el **instante de observación**: cuándo F26 ca
 - **Formato:** JSON (legible) o msgpack (rápido) — decisión de implementación
 - **Atomicidad:** Se escribe a un archivo temporal y se renombra (`os.rename`)
 
+**Versión de esquema del snapshot (CR-14):**
+
+```python
+SNAPSHOT_SCHEMA_VERSION = 1
+
+@dataclass(frozen=True)
+class SnapshotHeader:
+    schema_version: int = SNAPSHOT_SCHEMA_VERSION
+    snapshot_version: str       # ej: "v26.1.0-snapshot-001"
+    checksum: str               # SHA-256 del contenido completo
+    creation_time: float        # timestamp de creación del snapshot
+    compatible_from: str        # versión mínima de F26 compatible
+    entry_count: int            # número de entries en este snapshot
+    journal_offset: int         # posición del journal al crear el snapshot
+```
+
+**Migración futura:** Si `SNAPSHOT_SCHEMA_VERSION` cambia, la función `load_snapshot()` aplica transformaciones. No hay migraciones destructivas.
+
 ### Journal
 
 - **Formato:** JSON Lines (una entrada por línea)
@@ -265,18 +295,24 @@ Si en el futuro hay múltiples procesos escribiendo:
 ## 8. MemoryEntry: Identidad Estable (CR-08)
 
 ```python
-def make_entry_id(timestamp: float, fact_count: int, event_type: str) -> str:
-    """ID determinista de MemoryEntry.
+def make_entry_id(event_type: str, fact_version_ids: list[str], timestamp: float) -> str:
+    """ID determinista de MemoryEntry basado en contenido canónico.
 
     Participan:
-    - timestamp (instante de observación)
-    - fact_count (número de Facts referenciados)
-    - event_type (tipo de evento)
+    - event_type: tipo de evento (string canónico)
+    - fact_version_ids: TODOS los version_id referenciados, ordenados (sorted)
+    - timestamp: instante de observación (int)
 
     NO participa la posición en MemoryTimeline.
-    Dos entries con los mismos parámetros → mismo entry_id.
+    NO participan metadatos agregados (fact_count, confidence_avg).
+
+    Garantías:
+    - Mismo contenido en mismo instante → mismo entry_id
+    - Dos eventos con mismo timestamp pero diferente contenido → IDs diferentes
+    - Idempotente: reordenar fact_version_ids no cambia el ID (están sorted)
     """
-    raw = f"{int(timestamp)}:{fact_count}:{event_type}"
+    sorted_ids = sorted(fact_version_ids)
+    raw = f"{event_type}:{','.join(sorted_ids)}:{int(timestamp)}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 ```
 
@@ -290,14 +326,29 @@ def make_entry_id(timestamp: float, fact_count: int, event_type: str) -> str:
 
 ## 9. Política de Eliminación (CR-09)
 
-| Elemento | ¿Cuándo se elimina? | ¿Cómo? |
-|----------|---------------------|--------|
-| **MemoryEntry** normal | Tras `retention_days` sin snapshot | Marcado como `expired` + excluido de consultas. El DELETE físico ocurre durante compactación. |
-| **MemorySnapshot** | Nunca (retención permanente) | No se elimina |
-| **Journal** | Con cada snapshot | El journal anterior se descarta tras confirmar el snapshot |
-| **Referencias a Fact** | Nunca (son solo strings) | No aplica — las referencias son inmutables |
-| **Índices temporales** | Al expirar un entry | Reconstruidos durante compactación (los entries expirados se excluyen) |
-| **Archivo de snapshot** | Solo si explícitamente se solicita archive | Se mueve a almacenamiento de larga duración |
+### Principio General
+
+La retención elimina información operativa. **Nunca elimina información necesaria para reproducibilidad o auditoría.** MemorySnapshot y journal se conservan aunque superen el período de retención, siempre que exista espacio en disco.
+
+### Política por tipo
+
+| Elemento | ¿Cuándo se elimina? | ¿Cómo? | ¿Afecta a auditoría? |
+|----------|---------------------|--------|----------------------|
+| **MemoryEntry** normal | Tras `retention_days` sin pertenecer a un snapshot | Marcado como `expired` + excluido de consultas. DELETE físico en compactación. | ❌ No, si existe un snapshot que lo cubra |
+| **MemorySnapshot** | Nunca (retención permanente) | No se elimina | ✅ Los snapshots son la base de la auditoría |
+| **Journal** | Con cada snapshot | El journal anterior se descarta tras confirmar el snapshot | ✅ El snapshot resultante contiene toda la información del journal |
+| **Referencias a Fact** | Nunca (son solo strings) | No aplica — las referencias son inmutables | ✅ Las referencias persisten aunque el entry expire |
+| **Índices temporales** | Al expirar un entry | Reconstruidos durante compactación | ❌ Los índices son reconstruibles desde entries no expirados |
+| **Archivo de snapshot** | Nunca (retención permanente) | Conservado incluso tras compactación | ✅ Base para reconstrucción histórica |
+
+### Excepciones a la retención
+
+- **Auditorías activas:** Si existe una investigación o auditoría en curso que requiera entries fuera del período de retención, esos entries se marcan como `protected` y no se eliminan.
+- **Reconstrucciones históricas:** Para reconstruir el estado en T, se necesita:
+  1. El snapshot inmediatamente anterior a T
+  2. Todos los entries entre ese snapshot y T
+  Si alguno de esos entries fue eliminado, la reconstrucción no es posible.
+- **Protección:** Los snapshots NUNCA se eliminan automáticamente. Solo por decisión explícita del operador.
 
 **DELETE físico es irreversible.** Solo ocurre durante compactación y siempre tras backup implícito (el snapshot anterior sigue existiendo hasta el próximo ciclo).
 
@@ -334,17 +385,21 @@ def make_entry_id(timestamp: float, fact_count: int, event_type: str) -> str:
 def state_at(self, timestamp: float) -> MemoryEntry | None:
     """Retorna el MemoryEntry vigente en el instante dado.
 
+    Regla de desempate (CR-13):
+    Si múltiples entries tienen el mismo observation_timestamp,
+    prevalece el de mayor entry_id (orden lexicográfico inverso).
+    Esto garantiza determinismo incluso con timestamps duplicados.
+
     Complejidad: O(log n) donde n = número de entries.
-    Implementación: búsqueda binaria sobre _by_time (SortedList).
     """
-    idx = self._by_time.bisect_right((timestamp, "")) - 1
+    idx = self._timeline.bisect_right((timestamp, "\uffff")) - 1
     if idx < 0:
         return None
-    _, entry_id = self._by_time[idx]
+    _, entry_id = self._timeline[idx]
     return self._entries.get(entry_id)
 ```
 
-**Garantía:** `state_at()` es O(log n). Se implementa con `bisect` sobre una lista ordenada por timestamp. No hay recorrido lineal de la timeline.
+**Garantía:** `state_at()` es O(log n). Se implementa sobre una **estructura ordenada con búsqueda O(log n)** (no se acopla a una implementación concreta: puede ser `bisect` sobre lista ordenada, `SortedList`, B-tree, o índice de base de datos). No hay recorrido lineal de la timeline.
 
 ---
 
@@ -368,9 +423,10 @@ class MemoryQuery:
 ### Identidad
 
 ```
-M01. entry_id = SHA-256(timestamp + fact_count + event_type)[:16]
+M01. entry_id = SHA-256(event_type + sorted(fact_version_ids) + timestamp)[:16]
 M02. entry_id es inmutable. No depende de la posición en la timeline.
 M03. Dos entries con el mismo entry_id representan el mismo registro de observación.
+M04. entry_id NO se deriva de metadatos agregados (fact_count, confidence_avg).
 ```
 
 ### Fuente de verdad
