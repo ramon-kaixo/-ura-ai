@@ -14,6 +14,8 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
+
 from motor.core.fusion.base import BaseStage, EntityResolver
 from motor.core.fusion.engine import FusionStage
 from motor.core.fusion.models import (
@@ -25,6 +27,7 @@ from motor.core.fusion.models import (
     make_claim_id,
 )
 from motor.core.fusion.stages.entity_resolver import (
+    CachePolicy,
     ContextualEntityResolver,
     EntityDef,
     EntityRegistry,
@@ -476,3 +479,41 @@ def test_stage_has_ambiguous_entity_ids() -> None:
     assert "ambiguous_entity_ids" in result.statistics
     if result.statistics["entities_ambiguous"] > 0:
         assert len(result.statistics["ambiguous_entity_ids"]) > 0
+
+
+# ── B3.13: CachePolicy validation ───────────────────────
+
+def test_cache_policy_from_string_valid() -> None:
+    assert CachePolicy.from_string("deterministic_only") == CachePolicy.DETERMINISTIC_ONLY
+    assert CachePolicy.from_string("all") == CachePolicy.ALL
+    assert CachePolicy.from_string("disabled") == CachePolicy.DISABLED
+
+
+def test_cache_policy_from_string_invalid() -> None:
+    import re
+    with pytest.raises(ValueError, match=re.escape("Invalid cache policy: 'invalid'")):
+        CachePolicy.from_string("invalid")
+
+
+def test_cache_policy_from_string_case_sensitive() -> None:
+    with pytest.raises(ValueError):
+        CachePolicy.from_string("ALL")  # must be lowercase
+
+
+def test_cache_policy_accepts_enum_in_constructor() -> None:
+    r = ContextualEntityResolver(cache_policy=CachePolicy.DISABLED)
+    assert r.cache_policy == CachePolicy.DISABLED
+
+
+def test_cache_policy_accepts_string_in_constructor() -> None:
+    r = ContextualEntityResolver(cache_policy="disabled")
+    assert r.cache_policy == CachePolicy.DISABLED
+
+
+def test_cache_disabled_does_not_cache() -> None:
+    r = ContextualEntityResolver(cache_policy=CachePolicy.DISABLED)
+    a = r.resolve("nvidia")
+    b = r.resolve("nvidia")
+    # Sin caché → objetos distintos
+    assert a is not b
+    assert a.entity_id == b.entity_id
