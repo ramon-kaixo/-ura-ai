@@ -13,6 +13,7 @@ from motor.core.web.base import (
 )
 from motor.core.web.config import WebConfig
 from motor.core.web.crawler.providers.httpx_crawler import CrawledDocument, HttpCrawler
+from motor.core.web.extractor.providers.html_extractor import HtmlExtractor
 from motor.core.web.models import Citation, SearchResult, SourceMetadata, WebDocument
 from motor.core.web.pipeline import PipelineStage, WebPipeline
 from motor.core.web.registry import Registry
@@ -25,6 +26,7 @@ __all__ = [
     "Crawler",
     "DuckDuckGoSearchProvider",
     "Extractor",
+    "HtmlExtractor",
     "HttpCrawler",
     "PipelineStage",
     "Ranker",
