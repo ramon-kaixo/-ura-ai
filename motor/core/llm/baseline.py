@@ -18,7 +18,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-# Umbrales de regresión por defecto (multiplicador sobre baseline)
+from motor.core.llm._logging import percentile
+
+# Umbrales de regresion por defecto (multiplicador sobre baseline)
 DEFAULT_THRESHOLDS: dict[str, float] = {
     "wall_time_p50": 1.5,
     "wall_time_p95": 2.0,
@@ -26,13 +28,6 @@ DEFAULT_THRESHOLDS: dict[str, float] = {
     "cpu_time_p50": 2.0,
     "peak_memory_kb_p50": 2.0,
 }
-
-
-def _percentile(data: list[float], p: float) -> float:
-    if not data:
-        return 0.0
-    idx = max(0, min(len(data) - 1, int(len(data) * p / 100)))
-    return sorted(data)[idx]
 
 
 class BaselineStats:
@@ -179,15 +174,15 @@ class PerformanceBaseline:
         elapsed = max(1.0, time.monotonic() - 1.0)  # aprox
 
         stats = BaselineStats()
-        stats.wall_time_p50 = _percentile(wall_times, 50)
-        stats.wall_time_p95 = _percentile(wall_times, 95)
-        stats.wall_time_p99 = _percentile(wall_times, 99)
-        stats.cpu_time_p50 = _percentile(cpu_times, 50)
-        stats.cpu_time_p95 = _percentile(cpu_times, 95)
-        stats.cpu_time_p99 = _percentile(cpu_times, 99)
-        stats.peak_memory_kb_p50 = _percentile(mem_kb, 50)
-        stats.peak_memory_kb_p95 = _percentile(mem_kb, 95)
-        stats.peak_memory_kb_p99 = _percentile(mem_kb, 99)
+        stats.wall_time_p50 = percentile(wall_times, 50)
+        stats.wall_time_p95 = percentile(wall_times, 95)
+        stats.wall_time_p99 = percentile(wall_times, 99)
+        stats.cpu_time_p50 = percentile(cpu_times, 50)
+        stats.cpu_time_p95 = percentile(cpu_times, 95)
+        stats.cpu_time_p99 = percentile(cpu_times, 99)
+        stats.peak_memory_kb_p50 = percentile(mem_kb, 50)
+        stats.peak_memory_kb_p95 = percentile(mem_kb, 95)
+        stats.peak_memory_kb_p99 = percentile(mem_kb, 99)
         stats.throughput = len(samples) / elapsed
         stats.sample_count = len(samples)
 

@@ -18,25 +18,12 @@ from typing import Any
 
 import httpx
 
-from motor.core.llm.base import BaseLLMProvider
+from motor.core.llm._logging import log_call
+from motor.core.llm.base import FALLBACK_EMBEDDING_DIMENSION, BaseLLMProvider
 from motor.core.secrets import get_secret
 
 log = logging.getLogger(__name__)
 
-
-def _log_call(
-    provider: str,
-    model: str,
-    latency_ms: float,
-    error: str | None = None,
-    **extra: Any,
-) -> None:
-    extra_str = " ".join(f"{k}={v}" for k, v in extra.items())
-    msg = "llm_call  provider=%s model=%s latency_ms=%.0f error=%s %s"
-    if error:
-        log.warning(msg, provider, model, latency_ms, error, extra_str)
-    else:
-        log.info(msg, provider, model, latency_ms, "null", extra_str)
 
 
 class AnthropicProvider(BaseLLMProvider):
@@ -101,7 +88,7 @@ class AnthropicProvider(BaseLLMProvider):
             respuesta = respuesta.strip()
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usage", {})
-            _log_call(
+            log_call(
                 self._provider_name, model_name, latency_ms,
                 input_tokens=usage.get("input_tokens"),
                 output_tokens=usage.get("output_tokens"),
@@ -109,31 +96,31 @@ class AnthropicProvider(BaseLLMProvider):
             return respuesta or "El modelo no generó ninguna respuesta."
         except httpx.TimeoutException:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "timeout")
+            log_call(self._provider_name, model_name, latency_ms, "timeout")
             return "Error: La generación excedió el tiempo de espera."
         except httpx.HTTPStatusError as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error = f"http_{e.response.status_code}"
-            _log_call(self._provider_name, model_name, latency_ms, error)
+            log_call(self._provider_name, model_name, latency_ms, error)
             return f"Error: El servicio respondió con código {e.response.status_code}."
         except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "connection_error")
+            log_call(self._provider_name, model_name, latency_ms, "connection_error")
             return "Error: No se pudo conectar con el servicio."
         except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("error inesperado en generate")
             return "Error: Error interno del proveedor."
 
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         """Anthropic no ofrece embeddings nativos. Retorna degradación controlada."""
-        _log_call(self._provider_name, model or "none", 0, "embeddings_not_supported")
-        return [[0.0] * 768 for _ in texts]
+        log_call(self._provider_name, model or "none", 0, "embeddings_not_supported")
+        return [[0.0] * FALLBACK_EMBEDDING_DIMENSION for _ in texts]
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        _log_call(self._provider_name, model or "none", 0, "embeddings_not_supported", async_=True)
-        return [[0.0] * 768 for _ in texts]
+        log_call(self._provider_name, model or "none", 0, "embeddings_not_supported", async_=True)
+        return [[0.0] * FALLBACK_EMBEDDING_DIMENSION for _ in texts]
 
     def health(self) -> dict[str, Any]:
         t0 = time.monotonic()
@@ -145,13 +132,13 @@ class AnthropicProvider(BaseLLMProvider):
             )
             latency_ms = (time.monotonic() - t0) * 1000
             if r.is_error:
-                _log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
+                log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
                     "provider": self._provider_name, "status": "error",
                     "detail": r.text[:200], "latency_ms": latency_ms,
                 }
             modelos = r.json().get("data", [])
-            _log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))
+            log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))
             return {
                 "provider": self._provider_name,
                 "status": "ok",
@@ -160,5 +147,5 @@ class AnthropicProvider(BaseLLMProvider):
             }
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, "health", latency_ms, "health_error")
+            log_call(self._provider_name, "health", latency_ms, "health_error")
             return {"provider": self._provider_name, "status": "error", "detail": str(e), "latency_ms": latency_ms}

@@ -17,18 +17,12 @@ from typing import Any
 import httpx
 
 from core.config_manager import CONFIG, get_ollama_url
-from motor.core.llm.base import BaseLLMProvider
+from motor.core.llm._logging import log_call
+from motor.core.llm.base import FALLBACK_EMBEDDING_DIMENSION, BaseLLMProvider
+from motor.core.secrets import get_secret
 
 log = logging.getLogger(__name__)
 
-
-def _log_call(provider: str, model: str, latency_ms: float, error: str | None = None, **extra: Any) -> None:
-    extra_str = " ".join(f"{k}={v}" for k, v in extra.items())
-    msg = "llm_call  provider=%s model=%s latency_ms=%.0f error=%s %s"
-    if error:
-        log.warning(msg, provider, model, latency_ms, error, extra_str)
-    else:
-        log.info(msg, provider, model, latency_ms, "null", extra_str)
 
 
 class OllamaProvider(BaseLLMProvider):
@@ -52,11 +46,35 @@ class OllamaProvider(BaseLLMProvider):
         self._provider_name = "ollama"
         _cfg = CONFIG.get("llm", {})
         self._url = get_ollama_url()
-        self._rag_model: str = _cfg.get("model") or CONFIG.get("fallback_model", "qwen2.5:3b")
-        self._embedding_model: str = _cfg.get("embedding_model", "nomic-embed-text")
-        self._timeout: int = _cfg.get("timeout") or CONFIG.get("rag", {}).get("timeout", 120)
-        self._temperature: float = _cfg.get("temperature") or CONFIG.get("rag", {}).get("temperature", 0.3)
-        self._max_tokens: int = _cfg.get("max_tokens") or CONFIG.get("rag", {}).get("max_tokens", 1024)
+        self._rag_model: str = (
+            _cfg.get("model")
+            or CONFIG.get("fallback_model")
+            or get_secret("OLLAMA_MODEL")
+            or "qwen2.5:3b"
+        )
+        self._embedding_model: str = (
+            _cfg.get("embedding_model")
+            or get_secret("OLLAMA_EMBEDDING_MODEL")
+            or "nomic-embed-text"
+        )
+        self._timeout: int = int(
+            _cfg.get("timeout")
+            or CONFIG.get("rag", {}).get("timeout")
+            or get_secret("OLLAMA_TIMEOUT")
+            or "120"
+        )
+        self._temperature: float = float(
+            _cfg.get("temperature")
+            or CONFIG.get("rag", {}).get("temperature")
+            or get_secret("OLLAMA_TEMPERATURE")
+            or "0.3"
+        )
+        self._max_tokens: int = int(
+            _cfg.get("max_tokens")
+            or CONFIG.get("rag", {}).get("max_tokens")
+            or get_secret("OLLAMA_MAX_TOKENS")
+            or "1024"
+        )
 
     def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
         opts = dict(options or {})
@@ -75,7 +93,7 @@ class OllamaProvider(BaseLLMProvider):
             data = r.json()
             respuesta = data.get("response", "").strip()
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(
+            log_call(
                 self._provider_name, model_name, latency_ms,
                 eval_count=data.get("eval_count", 0),
                 eval_duration_ms=data.get("eval_duration", 0) / 1e6 if data.get("eval_duration") else 0,
@@ -84,21 +102,21 @@ class OllamaProvider(BaseLLMProvider):
         except httpx.TimeoutException:
             latency_ms = (time.monotonic() - t0) * 1000
             error = "timeout"
-            _log_call(self._provider_name, model_name, latency_ms, error)
+            log_call(self._provider_name, model_name, latency_ms, error)
             return "Error: La generación excedió el tiempo de espera."
         except httpx.HTTPStatusError as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error = f"http_{e.response.status_code}"
-            _log_call(self._provider_name, model_name, latency_ms, error)
+            log_call(self._provider_name, model_name, latency_ms, error)
             return f"Error: El servicio de generación respondió con código {e.response.status_code}."
         except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
             error = "connection_error"
-            _log_call(self._provider_name, model_name, latency_ms, error)
+            log_call(self._provider_name, model_name, latency_ms, error)
             return "Error: No se pudo conectar con el servicio de generación."
         except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("error inesperado en generate")
             return "Error: Error interno del proveedor."
 
@@ -114,15 +132,15 @@ class OllamaProvider(BaseLLMProvider):
             if r.status_code == 200:
                 latency_ms = (time.monotonic() - t0) * 1000
                 result = r.json()["embeddings"]
-                _log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(result))
+                log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(result))
                 return result
         except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "request_error")
+            log_call(self._provider_name, model_name, latency_ms, "request_error")
             log.warning("Ollama /api/embed batch falló, intentando individual")
         except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("Ollama /api/embed batch falló (except), intentando individual")
 
         resultados: list[list[float]] = []
@@ -137,7 +155,7 @@ class OllamaProvider(BaseLLMProvider):
                 resultados.append(r.json()["embedding"])
             except Exception:
                 log.warning("error generando embedding (old API), continuando")
-                resultados.append([0.0] * 768)
+                resultados.append([0.0] * FALLBACK_EMBEDDING_DIMENSION)
         return resultados
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
@@ -152,18 +170,18 @@ class OllamaProvider(BaseLLMProvider):
                 if r.status_code == 200:
                     latency_ms = (time.monotonic() - t0) * 1000
                     result = r.json()["embeddings"]
-                    _log_call(
+                    log_call(
                         self._provider_name, model_name, latency_ms,
                         async_=True, batch_size=len(texts), vectors=len(result),
                     )
                     return result
         except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "request_error", async_=True)
+            log_call(self._provider_name, model_name, latency_ms, "request_error", async_=True)
             log.warning("Ollama /api/embed async batch falló, intentando individual")
         except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "unexpected", async_=True)
+            log_call(self._provider_name, model_name, latency_ms, "unexpected", async_=True)
             log.warning("Ollama /api/embed async batch falló (except), intentando individual")
 
         resultados: list[list[float]] = []
@@ -178,7 +196,7 @@ class OllamaProvider(BaseLLMProvider):
                     resultados.append(r.json()["embedding"])
             except Exception:
                 log.warning("error generando embedding async (old API), continuando")
-                resultados.append([0.0] * 768)
+                resultados.append([0.0] * FALLBACK_EMBEDDING_DIMENSION)
         return resultados
 
     def health(self) -> dict[str, Any]:
@@ -189,13 +207,13 @@ class OllamaProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             if r.is_error:
                 error = f"http_{r.status_code}"
-                _log_call(self._provider_name, "health", latency_ms, error)
+                log_call(self._provider_name, "health", latency_ms, error)
                 return {
                     "provider": self._provider_name, "status": "error",
                     "detail": r.text[:200], "latency_ms": latency_ms,
                 }
             modelos = r.json().get("models", [])
-            _log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))
+            log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))
             return {
                 "provider": self._provider_name,
                 "status": "ok",
@@ -204,5 +222,5 @@ class OllamaProvider(BaseLLMProvider):
             }
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, "health", latency_ms, "health_error")
+            log_call(self._provider_name, "health", latency_ms, "health_error")
             return {"provider": self._provider_name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
