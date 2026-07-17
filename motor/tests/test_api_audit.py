@@ -94,7 +94,10 @@ class TestCrossModule:
         assert "motor.core.llm.router" not in leaked
 
     def test_no_circular_imports(self) -> None:
-        """Verificar que todos los módulos se importan sin error."""
+        """Verificar que todos los módulos se importan sin error.
+
+        NOTA: Restaura sys.modules después del test para no contaminar
+        el estado global de otros tests."""
         import sys as _sys
         modules = [
             "motor.core.llm", "motor.core.llm.base", "motor.core.llm.registry",
@@ -110,10 +113,13 @@ class TestCrossModule:
             "motor.core.evaluation.experiment", "motor.core.evaluation.regression",
             "motor.core.evaluation.continuous",
         ]
+        saved = {mod: _sys.modules[mod] for mod in modules if mod in _sys.modules}
         for mod in modules:
             _sys.modules.pop(mod, None)
-        for mod in modules:
-            try:
+        try:
+            for mod in modules:
                 __import__(mod)
-            except Exception as e:
-                raise AssertionError(f"Error al importar {mod}: {e}") from e
+        except Exception as e:
+            raise AssertionError(f"Error al importar {mod}: {e}") from e
+        finally:
+            _sys.modules.update(saved)
