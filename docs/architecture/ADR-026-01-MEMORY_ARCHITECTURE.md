@@ -1,79 +1,104 @@
-# ADR-026-01: Memoria Histórica — Arquitectura
+# ADR-026-01: Memoria Histórica — Arquitectura (v2)
 
-**Estado:** Borrador (pendiente de aprobación)  
+**Estado:** Aprobado con cambios  
+**Fecha:** 2026-07-17  
 **Fase:** F26-B1  
 **Depende de:** F25 (v0.25.0-fase25, baseline congelado)  
-**No implementar hasta aprobar esta revisión.**
+**CR resueltos:** CR-01 a CR-10  
 
 ---
 
-## 1. Objetivo de la Memoria Histórica (ADR-026-01)
+## 1. Objetivo de la Memoria Histórica
 
 ### ¿Qué problema resuelve?
 
-F25 produce Facts fusionados pero no retiene el **estado del conocimiento a lo largo del tiempo**. Sin Memoria Histórica:
-- No se puede responder "¿qué sabía el sistema la semana pasada?"
-- No se puede auditar cómo evolucionó un hecho
-- No se puede revertir el conocimiento a un estado anterior
-- No se puede medir la velocidad de cambio del conocimiento
-- No hay un "ahora" conceptual que avance con el tiempo
+F25 produce Facts fusionados pero no retiene el **estado del conocimiento a lo largo del tiempo**. Sin Memoria Histórica no se puede responder "¿qué sabía el sistema la semana pasada?", auditar la evolución del conocimiento, revertir a un estado anterior, ni medir la velocidad de cambio.
 
 ### ¿Qué NO resuelve?
 
-- ❌ NO es un almacén de episodios conversacionales (eso es F27)
-- ❌ NO es un caché de LLM
-- ❌ NO es un sistema de archivos de documentos fuente (eso es KE)
-- ❌ NO es una base de datos vectorial (puede usarla, pero no la reemplaza)
-- ❌ NO es un bus de eventos (aunque use eventos internamente)
+- ❌ NO es almacén de episodios conversacionales (F27)
+- ❌ NO es caché de LLM
+- ❌ NO es sistema de archivos de documentos fuente (KE)
+- ❌ NO es base de datos vectorial
+- ❌ NO es bus de eventos
 
 ### Responsabilidad única
 
 **Preservar, consultar y gestionar la evolución temporal del conocimiento fusionado.**
 
-F26 es el "historial de versiones de la base de conocimiento completa". Cada `MemoryEntry` representa el estado del conocimiento en un instante. La secuencia de entradas forma la línea temporal del conocimiento del sistema.
+F26 registra el estado del conocimiento en instantes discretos (MemoryEntry). La secuencia de entradas forma la línea temporal del conocimiento. **MemoryTimeline NO es fuente de verdad del conocimiento — esa función pertenece a FactHistory (F25).** MemoryTimeline es únicamente un registro de la evolución temporal.
 
 ---
 
-## 2. Modelo Conceptual
+## 2. Fuente de Verdad (CR-01)
+
+| Verdad | Reside en | Propietario |
+|--------|-----------|-------------|
+| ¿Cuál es la versión vigente de un Fact? | `FactHistory.current` | **F25** |
+| ¿Cuál es el historial de versiones de un Fact? | `FactHistory.versions` | **F25** |
+| ¿Cuál era el estado completo del conocimiento en T? | `MemoryTimeline.state_at(T)` | **F26** |
+| ¿Cómo evolucionó el conocimiento entre T1 y T2? | `MemoryTimeline.diff(T1, T2)` | **F26** |
+
+**Decisión:** FactHistory es la única fuente de verdad para Facts. MemoryTimeline es una **proyección temporal indexada** — replica referencias, no datos. Si FactHistory y MemoryTimeline discrepan, FactHistory prevalece.
+
+**Implicación:** MemoryTimeline nunca se usa para responder "¿cuál es el Fact vigente ahora?". Esa pregunta se responde con FactIndex (F25). MemoryTimeline solo responde "¿cuál era el Fact vigente en T?".
+
+---
+
+## 3. Modelo Conceptual
 
 ### Memory
 
-Contenedor raíz. Es la Memoria Histórica completa. Contiene:
-- `MemoryTimeline` (la línea temporal)
-- `MemoryPolicy` (reglas de retención)
-- `MemoryMetadata` (metadatos del sistema)
+Contenedor raíz. Contiene `MemoryTimeline`, `MemoryPolicy`, `MemoryMetadata`.
 
-### MemoryEntry
+### MemoryEntry (CR-02)
 
-Estado del conocimiento en un instante. Una entrada contiene:
-- `entry_id: str` — ID determinista
-- `timestamp: float` — cuándo se capturó
-- `facts: list[tuple[Fact, FactVersion]]` — hechos vigentes en ese instante
-- `source: str` — qué originó esta entrada (pipeline, manual, rollback)
-- `metadata: MemoryMetadata`
+**NO contiene Facts.** Contiene únicamente **referencias** inmutables a Facts y FactVersion:
 
-Equivale a: "esto es lo que el sistema sabía en el momento T".
+```python
+@dataclass(frozen=True)
+class MemoryEntry:
+    entry_id: str                     # SHA-256 determinista (CR-08)
+    timestamp: float                  # instante de observación (CR-03)
+    fact_refs: tuple[FactRef, ...]    # referencias, NO Facts (CR-02)
+    source: str                       # qué originó esta entrada
+    event_type: MemoryEventType       # tipo de evento
+    metadata: MemoryMetadata
+    snapshot: bool = False            # si es un snapshot retenible
+
+@dataclass(frozen=True)
+class FactRef:
+    fact_id: str
+    version_id: str
+    subject: str        # desnormalizado para consulta sin cruzar a F25
+    predicate: str
+    object: str
+```
+
+**Regla:** `MemoryEntry` no mezcla conceptos. Una entrada es un registro de referencias. Los eventos se registran por separado en `MemoryEvent`.
 
 ### MemorySnapshot
 
-Captura completa del estado del conocimiento en un instante. Diferencia con `MemoryEntry`:
-- `MemoryEntry` es una captura completa del estado
-- `MemorySnapshot` es un `MemoryEntry` marcado para retención a largo plazo (no compactable)
-
-Un `MemorySnapshot` es un `MemoryEntry` con `snapshot=True` y política de retención explícita.
+Un `MemoryEntry` con `snapshot=True`. Se diferencia de un `MemoryEntry` normal en que:
+- No es compactable
+- Tiene política de retención explícita (por defecto: no expirar)
+- Sirve como punto de recuperación
 
 ### MemoryTimeline
 
-Secuencia ordenada de `MemoryEntry` por timestamp. NO es un historial de versiones de un Fact (eso es FactHistory). MemoryTimeline es el historial global. FactHistory es el historial por Fact.
+Secuencia ordenada de `entry_id` por timestamp. **NO almacena Facts ni versions.** Solo índices temporales.
 
-| Concepto | Alcance | Granularidad | Propietario |
-|----------|---------|-------------|-------------|
-| FactHistory | Por Fact | Versiones individuales | F25 |
-| MemoryTimeline | Global | Estados completos del conocimiento | F26 |
+```
+MemoryTimeline
+├── _by_time: SortedList[tuple[float, str]]  # (timestamp, entry_id)
+├── _by_entity: dict[str, list[str]]          # entity → entry_ids
+├── _by_event: dict[str, list[str]]           # event_type → entry_ids
+└── _entries: dict[str, MemoryEntry]          # entry_id → entry
+```
 
 ### MemoryEvent
 
-Un evento que ocurre en el sistema y que la memoria registra:
+Evento atómico que originó un `MemoryEntry`:
 
 ```python
 class MemoryEventType(StrEnum):
@@ -83,412 +108,390 @@ class MemoryEventType(StrEnum):
     ROLLBACK = "rollback"
     SNAPSHOT = "snapshot"
     COMPACTION = "compaction"
-    SYSTEM_EVENT = "system_event"
+    SYSTEM = "system_event"
 ```
 
 ### MemoryReference
 
-Referencia desde Memoria a un objeto externo:
-- `fact_id` (a un Fact de F25)
-- `version_id` (a una FactVersion de F25)
-- `evidence_id` (a un Evidence de F24)
-- `document_id` (a un documento fuente)
-- `claim_id` (a un Claim de F25)
+Referencia desde F26 a objetos de F25:
+- `fact_id` + `version_id` (a FactVersion de F25)
+- `claim_id` (a KnowledgeClaim de F25)
+- `evidence_id` (a Evidence de F24)
+
+Todas las referencias son inmutables.
 
 ### MemoryPolicy
 
-Reglas que gobiernan la memoria:
-
 | Política | Defecto | Descripción |
 |----------|---------|-------------|
-| `retention_days` | 365 | Días que se conserva una entrada normal |
-| `snapshot_interval` | 24h | Cada cuánto se fuerza un snapshot |
-| `compaction_threshold` | 100_000 | Entradas antes de compactar |
-| `max_entries` | 1_000_000 | Máximo de entradas sin compactar |
-| `auto_prune` | True | Eliminar entradas fuera de retención |
+| `snapshot_interval_entries` | 10_000 | Cada N entradas se fuerza snapshot |
+| `snapshot_interval_seconds` | 86400 | Cada 24h se fuerza snapshot |
+| `compaction_max_entries` | 1_000_000 | Máximo de entradas antes de compactar |
+| `retention_days` | 365 | Días de retención para entradas normales |
+| `snapshot_retention` | forever | Los snapshots no expiran |
+| `auto_prune` | True | Eliminar entradas fuera de retención al compactar |
 
 ### MemoryMetadata
-
-Metadatos del sistema sobre una entrada:
 
 ```python
 @dataclass(frozen=True)
 class MemoryMetadata:
     pipeline_version: str
     fusion_config_hash: str
-    source_count: int
     fact_count: int
     confidence_avg: float
-    created_by: str  # "pipeline" | "manual" | "rollback" | "snapshot"
+    created_by: str  # "pipeline" | "manual" | "rollback" | "snapshot" | "compaction"
 ```
 
 ---
 
-## 3. Límites Arquitectónicos
+## 4. Semántica Temporal (CR-03)
 
-| Capacidad | F25 | F26 | F27 | LLM/Retriever |
-|-----------|-----|-----|-----|---------------|
-| Fusión de fuentes | ✅ Propietario | — | — | — |
-| Identidad de Facts | ✅ Propietario | — | — | — |
-| Versionado por Fact | ✅ FactHistory | — | — | — |
-| Indexación | ✅ FactIndex | — | — | — |
-| Memoria temporal global | — | ✅ Propietario | — | — |
-| Snapshots | — | ✅ Propietario | — | — |
-| Retención/expiración | — | ✅ Propietario | — | — |
-| Compactación | — | ✅ Propietario | — | — |
-| Consultas temporales | — | ✅ Propietario | — | — |
-| Agentes autónomos | — | — | ✅ Propietario | — |
-| Planificación | — | — | ✅ Propietario | — |
-| Contexto para LLM | ContextBuilder | — | — | Consumidor |
-| Retrieval semántico | — | — | — | Consumidor |
-| Evaluación | — | — | — | Consumidor |
+MemoryEntry.timestamp representa el **instante de observación**: cuándo F26 capturó el estado del conocimiento.
 
-**Regla:** Ninguna característica puede tener dos propietarios.
+| Concepto | Significado | Quién lo asigna |
+|----------|-------------|-----------------|
+| **Instante de observación** | Cuándo F26 capturó el estado | F26 (time.time() en el momento de append) |
+| **Instante de ingestión** | Cuándo el documento fuente fue ingerido | `Evidence.fetched_at` (F24) |
+| **Instante de validez** | Cuándo el hecho era verdadero (si aplica) | No lo gestiona F26 — es semántica externa |
+| **Instante del evento** | Cuándo ocurrió el cambio en el conocimiento | `MemoryEvent.timestamp` (≈ instante de observación) |
+
+**Regla:** F26 solo garantiza el instante de observación. Los instantes de ingestión y validez se conservan en los modelos de F24/F25 (`Evidence.fetched_at`, `FactVersion.created_at`). F26 nunca asigna ni modifica esos timestamps.
+
+**Invariante:** `MemoryTimeline` está ordenada estrictamente por instante de observación creciente. No existen saltos temporales.
 
 ---
 
-## 4. Flujo Completo
+## 5. FactHistory vs MemoryTimeline (CR-01 + CR-06)
 
-```
-Documento (F24)
-  │
-  ▼
-Evidence (F24)
-  │
-  ▼
-KnowledgeClaim (F25 - ExtractionStage)
-  │
-  ▼
-KnowledgeFact (F25 - KnowledgeMerger)
-  │
-  ▼
-FactHistory (F25 - por Fact) → MemoryEvent (F26)
-  │                                │
-  ▼                                ▼
-FactIndex (F25 - vigentes)    MemoryEntry (F26 - estado completo)
-                                   │
-                                   ▼
-                              MemoryTimeline (F26)
-                                   │
-                                   ▼
-                              Retriever (F26)
-                                   │
-                                   ▼
-                              ContextBuilder (F26 - extendido)
-                                   │
-                                   ▼
-                              LLM (consumidor final)
-```
+| Aspecto | FactHistory (F25) | MemoryTimeline (F26) |
+|---------|-------------------|---------------------|
+| **Fuente de verdad** | ✅ SÍ — para versiones de un Fact | ❌ NO — solo registro temporal |
+| **Alcance** | Un solo Fact | Toda la base de conocimiento |
+| **Granularidad** | Versiones individuales | Estados completos en instantes discretos |
+| **Qué contiene** | FactVersion (contenido completo) | FactRef (referencias, no contenido) |
+| **Consulta típica** | "¿cómo cambió este Fact?" | "¿qué sabía el sistema en T?" |
+| **Propietario** | F25 | F26 |
+| **state_at(T)** | O(k) recorriendo supersedes | **O(log n)** con índice temporal |
+| **Almacenamiento** | En memoria (dict) | Persistente (journal + snapshot) |
+| **Rollback** | Reasigna current | Registra el cambio como nuevo entry |
+| **Compactación** | No aplica | Sí, sobre entries antiguos |
 
-Cada transición tiene un único propietario:
-- `Document → Evidence`: F24
-- `Evidence → Claim`: F25
-- `Claim → Fact`: F25
-- `Fact → FactHistory`: F25
-- `FactHistory → MemoryEvent`: F26 (integración)
-- `MemoryEvent → MemoryEntry`: F26
-- `MemoryEntry → MemoryTimeline`: F26
-- `MemoryTimeline → Retriever`: F26
-- `Retriever → ContextBuilder`: F26
-- `ContextBuilder → LLM`: Consumidor
+**No representan el mismo concepto ni pueden confundirse.** Uno es versionado por Fact (F25). El otro es evolución global del conocimiento (F26).
 
 ---
 
-## 5. Invariantes
+## 6. Persistencia (CR-04)
+
+### Estrategia: Snapshot + Append-Only Journal
+
+```
+[MemoryTimeline en memoria]
+       │
+       ├── cada N entries o T tiempo ──→ MemorySnapshot (disco)
+       │
+       └── cada append ──→ Journal (disco, append-only)
+```
+
+### Snapshot
+
+- **Frecuencia:** cada 10.000 entries o 24h (lo que ocurra primero)
+- **Contenido:** Todos los `MemoryEntry` desde el último snapshot + metadatos
+- **Formato:** JSON (legible) o msgpack (rápido) — decisión de implementación
+- **Atomicidad:** Se escribe a un archivo temporal y se renombra (`os.rename`)
+
+### Journal
+
+- **Formato:** JSON Lines (una entrada por línea)
+- **Róta** con cada snapshot (el journal anterior se compacta en el snapshot)
+- **Tamaño máximo:** 10.000 entries entre snapshots (~50 MB)
+
+### Compactación
+
+- **Cuándo:** Al superar `compaction_max_entries` (1M)
+- **Qué hace:** Toma el último snapshot + journal → nuevo snapshot → journal vacío
+- **Coste máximo:** O(n) donde n = entries desde el último snapshot
+- **Consistencia:** No hay lecturas durante compactación (single writer lock)
+
+### Recuperación tras fallo
+
+```
+1. Cargar último snapshot completo
+2. Replay journal (entries después del snapshot, en orden)
+3. Reconstruir índices temporales (_by_time, _by_entity, _by_event)
+4. Verificar: count(snapshot) + count(journal) == count(MemoryTimeline)
+```
+
+**Coste máximo de recuperación para 1M entries:** < 5s (objetivo)
+
+**Consistencia durante snapshot:** El snapshot se escribe atómicamente (rename). Si el proceso falla durante la escritura, el archivo temporal se descarta y el próximo reinicio usa el snapshot anterior + journal completo.
+
+---
+
+## 7. Concurrencia (CR-05)
+
+### Modelo: Single Writer + Copy-on-Read
+
+| Operación | Modelo | Responsable |
+|-----------|--------|-------------|
+| `append()` | Single writer (lock exclusivo) | `Memory.append()` |
+| `state_at()` | Lectura concurrente (sin lock) | Memoria |
+| `timeline()` | Lectura concurrente (sin lock) | Memoria |
+| `compact()` | Single writer (lock exclusivo, without lecturas) | `Memory.compact()` |
+
+### ¿Quién posee el writer?
+
+El **proceso que ejecuta `Memory.append()`**. En el caso nominal, es el mismo proceso que ejecuta `FusionPipeline.run()`. No hay writer remoto ni distribuido en F26.
+
+### Arbitración de múltiples productores
+
+Si múltiples pipelines ejecutan en paralelo, cada uno produce su propio `FusionResult`. Un `MemoryConsumer` serializa los resultados y llama a `append()` secuencialmente. El writer lock garantiza orden temporal.
+
+### Comportamiento ante reinicio
+
+La memoria se reconstruye desde el último snapshot + journal. No hay estado en memoria que sobreviva al reinicio del proceso.
+
+### Comportamiento distribuido futuro (post-F26)
+
+Si en el futuro hay múltiples procesos escribiendo:
+1. Cada proceso tiene su propio journal
+2. Un proceso centralizado (MemoryServer) consolida los journals
+3. Los timestamps de observación se asignan en el servidor, no en los productores
+
+**Esto no se implementa en F26.** Se documenta como posible evolución.
+
+---
+
+## 8. MemoryEntry: Identidad Estable (CR-08)
+
+```python
+def make_entry_id(timestamp: float, fact_count: int, event_type: str) -> str:
+    """ID determinista de MemoryEntry.
+
+    Participan:
+    - timestamp (instante de observación)
+    - fact_count (número de Facts referenciados)
+    - event_type (tipo de evento)
+
+    NO participa la posición en MemoryTimeline.
+    Dos entries con los mismos parámetros → mismo entry_id.
+    """
+    raw = f"{int(timestamp)}:{fact_count}:{event_type}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+```
+
+**Garantías:**
+- `entry_id` es independiente de la posición en la timeline
+- Mismo estado en mismo instante → mismo entry_id
+- `entry_id` no cambia aunque se reordene la timeline
+- La posición en la timeline NO es parte de la identidad
+
+---
+
+## 9. Política de Eliminación (CR-09)
+
+| Elemento | ¿Cuándo se elimina? | ¿Cómo? |
+|----------|---------------------|--------|
+| **MemoryEntry** normal | Tras `retention_days` sin snapshot | Marcado como `expired` + excluido de consultas. El DELETE físico ocurre durante compactación. |
+| **MemorySnapshot** | Nunca (retención permanente) | No se elimina |
+| **Journal** | Con cada snapshot | El journal anterior se descarta tras confirmar el snapshot |
+| **Referencias a Fact** | Nunca (son solo strings) | No aplica — las referencias son inmutables |
+| **Índices temporales** | Al expirar un entry | Reconstruidos durante compactación (los entries expirados se excluyen) |
+| **Archivo de snapshot** | Solo si explícitamente se solicita archive | Se mueve a almacenamiento de larga duración |
+
+**DELETE físico es irreversible.** Solo ocurre durante compactación y siempre tras backup implícito (el snapshot anterior sigue existiendo hasta el próximo ciclo).
+
+---
+
+## 10. Escalabilidad con Presupuesto RAM (CR-07)
+
+| Volumen | Entry size | RAM (entries) | RAM (índices) | RAM total | Estrategia |
+|---------|-----------|---------------|---------------|-----------|------------|
+| 10K | ~150 KB | ~1.5 MB | ~0.5 MB | ~2 MB | ✅ Memoria |
+| 100K | ~1.5 MB | ~15 MB | ~5 MB | ~20 MB | ✅ Memoria |
+| 1M | ~15 MB | ~150 MB | ~50 MB | ~200 MB | ⚠️ Memoria + journal |
+| 10M | ~150 MB | ~1.5 GB | ~500 MB | ~2 GB | ❌ Solo persistente |
+| 100M | ~1.5 GB | ~15 GB | ~5 GB | ~20 GB | ❌ Solo persistente |
+
+**Cálculo por entry:**
+- `entry_id` (16 chars): ~50 bytes
+- `timestamp` (float): 24 bytes
+- `fact_refs` (promedio 50 referencias): 50 × ~200 bytes = ~10 KB
+- `source` (string): ~50 bytes
+- `metadata`: ~200 bytes
+- Overhead dict: ~100 bytes
+- **Total por entry:** ~150 bytes + 10 KB de referencias
+
+**Target inicial:** 100K entries en memoria (~20 MB RAM).  
+**Límite superior sin persistencia:** 1M entries (~200 MB RAM).  
+**Más allá de 1M:** solo persistente (journal + snapshot + carga bajo demanda).
+
+---
+
+## 11. state_at(timestamp) — Complejidad O(log n) (CR-06)
+
+```python
+def state_at(self, timestamp: float) -> MemoryEntry | None:
+    """Retorna el MemoryEntry vigente en el instante dado.
+
+    Complejidad: O(log n) donde n = número de entries.
+    Implementación: búsqueda binaria sobre _by_time (SortedList).
+    """
+    idx = self._by_time.bisect_right((timestamp, "")) - 1
+    if idx < 0:
+        return None
+    _, entry_id = self._by_time[idx]
+    return self._entries.get(entry_id)
+```
+
+**Garantía:** `state_at()` es O(log n). Se implementa con `bisect` sobre una lista ordenada por timestamp. No hay recorrido lineal de la timeline.
+
+---
+
+## 12. Consultas
+
+```python
+class MemoryQuery:
+    def state_at(self, ts: float) -> MemoryEntry | None          # O(log n)
+    def by_entity(self, entity: str) -> list[MemoryEntry]        # O(1) + O(m)
+    def by_time(self, start: float, end: float) -> list[MemoryEntry]  # O(log n + m)
+    def by_event(self, event_type: str) -> list[MemoryEntry]     # O(1) + O(m)
+    def by_source(self, source: str) -> list[MemoryEntry]        # O(1) + O(m)
+    def diff(self, entry_a: str, entry_b: str) -> MemoryDiff     # O(a + b)
+    def timeline(self, entity: str) -> list[MemoryEntry]         # O(1) + O(m)
+```
+
+---
+
+## 13. Invariantes de F26 (CR-10)
 
 ### Identidad
 
 ```
-M1. entry_id = SHA-256(timestamp + fact_count + source)[:16]
-M2. entry_id es inmutable una vez creado
-M3. Dos entradas con el mismo entry_id representan el mismo estado
-M4. MemoryEntry.facts contiene solo Facts vigentes en ese instante
+M01. entry_id = SHA-256(timestamp + fact_count + event_type)[:16]
+M02. entry_id es inmutable. No depende de la posición en la timeline.
+M03. Dos entries con el mismo entry_id representan el mismo registro de observación.
+```
+
+### Fuente de verdad
+
+```
+M04. MemoryTimeline NO es fuente de verdad del conocimiento.
+     La fuente de verdad es FactHistory (F25).
+M05. MemoryTimeline solo contiene referencias (FactRef), nunca Facts completos.
+M06. Si MemoryTimeline y FactHistory discrepan, FactHistory prevalece.
 ```
 
 ### Temporalidad
 
 ```
-M5. MemoryTimeline está ordenada por timestamp (estrictamente creciente)
-M6. No existen saltos temporales: t(n) < t(n+1)
-M7. MemoryEntry.timestamp coincide con el momento de captura
-M8. Un MemoryEntry no puede modificarse después de creado (frozen)
+M07. MemoryTimeline está ordenada por instante de observación estrictamente creciente.
+M08. timestamp = instante de observación (no de ingestión, no de validez).
+M09. No existen saltos temporales: t(n) < t(n+1).
+M10. Un MemoryEntry no puede modificarse después de creado (frozen).
 ```
 
 ### Consistencia
 
 ```
-M9. MemoryEntry.facts contiene exactamente los Facts que FactIndex tenía en T
-M10. No hay Facts huérfanos: todo fact_id en MemoryEntry existe en F25
-M11. Tras compactación, no se pierden snapshots
-```
-
-### Determinismo
-
-```
-M12. Mismos Facts en mismo instante → mismo entry_id
-M13. MemoryEntry no depende del orden de inserción
-M14. MemoryMetadata es reproducible
+M11. Toda referencia (fact_id, version_id) en MemoryTimeline existe en F25.
+M12. Tras compactación, no se pierden snapshots.
+M13. Tras expiración, las referencias se eliminan de índices (no de F25).
 ```
 
 ### Concurrencia
 
 ```
-M15. MemoryTimeline es append-only (no se modifican entradas existentes)
-M16. Las lecturas concurrentes son seguras (dict.get atómico)
-M17. Las escrituras deben serializarse externamente
+M14. MemoryTimeline es append-only. No se modifican entries existentes.
+M15. append() requiere lock exclusivo.
+M16. state_at() y consultas son seguras sin lock (entries inmutables).
 ```
 
 ### Persistencia
 
 ```
-M18. MemorySnapshot sobrevive a reinicios del sistema
-M19. Compactación no pierde datos (journal + snapshot)
-M20. Recuperación tras fallo: replay del journal desde el último snapshot
+M17. MemorySnapshot sobrevive a reinicios del sistema.
+M18. count(snapshot) + count(journal) == count(MemoryTimeline) tras recuperación.
+M19. La recuperación es bit-a-bit reproducible desde snapshot + journal.
 ```
 
-### Reproducibilidad
+### Rendimiento
 
 ```
-M21. Mismo conjunto de Facts en mismo orden → misma MemoryTimeline
-M22. snapshot + journal = estado reconstruible bit a bit
-```
-
----
-
-## 6. Temporalidad: FactHistory vs MemoryTimeline
-
-| Aspecto | FactHistory | MemoryTimeline |
-|---------|-------------|----------------|
-| Alcance | Un solo Fact | Toda la base de conocimiento |
-| Granularidad | Versiones individuales | Estados completos |
-| Qué registra | `confidence`, `evidence_ids`, `state` | Todos los Facts vigentes en T |
-| Consulta típica | "¿cómo cambió este Fact?" | "¿qué sabía el sistema en T?" |
-| Propietario | F25 | F26 |
-| Almacenamiento | En memoria (dict) | Persistente (journal + snapshot) |
-| Rollback | Reasigna current | Restaura entry completo |
-| Compactación | No aplica | Sí (entradas antiguas) |
-
-**No representan el mismo concepto.** FactHistory es interno a F25 (versionado por Fact). MemoryTimeline es la memoria global del sistema.
-
----
-
-## 7. Política de Actualización
-
-| Operación | Semántica | ¿Crea MemoryEntry? | ¿Modifica FactIndex? |
-|-----------|-----------|-------------------|---------------------|
-| **append** | Añadir nuevo estado al final de la timeline | ✅ Sí | ❌ No |
-| **merge** | Combinar dos entradas consecutivas (compactación) | ✅ Nueva | ❌ No |
-| **replace** | Reemplazar una entrada (solo antes de persistir) | ❌ No | ❌ No |
-| **expire** | Marcar entrada como fuera de retención | ❌ No | ❌ No |
-| **archive** | Mover entrada a almacenamiento de larga duración | ❌ No | ❌ No |
-| **delete** | Eliminar entrada permanentemente | ❌ No | ❌ No |
-| **rollback** | Restaurar el conocimiento a un entry anterior | ✅ Nueva | ✅ Sí (vía F25) |
-
-**Reglas:**
-- `append` es la única operación que añade entries
-- `rollback` sobre F25 produce un nuevo FactHistory que, al ser capturado por F26, genera un nuevo MemoryEntry
-- `delete` físico es irreversible (solo tras backup)
-- `expire` es lógico (la entrada no se elimina, solo se marca)
-
----
-
-## 8. Persistencia
-
-### Estrategia: Snapshot + Append-Only Journal
-
-```
-Estado inicial: vacío
-Cada N entries o T tiempo:
-  → MemorySnapshot (todos los Facts vigentes)
-  → Journal (entries desde el último snapshot)
-  → Compactación: journal + snapshot = nuevo snapshot
-```
-
-### Formato
-
-- Snapshot: archivo JSON/msgpack con todos los Facts vigentes + metadatos
-- Journal: archivo append-only con entries nuevos desde el último snapshot
-- Compactación: snapshot nuevo + journal vacío
-
-### Recuperación
-
-```
-1. Cargar último snapshot
-2. Replay journal (entries después del snapshot)
-3. MemoryTimeline = snapshot.entries + journal.entries
-```
-
-### Índices persistentes
-
-Los índices de consulta (por entidad, tiempo, evento) se reconstruyen desde la timeline en memoria. Se persisten como archivos separados para acelerar la carga.
-
----
-
-## 9. Consultas (Diseño)
-
-```python
-class MemoryQuery:
-    def by_entity(self, entity: str) -> list[MemoryEntry]: ...
-    def by_time(self, start: float, end: float) -> list[MemoryEntry]: ...
-    def by_event(self, event_type: MemoryEventType) -> list[MemoryEntry]: ...
-    def by_source(self, source: str) -> list[MemoryEntry]: ...
-    def by_confidence(self, min_conf: float) -> list[MemoryEntry]: ...
-    def by_provenance(self, claim_id: str) -> list[MemoryEntry]: ...
-    def by_relation(self, fact_id: str) -> list[MemoryEntry]: ...
-
-    # Compuestas
-    def state_at(self, timestamp: float) -> MemoryEntry: ...
-    def diff(self, entry_a: str, entry_b: str) -> MemoryDiff: ...
-    def timeline(self, entity: str) -> list[MemoryEntry]: ...
+M20. state_at() es O(log n).
+M21. append() es O(1) amortizado.
+M22. by_entity() es O(1) + O(m) donde m = resultados.
 ```
 
 ---
 
-## 10. Escalabilidad (Objetivos)
+## 14. Integración con F25
 
-| Volumen | Entry size | RAM estimada | Persistencia |
-|---------|-----------|-------------|-------------|
-| 10K | ~50 MB | ~10 MB | ✅ Memoria |
-| 100K | ~500 MB | ~100 MB | ✅ Memoria |
-| 1M | ~5 GB | ~1 GB | ⚠️ Memoria + journal |
-| 10M | ~50 GB | ~10 GB | ❌ Solo persistente |
-| 100M | ~500 GB | ~100 GB | ❌ Solo persistente |
+| Componente F25 | Uso en F26 | Naturaleza |
+|---------------|-----------|-----------|
+| `FusionResult.index` (FactIndex) | Punto de entrada: produce MemoryEntry con FactRefs | Lectura |
+| `FactHistory` | NO se consulta desde F26 | — |
+| `Fact`, `FactVersion` | Modelos referenciados via FactRef (solo strings) | Referencia |
+| `ContextBuilder` | Se extiende para consultar MemoryTimeline | Extensión |
+| `make_fact_id` | Se usa para construir FactRef | Herramienta |
 
-**Target inicial:** 100K entries en memoria. Más allá de 1M, usar journal + carga bajo demanda.
-
----
-
-## 11. Concurrencia
-
-**Modelo elegido:** Single Writer + Copy-on-Read
-
-| Operación | Modelo | Justificación |
-|-----------|--------|---------------|
-| Escritura (append) | Single writer serializado | MemoryTimeline es append-only. Un solo escritor garantiza orden temporal. |
-| Lectura (consulta) | Copy-on-read | Las entries son inmutables. Las consultas reciben una copia de la referencia al entry. |
-| Compactación | Single writer (exclusivo) | No debe haber lecturas durante compactación para evitar estado inconsistente. |
-
-**Implementación:**
-```python
-class MemoryTimeline:
-    def __init__(self):
-        self._entries: dict[str, MemoryEntry] = {}
-        self._timeline: list[str] = []
-        self._lock = threading.Lock()
-
-    def append(self, entry: MemoryEntry) -> None:
-        with self._lock:
-            self._entries[entry.entry_id] = entry
-            self._timeline.append(entry.entry_id)
-
-    def get(self, entry_id: str) -> MemoryEntry | None:
-        return self._entries.get(entry_id)  # seguro: entry es inmutable
-
-    def timeline(self) -> list[MemoryEntry]:
-        with self._lock:
-            return [self._entries[eid] for eid in self._timeline]
-```
+**No hay duplicación de almacenamiento. No hay ownership compartido.**
 
 ---
 
-## 12. Integración con F25
+## 15. Riesgos
 
-| Componente F25 | Uso en F26 |
-|----------------|-----------|
-| `FactIndex` | Fuente de Facts vigentes para cada MemoryEntry |
-| `FactHistory` | NO se consulta desde F26 (solo F25) |
-| `FusionResult.index` | Punto de entrada: cada `FusionResult` produce un `MemoryEvent` |
-| `ContextBuilder` | Se extiende para consultar `MemoryTimeline` además de `FactIndex` |
-| `Fact`, `FactVersion` | Modelos compartidos (inmutables, sin cambios) |
-
-**NO hay duplicación de almacenamiento:**
-- Facts vigentes: los tiene FactIndex (F25)
-- Historial por Fact: lo tiene FactHistory (F25)
-- Historial global: lo tiene MemoryTimeline (F26)
-
-Cada componente tiene una única responsabilidad y una única fuente de verdad.
+| Riesgo | Prob | Impacto | Mitigación |
+|--------|------|---------|-----------|
+| Crecimiento infinito | Alta | Medio | Política de retención + compactación + snapshot |
+| Duplicación de referencias | Media | Bajo | entry_id determinista (mismo estado → mismo ID) |
+| Pérdida de coherencia tras fallo | Baja | Crítico | snapshot atómico + journal replay + verificación |
+| Contención de writer | Baja | Medio | append O(1), journal asíncrono |
+| Coste RAM > 200 MB | Media | Alto | A 1M entries, migrar a solo persistente |
+| Inconsistencia FactIndex vs MemoryTimeline | Baja | Crítico | Un único punto de entrada (FusionResult), sin modificación externa |
 
 ---
 
-## 13. Riesgos Identificados
-
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|-----------|
-| **Crecimiento infinito** | Alta | Medio | Política de retención + compactación + snapshot |
-| **Duplicación de Facts** | Media | Alto | Referencias a FactIndex, no copias |
-| **Pérdida de coherencia** | Baja | Crítico | Journal + snapshot + verificación post-compactación |
-| **Fragmentación** | Media | Bajo | Compactación periódica |
-| **Coste temporal** | Media | Medio | Append-only O(1), consultas O(log n) con índice |
-| **Coste RAM** | Alta | Alto | Más allá de 1M entries, solo persistente |
-| **Inconsistencia FactIndex vs MemoryTimeline** | Baja | Crítico | Un único punto de entrada (FusionResult) |
-
----
-
-## 14. Métricas (Objetivos pre-Implementación)
+## 16. Métricas
 
 | Métrica | Target | Cómo se mide |
 |---------|--------|-------------|
-| `MemoryTimeline.append` latency p50 | <1ms | Benchmarks |
-| `MemoryTimeline.append` latency p99 | <5ms | Benchmarks |
-| `state_at(timestamp)` latency | <10ms | Benchmarks |
-| `timeline(entity)` latency | <50ms | Benchmarks |
-| Peak RAM (100K entries) | <150 MB | `tracemalloc` |
-| Recovery time (1M entries) | <5s | Medición |
-| Compaction throughput | >10K entries/s | Medición |
-| Journal growth rate | <1MB/hora normal | Medición |
+| `append()` latency p50 | <1ms | time.perf_counter() |
+| `append()` latency p99 | <5ms | time.perf_counter() |
+| `state_at()` latency | <1ms (O(log n)) | time.perf_counter() |
+| `by_entity()` latency (100K entries) | <10ms | time.perf_counter() |
+| Peak RAM (100K entries) | <150 MB | tracemalloc |
+| Recovery time (1M entries) | <5s | time.perf_counter() |
+| Journal growth rate | <1 MB/h | Medición en CI |
 
 ---
 
-## 15. Criterios de Aceptación
-
-F26 no se cerrará sin demostrar E2E que:
-
-```
-Document (F24)
-  → Evidence (F24)
-    → KnowledgeFact (F25)
-      → MemoryEntry (F26)
-        → MemoryTimeline (F26)
-          → Retriever query (F26)
-            → ContextBuilder output (F26)
-              → LLM prompt (consumidor)
-```
-
-**Criterios específicos:**
+## 17. Criterios de Aceptación para Cierre de F26
 
 | # | Criterio | Cómo se demuestra |
 |---|----------|-------------------|
-| 1 | Un Fact producido por F25 llega a MemoryTimeline | Test E2E: pipeline.run() → Memory.append() → timeline contiene el Fact |
-| 2 | Se puede consultar el estado en un instante pasado | Test: state_at(t) retorna los Facts vigentes en t |
-| 3 | Rollback en F25 genera un nuevo MemoryEntry | Test: F25 rollback → F26 captura el cambio |
-| 4 | Compactación preserva snapshots | Test: compactación → snapshots intactos |
-| 5 | Recuperación tras fallo | Test: snapshot + journal → mismo estado que antes |
-| 6 | ContextBuilder puede consultar memoria histórica | Test: query temporal → facts formateados para LLM |
-| 7 | Sin regresiones en F25 baseline | `pytest -q` contra tests de F25 |
-| 8 | Sin regresiones en benchmarks de F25 | Benchmarks de F25 siguen pasando |
+| 1 | Fact → MemoryEntry con referencias (no Facts duplicados) | Test: entry.fact_refs contiene strings, no Fact objects |
+| 2 | `state_at(T)` retorna el estado correcto en T | Test: 3 entries en T1<T2<T3 → state_at(T1.5) = entry en T1 |
+| 3 | Rollback en F25 → nuevo MemoryEntry en F26 | Test: F25 rollback → F26 captura como entry nuevo |
+| 4 | Compactación preserva snapshots | Test: compact → snapshot intacto |
+| 5 | Recuperación desde snapshot + journal | Test: crash simulado → mismo estado |
+| 6 | Sin regresiones en F25 baseline | pytest F25 completo |
+| 7 | Sin regresiones en benchmarks F25 | Benchmarks F25 pasan |
+| 8 | `state_at()` es O(log n) verificado | Benchmark: 10K, 100K, 1M entries → latencia constante |
 
 ---
 
-## Resumen para Aprobación
+## Resumen de Cambios v1→v2
 
-| Entregable | Estado |
-|-----------|--------|
-| 1. ADR-026-01 (Objetivo) | ✅ Definido |
-| 2. Modelo conceptual | ✅ 8 conceptos definidos |
-| 3. Límites arquitectónicos | ✅ Tabla F25/F26/F27/LLM |
-| 4. Flujo completo | ✅ 11 transiciones, propietario único cada una |
-| 5. Invariantes | ✅ 22 invariantes (7 categorías) |
-| 6. Temporalidad | ✅ FactHistory ≠ MemoryTimeline |
-| 7. Política de actualización | ✅ 7 operaciones con semántica formal |
-| 8. Persistencia | ✅ Snapshot + journal + compactación |
-| 9. Consultas | ✅ 8 tipos de consulta diseñados |
-| 10. Escalabilidad | ✅ Objetivos 10K–100M |
-| 11. Concurrencia | ✅ Single writer + copy-on-read |
-| 12. Integración | ✅ Tabla de integración con F25 |
-| 13. Riesgos | ✅ 7 riesgos identificados |
-| 14. Métricas | ✅ 8 métricas con target |
-| 15. Criterios aceptación | ✅ 8 criterios E2E |
-
----
-
-**Pendiente de aprobación para comenzar implementación de F26-B2.**
+| CR | Cambio | Sección |
+|----|--------|---------|
+| CR-01 | FactHistory = fuente de verdad. MemoryTimeline = proyección temporal. | §2 |
+| CR-02 | MemoryEntry contiene solo FactRef (strings), no Facts. | §3 |
+| CR-03 | timestamp = instante de observación. Documentados los otros 3 tipos. | §4 |
+| CR-04 | Snapshot cada 10K entries o 24h. Journal JSON Lines. Recuperación <5s. | §6 |
+| CR-05 | Single writer en el proceso pipeline. Distribuido documentado como futuro. | §7 |
+| CR-06 | state_at() = O(log n) con bisección binaria. | §11 |
+| CR-07 | RAM cuantificado: 100K = ~20MB, 1M = ~200MB, >1M = persistente. | §10 |
+| CR-08 | entry_id determinista (SHA-256). NO depende de posición. | §8 |
+| CR-09 | Política por tipo: entries expiran, snapshots no, journal rota con snapshot. | §9 |
+| CR-10 | 22 invariantes separados de F25 (7 categorías). | §13 |
