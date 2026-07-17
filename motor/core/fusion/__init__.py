@@ -21,6 +21,7 @@ from motor.core.fusion.base import (
 )
 from motor.core.fusion.config import FusionConfig
 from motor.core.fusion.engine import FusionPipeline, FusionStage
+from motor.core.fusion.fact_index import FactIndex
 from motor.core.fusion.models import (
     Conflict,
     ConflictGraph,
@@ -50,6 +51,7 @@ __all__ = [
     "ConflictType",
     "EntityResolver",
     "EvidenceSet",
+    "FactIndex",
     "FusionConfig",
     "FusionContext",
     "FusionEngine",
