@@ -1,12 +1,13 @@
 """Entity Resolution avanzado (F25-B3).
 
 ContextualEntityResolver con desambiguación por contexto,
-LRU cache, soporte multi-entidad (polisemia) y extracción
-de candidatos mediante n-gramas sobre el claim completo.
+LRU cache (solo entradas no ambiguas), registro inyectable
+y estrategia de scoring sustituible.
 """
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -19,12 +20,16 @@ if TYPE_CHECKING:
     from motor.core.fusion.models import FusionContext
 
 
-# ── Modelo interno de definición de entidad ──────────────
+# ── Modelo de definición de entidad ──────────────────────
 
 
 @dataclass
 class EntityDef:
-    """Definición de una entidad conocida con datos de desambiguación."""
+    """Definición de una entidad conocida.
+
+    Separada del resolver para permitir almacenamiento externo
+    (BD, vector DB, archivo YAML) sin modificar el algoritmo.
+    """
 
     entity_id: str
     canonical_name: str
@@ -33,16 +38,81 @@ class EntityDef:
     keywords: list[str] = field(default_factory=list)
 
 
-# ── Registro de entidades con soporte de polisemia ───────
-#
-# Cada clave (lowercase) puede tener múltiples EntityDef.
-# La desambiguación usa keywords presentes en el contexto del claim.
+# ── Registro de entidades (inyectable) ───────────────────
 
-_ENTITY_REGISTRY: dict[str, list[EntityDef]] = {
+
+class EntityRegistry:
+    """Almacenamiento de entidades conocido, separado del algoritmo.
+
+    Puede ser reemplazado por una BD, un archivo o una consulta
+    a vector DB sin modificar el resolver.
+    """
+
+    def __init__(self, entries: dict[str, list[EntityDef]] | None = None) -> None:
+        self._entries: dict[str, list[EntityDef]] = entries or {}
+        self._rebuild_index()
+
+    def _rebuild_index(self) -> None:
+        self._all_names: set[str] = set()
+        for key, entry_list in self._entries.items():
+            self._all_names.add(key)
+            for entry in entry_list:
+                for alias in entry.aliases:
+                    self._all_names.add(alias.strip().lower())
+
+    def lookup(self, name: str) -> list[EntityDef]:
+        """Retorna todas las definiciones para un nombre (0, 1 o varias)."""
+        return list(self._entries.get(name.strip().lower(), []))
+
+    @property
+    def known_names(self) -> set[str]:
+        return set(self._all_names)
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+
+# ── Estrategia de scoring para desambiguación ────────────
+
+
+class ScoringStrategy(ABC):
+    """Estrategia de desambiguación sustituible.
+
+    La implementación por defecto usa keywords. Puede reemplazarse
+    por un scorer basado en embeddings, TF-IDF, o LLM sin modificar
+    la pipeline.
+    """
+
+    @abstractmethod
+    def select(self, entries: list[EntityDef], context: str) -> int | None:
+        """Retorna índice de la mejor entrada, o None si ambiguo."""
+        ...
+
+
+class KeywordScorer(ScoringStrategy):
+    """Puntúa cada entrada contando keywords presentes en el contexto.
+
+    Si hay empate o ninguna keyword coincide → None (AMBIGUOUS).
+    """
+
+    def select(self, entries: list[EntityDef], context: str) -> int | None:
+        if len(entries) == 1:
+            return 0
+        ctx_lower = context.lower()
+        scores = [sum(1 for kw in e.keywords if kw in ctx_lower) for e in entries]
+        max_score = max(scores)
+        if max_score == 0 or scores.count(max_score) > 1:
+            return None
+        return scores.index(max_score)
+
+
+# ── Registro por defecto ─────────────────────────────────
+
+_DEFAULT_ENTRIES: dict[str, list[EntityDef]] = {
     "apple": [
         EntityDef(
             entity_id="E0001", canonical_name="Apple Inc.", category="organization",
-            aliases=["apple inc.", "apple computer", "apple"],
+            aliases=["apple inc.", "apple computer"],
             keywords=["company", "inc", "iphone", "mac", "tim cook", "cupertino",
                       "sells", "stock", "ceo", "revenue", "product", "store",
                       "app store", "ios", "ipad", "watch", "airpods"],
@@ -180,24 +250,21 @@ _ENTITY_REGISTRY: dict[str, list[EntityDef]] = {
     ],
 }
 
-# ── Conjunto de búsqueda rápida para extracción de candidatos ──
-
-_KNOWN_NAMES: set[str] = set()
-for key, entries in _ENTITY_REGISTRY.items():
-    _KNOWN_NAMES.add(key)
-    for entry in entries:
-        for alias in entry.aliases:
-            _KNOWN_NAMES.add(alias.strip().lower())
+_DEFAULT_REGISTRY = EntityRegistry(_DEFAULT_ENTRIES)
 
 
-# ── LRU Cache ────────────────────────────────────────────
+# ── LRU Cache (solo entradas independientes de contexto) ─
 
 
 class LRUCache:
-    """Cache LRU para resoluciones de entidades frecuentes.
+    """Cache LRU para resoluciones deterministas.
 
-    Reduce llamadas repetidas al resolver cuando el mismo texto
-    aparece en múltiples claims (ej: "Apple" en 50 documentos).
+    Solo almacena entradas cuya resolución NO depende del contexto:
+    - Entidades con una única definición (no ambiguas)
+    - Resultados UNKNOWN
+
+    Las entidades ambiguas (múltiples definiciones) NO se cachean
+    para evitar falsos aciertos cuando el contexto cambia.
     """
 
     def __init__(self, maxsize: int = 2048) -> None:
@@ -231,42 +298,24 @@ class LRUCache:
 # ── Funciones auxiliares ─────────────────────────────────
 
 
-def _extract_entity_candidates(text: str, max_ngram: int = 3) -> list[str]:
+def _extract_entity_candidates(text: str, registry: EntityRegistry, max_ngram: int = 3) -> list[str]:
     """Extrae n-gramas del texto que coinciden con entidades conocidas.
 
-    Solo genera candidatos si el n-grama está en _KNOWN_NAMES,
-    evitando O(n*m) innecesario sobre palabras irrelevantes.
+    Solo genera candidatos si el n-grama está en registry.known_names.
+    Elimina duplicados (mismo n-grama aparece una sola vez por texto).
+    Complejidad: O(n * max_ngram) donde n = palabras del texto.
     """
     words = text.split()
     candidates: list[str] = []
     seen: set[str] = set()
+    known = registry.known_names
     for n in range(1, max_ngram + 1):
         for i in range(len(words) - n + 1):
             phrase = " ".join(words[i:i + n]).strip().lower()
-            if phrase in _KNOWN_NAMES and phrase not in seen:
+            if phrase in known and phrase not in seen:
                 seen.add(phrase)
                 candidates.append(phrase)
     return candidates
-
-
-def _disambiguate(entries: list[EntityDef], context: str) -> EntityDef | None:
-    """Selecciona la entidad más probable según palabras clave en el contexto.
-
-    1. Si solo hay una entrada → resolver directamente.
-    2. Si hay múltiples → puntuar cada una según keywords presentes en context.
-    3. Si hay empate o ninguna coincide → retornar None (AMBIGUOUS).
-    """
-    if len(entries) == 1:
-        return entries[0]
-
-    ctx_lower = context.lower()
-    scores = [sum(1 for kw in e.keywords if kw in ctx_lower) for e in entries]
-    max_score = max(scores)
-
-    if max_score == 0 or scores.count(max_score) > 1:
-        return None
-
-    return entries[scores.index(max_score)]
 
 
 # ── RuleBasedEntityResolver (backward compatible) ────────
@@ -279,24 +328,25 @@ class RuleBasedEntityResolver(EntityResolver):
     para producción: soporta desambiguación contextual y cache.
     """
 
+    _LEGACY: dict[str, dict[str, str | list[str]]] = {
+        "apple": {"id": "E0001", "name": "Apple", "aliases": ["apple inc.", "apple computer"]},
+        "microsoft": {"id": "E0002", "name": "Microsoft", "aliases": ["microsoft corp.", "ms"]},
+        "google": {"id": "E0003", "name": "Google", "aliases": ["google inc.", "alphabet"]},
+        "amazon": {"id": "E0004", "name": "Amazon", "aliases": ["amazon.com", "amazon web services"]},
+        "meta": {"id": "E0005", "name": "Meta", "aliases": ["meta platforms", "facebook"]},
+        "tesla": {"id": "E0006", "name": "Tesla", "aliases": ["tesla inc.", "tesla motors"]},
+        "nvidia": {"id": "E0007", "name": "NVIDIA", "aliases": ["nvidia corporation"]},
+        "openai": {"id": "E0008", "name": "OpenAI", "aliases": ["open ai"]},
+    }
+
     @property
     def version(self) -> str:
         return "1.0.0"
 
     def resolve(self, text: str, context: dict | None = None) -> ResolvedEntity:
         key = text.strip().lower()
-        legacy: dict[str, dict[str, str | list[str]]] = {
-            "apple": {"id": "E0001", "name": "Apple", "aliases": ["apple inc.", "apple computer"]},
-            "microsoft": {"id": "E0002", "name": "Microsoft", "aliases": ["microsoft corp.", "ms"]},
-            "google": {"id": "E0003", "name": "Google", "aliases": ["google inc.", "alphabet"]},
-            "amazon": {"id": "E0004", "name": "Amazon", "aliases": ["amazon.com", "amazon web services"]},
-            "meta": {"id": "E0005", "name": "Meta", "aliases": ["meta platforms", "facebook"]},
-            "tesla": {"id": "E0006", "name": "Tesla", "aliases": ["tesla inc.", "tesla motors"]},
-            "nvidia": {"id": "E0007", "name": "NVIDIA", "aliases": ["nvidia corporation"]},
-            "openai": {"id": "E0008", "name": "OpenAI", "aliases": ["open ai"]},
-        }
-        if key in legacy:
-            info = legacy[key]
+        info = self._LEGACY.get(key)
+        if info is not None:
             return ResolvedEntity(
                 entity_id=info["id"],  # type: ignore[arg-type]
                 canonical_name=info["name"],  # type: ignore[arg-type]
@@ -328,23 +378,35 @@ class RuleBasedEntityResolver(EntityResolver):
 class ContextualEntityResolver(EntityResolver):
     """Resuelve entidades usando el contexto completo del claim.
 
+    Componentes inyectables:
+    - registry: EntityRegistry — almacenamiento de entidades conocido
+    - scorer: ScoringStrategy — algoritmo de desambiguación
+
     Características:
-    - Desambiguación contextual (Apple empresa vs fruta, Tesla empresa vs persona)
-    - N-gramas (resuelve "Berkshire Hathaway" como una entidad, no dos palabras)
-    - Cache LRU de resoluciones frecuentes
+    - Desambiguación contextual (Apple empresa vs fruta)
+    - N-gramas (resuelve "Berkshire Hathaway" como entidad única)
+    - Cache LRU solo para entradas deterministas (no ambiguas)
     - Retorno AMBIGUOUS cuando el contexto no permite decidir
     - Diseñado para extenderse con embeddings en F26
-
-    Estrategia de resolución:
-    1. Buscar el texto exacto en el registro (caso directo)
-    2. Si hay múltiples entidades para el mismo nombre → desambiguar por contexto
-    3. Si no hay entradas → UNKNOWN
-    4. Cachear resultados para evitar recomputación
     """
 
-    def __init__(self, cache_maxsize: int = 2048) -> None:
+    def __init__(
+        self,
+        registry: EntityRegistry | None = None,
+        scorer: ScoringStrategy | None = None,
+        cache_maxsize: int = 2048,
+    ) -> None:
+        self._registry = registry if registry is not None else _DEFAULT_REGISTRY
+        self._scorer = scorer if scorer is not None else KeywordScorer()
         self._cache = LRUCache(maxsize=cache_maxsize)
-        self._registry = _ENTITY_REGISTRY
+
+    @property
+    def registry(self) -> EntityRegistry:
+        return self._registry
+
+    @property
+    def scorer(self) -> ScoringStrategy:
+        return self._scorer
 
     @property
     def cache(self) -> LRUCache:
@@ -352,30 +414,37 @@ class ContextualEntityResolver(EntityResolver):
 
     @property
     def version(self) -> str:
-        return "3.0.0"
+        return "3.1.0"
 
     def resolve(self, text: str, context: dict | None = None) -> ResolvedEntity:
         key = text.strip().lower()
         if not key:
-            return self._unknown(text)
+            return self._resolve_unknown(text)
 
+        # Cache hit — solo para entradas deterministas (no ambiguas)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
 
-        entries = self._registry.get(key)
-        if entries is None:
-            result = self._unknown(text)
+        entries = self._registry.lookup(key)
+        if not entries:
+            result = self._resolve_unknown(text)
+            self._cache.put(key, result)  # UNKNOWN siempre es determinista
+            return result
+
+        # Una sola definición → determinista, se puede cachear
+        if len(entries) == 1:
+            result = self._build_resolved(entries[0])
             self._cache.put(key, result)
             return result
 
+        # Múltiples definiciones → depende del contexto → NO se cachea
         ctx_text = (context or {}).get("claim_text", text)
-        matched = _disambiguate(entries, ctx_text)
+        idx = self._scorer.select(entries, ctx_text)
 
-        if matched is None and len(entries) > 1:
-            # No se pudo desambiguar
+        if idx is None:
             entity_ids = tuple(e.entity_id for e in entries)
-            result = ResolvedEntity(
+            return ResolvedEntity(
                 entity_id="",
                 canonical_name=text,
                 confidence=0.0,
@@ -384,21 +453,8 @@ class ContextualEntityResolver(EntityResolver):
                 resolver_name=self.__class__.__name__,
                 resolver_version=self.version,
             )
-            self._cache.put(key, result)
-            return result
 
-        entry = matched or entries[0]
-        result = ResolvedEntity(
-            entity_id=entry.entity_id,
-            canonical_name=entry.canonical_name,
-            confidence=0.95,
-            status=ResolutionStatus.RESOLVED,
-            aliases=tuple(entry.aliases),
-            resolver_name=self.__class__.__name__,
-            resolver_version=self.version,
-        )
-        self._cache.put(key, result)
-        return result
+        return self._build_resolved(entries[idx])
 
     def resolve_many(
         self, texts: list[str], context: dict | None = None,
@@ -408,19 +464,33 @@ class ContextualEntityResolver(EntityResolver):
     def normalize(self, text: str) -> str:
         return text.strip().lower()
 
+    # ── helpers ──────────────────────────────────────
+
     @staticmethod
-    def _unknown(text: str) -> ResolvedEntity:
+    def _resolve_unknown(text: str) -> ResolvedEntity:
         return ResolvedEntity(
             entity_id="",
             canonical_name=text,
             confidence=0.0,
             status=ResolutionStatus.UNKNOWN,
             resolver_name="ContextualEntityResolver",
-            resolver_version="3.0.0",
+            resolver_version="3.1.0",
+        )
+
+    @staticmethod
+    def _build_resolved(entry: EntityDef) -> ResolvedEntity:
+        return ResolvedEntity(
+            entity_id=entry.entity_id,
+            canonical_name=entry.canonical_name,
+            confidence=0.95,
+            status=ResolutionStatus.RESOLVED,
+            aliases=tuple(entry.aliases),
+            resolver_name="ContextualEntityResolver",
+            resolver_version="3.1.0",
         )
 
 
-# ── EntityResolutionStage actualizada (B3) ───────────────
+# ── EntityResolutionStage (B3) ───────────────────────────
 
 
 class EntityResolutionStage(BaseStage):
@@ -443,13 +513,17 @@ class EntityResolutionStage(BaseStage):
 
     @property
     def version(self) -> str:
-        return "3.0.0"
+        return "3.1.0"
 
     def _execute(self, context: FusionContext) -> FusionContext:
         resolved_count = 0
         ambiguous_count = 0
         unknown_count = 0
         entities: list[ResolvedEntity] = []
+        ambiguous_entity_ids: list[str] = []
+
+        # Obtener registry del resolver si es ContextualEntityResolver
+        registry = getattr(self._resolver, "registry", None)
 
         for claim in context.claims:
             text = claim.normalized_text or claim.text
@@ -459,7 +533,7 @@ class EntityResolutionStage(BaseStage):
                 "normalized_text": claim.normalized_text,
             }
 
-            candidates = _extract_entity_candidates(text)
+            candidates = _extract_entity_candidates(text, registry or _DEFAULT_REGISTRY)
             seen_ids: set[str] = set()
 
             for candidate in candidates:
@@ -471,17 +545,23 @@ class EntityResolutionStage(BaseStage):
                     resolved_count += 1
                 elif entity.status == ResolutionStatus.AMBIGUOUS:
                     ambiguous_count += 1
+                    ambiguous_entity_ids.append(candidate)
                 else:
                     unknown_count += 1
+
+        if ambiguous_entity_ids:
+            context.warnings.append(
+                f"Ambiguous entities: {', '.join(sorted(set(ambiguous_entity_ids)))}"
+            )
 
         context.entities = entities
         context.statistics["entities_resolved"] = resolved_count
         context.statistics["entities_ambiguous"] = ambiguous_count
         context.statistics["entities_unknown"] = unknown_count
+        context.statistics["ambiguous_entity_ids"] = ambiguous_entity_ids
         context.provenance.resolver_name = self._resolver.__class__.__name__
         context.provenance.resolver_version = self._resolver.version
 
-        # Cache stats si el resolver tiene cache
         cache = getattr(self._resolver, "cache", None)
         if cache is not None:
             context.statistics["resolver_cache_size"] = cache.size

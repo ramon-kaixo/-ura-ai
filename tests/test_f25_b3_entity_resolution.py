@@ -26,12 +26,15 @@ from motor.core.fusion.models import (
 )
 from motor.core.fusion.stages.entity_resolver import (
     ContextualEntityResolver,
+    EntityDef,
+    EntityRegistry,
     EntityResolutionStage,
+    KeywordScorer,
     LRUCache,
     RuleBasedEntityResolver,
-    _disambiguate,
+    ScoringStrategy,
     _extract_entity_candidates,
-    _KNOWN_NAMES,
+    _DEFAULT_REGISTRY,
 )
 
 
@@ -183,11 +186,23 @@ def test_resolve_empty_text() -> None:
 
 # ── B3.5: Cache integration ─────────────────────────────
 
-def test_cache_hit_returns_cached() -> None:
+def test_cache_does_not_cache_multi_entry() -> None:
+    """Multi-entry entities (apple) are NOT cached — depends on context."""
     r = ContextualEntityResolver()
-    ctx = {"claim_text": "Apple Inc. sells iPhones"}
-    first = r.resolve("apple", context=ctx)
-    cached = r.resolve("apple", context=ctx)
+    ctx_a = {"claim_text": "Apple Inc. sells iPhones"}
+    ctx_b = {"claim_text": "I ate an apple fruit"}
+    a = r.resolve("apple", context=ctx_a)
+    b = r.resolve("apple", context=ctx_b)
+    assert a is not b  # different objects (no cache hit)
+    assert a.entity_id == "E0001"  # Apple Inc.
+    assert b.entity_id == "E0009"  # Apple fruit
+
+
+def test_cache_hit_single_entry() -> None:
+    """Single-entry entities (nvidia) ARE cached."""
+    r = ContextualEntityResolver()
+    first = r.resolve("nvidia")
+    cached = r.resolve("nvidia")
     assert cached is first  # same object (cache hit)
 
 
@@ -195,42 +210,43 @@ def test_cache_stats_in_stage() -> None:
     ctx = FusionContext(
         claims=[
             KnowledgeClaim(
-                id=make_claim_id("ev1", "Apple sells iPhones"),
-                text="Apple sells iPhones", confidence=0.9,
+                id=make_claim_id("ev1", "NVIDIA makes GPUs"),
+                text="NVIDIA makes GPUs", confidence=0.9,
             ),
         ],
     )
     stage = EntityResolutionStage()
     result = stage.execute(ctx)
     assert "resolver_cache_size" in result.statistics
+    # NVIDIA is single-entry → cached
     assert result.statistics["resolver_cache_size"] >= 1
 
 
 # ── B3.6: N-gram extraction ─────────────────────────────
 
 def test_extract_candidates_single_word() -> None:
-    assert "apple" in _extract_entity_candidates("Apple sells oranges")
+    assert "apple" in _extract_entity_candidates("Apple sells oranges", _DEFAULT_REGISTRY)
 
 
 def test_extract_candidates_multi_word() -> None:
     assert "berkshire hathaway" in _extract_entity_candidates(
-        "Berkshire Hathaway bought a company"
+        "Berkshire Hathaway bought a company", _DEFAULT_REGISTRY
     )
 
 
 def test_extract_candidates_multi_word_three() -> None:
     assert "elon musk" in _extract_entity_candidates(
-        "Elon Musk is the CEO of Tesla"
+        "Elon Musk is the CEO of Tesla", _DEFAULT_REGISTRY
     )
 
 
 def test_extract_candidates_does_not_include_unknown() -> None:
-    candidates = _extract_entity_candidates("The quick brown fox jumps")
+    candidates = _extract_entity_candidates("The quick brown fox jumps", _DEFAULT_REGISTRY)
     assert len(candidates) == 0
 
 
 def test_extract_candidates_no_duplicates() -> None:
-    candidates = _extract_entity_candidates("Apple Apple Apple")
+    candidates = _extract_entity_candidates("Apple Apple Apple", _DEFAULT_REGISTRY)
     assert candidates.count("apple") == 1
 
 
@@ -303,7 +319,7 @@ def test_stage_provenance_records_resolver_version() -> None:
     stage = EntityResolutionStage()
     result = stage.execute(ctx)
     assert result.provenance.resolver_name == "ContextualEntityResolver"
-    assert result.provenance.resolver_version == "3.0.0"
+    assert result.provenance.resolver_version == "3.1.0"
 
 
 # ── B3.8: Backward compatibility ────────────────────────
@@ -374,3 +390,89 @@ def test_resolve_without_context_ambiguous() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("apple")  # no context → ambiguous
     assert e.status == ResolutionStatus.AMBIGUOUS
+
+
+# ── B3.11: EntityRegistry injection ─────────────────────
+
+def test_custom_registry_injection() -> None:
+    """El resolver acepta un EntityRegistry personalizado."""
+    custom = EntityRegistry({
+        "customcorp": [
+            EntityDef(entity_id="E9999", canonical_name="Custom Corp",
+                      category="organization", keywords=["custom"]),
+        ],
+    })
+    r = ContextualEntityResolver(registry=custom)
+    assert r.registry is custom
+    e = r.resolve("customcorp", context={"claim_text": "Custom Corp makes products"})
+    assert e.status == ResolutionStatus.RESOLVED
+    assert e.entity_id == "E9999"
+
+
+def test_custom_registry_does_not_see_default() -> None:
+    """Un resolver con registry personalizado no ve las entidades por defecto."""
+    custom = EntityRegistry()
+    r = ContextualEntityResolver(registry=custom)
+    e = r.resolve("nvidia")
+    assert e.status == ResolutionStatus.UNKNOWN  # not in custom registry
+
+
+def test_entity_registry_known_names() -> None:
+    reg = EntityRegistry({
+        "test": [
+            EntityDef(entity_id="T1", canonical_name="Test", aliases=["test alias"]),
+        ],
+    })
+    assert "test" in reg.known_names
+    assert "test alias" in reg.known_names
+
+
+def test_entity_registry_len() -> None:
+    reg = EntityRegistry({"a": [], "b": []})
+    assert len(reg) == 2
+
+
+# ── B3.12: ScoringStrategy injection ────────────────────
+
+class _AlwaysFirst(ScoringStrategy):
+    """Estrategia de testing: siempre elige la primera entrada."""
+    def select(self, entries: list[EntityDef], context: str) -> int | None:
+        return 0 if entries else None
+
+
+def test_custom_scorer_injection() -> None:
+    """El resolver acepta un ScoringStrategy personalizado."""
+    r = ContextualEntityResolver(
+        scorer=_AlwaysFirst(),
+    )
+    # "apple" sin contexto → _AlwaysFirst returns index 0 (Apple Inc.)
+    e = r.resolve("apple")
+    assert e.status == ResolutionStatus.RESOLVED
+    assert e.canonical_name == "Apple Inc."
+
+
+def test_custom_scorer_returns_ambiguous() -> None:
+    """Un scorer que retorna None genera AMBIGUOUS."""
+    class _AlwaysAmbiguous(ScoringStrategy):
+        def select(self, entries: list[EntityDef], context: str) -> int | None:
+            return None
+    r = ContextualEntityResolver(scorer=_AlwaysAmbiguous())
+    e = r.resolve("apple", context={"claim_text": "Apple sells iPhones"})
+    assert e.status == ResolutionStatus.AMBIGUOUS
+
+
+def test_stage_has_ambiguous_entity_ids() -> None:
+    """El stage reporta qué entidades quedaron ambiguas."""
+    ctx = FusionContext(
+        claims=[
+            KnowledgeClaim(
+                id=make_claim_id("ev1", "I like apple"),
+                text="I like apple", confidence=0.5,
+            ),
+        ],
+    )
+    stage = EntityResolutionStage()
+    result = stage.execute(ctx)
+    assert "ambiguous_entity_ids" in result.statistics
+    if result.statistics["entities_ambiguous"] > 0:
+        assert len(result.statistics["ambiguous_entity_ids"]) > 0
