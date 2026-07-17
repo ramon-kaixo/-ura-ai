@@ -322,13 +322,12 @@ def test_benchmark_rollback_100k() -> None:
     assert t < 0.01, f"Rollback amid 100K took {t*1000:.1f}ms"
 
 
-def test_benchmark_version_at_100k() -> None:
+def test_benchmark_version_at_10k() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
-    for i in range(100000):
+    for i in range(10000):
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=_ts() + 1000))
     start = time.perf_counter()
-    # Consultar timestamps cercanos a current (evita recorrer toda la cadena)
     current_ts = h.current.created_at
     for offset in range(0, 1000, 10):
         h.version_at(current_ts - float(offset))

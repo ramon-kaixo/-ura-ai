@@ -19,7 +19,9 @@ from motor.core.fusion.base import (
     PipelineStage,
     SourceScorer,
 )
+from motor.core.fusion.bridge import fact_version_to_semantic_fact, knowledge_fact_to_semantic_fact
 from motor.core.fusion.config import FusionConfig
+from motor.core.fusion.context_builder import ContextBuilder
 from motor.core.fusion.engine import FusionPipeline, FusionStage
 from motor.core.fusion.fact_index import FactIndex
 from motor.core.fusion.models import (
@@ -55,6 +57,7 @@ __all__ = [
     "ConflictGraph",
     "ConflictResolver",
     "ConflictType",
+    "ContextBuilder",
     "EntityResolver",
     "EvidenceSet",
     "Fact",
@@ -81,6 +84,8 @@ __all__ = [
     "SourceScorer",
     "StageProvenance",
     "VersionState",
+    "fact_version_to_semantic_fact",
+    "knowledge_fact_to_semantic_fact",
     "make_claim_id",
     "make_conflict_id",
     "make_fact_id",
