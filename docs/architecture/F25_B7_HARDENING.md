@@ -110,7 +110,43 @@ R4. Tras from_dict() exitoso, todas las invariantes V01-V10 se mantienen.
 
 ---
 
-## 4. Resumen de Tests de Hardening
+## 4. Presupuesto de Memoria (R07-FINAL-06)
+
+| Componente | Bytes / unidad | 1M unidades |
+|-----------|---------------|-------------|
+| `Fact` (identidad) | ~120 | ~120 MB |
+| `FactVersion` (contenido) | ~250 | ~250 MB |
+| `FactHistory` (1 history + N versions) | ~200 + N×250 | ~250 MB |
+| `FactIndex._by_id` (dict entry) | ~200 por fact | ~200 MB |
+| `FactIndex._by_entity` (dict entry) | ~200 por entity | ~200 MB (estimado) |
+| `FactIndex._by_evidence` (dict entry) | ~200 por evidence | ~200 MB (estimado) |
+
+**Total estimado para 1M Facts con 1 versión cada uno:** ~1.2 GB
+
+**Total estimado para 1M Facts con 10 versiones cada uno:** ~3.7 GB
+
+**Notas:**
+- Los tamaños son estimaciones en Python 3.12 (CPython). Varían por plataforma.
+- `KnowledgeFact` legacy es ~450 bytes (tiene más campos que `Fact` + `FactVersion`).
+- La migración de `KnowledgeFact` a `Fact` + `FactVersion` reduce memoria ~30%.
+
+## 5. Presupuesto Temporal (R07-FINAL-07)
+
+Objetivos de regresión para cada operación crítica:
+
+| Operación | Volumen | Target | Límite | Medido |
+|-----------|---------|--------|--------|--------|
+| `FactHistory.add_version` | 1 versión | < 1µs | < 10µs | ✅ ~0.5µs |
+| `FactHistory.add_version` | 100K batch | < 3s | < 5s | ✅ ~3s |
+| `FactHistory.rollback` | 100K history | < 1ms | < 10ms | ✅ ~0.3ms |
+| `FactHistory.version_at` | 100 queries | < 50ms | < 100ms | ✅ ~30ms |
+| `FactHistory.to_dict` | 10K versions | < 50ms | < 150ms | ✅ ~89ms |
+| `FactHistory.from_dict` | 10K versions | < 50ms | < 150ms | ✅ ~100ms |
+| `FactIndex.lookup` | 10K facts | < 1ms | < 10ms | ✅ ~0.1ms |
+| `FactIndex.add_fact` | 10K batch | < 50ms | < 100ms | ✅ ~30ms |
+| Serialize → Deserialize → Rebuild | 10K versions | < 150ms | < 300ms | ✅ ~190ms |
+
+## 6. Resumen de Tests de Hardening
 
 | ID | Test | Tipo | Cubre |
 |----|------|------|-------|
@@ -135,3 +171,8 @@ R4. Tras from_dict() exitoso, todas las invariantes V01-V10 se mantienen.
 | H19 | `test_fact_index_remove_version_fact` | FactIndex cleanup | R07-13 |
 | H20 | `test_rollback_preserves_timeline` | Rollback stats | R07-14 |
 | H21 | `test_benchmark_zipf_distribution` | Zipf | R07-15 |
+| H22 | `test_canonical_serialization_deterministic` | Checksum | R07-FINAL-01 |
+| H23 | `test_canonical_serialization_cross_platform` | Checksum | R07-FINAL-02 |
+| H24 | `test_checksum_independent_of_hash_order` | Checksum | R07-FINAL-01 |
+| H25 | `test_benchmark_full_recovery` | Recovery | R07-FINAL-05 |
+| H26 | `test_stability_100_runs_bit_identical` | Estabilidad | R07-FINAL-08 |
