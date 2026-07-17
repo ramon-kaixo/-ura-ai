@@ -12,6 +12,8 @@ import time
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
+from motor.core.llm.base import FALLBACK_EMBEDDING_DIMENSION
+
 if TYPE_CHECKING:
     from motor.core.llm.registry import ProviderRegistry
 
@@ -489,5 +491,5 @@ def _is_error_result(result: Any) -> bool:
 
 def _build_error(method: str, error: str) -> Any:
     if method in ("embed", "embed_async"):
-        return [[0.0] * 768]
+        return [[0.0] * FALLBACK_EMBEDDING_DIMENSION]
     return f"Error: {error}"
