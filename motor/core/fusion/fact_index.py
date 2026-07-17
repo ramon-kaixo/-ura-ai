@@ -8,7 +8,6 @@ No depende de FusionPipeline, KnowledgeMerger ni EntityResolver.
 
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -20,35 +19,45 @@ class FactIndex:
 
     Responsabilidad única: indexar hechos y localizarlos eficientemente.
 
-    Índices mantenidos:
+    Índices mantenidos (todos O(1) amortizado):
     - fact_id → KnowledgeFact (índice primario)
-    - entity (subject) → list[fact_id]
-    - predicate → list[fact_id]
-    - (subject, predicate) → list[fact_id]
-    - evidence_id → list[fact_id]
+    - entity (subject) → ordered set[fact_id]
+    - predicate → ordered set[fact_id]
+    - (subject, predicate) → ordered set[fact_id]
+    - evidence_id → ordered set[fact_id]
+
+    Los índices secundarios usan dict como ordered set (O(1) add/remove,
+    preserva orden de inserción). No hay duplicados.
 
     Complejidad garantizada:
-    - add_fact: O(1) amortizado por índice (k=5 índices, constante)
-    - remove_fact: O(k · m) donde k=índices, m=evidence_ids (constante práctico)
-    - lookup por clave primaria: O(1)
-    - lookup por índice secundario: O(1) para obtener lista, O(m) para resolver facts
+    - add_fact: O(k) donde k = número de índices secundarios = 5 (constante)
+    - remove_fact: O(k · m) donde m = evidence_ids (constante práctico)
+    - lookup primario: O(1)
+    - lookup secundario: O(1) para obtener set, O(m) para resolver facts
 
     Contrato de concurrencia:
-    - Lecturas concurrentes: seguras (dict.get es atómico en CPython)
-    - Escrituras: deben serializarse externamente
-    - Reemplazo atómico: build() → freeze() → swap referencia
-    - Una vez frozen, el índice es inmutable y puede compartirse entre threads
+    - Lecturas concurrentes: seguras (dict.get es atómico en CPython).
+    - Escrituras: deben serializarse externamente.
+    - Reemplazo atómico: build() → freeze() → swap referencia.
+    - Una vez frozen, el índice es inmutable y thread-safe.
 
     Inmutabilidad:
     - KnowledgeFact nunca se modifica. El índice solo almacena referencias.
+    - Los índices secundarios son dicts internos; no se exponen directamente.
+
+    copy() y structural sharing:
+    - Los KnowledgeFact referenciados se comparten (no se copian).
+    - Los dicts de índices son copias shallow (nuevos objetos dict).
+    - Los ordered sets internos (dict[str, None]) también se copian.
+    - El nuevo índice NO está frozen.
     """
 
     def __init__(self) -> None:
         self._by_id: dict[str, KnowledgeFact] = {}
-        self._by_entity: dict[str, list[str]] = {}
-        self._by_predicate: dict[str, list[str]] = {}
-        self._by_sp: dict[tuple[str, str], list[str]] = {}
-        self._by_evidence: dict[str, list[str]] = {}
+        self._by_entity: dict[str, dict[str, None]] = {}
+        self._by_predicate: dict[str, dict[str, None]] = {}
+        self._by_sp: dict[tuple[str, str], dict[str, None]] = {}
+        self._by_evidence: dict[str, dict[str, None]] = {}
         self._frozen: bool = False
 
     # ── API pública ──────────────────────────────────
@@ -56,7 +65,7 @@ class FactIndex:
     def add_fact(self, fact: KnowledgeFact) -> None:
         """Indexa un KnowledgeFact en todos los índices secundarios.
 
-        O(1) amortizado por índice.
+        O(k) donde k = número de índices.
         Lanza KeyError si el fact_id ya existe.
         Lanza RuntimeError si el índice está frozen.
         """
@@ -69,18 +78,18 @@ class FactIndex:
             raise KeyError(f"Fact '{fid}' already indexed")
 
         self._by_id[fid] = fact
-        self._add_to_index(self._by_entity, fact.subject.lower(), fid)
-        self._add_to_index(self._by_predicate, fact.predicate.lower(), fid)
+        self._add_to_ordered_set(self._by_entity, fact.subject.lower(), fid)
+        self._add_to_ordered_set(self._by_predicate, fact.predicate.lower(), fid)
         sp_key = (fact.subject.lower(), fact.predicate.lower())
-        self._add_to_index(self._by_sp, sp_key, fid)
+        self._add_to_ordered_set(self._by_sp, sp_key, fid)
         for eid in fact.evidence_ids:
             if eid:
-                self._add_to_index(self._by_evidence, eid, fid)
+                self._add_to_ordered_set(self._by_evidence, eid, fid)
 
     def remove_fact(self, fact_id: str) -> KnowledgeFact:
         """Elimina un fact del índice y retorna el KnowledgeFact.
 
-        O(k · m) donde k = número de índices, m = evidence_ids.
+        O(k · m) donde k = índices, m = evidence_ids.
         Lanza KeyError si fact_id no existe.
         Lanza RuntimeError si el índice está frozen.
         """
@@ -90,13 +99,13 @@ class FactIndex:
         if fact is None:
             raise KeyError(f"Fact '{fact_id}' not found")
 
-        self._remove_from_index(self._by_entity, fact.subject.lower(), fact_id)
-        self._remove_from_index(self._by_predicate, fact.predicate.lower(), fact_id)
+        self._remove_from_ordered_set(self._by_entity, fact.subject.lower(), fact_id)
+        self._remove_from_ordered_set(self._by_predicate, fact.predicate.lower(), fact_id)
         sp_key = (fact.subject.lower(), fact.predicate.lower())
-        self._remove_from_index(self._by_sp, sp_key, fact_id)
+        self._remove_from_ordered_set(self._by_sp, sp_key, fact_id)
         for eid in fact.evidence_ids:
             if eid:
-                self._remove_from_index(self._by_evidence, eid, fact_id)
+                self._remove_from_ordered_set(self._by_evidence, eid, fact_id)
         return fact
 
     def lookup(self, fact_id: str) -> KnowledgeFact | None:
@@ -104,22 +113,22 @@ class FactIndex:
         return self._by_id.get(fact_id)
 
     def lookup_entity(self, entity: str) -> list[KnowledgeFact]:
-        """Retorna todos los facts para una entidad (subject). O(1) + O(m)."""
-        return self._resolve_ids(self._by_entity.get(entity.lower(), []))
+        """Retorna facts para una entidad (subject). O(1) + O(m)."""
+        return self._resolve_ids(self._by_entity.get(entity.lower()))
 
     def lookup_predicate(self, predicate: str) -> list[KnowledgeFact]:
-        """Retorna todos los facts con un predicado. O(1) + O(m)."""
-        return self._resolve_ids(self._by_predicate.get(predicate.lower(), []))
+        """Retorna facts con un predicado. O(1) + O(m)."""
+        return self._resolve_ids(self._by_predicate.get(predicate.lower()))
 
     def lookup_subject_predicate(self, subject: str, predicate: str) -> list[KnowledgeFact]:
         """Retorna facts con (subject, predicate). O(1) + O(m)."""
         return self._resolve_ids(
-            self._by_sp.get((subject.lower(), predicate.lower()), [])
+            self._by_sp.get((subject.lower(), predicate.lower()))
         )
 
     def lookup_evidence(self, evidence_id: str) -> list[KnowledgeFact]:
         """Retorna facts asociados a un evidence_id. O(1) + O(m)."""
-        return self._resolve_ids(self._by_evidence.get(evidence_id, []))
+        return self._resolve_ids(self._by_evidence.get(evidence_id))
 
     # ── Propiedades de estado ─────────────────────────
 
@@ -134,10 +143,7 @@ class FactIndex:
         return self._frozen
 
     def freeze(self) -> None:
-        """Congela el índice para uso read-only y swapping atómico.
-
-        Una vez frozen, add_fact y remove_fact lanzan RuntimeError.
-        """
+        """Congela el índice para uso read-only y swapping atómico."""
         self._frozen = True
 
     # ── Construcción por lotes ─────────────────────────
@@ -146,9 +152,9 @@ class FactIndex:
     def build(cls, facts: list[KnowledgeFact]) -> FactIndex:
         """Construye un FactIndex frozen desde una lista de facts.
 
-        O(n) donde n = número de facts.
-        Si hay fact_ids duplicados, el primero prevalece (los siguientes se saltan).
+        O(n). Si hay fact_ids duplicados, el primero prevalece.
         El índice resultante está frozen (inmutable, thread-safe).
+        Equivale a: crear índice vacío + add_fact() secuencial + freeze().
         """
         idx = cls()
         for fact in facts:
@@ -159,32 +165,41 @@ class FactIndex:
         return idx
 
     def copy(self) -> FactIndex:
-        """Copia shallow del índice para copy-on-write.
+        """Copia shallow para copy-on-write.
 
-        Los KnowledgeFact referenciados no se copian (compartidos).
-        Las listas de fact_ids sí se copian (shallow copy).
-        El nuevo índice NO está frozen.
+        - KnowledgeFact referenciados: compartidos (no se copian).
+        - Dicts de índices: copias shallow (nuevos objetos).
+        - Ordered sets internos (dict[str, None]): copias shallow.
+        - El nuevo índice NO está frozen (permite escritura).
         """
         new = FactIndex()
         new._by_id = dict(self._by_id)
-        new._by_entity = {k: list(v) for k, v in self._by_entity.items()}
-        new._by_predicate = {k: list(v) for k, v in self._by_predicate.items()}
-        new._by_sp = {k: list(v) for k, v in self._by_sp.items()}
-        new._by_evidence = {k: list(v) for k, v in self._by_evidence.items()}
+        new._by_entity = {k: dict(v) for k, v in self._by_entity.items()}
+        new._by_predicate = {k: dict(v) for k, v in self._by_predicate.items()}
+        new._by_sp = {k: dict(v) for k, v in self._by_sp.items()}
+        new._by_evidence = {k: dict(v) for k, v in self._by_evidence.items()}
         return new
 
     # ── Helpers internos ────────────────────────────
 
     @staticmethod
-    def _add_to_index(index: dict, key: object, value: str) -> None:
-        index.setdefault(key, []).append(value)
+    def _add_to_ordered_set(index: dict, key: object, fact_id: str) -> None:
+        """Añade fact_id al ordered set (dict) para la clave dada. O(1)."""
+        inner = index.get(key)
+        if inner is None:
+            inner = {}
+            index[key] = inner
+        inner[fact_id] = None
 
     @staticmethod
-    def _remove_from_index(index: dict, key: object, value: str) -> None:
-        lst = index.get(key)
-        if lst is not None:
-            with suppress(ValueError):
-                lst.remove(value)
+    def _remove_from_ordered_set(index: dict, key: object, fact_id: str) -> None:
+        """Elimina fact_id del ordered set. O(1)."""
+        inner = index.get(key)
+        if inner is not None:
+            inner.pop(fact_id, None)
 
-    def _resolve_ids(self, fact_ids: list[str]) -> list[KnowledgeFact]:
-        return [self._by_id[fid] for fid in fact_ids if fid in self._by_id]
+    def _resolve_ids(self, ordered_set: dict[str, None] | None) -> list[KnowledgeFact]:
+        """Convierte ordered set de fact_ids en lista de KnowledgeFact."""
+        if ordered_set is None:
+            return []
+        return [self._by_id[fid] for fid in ordered_set if fid in self._by_id]
