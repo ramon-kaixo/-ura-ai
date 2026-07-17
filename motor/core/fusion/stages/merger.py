@@ -81,12 +81,24 @@ class KnowledgeMergerStage(BaseStage):
         return "1.0.0"
 
     def _execute(self, context: FusionContext) -> FusionContext:
-        facts = self._merger.merge(
-            context.claims or [],
-            context.conflicts or [],
-        )
+        ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
+        claims_to_merge = [
+            c for c in (context.claims or [])
+            if not any(aid in (c.text + c.normalized_text) for aid in ambiguous_ids)
+        ] if ambiguous_ids else (context.claims or [])
+
+        if ambiguous_ids and len(claims_to_merge) < len(context.claims or []):
+            context.warnings.append(
+                f"Excluded {len(context.claims or []) - len(claims_to_merge)} "
+                f"claims with ambiguous entities from merge"
+            )
+
+        facts = self._merger.merge(claims_to_merge, context.conflicts or [])
         context.facts = facts
         context.statistics["facts_merged"] = len(facts)
+        context.statistics["claims_with_ambiguous_entities"] = (
+            len(context.claims or []) - len(claims_to_merge)
+        )
         context.provenance.merger_name = "SimpleKnowledgeMerger"
         context.provenance.merger_version = "1.0.0"
         return context

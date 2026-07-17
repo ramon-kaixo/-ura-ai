@@ -78,14 +78,35 @@ class EntityRegistry:
 class ScoringStrategy(ABC):
     """Estrategia de desambiguación sustituible.
 
-    La implementación por defecto usa keywords. Puede reemplazarse
-    por un scorer basado en embeddings, TF-IDF, o LLM sin modificar
-    la pipeline.
+    Contrato:
+    - `select(entries, context)` recibe una lista de EntityDef y el contexto textual.
+    - Retorna el índice de la entrada ganadora (int), o None si no puede decidir (AMBIGUOUS).
+    - El rango de puntuación es interno a cada implementación. No se requiere
+      normalización entre estrategias.
+    - En caso de empate (misma puntuación máxima para dos o más entradas),
+      debe retornar None (no desempatar arbitrariamente).
+    - El contexto es el texto completo del claim (no solo la palabra resuelta).
+
+    La implementación por defecto usa keyword matching. Puede reemplazarse
+    por un scorer basado en embeddings, TF-IDF, o LLM sin modificar la pipeline.
     """
 
     @abstractmethod
     def select(self, entries: list[EntityDef], context: str) -> int | None:
-        """Retorna índice de la mejor entrada, o None si ambiguo."""
+        """Selecciona la mejor entrada entre múltiples candidatas.
+
+        Solo se invoca cuando hay 2 o más entradas. El resolver maneja
+        el caso de 1 entrada directamente (sin ambigüedad).
+
+        Args:
+            entries: Lista de 2 o más EntityDef candidatas.
+            context: Texto completo del claim en crudo (el scorer aplica su
+                propia normalización, normalmente lower()).
+
+        Returns:
+            Índice en entries de la mejor candidata (int), o None si ambiguo.
+            None también indica empate (no desempatar arbitrariamente).
+        """
         ...
 
 
@@ -390,15 +411,31 @@ class ContextualEntityResolver(EntityResolver):
     - Diseñado para extenderse con embeddings en F26
     """
 
+    CACHE_DETERMINISTIC_ONLY = "deterministic_only"
+    CACHE_ALL = "all"
+    CACHE_DISABLED = "disabled"
+
     def __init__(
         self,
         registry: EntityRegistry | None = None,
         scorer: ScoringStrategy | None = None,
         cache_maxsize: int = 2048,
+        cache_policy: str = "deterministic_only",
     ) -> None:
         self._registry = registry if registry is not None else _DEFAULT_REGISTRY
         self._scorer = scorer if scorer is not None else KeywordScorer()
+        self._cache_policy = cache_policy
         self._cache = LRUCache(maxsize=cache_maxsize)
+
+    @property
+    def cache_policy(self) -> str:
+        """Política de caché activa.
+
+        - "deterministic_only": solo entradas no ambiguas (1 entrada o UNKNOWN)
+        - "all": cachea todo (incluye contexto en la clave)
+        - "disabled": sin caché
+        """
+        return self._cache_policy
 
     @property
     def registry(self) -> EntityRegistry:
@@ -421,24 +458,27 @@ class ContextualEntityResolver(EntityResolver):
         if not key:
             return self._resolve_unknown(text)
 
-        # Cache hit — solo para entradas deterministas (no ambiguas)
-        cached = self._cache.get(key)
-        if cached is not None:
-            return cached
+        # Cache hit (según política)
+        if self._cache_policy != self.CACHE_DISABLED:
+            cached = self._cache.get(key)
+            if cached is not None:
+                return cached
 
         entries = self._registry.lookup(key)
         if not entries:
             result = self._resolve_unknown(text)
-            self._cache.put(key, result)  # UNKNOWN siempre es determinista
+            if self._cache_policy != self.CACHE_DISABLED:
+                self._cache.put(key, result)  # UNKNOWN es determinista
             return result
 
-        # Una sola definición → determinista, se puede cachear
+        # Una sola definición → determinista
         if len(entries) == 1:
             result = self._build_resolved(entries[0])
-            self._cache.put(key, result)
+            if self._cache_policy != self.CACHE_DISABLED:
+                self._cache.put(key, result)
             return result
 
-        # Múltiples definiciones → depende del contexto → NO se cachea
+        # Múltiples definiciones → depende del contexto
         ctx_text = (context or {}).get("claim_text", text)
         idx = self._scorer.select(entries, ctx_text)
 
@@ -454,7 +494,12 @@ class ContextualEntityResolver(EntityResolver):
                 resolver_version=self.version,
             )
 
-        return self._build_resolved(entries[idx])
+        result = self._build_resolved(entries[idx])
+        # Solo cachear multi-entry si política es "all" (usa contexto en clave)
+        if self._cache_policy == self.CACHE_ALL:
+            ctx_key = f"{key}:{ctx_text.strip().lower()}"
+            self._cache.put(ctx_key, result)
+        return result
 
     def resolve_many(
         self, texts: list[str], context: dict | None = None,

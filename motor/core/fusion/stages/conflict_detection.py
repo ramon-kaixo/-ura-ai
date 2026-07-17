@@ -111,8 +111,24 @@ class ConflictDetectionStage(BaseStage):
         if not context.claims:
             return context
 
-        conflicts = self._resolver.detect(context.claims)
-        _, unresolved = self._resolver.resolve(conflicts, context.claims)
+        ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
+        if ambiguous_ids:
+            context.warnings.append(
+                f"Skipping conflict detection for {len(ambiguous_ids)} ambiguous entities"
+            )
+
+        claims_to_check = [
+            c for c in context.claims
+            if not any(aid in (c.text + c.normalized_text) for aid in ambiguous_ids)
+        ] if ambiguous_ids else context.claims
+
+        if not claims_to_check:
+            context.statistics["conflicts_detected"] = 0
+            context.statistics["conflicts_unresolved"] = 0
+            return context
+
+        conflicts = self._resolver.detect(claims_to_check)
+        _, unresolved = self._resolver.resolve(conflicts, claims_to_check)
         context.conflicts = unresolved
         context.conflict_graph = ConflictGraph.from_edges(conflicts)
         context.statistics["conflicts_detected"] = len(conflicts)
