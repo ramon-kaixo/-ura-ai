@@ -58,6 +58,12 @@ class MemoryCandidateSelectionStage(BaseStage):
         return "1.0.0"
 
     def _execute(self, context: FusionContext) -> FusionContext:
+        ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
+        if ambiguous_ids:
+            context.warnings.append(
+                f"Memory selection skipping {len(ambiguous_ids)} ambiguous entities"
+            )
+
         context.statistics["candidates_requested"] = self._selector.max_candidates
         context.statistics["candidates_returned"] = 0
         context.provenance.selector_name = "ThresholdSelector"
