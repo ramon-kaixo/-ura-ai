@@ -7,9 +7,13 @@ from motor.core.fusion.stages.conflict_detection import (
 from motor.core.fusion.stages.delta import BasicChangeDetector, KnowledgeDeltaStage
 from motor.core.fusion.stages.entity_resolver import (
     ContextualEntityResolver,
+    EntityDef,
+    EntityRegistry,
     EntityResolutionStage,
+    KeywordScorer,
     LRUCache,
     RuleBasedEntityResolver,
+    ScoringStrategy,
 )
 from motor.core.fusion.stages.extraction import ExtractionStage
 from motor.core.fusion.stages.merger import (
@@ -30,8 +34,11 @@ __all__ = [
     "BasicChangeDetector",
     "ConflictDetectionStage",
     "ContextualEntityResolver",
+    "EntityDef",
+    "EntityRegistry",
     "EntityResolutionStage",
     "ExtractionStage",
+    "KeywordScorer",
     "KnowledgeDeltaStage",
     "KnowledgeMergerStage",
     "LRUCache",
@@ -40,6 +47,7 @@ __all__ = [
     "NormalizationStage",
     "QualitySourceScorer",
     "RuleBasedEntityResolver",
+    "ScoringStrategy",
     "SimpleKnowledgeMerger",
     "SourceScoringStage",
     "ThresholdSelector",

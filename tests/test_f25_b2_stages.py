@@ -521,7 +521,7 @@ def test_provenance_all_fields_set() -> None:
     # EntityResolution (now defaults to ContextualEntityResolver)
     ctx = EntityResolutionStage().execute(ctx)
     assert ctx.provenance.resolver_name == "ContextualEntityResolver"
-    assert ctx.provenance.resolver_version == "3.0.0"
+    assert ctx.provenance.resolver_version == "3.1.0"
 
     # ConflictDetection
     ctx = ConflictDetectionStage().execute(ctx)
