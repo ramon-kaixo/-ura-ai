@@ -3,6 +3,16 @@
 Estrategia C: SemanticFact es una proyección/adaptador de KnowledgeFact.
 El modelo canónico es KnowledgeFact. SemanticFact se deriva mediante
 transformación explícita.
+
+Contrato del bridge:
+- Determinista: mismo KnowledgeFact → mismo dict
+- Puro: sin efectos secundarios, sin IO, sin llamadas externas
+- Idempotente: aplicar dos veces produce el mismo resultado
+- Sin pérdida de información en los campos mapeados
+- Datos perdidos documentados (no hay equivalente en SemanticFact)
+
+NO hay transformación inversa (SemanticFact → KnowledgeFact).
+El bridge es una proyección unidireccional.
 """
 
 from __future__ import annotations
@@ -13,22 +23,21 @@ if TYPE_CHECKING:
     from motor.core.fusion.models import Fact, FactVersion, KnowledgeFact
 
 
+# Datos que KnowledgeFact tiene y SemanticFact NO:
+# - superseded_by: str | None  (gestión de versionado F25)
+# - previous_version: str | None  (gestión de versionado F25)
+# - evidence: tuple[Evidence, ...]  (campo deprecated)
+# - source_score: SourceScore | None  (scoring de fuentes)
+# Estos campos no tienen equivalente en el modelo de memoria episódica.
+
+
 def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
     """Proyecta un KnowledgeFact a un dict compatible con SemanticFact.
 
-    No se importa SemanticFact directamente para evitar dependencias
-    cruzadas en tiempo de importación. El dict resultante puede pasarse
-    a SemanticMemoryStore.store() o a un constructor de SemanticFact.
-
-    Mapeo:
-    - subject → subject
-    - predicate → predicate
-    - object → object_value
-    - confidence → confidence
-    - evidence_ids → source_episode_ids (conversión semántica)
-    - created_at → created_at
-    - id → id
-    - version → version
+    Restricciones:
+    - Sin pérdida en campos mapeados (ver docstring del módulo para pérdidas)
+    - importance = confidence × 0.8 (heurística: confianza como importancia base)
+    - source_episode_ids = evidence_ids (conversión semántica)
     """
     return {
         "id": kf.id,
@@ -36,7 +45,7 @@ def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
         "predicate": kf.predicate,
         "object_value": kf.object,
         "confidence": kf.confidence,
-        "importance": kf.confidence * 0.8,  # heurística: confianza como importancia base
+        "importance": kf.confidence * 0.8,
         "source_episode_ids": list(kf.evidence_ids),
         "tags": ["fusion", "knowledge"],
         "version": kf.version,
@@ -49,7 +58,12 @@ def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
 
 
 def fact_version_to_semantic_fact(fact: Fact, version: FactVersion) -> dict:
-    """Proyecta un par (Fact, FactVersion) a dict compatible con SemanticFact."""
+    """Proyecta un par (Fact, FactVersion) a dict compatible con SemanticFact.
+
+    Restricciones:
+    - Solo la versión vigente debe proyectarse (versiones obsoletas NO)
+    - importance = confidence × 0.8
+    """
     return {
         "id": fact.fact_id,
         "subject": fact.subject,
