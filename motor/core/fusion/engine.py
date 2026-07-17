@@ -108,6 +108,9 @@ class FusionPipeline:
         Si se proporcionaron componentes individuales, delega en
         FusionEngine.fuse(). Si se proporcionaron etapas, las
         ejecuta secuencialmente usando FusionContext.
+
+        El resultado incluye un FactIndex con los Facts producidos,
+        indexados por entidad, predicado y evidencia.
         """
         if self._engine is not None:
             return self._engine.fuse(bundle, documents)
@@ -115,7 +118,29 @@ class FusionPipeline:
         context = _build_context(bundle, documents)
         for stage in self._stages:
             context = stage.execute(context)
-        return _context_to_result(context)
+        result = _context_to_result(context)
+
+        # Construir FactIndex desde los Facts producidos
+        from motor.core.fusion.fact_index import FactIndex
+        from motor.core.fusion.models import Fact, FactVersion, make_fact_id
+
+        idx = FactIndex()
+        for kf in result.accepted:
+            fid = make_fact_id(kf.subject, kf.predicate, kf.object)
+            fact = Fact(fact_id=fid, subject=kf.subject, predicate=kf.predicate, object=kf.object)
+            version = FactVersion(
+                version_id=f"v{kf.version}",
+                fact_id=fid,
+                confidence=kf.confidence,
+                evidence_ids=kf.evidence_ids,
+                provenance=kf.provenance,
+                created_at=kf.created_at or 0.0,
+            )
+            idx.add_fact_version(fact, version)
+        idx.freeze()
+        result.index = idx
+
+        return result
 
 
 def _build_context(
