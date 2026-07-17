@@ -233,11 +233,22 @@ class FactHistory:
     # ── Serialización (para pruebas) ─────────────────
 
     def to_dict(self) -> dict:
+        """Serialización canónica.
+
+        Orden determinado: versiones ordenadas por created_at,
+        tombstones ordenadas por removed_at. Esto garantiza que
+        el mismo historial → mismo dict → mismo checksum,
+        independientemente del orden de inserción en memoria.
+        """
+        sorted_versions = sorted(self._versions.values(), key=lambda v: v.created_at)
+        sorted_tombstones = sorted(self._tombstones.values(), key=lambda t: t.removed_at)
+
         return {
+            "schema_version": "1",
             "fact_id": self._fact_id,
             "current": self._current,
-            "versions": {
-                vid: {
+            "versions": [
+                {
                     "version_id": v.version_id,
                     "fact_id": v.fact_id,
                     "confidence": v.confidence,
@@ -247,17 +258,17 @@ class FactHistory:
                     "supersedes": v.supersedes,
                     "state": v.state.value,
                 }
-                for vid, v in self._versions.items()
-            },
-            "tombstones": {
-                tid: {
+                for v in sorted_versions
+            ],
+            "tombstones": [
+                {
                     "fact_id": t.fact_id,
                     "removed_at": t.removed_at,
                     "reason": t.reason,
                     "version_id": t.version_id,
                 }
-                for tid, t in self._tombstones.items()
-            },
+                for t in sorted_tombstones
+            ],
             "created": self._created,
             "updated": self._updated,
         }
@@ -267,19 +278,36 @@ class FactHistory:
         from motor.core.fusion.models import Fact, FactTombstone, FactVersion, VersionState
 
         # ruff: noqa: SLF001 — acceso controlado a miembros internos para deserialización
-        versions = {
-            vid: FactVersion(
-                version_id=v["version_id"],
-                fact_id=v["fact_id"],
-                confidence=v["confidence"],
-                evidence_ids=tuple(v["evidence_ids"]),
-                provenance=tuple(v["provenance"]),
-                created_at=v["created_at"],
-                supersedes=v.get("supersedes"),
-                state=VersionState(v.get("state", "current")),
-            )
-            for vid, v in data["versions"].items()
-        }
+        raw_versions = data.get("versions", {})
+        if isinstance(raw_versions, list):
+            versions = {
+                v["version_id"]: FactVersion(
+                    version_id=v["version_id"],
+                    fact_id=v["fact_id"],
+                    confidence=v["confidence"],
+                    evidence_ids=tuple(v.get("evidence_ids", [])),
+                    provenance=tuple(v.get("provenance", [])),
+                    created_at=v["created_at"],
+                    supersedes=v.get("supersedes"),
+                    state=VersionState(v.get("state", "current")),
+                )
+                for v in raw_versions
+            }
+        else:
+            # formato legacy: dict de version_id -> version
+            versions = {
+                vid: FactVersion(
+                    version_id=v["version_id"],
+                    fact_id=v["fact_id"],
+                    confidence=v["confidence"],
+                    evidence_ids=tuple(v.get("evidence_ids", [])),
+                    provenance=tuple(v.get("provenance", [])),
+                    created_at=v["created_at"],
+                    supersedes=v.get("supersedes"),
+                    state=VersionState(v.get("state", "current")),
+                )
+                for vid, v in raw_versions.items()
+            }
         first_vid = min(versions.keys(), key=lambda k: versions[k].created_at)
         first_v = versions[first_vid]
 
@@ -306,7 +334,14 @@ class FactHistory:
                     history._current = v.version_id
                     break
 
-        history._tombstones = {
-            tid: FactTombstone(**t) for tid, t in data.get("tombstones", {}).items()
-        }
+        raw_tombstones = data.get("tombstones", {})
+        if isinstance(raw_tombstones, list):
+            history._tombstones = {
+                t["version_id"] or f"ts_{i}": FactTombstone(**t)
+                for i, t in enumerate(raw_tombstones)
+            }
+        else:
+            history._tombstones = {
+                tid: FactTombstone(**t) for tid, t in raw_tombstones.items()
+            }
         return history
