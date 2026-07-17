@@ -1,161 +1,129 @@
-"""FactIndex — índice de hechos (R06, F25-B4).
+"""FactIndex — índice de hechos (R06, F25-B4/B6).
 
-Componente arquitectónico independiente para indexación y consulta
-eficiente de KnowledgeFact.
-
-No depende de FusionPipeline, KnowledgeMerger ni EntityResolver.
+Soporta tanto KnowledgeFact (legacy) como Fact+FactVersion (nuevo modelo).
+FactIndex indexa solo la versión vigente. Histórico via FactHistory.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from motor.core.fusion.models import KnowledgeFact
+    from motor.core.fusion.models import Fact, FactVersion, KnowledgeFact
 
 
 class FactIndex:
     """Índice de hechos con índices secundarios.
 
-    Responsabilidad única: indexar hechos y localizarlos eficientemente.
+    Soporta dos modos:
+    - Legacy: add_fact(KnowledgeFact) — índices por subject/predicate
+    - Nuevo: add_fact_version(Fact, FactVersion) — índices por Fact.subject/predicate
 
     Índices mantenidos (todos O(1) amortizado):
-    - fact_id → KnowledgeFact (índice primario)
+    - fact_id → fact (KnowledgeFact o tuple[Fact, FactVersion])
     - entity (subject) → ordered set[fact_id]
     - predicate → ordered set[fact_id]
     - (subject, predicate) → ordered set[fact_id]
     - evidence_id → ordered set[fact_id]
 
-    Los índices secundarios usan dict como ordered set (O(1) add/remove,
-    preserva orden de inserción). No hay duplicados.
-
-    Complejidad garantizada:
-    - add_fact: O(k) donde k = número de índices secundarios = 5 (constante)
-    - remove_fact: O(k · m) donde m = evidence_ids (constante práctico)
-    - lookup primario: O(1)
-    - lookup secundario: O(1) para obtener set, O(m) para resolver facts
-
-    Contrato de concurrencia:
-    - Lecturas concurrentes: seguras (dict.get es atómico en CPython).
+    Concurrencia:
+    - Lecturas concurrentes: seguras (dict.get atómico en CPython).
     - Escrituras: deben serializarse externamente.
-    - Reemplazo atómico: build() → freeze() → swap referencia.
-    - Una vez frozen, el índice es inmutable y thread-safe.
-
-    Inmutabilidad:
-    - KnowledgeFact nunca se modifica. El índice solo almacena referencias.
-    - Los índices secundarios son dicts internos; no se exponen directamente.
-
-    copy() y structural sharing:
-    - Los KnowledgeFact referenciados se comparten (no se copian).
-    - Los dicts de índices son copias shallow (nuevos objetos dict).
-    - Los ordered sets internos (dict[str, None]) también se copian.
-    - El nuevo índice NO está frozen.
+    - build() → freeze() → swap referencia.
     """
 
     def __init__(self) -> None:
-        self._by_id: dict[str, KnowledgeFact] = {}
+        self._by_id: dict[str, Any] = {}
         self._by_entity: dict[str, dict[str, None]] = {}
         self._by_predicate: dict[str, dict[str, None]] = {}
         self._by_sp: dict[tuple[str, str], dict[str, None]] = {}
         self._by_evidence: dict[str, dict[str, None]] = {}
         self._frozen: bool = False
 
-    # ── API pública ──────────────────────────────────
+    # ── API pública (legacy) ──────────────────────────
 
     def add_fact(self, fact: KnowledgeFact) -> None:
-        """Indexa un KnowledgeFact en todos los índices secundarios.
+        """Indexa un KnowledgeFact (legacy)."""
+        self._check_mutable()
+        fid, subj, pred, eids = fact.id, fact.subject, fact.predicate, fact.evidence_ids
+        self._add(fid, fact, subj, pred, eids)
 
-        O(k) donde k = número de índices.
-        Lanza KeyError si el fact_id ya existe.
-        Lanza RuntimeError si el índice está frozen.
-        """
-        if self._frozen:
-            raise RuntimeError("Cannot modify frozen FactIndex")
-        fid = fact.id
-        if not fid:
-            raise ValueError("Fact must have a non-empty id")
-        if fid in self._by_id:
-            raise KeyError(f"Fact '{fid}' already indexed")
-
-        self._by_id[fid] = fact
-        self._add_to_ordered_set(self._by_entity, fact.subject.lower(), fid)
-        self._add_to_ordered_set(self._by_predicate, fact.predicate.lower(), fid)
-        sp_key = (fact.subject.lower(), fact.predicate.lower())
-        self._add_to_ordered_set(self._by_sp, sp_key, fid)
-        for eid in fact.evidence_ids:
-            if eid:
-                self._add_to_ordered_set(self._by_evidence, eid, fid)
-
-    def remove_fact(self, fact_id: str) -> KnowledgeFact:
-        """Elimina un fact del índice y retorna el KnowledgeFact.
-
-        O(k · m) donde k = índices, m = evidence_ids.
-        Lanza KeyError si fact_id no existe.
-        Lanza RuntimeError si el índice está frozen.
-        """
-        if self._frozen:
-            raise RuntimeError("Cannot modify frozen FactIndex")
+    def remove_fact(self, fact_id: str) -> Any:
+        """Elimina un fact del índice."""
+        self._check_mutable()
         fact = self._by_id.pop(fact_id, None)
         if fact is None:
             raise KeyError(f"Fact '{fact_id}' not found")
 
-        self._remove_from_ordered_set(self._by_entity, fact.subject.lower(), fact_id)
-        self._remove_from_ordered_set(self._by_predicate, fact.predicate.lower(), fact_id)
-        sp_key = (fact.subject.lower(), fact.predicate.lower())
-        self._remove_from_ordered_set(self._by_sp, sp_key, fact_id)
-        for eid in fact.evidence_ids:
+        subj, pred, eids = self._extract_keys(fact)
+        self._remove_from_ordered_set(self._by_entity, subj.lower(), fact_id)
+        self._remove_from_ordered_set(self._by_predicate, pred.lower(), fact_id)
+        self._remove_from_ordered_set(self._by_sp, (subj.lower(), pred.lower()), fact_id)
+        for eid in eids:
             if eid:
                 self._remove_from_ordered_set(self._by_evidence, eid, fact_id)
         return fact
 
-    def lookup(self, fact_id: str) -> KnowledgeFact | None:
-        """Retorna un KnowledgeFact por su fact_id. O(1)."""
+    # ── API pública (nuevo modelo) ────────────────────
+
+    def add_fact_version(self, fact: Fact, version: FactVersion) -> None:
+        """Indexa un Fact con su versión vigente.
+
+        Solo la versión vigente se indexa. Histórico via FactHistory.
+        """
+        self._check_mutable()
+        fid = fact.fact_id
+        if fid in self._by_id:
+            raise KeyError(f"Fact '{fid}' already indexed")
+        eids = version.evidence_ids
+        self._add(fid, (fact, version), fact.subject, fact.predicate, eids)
+
+    def update_current(self, fact_id: str, version: FactVersion) -> None:
+        """Actualiza la versión vigente de un Fact ya indexado."""
+        self._check_mutable()
+        entry = self._by_id.get(fact_id)
+        if entry is None:
+            raise KeyError(f"Fact '{fact_id}' not found")
+        if isinstance(entry, tuple):
+            fact = entry[0]
+            self._by_id[fact_id] = (fact, version)
+
+    # ── Lookup ────────────────────────────────────────
+
+    def lookup(self, fact_id: str) -> Any | None:
         return self._by_id.get(fact_id)
 
-    def lookup_entity(self, entity: str) -> list[KnowledgeFact]:
-        """Retorna facts para una entidad (subject). O(1) + O(m)."""
+    def lookup_entity(self, entity: str) -> list[Any]:
         return self._resolve_ids(self._by_entity.get(entity.lower()))
 
-    def lookup_predicate(self, predicate: str) -> list[KnowledgeFact]:
-        """Retorna facts con un predicado. O(1) + O(m)."""
+    def lookup_predicate(self, predicate: str) -> list[Any]:
         return self._resolve_ids(self._by_predicate.get(predicate.lower()))
 
-    def lookup_subject_predicate(self, subject: str, predicate: str) -> list[KnowledgeFact]:
-        """Retorna facts con (subject, predicate). O(1) + O(m)."""
+    def lookup_subject_predicate(self, subject: str, predicate: str) -> list[Any]:
         return self._resolve_ids(
             self._by_sp.get((subject.lower(), predicate.lower()))
         )
 
-    def lookup_evidence(self, evidence_id: str) -> list[KnowledgeFact]:
-        """Retorna facts asociados a un evidence_id. O(1) + O(m)."""
+    def lookup_evidence(self, evidence_id: str) -> list[Any]:
         return self._resolve_ids(self._by_evidence.get(evidence_id))
 
-    # ── Propiedades de estado ─────────────────────────
+    # ── Estado ────────────────────────────────────────
 
     @property
     def size(self) -> int:
-        """Número de facts indexados. O(1)."""
         return len(self._by_id)
 
     @property
     def frozen(self) -> bool:
-        """True si el índice es inmutable."""
         return self._frozen
 
     def freeze(self) -> None:
-        """Congela el índice para uso read-only y swapping atómico."""
         self._frozen = True
 
     # ── Construcción por lotes ─────────────────────────
 
     @classmethod
     def build(cls, facts: list[KnowledgeFact]) -> FactIndex:
-        """Construye un FactIndex frozen desde una lista de facts.
-
-        O(n). Si hay fact_ids duplicados, el primero prevalece.
-        El índice resultante está frozen (inmutable, thread-safe).
-        Equivale a: crear índice vacío + add_fact() secuencial + freeze().
-        """
         idx = cls()
         for fact in facts:
             if not fact.id or fact.id in idx._by_id:
@@ -164,14 +132,19 @@ class FactIndex:
         idx.freeze()
         return idx
 
-    def copy(self) -> FactIndex:
-        """Copia shallow para copy-on-write.
+    @classmethod
+    def build_from_versions(
+        cls, entries: list[tuple[Fact, FactVersion]],
+    ) -> FactIndex:
+        idx = cls()
+        for fact, version in entries:
+            if fact.fact_id in idx._by_id:
+                continue
+            idx.add_fact_version(fact, version)
+        idx.freeze()
+        return idx
 
-        - KnowledgeFact referenciados: compartidos (no se copian).
-        - Dicts de índices: copias shallow (nuevos objetos).
-        - Ordered sets internos (dict[str, None]): copias shallow.
-        - El nuevo índice NO está frozen (permite escritura).
-        """
+    def copy(self) -> FactIndex:
         new = FactIndex()
         new._by_id = dict(self._by_id)
         new._by_entity = {k: dict(v) for k, v in self._by_entity.items()}
@@ -180,11 +153,34 @@ class FactIndex:
         new._by_evidence = {k: dict(v) for k, v in self._by_evidence.items()}
         return new
 
-    # ── Helpers internos ────────────────────────────
+    # ── Internos ───────────────────────────────────────
+
+    def _check_mutable(self) -> None:
+        if self._frozen:
+            raise RuntimeError("Cannot modify frozen FactIndex")
+
+    def _add(self, fid: str, obj: Any, subj: str, pred: str, eids: tuple[str, ...]) -> None:
+        if not fid:
+            raise ValueError("Fact must have a non-empty id")
+        if fid in self._by_id:
+            raise KeyError(f"Fact '{fid}' already indexed")
+        self._by_id[fid] = obj
+        self._add_to_ordered_set(self._by_entity, subj.lower(), fid)
+        self._add_to_ordered_set(self._by_predicate, pred.lower(), fid)
+        self._add_to_ordered_set(self._by_sp, (subj.lower(), pred.lower()), fid)
+        for eid in eids:
+            if eid:
+                self._add_to_ordered_set(self._by_evidence, eid, fid)
+
+    @staticmethod
+    def _extract_keys(entry: Any) -> tuple[str, str, tuple[str, ...]]:
+        if isinstance(entry, tuple):
+            fact, version = entry
+            return fact.subject, fact.predicate, version.evidence_ids
+        return entry.subject, entry.predicate, entry.evidence_ids
 
     @staticmethod
     def _add_to_ordered_set(index: dict, key: object, fact_id: str) -> None:
-        """Añade fact_id al ordered set (dict) para la clave dada. O(1)."""
         inner = index.get(key)
         if inner is None:
             inner = {}
@@ -193,13 +189,11 @@ class FactIndex:
 
     @staticmethod
     def _remove_from_ordered_set(index: dict, key: object, fact_id: str) -> None:
-        """Elimina fact_id del ordered set. O(1)."""
         inner = index.get(key)
         if inner is not None:
             inner.pop(fact_id, None)
 
-    def _resolve_ids(self, ordered_set: dict[str, None] | None) -> list[KnowledgeFact]:
-        """Convierte ordered set de fact_ids en lista de KnowledgeFact."""
+    def _resolve_ids(self, ordered_set: dict[str, None] | None) -> list[Any]:
         if ordered_set is None:
             return []
         return [self._by_id[fid] for fid in ordered_set if fid in self._by_id]

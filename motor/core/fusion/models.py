@@ -10,6 +10,7 @@ Reglas:
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -18,6 +19,26 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from motor.core.web.citation.citation import Evidence
     from motor.core.web.models import WebDocument
+
+
+# ── Normalización canónica de identidad ───
+
+
+def normalize_identity(text: str) -> str:
+    """Normalización canónica para identidad de hechos.
+
+    Única implementación permitida. Todos los puntos donde se calcule
+    un fact_id deben usar exactamente esta función.
+    - lowercase + strip
+    - espacios múltiples → simple
+    - puntuación no esencial eliminada
+    - NO resuelve sinónimos (CEO → Chief Executive Officer)
+    - NO resuelve entidades (Apple → E0001)
+    """
+    text = text.strip().lower()
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[^\w\s]", "", text)
+    return text.strip()
 
 
 # ── IDs deterministas ─────────────────────
@@ -32,9 +53,26 @@ def make_fact_id(
     subject: str,
     predicate: str,
     obj: str,
-    version: int = 1,
 ) -> str:
-    raw = f"{subject}:{predicate}:{obj}:v{version}"
+    """ID determinista de Fact.
+
+    Usa normalize_identity() canónica. version NO participa en la identidad.
+    """
+    raw = (
+        f"{normalize_identity(subject)}:"
+        f"{normalize_identity(predicate)}:"
+        f"{normalize_identity(obj)}"
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def make_version_id(fact_id: str, timestamp: float, content_hash: str) -> str:
+    """ID determinista de versión.
+
+    Independiente del orden de inserción en FactHistory.
+    NO participan: ordinal, current, estado temporal del sistema.
+    """
+    raw = f"{fact_id}:{int(timestamp)}:{content_hash}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -59,15 +97,82 @@ class ConflictType(StrEnum):
 
 
 class ResolutionStatus(StrEnum):
-    """Estado de resolución de una entidad.
-
-    Evita valores mágicos como "UNKNOWN_ENTITY" dispersos por el código.
-    """
+    """Estado de resolución de una entidad."""
 
     RESOLVED = "resolved"
     UNKNOWN = "unknown"
     AMBIGUOUS = "ambiguous"
     ERROR = "error"
+
+
+class VersionState(StrEnum):
+    """Estado de una FactVersion dentro de FactHistory.
+
+    Mutuamente excluyentes. Una versión solo puede estar en un estado.
+    """
+
+    CURRENT = "current"
+    SUPERSEDED = "superseded"
+    ROLLED_BACK = "rolled_back"
+    TOMBSTONE = "obsolete"
+    DELETED = "deleted"
+
+
+# ── Fact (identidad) ──────────────────────
+
+
+@dataclass(frozen=True)
+class Fact:
+    """Identidad inmatable de un hecho de conocimiento.
+
+    - Dos Facts son el mismo hecho si tienen el mismo fact_id.
+    - fact_id se deriva exclusivamente de (normalized subject, predicate, object).
+    - Ningún otro atributo participa en la identidad.
+    - Un Fact no tiene confianza, evidencia ni versión — solo identidad.
+    """
+
+    fact_id: str
+    subject: str
+    predicate: str
+    object: str
+
+
+# ── FactTombstone ─────────────────────────
+
+
+@dataclass(frozen=True)
+class FactTombstone:
+    """Marcador de eliminación lógica de un Fact.
+
+    Participa en FactIndex hasta DELETE físico.
+    """
+
+    fact_id: str
+    removed_at: float
+    reason: str
+    version_id: str | None = None
+
+
+# ── FactVersion (contenido) ───────────────
+
+
+@dataclass(frozen=True)
+class FactVersion:
+    """Una versión concreta de un hecho en un instante.
+
+    - Pertenece exactamente a un Fact (vía fact_id). NO existe sin él.
+    - Diferentes versiones del mismo Fact comparten fact_id.
+    - version_id es independiente del orden de inserción en FactHistory.
+    """
+
+    version_id: str
+    fact_id: str
+    confidence: float
+    evidence_ids: tuple[str, ...] = field(default_factory=tuple)
+    provenance: tuple[str, ...] = field(default_factory=tuple)
+    created_at: float = 0.0
+    supersedes: str | None = None
+    state: VersionState = VersionState.CURRENT
 
 
 # ── ResolvedEntity (salida de EntityResolver) ─
@@ -222,8 +327,10 @@ class KnowledgeFact:
     provenance: tuple[str, ...] = field(default_factory=tuple)
     version: int = 1
     created_at: float = field(default_factory=time.time)
-    superseded_by: str | None = None
     evidence_ids: tuple[str, ...] = field(default_factory=tuple)
+    # DEPRECATED: usar FactHistory en lugar de enlaces entre Facts
+    # Estos campos se eliminarán cuando FactHistory esté completamente integrado.
+    superseded_by: str | None = None
     previous_version: str | None = None
 
 
