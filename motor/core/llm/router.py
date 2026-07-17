@@ -23,10 +23,6 @@ DEFAULT_ROUTES: dict[str, str] = {
     "health": "ollama",
 }
 
-_ERROR_STR_EXCEEDED = "Error: La generación excedió el tiempo de espera."
-_ERROR_STR_CONNECTION = "Error: No se pudo conectar con el servicio de generación."
-
-
 class LLMRouter:
     """Enruta peticiones LLM con circuit breaker, retry y fallback."""
 
@@ -189,7 +185,6 @@ class LLMRouter:
                                 )
                 latency_ms = (time.monotonic() - t0) * 1000
 
-                tokens = None
                 tokens = None
                 if method == "generate" and isinstance(result, str):
                     tokens = max(1, len(result) // 4)
