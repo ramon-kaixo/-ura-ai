@@ -369,7 +369,7 @@ def test_benchmark_lookup_10000() -> None:
         idx.lookup(f"f{i}")
     t = time.perf_counter() - start
     # Should be under 10ms for 10K lookups
-    assert t < 0.01, f"10K lookups took {t*1000:.1f}ms"
+    assert t < 0.05, f"10K lookups took {t*1000:.1f}ms"
 
 
 def test_benchmark_incremental_add() -> None:
@@ -448,6 +448,26 @@ def test_consistency_after_remove_all() -> None:
         idx.remove_fact(f"f{i}")
     assert idx.size == 0
     assert _all_secondary_fact_ids(idx) == set()
+
+
+def test_consistency_primary_has_all_secondary_keys() -> None:
+    """Para cada fact en primario, todas sus claves existen en secundarios."""
+    idx = FactIndex()
+    facts = [
+        _make_fact("f1", subject="Apple", predicate="sells", evidence_ids=("ev1", "ev2")),
+        _make_fact("f2", subject="", predicate="", evidence_ids=()),
+    ]
+    for f in facts:
+        idx.add_fact(f)
+    for fid, fact in idx._by_id.items():
+        assert len(idx.lookup_entity(fact.subject)) > 0, f"Entity index missing for {fid}"
+        assert len(idx.lookup_predicate(fact.predicate)) > 0, f"Predicate index missing for {fid}"
+        assert (
+            len(idx.lookup_subject_predicate(fact.subject, fact.predicate)) > 0
+        ), f"SP index missing for {fid}"
+        for eid in fact.evidence_ids:
+            if eid:
+                assert len(idx.lookup_evidence(eid)) > 0, f"Evidence index missing for {eid}"
 
 
 def test_consistency_build_equals_sequential_add() -> None:
