@@ -49,7 +49,15 @@ def save_snapshot(timeline: MemoryTimeline, path: str, version: str = "") -> str
     fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(path) or ".", suffix=".tmp")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(raw_final)
+        f.flush()
+        os.fsync(f.fileno())  # fsync antes de renombrar
     os.replace(tmp_path, path)
+    # fsync del directorio para garantizar que el rename es persistente
+    dir_fd = os.open(os.path.dirname(path) or ".", os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
     return checksum[:16]
 

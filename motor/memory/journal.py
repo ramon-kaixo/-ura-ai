@@ -36,12 +36,14 @@ class Journal:
         self._count = self._count_lines()
 
     def append(self, entry: MemoryEntry) -> None:
+        """Append + flush + fsync. Garantiza durabilidad en disco."""
         if self._file is None:
             raise RuntimeError("Journal not open")
         line = json.dumps(self._entry_to_dict(entry), ensure_ascii=False)
         with self._lock:
             self._file.write(line + "\n")
             self._file.flush()
+            os.fsync(self._file.fileno())
             self._count += 1
 
     def read_all(self) -> list[dict]:
@@ -89,6 +91,8 @@ class Journal:
     @staticmethod
     def _entry_to_dict(entry: MemoryEntry) -> dict:
         return {
+            "schema_version": 1,
+            "entry_version": entry.metadata.created_by if hasattr(entry.metadata, 'created_by') and entry.metadata.created_by else "1",
             "entry_id": entry.entry_id,
             "timestamp": entry.timestamp,
             "fact_refs": [
