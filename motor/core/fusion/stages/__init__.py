@@ -6,6 +6,7 @@ from motor.core.fusion.stages.conflict_detection import (
 )
 from motor.core.fusion.stages.delta import BasicChangeDetector, KnowledgeDeltaStage
 from motor.core.fusion.stages.entity_resolver import (
+    CachePolicy,
     ContextualEntityResolver,
     EntityDef,
     EntityRegistry,
@@ -32,6 +33,7 @@ from motor.core.fusion.stages.source_scorer import (
 
 __all__ = [
     "BasicChangeDetector",
+    "CachePolicy",
     "ConflictDetectionStage",
     "ContextualEntityResolver",
     "EntityDef",
