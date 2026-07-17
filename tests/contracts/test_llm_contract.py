@@ -45,9 +45,12 @@ class TestAPIExportada:
         esperados = {
             "generate", "embed", "embed_async", "health",
             "CONFIG", "log", "logging",
-            "OllamaProvider", "OpenAIProvider", "AnthropicProvider", "GeminiProvider", "OpenRouterProvider", "LMStudioProvider", "VLLMProvider",
-            "ollama", "openai", "anthropic", "gemini", "openrouter", "lmstudio", "vllm", "base", "registry",
-            "router", "circuit_breaker", "observability", "profiler", "detector", "baseline", "monitor",
+            "OllamaProvider", "OpenAIProvider", "AnthropicProvider",
+            "GeminiProvider", "OpenRouterProvider", "LMStudioProvider", "VLLMProvider",
+            "ollama", "openai", "anthropic", "gemini", "openrouter",
+            "lmstudio", "vllm", "base", "registry",
+            "router", "circuit_breaker", "observability", "profiler",
+            "detector", "baseline", "monitor",
             "provider_name", "Any", "cls", "name",
         }
         extras = exports_no_publicos - esperados
