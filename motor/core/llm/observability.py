@@ -11,12 +11,7 @@ import time
 from collections import defaultdict
 from typing import Any
 
-
-def _percentile(data: list[float], p: float) -> float:
-    if not data:
-        return 0.0
-    idx = max(0, min(len(data) - 1, int(len(data) * p / 100)))
-    return sorted(data)[idx]
+from motor.core.llm._logging import percentile
 
 
 class LLMMetrics:
@@ -71,9 +66,9 @@ class LLMMetrics:
                     "provider": prov,
                     "operation": op,
                     "llamadas_totales": len(latencias),
-                    "latencia_p50_ms": _percentile(latencias, 50),
-                    "latencia_p95_ms": _percentile(latencias, 95),
-                    "latencia_p99_ms": _percentile(latencias, 99),
+                    "latencia_p50_ms": percentile(latencias, 50),
+                    "latencia_p95_ms": percentile(latencias, 95),
+                    "latencia_p99_ms": percentile(latencias, 99),
                     "latencia_min_ms": min(latencias),
                     "latencia_max_ms": max(latencias),
                     "latencia_media_ms": sum(latencias) / len(latencias) if latencias else 0.0,

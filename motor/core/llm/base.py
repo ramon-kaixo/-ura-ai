@@ -9,6 +9,8 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Any
 
+FALLBACK_EMBEDDING_DIMENSION: int = 768
+
 DEFAULT_PROVIDER_CAPABILITIES: dict[str, Any] = {
     "chat": True,
     "embeddings": True,
@@ -184,14 +186,6 @@ def _check_signature(method: Any, expected_params: list[str], optional: list[str
         for ep in expected_params:
             if ep not in param_names:
                 return f"falta parámetro '{ep}'"
-
-        # Verificar que los opcionales tengan default None
-        for op in optional:
-            if op in param_names:
-                param = sig.parameters[op]
-                if param.default is not param.empty and param.default is not None:
-                    # OK si tiene default (no necesariamente None para options)
-                    pass
 
         return None
     except (ValueError, TypeError) as e:

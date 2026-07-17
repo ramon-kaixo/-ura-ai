@@ -17,19 +17,12 @@ from typing import Any
 
 import httpx
 
-from motor.core.llm.base import BaseLLMProvider
+from motor.core.llm._logging import log_call
+from motor.core.llm.base import FALLBACK_EMBEDDING_DIMENSION, BaseLLMProvider
 from motor.core.secrets import get_secret
 
 log = logging.getLogger(__name__)
 
-
-def _log_call(provider: str, model: str, latency_ms: float, error: str | None = None, **extra: Any) -> None:
-    extra_str = " ".join(f"{k}={v}" for k, v in extra.items())
-    msg = "llm_call  provider=%s model=%s latency_ms=%.0f error=%s %s"
-    if error:
-        log.warning(msg, provider, model, latency_ms, error, extra_str)
-    else:
-        log.info(msg, provider, model, latency_ms, "null", extra_str)
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -62,7 +55,10 @@ class GeminiProvider(BaseLLMProvider):
         return f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
 
     def _headers(self) -> dict[str, str]:
-        return {"Content-Type": "application/json"}
+        return {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self._api_key,
+        }
 
     def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
         opts = dict(options or {})
@@ -71,7 +67,7 @@ class GeminiProvider(BaseLLMProvider):
         model_name = model or self._model
         t0 = time.monotonic()
         try:
-            url = f"{self._base_url(model_name)}:generateContent?key={self._api_key}"
+            url = f"{self._base_url(model_name)}:generateContent"
             r = httpx.post(
                 url,
                 headers=self._headers(),
@@ -93,7 +89,7 @@ class GeminiProvider(BaseLLMProvider):
             respuesta = respuesta.strip()
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usageMetadata", {})
-            _log_call(
+            log_call(
                 self._provider_name, model_name, latency_ms,
                 prompt_tokens=usage.get("promptTokenCount"),
                 candidates_tokens=usage.get("candidatesTokenCount"),
@@ -101,20 +97,20 @@ class GeminiProvider(BaseLLMProvider):
             return respuesta or "El modelo no generó ninguna respuesta."
         except httpx.TimeoutException:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "timeout")
+            log_call(self._provider_name, model_name, latency_ms, "timeout")
             return "Error: La generación excedió el tiempo de espera."
         except httpx.HTTPStatusError as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error = f"http_{e.response.status_code}"
-            _log_call(self._provider_name, model_name, latency_ms, error)
+            log_call(self._provider_name, model_name, latency_ms, error)
             return f"Error: El servicio respondió con código {e.response.status_code}."
         except httpx.RequestError:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "connection_error")
+            log_call(self._provider_name, model_name, latency_ms, "connection_error")
             return "Error: No se pudo conectar con el servicio."
         except Exception:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, "unexpected")
+            log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("error inesperado en generate")
             return "Error: Error interno del proveedor."
 
@@ -122,7 +118,7 @@ class GeminiProvider(BaseLLMProvider):
         model_name = model or self._embedding_model
         t0 = time.monotonic()
         try:
-            url = f"{self._base_url(model_name)}:batchEmbedContents?key={self._api_key}"
+            url = f"{self._base_url(model_name)}:batchEmbedContents"
             r = httpx.post(
                 url,
                 headers=self._headers(),
@@ -138,12 +134,12 @@ class GeminiProvider(BaseLLMProvider):
             data = r.json()
             embeddings = [e["values"] for e in data.get("embeddings", [])]
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(embeddings))
+            log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(embeddings))
             return embeddings
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, model_name, latency_ms, str(e))
-            return [[0.0] * 768 for _ in texts]
+            log_call(self._provider_name, model_name, latency_ms, str(e))
+            return [[0.0] * FALLBACK_EMBEDDING_DIMENSION for _ in texts]
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         import asyncio
@@ -153,16 +149,16 @@ class GeminiProvider(BaseLLMProvider):
         t0 = time.monotonic()
         try:
             model_name = self._model
-            url = f"{self._base_url(model_name)}?key={self._api_key}"
+            url = f"{self._base_url(model_name)}"
             r = httpx.get(url, headers=self._headers(), timeout=5)
             latency_ms = (time.monotonic() - t0) * 1000
             if r.is_error:
-                _log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
+                log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
                     "provider": self._provider_name, "status": "error",
                     "detail": r.text[:200], "latency_ms": latency_ms,
                 }
-            _log_call(self._provider_name, "health", latency_ms)
+            log_call(self._provider_name, "health", latency_ms)
             return {
                 "provider": self._provider_name,
                 "status": "ok",
@@ -170,5 +166,5 @@ class GeminiProvider(BaseLLMProvider):
             }
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
-            _log_call(self._provider_name, "health", latency_ms, "health_error")
+            log_call(self._provider_name, "health", latency_ms, "health_error")
             return {"provider": self._provider_name, "status": "error", "detail": str(e), "latency_ms": latency_ms}
