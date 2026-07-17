@@ -41,7 +41,10 @@ class Memory:
         if journal_path:
             self._journal.open(journal_path)
 
-        if auto_recover and snapshot_path and os.path.exists(snapshot_path):
+        if auto_recover and (
+            (snapshot_path and os.path.exists(snapshot_path))
+            or (journal_path and os.path.exists(journal_path))
+        ):
             self._recover()
 
     # ── API pública ──────────────────────────────────
@@ -66,7 +69,8 @@ class Memory:
         if not path:
             path = f"memory_snapshot_{int(__import__('time').time())}.json"
         checksum = _save_snapshot(self._timeline, path, version=version)
-        self._journal.rotate(f"{path}.journal.bak")
+        if self._journal.path:
+            self._journal.rotate(f"{path}.journal.bak")
         self._entry_count_since_snapshot = 0
         return checksum
 
@@ -128,10 +132,11 @@ class Memory:
         """Recupera estado desde snapshot + journal."""
         from motor.memory.models import FactRef, MemoryEntry, MemoryEventType, MemoryMetadata
 
+        entries_dict: dict = {}
         try:
             _, entries_dict = _load_snapshot(self._snapshot_path)
         except (FileNotFoundError, ValueError):
-            return
+            entries_dict = {}  # snapshot no disponible, solo journal
 
         for entry_id, entry_data in sorted(
             entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)
@@ -167,9 +172,12 @@ class Memory:
             except KeyError:
                 pass
 
-        # Replay journal entries after snapshot
+        # Replay journal entries after snapshot (solo los que no están ya en snapshot)
         journal_entries = self._journal.read_all()
+        existing_ids = set(self._timeline.entries.keys())
         for entry_data in journal_entries:
+            if entry_data.get("entry_id", "") in existing_ids:
+                continue  # ya cargado desde snapshot
             fact_refs = tuple(
                 FactRef(
                     fact_id=r["fact_id"],
