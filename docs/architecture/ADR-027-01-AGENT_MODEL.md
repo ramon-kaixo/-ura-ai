@@ -109,11 +109,14 @@ class AgentState(StrEnum):
     PLANNING = "planning"
     READY = "ready"
     RUNNING = "running"
-    WAITING = "waiting"      # esperando herramienta/LLM/subagente
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    TIMEOUT = "timeout"
+    WAITING = "waiting"               # esperando herramienta/LLM/subagente
+    COMPLETED = "completed"            # éxito
+    FAILED = "failed"                 # error interno del agente
+    CANCELLED = "cancelled"           # cancelación externa
+    TIMEOUT = "timeout"               # excedió límite de tiempo
+    PERMISSION_DENIED = "permission_denied"  # operación sin capability
+    TOOL_ERROR = "tool_error"         # error en herramienta no recuperable
+    LLM_ERROR = "llm_error"          # error en LLM no recuperable
 ```
 
 ### AgentResult
@@ -121,9 +124,20 @@ class AgentState(StrEnum):
 ```python
 @dataclass(frozen=True)
 class AgentResult:
+    """Resultado de ejecución de un agente.
+
+    state diferencia 7 resultados posibles (CR-06):
+    - COMPLETED: éxito, objetivo alcanzado
+    - FAILED: error interno del agente o del plan
+    - CANCELLED: cancelación solicitada externamente
+    - TIMEOUT: excedió límite de tiempo
+    - PERMISSION_DENIED: operación sin capability
+    - TOOL_ERROR: error en herramienta (no recuperable)
+    - LLM_ERROR: error en llamada a LLM (no recuperable)
+    """
     agent_id: str
     task_id: str
-    state: AgentState
+    state: AgentState          # COMPLETED | FAILED | CANCELLED | TIMEOUT | PERMISSION_DENIED | TOOL_ERROR | LLM_ERROR
     output: str
     steps_completed: int
     duration_ms: float
@@ -247,7 +261,63 @@ CREATED ──→ PLANNING ──→ READY ──→ RUNNING ──→ COMPLETED
 
 ---
 
+## 3.5 CapabilityGate (CR-01)
+
+### Componente independiente de control de permisos
+
+Toda operación de un agente sobre la plataforma pasa por `CapabilityGate`.
+No hay acceso directo a Tool, Memory, Knowledge ni Web.
+
+```python
+class CapabilityGate:
+    """Gateway único para toda operación de agente sobre la plataforma.
+
+    Toda llamada pasa por aquí. Sin excepción.
+    Verifica capabilities antes de delegar en el servicio destino.
+    """
+
+    def __init__(self, agent_capabilities: set[AgentCapability]) -> None:
+        self._capabilities = agent_capabilities
+
+    def check(self, required: AgentCapability) -> None:
+        if required not in self._capabilities:
+            raise PermissionError(
+                f"Agent lacks capability: {required.value}"
+            )
+
+    def execute_tool(self, tool_name: str, params: dict) -> ToolResult:
+        self.check(AgentCapability.TOOLS_EXECUTE)
+        # delega en ToolRunner
+
+    def read_memory(self, query: str) -> list[MemoryEntry]:
+        self.check(AgentCapability.MEMORY_READ)
+        # delega en MemoryTimeline
+
+    def write_memory(self, entry: MemoryEntry) -> None:
+        self.check(AgentCapability.MEMORY_WRITE)
+        # delega en Memory.append()
+
+    def read_facts(self, entity: str) -> list[KnowledgeFact]:
+        self.check(AgentCapability.FACTS_READ)
+        # delega en FactIndex
+```
+
+**Regla:** Ningún componente del sistema acepta llamadas directas desde un agente sin pasar por `CapabilityGate`.
+
+---
+
 ## 4. Modelo de Ejecución
+
+### Scheduler — Garantías Formales (CR-02)
+
+| Garantía | Descripción |
+|----------|-------------|
+| **FIFO por prioridad** | Dentro de la misma prioridad, las tareas se ejecutan en orden de llegada. |
+| **Ausencia de starvation** | Tareas LOW con envejecimiento: cada 60s sin ejecutar, su prioridad efectiva sube un nivel. Máximo: HIGH. |
+| **Política de empate** | Misma prioridad + misma hora de llegada → menor agent_id primero (lexicográfico). |
+| **Cancelación** | Cooperativa (flag) + forzosa (thread timeout). Siempre posible, sin excepción. |
+| **Reintentos** | Máx 3 por paso, backoff exponencial, solo errores transitorios. |
+| **Shutdown ordenado** | 1. Detener aceptación de nuevas tareas. 2. Cancelar agentes en ejecución. 3. Esperar finalización (timeout 30s). 4. Forzar cancelación de lo restante. |
 
 ### Cola y Prioridades
 
@@ -258,6 +328,7 @@ CREATED ──→ PLANNING ──→ READY ──→ RUNNING ──→ COMPLETED
   3. `NORMAL` — tareas de usuario sin presión temporal
   4. `LOW` — tareas background (mantenimiento, exploración)
 - **Máximo de agentes concurrentes:** configurable (defecto: 5)
+- **Aging:** tareas LOW suben un nivel cada 60s sin ejecutar
 
 ### Reintentos
 
@@ -352,32 +423,69 @@ Sí, bajo estas condiciones:
 - Si el agente detecta que el plan actual no llevará al objetivo
 - Como máximo 2 replanificaciones por tarea
 
-### ¿Qué conserva del plan anterior?
+### ¿Qué conserva del plan anterior? (CR-05)
 
-- Los pasos ya completados (no se reejecutan)
-- El contexto acumulado
-- El objetivo original
-- Las consultas a memoria ya realizadas
+| Elemento | ¿Se conserva? | Justificación |
+|----------|--------------|---------------|
+| Pasos ya completados | ✅ Sí | No se reejecutan. Su resultado está en AgentContext. |
+| Resultados parciales | ✅ Sí | Se conservan en el contexto de ejecución. |
+| Consultas a memoria | ✅ Sí | Ya realizadas, disponibles en context.memory_entries. |
+| Consultas a Facts | ✅ Sí | Ya realizadas, disponibles en context.knowledge_facts. |
+| Contexto conversacional | ✅ Sí | Acumulado, no se descarta. |
+| Plan original | ❌ No | Se reemplaza por el nuevo plan. |
+| Pasos no ejecutados | ❌ No | Se invalidan. El nuevo plan los reemplaza. |
+| Dependencias entre pasos | ❌ No | Se recalculan con el nuevo plan. |
+
+### Replanificación: qué conserva y qué invalida
+
+1. **Conserva:** resultados de pasos ya ejecutados, contexto acumulado, objetivo original, consultas realizadas.
+2. **Invalida:** pasos pendientes, plan original, dependencias no ejecutadas.
+3. **Resultados parciales:** se mantienen en AgentContext y se entregan al nuevo plan como entrada.
 
 ---
 
 ## 8. Gestión de Contexto
 
-### Cuatro contextos separados, sin mezclar:
+### Ownership de Contexto (CR-03)
 
-| Contexto | Contenido | Propietario | Persistencia |
-|----------|-----------|-------------|-------------|
-| **Ejecución** | Estado interno del agente (paso actual, variables) | Executor | En memoria (volátil) |
-| **Conversacional** | Historial de mensajes usuario↔agente | AgentSession | F26 (MemoryEntry por conversación) |
-| **Memoria** | Facts (F25) + MemoryEntries (F26) recuperados | ContextRetriever | No persiste (se reconstruye cada vez) |
-| **Plan** | Plan actual + steps completados | Planner | Solo mientras dura la ejecución |
+| Contexto | Quién crea | Quién modifica | Quién destruye | ¿Compartido? |
+|----------|-----------|---------------|---------------|--------------|
+| **Ejecución** | Executor (al iniciar el agente) | Executor (entre pasos) | Executor (al finalizar) | ❌ No. Cada agente tiene el suyo. |
+| **Conversacional** | AgentSession (primera interacción) | Executor (cada mensaje) | AgentSession (al cerrar sesión) | ❌ No. Por conversación. |
+| **Memoria** | ContextRetriever (por consulta) | ContextRetriever (solo lectura) | Recolector de basura (al descartar) | ❌ No. Se reconstruye por consulta. |
+| **Plan** | Planner (al planificar) | Planner (solo en replanificación) | Executor (al finalizar tarea) | ❌ No. Por agente. |
 
-### Reglas
+**Regla absoluta: ningún contexto se comparte entre agentes.**
 
-- El contexto conversacional se conserva entre invocaciones del agente
-- El contexto de ejecución se pierde al finalizar el agente
-- El contexto de memoria se reconstruye en cada paso
-- El contexto del plan persiste solo durante la ejecución activa
+---
+
+## 8.5 Contrato de Herramientas (CR-04)
+
+Toda herramienta registrada en ToolRunner debe cumplir este contrato:
+
+```python
+@dataclass(frozen=True)
+class ToolContract:
+    name: str
+    timeout_seconds: int = 30
+    cancelable: bool = True
+    idempotent: bool = False
+    side_effects: list[str] = field(default_factory=list)
+    expected_cost_units: int = 5
+    description: str = ""
+```
+
+### Ejemplos
+
+| Herramienta | Timeout | Cancelable | Idempotente | Efectos secundarios | Coste |
+|-------------|---------|-----------|-------------|-------------------|-------|
+| `web.search` | 15s | Sí | Sí | Ninguno | 2 |
+| `web.fetch` | 30s | Sí | Sí | Ninguno | 3 |
+| `memory.read` | 5s | Sí | Sí | Ninguno | 1 |
+| `memory.write` | 5s | Sí | No | Crea MemoryEntry | 2 |
+| `facts.read` | 5s | Sí | Sí | Ninguno | 1 |
+| `llm.call` | 30s | No | No | Consume tokens | 10 |
+| `agent.spawn` | 10s | Sí | No | Crea subagente | 5 |
 
 ---
 
@@ -425,7 +533,43 @@ Sí, bajo estas condiciones:
 
 ---
 
-## 11. Recuperación
+## 10.5 Presupuesto Acumulado (CR-07)
+
+Cada agente mantiene un presupuesto multidimensional que se consume durante la ejecución:
+
+| Dimensión | Unidad | Límite defecto | Se agota con... |
+|-----------|--------|---------------|-----------------|
+| **Tiempo** | segundos | 300 | Cada paso consume duración real |
+| **Llamadas LLM** | llamadas | 50 | `llm.call` incrementa en 1 |
+| **Herramientas** | invocaciones | 20 | Cualquier `tools.execute` incrementa en 1 |
+| **Memoria (lectura)** | consultas | 100 | `memory.read` incrementa en 1 |
+| **Coste monetario** | unidades | 1000 | Cada operación consume su `expected_cost_units` |
+| **Subagentes** | agentes | 3 | `agent.spawn` incrementa en 1 |
+
+### Verificación
+
+- El presupuesto se verifica ANTES de cada operación (pre-check)
+- Si una operación excede el presupuesto restante, se deniega con `PERMISSION_DENIED`
+- El presupuesto se registra en `AgentExecution.cost_units` y se persiste en `AgentAuditRecord`
+- No hay sobregiro: una vez agotado, el agente debe finalizar su paso actual y detenerse
+
+---
+
+## 11. Recuperación (CR-08)
+
+### ¿Un agente reiniciado continúa, replanifica o reinicia?
+
+| Escenario | Comportamiento | Justificación |
+|-----------|---------------|---------------|
+| **Reanudación normal** | Continúa (misma tarea, mismo plan) | El agente no se reinicia, solo se recupera de un paso fallido |
+| **Caída del proceso** | ❌ No continúa. Se pierde. | El estado en memoria no sobrevive al reinicio. La auditoría está en F26. |
+| **Timeout** | ❌ TIMEOUT. No continúa. | La tarea excedió su presupuesto de tiempo. Debe crearse una nueva. |
+| **Cancelación** | ❌ CANCELLED. No continúa. | Cancelación es irreversible para la tarea actual. |
+| **Error de herramienta recuperable** | Reintenta (hasta 3 veces) | El error es transitorio, la tarea puede continuar. |
+| **Error de herramienta no recuperable** | Replanifica (si hay plan alternativo) | El paso actual no es viable, pero el objetivo puede alcanzarse con otro plan. |
+| **Permiso denegado** | ❌ PERMISSION_DENIED. No continúa. | La tarea requiere capabilities que no tiene. No puede continuar. |
+
+**Regla:** Un agente reiniciado tras caída de proceso NO continúa. La única información que sobrevive es el `AgentAuditRecord` en F26.
 
 | Escenario | Comportamiento | Recuperación |
 |-----------|---------------|-------------|

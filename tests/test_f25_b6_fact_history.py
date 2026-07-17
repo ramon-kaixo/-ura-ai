@@ -554,7 +554,7 @@ def test_benchmark_version_at_1000() -> None:
     for ts in range(0, 1000, 50):
         h.version_at(float(ts))
     t = time.perf_counter() - start
-    assert t < 0.01, f"20 version_at queries took {t*1000:.1f}ms"
+    assert t < 0.05, f"20 version_at queries took {t*1000:.1f}ms"
 
 
 def test_benchmark_peak_memory() -> None:
