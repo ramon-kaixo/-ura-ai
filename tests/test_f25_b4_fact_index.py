@@ -398,3 +398,113 @@ def test_benchmark_memory_estimate() -> None:
     # Print memory for visibility (not an assertion)
     fact_size = sum(sys.getsizeof(f) for f in facts)
     print(f"\n  10K facts total size: {fact_size / 1024:.1f} KB")
+
+
+# ── B4.13: consistency across indexes ──────────────────
+
+
+def _all_secondary_fact_ids(idx: FactIndex) -> set[str]:
+    """Retorna todos los fact_ids referenciados en índices secundarios."""
+    ids: set[str] = set()
+    for inner in idx._by_entity.values():
+        ids.update(inner)
+    for inner in idx._by_predicate.values():
+        ids.update(inner)
+    for inner in idx._by_sp.values():
+        ids.update(inner)
+    for inner in idx._by_evidence.values():
+        ids.update(inner)
+    return ids
+
+
+def test_consistency_after_add() -> None:
+    """Todo fact en índices secundarios existe en el primario."""
+    idx = FactIndex()
+    f1 = _make_fact("f1", subject="Apple", predicate="sells", evidence_ids=("ev1",))
+    f2 = _make_fact("f2", subject="Tesla", predicate="makes", evidence_ids=("ev2",))
+    idx.add_fact(f1)
+    idx.add_fact(f2)
+    secondary_ids = _all_secondary_fact_ids(idx)
+    for fid in secondary_ids:
+        assert idx.lookup(fid) is not None, f"Secondary index references {fid} not in primary"
+
+
+def test_consistency_after_remove() -> None:
+    """Ningún fact eliminado permanece en índices secundarios."""
+    idx = FactIndex()
+    f = _make_fact("f1", subject="Apple", predicate="sells", evidence_ids=("ev1",))
+    idx.add_fact(f)
+    idx.remove_fact("f1")
+    secondary_ids = _all_secondary_fact_ids(idx)
+    assert "f1" not in secondary_ids, "Removed fact still in secondary index"
+
+
+def test_consistency_after_remove_all() -> None:
+    """Eliminar todos los facts → índices secundarios vacíos."""
+    idx = FactIndex()
+    for i in range(10):
+        idx.add_fact(_make_fact(f"f{i}", subject=f"E{i}", evidence_ids=(f"ev{i}",)))
+    for i in range(10):
+        idx.remove_fact(f"f{i}")
+    assert idx.size == 0
+    assert _all_secondary_fact_ids(idx) == set()
+
+
+def test_consistency_build_equals_sequential_add() -> None:
+    """build(list) produce el mismo estado que add_fact() secuencial."""
+    facts = [
+        _make_fact("f1", subject="Apple", predicate="sells", evidence_ids=("ev1",)),
+        _make_fact("f2", subject="Tesla", predicate="makes", evidence_ids=("ev2",)),
+        _make_fact("f3", subject="Apple", predicate="sells", evidence_ids=("ev3",)),
+    ]
+    idx_build = FactIndex.build(facts)
+    idx_seq = FactIndex()
+    for f in facts:
+        idx_seq.add_fact(f)
+    idx_seq.freeze()
+
+    # Same primary
+    assert idx_build.size == idx_seq.size
+    for f in facts:
+        assert (idx_build.lookup(f.id) is not None) == (idx_seq.lookup(f.id) is not None)
+
+    # Same secondary indexes
+    assert len(idx_build.lookup_entity("apple")) == len(idx_seq.lookup_entity("apple"))
+    assert len(idx_build.lookup_predicate("sells")) == len(idx_seq.lookup_predicate("sells"))
+    assert (
+        len(idx_build.lookup_subject_predicate("Apple", "sells"))
+        == len(idx_seq.lookup_subject_predicate("Apple", "sells"))
+    )
+
+
+def test_consistency_copy_preserves_integrity() -> None:
+    """copy() preserva la consistencia entre índices."""
+    facts = [_make_fact(f"f{i}", subject=f"E{i % 5}") for i in range(20)]
+    idx = FactIndex.build(facts)
+    mutable = idx.copy()
+    # Añadir nuevo fact al mutable
+    new_f = _make_fact("f99", subject="E99", evidence_ids=("ev99",))
+    mutable.add_fact(new_f)
+    secondary_ids = _all_secondary_fact_ids(mutable)
+    for fid in secondary_ids:
+        assert mutable.lookup(fid) is not None
+
+
+# ── B4.14: skewed distribution benchmark ────────────────
+
+
+def test_benchmark_skewed_distribution() -> None:
+    """100 facts para una entidad + 9900 para otras."""
+    facts = [_make_fact(f"f{i}", subject="HotEntity") for i in range(100)]
+    facts += [_make_fact(f"g{j}", subject=f"Other{j}") for j in range(9900)]
+    start = time.perf_counter()
+    idx = FactIndex.build(facts)
+    build_t = time.perf_counter() - start
+    assert idx.size == 10000
+    # Lookup on the hot entity
+    start = time.perf_counter()
+    hot = idx.lookup_entity("hotentity")
+    lookup_t = time.perf_counter() - start
+    assert len(hot) == 100
+    assert build_t < 0.5, f"Skewed build took {build_t*1000:.1f}ms"
+    assert lookup_t < 0.001, f"Hot entity lookup took {lookup_t*1000:.1f}ms"
