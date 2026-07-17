@@ -140,3 +140,7 @@ v0.21.0-fase21     — Evaluación RAG
 v0.22.0-fase22     — 7 proveedores
 v1.0.0-rc          — Release Candidate  ← NUEVO
 ```
+
+### Fixes (RC→stable)
+- Eliminados 16 tests flaky: sys.modules restaurado tras test de imports circulares
+- 414/414 tests deterministas, 0 fallos
