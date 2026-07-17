@@ -73,7 +73,7 @@ class KnowledgeDeltaStage(BaseStage):
 
     @property
     def stage(self) -> FusionStage:
-        return FusionStage.DELTA_DETECTION
+        return FusionStage.DELTA
 
     @property
     def name(self) -> str:
