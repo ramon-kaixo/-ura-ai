@@ -12,6 +12,7 @@ from motor.core.web.base import (
     Summarizer,
 )
 from motor.core.web.config import WebConfig
+from motor.core.web.crawler.providers.httpx_crawler import CrawledDocument, HttpCrawler
 from motor.core.web.models import Citation, SearchResult, SourceMetadata, WebDocument
 from motor.core.web.pipeline import PipelineStage, WebPipeline
 from motor.core.web.registry import Registry
@@ -20,9 +21,11 @@ from motor.core.web.searcher.providers.searxng import SearXNGSearchProvider
 
 __all__ = [
     "Citation",
+    "CrawledDocument",
     "Crawler",
     "DuckDuckGoSearchProvider",
     "Extractor",
+    "HttpCrawler",
     "PipelineStage",
     "Ranker",
     "Registry",
