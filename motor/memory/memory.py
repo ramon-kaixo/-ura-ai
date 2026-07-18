@@ -7,8 +7,8 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import os
-import threading
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from motor.memory.journal import Journal
 from motor.memory.snapshot import load_snapshot as _load_snapshot
@@ -32,12 +32,14 @@ class Memory:
         journal_path: str = "",
         snapshot_path: str = "",
         auto_recover: bool = True,
+        encryption_key: str = "",
     ) -> None:
         self._timeline = MemoryTimeline()
-        self._journal = Journal()
+        self._journal = Journal(encryption_key=encryption_key)
         self._snapshot_path = snapshot_path
         self._auto_recover = auto_recover
         self._entry_count_since_snapshot = 0
+        self._encryption_key = encryption_key
 
         if journal_path:
             self._journal.open(journal_path)
