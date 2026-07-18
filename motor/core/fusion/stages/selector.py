@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from motor.core.fusion.base import BaseStage, MemoryCandidateSelector
-from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
 from motor.core.fusion.engine import FusionStage
 
 if TYPE_CHECKING:
@@ -61,7 +60,8 @@ class MemoryCandidateSelectionStage(BaseStage):
         return "1.0.0"
 
     def _execute(self, context: FusionContext) -> FusionContext:
-        from motor.memory import Memory, MemoryEntry, MemoryEventType, make_entry_id, FactRef as MemoryFactRef
+        from motor.memory import FactRef as MemoryFactRef
+        from motor.memory import MemoryEntry, MemoryEventType, make_entry_id
 
         ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
         if ambiguous_ids:
@@ -78,8 +78,6 @@ class MemoryCandidateSelectionStage(BaseStage):
         memory = context.statistics.get("_memory_instance")
         if memory is not None and selected:
             for kf in selected:
-                # Proyectar a SemanticFact via bridge
-                semantic = knowledge_fact_to_semantic_fact(kf)
                 # Crear MemoryEntry con FactRef
                 refs = (
                     MemoryFactRef(
