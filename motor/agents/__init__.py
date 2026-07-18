@@ -53,6 +53,7 @@ from motor.agents.models import (
     make_task_id,
     make_tool_execution_id,
 )
+from motor.agents.planner import RuleBasedPlanner
 from motor.agents.runner import (
     AgentToolRunner,
     ToolAdapterError,
@@ -89,6 +90,7 @@ __all__ = [
     "PermissionDecision",
     "PlanStep",
     "Planner",
+    "RuleBasedPlanner",
     "Scheduler",
     "StateMachine",
     "TaskQueue",
