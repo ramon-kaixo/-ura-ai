@@ -63,13 +63,13 @@ def test_tool_runner_rate_limit() -> None:
 
 def test_sanitize_rejects_script_tags() -> None:
     from motor.platform.validator import ProtocolValidator
-    from motor.platform.models import ProtocolEnvelope, VersionHeader, RoutingHeader, TraceHeader, DeliveryHeader, MessageKind, CorrelationId, CausationId
+    from motor.platform.models import ProtocolEnvelope, VersionHeader, RoutingHeader, TraceHeader, DeliveryHeader, MessageKind, CorrelationId, CausationId, SpanId, TraceId
     from motor.platform.serializer import make_message_id, make_envelope_with_checksum
 
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "a", "b", "T", b"<script>alert(1)</script>")
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="a", destination="b")
-    t = TraceHeader(correlation_id=CorrelationId("c"), causation_id=CausationId.root())
+    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId("c"), causation_id=CausationId.root())
     d = DeliveryHeader()
     env = make_envelope_with_checksum(v, r, t, d, b"<script>alert(1)</script>")
 
@@ -86,12 +86,12 @@ def test_sanitize_allows_normal_payload() -> None:
 
 
 def _make_env():
-    from motor.platform.models import ProtocolEnvelope, VersionHeader, RoutingHeader, TraceHeader, DeliveryHeader, MessageKind, CorrelationId, CausationId
+    from motor.platform.models import ProtocolEnvelope, VersionHeader, RoutingHeader, TraceHeader, DeliveryHeader, MessageKind, CorrelationId, CausationId, SpanId, TraceId
     from motor.platform.serializer import make_message_id, make_envelope_with_checksum
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "a", "b", "T", b'{"ok":true}')
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="a", destination="b")
-    t = TraceHeader(correlation_id=CorrelationId("c"), causation_id=CausationId.root())
+    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId("c"), causation_id=CausationId.root())
     d = DeliveryHeader()
     return make_envelope_with_checksum(v, r, t, d, b'{"ok":true}')
 
