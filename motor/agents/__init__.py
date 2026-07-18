@@ -19,6 +19,7 @@ Clasificación de API (42 símbolos exportados):
     ToolTimeoutError, ToolTransientError
 """
 
+from motor.agents.agent import AgentOrchestrator
 from motor.agents.base import (
     Agent,
     AuditLogger,
@@ -78,6 +79,7 @@ __all__ = [
     "AgentPolicy",
     "AgentResult",
     "AgentState",
+    "AgentOrchestrator",
     "AgentStateMachine",
     "AgentTask",
     "AgentScheduler",
