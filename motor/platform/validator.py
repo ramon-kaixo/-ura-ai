@@ -2,21 +2,45 @@
 
 from __future__ import annotations
 
+import logging
+
 from motor.platform.models import DeliverySemantics, MessageKind, ProtocolEnvelope
 from motor.platform.serializer import compute_checksum, verify_checksum
 
+logger = logging.getLogger("ura.security")
+
 
 class ProtocolValidationError(Exception):
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, envelope: ProtocolEnvelope | None = None) -> None:
         self.code = code
         self.message = message
+        self.envelope = envelope
+        if envelope is not None and code not in ("invalid_version", "invalid_schema"):
+            logger.warning(
+                "SECURITY: %s from=%s to=%s type=%s msg=%s",
+                code, envelope.routing.source, envelope.routing.destination,
+                envelope.routing.message_type, message,
+            )
         super().__init__(f"[{code}] {message}")
 
 
 class ProtocolValidator:
-    """All protocol validation in one place."""
+    """All protocol validation and sanitization in one place."""
 
     MAX_PAYLOAD_SIZE = 10 * 1024 * 1024
+    FORBIDDEN_PATTERNS = [
+        b"<script", b"javascript:", b"onload=", b"onerror=",
+        b"../", b"..\\", b"${", b"`",
+    ]
+
+    def _sanitize_payload(self, envelope: ProtocolEnvelope) -> None:
+        """Busca patrones peligrosos en el payload."""
+        for pattern in self.FORBIDDEN_PATTERNS:
+            if pattern in envelope.payload.lower():
+                raise ProtocolValidationError(
+                    "unsafe_payload",
+                    f"Payload contains forbidden pattern: {pattern[:20]}",
+                )
 
     def validate(self, envelope: ProtocolEnvelope) -> None:
         self._validate_version(envelope)
@@ -25,6 +49,7 @@ class ProtocolValidator:
         self._validate_delivery(envelope)
         self._validate_payload(envelope)
         self._validate_checksum_integrity(envelope)
+        self._sanitize_payload(envelope)
 
     def _validate_version(self, envelope: ProtocolEnvelope) -> None:
         v = envelope.version
