@@ -11,6 +11,8 @@ import os
 import threading
 from typing import TYPE_CHECKING
 
+from motor.memory.crypto import decrypt as _decrypt, encrypt as _encrypt
+
 if TYPE_CHECKING:
     from motor.memory.models import MemoryEntry
 
@@ -20,28 +22,37 @@ class Journal:
 
     Cada línea es un JSON con un MemoryEntry serializado.
     El archivo crece hasta el próximo snapshot, momento en que se rota.
+
+    Si encryption_key se proporciona, los datos se cifran con AES-256-CTR
+    antes de escribir en disco. La lectura detecta automáticamente el cifrado.
     """
 
-    def __init__(self, path: str = "") -> None:
+    def __init__(self, path: str = "", encryption_key: str = "") -> None:
         self._path = path
         self._file: object = None
         self._count: int = 0
         self._lock = threading.Lock()
+        self._encryption_key = encryption_key
 
     # ── API ──────────────────────────────────────────
 
     def open(self, path: str) -> None:
         self._path = path
-        self._file = open(path, "a", encoding="utf-8")
+        mode = "ab" if self._encryption_key else "a"
+        enc = None if self._encryption_key else "utf-8"
+        self._file = open(path, mode, encoding=enc)
         self._count = self._count_lines()
 
     def append(self, entry: MemoryEntry) -> None:
         """Append + flush + fsync. Garantiza durabilidad en disco."""
         if self._file is None:
             raise RuntimeError("Journal not open")
-        line = json.dumps(self._entry_to_dict(entry), ensure_ascii=False)
+        raw_line = json.dumps(self._entry_to_dict(entry), ensure_ascii=False) + "\n"
         with self._lock:
-            self._file.write(line + "\n")
+            if self._encryption_key:
+                self._file.write(_encrypt(raw_line.encode(), self._encryption_key))
+            else:
+                self._file.write(raw_line)
             self._file.flush()
             os.fsync(self._file.fileno())
             self._count += 1
@@ -51,15 +62,25 @@ class Journal:
         if not self._path or not os.path.exists(self._path):
             return []
         result: list[dict] = []
-        with open(self._path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    result.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue  # línea corrupta: omitir
+        with open(self._path, "rb") as f:
+            raw = f.read()
+        if not raw:
+            return []
+        # Intentar descifrar si hay clave
+        try:
+            decrypted = _decrypt(raw, self._encryption_key)
+            text = decrypted.decode("utf-8")
+        except (UnicodeDecodeError, Exception):
+            text = raw.decode("utf-8", errors="replace")
+
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                result.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
         return result
 
     def rotate(self, new_path: str) -> None:
@@ -69,7 +90,8 @@ class Journal:
             if self._path and os.path.exists(self._path):
                 os.rename(self._path, new_path)
             if self._path:
-                self._file = open(self._path, "a", encoding="utf-8")
+                self._file = open(self._path, "ab" if self._encryption_key else "a",
+                                  encoding=None if self._encryption_key else "utf-8")
             self._count = 0
 
     def close(self) -> None:
