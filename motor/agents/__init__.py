@@ -23,6 +23,7 @@ from motor.agents.base import (
     TaskQueue,
     ToolRunner,
 )
+from motor.agents.gate import AgentCapabilityGate, DenialCode, PermissionDecision
 from motor.agents.models import (
     AgentAuditRecord,
     AgentCapability,
@@ -47,6 +48,7 @@ __all__ = [
     "Agent",
     "AgentAuditRecord",
     "AgentCapability",
+    "AgentCapabilityGate",
     "AgentContext",
     "AgentExecution",
     "AgentPlan",
@@ -58,7 +60,9 @@ __all__ = [
     "AuditEvent",
     "AuditLogger",
     "CapabilityGate",
+    "DenialCode",
     "Executor",
+    "PermissionDecision",
     "PlanStep",
     "Planner",
     "Scheduler",
