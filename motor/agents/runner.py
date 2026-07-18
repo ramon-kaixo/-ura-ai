@@ -9,12 +9,10 @@ from __future__ import annotations
 
 import threading
 import time
-from enum import StrEnum
-from typing import TYPE_CHECKING
 
-from motor.agents.base import ToolAdapter, ToolRunner as ToolRunnerABC
+from motor.agents.base import ToolAdapter
+from motor.agents.base import ToolRunner as ToolRunnerABC
 from motor.agents.models import ToolContract, ToolRequest, ToolResult
-
 
 # ── Excepciones tipificadas (TR-20) ────────
 
@@ -204,7 +202,6 @@ class AgentToolRunner(ToolRunnerABC):
         if error_container:
             err = error_container[0]
             error_type = type(err).__name__
-            is_transient = isinstance(err, ToolTransientError)
             return ToolResult(
                 execution_id=request.execution_id,
                 tool_name=request.tool_name,
