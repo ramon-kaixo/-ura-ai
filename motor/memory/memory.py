@@ -6,9 +6,12 @@ Punto de entrada único para toda operación de memoria.
 
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+
+logger = logging.getLogger("ura.memory")
 
 from motor.memory.journal import Journal
 from motor.memory.snapshot import load_snapshot as _load_snapshot
@@ -58,11 +61,14 @@ class Memory:
 
     def append(self, entry: MemoryEntry) -> None:
         """Añade un entry a la timeline y al journal (si está abierto)."""
+        if self._shutdown:
+            raise RuntimeError("Memory is shutting down")
         self._timeline.append(entry)
         if self._journal.path:
             self._journal.append(entry)
         self._entry_count_since_snapshot += 1
         self._notify_subscribers(entry)
+        logger.debug("appended entry=%s ts=%.0f source=%s", entry.entry_id, entry.timestamp, entry.source)
 
     def state_at(self, timestamp: float) -> MemoryEntry | None:
         return self._timeline.state_at(timestamp)
@@ -72,10 +78,13 @@ class Memory:
         path = self._snapshot_path
         if not path:
             path = f"memory_snapshot_{int(__import__('time').time())}.json"
-        checksum = _save_snapshot(self._timeline, path, version=version)
+        checksum = _save_snapshot(self._timeline, path, version=version,
+                                  encryption_key=self._encryption_key)
         if self._journal.path:
             self._journal.rotate(f"{path}.journal.bak")
         self._entry_count_since_snapshot = 0
+        logger.info("snapshot saved entries=%d checksum=%s path=%s",
+                     self._timeline.size, checksum, path)
         return checksum
 
     # ── Persistencia ─────────────────────────────────
@@ -126,6 +135,53 @@ class Memory:
             except KeyError:
                 pass  # duplicados tolerados en carga
         return memory
+
+    # ── Health / Readiness / Liveness ──────────────────
+
+    def health(self) -> dict:
+        """Health check. Retorna estado del subsistema."""
+        return {
+            "service": "memory",
+            "status": "ok",
+            "entries": self._timeline.size,
+            "journal": bool(self._journal.path),
+            "snapshot": bool(self._snapshot_path),
+            "encryption": bool(self._journal._encryption_key),
+        }
+
+    def readiness(self) -> dict:
+        """Readiness check. True si puede aceptar lecturas/escrituras."""
+        journal_ok = not self._journal.path or os.path.exists(self._journal.path)
+        return {
+            "service": "memory",
+            "ready": journal_ok and not self._shutdown,
+        }
+
+    def liveness(self) -> dict:
+        """Liveness check. True si el hilo principal responde."""
+        return {
+            "service": "memory",
+            "alive": True,
+        }
+
+    # ── Graceful shutdown ──────────────────────────────
+
+    @property
+    def _shutdown(self) -> bool:
+        return getattr(self, "_shutdown_flag", False)
+
+    def shutdown(self, timeout: int = 30) -> None:
+        """Graceful shutdown. Cierra journal, espera operaciones en curso."""
+        self._shutdown_flag = True
+        import time, threading
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            # Esperar a que no haya operaciones en curso
+            if self._journal.count > 0:
+                time.sleep(0.1)
+            else:
+                break
+        self._journal.close()
 
     # ── Suscripción de eventos ─────────────────────────
 

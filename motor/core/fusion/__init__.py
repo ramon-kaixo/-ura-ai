@@ -3,8 +3,17 @@
 Fusión multi-documento, resolución de conflictos, detección de
 contradicciones y consolidación de fuentes.
 
-F25 consume los CitationBundle y Evidence generados por F24 y produce
-KnowledgeFact con trazabilidad completa.
+API Classification:
+- 🟢 ESTABLE: FusionPipeline, FusionResult, FusionContext, KnowledgeFact,
+    Fact, FactVersion, FactIndex, FactHistory, PipelineStage, BaseStage,
+    EntityResolver, ConflictResolver, KnowledgeMerger, SourceScorer,
+    ChangeDetector, MemoryCandidateSelector
+- 🟡 ADVANCED: FusionConfig, FusionRegistry, FusionProvenance,
+    StageProvenance, Conflict, ConflictGraph, EvidenceSet,
+    ResolvedEntity, SourceScore, KnowledgeClaim, KnowledgeDelta,
+    FactTombstone, VersionState, ContextBuilder
+- 🔵 INTERNA: make_claim_id, make_fact_id, make_version_id,
+    make_conflict_id, normalize_identity, FactHistory
 """
 
 from __future__ import annotations
