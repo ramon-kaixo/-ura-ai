@@ -21,6 +21,7 @@ from motor.agents.base import (
     Scheduler,
     StateMachine,
     TaskQueue,
+    ToolAdapter,
     ToolRunner,
 )
 from motor.agents.gate import AgentCapabilityGate, DenialCode, PermissionDecision
@@ -37,10 +38,23 @@ from motor.agents.models import (
     AuditEvent,
     PlanStep,
     ToolContract,
+    ToolRequest,
+    ToolResult,
     make_agent_id,
     make_plan_id,
     make_step_id,
     make_task_id,
+    make_tool_execution_id,
+)
+from motor.agents.runner import (
+    AgentToolRunner,
+    ToolAdapterError,
+    ToolCancelledError,
+    ToolError,
+    ToolNotFoundError,
+    ToolPermanentError,
+    ToolTimeoutError,
+    ToolTransientError,
 )
 from motor.agents.state import AgentStateMachine
 
@@ -57,6 +71,7 @@ __all__ = [
     "AgentState",
     "AgentStateMachine",
     "AgentTask",
+    "AgentToolRunner",
     "AuditEvent",
     "AuditLogger",
     "CapabilityGate",
@@ -68,10 +83,21 @@ __all__ = [
     "Scheduler",
     "StateMachine",
     "TaskQueue",
+    "ToolAdapter",
+    "ToolAdapterError",
+    "ToolCancelledError",
     "ToolContract",
+    "ToolError",
+    "ToolNotFoundError",
+    "ToolPermanentError",
+    "ToolRequest",
+    "ToolResult",
     "ToolRunner",
+    "ToolTimeoutError",
+    "ToolTransientError",
     "make_agent_id",
     "make_plan_id",
     "make_step_id",
     "make_task_id",
+    "make_tool_execution_id",
 ]

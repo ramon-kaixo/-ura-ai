@@ -9,7 +9,6 @@ import hashlib
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-
 # ── IDs deterministas ─────────────────────
 
 
@@ -180,3 +179,32 @@ class AuditEvent:
     agent_id: str
     timestamp: float
     data: dict = field(default_factory=dict)
+
+
+# ── ToolRunner ─────────────────────────────
+
+
+@dataclass(frozen=True)
+class ToolRequest:
+    execution_id: str
+    tool_name: str
+    params: dict
+    timeout: int = 30
+    attempt: int = 1
+
+
+@dataclass(frozen=True)
+class ToolResult:
+    execution_id: str
+    tool_name: str
+    success: bool
+    data: dict = field(default_factory=dict)
+    error: str | None = None
+    error_type: str | None = None
+    duration_ms: float = 0.0
+    attempt: int = 1
+
+
+def make_tool_execution_id(agent_id: str, tool_name: str, timestamp: float) -> str:
+    raw = f"{agent_id}:{tool_name}:{int(timestamp)}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]

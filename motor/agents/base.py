@@ -11,12 +11,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from motor.agents.models import (
-        AgentAuditRecord,
         AgentCapability,
         AgentContext,
         AgentExecution,
         AgentPlan,
-        AgentPolicy,
         AgentResult,
         AgentState,
         AgentTask,
@@ -210,6 +208,29 @@ class TaskQueue(ABC):
     @abstractmethod
     def size(self) -> int:
         """Número de ejecuciones en cola."""
+        ...
+
+
+class ToolAdapter(ABC):
+    """Adaptador para una herramienta concreta.
+
+    ToolRunner nunca ejecuta herramientas directamente.
+    Siempre a través de un ToolAdapter.
+    """
+
+    @abstractmethod
+    def name(self) -> str:
+        """Nombre único de la herramienta."""
+        ...
+
+    @abstractmethod
+    def run(self, params: dict) -> dict:
+        """Ejecuta la herramienta y retorna el resultado."""
+        ...
+
+    @abstractmethod
+    def cancel(self) -> None:
+        """Cancela la ejecución en curso (cooperativa)."""
         ...
 
 
