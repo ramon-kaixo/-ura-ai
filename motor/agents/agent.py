@@ -13,12 +13,13 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from motor.agents.base import Agent as AgentABC, CapabilityGate as CapabilityGateABC
+from motor.agents.base import Agent as AgentABC
+from motor.agents.base import CapabilityGate as CapabilityGateABC
+from motor.agents.models import AgentCapability
 
 if TYPE_CHECKING:
-    from motor.agents.models import AgentExecution, AgentResult, AgentState, AgentTask
     from motor.agents.base import AuditLogger, Planner, Scheduler, ToolRunner
-    from motor.agents.models import AgentCapability
+    from motor.agents.models import AgentExecution, AgentResult, AgentState, AgentTask
 
 
 class AgentOrchestrator(AgentABC):
@@ -42,10 +43,21 @@ class AgentOrchestrator(AgentABC):
         self._gate = gate
         self._audit_logger = audit_logger
         self._executions: dict[str, AgentExecution] = {}
+        self._required_capabilities: dict[str, AgentCapability] = {
+            "retrieve": AgentCapability.FACTS_READ,
+            "search": AgentCapability.WEB_SEARCH,
+            "fetch": AgentCapability.WEB_FETCH,
+            "tool": AgentCapability.TOOLS_EXECUTE,
+            "llm": AgentCapability.MEMORY_READ,
+        }
 
     def run(self, task: AgentTask) -> AgentResult:
-        """Ejecuta una tarea y retorna el resultado."""
-        from motor.agents.models import AgentExecution, AgentResult, AgentState, make_agent_id
+        """Ejecuta una tarea y retorna el resultado.
+
+        Cada paso del plan requiere una capability específica.
+        CapabilityGate verifica antes de cada operación.
+        """
+        from motor.agents.models import AgentExecution, AgentState, make_agent_id
 
         agent_id = make_agent_id(task.task_id, time.time())
 
@@ -53,7 +65,7 @@ class AgentOrchestrator(AgentABC):
         execution = AgentExecution(
             agent_id=agent_id,
             task=task,
-            capabilities=set(),
+            capabilities=self._gate.capabilities(),
             policy=AgentPolicy(),
             state=AgentState.CREATED,
         )
@@ -62,13 +74,15 @@ class AgentOrchestrator(AgentABC):
         start_time = time.time()
 
         try:
-            # 1. Planificar
+            # 1. Verificar permiso para planificar
+            self._gate.check(AgentCapability.MEMORY_READ)
             self._transition(execution, AgentState.PLANNING)
             plan = self._planner.plan(task)
             execution.plan = plan
             self._transition(execution, AgentState.READY)
 
             # 2. Ejecutar via Scheduler
+            self._gate.check(AgentCapability.MEMORY_READ)
             self._transition(execution, AgentState.RUNNING)
             self._scheduler.submit(execution)
 
@@ -82,6 +96,18 @@ class AgentOrchestrator(AgentABC):
                         execution, AgentState.CANCELLED, start_time, error="Budget exceeded"
                     )
 
+                # Verificar capability para esta acción
+                required = self._required_capabilities.get(step.action)
+                if required is not None:
+                    try:
+                        self._gate.check(required)
+                    except PermissionError:
+                        return self._finalize(
+                            execution, AgentState.PERMISSION_DENIED,
+                            start_time,
+                            error=f"Missing capability '{required.value}' for action '{step.action}'",
+                        )
+
                 self._tool_runner.run(step.action, step.params)
                 execution.cost_units += 1
                 if hasattr(step, 'action') and step.action == "llm":
@@ -89,6 +115,8 @@ class AgentOrchestrator(AgentABC):
 
             return self._finalize(execution, AgentState.COMPLETED, start_time)
 
+        except PermissionError as e:
+            return self._finalize(execution, AgentState.PERMISSION_DENIED, start_time, error=str(e))
         except Exception as e:
             return self._finalize(execution, AgentState.FAILED, start_time, error=str(e))
 
