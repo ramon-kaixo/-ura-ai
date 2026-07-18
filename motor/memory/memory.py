@@ -7,7 +7,8 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+import threading
+from typing import TYPE_CHECKING, Callable
 
 from motor.memory.journal import Journal
 from motor.memory.snapshot import load_snapshot as _load_snapshot
@@ -59,6 +60,7 @@ class Memory:
         if self._journal.path:
             self._journal.append(entry)
         self._entry_count_since_snapshot += 1
+        self._notify_subscribers(entry)
 
     def state_at(self, timestamp: float) -> MemoryEntry | None:
         return self._timeline.state_at(timestamp)
@@ -122,6 +124,22 @@ class Memory:
             except KeyError:
                 pass  # duplicados tolerados en carga
         return memory
+
+    # ── Suscripción de eventos ─────────────────────────
+
+    def subscribe(self, callback: Callable[[MemoryEntry], None]) -> None:
+        """Registra un callback que se invoca en cada append."""
+        if not hasattr(self, '_subscribers'):
+            self._subscribers: list[Callable] = []
+        self._subscribers.append(callback)
+
+    def _notify_subscribers(self, entry: MemoryEntry) -> None:
+        if hasattr(self, '_subscribers'):
+            for cb in self._subscribers:
+                try:
+                    cb(entry)
+                except Exception:
+                    pass
 
     def close(self) -> None:
         self._journal.close()
