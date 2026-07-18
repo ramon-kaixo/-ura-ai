@@ -1,53 +1,43 @@
-# ADR-028-05: Observability Contract
+# ADR-028-05: Observability Contract (v2)
 
 **Status:** Draft  
-**Phase:** F28-B1
+**Phase:** F28-B1A  
+**CR resolved:** CR-07 (metadata removed from observability)  
 
 ---
 
 ## Trace Model
 
-Toda comunicación entre subsistemas produce una traza reconstruible:
+TraceHeader in ProtocolEnvelope carries all observability fields:
+- `correlation_id`: set by root emitter, never changes
+- `causation_id`: message_id that caused this message (None for root)
+- `timestamp`: wall clock (production), monotonic counter (testing)
 
-```
-                        correlation_id = "T001"
-                        │
-Agent ──[COMMAND]──→ Planner
- causation = None     │
-                        causation_id = "T001:M001"
-                        │
-Agent ←──[RESPONSE]─→ Planner
- causation = "T001:M002"
-                        │
-                        causation_id = "T001:M001"
-                        │
-Agent ──[COMMAND]──→ ToolRunner
- causation = "T001:M001"
-```
+No metadata in TraceHeader. Application-level annotations go in DeliveryHeader.metadata.
 
-## Required Fields
+## Fields
 
-| Field | Purpose | Set by |
-|-------|---------|--------|
-| `message_id` | Identidad del mensaje | Emisor |
-| `correlation_id` | Traza completa | Primer emisor de la cadena |
-| `causation_id` | Relación causa-efecto | Emisor (hereda del mensaje entrante) |
-| `source` | Componente origen | Emisor |
-| `destination` | Componente destino | Emisor |
-| `timestamp` | Instante de creación | Emisor (time.time(), determinista) |
-| `message_kind` | Tipo de mensaje | Emisor |
+| Field | Header | Purpose | Set by |
+|-------|--------|---------|--------|
+| `message_id` | RoutingHeader | Identity | Emitter |
+| `correlation_id` | TraceHeader | Cross-chain trace | Root emitter |
+| `causation_id` | TraceHeader | Cause-effect | Emitter (from incoming message_id) |
+| `source` | RoutingHeader | Origin | Emitter |
+| `destination` | RoutingHeader | Target | Emitter |
+| `timestamp` | TraceHeader | Creation time | Emitter |
+| `message_kind` | RoutingHeader | Message type classification | Emitter |
 
 ## Audit Requirements
 
 ```
-OB01. Todo mensaje emitido debe registrarse en el AuditLogger del emisor
-OB02. Todo mensaje recibido debe registrarse en el AuditLogger del receptor
-OB03. AuditLogger debe indexar por correlation_id
-OB04. AuditLogger debe indexar por source + destination
-OB05. AuditLogger debe indexar por message_kind
-OB06. Los tiempos de procesamiento se derivan de timestamp origen + timestamp recepción
+OB01. Every message sent must be logged by sender's AuditLogger
+OB02. Every message received must be logged by receiver's AuditLogger
+OB03. AuditLogger indexes by correlation_id
+OB04. AuditLogger indexes by source + destination
+OB05. AuditLogger indexes by message_kind
+OB06. Processing time derived from timestamp_difference
 ```
 
-## No Audit (optimización)
+## Exception
 
-Los mensajes de tipo EVENT no requieren auditoría bilateral (solo emisor).
+EVENT messages: sender-side audit only (no bilateral audit).

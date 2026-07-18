@@ -1,66 +1,53 @@
-# ADR-028-07: Evolution Strategy
+# ADR-028-07: Evolution Strategy (v2)
 
 **Status:** Draft  
-**Phase:** F28-B1
+**Phase:** F28-B1A  
 
 ---
 
 ## Version Lifecycle
 
 ```
-protocol_version = "1.0" → "1.1" → "1.2" → "2.0" → "2.1" → ...
-                     │        │        │        │
-                   active   active  deprec.  active
-
-Etapas:
-  ACTIVE     → versión actual, soporte completo
-  DEPRECATED → aún funciona, pero no se recomienda
-  SUNSET     → programado para eliminación
-  REMOVED    → ya no existe
+ACTIVE → DEPRECATED → SUNSET → REMOVED
 ```
 
-## Timeline
-
-```
-Month 0:  v1.0 release (ACTIVE)
-Month 6:  v1.1 release (ACTIVE), v1.0 → DEPRECATED
-Month 12: v2.0 release (ACTIVE), v1.0 → REMOVED, v1.1 → DEPRECATED
-Month 18: v2.1 release (ACTIVE), v1.1 → REMOVED
-```
-
-## Migration Process
-
-```
-1. Nueva versión coexiste con la anterior (mismos consumers la soportan)
-2. Producers migran uno a uno
-3. Ningún producer queda en version antigua sin un consumer que la soporte
-4. La negociación de versiones (ADR-028-03) garantiza compatibilidad durante la transición
-5. Una vez migrados todos los producers, se declara DEPRECATED la versión antigua
-6. Se elimina tras un período de solapamiento mínimo de 2 releases
-```
-
-## Independent Subsystem Evolution
-
-```
-Cada subsistema (F24, F25, F26, F27) puede evolucionar su protocol_version
-de forma independiente. No hay version global del sistema.
-
-Ejemplo:
-
-  F25 Knowledge Fusion: protocol_version = "2.3"
-  F26 Memory:           protocol_version = "1.7"
-  F27 Agents:           protocol_version = "1.2"
-
-Cada par emisor-receptor negocia su versión en el primer intercambio.
-```
+Timeline:
+- Month 0: v1.0 ACTIVE
+- Month 6: v1.1 ACTIVE, v1.0 → DEPRECATED
+- Month 12: v2.0 ACTIVE, v1.0 → REMOVED
+- Month 18: v2.1 ACTIVE, v1.1 → REMOVED
 
 ## Deprecation Policy
 
 ```
-DP01. Un campo deprecated sigue funcionando por 2 releases MAJOR
-DP02. Un message_type deprecated sigue funcionando por 2 releases MAJOR
-DP03. Una capability deprecated sigue funcionando por 2 releases MAJOR
-DP04. Al deprecar, el emisor emite warning en metadata: {"deprecated": "field_x"}
-DP05. Al eliminar, se incrementa MAJOR
-DP06. No hay eliminación sin MAJOR bump
+DP01. Deprecated field works for 2 MAJOR releases
+DP02. Deprecated message_type works for 2 MAJOR releases
+DP03. Deprecated capability works for 2 MAJOR releases
+DP04. Removal requires MAJOR bump
+DP05. No removal without MAJOR bump
+DP06. Warning: emitters add {"deprecated": "field_name"} to DeliveryHeader.metadata
+```
+
+## Independent Subsystem Evolution
+
+Each subsystem (F24-F27) evolves its protocol_version independently.
+No global system version. Each emitter-receiver pair negotiates per connection.
+
+## Unknown Future Messages → Dead-letter
+
+Messages with MAJOR > receiver MAJOR are sent to dead-letter queue:
+1. Log full envelope
+2. Store in dead-letter storage (persistent)
+3. No response to sender (sender would not understand it)
+4. Dead-letter reviewed during upgrades
+
+## Migration Process
+
+```
+1. New version coexists (same consumers support both)
+2. Producers migrate one by one
+3. No producer left on old version without a consumer that supports it
+4. Version negotiation handles transition
+5. Once all producers migrated → old version → DEPRECATED
+6. Removed after 2 MAJOR release overlap
 ```
