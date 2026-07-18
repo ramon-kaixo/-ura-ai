@@ -2,26 +2,21 @@
 
 Contratos, modelos y componentes del sistema de agentes.
 
-Clasificación de API:
-- 🟢 ESTABLE (compatibilidad garantizada):
-    Agent, AgentState, AgentCapability, CapabilityGate,
-    AgentCapabilityGate, DenialCode,
-    Scheduler, Planner, Executor, ToolRunner, ToolAdapter,
-    StateMachine, AgentToolRunner
+Clasificación de API (42 símbolos exportados):
+- 🟢 ESTABLE (12): Agent, AgentCapability, AgentCapabilityGate,
+    AgentScheduler, AgentState, AgentToolRunner, CapabilityGate,
+    DenialCode, Scheduler, StateMachine, ToolAdapter, ToolRunner
 
-- 🟡 ADVANCED (extensión, sin garantía de compatibilidad):
-    AgentTask, AgentPlan, AgentResult, AgentContext,
-    AgentPolicy, AgentExecution, AgentAuditRecord,
-    ToolContract, ToolRequest, ToolResult,
-    AuditEvent, TaskQueue, AuditLogger,
-    PermissionDecision,
-    ToolError, ToolTimeoutError, ToolCancelledError,
-    ToolTransientError, ToolPermanentError, ToolNotFoundError
+- 🟡 ADVANCED (17): AgentAuditRecord, AgentContext, AgentExecution,
+    AgentPlan, AgentPolicy, AgentResult, AgentTask, AuditEvent,
+    AuditLogger, Executor, PermissionDecision, Planner, TaskQueue,
+    ToolContract, ToolError, ToolRequest, ToolResult
 
-- 🔵 INTERNA (no exportar desde este paquete):
-    make_agent_id, make_task_id, make_plan_id, make_step_id,
-    make_tool_execution_id, PlanStep, AgentStateMachine,
-    ToolAdapterError
+- 🔵 INTERNA (13): AgentStateMachine, make_agent_id,
+    make_plan_id, make_step_id, make_task_id,
+    make_tool_execution_id, PlanStep, ToolAdapterError,
+    ToolCancelledError, ToolNotFoundError, ToolPermanentError,
+    ToolTimeoutError, ToolTransientError
 """
 
 from motor.agents.base import (
