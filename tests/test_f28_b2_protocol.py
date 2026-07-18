@@ -31,7 +31,9 @@ from motor.platform import (
     VersionHeader,
     VersionNegotiator,
     compute_checksum,
+    make_envelope_with_checksum,
     make_message_id,
+    verify_checksum,
 )
 from motor.platform.models import RoutingHeader, SecurityHeader, TraceHeader
 
@@ -52,7 +54,7 @@ def _make_env(
     r = RoutingHeader(message_id=mid, message_type=message_type, message_kind=kind, source=source, destination=destination)
     t = TraceHeader(correlation_id=CorrelationId(correlation), causation_id=CausationId.root(), timestamp=1000.0)
     d = DeliveryHeader(semantics=semantics)
-    return ProtocolEnvelope(version=v, routing=r, trace=t, delivery=d, payload=payload)
+    return make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=payload)
 
 
 # ═══════════════════════════════════════════════════
@@ -100,7 +102,7 @@ def test_canonical_json_format() -> None:
 def test_serialization_with_security() -> None:
     env = _make_env()
     sec = SecurityHeader(auth_token="tok123", auth_token_type="bearer")
-    env2 = ProtocolEnvelope(version=env.version, routing=env.routing, trace=env.trace, delivery=env.delivery, payload=env.payload, security=sec)
+    env2 = make_envelope_with_checksum(version=env.version, routing=env.routing, trace=env.trace, delivery=env.delivery, payload=env.payload, security=sec)
     ser = JsonProtocolSerializer()
     deser = JsonProtocolDeserializer()
     data = ser.serialize(env2)
@@ -184,7 +186,7 @@ def test_validate_missing_correlation() -> None:
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="s", destination="d")
     t = TraceHeader(correlation_id=CorrelationId(""), causation_id=CausationId.root())
     d = DeliveryHeader()
-    env = ProtocolEnvelope(version=v, routing=r, trace=t, delivery=d, payload=b"{}")
+    env = make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=b"{}")
     with pytest.raises(ProtocolValidationError):
         val.validate(env)
 
@@ -192,7 +194,7 @@ def test_validate_missing_correlation() -> None:
 def test_validate_exactly_once_requires_key() -> None:
     val = ProtocolValidator()
     env = _make_env(semantics=DeliverySemantics.EXACTLY_ONCE)
-    with pytest.raises(ProtocolValidationError):
+    with pytest.raises(ProtocolValidationError, match="missing_idempotency"):
         val.validate(env)
 
 
@@ -200,7 +202,7 @@ def test_validate_oversized_payload() -> None:
     val = ProtocolValidator()
     big = b"x" * (11 * 1024 * 1024)
     env = _make_env(payload=big)
-    with pytest.raises(ProtocolValidationError):
+    with pytest.raises(ProtocolValidationError, match="oversized"):
         val.validate(env)
 
 
@@ -315,3 +317,103 @@ def test_benchmark_deserialize_1000() -> None:
         deser.deserialize(d)
     t = time.perf_counter() - start
     assert t < 2.0, f"1000 deserializations took {t:.2f}s"
+
+
+# ═══════════════════════════════════════════════════
+# B2.11: Checksum integration (CR-01)
+# ═══════════════════════════════════════════════════
+
+
+def test_checksum_in_serialize_deserialize() -> None:
+    """checksum must survive serialize→deserialize cycle."""
+    ser = JsonProtocolSerializer()
+    deser = JsonProtocolDeserializer()
+    env = _make_env(payload=b"test payload")
+    data = ser.serialize(env)
+    restored = deser.deserialize(data)
+    assert restored.checksum == env.checksum
+    assert verify_checksum(b"test payload", restored.checksum)
+
+
+def test_checksum_mismatch_detected() -> None:
+    """validate must reject mismatched checksum."""
+    val = ProtocolValidator()
+    env = _make_env(payload=b"original")
+    # Tamper with envelope
+    env2 = ProtocolEnvelope(
+        version=env.version, routing=env.routing, trace=env.trace,
+        delivery=env.delivery, payload=b"tampered", checksum=env.checksum,
+    )
+    with pytest.raises(ProtocolValidationError, match="checksum"):
+        val.validate(env2)
+
+
+# ═══════════════════════════════════════════════════
+# B2.12: Causation sentinel (CR-04)
+# ═══════════════════════════════════════════════════
+
+
+def test_causation_root_sentinel_roundtrip() -> None:
+    """Root causation must survive serialize→deserialize."""
+    ser = JsonProtocolSerializer()
+    deser = JsonProtocolDeserializer()
+    env = _make_env()
+    data = ser.serialize(env)
+    restored = deser.deserialize(data)
+    assert restored.trace.causation_id.is_root is True
+
+
+# ═══════════════════════════════════════════════════
+# B2.13: Negotiate response/error (CR-03/04)
+# ═══════════════════════════════════════════════════
+
+
+def test_negotiate_response_inherits_version() -> None:
+    neg = VersionNegotiator()
+    res = neg.negotiate_response("1.5", {"cap_a"}, {"cap_a", "cap_b"})
+    assert res.compatible is True
+    assert res.protocol_version == "1.5"
+    assert "cap_a" in res.capabilities
+
+
+def test_negotiate_error_inherits_version() -> None:
+    neg = VersionNegotiator()
+    res = neg.negotiate_error("2.0", set(), set())
+    assert res.compatible is True
+    assert res.protocol_version == "2.0"
+
+
+# ═══════════════════════════════════════════════════
+# B2.14: Unknown MessageKind (CR-10)
+# ═══════════════════════════════════════════════════
+
+
+def test_unknown_message_kind_raises_protocol_exception() -> None:
+    """Unknown MessageKind must raise ProtocolException, not ValueError."""
+    import json
+    from motor.platform.errors import ProtocolException
+    deser = JsonProtocolDeserializer()
+    bad_data = json.dumps({
+        "version": {"protocol_version": "1.0", "schema_version": "1.0",
+                     "payload_type": "json", "capabilities": [], "reserved": []},
+        "routing": {"message_id": "x", "message_type": "T",
+                     "message_kind": "UNKNOWN_FUTURE_KIND",
+                     "source": "s", "destination": "d"},
+        "trace": {"correlation_id": "c", "causation_id": "ROOT", "timestamp": 0},
+        "delivery": {"semantics": "at_most_once", "timeout_ms": 30000,
+                      "cancelable": False, "max_response_bytes": 10000000},
+        "payload_hex": "", "checksum": "",
+    }).encode()
+    with pytest.raises(ProtocolException):
+        deser.deserialize(bad_data)
+
+
+# ═══════════════════════════════════════════════════
+# B2.15: Metadata immutable (CR-08)
+# ═══════════════════════════════════════════════════
+
+
+def test_metadata_is_immutable() -> None:
+    dh = DeliveryHeader(metadata=(("key", "value"),))
+    assert isinstance(dh.metadata, tuple)
+    assert dh.metadata == (("key", "value"),)

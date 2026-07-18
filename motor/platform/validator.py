@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from motor.platform.models import (
-    DeliverySemantics,
-    MessageKind,
-    ProtocolEnvelope,
-)
-from motor.platform.serializer import compute_checksum
+from motor.platform.models import DeliverySemantics, MessageKind, ProtocolEnvelope
+from motor.platform.serializer import compute_checksum, verify_checksum
 
 
 class ProtocolValidationError(Exception):
@@ -20,7 +16,6 @@ class ProtocolValidationError(Exception):
 class ProtocolValidator:
     """All protocol validation in one place."""
 
-    MAX_HEADER_SIZE = 1024
     MAX_PAYLOAD_SIZE = 10 * 1024 * 1024
 
     def validate(self, envelope: ProtocolEnvelope) -> None:
@@ -29,6 +24,7 @@ class ProtocolValidator:
         self._validate_trace(envelope)
         self._validate_delivery(envelope)
         self._validate_payload(envelope)
+        self._validate_checksum_integrity(envelope)
 
     def _validate_version(self, envelope: ProtocolEnvelope) -> None:
         v = envelope.version
@@ -55,6 +51,9 @@ class ProtocolValidator:
             raise ProtocolValidationError(
                 "invalid_routing", "source and destination are required"
             )
+        # MessageKind validation: check via .value which works for
+        # programmatic construction. Deserialization errors are
+        # caught by _from_dict in serializer.py.
         if not isinstance(r.message_kind, MessageKind):
             raise ProtocolValidationError(
                 "invalid_kind", f"Unknown message_kind: {r.message_kind}"
@@ -73,8 +72,7 @@ class ProtocolValidator:
             )
         if d.semantics == DeliverySemantics.EXACTLY_ONCE and d.idempotency_key is None:
             raise ProtocolValidationError(
-                "missing_idempotency",
-                "EXACTLY_ONCE requires idempotency_key",
+                "missing_idempotency", "EXACTLY_ONCE requires idempotency_key"
             )
         if d.timeout_ms < 0:
             raise ProtocolValidationError("invalid_timeout", "timeout_ms must be >= 0")
@@ -82,14 +80,23 @@ class ProtocolValidator:
     def _validate_payload(self, envelope: ProtocolEnvelope) -> None:
         if len(envelope.payload) > self.MAX_PAYLOAD_SIZE:
             raise ProtocolValidationError(
-                "oversized",
-                f"Payload exceeds {self.MAX_PAYLOAD_SIZE} bytes",
+                "oversized", f"Payload exceeds {self.MAX_PAYLOAD_SIZE} bytes"
+            )
+
+    def _validate_checksum_integrity(self, envelope: ProtocolEnvelope) -> None:
+        if not envelope.checksum:
+            raise ProtocolValidationError("missing_checksum", "checksum is required")
+        if not verify_checksum(envelope.payload, envelope.checksum):
+            raise ProtocolValidationError(
+                "checksum_mismatch",
+                f"Checksum {envelope.checksum} does not match payload",
             )
 
     def validate_checksum(self, payload: bytes, expected: str) -> None:
-        actual = compute_checksum(payload)
-        if actual != expected:
+        if not verify_checksum(payload, expected):
             raise ProtocolValidationError(
-                "checksum_mismatch",
-                f"Expected {expected}, got {actual}",
+                "checksum_mismatch", f"Expected {expected}, got {compute_checksum(payload)}"
             )
+
+
+

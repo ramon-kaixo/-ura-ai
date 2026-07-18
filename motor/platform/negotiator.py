@@ -98,3 +98,37 @@ class VersionNegotiator:
             emitter_version, receiver_version,
             set(), set(), MessageKind.EVENT,
         )
+
+    def negotiate_response(
+        self,
+        trigger_version: str,
+        emitter_capabilities: set[str],
+        receiver_capabilities: set[str],
+    ) -> VersionNegotiationResult:
+        """RESPONSE inherits protocol_version from the triggering COMMAND/QUERY.
+
+        Per ADR-028-03: RESPONSE uses the same version as the request.
+        No separate negotiation. Same MAJOR required.
+        """
+        return self.negotiate(
+            trigger_version, trigger_version,
+            emitter_capabilities, receiver_capabilities,
+            MessageKind.RESPONSE,
+        )
+
+    def negotiate_error(
+        self,
+        original_message_version: str,
+        emitter_capabilities: set[str],
+        receiver_capabilities: set[str],
+    ) -> VersionNegotiationResult:
+        """ERROR inherits protocol_version from the original message.
+
+        Per ADR-028-03: ERROR uses the same version as the message
+        that caused it. No separate negotiation.
+        """
+        return self.negotiate(
+            original_message_version, original_message_version,
+            emitter_capabilities, receiver_capabilities,
+            MessageKind.ERROR,
+        )

@@ -6,7 +6,7 @@ All immutable. All deterministic. Thread-safe by design.
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 # ── Value Objects ──────────────────────────
@@ -29,7 +29,16 @@ class MessageId:
         message_type: str,
         payload_first_bytes: bytes,
     ) -> MessageId:
-        raw = f"{protocol_version}:{schema_version}:{source}:{destination}:{message_type}:{payload_first_bytes.hex()}"
+        """Creates a deterministic message ID.
+
+        Uses only the first 64 bytes of payload (O(1), not O(n)).
+        This is a deliberate optimization: the first bytes provide
+        enough entropy for collision resistance. Full payload would
+        make message_id computation O(n) for large payloads without
+        meaningful collision-resistance improvement, given SHA-256[:16].
+        """
+        window = payload_first_bytes[:64]
+        raw = f"{protocol_version}:{schema_version}:{source}:{destination}:{message_type}:{window.hex()}"
         return cls(hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16])
 
 
@@ -46,12 +55,20 @@ class CausationId:
     value: str
     is_root: bool = False
 
+    ROOT_SENTINEL = "ROOT"
+
     def __str__(self) -> str:
-        return self.value if not self.is_root else ""
+        return self.ROOT_SENTINEL if self.is_root else self.value
 
     @classmethod
     def root(cls) -> CausationId:
         return cls(value="", is_root=True)
+
+    @classmethod
+    def from_string(cls, s: str) -> CausationId:
+        if s == cls.ROOT_SENTINEL:
+            return cls.root()
+        return cls(value=s)
 
 
 @dataclass(frozen=True)
@@ -114,7 +131,7 @@ class DeliveryHeader:
     timeout_ms: int = 30000
     cancelable: bool = False
     max_response_bytes: int = 10 * 1024 * 1024
-    metadata: dict[str, str] = field(default_factory=dict)
+    metadata: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -145,6 +162,7 @@ class ProtocolEnvelope:
     trace: TraceHeader
     delivery: DeliveryHeader
     payload: bytes = b""
+    checksum: str = ""
     security: SecurityHeader | None = None
 
 
@@ -155,7 +173,7 @@ class ProtocolEnvelope:
 class ErrorEnvelope:
     error_code: str
     error_message: str
-    error_details: dict[str, str] = field(default_factory=dict)
+    error_details: tuple[tuple[str, str], ...] = ()
     component: str = ""
     original_message_id: str = ""
     original_message_type: str = ""

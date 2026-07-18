@@ -7,6 +7,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any
 
+from motor.platform.errors import ProtocolException
 from motor.platform.models import (
     CausationId,
     CorrelationId,
@@ -22,35 +23,30 @@ from motor.platform.models import (
     VersionHeader,
 )
 
-# ── ABCs ───────────────────────────────────
-
 
 class ProtocolSerializer(ABC):
     @abstractmethod
     def serialize(self, envelope: ProtocolEnvelope) -> bytes:
-        """Serialize envelope to bytes (canonical JSON)."""
         ...
 
 
 class ProtocolDeserializer(ABC):
     @abstractmethod
     def deserialize(self, data: bytes) -> ProtocolEnvelope:
-        """Deserialize bytes to ProtocolEnvelope."""
         ...
-
-
-# ── Implementation ────────────────────────
 
 
 _DEFAULT_ENCODING = "utf-8"
 
 
+def _metadata_to_tuple(md: dict[str, str] | tuple[tuple[str, str], ...]) -> tuple[tuple[str, str], ...]:
+    if isinstance(md, dict):
+        return tuple(sorted(md.items()))
+    return md
+
+
 def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
-    v = envelope.version
-    r = envelope.routing
-    t = envelope.trace
-    d = envelope.delivery
-    s = envelope.security
+    v, r, t, d, s = envelope.version, envelope.routing, envelope.trace, envelope.delivery, envelope.security
 
     result: dict[str, Any] = {
         "version": {
@@ -79,13 +75,14 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
             "max_response_bytes": d.max_response_bytes,
         },
         "payload_hex": envelope.payload.hex(),
+        "checksum": envelope.checksum,
     }
 
     if d.idempotency_key is not None:
         result["delivery"]["idempotency_key"] = str(d.idempotency_key)
 
     if d.metadata:
-        result["delivery"]["metadata"] = dict(d.metadata)
+        result["delivery"]["metadata"] = [list(pair) for pair in d.metadata]
 
     if s is not None:
         sec: dict[str, Any] = {}
@@ -99,18 +96,31 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
 
 
 def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
-    v = data["version"]
-    r = data["routing"]
-    t = data["trace"]
-    d = data["delivery"]
+    vd = data["version"]
+    rd = data["routing"]
+    td = data["trace"]
+    dd = data["delivery"]
 
     payload_hex = data.get("payload_hex", "")
     payload = bytes.fromhex(payload_hex) if payload_hex else b""
+    checksum = data.get("checksum", "")
 
-    metadata = d.get("metadata", {}) or {}
+    metadata_raw = dd.get("metadata", []) or []
+    metadata = tuple(tuple(pair) for pair in metadata_raw) if metadata_raw else ()
 
-    ik = d.get("idempotency_key")
-    idempotency_key = IdempotencyKey(ik) if ik else None
+    ik_str = dd.get("idempotency_key")
+    idempotency_key = IdempotencyKey(ik_str) if ik_str else None
+
+    # CausationId — use from_string to preserve root sentinel
+    causation = CausationId.from_string(td.get("causation_id", ""))
+
+    # MessageKind — catch unknown values for forwarding to dead-letter
+    try:
+        message_kind = MessageKind(rd["message_kind"])
+    except ValueError:
+        raise ProtocolException(
+            f"Unknown message_kind: {rd.get('message_kind', '')}"
+        )
 
     security_data = data.get("security")
     security = None
@@ -122,33 +132,34 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
 
     return ProtocolEnvelope(
         version=VersionHeader(
-            protocol_version=v["protocol_version"],
-            schema_version=v["schema_version"],
-            payload_type=v.get("payload_type", "json"),
-            capabilities=tuple(v.get("capabilities", [])),
-            reserved=tuple(v.get("reserved", [])),
+            protocol_version=vd.get("protocol_version", "1.0"),
+            schema_version=vd.get("schema_version", "1.0"),
+            payload_type=vd.get("payload_type", "json"),
+            capabilities=tuple(vd.get("capabilities", [])),
+            reserved=tuple(vd.get("reserved", [])),
         ),
         routing=RoutingHeader(
-            message_id=MessageId(r["message_id"]),
-            message_type=r["message_type"],
-            message_kind=MessageKind(r["message_kind"]),
-            source=r["source"],
-            destination=r["destination"],
+            message_id=MessageId(rd["message_id"]),
+            message_type=rd.get("message_type", ""),
+            message_kind=message_kind,
+            source=rd.get("source", ""),
+            destination=rd.get("destination", ""),
         ),
         trace=TraceHeader(
-            correlation_id=CorrelationId(t["correlation_id"]),
-            causation_id=CausationId(t.get("causation_id", "")),
-            timestamp=t.get("timestamp", 0.0),
+            correlation_id=CorrelationId(td.get("correlation_id", "")),
+            causation_id=causation,
+            timestamp=td.get("timestamp", 0.0),
         ),
         delivery=DeliveryHeader(
-            semantics=DeliverySemantics(d["semantics"]),
+            semantics=DeliverySemantics(dd.get("semantics", "at_most_once")),
             idempotency_key=idempotency_key,
-            timeout_ms=d.get("timeout_ms", 30000),
-            cancelable=d.get("cancelable", False),
-            max_response_bytes=d.get("max_response_bytes", 10 * 1024 * 1024),
-            metadata=metadata,  # type: ignore
+            timeout_ms=dd.get("timeout_ms", 30000),
+            cancelable=dd.get("cancelable", False),
+            max_response_bytes=dd.get("max_response_bytes", 10 * 1024 * 1024),
+            metadata=metadata,
         ),
         payload=payload,
+        checksum=checksum,
         security=security,
     )
 
@@ -179,6 +190,31 @@ def compute_checksum(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def verify_checksum(payload: bytes, expected: str) -> bool:
+    return compute_checksum(payload) == expected
+
+
+def make_envelope_with_checksum(
+    version: VersionHeader,
+    routing: RoutingHeader,
+    trace: TraceHeader,
+    delivery: DeliveryHeader,
+    payload: bytes = b"",
+    security: SecurityHeader | None = None,
+) -> ProtocolEnvelope:
+    """Creates a ProtocolEnvelope with payload checksum pre-computed."""
+    cs = compute_checksum(payload)
+    return ProtocolEnvelope(
+        version=version,
+        routing=routing,
+        trace=trace,
+        delivery=delivery,
+        payload=payload,
+        checksum=cs,
+        security=security,
+    )
+
+
 def make_message_id(
     protocol_version: str,
     schema_version: str,
@@ -187,6 +223,13 @@ def make_message_id(
     message_type: str,
     payload: bytes,
 ) -> MessageId:
+    """Deterministic message ID.
+
+    Uses only the first 64 bytes of payload (constant-time window).
+    This is deliberate: full-payload ID would make message_id
+    computation O(n) for large payloads. The 64-byte window provides
+    sufficient entropy for SHA-256[:16] collision resistance.
+    """
     first_64 = payload[:64]
     return MessageId.make(
         protocol_version, schema_version,
