@@ -2,14 +2,26 @@
 
 Contratos, modelos y componentes del sistema de agentes.
 
-Clasificación de API (Observación B2A):
-- 🟢 ESTABLE: Agent, AgentState, AgentCapability, CapabilityGate,
-    Scheduler, Planner, Executor, ToolRunner, StateMachine
-- 🟡 EXPERIMENTAL: AgentTask, AgentPlan, AgentResult, AgentContext,
-    AgentPolicy, AgentExecution, AgentAuditRecord, ToolContract,
-    AuditEvent, TaskQueue, AuditLogger
-- 🔵 INTERNA: make_agent_id, make_task_id, make_plan_id, make_step_id,
-    PlanStep, AgentStateMachine
+Clasificación de API:
+- 🟢 ESTABLE (compatibilidad garantizada):
+    Agent, AgentState, AgentCapability, CapabilityGate,
+    AgentCapabilityGate, DenialCode,
+    Scheduler, Planner, Executor, ToolRunner, ToolAdapter,
+    StateMachine, AgentToolRunner
+
+- 🟡 ADVANCED (extensión, sin garantía de compatibilidad):
+    AgentTask, AgentPlan, AgentResult, AgentContext,
+    AgentPolicy, AgentExecution, AgentAuditRecord,
+    ToolContract, ToolRequest, ToolResult,
+    AuditEvent, TaskQueue, AuditLogger,
+    PermissionDecision,
+    ToolError, ToolTimeoutError, ToolCancelledError,
+    ToolTransientError, ToolPermanentError, ToolNotFoundError
+
+- 🔵 INTERNA (no exportar desde este paquete):
+    make_agent_id, make_task_id, make_plan_id, make_step_id,
+    make_tool_execution_id, PlanStep, AgentStateMachine,
+    ToolAdapterError
 """
 
 from motor.agents.base import (
@@ -56,6 +68,7 @@ from motor.agents.runner import (
     ToolTimeoutError,
     ToolTransientError,
 )
+from motor.agents.scheduler import AgentScheduler
 from motor.agents.state import AgentStateMachine
 
 __all__ = [
@@ -71,6 +84,7 @@ __all__ = [
     "AgentState",
     "AgentStateMachine",
     "AgentTask",
+    "AgentScheduler",
     "AgentToolRunner",
     "AuditEvent",
     "AuditLogger",
