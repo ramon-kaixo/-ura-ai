@@ -108,6 +108,8 @@ class AgentPolicy:
     cancel_on_timeout: bool = True
     retry_max_attempts: int = 3
     backoff_base_seconds: float = 1.0
+    max_context_entries: int = 1000
+    max_memory_bytes: int = 50 * 1024 * 1024  # 50 MB
 
 
 @dataclass

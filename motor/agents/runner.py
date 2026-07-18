@@ -55,6 +55,35 @@ class ToolAdapterError(ToolError):
 # ── ToolRunner concreto ────────────────────
 
 
+class RateLimiter:
+    """Rate limiter simple (token bucket) por herramienta.
+
+    Límite: max_calls por ventana de window_seconds.
+    Thread-safe.
+    """
+
+    def __init__(self, max_calls: int = 60, window_seconds: int = 60) -> None:
+        self._max_calls = max_calls
+        self._window = window_seconds
+        self._buckets: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def check(self, tool_name: str) -> None:
+        """Verifica si la llamada está permitida. Lanza ToolError si no."""
+        with self._lock:
+            now = time.time()
+            bucket = self._buckets.setdefault(tool_name, [])
+            # Limpiar entradas antiguas
+            cutoff = now - self._window
+            bucket[:] = [t for t in bucket if t > cutoff]
+            if len(bucket) >= self._max_calls:
+                raise ToolTransientError(
+                    f"Rate limit exceeded for '{tool_name}': "
+                    f"{self._max_calls} calls per {self._window}s"
+                )
+            bucket.append(now)
+
+
 class AgentToolRunner(ToolRunnerABC):
     """Ejecutor de herramientas con encapsulación completa.
 
@@ -68,10 +97,15 @@ class AgentToolRunner(ToolRunnerABC):
     TR-20: Todas las excepciones tipificadas.
     """
 
-    def __init__(self, adapters: dict[str, ToolAdapter] | None = None) -> None:
+    def __init__(
+        self,
+        adapters: dict[str, ToolAdapter] | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> None:
         self._adapters: dict[str, ToolAdapter] = dict(adapters or {})
         self._contracts: dict[str, ToolContract] = {}
         self._lock = threading.Lock()
+        self._rate_limiter = rate_limiter or RateLimiter()
 
     def register(self, name: str, adapter: ToolAdapter, contract: ToolContract) -> None:
         """Registra una herramienta con su adaptador y contrato."""
@@ -90,6 +124,7 @@ class AgentToolRunner(ToolRunnerABC):
         timeout: int = 30,
     ) -> dict:
         """Ejecuta una herramienta y retorna su resultado. (TR-15)."""
+        self._rate_limiter.check(tool_name)
         request = self._build_request(tool_name, params, timeout)
         result = self._execute(request)
         if not result.success:
