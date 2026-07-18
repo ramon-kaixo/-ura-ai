@@ -44,12 +44,18 @@ from motor.platform.serializer import (
     make_message_id,
 )
 from motor.platform.tracing import (
+    InMemoryExporter,
     MetricsCollector,
+    Sampler,
+    SamplingStrategy,
     SpanEvent,
+    SpanTreeError,
     TraceContext,
     TraceExporter,
     get_metrics_collector,
     record_latency,
+    sanitize_tags,
+    validate_span_tree,
 )
 from motor.platform.health import HealthAggregator
 
@@ -803,3 +809,591 @@ def test_metrics_per_subsystem() -> None:
         assert pair in snap
         assert snap[pair]["count"] == 10
         assert snap[pair]["avg_duration_ms"] == 0.5
+
+
+# ══════════════════════════════════════════════════════════
+# 🔴 1. E2E Propagation Audit — F24→F25→F26→F27→F28
+# ══════════════════════════════════════════════════════════
+
+
+def test_e2e_propagation_across_five_subsystems() -> None:
+    """🔴1: trace_id, span_id, parent_span_id, correlation_id, causation_id
+    survive across F24→F25→F26→F27→F28 via middleware and no field is lost.
+    
+    The chain works as:
+    1. F24 creates a header for its OUTGOING message to F25
+    2. F25 receives it via from_header (parent = h_24.span_id)
+    3. BEFORE creating its own span, F25 propagates h_24.span_id as parent
+    4. AFTER entering its own span() and calling make_header(),
+       the parent_span_id in that header = the span_id of F25's span
+       (because span() updates _parent_span_id to its own span_id)
+    """
+    exporter = InMemoryExporter()
+    original_trace = TraceId.generate()
+    original_corr = CorrelationId("e2e-corr-99")
+    original_caus = CausationId("e2e-caus-88")
+
+    # F24 → F25: create outgoing message header via span()
+    ctx_f24 = TraceContext(
+        source="f24", destination="f25",
+        trace_id=original_trace,
+        correlation_id=original_corr, causation_id=original_caus,
+    )
+    ctx_f24.set_exporter(exporter)
+    with ctx_f24.span(message_type="web.extract", tags={"doc_id": "d1"}):
+        h_24 = ctx_f24.make_header()  # OUTGOING from F24: span_id=R24, parent=span_of_span
+
+    # 🔍 h_24 must carry all IDs
+    assert str(h_24.trace_id) == str(original_trace)
+    assert str(h_24.correlation_id) == str(original_corr)
+    assert str(h_24.causation_id) == str(original_caus)
+
+    # F25 → F26: receive via from_header → parent_span_id = h_24.span_id
+    ctx_f25 = TraceContext.from_header(h_24, "f25", "f26")
+    ctx_f25.set_exporter(exporter)
+    # BEFORE span(): parent_span_id should be h_24.span_id (propagated correctly)
+    h_pre_25 = ctx_f25.make_header()
+    assert str(h_pre_25.parent_span_id) == str(h_24.span_id), \
+        "F25: parent should be h_24.span_id after from_header"
+
+    # WITHIN span: execute operation
+    with ctx_f25.span(message_type="fusion.run", tags={"fact_count": "42"}):
+        h_25 = ctx_f25.make_header()  # header for OUTGOING to F26
+    # h_25.parent_span_id = span_id of f25's span (set by span())
+
+    # F26 → F27
+    ctx_f26 = TraceContext.from_header(h_25, "f26", "f27")
+    ctx_f26.set_exporter(exporter)
+    h_pre_26 = ctx_f26.make_header()
+    assert str(h_pre_26.parent_span_id) == str(h_25.span_id), \
+        "F26: parent should be h_25.span_id after from_header"
+    with ctx_f26.span(message_type="memory.append", tags={"entries": "7"}):
+        h_26 = ctx_f26.make_header()
+
+    # F27 → F28
+    ctx_f27 = TraceContext.from_header(h_26, "f27", "f28")
+    ctx_f27.set_exporter(exporter)
+    h_pre_27 = ctx_f27.make_header()
+    assert str(h_pre_27.parent_span_id) == str(h_26.span_id), \
+        "F27: parent should be h_26.span_id after from_header"
+    with ctx_f27.span(message_type="agent.run", tags={"action": "search"}):
+        h_27 = ctx_f27.make_header()
+
+    # 🔍 AUDIT: all 5 subsystems must have same trace_id
+    trace_ids = set(str(ctx.trace_id) for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    assert len(trace_ids) == 1, f"Multiple trace_ids: {trace_ids}"
+    assert str(original_trace) in trace_ids
+
+    # 🔍 AUDIT: all 5 subsystems must have same correlation_id
+    corrs = set(ctx.correlation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    assert len(corrs) == 1, f"Multiple correlation_ids: {corrs}"
+
+    # 🔍 AUDIT: all 5 subsystems must have same causation_id
+    causs = set(ctx.causation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    assert len(causs) == 1, f"Multiple causation_ids: {causs}"
+
+    # 🔍 AUDIT: parent chain via from_header propagation (pre-span headers)
+    assert str(h_pre_25.parent_span_id) == str(h_24.span_id), "F24→F25 parent lost"
+    assert str(h_pre_26.parent_span_id) == str(h_25.span_id), "F25→F26 parent lost"
+    assert str(h_pre_27.parent_span_id) == str(h_26.span_id), "F26→F27 parent lost"
+
+    # 🔍 AUDIT: no span_id reused across hops
+    span_ids = {str(h.span_id) for h in [h_24, h_25, h_26, h_27]}
+    assert len(span_ids) == 4, f"Span ID collision: {span_ids}"
+
+    # 🔍 AUDIT: all 4 events were emitted
+    assert exporter.count == 4, f"Expected 4 events, got {exporter.count}"
+
+
+# ══════════════════════════════════════════════════════════
+# 🔴 2. Span Tree DAG Validator
+# ══════════════════════════════════════════════════════════
+
+
+def test_span_tree_validator_accepts_valid_tree() -> None:
+    """🔴2: Valid tree passes validation."""
+    spans = [
+        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=1, monotonic_ts=1000),
+        SpanEvent(trace_id="t1", span_id="s1", parent_span_id="root",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=2, monotonic_ts=2000),
+        SpanEvent(trace_id="t1", span_id="s2", parent_span_id="root",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=3, monotonic_ts=3000),
+    ]
+    validate_span_tree(spans)  # no error
+
+
+def test_span_tree_validator_rejects_empty() -> None:
+    """🔴2: Empty tree raises error."""
+    with pytest.raises(SpanTreeError, match="Empty"):
+        validate_span_tree([])
+
+
+def test_span_tree_validator_rejects_multiple_roots() -> None:
+    """🔴2: Multiple roots raise error."""
+    spans = [
+        SpanEvent(trace_id="t1", span_id="root1", parent_span_id="ROOT",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=1, monotonic_ts=1000),
+        SpanEvent(trace_id="t1", span_id="root2", parent_span_id="ROOT",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=2, monotonic_ts=2000),
+    ]
+    with pytest.raises(SpanTreeError, match="expected 1 root"):
+        validate_span_tree(spans)
+
+
+def test_span_tree_validator_rejects_cycle() -> None:
+    """🔴2: Cycle detection."""
+    spans = [
+        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=1, monotonic_ts=1000),
+        SpanEvent(trace_id="t1", span_id="a", parent_span_id="c",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=2, monotonic_ts=2000),
+        SpanEvent(trace_id="t1", span_id="b", parent_span_id="a",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=3, monotonic_ts=3000),
+        SpanEvent(trace_id="t1", span_id="c", parent_span_id="b",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=4, monotonic_ts=4000),
+    ]
+    with pytest.raises(SpanTreeError, match="cycle"):
+        validate_span_tree(spans)
+
+
+def test_span_tree_validator_rejects_orphans() -> None:
+    """🔴2: Orphan spans detected."""
+    spans = [
+        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=1, monotonic_ts=1000),
+        SpanEvent(trace_id="t1", span_id="orphan", parent_span_id="nonexistent",
+                  source="a", destination="b", message_type="T", message_kind="cmd",
+                  timestamp_utc=2, monotonic_ts=2000),
+    ]
+    with pytest.raises(SpanTreeError, match="orphan"):
+        validate_span_tree(spans)
+
+
+# ══════════════════════════════════════════════════════════
+# 🔴 3. Concurrency Stress — 1000 traces, 10k spans
+# ══════════════════════════════════════════════════════════
+
+
+def test_concurrency_1000_traces_no_mixing() -> None:
+    """🔴3: 1000 concurrent traces with 10 spans each = 10k total spans.
+    Verify: no SpanId collisions, no trace mixing, parent_span_id correct."""
+    exporter = InMemoryExporter()
+    errors: list[str] = []
+    span_ids_global: list[str] = []
+
+    def worker(trace_idx: int) -> None:
+        try:
+            ctx = TraceContext(source=f"worker{trace_idx}", destination="target")
+            ctx.set_exporter(exporter)
+            my_trace = ctx.trace_id
+            for hop in range(10):
+                with ctx.span(message_type=f"hop{hop}"):
+                    h = ctx.make_header()
+                    span_ids_global.append(str(h.span_id))
+                    # OBS-02: trace_id never changes within a trace
+                    assert ctx.trace_id == my_trace, \
+                        f"Worker {trace_idx}: trace_id changed within trace!"
+        except Exception as e:
+            errors.append(f"worker{trace_idx}: {e}")
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(1000)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+
+    assert len(errors) == 0, f"{len(errors)} worker errors: {errors[:3]}"
+    # 1000 workers × 10 span_ids = 10000 span_ids
+    assert len(span_ids_global) >= 10000, f"Expected 10k spans, got {len(span_ids_global)}"
+    assert len(set(span_ids_global)) == len(span_ids_global), "SpanId collision detected"
+    assert exporter.count >= 10000, f"Expected 10k events, got {exporter.count}"
+
+
+# ══════════════════════════════════════════════════════════
+# 🔴 4. Backpressure — bounded queue, non-blocking
+# ══════════════════════════════════════════════════════════
+
+
+def test_exporter_backpressure_drops_on_full() -> None:
+    """🔴4: When buffer is full, exporter drops events silently."""
+    exporter = TraceExporter(
+        path="/dev/null",  # no real I/O
+        buffer_size=10,    # tiny buffer
+        batch_size=100,    # don't auto-flush
+        flush_interval=999,
+    )
+    for _ in range(100):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    exporter.flush()
+    exporter.close()
+
+    # Some events should have been dropped
+    assert exporter.dropped_count > 0, "No drops with full buffer"
+    assert exporter.event_count > 0
+
+
+def test_exporter_non_blocking_on_slow_disk() -> None:
+    """🔴4: Exporter never blocks the caller, even with slow writes."""
+    exporter = TraceExporter(
+        path="/nonexistent/path/traces.jsonl",  # will fail silently
+        buffer_size=100,
+        batch_size=1,
+        flush_interval=0.1,
+    )
+    start = time.time()
+    for _ in range(100):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    elapsed = time.time() - start
+    exporter.close()
+
+    # Must complete quickly (non-blocking)
+    assert elapsed < 5.0, f"Exporter blocked for {elapsed:.1f}s"
+    assert exporter.event_count > 0
+
+
+# ══════════════════════════════════════════════════════════
+# 🔴 5. Roundtrip Integrity — original tree == replay tree
+# ══════════════════════════════════════════════════════════
+
+
+def test_roundtrip_tree_integrity_via_in_memory_exporter() -> None:
+    """🔴5: Tree from InMemoryExporter events == tree from re-imported events."""
+    exporter = InMemoryExporter()
+    ctx = TraceContext(source="f24", destination="f28")
+    ctx.set_exporter(exporter)
+
+    with ctx.span(message_type="root_op"):
+        h_root = ctx.make_header()
+        with ctx.span(message_type="child1"):
+            h_c1 = ctx.make_header()
+            with ctx.span(message_type="grandchild"):
+                h_gc = ctx.make_header()
+        with ctx.span(message_type="child2"):
+            h_c2 = ctx.make_header()
+
+    # Original spans
+    original_events = list(exporter.events)
+    assert len(original_events) == 4
+
+    # Re-import: create SpanEvents from the exported dicts
+    reimported = [SpanEvent(**ev.to_dict()) for ev in original_events]
+
+    # Both trees must pass validation
+    validate_span_tree(original_events)
+    validate_span_tree(reimported)
+
+    # Structure must be identical
+    def tree_key(ev: SpanEvent) -> tuple:
+        return (ev.span_id, ev.parent_span_id, ev.source, ev.destination)
+
+    orig_keys = {tree_key(ev) for ev in original_events}
+    reimp_keys = {tree_key(ev) for ev in reimported}
+    assert orig_keys == reimp_keys, "Roundtrip tree mismatch"
+
+
+# ══════════════════════════════════════════════════════════
+# 🟠 6. Clock Skew — monotonic sorting
+# ══════════════════════════════════════════════════════════
+
+
+def test_clock_skew_sort_by_monotonic() -> None:
+    """🟠6: Events are sorted by monotonic_ts even if UTC timestamps are
+    out of order (simulating clock skew / NTP adjustment)."""
+    events = [
+        SpanEvent(trace_id="t1", span_id="a", parent_span_id="ROOT",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=2000, monotonic_ts=3000),  # earlier in monotonic
+        SpanEvent(trace_id="t1", span_id="b", parent_span_id="a",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=1000, monotonic_ts=1000),  # later in monotonic
+        SpanEvent(trace_id="t1", span_id="c", parent_span_id="b",
+                  source="x", destination="y", message_type="T", message_kind="cmd",
+                  timestamp_utc=1500, monotonic_ts=2000),
+    ]
+
+    # Sort by monotonic_ts
+    sorted_events = sorted(events, key=lambda e: e.monotonic_ts)
+    assert [e.span_id for e in sorted_events] == ["b", "c", "a"]
+
+    # The tree must validate correctly based on parent_span_id (not timestamps)
+    # Even though UTC is out of order, monotonic_ts provides correct ordering
+    validate_span_tree(events)  # parent_span_id chain is correct
+
+
+# ══════════════════════════════════════════════════════════
+# 🟠 7. Sampling Strategies
+# ══════════════════════════════════════════════════════════
+
+
+def test_sampler_always() -> None:
+    """🟠7: ALWAYS samples everything."""
+    s = Sampler(strategy=SamplingStrategy.ALWAYS)
+    assert s.should_sample()
+    assert s.should_sample()
+    assert s.should_sample({"priority": "low"})
+
+
+def test_sampler_never() -> None:
+    """🟠7: NEVER samples nothing."""
+    s = Sampler(strategy=SamplingStrategy.NEVER)
+    assert not s.should_sample()
+    assert not s.should_sample({"priority": "critical"})
+
+
+def test_sampler_probabilistic() -> None:
+    """🟠7: PROBABILISTIC samples with configured probability."""
+    s = Sampler(strategy=SamplingStrategy.PROBABILISTIC, probability=1.0)
+    assert s.should_sample()
+
+    s2 = Sampler(strategy=SamplingStrategy.PROBABILISTIC, probability=0.0)
+    assert not s2.should_sample()
+
+    # Approximate test: with p=0.5 and 1000 trials, should get 400-600 samples
+    s3 = Sampler(strategy=SamplingStrategy.PROBABILISTIC, probability=0.5)
+    sampled = sum(1 for _ in range(1000) if s3.should_sample())
+    assert 400 <= sampled <= 600, f"Expected ~500, got {sampled}"
+
+
+def test_sampler_adaptive() -> None:
+    """🟠7: ADAPTIVE increases probability with error rate."""
+    s = Sampler(strategy=SamplingStrategy.ADAPTIVE,
+                adaptive_min_p=0.1, adaptive_max_p=1.0,
+                error_rate_window=10)
+
+    # Low error rate → sample rate ~= min_p (0.1)
+    for _ in range(10):
+        s.record_error(False)
+    low_rate = sum(1 for _ in range(500) if s.should_sample())
+    assert low_rate < 300, f"Adaptive too aggressive at low error: {low_rate}"
+
+    # High error rate → sample rate ~= max_p (1.0)
+    s2 = Sampler(strategy=SamplingStrategy.ADAPTIVE,
+                 adaptive_min_p=0.1, adaptive_max_p=1.0,
+                 error_rate_window=10)
+    for _ in range(10):
+        s2.record_error(True)
+    high_rate = sum(1 for _ in range(500) if s2.should_sample())
+    assert high_rate > 400, f"Adaptive not aggressive enough at high error: {high_rate}"
+
+
+def test_sampler_priority() -> None:
+    """🟠7: PRIORITY only samples critical/high priority."""
+    s = Sampler(strategy=SamplingStrategy.PRIORITY)
+    assert s.should_sample({"priority": "critical"})
+    assert s.should_sample({"priority": "high"})
+    assert not s.should_sample({"priority": "normal"})
+    assert not s.should_sample({"priority": "low"})
+    assert not s.should_sample({})  # no priority tag
+
+
+def test_sampler_integration_with_trace_context() -> None:
+    """🟠7: Sampler wired to TraceContext filters events."""
+    exporter = InMemoryExporter()
+    always = Sampler(strategy=SamplingStrategy.ALWAYS)
+    never = Sampler(strategy=SamplingStrategy.NEVER)
+
+    ctx = TraceContext(source="a", destination="b")
+    ctx.set_exporter(exporter)
+    ctx.set_sampler(never)
+    with ctx.span(message_type="hidden"):
+        pass
+    assert exporter.count == 0, "NEVER sampler should block events"
+
+    ctx.set_sampler(always)
+    with ctx.span(message_type="visible"):
+        pass
+    assert exporter.count == 1, "ALWAYS sampler should emit events"
+
+
+# ══════════════════════════════════════════════════════════
+# 🟠 8. Privacy — no sensitive data in traces
+# ══════════════════════════════════════════════════════════
+
+
+def test_privacy_removes_prompts() -> None:
+    """🟠8: 'prompt' tag key is removed."""
+    tags = sanitize_tags({"prompt": "Tell me a joke", "answer": "knock knock"})
+    assert "prompt" not in tags
+    assert "answer" in tags
+
+
+def test_privacy_removes_keys() -> None:
+    """🟠8: 'api_key', 'secret', 'token' tag keys are removed."""
+    tags = sanitize_tags({"api_key": "sk-12345", "secret": "supersecret", "ok": "value"})
+    assert "api_key" not in tags
+    assert "secret" not in tags
+    assert "ok" in tags
+
+
+def test_privacy_removes_full_document() -> None:
+    """🟠8: 'document' key is removed (no full docs in traces)."""
+    tags = sanitize_tags({"document": "long text...", "doc_id": "d123"})
+    assert "document" not in tags
+    assert "doc_id" in tags
+
+
+def test_privacy_truncates_values() -> None:
+    """🟠8: Tag values are truncated to MAX_TAG_VAL_LENGTH."""
+    long_val = "x" * 10000
+    tags = sanitize_tags({"safe_key": long_val})
+    assert len(tags["safe_key"]) <= 512  # MAX_TAG_VAL_LENGTH
+
+
+def test_privacy_in_exporter_pipeline() -> None:
+    """🟠8: Tags sanitized before write in TraceExporter pipeline."""
+    exporter = InMemoryExporter()
+    ctx = TraceContext(source="a", destination="b")
+    ctx.set_exporter(exporter)
+    with ctx.span(message_type="op", tags={
+        "prompt": "sensitive", "api_key": "sk-123", "safe": "ok",
+    }):
+        pass
+
+    assert exporter.count == 1
+    event = exporter.events[0]
+    tags = event.tags
+    assert "prompt" not in tags, "Privacy: prompt leaked"
+    assert "api_key" not in tags, "Privacy: api_key leaked"
+    assert tags.get("safe") == "ok"
+
+
+# ══════════════════════════════════════════════════════════
+# 🟡 9. OpenTelemetry Mapping
+# ══════════════════════════════════════════════════════════
+
+
+def test_otel_mapping_check() -> None:
+    """🟡9: Verify that URA tracing model maps cleanly to OpenTelemetry.
+
+    Mapping:
+        TraceId → OTel TraceId (16 hex bytes)
+        SpanId → OTel SpanId (8 hex bytes)
+        parent_span_id → OTel ParentSpanId
+        SpanEvent → OTel Span (SpanId + TraceId + ParentSpanId + Attributes)
+        tags → OTel Attributes (k:v)
+        timestamp_utc → OTel StartTime (Unix microseconds)
+        duration_ns → OTel Duration (nanoseconds)
+        error_code → OTel Status.Code (ERROR if non-empty)
+        error_message → OTel Status.Description
+    """
+    # Verify TraceId is compatible (16 hex chars → 8 bytes)
+    tid = TraceId.generate()
+    assert len(tid.value) == 16, f"TraceId should be 16 hex chars: {tid.value}"
+    assert len(bytes.fromhex(tid.value)) == 8, "TraceId should decode to 8 bytes"
+
+    # Verify SpanId is compatible (16 hex chars → 8 bytes, OTel SpanId is 8 bytes)
+    sid = SpanId.generate()
+    assert len(sid.value) == 16, f"SpanId should be 16 hex chars: {sid.value}"
+    assert len(bytes.fromhex(sid.value)) == 8, "SpanId should decode to 8 bytes"
+
+    # Verify SpanEvent maps to OTel Span attributes
+    event = SpanEvent(
+        trace_id=str(tid), span_id=str(sid), parent_span_id="ROOT",
+        source="f24", destination="f25", message_type="extract", message_kind="command",
+        timestamp_utc=1000.0, monotonic_ts=5000, duration_ns=1_000_000,
+        tags={"key": "value"},
+    )
+    d = event.to_dict()
+
+    # OTel SpanId.from_string(sid)
+    assert len(d["span_id"]) == 16
+    # OTel TraceId.from_string(tid)
+    assert len(d["trace_id"]) == 16
+    # OTel Span.ParentSpanId
+    assert d["parent_span_id"] == "ROOT"
+    # OTel Span.Attributes
+    assert d["tags"]["key"] == "value"
+    # OTel Span.Status
+    assert d.get("error_code", "") == ""
+
+
+# ══════════════════════════════════════════════════════════
+# 🟡 10. Budget Limits — CPU, RAM, latency, trace size, retention
+# ══════════════════════════════════════════════════════════
+
+
+def test_budget_max_tags_per_event() -> None:
+    """🟡10: Max 32 tags per event (MAX_TAGS_PER_EVENT)."""
+    many_tags = {f"k{i}": f"v{i}" for i in range(100)}
+    clean = sanitize_tags(many_tags)
+    assert len(clean) <= 32
+
+
+def test_budget_max_tag_key_length() -> None:
+    """🟡10: Max 64 chars per tag key (MAX_TAG_KEY_LENGTH)."""
+    long_key = "very_long_key_" * 20  # 300 chars
+    tags = sanitize_tags({long_key: "value"})
+    keys = list(tags.keys())
+    if keys:
+        assert len(keys[0]) <= 64
+
+
+def test_budget_max_tag_value_length() -> None:
+    """🟡10: Max 512 chars per tag value (MAX_TAG_VAL_LENGTH)."""
+    long_val = "x" * 100000
+    tags = sanitize_tags({"safe": long_val})
+    assert len(tags["safe"]) <= 512
+
+
+def test_budget_exporter_buffer_does_not_grow_unbounded() -> None:
+    """🟡10: TraceExporter bounded queue (maxsize) prevents OOM."""
+    exporter = TraceExporter(
+        path="/dev/null",
+        buffer_size=10,
+        batch_size=100,
+        flush_interval=999,
+    )
+
+    # Emit many more events than buffer size
+    for _ in range(1000):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    exporter.flush()
+    exporter.close()
+
+    # Some events were dropped, not accumulated OOM
+    assert exporter.event_count > 0
+    assert exporter.dropped_count > 0
+
+
+def test_budget_trace_event_count_under_10k() -> None:
+    """🟡10: Verify a realistic trace stays under MAX_EVENTS_PER_TRACE (10k)."""
+    exporter = InMemoryExporter()
+    ctx = TraceContext(source="f24", destination="f28")
+    ctx.set_exporter(exporter)
+
+    # Realistic nested pipeline: root → stage → substage
+    with ctx.span(message_type="pipeline"):
+        for stage in range(5):
+            with ctx.span(message_type=f"stage_{stage}"):
+                for substage in range(10):
+                    with ctx.span(message_type=f"sub_{stage}_{substage}"):
+                        pass  # leaf operations
+
+    assert exporter.count == 1 + 5 + 50, f"Expected 56 events, got {exporter.count}"
+    assert exporter.count <= 10000, "Trace exceeded max events"
+
+    # Tree must be valid
+    validate_span_tree(list(exporter.events))

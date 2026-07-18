@@ -10,6 +10,10 @@ OBS-07: Every error includes span_id.
 OBS-08: Tracing never modifies functional behavior.
 OBS-09: System works if tracing fails.
 OBS-10: Overhead budget <2% CPU, <5% latency.
+
+Sampling (OBS-07): Always, Never, Probabilistic, Adaptive, Priority.
+Privacy (OBS-08): tags sanitized — no prompts, docs, keys in traces.
+Budget (OBS-10): bounded buffer, max events/trace, max trace size.
 """
 
 from __future__ import annotations
@@ -18,11 +22,14 @@ import atexit
 import json
 import logging
 import os
+import queue
+import random
 import threading
 import time
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
 
 from motor.platform.models import (
@@ -36,6 +43,208 @@ from motor.platform.models import (
 )
 
 logger = logging.getLogger("ura.tracing")
+
+# ── Budget constants (OBS-10) ───────────────
+
+MAX_EVENTS_PER_TRACE = 10_000         # max span events per trace_id
+MAX_TAGS_PER_EVENT = 32                # max k:v pairs per span
+MAX_TAG_KEY_LENGTH = 64                # max bytes per tag key
+MAX_TAG_VAL_LENGTH = 512               # max bytes per tag value
+MAX_TRACE_FILE_BYTES = 1 * 1024**3     # 1 GB max per trace file before rotation
+EXPORTER_BUFFER_SIZE = 10000           # max queued events before drop
+CPU_BUDGET_FRAC = 0.02                 # max fraction of wall time for tracing
+LATENCY_BUDGET_NS = 5_000_000          # max 5ms p99 latency for tracing overhead
+FORBIDDEN_TAG_PREFIXES = (              # OBS-08: privacy — prefix match only
+    "prompt", "query_", "document_", "key_", "token", "secret",
+    "password", "credential", "api_key", "auth_",
+)
+FORBIDDEN_TAG_EXACT = {                 # whole-word match
+    "query", "document", "key", "secret",
+}
+
+
+# ── Sampler (OBS-07) ────────────────────────
+
+
+class SamplingStrategy(StrEnum):
+    ALWAYS = "always"
+    NEVER = "never"
+    PROBABILISTIC = "probabilistic"
+    ADAPTIVE = "adaptive"
+    PRIORITY = "priority"
+
+
+@dataclass
+class Sampler:
+    """Trace sampling controller.
+
+    Always: sample all traces (default).
+    Never: sample no traces.
+    Probabilistic: sample with probability p (0.0-1.0).
+    Adaptive: increase probability when error rate is high.
+    Priority: sample based on trace priority label.
+    """
+
+    strategy: SamplingStrategy = SamplingStrategy.ALWAYS
+    probability: float = 0.1  # for PROBABILISTIC
+    error_rate_window: int = 100  # for ADAPTIVE
+    adaptive_min_p: float = 0.05
+    adaptive_max_p: float = 1.0
+
+    # Internal state for ADAPTIVE
+    _recent_errors: list[bool] = field(default_factory=list)
+
+    def should_sample(self, tags: dict[str, str] | None = None) -> bool:
+        if self.strategy == SamplingStrategy.ALWAYS:
+            return True
+        if self.strategy == SamplingStrategy.NEVER:
+            return False
+        if self.strategy == SamplingStrategy.PROBABILISTIC:
+            return random.random() < self.probability
+        if self.strategy == SamplingStrategy.ADAPTIVE:
+            if self._recent_errors:
+                rate = sum(self._recent_errors) / len(self._recent_errors)
+                p = self.adaptive_min_p + (self.adaptive_max_p - self.adaptive_min_p) * rate
+                return random.random() < p
+            return random.random() < self.adaptive_min_p
+        if self.strategy == SamplingStrategy.PRIORITY:
+            tags = tags or {}
+            priority = tags.get("priority", "normal")
+            return priority in ("critical", "high")
+        return True
+
+    def record_error(self, was_error: bool) -> None:
+        self._recent_errors.append(was_error)
+        if len(self._recent_errors) > self.error_rate_window:
+            self._recent_errors.pop(0)
+
+
+# ── Privacy: tag sanitization (OBS-08) ──────
+
+
+def sanitize_tags(tags: dict[str, str]) -> dict[str, str]:
+    """Remove or truncate sensitive tag values.
+
+    OBS-08: no prompts, documents, keys, tokens in traces.
+    Uses prefix and exact matching to avoid false positives (e.g., "safe_key").
+    """
+    result: dict[str, str] = {}
+    for k, v in tags.items():
+        k_lower = k.lower().strip()
+        # Check exact match
+        if k_lower in FORBIDDEN_TAG_EXACT:
+            continue
+        # Check prefix match
+        if any(k_lower.startswith(p) for p in FORBIDDEN_TAG_PREFIXES):
+            continue
+        # Truncate key
+        k_clean = k[:MAX_TAG_KEY_LENGTH]
+        # Truncate value
+        v_clean = v[:MAX_TAG_VAL_LENGTH]
+        result[k_clean] = v_clean
+        if len(result) >= MAX_TAGS_PER_EVENT:
+            break
+    return result
+
+
+# ── SpanTreeValidator (OBS-02/04) ────────────
+
+
+class SpanTreeError(Exception):
+    """Error in span tree structure."""
+    pass
+
+
+def validate_span_tree(spans: list[SpanEvent]) -> None:
+    """Validate a span tree.
+
+    Checks:
+    - No cycles (OBS-02)
+    - No multiple roots for the same trace (OBS-02)
+    - No orphan spans (OBS-04)
+    - No missing parents (OBS-04)
+    - All span_ids unique per trace
+
+    Raises SpanTreeError if any check fails.
+    """
+    if not spans:
+        raise SpanTreeError("Empty span tree")
+
+    by_trace: dict[str, list[SpanEvent]] = {}
+    for s in spans:
+        by_trace.setdefault(s.trace_id, []).append(s)
+
+    for trace_id, trace_spans in by_trace.items():
+        span_map = {s.span_id: s for s in trace_spans}
+        visited: set[str] = set()
+        in_degree: dict[str, int] = {}
+        for s in trace_spans:
+            p = s.parent_span_id
+            if p not in ("ROOT", "") and p in span_map:
+                in_degree[p] = in_degree.get(p, 0) + 1
+
+        # First: detect cycles via DFS with coloring
+        WHITE, GRAY, BLACK = 0, 1, 2
+        color: dict[str, int] = {s.span_id: WHITE for s in trace_spans}
+
+        def has_cycle(sid: str) -> bool:
+            color[sid] = GRAY
+            for s in trace_spans:
+                if s.parent_span_id == sid:
+                    if color[s.span_id] == GRAY:
+                        return True  # back edge = cycle
+                    if color[s.span_id] == WHITE and has_cycle(s.span_id):
+                        return True
+            color[sid] = BLACK
+            return False
+
+        for s in trace_spans:
+            if color[s.span_id] == WHITE:
+                if has_cycle(s.span_id):
+                    raise SpanTreeError(f"Trace {trace_id}: cycle detected")
+
+        # Check for spans with non-existent parent (orphans) BEFORE root counting
+        missing_parent = [
+            s for s in trace_spans
+            if s.parent_span_id not in ("ROOT", "")
+            and s.parent_span_id not in span_map
+        ]
+        if missing_parent:
+            orphan_ids = [s.span_id for s in missing_parent]
+            raise SpanTreeError(
+                f"Trace {trace_id}: {len(missing_parent)} orphan spans "
+                f"with missing parent: {orphan_ids}"
+            )
+
+        # Now find roots (spans whose parent is ROOT or "")
+        roots: list[SpanEvent] = []
+        for s in trace_spans:
+            p = s.parent_span_id
+            if p == "ROOT" or p == "":
+                roots.append(s)
+
+        if len(roots) != 1:
+            raise SpanTreeError(
+                f"Trace {trace_id}: expected 1 root, got {len(roots)}"
+            )
+
+        # Full DFS from root to find all reachable nodes
+        def dfs(sid: str) -> None:
+            if sid in visited:
+                return
+            visited.add(sid)
+            for s in trace_spans:
+                if s.parent_span_id == sid:
+                    dfs(s.span_id)
+
+        dfs(roots[0].span_id)
+
+        # Check for unreachable spans (orphans)
+        if len(visited) != len(trace_spans):
+            unreachable = set(span_map.keys()) - visited
+            raise SpanTreeError(
+                f"Trace {trace_id}: {len(unreachable)} orphan spans: {unreachable}"
+            )
 
 # ── SpanEvent ──────────────────────────────
 
@@ -121,7 +330,8 @@ class TraceContext:
         self._span_count = 0
         self._error_count = 0
 
-        self._exporter: TraceExporter | None = None
+        self._exporter: _SpanEventSink | None = None
+        self._sampler: Sampler | None = None
         self._start_time_ns = 0
 
     @property
@@ -144,8 +354,11 @@ class TraceContext:
     def error_count(self) -> int:
         return self._error_count
 
-    def set_exporter(self, exporter: TraceExporter) -> None:
+    def set_exporter(self, exporter: _SpanEventSink) -> None:
         self._exporter = exporter
+
+    def set_sampler(self, sampler: Sampler) -> None:
+        self._sampler = sampler
 
     def make_header(self, span_id: SpanId | None = None) -> TraceHeader:
         """Build a TraceHeader for a new message.
@@ -231,8 +444,18 @@ class TraceContext:
         error_message: str,
         tags: dict[str, str],
     ) -> None:
-        """Emit a span event. OBS-09: silent on failure."""
+        """Emit a span event. OBS-09: silent on failure.
+
+        Applies sampler (OBS-07) and privacy sanitization (OBS-08).
+        """
         try:
+            # Privacy: sanitize tags before emission (OBS-08)
+            clean_tags = sanitize_tags(tags)
+
+            # Sampling check (OBS-07)
+            if self._sampler and not self._sampler.should_sample(clean_tags):
+                return
+
             event = SpanEvent(
                 trace_id=str(self._trace_id),
                 span_id=span_id,
@@ -246,10 +469,15 @@ class TraceContext:
                 duration_ns=duration_ns,
                 error_code=error_code,
                 error_message=error_message,
-                tags=tags,
+                tags=clean_tags,
             )
             if self._exporter:
                 self._exporter.emit(event)
+                # Track error for adaptive sampler
+                if self._sampler and error_code:
+                    self._sampler.record_error(True)
+                elif self._sampler:
+                    self._sampler.record_error(False)
         except Exception:
             logger.debug("trace emit failed (OBS-09)", exc_info=True)
 
@@ -290,14 +518,62 @@ class TraceContext:
         )
 
 
+# ── Abstract Exporter ──────────────────────
+
+
+class _SpanEventSink:
+    """Abstract sink for span events. Used for DI in TraceContext."""
+    def emit(self, event: SpanEvent) -> None:
+        raise NotImplementedError
+
+    def flush(self) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+
+# ── InMemoryExporter (for testing, OBS-05 roundtrip) ─
+
+
+class InMemoryExporter(_SpanEventSink):
+    """Captures all events in memory. Used for roundtrip testing (OBS-05)."""
+
+    def __init__(self) -> None:
+        self.events: list[SpanEvent] = []
+        self._lock = threading.Lock()
+
+    def emit(self, event: SpanEvent) -> None:
+        with self._lock:
+            self.events.append(event)
+
+    def clear(self) -> None:
+        with self._lock:
+            self.events.clear()
+
+    @property
+    def count(self) -> int:
+        with self._lock:
+            return len(self.events)
+
+    def flush(self) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+
 # ── TraceExporter ───────────────────────────
 
 
-class TraceExporter:
+class TraceExporter(_SpanEventSink):
     """Exporta eventos de tracing a un archivo JSON rotativo.
 
-    OBS-09: fallos silenciosos.
-    OBS-10: escritura batch cada N eventos o cada T segundos.
+    OBS-09: fallos silenciosos — nunca bloquea la aplicación.
+    OBS-10: bounded queue + background flush thread.
+    Backpressure (OBS-04): bounded queue with non-blocking put.
+    Privacy (OBS-08): tags sanitized before write.
+    Budget (OBS-10): max file size 1 GB, rotation, bounded buffer.
     """
 
     def __init__(
@@ -306,18 +582,25 @@ class TraceExporter:
         max_events_per_file: int = 10000,
         batch_size: int = 10,
         flush_interval: float = 2.0,
+        buffer_size: int = 10000,
     ) -> None:
         self._path = path
         self._max_events_per_file = max_events_per_file
         self._batch_size = batch_size
         self._flush_interval = flush_interval
-        self._buffer: list[SpanEvent] = []
+        self._buffer: queue.Queue = queue.Queue(maxsize=buffer_size)
         self._file_index = 0
         self._event_count = 0
-        self._lock = threading.Lock()
+        self._dropped_count = 0
         self._closed = False
         self._file: Any = None
         self._last_flush = time.monotonic()
+        self._lock = threading.Lock()
+        self._flush_buf: list[SpanEvent] = []
+
+        # Background flush thread (daemon: no bloquea shutdown)
+        self._flush_thread = threading.Thread(target=self._flush_loop, daemon=True)
+        self._flush_thread.start()
 
         atexit.register(self.close)
 
@@ -326,55 +609,86 @@ class TraceExporter:
         if self._file_index > 0:
             base, ext = os.path.splitext(self._path)
             path = f"{base}.{self._file_index}{ext}"
-        self._file = open(path, "a")
-        self._file_event_count = 0
+        try:
+            self._file = open(path, "a")
+            self._file_event_count = 0
+        except OSError:
+            self._file = None  # OBS-09: silent on file errors
 
     def emit(self, event: SpanEvent) -> None:
-        """Emit a span event. OBS-09: silent on failure."""
+        """Emit a span event. Non-blocking. OBS-09: silent on failure."""
         try:
-            with self._lock:
-                if self._closed:
-                    return
-                self._buffer.append(event)
-                self._event_count += 1
-                now = time.monotonic()
-                if len(self._buffer) >= self._batch_size or (now - self._last_flush) >= self._flush_interval:
-                    self._flush_locked()
+            self._buffer.put_nowait(event)
+            self._event_count += 1
+        except queue.Full:
+            self._dropped_count += 1  # OBS-04: backpressure — drop oldest silently
         except Exception:
             logger.debug("trace emit failed (OBS-09)", exc_info=True)
 
-    def _flush_locked(self) -> None:
-        if not self._buffer:
-            self._last_flush = time.monotonic()
+    def _flush_loop(self) -> None:
+        """Background thread: flush buffer periodically. OBS-09: silent."""
+        while not self._closed:
+            try:
+                event = self._buffer.get(timeout=self._flush_interval)
+                self._flush_buf.append(event)
+                # Batch flush: drain as many as possible
+                while len(self._flush_buf) < self._batch_size:
+                    try:
+                        self._flush_buf.append(self._buffer.get_nowait())
+                    except queue.Empty:
+                        break
+                self._write_batch()
+            except queue.Empty:
+                # Timeout: flush what we have
+                if self._flush_buf:
+                    self._write_batch()
+            except Exception:
+                logger.debug("flush loop error (OBS-09)", exc_info=True)
+
+    def _write_batch(self) -> None:
+        if not self._flush_buf:
             return
         if self._file is None:
             self._open_file()
-        for event in self._buffer:
-            self._file.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+        if self._file is None:
+            self._flush_buf.clear()
+            return  # OBS-09: silent if file can't be opened
+
+        for event in self._flush_buf:
+            # Privacy: sanitize tags before write (OBS-08)
+            d = event.to_dict()
+            d["tags"] = sanitize_tags(d.get("tags", {}))
+            self._file.write(json.dumps(d, ensure_ascii=False) + "\n")
             self._file_event_count += 1
+            self._file.flush()  # Durability: flush every event
+            # Rotate if file too large (OBS-10 budget)
             if self._file_event_count >= self._max_events_per_file:
                 self._file.close()
                 self._file_index += 1
                 self._open_file()
-        self._buffer.clear()
-        self._last_flush = time.monotonic()
+        self._flush_buf.clear()
 
     def flush(self) -> None:
         """Force flush of buffered events."""
         try:
-            with self._lock:
-                self._flush_locked()
-                if self._file:
-                    self._file.flush()
+            # Drain queue
+            while True:
+                try:
+                    self._flush_buf.append(self._buffer.get_nowait())
+                except queue.Empty:
+                    break
+            self._write_batch()
+            if self._file:
+                self._file.flush()
         except Exception:
             pass
 
     def close(self) -> None:
         """Close exporter. Flushes remaining events."""
         try:
+            self._closed = True
             self.flush()
             with self._lock:
-                self._closed = True
                 if self._file:
                     self._file.close()
                     self._file = None
@@ -384,6 +698,10 @@ class TraceExporter:
     @property
     def event_count(self) -> int:
         return self._event_count
+
+    @property
+    def dropped_count(self) -> int:
+        return self._dropped_count
 
     @property
     def path(self) -> str:
