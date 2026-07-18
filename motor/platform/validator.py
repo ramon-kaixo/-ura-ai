@@ -86,8 +86,10 @@ class ProtocolValidator:
 
     def _validate_trace(self, envelope: ProtocolEnvelope) -> None:
         t = envelope.trace
-        if not t.correlation_id.value:
-            raise ProtocolValidationError("missing_correlation", "correlation_id is required")
+        if not t.trace_id.value:
+            raise ProtocolValidationError("missing_trace", "trace_id is required (OBS-01)")
+        if not t.span_id.value:
+            raise ProtocolValidationError("missing_span", "span_id is required (OBS-03)")
 
     def _validate_delivery(self, envelope: ProtocolEnvelope) -> None:
         d = envelope.delivery

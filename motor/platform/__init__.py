@@ -9,15 +9,19 @@ API Classification:
     MessageId, CorrelationId, CausationId, MessageKind,
     DeliverySemantics, ProtocolValidator, ProtocolSerializer,
     ProtocolDeserializer, Transport, CompatibilityChecker,
-    VersionNegotiator
+    VersionNegotiator, SpanId, TraceId
 - 🟡 ADVANCED: ProtocolRegistry, RetryPolicy, IdempotencyKey,
-    LocalTransport, ProtocolException, ProtocolValidationError
+    LocalTransport, ProtocolException, ProtocolValidationError,
+    TraceContext, TraceExporter, MetricsCollector, TraceMiddleware,
+    HealthAggregator, SpanEvent
 - 🔵 INTERNA: compute_checksum, verify_checksum, make_message_id,
     make_envelope_with_checksum
 """
 
 from motor.platform.compat import CompatibilityChecker
 from motor.platform.errors import ProtocolException
+from motor.platform.health import HealthAggregator, get_health_aggregator
+from motor.platform.middleware import TraceMiddleware, traced
 from motor.platform.models import (
     CausationId,
     CorrelationId,
@@ -31,7 +35,9 @@ from motor.platform.models import (
     RetryPolicy,
     RoutingHeader,
     SecurityHeader,
+    SpanId,
     TraceHeader,
+    TraceId,
     VersionHeader,
 )
 from motor.platform.negotiator import VersionNegotiationResult, VersionNegotiator
@@ -46,6 +52,14 @@ from motor.platform.serializer import (
     make_message_id,
     verify_checksum,
 )
+from motor.platform.tracing import (
+    MetricsCollector,
+    SpanEvent,
+    TraceContext,
+    TraceExporter,
+    get_metrics_collector,
+    record_latency,
+)
 from motor.platform.transport import LocalTransport, Transport
 from motor.platform.validator import ProtocolValidationError, ProtocolValidator
 
@@ -56,12 +70,14 @@ __all__ = [
     "DeliveryHeader",
     "DeliverySemantics",
     "ErrorEnvelope",
+    "HealthAggregator",
     "IdempotencyKey",
     "JsonProtocolDeserializer",
     "JsonProtocolSerializer",
     "LocalTransport",
     "MessageId",
     "MessageKind",
+    "MetricsCollector",
     "ProtocolDeserializer",
     "ProtocolEnvelope",
     "ProtocolException",
@@ -72,13 +88,23 @@ __all__ = [
     "RetryPolicy",
     "RoutingHeader",
     "SecurityHeader",
+    "SpanEvent",
+    "SpanId",
+    "TraceContext",
+    "TraceExporter",
     "TraceHeader",
+    "TraceId",
+    "TraceMiddleware",
     "Transport",
     "VersionHeader",
     "VersionNegotiationResult",
     "VersionNegotiator",
     "compute_checksum",
+    "get_health_aggregator",
+    "get_metrics_collector",
     "make_envelope_with_checksum",
     "make_message_id",
+    "record_latency",
+    "traced",
     "verify_checksum",
 ]

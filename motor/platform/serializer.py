@@ -19,7 +19,9 @@ from motor.platform.models import (
     ProtocolEnvelope,
     RoutingHeader,
     SecurityHeader,
+    SpanId,
     TraceHeader,
+    TraceId,
     VersionHeader,
 )
 
@@ -64,9 +66,13 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
             "destination": r.destination,
         },
         "trace": {
-            "correlation_id": str(t.correlation_id),
-            "causation_id": str(t.causation_id),
+            "trace_id": str(t.trace_id),
+            "span_id": str(t.span_id),
+            "parent_span_id": str(t.parent_span_id) if t.parent_span_id else "",
+            "correlation_id": str(t.correlation_id) if t.correlation_id else "",
+            "causation_id": str(t.causation_id) if t.causation_id else "",
             "timestamp": t.timestamp,
+            "monotonic_ts": t.monotonic_ts,
         },
         "delivery": {
             "semantics": d.semantics.value,
@@ -114,6 +120,14 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
     # CausationId — use from_string to preserve root sentinel
     causation = CausationId.from_string(td.get("causation_id", ""))
 
+    # Trace fields
+    trace_id = TraceId(td.get("trace_id", TraceId.generate().value))
+    span_id = SpanId(td.get("span_id", SpanId.generate().value))
+    parent_raw = td.get("parent_span_id", "")
+    parent_span_id = SpanId(parent_raw) if parent_raw else None
+    corr_id_raw = td.get("correlation_id", "")
+    correlation_id = CorrelationId(corr_id_raw) if corr_id_raw else None
+
     # MessageKind — catch unknown values for forwarding to dead-letter
     try:
         message_kind = MessageKind(rd["message_kind"])
@@ -146,9 +160,13 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
             destination=rd.get("destination", ""),
         ),
         trace=TraceHeader(
-            correlation_id=CorrelationId(td.get("correlation_id", "")),
+            trace_id=trace_id,
+            span_id=span_id,
+            parent_span_id=parent_span_id,
+            correlation_id=correlation_id,
             causation_id=causation,
             timestamp=td.get("timestamp", 0.0),
+            monotonic_ts=td.get("monotonic_ts", 0),
         ),
         delivery=DeliveryHeader(
             semantics=DeliverySemantics(dd.get("semantics", "at_most_once")),

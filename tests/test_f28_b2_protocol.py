@@ -35,7 +35,7 @@ from motor.platform import (
     make_message_id,
     verify_checksum,
 )
-from motor.platform.models import RoutingHeader, SecurityHeader, TraceHeader
+from motor.platform.models import RoutingHeader, SecurityHeader, SpanId, TraceHeader, TraceId
 
 
 def _make_env(
@@ -52,7 +52,7 @@ def _make_env(
     v = VersionHeader(protocol_version=proto_ver, schema_version=schema_ver)
     mid = make_message_id(proto_ver, schema_ver, source, destination, message_type, payload)
     r = RoutingHeader(message_id=mid, message_type=message_type, message_kind=kind, source=source, destination=destination)
-    t = TraceHeader(correlation_id=CorrelationId(correlation), causation_id=CausationId.root(), timestamp=1000.0)
+    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId(correlation), causation_id=CausationId.root(), timestamp=1000.0)
     d = DeliveryHeader(semantics=semantics)
     return make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=payload)
 
@@ -179,12 +179,12 @@ def test_validate_invalid_version() -> None:
         val.validate(env)
 
 
-def test_validate_missing_correlation() -> None:
+def test_validate_missing_trace() -> None:
     val = ProtocolValidator()
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "s", "d", "T", b"{}")
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="s", destination="d")
-    t = TraceHeader(correlation_id=CorrelationId(""), causation_id=CausationId.root())
+    t = TraceHeader(trace_id=TraceId(""), span_id=SpanId(""), correlation_id=CorrelationId(""), causation_id=CausationId.root())
     d = DeliveryHeader()
     env = make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=b"{}")
     with pytest.raises(ProtocolValidationError):
