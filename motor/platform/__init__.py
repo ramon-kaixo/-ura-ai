@@ -53,12 +53,18 @@ from motor.platform.serializer import (
     verify_checksum,
 )
 from motor.platform.tracing import (
+    InMemoryExporter,
     MetricsCollector,
+    Sampler,
+    SamplingStrategy,
     SpanEvent,
+    SpanTreeError,
     TraceContext,
     TraceExporter,
     get_metrics_collector,
     record_latency,
+    sanitize_tags,
+    validate_span_tree,
 )
 from motor.platform.transport import LocalTransport, Transport
 from motor.platform.validator import ProtocolValidationError, ProtocolValidator
@@ -72,6 +78,7 @@ __all__ = [
     "ErrorEnvelope",
     "HealthAggregator",
     "IdempotencyKey",
+    "InMemoryExporter",
     "JsonProtocolDeserializer",
     "JsonProtocolSerializer",
     "LocalTransport",
@@ -88,8 +95,11 @@ __all__ = [
     "RetryPolicy",
     "RoutingHeader",
     "SecurityHeader",
+    "Sampler",
+    "SamplingStrategy",
     "SpanEvent",
     "SpanId",
+    "SpanTreeError",
     "TraceContext",
     "TraceExporter",
     "TraceHeader",
@@ -105,6 +115,8 @@ __all__ = [
     "make_envelope_with_checksum",
     "make_message_id",
     "record_latency",
+    "sanitize_tags",
     "traced",
+    "validate_span_tree",
     "verify_checksum",
 ]
