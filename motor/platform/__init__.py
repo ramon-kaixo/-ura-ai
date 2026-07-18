@@ -2,6 +2,18 @@
 
 Infraestructura de comunicación entre subsistemas.
 Independiente del transporte. Sin dependencias de HTTP, RPC ni colas.
+
+API Classification:
+- 🟢 ESTABLE: ProtocolEnvelope, VersionHeader, RoutingHeader,
+    TraceHeader, DeliveryHeader, SecurityHeader, ErrorEnvelope,
+    MessageId, CorrelationId, CausationId, MessageKind,
+    DeliverySemantics, ProtocolValidator, ProtocolSerializer,
+    ProtocolDeserializer, Transport, CompatibilityChecker,
+    VersionNegotiator
+- 🟡 ADVANCED: ProtocolRegistry, RetryPolicy, IdempotencyKey,
+    LocalTransport, ProtocolException, ProtocolValidationError
+- 🔵 INTERNA: compute_checksum, verify_checksum, make_message_id,
+    make_envelope_with_checksum
 """
 
 from motor.platform.compat import CompatibilityChecker

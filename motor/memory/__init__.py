@@ -2,6 +2,12 @@
 
 Preserva, consulta y gestiona la evolución temporal del
 conocimiento fusionado.
+
+API Classification:
+- 🟢 ESTABLE: Memory, MemoryTimeline, MemoryEntry, MemoryEventType,
+    FactRef, Journal
+- 🟡 ADVANCED: MemoryMetadata, SnapshotHeader, MemoryQuery
+- 🔵 INTERNA: make_entry_id, load_snapshot, save_snapshot
 """
 
 from motor.memory.journal import Journal

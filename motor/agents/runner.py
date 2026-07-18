@@ -95,17 +95,20 @@ class AgentToolRunner(ToolRunnerABC):
     TR-18: Sin singletons.
     TR-19: Determinista cuando la herramienta lo es.
     TR-20: Todas las excepciones tipificadas.
+    Backpressure: max_concurrent_tools limita ejecuciones simultáneas.
     """
 
     def __init__(
         self,
         adapters: dict[str, ToolAdapter] | None = None,
         rate_limiter: RateLimiter | None = None,
+        max_concurrent_tools: int = 10,
     ) -> None:
         self._adapters: dict[str, ToolAdapter] = dict(adapters or {})
         self._contracts: dict[str, ToolContract] = {}
         self._lock = threading.Lock()
         self._rate_limiter = rate_limiter or RateLimiter()
+        self._semaphore = threading.Semaphore(max_concurrent_tools)
 
     def register(self, name: str, adapter: ToolAdapter, contract: ToolContract) -> None:
         """Registra una herramienta con su adaptador y contrato."""
@@ -125,11 +128,18 @@ class AgentToolRunner(ToolRunnerABC):
     ) -> dict:
         """Ejecuta una herramienta y retorna su resultado. (TR-15)."""
         self._rate_limiter.check(tool_name)
-        request = self._build_request(tool_name, params, timeout)
-        result = self._execute(request)
-        if not result.success:
-            self._raise_error(result)
-        return result.data
+        # Backpressure: esperar si hay demasiadas herramientas concurrentes
+        acquired = self._semaphore.acquire(timeout=timeout)
+        if not acquired:
+            raise ToolTimeoutError(f"Backpressure timeout for '{tool_name}'")
+        try:
+            request = self._build_request(tool_name, params, timeout)
+            result = self._execute(request)
+            if not result.success:
+                self._raise_error(result)
+            return result.data
+        finally:
+            self._semaphore.release()
 
     # ── Internos ──────────────────────────────────────
 
