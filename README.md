@@ -77,8 +77,14 @@ curl localhost:8000/metrics
 ```
 ura-ai/
 ├── motor/
+│   ├── core/
+│   │   ├── fusion/         → F25 Knowledge Fusion (pipeline, FactIndex, FactHistory)
+│   │   └── web/citation/   → CitationBundle, Evidence
+│   ├── memory/             → F26 Historical Memory (Timeline, Journal, Snapshot, crypto)
+│   ├── agents/             → F27 Autonomous Agents (CapabilityGate, ToolRunner, Scheduler, Orchestrator)
+│   ├── platform/           → F28 Platform Protocols (Envelope, Tracing, Health, Metrics, RateLimiter)
 │   ├── intelligence/
-│   │   ├── agents/         → Agent ABC, Runtime, Planner, Executor, etc.
+│   │   ├── agents/         → Legacy agent ABC, Runtime, Planner
 │   │   ├── retrieval/      → Vector, BM25, Hybrid retrievers
 │   │   ├── reranking/      → NoOp, LLM, CrossEncoder rerankers
 │   │   ├── chunking.py     → SemanticChunker
@@ -150,8 +156,12 @@ docker run -p 8000:8000 ura
 | F10 | Stabilization | ✅ Closed |
 | F11 | Platform (plugins, events, pipeline) | ✅ Closed |
 | F12 | Intelligence (retrieval, memory, agents) | ✅ Closed |
-| F13 | Production (Docker, CI/CD, docs) | 🟡 Active |
-| F14 | Consensus, advanced agents, fine-tuning | 🔮 Planned |
+| F13 | Production (Docker, CI/CD, docs) | ✅ Closed |
+| F14 | Robustness (load, resiliency, profiling) | ✅ Closed |
+| F25 | Knowledge Fusion (pipeline, Entity Resolution) | ✅ Closed |
+| F26 | Historical Memory (Timeline, Journal, Snapshot) | ✅ Closed |
+| F27 | Autonomous Agents (Gate, Runner, Orchestrator) | ✅ Closed |
+| F28 | Platform Protocols (Envelope, Tracing, Health) | ✅ Closed |
 
 ## Architecture
 

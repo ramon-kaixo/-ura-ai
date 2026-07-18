@@ -1,4 +1,37 @@
-# Changelog — Knowledge Engine
+# Changelog
+
+## [0.28.0] — 2026-07-19 — Fase 28 Platform Protocols
+
+### Added
+- F28: ProtocolEnvelope (5 headers), ProtocolValidator, VersionNegotiator, Transport ABC + LocalTransport, ErrorEnvelope
+- F28: Observabilidad Distribuida (TraceId/SpanId, TraceExporter, Sampler, MetricsCollector, HealthAggregator, span tree validation)
+- F28: RateLimiter (token bucket), payload sanitization (8 blocked patterns), structured JSON logging
+- 63 tracing tests, 488 total F25–F28+OBS tests, soak 3288 ops/60s 0 errors
+
+## [0.27.0] — 2026-07-18 — Fase 27 Autonomous Agents
+
+### Added
+- F27: CapabilityGate (6 denial codes), ToolRunner (20 constraints, Semaphore backpressure)
+- F27: Scheduler (FIFO + aging + GracefulShutdown), Planner (rule-based, no LLM in hot path)
+- F27: AgentOrchestrator (18 constraints, DI-based, CapabilityGate integrated)
+- 109 tests, 0 regresiones
+
+## [0.26.0] — 2026-07-17 — Fase 26 Historical Memory
+
+### Added
+- F26: MemoryTimeline (temporal projection), Journal (WAL with fsync+checksum), Snapshot (recovery point)
+- F26: Health/Readiness/Liveness probes, graceful shutdown
+- F26: AES-256-CTR optional encryption (PBKDF2, cryptography library)
+
+## [0.25.0] — 2026-07-16 — Fase 25 Knowledge Fusion
+
+### Added
+- F25: Pipeline stages (Extraction, Normalization, KnowledgeMerger, MemoryCandidate)
+- F25: Entity Resolution (ContextualEntityResolver with LRU cache, n-gramas, polysemy handling)
+- F25: FactIndex, FactHistory, bucket-based conflict detection
+- F25: Bridge to F26 Memory (MemoryCandidateSelectionStage)
+
+## [0.2.0] — 2026-07-01 — Release Candidate
 
 ## [0.2.0] — 2026-07-01 — Release Candidate
 

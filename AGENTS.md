@@ -22,7 +22,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
 - Test: `pytest -q` (needs hypothesis, pytest-asyncio, pytest-timeout)
-- Full audit: `bash /home/ramon/URA/ura_ia_1972/tuneladora.sh`
+- Full audit: `python3 /home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py`
 - Demo: `bash scripts/demo.sh`
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
@@ -147,7 +147,7 @@ Organizados por función en las siguientes categorías:
 - `reflexion_profunda.py` → fusionado en `analizar_fallo_conciencia.py`
 - `translate_to_english.py` → eliminado (código en inglés)
 - `ia-flujo.service` → eliminado (app/flujo_constante.py nunca existió)
-- 34 scripts huérfanos → `.nervioso/scripts_eliminados/`
+- 34 scripts huérfanos → `.nervioso/descarte/`
 
 ## GX10 (ASUS GB10) — Estado Real (2026-06-24)
 
@@ -162,27 +162,33 @@ Organizados por función en las siguientes categorías:
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
 | `ura-openclaw` | 18789 | ✅ activo | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G) |
-| `opencode` | 8081 | ✅ activo | systemd | OpenCode Server |
-| `ura-executor` | 4096 | ✅ activo | systemd | URA Executor API (renombrado de opencode-executor) |
-| `agent-hierarchy` | - | ✅ activo | systemd | URA Agent Hierarchy System |
-| `swarm-discovery` | - | ✅ activo | systemd | URA Swarm Auto-Discovery Service |
-| `ura-agent-bus` | - | ✅ activo | systemd | URA Agent Message Bus |
-| `ura-audit-api` | - | ✅ activo | systemd | URA Audit API (FastAPI) |
+| `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
+| `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
 | `ura-contraste` | 8002 | ✅ activo | systemd | Proxy de Contraste + Telemetría POS (POST /api/v1/telemetry + GET /metrics) |
-| `ura-detector` | - | ✅ activo | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis |
-| `ura-go2rtc` | - | ✅ activo | systemd | go2rtc Camera Stream Proxy |
+| `ura-go2rtc` | 1984 | ✅ activo | systemd | go2rtc Camera Stream Proxy |
+| `ura-heartbeat` | - | ✅ activo | systemd | URA Mochila Heartbeat — reinicio automático si /health falla |
+| `ura-metrics` | 8888 | ✅ activo | systemd | URA Metrics Server |
 | `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
+| `ura-mochila` | - | ✅ activo | systemd | Servicio Router Mochila - Servidor API FastAPI |
 | `ura-ssh-guard` | - | ✅ activo | systemd | URA SSH Guard |
-| `gx10-api` | - | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
-| `llama-vision` | - | ✅ activo | systemd | llama.cpp Vision Model for URA (Qwen2-VL-7B) |
-| `tuneladora.timer` | - | ✅ activo | systemd | URA Tuneladora Timer - Every 6 hours |
+| `ura-voice` | - | ✅ activo | systemd | URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS) |
+| `ura-watchdog-buffer` | - | ✅ activo | systemd | URA Watchdog de Buffer de 30GB |
+| `ura-watcher` | - | ✅ activo | systemd | URA Watcher — Indexación sectorizada en tiempo real |
+| `ura-watcher-auditoria` | - | ✅ activo | systemd | URA Watcher Auditoria — Dispara auditoria al recibir datos |
+| `ura-xvfb` | - | ✅ activo | systemd | URA Xvfb Virtual Display |
+| `ura-agent-hierarchy` | - | ❌ fallido | systemd | URA Agent Hierarchy System |
+| `ura-aspirador` | - | ❌ fallido | systemd | URA Aspirador — vectorize downloaded files |
+| `ura-detector` | - | ❌ fallido | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis |
+| `ura-fix-x11-socket` | - | ❌ fallido | systemd | URA Fix X11 socket directory |
+| `ura-hetzner-tunnel` | - | ❌ fallido | systemd | URA SSH Tunnel to Hetzner |
+| `ura-historiador` | - | ❌ fallido | systemd | URA Historiador — registra acciones en Qdrant |
+| `ura-procesamiento-lento` | - | ❌ fallido | systemd | URA Daemon de Procesamiento Lento (10% CPU) |
+| `ura-router-health` | - | ❌ fallido | systemd | URA Model Router Health Check |
 
 ### Servicios systemd (REALES - Usuario)
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
 | `model-router` | 11435 | ✅ activo | systemd user | URA Model Router Enhanced (cache 5min, Connection: close) |
-| `start-router` | - | ✅ activo | systemd user | URA Router llama_router (usuario) |
-| `backend@codestral-22b` | - | ✅ activo | systemd user | Backend llama.cpp para modelo codestral-22b |
 | `backend@qwen2.5-coder-32b` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-32b |
 | `backend@qwen2.5-coder-q8_0` | - | ✅ activo | systemd user | Backend llama.cpp para modelo qwen2.5-coder-q8_0 |
 
@@ -290,7 +296,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - **Mac**: `/Users/ramonesnaola/URA/backups_gx10/` (backups desde GX10)
 
 ### Tuneladora Unificada
-- **Ubicación**: `/home/ramon/URA/ura_ia_1972/tuneladora.sh`
+- **Ubicación**: `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py`
 - **Fases**: 6 fases unificadas (Diagnóstico, Mantenimiento, Auditoría Modelos, Mejora, Rollback, Backup)
 - **Timer**: `tuneladora.timer` - ejecuta cada 6 horas
 - **Rutas corregidas**: Usa `/home/ramon/URA/` (no `/opt/ura/`)
@@ -343,7 +349,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `README.md` — Human-readable project overview
 - `pyproject.toml` — Python project configuration
 - `CLAUDE.md` — Symlink to AGENTS.md (Claude Code compatibility)
-- `/home/ramon/URA/ura_ia_1972/tuneladora.sh` — Tuneladora unificada (6 fases)
+- `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py` — Tuneladora unificada (6 fases)
 - `/home/ramon/URA/core/model_router.py` — Model Router Enhanced
 - `docs/architecture/FASE8_DESIGN.md` — Fase 8 design document (live)
 - `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
@@ -370,19 +376,20 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `/home/ramon/docker/prometheus/alert.rules` — Regla NodoPerifericoDesconectado
 - `/etc/ura/fix-path.conf` — Environment file desplegado del servicio
 
-## Problemas Conocidos (2026-07-06)
+## Problemas Conocidos (2026-07-19)
 - **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
 - **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
 - **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
-- **RAM**: 105GB/121GB (modelo cargado en CUDA, no es fuga)
+- **RAM**: 57GB/121GB (~47%, modelo grande descargado)
+- **Rootfs montado RO**: ✅ **RESUELTO (2026-07-19)**. Causa: falta `rw` en fstab. Fijado: `rw,errors=remount-ro`. `systemctl daemon-reload` aplicado. Próximo reinicio arrancará RW automáticamente.
 - **Zombies**: 0 (limpiados durante reparación)
-- **F14-F01**: Flag `no new privileges` impide detener servicios systemd (Ollama) sin sudo. R02/R10 no pudieron probarse completamente en Bloque 2.
+- **F14-F01**: Flag `no new privileges` impide usar sudo y restart systemd services sin polkit interactivo.
 - **F14-F02**: `MultiAgentRuntime.cancel()` requiere `workflow_id` obligatorio — API inconsistente.
 - **F14-F03**: `EpisodeStore` no recrea BD SQLite automáticamente tras corrupción (R06 data loss).
 - **F14-F04**: Qdrant recovery time ~30.2s excede umbral de 30s en R01/R09 — borderline.
 - **F14-F05**: `HybridRetriever` retorna éxito sin Qdrant disponible — posible fallback a memoria no documentado.
 
-## Roadmap (Fases 10–13)
+## Roadmap (Fases 10–28)
 
 | Fase | Objetivo | Resultado Clave | Estado |
 |------|----------|-----------------|--------|
@@ -390,7 +397,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
-| **14** | Robustez | Load & Stress, resiliencia, E2E, profiling, RC Audit | 🔮 Planificado |
+| **14** | Robustez | Load & Stress, resiliencia, E2E, profiling, RC Audit | ✅ Cerrada (v0.14.8-b5) |
 
 ### Detalle por Fase
 
@@ -512,6 +519,51 @@ Solo medir, validar, documentar.
 - `docs/architecture/SECRETS.md` y `docs/architecture/SECRETS_AUDIT.md`
 - Ruff delta: -99 errores en archivos tocados (0 nuevos)
 - Ver `docs/architecture/SECRETS.md`
+
+**Fase 25 — Knowledge Fusion** ✅ Cerrada (v0.25.0-fase25)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **B1** | Contratos: ABCs (8), modelos (12), enums, config, registry | ✅ Completado (v0.25.0-b3) |
+| **B2** | PipelineStage implementations: 8 stages concretos + BaseStage | ✅ Completado (v0.25.0-b3) |
+| **B3** | Entity Resolution Avanzado: ContextualEntityResolver con desambiguación contextual, LRU cache, n-gramas, polisemia (Apple empresa/fruta, Tesla empresa/persona, Amazon empresa/río, Washington estado/capital/persona) | ✅ Completado (v0.25.0-b3) |
+| **B4** | Conflict Detection (pendiente) | 🔮 Planificado |
+| **B5** | Knowledge Merge (pendiente) | 🔮 Planificado |
+| **B6** | Source Scoring (pendiente) | 🔮 Planificado |
+
+Ver `docs/architecture/F25_ARCHITECTURE_AUDIT.md` para auditoría completa y métricas de calidad.
+
+**Fase 26 — Historical Memory** ✅ Cerrada (v0.26.0-rc1)
+
+- Arquitectura de memoria: Timeline (proyección temporal), Journal (WAL con fsync+checksum), Snapshot (punto de recuperación)
+- Health/Readiness/Liveness probes funcionales
+- Graceful Shutdown con timeout (flushea journal antes de salir)
+- Cifrado AES-256-CTR opcional en journal y snapshot vía PBKDF2 (cryptography)
+- Ver `motor/memory/` para implementación completa
+
+**Fase 27 — Autonomous Agents** ✅ Cerrada (v0.27.0-fase27)
+
+- Arquitectura de agentes: ABCs + modelos frozen (ADR-027-01/02)
+- CapabilityGate con 6 denial codes + mensajes descriptivos
+- ToolRunner con 20 constraints (TR-01..20), backpressure vía Semaphore
+- Scheduler: FIFO + aging (priority decay cada 30s) + GracefulShutdown
+- Planner: rule-based determinista (sin LLM en hot path)
+- AgentOrchestrator: 18 constraints, DI-based, CapabilityGate integrado
+- 109 tests, 0 regresiones
+- Ver `motor/agents/` para implementación
+
+**Fase 28 — Platform Protocols** ✅ Cerrada (v0.28.0-b3, pending stable tag)
+
+- ProtocolEnvelope con 5 headers: Version, Routing, Trace, Delivery, Security
+- JSON canonical serializer/deserializer + ProtocolValidator
+- VersionNegotiator por MessageKind + CompatibilityChecker
+- ProtocolRegistry + Transport ABC + LocalTransport
+- ErrorEnvelope con trace_id + causation_id
+- Observabilidad: TraceId/SpanId/parent_span_id, TraceExporter (bounded queue + background flush), HealthAggregator, MetricsCollector (p50/p95/p99), Sampler (5 estrategias), validate_span_tree, sanitize_tags
+- Structured JSON logging (motor/platform/logging.py)
+- RateLimiter (token bucket, thread-safe), payload sanitization (8 patrones bloqueados)
+- 63 tests tracing + 488 tests total en F25-F28+OBS, 0 regresiones
+- Ver `motor/platform/` y `docs/architecture/GOVERNANCE.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
