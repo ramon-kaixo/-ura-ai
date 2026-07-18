@@ -1,6 +1,15 @@
 """Agentes Autónomos (F27).
 
 Contratos, modelos y componentes del sistema de agentes.
+
+Clasificación de API (Observación B2A):
+- 🟢 ESTABLE: Agent, AgentState, AgentCapability, CapabilityGate,
+    Scheduler, Planner, Executor, ToolRunner, StateMachine
+- 🟡 EXPERIMENTAL: AgentTask, AgentPlan, AgentResult, AgentContext,
+    AgentPolicy, AgentExecution, AgentAuditRecord, ToolContract,
+    AuditEvent, TaskQueue, AuditLogger
+- 🔵 INTERNA: make_agent_id, make_task_id, make_plan_id, make_step_id,
+    PlanStep, AgentStateMachine
 """
 
 from motor.agents.base import (
