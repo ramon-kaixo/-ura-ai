@@ -30,7 +30,9 @@ from motor.platform.serializer import (
     ProtocolDeserializer,
     ProtocolSerializer,
     compute_checksum,
+    make_envelope_with_checksum,
     make_message_id,
+    verify_checksum,
 )
 from motor.platform.transport import LocalTransport, Transport
 from motor.platform.validator import ProtocolValidationError, ProtocolValidator
@@ -64,5 +66,7 @@ __all__ = [
     "VersionNegotiationResult",
     "VersionNegotiator",
     "compute_checksum",
+    "make_envelope_with_checksum",
     "make_message_id",
+    "verify_checksum",
 ]

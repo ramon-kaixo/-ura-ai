@@ -1,7 +1,16 @@
-"""Transport abstraction + LocalTransport reference implementation."""
+"""Transport abstraction + LocalTransport reference implementation.
+
+Concurrency contract for LocalTransport:
+- send() and request() are thread-safe (lock-protected).
+- receive() is thread-safe.
+- register() should be called before concurrent access.
+- The transport is NOT designed for multi-producer/multi-consumer
+  at scale. It is a reference implementation for testing.
+"""
 
 from __future__ import annotations
 
+import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
@@ -23,30 +32,35 @@ class Transport(ABC):
 
 
 class LocalTransport(Transport):
-    """In-process transport. No serialization. Reference implementation."""
+    """In-process transport. Reference implementation. Thread-safe."""
 
     def __init__(self) -> None:
         self._handlers: dict[str, Callable[[ProtocolEnvelope], ProtocolEnvelope]] = {}
         self._received: list[ProtocolEnvelope] = []
+        self._lock = threading.Lock()
 
     def register(self, message_type: str, handler: Callable[[ProtocolEnvelope], ProtocolEnvelope]) -> None:
         self._handlers[message_type] = handler
 
     def clear(self) -> None:
-        self._handlers.clear()
-        self._received.clear()
+        with self._lock:
+            self._handlers.clear()
+            self._received.clear()
 
     async def send(self, envelope: ProtocolEnvelope) -> None:
-        self._received.append(envelope)
+        with self._lock:
+            self._received.append(envelope)
 
     async def receive(self) -> ProtocolEnvelope:
-        if not self._received:
-            raise RuntimeError("No messages available")
-        return self._received.pop(0)
+        with self._lock:
+            if not self._received:
+                raise RuntimeError("No messages available")
+            return self._received.pop(0)
 
     async def request(self, envelope: ProtocolEnvelope) -> ProtocolEnvelope:
-        self._received.append(envelope)
-        handler = self._handlers.get(envelope.routing.message_type)
+        with self._lock:
+            self._received.append(envelope)
+            handler = self._handlers.get(envelope.routing.message_type)
         if handler is None:
             raise RuntimeError(f"No handler for {envelope.routing.message_type}")
         return handler(envelope)
