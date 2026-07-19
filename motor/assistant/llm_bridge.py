@@ -122,7 +122,11 @@ class LLMBridge:
     def _do_generate(self, messages: list[dict[str, str]], model_key: str) -> str:
         if self._router is not None:
             try:
-                response = self._router.generate(messages, task=model_key)
+                prompt = self._messages_to_prompt(messages)
+                if hasattr(self._router, 'generate_with_capability'):
+                    response = self._router.generate_with_capability(prompt, capability=model_key)
+                else:
+                    response = self._router.generate(prompt, model=model_key)
                 if response:
                     return str(response)
             except Exception:  # noqa: S110
