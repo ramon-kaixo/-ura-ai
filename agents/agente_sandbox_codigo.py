@@ -69,8 +69,8 @@ def pushover(msg, title="URA Sandbox", pri=0) -> None:
             },
             timeout=10,
         )
-    except BaseException:
-        pass
+        except BaseException:
+            log.exception("Error enviando notificación Pushover")
 
 
 def md5(ruta):

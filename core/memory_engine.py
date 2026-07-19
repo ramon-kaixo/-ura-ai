@@ -30,6 +30,10 @@ CHUNK_SIZE = RAG_CONFIG.get("chunk_size", 500)
 CHUNK_OVERLAP = RAG_CONFIG.get("chunk_overlap", 50)
 TOP_K = RAG_CONFIG.get("top_k", 5)
 SIMILARITY_THRESHOLD = RAG_CONFIG.get("threshold", 0.7)
+OLLAMA_URL = CONFIG.get("ollama", {}).get("url", "http://localhost:11434")
+RAG_MODEL = RAG_CONFIG.get("model", "nomic-embed-text")
+TEMPERATURE = RAG_CONFIG.get("temperature", 0.7)
+MAX_TOKENS = RAG_CONFIG.get("max_tokens", 2048)
 
 _qdrant: QdrantClient | None = None
 
@@ -244,6 +248,11 @@ def get_sources(results: list[dict]) -> list[dict]:
                 if s["source"] == src:
                     s["chunks_used"] += 1
     return sources
+
+
+def _chromadb_available() -> bool:
+    """ChromaDB fue desinstalado — retorna False siempre."""
+    return False
 
 
 def rag_enabled() -> bool:

@@ -15,10 +15,15 @@ import subprocess
 import sys
 import threading
 import time
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-# Módulos locales (misma carpeta)
+# Asegurar que el directorio local está en sys.path para imports relativos
+_monitor_dir = str(Path(__file__).resolve().parent)
+if _monitor_dir not in sys.path:
+    sys.path.insert(0, _monitor_dir)
+
 from error_logger import ErrorLogger
 from mac_heartbeat import MacHeartbeat
 
@@ -41,7 +46,10 @@ CONFIG = {**_raw_config.get("global_defaults", {}), **_profile}
 RUNBOOK_PATH = Path(__file__).parent.parent / "deploy" / "emergency_runbook.json"
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-_STATE_DIR.chmod(0o700)
+try:
+    _STATE_DIR.chmod(0o700)
+except OSError:
+    pass  # Esperado si ~/.ura/ está en filesystem RO
 STATE_FILE = _STATE_DIR / "ura_snc_state.json"
 PID_FILE = _STATE_DIR / "ura_snc.pid"
 POLL_INTERVAL = 10  # segundos

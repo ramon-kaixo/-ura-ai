@@ -31,7 +31,7 @@ SCRIPTS = URA_ROOT / "scripts/pro"
 NERVIOSO = URA_ROOT / ".nervioso"
 NERVIOSO.mkdir(parents=True, exist_ok=True)
 
-GUARDIAN = URA_ROOT / "core" / "guardian_disco.py"
+GUARDIAN = URA_ROOT / "core" / "guardian_disco.py"  # renamed from guardián_disco
 
 
 def run_step(cmd, timeout=60, json_output=True):

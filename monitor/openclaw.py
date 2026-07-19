@@ -25,7 +25,10 @@ from pathlib import Path
 # Paths
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-_STATE_DIR.chmod(0o700)
+try:
+    _STATE_DIR.chmod(0o700)
+except OSError:
+    pass  # Esperado si ~/.ura/ está en filesystem RO
 STATE_FILE = _STATE_DIR / "ura_snc_state.json"
 RUNBOOK_PATH = Path(__file__).parent.parent / "deploy" / "emergency_runbook.json"
 STATS_FILE = _STATE_DIR / "ura_openclaw_stats.json"

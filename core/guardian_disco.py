@@ -54,7 +54,7 @@ def cargar_config() -> dict:
         try:
             return json.loads(CONFIG_PATH.read_text())
         except Exception:
-            pass  # noqa: S110
+            log.exception("Error cargando configuración desde %s", CONFIG_PATH)
     NERVIOSO.mkdir(parents=True, exist_ok=True)
     CONFIG_PATH.write_text(json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False) + "\n")
     return dict(DEFAULT_CONFIG)

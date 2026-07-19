@@ -68,7 +68,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             if existing:
                 continue
         except Exception:
-            pass
+            log.exception("Error buscando punto existente en Qdrant")
 
         try:
             vec = await _embed(idea.texto_para_embedding())
