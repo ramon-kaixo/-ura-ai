@@ -5,6 +5,8 @@ FUSIONADO CON:
   - meta_mejora_real.py (medicion antes/despues de mejoras)
 """
 
+import os
+
 PLUGIN = {
     "name": "meta_mejora",
     "phase": "post",

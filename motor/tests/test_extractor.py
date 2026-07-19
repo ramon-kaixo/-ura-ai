@@ -1,14 +1,6 @@
-"""Tests del extractor HTML (F24-B4).
+"""Tests del extractor HTML (F24-B4)."""
 
-Verifica:
-1. HtmlExtractor implementa Extractor
-2. Extracción de título, texto, metadatos
-3. Canonical URL, author, language, published_time
-4. Eliminación de scripts y estilos
-5. Codificación (UTF-8, ISO-8859-1, meta charset)
-6. HTML mal formado, vacío
-7. Integración con Registry + WebPipeline
-"""
+from __future__ import annotations
 
 from motor.core.web.base import Extractor
 from motor.core.web.models import WebDocument

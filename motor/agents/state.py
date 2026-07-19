@@ -8,7 +8,6 @@ from __future__ import annotations
 from motor.agents.base import StateMachine as StateMachineABC
 from motor.agents.models import AgentState
 
-
 # Mapa de transiciones válidas: (desde, hacia) → permitido
 _VALID_TRANSITIONS: set[tuple[AgentState, AgentState]] = {
     # CREATED → PLANIFICACIÓN

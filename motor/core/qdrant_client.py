@@ -1,7 +1,9 @@
 import asyncio
 import hashlib
 import logging
+import re
 import threading
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Optional
@@ -13,6 +15,16 @@ from motor.core.llm import embed as llm_embed, embed_async as llm_embed_async
 from motor.core.state import DegradedMode
 
 log = logging.getLogger("ura.qdrant")
+
+
+def generar_sparse_vector(texto: str, max_tokens: int = 512) -> dict:
+    """Genera sparse vector (indices + valores TF) para búsqueda híbrida Qdrant."""
+    tokens = re.findall(r"\w+", texto.lower())[:max_tokens]
+    freqs = Counter(tokens)
+    indices = [hash(t) % (2**31) for t in freqs]
+    values = [f / len(tokens) for f in freqs.values()]
+    return {"indices": indices, "values": values}
+
 
 COLECCION_INCIDENTES = "incidente_record"
 VECTOR_SIZE = 7

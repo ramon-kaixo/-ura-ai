@@ -11,7 +11,11 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from motor.core.web.citation.citation import CitationBundle
+    from motor.core.web.cleaner.cleaner import CleanedResult
     from motor.core.web.models import Citation, SearchResult, WebDocument
+    from motor.core.web.ranker.ranker import RankedDocument
+    from motor.core.web.summarizer.summarizer import Summary
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +83,24 @@ class WebPipeline:
         self._stage_times[PipelineStage.EXTRACT] = (time.monotonic() - t0) * 1000
         return doc
 
+    def clean(
+        self,
+        documents: list[WebDocument],
+        *,
+        min_words: int = 3,
+    ) -> CleanedResult:
+        """Limpia y deduplica una lista de documentos."""
+        t0 = time.monotonic()
+        from motor.core.web.cleaner.cleaner import DocumentCleaner
+        from motor.core.web.cleaner.deduplication import DeduplicationEngine
+
+        cleaner = DocumentCleaner(min_words=min_words)
+        cleaned = cleaner.clean(documents)
+        dedup = DeduplicationEngine()
+        cleaned.documents = dedup.deduplicate(cleaned.documents, stats=cleaned.stats)
+        self._stage_times[PipelineStage.CLEAN] = (time.monotonic() - t0) * 1000
+        return cleaned
+
     def rank(self, results: list[SearchResult], query: str) -> list[SearchResult]:
         """Ordena resultados según relevancia."""
         t0 = time.monotonic()
@@ -86,6 +108,49 @@ class WebPipeline:
         ranked = ranker.rank(results, query)
         self._stage_times[PipelineStage.RANK] = (time.monotonic() - t0) * 1000
         return ranked
+
+    def rank_documents(
+        self,
+        query: str,
+        documents: list[WebDocument],
+        positions: dict[str, int] | None = None,
+    ) -> list[RankedDocument]:
+        """Ranking de documentos extraídos por relevancia."""
+        t0 = time.monotonic()
+        from motor.core.web.ranker.ranker import DocumentRanker
+
+        ranker = DocumentRanker()
+        result = ranker.rank(query, documents, positions=positions)
+        self._stage_times[PipelineStage.RANK] = (time.monotonic() - t0) * 1000
+        return result
+
+    def summarize_documents(
+        self,
+        documents: list[WebDocument],
+        max_length: int = 10,
+    ) -> Summary:
+        """Resumen extractivo sin LLM."""
+        t0 = time.monotonic()
+        from motor.core.web.summarizer.summarizer import ExtractiveSummarizer
+
+        summarizer = ExtractiveSummarizer()
+        result = summarizer.summarize(documents, max_length=max_length)
+        self._stage_times[PipelineStage.SUMMARIZE] = (time.monotonic() - t0) * 1000
+        return result
+
+    def cite(
+        self,
+        summary: Summary,
+        documents: list[WebDocument],
+    ) -> CitationBundle:
+        """Genera citas y trazabilidad para un resumen."""
+        t0 = time.monotonic()
+        from motor.core.web.citation.citation import CitationEngine
+
+        engine = CitationEngine()
+        bundle = engine.build(summary, documents)
+        self._stage_times[PipelineStage.VALIDATE] = (time.monotonic() - t0) * 1000
+        return bundle
 
     def summarize(
         self,

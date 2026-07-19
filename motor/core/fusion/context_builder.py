@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.fusion.fact_index import FactIndex
-    from motor.core.fusion.models import VersionState
 
 _DEFAULT_MAX_FACTS = 50
 

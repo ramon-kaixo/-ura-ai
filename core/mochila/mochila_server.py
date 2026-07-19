@@ -18,6 +18,8 @@ from core.logs.guardian_logger import log_event
 from core.memoria.analizador import analizar
 from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
+
+log = logging.getLogger(__name__)
 from core.memoria.rastreadores.comprar import fase_comprar
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.saber import fase_saber

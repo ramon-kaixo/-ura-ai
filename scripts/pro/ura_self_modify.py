@@ -3,6 +3,7 @@
 Ejecuta contra la BD de Open WebUI en el GX10.
 """
 
+import os
 import subprocess
 import sys
 

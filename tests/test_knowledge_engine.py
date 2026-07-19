@@ -55,6 +55,7 @@ from knowledge.engine.scanner import scan_incremental, scan_source, take_snapsho
 from knowledge.engine.sqlite_writer import SyncPolicy, init_db
 from knowledge.engine.storage_verifier import check_fts_sync, check_schema
 from knowledge.engine.validator import validate_batch, validate_knowledge_object
+from knowledge.engine.migrations import SCHEMA_VERSION
 from knowledge.engine.verifier import verify_graph
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
 

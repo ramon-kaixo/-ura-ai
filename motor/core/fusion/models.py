@@ -446,4 +446,4 @@ class FusionResult:
     warnings: tuple[str, ...] = field(default_factory=tuple)
     statistics: dict[str, Any] = field(default_factory=dict)
     provenance: FusionProvenance = field(default_factory=FusionProvenance)
-    index: Any = None  # FactIndex — importado diferido para evitar ciclo
+    index: Any = None  # FactIndex (import diferido para evitar ciclo)

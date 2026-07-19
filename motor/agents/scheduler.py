@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import threading
 import time
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from motor.agents.base import Scheduler as SchedulerABC
