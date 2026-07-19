@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 import urllib.request
 from pathlib import Path
 
@@ -191,26 +192,12 @@ def _llm(prompt: str, model: str, num_predict: int = 4096) -> str:
     with urllib.request.urlopen(req, timeout=300) as r:
         data = json.loads(r.read())
     return data.get("response", "")
-    breaks = {1, total + 1}
-
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            breaks.add(node.lineno)
-            breaks.add(node.end_lineno + 1)
-
-    for ln in range(1, total + 1):
-        idx = ln - 1
-        if idx > 0 and idx < total - 1 and lines[idx].strip() == "":
-            if lines[idx - 1].strip() and lines[idx + 1].strip():
-                breaks.add(ln + 1)
-
-    return sorted(breaks)
 
 
 def chunk_file(file_path: str) -> list[dict]:
     source = Path(file_path).read_text(encoding="utf-8")
     lines = source.splitlines()
-    breaks = get_natural_breaks(file_path)
+    breaks = _get_natural_breaks(file_path)
 
     segments = []
     for i in range(len(breaks) - 1):
@@ -322,9 +309,9 @@ def run_cleaner(chunk: dict, rel_path: str, total: int) -> dict:
     chunk_n = chunk["idx"] + 1
     prompt = build_cleaner_prompt(chunk, rel_path, total)
     t0 = time.time()
-    resp = llm(prompt, MODEL_CLEANER, num_predict=min(chunk["lines"] * 10, 4096))
+    resp = _llm(prompt, MODEL_CLEANER, num_predict=min(chunk["lines"] * 10, 4096))
     elapsed = time.time() - t0
-    cleaned = clean_response(resp)
+    cleaned = _clean_response(resp)
     if not cleaned:
         log(f"     ⚠️  Chunk {chunk_n}: clean vacío → usando original")
         cleaned = chunk["source"]
@@ -341,9 +328,9 @@ def run_refactorer(cleaned_chunk: dict, rel_path: str, total: int) -> dict:
     tagged = inject_coord_tag(code, idx, total, indent)
     prompt = build_refactorer_prompt(tagged, rel_path, chunk_n, total, indent)
     t0 = time.time()
-    resp = llm(prompt, MODEL_REFACTOR, num_predict=min(len(code.splitlines()) * 20, 8192))
+    resp = _llm(prompt, MODEL_REFACTOR, num_predict=min(len(code.splitlines()) * 20, 8192))
     elapsed = time.time() - t0
-    refactored = clean_response(resp)
+    refactored = _clean_response(resp)
     if not refactored:
         log(f"     💀 C{chunk_n}/{total}: refactor vacío → usando código limpio")
         refactored = code
@@ -393,7 +380,7 @@ def helper3(data) -> None:
 def helper4(data) -> None:
     _, _rel = data
     workers = SANDBOX_WORKERS if SANDBOX_WORKERS > 0 else auto_workers()
-    log(f"🎛️  Workers: {workers} | RAM usada: {get_ram_used_gb():.1f}GB | Techo: {RAM_CEILING_GB}GB")
+    log(f"🎛️  Workers: {workers} | RAM usada: {_get_total_memory_usage():.1f}GB | Techo: {RAM_CEILING_GB}GB")
 
 
 def _ejecutar_ruff_check(sandbox_file_path) -> None:
@@ -438,6 +425,7 @@ def _procesar_resultados(
     sandbox_file_path_bak,
     CHUNKS_FAILED,
     FILES_FAILED,
+    total: int = 0,
 ) -> bool | None:
     if not pyc_ok or not compile_ok:
         log("❌ Aduana RECHAZADA")
@@ -561,6 +549,7 @@ def process_sandbox(
             sandbox_file_path_bak,
             CHUNKS_FAILED,
             FILES_FAILED,
+            total,
         )
     _inyectar_en_repo_real(sandbox_file_path, path)
     _revisar_ruff_ultimo(path)

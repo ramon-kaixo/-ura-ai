@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Tuple
 
 log = logging.getLogger("ura.ingestador_red")
 

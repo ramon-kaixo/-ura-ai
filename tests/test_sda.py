@@ -7,6 +7,7 @@ Verifica:
 """
 
 import asyncio
+import httpx
 import json
 import os
 import sys
