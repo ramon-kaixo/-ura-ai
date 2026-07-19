@@ -51,8 +51,11 @@ class ConversationEngine:
         episodic_memory: EpisodicConversationMemory | None = None,
         trend_awareness: TrendAwareness | None = None,
         max_turns: int = 200,
+        db_path: str | None = None,
     ):
-        store = message_store or MessageStore()
+        from motor.assistant.config import config as app_config
+        db = db_path or app_config.db_path
+        store = message_store or MessageStore(db_path=db)
         self._store = store
         self._context = context_window or ContextWindow()
         self._intent = intent_engine or IntentEngine()
