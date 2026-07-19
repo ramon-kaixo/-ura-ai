@@ -77,22 +77,64 @@ _rate_limiter = _RateLimiter()
 
 
 _SYSTEM_PROMPTS = {
-    "conversacion": (
-        "Eres URA, un asistente conversacional inteligente. "
-        "Responde de forma natural y directa, sin extenderte. "
-        "Sé conciso pero completo. Lenguaje natural como entre amigos."
-    ),
-    "trabajo": (
-        "Eres URA, un asistente profesional. "
-        "Responde de forma precisa y estructurada. "
-        "Usa bullet points cuando sea apropiado. Ve al grano."
-    ),
-    "explicacion": (
-        "Eres URA, un tutor experto. "
-        "Explica paso a paso con ejemplos concretos. "
-        "Profundiza en causas, mecanismos y consecuencias. "
-        "Asume que el usuario quiere entender realmente."
-    ),
+    "conversacion": {
+        "es": (
+            "Eres URA, un asistente conversacional inteligente. "
+            "Responde de forma natural y directa, sin extenderte. "
+            "Sé conciso pero completo. Habla en español."
+        ),
+        "en": (
+            "You are URA, an intelligent conversational assistant. "
+            "Respond naturally and directly, don't overexplain. "
+            "Be concise but complete. Speak in English."
+        ),
+    },
+    "trabajo": {
+        "es": (
+            "Eres URA, un asistente profesional. "
+            "Responde de forma precisa y estructurada. "
+            "Usa bullet points cuando sea apropiado. Ve al grano."
+        ),
+        "en": (
+            "You are URA, a professional assistant. "
+            "Respond precisely and structured. "
+            "Use bullet points when appropriate. Get to the point."
+        ),
+    },
+    "explicacion": {
+        "es": (
+            "Eres URA, un tutor experto. "
+            "Explica paso a paso con ejemplos concretos. "
+            "Profundiza en causas, mecanismos y consecuencias."
+        ),
+        "en": (
+            "You are URA, an expert tutor. "
+            "Explain step by step with concrete examples. "
+            "Go deep into causes, mechanisms and consequences."
+        ),
+    },
+}
+
+
+def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
+    mode_prompts = _SYSTEM_PROMPTS.get(mode_value, _SYSTEM_PROMPTS["conversacion"])
+    system_prompt = mode_prompts.get(lang_code, mode_prompts["es"])
+
+    if analysis.get("sentiment_action"):
+        if lang_code == "en":
+            system_prompt += f" The user seems {analysis['sentiment']}. {analysis['sentiment_action']}."
+        else:
+            system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
+    if analysis.get("interruption_context"):
+        system_prompt += f" [Context: {analysis['interruption_context']}]"
+    if analysis.get("episodic_context"):
+        system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
+    return system_prompt
+
+
+_FALLBACK_REPLIES = {
+    "es": "Lo siento, no puedo conectar con la IA ahora. ¿Pruebo de nuevo o preguntas otra cosa?",
+    "en": "Sorry, I can't reach the AI model now. Try again or ask something else?",
 }
 
 
@@ -108,18 +150,13 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
     intent = analysis["intent"]
     mode = analysis["mode"]
     resolved = analysis["resolved_message"]
+    lang_code = analysis.get("language", "es")
 
     engine.add_message(cid, "user", resolved)
 
-    system_prompt = _SYSTEM_PROMPTS.get(mode.value, _SYSTEM_PROMPTS["conversacion"])
-    if analysis.get("sentiment_action"):
-        system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
-    if analysis.get("interruption_context"):
-        system_prompt += f" Contexto de interrupción: {analysis['interruption_context']}"
-    if analysis.get("episodic_context"):
-        system_prompt += f" Contexto de conversaciones anteriores: {analysis['episodic_context']}"
+    system_prompt = _build_system_prompt(mode.value, analysis, lang_code)
 
-    return intent, mode, resolved, system_prompt, conv
+    return intent, mode, resolved, system_prompt, conv, lang_code
 
 
 @router.post("", response_model=ChatResponse)
@@ -131,18 +168,21 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     llm = get_llm()
     cid = request.conversation_id or ""
 
-    intent, mode, resolved, system_prompt, conv = _process(engine, llm, cid, request.message, request.mode)
+    intent, mode, resolved, system_prompt, conv, lang_code = _process(engine, llm, cid, request.message, request.mode)
 
     if request.stream:
         async def event_stream():
-            if hasattr(llm, 'generate_async'):
-                reply = await llm.generate_async(
-                    cid, resolved, mode,
-                    intent_value=intent.value,
-                    system_prompt=system_prompt,
-                )
-            else:
-                reply = llm.generate(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt)
+            try:
+                if hasattr(llm, 'generate_async'):
+                    reply = await llm.generate_async(
+                        cid, resolved, mode,
+                        intent_value=intent.value,
+                        system_prompt=system_prompt,
+                    )
+                else:
+                    reply = llm.generate(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt)
+            except Exception:
+                reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
             engine.add_message(cid, "assistant", reply)
             event = StreamEvent("complete", {
@@ -155,11 +195,15 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
-    reply = llm.generate(
-        cid, resolved, mode,
-        intent_value=intent.value,
-        system_prompt=system_prompt,
-    )
+    try:
+        reply = llm.generate(
+            cid, resolved, mode,
+            intent_value=intent.value,
+            system_prompt=system_prompt,
+        )
+    except Exception:
+        reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
+
     engine.add_message(cid, "assistant", reply)
 
     return ChatResponse(
