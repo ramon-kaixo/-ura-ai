@@ -77,7 +77,7 @@ def _save_restart_to_qdrant() -> None:
                 },
             )
     except Exception:
-        pass  # noqa: S110
+        logger.exception("Error guardando incidente de reinicio en Qdrant")
 
 
 def restart_service() -> None:

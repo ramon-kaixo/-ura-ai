@@ -38,14 +38,14 @@ class ResearcherAgent(Agent):
             if self._context_retriever is None:
                 self._context_retriever = ContextRetriever(EpisodeStore())
         except Exception:
-            pass
+            log.exception("Error en auto-descubrimiento de ContextRetriever")
         try:
             from motor.intelligence.memory.semantic import SemanticMemoryStore
 
             if self._memory_store is None:
                 self._memory_store = SemanticMemoryStore()
         except Exception:
-            pass
+            log.exception("Error en auto-descubrimiento de SemanticMemoryStore")
 
     def run(self, task: AgentTask) -> AgentResult:
         start = time.monotonic()
