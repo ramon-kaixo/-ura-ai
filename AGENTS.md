@@ -389,7 +389,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - **F14-F04**: Qdrant recovery time ~30.2s excede umbral de 30s en R01/R09 — borderline.
 - **F14-F05**: `HybridRetriever` retorna éxito sin Qdrant disponible — posible fallback a memoria no documentado.
 
-## Roadmap (Fases 10–28)
+## Roadmap (Fases 10–29)
 
 | Fase | Objetivo | Resultado Clave | Estado |
 |------|----------|-----------------|--------|
@@ -398,6 +398,8 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 | **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
 | **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
 | **14** | Robustez | Load & Stress, resiliencia, E2E, profiling, RC Audit | ✅ Cerrada (v0.14.8-b5) |
+| **28.1** | Stabilization | Cerrar F28: 0 bugs críticos, ADRs Approved, tag stable | ⏳ Pendiente |
+| **29** | Production Readiness | OBS + VAL + OPS + RES + COMPAT + GOV + RR1 | ⏳ Pendiente |
 
 ### Detalle por Fase
 
@@ -552,7 +554,7 @@ Ver `docs/architecture/F25_ARCHITECTURE_AUDIT.md` para auditoría completa y mé
 - 109 tests, 0 regresiones
 - Ver `motor/agents/` para implementación
 
-**Fase 28 — Platform Protocols** ✅ Cerrada (v0.28.0-b3, pending stable tag)
+**Fase 28 — Platform Protocols** ⚠️ Pending stabilization (F28.1)
 
 - ProtocolEnvelope con 5 headers: Version, Routing, Trace, Delivery, Security
 - JSON canonical serializer/deserializer + ProtocolValidator
@@ -564,6 +566,46 @@ Ver `docs/architecture/F25_ARCHITECTURE_AUDIT.md` para auditoría completa y mé
 - RateLimiter (token bucket, thread-safe), payload sanitization (8 patrones bloqueados)
 - 63 tests tracing + 488 tests total en F25-F28+OBS, 0 regresiones
 - Ver `motor/platform/` y `docs/architecture/GOVERNANCE.md`
+- **⚠️ Bugs conocidos:** checksum nunca verificado, race condition en LocalTransport, ADRs en Draft. Ver `docs/architecture/F28_B2_CODE_AUDIT.md`
+
+**Fase 28.1 — Stabilization** ⏳ Pendiente (prerrequisito de F29)
+
+**Objetivo:** Cerrar F28 completamente antes de empezar F29.
+
+| # | Criterio | Verificación |
+|---|----------|-------------|
+| 1 | 0 discrepancias ADR ↔ implementación | Diff ADR vs código |
+| 2 | 0 bugs críticos | F28_B2_CODE_AUDIT.md resuelto |
+| 3 | 0 race conditions | LocalTransport.test concurrente |
+| 4 | checksum validado siempre | compute + verify en send/receive |
+| 5 | ProtocolEnvelope en llamadas cross-component | F28_PROTOCOL_AUDIT.md resuelto |
+| 6 | ADRs Approved (5) | 028-01..06, 028-10 |
+| 7 | Tag estable | `v0.28.3-stable` |
+
+- ADR: `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md`
+- Ver `docs/architecture/F29_PROPOSAL.md`
+
+**Fase 29 — Production Readiness** ⏳ Pendiente (diseñada, no iniciada)
+
+**Objetivo:** Demostrar que F24—F28 puede operar de forma continua, fiable y mantenible en producción.
+
+**Principio:** 0 nuevas capacidades de IA. Solo operación, resiliencia, observabilidad, recuperación y validación real.
+
+**Orden:** B1 OBS → B2 VAL-técnica → B3 VAL-funcional → B4 OPS → B5 RES → B6 COMPAT → B7 GOV → RR1
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **B1** | Observabilidad: health probes, métricas, logging estructurado, tracing | 🔮 Planificado |
+| **B2** | Validación técnica: benchmarks públicos, throughput, latencia, memoria, estrés | 🔮 Planificado |
+| **B3** | Validación funcional: 5 dominios reales (jurídico, técnico, código, científico, conversacional) | 🔮 Planificado |
+| **B4** | Operación: graceful shutdown, health endpoints, backup/restore, docker-compose, config por entorno | 🔮 Planificado |
+| **B5** | Resiliencia: circuit breakers, backpressure, degradación graceful, 7 chaos tests | 🔮 Planificado |
+| **B6** | Compatibilidad y evolución: rolling upgrade, mixed-version, downgrade, forward/backward compat | 🔮 Planificado |
+| **B7** | Gobernanza: ownership, runbooks, release checklist, SLOs, ADRs F29 | 🔮 Planificado |
+| **RR1** | Production Readiness: checklist final, tag v0.29.0-fase29 | 🔮 Planificado |
+
+- ADRs: `docs/architecture/ADR-029-01-OBSERVABILITY.md` (B1), `ADR-029-02-VALIDATION.md` (B2+B3), `ADR-029-03-OPS.md` (B4), `ADR-029-04-RESILIENCE.md` (B5), `ADR-029-05-COMPAT.md` (B6), `ADR-029-06-GOVERNANCE.md` (B7)
+- Ver `docs/architecture/F29_PROPOSAL.md`
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
