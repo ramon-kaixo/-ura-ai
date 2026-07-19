@@ -8,7 +8,9 @@ from typing import Any
 
 from motor.assistant.auto_mode import AutoModeDetector
 from motor.assistant.context_window import ContextWindow
+from motor.assistant.corrective_learning import CorrectiveMemory
 from motor.assistant.episodic_memory import EpisodicConversationMemory
+from motor.assistant.implicit_feedback import ImplicitFeedback
 from motor.assistant.intent import IntentEngine
 from motor.assistant.interruption import InterruptionSystem
 from motor.assistant.message_store import MessageStore
@@ -20,6 +22,8 @@ from motor.assistant.models import (
     MessageRole,
     UserIntent,
 )
+from motor.assistant.proactive_memory import ProactiveMemory
+from motor.assistant.sentiment import Sentiment, SentimentDetector
 from motor.assistant.trends import TrendAwareness
 
 _MAX_ACTIVE_CONVERSATIONS = 1000
@@ -54,6 +58,10 @@ class ConversationEngine:
         self._interruptions = interruption_system or InterruptionSystem()
         self._episodic = episodic_memory or EpisodicConversationMemory(message_store=store)
         self._trends = trend_awareness or TrendAwareness()
+        self._corrections = CorrectiveMemory()
+        self._proactive = ProactiveMemory()
+        self._sentiment = SentimentDetector()
+        self._feedback = ImplicitFeedback()
         self._max_turns = max_turns
         self._active: dict[str, Conversation] = {}
         self._lock = threading.Lock()
@@ -156,7 +164,20 @@ class ConversationEngine:
         episodic_context = self._episodic.get_relevant_context(user_message)
 
         trend = self._trends.analyze_query(user_message, intent.value)
-        needs_web = trend.needs_update
+
+        sentiment = self._sentiment.detect(user_message, conversation_id)
+
+        correction = None
+        if intent == UserIntent.CORRECT:
+            correction = self._corrections.record_correction(user_message)
+        relevant_corrections = self._corrections.get_relevant_corrections(user_message)
+
+        feedback = self._feedback.analyze(conversation_id, user_message)
+
+        self._handle_task_triggers(user_message, conversation_id)
+        proactive_suggestion = self._proactive.suggest_proactive(conversation_id)
+
+        response_adjustments = self._build_adjustments(sentiment, feedback)
 
         return {
             "intent": intent,
@@ -166,9 +187,38 @@ class ConversationEngine:
             "is_interruption": is_interruption,
             "interruption_context": interruption_context,
             "episodic_context": episodic_context,
-            "needs_web_search": needs_web,
+            "needs_web_search": trend.needs_update,
             "trend_reason": trend.reason,
+            "sentiment": sentiment.sentiment.value,
+            "sentiment_score": sentiment.score,
+            "sentiment_action": sentiment.suggested_action,
+            "correction_recorded": correction is not None,
+            "relevant_corrections": len(relevant_corrections),
+            "feedback_signals": feedback,
+            "proactive_suggestion": proactive_suggestion,
+            "response_adjustments": response_adjustments,
         }
+
+    def _build_adjustments(self, sentiment: Any, feedback: dict[str, Any]) -> dict[str, bool]:
+        adj: dict[str, bool] = {}
+        if sentiment.sentiment in {Sentiment.FRUSTRATED, Sentiment.CONFUSED}:
+            adj["apologize"] = True
+        if sentiment.sentiment == Sentiment.IMPATIENT:
+            adj["shorten"] = True
+        if feedback.get("was_unclear"):
+            adj["clarify"] = True
+        if feedback.get("was_wrong"):
+            adj["correct"] = True
+        return adj
+
+    def _handle_task_triggers(self, user_message: str, conversation_id: str) -> None:
+        trigger = self._proactive.detect_task_trigger(user_message)
+        if trigger == "add_task":
+            self._proactive.add_task(user_message, conversation_id)
+        elif trigger == "complete_task":
+            pending = self._proactive.get_pending_tasks(conversation_id)
+            if pending:
+                self._proactive.complete_task(pending[0].task_id)
 
     def get_or_create(self, conversation_id: str) -> Conversation:
         with self._lock:

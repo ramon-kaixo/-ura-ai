@@ -12,7 +12,7 @@ from motor.assistant.models import Message
 
 class MessageStore:
     def __init__(self, db_path: str | None = None):
-        self._db_path = db_path or str(Path.home() / ".ura" / "conversations.db")
+        self._db_path = db_path or "/tmp/ura/conversations.db"
         self._lock = threading.Lock()
         self._closed = False
         self._init_db()
