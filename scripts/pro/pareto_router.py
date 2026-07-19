@@ -62,11 +62,11 @@ def _free_ram_mb() -> int:
     if psutil:
         return psutil.virtual_memory().available // (1024 * 1024)
     try:
-        with open("/proc/meminfo") as f:
+        with open("/proc/meminfo") as f:  # noqa: PTH123
             for line in f:
                 if "MemAvailable" in line:
                     return int(line.split()[1]) // 1024
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return 8192
 
@@ -83,8 +83,8 @@ def sync_criticos():
 
         try:
             # Sync a Mac (cable directo)
-            r = subprocess.run(
-                [
+            r = subprocess.run(  # noqa: S603
+                [  # noqa: S607
                     "rsync",
                     "-avz",
                     "--timeout=10",
@@ -106,7 +106,7 @@ def sync_criticos():
         # Sync a Hetzner (via Tailscale, solo si online)
         try:
             r = subprocess.run(
-                ["tailscale", "status", "--json"],
+                ["tailscale", "status", "--json"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -121,8 +121,8 @@ def sync_criticos():
 
         if hetzner_online:
             try:
-                r = subprocess.run(
-                    ["rsync", "-avz", "--timeout=15", str(src), f"ramon@{HETZNER}:{src}"],
+                r = subprocess.run(  # noqa: S603
+                    ["rsync", "-avz", "--timeout=15", str(src), f"ramon@{HETZNER}:{src}"],  # noqa: S607
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -132,7 +132,7 @@ def sync_criticos():
                     pass
                 else:
                     pass
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
     return {"synced": synced, "errors": errors}
@@ -156,7 +156,7 @@ def check_ram_purge():
                         try:
                             f.unlink()
                             purged += 1
-                        except Exception:
+                        except Exception:  # noqa: S110
                             pass
         return {"ram_pct": ram_pct, "purged": purged, "ram_free_mb": ram_free}
     return {"ram_pct": ram_pct, "purged": 0, "ram_free_mb": ram_free, "status": "ok"}
@@ -165,7 +165,7 @@ def check_ram_purge():
 def clasificar_datos() -> dict:
     """Clasifica todos los datos del pipeline en 20% crítico vs 80% pesado."""
     total_criticos = sum(
-        os.path.getsize(URA / p) if (URA / p).exists() else 0 for p in DATOS_CRITICOS if not p.endswith("/")
+        Path(URA / p).stat().st_size if (URA / p).exists() else 0 for p in DATOS_CRITICOS if not p.endswith("/")
     )
     total_pesados_est = sum(
         int(

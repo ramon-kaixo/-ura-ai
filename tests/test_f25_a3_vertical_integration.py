@@ -69,27 +69,32 @@ def _make_bundle() -> CitationBundle:
 def test_e2e_fusion_to_index() -> None:
     """FusionPipeline produce FusionResult con FactIndex incluido."""
     from motor.core.fusion.stages import KnowledgeMergerStage
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-    ])
+
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+        ],
+    )
     bundle = _make_bundle()
     result = pipeline.run(bundle, [])
     assert isinstance(result, FusionResult)
     assert result.index is not None
     assert result.index.size >= 1, f"Expected at least 1 fact, got {result.index.size}"
-    print(f"  Facts indexados: {result.index.size}")
 
 
 def test_e2e_index_to_context() -> None:
     """FactIndex → ContextBuilder produce texto utilizable por LLM."""
     from motor.core.fusion.stages import KnowledgeMergerStage
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-    ])
+
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+        ],
+    )
     bundle = _make_bundle()
     result = pipeline.run(bundle, [])
 
@@ -98,9 +103,8 @@ def test_e2e_index_to_context() -> None:
     assert context is not None
     assert len(context) > 0
     assert "Apple" in context or "apple" in context
-    print(f"  Contexto generado ({len(context)} chars):")
-    for line in context.split("\n"):
-        print(f"    {line}")
+    for _line in context.split("\n"):
+        pass
 
 
 def test_e2e_fact_to_semantic_projection() -> None:
@@ -123,7 +127,6 @@ def test_e2e_fact_to_semantic_projection() -> None:
     # Compatible con SemanticMemoryStore.store()
     required_keys = {"subject", "predicate", "object_value", "confidence", "source_episode_ids"}
     assert required_keys.issubset(projected.keys()), f"Missing keys: {required_keys - set(projected.keys())}"
-    print(f"  Proyeccion OK: {projected['subject']} | {projected['predicate']} | {projected['object_value']}")
 
 
 def test_e2e_context_ready_for_llm() -> None:
@@ -132,8 +135,10 @@ def test_e2e_context_ready_for_llm() -> None:
     fid = make_fact_id("Apple", "sells", "oranges")
     fact = Fact(fact_id=fid, subject="Apple", predicate="sells", object="oranges")
     version = FactVersion(
-        version_id="v1", fact_id=fid,
-        confidence=0.95, evidence_ids=("ev001",),
+        version_id="v1",
+        fact_id=fid,
+        confidence=0.95,
+        evidence_ids=("ev001",),
     )
     idx = FactIndex()
     idx.add_fact_version(fact, version)
@@ -158,8 +163,6 @@ Pregunta: ¿Qué vende Apple?
 """
     assert "Apple" in prompt
     assert "oranges" in prompt
-    print("  Contexto listo para LLM:")
-    print(f"    {prompt[:200]}...")
 
 
 def test_e2e_full_vertical_flow() -> None:
@@ -170,11 +173,14 @@ def test_e2e_full_vertical_flow() -> None:
     """
     # 1. Pipeline produce Facts
     from motor.core.fusion.stages import KnowledgeMergerStage
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-    ])
+
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+        ],
+    )
     result = pipeline.run(_make_bundle(), [])
 
     # 2. FactIndex está poblado
@@ -191,7 +197,8 @@ def test_e2e_full_vertical_flow() -> None:
     # 4. ContextBuilder produce texto
     builder = ContextBuilder(result.index)
     context = builder.build_context(query="Apple sells oranges")
-    assert context and len(context) > 0
+    assert context
+    assert len(context) > 0
 
     # 5. El contexto es insertable en un prompt
     prompt = f"""Eres un asistente con acceso a hechos.
@@ -202,12 +209,6 @@ Pregunta: ¿Qué vende Apple?
 """
     assert "Apple" in prompt
     assert len(prompt) > 50
-    print("  FLUJO VERTICAL COMPLETO VERIFICADO:")
-    print(f"    1. Pipeline produjo {len(result.accepted)} facts")
-    print(f"    2. FactIndex indexo {result.index.size} facts")
-    print("    3. Proyeccion a SemanticFact disponible")
-    print(f"    4. ContextBuilder genero {len(context)} chars")
-    print(f"    5. Prompt listo para LLM ({len(prompt)} chars)")
 
 
 # ── A3-08: Filtro de versiones obsoletas ─────────────
@@ -221,7 +222,9 @@ def test_e2e_context_filters_obsolete() -> None:
     fid = make_fact_id("Apple", "sells", "oranges")
     fact = Fact(fact_id=fid, subject="Apple", predicate="sells", object="oranges")
     current_v = FactVersion(
-        version_id="v2", fact_id=fid, confidence=0.95,
+        version_id="v2",
+        fact_id=fid,
+        confidence=0.95,
     )
     idx = FactIndex()
     idx.add_fact_version(fact, current_v)
@@ -269,8 +272,10 @@ def test_e2e_context_after_tombstone() -> None:
     v1 = FactVersion(version_id="v1", fact_id=fid, confidence=0.9)
     history = FactHistory.create(fact, v1)
     tomb = FactVersion(
-        version_id="v2", fact_id=fid,
-        confidence=0.0, state=VersionState.TOMBSTONE,
+        version_id="v2",
+        fact_id=fid,
+        confidence=0.0,
+        state=VersionState.TOMBSTONE,
     )
     history.tombstone(tomb)
 
@@ -294,11 +299,13 @@ def test_benchmark_e2e_full_flow() -> None:
 
     from motor.core.fusion.stages import KnowledgeMergerStage
 
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-    ])
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+        ],
+    )
 
     # Crear bundle con múltiples evidencias
     bundle = CitationBundle(
@@ -308,11 +315,15 @@ def test_benchmark_e2e_full_flow() -> None:
             Evidence(
                 evidence_id=f"ev{i:04d}",
                 document_url=f"https://example.com/doc{i}",
-                canonical_url=None, title=f"Doc{i}",
-                document_index=i, sentence_position=0,
+                canonical_url=None,
+                title=f"Doc{i}",
+                document_index=i,
+                sentence_position=0,
                 fragment=f"Entity{i % 50} has property value{i}",
-                content_hash=f"hash{i}", document_id=f"doc{i}",
-                fetched_at=float(i), quality_score=0.5 + (i % 5) * 0.1,
+                content_hash=f"hash{i}",
+                document_id=f"doc{i}",
+                fetched_at=float(i),
+                quality_score=0.5 + (i % 5) * 0.1,
             )
             for i in range(100)
         ],
@@ -327,23 +338,11 @@ def test_benchmark_e2e_full_flow() -> None:
     context = builder.build_context(query="Entity1 property")
     context_t = time.perf_counter() - start
 
-    prompt = f"Contexto:\n{context}\n\nPregunta: ¿Qué property tiene Entity1?"
-    total_t = pipeline_t + context_t
+    pipeline_t + context_t
 
-    ram_estimate = (
-        sum(sys.getsizeof(kf) for kf in result.accepted) if result.accepted else 0
-    )
-
-    print("\n  E2E Benchmark (100 evidencias):")
-    print(f"    Pipeline: {pipeline_t*1000:.1f}ms")
-    print(f"    ContextBuilder: {context_t*1000:.1f}ms")
-    print(f"    Total: {total_t*1000:.1f}ms")
-    print(f"    Facts indexados: {result.index.size if result.index else 0}")
-    print(f"    Contexto: {len(context)} chars")
-    print(f"    RAM estimada: {ram_estimate / 1024:.1f} KB")
-    print(f"    Prompt: {len(prompt)} chars")
+    sum(sys.getsizeof(kf) for kf in result.accepted) if result.accepted else 0
 
     assert result.index is not None
     assert result.index.size > 0
     assert len(context) > 0
-    assert pipeline_t < 2.0, f"Pipeline too slow: {pipeline_t*1000:.1f}ms"
+    assert pipeline_t < 2.0, f"Pipeline too slow: {pipeline_t * 1000:.1f}ms"

@@ -14,7 +14,7 @@ OUTPUT = ROOT / "docs" / "architecture.md"
 def get_systemd_services() -> list[dict]:
     services = []
     r = subprocess.run(
-        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],
+        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],  # noqa: S607
         capture_output=True,
         text=True,
         check=False,
@@ -31,7 +31,7 @@ def get_systemd_services() -> list[dict]:
 def get_docker_containers() -> list[dict]:
     containers = []
     r = subprocess.run(
-        ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Status}}"],
+        ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Status}}"],  # noqa: S607
         capture_output=True,
         text=True,
         check=False,
@@ -44,11 +44,11 @@ def get_docker_containers() -> list[dict]:
 
 
 def get_git_branches() -> list[str]:
-    r = subprocess.run(["git", "branch", "--list"], capture_output=True, text=True, cwd=ROOT, check=False)
+    r = subprocess.run(["git", "branch", "--list"], capture_output=True, text=True, cwd=ROOT, check=False)  # noqa: S607
     return [b.strip().removeprefix("* ") for b in r.stdout.splitlines() if b.strip()]
 
 
-def generate() -> None:
+def generate() -> None:  # noqa: C901, PLR0915
     services = get_systemd_services()
     containers = get_docker_containers()
     branches = get_git_branches()
@@ -60,7 +60,7 @@ def generate() -> None:
     lines = []
     lines.append("# URA Architecture Diagram")
     lines.append(
-        f"*Auto-generated: {subprocess.run(['date', '-Iseconds'], capture_output=True, text=True, check=False).stdout.strip()}*",
+        f"*Auto-generated: {subprocess.run(['date', '-Iseconds'], capture_output=True, text=True, check=False).stdout.strip()}*",  # noqa: E501, S607
     )
     lines.append("")
     lines.append("```mermaid")
@@ -89,7 +89,7 @@ def generate() -> None:
     # Git branches
     lines.append("    subgraph GIT[Git Repository]")
     for b in sorted(branches):
-        lines.append(f"      branch_{b.replace('/', '_').replace('-', '_')}[🌿 {b}]")
+        lines.append(f"      branch_{b.replace('/', '_').replace('-', '_')}[🌿 {b}]")  # noqa: PERF401
     lines.append("    end")
     lines.append("")
 

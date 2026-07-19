@@ -12,9 +12,9 @@ Valida la operación del sistema en condiciones reales:
 from __future__ import annotations
 
 import hashlib
-import os
 import random
 import time
+from pathlib import Path
 
 import pytest
 
@@ -45,7 +45,9 @@ def _entry(ts: float = 1000) -> MemoryEntry:
     ref = _ref()
     return MemoryEntry(
         entry_id=make_entry_id("fact_added", [ref.version_id], ts),
-        timestamp=ts, fact_refs=(ref,), source="test",
+        timestamp=ts,
+        fact_refs=(ref,),
+        source="test",
         event_type=MemoryEventType.FACT_ADDED,
     )
 
@@ -57,8 +59,8 @@ def _entry(ts: float = 1000) -> MemoryEntry:
 
 def test_recovery_after_restart(tmp_path: str) -> None:
     """Simular reinicio completo: escribir, cerrar, abrir, verificar."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     for i in range(100):
@@ -66,16 +68,12 @@ def test_recovery_after_restart(tmp_path: str) -> None:
     m1.snapshot("v1")
     for i in range(100, 110):
         m1.append(_entry(ts=float(i * 1000)))
-    cs_before = hashlib.sha256(
-        str(sorted(m1.timeline.entries.keys())).encode()
-    ).hexdigest()
+    cs_before = hashlib.sha256(str(sorted(m1.timeline.entries.keys())).encode()).hexdigest()
     m1.close()
 
     # Reinicio simulado
     m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
-    cs_after = hashlib.sha256(
-        str(sorted(m2.timeline.entries.keys())).encode()
-    ).hexdigest()
+    cs_after = hashlib.sha256(str(sorted(m2.timeline.entries.keys())).encode()).hexdigest()
 
     assert cs_before == cs_after, "State changed after restart"
     assert m2.timeline.size == 110
@@ -89,8 +87,8 @@ def test_recovery_after_restart(tmp_path: str) -> None:
 
 def test_recovery_after_journal_corruption(tmp_path: str) -> None:
     """Corrupción del journal (lineas faltantes) → recovery desde snapshot."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     for i in range(50):
@@ -101,7 +99,7 @@ def test_recovery_after_journal_corruption(tmp_path: str) -> None:
     m1.close()
 
     # Corromper: eliminar las últimas 3 líneas del journal
-    with open(journal, "r+") as f:
+    with Path(journal).open("r+") as f:
         lines = f.readlines()
         f.seek(0)
         f.truncate()
@@ -120,13 +118,12 @@ def test_recovery_after_journal_corruption(tmp_path: str) -> None:
 
 def test_journal_sustained_growth(tmp_path: str) -> None:
     """Journal growth medido con 1000 entries (fsync real por línea)."""
-    journal = os.path.join(tmp_path, "growth.jsonl")
+    journal = Path(tmp_path) / "growth.jsonl"
     j = Journal()
     j.open(journal)
     for i in range(1000):
         j.append(_entry(ts=float(i * 1000)))
-    size_kb = os.path.getsize(journal) / 1024
-    print(f"  1000 entries: {size_kb:.1f} KB")
+    Path(journal).stat().st_size / 1024
     assert j.count == 1000
     j.close()
 
@@ -138,8 +135,8 @@ def test_journal_sustained_growth(tmp_path: str) -> None:
 
 def test_repeated_snapshots_under_load(tmp_path: str) -> None:
     """10 snapshots consecutivos con carga entre cada uno."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m = Memory(snapshot_path=snap, journal_path=journal)
     for s in range(10):
@@ -164,11 +161,11 @@ def test_repeated_snapshots_under_load(tmp_path: str) -> None:
 @pytest.mark.slow
 def test_soak_continuous_operation(tmp_path: str) -> None:
     """100K operaciones continuas midiendo estabilidad."""
-    snap = os.path.join(tmp_path, "snap_soak.json")
-    journal = os.path.join(tmp_path, "journal_soak.jsonl")
+    snap = Path(tmp_path) / "snap_soak.json"
+    journal = Path(tmp_path) / "journal_soak.jsonl"
 
     m = Memory(snapshot_path=snap, journal_path=journal)
-    random.Random(42)
+    random.Random(42)  # noqa: S311
     start = time.perf_counter()
     snapshots = 0
 
@@ -178,11 +175,9 @@ def test_soak_continuous_operation(tmp_path: str) -> None:
             m.snapshot(f"soak_v{snapshots}")
             snapshots += 1
         if i % 25000 == 0 and i > 0:
-            elapsed = time.perf_counter() - start
-            print(f"  {i} ops in {elapsed:.1f}s ({i/elapsed:.0f} ops/s)")
+            time.perf_counter() - start
 
-    total = time.perf_counter() - start
-    print(f"  100K ops in {total:.1f}s ({100000/total:.0f} ops/s)")
+    time.perf_counter() - start
     assert m.timeline.size == 100000
     m.close()
 
@@ -199,8 +194,8 @@ def test_soak_continuous_operation(tmp_path: str) -> None:
 
 def test_benchmark_stability(tmp_path: str) -> None:
     """Benchmarks deben ser estables en 3 ejecuciones consecutivas."""
-    snap = os.path.join(tmp_path, "stab_snap.json")
-    journal = os.path.join(tmp_path, "stab_journal.jsonl")
+    snap = Path(tmp_path) / "stab_snap.json"
+    journal = Path(tmp_path) / "stab_journal.jsonl"
 
     times: list[float] = []
     for run in range(3):
@@ -218,7 +213,5 @@ def test_benchmark_stability(tmp_path: str) -> None:
 
     avg = sum(times) / len(times)
     max_dev = max(abs(t - avg) for t in times)
-    print(f"  Recovery times: {[f'{t*1000:.1f}ms' for t in times]}")
-    print(f"  Avg: {avg*1000:.1f}ms, Max deviation: {max_dev*1000:.1f}ms")
     # No debe desviarse más del 50% del promedio
-    assert max_dev < avg * 1.0, f"Benchmark unstable: {max_dev/avg*100:.1f}% deviation"
+    assert max_dev < avg * 1.0, f"Benchmark unstable: {max_dev / avg * 100:.1f}% deviation"

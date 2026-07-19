@@ -30,11 +30,7 @@ class SearXNGSearchProvider(SearchProvider):
         user_agent: str = DEFAULT_USER_AGENT,
         max_retries: int = 2,
     ) -> None:
-        self._base_url = (
-            base_url
-            or get_secret("SEARXNG_BASE_URL")
-            or DEFAULT_BASE_URL
-        ).rstrip("/")
+        self._base_url = (base_url or get_secret("SEARXNG_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
         self._timeout = timeout
         self._user_agent = user_agent
         self._max_retries = max_retries
@@ -65,7 +61,8 @@ class SearXNGSearchProvider(SearchProvider):
                 log.warning("searxng connection error (attempt %d/%d): %s", attempt + 1, self._max_retries + 1, e)
                 time.sleep(1.0 * (attempt + 1))
 
-        raise RuntimeError(f"SearXNG search failed after {self._max_retries + 1} attempts") from last_error
+        msg = f"SearXNG search failed after {self._max_retries + 1} attempts"
+        raise RuntimeError(msg) from last_error
 
     def _search_once(self, query: str, limit: int = 10) -> list[SearchResult]:
         r = httpx.get(

@@ -32,7 +32,7 @@ from motor.agents import (
 
 def _execution(
     capabilities: set[AgentCapability] | None = None,
-    cancelled: bool = False,
+    cancelled: bool = False,  # noqa: FBT001, FBT002
     cost_units: int = 0,
     max_cost: int = 1000,
 ) -> AgentExecution:
@@ -129,8 +129,11 @@ def test_agent_cancelled() -> None:
 
 def test_permission_decision_granted() -> None:
     from motor.agents.gate import PermissionDecision
+
     d = PermissionDecision(
-        granted=True, capability=AgentCapability.MEMORY_READ, agent_id="a1",
+        granted=True,
+        capability=AgentCapability.MEMORY_READ,
+        agent_id="a1",
     )
     assert d.granted is True
     assert d.denial_code is None
@@ -138,8 +141,11 @@ def test_permission_decision_granted() -> None:
 
 def test_permission_decision_denied() -> None:
     from motor.agents.gate import PermissionDecision
+
     d = PermissionDecision(
-        granted=False, capability=AgentCapability.WEB_SEARCH, agent_id="a1",
+        granted=False,
+        capability=AgentCapability.WEB_SEARCH,
+        agent_id="a1",
         denial_code=DenialCode.CAPABILITY_NOT_GRANTED,
         denial_reason="not in capabilities",
     )
@@ -169,11 +175,13 @@ def test_denial_code_values() -> None:
 
 
 def test_audit_all_decisions() -> None:
-    gate = AgentCapabilityGate(_execution(
-        capabilities={AgentCapability.MEMORY_READ, AgentCapability.FACTS_READ},
-    ))
+    gate = AgentCapabilityGate(
+        _execution(
+            capabilities={AgentCapability.MEMORY_READ, AgentCapability.FACTS_READ},
+        ),
+    )
     gate.check(AgentCapability.MEMORY_READ)  # granted
-    try:
+    try:  # noqa: SIM105
         gate.check(AgentCapability.WEB_SEARCH)  # denied
     except PermissionError:
         pass
@@ -202,7 +210,7 @@ def test_cache_hit() -> None:
     # Solo se evaluó 1 vez, pero se registraron 2 decisiones
     assert gate.decision_count == 2
     # Cache tiene la capability MEMORY_READ (1 entrada)
-    assert len(gate._cache) >= 1
+    assert len(gate._cache) >= 1  # noqa: SLF001
 
 
 def test_cache_denied() -> None:
@@ -212,12 +220,12 @@ def test_cache_denied() -> None:
     )
     with contextlib.suppress(PermissionError):
         gate.check(AgentCapability.WEB_SEARCH)
-    try:
+    try:  # noqa: SIM105
         gate.check(AgentCapability.WEB_SEARCH)  # cache hit (denied)
     except PermissionError:
         pass
     assert gate.denied_count == 2
-    assert len(gate._cache) >= 1
+    assert len(gate._cache) >= 1  # noqa: SLF001
 
 
 # ═══════════════════════════════════════════════════
@@ -232,8 +240,8 @@ def test_deterministic_evaluation() -> None:
     gate1 = AgentCapabilityGate(e)
     gate2 = AgentCapabilityGate(e)
 
-    d1 = gate1._evaluate(AgentCapability.MEMORY_READ)
-    d2 = gate2._evaluate(AgentCapability.MEMORY_READ)
+    d1 = gate1._evaluate(AgentCapability.MEMORY_READ)  # noqa: SLF001
+    d2 = gate2._evaluate(AgentCapability.MEMORY_READ)  # noqa: SLF001
 
     assert d1.granted == d2.granted
 
@@ -243,8 +251,8 @@ def test_deterministic_denied() -> None:
     gate1 = AgentCapabilityGate(e)
     gate2 = AgentCapabilityGate(e)
 
-    d1 = gate1._evaluate(AgentCapability.WEB_SEARCH)
-    d2 = gate2._evaluate(AgentCapability.WEB_SEARCH)
+    d1 = gate1._evaluate(AgentCapability.WEB_SEARCH)  # noqa: SLF001
+    d2 = gate2._evaluate(AgentCapability.WEB_SEARCH)  # noqa: SLF001
 
     assert d1.granted == d2.granted  # ambos False
 
@@ -259,6 +267,7 @@ def test_no_external_dependencies() -> None:
     import inspect
 
     import motor.agents.gate as gate_module
+
     source = inspect.getsource(gate_module)
     assert "ToolRunner" not in source
     assert "Scheduler" not in source

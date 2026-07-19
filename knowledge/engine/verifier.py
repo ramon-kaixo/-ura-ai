@@ -66,7 +66,7 @@ def verify_graph(
         db_version = get_schema_version(conn)
         if db_version != SCHEMA_VERSION:
             results.append(
-                ("ERROR", "schema_version", f"Schema version mismatch: DB={db_version}, expected={SCHEMA_VERSION}")
+                ("ERROR", "schema_version", f"Schema version mismatch: DB={db_version}, expected={SCHEMA_VERSION}"),
             )
         else:
             results.append(("INFO", "schema_version", f"Schema v{db_version} OK"))
@@ -91,7 +91,7 @@ def verify_graph(
     # Version info
     try:
         version = conn.execute(
-            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1"
+            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",  # noqa: E501
         ).fetchone()
     except sqlite3.OperationalError:
         version = None
@@ -106,11 +106,11 @@ def verify_graph(
     # Last compile errors from log
     try:
         errors_from_log = conn.execute(
-            "SELECT error_code, severity, message FROM op_compile_errors ORDER BY created_at DESC LIMIT 20"
+            "SELECT error_code, severity, message FROM op_compile_errors ORDER BY created_at DESC LIMIT 20",
         ).fetchall()
         if errors_from_log:
             for e in errors_from_log:
-                results.append((e["severity"], e["error_code"], e["message"]))
+                results.append((e["severity"], e["error_code"], e["message"]))  # noqa: PERF401
     except sqlite3.OperationalError:
         pass
 

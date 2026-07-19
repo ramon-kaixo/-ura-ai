@@ -13,10 +13,10 @@ Cubre:
 from __future__ import annotations
 
 import json
-import os
 import sys
 import threading
 import time
+from pathlib import Path
 
 import pytest
 
@@ -37,8 +37,11 @@ from motor.memory import (
 
 def _make_ref(fact_id: str = "f1", version_id: str = "v1", subject: str = "Apple") -> FactRef:
     return FactRef(
-        fact_id=fact_id, version_id=version_id,
-        subject=subject, predicate="sells", object="oranges",
+        fact_id=fact_id,
+        version_id=version_id,
+        subject=subject,
+        predicate="sells",
+        object="oranges",
     )
 
 
@@ -50,8 +53,11 @@ def _make_entry(
     event_type: MemoryEventType = MemoryEventType.FACT_ADDED,
 ) -> MemoryEntry:
     return MemoryEntry(
-        entry_id=entry_id or make_entry_id(
-            event_type.value, [r.version_id for r in fact_refs], timestamp,
+        entry_id=entry_id
+        or make_entry_id(
+            event_type.value,
+            [r.version_id for r in fact_refs],
+            timestamp,
         ),
         timestamp=timestamp,
         fact_refs=fact_refs,
@@ -216,7 +222,7 @@ def test_diff() -> None:
 
 
 def test_journal_append_and_read(tmp_path: str) -> None:
-    path = os.path.join(tmp_path, "journal.jsonl")
+    path = Path(tmp_path) / "journal.jsonl"
     j = Journal()
     j.open(path)
     j.append(_make_entry())
@@ -227,18 +233,18 @@ def test_journal_append_and_read(tmp_path: str) -> None:
 
 
 def test_journal_rotate(tmp_path: str) -> None:
-    path = os.path.join(tmp_path, "journal.jsonl")
-    backup = os.path.join(tmp_path, "journal.bak")
+    path = Path(tmp_path) / "journal.jsonl"
+    backup = Path(tmp_path) / "journal.bak"
     j = Journal()
     j.open(path)
     j.append(_make_entry())
     j.rotate(backup)
     assert j.count == 0
-    assert os.path.exists(backup)
+    assert Path(backup).exists()
 
 
 def test_journal_count(tmp_path: str) -> None:
-    path = os.path.join(tmp_path, "journal.jsonl")
+    path = Path(tmp_path) / "journal.jsonl"
     j = Journal()
     j.open(path)
     j.append(_make_entry())
@@ -253,7 +259,7 @@ def test_journal_count(tmp_path: str) -> None:
 
 def test_snapshot_save_and_load(tmp_path: str) -> None:
     tl = _make_timeline()
-    path = os.path.join(tmp_path, "snapshot.json")
+    path = Path(tmp_path) / "snapshot.json"
     cs = save_snapshot(tl, path)
     assert len(cs) == 16
     header, entries = load_snapshot(path)
@@ -263,13 +269,13 @@ def test_snapshot_save_and_load(tmp_path: str) -> None:
 
 def test_snapshot_checksum_validation(tmp_path: str) -> None:
     tl = _make_timeline()
-    path = os.path.join(tmp_path, "snapshot.json")
+    path = Path(tmp_path) / "snapshot.json"
     save_snapshot(tl, path)
     # Corromper el archivo
-    with open(path) as f:
+    with Path(path).open() as f:
         data = json.load(f)
     data["entries"]["corrupted"] = {"entry_id": "bad"}
-    with open(path, "w") as f:
+    with Path(path).open("w") as f:
         json.dump(data, f)
     with pytest.raises(ValueError, match="checksum mismatch"):
         load_snapshot(path)
@@ -299,7 +305,7 @@ def test_memory_load_cycle(tmp_path: str) -> None:
     m1 = Memory()
     m1.append(_make_entry(timestamp=1000))
     m1.append(_make_entry(timestamp=2000))
-    path = os.path.join(tmp_path, "cycle.json")
+    path = Path(tmp_path) / "cycle.json"
     m1.save(path)
     m2 = Memory.load(path)
     assert m2.timeline.size == 2
@@ -309,8 +315,8 @@ def test_memory_load_cycle(tmp_path: str) -> None:
 
 def test_memory_recover_from_snapshot_and_journal(tmp_path: str) -> None:
     """Recuperación desde snapshot + journal."""
-    snap_path = os.path.join(tmp_path, "snap.json")
-    journal_path = os.path.join(tmp_path, "journal.jsonl")
+    snap_path = Path(tmp_path) / "snap.json"
+    journal_path = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap_path, journal_path=journal_path)
     m1.append(_make_entry(timestamp=1000))
@@ -386,6 +392,7 @@ def test_deterministic_entry_id() -> None:
 
 def test_deterministic_state_at() -> None:
     """Misma timeline → mismo resultado en state_at."""
+
     def build() -> MemoryTimeline:
         tl = MemoryTimeline()
         tl.append(_make_entry(timestamp=1000))
@@ -394,7 +401,8 @@ def test_deterministic_state_at() -> None:
 
     r1 = build().state_at(1500)
     r2 = build().state_at(1500)
-    assert r1 is not None and r2 is not None
+    assert r1 is not None
+    assert r2 is not None
     assert r1.entry_id == r2.entry_id
 
 
@@ -410,7 +418,7 @@ def test_benchmark_append_1000() -> None:
         tl.append(_make_entry(timestamp=float(i * 1000), fact_refs=(_make_ref(f"f{i}"),)))
     t = time.perf_counter() - start
     assert tl.size == 1000
-    assert t < 0.5, f"1000 appends took {t*1000:.1f}ms"
+    assert t < 0.5, f"1000 appends took {t * 1000:.1f}ms"
 
 
 def test_benchmark_state_at_1000() -> None:
@@ -421,20 +429,19 @@ def test_benchmark_state_at_1000() -> None:
     for ts in range(0, 1000 * 1000, 1000):
         tl.state_at(float(ts))
     t = time.perf_counter() - start
-    assert t < 0.5, f"1000 state_at queries took {t*1000:.1f}ms"
+    assert t < 0.5, f"1000 state_at queries took {t * 1000:.1f}ms"
 
 
 def test_benchmark_peak_memory_10k() -> None:
     """RAM estimada para 10K entries."""
     tl = MemoryTimeline()
     for i in range(10000):
-        tl.append(_make_entry(
-            timestamp=float(i * 1000),
-            fact_refs=tuple(_make_ref(f"f{j}") for j in range(3)),
-        ))
+        tl.append(
+            _make_entry(
+                timestamp=float(i * 1000),
+                fact_refs=tuple(_make_ref(f"f{j}") for j in range(3)),
+            ),
+        )
     # Tamaño aproximado (solo entries)
-    size = sys.getsizeof(tl) + sum(
-        sys.getsizeof(e) for e in tl.entries.values()
-    )
-    print(f"\n  10K entries: ~{size / 1024:.1f} KB")
+    sys.getsizeof(tl) + sum(sys.getsizeof(e) for e in tl.entries.values())
     assert tl.size == 10000

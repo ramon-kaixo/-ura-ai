@@ -34,11 +34,17 @@ class AssetStore(Protocol):
     def asset_exists(self, asset_id: str) -> bool: ...
     def delete_asset(self, asset_id: str) -> bool: ...
     def list_assets(
-        self, asset_type: AssetType | None = None, limit: int = 100, offset: int = 0
+        self,
+        asset_type: AssetType | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[KnowledgeAsset]: ...
     def count(self, asset_type: AssetType | None = None) -> int: ...
     def search_assets(
-        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+        self,
+        query: str,
+        limit: int = 10,
+        asset_type: AssetType | None = None,
     ) -> list[KnowledgeAsset]: ...
 
 
@@ -49,7 +55,7 @@ class SQLiteAssetStore:
     Cifra en reposo: no (los metadatos no son secreto).
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
     def save_asset(self, asset: KnowledgeAsset) -> bool:
@@ -63,14 +69,14 @@ class SQLiteAssetStore:
                 [
                     {"target_id": r.target_id, "relation": r.relation, "metadata": r.metadata}
                     for r in asset.relationships
-                ]
+                ],
             )
             source_json = json.dumps(
                 {
                     "kind": asset.source.kind,
                     "location": asset.source.location,
                     "fetched_at": asset.source.fetched_at,
-                }
+                },
             )
 
             conn.execute(
@@ -151,7 +157,10 @@ class SQLiteAssetStore:
                     conn.close()
 
     def list_assets(
-        self, asset_type: AssetType | None = None, limit: int = 100, offset: int = 0
+        self,
+        asset_type: AssetType | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[KnowledgeAsset]:
         """Lista KnowledgeAssets, opcionalmente filtrados por tipo."""
         conn = None
@@ -185,7 +194,8 @@ class SQLiteAssetStore:
             conn = open_db(self._db_path)
             if asset_type:
                 row = conn.execute(
-                    "SELECT COUNT(*) as c FROM op_assets WHERE asset_type = ?", (asset_type.value,)
+                    "SELECT COUNT(*) as c FROM op_assets WHERE asset_type = ?",
+                    (asset_type.value,),
                 ).fetchone()
             else:
                 row = conn.execute("SELECT COUNT(*) as c FROM op_assets").fetchone()
@@ -231,7 +241,10 @@ class SQLiteAssetStore:
             return self._search_assets_like(query, limit, asset_type)
 
     def _search_assets_like(
-        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+        self,
+        query: str,
+        limit: int = 10,
+        asset_type: AssetType | None = None,
     ) -> list[KnowledgeAsset]:
         """Fallback LIKE: busca substring en metadata->title."""
         conn = open_db(self._db_path)

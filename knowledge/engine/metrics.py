@@ -217,12 +217,12 @@ def _set_db_gauges(db_path: Path | None) -> None:
         db_schema_version.set(version[0] if version else 0)
 
         row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'compile' AND status IN ('pending', 'running')"
+            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'compile' AND status IN ('pending', 'running')",
         ).fetchone()
         compile_queue_length.set(row["c"] if row else 0)
 
         row = conn.execute(
-            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'archive_source' AND status IN ('pending', 'running')"
+            "SELECT COUNT(*) as c FROM op_jobs WHERE job_type = 'archive_source' AND status IN ('pending', 'running')",
         ).fetchone()
         archive_queue_length.set(row["c"] if row else 0)
 
@@ -243,6 +243,7 @@ def export_metrics(db_path: Path | None = None) -> bytes:
 
     Returns:
         bytes en formato Prometheus exposition (text/plain; charset=utf-8).
+
     """
     _set_db_gauges(db_path)
     return generate_latest(REGISTRY)
@@ -253,18 +254,18 @@ def export_metrics(db_path: Path | None = None) -> bytes:
 
 def _reset_for_testing() -> None:
     """Reinicia todos los contadores/gauges. Solo para tests."""
-    for collector in list(REGISTRY._collector_to_names):
+    for collector in list(REGISTRY._collector_to_names):  # noqa: SLF001
         if isinstance(collector, Counter | Gauge | Histogram):
             REGISTRY.unregister(collector)
     # Registrar de nuevo
-    global search_requests, search_duration, qdrant_sync_ops
-    global compile_requests, archive_ops, errors_total
-    global db_nodes_total, db_edges_total, db_compile_runs
-    global db_compile_errors, db_pending_sync, db_schema_version
-    global compile_queue_length, archive_queue_length
-    global audit_write_failures
-    global compile_lock_wait_seconds, sqlite_busy_retries_total
-    global job_retry_total, archive_duration_seconds, audit_ingest_duration_seconds
+    global search_requests, search_duration, qdrant_sync_ops  # noqa: PLW0603
+    global compile_requests, archive_ops, errors_total  # noqa: PLW0603
+    global db_nodes_total, db_edges_total, db_compile_runs  # noqa: PLW0603
+    global db_compile_errors, db_pending_sync, db_schema_version  # noqa: PLW0603
+    global compile_queue_length, archive_queue_length  # noqa: PLW0603
+    global audit_write_failures  # noqa: PLW0603
+    global compile_lock_wait_seconds, sqlite_busy_retries_total  # noqa: PLW0603
+    global job_retry_total, archive_duration_seconds, audit_ingest_duration_seconds  # noqa: PLW0603
 
     search_requests = Counter("ke_search_requests_total", "", ["mode"])
     search_duration = Histogram("ke_search_duration_seconds", "", ["mode"])
@@ -282,13 +283,19 @@ def _reset_for_testing() -> None:
     archive_queue_length = Gauge("ke_archive_queue_length", "")
     audit_write_failures = Counter("ke_audit_write_failures_total", "")
     compile_lock_wait_seconds = Histogram(
-        "ke_compile_lock_wait_seconds", "", buckets=(0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0)
+        "ke_compile_lock_wait_seconds",
+        "",
+        buckets=(0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0),
     )
     sqlite_busy_retries_total = Counter("ke_sqlite_busy_retries_total", "")
     job_retry_total = Counter("ke_job_retry_total", "", ["job_type", "reason"])
     archive_duration_seconds = Histogram(
-        "ke_archive_duration_seconds", "", buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0)
+        "ke_archive_duration_seconds",
+        "",
+        buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
     )
     audit_ingest_duration_seconds = Histogram(
-        "ke_audit_ingest_duration_seconds", "", buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
+        "ke_audit_ingest_duration_seconds",
+        "",
+        buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
     )

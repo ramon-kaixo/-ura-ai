@@ -52,6 +52,7 @@ class StateDeductor:
 
         Returns:
             Lista de deducciones.
+
         """
         results: list[Deduction] = []
         node_map = {n["id"]: n for n in nodes}
@@ -77,7 +78,7 @@ class StateDeductor:
                         description=f"Documento sin relaciones: {n.get('path', nid)}",
                         confidence=0.9,
                         metadata={"type": n.get("type", "")},
-                    )
+                    ),
                 )
 
         # 2. Cobertura por tipo
@@ -92,7 +93,7 @@ class StateDeductor:
                         description=f"Cobertura {dtype}: {count}/{total} ({coverage:.0%})",
                         confidence=1.0,
                         metadata={"count": count, "total": total, "ratio": coverage},
-                    )
+                    ),
                 )
 
         # 3. Documentos más referenciados (hub nodes)
@@ -112,7 +113,7 @@ class StateDeductor:
                                 "inbound_refs": refs,
                                 "path": node.get("path", ""),
                             },
-                        )
+                        ),
                     )
 
         return results

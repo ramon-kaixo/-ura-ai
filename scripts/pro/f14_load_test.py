@@ -37,10 +37,10 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def gather_environment() -> dict[str, Any]:
-    git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"
+    git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"  # noqa: PLW1510, S607
     git_tag = (
-        subprocess.run(
-            ["git", "describe", "--tags", "--always"],
+        subprocess.run(  # noqa: PLW1510
+            ["git", "describe", "--tags", "--always"],  # noqa: S607
             capture_output=True,
             text=True,
         ).stdout.strip()
@@ -78,8 +78,8 @@ class SystemMonitor:
             "threads": self.process.num_threads(),
         }
         try:
-            r = subprocess.run(
-                ["docker", "stats", "ura-qdrant", "--no-stream", "--format", "{{.MemUsage}}"],
+            r = subprocess.run(  # noqa: PLW1510
+                ["docker", "stats", "ura-qdrant", "--no-stream", "--format", "{{.MemUsage}}"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -160,7 +160,6 @@ def benchmark_l01(levels: list[int]) -> dict[str, Any]:
     all_latencies = []
 
     for n_wf in levels:
-        print(f"  L01 → {n_wf} workflows...", flush=True)
         latencies = []
         errors = 0
         t0 = time.monotonic()
@@ -193,11 +192,7 @@ def benchmark_l01(levels: list[int]) -> dict[str, Any]:
                 "rss_mb": snap["rss_mb"],
                 "errors": errors,
                 "timeouts": 0,
-            }
-        )
-        print(
-            f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
-            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+            },
         )
 
     return {
@@ -231,7 +226,6 @@ def benchmark_l02(levels: list[int]) -> dict[str, Any]:
     ]
 
     for n_q in levels:
-        print(f"  L02 → {n_q} queries...", flush=True)
         latencies = []
         errors = 0
         t0 = time.monotonic()
@@ -260,11 +254,7 @@ def benchmark_l02(levels: list[int]) -> dict[str, Any]:
                 "cpu_percent": snap["cpu_percent"],
                 "rss_mb": snap["rss_mb"],
                 "errors": errors,
-            }
-        )
-        print(
-            f"    → {total_s:.1f}s  p95={p['p95']:.0f}ms  "
-            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+            },
         )
 
     return {
@@ -288,7 +278,6 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
     all_latencies = []
 
     for n_ep in levels:
-        print(f"  L03 → {n_ep} episodios...", flush=True)
         latencies = []
         errors = 0
 
@@ -332,11 +321,7 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
                 "cpu_percent": snap["cpu_percent"],
                 "rss_mb": snap["rss_mb"],
                 "errors": errors,
-            }
-        )
-        print(
-            f"    → p95_store={p['p95']:.0f}ms  search={search_latency:.0f}ms  "
-            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+            },
         )
 
     return {
@@ -373,7 +358,6 @@ def benchmark_l04(levels: list[int]) -> dict[str, Any]:
     all_latencies = []
 
     for n_agents in levels:
-        print(f"  L04 → {n_agents} agentes...", flush=True)
         agent_names = [f"agent-{chr(97 + i)}" for i in range(n_agents)]
         latencies = []
         errors = 0
@@ -413,11 +397,7 @@ def benchmark_l04(levels: list[int]) -> dict[str, Any]:
                 "cpu_percent": snap["cpu_percent"],
                 "rss_mb": snap["rss_mb"],
                 "errors": errors,
-            }
-        )
-        print(
-            f"    → {total_s:.3f}s  p95={p['p95']:.1f}ms  "
-            f"err={errors}  cpu={snap['cpu_percent']}%  rss={snap['rss_mb']}MB"
+            },
         )
 
     return {
@@ -445,7 +425,6 @@ def benchmark_l05() -> dict[str, Any]:
     stage = 0
 
     loads = [1, 2, 5, 10, 20, 50, 100, 200]
-    print("  L05 → Saturación progresiva (escalada cada ~5s)...", flush=True)
 
     for n_concurrent in loads:
         stage_latencies = []
@@ -475,7 +454,7 @@ def benchmark_l05() -> dict[str, Any]:
                 "errors": stage_errors,
                 "cpu_percent": snap["cpu_percent"],
                 "rss_mb": snap["rss_mb"],
-            }
+            },
         )
 
         if baseline_p95 is None and stage_p["p95"] > 0:
@@ -488,18 +467,13 @@ def benchmark_l05() -> dict[str, Any]:
                 "baseline_p95_ms": baseline_p95,
                 "stage": stage,
             }
-            print(
-                f"    ⚠️  Degradación en carga={n_concurrent}  "
-                f"p95={stage_p['p95']:.0f}ms (2× baseline={baseline_p95:.0f}ms)"
-            )
 
         if stage_errors > n_concurrent * 0.3:
             saturation_load = n_concurrent
             saturation_time = round(time.monotonic() - t0, 1)
-            print(f"    ❌ Saturación en carga={n_concurrent}  {stage_errors} errores")
             break
 
-        stage += 1
+        stage += 1  # noqa: SIM113
         time.sleep(3)
 
     return {
@@ -534,7 +508,6 @@ def save_results(data: dict[str, Any]) -> Path:
 
     json_path = base.with_suffix(".json")
     json_path.write_text(json.dumps(data, indent=2, default=str))
-    print(f"  📄 JSON: {json_path}")
 
     csv_path = base.with_suffix(".csv")
     if data.get("results"):
@@ -542,7 +515,6 @@ def save_results(data: dict[str, Any]) -> Path:
             w = csv.DictWriter(f, fieldnames=list(data["results"][0].keys()))
             w.writeheader()
             w.writerows(data["results"])
-        print(f"  📄 CSV:  {csv_path}")
 
     return base
 
@@ -580,9 +552,6 @@ def main() -> None:
 
     all_ok = True
     for bid, (fn, default_levels) in to_run:
-        print(f"\n{'=' * 60}")
-        print(f"  🏋️  Benchmark {bid}")
-        print(f"{'=' * 60}")
         try:
             levels = custom_levels or default_levels
             data = fn() if bid == "L05" else fn(levels)
@@ -597,17 +566,12 @@ def main() -> None:
             data["error_rate"] = round(error_rate, 4)
             if data["veredict"] == "FAIL":
                 all_ok = False
-                print(f"  ❌ VEREDICT: FAIL (error_rate={error_rate:.2%})")
             else:
-                print(f"  ✅ VEREDICT: PASS (error_rate={error_rate:.2%})")
+                pass
             save_results(data)
-        except Exception as e:
-            print(f"  ❌ ERROR en {bid}: {e}")
+        except Exception:
             all_ok = False
 
-    print(f"\n{'=' * 60}")
-    print(f"  {'✅' if all_ok else '⚠️'} Todos los benchmarks {'completados' if all_ok else 'con errores'}.")
-    print(f"{'=' * 60}")
     sys.exit(0 if all_ok else 1)
 
 

@@ -7,11 +7,12 @@ Ajusta sys.path para encontrar motor/ desde scripts/.
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(Path(__file__).parent, ".."))  # noqa: F821, PTH118
 
 # Flujo vertical: Documento (simulado) -> F24 -> F25 -> F26 -> F27 -> LLM
 
 import time
+from pathlib import Path
 
 # Colores para output
 GREEN = "\033[92m"
@@ -25,25 +26,20 @@ VERBOSE = "--verbose" in sys.argv
 
 
 def log(step: str, msg: str = "") -> None:
-    print(f"\n{BOLD}{GREEN}▶ {step}{END}")
     if msg:
-        print(f"  {msg}")
+        pass
 
 
 def debug(msg: str) -> None:
     if VERBOSE:
-        print(f"  {BLUE}{msg}{END}")
+        pass
 
 
-def main() -> None:
-    print(f"\n{BOLD}{'='*60}{END}")
-    print(f"{BOLD}  URA — DEMO: Pipeline Completo de Conocimiento{END}")
-    print(f"{BOLD}{'='*60}{END}")
+def main() -> None:  # noqa: PLR0915
     start = time.perf_counter()
 
     # ── Paso 1: Documentos fuente ──
-    log("PASO 1: Documentos fuente (F24 Web Intelligence)",
-        "3 documentos sobre tecnología simulados")
+    log("PASO 1: Documentos fuente (F24 Web Intelligence)", "3 documentos sobre tecnología simulados")
 
     documents = [
         "Apple Inc. reported record revenue of $124.3 billion in Q1 2026, driven by iPhone and Services growth.",
@@ -51,11 +47,10 @@ def main() -> None:
         "Tesla delivered 1.8 million electric vehicles in 2025, exceeding analyst expectations.",
     ]
     for i, doc in enumerate(documents):
-        debug(f"  Doc {i+1}: {doc[:60]}...")
+        debug(f"  Doc {i + 1}: {doc[:60]}...")
 
     # ── Paso 2: CitationBundle (simula F24) ──
-    log("PASO 2: CitationBundle con evidencias (F24)",
-         "Extrayendo fragmentos con calidad >0.7")
+    log("PASO 2: CitationBundle con evidencias (F24)", "Extrayendo fragmentos con calidad >0.7")
 
     from motor.core.web.citation.citation import CitationBundle, Evidence
 
@@ -79,11 +74,9 @@ def main() -> None:
             for i, doc in enumerate(documents)
         ],
     )
-    print(f"     → {len(bundle.evidence)} evidencias extraídas")
 
     # ── Paso 3: FusionPipeline (F25) ──
-    log("PASO 3: Knowledge Fusion (F25)",
-        "Pipeline: Extracción → Normalización → Merge → Memoria")
+    log("PASO 3: Knowledge Fusion (F25)", "Pipeline: Extracción → Normalización → Merge → Memoria")
 
     from motor.core.fusion.engine import FusionPipeline
     from motor.core.fusion.stages import (
@@ -93,71 +86,68 @@ def main() -> None:
         NormalizationStage,
     )
 
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-        MemoryCandidateSelectionStage(),
-    ])
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+            MemoryCandidateSelectionStage(),
+        ],
+    )
 
-    import os
     import tempfile
 
     from motor.memory import Memory
+
     tmpdir = tempfile.mkdtemp(prefix="ura_demo_")
-    snap = os.path.join(tmpdir, "snap.json")
-    journal = os.path.join(tmpdir, "journal.jsonl")
+    snap = Path(tmpdir) / "snap.json"
+    journal = Path(tmpdir) / "journal.jsonl"
     memory = Memory(snapshot_path=snap, journal_path=journal)
 
     from motor.core.fusion.models import FusionContext
+
     ctx = FusionContext(bundle=bundle)
     ctx.statistics["_memory_instance"] = memory
 
     t0 = time.perf_counter()
-    for stage in pipeline._stages:
+    for stage in pipeline._stages:  # noqa: SLF001
         ctx = stage.execute(ctx)
-    fusion_time = time.perf_counter() - t0
+    time.perf_counter() - t0
 
-    facts_count = len(ctx.facts)
-    claims_count = len(ctx.claims)
-    print(f"     → {facts_count} KnowledgeFacts generados en {fusion_time*1000:.1f}ms")
-    print(f"     → {claims_count} Claims procesados")
-    print(f"     → {len(ctx.entities)} entidades resueltas")
+    len(ctx.facts)
+    len(ctx.claims)
 
-    for i, fact in enumerate(ctx.facts):
-        print(f"       Fact {i+1}: {fact.subject} | {fact.predicate} | {fact.object} "
-              f"(confianza: {fact.confidence:.2f})")
+    for i, fact in enumerate(ctx.facts):  # noqa: B007
+        pass
 
     # ── Paso 4: Memory (F26) ──
-    log("PASO 4: Memoria Histórica (F26)",
-        "Escribiendo Facts en la línea temporal")
+    log("PASO 4: Memoria Histórica (F26)", "Escribiendo Facts en la línea temporal")
 
-    memory_entries = memory.timeline.size
     memory.snapshot("demo_v1")
-    print(f"     → {memory_entries} entries en MemoryTimeline")
-    print("     → Snapshot guardado")
 
     # ── Paso 5: Context Builder → Prompt LLM (F27) ──
-    log("PASO 5: Contexto para LLM (F27)",
-        "Construyendo prompt a partir de Facts fusionados")
+    log("PASO 5: Contexto para LLM (F27)", "Construyendo prompt a partir de Facts fusionados")
 
     from motor.core.fusion.context_builder import ContextBuilder
 
     # Reconstruir FactIndex desde el pipeline
     result = pipeline.run(bundle, [])
     if result.index is None:
-        print(f"     {RED}⚠ No se pudo construir FactIndex{END}")
         # Fallback: construir manualmente
         from motor.core.fusion.fact_index import FactIndex
         from motor.core.fusion.models import Fact, FactVersion, make_fact_id
+
         idx = FactIndex()
         for kf in ctx.facts:
             fid = make_fact_id(kf.subject, kf.predicate, kf.object)
             fact = Fact(fact_id=fid, subject=kf.subject, predicate=kf.predicate, object=kf.object)
             ver = FactVersion(
-                version_id=f"v{kf.version}", fact_id=fid,
-                confidence=kf.confidence, evidence_ids=kf.evidence_ids,
-                provenance=kf.provenance, created_at=kf.created_at or 0.0,
+                version_id=f"v{kf.version}",
+                fact_id=fid,
+                confidence=kf.confidence,
+                evidence_ids=kf.evidence_ids,
+                provenance=kf.provenance,
+                created_at=kf.created_at or 0.0,
             )
             idx.add_fact_version(fact, ver)
         idx.freeze()
@@ -177,17 +167,14 @@ def main() -> None:
     for query in queries:
         context = builder.build_context(query=query, max_facts=5)
         if context:
-            word_count = len(context.split())
-            print(f"\n  {YELLOW}Consulta: '{query}'{END}")
-            print(f"  Contexto generado: {word_count} palabras, {len(context)} chars")
+            len(context.split())
             if VERBOSE:
-                print(f"  {context[:300]}...")
+                pass
         else:
-            print(f"  {YELLOW}Consulta: '{query}' → sin resultados relevantes{END}")
+            pass
 
     # ── Paso 6: Prompt final listo para LLM ──
-    log("PASO 6: Prompt listo para LLM",
-        "Contexto formateado para enviar a cualquier LLM")
+    log("PASO 6: Prompt listo para LLM", "Contexto formateado para enviar a cualquier LLM")
 
     context_all = builder.build_context(max_facts=10)
 
@@ -198,24 +185,15 @@ def main() -> None:
 Pregunta: ¿Qué empresas tecnológicas reportaron resultados y cuáles fueron sus métricas clave?
 """
 
-    print("\n  Prompt final:")
-    print(f"  {'─'*50}")
-    for line in prompt.strip().split("\n")[:8]:
-        print(f"  {line}")
-    print(f"  {'─'*50}")
-    print(f"  → Prompt listo: {len(prompt)} chars, ~{len(prompt.split())} tokens approx")
+    for _line in prompt.strip().split("\n")[:8]:
+        pass
 
     # ── Resumen ──
-    total_time = time.perf_counter() - start
-    print(f"\n{BOLD}{'='*60}{END}")
-    print(f"{BOLD}  DEMO COMPLETADA{END}")
-    print(f"  Tiempo total: {total_time*1000:.1f}ms")
-    print(f"  Facts: {facts_count} | Memoria: {memory_entries} | Prompt: {len(prompt)} chars")
-    print("  Pipeline completo: Documento → Evidence → Fact → Memory → Contexto → LLM")
-    print(f"{BOLD}{'='*60}{END}\n")
+    time.perf_counter() - start
 
     # Limpieza
     import shutil
+
     memory.close()
     shutil.rmtree(tmpdir, ignore_errors=True)
 

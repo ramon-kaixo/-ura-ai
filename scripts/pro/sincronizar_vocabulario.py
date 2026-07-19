@@ -8,18 +8,19 @@ Flujo:
 Usa INSERT OR IGNORE para evitar colisiones de primary key.
 Ejecutar via cron cada 5 minutos en Mac:
   */5 * * * * /usr/bin/python3 /Users/ramonesnaola/URA/ura_ia_1972/scripts/pro/sincronizar_vocabulario.py >> /Users/ramonesnaola/URA/ura_ia_1972/logs/sync.log 2>&1
-"""
+"""  # noqa: E501
 
 import os
 import sqlite3
 import subprocess
 import sys
+from pathlib import Path
 
 # ── Configuración ──────────────────────────────────────────────────
 BASE = "/Users/ramonesnaola/URA/ura_ia_1972"
-DB_LOCAL = os.path.join(BASE, "config/voice_corrections.db")
-DUMP_LOCAL = "/tmp/vocabulario_mac.sql"
-DUMP_REMOTO = "/tmp/vocabulario_asus.sql"
+DB_LOCAL = Path(BASE) / "config/voice_corrections.db"
+DUMP_LOCAL = "/tmp/vocabulario_mac.sql"  # noqa: S108
+DUMP_REMOTO = "/tmp/vocabulario_asus.sql"  # noqa: S108
 
 ASUS_SSH = "ramon@10.164.1.99"
 DB_ASUS = "/home/ramon/URA/ura_ia_1972/config/voice_corrections.db"
@@ -30,8 +31,8 @@ def _dump_conn(conn) -> str:
     """Genera volcado SQL con INSERT OR IGNORE desde una conexión."""
     lines = []
     for line in conn.iterdump():
-        line = line.replace('INSERT INTO "', 'INSERT OR IGNORE INTO "')
-        line = line.replace("INSERT INTO ", "INSERT OR IGNORE INTO ")
+        line = line.replace('INSERT INTO "', 'INSERT OR IGNORE INTO "')  # noqa: PLW2901
+        line = line.replace("INSERT INTO ", "INSERT OR IGNORE INTO ")  # noqa: PLW2901
         lines.append(line)
     return "\n".join(lines)
 
@@ -39,37 +40,37 @@ def _dump_conn(conn) -> str:
 def sincronizar() -> None:
 
     # 1. Local → Remoto
-    if os.path.exists(DB_LOCAL):
+    if Path(DB_LOCAL).exists():
         with sqlite3.connect(DB_LOCAL) as conn:
             dump = _dump_conn(conn)
-        with open(DUMP_LOCAL, "w") as f:
+        with open(DUMP_LOCAL, "w") as f:  # noqa: PTH123
             f.write(dump)
 
-        subprocess.run(
-            ["scp", DUMP_LOCAL, f"{ASUS_SSH}:{DUMP_REMOTO}"],
+        subprocess.run(  # noqa: S603
+            ["scp", DUMP_LOCAL, f"{ASUS_SSH}:{DUMP_REMOTO}"],  # noqa: S607
             check=True,
             capture_output=True,
         )
         cmd = f"sqlite3 {DB_ASUS} < {DUMP_REMOTO} && rm {DUMP_REMOTO}"
-        subprocess.run(["ssh", ASUS_SSH, cmd], check=True, capture_output=True)
+        subprocess.run(["ssh", ASUS_SSH, cmd], check=True, capture_output=True)  # noqa: S603, S607
 
     # 2. Remoto → Local
-    result = subprocess.run(
-        ["ssh", ASUS_SSH, f"sqlite3 {DB_ASUS} .dump"],
+    result = subprocess.run(  # noqa: S603
+        ["ssh", ASUS_SSH, f"sqlite3 {DB_ASUS} .dump"],  # noqa: S607
         capture_output=True,
         text=True,
         check=True,
     )
-    with open(DUMP_LOCAL, "w") as f:
+    with open(DUMP_LOCAL, "w") as f:  # noqa: PTH123
         for line in result.stdout.splitlines():
-            line = line.replace('INSERT INTO "', 'INSERT OR IGNORE INTO "')
-            line = line.replace("INSERT INTO ", "INSERT OR IGNORE INTO ")
+            line = line.replace('INSERT INTO "', 'INSERT OR IGNORE INTO "')  # noqa: PLW2901
+            line = line.replace("INSERT INTO ", "INSERT OR IGNORE INTO ")  # noqa: PLW2901
             f.write(line + "\n")
 
-    with sqlite3.connect(DB_LOCAL) as conn, open(DUMP_LOCAL) as f:
+    with sqlite3.connect(DB_LOCAL) as conn, open(DUMP_LOCAL) as f:  # noqa: PTH123
         conn.executescript(f.read())
 
-    os.remove(DUMP_LOCAL)
+    os.remove(DUMP_LOCAL)  # noqa: PTH107
 
 
 if __name__ == "__main__":

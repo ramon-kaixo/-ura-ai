@@ -43,7 +43,6 @@ def cargar_inventario() -> dict:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
-            pass
     return {"dispositivos": {}}
 
 
@@ -190,7 +189,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.ssh:
-        exit_code, out, err = tailscale_ssh(args.ssh, "hostname && free -h | head -2")
+        exit_code, out, err = tailscale_ssh(args.ssh, "hostname && free -h | head -2")  # noqa: RUF059
         sys.exit(exit_code)
 
     if args.enviar:

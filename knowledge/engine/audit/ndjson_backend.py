@@ -42,7 +42,7 @@ class NDJSONAuditBackend:
     MAX_BYTES: int = 100 * 1024 * 1024  # 100 MB por segmento
     MAX_SEGMENTS: int = 3
 
-    def __init__(self, audit_dir: Path | str, filename: str = "audit.ndjson"):
+    def __init__(self, audit_dir: Path | str, filename: str = "audit.ndjson") -> None:
         self._lock = threading.Lock()
         self._file = Path(audit_dir) / filename
         self._lock_file = self._file.with_suffix(".ndjson.lock")
@@ -183,7 +183,7 @@ class NDJSONAuditBackend:
         events: list[AuditEvent] = []
         with path.open() as f:
             for line in f:
-                line = line.strip()
+                line = line.strip()  # noqa: PLW2901
                 if not line:
                     continue
                 try:
@@ -207,7 +207,7 @@ class NDJSONAuditBackend:
 
         processing = self._file.with_suffix(".ndjson.processing")
         try:
-            os.rename(str(self._file), str(processing))
+            os.rename(str(self._file), str(processing))  # noqa: PTH104
         except FileNotFoundError:
             return 0
 
@@ -229,7 +229,7 @@ class NDJSONAuditBackend:
             _t0 = _time.monotonic()
             with processing.open() as f:
                 for line in f:
-                    line = line.strip()
+                    line = line.strip()  # noqa: PLW2901
                     if not line:
                         continue
                     try:
@@ -266,7 +266,7 @@ class NDJSONAuditBackend:
             from knowledge.engine.metrics import audit_ingest_duration_seconds
 
             audit_ingest_duration_seconds.observe(_time.monotonic() - _t0)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # Limpiar archivo procesado

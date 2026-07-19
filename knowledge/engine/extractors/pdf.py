@@ -122,7 +122,8 @@ class PdfExtractor:
         try:
             num_pages = doc.page_count
             if num_pages > MAX_PAGES:
-                raise PdfLimitError(f"PDF has {num_pages} pages (max {MAX_PAGES})")
+                msg = f"PDF has {num_pages} pages (max {MAX_PAGES})"
+                raise PdfLimitError(msg)
 
             metadata["pages"] = num_pages
             metadata["pdf_version"] = doc.pdf_version if hasattr(doc, "pdf_version") else ""

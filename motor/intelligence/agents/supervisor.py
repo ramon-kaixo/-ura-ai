@@ -89,27 +89,26 @@ class SupervisorAgent(Agent):
                             "status": "cancelled",
                             "attempt": attempt + 1,
                             "reason": "workflow_cancelled",
-                        }
+                        },
                     )
                     break
                 try:
                     result = agent.run(task)
                     if result.success:
                         steps.append(
-                            {"step": task.objective, "status": "completed", "agent": agent.id, "attempt": attempt + 1}
+                            {"step": task.objective, "status": "completed", "agent": agent.id, "attempt": attempt + 1},
                         )
                         break
-                    else:
-                        log.warning("Attempt %d failed for %s: %s", attempt + 1, agent.name, result.error)
-                        steps.append(
-                            {
-                                "step": task.objective,
-                                "status": "failed",
-                                "agent": agent.id,
-                                "attempt": attempt + 1,
-                                "error": result.error,
-                            }
-                        )
+                    log.warning("Attempt %d failed for %s: %s", attempt + 1, agent.name, result.error)
+                    steps.append(
+                        {
+                            "step": task.objective,
+                            "status": "failed",
+                            "agent": agent.id,
+                            "attempt": attempt + 1,
+                            "error": result.error,
+                        },
+                    )
                 except Exception as exc:
                     log.warning("Exception in %s attempt %d: %s", agent.name, attempt + 1, exc)
                     steps.append(
@@ -119,7 +118,7 @@ class SupervisorAgent(Agent):
                             "agent": agent.id,
                             "attempt": attempt + 1,
                             "error": str(exc),
-                        }
+                        },
                     )
 
         success = all(s.get("status") == "completed" for s in steps)

@@ -92,7 +92,7 @@ def comparar(anterior: dict, actual: dict) -> list:
             cambios.append({"file": f, "status": "MODIFICADO", "hash": h})
     for f in anterior:
         if f not in actual:
-            cambios.append({"file": f, "status": "FANTASMA", "hash": "—"})
+            cambios.append({"file": f, "status": "FANTASMA", "hash": "—"})  # noqa: PERF401
     return cambios
 
 
@@ -132,14 +132,14 @@ def guardar_historial(cambios: list, total: int) -> None:
         "fantasmas": sum(1 for c in cambios if c["status"] == "FANTASMA"),
     }
     HISTORIAL.parent.mkdir(parents=True, exist_ok=True)
-    with open(HISTORIAL, "a") as f:
+    with open(HISTORIAL, "a") as f:  # noqa: PTH123
         f.write(json.dumps(entry) + "\n")
 
 
 # ── Main ──
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912
     import argparse
 
     parser = argparse.ArgumentParser(description="Guardián de Disco SHA-256 v2.0")

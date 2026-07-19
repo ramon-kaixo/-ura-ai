@@ -28,8 +28,8 @@ PATTERNS = ["ERROR", "CRITICAL", "FATAL", "CRASH", "Traceback", "Exception", "Se
 
 def ssh_run(cmd: str) -> str:
     try:
-        result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
+        result = subprocess.run(  # noqa: S603
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=SSH_TIMEOUT,
@@ -44,7 +44,7 @@ def load_seen_hashes() -> set:
     if SEEN_HASHES_FILE.exists():
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return set()
 
@@ -69,18 +69,18 @@ def fetch_critical_logs() -> list:
     cmd_parts = []
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
-            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
+            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
     if output:
         for line in output.strip().split("\n"):
             if line.strip():
-                critical.append(line.strip())
+                critical.append(line.strip())  # noqa: PERF401
     return critical
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
 
     seen = load_seen_hashes()
     critical = fetch_critical_logs()
@@ -101,7 +101,7 @@ def main() -> int:
     if new_alerts:
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         alert_file = LOCAL_ALERTS_DIR / f"gx10_critical_{timestamp}.log"
-        with open(alert_file, "w") as f:
+        with open(alert_file, "w") as f:  # noqa: PTH123
             for line in new_alerts:
                 f.write(line + "\n")
         save_seen_hashes(seen)
@@ -120,7 +120,7 @@ def main() -> int:
             pass
 
         if len(new_alerts) <= 10:
-            for line in new_alerts:
+            for line in new_alerts:  # noqa: B007
                 pass
         return 1
     return 0

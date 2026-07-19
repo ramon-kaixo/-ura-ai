@@ -79,7 +79,7 @@ def test_state_machine_no_invalid_transitions() -> None:
 def test_state_machine_random_sequences() -> None:
     """Property-based: secuencias aleatorias no deben corromper el estado."""
     sm = AgentStateMachine()
-    rng = random.Random(42)
+    rng = random.Random(42)  # noqa: S311
     for _ in range(1000):
         state = AgentState.CREATED
         for _ in range(20):
@@ -153,9 +153,15 @@ def test_mass_cancellation_500() -> None:
 
 
 class _SlowAdapter(ToolAdapter):
-    def name(self): return "slow"
-    def run(self, params): time.sleep(5); return {}
-    def cancel(self): pass
+    def name(self):
+        return "slow"
+
+    def run(self, params):
+        time.sleep(5)
+        return {}
+
+    def cancel(self):
+        pass
 
 
 def test_multiple_timeouts() -> None:
@@ -178,13 +184,19 @@ def test_multiple_timeouts() -> None:
 class _FlakyAdapter(ToolAdapter):
     def __init__(self):
         self._call_count = 0
-    def name(self): return "flaky"
+
+    def name(self):
+        return "flaky"
+
     def run(self, params):
         self._call_count += 1
         if self._call_count <= 2:
-            raise ToolTransientError("transient error")
+            msg = "transient error"
+            raise ToolTransientError(msg)
         return {"ok": True}
-    def cancel(self): pass
+
+    def cancel(self):
+        pass
 
 
 def test_flaky_tool_recovers() -> None:
@@ -202,7 +214,8 @@ def test_flaky_tool_recovers() -> None:
 def test_budget_exhaustion() -> None:
     """Budget agotado debe denegar capabilities."""
     execution = AgentExecution(
-        agent_id="b1", task=_task(),
+        agent_id="b1",
+        task=_task(),
         capabilities={AgentCapability.MEMORY_READ},
         policy=AgentPolicy(max_cost_units=10),
         cost_units=10,
@@ -221,8 +234,10 @@ def test_gate_deterministic() -> None:
     """Mismo execution → mismas decisiones."""
     e1 = _exec()
     e2 = AgentExecution(
-        agent_id=e1.agent_id, task=e1.task,
-        capabilities=e1.capabilities, policy=e1.policy,
+        agent_id=e1.agent_id,
+        task=e1.task,
+        capabilities=e1.capabilities,
+        policy=e1.policy,
     )
     g1 = AgentCapabilityGate(e1)
     g2 = AgentCapabilityGate(e2)
@@ -230,5 +245,5 @@ def test_gate_deterministic() -> None:
         g1.check(AgentCapability.WEB_SEARCH)
     with contextlib.suppress(PermissionError):
         g2.check(AgentCapability.WEB_SEARCH)
-    assert len(g1._decisions) > 0
-    assert len(g2._decisions) > 0
+    assert len(g1._decisions) > 0  # noqa: SLF001
+    assert len(g2._decisions) > 0  # noqa: SLF001

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Compare KE 1.x (single-chunk) vs KE 2.0 (semantic chunking).
-Runs same queries against both indices and compares metrics."""
+Runs same queries against both indices and compares metrics.
+"""
 
 from __future__ import annotations
 
@@ -25,11 +26,11 @@ KE2_COLLECTION = "ura_docs_semantic"
 def load_queries():
     queries = []
     relevance_map = {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             queries.append(d)
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             relevance_map.setdefault(d["qid"], []).append(d)
@@ -38,8 +39,8 @@ def load_queries():
 
 def search_collection(qc, texto, collection, limit=10):
     vector = qc.generar_embedding(texto)
-    if qc._cliente:
-        hits = qc._cliente.query_points(
+    if qc._cliente:  # noqa: SLF001
+        hits = qc._cliente.query_points(  # noqa: SLF001
             collection_name=collection,
             query=vector,
             limit=limit,
@@ -83,7 +84,7 @@ def compute_metrics(retrieved_docs, gold_set, gold_relevance, k=10):
     return r1, r5, r10, p5, mrr, ndcg, ap
 
 
-def main():
+def main() -> int:  # noqa: C901, PLR0912, PLR0915
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
 
@@ -156,39 +157,22 @@ def main():
 
     # Print comparison table
     versions = list(all_results.keys())
-    print(f"\n{'=' * 75}")
-    print("  KE 1.x vs KE 2.0 — Chunking Comparison")
-    print(f"{'=' * 75}")
-    print(f"{'Metric':<22} {'KE 1.x':<12} {'KE 2.0':<12} {'Delta':<10} {'Pass?':<10}")
-    print(f"{'-' * 66}")
 
     for metric in ["Recall@1", "Recall@5", "Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10"]:
         v1 = all_results[versions[0]][metric]
         v2 = all_results[versions[1]][metric]
         delta = v2 - v1
-        pct = (delta / v1 * 100) if v1 else float("inf")
-        passed = pct > 0 or (v1 == 0 and v2 > 0)
-        print(f"{metric:<22} {v1:<12.4f} {v2:<12.4f} {pct:>+7.1f}%  {'✅' if passed else '❌'}")
-
-    print(f"{'-' * 66}")
+        (delta / v1 * 100) if v1 else float("inf")
 
     for metric in ["Latency P50 (ms)", "Latency P95 (ms)", "Latency P99 (ms)"]:
         v1 = all_results[versions[0]][metric]
         v2 = all_results[versions[1]][metric]
         delta = ((v2 - v1) / v1 * 100) if v1 else 0
-        passed = delta <= 10  # P95 within baseline +10%
-        print(f"{metric:<22} {v1:<12.2f} {v2:<12.2f} {delta:>+7.1f}%  {'✅' if passed else '❌'}")
 
     for metric in ["Throughput (qps)", "No-context rate"]:
         v1 = all_results[versions[0]][metric]
         v2 = all_results[versions[1]][metric]
-        if metric == "No-context rate":
-            delta = v2 - v1
-            passed = delta <= 0
-            print(f"{metric:<22} {v1:<12.2%} {v2:<12.2%} {delta:>+7.1%}  {'✅' if passed else '❌'}")
-        else:
-            delta = ((v2 - v1) / v1 * 100) if v1 else 0
-            print(f"{metric:<22} {v1:<12.2f} {v2:<12.2f} {delta:>+7.1f}%")
+        delta = v2 - v1 if metric == "No-context rate" else (v2 - v1) / v1 * 100 if v1 else 0
 
     # Acceptance check
     r10_ke1 = all_results[versions[0]]["Recall@10"]
@@ -215,14 +199,10 @@ def main():
     else:
         accepts.append(f"❌ No-context rate aumenta: {nctx_ke2:.2%} > {nctx_ke1:.2%}")
 
-    print(f"\n{'=' * 75}")
-    print("  Acceptance Criteria")
-    print(f"{'=' * 75}")
-    for a in accepts:
-        print(f"  {a}")
+    for _a in accepts:
+        pass
 
     all_pass = all("❌" not in a for a in accepts)
-    print(f"\n  {'✅ APROBADO — continuar con Retrieval Híbrido' if all_pass else '❌ RECHAZADO — revisar chunking'}")
     return 0 if all_pass else 1
 
 

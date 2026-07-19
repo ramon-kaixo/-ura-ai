@@ -158,11 +158,7 @@ class LLMProfiler:
     def get_stats(self, provider: str | None = None) -> dict[str, Any]:
         """Estadísticas agregadas por proveedor."""
         with self._lock:
-            filtered = (
-                [p for p in self._profiles if p.provider == provider]
-                if provider
-                else self._profiles
-            )
+            filtered = [p for p in self._profiles if p.provider == provider] if provider else self._profiles
             if not filtered:
                 return {}
 

@@ -102,7 +102,7 @@ def snapshot(ruta: Path) -> dict:
 
     # F821 actual
     try:
-        r = subprocess.run(
+        r = subprocess.run(  # noqa: S603
             [RUFF, "check", "--select", "F821", "--output-format", "json", str(ruta)],
             capture_output=True,
             text=True,
@@ -196,26 +196,26 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
 
     # 1. Ruff fix (indentación, sintaxis básica)
     try:
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [RUFF, "check", "--fix", "--unsafe-fixes", str(ruta)],
             capture_output=True,
             timeout=30,
             check=False,
         )
         reparaciones.append("ruff --fix --unsafe-fixes")
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # 2. Ruff format
     try:
-        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15, check=False)
+        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15, check=False)  # noqa: S603
         reparaciones.append("ruff format")
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # 3. Auto-reglas (imports faltantes)
     try:
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [sys.executable, "scripts/pro/auto_reglas.py", "--aplicar", str(ruta)],
             capture_output=True,
             text=True,
@@ -224,7 +224,7 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
             check=False,
         )
         reparaciones.append("auto_reglas")
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # 4. Verificar si se arregló
@@ -303,11 +303,11 @@ def scan_project() -> None:
             funcs = sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
             classes = sum(1 for n in ast.walk(tree) if isinstance(n, ast.ClassDef))
             results[p] = {"functions": funcs, "classes": classes, "lines": len(content.splitlines())}
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912, PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="Scanner Auto-ajustable ENTRADA/SALIDA")
@@ -355,7 +355,7 @@ def main() -> None:
             )
 
         try:
-            r_opt = subprocess.run(
+            r_opt = subprocess.run(  # noqa: S603
                 [
                     sys.executable,
                     str(Path(__file__).parent / "chunk_optimizer.py"),

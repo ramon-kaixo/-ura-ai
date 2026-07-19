@@ -29,7 +29,7 @@ class OpenRouterProvider(Provider):
         self,
         modelo: str,
         mensajes: list,
-        stream: bool = False,
+        stream: bool = False,  # noqa: FBT001, FBT002
         tools: list | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,

@@ -53,7 +53,8 @@ class FactIndex:
         self._check_mutable()
         fact = self._by_id.pop(fact_id, None)
         if fact is None:
-            raise KeyError(f"Fact '{fact_id}' not found")
+            msg = f"Fact '{fact_id}' not found"
+            raise KeyError(msg)
 
         subj, pred, eids = self._extract_keys(fact)
         self._remove_from_ordered_set(self._by_entity, subj.lower(), fact_id)
@@ -74,7 +75,8 @@ class FactIndex:
         self._check_mutable()
         fid = fact.fact_id
         if fid in self._by_id:
-            raise KeyError(f"Fact '{fid}' already indexed")
+            msg = f"Fact '{fid}' already indexed"
+            raise KeyError(msg)
         eids = version.evidence_ids
         self._add(fid, (fact, version), fact.subject, fact.predicate, eids)
 
@@ -83,7 +85,8 @@ class FactIndex:
         self._check_mutable()
         entry = self._by_id.get(fact_id)
         if entry is None:
-            raise KeyError(f"Fact '{fact_id}' not found")
+            msg = f"Fact '{fact_id}' not found"
+            raise KeyError(msg)
         if isinstance(entry, tuple):
             fact = entry[0]
             self._by_id[fact_id] = (fact, version)
@@ -100,9 +103,7 @@ class FactIndex:
         return self._resolve_ids(self._by_predicate.get(predicate.lower()))
 
     def lookup_subject_predicate(self, subject: str, predicate: str) -> list[Any]:
-        return self._resolve_ids(
-            self._by_sp.get((subject.lower(), predicate.lower()))
-        )
+        return self._resolve_ids(self._by_sp.get((subject.lower(), predicate.lower())))
 
     def lookup_evidence(self, evidence_id: str) -> list[Any]:
         return self._resolve_ids(self._by_evidence.get(evidence_id))
@@ -134,7 +135,8 @@ class FactIndex:
 
     @classmethod
     def build_from_versions(
-        cls, entries: list[tuple[Fact, FactVersion]],
+        cls,
+        entries: list[tuple[Fact, FactVersion]],
     ) -> FactIndex:
         idx = cls()
         for fact, version in entries:
@@ -157,13 +159,16 @@ class FactIndex:
 
     def _check_mutable(self) -> None:
         if self._frozen:
-            raise RuntimeError("Cannot modify frozen FactIndex")
+            msg = "Cannot modify frozen FactIndex"
+            raise RuntimeError(msg)
 
     def _add(self, fid: str, obj: Any, subj: str, pred: str, eids: tuple[str, ...]) -> None:
         if not fid:
-            raise ValueError("Fact must have a non-empty id")
+            msg = "Fact must have a non-empty id"
+            raise ValueError(msg)
         if fid in self._by_id:
-            raise KeyError(f"Fact '{fid}' already indexed")
+            msg = f"Fact '{fid}' already indexed"
+            raise KeyError(msg)
         self._by_id[fid] = obj
         self._add_to_ordered_set(self._by_entity, subj.lower(), fid)
         self._add_to_ordered_set(self._by_predicate, pred.lower(), fid)

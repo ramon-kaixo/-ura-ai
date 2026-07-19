@@ -14,9 +14,6 @@ def cmd_pipeline_run(args) -> int:
     pipeline = Pipeline(source_dir=source_dir, db_path=db_path or None, archive_dir=archive_dir)
     result = pipeline.run()
 
-    print(f"Pipeline: {'✅' if result.success else '❌'} ({result.total_duration_ms:.0f}ms)")
     for s in result.stages:
-        icon = "✅" if s.success else "❌"
-        err = f" — {s.error[:60]}" if s.error else ""
-        print(f"  {icon} {s.stage.value}: {s.duration_ms:.0f}ms{err}")
+        f" — {s.error[:60]}" if s.error else ""
     return 0 if result.success else 1

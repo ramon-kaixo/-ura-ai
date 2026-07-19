@@ -33,7 +33,7 @@ _READER_POOL_MAX = 10  # máx pools distintos antes de evictar el más antiguo
 
 def _get_conn(db_path: Path) -> sqlite3.Connection:
     """Obtiene conexión del pool de lectura. Crea pool si no existe."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
     if spath not in _READER_POOL:
         from knowledge.engine.connection_pool import ReadConnectionPool
@@ -50,7 +50,7 @@ def _get_conn(db_path: Path) -> sqlite3.Connection:
 
 def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:
     """Devuelve conexión al pool."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
     if spath in _READER_POOL:
         _READER_POOL[spath].release(conn)
@@ -60,7 +60,7 @@ def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:
 
 def clear_all_connection_pools() -> None:
     """Cierra todas las conexiones de todos los pools."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     for pool in _READER_POOL.values():
         pool.close_all()
     _READER_POOL.clear()
@@ -143,7 +143,8 @@ class KnowledgeReader:
         elif mode == "hybrid":
             results = self._search_hybrid(query, filters, limit)
         else:
-            raise ValueError(f"Modo de búsqueda no soportado: {mode!r}")
+            msg = f"Modo de búsqueda no soportado: {mode!r}"
+            raise ValueError(msg)
         with contextlib.suppress(Exception):
             get_audit().log_read(query=query, docs=len(results))
         return results
@@ -187,7 +188,7 @@ class KnowledgeReader:
                         title=fm.title,
                         snippet=_make_snippet(row["body"], query),
                         doc_type=row["type"],
-                    )
+                    ),
                 )
             return results
         finally:

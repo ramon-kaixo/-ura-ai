@@ -33,7 +33,7 @@ URA_ROOT = Path(__file__).resolve().parents[2]
 def _load_config():
     dispositivos = URA_ROOT / "config" / "dispositivos.json"
     try:
-        with open(dispositivos) as f:
+        with open(dispositivos) as f:  # noqa: PTH123
             cfg = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None
@@ -87,7 +87,7 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
     return False
 
 
-def bypass_linksys() -> bool:
+def bypass_linksys() -> bool:  # noqa: C901, PLR0912, PLR0915
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -189,7 +189,7 @@ def bypass_linksys() -> bool:
                             page.wait_for_load_state("networkidle", timeout=8000)
                             clicked = True
                             break
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
                 if not clicked:
                     pass
@@ -210,15 +210,15 @@ def bypass_linksys() -> bool:
                     inp.get_attribute("type") or ""
                     inp.get_attribute("value") or ""
                     inp.get_attribute("placeholder") or ""
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
 
             # ── PASO 6: Save screenshot and close ──
             page.screenshot(path=str(EVIDENCIA))
 
             # Also save page HTML for debugging
-            html_path = "/tmp/linksys_debug.html"
-            with open(html_path, "w") as f:
+            html_path = "/tmp/linksys_debug.html"  # noqa: S108
+            with open(html_path, "w") as f:  # noqa: PTH123
                 f.write(page.content())
 
         except Exception:

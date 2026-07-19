@@ -49,7 +49,7 @@ def collect_units() -> dict[str, list[str]]:
 
 def extract_execstart(path: str) -> str | None:
     try:
-        with open(path) as f:
+        with open(path) as f:  # noqa: PTH123
             for line in f:
                 stripped = line.strip()
                 if stripped.startswith("ExecStart="):
@@ -99,7 +99,7 @@ def is_ura_unit(name: str) -> bool:
     return any(k in lower for k in keywords)
 
 
-def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:
+def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
     results: list[dict[str, Any]] = []
     units = collect_units()
 
@@ -136,7 +136,7 @@ def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:
 def _disable_and_delete(unit: str, scope: str) -> None:
     user_flag = ["--user"] if scope == "user" else []
     with contextlib.suppress(Exception):
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [SYSTEMCTL, *user_flag, "disable", "--now", unit],
             capture_output=True,
             timeout=30,
@@ -146,7 +146,7 @@ def _disable_and_delete(unit: str, scope: str) -> None:
         timer = Path(d) / unit.replace(".service", ".timer")
         if timer.exists():
             with contextlib.suppress(Exception):
-                subprocess.run(
+                subprocess.run(  # noqa: S603
                     [SYSTEMCTL, *user_flag, "disable", "--now", timer.name],
                     capture_output=True,
                     timeout=30,

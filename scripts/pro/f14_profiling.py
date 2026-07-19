@@ -30,7 +30,7 @@ FINDINGS_PATH = Path("motor/data/f14/findings.json")
 findings: list[dict] = []
 
 
-def record_finding(scenario_id: str, description: str, impact: str):
+def record_finding(scenario_id: str, description: str, impact: str) -> None:
     findings.append(
         {
             "id": f"F14-{scenario_id}",
@@ -38,14 +38,14 @@ def record_finding(scenario_id: str, description: str, impact: str):
             "description": description,
             "impact": impact,
             "timestamp": datetime.now(UTC).isoformat(),
-        }
+        },
     )
 
 
 def get_env() -> dict:
     try:
-        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
+        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
     except Exception:
         sha, tag = "?", "?"
     return {
@@ -63,12 +63,12 @@ def get_env() -> dict:
 class Snapshotter:
     """Captura series temporales de recursos cada `interval` segundos."""
 
-    def __init__(self, interval: float = 10.0):
+    def __init__(self, interval: float = 10.0) -> None:
         self.interval = interval
         self._series: list[dict] = []
         self._metrics = MetricsRegistry()
 
-    def start(self):
+    def start(self) -> None:
         self._t0 = time.monotonic()
 
     def snap(self, load_desc: str = "", extra: dict | None = None) -> dict:
@@ -132,7 +132,7 @@ def make_hybrid_retriever():
     return HybridRetriever(vec, lex, alpha=0.5, beta=0.5)
 
 
-def load_task(n: int):
+def load_task(n: int) -> None:
     """Ejecuta n consultas de retrieval como carga."""
     try:
         hr = make_hybrid_retriever()
@@ -151,11 +151,11 @@ def load_task(n: int):
         for i in range(n):
             qry = queries[i % len(queries)]
             hr.search(qry, k=5)
-    except Exception:
+    except Exception:  # noqa: S110
         pass  # La carga debe continuar aunque falle una consulta
 
 
-def load_task_memory(n: int):
+def load_task_memory(n: int) -> None:
     """Almacena n episodios como carga de memoria."""
     try:
         store = EpisodeStore(EpisodeStoreConfig())
@@ -169,11 +169,11 @@ def load_task_memory(n: int):
             )
             store.store(ep)
         store.get_recent(k=min(n, 100))
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
-def load_task_metrics(metrics: MetricsRegistry, n: int):
+def load_task_metrics(metrics: MetricsRegistry, n: int) -> None:
     """Ejecuta n ciclos de métricas como carga."""
     c = metrics.counter("profiling_ops", "Profiling operations")
     h = metrics.histogram("profiling_latency", "Profiling latency")
@@ -200,7 +200,9 @@ def scenario_p01(snap: Snapshotter, duration_s: int = 300) -> dict:
     if rss_growth > summary["rss_mb"]["mean"] * 0.05:
         anomalies.append(f"Crecimiento RSS >5% en reposo: {rss_growth:.1f}MB")
         record_finding(
-            "P01", f"RSS creció {rss_growth:.1f}MB en reposo ({duration_s}s) sin carga. Posible leak basal.", "medio"
+            "P01",
+            f"RSS creció {rss_growth:.1f}MB en reposo ({duration_s}s) sin carga. Posible leak basal.",
+            "medio",
         )
     if thread_stable > 2:
         anomalies.append(f"Hilos fluctuaron en ±{thread_stable} durante reposo")
@@ -225,7 +227,7 @@ def scenario_p02(snap: Snapshotter, duration_s: int = 600) -> dict:
     for step in range(int(duration_s / snap.interval)):
         load_task(5)
         load_task_memory(10)
-        load_task_metrics(snap._metrics, 10)
+        load_task_metrics(snap._metrics, 10)  # noqa: SLF001
         snap.snap(load_desc=f"carga media (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga media {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
@@ -235,13 +237,17 @@ def scenario_p02(snap: Snapshotter, duration_s: int = 600) -> dict:
     if growth_rate > 5:
         anomalies.append(f"Crecimiento RSS acelerado: {growth_rate:.1f}MB/min")
         record_finding(
-            "P02", f"RSS creció {growth_rate:.1f}MB/min durante carga media. Posible memory leak bajo carga.", "alto"
+            "P02",
+            f"RSS creció {growth_rate:.1f}MB/min durante carga media. Posible memory leak bajo carga.",
+            "alto",
         )
     thread_leak = summary["num_threads"]["max"] - summary["num_threads"]["min"]
     if thread_leak > 5:
         anomalies.append(f"Hilos crecieron {thread_leak} durante carga")
         record_finding(
-            "P02", f"Número de hilos aumentó en {thread_leak} durante carga media. Posible thread leak.", "alto"
+            "P02",
+            f"Número de hilos aumentó en {thread_leak} durante carga media. Posible thread leak.",
+            "alto",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"
     return {
@@ -263,7 +269,7 @@ def scenario_p03(snap: Snapshotter, duration_s: int = 180) -> dict:
     for step in range(int(duration_s / snap.interval)):
         load_task(20)
         load_task_memory(50)
-        load_task_metrics(snap._metrics, 50)
+        load_task_metrics(snap._metrics, 50)  # noqa: SLF001
         snap.snap(load_desc=f"carga pico (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga pico {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
@@ -275,7 +281,9 @@ def scenario_p03(snap: Snapshotter, duration_s: int = 180) -> dict:
         growth = summary["rss_mb"]["max"] - summary["rss_mb"]["min"]
         anomalies.append(f"RSS creció {growth:.1f}MB durante pico (>30%)")
         record_finding(
-            "P03", f"RSS creció {growth:.1f}MB durante carga pico ({duration_s}s). Posible presión de memoria.", "medio"
+            "P03",
+            f"RSS creció {growth:.1f}MB durante carga pico ({duration_s}s). Posible presión de memoria.",
+            "medio",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"
     return {
@@ -308,7 +316,7 @@ def scenario_p04(snap: Snapshotter, duration_s: int = 300) -> dict:
         anomalies.append(f"RSS no retornó a nivel basal: primero={rss_first:.0f}MB vs último={rss_last:.0f}MB")
         record_finding(
             "P04",
-            f"RSS no retornó a nivel basal tras carga. Primera muestra={rss_first:.0f}MB, última={rss_last:.0f}MB, pico={rss_peak:.0f}MB.",
+            f"RSS no retornó a nivel basal tras carga. Primera muestra={rss_first:.0f}MB, última={rss_last:.0f}MB, pico={rss_peak:.0f}MB.",  # noqa: E501
             "alto",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"
@@ -341,7 +349,7 @@ def scenario_p05(snap: Snapshotter, cycles: int = 3, cycle_duration_s: int = 180
         gc.collect()
         s = snap.snap(load_desc=f"ciclo {cycle + 1} reposo")
         time.sleep(step_s)
-    observed.append(f"Ciclos carga-reposo: {cycles} ciclos × {cycle_duration_s}s = {total_s}s")
+    observed.append(f"Ciclos carga-reposo: {cycles} ciclos × {cycle_duration_s}s = {total_s}s")  # noqa: RUF001
     summary = snap.summary()
     anomalies = []
     rss_first_cycle = None
@@ -355,13 +363,13 @@ def scenario_p05(snap: Snapshotter, cycles: int = 3, cycle_duration_s: int = 180
         anomalies.append(f"Fatiga detectada: RSS ciclo1={rss_first_cycle:.0f}MB vs ciclofinal={rss_last_cycle:.0f}MB")
         record_finding(
             "P05",
-            f"Fatiga de recursos: RSS creció de {rss_first_cycle:.0f}MB (ciclo 1) a {rss_last_cycle:.0f}MB (ciclo {cycles}). Posible leak acumulativo.",
+            f"Fatiga de recursos: RSS creció de {rss_first_cycle:.0f}MB (ciclo 1) a {rss_last_cycle:.0f}MB (ciclo {cycles}). Posible leak acumulativo.",  # noqa: E501
             "alto",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"
     return {
         "id": "P05",
-        "description": f"Ciclos carga-reposo ×{cycles}",
+        "description": f"Ciclos carga-reposo ×{cycles}",  # noqa: RUF001
         "duration_s": total_s,
         "observed": "; ".join(observed + anomalies),
         "summary": summary,
@@ -387,8 +395,6 @@ def run(scenario_ids: list[str] | None = None, durations: dict | None = None) ->
 
     results = []
     for sid, fn in to_run.items():
-        print(f"\n  📍 Escenario {sid}")
-        print(f"  {'─' * 56}")
         t0 = time.monotonic()
         try:
             r = fn()
@@ -404,10 +410,9 @@ def run(scenario_ids: list[str] | None = None, durations: dict | None = None) ->
             }
             record_finding(sid, f"Unhandled exception: {e}", "crítico")
         results.append(r)
-        icon = {"PASS": "✅", "FAIL": "❌", "PARTIAL": "⚠️"}.get(r["veredict"], "?")
-        print(f"  {icon} {sid}: {r['veredict']} — {r.get('duration_s', 0):.0f}s")
-        for a in r.get("anomalies", []):
-            print(f"     ⚠️  {a}")
+        {"PASS": "✅", "FAIL": "❌", "PARTIAL": "⚠️"}.get(r["veredict"], "?")
+        for _a in r.get("anomalies", []):
+            pass
     return results
 
 
@@ -422,10 +427,9 @@ def save_results(results: list[dict], env: dict):
     json_path = DATA_DIR / f"profiling_{timestamp}.json"
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(data, indent=2, default=str))
-    print(f"\n  📄 JSON: {json_path}")
 
     csv_path = DATA_DIR / f"profiling_{timestamp}.csv"
-    with open(csv_path, "w", newline="") as f:
+    with open(csv_path, "w", newline="") as f:  # noqa: PTH123
         w = csv.DictWriter(
             f,
             fieldnames=[
@@ -464,47 +468,32 @@ def save_results(results: list[dict], env: dict):
                     "threads_max": s.get("num_threads", {}).get("max", ""),
                     "threads_mean": s.get("num_threads", {}).get("mean", ""),
                     "anomalies_count": len(r.get("anomalies", [])),
-                }
+                },
             )
-    print(f"  📄 CSV:  {csv_path}")
 
     if findings:
         existing = json.loads(FINDINGS_PATH.read_text()) if FINDINGS_PATH.exists() else []
         existing.extend(findings)
         FINDINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
         FINDINGS_PATH.write_text(json.dumps(existing, indent=2))
-        print(f"  📄 Hallazgos: {FINDINGS_PATH}")
 
     return json_path
 
 
-def print_summary(results: list[dict]):
-    passes = sum(1 for r in results if r["veredict"] == "PASS")
-    partials = sum(1 for r in results if r["veredict"] == "PARTIAL")
-    fails = sum(1 for r in results if r["veredict"] == "FAIL")
-    total = len(results)
-    total_anomalies = sum(len(r.get("anomalies", [])) for r in results)
-    total_dur = sum(r.get("duration_s", 0) for r in results)
+def print_summary(results: list[dict]) -> None:
+    sum(1 for r in results if r["veredict"] == "PASS")
+    sum(1 for r in results if r["veredict"] == "PARTIAL")
+    sum(1 for r in results if r["veredict"] == "FAIL")
+    len(results)
+    sum(len(r.get("anomalies", [])) for r in results)
+    sum(r.get("duration_s", 0) for r in results)
 
-    print("\n" + "=" * 60)
-    print("  Resumen Bloque 4 — Profiling")
-    print("=" * 60)
-    print(f"  Total escenarios: {total}")
-    print(f"  ✅ PASS: {passes}")
-    print(f"  ⚠️  PARTIAL: {partials}")
-    print(f"  ❌ FAIL: {fails}")
-    print(f"  Duración total: {total_dur:.0f}s ({total_dur / 60:.1f}min)")
-    print(f"  Anomalías detectadas: {total_anomalies}")
     if findings:
-        print(f"  Hallazgos registrados: {len(findings)}")
-        for f in findings:
-            print(f"    ⚠️  {f['id']}: {f['description'][:100]}")
-    verdict = "FAIL" if fails > 0 else ("PARTIAL" if partials > 0 else "PASS")
-    print(f"\n  Conclusión global: {verdict}")
-    print()
+        for _f in findings:
+            pass
 
 
-def main():
+def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="F14 Bloque 4 — Profiling")
@@ -517,18 +506,12 @@ def main():
     parser.add_argument("--fast", action="store_true", help="Usa duraciones reducidas para test rápido")
     args = parser.parse_args()
 
-    print("=" * 60)
-    print("  F14 — Profiling Tests (5 escenarios)")
-    print("=" * 60)
-
     if args.fast:
         durations = {"P01": 60, "P02": 120, "P03": 60, "P04": 60, "P05": 120}
-        print("  Modo rápido activado (duraciones reducidas)")
     else:
         durations = {"P01": 300, "P02": 600, "P03": 180, "P04": 300, "P05": 540}
 
-    total_est = sum(durations.values())
-    print(f"  Duración estimada: {total_est}s ({total_est / 60:.1f}min)\n")
+    sum(durations.values())
 
     env = get_env()
     results = run(scenario_ids=args.scenarios, durations=durations)

@@ -40,10 +40,18 @@ class TestDuckDuckGoProvider:
         from motor.core.web.searcher.providers.duckduckgo import DuckDuckGoSearchProvider
 
         p = DuckDuckGoSearchProvider()
-        with patch.object(p, "_search_once", return_value=[
-            SearchResult(title="Example Title", url="https://example.com",
-                         snippet="Example snippet text", source="duckduckgo"),
-        ]):
+        with patch.object(
+            p,
+            "_search_once",
+            return_value=[
+                SearchResult(
+                    title="Example Title",
+                    url="https://example.com",
+                    snippet="Example snippet text",
+                    source="duckduckgo",
+                ),
+            ],
+        ):
             results = p.search("test query", limit=5)
             assert len(results) == 1
             assert all(isinstance(r, SearchResult) for r in results)
@@ -57,11 +65,14 @@ class TestDuckDuckGoProvider:
         p = DuckDuckGoSearchProvider(max_retries=1)
         import httpx
 
-        with patch.object(p, "_search_once", side_effect=[
-            httpx.TimeoutException("timeout", request=None),
-            [SearchResult(title="Retry OK", url="https://ok.com",
-                          snippet="", source="duckduckgo")],
-        ]):
+        with patch.object(
+            p,
+            "_search_once",
+            side_effect=[
+                httpx.TimeoutException("timeout", request=None),
+                [SearchResult(title="Retry OK", url="https://ok.com", snippet="", source="duckduckgo")],
+            ],
+        ):
             results = p.search("test")
             assert len(results) == 1
             assert results[0].title == "Retry OK"
@@ -88,10 +99,18 @@ class TestSearXNGProvider:
         from motor.core.web.searcher.providers.searxng import SearXNGSearchProvider
 
         p = SearXNGSearchProvider()
-        with patch.object(p, "_search_once", return_value=[
-            SearchResult(title="SearX Result", url="https://searx.example",
-                         snippet="SearX snippet", source="searxng"),
-        ]):
+        with patch.object(
+            p,
+            "_search_once",
+            return_value=[
+                SearchResult(
+                    title="SearX Result",
+                    url="https://searx.example",
+                    snippet="SearX snippet",
+                    source="searxng",
+                ),
+            ],
+        ):
             results = p.search("test")
             assert len(results) == 1
             assert results[0].source == "searxng"
@@ -124,6 +143,7 @@ class TestRegistrySearcher:
 
     def test_get_nonexistent_raises(self) -> None:
         import pytest
+
         reg = Registry()
         with pytest.raises(KeyError):
             reg.get_searcher("nonexistent")
@@ -141,11 +161,22 @@ class TestPipelineSearch:
         reg.register_searcher("searxng", sxn)
         pipeline = WebPipeline(reg)
 
-        with patch.object(ddg, "search", return_value=[
-            SearchResult(title="DDG", url="https://ddg.com", snippet="", source="duckduckgo"),
-        ]), patch.object(sxn, "search", return_value=[
-            SearchResult(title="SearX", url="https://searx.com", snippet="", source="searxng"),
-        ]):
+        with (
+            patch.object(
+                ddg,
+                "search",
+                return_value=[
+                    SearchResult(title="DDG", url="https://ddg.com", snippet="", source="duckduckgo"),
+                ],
+            ),
+            patch.object(
+                sxn,
+                "search",
+                return_value=[
+                    SearchResult(title="SearX", url="https://searx.com", snippet="", source="searxng"),
+                ],
+            ),
+        ):
             results = pipeline.search("test", sources=["duckduckgo", "searxng"])
             assert len(results) == 2
             sources = {r.source for r in results}
@@ -160,8 +191,12 @@ class TestPipelineSearch:
         reg.register_searcher("duckduckgo", ddg)
         pipeline = WebPipeline(reg)
 
-        with patch.object(ddg, "search", return_value=[
-            SearchResult(title="DDG", url="https://ddg.com", snippet="", source="duckduckgo"),
-        ]):
+        with patch.object(
+            ddg,
+            "search",
+            return_value=[
+                SearchResult(title="DDG", url="https://ddg.com", snippet="", source="duckduckgo"),
+            ],
+        ):
             results = pipeline.search("test")
             assert len(results) == 1

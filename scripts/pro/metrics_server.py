@@ -22,11 +22,11 @@ log = logging.getLogger("ura.metrics")
 LOG_DIR = Path(
     os.environ.get(
         "METRICS_LOG_DIR",
-        "/tmp/ura_search_logs",
+        "/tmp/ura_search_logs",  # noqa: S108
     ),
 )
 TAIL_LINES = int(os.environ.get("METRICS_TAIL_LINES", "1000"))
-HOST = os.environ.get("METRICS_HOST", "0.0.0.0")
+HOST = os.environ.get("METRICS_HOST", "0.0.0.0")  # noqa: S104
 PORT = int(os.environ.get("METRICS_PORT", "9091"))
 
 
@@ -79,7 +79,7 @@ def _compute_metrics(lines: list[str]) -> dict:
 
 
 async def handle_metrics(request: web.Request) -> web.Response:
-    files = sorted(LOG_DIR.glob("search_*.ndjson"), reverse=True) if LOG_DIR.exists() else []
+    files = sorted(LOG_DIR.glob("search_*.ndjson"), reverse=True) if LOG_DIR.exists() else []  # noqa: ASYNC240
     log_path = files[0] if files else LOG_DIR / "no_data.ndjson"
 
     proc = await asyncio.create_subprocess_exec(

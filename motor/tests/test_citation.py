@@ -126,9 +126,13 @@ class TestCitationBundle:
             summary="Summary text.",
             citations=[
                 CitationRecord(
-                    evidence_id="e1", document_url="http://a.com",
-                    title="A", fragment="Frag.", citation_index=0, document_index=0,
-                )
+                    evidence_id="e1",
+                    document_url="http://a.com",
+                    title="A",
+                    fragment="Frag.",
+                    citation_index=0,
+                    document_index=0,
+                ),
             ],
             evidence=[],
         )
@@ -150,9 +154,7 @@ def _summarize(text: str, max_len: int = 5) -> tuple:
 
 class TestCitationEngine:
     def test_single_document_single_citation(self) -> None:
-        summary, docs = _summarize(
-            "This is the first sentence. This is the second sentence."
-        )
+        summary, docs = _summarize("This is the first sentence. This is the second sentence.")
         bundle = CitationEngine().build(summary, docs)
         assert bundle.traceability_report["total_citations"] > 0
         assert bundle.traceability_report["unique_documents"] == 1
@@ -160,8 +162,7 @@ class TestCitationEngine:
 
     def test_multiple_citations_same_document(self) -> None:
         summary, docs = _summarize(
-            "First sentence here. Second sentence here. Third sentence here. "
-            "Fourth sentence here. Fifth sentence here."
+            "First sentence here. Second sentence here. Third sentence here. Fourth sentence here. Fifth sentence here.",  # noqa: E501
         )
         bundle = CitationEngine().build(summary, docs)
         assert bundle.traceability_report["total_citations"] >= 2
@@ -171,11 +172,13 @@ class TestCitationEngine:
     def test_multi_document(self) -> None:
         d1 = _doc(
             text="Alpha first sentence. Alpha second sentence.",
-            url="http://a.com", title="Doc A",
+            url="http://a.com",
+            title="Doc A",
         )
         d2 = _doc(
             text="Beta first sentence. Beta second sentence.",
-            url="http://b.com", title="Doc B",
+            url="http://b.com",
+            title="Doc B",
         )
         s = ExtractiveSummarizer()
         summary = s.summarize([d1, d2], max_length=4)

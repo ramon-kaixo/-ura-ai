@@ -81,7 +81,7 @@ class TestSearch:
             [
                 {"id": "a", "score": 0.95, "payload": {"asset_id": "a"}},
                 {"id": "b", "score": 0.80, "payload": {"asset_id": "b"}},
-            ]
+            ],
         )
         store = QdrantVectorStore(collection="test")
         results = store.search([1.0, 0.0], top_k=2)
@@ -98,7 +98,7 @@ class TestSearch:
 
     def test_search_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.search([1.0, 0.0]) == []
 
     def test_search_empty_vector(self, mock_client):
@@ -118,7 +118,7 @@ class TestSearch:
         mock_client.post.return_value = _search_response(
             [
                 {"id": "a", "score": 0.9, "payload": {"asset_id": "a"}},
-            ]
+            ],
         )
         store = QdrantVectorStore(collection="test")
         results = store.search([1.0, 0.0], filter={"asset_type": "pdf"})
@@ -151,7 +151,7 @@ class TestUpsert:
 
     def test_upsert_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.upsert([VectorItem("a", [1.0], "x")]) == 0
 
     def test_upsert_auto_create_collection(self, mock_client):
@@ -208,7 +208,7 @@ class TestDelete:
 
     def test_delete_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.delete(["a"]) == 0
 
     def test_delete_http_error(self, mock_client):
@@ -236,7 +236,7 @@ class TestCount:
 
     def test_count_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.count() == 0
 
 
@@ -250,13 +250,13 @@ class TestAvailable:
 
     def test_available_false(self, mock_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.available is False
 
     def test_available_http_error(self, mock_client):
         mock_client.get.side_effect = httpx.HTTPError("Connection refused")
         store = QdrantVectorStore(collection="test")
-        store._degraded = True
+        store._degraded = True  # noqa: SLF001
         assert store.available is False
         # check_available does real HTTP check with backoff
         assert not store.check_available()

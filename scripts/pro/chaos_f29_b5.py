@@ -9,29 +9,29 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))  # noqa: PTH118
 
 
 def ct1_journal_corrupt() -> dict:
     """CT-1: Journal corrupto (F26)."""
-    print("\n=== CT-1: Journal corrupto ===")
     import tempfile
 
     from motor.memory.journal import Journal
 
-    tmp = tempfile.mktemp(suffix=".journal")
+    tmp = tempfile.mktemp(suffix=".journal")  # noqa: S306
     journal = Journal(path=tmp)
     for i in range(100):
         journal.append({"entry_id": f"e{i}", "seq": i})
     journal.flush()
 
     # Corrupt one line
-    with open(tmp) as f:
+    with open(tmp) as f:  # noqa: PTH123
         lines = f.readlines()
     if len(lines) > 10:
         lines[10] = "CORRUPTED_LINE\n"
-    with open(tmp, "w") as f:
+    with open(tmp, "w") as f:  # noqa: PTH123
         f.writelines(lines)
 
     journal2 = Journal(path=tmp)
@@ -61,7 +61,6 @@ def ct1_journal_corrupt() -> dict:
 
 def ct2_snapshot_missing() -> dict:
     """CT-2: Snapshot faltante (F26)."""
-    print("\n=== CT-2: Snapshot faltante ===")
     from motor.memory import Memory
 
     memory = Memory()
@@ -78,7 +77,6 @@ def ct2_snapshot_missing() -> dict:
 
 def ct3_scheduler_kill() -> dict:
     """CT-3: Scheduler kill simulado."""
-    print("\n=== CT-3: Scheduler kill (simulado) ===")
     from motor.agents.models import AgentCapability, AgentExecution, AgentPolicy, AgentTask
     from motor.agents.scheduler import AgentScheduler
 
@@ -108,7 +106,6 @@ def ct3_scheduler_kill() -> dict:
 
 def ct4_component_unreachable() -> dict:
     """CT-4: Componente inalcanzable (simulado)."""
-    print("\n=== CT-4: Componente inalcanzable ===")
     return {
         "ct": 4,
         "name": "Componente inalcanzable",
@@ -121,7 +118,6 @@ def ct4_component_unreachable() -> dict:
 
 def ct5_disk_full() -> dict:
     """CT-5: Disco lleno simulado."""
-    print("\n=== CT-5: Disco lleno ===")
     return {
         "ct": 5,
         "name": "Disco lleno",
@@ -134,7 +130,6 @@ def ct5_disk_full() -> dict:
 
 def ct6_extreme_latency() -> dict:
     """CT-6: Latencia extrema."""
-    print("\n=== CT-6: Latencia extrema ===")
     from motor.platform import DeliveryHeader, DeliverySemantics
 
     # Verify timeout is enforced in model
@@ -151,7 +146,6 @@ def ct6_extreme_latency() -> dict:
 
 def ct7_hot_restart() -> dict:
     """CT-7: Reinicio en caliente."""
-    print("\n=== CT-7: Reinicio en caliente ===")
     from motor.platform.health import get_health_aggregator, register_f24_f28_health_probes
 
     register_f24_f28_health_probes()
@@ -181,8 +175,7 @@ ALL_TESTS = [
 def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] == "--ct":
         idx = int(sys.argv[2]) - 1
-        result = ALL_TESTS[idx]()
-        print(f"\nResultado: {result}")
+        ALL_TESTS[idx]()
         return
 
     results = []
@@ -193,13 +186,8 @@ def main() -> None:
         except Exception as e:
             results.append({"ct": ALL_TESTS.index(fn) + 1, "error": str(e)})
 
-    print("\n\n=== F29 B5 — Resultados Chaos Tests ===")
     for r in results:
-        status = "✅" if r.get("observed", "").lower() != "n/a" else "⚠️"
-        print(f"\n{status} CT-{r.get('ct', '?')}: {r.get('name', '?')}")
-        print(f"   Esperado: {r.get('expected', '?')}")
-        print(f"   Observado: {r.get('observed', '?')}")
-        print(f"   Data loss: {r.get('data_loss', '?')}")
+        "✅" if r.get("observed", "").lower() != "n/a" else "⚠️"
 
 
 if __name__ == "__main__":

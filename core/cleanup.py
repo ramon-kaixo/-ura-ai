@@ -20,10 +20,10 @@ from pathlib import Path
 logger = logging.getLogger("ura.cleanup")
 
 LOCKS_CONOCIDOS = [
-    "/tmp/ura_debate.lock",
-    "/tmp/ura_state.json",
-    "/tmp/tailscale-selfheal.lock",
-    "/tmp/ura-events.pub",
+    "/tmp/ura_debate.lock",  # noqa: S108
+    "/tmp/ura_state.json",  # noqa: S108
+    "/tmp/tailscale-selfheal.lock",  # noqa: S108
+    "/tmp/ura-events.pub",  # noqa: S108
 ]
 SHM_PREFIX = "ura_"
 
@@ -74,7 +74,7 @@ def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
         return False
 
 
-EXIT_CODE_DIR = Path("/tmp/ura_exit_codes")
+EXIT_CODE_DIR = Path("/tmp/ura_exit_codes")  # noqa: S108
 
 
 def guardar_codigo_exit(service: str, exit_code: int, signal: int = 0) -> None:
@@ -141,10 +141,10 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
                 logger.info("SHM eliminado: id=%s key=%s", shmid, parts[0])
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         logger.warning("ipcs no disponible: %s", e)
-    for f in Path("/dev/shm").glob(f"{prefix}*"):
+    for f in Path("/dev/shm").glob(f"{prefix}*"):  # noqa: S108
         try:
             f.unlink()
-            logger.info("/dev/shm/%s eliminado", f.name)
+            logger.info("/dev/shm/%s eliminado", f.name)  # noqa: S108
         except OSError as e:
             logger.warning("Error eliminando /dev/shm/%s: %s", f.name, e)
 
@@ -172,7 +172,7 @@ def check_vram_post_kill() -> dict:
 def cleanup(
     fault_id: str = "",
     affected: dict | None = None,
-    verify: bool = True,
+    verify: bool = True,  # noqa: FBT001, FBT002
 ) -> dict:
     """Protocolo completo de limpieza.
 

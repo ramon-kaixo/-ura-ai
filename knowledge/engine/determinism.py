@@ -46,7 +46,7 @@ def record_determinism_hash(db_path: Path, run_id: int) -> None:
         rows = conn.execute(
             "SELECT id, type, path, content_sha256, body, frontmatter, "
             "       quality, confidence "
-            "FROM kg_nodes ORDER BY id"
+            "FROM kg_nodes ORDER BY id",
         ).fetchall()
         node_data = [dict(r) for r in rows]
 

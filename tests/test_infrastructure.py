@@ -55,21 +55,21 @@ class TestDockerCompose:
     def test_has_ura_service(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         assert "ura" in cfg.get("services", {})
 
     def test_has_qdrant(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         assert "qdrant" in cfg.get("services", {})
 
     def test_has_ollama_profile(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         ollama = cfg.get("services", {}).get("ollama", {})
         assert ollama.get("profiles") == ["ollama"]
@@ -77,7 +77,7 @@ class TestDockerCompose:
     def test_persistent_volumes(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         volumes = cfg.get("volumes", {})
         assert "qdrant_data" in volumes
@@ -86,14 +86,14 @@ class TestDockerCompose:
     def test_network_defined(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         assert "ura_net" in cfg.get("networks", {})
 
     def test_healthcheck_qdrant(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         qdrant = cfg["services"]["qdrant"]
         assert "healthcheck" in qdrant
@@ -101,7 +101,7 @@ class TestDockerCompose:
     def test_env_vars_structured(self):
         import yaml
 
-        with open(ROOT / "docker-compose.yml") as f:
+        with open(ROOT / "docker-compose.yml") as f:  # noqa: PTH123
             cfg = yaml.safe_load(f)
         ura = cfg["services"]["ura"]
         env = ura.get("environment", {}) or {}
@@ -130,7 +130,7 @@ class TestInstallScript:
         assert (ROOT / "install.sh").exists()
 
     def test_is_executable(self):
-        st = os.stat(ROOT / "install.sh")
+        st = os.stat(ROOT / "install.sh")  # noqa: PTH116
         assert st.st_mode & stat.S_IXUSR
 
     def test_has_shebang(self):
@@ -157,7 +157,8 @@ class TestInstallScript:
         content = (ROOT / "install.sh").read_text()
         for line in content.splitlines():
             if line.strip().startswith("/") and not line.strip().startswith("#!/"):
-                raise AssertionError(f"Absolute path found: {line.strip()}")
+                msg = f"Absolute path found: {line.strip()}"
+                raise AssertionError(msg)
 
 
 class TestEntrypointScript:
@@ -165,7 +166,7 @@ class TestEntrypointScript:
         assert (ROOT / "entrypoint.sh").exists()
 
     def test_is_executable(self):
-        st = os.stat(ROOT / "entrypoint.sh")
+        st = os.stat(ROOT / "entrypoint.sh")  # noqa: PTH116
         assert st.st_mode & stat.S_IXUSR
 
     def test_has_shebang(self):

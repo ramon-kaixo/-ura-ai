@@ -25,7 +25,7 @@ def check_duplicate_ids(conn: sqlite3.Connection) -> list[str]:
     issues: list[str] = []
     dups = conn.execute("SELECT id, COUNT(*) as cnt FROM kg_nodes GROUP BY id HAVING cnt > 1").fetchall()
     for d in dups:
-        issues.append(f"KE101|ID duplicado: '{d['id']}' aparece {d['cnt']} veces")
+        issues.append(f"KE101|ID duplicado: '{d['id']}' aparece {d['cnt']} veces")  # noqa: PERF401
     return issues
 
 
@@ -33,7 +33,7 @@ def check_duplicate_paths(conn: sqlite3.Connection) -> list[str]:
     issues: list[str] = []
     dups = conn.execute("SELECT path, COUNT(*) as cnt FROM kg_nodes GROUP BY path HAVING cnt > 1").fetchall()
     for d in dups:
-        issues.append(f"KE102|Path duplicado: '{d['path']}' aparece {d['cnt']} veces")
+        issues.append(f"KE102|Path duplicado: '{d['path']}' aparece {d['cnt']} veces")  # noqa: PERF401
     return issues
 
 
@@ -41,10 +41,10 @@ def check_repeated_hashes(conn: sqlite3.Connection) -> list[str]:
     issues: list[str] = []
     rows = conn.execute(
         "SELECT content_sha256, GROUP_CONCAT(id) as ids, COUNT(*) as cnt "
-        "FROM kg_nodes GROUP BY content_sha256 HAVING cnt > 1"
+        "FROM kg_nodes GROUP BY content_sha256 HAVING cnt > 1",
     ).fetchall()
     for r in rows:
-        issues.append(f"KE103|Hash repetido '{r['content_sha256'][:12]}' en {r['cnt']} docs: {r['ids']}")
+        issues.append(f"KE103|Hash repetido '{r['content_sha256'][:12]}' en {r['cnt']} docs: {r['ids']}")  # noqa: PERF401
     return issues
 
 
@@ -68,7 +68,7 @@ def check_referential_integrity(conn: sqlite3.Connection) -> list[str]:
 def check_orphans(conn: sqlite3.Connection) -> list[str]:
     issues: list[str] = []
     orphans = conn.execute(
-        "SELECT id FROM kg_nodes WHERE id NOT IN (SELECT src FROM kg_edges UNION SELECT dst FROM kg_edges)"
+        "SELECT id FROM kg_nodes WHERE id NOT IN (SELECT src FROM kg_edges UNION SELECT dst FROM kg_edges)",
     ).fetchall()
     if orphans:
         ids = [r["id"] for r in orphans[:10]]
@@ -109,14 +109,14 @@ def check_ontology(conn: sqlite3.Connection) -> list[str]:
     parents = {r["id"] for r in conn.execute("SELECT id FROM kg_ontology_nodes").fetchall()}
     for row in conn.execute("SELECT id, name, parent_id FROM kg_ontology_nodes WHERE parent_id IS NOT NULL").fetchall():
         if row["parent_id"] not in parents:
-            issues.append(
-                f"KE107|Ontología '{row['name']}' (id={row['id']}) tiene parent_id '{row['parent_id']}' que no existe"
+            issues.append(  # noqa: PERF401
+                f"KE107|Ontología '{row['name']}' (id={row['id']}) tiene parent_id '{row['parent_id']}' que no existe",
             )
 
     orphan_onto = conn.execute(
         "SELECT id, name FROM kg_ontology_nodes WHERE id NOT IN "
         "(SELECT src FROM kg_ontology_edges UNION SELECT dst FROM kg_ontology_edges) "
-        "AND id NOT IN (SELECT parent_id FROM kg_ontology_nodes WHERE parent_id IS NOT NULL)"
+        "AND id NOT IN (SELECT parent_id FROM kg_ontology_nodes WHERE parent_id IS NOT NULL)",
     ).fetchall()
     if orphan_onto and len(parents) > 1:
         ids = [f"{r['name']}({r['id']})" for r in orphan_onto[:5]]

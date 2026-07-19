@@ -35,7 +35,7 @@ class SQLiteGovernanceStore:
     Almacena políticas en la tabla op_governance.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
     def set_policy(self, asset_id: str, policy: dict[str, Any], actor: str = "system") -> bool:

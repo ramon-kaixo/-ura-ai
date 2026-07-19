@@ -10,13 +10,12 @@ Flujo:
 """
 
 import json
-import os
 import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-REPO = Path(os.path.expanduser("~/URA/ura_ia_1972"))
+REPO = Path(Path("~/URA/ura_ia_1972").expanduser())
 SUGERENCIAS = Path("/opt/ura/data/sugerencias.json")
 NOTIFICAR = Path("/opt/ura/scripts/notificar.sh")
 LOG = REPO / "logs/conciencia.log"
@@ -46,14 +45,14 @@ FALLOS_CONOCIDOS = {
 
 
 def log(mensaje) -> None:
-    with open(LOG, "a") as f:
+    with open(LOG, "a") as f:  # noqa: PTH123
         f.write(f"{datetime.now(UTC).isoformat()} - {mensaje}\n")
 
 
 def agregar_sugerencia(problema, solucion) -> None:
     sugerencias = []
     if SUGERENCIAS.exists():
-        with open(SUGERENCIAS) as f:
+        with open(SUGERENCIAS) as f:  # noqa: PTH123
             sugerencias = json.load(f)
     sugerencias.append(
         {
@@ -64,13 +63,13 @@ def agregar_sugerencia(problema, solucion) -> None:
             "gravedad": "alta",
         },
     )
-    with open(SUGERENCIAS, "w") as f:
+    with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
         json.dump(sugerencias, f, indent=2)
 
 
 def notificar(mensaje) -> None:
     if NOTIFICAR.exists():
-        subprocess.run([str(NOTIFICAR), mensaje], check=False)
+        subprocess.run([str(NOTIFICAR), mensaje], check=False)  # noqa: S603
 
 
 def diagnosticar_y_corregir() -> bool:
@@ -79,7 +78,7 @@ def diagnosticar_y_corregir() -> bool:
 
     # 1. Ejecutar test
     log("Ejecutando test de conciencia...")
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(REPO / "scripts/test_conciencia.py")],
         capture_output=True,
         text=True,
@@ -116,10 +115,10 @@ def diagnosticar_y_corregir() -> bool:
     # 3. Intentar correccion
     for fallo in fallos_detectados:
         info = FALLOS_CONOCIDOS[fallo]
-        if info["script"] and os.path.exists(info["script"]):
+        if info["script"] and Path(info["script"]).exists():
             log(f"Ejecutando script corrector para '{fallo}': {info['script']}")
             try:
-                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30, check=False)
+                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30, check=False)  # noqa: S603, S607
                 log(f"Correccion aplicada para '{fallo}'")
             except Exception as e:
                 log(f"Error ejecutando correccion '{fallo}': {e}")

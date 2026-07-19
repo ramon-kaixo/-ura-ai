@@ -22,7 +22,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
+URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 LOG_FILE = Path(os.environ.get("TUNEL_LOG", str(URA_ROOT / "logs" / "ura_tunel.log")))
 NERVIOSO = URA_ROOT / ".nervioso"
 
@@ -35,7 +35,7 @@ def log(msg: str) -> None:
     ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
     try:
-        with open(LOG_FILE, "a") as f:
+        with open(LOG_FILE, "a") as f:  # noqa: PTH123
             f.write(line + "\n")
     except PermissionError:
         pass
@@ -79,7 +79,7 @@ def modo_delta() -> int:
 
         ahorro = round(sin_cambio / max(total, 1) * 100, 1)
         log(
-            f"Δ Delta: {total} activos, {cambiados} modificados, {nuevos} nuevos, {sin_cambio} sin cambios ({ahorro}% ahorro)",
+            f"Δ Delta: {total} activos, {cambiados} modificados, {nuevos} nuevos, {sin_cambio} sin cambios ({ahorro}% ahorro)",  # noqa: E501
         )
     else:
         log("Δ Primer ciclo — sin snapshot previo, procesando todo")
@@ -88,7 +88,7 @@ def modo_delta() -> int:
     t0 = time.time()
 
     result = subprocess.run(
-        ["bash", "scripts/pro/launch_refactor_gx10.sh"],
+        ["bash", "scripts/pro/launch_refactor_gx10.sh"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=86400,
@@ -134,7 +134,7 @@ def helper1() -> None:
     """Helper function to clean delta snapshots."""
     delta_dir = Path("NERVIOSO") / "delta_snapshots"
     if delta_dir.exists():
-        subprocess.run(["rm", "-rf", str(delta_dir)], check=False)
+        subprocess.run(["rm", "-rf", str(delta_dir)], check=False)  # noqa: S603, S607
 
 
 def helper2() -> None:
@@ -149,7 +149,7 @@ def helper2() -> None:
 
 def helper3(label: str) -> None:
     """Helper function to create a snapshot of F821 errors."""
-    subprocess.run(
+    subprocess.run(  # noqa: S603
         [sys.executable, "scripts/pro/f821_watch.py", "snapshot", "--label", label],
         capture_output=True,
         timeout=60,
@@ -159,7 +159,7 @@ def helper3(label: str) -> None:
 
 def helper4(target: str) -> str:
     """Helper function to compare the F821 errors with a target."""
-    cmp = subprocess.run(
+    cmp = subprocess.run(  # noqa: S603
         [sys.executable, "scripts/pro/f821_watch.py", "compare", "--target", target],
         capture_output=True,
         text=True,
@@ -188,7 +188,7 @@ def modo_profundo() -> int:
     log("🔧 Rebuilding nervous system from scratch...")
 
     ruff = subprocess.run(
-        ["ruff", "check", "--select", "F821,F841,E402", "--output-format", "concise", "."],
+        ["ruff", "check", "--select", "F821,F841,E402", "--output-format", "concise", "."],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=300,
@@ -204,7 +204,7 @@ def modo_profundo() -> int:
     t0 = time.time()
 
     result = subprocess.run(
-        ["bash", "scripts/pro/launch_refactor_gx10.sh"],
+        ["bash", "scripts/pro/launch_refactor_gx10.sh"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=86400,

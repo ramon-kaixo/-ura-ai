@@ -34,10 +34,7 @@ _PRIVATE_NETWORKS: list[str] = [
     "::1/128",
 ]
 
-DEFAULT_USER_AGENT = (
-    "Mozilla/5.0 (compatible; URA/1.0; +https://github.com/anomalyco/ura) "
-    "Web Crawler"
-)
+DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; URA/1.0; +https://github.com/anomalyco/ura) Web Crawler"
 
 _MAX_REDIRECTS = 10
 _DEFAULT_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -101,13 +98,12 @@ def _validate_url(url: str) -> None:
     """Valida que la URL sea segura para crawling."""
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in ("http", "https"):
-        raise ValueError(
-            f"Scheme '{parsed.scheme}' not allowed. Only http/https."
-        )
+        msg = f"Scheme '{parsed.scheme}' not allowed. Only http/https."
+        raise ValueError(msg)
     if _is_private_url(url):
+        msg = f"URL '{url}' points to a private network (SSRF protection). Set allow_private=True to override."
         raise ValueError(
-            f"URL '{url}' points to a private network (SSRF protection). "
-            "Set allow_private=True to override."
+            msg,
         )
 
 
@@ -121,6 +117,7 @@ class HttpCrawler(Crawler):
         user_agent: User-Agent header.
         allow_private: Permitir IPs privadas (SSRF protection, default: False).
         allowed_content_types: Lista de Content-Type permitidos (default: todos).
+
     """
 
     def __init__(
@@ -152,7 +149,8 @@ class HttpCrawler(Crawler):
         """
         doc = self.fetch_raw(url, timeout=timeout)
         if doc.error:
-            raise RuntimeError(f"Crawler error: {doc.error}")
+            msg = f"Crawler error: {doc.error}"
+            raise RuntimeError(msg)
         try:
             return doc.content.decode(doc.charset or "utf-8", errors="replace")
         except Exception:

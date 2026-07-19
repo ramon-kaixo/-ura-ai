@@ -1,4 +1,4 @@
-import ast
+import ast  # noqa: INP001
 
 MAX_COMPLEXITY = 10
 
@@ -78,7 +78,8 @@ def lint_code(code: str) -> None:
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
-        raise SyntaxError(f"SyntaxError: {e}")
+        msg = f"SyntaxError: {e}"
+        raise SyntaxError(msg)  # noqa: B904
 
     cpx_errs = check_complexity(tree)
     if cpx_errs:

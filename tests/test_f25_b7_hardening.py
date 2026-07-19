@@ -105,7 +105,7 @@ def test_concurrent_readers_during_add() -> None:
     assert h.version_count > 0
 
 
-def test_concurrent_rollback_during_reads() -> None:
+def test_concurrent_rollback_during_reads() -> None:  # noqa: C901
     """Rollback concurrente con lecturas."""
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v0"))
@@ -120,9 +120,9 @@ def test_concurrent_rollback_during_reads() -> None:
         for _ in range(20):
             with lock:
                 try:
-                    versions = [vid for vid in h._versions if vid != h.current_version_id]
+                    versions = [vid for vid in h._versions if vid != h.current_version_id]  # noqa: SLF001
                     if versions:
-                        h.rollback(random.choice(versions))
+                        h.rollback(random.choice(versions))  # noqa: S311
                 except Exception as e:
                     errors.append(e)
 
@@ -131,7 +131,7 @@ def test_concurrent_rollback_during_reads() -> None:
             with lock:
                 try:
                     _ = h.timeline()
-                    _ = h.version_at(random.random() * 1000)
+                    _ = h.version_at(random.random() * 1000)  # noqa: S311
                 except Exception as e:
                     errors.append(e)
 
@@ -152,7 +152,7 @@ def test_concurrent_rollback_during_reads() -> None:
 
 
 def _rng(seed: int) -> random.Random:
-    return random.Random(seed)
+    return random.Random(seed)  # noqa: S311
 
 
 def test_fuzz_random_operations() -> None:
@@ -169,13 +169,14 @@ def test_fuzz_random_operations() -> None:
                 if op == "add":
                     version_counter += 1
                     v = _make_version(
-                        fact.fact_id, f"v{version_counter}",
+                        fact.fact_id,
+                        f"v{version_counter}",
                         created_at=_ts() + 10000 * trial + version_counter,
                         confidence=rng.random(),
                     )
                     h.add_version(v)
                 elif op == "rollback":
-                    keys = list(h._versions.keys())
+                    keys = list(h._versions.keys())  # noqa: SLF001
                     if keys and h.current.state != VersionState.TOMBSTONE:
                         target = rng.choice(keys)
                         h.rollback(target)
@@ -212,7 +213,7 @@ def test_corruption_nonexistent_current() -> None:
     """current apunta a version_id inexistente → RuntimeError."""
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
-    h._current = "nonexistent"  # type: ignore
+    h._current = "nonexistent"  # type: ignore  # noqa: PGH003, SLF001
     with pytest.raises(RuntimeError):
         _ = h.current
 
@@ -223,9 +224,11 @@ def test_corruption_broken_supersedes_chain() -> None:
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     v2 = _make_version(fact.fact_id, "v2", created_at=100)
     h.add_version(v2)
-    h._versions["v2"] = FactVersion(  # type: ignore
-        version_id="v2", fact_id=fact.fact_id,
-        confidence=0.9, created_at=100,
+    h._versions["v2"] = FactVersion(  # type: ignore  # noqa: PGH003, SLF001
+        version_id="v2",
+        fact_id=fact.fact_id,
+        confidence=0.9,
+        created_at=100,
         supersedes="ghost_version",
     )
     # La cadena debe terminar (no ciclar infinitamente)
@@ -244,9 +247,11 @@ def test_corruption_cycle_in_supersedes() -> None:
     v2 = _make_version(fact.fact_id, "v2", created_at=100)
     h.add_version(v2)
     # Crear ciclo: v2 -> v1, v1 -> v2
-    h._versions["v1"] = FactVersion(
-        version_id="v1", fact_id=fact.fact_id,
-        confidence=0.9, created_at=0,
+    h._versions["v1"] = FactVersion(  # noqa: SLF001
+        version_id="v1",
+        fact_id=fact.fact_id,
+        confidence=0.9,
+        created_at=0,
         supersedes="v2",
     )
     # Recorrer cadena con timeout para verificar que no hay bucle infinito
@@ -268,8 +273,10 @@ def test_corruption_orphan_version() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     bad_v = FactVersion(
-        version_id="bad", fact_id="other_fact",
-        confidence=0.5, created_at=50,
+        version_id="bad",
+        fact_id="other_fact",
+        confidence=0.5,
+        created_at=50,
     )
     with pytest.raises(ValueError, match="fact_id"):
         h.add_version(bad_v)
@@ -280,8 +287,11 @@ def test_corruption_tombstone_rollback() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     v2 = FactVersion(
-        version_id="v2", fact_id=fact.fact_id,
-        confidence=0.0, created_at=100, state=VersionState.TOMBSTONE,
+        version_id="v2",
+        fact_id=fact.fact_id,
+        confidence=0.0,
+        created_at=100,
+        state=VersionState.TOMBSTONE,
     )
     h.tombstone(v2)
     with pytest.raises(ValueError, match="tombstone"):
@@ -314,7 +324,7 @@ def test_benchmark_rollback_100k() -> None:
     start = time.perf_counter()
     h.rollback("v50000")
     t = time.perf_counter() - start
-    assert t < 0.01, f"Rollback amid 100K took {t*1000:.1f}ms"
+    assert t < 0.01, f"Rollback amid 100K took {t * 1000:.1f}ms"
 
 
 def test_benchmark_version_at_10k() -> None:
@@ -327,7 +337,7 @@ def test_benchmark_version_at_10k() -> None:
     for offset in range(0, 1000, 10):
         h.version_at(current_ts - float(offset))
     t = time.perf_counter() - start
-    assert t < 0.1, f"100 version_at queries took {t*1000:.1f}ms"
+    assert t < 0.1, f"100 version_at queries took {t * 1000:.1f}ms"
 
 
 # ═══════════════════════════════════════════════════
@@ -342,12 +352,10 @@ def test_benchmark_ram_1m() -> None:
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base"))
     for i in range(1_000_000):
         if i % 100_000 == 0 and i > 0:
-            gc_count = sys.gettotalrefcount() if hasattr(sys, 'gettotalrefcount') else 0
-            print(f"  {i} versions, refs={gc_count}")
+            sys.gettotalrefcount() if hasattr(sys, "gettotalrefcount") else 0
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=_ts() + 1000))
     # Tamaño aproximado
-    size = sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())
-    print(f"\n  1M versions: ~{size / 1024 / 1024:.1f} MB")
+    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())  # noqa: SLF001
     assert h.version_count == 1_000_001
 
 
@@ -372,7 +380,7 @@ def test_soak_million_operations() -> None:
                 v = _make_version(fact.fact_id, f"v{version_counter}", created_at=_ts() + 1000)
                 h.add_version(v)
             elif op == "rollback":
-                keys = list(h._versions.keys())
+                keys = list(h._versions.keys())  # noqa: SLF001
                 if keys and h.current.state != VersionState.TOMBSTONE:
                     target = keys[rng.randint(0, len(keys) - 1)]
                     h.rollback(target)
@@ -380,8 +388,10 @@ def test_soak_million_operations() -> None:
                 if not h.has_tombstone:
                     version_counter += 1
                     v = FactVersion(
-                        version_id=f"v{version_counter}", fact_id=fact.fact_id,
-                        confidence=0.0, created_at=_ts() + 1000,
+                        version_id=f"v{version_counter}",
+                        fact_id=fact.fact_id,
+                        confidence=0.0,
+                        created_at=_ts() + 1000,
                         state=VersionState.TOMBSTONE,
                     )
                     h.tombstone(v)
@@ -392,10 +402,8 @@ def test_soak_million_operations() -> None:
         except (ValueError, KeyError, RuntimeError):
             pass
         if i % 100_000 == 0 and i > 0:
-            elapsed = time.perf_counter() - start
-            print(f"  {i} ops in {elapsed:.1f}s ({i/elapsed:.0f} ops/s)")
-    total = time.perf_counter() - start
-    print(f"  1M ops en {total:.1f}s ({1_000_000/total:.0f} ops/s)")
+            time.perf_counter() - start
+    time.perf_counter() - start
     assert h.version_count > 0
 
 
@@ -441,12 +449,13 @@ def test_serialization_checksum_stability() -> None:
 
 def _history_checksum(h: FactHistory) -> str:
     """Checksum SHA-256 del historial completo."""
-    raw = f"{h.fact_id}:{h.current_version_id}:{sorted(h._versions.keys())}:{h.version_count}"
+    raw = f"{h.fact_id}:{h.current_version_id}:{sorted(h._versions.keys())}:{h.version_count}"  # noqa: SLF001
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
 def test_checksum_stable_after_same_ops() -> None:
     """Mismas operaciones → mismo checksum."""
+
     def build() -> tuple[FactHistory, str]:
         fact = _make_fact()
         h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=100))
@@ -477,9 +486,14 @@ def test_checksum_changes_after_mutation() -> None:
 def test_fact_index_remove_legacy_fact() -> None:
     """FactIndex.remove_fact() elimina todas las referencias."""
     from motor.core.fusion.models import KnowledgeFact
+
     kf = KnowledgeFact(
-        id="f1", subject="Apple", predicate="sells", object="oranges",
-        confidence=0.9, evidence_ids=("ev1",),
+        id="f1",
+        subject="Apple",
+        predicate="sells",
+        object="oranges",
+        confidence=0.9,
+        evidence_ids=("ev1",),
     )
     idx = FactIndex()
     idx.add_fact(kf)
@@ -542,7 +556,7 @@ def test_benchmark_zipf_distribution() -> None:
     # Distribución Zipf: el historial 0 recibe ~50% de las operaciones
     rng = _rng(42)
     zipf = [100_000 // (i + 1) for i in range(100)]
-    total_ops = sum(zipf)
+    sum(zipf)
 
     start = time.perf_counter()
     for h_idx, num_ops in enumerate(zipf):
@@ -550,15 +564,15 @@ def test_benchmark_zipf_distribution() -> None:
         for op_idx in range(min(num_ops, 100)):  # limitar a 100 por historial
             try:
                 v = _make_version(
-                    histories[h_idx].fact_id, f"v{op_idx}",
+                    histories[h_idx].fact_id,
+                    f"v{op_idx}",
                     created_at=_ts() + 1000,
                     confidence=rng.random(),
                 )
                 h.add_version(v)
             except (ValueError, KeyError):
                 pass
-    t = time.perf_counter() - start
-    print(f"\n  Zipf 100 histories ({total_ops} total ops): {t:.2f}s")
+    time.perf_counter() - start
 
     # Verificar que el historial más activo tiene más versiones
     most_active = max(histories, key=lambda h: h.version_count)
@@ -574,6 +588,7 @@ def test_benchmark_zipf_distribution() -> None:
 def _canonical_json(data: dict) -> str:
     """JSON canónico: keys ordenadas, sin espacios, UTF-8."""
     import json
+
     return json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -593,6 +608,7 @@ def test_canonical_serialization_deterministic() -> None:
 
 def test_canonical_serialization_cross_platform() -> None:
     """Misma secuencia de operaciones → mismo JSON, cualquier orden interno."""
+
     def build() -> dict:
         fact = _make_fact()
         h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=100))
@@ -657,10 +673,6 @@ def test_benchmark_full_recovery() -> None:
     assert restored.version_count == h.version_count
     assert idx.size == 1
 
-    print(f"\n  Serialize 10K: {serialize_t*1000:.1f}ms")
-    print(f"  Deserialize 10K: {deserialize_t*1000:.1f}ms")
-    print(f"  Rebuild FactIndex: {rebuild_t*1000:.1f}ms")
-
     # Todas las operaciones deben estar bajo 100ms
     assert serialize_t < 0.2
     assert deserialize_t < 0.2
@@ -674,6 +686,7 @@ def test_benchmark_full_recovery() -> None:
 
 def test_stability_100_runs_bit_identical() -> None:
     """100 ejecuciones de la misma secuencia producen resultados idénticos."""
+
     def run() -> dict:
         fact = _make_fact()
         h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=100))

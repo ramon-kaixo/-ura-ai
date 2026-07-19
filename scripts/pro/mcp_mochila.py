@@ -60,7 +60,7 @@ async def _handle_tools_call(params: dict) -> dict:
         }
 
 
-async def main() -> None:
+async def main() -> None:  # noqa: C901, PLR0912
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
     await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
@@ -114,7 +114,7 @@ async def main() -> None:
                 if err_response.get("id") is not None:
                     sys.stdout.write(json.dumps(err_response, ensure_ascii=False) + "\n")
                     sys.stdout.flush()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
 

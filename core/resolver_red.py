@@ -41,7 +41,6 @@ def cargar_inventario() -> dict:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
-            pass
     return {"dispositivos": {}}
 
 
@@ -77,7 +76,6 @@ def resolver_dns(hostname: str) -> str | None:
                         return ips[0]
     except Exception:
         log.exception("Error querying Tailscale status for %s", hostname)
-        pass
 
     # 3. Fallback: inventario
     inventario = cargar_inventario()
@@ -105,7 +103,6 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
                     return True, ms
     except Exception:
         log.exception("Error pinging %s", ip)
-        pass
     return False, 999
 
 

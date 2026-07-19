@@ -1,4 +1,4 @@
-import argparse
+import argparse  # noqa: INP001
 import sys
 
 from core.memory_engine import get_sources, query

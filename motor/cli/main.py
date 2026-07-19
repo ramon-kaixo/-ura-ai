@@ -71,7 +71,7 @@ URA_COMMANDS: dict[str, object] = {
 }
 
 
-def _setup_logging(level: str):
+def _setup_logging(level: str) -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     h = logging.StreamHandler(sys.stderr)
@@ -80,7 +80,7 @@ def _setup_logging(level: str):
     logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")

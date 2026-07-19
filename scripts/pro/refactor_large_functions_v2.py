@@ -35,7 +35,7 @@ WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
 MODEL = os.environ.get("REFACTOR_MODEL", "auto")
 MODEL_FALLBACK = os.environ.get("REFACTOR_MODEL_FALLBACK", "qwen2.5-coder:14b")
-URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
+URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 MAX_FUNCTIONS = int(os.environ.get("MAX_FUNCTIONS", "999"))
 MIN_LINES = int(os.environ.get("MIN_LINES", "100"))
@@ -54,7 +54,7 @@ def _ajustar_contexto(tokens_funcion: int, max_modelo: int = 100000, factor: flo
             cfg = json.loads(chunk_cfg.read_text())
             chunk_actual = cfg.get("chunk_actual", optimo)
             optimo = min(optimo, chunk_actual)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return min(optimo, max_modelo)
 
@@ -69,12 +69,12 @@ def log(msg: str) -> None:
 
 def _ollama_request(url: str, payload: dict) -> dict:
     """Envía request a Ollama/router. Retorna respuesta JSON o dict vacío."""
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         url,
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=600) as r:
+    with urllib.request.urlopen(req, timeout=600) as r:  # noqa: S310
         return json.loads(r.read())
 
 
@@ -141,7 +141,7 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
             source = py_file.read_text(encoding="utf-8")
             tree = ast.parse(source)
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
                     if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
                         n_lines = node.end_lineno - node.lineno
                         if n_lines > threshold:
@@ -226,7 +226,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
         compile(new_content, file_path, "exec")
     except SyntaxError as e:
         log(f"  Error sintaxis post-reemplazo: {e}")
-        fix_prompt = f"El codigo tiene un error de sintaxis: {e}. Corrigelo SIN cambiar la logica. Codigo:\n```python\n{new_code}\n```\nDevuelve SOLO el codigo corregido."
+        fix_prompt = f"El codigo tiene un error de sintaxis: {e}. Corrigelo SIN cambiar la logica. Codigo:\n```python\n{new_code}\n```\nDevuelve SOLO el codigo corregido."  # noqa: E501
         fix_resp = llm(fix_prompt)
         fix_code = clean_llm_response(fix_resp)
         if fix_code:
@@ -240,13 +240,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                     if not backup.exists():
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
-                    subprocess.run(
-                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+                    subprocess.run(  # noqa: S603
+                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
                         capture_output=True,
                         timeout=30,
                         check=False,
                     )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
                 log("  Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -261,19 +261,19 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
         shutil.copy2(path, backup)
 
     path.write_text(new_content, encoding="utf-8")
-    subprocess.run(
-        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+    subprocess.run(  # noqa: S603
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
         capture_output=True,
         timeout=30,
         check=False,
     )
-    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
     return True
 
 
 def refactor_one(func: dict) -> bool:
     """Refactoriza una funcion con compactacion."""
-    global REFACTORED, SKIPPED, ERRORS
+    global REFACTORED, SKIPPED, ERRORS  # noqa: PLW0602, PLW0603
 
     file_path = func["file"]
     func_name = func["function"]
@@ -345,7 +345,7 @@ def main() -> None:
         scan_project()
         return
 
-    global REFACTORED, SKIPPED, ERRORS, MIN_LINES, MAX_FUNCTIONS
+    global REFACTORED, SKIPPED, ERRORS, MIN_LINES, MAX_FUNCTIONS  # noqa: PLW0602
 
     log("=" * 60)
     log("  REFACTOR LARGE FUNCTIONS v2 (con compactacion)")

@@ -36,34 +36,37 @@ def compress_payload(data: bytes, method: str = "gzip") -> bytes:
     if method == "gzip":
         return gzip.compress(data)
     if method == "zstd":
-        raise NotImplementedError("zstd compression not yet available")
+        msg = "zstd compression not yet available"
+        raise NotImplementedError(msg)
     if method == "none":
         return data
-    raise ValueError(f"Unsupported compression: {method}")
+    msg = f"Unsupported compression: {method}"
+    raise ValueError(msg)
 
 
 def decompress_payload(data: bytes, method: str = "gzip") -> bytes:
     if method == "gzip":
         return gzip.decompress(data)
     if method == "zstd":
-        raise NotImplementedError("zstd decompression not yet available")
+        msg = "zstd decompression not yet available"
+        raise NotImplementedError(msg)
     if method == "none":
         return data
-    raise ValueError(f"Unsupported compression: {method}")
+    msg = f"Unsupported compression: {method}"
+    raise ValueError(msg)
+
 
 # ── Serializers ──────────────────────────
 
 
 class ProtocolSerializer(ABC):
     @abstractmethod
-    def serialize(self, envelope: ProtocolEnvelope) -> bytes:
-        ...
+    def serialize(self, envelope: ProtocolEnvelope) -> bytes: ...
 
 
 class ProtocolDeserializer(ABC):
     @abstractmethod
-    def deserialize(self, data: bytes) -> ProtocolEnvelope:
-        ...
+    def deserialize(self, data: bytes) -> ProtocolEnvelope: ...
 
 
 _DEFAULT_ENCODING = "utf-8"
@@ -149,9 +152,8 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
     raw_payload = bytes.fromhex(payload_hex) if payload_hex else b""
     checksum = data.get("checksum", "")
     if checksum and not verify_checksum(raw_payload, checksum):
-        raise ProtocolException(
-            f"Checksum mismatch: expected {checksum}, got {compute_checksum(raw_payload)}"
-        )
+        msg = f"Checksum mismatch: expected {checksum}, got {compute_checksum(raw_payload)}"
+        raise ProtocolException(msg)
 
     # Payload stays as-is (compressed if wire format was compressed).
     # ADR-028-04 SR05: envelope payload is compressed, checksum covers compressed bytes.
@@ -191,9 +193,8 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
     try:
         message_kind = MessageKind(rd["message_kind"])
     except ValueError:
-        raise ProtocolException(
-            f"Unknown message_kind: {rd.get('message_kind', '')}"
-        )
+        msg = f"Unknown message_kind: {rd.get('message_kind', '')}"
+        raise ProtocolException(msg)  # noqa: B904
 
     security_data = data.get("security")
     security = None
@@ -329,7 +330,10 @@ def make_message_id(
     """
     first_64 = payload[:64]
     return MessageId.make(
-        protocol_version, schema_version,
-        source, destination, message_type,
+        protocol_version,
+        schema_version,
+        source,
+        destination,
+        message_type,
         first_64,
     )

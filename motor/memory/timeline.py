@@ -41,7 +41,8 @@ class MemoryTimeline:
         """
         with self._lock:
             if entry.entry_id in self._entries:
-                raise KeyError(f"Entry '{entry.entry_id}' already exists")
+                msg = f"Entry '{entry.entry_id}' already exists"
+                raise KeyError(msg)
             self._entries[entry.entry_id] = entry
             self._timeline.append((entry.timestamp, entry.entry_id))
             self._index_entry(entry)
@@ -71,11 +72,7 @@ class MemoryTimeline:
         """Retorna entries en un rango temporal. O(log n + m)."""
         left = bisect.bisect_left(self._timeline, (start, ""))
         right = bisect.bisect_right(self._timeline, (end, "\uffff"))
-        return [
-            self._entries[eid]
-            for _, eid in self._timeline[left:right]
-            if eid in self._entries
-        ]
+        return [self._entries[eid] for _, eid in self._timeline[left:right] if eid in self._entries]
 
     def by_event(self, event_type: str) -> list[MemoryEntry]:
         """Retorna entries de un tipo de evento."""
@@ -91,7 +88,8 @@ class MemoryTimeline:
         a = self._entries.get(entry_a_id)
         b = self._entries.get(entry_b_id)
         if a is None or b is None:
-            raise KeyError("Entry not found")
+            msg = "Entry not found"
+            raise KeyError(msg)
         refs_a = {r.fact_id for r in a.fact_refs}
         refs_b = {r.fact_id for r in b.fact_refs}
         return {

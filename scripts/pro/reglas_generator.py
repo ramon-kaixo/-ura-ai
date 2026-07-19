@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 # Import from loader in same directory
-_sys_path = os.path.dirname(os.path.abspath(__file__))
+_sys_path = Path(Path(__file__).resolve().parent)
 if _sys_path not in sys.path:
     sys.path.insert(0, _sys_path)
 
@@ -35,7 +35,7 @@ def _es_import_estandar(nombre: str) -> dict | None:
         try:
             data = json.loads(config_path.read_text())
             return data.get("imports_estandar", {}).get(nombre)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return None
 

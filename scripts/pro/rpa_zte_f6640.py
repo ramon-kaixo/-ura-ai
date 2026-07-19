@@ -51,7 +51,7 @@ try:
     # ═══════════════════════════════════════════════════════════
     # FASE 1: Abrir navegador y login
     # ═══════════════════════════════════════════════════════════
-    subprocess.run(["open", "-a", "Safari"], check=False)
+    subprocess.run(["open", "-a", "Safari"], check=False)  # noqa: S607
     wait(3)
     pyautogui.hotkey("command", "l")
     wait(0.5)

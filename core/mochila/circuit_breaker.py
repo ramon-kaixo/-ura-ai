@@ -44,7 +44,7 @@ class CircuitBreaker:
     def _caragar(self) -> None:
         if self._health_file.exists():
             try:
-                with open(self._health_file) as f:
+                with open(self._health_file) as f:  # noqa: PTH123
                     raw = json.load(f)
                 for provider, data in raw.items():
                     if data.get("state") in ("closed", "open", "half_open"):
@@ -65,7 +65,7 @@ class CircuitBreaker:
             d["state"] = d["state"].value if isinstance(d["state"], CircuitState) else d["state"]
         tmp = self._health_file.with_suffix(".tmp")
         self._health_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(tmp, "w") as f:
+        with open(tmp, "w") as f:  # noqa: PTH123
             json.dump(raw, f, indent=2)
         tmp.replace(self._health_file)
 
@@ -98,7 +98,7 @@ class CircuitBreaker:
             h.failure_count = 0
         self._persistir()
 
-    def registrar_fallo(self, provider: str, es_timeout: bool = False) -> None:
+    def registrar_fallo(self, provider: str, es_timeout: bool = False) -> None:  # noqa: FBT001, FBT002
         h = self._health_por_provider(provider)
         h.failure_count += 1
         h.last_failure_time = time.time()

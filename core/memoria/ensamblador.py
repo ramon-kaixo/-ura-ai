@@ -10,7 +10,7 @@ log = logging.getLogger("ura.ensamblador")
 
 
 class ContextWindowGuard:
-    def __init__(self, limite_tokens_ctx: int = 4096, margen_salida: int = 1024):
+    def __init__(self, limite_tokens_ctx: int = 4096, margen_salida: int = 1024) -> None:
         self.limite_entrada_tokens = limite_tokens_ctx - margen_salida
         self.OVERHEAD_MSG = 4
 

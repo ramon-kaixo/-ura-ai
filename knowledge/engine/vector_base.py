@@ -73,6 +73,7 @@ class VectorStore(Protocol):
             Tuple de (ids, next_offset).
             next_offset es None cuando no hay más páginas.
             Si el backend no soporta enumeración, retorna ([], None).
+
         """
         ...
 

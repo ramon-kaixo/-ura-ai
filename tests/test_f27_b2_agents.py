@@ -205,46 +205,55 @@ def test_is_terminal() -> None:
 
 def test_capability_gate_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(CapabilityGate)
 
 
 def test_planner_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(Planner)
 
 
 def test_executor_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(Executor)
 
 
 def test_scheduler_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(Scheduler)
 
 
 def test_agent_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(Agent)
 
 
 def test_tool_runner_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(ToolRunner)
 
 
 def test_audit_logger_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(AuditLogger)
 
 
 def test_task_queue_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(TaskQueue)
 
 
 def test_state_machine_is_abc() -> None:
     import inspect
+
     assert inspect.isabstract(StateMachine)
 
 
@@ -255,14 +264,34 @@ def test_state_machine_is_abc() -> None:
 
 def test_all_exported_symbols() -> None:
     from motor.agents import __all__
+
     expected = [
-        "Agent", "AgentAuditRecord", "AgentCapability", "AgentContext",
-        "AgentExecution", "AgentPlan", "AgentPolicy", "AgentResult",
-        "AgentState", "AgentStateMachine", "AgentTask", "AuditEvent",
-        "AuditLogger", "CapabilityGate", "Executor", "PlanStep",
-        "Planner", "Scheduler", "StateMachine", "TaskQueue",
-        "ToolContract", "ToolRunner",
-        "make_agent_id", "make_plan_id", "make_step_id", "make_task_id",
+        "Agent",
+        "AgentAuditRecord",
+        "AgentCapability",
+        "AgentContext",
+        "AgentExecution",
+        "AgentPlan",
+        "AgentPolicy",
+        "AgentResult",
+        "AgentState",
+        "AgentStateMachine",
+        "AgentTask",
+        "AuditEvent",
+        "AuditLogger",
+        "CapabilityGate",
+        "Executor",
+        "PlanStep",
+        "Planner",
+        "Scheduler",
+        "StateMachine",
+        "TaskQueue",
+        "ToolContract",
+        "ToolRunner",
+        "make_agent_id",
+        "make_plan_id",
+        "make_step_id",
+        "make_task_id",
     ]
     for symbol in expected:
         assert symbol in __all__, f"Missing export: {symbol}"

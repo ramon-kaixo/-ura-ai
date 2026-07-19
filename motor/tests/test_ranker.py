@@ -144,10 +144,16 @@ class TestDocumentRanker:
             _doc(text=long, word_count=500, url="http://a.com"),
             _doc(text=short, word_count=3, url="http://b.com"),
         ]
-        ranker = DocumentRanker(weights={
-            "quality": 0.0, "position": 0.0, "title_match": 0.0,
-            "text_match": 0.0, "url_match": 0.0, "canonical_bonus": 0.0,
-        })
+        ranker = DocumentRanker(
+            weights={
+                "quality": 0.0,
+                "position": 0.0,
+                "title_match": 0.0,
+                "text_match": 0.0,
+                "url_match": 0.0,
+                "canonical_bonus": 0.0,
+            },
+        )
         result = ranker.rank("test", docs)
         assert result[0].document.url == "http://a.com"
 
@@ -156,10 +162,16 @@ class TestDocumentRanker:
             _doc(url="http://example.com/a", canonical="http://canon.com/x"),
             _doc(url="http://example.com/b"),
         ]
-        ranker = DocumentRanker(weights={
-            "quality": 0.0, "position": 0.0, "length": 0.0,
-            "title_match": 0.0, "text_match": 0.0, "url_match": 0.0,
-        })
+        ranker = DocumentRanker(
+            weights={
+                "quality": 0.0,
+                "position": 0.0,
+                "length": 0.0,
+                "title_match": 0.0,
+                "text_match": 0.0,
+                "url_match": 0.0,
+            },
+        )
         result = ranker.rank("test", docs)
         assert result[0].document.url == "http://example.com/a"
 
@@ -168,11 +180,17 @@ class TestDocumentRanker:
             _doc(word_count=3, text="short", url="http://a.com"),
             _doc(word_count=100, text="adequate content here for testing", url="http://b.com"),
         ]
-        ranker = DocumentRanker(weights={
-            "quality": 0.0, "position": 0.0, "length": 0.0,
-            "title_match": 0.0, "text_match": 0.0, "url_match": 0.0,
-            "canonical_bonus": 0.0,
-        })
+        ranker = DocumentRanker(
+            weights={
+                "quality": 0.0,
+                "position": 0.0,
+                "length": 0.0,
+                "title_match": 0.0,
+                "text_match": 0.0,
+                "url_match": 0.0,
+                "canonical_bonus": 0.0,
+            },
+        )
         result = ranker.rank("test", docs)
         assert result[0].document.url == "http://b.com"
 
@@ -181,11 +199,17 @@ class TestDocumentRanker:
             _doc(word_count=0, text="", url="http://a.com"),
             _doc(word_count=50, text="some content here for testing", url="http://b.com"),
         ]
-        ranker = DocumentRanker(weights={
-            "quality": 0.0, "position": 0.0, "length": 0.0,
-            "title_match": 0.0, "text_match": 0.0, "url_match": 0.0,
-            "canonical_bonus": 0.0,
-        })
+        ranker = DocumentRanker(
+            weights={
+                "quality": 0.0,
+                "position": 0.0,
+                "length": 0.0,
+                "title_match": 0.0,
+                "text_match": 0.0,
+                "url_match": 0.0,
+                "canonical_bonus": 0.0,
+            },
+        )
         result = ranker.rank("test", docs)
         assert result[0].document.url == "http://b.com"
 

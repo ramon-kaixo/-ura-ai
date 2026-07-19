@@ -16,7 +16,11 @@ from typing import Any
 
 
 def software_version(
-    name: str, version: str, release_date: str, description: str = "", bugs: list[dict] | None = None
+    name: str,
+    version: str,
+    release_date: str,
+    description: str = "",
+    bugs: list[dict] | None = None,
 ) -> dict:
     """Schema.org SoftwareVersion template."""
     entity: dict[str, Any] = {

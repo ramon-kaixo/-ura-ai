@@ -17,7 +17,7 @@ def _make_legacy_plugin(path: Path, name: str) -> Path:
         f"from motor.plugin.base import PluginBase\n"
         f"class _P(PluginBase):\n"
         f"    def execute(self, context):\n"
-        f'        return {{"name": "{name}"}}\n'
+        f'        return {{"name": "{name}"}}\n',
     )
     return f
 
@@ -34,7 +34,7 @@ def _make_v2_plugin(base: Path, name: str, version: str = "1.0.0", extra_hooks: 
     if extra_hooks:
         yaml_lines.append("hooks:")
         for h in extra_hooks:
-            yaml_lines.append(f"  - {h}")
+            yaml_lines.append(f"  - {h}")  # noqa: PERF401
     (d / "plugin.yaml").write_text("\n".join(yaml_lines) + "\n")
     init_content = (
         "from motor.plugin.base import PluginBase\n"
@@ -209,7 +209,7 @@ class TestRegistryV2Compatibility:
             "from motor.plugin.base import PluginBase\n"
             "class MyPlugin(PluginBase):\n"
             "    def execute(self, context):\n"
-            "        return {}\n"
+            "        return {}\n",
         )
         registry.discover([str(tmp_path)])
         plugin = registry.get("bad_api")

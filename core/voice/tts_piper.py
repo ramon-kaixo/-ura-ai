@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .anker_pipeline import AnkerDeterministicPipeline
 
 VOICES_DIR = Path(__file__).resolve().parent / "voices"
-PIPER_BIN = os.path.expanduser("~/.local/bin/piper")
+PIPER_BIN = Path("~/.local/bin/piper").expanduser()
 DEFAULT_VOICE = "es_ES-davefx-medium.onnx"
 
 
@@ -32,12 +32,12 @@ class PiperTTSMotor:
     ) -> None:
         self.model_path = str(VOICES_DIR / voice)
         self.config_path = f"{self.model_path}.json"
-        self.output_wav = "/tmp/ura_tts_output.wav"
+        self.output_wav = "/tmp/ura_tts_output.wav"  # noqa: S108
         self.pipeline = stt_pipeline
 
         self.device_index = self._find_anker_output_device()
 
-        if not os.path.exists(self.model_path):
+        if not Path(self.model_path).exists():
             msg = (
                 f"Modelo de voz no encontrado: {self.model_path}\n"
                 f"Descarga voces desde: https://rhasspy.github.io/piper-samples/"
@@ -45,16 +45,16 @@ class PiperTTSMotor:
             raise FileNotFoundError(
                 msg,
             )
-        if not os.path.exists(self.config_path):
+        if not Path(self.config_path).exists():
             msg = f"Config {self.config_path} no encontrada"
             raise FileNotFoundError(msg)
-        if not os.path.exists(PIPER_BIN):
+        if not Path(PIPER_BIN).exists():
             msg = f"piper CLI no encontrado en {PIPER_BIN}. Ejecuta: pip install piper-tts --break-system-packages"
             raise RuntimeError(
                 msg,
             )
 
-        os.path.getsize(self.model_path)
+        Path(self.model_path).stat().st_size  # noqa: B018
 
     def _find_anker_output_device(self) -> int | None:
         """Busca el índice físico de salida (output) del Anker S500."""
@@ -64,7 +64,7 @@ class PiperTTSMotor:
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 
@@ -90,21 +90,21 @@ class PiperTTSMotor:
             )
             proc.communicate(input=text)
 
-            if not os.path.exists(self.output_wav):
+            if not Path(self.output_wav).exists():
                 return
 
             data, fs = sf.read(self.output_wav)
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False
-            if os.path.exists(self.output_wav):
+            if Path(self.output_wav).exists():
                 with contextlib.suppress(BaseException):
-                    os.remove(self.output_wav)
+                    os.remove(self.output_wav)  # noqa: PTH107
 
     def hablar_asincrono(self, text: str) -> None:
         """Punto de entrada principal sin bloqueo para el orquestador."""
@@ -137,4 +137,4 @@ class PiperTTSMotor:
                 self.pipeline.is_playing_tts = False
 
     def __repr__(self) -> str:
-        return f"<PiperTTSMotor voice={os.path.basename(self.model_path)}>"
+        return f"<PiperTTSMotor voice={Path(self.model_path).name}>"

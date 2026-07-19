@@ -40,7 +40,8 @@ class Registry:
 
     def get_searcher(self, name: str) -> SearchProvider:
         if name not in self._searchers:
-            raise KeyError(f"Searcher '{name}' not found")
+            msg = f"Searcher '{name}' not found"
+            raise KeyError(msg)
         return self._searchers[name]
 
     def list_searchers(self) -> list[str]:
@@ -53,7 +54,8 @@ class Registry:
 
     def get_crawler(self, name: str) -> Crawler:
         if name not in self._crawlers:
-            raise KeyError(f"Crawler '{name}' not found")
+            msg = f"Crawler '{name}' not found"
+            raise KeyError(msg)
         return self._crawlers[name]
 
     def list_crawlers(self) -> list[str]:
@@ -66,7 +68,8 @@ class Registry:
 
     def get_extractor(self, name: str) -> Extractor:
         if name not in self._extractors:
-            raise KeyError(f"Extractor '{name}' not found")
+            msg = f"Extractor '{name}' not found"
+            raise KeyError(msg)
         return self._extractors[name]
 
     def list_extractors(self) -> list[str]:
@@ -79,7 +82,8 @@ class Registry:
 
     def get_ranker(self, name: str) -> Ranker:
         if name not in self._rankers:
-            raise KeyError(f"Ranker '{name}' not found")
+            msg = f"Ranker '{name}' not found"
+            raise KeyError(msg)
         return self._rankers[name]
 
     def list_rankers(self) -> list[str]:
@@ -92,7 +96,8 @@ class Registry:
 
     def get_summarizer(self, name: str) -> Summarizer:
         if name not in self._summarizers:
-            raise KeyError(f"Summarizer '{name}' not found")
+            msg = f"Summarizer '{name}' not found"
+            raise KeyError(msg)
         return self._summarizers[name]
 
     def list_summarizers(self) -> list[str]:
@@ -105,7 +110,8 @@ class Registry:
 
     def get_validator(self, name: str) -> SourceValidator:
         if name not in self._validators:
-            raise KeyError(f"Validator '{name}' not found")
+            msg = f"Validator '{name}' not found"
+            raise KeyError(msg)
         return self._validators[name]
 
     def list_validators(self) -> list[str]:

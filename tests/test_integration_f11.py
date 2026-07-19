@@ -26,7 +26,7 @@ def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Pat
     if hook_names:
         yaml_lines.append("hooks:")
         for h in hook_names:
-            yaml_lines.append(f"  - {h}")
+            yaml_lines.append(f"  - {h}")  # noqa: PERF401
     (d / "plugin.yaml").write_text("\n".join(yaml_lines) + "\n")
     hook_impl = ""
     for h in hook_names:
@@ -89,7 +89,7 @@ class TestIntegrationEventBusDegradedMode:
         d = tmp_path / "bad_hook_plugin"
         d.mkdir()
         (d / "plugin.yaml").write_text(
-            "name: bad_hook\nversion: '1.0.0'\napi_version: '1.0.0'\nentry_point: 'MyPlugin'\nhooks:\n  - pre_ingest\n"
+            "name: bad_hook\nversion: '1.0.0'\napi_version: '1.0.0'\nentry_point: 'MyPlugin'\nhooks:\n  - pre_ingest\n",
         )
         init_content = (
             "from motor.plugin.base import PluginBase\n"
@@ -114,7 +114,7 @@ class TestIntegrationRegistryWithExecutor:
         d = tmp_path / "exec_plugin"
         d.mkdir()
         (d / "plugin.yaml").write_text(
-            "name: exec_plugin\nversion: '1.0.0'\napi_version: '1.0.0'\nentry_point: 'MyPlugin'\n"
+            "name: exec_plugin\nversion: '1.0.0'\napi_version: '1.0.0'\nentry_point: 'MyPlugin'\n",
         )
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
@@ -123,7 +123,7 @@ class TestIntegrationRegistryWithExecutor:
             "    def execute(self, context):\n"
             "        exe = SubprocessExecutor()\n"
             "        r = exe.run(['echo', 'hello_from_plugin'])\n"
-            "        return {'stdout': r.stdout.strip()}\n"
+            "        return {'stdout': r.stdout.strip()}\n",
         )
         registry.discover([str(tmp_path)])
         results = registry.run_phase("always")

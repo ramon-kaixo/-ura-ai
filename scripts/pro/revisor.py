@@ -21,7 +21,7 @@ def calcular_tendencias() -> dict:
     if not reg_path.exists():
         return {"ultimas_10": [], "direccion": "estable"}
 
-    with open(reg_path) as f:
+    with open(reg_path) as f:  # noqa: PTH123
         lineas = f.readlines()[-10:]
 
     scores = []
@@ -47,7 +47,7 @@ def generar_html(data: dict, tendencia: dict) -> Path:
 
     hallazgos_html = ""
     for h in data.get("hallazgos", []):
-        hallazgos_html += f"<tr><td>{h.get('archivo', '')}:{h.get('linea', '')}</td><td>{h.get('tipo', '')}</td><td>{h.get('fix', '')}</td></tr>\n"
+        hallazgos_html += f"<tr><td>{h.get('archivo', '')}:{h.get('linea', '')}</td><td>{h.get('tipo', '')}</td><td>{h.get('fix', '')}</td></tr>\n"  # noqa: E501
 
     html = f"""<!DOCTYPE html>
 <html><head><title>URA Audit Report</title>
@@ -104,8 +104,8 @@ def main() -> int:
     if not script_path.exists():
         return 1
 
-    result = subprocess.run(
-        ["bash", str(script_path), "--profundidad", profundidad],
+    result = subprocess.run(  # noqa: S603
+        ["bash", str(script_path), "--profundidad", profundidad],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=300,

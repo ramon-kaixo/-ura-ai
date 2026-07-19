@@ -84,5 +84,5 @@ def _guardar_en_inbox(url: str, title: str, content: str) -> Path | None:
         ruta.write_text(html, encoding="utf-8")
         return ruta
     except OSError as e:
-        log.error(f"Error guardando {url}: {e}")
+        log.exception(f"Error guardando {url}: {e}")
         return None

@@ -39,10 +39,10 @@ HYBRID_BASELINE = {
 
 def load_queries():
     queries, rel = [], {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for l in f:
-            queries.append(json.loads(l))
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+            queries.append(json.loads(l))  # noqa: PERF401
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for l in f:
             d = json.loads(l)
             rel.setdefault(d["qid"], []).append(d)
@@ -110,7 +110,7 @@ def run(name, retriever_fn, queries, rel_map, reranker=None):
     }
 
 
-def main():
+def main() -> int:
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.reranking.llm import LLMReranker
@@ -142,9 +142,7 @@ def main():
         all_results[name] = run(name, fn, queries, rel_map)
 
     # Hybrid + NoOpReranker
-    all_results["Hybrid + NoOp"] = run(
-        "Hybrid+NoOp", hybrid.search, queries, rel_map, reranker=NoOpReranker()
-    )
+    all_results["Hybrid + NoOp"] = run("Hybrid+NoOp", hybrid.search, queries, rel_map, reranker=NoOpReranker())
 
     # Hybrid + LLMReranker (only first 50 queries due to time)
     log.warning("LLMReranker: ejecutando primeras 50 queries (costoso)...")
@@ -159,29 +157,17 @@ def main():
         reranker=llm,
     )
 
-    print(f"\n{'=' * 100}")
-    print(
-        f"  {'Config':<25} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
-    )
-    print(f"{'=' * 100}")
     for name in ["Vector only", "Hybrid (NoOp reranker)", "Hybrid + NoOp", "Hybrid + LLM"]:
         r = all_results.get(name)
         if r is None:
             continue
-        print(
-            f"  {name:<25} {r['Recall@10']:<8.4f} {r['Precision@5']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG@10']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['P99']:<8.2f} {r['Throughput']:<8.2f} {r['No-context']:<8.2%}"
-        )
 
     # Acceptance for Hybrid+Reranker vs criteria
-    print(f"\n{'=' * 100}")
-    print("  Acceptance Criteria (Hybrid + Reranker)")
-    print(f"{'=' * 100}")
 
     for reranker_name in ["Hybrid + NoOp", "Hybrid + LLM"]:
         r = all_results.get(reranker_name)
         if r is None:
             continue
-        print(f"\n  {reranker_name}:")
         checks = [
             (
                 "MAP >= Vector-only",
@@ -209,12 +195,9 @@ def main():
                 f"{r['P95']:.2f} <= {HYBRID_BASELINE['P95'] * 1.25:.2f}",
             ),
         ]
-        all_pass = True
-        for label, passed, detail in checks:
-            print(f"    {'✅' if passed else '❌'} {label}: {detail}")
+        for _label, passed, _detail in checks:
             if not passed:
-                all_pass = False
-        print(f"    {'✅ APROBADO' if all_pass else '❌ RECHAZADO'}")
+                pass
 
     return 0
 

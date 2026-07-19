@@ -56,11 +56,11 @@ def _generar_corpus_ejemplo(path: str) -> None:
     ]
     corpus.add_queries(queries)
     corpus.save(path)
-    print(f"  Corpus de ejemplo con {len(queries)} consultas guardado → {path}")
 
 
 def _crear_retrievers_mock() -> dict[str, Callable]:
     """Crea retrievers mock para testing."""
+
     def _bm25(query: str) -> list[str]:
         return ["d1", "d3", "d2", "d5", "d4", "d7", "d6", "d9", "d8", "d10"]
 
@@ -75,33 +75,19 @@ def _crear_retrievers_mock() -> dict[str, Callable]:
 
 def _mostrar_resultados(resultados: dict[str, Any], k: int) -> None:
     """Muestra resultados en tabla."""
-    print(f"\n  Resultados @{k}")
-    print(LINEA)
     hdr = "  {:15} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8}"
-    header = hdr.format("Retriever", "Recall", "Prec", "MRR", "nDCG", "MAP", "P50(ms)", "P95(ms)")
-    print(header)
-    print(LINEA)
+    hdr.format("Retriever", "Recall", "Prec", "MRR", "nDCG", "MAP", "P50(ms)", "P95(ms)")
 
-    for cfg_name, data in resultados["configs"].items():
-        m = data["metrics"]
-        lat = data["latency_stats"]
-        print(
-            f"  {cfg_name:<15} {m.get(f'recall@{k}',0):>8.3f} "
-            f"{m.get(f'precision@{k}',0):>8.3f} {m.get('mrr',0):>8.3f} "
-            f"{m.get(f'ndcg@{k}',0):>8.3f} {m.get('map',0):>8.3f} "
-            f"{lat.get('mean_ms',0):>8.1f} {lat.get('max_ms',0):>8.1f}"
-        )
+    for data in resultados["configs"].values():
+        data["metrics"]
+        data["latency_stats"]
 
-    print(LINEA)
-    print("\n  Mejor por métrica:")
-    for metric, info in resultados.get("best_by_metric", {}).items():
-        print(f"    {metric:<15} → {info['config']:<15} ({info['value']:.3f})")
+    for _metric, _info in resultados.get("best_by_metric", {}).items():
+        pass
 
 
 def _mostrar_ranking(resultados: dict[str, Any], k: int) -> None:
     """Muestra ranking agregado (Score = promedio de todas las métricas)."""
-    print(f"\n  Ranking Agregado @{k}")
-    print(LINEA)
     scores: list[tuple[str, float]] = []
     for cfg_name, data in resultados["configs"].items():
         m = data["metrics"]
@@ -116,10 +102,8 @@ def _mostrar_ranking(resultados: dict[str, Any], k: int) -> None:
         scores.append((cfg_name, avg))
 
     scores.sort(key=lambda x: x[1], reverse=True)
-    print(f"  {'Rank':<6} {'Retriever':<15} {'Score':>8}")
-    print(LINEA)
-    for rank, (name, score) in enumerate(scores, 1):
-        print(f"  {rank:<6} {name:<15} {score:>8.4f}")
+    for _rank, (_name, _score) in enumerate(scores, 1):
+        pass
 
 
 def main() -> int:
@@ -137,12 +121,10 @@ def main() -> int:
 
     corpus_path = args.corpus
     if not corpus_path or not Path(corpus_path).exists():
-        print("  Error: especifica --corpus o usa --example para generar uno de ejemplo")
         return 1
 
     # Cargar corpus
     corpus = EvaluationCorpus.load(corpus_path)
-    print(f"\n  Corpus: {corpus.name} ({len(corpus)} consultas)")
 
     # Registrar retrievers
     engine = EvaluationEngine()
@@ -156,24 +138,20 @@ def main() -> int:
             if name in mock_retrievers:
                 retrievers_to_run[name] = mock_retrievers[name]
                 engine.register_retriever(name, mock_retrievers[name])
-                print(f"  Retriever registrado: {name} (mock)")
             else:
-                print(f"  Advertencia: retriever '{name}' no encontrado, omitido")
+                pass
     else:
         # Si no se especifican, usar todos los mock
         mock_retrievers = _crear_retrievers_mock()
         for name, fn in mock_retrievers.items():
             retrievers_to_run[name] = fn
             engine.register_retriever(name, fn)
-            print(f"  Retriever registrado: {name} (mock)")
 
     # Ejecutar comparación
-    print("\n  Evaluando retrievers...")
     t0 = time.monotonic()
     resultados = engine.compare("default", list(retrievers_to_run), k=args.k)
     elapsed = (time.monotonic() - t0) * 1000
 
-    print(f"  Evaluación completada en {elapsed:.0f}ms")
     _mostrar_resultados(resultados, args.k)
     _mostrar_ranking(resultados, args.k)
 
@@ -199,7 +177,7 @@ def main() -> int:
                                         d["metrics"].get("mrr", 0),
                                         d["metrics"].get(f"ndcg@{args.k}", 0),
                                         d["metrics"].get("map", 0),
-                                    ]
+                                    ],
                                 ),
                             )
                             for n, d in resultados["configs"].items()
@@ -212,7 +190,6 @@ def main() -> int:
             ],
         }
         Path(args.output).write_text(json.dumps(output, indent=2) + "\n")
-        print(f"\n  Resultados exportados → {args.output}")
 
     return 0
 

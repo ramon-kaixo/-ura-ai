@@ -70,7 +70,9 @@ class TraceMiddleware:
         # Build or propagate trace context
         if envelope and envelope.trace.trace_id.value:
             ctx = TraceContext.from_header(
-                envelope.trace, self._source, self._destination,
+                envelope.trace,
+                self._source,
+                self._destination,
             )
         else:
             ctx = TraceContext(
@@ -90,8 +92,7 @@ class TraceMiddleware:
                 message_kind=message_kind,
                 tags=tags,
             ):
-                result = fn(*args, **kwargs)
-            return result
+                return fn(*args, **kwargs)
         except Exception:
             error = True
             raise
@@ -100,8 +101,9 @@ class TraceMiddleware:
             try:
                 record_latency(f"{self._source}→{self._destination}", duration_ns, error=error)
             except Exception:
-                logging.getLogger("ura.platform.middleware").debug(
-                    "record_latency failed", exc_info=True,
+                logging.getLogger("ura.platform.middleware").debug(  # noqa: F821
+                    "record_latency failed",
+                    exc_info=True,
                 )
 
 
@@ -122,20 +124,26 @@ def traced(
         def append_to_memory(entry):
             ...
     """
+
     def decorator(fn: Callable[..., _T]) -> Callable[..., _T]:
         middleware = TraceMiddleware(
             source=source,
             destination=destination,
             exporter=exporter,
         )
+
         def wrapper(*args: Any, **kwargs: Any) -> _T:
             mt = message_type or fn.__name__
             return middleware.wrap(
-                fn, *args, **kwargs,
+                fn,
+                *args,
+                **kwargs,
                 message_type=mt,
                 message_kind=message_kind,
             )
+
         wrapper.__name__ = fn.__name__
         wrapper.__qualname__ = fn.__qualname__
         return wrapper
+
     return decorator

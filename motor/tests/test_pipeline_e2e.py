@@ -116,9 +116,8 @@ class TestPipelineE2E:
         assert summary.compression_ratio >= 0.0
         # Verbatim constraint: each sentence appears in at least one source
         import re
-        all_text_normalized = " ".join(
-            re.sub(r"\s+", " ", d.text or "") for d in unique
-        )
+
+        all_text_normalized = " ".join(re.sub(r"\s+", " ", d.text or "") for d in unique)
         for s in summary.sentences:
             normalized_s = re.sub(r"\s+", " ", s)
             assert normalized_s in all_text_normalized, f"Sentence not found in sources: {s[:50]}"
@@ -192,9 +191,7 @@ class TestPipelineE2E:
             u = dedup.deduplicate(c.documents)
             s = ExtractiveSummarizer().summarize(u, max_length=4)
             b = CitationEngine().build(s, u)
-            return tuple(
-                s.fragment for s in b.citations
-            ), b.traceability_report["total_citations"]
+            return tuple(s.fragment for s in b.citations), b.traceability_report["total_citations"]
 
         r1 = run()
         r2 = run()

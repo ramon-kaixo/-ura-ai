@@ -32,12 +32,11 @@ class FactHistory:
 
     def __init__(self, fact: Fact, initial_version: FactVersion) -> None:
         if fact.fact_id != initial_version.fact_id:
-            raise ValueError(
-                f"Fact fact_id '{fact.fact_id}' != "
-                f"FactVersion fact_id '{initial_version.fact_id}'"
-            )
+            msg = f"Fact fact_id '{fact.fact_id}' != FactVersion fact_id '{initial_version.fact_id}'"
+            raise ValueError(msg)
         if initial_version.state != VersionState.CURRENT:
-            raise ValueError("Initial version must have state=CURRENT")
+            msg = "Initial version must have state=CURRENT"
+            raise ValueError(msg)
 
         self._fact_id: str = fact.fact_id
         self._current: str = initial_version.version_id
@@ -58,7 +57,8 @@ class FactHistory:
     def current(self) -> FactVersion:
         v = self._versions.get(self._current)
         if v is None:
-            raise RuntimeError(f"Current version '{self._current}' not found")
+            msg = f"Current version '{self._current}' not found"
+            raise RuntimeError(msg)
         return v
 
     @property
@@ -114,16 +114,14 @@ class FactHistory:
         Transaccional: o se completa correctamente o no hay cambios visibles.
         """
         if version.fact_id != self._fact_id:
-            raise ValueError(
-                f"Version fact_id '{version.fact_id}' != "
-                f"history fact_id '{self._fact_id}'"
-            )
+            msg = f"Version fact_id '{version.fact_id}' != history fact_id '{self._fact_id}'"
+            raise ValueError(msg)
         if version.version_id in self._versions:
-            raise KeyError(f"Version '{version.version_id}' already exists")
+            msg = f"Version '{version.version_id}' already exists"
+            raise KeyError(msg)
         if version.created_at < self._created:
-            raise ValueError(
-                "Version created_at cannot be before history creation"
-            )
+            msg = "Version created_at cannot be before history creation"
+            raise ValueError(msg)
 
         # Marcar la versión anterior como SUPERSEDED
         old_current = self._versions.get(self._current)
@@ -164,9 +162,11 @@ class FactHistory:
         """
         target = self._versions.get(version_id)
         if target is None:
-            raise KeyError(f"Version '{version_id}' not found")
+            msg = f"Version '{version_id}' not found"
+            raise KeyError(msg)
         if target.state == VersionState.TOMBSTONE:
-            raise ValueError("Cannot rollback to a tombstone version")
+            msg = "Cannot rollback to a tombstone version"
+            raise ValueError(msg)
 
         old_current = self.current
         old_rolled = FactVersion(
@@ -199,9 +199,11 @@ class FactHistory:
     def tombstone(self, version: FactVersion) -> None:
         """Marca el hecho como obsoleto (DELETE lógico)."""
         if version.fact_id != self._fact_id:
-            raise ValueError("Version fact_id mismatch")
+            msg = "Version fact_id mismatch"
+            raise ValueError(msg)
         if version.version_id in self._versions:
-            raise KeyError(f"Version '{version.version_id}' already exists")
+            msg = f"Version '{version.version_id}' already exists"
+            raise KeyError(msg)
 
         old_current = self._versions.get(self._current)
         if old_current is not None and old_current.state == VersionState.CURRENT:
@@ -337,11 +339,8 @@ class FactHistory:
         raw_tombstones = data.get("tombstones", {})
         if isinstance(raw_tombstones, list):
             history._tombstones = {
-                t["version_id"] or f"ts_{i}": FactTombstone(**t)
-                for i, t in enumerate(raw_tombstones)
+                t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)
             }
         else:
-            history._tombstones = {
-                tid: FactTombstone(**t) for tid, t in raw_tombstones.items()
-            }
+            history._tombstones = {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
         return history

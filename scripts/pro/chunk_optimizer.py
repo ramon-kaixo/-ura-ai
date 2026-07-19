@@ -62,7 +62,7 @@ def cargar() -> dict:
     if CONFIG_PATH.exists():
         try:
             return json.loads(CONFIG_PATH.read_text())
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return _nuevo()
 

@@ -11,36 +11,50 @@ from motor.core.llm.router import LLMRouter
 class TestVLLMProvider:
     def test_vllm_importable(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         assert VLLMProvider is not None
 
     def test_vllm_validate(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         r = validate_provider(VLLMProvider)
-        assert r.valid and r.provider_name == "vllm"
+        assert r.valid
+        assert r.provider_name == "vllm"
 
     def test_vllm_generate(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         r = VLLMProvider().generate("test")
-        assert isinstance(r, str) and len(r) > 0
+        assert isinstance(r, str)
+        assert len(r) > 0
 
     def test_vllm_embed(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         r = VLLMProvider().embed(["texto"])
-        assert isinstance(r, list) and len(r) == 1
+        assert isinstance(r, list)
+        assert len(r) == 1
 
     def test_vllm_health(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         h = VLLMProvider().health()
-        assert isinstance(h, dict) and "status" in h
+        assert isinstance(h, dict)
+        assert "status" in h
 
     def test_vllm_capabilities(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         c = VLLMProvider().capabilities
-        assert c["chat"] and c["embeddings"] and c["streaming"]
-        assert c["vision"] is False and c["max_context"] == 32768
+        assert c["chat"]
+        assert c["embeddings"]
+        assert c["streaming"]
+        assert c["vision"] is False
+        assert c["max_context"] == 32768
 
     def test_registry(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         reg = ProviderRegistry()
         reg.register("vllm", VLLMProvider(), default=True)
         assert reg.get("vllm")._provider_name == "vllm"
@@ -48,6 +62,7 @@ class TestVLLMProvider:
     def test_router(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
         from motor.core.llm.vllm import VLLMProvider
+
         reg = ProviderRegistry()
         reg.register("ollama", OllamaProvider(), default=True)
         reg.register("vllm", VLLMProvider())
@@ -55,12 +70,14 @@ class TestVLLMProvider:
 
     def test_retry(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         reg = ProviderRegistry()
         reg.register("vllm", VLLMProvider(), default=True)
         assert isinstance(LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=2).generate("test"), str)
 
     def test_breaker(self) -> None:
         from motor.core.llm.vllm import VLLMProvider
+
         reg = ProviderRegistry()
         reg.register("vllm", VLLMProvider(), default=True)
         LLMRouter(registry=reg).generate("test")
@@ -68,6 +85,7 @@ class TestVLLMProvider:
     def test_observability(self) -> None:
         g.reset()
         from motor.core.llm.vllm import VLLMProvider
+
         reg = ProviderRegistry()
         reg.register("vllm", VLLMProvider(), default=True)
         LLMRouter(registry=reg, fallback_enabled=False).generate("test")
@@ -75,4 +93,8 @@ class TestVLLMProvider:
 
     def test_backward(self) -> None:
         from motor.core.llm import embed, embed_async, generate, health
-        assert callable(generate) and callable(embed) and callable(embed_async) and callable(health)
+
+        assert callable(generate)
+        assert callable(embed)
+        assert callable(embed_async)
+        assert callable(health)

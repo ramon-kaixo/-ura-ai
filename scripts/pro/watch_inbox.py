@@ -20,7 +20,7 @@ BACKOFF_BASE = 2
 
 def hash_file(path: Path) -> str:
     try:
-        return hashlib.md5(path.read_bytes()).hexdigest()
+        return hashlib.md5(path.read_bytes()).hexdigest()  # noqa: S324
     except OSError:
         return ""
 
@@ -34,7 +34,7 @@ async def _check_mochila_alive() -> bool:
         return False
 
 
-async def process_file(path: Path) -> bool:
+async def process_file(path: Path) -> bool:  # noqa: C901
     if not await _check_mochila_alive():
         log.warning("Mochila no responde — esperando...")
         await asyncio.sleep(30)
@@ -86,7 +86,7 @@ async def process_file(path: Path) -> bool:
     return False
 
 
-async def watch_loop(interval: float = 10.0):
+async def watch_loop(interval: float = 10.0) -> None:
     INBOX.mkdir(parents=True, exist_ok=True)
     seen: dict[str, str] = {}
 

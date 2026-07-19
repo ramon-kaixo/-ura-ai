@@ -40,7 +40,7 @@ def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError
                     stage="scanner",
                     message=f"Enlace simbólico omitido: {path.name}",
                     category="permanent",
-                )
+                ),
             )
             continue
         stat = path.stat()
@@ -53,7 +53,7 @@ def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError
                     stage="scanner",
                     message=f"Archivo omitido por tamaño ({stat.st_size} > {MAX_PARSE_SIZE}): {rel}",
                     category="permanent",
-                )
+                ),
             )
             continue
         if stat.st_size == 0:
@@ -67,7 +67,7 @@ def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError
                 content_sha256=hashlib.sha256(raw).hexdigest(),
                 size=len(raw),
                 content=raw,
-            )
+            ),
         )
     return sources, skipped
 
@@ -138,7 +138,7 @@ def take_snapshot(source_dir: Path) -> Snapshot:
                 content_sha256=hashlib.sha256(raw).hexdigest(),
                 size=len(raw),
                 content=b"",  # snapshot no necesita content bytes
-            )
+            ),
         )
     return Snapshot(
         sources=tuple(sources),

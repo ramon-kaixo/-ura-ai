@@ -9,7 +9,7 @@ URA_ROOT = Path(__file__).resolve().parent.parent
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     try:
-        with open(path) as f:
+        with open(path) as f:  # noqa: PTH123
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None

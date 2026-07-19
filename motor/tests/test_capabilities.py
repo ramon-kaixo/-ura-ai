@@ -18,20 +18,32 @@ from motor.core.llm.router import LLMRouter
 
 # ── Proveedores mock con capacidades declarativas ─────────
 
+
 class _BasicProvider(BaseLLMProvider):
     """Proveedor básico con capacidades por defecto (solo chat + embeddings)."""
+
     def __init__(self) -> None:
         self._provider_name = "basic"
-    def generate(self, prompt, model=None, options=None): return "ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def generate(self, prompt, model=None, options=None):
+        return "ok"
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _VisionProvider(BaseLLMProvider):
     """Proveedor con capacidades de visión."""
+
     def __init__(self) -> None:
         self._provider_name = "vision_pro"
+
     @property
     def capabilities(self) -> dict:
         caps = dict(DEFAULT_PROVIDER_CAPABILITIES)
@@ -39,26 +51,44 @@ class _VisionProvider(BaseLLMProvider):
         caps["multimodal"] = True
         caps["max_context"] = 128000
         return caps
-    def generate(self, prompt, model=None, options=None): return "vision_ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def generate(self, prompt, model=None, options=None):
+        return "vision_ok"
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _StreamingProvider(BaseLLMProvider):
     """Proveedor con streaming."""
+
     def __init__(self) -> None:
         self._provider_name = "stream_pro"
+
     @property
     def capabilities(self) -> dict:
         caps = dict(DEFAULT_PROVIDER_CAPABILITIES)
         caps["streaming"] = True
         caps["max_output"] = 8192
         return caps
-    def generate(self, prompt, model=None, options=None): return "stream_ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def generate(self, prompt, model=None, options=None):
+        return "stream_ok"
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class TestProviderCapabilities:
@@ -92,6 +122,7 @@ class TestProviderCapabilities:
 
     def test_ollama_capabilities(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
+
         p = OllamaProvider()
         assert p.supports("chat") is True
         assert p.supports("embeddings") is True
@@ -100,6 +131,7 @@ class TestProviderCapabilities:
 
     def test_openai_capabilities(self) -> None:
         from motor.core.llm.openai import OpenAIProvider
+
         p = OpenAIProvider()
         assert p.supports("chat") is True
         assert p.supports("streaming") is True
@@ -134,6 +166,7 @@ class TestRouterCapabilitySelection:
         router = LLMRouter(registry=reg)
 
         import pytest
+
         with pytest.raises(RuntimeError, match="vision"):
             router.select_provider_by_capability("vision")
 
@@ -151,6 +184,7 @@ class TestRouterCapabilitySelection:
     def test_capability_validation(self) -> None:
         """validate_provider debe verificar capabilities."""
         from motor.core.llm.base import validate_provider
+
         result = validate_provider(_VisionProvider)
         assert result.valid
 
@@ -169,10 +203,7 @@ class TestRouterCapabilitySelection:
         reg.register("basic", _BasicProvider(), default=True)
         reg.register("vision", _VisionProvider())
 
-        vision_providers = [
-            name for name in reg.list()
-            if reg.get(name).supports("vision")
-        ]
+        vision_providers = [name for name in reg.list() if reg.get(name).supports("vision")]
         assert "vision" in vision_providers
         assert "basic" not in vision_providers
 

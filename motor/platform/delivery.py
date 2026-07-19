@@ -113,9 +113,7 @@ class ErrorDelivery:
         envelope = self._build_envelope(original, error)
         self._send(envelope)
 
-    def _build_envelope(
-        self, original: ProtocolEnvelope, error: ErrorEnvelope
-    ) -> ProtocolEnvelope:
+    def _build_envelope(self, original: ProtocolEnvelope, error: ErrorEnvelope) -> ProtocolEnvelope:
         """Build ERROR ProtocolEnvelope from original message and ErrorEnvelope.
 
         ER03: original_message_id points to triggering message (set in from_original).
@@ -125,7 +123,8 @@ class ErrorDelivery:
 
         payload = f"{error.error_code}:{error.error_message}".encode()
         mid = make_message_id(
-            "1.0", "1.0",
+            "1.0",
+            "1.0",
             original.routing.destination,
             original.routing.source,
             f"ERROR.{original.routing.message_type}",

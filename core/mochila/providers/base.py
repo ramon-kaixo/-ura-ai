@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 
 
 class ProviderError(Exception):
-    def __init__(self, message: str, provider: str, status_code: int | None = None):
+    def __init__(self, message: str, provider: str, status_code: int | None = None) -> None:
         self.provider = provider
         self.status_code = status_code
         super().__init__(message)
@@ -23,7 +23,7 @@ class Provider(ABC):
         self,
         modelo: str,
         mensajes: list,
-        stream: bool = False,
+        stream: bool = False,  # noqa: FBT001, FBT002
         tools: list | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,

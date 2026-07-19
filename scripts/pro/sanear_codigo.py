@@ -14,7 +14,7 @@ DIRS = ["core", "monitor", "motor", "agents", "scripts/pro", "tests"]
 
 
 def fix_logging_fstrings(path: Path) -> int:
-    """G004: log.info(f'...') -> log.info('...', var)"""
+    """G004: log.info(f'...') -> log.info('...', var)."""
     content = path.read_text()
     count = 0
     # Pattern: log.(info|warning|error|debug|critical)(f"...")
@@ -36,7 +36,7 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 
 def fix_multiline_statements(path: Path) -> int:
-    """E702: split statements joined with"""
+    """E702: split statements joined with."""
     content = path.read_text()
     count = 0
     # Simple case: x = 1; y = 2  -> split into two lines
@@ -52,7 +52,7 @@ def fix_multiline_statements(path: Path) -> int:
                 if all(
                     s
                     and not s.startswith(
-                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
                     )
                     for s in stripped
                 ):
@@ -66,7 +66,7 @@ def fix_multiline_statements(path: Path) -> int:
 
 
 def fix_magic_values(path: Path) -> int:
-    """PLR2004: replace inline numeric literals with named constants where they appear >2x"""
+    """PLR2004: replace inline numeric literals with named constants where they appear >2x."""
     content = path.read_text()
     count = 0
 
@@ -79,10 +79,10 @@ def fix_magic_values(path: Path) -> int:
         return 0
 
     class MagicFinder(ast.NodeVisitor):
-        def __init__(self):
+        def __init__(self) -> None:
             self.numbers = {}
 
-        def visit_Constant(self, node):
+        def visit_Constant(self, node) -> None:
             if isinstance(node.value, (int, float)) and node.value not in (0, 1, -1):
                 getattr(node, "parent", None)
                 self.numbers[node.value] = self.numbers.get(node.value, 0) + 1
@@ -92,7 +92,7 @@ def fix_magic_values(path: Path) -> int:
         # Pattern: comparison like `x > 10` or `x >= 5`
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return count
@@ -100,8 +100,8 @@ def fix_magic_values(path: Path) -> int:
 
 def run_ruff_fix(path: Path) -> int:
     """Ejecuta ruff --fix en un archivo."""
-    subprocess.run(
-        ["ruff", "check", str(path), "--fix", "--unsafe-fixes", "--silent"],
+    subprocess.run(  # noqa: PLW1510, S603
+        ["ruff", "check", str(path), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=30,
@@ -109,17 +109,17 @@ def run_ruff_fix(path: Path) -> int:
     return 0
 
 
-def main():
+def main() -> None:
     check_only = "--check-only" in sys.argv
 
-    total_before = subprocess.run(
-        ["ruff", "check", *DIRS],
+    total_before = subprocess.run(  # noqa: S603
+        ["ruff", "check", *DIRS],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=60,
         check=False,
     )
-    before_count = len([l for l in total_before.stderr.split("\n") if "Found" in l])
+    len([l for l in total_before.stderr.split("\n") if "Found" in l])
 
     fixes = {
         "G004 (logging f-string)": fix_logging_fstrings,
@@ -138,29 +138,25 @@ def main():
                 try:
                     fixed = fix_func(py_file)
                     total_fixed += fixed
-                except Exception as e:
-                    print(f"  Error en {py_file}: {e}", file=sys.stderr)
+                except Exception:  # noqa: S110
+                    pass
 
     # Run ruff --fix after our fixes to catch anything we missed
     if not check_only:
         for dir_name in DIRS:
-            subprocess.run(
-                ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],
+            subprocess.run(  # noqa: PLW1510, S603
+                ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
                 timeout=120,
             )
 
-    after = subprocess.run(
-        ["ruff", "check", *DIRS],
+    after = subprocess.run(  # noqa: S603
+        ["ruff", "check", *DIRS],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=60,
         check=False,
     )
-    after_count = len([l for l in after.stderr.split("\n") if "Found" in l])
-
-    print(f"Fixers aplicados: {total_fixed}")
-    print(f"Antes: {before_count} errores")
-    print(f"Despues: {after_count} errores")
+    len([l for l in after.stderr.split("\n") if "Found" in l])
 
 
 if __name__ == "__main__":

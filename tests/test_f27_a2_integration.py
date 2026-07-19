@@ -28,20 +28,29 @@ from motor.agents import (
 class _IntegrationGate(CapabilityGate):
     def __init__(self):
         self.checks = []
+
     def check(self, required):
         self.checks.append(required)
+
     def capabilities(self):
-        return {AgentCapability.MEMORY_READ, AgentCapability.FACTS_READ,
-                AgentCapability.WEB_SEARCH, AgentCapability.TOOLS_EXECUTE}
+        return {
+            AgentCapability.MEMORY_READ,
+            AgentCapability.FACTS_READ,
+            AgentCapability.WEB_SEARCH,
+            AgentCapability.TOOLS_EXECUTE,
+        }
 
 
 class _IntegrationScheduler(Scheduler):
     def __init__(self):
         self.submissions = []
+
     def submit(self, execution):
         self.submissions.append(execution)
+
     def cancel(self, agent_id):
         pass
+
     def shutdown(self, timeout=30):
         return []
 
@@ -49,9 +58,12 @@ class _IntegrationScheduler(Scheduler):
 class _IntegrationToolRunner(ToolRunner):
     def __init__(self):
         self.calls = []
+
     def get_contract(self, tool_name):
         from motor.agents.models import ToolContract
+
         return ToolContract(name=tool_name)
+
     def run(self, tool_name, params, timeout=30):
         self.calls.append((tool_name, params))
         if tool_name == "retrieve":
@@ -63,6 +75,7 @@ class _IntegrationToolRunner(ToolRunner):
         if tool_name == "tool":
             return {"written": True}
         return {"result": "ok"}
+
     def cancel(self, tool_name):
         pass
 
@@ -70,10 +83,12 @@ class _IntegrationToolRunner(ToolRunner):
 class _IntegrationAudit(AuditLogger):
     def __init__(self):
         self.events = []
+
     def log(self, event):
         self.events.append(event)
+
     def get_audit(self, agent_id):
-        return [e for e in self.events if hasattr(e, 'agent_id') and e.agent_id == agent_id]
+        return [e for e in self.events if hasattr(e, "agent_id") and e.agent_id == agent_id]
 
 
 # ═══════════════════════════════════════════════════
@@ -147,14 +162,16 @@ def test_integration_audit_trail() -> None:
     audit = _IntegrationAudit()
 
     agent = AgentOrchestrator(
-        planner=planner, scheduler=scheduler,
-        tool_runner=tool_runner, gate=gate, audit_logger=audit,
+        planner=planner,
+        scheduler=scheduler,
+        tool_runner=tool_runner,
+        gate=gate,
+        audit_logger=audit,
     )
     result = agent.run(AgentTask(task_id="audit_test", objective="read facts"))
 
     assert len(audit.events) > 0
-    assert result.state in (AgentState.COMPLETED, AgentState.FAILED,
-                            AgentState.CANCELLED, AgentState.TIMEOUT)
+    assert result.state in (AgentState.COMPLETED, AgentState.FAILED, AgentState.CANCELLED, AgentState.TIMEOUT)
 
 
 # ═══════════════════════════════════════════════════
@@ -169,8 +186,10 @@ def test_integration_plan_executed() -> None:
     scheduler = _IntegrationScheduler()
 
     agent = AgentOrchestrator(
-        planner=planner, scheduler=scheduler,
-        tool_runner=tool_runner, gate=_IntegrationGate(),
+        planner=planner,
+        scheduler=scheduler,
+        tool_runner=tool_runner,
+        gate=_IntegrationGate(),
         audit_logger=_IntegrationAudit(),
     )
     agent.run(AgentTask(task_id="exec_test", objective="search for data"))

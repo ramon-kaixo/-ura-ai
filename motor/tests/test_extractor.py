@@ -27,8 +27,7 @@ SCRIPT_HTML = """<html><head><title>Script test</title></head><body>
 </body></html>"""
 
 META_CHARSET_HTML = (
-    '<html><head><meta charset="iso-8859-1"><title>Charset test</title>'
-    "</head><body><p>café</p></body></html>"
+    '<html><head><meta charset="iso-8859-1"><title>Charset test</title></head><body><p>café</p></body></html>'
 )
 
 MINIMAL_HTML = "<html><head></head><body><p>Hello</p></body></html>"
@@ -209,18 +208,12 @@ class TestQualityScore:
     def test_good_content_scores_high(self) -> None:
         from motor.core.web.extractor.providers.html_extractor import HtmlExtractor
 
-        long_html = (
-            "<html><head><title>Good</title></head><body>"
-            + "<p>word</p>" * 200
-            + "</body></html>"
-        )
+        long_html = "<html><head><title>Good</title></head><body>" + "<p>word</p>" * 200 + "</body></html>"
         doc = HtmlExtractor().extract(long_html, "https://example.com")
         assert doc.quality_score >= 0.3
 
     def test_empty_content_scores_low(self) -> None:
         from motor.core.web.extractor.providers.html_extractor import HtmlExtractor
 
-        doc = HtmlExtractor().extract(
-            "<html><body></body></html>", "https://example.com"
-        )
+        doc = HtmlExtractor().extract("<html><body></body></html>", "https://example.com")
         assert doc.quality_score < 0.5

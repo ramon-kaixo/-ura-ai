@@ -186,7 +186,7 @@ class PluginRegistry:
                         phase=phase,
                         error="Plugin load failed",
                         duration_ms=elapsed,
-                    )
+                    ),
                 )
                 continue
 
@@ -200,7 +200,7 @@ class PluginRegistry:
                         phase=phase,
                         data=data,
                         duration_ms=elapsed,
-                    )
+                    ),
                 )
                 log.info("[plugin] %s ejecutado (%.0fms)", name, elapsed)
             except Exception as exc:
@@ -214,7 +214,7 @@ class PluginRegistry:
                         phase=phase,
                         error=str(exc),
                         duration_ms=elapsed,
-                    )
+                    ),
                 )
 
         return results

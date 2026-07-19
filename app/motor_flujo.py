@@ -48,7 +48,7 @@ class AlforjaSpooler:
             archivos[0].unlink()
             return tarea
         except (OSError, json.JSONDecodeError) as e:
-            logger.error(f"[ALFORJA] Error leyendo spool: {e}")
+            logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
             return None
 
 
@@ -99,7 +99,7 @@ class AsignadorCanales:
                         self.spool.guardar_tarea(tr)
                     self.cola.task_done()
             except Exception as e:
-                logger.error(f"Error en bucle: {e}")
+                logger.exception(f"Error en bucle: {e}")
             await asyncio.sleep(0.1)
 
     def arrancar(self) -> None:

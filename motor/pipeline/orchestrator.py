@@ -23,11 +23,11 @@ ARCHIVO_TRENDS = "trends.ndjson"
 class Orchestrator:
     """Orquestador del pipeline: preflight → scan → diagnose → verify."""
 
-    def __init__(self, config: UraConfig):
+    def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.qdrant = QdrantClient.instancia(config)
 
-    def run(self, dry_run: bool = False) -> PipelineResult:
+    def run(self, dry_run: bool = False) -> PipelineResult:  # noqa: FBT001, FBT002
         """Ejecuta el pipeline completo."""
         result = PipelineResult(timestamp=datetime.now(UTC).isoformat() + "Z")
         t_total = time.time()
@@ -77,11 +77,11 @@ class Orchestrator:
         except Exception as e:
             result.ok = False
             result.error = str(e)
-            log.error("pipeline error: %s", e, exc_info=True)
+            log.error("pipeline error: %s", e, exc_info=True)  # noqa: G201
         self._emit(result)
         return result
 
-    def _registrar_trend(self, result: PipelineResult, perf: dict | None = None):
+    def _registrar_trend(self, result: PipelineResult, perf: dict | None = None) -> None:
         """Registra métricas de tendencia a disco."""
         if not result.scan:
             return
@@ -100,10 +100,10 @@ class Orchestrator:
         if perf:
             entry["perf"] = perf
         lines = dep / ARCHIVO_TRENDS
-        with open(lines, "a") as f:
+        with open(lines, "a") as f:  # noqa: PTH123
             f.write(json.dumps(entry, default=str) + "\n")
 
-    def _escribir_side_effects(self, result: PipelineResult):
+    def _escribir_side_effects(self, result: PipelineResult) -> None:
         """Escribe JSON de estado y diagnóstico a disco."""
         dep = Path(self.config.deploy_dir)
         dep.mkdir(parents=True, exist_ok=True)
@@ -131,19 +131,5 @@ class Orchestrator:
             }
             (dep / ARCHIVO_DIAGNOSTICO).write_text(json.dumps(d, indent=2))
 
-    def _emit(self, result: PipelineResult):
+    def _emit(self, result: PipelineResult) -> None:
         """Emite resultado del pipeline como JSON a stdout."""
-        print(
-            json.dumps(
-                {
-                    "ura": "pipeline",
-                    "ok": result.ok,
-                    "ts": result.timestamp,
-                    "error": result.error,
-                    "health_score": result.scan.health_score if result.scan else None,
-                    "incidentes": len(result.diagnose.incidentes) if result.diagnose else 0,
-                },
-                default=str,
-            ),
-            flush=True,
-        )

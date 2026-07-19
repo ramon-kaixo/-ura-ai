@@ -39,7 +39,7 @@ _qdrant: QdrantClient | None = None
 
 
 def _get_qdrant() -> QdrantClient:
-    global _qdrant
+    global _qdrant  # noqa: PLW0603
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -47,7 +47,7 @@ def _get_qdrant() -> QdrantClient:
 
 def _sha256(filepath: Path) -> str:
     h = hashlib.sha256()
-    with open(filepath, "rb") as f:
+    with open(filepath, "rb") as f:  # noqa: PTH123
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -97,7 +97,7 @@ def save_manifest(manifest: dict) -> None:
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
-def index_documents(force: bool = False) -> dict:
+def index_documents(force: bool = False) -> dict:  # noqa: C901, FBT001, FBT002, PLR0912, PLR0915
     """Indexa todos los documentos en data/documentos/ en Qdrant.
     - Archivos nuevos → chunk + embed (vía Ollama)
     - Archivos modificados (SHA-256 ≠) → re-indexa
@@ -281,7 +281,8 @@ def _build_context(results: list[dict], max_chars: int = 8000) -> str:
 
 def _generate(context: str, question: str) -> str:
     """Wrapper temporal: delega en motor.core.llm.generate().
-    Se eliminará cuando toda la migración esté validada."""
+    Se eliminará cuando toda la migración esté validada.
+    """
     if not context:
         return "No se encontraron documentos relevantes para generar una respuesta."
     prompt = (

@@ -30,7 +30,7 @@ _qdrant = None
 
 
 def _get_qdrant():
-    global _qdrant
+    global _qdrant  # noqa: PLW0603
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -58,13 +58,13 @@ def medir():
             import urllib.request
 
             data = json.dumps({"name": t, "arguments": {}}).encode()
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 f"{MCP}/mcp/call",
                 data=data,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=15):
+            with urllib.request.urlopen(req, timeout=15):  # noqa: S310
                 pass
             ms = int((time.time() - inicio) * 1000)
             resultados.append({"test": t, "ms": ms, "ok": True})
@@ -97,13 +97,13 @@ print('OK')
         tmp_f.write(code)
         tmp_path = tmp_f.name
     _asus_ssh = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
-    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True, check=False)
-    subprocess.run(
+    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True, check=False)  # noqa: S603, S607
+    subprocess.run(  # noqa: S603
         [*GX10_SSH, "docker", "cp", f"{tmp_path}", "open-webui:/tmp/"],
         capture_output=True,
         check=False,
     )
-    r = subprocess.run(
+    r = subprocess.run(  # noqa: S603
         [*GX10_SSH, "docker", "exec", "-e", f"URA_PROMPT_ADD={prompt_add}", "open-webui", "python3", tmp_path],
         capture_output=True,
         text=True,
@@ -112,7 +112,7 @@ print('OK')
     )
     Path(tmp_path).unlink(missing_ok=True)
     if "OK" in r.stdout:
-        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30, check=False)
+        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30, check=False)  # noqa: S603
         time.sleep(5)
 
 
@@ -125,7 +125,7 @@ def comparar_resultados(antes, despues):
 def analizar_reflexiones() -> None:
     if not REFLEXIONES.exists():
         return
-    with open(REFLEXIONES) as f:
+    with open(REFLEXIONES) as f:  # noqa: PTH123
         lineas = f.readlines()
     if len(lineas) < 3:
         return
@@ -138,7 +138,7 @@ def analizar_reflexiones() -> None:
         sugerencia += " Hay muchos fallos. Revisar tools, permisos y function calling."
         sugs = []
         if SUGERENCIAS.exists():
-            with open(SUGERENCIAS) as f:
+            with open(SUGERENCIAS) as f:  # noqa: PTH123
                 sugs = json.load(f)
         idx = len(sugs)
         sugs.append(
@@ -149,13 +149,13 @@ def analizar_reflexiones() -> None:
                 "solucion": "Revisar configuracion de tools, function calling en Open WebUI, y permisos",
             },
         )
-        with open(SUGERENCIAS, "w") as f:
+        with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
             json.dump(sugs, f, indent=2)
-        proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])
+        proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])  # noqa: S603
         # No esperamos a que termine, pero registramos el PID
         log(f"Test lanzado con PID {proc.pid}")
     MEJORAS.parent.mkdir(parents=True, exist_ok=True)
-    with open(MEJORAS, "a") as f:
+    with open(MEJORAS, "a") as f:  # noqa: PTH123
         f.write(f"\n# {datetime.now(UTC).isoformat()}\n# {sugerencia}\n")
 
 
@@ -163,7 +163,7 @@ def aplicar_mejora() -> bool:
     if not SUGERENCIAS.exists():
         log("No hay sugerencias")
         return False
-    with open(SUGERENCIAS) as f:
+    with open(SUGERENCIAS) as f:  # noqa: PTH123
         sugs = json.load(f)
     for s in sugs:
         if s.get("dominio") == "meta_mejora" and not s.get("aplicada", False):
@@ -186,7 +186,7 @@ def aplicar_mejora() -> bool:
                 guardar_correccion_en_qdrant(s.get("problema", ""), s.get("solucion", ""), s["impacto"])
             else:
                 log("  SIN MEJORA: se revertira")
-            with open(SUGERENCIAS, "w") as f:
+            with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
                 json.dump(sugs, f, indent=2)
             return True
     log("No hay sugerencias pendientes de aplicar")

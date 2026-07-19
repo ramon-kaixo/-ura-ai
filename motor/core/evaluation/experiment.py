@@ -114,18 +114,21 @@ class Experiment:
         description: str = "",
     ) -> None:
         """Registra una configuración para el experimento."""
-        self._configs.append(ExperimentConfig(
-            name=name,
-            retrieve_fn=retrieve_fn,
-            params=params or {},
-            description=description,
-        ))
+        self._configs.append(
+            ExperimentConfig(
+                name=name,
+                retrieve_fn=retrieve_fn,
+                params=params or {},
+                description=description,
+            ),
+        )
 
     def run(self, k: int = 10) -> list[ExperimentResult]:
         """Ejecuta todas las configuraciones registradas.
 
         Returns:
             Lista de ExperimentResult, uno por configuración.
+
         """
         self._k = k
         self._results.clear()
@@ -156,6 +159,7 @@ class Experiment:
 
         Returns:
             Dict con rankings por métrica y ganador general.
+
         """
         if not self._results:
             return {"error": "no results", "configs": []}
@@ -175,10 +179,7 @@ class Experiment:
                 key=lambda x: x[1],
                 reverse=True,
             )
-            rankings[metric] = [
-                {"config": name, "value": round(value, 4)}
-                for name, value in ranked
-            ]
+            rankings[metric] = [{"config": name, "value": round(value, 4)} for name, value in ranked]
 
         # Ganador general (promedio de rankings normalizados)
         config_scores: dict[str, float] = {}
@@ -202,8 +203,7 @@ class Experiment:
             "elapsed_seconds": round(elapsed, 2),
             "rankings": rankings,
             "general_ranking": [
-                {"rank": i + 1, "config": name, "score": score}
-                for i, (name, score) in enumerate(general)
+                {"rank": i + 1, "config": name, "score": score} for i, (name, score) in enumerate(general)
             ],
             "winner": general[0][0] if general else None,
             "winner_score": general[0][1] if general else None,
@@ -226,16 +226,11 @@ class Experiment:
         ]
 
         lines.extend(
-            f"    #{entry['rank']}  {entry['config']:<15} "
-            f"{entry['score']:.4f}"
-            for entry in comp["general_ranking"]
+            f"    #{entry['rank']}  {entry['config']:<15} {entry['score']:.4f}" for entry in comp["general_ranking"]
         )
 
         if comp.get("winner"):
-            lines.append(
-                f"\n  Ganador: {comp['winner']} "
-                f"(score: {comp['winner_score']:.4f})"
-            )
+            lines.append(f"\n  Ganador: {comp['winner']} (score: {comp['winner_score']:.4f})")
 
         return "\n".join(lines)
 
@@ -261,6 +256,5 @@ class Experiment:
         Nota: solo carga los resultados, no las configuraciones originales.
         Para re-ejecutar, crear un nuevo Experiment con las mismas configs.
         """
-        data = json.loads(Path(path).read_text())
+        return json.loads(Path(path).read_text())
         # Devolvemos un resultado directo (o podríamos reconstruir parcialmente)
-        return data

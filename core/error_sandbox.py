@@ -51,7 +51,7 @@ class ErrorSandbox:
     def _load_config(self) -> dict:
         """Cargar configuración desde archivo."""
         try:
-            with open(self.config_path) as f:
+            with open(self.config_path) as f:  # noqa: PTH123
                 return json.load(f)
         except FileNotFoundError:
             logger.warning(f"Archivo de configuración no encontrado: {self.config_path}")
@@ -73,7 +73,7 @@ class ErrorSandbox:
     def _load_knowledge_base(self) -> dict:
         """Cargar base de conocimiento de errores."""
         try:
-            with open(self.knowledge_base_path) as f:
+            with open(self.knowledge_base_path) as f:  # noqa: PTH123
                 return json.load(f)
         except FileNotFoundError:
             logger.warning(f"Base de conocimiento no encontrada: {self.knowledge_base_path}")
@@ -292,12 +292,12 @@ def main() -> None:
 
     elif args.log:
         log = sandbox.get_sandbox_log()
-        for result in log:
+        for result in log:  # noqa: B007
             pass
 
     elif args.manual:
         manual_errors = sandbox.get_manual_intervention_errors()
-        for result in manual_errors:
+        for result in manual_errors:  # noqa: B007
             pass
 
     else:

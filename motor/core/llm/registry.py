@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
 class ProviderRegistry:
     """Registro de proveedores LLM. Thread-safe por naturaleza (dict operations
-    are atomic in CPython para keys aislados)."""
+    are atomic in CPython para keys aislados).
+    """
 
     def __init__(self) -> None:
         self._providers: dict[str, BaseLLMProvider] = {}

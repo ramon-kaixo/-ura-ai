@@ -212,14 +212,10 @@ def run_pipeline(iterations: int = 5) -> dict[str, Any]:
             "max_summary_sentences": MAX_SUMMARY,
             "query": QUERY,
         },
-        "latency_ms": {
-            stage: compute_stats(vals) for stage, vals in times.items()
-        },
+        "latency_ms": {stage: compute_stats(vals) for stage, vals in times.items()},
         "total_latency_ms": compute_stats(total_times),
         "throughput": {
-            "docs_per_second": round(
-                documents_in / (mean(total_times) / 1000) if total_times else 0, 1
-            ),
+            "docs_per_second": round(documents_in / (mean(total_times) / 1000) if total_times else 0, 1),
             "total_time_seconds": round(mean(total_times) / 1000, 3),
         },
         "documents": {
@@ -243,50 +239,35 @@ def run_pipeline(iterations: int = 5) -> dict[str, Any]:
 def write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2))
-    print(f"  📄 {path}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Benchmark F24 Web Intelligence")
-    parser.add_argument(
-        "--iterations", type=int, default=5, help="Número de iteraciones (default: 5)"
-    )
+    parser.add_argument("--iterations", type=int, default=5, help="Número de iteraciones (default: 5)")
     args = parser.parse_args()
-
-    print(f"Benchmark F24 — {args.iterations} iteraciones (+{WARMUP} warmup)")
-    print("-" * 50)
 
     result = run_pipeline(iterations=args.iterations)
 
-    print(f"\nDocumentos: {result['documents']['total_input']} → {result['documents']['valid_after_dedup']}")
-    print(f"Duplicados eliminados: {result['documents']['removed_total']} ({result['documents']['duplication_pct']}%)")
-    print(f"Citas: {result['citations']['total']} (evidencia única: {result['citations']['unique_evidence']})")
-    print(f"Compresión resumen: {result['summary']['compression_ratio']:.1%}")
-    print(f"\nThroughput: {result['throughput']['docs_per_second']} docs/s")
-    print(f"Tiempo total medio: {result['total_latency_ms']['mean']}ms")
-
-    print("\nLatencia por etapa (ms):")
-    print(f"  {'Etapa':<15} {'Media':>8} {'P50':>8} {'P95':>8} {'P99':>8}")
-    print("  " + "-" * 47)
-    for stage, stats in result["latency_ms"].items():
-        print(
-            f"  {stage:<15} {stats['mean']:>8.1f} {stats['p50']:>8.1f} {stats['p95']:>8.1f} {stats['p99']:>8.1f}"
-        )
+    for _stage, _stats in result["latency_ms"].items():
+        pass
 
     out_dir = REPO / "docs" / "architecture"
     write_json(out_dir / "benchmark_f24.json", result)
-    write_json(out_dir / "benchmark_f24_pipeline.json", {
-        "pipeline_stages": list(result["latency_ms"].keys()),
-        "iterations": args.iterations,
-        "total_documents": result["documents"]["total_input"],
-        "valid_documents": result["documents"]["valid_after_dedup"],
-        "duplicates_removed": result["documents"]["removed_total"],
-        "citations": result["citations"]["total"],
-        "evidence": result["citations"]["unique_evidence"],
-        "compression_ratio": result["summary"]["compression_ratio"],
-        "throughput_docs_per_second": result["throughput"]["docs_per_second"],
-        "total_time_ms_mean": result["total_latency_ms"]["mean"],
-    })
+    write_json(
+        out_dir / "benchmark_f24_pipeline.json",
+        {
+            "pipeline_stages": list(result["latency_ms"].keys()),
+            "iterations": args.iterations,
+            "total_documents": result["documents"]["total_input"],
+            "valid_documents": result["documents"]["valid_after_dedup"],
+            "duplicates_removed": result["documents"]["removed_total"],
+            "citations": result["citations"]["total"],
+            "evidence": result["citations"]["unique_evidence"],
+            "compression_ratio": result["summary"]["compression_ratio"],
+            "throughput_docs_per_second": result["throughput"]["docs_per_second"],
+            "total_time_ms_mean": result["total_latency_ms"]["mean"],
+        },
+    )
 
 
 if __name__ == "__main__":

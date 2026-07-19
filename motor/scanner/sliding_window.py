@@ -8,7 +8,7 @@ log = logging.getLogger("ura.scanner.sliding")
 class SlidingWindow:
     """Ventana deslizante para detección de flapping en servicios."""
 
-    def __init__(self, maxlen: int = 3):
+    def __init__(self, maxlen: int = 3) -> None:
         self._buffer = deque(maxlen=maxlen)
 
     def add_and_check(self, estado: Any) -> list:

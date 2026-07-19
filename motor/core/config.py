@@ -14,6 +14,8 @@ RUTA_DEPLOY_DEFECTO = "/home/ramon/URA/ura_ia_1972/deploy"
 HOST_ASUS_DEFECTO = "100.72.103.12"
 PUERTO_ASUS_DEFECTO = 4198
 INTERFAZ_TAILSCALE_DEFECTO = "tailscale0"
+
+
 def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
     """Aplica configuración desde JSON legacy (path arg, URA_CONFIG, /etc/ura/config.json).
     Es la fuente de menor prioridad — CONFIG y env vars sobrescriben después.
@@ -21,8 +23,7 @@ def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
     sources = [p for p in [path, os.environ.get("URA_CONFIG", ""), RUTA_CONFIG_DEFECTO] if p]
     if path or os.environ.get("URA_CONFIG"):
         warnings.warn(
-            "UraConfig.load(path=...) y URA_CONFIG están DEPRECATED. "
-            "Use system_config.json vía config_manager.",
+            "UraConfig.load(path=...) y URA_CONFIG están DEPRECATED. Use system_config.json vía config_manager.",
             FutureWarning,
             stacklevel=3,
         )

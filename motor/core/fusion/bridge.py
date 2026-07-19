@@ -38,7 +38,7 @@ def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
     - Sin pérdida en campos mapeados (ver docstring del módulo para pérdidas)
     - importance = confidence × 0.8 (heurística: confianza como importancia base)
     - source_episode_ids = evidence_ids (conversión semántica)
-    """
+    """  # noqa: RUF002
     return {
         "id": kf.id,
         "subject": kf.subject,
@@ -63,7 +63,7 @@ def fact_version_to_semantic_fact(fact: Fact, version: FactVersion) -> dict:
     Restricciones:
     - Solo la versión vigente debe proyectarse (versiones obsoletas NO)
     - importance = confidence × 0.8
-    """
+    """  # noqa: RUF002
     return {
         "id": fact.fact_id,
         "subject": fact.subject,

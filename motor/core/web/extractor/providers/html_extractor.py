@@ -14,16 +14,46 @@ from html.parser import HTMLParser
 from motor.core.web.base import Extractor
 from motor.core.web.models import WebDocument
 
-_BLOCK_TAGS: frozenset = frozenset({
-    "p", "div", "h1", "h2", "h3", "h4", "h5", "h6",
-    "li", "blockquote", "section", "article", "pre",
-    "br", "tr", "th", "td",
-})
-_SKIP_TAGS: frozenset = frozenset({
-    "script", "style", "noscript", "iframe", "svg",
-    "canvas", "form", "input", "select", "textarea",
-    "button", "nav", "footer", "header", "aside",
-})
+_BLOCK_TAGS: frozenset = frozenset(
+    {
+        "p",
+        "div",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "li",
+        "blockquote",
+        "section",
+        "article",
+        "pre",
+        "br",
+        "tr",
+        "th",
+        "td",
+    },
+)
+_SKIP_TAGS: frozenset = frozenset(
+    {
+        "script",
+        "style",
+        "noscript",
+        "iframe",
+        "svg",
+        "canvas",
+        "form",
+        "input",
+        "select",
+        "textarea",
+        "button",
+        "nav",
+        "footer",
+        "header",
+        "aside",
+    },
+)
 _WHITESPACE_RE: re.Pattern = re.compile(r"[ \t]+")
 _NEWLINE_RE: re.Pattern = re.compile(r"\n{3,}")
 

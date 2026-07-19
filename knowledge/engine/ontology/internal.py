@@ -126,4 +126,3 @@ class KnowledgeAsset:
     def wraps_document(self, doc_id: str) -> None:
         """Marca este asset como envoltura de un Document existente."""
         # No se puede modificar frozen dataclass, devolvemos nuevo
-        pass
