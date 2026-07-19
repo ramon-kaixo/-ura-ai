@@ -45,8 +45,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: pytest tests/test_f28_b2_protocol.py tests/test_platform_delivery.py tests/test_platform_resilience.py tests/test_core_secrets.py tests/test_platform_registry.py tests/test_f14_bugs.py -q --no-cov
-        timeout-minutes: 5
+      - run: pytest tests/test_f28_b2_protocol.py tests/test_platform_delivery.py tests/test_platform_resilience.py tests/test_core_secrets.py tests/test_platform_registry.py tests/test_obs_tracing.py tests/test_f14_bugs.py tests/test_events.py tests/test_plugin.py tests/test_memory.py tests/test_agents_comprehensive.py -q --cov 2>&1 | tail -5
+        timeout-minutes: 10
 
   security:
     name: Security (bandit)

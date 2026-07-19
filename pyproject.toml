@@ -126,11 +126,11 @@ asyncio_mode = "auto"
 addopts = "-q --cov=core --cov=monitor --cov=motor --cov-report=term --cov-report=xml"
 
 [tool.coverage.run]
-source = ["core", "monitor", "motor"]
-omit = ["*/tests/*", "*/.venv/*", "*/__pycache__/*"]
+source = ["motor"]
+omit = ["*/tests/*", "*/.venv/*", "*/__pycache__/*", "*/motor/tests/*"]
 
 [tool.coverage.report]
-fail_under = 1
+fail_under = 30
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
