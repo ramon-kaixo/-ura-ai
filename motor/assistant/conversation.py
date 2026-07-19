@@ -6,8 +6,11 @@ import threading
 import uuid
 from typing import Any
 
+from motor.assistant.auto_mode import AutoModeDetector
 from motor.assistant.context_window import ContextWindow
+from motor.assistant.episodic_memory import EpisodicConversationMemory
 from motor.assistant.intent import IntentEngine
+from motor.assistant.interruption import InterruptionSystem
 from motor.assistant.message_store import MessageStore
 from motor.assistant.models import (
     Conversation,
@@ -17,6 +20,7 @@ from motor.assistant.models import (
     MessageRole,
     UserIntent,
 )
+from motor.assistant.trends import TrendAwareness
 
 _MAX_ACTIVE_CONVERSATIONS = 1000
 
@@ -36,11 +40,20 @@ class ConversationEngine:
         message_store: MessageStore | None = None,
         context_window: ContextWindow | None = None,
         intent_engine: IntentEngine | None = None,
+        auto_mode: AutoModeDetector | None = None,
+        interruption_system: InterruptionSystem | None = None,
+        episodic_memory: EpisodicConversationMemory | None = None,
+        trend_awareness: TrendAwareness | None = None,
         max_turns: int = 200,
     ):
-        self._store = message_store or MessageStore()
+        store = message_store or MessageStore()
+        self._store = store
         self._context = context_window or ContextWindow()
         self._intent = intent_engine or IntentEngine()
+        self._auto_mode = auto_mode or AutoModeDetector()
+        self._interruptions = interruption_system or InterruptionSystem()
+        self._episodic = episodic_memory or EpisodicConversationMemory(message_store=store)
+        self._trends = trend_awareness or TrendAwareness()
         self._max_turns = max_turns
         self._active: dict[str, Conversation] = {}
         self._lock = threading.Lock()
@@ -110,6 +123,52 @@ class ConversationEngine:
                     else:
                         resolved = pattern.sub(f"({ctx}...)", resolved)
         return resolved
+
+    def process_user_message(
+        self,
+        conversation_id: str,
+        user_message: str,
+    ) -> dict[str, object]:
+        intent = self.detect_intent(user_message)
+        conv = self.get_or_create(conversation_id)
+
+        is_interruption = self._interruptions.detect_interruption(
+            conversation_id, conv.messages,
+        )
+
+        mode_result = self._auto_mode.detect_mode(
+            user_message, intent,
+            previous_mode=conv.state.mode if conv.state else None,
+            conversation_id=conversation_id,
+        )
+        if conv.state:
+            conv.state.mode = mode_result.mode
+            self._auto_mode.set_mode(conversation_id, mode_result.mode)
+
+        resolved = self.resolve_reference(user_message, conversation_id)
+
+        interruption_context = ""
+        if is_interruption:
+            interruption_context = self._interruptions.auto_recover_context(
+                conversation_id, mode_result.mode.value,
+            )
+
+        episodic_context = self._episodic.get_relevant_context(user_message)
+
+        trend = self._trends.analyze_query(user_message, intent.value)
+        needs_web = trend.needs_update
+
+        return {
+            "intent": intent,
+            "mode": mode_result.mode,
+            "mode_reason": mode_result.reason,
+            "resolved_message": resolved,
+            "is_interruption": is_interruption,
+            "interruption_context": interruption_context,
+            "episodic_context": episodic_context,
+            "needs_web_search": needs_web,
+            "trend_reason": trend.reason,
+        }
 
     def get_or_create(self, conversation_id: str) -> Conversation:
         with self._lock:
