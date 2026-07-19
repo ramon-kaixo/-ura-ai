@@ -28,7 +28,7 @@ class UserPreferences:
 
 class ConversationalLearning:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or str(Path.home() / ".ura" / "learning.db")
+        self._db_path = db_path or "/tmp/ura/learning.db"
         self._lock = threading.Lock()
         self._preferences: dict[str, UserPreferences] = {}
         self._init_db()
