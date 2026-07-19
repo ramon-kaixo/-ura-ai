@@ -1,105 +1,117 @@
 # Changelog
 
-## [0.28.0] — 2026-07-19 — Fase 28 Platform Protocols
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
 
 ### Added
-- F28: ProtocolEnvelope (5 headers), ProtocolValidator, VersionNegotiator, Transport ABC + LocalTransport, ErrorEnvelope
-- F28: Observabilidad Distribuida (TraceId/SpanId, TraceExporter, Sampler, MetricsCollector, HealthAggregator, span tree validation)
-- F28: RateLimiter (token bucket), payload sanitization (8 blocked patterns), structured JSON logging
-- 63 tracing tests, 488 total F25–F28+OBS tests, soak 3288 ops/60s 0 errors
+- Fase 0: requirements/base.txt, requirements/gpu.txt, requirements/dev.txt
+- Fase 1: GitHub Actions CI (lint, typecheck, test, security) + publish
+- Fase 2: Repo cleanup (colisión macOS resuelta, .gitignore runtime data)
+- Fase 3: Scripts huérfanos archivados (6 → .nervioso/descarte/)
 
-## [0.27.0] — 2026-07-18 — Fase 27 Autonomous Agents
+## [0.29.0] — 2026-07-19
 
 ### Added
-- F27: CapabilityGate (6 denial codes), ToolRunner (20 constraints, Semaphore backpressure)
-- F27: Scheduler (FIFO + aging + GracefulShutdown), Planner (rule-based, no LLM in hot path)
-- F27: AgentOrchestrator (18 constraints, DI-based, CapabilityGate integrated)
+- F29 B1: Observabilidad — ComponentLogger estructurado, HealthAggregator, PlatformMetrics
+- F29 B2: Validación técnica — benchmark_f29_b2.py, reporte de throughput/latencia/memoria
+- F29 B3: Validación funcional — 5 informes de dominio (jurídico, técnico, código, científico, conversacional)
+- F29 B4: Operación — runbook, backup_f26_memory.py, graceful shutdown
+- F29 B5: Resiliencia — CircuitBreaker, Backpressure, 7 chaos tests
+- F29 B6: Compatibilidad — rolling upgrade + downgrade procedure
+- F29 B7: Gobernanza — ownership table, runbooks, SLO targets
+- 101 tests nuevos: delivery(42), resilience(29), secrets(15), registry(15)
+- deploy/polkit/10-ura.rules — regla polkit para systemctl sin sudo
+- F14-F02: MultiAgentRuntime.cancel() ahora acepta workflow_id=None
+- F14-F03: EpisodeStore auto-recreate tras SQLite corrupta
+- F14-F05: HybridRetriever fallback graceful sin Qdrant
+- T06: 0 errores de lint (ruff ALL rules, 2356 → 0)
+
+### Changed
+- pyproject.toml: dependencies actualizadas, optional-dependencies reorganizados
+- scripts/pro/ → 140 scripts activos (6 huérfanos archivados)
+
+### Fixed
+- tests/test_unit.py: sys.exit envuelto en `__name__ == '__main__'`
+- knowledge/engine/: 26 `except: pass` auditados como degradación controlada
+- docs/architecture.md → docs/architecture_diagram.md (colisión case-sensitive macOS)
+
+## [0.28.3] — 2026-07-19
+
+### Added
+- F28.1 Stabilization: 0 bugs críticos, ADRs Approved, tag estable
+- P1 fixes: checksum verification, LocalTransport race condition, TraceExporter DropPolicy
+- P2 ADR-compliance: ErrorCode(StrEnum), ErrorEnvelope.from_original(), size budgets, compression
+- P3 ProtocolEnvelope wrappers: ToolRequest/ToolResult + to_envelope()/from_envelope()
+- 6 ADRs Approved: 028-01..06, 028-10
+
+### Changed
+- motor/platform/: 8 `except:pass` blocks with logging (T08)
+- tests: 71/71 tracing, 67/67 protocol — todos verdes
+
+## [0.27.0] — 2026-07-18
+
+### Added
+- Fase 27: Arquitectura de agentes autónomos
+- Agent ABCs + models frozen (ADR-027-01/02)
+- CapabilityGate con 6 denial codes
+- ToolRunner con 20 constraints + backpressure vía Semaphore
+- Scheduler: FIFO + aging (priority decay cada 30s) + GracefulShutdown
+- Planner: rule-based determinista (sin LLM en hot path)
+- AgentOrchestrator: 18 constraints, DI-based
 - 109 tests, 0 regresiones
 
-## [0.26.0] — 2026-07-17 — Fase 26 Historical Memory
+## [0.26.0] — 2026-07-17
 
 ### Added
-- F26: MemoryTimeline (temporal projection), Journal (WAL with fsync+checksum), Snapshot (recovery point)
-- F26: Health/Readiness/Liveness probes, graceful shutdown
-- F26: AES-256-CTR optional encryption (PBKDF2, cryptography library)
+- Fase 26: Memoria Histórica
+- Timeline (proyección temporal), Journal (WAL con fsync+checksum), Snapshot (punto de recuperación)
+- Health/Readiness/Liveness probes
+- Graceful Shutdown con timeout
+- Cifrado AES-256-CTR opcional en journal y snapshot
+- 10,644 ops/s append, 46,000+ ops/s state_at
 
-## [0.25.0] — 2026-07-16 — Fase 25 Knowledge Fusion
-
-### Added
-- F25: Pipeline stages (Extraction, Normalization, KnowledgeMerger, MemoryCandidate)
-- F25: Entity Resolution (ContextualEntityResolver with LRU cache, n-gramas, polysemy handling)
-- F25: FactIndex, FactHistory, bucket-based conflict detection
-- F25: Bridge to F26 Memory (MemoryCandidateSelectionStage)
-
-## [0.2.0] — 2026-07-01 — Release Candidate
-
-## [0.2.0] — 2026-07-01 — Release Candidate
+## [0.25.0] — 2026-07-16
 
 ### Added
-- Fase D: Rule evaluation engine (SafeEval AST, R001-R005)
-- Fase D: StateDeductor (coverage, orphan, hub nodes)
-- Fase D: RecommendationValidator
-- CLI commands: `ke rules list|eval`, `ke deduce`
-- Cross-process concurrency test (10 compile + 5 archive, 0 SQLITE_BUSY)
-- Stress tests: 5 escenarios (writer/readers, archive, kill, queue, contention)
-- Resilience tests: v8→v11 migration, downgrade protection, corruption
-- Property tests: 200 random markdowns parsed deterministically
-- CI pipeline: `scripts/ci.sh` (ruff, tests, golden-master, property, doctor, audit-db, invariants)
-- ADRs: 6 documentos de arquitectura (NDJSON, flock, determinism ABI, WAL, async archive, systemd)
-- API documentation: `docs/api/API.md`
-- Benchmark baseline: `docs/benchmarks/BASELINE.md`
-- Release checklist: `docs/architecture/RELEASE_CHECKLIST.md`
-- Invariants: `docs/architecture/INVARIANTS.md` (11 reglas vinculantes)
+- Fase 25: Knowledge Fusion
+- ABCs (8), modelos (12), enums, config, registry
+- 8 PipelineStage implementations + BaseStage
+- Entity Resolution Avanzado: ContextualEntityResolver con desambiguación contextual
+- LRU cache, n-gramas, polisemia (Apple, Tesla, Amazon, Washington)
 
-### Changed
-- `cmd_compile` ahora pasa por `request_compile()` con flock (seguridad entre procesos)
-- `verify_archive`/`restore_source` aceptan `archive_dir` opcional (path traversal fix)
-- `get_audit()` fallback a no-op si `~/.ura/audit/` no es escribible
-- Timestamp de archive con microsegundos (colisión entre procesos)
-- `determinism_algorithm` ahora se escribe correctamente (compiler delega en determinism.py)
-- Schema base incluye `determinism_algorithm` (DBs frescas consistentes)
-
-### Fixed
-- `cmd_compile` sin flock → 10 procesos simultáneos causaban SQLITE_BUSY
-- Colisión de timestamp entre procesos en archive
-- Deadlock de importación en hilos (__init__.py)
-- `wal_path.stat()` sin `exists()` en ke audit-db
-- frontmatter sin `sort_keys` → hash inestable
-- `process_archive_jobs` sin `BEGIN IMMEDIATE` tras cada COMMIT
-- `determinism_algorithm` dead code (nunca se escribía en DB)
-- 15/15 SafeEval bypasses bloqueados (__class__, __bases__, lambda, etc.)
-
-### Security
-- SafeEval: AST whitelist, dunder blocking, límites (depth 10, nodes 100, chars 2048, calls 10)
-- path traversal en manifest/archive corregido
-- `shell=True` nunca usado
-- Dependency: simpleeval reemplazado por AST nativo (0 dependencias externas)
-
-## [0.1.0] — 2026-06-24 — Fase C completa
+## [0.17.0] — 2026-07-14
 
 ### Added
-- Auditoría NDJSON (read path lock-free)
-- Connection factory única (`connection.py`)
-- `begin_immediate` para todas las escrituras SQLite
-- `compile_lock` context manager con flock
-- Determinism hash versionado (sha256-v1)
-- Stale recovery para jobs
-- Métricas Prometheus (compile, search, archive, audit, queue)
+- Fase 17: Configuración Unificada
+- UraConfig como vista tipada de CONFIG
+- Deprecación de config.local.json
+- scripts/pro/audit_config.py con 3 comprobaciones automáticas
 
-### Changed
-- API pública congelada
-- ENGINE_VERSION y MIN/MAX_SCHEMA en migrations.py
-- CLI commands: `audit-db`, `job-process`
-
-### Fixed
-- `verify_archive` path traversal (CRITICAL)
-- Conexiones SQLite sin PRAGMAs (10/15 sin WAL)
-- Jobs stuck en "running" forever
-
-## [0.0.1] — 2026-06-17 — Fase A + B
+## [0.11.0] — 2026-07-10
 
 ### Added
-- Knowledge Engine inicial
-- Fase A: Archival (git bundle + manifest + restore)
-- Fase B: Observabilidad (métricas, logs estructurados, correlation_id)
-- 170 tests, stress tests, cross-process tests
+- Fase 11: Plataforma — Motor extensible
+- EventBus tipado (tópicos, payloads, sync/async)
+- Plugin manifest + RegistryV2
+- Pipelines dinámicos (engine YAML, etapas base, CLI)
+- Observabilidad: /metrics, /health, /ready
+
+## [0.10.0] — 2026-07-08
+
+### Added
+- Fase 10: Estabilización
+- CI verde, 540 tests, 0 fallos
+- DegradedMode, PluginRegistry, Executor
+- 67 tests nuevos
+- Benchmarks: 0 degradaciones
+
+## [0.0.1] — 2026-05-01
+
+### Added
+- Initial project structure
+- Multi-agent architecture
+- Knowledge Engine foundation
