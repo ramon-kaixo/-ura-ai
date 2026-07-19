@@ -1,8 +1,10 @@
 # ADR-028-03: Protocol Versioning + Compatibility (merged)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 **CR resolved:** CR-09 (Merge ADR-028-02 into ADR-028-03), CR-06  
+**Approved:** 2026-07-19  
+**Verification:** All semver rules, compatibility rules (BC01-BC05, FC01-FC02, BR01-BR04, NB01-NB03), and per-message-kind negotiation implemented in `motor/platform/compat.py`, `motor/platform/negotiator.py`, and `motor/platform/validator.py`. ABC versioning (Section 4) is a guideline — implementation will be tracked per-ABC during F29 evolution.  
 
 ---
 

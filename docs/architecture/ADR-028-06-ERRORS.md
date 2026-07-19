@@ -1,8 +1,10 @@
 # ADR-028-06: Error Contract (v2)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 **CR resolved:** CR-02 (single ErrorEnvelope definition)  
+**Approved:** 2026-07-19  
+**Verification:** ErrorEnvelope with all fields + ErrorCode(StrEnum) with 11 canonical codes in `motor/platform/models.py`. ErrorDelivery ER01-ER08 in `motor/platform/delivery.py` with classify_error() for domain vs transport. from_original() inherits causation per ER04. 3 retries per ER02. Tests passing.  
 
 ---
 
