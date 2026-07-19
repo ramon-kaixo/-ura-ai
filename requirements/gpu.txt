@@ -1,0 +1,11 @@
+# GPU dependencies — requeridas para ejecución con aceleración GPU
+# Solo necesarias en servidores con NVIDIA GPU (GX10, etc.)
+-r base.txt
+
+torch>=2.0
+torchvision>=0.15
+numpy>=1.24
+scipy>=1.10
+pillow>=10.0
+transformers>=4.35
+safetensors>=0.4

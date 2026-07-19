@@ -1,0 +1,25 @@
+# Development dependencies — herramientas de desarrollo y testing
+-r base.txt
+
+# Testing
+pytest>=7.0
+pytest-asyncio>=0.21
+pytest-timeout>=2.0
+pytest-cov>=4.0
+hypothesis>=6.80
+
+# Linting y tipo
+ruff>=0.15
+mypy>=1.8
+bandit>=1.7
+coverage>=7.0
+
+# Pre-commit
+pre-commit>=3.0
+
+# Seguridad
+safety>=3.0
+
+# Documentación (opcional)
+mkdocs>=1.5
+mkdocs-material>=9.0
