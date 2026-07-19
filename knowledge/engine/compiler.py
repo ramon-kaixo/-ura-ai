@@ -45,7 +45,7 @@ from knowledge.engine.validator import validate_batch
 log = logging.getLogger("ura.knowledge.compiler")
 
 
-def compile_source(
+def compile_source(  # noqa: C901
     source_dir: Path | None = None,
     db_path: Path | None = None,
     compiler_version: str = "0.1.0",
@@ -108,14 +108,14 @@ def compile_source(
 
     # Register deletions as INFO
     for d in deleted:
-        all_warnings.append(
+        all_warnings.append(  # noqa: PERF401
             CompileError(
                 code="KE207",
                 document=d.path,
                 stage="compiler",
                 message=f"Documento eliminado: {d.path}",
                 category="permanent",
-            )
+            ),
         )
 
     ctx = CompileContext(
@@ -210,7 +210,7 @@ def compile_source(
             errors=len(result.errors) if hasattr(result, "errors") else 0,
             duration_ms=round(duration * 1000),
         )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return CompileResult(
@@ -366,6 +366,7 @@ def compile_incremental(
 
     Returns:
         CompileResult con documents_changed = 0 si no hay cambios.
+
     """
     from knowledge.engine.snapshot_store import load_snapshot
 

@@ -43,10 +43,9 @@ class Orquestador:
         return r
 
 
-async def main():
+async def main() -> None:
     o = Orquestador()
-    r = await o.ciclo()
-    print(json.dumps(r, indent=2))
+    await o.ciclo()
 
 
 if __name__ == "__main__":

@@ -71,7 +71,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_called_once()
         vector_store.upsert.assert_called_once()
@@ -92,7 +92,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=False,
                 duration_ms=50.0,
-            )
+            ),
         )
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
@@ -112,7 +112,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
@@ -131,7 +131,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
@@ -152,7 +152,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_called_once()
         vector_store.upsert.assert_not_called()  # no vectors → no upsert
@@ -173,7 +173,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_called_once()
         vector_store.upsert.assert_called_once()
@@ -196,7 +196,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_called_once()
         # Verificar que se truncó
@@ -220,7 +220,7 @@ class TestVectorIndexSubscriber:
                 extractor="markdown",
                 success=True,
                 duration_ms=100.0,
-            )
+            ),
         )
         embedder.embed.assert_called_once()
         call_text = embedder.embed.call_args[0][0][0]

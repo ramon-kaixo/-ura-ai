@@ -29,7 +29,7 @@ class Sandbox:
         """Registrar evento en log del sandbox."""
         try:
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
-            with open(SANDBOX_LOG, "a", encoding="utf-8") as f:
+            with open(SANDBOX_LOG, "a", encoding="utf-8") as f:  # noqa: PTH123
                 f.write(f"[{timestamp}] [{event_type}] {details}\n")
         except Exception as e:
             logger.exception(f"Error registrando en sandbox.log: {e}")
@@ -91,7 +91,7 @@ class Sandbox:
             finally:
                 # Limpiar archivo temporal
                 with contextlib.suppress(OSError):
-                    Path(test_file).unlink()
+                    Path(test_file).unlink()  # noqa: ASYNC240
 
         except Exception as e:
             result = {"success": False, "output": "", "error": str(e)}
@@ -218,7 +218,7 @@ _sandbox_instance: Sandbox | None = None
 
 def get_sandbox() -> Sandbox:
     """Obtener el singleton del sandbox."""
-    global _sandbox_instance
+    global _sandbox_instance  # noqa: PLW0603
     if _sandbox_instance is None:
         _sandbox_instance = Sandbox()
     return _sandbox_instance
@@ -240,15 +240,15 @@ log.info(f'1 + 1 = {x}')
         await sandbox.test_improvement("test_module", test_code)
 
         # Test 3: backup
-        test_file = Path("/tmp/test_sandbox.txt")
-        test_file.write_text("contenido original")
+        test_file = Path("/tmp/test_sandbox.txt")  # noqa: S108
+        test_file.write_text("contenido original")  # noqa: ASYNC240
         backup = sandbox.create_backup(str(test_file))
 
         # Test 4: rollback
-        test_file.write_text("contenido modificado")
+        test_file.write_text("contenido modificado")  # noqa: ASYNC240
         sandbox.rollback(str(test_file), backup)
 
         # Limpiar
-        test_file.unlink()
+        test_file.unlink()  # noqa: ASYNC240
 
     asyncio.run(test())

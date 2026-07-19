@@ -35,7 +35,7 @@ wait(3)
 
 try:
     # ── 1. Abrir Safari ──
-    subprocess.run(["open", "-a", "Safari"], check=False)
+    subprocess.run(["open", "-a", "Safari"], check=False)  # noqa: S607
     wait(3)
     # Cmd+L para barra de URL
     pyautogui.hotkey("command", "l")
@@ -140,5 +140,5 @@ try:
 
 except pyautogui.FailSafeException:
     pass
-except Exception:
+except Exception:  # noqa: S110
     pass

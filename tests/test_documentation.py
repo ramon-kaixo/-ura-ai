@@ -56,7 +56,8 @@ class TestPluginDev:
 
     def test_has_agent_abc(self):
         content = (ROOT / "docs/PLUGIN_DEV.md").read_text()
-        assert "Agent" in content and "ABC" in content
+        assert "Agent" in content
+        assert "ABC" in content
 
     def test_has_interfaces(self):
         content = (ROOT / "docs/PLUGIN_DEV.md").read_text()

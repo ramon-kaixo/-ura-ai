@@ -9,7 +9,7 @@ from motor.core.state import ScanResult
 def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
     lines = []
     for i in range(puntos):
-        lines.append(
+        lines.append(  # noqa: PERF401
             json.dumps(
                 {
                     "ts": f"2026-06-15T0{i:02d}:00:00Z",
@@ -167,7 +167,7 @@ def test_status_returns_json():
     import subprocess
 
     r = subprocess.run(
-        ["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],
+        ["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=10,

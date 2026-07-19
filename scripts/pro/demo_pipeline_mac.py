@@ -28,22 +28,22 @@ _lock_file = None
 
 
 def _adquirir_instancia_unica() -> None:
-    global _lock_file
-    lock_path = "/tmp/com.ura.voice.lock"
+    global _lock_file  # noqa: PLW0603
+    lock_path = "/tmp/com.ura.voice.lock"  # noqa: S108
     try:
-        _lock_file = open(lock_path, "w")
+        _lock_file = open(lock_path, "w")  # noqa: PTH123, SIM115
         fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         sys.exit(0)
 
 
 def _liberar_y_salir(signum, frame) -> None:
-    global _lock_file
+    global _lock_file  # noqa: PLW0602
     if _lock_file:
         try:
             fcntl.flock(_lock_file, fcntl.LOCK_UN)
             _lock_file.close()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     sys.exit(0)
 
@@ -63,7 +63,7 @@ def ejecutar_nodo_voz() -> None:
     while True:
         if pipeline.device_index is None:
             time.sleep(10)
-            pipeline.device_index = pipeline._find_anker_device()
+            pipeline.device_index = pipeline._find_anker_device()  # noqa: SLF001
             continue
 
         _raw, _corrected, clean = pipeline.listen_and_transcribe(duration_seconds=5)

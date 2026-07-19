@@ -69,11 +69,7 @@ def _handle_dup(
     if doc.quality_score > existing.quality_score:
         _remove_doc(existing, state)
         norm_url = normalize_url(doc.url)
-        canonical = (
-            doc.metadata.get("canonical_url")
-            if isinstance(doc.metadata, dict)
-            else None
-        )
+        canonical = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
         doc_id = get_document_id(doc.url, canonical)
         h = content_hash(doc.text or "")
         state.url_best[norm_url] = doc
@@ -90,11 +86,7 @@ def _handle_dup(
 def _remove_doc(doc: WebDocument, state: _State) -> None:
     """Elimina un documento de todos los índices."""
     norm_url = normalize_url(doc.url)
-    canonical = (
-        doc.metadata.get("canonical_url")
-        if isinstance(doc.metadata, dict)
-        else None
-    )
+    canonical = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
     doc_id = get_document_id(doc.url, canonical)
     h = content_hash(doc.text or "")
 
@@ -132,11 +124,7 @@ class DeduplicationEngine:
 
             for doc in documents:
                 norm_url = normalize_url(doc.url)
-                canonical = (
-                    doc.metadata.get("canonical_url")
-                    if isinstance(doc.metadata, dict)
-                    else None
-                )
+                canonical = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
                 doc_id = get_document_id(doc.url, canonical)
                 h = content_hash(doc.text or "")
                 _try_add(doc, norm_url, doc_id, h, state)

@@ -50,7 +50,7 @@ async def revisar_fuente(fuente: dict) -> dict:
     try:
         pagina = await page_read(url, max_chars=30000)
     except Exception as e:
-        log.error(f"Error leyendo {url}: {e}")
+        log.exception(f"Error leyendo {url}: {e}")
         resultado["error"] = str(e)
         return resultado
 
@@ -86,7 +86,8 @@ async def revisar_fuente(fuente: dict) -> dict:
 
 async def procesar_cambios() -> list[dict]:
     """Revisa todas las fuentes vigiladas. Para las que cambiaron,
-    comprime y versiona las ideas via Qdrant."""
+    comprime y versiona las ideas via Qdrant.
+    """
     from core.memoria.compresor import comprimir_a_ideas
     from core.memoria.qdrant_store import almacenar_ideas, marcar_antiguas
 
@@ -117,7 +118,7 @@ async def procesar_cambios() -> list[dict]:
                 cambio["ideas_insertadas"] = n
                 cambio["total_ideas"] = len(ideas)
         except Exception as e:
-            log.error(f"Error comprimiendo cambios de {cambio['url']}: {e}")
+            log.exception(f"Error comprimiendo cambios de {cambio['url']}: {e}")
 
     guardar_fuentes(fuentes)
     return cambios

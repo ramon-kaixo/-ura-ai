@@ -38,7 +38,7 @@ def chunk_document(
                 doc_type=doc.doc_type,
                 path=doc.path,
                 title=title,
-            )
+            ),
         ]
 
     start = 0
@@ -54,7 +54,7 @@ def chunk_document(
                 doc_type=doc.doc_type,
                 path=doc.path,
                 title=title,
-            )
+            ),
         )
         index += 1
         if end >= len(words):
@@ -94,7 +94,7 @@ def chunk_text(
                 doc_type=doc_type,
                 path=path,
                 title=title,
-            )
+            ),
         )
         index += 1
         if end >= len(words):

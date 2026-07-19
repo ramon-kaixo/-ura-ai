@@ -25,7 +25,7 @@ VALID_DOC_TYPES: frozenset[str] = frozenset(
         "api",
         "concept",
         "architecture",
-    }
+    },
 )
 
 VALID_STATUSES: frozenset[str] = frozenset(
@@ -36,7 +36,7 @@ VALID_STATUSES: frozenset[str] = frozenset(
         "archived",
         "deprecated",
         "wip",
-    }
+    },
 )
 
 DEPRECATED_FIELDS: frozenset[str] = frozenset(
@@ -44,13 +44,13 @@ DEPRECATED_FIELDS: frozenset[str] = frozenset(
         "category",
         "author",
         "version",
-    }
+    },
 )
 
 _MIN_BODY_CHARS = 10
 
 
-def validate_knowledge_object(
+def validate_knowledge_object(  # noqa: C901
     obj: KnowledgeObject,
     valid_types: frozenset[str] | None = None,
 ) -> ValidationResult:
@@ -73,7 +73,7 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"Tipo de documento inválido: '{doc.doc_type}'. Válidos: {sorted(types)}",
-            )
+            ),
         )
 
     # KE009: doc_id debe ser string no vacío
@@ -84,7 +84,7 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"doc_id inválido (debe ser string no vacío): {doc.doc_id!r}",
-            )
+            ),
         )
 
     # KE009: status no estándar
@@ -95,7 +95,7 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"Status no estándar: '{doc.frontmatter.status}'. Esperado uno de: {sorted(VALID_STATUSES)}",
-            )
+            ),
         )
 
     # KE009: quality fuera de rango
@@ -106,7 +106,7 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"quality fuera de rango [0.0, 1.0]: {doc.quality}",
-            )
+            ),
         )
 
     # KE009: confidence fuera de rango
@@ -117,7 +117,7 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"confidence fuera de rango [0.0, 1.0]: {doc.confidence}",
-            )
+            ),
         )
 
     # KE009: body muy corto
@@ -129,43 +129,43 @@ def validate_knowledge_object(
                 document=path,
                 stage="validator",
                 message=f"Body muy corto ({len(body_stripped)} chars, mínimo {_MIN_BODY_CHARS})",
-            )
+            ),
         )
 
     # KE009: tags inválidos
     for tag in doc.frontmatter.tags:
         if not isinstance(tag, str) or not tag.strip():
-            warnings.append(
+            warnings.append(  # noqa: PERF401
                 CompileError(
                     code="KE009",
                     document=path,
                     stage="validator",
                     message=f"Tag inválido: {tag!r}",
-                )
+                ),
             )
 
     # KE009: aliases inválidos
     for alias in doc.frontmatter.aliases:
         if not isinstance(alias, str) or not alias.strip():
-            warnings.append(
+            warnings.append(  # noqa: PERF401
                 CompileError(
                     code="KE009",
                     document=path,
                     stage="validator",
                     message=f"Alias inválido: {alias!r}",
-                )
+                ),
             )
 
     # KE204: campos obsoletos
     for field in DEPRECATED_FIELDS:
         if field in doc.frontmatter.extra:
-            warnings.append(
+            warnings.append(  # noqa: PERF401
                 CompileError(
                     code="KE204",
                     document=path,
                     stage="validator",
                     message=f"Campo obsoleto en frontmatter: '{field}'",
-                )
+                ),
             )
 
     return ValidationResult(
@@ -175,7 +175,7 @@ def validate_knowledge_object(
     )
 
 
-def validate_batch(
+def validate_batch(  # noqa: C901
     objects: list[KnowledgeObject],
     valid_types: frozenset[str] | None = None,
 ) -> tuple[list[KnowledgeObject], list[CompileError], list[CompileError]]:
@@ -230,7 +230,7 @@ def validate_batch(
                         document=path,
                         stage="validator",
                         message=f"Relación '{rel.relation}' apunta a documento inexistente: '{dst}' (desde {doc_id})",
-                    )
+                    ),
                 )
 
         valid.append(obj)
@@ -244,7 +244,7 @@ def validate_batch(
                     document="",
                     stage="validator",
                     message=f"ID duplicado entre documentos: '{did}' aparece {count} veces",
-                )
+                ),
             )
 
     for path_str, count in path_count.items():
@@ -255,7 +255,7 @@ def validate_batch(
                     document=path_str,
                     stage="validator",
                     message=f"Path duplicado: '{path_str}' aparece {count} veces",
-                )
+                ),
             )
 
     return valid, errors, warnings

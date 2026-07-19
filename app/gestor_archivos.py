@@ -23,10 +23,10 @@ class GestorArchivosSeguro:
 
     def listar_proyectos(self) -> list[str]:
         """Lista proyectos en el directorio raiz."""
-        if not os.path.exists(self.root_path):
+        if not Path(self.root_path).exists():
             return []
         try:
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+            return [d for d in os.listdir(self.root_path) if Path(os.path.join(self.root_path, d).is_dir())]  # noqa: PTH118, PTH208
         except Exception:
             logger.exception("Error listing projects in %s", self.root_path)
             return []

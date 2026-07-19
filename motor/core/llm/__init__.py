@@ -59,6 +59,7 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         pass
     return providers
 
+
 log = logging.getLogger(__name__)
 
 try:

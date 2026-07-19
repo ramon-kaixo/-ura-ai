@@ -86,7 +86,7 @@ class ReflectionAgent(Agent):
         strategy: ReflectionStrategy | None = None,
         max_iterations: int = 3,
         min_confidence: float = 0.90,
-        stop_on_accept: bool = True,
+        stop_on_accept: bool = True,  # noqa: FBT001, FBT002
         agent_id: str = "",
     ) -> None:
         self.id = agent_id or uuid.uuid4().hex[:12]
@@ -136,7 +136,7 @@ class ReflectionAgent(Agent):
     def reflect_on(self, result: AgentResult) -> ReflectionDecision:
         return self._strategy.reflect(result, iteration=0)
 
-    def _reflect(self, task: AgentTask) -> AgentResult:
+    def _reflect(self, task: AgentTask) -> AgentResult:  # noqa: PLR0911
         initial = task.input_data.get("initial_result")
         if initial is None:
             return AgentResult(

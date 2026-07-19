@@ -69,9 +69,7 @@ def _safe_markdown(text: str) -> str:
     for token, original in preserved:
         text = text.replace(token, original)
     # Corregir doble escape: &amp;amp; → &amp;
-    text = re.sub(r"&amp;(#[0-9]+|[a-zA-Z]+);", r"&\1;", text)
-
-    return text
+    return re.sub(r"&amp;(#[0-9]+|[a-zA-Z]+);", r"&\1;", text)
 
 
 def _verify_links(content: str, valid_ids: set[str]) -> list[str]:
@@ -109,7 +107,7 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:
+def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
     """Genera la documentación MkDocs desde el grafo de conocimiento.
 
     Escritura atómica: primero escribe en un directorio temporal,
@@ -122,6 +120,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
 
     Returns:
         Número de documentos generados.
+
     """
     from knowledge.engine.connection import open_db
 
@@ -188,7 +187,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
                 rels = edge_map.get(doc_id, [])
                 rel_lines = []
                 for e in rels:
-                    rel_lines.append(f"- [{_safe_markdown(e['relation'])}]({e['dst']}.md)")
+                    rel_lines.append(f"- [{_safe_markdown(e['relation'])}]({e['dst']}.md)")  # noqa: PERF401
                 rel_section = "\n\n## Relaciones\n" + "\n".join(rel_lines) if rel_lines else ""
 
                 # Feedback
@@ -224,7 +223,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
                         "content": content,
                         "path": r["path"],
                         "rels": [e["dst"] for e in rels],
-                    }
+                    },
                 )
 
             offset += len(batch)
@@ -256,7 +255,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
                 if prev_manifest.get(doc_id) == new_hash:
                     # No cambió — podemos saltar
                     nav_entry[doc_type].append(
-                        {doc["title"]: f"{_sanitize_filename(doc_type)}/{_sanitize_filename(doc_id)}.md"}
+                        {doc["title"]: f"{_sanitize_filename(doc_type)}/{_sanitize_filename(doc_id)}.md"},
                     )
                     count += 1
                     continue
@@ -271,7 +270,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
             nav.append(nav_entry)
 
         # 4. Verificar enlaces internos
-        for doc_type in by_type:
+        for doc_type in by_type:  # noqa: PLC0206
             for doc in by_type[doc_type]:
                 broken = _verify_links(doc["content"], all_ids_set)
                 if broken:
@@ -290,7 +289,8 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
         # Guardar manifest para próxima generación incremental
         _save_manifest(dest, new_manifest)
         (dest / "mkdocs.yml").write_text(
-            yaml.dump(mkdocs_config, default_flow_style=False, sort_keys=True), encoding="utf-8"
+            yaml.dump(mkdocs_config, default_flow_style=False, sort_keys=True),
+            encoding="utf-8",
         )
 
         # 6. Generar index.md

@@ -131,8 +131,8 @@ class PluginBase(ABC):
 
     def rollback(self, context: dict[str, Any] | None = None) -> None:  # noqa: B027  -- intencionadamente no abstracta, opcional
         """Llamado cuando un pipeline revierte tras una etapa fallida.
-        Opcional — sobrescribir para limpiar recursos."""
-        pass
+        Opcional — sobrescribir para limpiar recursos.
+        """
 
     def __repr__(self) -> str:
         return f"<Plugin {self.meta.name}>"

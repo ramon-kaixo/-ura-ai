@@ -10,7 +10,7 @@ log = logging.getLogger("ura.scanner.calib")
 class Calibration:
     """Gestión de baseline y detección de anomalías por calibración."""
 
-    def __init__(self, config):
+    def __init__(self, config) -> None:
         self.config = config
         self.baseline_path = (
             Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"

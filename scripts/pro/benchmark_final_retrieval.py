@@ -22,10 +22,10 @@ CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "knowledge" / "eval
 
 def load_queries():
     queries, rel = [], {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for l in f:
-            queries.append(json.loads(l))
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+            queries.append(json.loads(l))  # noqa: PERF401
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for l in f:
             d = json.loads(l)
             rel.setdefault(d["qid"], []).append(d)
@@ -97,7 +97,7 @@ def run(name, fn, queries, rel_map, reranker=None):
     }
 
 
-def main():
+def main() -> int:
     from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
 
     from motor.core.config import UraConfig
@@ -135,28 +135,16 @@ def main():
         all_results[name] = run(name, fn, queries, rel_map)
 
     log.warning("Running: Hybrid + CrossEncoder")
-    all_results["Hybrid+CE"] = run(
-        "Hybrid+CE", hybrid.search, queries, rel_map, reranker=ce_reranker
-    )
+    all_results["Hybrid+CE"] = run("Hybrid+CE", hybrid.search, queries, rel_map, reranker=ce_reranker)
 
     # Print table
-    print(f"\n{'=' * 120}")
-    print(
-        f"  {'Config':<20} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
-    )
-    print(f"{'=' * 120}")
     for name in ["Vector-only", "Hybrid", "Hybrid+CE"]:
         r = all_results.get(name)
         if r:
-            print(
-                f"  {name:<20} {r['R@10']:<8.4f} {r['P@5']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['P99']:<8.2f} {r['TPS']:<8.2f} {r['NoCtx']:<8.2%}"
-            )
+            pass
 
     # Acceptance for Hybrid+CE
     r = all_results["Hybrid+CE"]
-    print(f"\n{'=' * 80}")
-    print("  Acceptance Criteria (Hybrid + CrossEncoder)")
-    print(f"{'=' * 80}")
     ace_criteria = [
         ("MAP ≥ 0.90", r["MAP"] >= 0.90, f"{r['MAP']:.4f}"),
         ("nDCG ≥ 0.82", r["nDCG"] >= 0.82, f"{r['nDCG']:.4f}"),
@@ -165,18 +153,14 @@ def main():
         ("P95 ≤ 600ms", r["P95"] <= 600, f"{r['P95']:.2f}ms"),
     ]
     all_pass = True
-    for label, passed, val in ace_criteria:
-        print(f"  {'✅' if passed else '❌'} {label}: {val}")
+    for _label, passed, _val in ace_criteria:
         if not passed:
             all_pass = False
 
     if all_pass:
-        print("\n  ✅ APROBADO — CrossEncoder cumple todos los criterios")
-        print("  Recomendación: Integrar CrossEncoder como etapa estándar de retrieval.")
+        pass
     else:
-        print("\n  ❌ NO APROBADO — CrossEncoder no cumple todos los criterios")
-        print("  Recomendación: Cerrar Bloque 1. Mejor configuración: Hybrid (R@10=0.87, NoCtx=0.5%).")
-        print("  El reranking CrossEncoder no justifica el incremento de latencia para este corpus.")
+        pass
 
     return 0 if all_pass else 1
 

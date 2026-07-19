@@ -17,7 +17,7 @@ class VersionNegotiationResult:
         protocol_version: str,
         schema_version: str,
         capabilities: frozenset[str],
-        compatible: bool,
+        compatible: bool,  # noqa: FBT001
     ) -> None:
         self.protocol_version = protocol_version
         self.schema_version = schema_version
@@ -99,8 +99,9 @@ class VersionNegotiator:
                 ms = (time.monotonic() - start) * 1000
                 self._metrics.record_negotiation(emitter_version, receiver_version, ms)
             except Exception:
-                logging.getLogger("ura.platform.negotiator").debug(
-                    "Metrics record_negotiation failed", exc_info=True,
+                logging.getLogger("ura.platform.negotiator").debug(  # noqa: F821
+                    "Metrics record_negotiation failed",
+                    exc_info=True,
                 )
         return result
 
@@ -110,8 +111,11 @@ class VersionNegotiator:
         receiver_version: str,
     ) -> VersionNegotiationResult:
         return self.negotiate(
-            emitter_version, receiver_version,
-            set(), set(), MessageKind.EVENT,
+            emitter_version,
+            receiver_version,
+            set(),
+            set(),
+            MessageKind.EVENT,
         )
 
     def negotiate_response(
@@ -126,8 +130,10 @@ class VersionNegotiator:
         No separate negotiation. Same MAJOR required.
         """
         return self.negotiate(
-            trigger_version, trigger_version,
-            emitter_capabilities, receiver_capabilities,
+            trigger_version,
+            trigger_version,
+            emitter_capabilities,
+            receiver_capabilities,
             MessageKind.RESPONSE,
         )
 
@@ -143,7 +149,9 @@ class VersionNegotiator:
         that caused it. No separate negotiation.
         """
         return self.negotiate(
-            original_message_version, original_message_version,
-            emitter_capabilities, receiver_capabilities,
+            original_message_version,
+            original_message_version,
+            emitter_capabilities,
+            receiver_capabilities,
             MessageKind.ERROR,
         )

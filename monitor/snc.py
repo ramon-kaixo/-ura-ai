@@ -45,7 +45,7 @@ CONFIG = {**_raw_config.get("global_defaults", {}), **_profile}
 RUNBOOK_PATH = Path(__file__).parent.parent / "deploy" / "emergency_runbook.json"
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-try:
+try:  # noqa: SIM105
     _STATE_DIR.chmod(0o700)
 except OSError:
     pass  # Esperado si ~/.ura/ está en filesystem RO
@@ -114,14 +114,15 @@ def load_runbook() -> dict:
 
 def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
     """Ejecuta un pipeline shell (|) sin shell=True.
-    Divide por |, ejecuta cada segmento, conectando stdout→stdin."""
+    Divide por |, ejecuta cada segmento, conectando stdout→stdin.
+    """
     segments = [shlex.split(seg.strip()) for seg in cmd.split("|")]
     if len(segments) == 1:
-        return subprocess.run(segments[0], capture_output=True, text=True, timeout=timeout, check=False)
+        return subprocess.run(segments[0], capture_output=True, text=True, timeout=timeout, check=False)  # noqa: S603
     prev_proc = None
     for i, args in enumerate(segments):
         stdin = prev_proc.stdout if prev_proc else None
-        prev_proc = subprocess.Popen(
+        prev_proc = subprocess.Popen(  # noqa: S603
             args,
             stdin=stdin,
             stdout=subprocess.PIPE,
@@ -131,7 +132,8 @@ def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
         if i > 0:
             stdin.close()  # type: ignore[union-attr]
     if prev_proc is None:
-        raise ValueError(f"No se pudo ejecutar pipeline: {cmd}")
+        msg = f"No se pudo ejecutar pipeline: {cmd}"
+        raise ValueError(msg)
     stdout, stderr = prev_proc.communicate(timeout=timeout)
     return subprocess.CompletedProcess(
         args=segments[-1],
@@ -151,7 +153,7 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
             result = _run_pipeline(cmd, timeout)
         else:
             args = shlex.split(cmd)
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 args,
                 capture_output=True,
                 text=True,
@@ -181,7 +183,7 @@ def is_command_forbidden(cmd: str, forbidden: list) -> bool:
 
 def repair_service(service_name: str, config: dict, runbook: dict) -> str:
     """Intenta reparar un servicio. Retorna 'ok', 'failed', 'escalated'."""
-    global repair_attempts, openclaw_active
+    global repair_attempts, openclaw_active  # noqa: PLW0602
 
     max_attempts = config.get("max_repair_attempts", runbook["retry_policy"]["max_attempts"])
     repair_cmds = config.get("repair", [])
@@ -220,8 +222,8 @@ def check_mac_unauthorized_writes() -> bool:
 
     try:
         remote_cmd = "ps aux | grep -E 'vim|nano|emacs|code' | grep -v grep"
-        result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],
+        result = subprocess.run(  # noqa: S603
+            ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -246,11 +248,11 @@ def check_mac_unauthorized_writes() -> bool:
     return False
 
 
-def poll_services(runbook: dict) -> dict:
+def poll_services(runbook: dict) -> dict:  # noqa: C901, PLR0912, PLR0915
     """Polling de todos los servicios. Retorna dict de estado.
     Modo Soberanía: GX10 opera independientemente.
     """
-    global openclaw_active, openclaw_stable_since, repair_attempts
+    global openclaw_active, openclaw_stable_since, repair_attempts  # noqa: PLW0602, PLW0603
 
     state = {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -287,7 +289,7 @@ def poll_services(runbook: dict) -> dict:
                         context="ASUS",
                         gateway_status="DISCONNECTED",
                         severity="WARN",
-                        message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
+                        message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",  # noqa: E501
                     )
             continue
 
@@ -376,7 +378,7 @@ def write_state(state: dict) -> None:
     try:
         tmp = STATE_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(state, indent=2))
-        os.replace(str(tmp), str(STATE_FILE))
+        os.replace(str(tmp), str(STATE_FILE))  # noqa: PTH105
     except Exception as e:
         error_logger.log_error(
             context="SNC",
@@ -443,7 +445,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
                 continue
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return result[:10]
 
@@ -529,7 +531,7 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
         if pid in _pending_sigcont:
             return
         _pending_sigcont[pid] = nombre
-    sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")
+    sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")  # noqa: S108
     sandbox_dir.mkdir(parents=True, exist_ok=True)
     try:
         os.kill(pid, signal.SIGSTOP)
@@ -576,7 +578,7 @@ def _trigger_tuneladora() -> None:
         _notify(f"⚠️ Error activando tuneladora: {e}", level="warning")
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 

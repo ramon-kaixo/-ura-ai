@@ -37,6 +37,7 @@ class Migration:
         description: Texto legible para logs.
         sql_file: Nombre del archivo SQL en schemas/migrations/.
                   None = migración virtual (solo version bump, sin SQL).
+
     """
 
     version: int
@@ -107,7 +108,7 @@ def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:
 # ── Migration orchestration ────────────────────────────────────────────────────
 
 
-def migrate_db(
+def migrate_db(  # noqa: C901
     conn: sqlite3.Connection,
     schema_path: Path,
     migrations_dir: Path | None = None,
@@ -133,22 +134,31 @@ def migrate_db(
         return
 
     if current < MINIMUM_SUPPORTED_SCHEMA:
-        raise ValueError(
+        msg = (
             f"DB schema version {current} is too old. "
             f"Minimum supported: {MINIMUM_SUPPORTED_SCHEMA}. "
             "Run 'ke init' to rebuild."
         )
+        raise ValueError(
+            msg,
+        )
 
     if current > MAXIMUM_SUPPORTED_SCHEMA:
-        raise ValueError(
+        msg = (
             f"DB schema version {current} > maximum supported {MAXIMUM_SUPPORTED_SCHEMA}. "
             "This engine version is too old for this database. "
             "Upgrade the Knowledge Engine or run 'ke init' to rebuild."
         )
+        raise ValueError(
+            msg,
+        )
 
     if current > target_version:
-        raise ValueError(
+        msg = (
             f"DB schema version {current} > target {target_version}. Downgrade not supported. Run 'ke init' to rebuild."
+        )
+        raise ValueError(
+            msg,
         )
 
     if migrations_dir is None:
@@ -156,16 +166,20 @@ def migrate_db(
 
     for version in range(current + 1, target_version + 1):
         if version not in MIGRATIONS:
-            raise ValueError(
+            msg = (
                 f"No migration defined for v{version}. "
                 f"Current DB: v{current}, target: v{target_version}. "
                 "Run 'ke init' to rebuild."
+            )
+            raise ValueError(
+                msg,
             )
         mig = MIGRATIONS[version]
         if mig.sql_file:
             migration_path = migrations_dir / mig.sql_file
             if not migration_path.exists():
-                raise FileNotFoundError(f"Migration file not found: {migration_path} (required for {mig.description})")
+                msg = f"Migration file not found: {migration_path} (required for {mig.description})"
+                raise FileNotFoundError(msg)
             log.info("Applying migration v%s: %s", version, mig.description)
             sql = migration_path.read_text()
             conn.executescript(f"BEGIN;\n{sql}\nCOMMIT;")
@@ -183,4 +197,5 @@ def verify_migration(conn: sqlite3.Connection, expected: int = SCHEMA_VERSION) -
     """Verify DB schema version matches expected. Raise on mismatch."""
     actual = get_schema_version(conn)
     if actual != expected:
-        raise RuntimeError(f"Schema version mismatch: DB={actual}, expected={expected}. Run 'ke init' to fix.")
+        msg = f"Schema version mismatch: DB={actual}, expected={expected}. Run 'ke init' to fix."
+        raise RuntimeError(msg)

@@ -54,7 +54,7 @@ class DockerOrchestrator:
 
     async def validar(self, codigo, nombre):
         if not self._docker():
-            return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")
+            return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")  # noqa: FBT003
         with tempfile.TemporaryDirectory() as d:
             return await self._run(Path(d), codigo, nombre)
 
@@ -76,8 +76,8 @@ class DockerOrchestrator:
             _, be = await asyncio.wait_for(b.communicate(), 120)
             if b.returncode:
                 return ResultadoSandbox(
-                    False,
-                    False,
+                    False,  # noqa: FBT003
+                    False,  # noqa: FBT003
                     0,
                     0,
                     [],
@@ -96,7 +96,7 @@ class DockerOrchestrator:
                 "--network=none",
                 "--read-only",
                 "--tmpfs",
-                "/tmp:64m",
+                "/tmp:64m",  # noqa: S108
                 tag,
                 stdout=-1,
                 stderr=-1,
@@ -105,7 +105,7 @@ class DockerOrchestrator:
                 so, se = await asyncio.wait_for(rp.communicate(), TIMEOUT)
             except TimeoutError:
                 rp.kill()
-                return ResultadoSandbox(False, False, 0, 0, ["TIMEOUT"], "", "", TIMEOUT * 1000, 0, "timeout")
+                return ResultadoSandbox(False, False, 0, 0, ["TIMEOUT"], "", "", TIMEOUT * 1000, 0, "timeout")  # noqa: FBT003
             t1 = asyncio.get_event_loop().time()
             ms = (t1 - t0) * 1000
             s2 = so.decode(errors="ignore").strip()
@@ -131,7 +131,7 @@ class DockerOrchestrator:
                 dt.get("error"),
             )
         finally:
-            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: S603,S607  -- tag es hash interno
+            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: ASYNC221, S603, S607
 
     @staticmethod
     def _df(c, n):
@@ -166,11 +166,11 @@ break
 except Exception as e: r["error"]=str(e)
 print(json.dumps(r))
 sys.exit(0 if r["fallidos"]==0 else 1)
-""")
+""")  # noqa: E501
 
     @staticmethod
     def _docker():
         try:
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0  # noqa: S607  -- comando constante
-        except:
+        except:  # noqa: E722
             return False

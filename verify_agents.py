@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,8 +26,8 @@ def verificar_agente(ruta_agente):
 
     try:
         # Verificar sintaxis con python -m py_compile
-        result = subprocess.run(
-            ["python3", "-m", "py_compile", str(ruta_agente)],
+        result = subprocess.run(  # noqa: S603
+            ["python3", "-m", "py_compile", str(ruta_agente)],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -40,11 +39,11 @@ def verificar_agente(ruta_agente):
             return resultado
 
         # Extraer funciones usando ast
-        result = subprocess.run(
-            [
+        result = subprocess.run(  # noqa: S603
+            [  # noqa: S607
                 "python3",
                 "-c",
-                f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])",
+                f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])",  # noqa: E501
             ],
             capture_output=True,
             text=True,
@@ -54,14 +53,14 @@ def verificar_agente(ruta_agente):
 
         if result.returncode == 0:
             try:
-                funciones = eval(result.stdout.strip())
+                funciones = eval(result.stdout.strip())  # noqa: S307
                 resultado["funciones"] = funciones
                 if len(funciones) > 0:
                     resultado["estado"] = "✅ FUNCIONA"
                 else:
                     resultado["estado"] = "⚠️ PARCIAL"
                     resultado["errores"].append("No se encontraron funciones públicas")
-            except:
+            except:  # noqa: E722
                 resultado["estado"] = "⚠️ PARCIAL"
         else:
             resultado["estado"] = "⚠️ PARCIAL"
@@ -111,35 +110,29 @@ def generar_informe(resultados):
     return ruta_informe
 
 
-def enviar_telegram(mensaje):
+def enviar_telegram(mensaje) -> bool:
     """Envía notificación por Telegram."""
     try:
-        if os.path.exists(TELEGRAM_SCRIPT):
-            subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)
+        if Path(TELEGRAM_SCRIPT).exists():
+            subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)  # noqa: S603
             return True
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return False
 
 
-def main():
-    print(f"🔍 Verificando agentes en {AGENTES_DIR}...")
+def main() -> None:
 
     # Obtener todos los archivos Python
     agentes = list(AGENTES_DIR.glob("*.py"))
-    print(f"📁 Encontrados {len(agentes)} agentes\n")
 
     resultados = []
     for agente in agentes:
-        print(f"Verificando {agente.name}...", end=" ")
         resultado = verificar_agente(agente)
         resultados.append(resultado)
-        print(resultado["estado"])
 
     # Generar informe
-    print("\n📝 Generando informe...")
-    ruta_informe = generar_informe(resultados)
-    print(f"✅ Informe guardado en: {ruta_informe}")
+    generar_informe(resultados)
 
     # Resumen para Telegram
     funcionando = sum(1 for r in resultados if "FUNCIONA" in r["estado"])
@@ -149,11 +142,7 @@ def main():
     mensaje = "🤖 Verificación Agentes URA\n"
     mensaje += f"Total: {len(resultados)} | ✅ {funcionando} | ⚠️ {parcial} | ❌ {rotos}"
 
-    print("\n📱 Enviando notificación Telegram...")
     enviar_telegram(mensaje)
-    print("✅ Notificación enviada")
-
-    print(f"\n📄 Informe completo: {ruta_informe}")
 
 
 if __name__ == "__main__":

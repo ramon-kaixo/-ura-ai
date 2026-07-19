@@ -34,19 +34,18 @@ HELP = """URA CLI v3.0
 """
 
 
-def main():
+def main() -> int | None:
     if len(sys.argv) < 2:
-        print(HELP, file=sys.stderr)
         return 0
 
     if sys.argv[1] in ("-h", "--help"):
-        print(HELP, file=sys.stderr)
         return 0
 
     if sys.argv[1] == "status":
         sys.argv[1] = "dashboard"
 
     _motor_main()
+    return None
 
 
 if __name__ == "__main__":

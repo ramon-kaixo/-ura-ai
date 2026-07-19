@@ -3,4 +3,3 @@
 
 class ProtocolException(Exception):
     """Base exception for all protocol-level errors."""
-    pass

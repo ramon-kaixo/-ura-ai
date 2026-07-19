@@ -1,6 +1,7 @@
 import json
 import os
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 import httpx
 
@@ -17,9 +18,9 @@ def _gemini_api_key() -> str:
     key = get_secret("GEMINI_API_KEY", "")
     if key:
         return key
-    cred_path = os.path.expanduser("~/.config/opencode/.credentials/gemini.json")
+    cred_path = Path("~/.config/opencode/.credentials/gemini.json").expanduser()
     try:
-        with open(cred_path) as f:
+        with open(cred_path) as f:  # noqa: PTH123
             data = json.load(f)
             return data.get("api_key", "")
     except (FileNotFoundError, json.JSONDecodeError):
@@ -42,7 +43,7 @@ class GeminiProvider(Provider):
         self,
         modelo: str,
         mensajes: list,
-        stream: bool = False,
+        stream: bool = False,  # noqa: FBT001, FBT002
         tools: list | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,

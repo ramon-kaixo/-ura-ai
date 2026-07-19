@@ -23,7 +23,7 @@ log = logging.getLogger("ura.knowledge.audit.sqlite")
 class SQLiteAuditBackend:
     """Backend SQLite — cada write() hace commit inmediato."""
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
         self._events_written = 0
         self._last_error = ""

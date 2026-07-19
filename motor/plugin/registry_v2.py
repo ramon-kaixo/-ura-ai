@@ -318,7 +318,7 @@ class PluginRegistryV2:
                         phase=phase,
                         error="Plugin load failed",
                         duration_ms=elapsed,
-                    )
+                    ),
                 )
                 continue
 
@@ -364,7 +364,8 @@ class PluginRegistryV2:
         def _visit(name: str, path: list[str]) -> None:
             if name in path:
                 cycle = " -> ".join([*path, name])
-                raise ManifestError(f"Dependencia circular: {cycle}")
+                msg = f"Dependencia circular: {cycle}"
+                raise ManifestError(msg)
             if name in visited:
                 return
             visited.add(name)

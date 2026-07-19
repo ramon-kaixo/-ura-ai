@@ -26,7 +26,6 @@ from motor.core.secrets import get_secret
 log = logging.getLogger(__name__)
 
 
-
 class OpenRouterProvider(BaseLLMProvider):
     """Proveedor LLM que conecta con OpenRouter API (proxy multi-modelo)."""
 
@@ -48,7 +47,8 @@ class OpenRouterProvider(BaseLLMProvider):
         self._provider_name = "openrouter"
         self._api_key = get_secret("OPENROUTER_API_KEY")
         self._base_url = get_secret(
-            "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1",
+            "OPENROUTER_BASE_URL",
+            "https://openrouter.ai/api/v1",
         ).rstrip("/")
         self._model: str = get_secret("OPENROUTER_MODEL", "openrouter/auto")
         self._timeout: int = int(get_secret("OPENROUTER_TIMEOUT", "120"))
@@ -84,7 +84,9 @@ class OpenRouterProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usage", {})
             log_call(
-                self._provider_name, model_name, latency_ms,
+                self._provider_name,
+                model_name,
+                latency_ms,
                 prompt_tokens=usage.get("prompt_tokens"),
                 completion_tokens=usage.get("completion_tokens"),
             )
@@ -131,6 +133,7 @@ class OpenRouterProvider(BaseLLMProvider):
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         import asyncio
+
         return await asyncio.to_thread(self.embed, texts, model)
 
     def health(self) -> dict[str, Any]:
@@ -145,8 +148,10 @@ class OpenRouterProvider(BaseLLMProvider):
             if r.is_error:
                 log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
-                    "provider": self._provider_name, "status": "error",
-                    "detail": r.text[:200], "latency_ms": latency_ms,
+                    "provider": self._provider_name,
+                    "status": "error",
+                    "detail": r.text[:200],
+                    "latency_ms": latency_ms,
                 }
             modelos = r.json().get("data", [])
             log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))

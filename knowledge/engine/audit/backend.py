@@ -48,5 +48,5 @@ def record_metric() -> None:
         from knowledge.engine.metrics import audit_write_failures
 
         audit_write_failures.inc()
-    except Exception:
+    except Exception:  # noqa: S110
         pass

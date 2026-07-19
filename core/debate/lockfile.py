@@ -1,7 +1,8 @@
 import fcntl
 import os
+from pathlib import Path
 
-LOCK_PATH = "/tmp/ura_debate.lock"
+LOCK_PATH = "/tmp/ura_debate.lock"  # noqa: S108
 
 
 class DebateLock:
@@ -23,8 +24,8 @@ class DebateLock:
             fcntl.flock(self._fd, fcntl.LOCK_UN)
             os.close(self._fd)
             self._fd = None
-        if os.path.exists(self._path):
-            os.remove(self._path)
+        if Path(self._path).exists():
+            os.remove(self._path)  # noqa: PTH107
 
     def __enter__(self):
         self.acquire()

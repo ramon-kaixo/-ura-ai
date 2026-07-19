@@ -61,9 +61,9 @@ class ErrorLogger:
         }
 
         try:
-            with open(self.log_path, "a") as f:
+            with open(self.log_path, "a") as f:  # noqa: PTH123
                 f.write(json.dumps(entry) + "\n")
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         self.rotate_if_needed()
@@ -79,7 +79,7 @@ class ErrorLogger:
             errors = []
             for line in lines[-count:]:
                 if line.strip():
-                    errors.append(json.loads(line))
+                    errors.append(json.loads(line))  # noqa: PERF401
             return errors
         except Exception:
             return []
@@ -98,7 +98,7 @@ class ErrorLogger:
                     error_time = datetime.fromisoformat(error["ts"]).timestamp()
                     if error_time > cutoff:
                         return True
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
         return False
 

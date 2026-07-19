@@ -56,14 +56,13 @@ class MarkdownExtractor:
 
         Returns:
             ExtractionResult con un KnowledgeAsset de tipo MARKDOWN.
+
         """
         t0 = time.monotonic()
         path_str = source.location
 
         try:
-            import os as _os
-
-            if not _os.path.exists(path_str):
+            if not _Path(path_str).exists():  # noqa: F821
                 return ExtractionResult(
                     errors=[f"File not found: {path_str}"],
                     duration_ms=(time.monotonic() - t0) * 1000,
@@ -128,7 +127,7 @@ class MarkdownExtractor:
 
 
 def _load_file(path: str) -> bytes:
-    with open(path, "rb") as f:
+    with open(path, "rb") as f:  # noqa: PTH123
         return f.read()
 
 

@@ -17,8 +17,7 @@ class SearchProvider(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
@@ -31,8 +30,7 @@ class Crawler(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
     def fetch(self, url: str, timeout: int = 30) -> str:
@@ -45,8 +43,7 @@ class Extractor(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
     def extract(self, html: str, url: str) -> WebDocument:

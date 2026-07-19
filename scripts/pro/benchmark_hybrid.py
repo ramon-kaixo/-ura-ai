@@ -20,11 +20,11 @@ CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "knowledge" / "eval
 
 def load_queries():
     queries, relevance_map = [], {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             queries.append(d)
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             relevance_map.setdefault(d["qid"], []).append(d)
@@ -119,31 +119,23 @@ def run_config(name, retriever, queries, relevance_map):
     }
 
 
-def print_comp(name, results, baseline, metrics):
-    print(f"\n{'=' * 70}")
-    print(f"  {name}")
-    print(f"{'=' * 70}")
-    print(f"{'Metric':<22} {'Actual':<12} {'Baseline':<12} {'Delta':<10} {'Pass?':<10}")
-    print(f"{'-' * 66}")
+def print_comp(name, results, baseline, metrics) -> None:
     for metric in metrics:
         v = results[metric]
         b = baseline.get(metric)
         if b and b != 0:
-            delta = (v - b) / b * 100
+            (v - b) / b * 100
         elif b == 0 and v > 0:
-            delta = float("inf")
+            float("inf")
         else:
-            delta = 0.0
-        if metric.startswith("Latency"):
-            passed = delta <= 15 if "P95" in metric else delta <= 20
-        elif metric == "No-context rate":
-            passed = v <= b
+            pass
+        if metric.startswith("Latency") or metric == "No-context rate":
+            pass
         else:
-            passed = v >= b
-        print(f"{metric:<22} {v:<12.4f} {(b or 0):<12.4f} {delta:>+7.1f}%  {'✅' if passed else '❌'}")
+            pass
 
 
-def main():
+def main() -> int:
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.retrieval.hybrid import HybridRetriever
@@ -190,7 +182,7 @@ def main():
         vec = VectorRetriever(qc)
         lex = LexicalRetriever()
         hybrid = HybridRetriever(vec, lex, alpha=alpha, beta=beta)
-        name = f"Híbrido α={alpha} β={beta}"
+        name = f"Híbrido α={alpha} β={beta}"  # noqa: RUF001
         all_results[name] = run_config(name, hybrid, queries, relevance_map)
         print_comp(name, all_results[name], CHUNKING_BASELINE, metrics)
 
@@ -200,9 +192,6 @@ def main():
         key=lambda r: r["Recall@10"],
     )
     accept = True
-    print(f"\n{'=' * 70}")
-    print("  Acceptance Criteria (vs semantic chunking baseline)")
-    print(f"{'=' * 70}")
 
     checks = [
         (
@@ -236,12 +225,10 @@ def main():
             f"{best_hybrid['No-context rate']:.2%} <= {CHUNKING_BASELINE['No-context rate']:.2%}",
         ),
     ]
-    for label, passed, detail in checks:
-        print(f"  {'✅' if passed else '❌'} {label}: {detail}")
+    for _label, passed, _detail in checks:
         if not passed:
             accept = False
 
-    print(f"\n  {'✅ APROBADO — continuar con Reranking' if accept else '❌ RECHAZADO'}")
     return 0 if accept else 1
 
 

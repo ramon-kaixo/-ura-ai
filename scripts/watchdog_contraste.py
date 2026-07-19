@@ -22,8 +22,8 @@ def is_alive() -> bool:
     try:
         import urllib.request
 
-        req = urllib.request.Request(CHECK_URL)
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(CHECK_URL)  # noqa: S310
+        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
             return resp.status == 200
     except Exception:
         return False
@@ -32,24 +32,24 @@ def is_alive() -> bool:
 def restart() -> bool:
     """Kill existing uvicorn processes and start fresh."""
     subprocess.run(
-        ["pkill", "-f", "uvicorn proxy_contraste"],
+        ["pkill", "-f", "uvicorn proxy_contraste"],  # noqa: S607
         capture_output=True,
         check=False,
     )
     time.sleep(2)
-    proc = subprocess.Popen(
+    proc = subprocess.Popen(  # noqa: S603
         [
             UVICORN_BIN,
             "proxy_contraste:app",
             "--host",
-            "0.0.0.0",
+            "0.0.0.0",  # noqa: S104
             "--port",
             PORT,
             "--workers",
             "1",
         ],
         cwd=WORKDIR,
-        stdout=open("/tmp/ura-contraste.log", "a"),
+        stdout=open("/tmp/ura-contraste.log", "a"),  # noqa: PTH123, S108, SIM115
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
         start_new_session=True,
@@ -57,7 +57,7 @@ def restart() -> bool:
     return proc.poll() is None
 
 
-def main():
+def main() -> None:
     sys.stdout.write(f"watchdog_contraste iniciado (PID {os.getpid()}, cada {POLL_INTERVAL}s)\n")
     sys.stdout.flush()
 

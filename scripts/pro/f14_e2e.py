@@ -41,7 +41,7 @@ FINDINGS_PATH = Path("motor/data/f14/findings.json")
 findings: list[dict] = []
 
 
-def record_finding(scenario_id: str, description: str, impact: str):
+def record_finding(scenario_id: str, description: str, impact: str) -> None:
     findings.append(
         {
             "id": f"F14-{scenario_id}",
@@ -49,7 +49,7 @@ def record_finding(scenario_id: str, description: str, impact: str):
             "description": description,
             "impact": impact,
             "timestamp": datetime.now(UTC).isoformat(),
-        }
+        },
     )
 
 
@@ -68,8 +68,8 @@ def load_env():
 
 def get_git_info() -> dict:
     try:
-        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
+        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
         return {"commit_sha": sha, "version": tag}
     except Exception:
         return {"commit_sha": "?", "version": "?"}
@@ -102,8 +102,8 @@ def auto_recovery_time(check_fn, timeout=60, interval=1) -> float:
 
 def qdrant_running() -> bool:
     try:
-        r = subprocess.run(
-            ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
+        r = subprocess.run(  # noqa: PLW1510
+            ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -115,7 +115,7 @@ def qdrant_running() -> bool:
 
 def ollama_running() -> bool:
     try:
-        r = subprocess.run(["systemctl", "is-active", "ollama"], capture_output=True, text=True, timeout=5)
+        r = subprocess.run(["systemctl", "is-active", "ollama"], capture_output=True, text=True, timeout=5)  # noqa: PLW1510, S607
         return "active" in r.stdout
     except Exception:
         return False
@@ -200,7 +200,7 @@ def case_e02() -> dict:
     errors = 0
     t0 = time.monotonic()
     try:
-        store = EpisodeStore(EpisodeStoreConfig(persist_path="/tmp/f14_e2e_episodes.db"))
+        store = EpisodeStore(EpisodeStoreConfig(persist_path="/tmp/f14_e2e_episodes.db"))  # noqa: S108
         ep = Episode(
             session_id="e2e_test",
             payload="URA es un asistente multi-agente con consciencia artificial",
@@ -288,7 +288,7 @@ def case_e03() -> dict:
     if "Read-only file system" in "; ".join(observed):
         record_finding(
             "E03",
-            "Pipeline Orchestrator intenta escribir en /opt/motor/data/snapshots/ que es read-only. El pipeline no completa preflight.",
+            "Pipeline Orchestrator intenta escribir en /opt/motor/data/snapshots/ que es read-only. El pipeline no completa preflight.",  # noqa: E501
             "alto",
         )
 
@@ -398,7 +398,7 @@ def case_e05() -> dict:
         bus = EventBus()
         received_events = []
 
-        def handler(event):
+        def handler(event) -> None:
             received_events.append(event)
 
         bus.subscribe(SYSTEM_STARTED, handler)
@@ -456,7 +456,7 @@ def case_e06() -> dict:
 
     try:
         if pre_stop:
-            subprocess.run(["docker", "stop", "ura-qdrant"], capture_output=True, timeout=15)
+            subprocess.run(["docker", "stop", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510, S607
             time.sleep(2)
             dm.mark_degraded("qdrant")
             observed.append("Qdrant detenido, DegradedMode marcado como degraded")
@@ -476,7 +476,7 @@ def case_e06() -> dict:
             observed.append(f"Retrieval degradado: excepción controlada — {type(e).__name__}")
 
         if pre_stop:
-            subprocess.run(["docker", "start", "ura-qdrant"], capture_output=True, timeout=15)
+            subprocess.run(["docker", "start", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510, S607
             rec_time = auto_recovery_time(qdrant_running, timeout=60)
             dm.mark_healthy("qdrant")
             observed.append(f"Qdrant restaurado en {rec_time}s, DegradedMode marcado como healthy")
@@ -544,7 +544,7 @@ def case_e07() -> dict:
                 if role:
                     agents = runtime.find_by_role(role)
                     agent_roles.append(f"{role_name}={len(agents)}")
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         observed.append(f"Runtime creado con {agent_count} agentes registrados")
         if agent_roles:
@@ -571,7 +571,7 @@ def case_e07() -> dict:
         ]
         consensus = engine.vote(agent_results)
         observed.append(
-            f"Consenso: strategy={consensus.strategy}, outcome={consensus.outcome}, votes={consensus.vote_counts}"
+            f"Consenso: strategy={consensus.strategy}, outcome={consensus.outcome}, votes={consensus.vote_counts}",
         )
     except Exception as e:
         observed.append(f"Error en E07: {e}")
@@ -602,7 +602,7 @@ def case_e07() -> dict:
 # ── E08: Observability endpoints ─────────────────────────────────────
 
 
-def case_e08() -> dict:
+def case_e08() -> dict:  # noqa: PLR0915
     real = ["HealthRegistry", "ReadinessRegistry", "MetricsRegistry", "format_prometheus"]
     mock = []
     justification = ""
@@ -652,7 +652,7 @@ def case_e08() -> dict:
         hist_count = len(m_snap.get("histograms", []))
         timer_count = len(m_snap.get("timers", []))
         observed.append(
-            f"Métricas: {counter_count} counters, {gauge_count} gauges, {hist_count} histograms, {timer_count} timers"
+            f"Métricas: {counter_count} counters, {gauge_count} gauges, {hist_count} histograms, {timer_count} timers",
         )
 
         prom = format_prometheus(metrics)
@@ -708,8 +708,6 @@ CASES = {
 def run_all() -> list[dict]:
     results = []
     for cid in sorted(CASES):
-        print(f"\n  📍 Escenario {cid}")
-        print(f"  {'─' * 56}")
         t0 = time.monotonic()
         try:
             r = CASES[cid]()
@@ -729,13 +727,12 @@ def run_all() -> list[dict]:
             }
             record_finding(cid, f"Unhandled exception: {e}", "crítico")
         results.append(r)
-        icon = {"PASS": "✅", "FAIL": "❌"}.get(r["veredict"], "⚠️")
-        dur = r.get("duration_s", "?")
-        err = r.get("errors", 0)
-        print(f"  {icon} {cid}: {r['veredict']} — {dur}s, {err} errores")
+        {"PASS": "✅", "FAIL": "❌"}.get(r["veredict"], "⚠️")
+        r.get("duration_s", "?")
+        r.get("errors", 0)
         for obs_line in r.get("observed", "").split("; "):
             if obs_line.strip():
-                print(f"    {obs_line[:120]}")
+                pass
     return results
 
 
@@ -749,10 +746,9 @@ def save_results(results: list[dict], env: dict, git_info: dict):
     }
     json_path = DATA_DIR / f"e2e_{timestamp}.json"
     save_json(data, json_path)
-    print(f"\n  📄 JSON: {json_path}")
 
     csv_path = DATA_DIR / f"e2e_{timestamp}.csv"
-    with open(csv_path, "w", newline="") as f:
+    with open(csv_path, "w", newline="") as f:  # noqa: PTH123
         w = csv.DictWriter(
             f,
             fieldnames=[
@@ -776,50 +772,32 @@ def save_results(results: list[dict], env: dict, git_info: dict):
                     "real_pct": r.get("real_pct", 0),
                     "observed": r.get("observed", ""),
                     "mock_justification": r.get("mock_justification", ""),
-                }
+                },
             )
-    print(f"  📄 CSV:  {csv_path}")
 
     if findings:
         f_path = FINDINGS_PATH
         existing = json.loads(f_path.read_text()) if f_path.exists() else []
         existing.extend(findings)
         save_json(existing, f_path)
-        print(f"  📄 Hallazgos: {f_path}")
 
     return json_path
 
 
-def print_summary(results: list[dict]):
-    passes = sum(1 for r in results if r["veredict"] == "PASS")
-    fails = sum(1 for r in results if r["veredict"] == "FAIL")
+def print_summary(results: list[dict]) -> None:
+    sum(1 for r in results if r["veredict"] == "PASS")
+    sum(1 for r in results if r["veredict"] == "FAIL")
     total = len(results)
-    real_avg = round(sum(r.get("real_pct", 0) for r in results) / max(total, 1), 1)
-    total_errors = sum(r.get("errors", 0) for r in results)
-    total_dur = sum(r.get("duration_s", 0) for r in results)
+    round(sum(r.get("real_pct", 0) for r in results) / max(total, 1), 1)
+    sum(r.get("errors", 0) for r in results)
+    sum(r.get("duration_s", 0) for r in results)
 
-    print("\n" + "=" * 60)
-    print("  Resumen Bloque 3 — End-to-End")
-    print("=" * 60)
-    print(f"  Total casos: {total}")
-    print(f"  ✅ PASS: {passes}")
-    print(f"  ❌ FAIL: {fails}")
-    print(f"  Componentes reales promedio: {real_avg}%")
-    print(f"  Errores totales: {total_errors}")
-    print(f"  Duración total: {total_dur:.1f}s")
     if findings:
-        print(f"  Hallazgos: {len(findings)}")
-        for f in findings:
-            print(f"    ⚠️  {f['id']}: {f['description'][:100]}")
-    global_verdict = "FAIL" if fails > 0 else "PASS"
-    print(f"\n  Conclusión global: {'✅ ' + global_verdict if global_verdict == 'PASS' else '❌ ' + global_verdict}")
-    print()
+        for _f in findings:
+            pass
 
 
-def main():
-    print("=" * 60)
-    print("  F14 — End-to-End Tests (8 casos)")
-    print("=" * 60)
+def main() -> int:
 
     env = load_env()
     git_info = get_git_info()

@@ -66,9 +66,11 @@ def _validate_url(url: str) -> str:
             ip = sockaddr[0]
             for net in _PRIVATE_NETWORKS:
                 if ipaddress.ip_address(ip) in ipaddress.ip_network(net):
-                    raise SSRFError(f"URL {url[:60]} apunta a red privada {ip} ({net})")
+                    msg = f"URL {url[:60]} apunta a red privada {ip} ({net})"
+                    raise SSRFError(msg)
     except socket.gaierror as exc:
-        raise SSRFError(f"No se pudo resolver {host}: {exc}") from exc
+        msg = f"No se pudo resolver {host}: {exc}"
+        raise SSRFError(msg) from exc
     return url
 
 
@@ -79,7 +81,8 @@ def _should_retry(exception: Exception) -> bool:
     """Determina si un error es transitorio y merece reintento."""
     # Verificar por tipo de excepción
     if isinstance(
-        exception, (ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError, TimeoutError, ConnectionError)
+        exception,
+        (ConnectionRefusedError, ConnectionResetError, ConnectionAbortedError, TimeoutError, ConnectionError),
     ):
         return True
     # Buscar palabras clave en el mensaje
@@ -103,7 +106,7 @@ def _should_retry(exception: Exception) -> bool:
 
 def _backoff(attempt: int) -> None:
     """Backoff exponencial con jitter."""
-    delay = min(_BACKOFF_BASE_S * (2**attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)
+    delay = min(_BACKOFF_BASE_S * (2**attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)  # noqa: S311
     time.sleep(delay)
 
 
@@ -130,7 +133,7 @@ def _record_metric(counter_name: str, channel: str, status: str, duration_ms: fl
                 buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
             )
             h.labels(channel=channel).observe(duration_ms / 1000)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
@@ -187,7 +190,7 @@ class Notifier(Protocol):
 
 
 class WebhookNotifier:
-    def __init__(self, url: str, secret: str | None = None):
+    def __init__(self, url: str, secret: str | None = None) -> None:
         self._url = url
         self._secret = secret
 
@@ -210,8 +213,8 @@ class WebhookNotifier:
 
             for attempt in range(_MAX_RETRIES):
                 try:
-                    req = Request(self._url, data=data, headers=headers, method="POST")
-                    with urlopen(req, timeout=_TIMEOUT_S) as resp:
+                    req = Request(self._url, data=data, headers=headers, method="POST")  # noqa: S310
+                    with urlopen(req, timeout=_TIMEOUT_S) as resp:  # noqa: S310
                         ok = resp.status < 300
                         _record_metric("sent", "webhook", "ok" if ok else "fail", (time.monotonic() - t0) * 1000)
                         if ok:
@@ -245,7 +248,7 @@ class WebhookNotifier:
 
 
 class SlackNotifier:
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str) -> None:
         self._url = webhook_url
 
     def send(self, notification: Notification) -> bool:
@@ -261,12 +264,12 @@ class SlackNotifier:
                         "text": notification.message,
                         "fields": [{"title": k, "value": v, "short": True} for k, v in notification.fields],
                         "footer": "Knowledge Engine",
-                    }
-                ]
+                    },
+                ],
             }
             data = json.dumps(payload).encode()
-            req = Request(self._url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-            with urlopen(req, timeout=_TIMEOUT_S) as resp:
+            req = Request(self._url, data=data, headers={"Content-Type": "application/json"}, method="POST")  # noqa: S310
+            with urlopen(req, timeout=_TIMEOUT_S) as resp:  # noqa: S310
                 ok = resp.status < 300
                 _record_metric("sent", "slack", "ok" if ok else "fail", (time.monotonic() - t0) * 1000)
                 return ok
@@ -284,7 +287,7 @@ class SlackNotifier:
 
 
 class EmailNotifier:
-    def __init__(self):
+    def __init__(self) -> None:
         self._host = os.environ.get("URA_SMTP_HOST", "")
         self._port = int(os.environ.get("URA_SMTP_PORT", "587"))
         self._user = os.environ.get("URA_SMTP_USER", "")
@@ -338,7 +341,7 @@ class NotificationService:
     Timeout total por canal: _TIMEOUT_S segundos.
     """
 
-    def __init__(self, max_workers: int = 5):
+    def __init__(self, max_workers: int = 5) -> None:
         self._notifiers: list[Notifier] = []
         self._max_workers = max_workers
 
@@ -350,6 +353,7 @@ class NotificationService:
 
         Returns:
             Número de canales que respondieron OK.
+
         """
         if not self._notifiers:
             return 0
@@ -360,7 +364,7 @@ class NotificationService:
                 try:
                     if future.result(timeout=_TIMEOUT_S + 5):
                         ok_count += 1
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
         return ok_count
 
@@ -375,7 +379,7 @@ _NOTIFY_INSTANCE: NotificationService | None = None
 
 
 def get_notifier() -> NotificationService:
-    global _NOTIFY_INSTANCE
+    global _NOTIFY_INSTANCE  # noqa: PLW0603
     if _NOTIFY_INSTANCE is not None:
         return _NOTIFY_INSTANCE
     _NOTIFY_INSTANCE = NotificationService()
@@ -386,5 +390,5 @@ def get_notifier() -> NotificationService:
 
 
 def set_notifier(service: NotificationService) -> None:
-    global _NOTIFY_INSTANCE
+    global _NOTIFY_INSTANCE  # noqa: PLW0603
     _NOTIFY_INSTANCE = service

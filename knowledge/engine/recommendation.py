@@ -48,7 +48,7 @@ class RecommendationValidator:
         result = validator.validate(recommendation, all_node_ids, existing_paths)
     """
 
-    def validate(
+    def validate(  # noqa: PLR0911
         self,
         recommendation: Recommendation,
         all_node_ids: set[str],
@@ -63,8 +63,8 @@ class RecommendationValidator:
 
         Returns:
             Resultado de validación.
-        """
 
+        """
         if recommendation.kind == "create":
             if recommendation.target_id in all_node_ids:
                 return ValidationResult(

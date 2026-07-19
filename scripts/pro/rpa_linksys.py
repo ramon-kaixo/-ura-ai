@@ -45,13 +45,13 @@ def wait_and_click(region=None, confidence=0.8, timeout=10) -> None:
     time.sleep(1)
 
 
-def main() -> None:
+def main() -> None:  # noqa: PLR0915
     time.sleep(3)
 
     try:
         # ── PASO 1: Abrir Safari ──
         log("PASO 1: Abriendo Safari...")
-        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"], check=False)
+        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"], check=False)  # noqa: S607
         time.sleep(4)
 
         # ── PASO 2: Bypass pantalla app móvil ──
@@ -152,7 +152,7 @@ def main() -> None:
         log(f"  ✅ Evidencia: {EVIDENCIA}")
 
         # ── PASO 9: Cerrar Safari ──
-        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'], check=False)
+        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'], check=False)  # noqa: S607
         log("  Safari cerrado")
 
     except pyautogui.FailSafeException:

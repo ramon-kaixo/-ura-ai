@@ -26,7 +26,10 @@ class _PriorityQueue:
 
     def __init__(self) -> None:
         self._queues: dict[int, list[tuple[float, str, AgentExecution]]] = {
-            0: [], 1: [], 2: [], 3: [],
+            0: [],
+            1: [],
+            2: [],
+            3: [],
         }
         self._entries: dict[str, AgentExecution] = {}
 
@@ -191,6 +194,7 @@ class AgentScheduler(SchedulerABC):
     def _run_execution(self, execution: AgentExecution) -> None:
         """Ejecuta un agente en su propio hilo (simulado)."""
         from motor.agents.models import AgentResult, AgentState
+
         start = time.time()
         try:
             execution.state = AgentState.RUNNING

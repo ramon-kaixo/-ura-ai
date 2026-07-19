@@ -43,7 +43,8 @@ def limpiar_cuarentena(ttl_horas: int = 24) -> int:
 
 def limpiar_versiones_antiguas(keep: int = 3) -> int:
     """Mantiene solo las `keep` versiones mas recientes de cada fuente.
-    Las ideas con vigente=false y version baja se eliminan."""
+    Las ideas con vigente=false y version baja se eliminan.
+    """
     client = _get_client()
     eliminados = 0
     offset = None
@@ -51,7 +52,7 @@ def limpiar_versiones_antiguas(keep: int = 3) -> int:
         items, next_offset = client.scroll(
             COLLECTION,
             scroll_filter=models.Filter(
-                must=[models.FieldCondition(key="vigente", match=models.MatchValue(value=False))]
+                must=[models.FieldCondition(key="vigente", match=models.MatchValue(value=False))],
             ),
             limit=100,
             offset=offset,

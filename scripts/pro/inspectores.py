@@ -61,7 +61,7 @@ class CheckResult:
         self,
         check_id: int,
         nombre: str,
-        passed: bool,
+        passed: bool,  # noqa: FBT001
         linea: int = 0,
         tipo: str = "",
         mensaje: str = "",
@@ -103,7 +103,7 @@ class Inspector:
                 passed, linea, tipo, msg = fn(codigo, lineas, arbol)
                 resultados.append(CheckResult(i + 1, nombre, passed, linea, tipo, msg))
             except Exception as e:
-                resultados.append(CheckResult(i + 1, nombre, False, 0, "EXCEPTION", str(e)))
+                resultados.append(CheckResult(i + 1, nombre, False, 0, "EXCEPTION", str(e)))  # noqa: FBT003
         return resultados
 
 
@@ -147,16 +147,16 @@ def _buscar_ruff() -> str | None:
     candidates = [
         shutil.which("ruff"),
         "/home/ramon/URA/ura_ia_1972/.venv/bin/ruff",
-        os.path.expanduser("~/.local/bin/ruff"),
+        Path("~/.local/bin/ruff").expanduser(),
         "/usr/local/bin/ruff",
     ]
     for c in candidates:
-        if c and os.path.isfile(c):
+        if c and Path(c).is_file():
             return c
     return None
 
 
-def check_f821(codigo, lineas, arbol):
+def check_f821(codigo, lineas, arbol):  # noqa: C901, PLR0912
     """Check 4: Fuga de referencias (F821)."""
     ruff_bin = _buscar_ruff()
     if not ruff_bin:
@@ -194,7 +194,7 @@ def check_f821(codigo, lineas, arbol):
         return True, 0, "", ""
 
     try:
-        r = subprocess.run(
+        r = subprocess.run(  # noqa: S603
             [ruff_bin, "check", "--select", "F821", "--output-format", "concise", "-"],
             input=codigo,
             capture_output=True,
@@ -620,7 +620,7 @@ def inspeccionar(ruta: Path) -> dict:
                 resultados = futuro.result()
                 agregador.agregar(resultados)
             except Exception as e:
-                agregador.agregar([CheckResult(0, nombre, False, 0, "EXEC_ERROR", str(e))])
+                agregador.agregar([CheckResult(0, nombre, False, 0, "EXEC_ERROR", str(e))])  # noqa: FBT003
 
     # Guardar watermarks
     patrones = agregador.guardar_watermarks()
@@ -644,7 +644,7 @@ def scan_project() -> None:
         try:
             content = py_file.read_text()
             results[p] = {"lines": len(content.splitlines())}
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 

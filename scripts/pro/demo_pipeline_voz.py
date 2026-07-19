@@ -65,14 +65,14 @@ def _test_semaphore() -> None:
     pipe = AnkerDeterministicPipeline(model_size="tiny")
     tts = PiperTTSMotor(stt_pipeline=pipe)
 
-    assert pipe.is_playing_tts is False
-    tts.speak_to_file("test", "/tmp/sem_test.wav")
-    assert pipe.is_playing_tts is False
+    assert pipe.is_playing_tts is False  # noqa: S101
+    tts.speak_to_file("test", "/tmp/sem_test.wav")  # noqa: S108
+    assert pipe.is_playing_tts is False  # noqa: S101
 
     pipe.is_playing_tts = True
     chunk = np.zeros((480, 1), dtype=np.float32)
-    pipe._audio_callback(chunk, 480, None, None)
-    assert pipe.audio_queue.empty()
+    pipe._audio_callback(chunk, 480, None, None)  # noqa: SLF001
+    assert pipe.audio_queue.empty()  # noqa: S101
     pipe.is_playing_tts = False
 
 
@@ -84,13 +84,13 @@ def _test_corrections() -> None:
         ("olama con open code", "Ollama con OpenCode"),
     ]
     for raw, exp in casos:
-        res = pipe._apply_deterministic_rules(raw)
-        assert res == exp, f"{raw} → {res} (esperado: {exp})"
+        res = pipe._apply_deterministic_rules(raw)  # noqa: SLF001
+        assert res == exp, f"{raw} → {res} (esperado: {exp})"  # noqa: S101
 
 
 def _test_tts() -> None:
     tts = PiperTTSMotor()
-    path = tts.speak_to_file("Hola GB10.", "/tmp/tts_orch.wav")
+    path = tts.speak_to_file("Hola GB10.", "/tmp/tts_orch.wav")  # noqa: S108
     import scipy.io.wavfile as wav
 
     _sr, _data = wav.read(path)
@@ -99,9 +99,9 @@ def _test_tts() -> None:
 def _test_sanitizer() -> None:
     dirty = "Conecta a 10.164.1.99 con password='secreto'"
     clean = sanitize_text(dirty)
-    assert "[IP_REDACTADA]" in clean
-    assert "[CREDENTIAL_REDACTADA]" in clean
-    assert "10.164.1.99" not in clean
+    assert "[IP_REDACTADA]" in clean  # noqa: S101
+    assert "[CREDENTIAL_REDACTADA]" in clean  # noqa: S101
+    assert "10.164.1.99" not in clean  # noqa: S101
 
 
 if __name__ == "__main__":

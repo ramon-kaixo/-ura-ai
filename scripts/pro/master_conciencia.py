@@ -12,7 +12,7 @@ from pathlib import Path
 
 MCP_URL = "http://127.0.0.1:9091"
 try:
-    with open(Path(__file__).resolve().parents[2] / "config" / "dispositivos.json") as f:
+    with open(Path(__file__).resolve().parents[2] / "config" / "dispositivos.json") as f:  # noqa: PTH123
         cfg = json.load(f)
     GX10 = cfg.get("dispositivos", {}).get("gx10-64c3", {}).get("ip_cable", os.environ.get("ASUS_HOST", "10.164.1.99"))
 except (FileNotFoundError, json.JSONDecodeError):
@@ -34,13 +34,13 @@ TEST_ACTIONS = [
 def test_api(desc, payload, url=MCP_URL):
     try:
         data = json.dumps(payload).encode()
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             f"{url}/mcp/call",
             data=data,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=15) as r:
+        with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310
             result = json.loads(r.read())
             ok = result.get("ok", False)
             log = f"{'✅' if ok else '❌'} {desc}"
@@ -48,12 +48,12 @@ def test_api(desc, payload, url=MCP_URL):
                 log += f" → {str(result.get('resultado', ''))[:80]}"
             else:
                 log += f" → {result.get('error', 'sin respuesta')}"
-            with open(LOG, "a") as f:
+            with open(LOG, "a") as f:  # noqa: PTH123
                 f.write(f"{datetime.now(UTC).isoformat()} - {log}\n")
             return ok
     except Exception as e:
         log = f"❌ {desc} → Error: {e}"
-        with open(LOG, "a") as f:
+        with open(LOG, "a") as f:  # noqa: PTH123
             f.write(f"{datetime.now(UTC).isoformat()} - {log}\n")
         return False
 
@@ -62,7 +62,7 @@ def main() -> None:
 
     # 1. Test conexion MCP
     try:
-        r = urllib.request.urlopen(f"{MCP_URL}/", timeout=5)
+        r = urllib.request.urlopen(f"{MCP_URL}/", timeout=5)  # noqa: S310
         json.loads(r.read())
     except Exception:
         sys.exit(1)

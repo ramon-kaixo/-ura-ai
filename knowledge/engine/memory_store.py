@@ -76,7 +76,7 @@ class SQLiteMemoryStore:
     Búsqueda: FTS5 sobre title y content.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
     def save(self, record: MemoryRecord, timeout: float = 15.0) -> bool:
@@ -85,6 +85,7 @@ class SQLiteMemoryStore:
         Args:
             record: Registro a guardar.
             timeout: Timeout para BEGIN IMMEDIATE (default 15s para contenido grande).
+
         """
         conn = None
         try:

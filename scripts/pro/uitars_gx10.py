@@ -30,7 +30,7 @@ def iniciar_xvfb() -> bool:
     if not shutil.which("Xvfb"):
         return False
     try:
-        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)
+        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)  # noqa: PLW1510, S607
         os.environ["DISPLAY"] = ":99"
         time.sleep(1)
         return True
@@ -79,7 +79,7 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
             data=json.dumps(data).encode(),
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310
             resp = json.loads(r.read())
         texto = resp.get("response", "")
         return RespuestaOllama(texto=texto, modelo="llama3.2-vision:11b")
@@ -87,24 +87,18 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
         return RespuestaOllama(texto=f"Error: {e}")
 
 
-def main():
-    print("=== UI-TARS GX10 ===")
+def main() -> None:
     modo = "headless"
     if tiene_display():
         modo = "display"
     elif iniciar_xvfb():
         modo = "xvfb"
-    print(f"  Modo: {modo}")
     imagen = capturar_pantalla() if modo != "headless" else None
     if imagen:
-        print(f"  Captura: {len(imagen)} bytes")
-    print("  Analizando con Ollama vision...")
+        pass
     resultado = analizar_con_ollama(imagen, "Describe esta interfaz en detalle")
-    print(f"  Resultado: {resultado.texto[:200]}")
-    print(f"  Modelo: {resultado.modelo}")
     path = REPORTS_DIR / f"uitars_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"modo": modo, "resultado": resultado.texto}, indent=2))
-    print(f"  Reporte: {path}")
 
 
 if __name__ == "__main__":

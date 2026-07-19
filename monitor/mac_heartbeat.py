@@ -13,7 +13,7 @@ from pathlib import Path
 
 _TERMINAL_HOST = os.environ.get("TERMINAL_HOST", "")
 try:
-    with open(Path(__file__).resolve().parent.parent / "config" / "dispositivos.json") as f:
+    with open(Path(__file__).resolve().parent.parent / "config" / "dispositivos.json") as f:  # noqa: PTH123
         cfg = json.load(f)
     MAC_IP = _TERMINAL_HOST or cfg.get("dispositivos", {}).get("mac-mini-de-ramon", {}).get("ip_cable", "10.164.1.26")
 except (FileNotFoundError, json.JSONDecodeError):
@@ -22,7 +22,7 @@ PING_TIMEOUT = 2  # segundos
 CONSECUTIVE_FAILURES_THRESHOLD = 3
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-try:
+try:  # noqa: SIM105
     _STATE_DIR.chmod(0o700)
 except OSError:
     pass  # Esperado si ~/.ura/ está en filesystem RO
@@ -53,7 +53,7 @@ class MacHeartbeat:
                 data = json.loads(HEARTBEAT_FILE.read_text())
                 self.consecutive_failures = data.get("consecutive_failures", 0)
                 self.mac_reachable = data.get("mac_reachable", True)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
     def _save_state(self) -> None:
@@ -70,8 +70,8 @@ class MacHeartbeat:
             tmp.write_text(json.dumps(state, indent=2))
             import os
 
-            os.replace(str(tmp), str(HEARTBEAT_FILE))
-        except Exception:
+            os.replace(str(tmp), str(HEARTBEAT_FILE))  # noqa: PTH105
+        except Exception:  # noqa: S110
             pass
 
     def check_mac(self) -> bool:

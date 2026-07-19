@@ -44,20 +44,31 @@ logger = logging.getLogger("ura.tracing")
 
 # ── Budget constants (OBS-10) ───────────────
 
-MAX_EVENTS_PER_TRACE = 10_000         # max span events per trace_id
-MAX_TAGS_PER_EVENT = 32                # max k:v pairs per span
-MAX_TAG_KEY_LENGTH = 64                # max bytes per tag key
-MAX_TAG_VAL_LENGTH = 512               # max bytes per tag value
-MAX_TRACE_FILE_BYTES = 1 * 1024**3     # 1 GB max per trace file before rotation
-EXPORTER_BUFFER_SIZE = 10000           # max queued events before drop
-CPU_BUDGET_FRAC = 0.02                 # max fraction of wall time for tracing
-LATENCY_BUDGET_NS = 5_000_000          # max 5ms p99 latency for tracing overhead
-FORBIDDEN_TAG_PREFIXES = (              # OBS-08: privacy — prefix match only
-    "prompt", "query_", "document_", "key_", "token", "secret",
-    "password", "credential", "api_key", "auth_",
+MAX_EVENTS_PER_TRACE = 10_000  # max span events per trace_id
+MAX_TAGS_PER_EVENT = 32  # max k:v pairs per span
+MAX_TAG_KEY_LENGTH = 64  # max bytes per tag key
+MAX_TAG_VAL_LENGTH = 512  # max bytes per tag value
+MAX_TRACE_FILE_BYTES = 1 * 1024**3  # 1 GB max per trace file before rotation
+EXPORTER_BUFFER_SIZE = 10000  # max queued events before drop
+CPU_BUDGET_FRAC = 0.02  # max fraction of wall time for tracing
+LATENCY_BUDGET_NS = 5_000_000  # max 5ms p99 latency for tracing overhead
+FORBIDDEN_TAG_PREFIXES = (  # OBS-08: privacy — prefix match only
+    "prompt",
+    "query_",
+    "document_",
+    "key_",
+    "token",
+    "secret",
+    "password",
+    "credential",
+    "api_key",
+    "auth_",
 )
-FORBIDDEN_TAG_EXACT = {                 # whole-word match
-    "query", "document", "key", "secret",
+FORBIDDEN_TAG_EXACT = {  # whole-word match
+    "query",
+    "document",
+    "key",
+    "secret",
 }
 
 
@@ -92,26 +103,26 @@ class Sampler:
     # Internal state for ADAPTIVE
     _recent_errors: list[bool] = field(default_factory=list)
 
-    def should_sample(self, tags: dict[str, str] | None = None) -> bool:
+    def should_sample(self, tags: dict[str, str] | None = None) -> bool:  # noqa: PLR0911
         if self.strategy == SamplingStrategy.ALWAYS:
             return True
         if self.strategy == SamplingStrategy.NEVER:
             return False
         if self.strategy == SamplingStrategy.PROBABILISTIC:
-            return random.random() < self.probability
+            return random.random() < self.probability  # noqa: S311
         if self.strategy == SamplingStrategy.ADAPTIVE:
             if self._recent_errors:
                 rate = sum(self._recent_errors) / len(self._recent_errors)
                 p = self.adaptive_min_p + (self.adaptive_max_p - self.adaptive_min_p) * rate
-                return random.random() < p
-            return random.random() < self.adaptive_min_p
+                return random.random() < p  # noqa: S311
+            return random.random() < self.adaptive_min_p  # noqa: S311
         if self.strategy == SamplingStrategy.PRIORITY:
             tags = tags or {}
             priority = tags.get("priority", "normal")
             return priority in ("critical", "high")
         return True
 
-    def record_error(self, was_error: bool) -> None:
+    def record_error(self, was_error: bool) -> None:  # noqa: FBT001
         self._recent_errors.append(was_error)
         if len(self._recent_errors) > self.error_rate_window:
             self._recent_errors.pop(0)
@@ -155,6 +166,7 @@ class DropPolicy(StrEnum):
     DROP_OLDEST: drain the oldest event from the queue to make room.
     BLOCK: block the caller until space frees up (may impact throughput).
     """
+
     DROP_NEWEST = "drop_newest"
     DROP_OLDEST = "drop_oldest"
     BLOCK = "block"
@@ -165,10 +177,9 @@ class DropPolicy(StrEnum):
 
 class SpanTreeError(Exception):
     """Error in span tree structure."""
-    pass
 
 
-def validate_span_tree(spans: list[SpanEvent]) -> None:
+def validate_span_tree(spans: list[SpanEvent]) -> None:  # noqa: C901
     """Validate a span tree.
 
     Checks:
@@ -181,7 +192,8 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
     Raises SpanTreeError if any check fails.
     """
     if not spans:
-        raise SpanTreeError("Empty span tree")
+        msg = "Empty span tree"
+        raise SpanTreeError(msg)
 
     by_trace: dict[str, list[SpanEvent]] = {}
     for s in spans:
@@ -201,31 +213,30 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
         color: dict[str, int] = {s.span_id: WHITE for s in trace_spans}
 
         def has_cycle(sid: str) -> bool:
-            color[sid] = GRAY
-            for s in trace_spans:
+            color[sid] = GRAY  # noqa: B023
+            for s in trace_spans:  # noqa: B023
                 if s.parent_span_id == sid:
-                    if color[s.span_id] == GRAY:
+                    if color[s.span_id] == GRAY:  # noqa: B023
                         return True  # back edge = cycle
-                    if color[s.span_id] == WHITE and has_cycle(s.span_id):
+                    if color[s.span_id] == WHITE and has_cycle(s.span_id):  # noqa: B023
                         return True
-            color[sid] = BLACK
+            color[sid] = BLACK  # noqa: B023
             return False
 
         for s in trace_spans:
             if color[s.span_id] == WHITE and has_cycle(s.span_id):
-                raise SpanTreeError(f"Trace {trace_id}: cycle detected")
+                msg = f"Trace {trace_id}: cycle detected"
+                raise SpanTreeError(msg)
 
         # Check for spans with non-existent parent (orphans) BEFORE root counting
         missing_parent = [
-            s for s in trace_spans
-            if s.parent_span_id not in ("ROOT", "")
-            and s.parent_span_id not in span_map
+            s for s in trace_spans if s.parent_span_id not in ("ROOT", "") and s.parent_span_id not in span_map
         ]
         if missing_parent:
             orphan_ids = [s.span_id for s in missing_parent]
+            msg = f"Trace {trace_id}: {len(missing_parent)} orphan spans with missing parent: {orphan_ids}"
             raise SpanTreeError(
-                f"Trace {trace_id}: {len(missing_parent)} orphan spans "
-                f"with missing parent: {orphan_ids}"
+                msg,
             )
 
         # Now find roots (spans whose parent is ROOT or "")
@@ -236,16 +247,15 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
                 roots.append(s)
 
         if len(roots) != 1:
-            raise SpanTreeError(
-                f"Trace {trace_id}: expected 1 root, got {len(roots)}"
-            )
+            msg = f"Trace {trace_id}: expected 1 root, got {len(roots)}"
+            raise SpanTreeError(msg)
 
         # Full DFS from root to find all reachable nodes
         def dfs(sid: str) -> None:
-            if sid in visited:
+            if sid in visited:  # noqa: B023
                 return
-            visited.add(sid)
-            for s in trace_spans:
+            visited.add(sid)  # noqa: B023
+            for s in trace_spans:  # noqa: B023
                 if s.parent_span_id == sid:
                     dfs(s.span_id)
 
@@ -254,9 +264,9 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
         # Check for unreachable spans (orphans)
         if len(visited) != len(trace_spans):
             unreachable = set(span_map.keys()) - visited
-            raise SpanTreeError(
-                f"Trace {trace_id}: {len(unreachable)} orphan spans: {unreachable}"
-            )
+            msg = f"Trace {trace_id}: {len(unreachable)} orphan spans: {unreachable}"
+            raise SpanTreeError(msg)
+
 
 # ── SpanEvent ──────────────────────────────
 
@@ -268,6 +278,7 @@ class SpanEvent:
     OBS-03: each event has a unique span_id.
     OBS-04: parent_span_id links to the previous span.
     """
+
     trace_id: str
     span_id: str
     parent_span_id: str
@@ -276,7 +287,7 @@ class SpanEvent:
     message_type: str
     message_kind: str
     timestamp_utc: float  # UTC seconds
-    monotonic_ts: int      # monotonic nanoseconds
+    monotonic_ts: int  # monotonic nanoseconds
     duration_ns: int = 0
     error_code: str = ""
     error_message: str = ""
@@ -330,8 +341,8 @@ class TraceContext:
         self._source = source
         self._destination = destination
         # OBS-01: trace_id is created once at the root
-        self._trace_id = trace_id if trace_id is not None else (
-            getattr(TraceContext._local, "trace_id", None) or TraceId.generate()
+        self._trace_id = (
+            trace_id if trace_id is not None else (getattr(TraceContext._local, "trace_id", None) or TraceId.generate())
         )
         # OBS-05: correlation_id and causation_id never change
         self._correlation_id = correlation_id or CorrelationId(str(self._trace_id))
@@ -487,9 +498,9 @@ class TraceContext:
                 self._exporter.emit(event)
                 # Track error for adaptive sampler
                 if self._sampler and error_code:
-                    self._sampler.record_error(True)
+                    self._sampler.record_error(True)  # noqa: FBT003
                 elif self._sampler:
-                    self._sampler.record_error(False)
+                    self._sampler.record_error(False)  # noqa: FBT003
         except Exception:
             logger.debug("trace emit failed (OBS-09)", exc_info=True)
 
@@ -535,6 +546,7 @@ class TraceContext:
 
 class _SpanEventSink:
     """Abstract sink for span events. Used for DI in TraceContext."""
+
     def emit(self, event: SpanEvent) -> None:
         raise NotImplementedError
 
@@ -621,10 +633,10 @@ class TraceExporter(_SpanEventSink):
     def _open_file(self) -> None:
         path = self._path
         if self._file_index > 0:
-            base, ext = os.path.splitext(self._path)
+            base, ext = os.path.splitext(self._path)  # noqa: PTH122
             path = f"{base}.{self._file_index}{ext}"
         try:
-            self._file = open(path, "a")
+            self._file = open(path, "a")  # noqa: PTH123, SIM115
             self._file_event_count = 0
         except OSError:
             self._file = None  # OBS-09: silent on file errors
@@ -778,6 +790,7 @@ class TraceExporter(_SpanEventSink):
 @dataclass
 class LatencyStats:
     """Latency percentiles for a subsystem."""
+
     count: int = 0
     errors: int = 0
     total_duration_ns: int = 0
@@ -788,7 +801,7 @@ class LatencyStats:
     p95_ns: int = 0
     p99_ns: int = 0
 
-    def record(self, duration_ns: int, error: bool = False) -> None:
+    def record(self, duration_ns: int, error: bool = False) -> None:  # noqa: FBT001, FBT002
         self.count += 1
         if error:
             self.errors += 1
@@ -837,7 +850,7 @@ class MetricsCollector:
         self,
         subsystem: str,
         duration_ns: int,
-        error: bool = False,
+        error: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         with self._lock:
             if subsystem not in self._stats:
@@ -856,18 +869,12 @@ class MetricsCollector:
     def throughput(self, window_seconds: float = 60.0) -> dict[str, float]:
         """Events per second per subsystem (approximate)."""
         with self._lock:
-            return {
-                s: st.count / max(window_seconds, 1)
-                for s, st in self._stats.items()
-            }
+            return {s: st.count / max(window_seconds, 1) for s, st in self._stats.items()}
 
     def error_rates(self) -> dict[str, float]:
         """Error rate per subsystem."""
         with self._lock:
-            return {
-                s: st.errors / max(st.count, 1)
-                for s, st in self._stats.items()
-            }
+            return {s: st.errors / max(st.count, 1) for s, st in self._stats.items()}
 
     def clear(self) -> None:
         with self._lock:
@@ -883,5 +890,5 @@ def get_metrics_collector() -> MetricsCollector:
     return _global_collector
 
 
-def record_latency(subsystem: str, duration_ns: int, error: bool = False) -> None:
+def record_latency(subsystem: str, duration_ns: int, error: bool = False) -> None:  # noqa: FBT001, FBT002
     _global_collector.record(subsystem, duration_ns, error)

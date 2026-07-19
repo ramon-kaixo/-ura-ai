@@ -14,14 +14,12 @@ def cmd_doctor(args) -> int:
 
     def report(sev: str, check: str, msg: str) -> None:
         nonlocal errors
-        prefix = {"OK": "\u2705", "WARN": "\u26a0\ufe0f", "FAIL": "\u274c"}.get(sev, "?")
+        {"OK": "\u2705", "WARN": "\u26a0\ufe0f", "FAIL": "\u274c"}.get(sev, "?")
         if sev == "FAIL":
             errors += 1
-        print(f"  {prefix} [{check}] {msg}")
 
     if not db_path.exists():
         report("FAIL", "sqlite", "DB file not found")
-        print(f"\n\u274c {errors} checks failed")
         return 1
     conn = _get_conn(db_path)
     try:
@@ -67,7 +65,4 @@ def cmd_doctor(args) -> int:
         )
     finally:
         conn.close()
-    print(
-        f"\n{'✅' if errors == 0 else '❌'} All health checks passed" if errors == 0 else f"\n❌ {errors} checks failed"
-    )
     return 1 if errors else 0

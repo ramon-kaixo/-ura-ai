@@ -145,7 +145,7 @@ def verificar_firma_ast(codigo_original: str, codigo_final: str) -> tuple[bool, 
     return True, []
 
 
-def verificar_mapa_cromatico(
+def verificar_mapa_cromatico(  # noqa: C901
     mapa: dict,
     codigo_original: str,
     codigo_final: str,
@@ -172,7 +172,7 @@ def verificar_mapa_cromatico(
 
     rojas_reales = 0
     for nodo in ast.walk(arbol):
-        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):  # noqa: SIM102
             if hasattr(nodo, "end_lineno") and nodo.end_lineno:
                 rojas_reales += 1
         if isinstance(nodo, (ast.For, ast.While, ast.If, ast.Try, ast.With)):
@@ -201,7 +201,7 @@ def compactar(
     ruta_original: Path,
     ruta_nuevo_codigo: Path,
     metadata: dict,
-    dry_run: bool = False,
+    dry_run: bool = False,  # noqa: FBT001, FBT002
     mapa_cromatico: dict | None = None,
 ) -> dict:
     """Ejecuta el pipeline completo de compactación.
@@ -262,14 +262,14 @@ def compactar(
         ruta_original.write_text(codigo_final, encoding="utf-8")
 
         # Ruff fix post-escritura
-        subprocess.run(
-            ["ruff", "check", "--fix", "--unsafe-fixes", str(ruta_original)],
+        subprocess.run(  # noqa: S603
+            ["ruff", "check", "--fix", "--unsafe-fixes", str(ruta_original)],  # noqa: S607
             capture_output=True,
             timeout=30,
             check=False,
         )
-        subprocess.run(
-            ["ruff", "format", str(ruta_original)],
+        subprocess.run(  # noqa: S603
+            ["ruff", "format", str(ruta_original)],  # noqa: S607
             capture_output=True,
             timeout=30,
             check=False,

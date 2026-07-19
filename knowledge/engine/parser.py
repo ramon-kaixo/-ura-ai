@@ -100,7 +100,11 @@ def parse_source(so: SourceObject) -> KnowledgeObject | CompileError:
 
     if not raw.strip():
         return CompileError(
-            code="KE005", document=so.path, stage="parser", message=f"Documento vacío: {so.path}", category="permanent"
+            code="KE005",
+            document=so.path,
+            stage="parser",
+            message=f"Documento vacío: {so.path}",
+            category="permanent",
         )
 
     fm_dict, body, err_code = _extract_frontmatter(raw)

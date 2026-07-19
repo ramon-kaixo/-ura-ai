@@ -41,6 +41,7 @@ def subscribe_all(
         source_dir: Ruta al directorio fuente.
         vector_embedder: Embedder para indexación vectorial (opcional).
         vector_store: VectorStore para indexación vectorial (opcional).
+
     """
     bus.subscribe(CompileCompleted, _make_compile_archive_handler(db_path, source_dir))
     bus.subscribe(CompileCompleted, _make_compile_audit_handler())

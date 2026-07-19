@@ -116,6 +116,7 @@ class RuleBasedPlanner(PlannerABC):
     @staticmethod
     def _make_step(index: int, action: str, params: dict | None = None) -> PlanStep:
         from motor.agents.models import PlanStep, make_step_id
+
         step_id = make_step_id("plan", index)
         return PlanStep(
             step_id=step_id,

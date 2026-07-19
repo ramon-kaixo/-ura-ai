@@ -36,7 +36,7 @@ class SQLiteLineageStore:
     Almacena eventos OpenLineage en la tabla op_lineage.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
     def store_lineage_event(self, event: dict[str, Any]) -> bool:

@@ -94,9 +94,7 @@ class KnowledgeDeltaStage(BaseStage):
 
         ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
         if ambiguous_ids:
-            context.warnings.append(
-                f"Deltas include {len(ambiguous_ids)} facts from ambiguous entities"
-            )
+            context.warnings.append(f"Deltas include {len(ambiguous_ids)} facts from ambiguous entities")
 
         context.provenance.change_detector_name = "BasicChangeDetector"
         context.provenance.change_detector_version = "1.0.0"

@@ -93,5 +93,5 @@ class LLMFactExtractor(FactExtractor):
 
         items: list[dict] = []
         for match in re.finditer(r"\{\s*\"subject\"\s*:\s*\"([^\"]+)\"", raw):
-            items.append({"subject": match.group(1)})
+            items.append({"subject": match.group(1)})  # noqa: PERF401
         return items

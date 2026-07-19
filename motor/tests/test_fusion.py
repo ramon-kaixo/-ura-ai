@@ -49,6 +49,7 @@ class _StubEngine(FusionEngine):
 class _StubResolver(ConflictResolver):
     def detect(self, claims):
         return []
+
     def resolve(self, conflicts, claims):
         return [], []
 
@@ -56,6 +57,7 @@ class _StubResolver(ConflictResolver):
 class _StubScorer(SourceScorer):
     def score(self, claim):
         return SourceScore(url="http://test.com")
+
     def score_evidence(self, evidence_set):
         return []
 
@@ -95,6 +97,7 @@ class _StubEntityResolver(EntityResolver):
 
     def normalize(self, text):
         return text.strip().lower()
+
 
 # ── IDs deterministas ──────────────────────
 
@@ -333,7 +336,7 @@ class TestFusionContext:
                 stage_name="ExtractionStage",
                 stage_version="1.0",
                 transformer="test",
-            )
+            ),
         )
         assert len(ctx.transforms) == 1
 
@@ -484,7 +487,8 @@ class TestKnowledgeFact:
         f = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.8)
         try:
             f.confidence = 0.9
-            raise AssertionError("Should have raised FrozenInstanceError")
+            msg = "Should have raised FrozenInstanceError"
+            raise AssertionError(msg)
         except Exception as e:
             assert type(e).__name__ in ("FrozenInstanceError", "AttributeError")
 
@@ -706,6 +710,7 @@ class TestConflictResolverContract:
         class R(ConflictResolver):
             def detect(self, claims):
                 return []
+
             def resolve(self, conflicts, claims):
                 return [], []
 
@@ -724,6 +729,7 @@ class TestSourceScorerContract:
         class S(SourceScorer):
             def score(self, claim):
                 return SourceScore(url="http://test.com")
+
             def score_evidence(self, evidence_set):
                 return []
 
@@ -825,12 +831,15 @@ class TestPipelineStageContract:
             @property
             def stage(self) -> FusionStage:
                 return FusionStage.NORMALIZATION
+
             @property
             def name(self) -> str:
                 return "StageA"
+
             @property
             def version(self) -> str:
                 return "1.0"
+
             def execute(self, ctx: FusionContext) -> FusionContext:
                 ctx.statistics["x"] = ctx.statistics.get("x", 0) + 1
                 return ctx
@@ -839,12 +848,15 @@ class TestPipelineStageContract:
             @property
             def stage(self) -> FusionStage:
                 return FusionStage.MERGE
+
             @property
             def name(self) -> str:
                 return "StageB"
+
             @property
             def version(self) -> str:
                 return "2.0"
+
             def execute(self, ctx: FusionContext) -> FusionContext:
                 ctx.statistics["x"] = ctx.statistics.get("x", 0) + 2
                 return ctx
@@ -856,16 +868,20 @@ class TestPipelineStageContract:
 
     def test_registers_transform(self) -> None:
         """Cada etapa debe registrar su transformación en context.transforms."""
+
         class TrackingStage(PipelineStage):
             @property
             def stage(self) -> FusionStage:
                 return FusionStage.EXTRACTION
+
             @property
             def name(self) -> str:
                 return "TrackingStage"
+
             @property
             def version(self) -> str:
                 return "1.0"
+
             def execute(self, ctx: FusionContext) -> FusionContext:
                 ctx.transforms.append(
                     StageProvenance(
@@ -874,7 +890,7 @@ class TestPipelineStageContract:
                         transformer="TrackingStage:v1",
                         input_claims=0,
                         output_claims=0,
-                    )
+                    ),
                 )
                 return ctx
 
@@ -888,14 +904,18 @@ def _make_stub_stage(stage_type: FusionStage) -> PipelineStage:
         @property
         def stage(self) -> FusionStage:
             return stage_type
+
         @property
         def name(self) -> str:
             return "StubStage"
+
         @property
         def version(self) -> str:
             return "0.0.0"
+
         def execute(self, ctx: FusionContext) -> FusionContext:
             return ctx
+
     return StubStage()
 
 
@@ -926,24 +946,36 @@ class TestFusionStage:
 class TestFusionPipeline:
     def test_create_with_engine(self) -> None:
         pipeline = FusionPipeline(
-            _StubEngine(), _StubResolver(), _StubScorer(),
-            _StubMerger(), _StubDetector(), _StubSelector(),
+            _StubEngine(),
+            _StubResolver(),
+            _StubScorer(),
+            _StubMerger(),
+            _StubDetector(),
+            _StubSelector(),
         )
         assert isinstance(pipeline.engine, FusionEngine)
         assert pipeline.stage_times == {}
 
     def test_run_with_engine(self) -> None:
         pipeline = FusionPipeline(
-            _StubEngine(), _StubResolver(), _StubScorer(),
-            _StubMerger(), _StubDetector(), _StubSelector(),
+            _StubEngine(),
+            _StubResolver(),
+            _StubScorer(),
+            _StubMerger(),
+            _StubDetector(),
+            _StubSelector(),
         )
         result = pipeline.run(bundle="ignored", documents=[])  # type: ignore[arg-type]
         assert result.accepted == ()
 
     def test_with_entity_resolver(self) -> None:
         pipeline = FusionPipeline(
-            _StubEngine(), _StubResolver(), _StubScorer(),
-            _StubMerger(), _StubDetector(), _StubSelector(),
+            _StubEngine(),
+            _StubResolver(),
+            _StubScorer(),
+            _StubMerger(),
+            _StubDetector(),
+            _StubSelector(),
             entity_resolver=_StubEntityResolver(),
         )
         assert pipeline.run(bundle="ignored", documents=[]).accepted == ()
@@ -960,19 +992,24 @@ class TestFusionPipeline:
             @property
             def stage(self) -> FusionStage:
                 return FusionStage.MERGE
+
             @property
             def name(self) -> str:
                 return "MergeStage"
+
             @property
             def version(self) -> str:
                 return "1.0"
+
             def execute(self, ctx: FusionContext) -> FusionContext:
                 ctx.facts = [
                     KnowledgeFact(
                         id=make_fact_id("A", "B", "C"),
-                        subject="A", predicate="B", object="C",
+                        subject="A",
+                        predicate="B",
+                        object="C",
                         confidence=0.9,
-                    )
+                    ),
                 ]
                 return ctx
 

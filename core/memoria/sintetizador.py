@@ -40,7 +40,7 @@ async def sintetizar(peticion: str) -> dict:
     if not ideas:
         return {
             "peticion": peticion,
-            "informe": "No tengo informacion en memoria sobre este tema. Prueba a buscar en internet con /memoria/consultar?forzar_web=true",
+            "informe": "No tengo informacion en memoria sobre este tema. Prueba a buscar en internet con /memoria/consultar?forzar_web=true",  # noqa: E501
             "total_ideas": 0,
             "fuentes": [],
         }

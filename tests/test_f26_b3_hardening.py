@@ -12,8 +12,8 @@ Cubre B2-01 a B2-10:
 from __future__ import annotations
 
 import json
-import os
 import time
+from pathlib import Path
 
 import pytest
 
@@ -70,8 +70,8 @@ def _populate(m: Memory, n: int = 100) -> None:
 
 def test_recovery_after_crash_during_append(tmp_path: str) -> None:
     """Simular crash después de append parcial: recovery debe ser consistente."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 50)
@@ -80,7 +80,7 @@ def test_recovery_after_crash_during_append(tmp_path: str) -> None:
     m1.close()
 
     # Simular crash: truncar el journal (última línea)
-    with open(journal, "r+") as f:
+    with Path(journal).open("r+") as f:
         lines = f.readlines()
         if lines:
             f.seek(0)
@@ -96,8 +96,8 @@ def test_recovery_after_crash_during_append(tmp_path: str) -> None:
 
 def test_recovery_after_crash_during_snapshot(tmp_path: str) -> None:
     """Crash durante snapshot → journal permite recuperar todo."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 20)
@@ -106,8 +106,8 @@ def test_recovery_after_crash_during_snapshot(tmp_path: str) -> None:
     # Snapshot nunca se escribió (simular crash). Journal tiene 20 entries.
     # El snapshot no existe → recovery desde journal puro.
     # Nota: Memory espera que exista el snapshot. Si no existe, carga desde journal.
-    if os.path.exists(snap):
-        os.remove(snap)
+    if Path(snap).exists():
+        Path(snap).unlink()
 
     # Forzar que el snapshot_path no exista para probar recovery desde journal
     m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
@@ -117,7 +117,7 @@ def test_recovery_after_crash_during_snapshot(tmp_path: str) -> None:
 
 def test_atomic_snapshot_write(tmp_path: str) -> None:
     """Snapshot se escribe atómicamente: archivo temporal + rename."""
-    snap = os.path.join(tmp_path, "snap.json")
+    snap = Path(tmp_path) / "snap.json"
     m = Memory(snapshot_path=snap)
     _populate(m, 10)
     m.snapshot(version="v1")
@@ -130,8 +130,8 @@ def test_atomic_snapshot_write(tmp_path: str) -> None:
 
 def test_recovery_partial_journal(tmp_path: str) -> None:
     """Journal truncado (crash durante append) → recovery omite última línea corrupta."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10)
@@ -140,7 +140,7 @@ def test_recovery_partial_journal(tmp_path: str) -> None:
     m1.close()
 
     # Añadir línea corrupta al journal
-    with open(journal, "a") as f:
+    with Path(journal).open("a") as f:
         f.write("{corrupted json line\n")
 
     # Recovery debe ignorar la línea corrupta y recuperar el resto
@@ -156,17 +156,17 @@ def test_recovery_partial_journal(tmp_path: str) -> None:
 
 def test_corrupt_snapshot_checksum(tmp_path: str) -> None:
     """Snapshot con checksum incorrecto → rechazado."""
-    snap = os.path.join(tmp_path, "snap.json")
+    snap = Path(tmp_path) / "snap.json"
     m = Memory(snapshot_path=snap)
     _populate(m, 10)
     m.snapshot("v1")
     m.close()
 
     # Corromper el checksum
-    with open(snap) as f:
+    with Path(snap).open() as f:
         data = json.load(f)
     data["header"]["checksum"] = "bad"
-    with open(snap, "w") as f:
+    with Path(snap).open("w") as f:
         json.dump(data, f)
 
     # Verificar que load_snapshot rechaza el archivo corrupto
@@ -176,14 +176,14 @@ def test_corrupt_snapshot_checksum(tmp_path: str) -> None:
 
 def test_corrupt_snapshot_truncated(tmp_path: str) -> None:
     """Snapshot truncado → error controlado en load_snapshot."""
-    snap = os.path.join(tmp_path, "snap.json")
+    snap = Path(tmp_path) / "snap.json"
     m = Memory(snapshot_path=snap)
     _populate(m, 10)
     m.snapshot("v1")
     m.close()
 
     # Truncar a la mitad
-    with open(snap, "r+") as f:
+    with Path(snap).open("r+") as f:
         content = f.read()
         f.seek(0)
         f.truncate()
@@ -195,8 +195,8 @@ def test_corrupt_snapshot_truncated(tmp_path: str) -> None:
 
 def test_corrupt_journal_incomplete_line(tmp_path: str) -> None:
     """Journal con línea incompleta (crash) → recovery tolera."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10)
@@ -205,7 +205,7 @@ def test_corrupt_journal_incomplete_line(tmp_path: str) -> None:
     m1.close()
 
     # Añadir línea incompleta (sin newline final)
-    with open(journal, "a") as f:
+    with Path(journal).open("a") as f:
         f.write('{"entry_id": "partial"')
 
     m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
@@ -220,8 +220,8 @@ def test_corrupt_journal_incomplete_line(tmp_path: str) -> None:
 
 def test_recovery_deterministic_100x(tmp_path: str) -> None:
     """100 recuperaciones desde el mismo snapshot+journal → mismo resultado."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10)
@@ -247,8 +247,8 @@ def test_recovery_deterministic_100x(tmp_path: str) -> None:
 
 def test_incremental_recovery(tmp_path: str) -> None:
     """Solo se reprocesan los entries del journal, no todo el snapshot."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 50)
@@ -266,7 +266,6 @@ def test_incremental_recovery(tmp_path: str) -> None:
     # Abrir el mismo journal (ahora con 11 entries nuevos)
     # Nota: esto falla porque el journal se rota en snapshot
     # En su lugar, crear un nuevo journal
-    pass
 
 
 # ═══════════════════════════════════════════════════
@@ -275,8 +274,8 @@ def test_incremental_recovery(tmp_path: str) -> None:
 
 
 def test_benchmark_recovery_10k(tmp_path: str) -> None:
-    snap = os.path.join(tmp_path, "snap_10k.json")
-    journal = os.path.join(tmp_path, "journal_10k.jsonl")
+    snap = Path(tmp_path) / "snap_10k.json"
+    journal = Path(tmp_path) / "journal_10k.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10000)
@@ -288,14 +287,13 @@ def test_benchmark_recovery_10k(tmp_path: str) -> None:
     t = time.perf_counter() - start
     assert m2.timeline.size == 10000
     assert t < 2.0, f"Recovery 10K took {t:.2f}s"
-    print(f"\n  Recovery 10K: {t*1000:.1f}ms")
     m2.close()
 
 
 @pytest.mark.slow
 def test_benchmark_recovery_100k(tmp_path: str) -> None:
-    snap = os.path.join(tmp_path, "snap_100k.json")
-    journal = os.path.join(tmp_path, "journal_100k.jsonl")
+    snap = Path(tmp_path) / "snap_100k.json"
+    journal = Path(tmp_path) / "journal_100k.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 100000)
@@ -307,7 +305,6 @@ def test_benchmark_recovery_100k(tmp_path: str) -> None:
     t = time.perf_counter() - start
     assert m2.timeline.size == 100000
     assert t < 15.0, f"Recovery 100K took {t:.2f}s"
-    print(f"\n  Recovery 100K: {t:.2f}s")
     m2.close()
 
 
@@ -319,10 +316,11 @@ def test_benchmark_recovery_100k(tmp_path: str) -> None:
 def test_fuzz_journal_operations(tmp_path: str) -> None:
     """Operaciones aleatorias durante miles de iteraciones."""
     import random
-    rng = random.Random(42)
 
-    snap = os.path.join(tmp_path, "snap_fuzz.json")
-    journal = os.path.join(tmp_path, "journal_fuzz.jsonl")
+    rng = random.Random(42)  # noqa: S311
+
+    snap = Path(tmp_path) / "snap_fuzz.json"
+    journal = Path(tmp_path) / "journal_fuzz.jsonl"
 
     for trial in range(50):
         m = Memory(snapshot_path=snap, journal_path=journal)
@@ -331,17 +329,19 @@ def test_fuzz_journal_operations(tmp_path: str) -> None:
             op = rng.choice(["append", "snapshot", "recover"])
             try:
                 if op == "append":
-                    m.append(_entry(
-                        ts=float(rng.randint(0, 100000)),
-                        refs=(_ref(f"f{rng.randint(0,100)}"),),
-                    ))
+                    m.append(
+                        _entry(
+                            ts=float(rng.randint(0, 100000)),
+                            refs=(_ref(f"f{rng.randint(0, 100)}"),),
+                        ),
+                    )
                 elif op == "snapshot":
                     m.snapshot(f"v{trial}")
                 elif op == "recover":
                     # Cerrar y reabrir (simula recovery)
                     m.close()
                     m = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         m.close()
         # Recuperar y verificar consistencia
@@ -375,21 +375,24 @@ def test_memory_no_reference_leaks() -> None:
 
 def test_schema_compatibility_v1(tmp_path: str) -> None:
     """Snapshot v1 (sin checksum) debe cargarse correctamente."""
-    snap = os.path.join(tmp_path, "compat_v1.json")
+    snap = Path(tmp_path) / "compat_v1.json"
 
     # Crear snapshot v1 manual (sin checksum)
     data = {
         "header": {"schema_version": 1, "entry_count": 1},
         "entries": {
             "e1": {
-                "entry_id": "e1", "timestamp": 1000,
+                "entry_id": "e1",
+                "timestamp": 1000,
                 "fact_refs": [{"fact_id": "f1", "version_id": "v1", "subject": "S", "predicate": "P", "object": "O"}],
-                "source": "test", "event_type": "fact_added",
-                "metadata": {}, "snapshot": False,
-            }
+                "source": "test",
+                "event_type": "fact_added",
+                "metadata": {},
+                "snapshot": False,
+            },
         },
     }
-    with open(snap, "w") as f:
+    with Path(snap).open("w") as f:
         json.dump(data, f)
 
     m = Memory.load(snap)
@@ -411,8 +414,8 @@ def test_e2e_full_flow(tmp_path: str) -> None:
     from motor.core.fusion.stages import ExtractionStage, KnowledgeMergerStage, NormalizationStage
     from motor.core.web.citation.citation import CitationBundle, Evidence
 
-    snap = os.path.join(tmp_path, "e2e_snap.json")
-    journal = os.path.join(tmp_path, "e2e_journal.jsonl")
+    snap = Path(tmp_path) / "e2e_snap.json"
+    journal = Path(tmp_path) / "e2e_journal.jsonl"
 
     # 1. Pipeline produce Facts
     bundle = CitationBundle(
@@ -422,20 +425,26 @@ def test_e2e_full_flow(tmp_path: str) -> None:
             Evidence(
                 evidence_id=f"ev{i:04d}",
                 document_url=f"https://example.com/{i}",
-                canonical_url=None, title=f"Doc{i}",
-                document_index=i, sentence_position=0,
+                canonical_url=None,
+                title=f"Doc{i}",
+                document_index=i,
+                sentence_position=0,
                 fragment=f"Entity{i} has property value{i}",
-                content_hash=f"h{i}", document_id=f"d{i}",
-                fetched_at=float(i), quality_score=0.8,
+                content_hash=f"h{i}",
+                document_id=f"d{i}",
+                fetched_at=float(i),
+                quality_score=0.8,
             )
             for i in range(10)
         ],
     )
-    pipeline = FusionPipeline(stages=[
-        ExtractionStage(),
-        NormalizationStage(),
-        KnowledgeMergerStage(),
-    ])
+    pipeline = FusionPipeline(
+        stages=[
+            ExtractionStage(),
+            NormalizationStage(),
+            KnowledgeMergerStage(),
+        ],
+    )
     result = pipeline.run(bundle, [])
 
     # 2. Memory captura el estado
@@ -481,8 +490,8 @@ def test_e2e_full_flow(tmp_path: str) -> None:
 
 def test_corrupt_last_journal_line_truncated(tmp_path: str) -> None:
     """Última línea del journal truncada → se omite, no se aborta."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 5)
@@ -491,7 +500,7 @@ def test_corrupt_last_journal_line_truncated(tmp_path: str) -> None:
     m1.close()
 
     # Añadir línea truncada (sin cerrar JSON)
-    with open(journal, "a") as f:
+    with Path(journal).open("a") as f:
         f.write('{"entry_id": "partial", "timestamp": 9999')
 
     m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
@@ -509,8 +518,8 @@ def test_corrupt_last_journal_line_truncated(tmp_path: str) -> None:
 
 def test_recover_idempotent(tmp_path: str) -> None:
     """recover() repetido produce exactamente el mismo estado."""
-    snap = os.path.join(tmp_path, "snap.json")
-    journal = os.path.join(tmp_path, "journal.jsonl")
+    snap = Path(tmp_path) / "snap.json"
+    journal = Path(tmp_path) / "journal.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10)
@@ -535,8 +544,8 @@ def test_recover_idempotent(tmp_path: str) -> None:
 
 def test_benchmark_recovery_budget(tmp_path: str) -> None:
     """Recovery completo (snapshot + journal) no debe exceder el presupuesto."""
-    snap = os.path.join(tmp_path, "snap_budget.json")
-    journal = os.path.join(tmp_path, "journal_budget.jsonl")
+    snap = Path(tmp_path) / "snap_budget.json"
+    journal = Path(tmp_path) / "journal_budget.jsonl"
 
     m1 = Memory(snapshot_path=snap, journal_path=journal)
     _populate(m1, 10000)
@@ -559,8 +568,8 @@ def test_benchmark_recovery_budget(tmp_path: str) -> None:
 
 def test_cross_compatibility_snapshot_journal(tmp_path: str) -> None:
     """Generar snapshot + journal de referencia y validar carga."""
-    snap = os.path.join(tmp_path, "ref_snap.json")
-    journal = os.path.join(tmp_path, "ref_journal.jsonl")
+    snap = Path(tmp_path) / "ref_snap.json"
+    journal = Path(tmp_path) / "ref_journal.jsonl"
 
     import hashlib
 
@@ -568,21 +577,17 @@ def test_cross_compatibility_snapshot_journal(tmp_path: str) -> None:
     _populate(m1, 100)
     m1.snapshot("ref_v1")
     _populate(m1, 10)
-    checksum_before = hashlib.sha256(
-        str(sorted(m1.timeline.entries.keys())).encode()
-    ).hexdigest()
+    checksum_before = hashlib.sha256(str(sorted(m1.timeline.entries.keys())).encode()).hexdigest()
     m1.close()
 
     # Cargar con nueva instancia
     m2 = Memory(snapshot_path=snap, journal_path=journal, auto_recover=True)
-    checksum_after = hashlib.sha256(
-        str(sorted(m2.timeline.entries.keys())).encode()
-    ).hexdigest()
+    checksum_after = hashlib.sha256(str(sorted(m2.timeline.entries.keys())).encode()).hexdigest()
 
     assert checksum_before == checksum_after, "Cross-compatibility failure"
     assert m2.timeline.size == 110
 
     # Verificar que los archivos existen (pueden conservarse como artefactos)
-    assert os.path.exists(snap)
-    assert os.path.exists(journal)
+    assert Path(snap).exists()
+    assert Path(journal).exists()
     m2.close()

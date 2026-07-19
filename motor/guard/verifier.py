@@ -13,7 +13,7 @@ URL_OLLAMA = "http://localhost:11435/v1/chat/completions"
 TIMEOUT_VERIFY = 3
 
 
-def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> VerifyResult:
+def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> VerifyResult:  # noqa: FBT001, FBT002
     """Ejecuta verificación post-cambio preguntando a Ollama."""
     r = VerifyResult()
     if not hubo_cambios:
@@ -69,9 +69,9 @@ def _test_ollama() -> str:
         return ""
 
 
-def _revertir_cambios():
+def _revertir_cambios() -> None:
     """Reinicia el servicio opencode para revertir cambios."""
     try:
         _executor.run(["systemctl", "restart", "opencode"], timeout=15)
     except Exception as e:
-        log.error("revertir cambios falló: %s", e)
+        log.exception("revertir cambios falló: %s", e)

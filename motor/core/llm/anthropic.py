@@ -25,7 +25,6 @@ from motor.core.secrets import get_secret
 log = logging.getLogger(__name__)
 
 
-
 class AnthropicProvider(BaseLLMProvider):
     """Proveedor LLM que conecta con Anthropic Claude API."""
 
@@ -47,7 +46,8 @@ class AnthropicProvider(BaseLLMProvider):
         self._provider_name = "anthropic"
         self._api_key = get_secret("ANTHROPIC_API_KEY")
         self._base_url = get_secret(
-            "ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1",
+            "ANTHROPIC_BASE_URL",
+            "https://api.anthropic.com/v1",
         ).rstrip("/")
         self._model: str = get_secret("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
         self._timeout: int = int(get_secret("ANTHROPIC_TIMEOUT", "120"))
@@ -89,7 +89,9 @@ class AnthropicProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usage", {})
             log_call(
-                self._provider_name, model_name, latency_ms,
+                self._provider_name,
+                model_name,
+                latency_ms,
                 input_tokens=usage.get("input_tokens"),
                 output_tokens=usage.get("output_tokens"),
             )
@@ -134,8 +136,10 @@ class AnthropicProvider(BaseLLMProvider):
             if r.is_error:
                 log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
-                    "provider": self._provider_name, "status": "error",
-                    "detail": r.text[:200], "latency_ms": latency_ms,
+                    "provider": self._provider_name,
+                    "status": "error",
+                    "detail": r.text[:200],
+                    "latency_ms": latency_ms,
                 }
             modelos = r.json().get("data", [])
             log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))

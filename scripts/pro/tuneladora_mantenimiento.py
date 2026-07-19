@@ -53,7 +53,7 @@ def _load_devices(root: Path) -> dict[str, str]:
         "mac_tailscale": _resolve_host(MAGICDNS_MAC, "100.123.81.101"),
     }
     try:
-        with open(root / "config" / "dispositivos.json") as f:
+        with open(root / "config" / "dispositivos.json") as f:  # noqa: PTH123
             cfg = json.load(f)
         d = cfg.get("dispositivos", {})
         gx10 = d.get("gx10-64c3", {})
@@ -82,7 +82,7 @@ def log(msg) -> None:
 
 def run(cmd, timeout=120):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)  # noqa: S603
         return r.returncode, r.stdout, r.stderr
     except Exception as e:
         return -1, "", str(e)
@@ -112,7 +112,7 @@ def health_check():
     try:
         usage = os.statvfs("/")
         metrics["disco_libre_gb"] = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     alertas = []
     if metrics.get("ram_usada_mb", 0) > 90000:
@@ -127,7 +127,7 @@ def check_ollama():
         rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{OLLAMA_URL}/api/tags"])
         if rc == 0 and "models" in out:
             return json.loads(out).get("models", [])
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return []
 
@@ -203,7 +203,7 @@ def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-code
     procs = []
     for i in range(workers):
         env["REFACTOR_WORKER_ID"] = str(i)
-        proc = subprocess.Popen(
+        proc = subprocess.Popen(  # noqa: S603
             [VENV_PYTHON, "-u", "scripts/pro/refactor_large_functions_v2.py"],
             env=env,
             stdout=subprocess.PIPE,
@@ -324,7 +324,7 @@ def step_auditoria(profundidad: str) -> dict:
 
 def step_forense_aislamientos() -> dict:
     """Lee procesos aislados por el SNC en /tmp/ura_aislados/ y limpia >7 días."""
-    aislados_dir = Path("/tmp/ura_aislados")
+    aislados_dir = Path("/tmp/ura_aislados")  # noqa: S108
     if not aislados_dir.exists():
         return {"total": 0, "activos": [], "limpiados": 0}
 

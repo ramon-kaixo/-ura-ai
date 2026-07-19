@@ -43,40 +43,64 @@ from motor.agents import (
 
 class _EchoAdapter(ToolAdapter):
     """Herramienta que devuelve los mismos parámetros."""
-    def name(self) -> str: return "echo"
-    def run(self, params: dict) -> dict: return params
-    def cancel(self) -> None: pass
+
+    def name(self) -> str:
+        return "echo"
+
+    def run(self, params: dict) -> dict:
+        return params
+
+    def cancel(self) -> None:
+        pass
 
 
 class _SlowAdapter(ToolAdapter):
     """Herramienta que tarda más del timeout."""
-    def name(self) -> str: return "slow"
+
+    def name(self) -> str:
+        return "slow"
+
     def run(self, params: dict) -> dict:
         time.sleep(10)
         return {"done": True}
-    def cancel(self) -> None: pass
+
+    def cancel(self) -> None:
+        pass
 
 
 class _FailingAdapter(ToolAdapter):
     """Herramienta que siempre falla."""
-    def name(self) -> str: return "fail"
+
+    def name(self) -> str:
+        return "fail"
+
     def run(self, params: dict) -> dict:
-        raise ToolPermanentError("Always fails")
-    def cancel(self) -> None: pass
+        msg = "Always fails"
+        raise ToolPermanentError(msg)
+
+    def cancel(self) -> None:
+        pass
 
 
 class _TransientAdapter(ToolAdapter):
     """Herramienta que falla las primeras N veces."""
+
     def __init__(self, fail_count: int = 2):
         self._attempts = 0
         self._fail_count = fail_count
-    def name(self) -> str: return "transient"
+
+    def name(self) -> str:
+        return "transient"
+
     def run(self, params: dict) -> dict:
         self._attempts += 1
         if self._attempts <= self._fail_count:
-            raise ToolTransientError(f"Attempt {self._attempts} failed")
+            msg = f"Attempt {self._attempts} failed"
+            raise ToolTransientError(msg)
         return {"success": True, "attempts": self._attempts}
-    def cancel(self) -> None: pass
+
+    def cancel(self) -> None:
+        pass
 
 
 def _make_runner() -> AgentToolRunner:
@@ -115,6 +139,7 @@ def test_execution_id_unique() -> None:
 
 def test_tool_result_immutable() -> None:
     from motor.agents.models import ToolResult
+
     r = ToolResult(execution_id="e1", tool_name="t1", success=True)
     with pytest.raises(AttributeError):
         r.success = False
@@ -156,8 +181,7 @@ def test_permanent_error_no_retry() -> None:
 
 
 def test_tool_contract() -> None:
-    c = ToolContract(name="web.search", timeout_seconds=15, idempotent=True,
-                     side_effects=[], expected_cost_units=2)
+    c = ToolContract(name="web.search", timeout_seconds=15, idempotent=True, side_effects=[], expected_cost_units=2)
     assert c.name == "web.search"
     assert c.timeout_seconds == 15
     assert c.idempotent is True
@@ -179,6 +203,7 @@ def test_no_external_dependencies() -> None:
     import inspect
 
     import motor.agents.runner as runner_module
+
     source = inspect.getsource(runner_module)
     assert "from motor.agents.base import Planner" not in source
     assert "from motor.agents.base import Scheduler" not in source
@@ -207,6 +232,7 @@ def test_request_to_result_flow() -> None:
 
 def test_parallel_execution() -> None:
     import threading
+
     runner = _make_runner()
     results: list[dict] = []
     errors: list[Exception] = []
@@ -240,6 +266,7 @@ def test_no_globals_or_singletons() -> None:
     import inspect
 
     import motor.agents.runner as runner_module
+
     source = inspect.getsource(runner_module)
     assert "_instance" not in source
     assert "_instancia" not in source

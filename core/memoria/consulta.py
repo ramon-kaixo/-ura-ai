@@ -22,10 +22,10 @@ def _es_suficiente(resultados_qdrant: list[dict]) -> bool:
     return len(buenas) >= MIN_IDEAS_MEMORIA
 
 
-async def consultar(query: str, forzar_web: bool = False) -> dict:
+async def consultar(query: str, forzar_web: bool = False) -> dict:  # noqa: FBT001, FBT002
     """Busca en memoria Qdrant. Si no hay suficientes ideas, busca en internet
-    y las incorpora a la memoria antes de responder."""
-
+    y las incorpora a la memoria antes de responder.
+    """
     ideas_memoria = await buscar_ideas(query, limit=10)
     desde = "memoria"
 
@@ -58,7 +58,7 @@ async def consultar(query: str, forzar_web: bool = False) -> dict:
                         n = await almacenar_ideas(ideas)
                         ideas_web += n
                 except Exception as e:
-                    log.error(f"Error comprimiendo web result: {e}")
+                    log.exception(f"Error comprimiendo web result: {e}")
 
     desde = "web" if not ideas_memoria else "memoria+web"
 

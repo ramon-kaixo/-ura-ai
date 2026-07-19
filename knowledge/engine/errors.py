@@ -36,7 +36,10 @@ KE005 = ErrorCode("KE005", Severity.WARN, "Empty document", "El documento no con
 KE006 = ErrorCode("KE006", Severity.ERROR, "Invalid frontmatter", "El frontmatter YAML no se puede parsear")
 KE007 = ErrorCode("KE007", Severity.WARN, "Duplicate path", "Dos documentos comparten la misma ruta de source")
 KE008 = ErrorCode(
-    "KE008", Severity.ERROR, "Circular dependency", "Se ha detectado una dependencia circular en el grafo"
+    "KE008",
+    Severity.ERROR,
+    "Circular dependency",
+    "Se ha detectado una dependencia circular en el grafo",
 )
 KE009 = ErrorCode("KE009", Severity.WARN, "Missing field", "Falta un campo opcional pero recomendado en frontmatter")
 KE010 = ErrorCode("KE010", Severity.WARN, "Unused relation", "Una relación no se usa en ningún documento")
@@ -46,13 +49,19 @@ KE010 = ErrorCode("KE010", Severity.WARN, "Unused relation", "Una relación no s
 KE101 = ErrorCode("KE101", Severity.ERROR, "Duplicate node ID", "Dos nodos comparten el mismo ID en kg_nodes")
 KE102 = ErrorCode("KE102", Severity.ERROR, "Duplicate node path", "Dos nodos comparten la misma ruta en kg_nodes")
 KE103 = ErrorCode(
-    "KE103", Severity.WARN, "Repeated content hash", "Varios documentos tienen el mismo content_sha256 (duplicado real)"
+    "KE103",
+    Severity.WARN,
+    "Repeated content hash",
+    "Varios documentos tienen el mismo content_sha256 (duplicado real)",
 )
 KE104 = ErrorCode("KE104", Severity.WARN, "Orphan node", "Nodo sin ninguna arista entrante ni saliente")
 KE105 = ErrorCode("KE105", Severity.ERROR, "Broken edge source", "kg_edges.src no existe en kg_nodes")
 KE106 = ErrorCode("KE106", Severity.ERROR, "Broken edge target", "kg_edges.dst no existe en kg_nodes")
 KE107 = ErrorCode(
-    "KE107", Severity.WARN, "Ontology inconsistency", "Un nodo de ontología tiene parent_id que no existe"
+    "KE107",
+    Severity.WARN,
+    "Ontology inconsistency",
+    "Un nodo de ontología tiene parent_id que no existe",
 )
 KE108 = ErrorCode("KE108", Severity.WARN, "Orphan ontology node", "Nodo de ontología sin aristas y sin hijos")
 KE109 = ErrorCode("KE109", Severity.ERROR, "FTS desync", "FTS5 desincronizado con kg_nodes")
@@ -62,7 +71,10 @@ KE111 = ErrorCode("KE111", Severity.WARN, "Journal mode", "journal_mode no es WA
 # ── Runtime errors (KE2xx) ──────────────────────────────────────────────────
 
 KE201 = ErrorCode(
-    "KE201", Severity.ERROR, "Reader not initialized", "KnowledgeReader no tiene conexión a la base de datos"
+    "KE201",
+    Severity.ERROR,
+    "Reader not initialized",
+    "KnowledgeReader no tiene conexión a la base de datos",
 )
 KE202 = ErrorCode("KE202", Severity.ERROR, "Document not found", "El documento solicitado no existe en el grafo")
 KE203 = ErrorCode("KE203", Severity.ERROR, "Search failed", "La búsqueda FTS5 falló por error interno")

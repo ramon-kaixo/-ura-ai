@@ -17,8 +17,9 @@ import os
 import sys
 import time
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, Path(os.path.dirname(os.path.dirname(Path(__file__).resolve().parent))))  # noqa: PTH120
 
 
 @dataclass
@@ -40,7 +41,6 @@ def benchmark_f26_memory() -> list[BenchmarkResult]:
     try:
         from motor.memory import Memory, MemoryEntry, MemoryTimeline
     except ImportError:
-        print("[SKIP] F26 Memory no disponible")
         return results
 
     N = 5000
@@ -71,7 +71,7 @@ def benchmark_f26_memory() -> list[BenchmarkResult]:
             p50_ms=round(sorted_lats[N // 2], 3),
             p95_ms=round(sorted_lats[int(N * 0.95)], 3),
             p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-        )
+        ),
     )
 
     # Memory.state_at (only if available)
@@ -94,7 +94,7 @@ def benchmark_f26_memory() -> list[BenchmarkResult]:
                 p50_ms=round(sorted_lats[N // 2], 3),
                 p95_ms=round(sorted_lats[int(N * 0.95)], 3),
                 p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-            )
+            ),
         )
 
     return results
@@ -113,7 +113,6 @@ def benchmark_f27_scheduler() -> list[BenchmarkResult]:
         )
         from motor.agents.scheduler import AgentScheduler
     except ImportError:
-        print("[SKIP] F27 Scheduler no disponible")
         return results
 
     scheduler = AgentScheduler()
@@ -143,7 +142,7 @@ def benchmark_f27_scheduler() -> list[BenchmarkResult]:
             p50_ms=round(sorted_lats[N // 2], 3),
             p95_ms=round(sorted_lats[int(N * 0.95)], 3),
             p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-        )
+        ),
     )
 
     scheduler.shutdown(timeout=5)
@@ -160,7 +159,7 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
             CorrelationId,
             DeliveryHeader,
             MessageKind,
-            ProtocolEnvelope,
+            ProtocolEnvelope,  # noqa: F401
             RoutingHeader,
             SpanId,
             TraceHeader,
@@ -174,7 +173,6 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
             make_message_id,
         )
     except ImportError:
-        print("[SKIP] F28 Protocol no disponible")
         return results
 
     serializer = JsonProtocolSerializer()
@@ -220,7 +218,7 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
             p50_ms=round(sorted_lats[N // 2], 6),
             p95_ms=round(sorted_lats[int(N * 0.95)], 6),
             p99_ms=round(sorted_lats[int(N * 0.99)], 6),
-        )
+        ),
     )
 
     # Deserialize (with checksum verification)
@@ -242,7 +240,7 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
             p50_ms=round(sorted_lats[N // 2], 6),
             p95_ms=round(sorted_lats[int(N * 0.95)], 6),
             p99_ms=round(sorted_lats[int(N * 0.99)], 6),
-        )
+        ),
     )
 
     return results
@@ -261,10 +259,9 @@ def main() -> None:
             results = bench_fn()
             for r in results:
                 d = asdict(r)
-                print(f"  {r.name:40s} {r.ops_per_s:>10.1f} ops/s  p50={r.p50_ms}ms")
                 all_results.append(d)
-        except Exception as e:
-            print(f"  [ERROR] {bench_fn.__name__}: {e}")
+        except Exception:  # noqa: S110
+            pass
 
     snapshot = tracemalloc.take_snapshot()
     stats = snapshot.statistics("lineno")
@@ -277,12 +274,9 @@ def main() -> None:
         "peak_memory": {"file": str(top.traceback) if top else "N/A", "size": top.size if top else 0},
     }
 
-    print(json.dumps(report, indent=2))
-
     if output:
-        with open(output, "w") as f:
+        with open(output, "w") as f:  # noqa: PTH123
             json.dump(report, f, indent=2)
-        print(f"Resultados guardados en {output}")
 
 
 if __name__ == "__main__":

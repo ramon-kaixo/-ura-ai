@@ -43,7 +43,9 @@ class LabeledCounter:
         key = _label_key(labels)
         if key not in self._counters:
             self._counters[key] = self._registry.counter(
-                f"{self._name}.{key}", self._description, labels,
+                f"{self._name}.{key}",
+                self._description,
+                labels,
             )
         self._counters[key].inc(amount)
 
@@ -52,7 +54,9 @@ class LabeledHistogram:
     """Histogram with dynamic label dimensions."""
 
     def __init__(
-        self, name: str, description: str = "",
+        self,
+        name: str,
+        description: str = "",
         buckets: list[float] | None = None,
         registry: MetricsRegistry | None = None,
     ) -> None:
@@ -66,7 +70,9 @@ class LabeledHistogram:
         key = _label_key(labels)
         if key not in self._histograms:
             self._histograms[key] = self._registry.histogram(
-                f"{self._name}.{key}", self._description, self._buckets,
+                f"{self._name}.{key}",
+                self._description,
+                self._buckets,
             )
         self._histograms[key].observe(value)
 
@@ -84,7 +90,9 @@ class LabeledGauge:
         key = _label_key(labels)
         if key not in self._gauges:
             self._gauges[key] = self._registry.gauge(
-                f"{self._name}.{key}", self._description, labels,
+                f"{self._name}.{key}",
+                self._description,
+                labels,
             )
         self._gauges[key].set(value)
 
@@ -158,14 +166,18 @@ class PlatformMetrics:
 
     # ── F29 B1: Record health status from HealthAggregator ──
 
-    def record_health(self, component: str, status: str, ready: bool) -> None:
+    def record_health(self, component: str, status: str, ready: bool) -> None:  # noqa: FBT001
         self.health_status.set(1.0 if status == "ok" else 0.0, component=component)
         self.health_ready.set(1.0 if ready else 0.0, component=component)
 
     # ── Convenience wiring methods ────────────────────────
 
     def record_sent(
-        self, source: str, destination: str, message_kind: str, size_bytes: int,
+        self,
+        source: str,
+        destination: str,
+        message_kind: str,
+        size_bytes: int,
         duration_ms: float,
     ) -> None:
         self.messages_sent.inc(source=source, destination=destination, message_kind=message_kind)
@@ -173,23 +185,35 @@ class PlatformMetrics:
         self.envelope_size.set(float(size_bytes), source=source, message_kind=message_kind)
 
     def record_received(
-        self, source: str, destination: str, message_kind: str, size_bytes: int,
+        self,
+        source: str,
+        destination: str,
+        message_kind: str,
+        size_bytes: int,
     ) -> None:
         self.messages_received.inc(source=source, destination=destination, message_kind=message_kind)
         self.envelope_size.set(float(size_bytes), source=source, message_kind=message_kind)
 
     def record_error(
-        self, source: str, destination: str, error_code: str,
+        self,
+        source: str,
+        destination: str,
+        error_code: str,
     ) -> None:
         self.messages_error.inc(source=source, destination=destination, error_code=error_code)
 
     def record_validation(
-        self, source: str, duration_ms: float,
+        self,
+        source: str,
+        duration_ms: float,
     ) -> None:
         self.validation_duration.observe(duration_ms, source=source)
 
     def record_negotiation(
-        self, emitter_version: str, receiver_version: str, duration_ms: float,
+        self,
+        emitter_version: str,
+        receiver_version: str,
+        duration_ms: float,
     ) -> None:
         self.negotiation_duration.observe(duration_ms)
 

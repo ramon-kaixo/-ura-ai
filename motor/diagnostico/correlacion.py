@@ -10,7 +10,7 @@ DEPENDENCIAS = {
 }
 
 
-def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list | None = None) -> list:
+def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list | None = None) -> list:  # noqa: FBT001, FBT002
     """Agrupa tags en correlaciones con causa raíz y servicios afectados."""
     grupos = []
     procesados = set()

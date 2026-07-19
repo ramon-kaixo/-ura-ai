@@ -92,6 +92,7 @@ def test_shutdown_with_pending() -> None:
 
 def test_fifo_by_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     q.push(_execution("a1"), priority=2)
     q.push(_execution("a2"), priority=0)
@@ -104,6 +105,7 @@ def test_fifo_by_priority() -> None:
 
 def test_fifo_same_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     q.push(_execution("a1"), priority=2)
     q.push(_execution("a2"), priority=2)
@@ -120,6 +122,7 @@ def test_fifo_same_priority() -> None:
 
 def test_queue_size() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     assert q.size() == 0
     q.push(_execution("a1"))
@@ -130,6 +133,7 @@ def test_queue_size() -> None:
 
 def test_queue_remove() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     q.push(_execution("a1"))
     q.push(_execution("a2"))
@@ -140,6 +144,7 @@ def test_queue_remove() -> None:
 
 def test_queue_peek() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     assert q.peek() is None
     q.push(_execution("a1"), priority=1)
@@ -154,10 +159,12 @@ def test_queue_peek() -> None:
 
 def test_aging_moves_to_higher_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
+
     q = _PriorityQueue()
     q.push(_execution("a1"), priority=2)  # LOW
     # Simular paso del tiempo
     import time as _time
+
     original_time = _time.time
     try:
         _time.time = lambda: original_time() + 120  # 2 minutos después
@@ -178,6 +185,7 @@ def test_no_external_dependencies() -> None:
     import inspect
 
     import motor.agents.scheduler as sched_module
+
     source = inspect.getsource(sched_module)
     assert "from motor.agents.base import Memory" not in source
     assert "from motor.agents.base import Knowledge" not in source

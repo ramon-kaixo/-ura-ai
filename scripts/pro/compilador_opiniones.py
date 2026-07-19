@@ -64,8 +64,8 @@ def compilar_opinion(
         try:
             import subprocess
 
-            result = subprocess.run(
-                ["ollama", "run", modelo_reintento, prompt],
+            result = subprocess.run(  # noqa: S603
+                ["ollama", "run", modelo_reintento, prompt],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=120,
@@ -81,7 +81,7 @@ def compilar_opinion(
         try:
             reparado = repair_json(raw)
             data = json.loads(reparado)
-        except Exception:
+        except Exception:  # noqa: S112
             continue
 
         if validar_esquema(data):

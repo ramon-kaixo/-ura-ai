@@ -29,14 +29,14 @@ async def test_hashes():
 
 @pytest.mark.asyncio
 async def test_guardar():
-    p = Path("/tmp/pm/m.json")
+    p = Path("/tmp/pm/m.json")  # noqa: S108
     m.guardar(p)
-    assert p.exists()
+    assert p.exists()  # noqa: ASYNC240
 
 
 @pytest.mark.asyncio
 async def test_cargar():
-    p = Path("/tmp/pm/m.json")
+    p = Path("/tmp/pm/m.json")  # noqa: S108
     m2 = MochilaEngine.cargar(p)
     assert m2.id == m.id
 

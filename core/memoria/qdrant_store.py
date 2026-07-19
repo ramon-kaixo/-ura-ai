@@ -22,7 +22,7 @@ _init_lock = threading.Lock()
 
 
 def _get_client() -> QdrantClient:
-    global _client
+    global _client  # noqa: PLW0603
     if _client is not None:
         return _client
     with _init_lock:
@@ -59,7 +59,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             {"key": "version", "match": {"value": idea.version}},
         ]
         try:
-            client = await qdrant_async._get_client()
+            client = await qdrant_async._get_client()  # noqa: SLF001
             resp = await client.post(
                 f"/collections/{COLLECTION}/points/search",
                 json={"filter": {"must": must}, "limit": 1, "with_payload": False},
@@ -73,7 +73,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
         try:
             vec = await _embed(idea.texto_para_embedding())
         except Exception as e:
-            log.error(f"Embedding error: {e}")
+            log.exception(f"Embedding error: {e}")
             continue
 
         punto = {
@@ -82,7 +82,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             "payload": idea.to_payload(),
         }
         try:
-            client = await qdrant_async._get_client()
+            client = await qdrant_async._get_client()  # noqa: SLF001
             resp = await client.put(
                 f"/collections/{COLLECTION}/points",
                 json={"points": [punto]},
@@ -91,7 +91,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             resp.raise_for_status()
             insertados += 1
         except Exception as e:
-            log.error(f"Qdrant upsert error: {e}")
+            log.exception(f"Qdrant upsert error: {e}")
 
     if insertados:
         log.info(f"Qdrant: {insertados}/{len(ideas)} ideas nuevas insertadas")
@@ -109,7 +109,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
                 "must": [
                     {"key": "fuente", "match": {"value": fuente_url}},
                     {"key": "vigente", "match": {"value": True}},
-                ]
+                ],
             },
             "limit": 50,
             "with_payload": True,
@@ -118,7 +118,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
             params["offset"] = offset
 
         try:
-            client = await qdrant_async._get_client()
+            client = await qdrant_async._get_client()  # noqa: SLF001
             resp = await client.post(f"/collections/{COLLECTION}/points/scroll", json=params)
             resp.raise_for_status()
             data = resp.json()
@@ -131,7 +131,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
             payload = point.get("payload", {})
             payload["vigente"] = False
             try:
-                client = await qdrant_async._get_client()
+                client = await qdrant_async._get_client()  # noqa: SLF001
                 await client.put(
                     f"/collections/{COLLECTION}/points",
                     json={"points": [{"id": point["id"], "payload": payload}]},
@@ -190,7 +190,7 @@ async def buscar_ideas(
 class MemoryPipelineStore:
     """Pipeline de memoria asíncrono. Usa URAQdrantClient con connection pooling (Hito 1.1.1)."""
 
-    def __init__(self, qdrant_client: URAQdrantClient | None = None):
+    def __init__(self, qdrant_client: URAQdrantClient | None = None) -> None:
         self.qdrant = qdrant_client or URAQdrantClient()
 
     async def guardar_contexto_ingestado(self, coleccion: str, puntos: list) -> bool:
@@ -198,7 +198,7 @@ class MemoryPipelineStore:
         if not puntos:
             return False
         try:
-            client = await self.qdrant._get_client()
+            client = await self.qdrant._get_client()  # noqa: SLF001
             response = await client.put(
                 f"/collections/{coleccion}/points",
                 json={"points": puntos},
@@ -208,5 +208,5 @@ class MemoryPipelineStore:
             log.info("MemoryPipelineStore: %d puntos indexados en '%s'", len(puntos), coleccion)
             return True
         except Exception as e:
-            log.error("MemoryPipelineStore: fallo al guardar en Qdrant: %s", e, exc_info=True)
+            log.error("MemoryPipelineStore: fallo al guardar en Qdrant: %s", e, exc_info=True)  # noqa: G201
             return False

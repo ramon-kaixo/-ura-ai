@@ -32,7 +32,7 @@ DECIDE y responde UNICAMENTE con JSON:
   "razon": "El tema tiene poca cobertura en memoria, necesitamos teoria y herramientas"
 }}
 
-JSON:"""
+JSON:"""  # noqa: E501
 
 
 async def analizar(peticion: str) -> dict:

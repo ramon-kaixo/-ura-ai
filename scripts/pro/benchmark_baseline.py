@@ -46,7 +46,7 @@ def _parse_results(output: str) -> dict[str, float]:
 
 
 def run_benchmark() -> dict[str, float]:
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(_BENCHMARK_FILE), "--verbose"],
         capture_output=True,
         text=True,
@@ -58,7 +58,6 @@ def run_benchmark() -> dict[str, float]:
 
 def save_baseline(results: dict[str, float]) -> None:
     _BASELINE_FILE.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print(f"Baseline guardada: {_BASELINE_FILE}")
 
 
 def load_baseline() -> dict[str, float]:
@@ -69,49 +68,35 @@ def load_baseline() -> dict[str, float]:
 
 def compare(current: dict[str, float], baseline: dict[str, float]) -> int:
     issues = 0
-    print(f"\n{'=' * 60}")
-    print("COMPARATIVA vs BASELINE")
-    print(f"{'=' * 60}")
-    print(f"{'Métrica':<30} {'Actual':>10} {'Baseline':>10} {'Diff':>10}  {'Estado'}")
-    print("-" * 75)
     for label in _TARGET_LABELS:
         cur = current.get(label)
         base = baseline.get(label)
         if cur is None:
             continue
-        cur_ms = f"{cur * 1000:.2f}ms" if isinstance(cur, float) else "N/A"
+        f"{cur * 1000:.2f}ms" if isinstance(cur, float) else "N/A"
         if base is not None:
-            base_ms = f"{base * 1000:.2f}ms"
+            f"{base * 1000:.2f}ms"
             ratio = cur / base if base > 0 else 0
-            pct = f"{(ratio - 1) * 100:+.1f}%"
-            status = "✅" if ratio <= 1.1 else "⚠️" if ratio <= 1.25 else "❌"
+            f"{(ratio - 1) * 100:+.1f}%"
             if ratio > 1.1:
                 issues += 1
         else:
-            base_ms = "—"
-            pct = "—"
-            status = "[+]"
-        print(f"{label:<30} {cur_ms:>10} {base_ms:>10} {pct:>10}  {status}")
-    print(f"\n{issues} discrepancia(s) detectada(s)")
+            pass
     return 0 if issues == 0 else 1
 
 
 def main() -> int:
     if "--help" in sys.argv or "-h" in sys.argv:
-        print(__doc__)
         return 0
 
     save = "--save" in sys.argv
     compare_only = "--compare" in sys.argv
 
     if not compare_only:
-        print("Ejecutando benchmark...")
         current = run_benchmark()
-        print(f"\nResultados: {len(current)} métricas capturadas")
     else:
         current = load_baseline()
         if not current:
-            print("No hay baseline guardada. Ejecute sin --compare primero.")
             return 1
 
     if save or not _BASELINE_FILE.exists():

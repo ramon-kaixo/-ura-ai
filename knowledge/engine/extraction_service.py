@@ -54,7 +54,9 @@ class MetadataExtractionService:
         result = service.extract(AssetSource("filesystem", "/path/to/doc.md"))
     """
 
-    def __init__(self, db_path: Path, registry: ExtractorRegistry | None = None, store: AssetStore | None = None):
+    def __init__(
+        self, db_path: Path, registry: ExtractorRegistry | None = None, store: AssetStore | None = None
+    ) -> None:
         self._db_path = db_path
         self._registry = registry or get_registry()
         self._store: AssetStore = store or SQLiteAssetStore(db_path)
@@ -104,7 +106,8 @@ class MetadataExtractionService:
         conn = open_db(self._db_path)
         try:
             row = conn.execute(
-                "SELECT status, error, result_data, started_at, completed_at FROM op_jobs WHERE id = ?", (int(job_id),)
+                "SELECT status, error, result_data, started_at, completed_at FROM op_jobs WHERE id = ?",
+                (int(job_id),),
             ).fetchone()
             if not row:
                 return {"status": "not_found"}
@@ -112,7 +115,7 @@ class MetadataExtractionService:
         finally:
             conn.close()
 
-    def start_worker(self):
+    def start_worker(self) -> None:
         """Inicia el worker loop en un hilo background."""
         if self._worker_thread and self._worker_thread.is_alive():
             return
@@ -132,7 +135,7 @@ class MetadataExtractionService:
         )
         self._worker_thread.start()
 
-    def stop_worker(self, timeout: float = 30.0):
+    def stop_worker(self, timeout: float = 30.0) -> None:
         """Detiene el worker loop y termina procesos en ejecución."""
         self._worker_stop.set()
         with self._jobs_lock:
@@ -155,6 +158,7 @@ class MetadataExtractionService:
 
         Returns:
             Dict con resultado de la extracción.
+
         """
         # Detectar MIME type por extensión
         mime = self._guess_mime(source.location)
@@ -179,7 +183,7 @@ class MetadataExtractionService:
                         "asset_id": result.asset.asset_id,
                         "saved": saved,
                         "duration_ms": result.duration_ms,
-                    }
+                    },
                 )
                 log.info(
                     "Extracted %s with %s (v%s) in %.0fms",
@@ -197,7 +201,7 @@ class MetadataExtractionService:
                                 extractor=extractor.id,
                                 success=True,
                                 duration_ms=result.duration_ms,
-                            )
+                            ),
                         )
                     except Exception as exc:
                         log.warning("Failed to publish MetadataExtracted: %s", exc)
@@ -250,7 +254,7 @@ def _guess_mime(location: str) -> str:
     return mime_map.get(ext, "application/octet-stream")
 
 
-def _worker_loop(
+def _worker_loop(  # noqa: C901, PLR0912, PLR0915
     db_path: Path,
     registry: ExtractorRegistry,
     store: AssetStore,
@@ -258,7 +262,7 @@ def _worker_loop(
     running_jobs: dict,
     jobs_lock: threading.Lock,
     max_workers: int = 1,
-):
+) -> None:
     """Loop principal del worker. Se ejecuta en un hilo DAEMON del proceso principal."""
     while not stop.is_set():
         conn = None
@@ -376,7 +380,7 @@ def _worker_loop(
                             extractor=extractor_id,
                             success=True,
                             duration_ms=result["duration_ms"],
-                        )
+                        ),
                     )
                 except Exception as exc:
                     log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
@@ -396,7 +400,7 @@ def _worker_loop(
                     conn.close()
 
 
-def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, extractor_id: str):
+def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, extractor_id: str) -> None:
     """Se ejecuta en PROCESO HIJO (fork).
 
     REGLAS:
@@ -447,7 +451,7 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
                 conn.close()
 
 
-def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):
+def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms) -> None:
     begin_immediate(conn)
     conn.execute(
         "UPDATE op_jobs SET status = 'done', completed_at = datetime('now'), result_data = ? WHERE id = ?",
@@ -457,7 +461,7 @@ def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):
                     "asset_id": asset_id,
                     "asset_type": asset_type,
                     "duration_ms": duration_ms,
-                }
+                },
             ),
             job_id,
         ),
@@ -465,7 +469,7 @@ def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):
     conn.commit()
 
 
-def _write_job_fail(conn, job_id, error):
+def _write_job_fail(conn, job_id, error) -> None:
     begin_immediate(conn)
     conn.execute(
         "UPDATE op_jobs SET status = 'failed', completed_at = datetime('now'), error = ? WHERE id = ?",
@@ -474,7 +478,7 @@ def _write_job_fail(conn, job_id, error):
     conn.commit()
 
 
-def _mark_job_failed(db_path, job_id, error):
+def _mark_job_failed(db_path, job_id, error) -> None:
     conn = open_db(db_path)
     try:
         begin_immediate(conn)

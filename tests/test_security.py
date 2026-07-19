@@ -25,9 +25,14 @@ from motor.agents.runner import (
 
 
 class _FastAdapter(ToolAdapter):
-    def name(self): return "fast"
-    def run(self, params): return {"ok": True}
-    def cancel(self): pass
+    def name(self):
+        return "fast"
+
+    def run(self, params):
+        return {"ok": True}
+
+    def cancel(self):
+        pass
 
 
 def test_rate_limiter_allows_within_limit() -> None:
@@ -84,7 +89,12 @@ def test_sanitize_rejects_script_tags() -> None:
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "a", "b", "T", b"<script>alert(1)</script>")
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="a", destination="b")
-    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId("c"), causation_id=CausationId.root())
+    t = TraceHeader(
+        trace_id=TraceId.generate(),
+        span_id=SpanId.generate(),
+        correlation_id=CorrelationId("c"),
+        causation_id=CausationId.root(),
+    )
     d = DeliveryHeader()
     env = make_envelope_with_checksum(v, r, t, d, b"<script>alert(1)</script>")
 
@@ -95,6 +105,7 @@ def test_sanitize_rejects_script_tags() -> None:
 
 def test_sanitize_allows_normal_payload() -> None:
     from motor.platform.validator import ProtocolValidator
+
     env = _make_env()
     val = ProtocolValidator()
     val.validate(env)  # no error
@@ -113,10 +124,16 @@ def _make_env():
         VersionHeader,
     )
     from motor.platform.serializer import make_envelope_with_checksum, make_message_id
+
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "a", "b", "T", b'{"ok":true}')
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="a", destination="b")
-    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId("c"), causation_id=CausationId.root())
+    t = TraceHeader(
+        trace_id=TraceId.generate(),
+        span_id=SpanId.generate(),
+        correlation_id=CorrelationId("c"),
+        causation_id=CausationId.root(),
+    )
     d = DeliveryHeader()
     return make_envelope_with_checksum(v, r, t, d, b'{"ok":true}')
 
@@ -128,6 +145,7 @@ def _make_env():
 
 def test_agent_policy_has_security_fields() -> None:
     from motor.agents.models import AgentPolicy
+
     p = AgentPolicy()
     assert hasattr(p, "max_context_entries")
     assert hasattr(p, "max_memory_bytes")

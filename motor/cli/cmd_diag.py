@@ -1,6 +1,5 @@
 import json
 import logging
-import socket
 import sys
 from pathlib import Path
 
@@ -17,63 +16,37 @@ ARCHIVO_ESTADO = "estado_alemania.json"
 _executor = SubprocessExecutor()
 
 
-def cmd_history(config: UraConfig, args=None):
+def cmd_history(config: UraConfig, args=None) -> None:
     qdrant = QdrantClient.instancia(config)
     if not qdrant.disponible:
-        print(json.dumps({"error": "Qdrant no disponible"}, indent=2))
         sys.exit(1)
-    incidents = qdrant.buscar_incidentes(limit=50)
-    print(json.dumps({"incidentes": incidents}, indent=2, default=str))
+    qdrant.buscar_incidentes(limit=50)
 
 
-def cmd_check(config: UraConfig, args=None):
+def cmd_check(config: UraConfig, args=None) -> None:
     r = ejecutar_preflight(config)
-    print(
-        json.dumps(
-            {
-                "ok": r.ok,
-                "bloqueado": r.bloqueado,
-                "razon": r.razon,
-                "configs_duplicadas": r.configs_duplicadas,
-                "snapshot": r.snapshot_path,
-            },
-            indent=2,
-            default=str,
-        ),
-    )
     sys.exit(0 if r.ok else 1)
 
 
-def cmd_verify(config: UraConfig, args=None):
-    r = ejecutar_verificacion(config, hubo_cambios=True)
-    print(
-        json.dumps(
-            {"ok": r.ok, "verdict": r.verdict, "error": r.error, "revertido": r.revertido},
-            indent=2,
-            default=str,
-        ),
-    )
+def cmd_verify(config: UraConfig, args=None) -> None:
+    ejecutar_verificacion(config, hubo_cambios=True)
 
 
-def cmd_detect(config: UraConfig, args=None):
+def cmd_detect(config: UraConfig, args=None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not trend_path.exists():
-        print(json.dumps({"error": "No hay datos de tendencia. Ejecuta pipeline primero."}, indent=2))
         sys.exit(1)
     lines = [json.loads(l) for l in trend_path.read_text().strip().splitlines() if l.strip()]
     cal = Calibration(config)
-    res = cal.detect(lines)
-    print(json.dumps(res, indent=2, default=str))
+    cal.detect(lines)
 
 
-def cmd_learn(config: UraConfig, args=None):
+def cmd_learn(config: UraConfig, args=None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not trend_path.exists() or not trend_path.stat().st_size:
-        print(json.dumps({"error": "No hay datos de tendencia"}, indent=2))
         sys.exit(1)
     lines = [json.loads(l) for l in trend_path.read_text().splitlines() if l.strip()]
     if len(lines) < 3:
-        print(json.dumps({"error": "Necesito al menos 3 puntos"}, indent=2))
         sys.exit(1)
     insights = []
     for metrica, nombre in [("health", "Health"), ("ram_pct", "RAM"), ("disk_pct", "DISK")]:
@@ -115,10 +88,9 @@ def cmd_learn(config: UraConfig, args=None):
                     "dias_para_llenar": dias_para_lleno if dias_para_lleno < 365 else ">1año",
                 },
             )
-    print(json.dumps({"ok": True, "total_puntos": len(lines), "insights": insights}, indent=2))
 
 
-def cmd_alerta(config: UraConfig = None, args=None):
+def cmd_alerta(config: UraConfig = None, args=None) -> None:
     r = _executor.run(
         [
             "journalctl",
@@ -134,11 +106,10 @@ def cmd_alerta(config: UraConfig = None, args=None):
         ],
         timeout=10,
     )
-    alerts = [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
-    print(json.dumps({"alertas": alerts[-20:], "total": len(alerts)}, indent=2, default=str))
+    [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
 
 
-def cmd_health_check(config: UraConfig, args=None):
+def cmd_health_check(config: UraConfig, args=None) -> None:
     checks = []
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:
@@ -182,6 +153,3 @@ def cmd_health_check(config: UraConfig, args=None):
         )
     except Exception as e:
         checks.append({"check": "docker qdrant", "ok": False, "detail": str(e)})
-    print(
-        json.dumps({"ok": all(c["ok"] for c in checks), "hostname": socket.gethostname(), "checks": checks}, indent=2),
-    )

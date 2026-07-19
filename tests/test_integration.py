@@ -27,8 +27,8 @@ YELLOW = "\033[33m"
 def gx10_accessible() -> bool:
     """Verifica si GX10 es accesible vía SSH."""
     try:
-        result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
+        result = subprocess.run(  # noqa: S603
+            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -40,7 +40,7 @@ def gx10_accessible() -> bool:
 
 
 def check(desc, fn) -> None:
-    global PASS, FAIL
+    global PASS, FAIL  # noqa: PLW0603
     try:
         if fn():
             PASS += 1
@@ -51,12 +51,12 @@ def check(desc, fn) -> None:
 
 
 def skip(desc) -> None:
-    global SKIP
+    global SKIP  # noqa: PLW0603
     SKIP += 1
 
 
-def main() -> int:
-    global PASS, FAIL, SKIP
+def main() -> int:  # noqa: C901
+    global PASS, FAIL, SKIP  # noqa: PLW0602
 
     if not gx10_accessible():
         skip("SSH a GX10")
@@ -73,9 +73,9 @@ def main() -> int:
     def ollama_health():
         try:
             url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
-            req = urllib.request.Request(url)
+            req = urllib.request.Request(url)  # noqa: S310
             req.add_header("Connection", "close")
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
                 data = json.loads(resp.read())
                 return "models" in data
         except Exception:
@@ -90,9 +90,9 @@ def main() -> int:
             data = json.dumps(
                 {"model": "auto", "messages": [{"role": "user", "content": "di hola"}], "stream": False},
             ).encode()
-            req = urllib.request.Request(url, data=data, method="POST")
+            req = urllib.request.Request(url, data=data, method="POST")  # noqa: S310
             req.add_header("Content-Type", "application/json")
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
                 resp_data = json.loads(resp.read())
                 return "message" in resp_data or "response" in resp_data
         except Exception:
@@ -103,8 +103,8 @@ def main() -> int:
     # Test 4: SNC state file
     def snc_state():
         try:
-            result = subprocess.run(
-                [
+            result = subprocess.run(  # noqa: S603
+                [  # noqa: S607
                     "ssh",
                     "-o",
                     "ConnectTimeout=3",
@@ -128,8 +128,8 @@ def main() -> int:
     # Test 5: Health check
     def health_check():
         try:
-            result = subprocess.run(
-                [
+            result = subprocess.run(  # noqa: S603
+                [  # noqa: S607
                     "ssh",
                     "-o",
                     "ConnectTimeout=3",

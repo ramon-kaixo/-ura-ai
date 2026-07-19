@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed  # noqa: A004
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -46,8 +46,8 @@ class ParallelExecutor:
         find_agent_fn: Callable[[str], Agent | None] | None = None,
         max_workers: int = 4,
         global_timeout: float | None = None,
-        fail_fast: bool = False,
-        cancel_on_error: bool = False,
+        fail_fast: bool = False,  # noqa: FBT001, FBT002
+        cancel_on_error: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         self._find_agent = find_agent_fn
         self._max_workers = max(1, max_workers)
@@ -72,7 +72,7 @@ class ParallelExecutor:
         with self._lock:
             return workflow_id in self._cancelled
 
-    def execute(
+    def execute(  # noqa: C901, PLR0912, PLR0915
         self,
         tasks: list[tuple[str, AgentTask]],
         workflow_id: str | None = None,

@@ -49,6 +49,6 @@ class VectorRetriever:
                     "latency_ms": round(emb_latency + qdrant_latency, 2),
                     "source": "vector",
                     "payload": payload,
-                }
+                },
             )
         return results

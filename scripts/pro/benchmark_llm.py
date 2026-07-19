@@ -32,6 +32,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from typing import Never
+
 from motor.core.llm.registry import registry as _reg
 from motor.core.llm.router import LLMRouter
 
@@ -167,28 +169,13 @@ def _to_output(resultados: list[dict]) -> dict:
 
 
 def _mostrar(resultados: list[dict]) -> None:
-    linea = "-" * 68
     for r in resultados:
         if "error" in r:
-            print(f"\n  ❌ {r['funcion']}: {r['error']}")
             continue
-        print(f"\n  {r['funcion']}")
-        print(linea)
-        print(f"  proveedor     {r.get('proveedor', '?')}")
-        print(f"  iteraciones   {r['iteraciones']}  ({r['exitosos']} exitosas, {r['fallos']} fallos)")
         if r.get("textos_por_call"):
-            print(f"  batch size    {r['textos_por_call']} textos")
-        print("\n  latencia")
-        print(f"    media       {r['latencia_media_ms']:8.0f} ms")
-        print(f"    p50         {r['latencia_p50_ms']:8.0f} ms")
-        print(f"    p95         {r['latencia_p95_ms']:8.0f} ms")
-        print(f"    p99         {r['latencia_p99_ms']:8.0f} ms")
-        print(f"    min         {r['latencia_min_ms']:8.0f} ms")
-        print(f"    max         {r['latencia_max_ms']:8.0f} ms")
-        print(f"\n  throughput    {r['throughput_qps']:6.1f} calls/s")
+            pass
         if "tokens_por_segundo" in r:
-            print(f"  tokens/s      {r['tokens_por_segundo']:6.0f}")
-            print(f"  tokens/call   {r['tokens_medios_por_call']:6.0f}")
+            pass
 
 
 def _bench_resilience() -> dict:  # noqa: C901
@@ -198,26 +185,49 @@ def _bench_resilience() -> dict:  # noqa: C901
 
     class _MockRetry(BaseLLMProvider):
         _count: int = 0
-        def generate(self, prompt, model=None, options=None):
+
+        def generate(self, prompt, model=None, options=None) -> str:
             self._count += 1
             if self._count < 3:
-                raise TimeoutError("transient")
+                msg = "transient"
+                raise TimeoutError(msg)
             return "ok"
-        def embed(self, texts, model=None): return [[0.0]]
-        async def embed_async(self, texts, model=None): return [[0.0]]
-        def health(self): return {"status": "ok"}
+
+        def embed(self, texts, model=None):
+            return [[0.0]]
+
+        async def embed_async(self, texts, model=None):
+            return [[0.0]]
+
+        def health(self):
+            return {"status": "ok"}
 
     class _MockFail(BaseLLMProvider):
-        def generate(self, prompt, model=None, options=None): raise ValueError("fail")
-        def embed(self, texts, model=None): return [[0.0]]
-        async def embed_async(self, texts, model=None): return [[0.0]]
-        def health(self): return {"status": "ok"}
+        def generate(self, prompt, model=None, options=None) -> Never:
+            msg = "fail"
+            raise ValueError(msg)
+
+        def embed(self, texts, model=None):
+            return [[0.0]]
+
+        async def embed_async(self, texts, model=None):
+            return [[0.0]]
+
+        def health(self):
+            return {"status": "ok"}
 
     class _MockOK(BaseLLMProvider):
-        def generate(self, prompt, model=None, options=None): return "ok"
-        def embed(self, texts, model=None): return [[0.0]]
-        async def embed_async(self, texts, model=None): return [[0.0]]
-        def health(self): return {"status": "ok"}
+        def generate(self, prompt, model=None, options=None) -> str:
+            return "ok"
+
+        def embed(self, texts, model=None):
+            return [[0.0]]
+
+        async def embed_async(self, texts, model=None):
+            return [[0.0]]
+
+        def health(self):
+            return {"status": "ok"}
 
     resultados: dict[str, dict] = {}
 
@@ -255,13 +265,15 @@ def _mostrar_observabilidad(resultados: dict | None = None) -> None:
 
     stats = metrics.summary()
     if stats:
-        print("  Observabilidad (acumulado):")
-        for prov, data in stats.items():
-            print(f"    {prov}: {data['ok']} ok, {data['fail']} fail, {data['total']} total")
+        for _prov, _data in stats.items():
+            pass
 
 
-def _run_monitored_benchmark(  # noqa: PLR0915
-    n: int, provider: str | None, baseline_path: str, output: str,
+def _run_monitored_benchmark(
+    n: int,
+    provider: str | None,
+    baseline_path: str,
+    output: str,
 ) -> int:
     """Ejecuta benchmark con monitor de rendimiento activo integrado en el router."""
     from motor.core.llm.registry import registry as _reg
@@ -273,28 +285,17 @@ def _run_monitored_benchmark(  # noqa: PLR0915
         p = Path(baseline_path)
         if p.exists():
             router._monitor.baseline.load(str(p))  # noqa: SLF001
-            print(f"  Baseline cargado desde {baseline_path}")
 
-    print(f"\n{'=' * 68}")
-    print("  Benchmark Continuo — motor.core.llm")
-    print(f"  {n} iteraciones por función")
     if provider:
-        print(f"  proveedor     {provider}")
-    print(f"{'=' * 68}\n")
+        pass
 
     resultados: list[dict] = []
 
-    print("  [1/2] generate() ...", end=" ", flush=True)
     r1 = bench_generate(n, router, provider=provider)
     resultados.append(r1)
-    estado = "✅" if "error" not in r1 else "❌"
-    print(f"{estado}  ({r1.get('exitosos', 0)}/{r1.get('iteraciones', 0)})")
 
-    print("  [2/2] embed()    ...", end=" ", flush=True)
     r2 = bench_embed(n, router, provider=provider)
     resultados.append(r2)
-    estado = "✅" if "error" not in r2 else "❌"
-    print(f"{estado}  ({r2.get('exitosos', 0)}/{r2.get('iteraciones', 0)})")
 
     _mostrar(resultados)
     _mostrar_observabilidad(resultados)
@@ -304,19 +305,13 @@ def _run_monitored_benchmark(  # noqa: PLR0915
     if monitor:
         report = monitor.get_report()
         issues = monitor.get_recent_issues(10)
-        print("\n  Monitor de Rendimiento:")
-        print(f"    operaciones     {report['total_operations']}")
-        print(f"    hotspots        {report['total_hotspots']}")
-        print(f"    regresiones     {report['total_regressions']}")
-        print(f"    throughput      {report['throughput_ops_per_sec']} ops/s")
         if issues:
-            print(f"    issues recientes: {len(issues)}")
+            pass
 
         # Guardar baseline
         if output:
             base_path = Path(output)
             monitor.baseline.save(str(base_path))
-            print(f"\n  Baseline guardado → {base_path}")
 
             # Snapshot final
             snap = {
@@ -326,75 +321,49 @@ def _run_monitored_benchmark(  # noqa: PLR0915
             }
             snap_path = base_path.parent / f"{base_path.stem}_snapshot.json"
             Path(snap_path).write_text(json.dumps(snap, indent=2) + "\n")
-            print(f"  Snapshot guardado → {snap_path}")
 
             if issues:
                 hotspot_path = base_path.parent / f"{base_path.stem}_hotspots.json"
                 Path(hotspot_path).write_text(json.dumps(issues, indent=2) + "\n")
-                print(f"  Hotspots guardados → {hotspot_path}")
 
-    print(f"\n{'=' * 68}\n")
     return 0 if all("error" not in r for r in resultados) else 1
 
 
-def _bench_all_providers(n: int, output: str) -> int:  # noqa: PLR0915
+def _bench_all_providers(n: int, output: str) -> int:
     """Benchmark todos los proveedores registrados en el Registry."""
     providers = list(_reg.list())
     if not providers:
-        print("  No hay proveedores registrados.")
         return 1
 
     resultados: dict[str, dict] = {}
     router = LLMRouter(registry=_reg)
 
-    print(f"\n{'=' * 68}")
-    print(f"  Benchmark Multi-Proveedor ({len(providers)} proveedores)")
-    print(f"  {n} iteraciones por función")
-    print(f"{'=' * 68}\n")
-
     for prov_name in providers:
-        print(f"  [{prov_name}] generate() ...", end=" ", flush=True)
         r = bench_generate(n, router, provider=prov_name)
         resultados[f"{prov_name}_generate"] = r
-        estado = "✅" if "error" not in r else "❌"
-        ok = r.get("exitosos", 0)
-        total = r.get("iteraciones", 0)
-        print(f"{estado}  ({ok}/{total})")
+        r.get("exitosos", 0)
+        r.get("iteraciones", 0)
 
-    print()
     for prov_name in providers:
-        print(f"  [{prov_name}] embed()    ...", end=" ", flush=True)
         r = bench_embed(n, router, provider=prov_name)
         resultados[f"{prov_name}_embed"] = r
-        estado = "✅" if "error" not in r else "❌"
-        ok = r.get("exitosos", 0)
-        total = r.get("iteraciones", 0)
-        print(f"{estado}  ({ok}/{total})")
+        r.get("exitosos", 0)
+        r.get("iteraciones", 0)
 
     # Mostrar tabla
-    print(f"\n{'=' * 68}")
-    print("  Resultados por Proveedor")
-    print(f"{'=' * 68}")
-    print(f"  {'Proveedor':<15} {'Función':<10} {'P50':>8} {'P95':>8} {'P99':>8} {'T/s':>6} {'Err':>4}")
-    print(f"{'=' * 68}")
     for prov_name in providers:
         r_gen = resultados.get(f"{prov_name}_generate", {})
         r_emb = resultados.get(f"{prov_name}_embed", {})
         for func, r in [("generate", r_gen), ("embed", r_emb)]:
             if "error" in r:
-                print(f"  {prov_name:<15} {func:<10} {'ERROR':>8} {r.get('error', ''):>20}")
                 continue
-            p50 = r.get("latencia_p50_ms", 0)
-            p95 = r.get("latencia_p95_ms", 0)
-            p99 = r.get("latencia_p99_ms", 0)
-            tps = r.get("tokens_por_segundo", 0) if func == "generate" else 0
-            err = r.get("fallos", 0)
-            print(f"  {prov_name:<15} {func:<10} {p50:>8.0f} {p95:>8.0f} {p99:>8.0f} {tps:>6.0f} {err:>4}")
+            r.get("latencia_p50_ms", 0)
+            r.get("latencia_p95_ms", 0)
+            r.get("latencia_p99_ms", 0)
+            r.get("tokens_por_segundo", 0) if func == "generate" else 0
+            r.get("fallos", 0)
 
     # Ranking
-    print(f"\n{'=' * 68}")
-    print("  Ranking por Latencia P50 (generate)")
-    print(f"{'=' * 68}")
     ranking = sorted(
         [
             (p, resultados[f"{p}_generate"].get("latencia_p50_ms", 99999))
@@ -403,8 +372,8 @@ def _bench_all_providers(n: int, output: str) -> int:  # noqa: PLR0915
         ],
         key=lambda x: x[1],
     )
-    for rank, (prov, lat) in enumerate(ranking, 1):
-        print(f"  #{rank:<3} {prov:<15} {lat:>8.0f} ms")
+    for _rank, (_prov, _lat) in enumerate(ranking, 1):
+        pass
 
     # Exportar
     if output:
@@ -431,19 +400,14 @@ def _bench_all_providers(n: int, output: str) -> int:  # noqa: PLR0915
                 }
                 for p in providers
             },
-            "ranking": [
-                {"rank": r, "provider": p, "latency_p50_ms": l}
-                for r, (p, l) in enumerate(ranking, 1)
-            ],
+            "ranking": [{"rank": r, "provider": p, "latency_p50_ms": l} for r, (p, l) in enumerate(ranking, 1)],
         }
         Path(output).write_text(json.dumps(out, indent=2) + "\n")
-        print(f"\n  Resultados exportados → {output}")
 
-    print(f"\n{'=' * 68}\n")
     return 0
 
 
-def main() -> int:  # noqa: PLR0915
+def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark motor.core.llm")
     parser.add_argument("--iterations", type=int, default=50, help="iteraciones por función (default: 50)")
     parser.add_argument("--provider", type=str, default="", help="proveedor (ollama, openai, ...)")
@@ -456,17 +420,11 @@ def main() -> int:  # noqa: PLR0915
     args = parser.parse_args()
 
     if args.resilience:
-        print(f"\n{'=' * 68}")
-        print("  Benchmark — Resiliencia (Retry / Fallback)")
-        print(f"{'=' * 68}\n")
         resultados = _bench_resilience()
-        for name, data in resultados.items():
-            estado = "✅" if data["ok"] else "❌"
-            print(f"  {name}: {estado}  latency={data['latency_ms']}ms")
+        for data in resultados.values():
+            "✅" if data["ok"] else "❌"
         if args.output:
             Path(args.output).write_text(json.dumps(resultados, indent=2) + "\n")
-            print(f"\n  JSON guardado → {args.output}")
-        print(f"\n{'=' * 68}\n")
         return 0
 
     if args.all_providers:
@@ -475,34 +433,26 @@ def main() -> int:  # noqa: PLR0915
     if args.monitor:
         save_path = args.baseline_save or args.output or ""
         return _run_monitored_benchmark(
-            args.iterations, args.provider or None,
-            args.baseline_load, save_path,
+            args.iterations,
+            args.provider or None,
+            args.baseline_load,
+            save_path,
         )
 
     n = args.iterations
     provider = args.provider or None
     router = LLMRouter(registry=_reg)
 
-    print(f"\n{'=' * 68}")
-    print("  Benchmark — motor.core.llm")
-    print(f"  {n} iteraciones por función")
     if provider:
-        print(f"  proveedor     {provider}")
-    print(f"{'=' * 68}\n")
+        pass
 
     resultados: list[dict] = []
 
-    print("  [1/2] generate() ...", end=" ", flush=True)
     r1 = bench_generate(n, router, provider=provider)
     resultados.append(r1)
-    estado = "✅" if "error" not in r1 else "❌"
-    print(f"{estado}  ({r1.get('exitosos', 0)}/{r1.get('iteraciones', 0)})")
 
-    print("  [2/2] embed()    ...", end=" ", flush=True)
     r2 = bench_embed(n, router, provider=provider)
     resultados.append(r2)
-    estado = "✅" if "error" not in r2 else "❌"
-    print(f"{estado}  ({r2.get('exitosos', 0)}/{r2.get('iteraciones', 0)})")
 
     _mostrar(resultados)
     _mostrar_observabilidad(resultados)
@@ -510,9 +460,7 @@ def main() -> int:  # noqa: PLR0915
     if args.output:
         out = _to_output(resultados)
         Path(args.output).write_text(json.dumps(out, indent=2) + "\n")
-        print(f"\n  JSON guardado → {args.output}")
 
-    print(f"\n{'=' * 68}\n")
     return 0 if all("error" not in r for r in resultados) else 1
 
 

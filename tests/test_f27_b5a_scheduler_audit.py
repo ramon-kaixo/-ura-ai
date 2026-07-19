@@ -37,6 +37,7 @@ def _exec(agent_id: str = "a1", duration: int = 300) -> AgentExecution:
 def test_queue_abstraction() -> None:
     """Scheduler usa TaskQueue por inyección, no instancia directamente."""
     from motor.agents.scheduler import _PriorityQueue
+
     custom_queue = _PriorityQueue()
     s = AgentScheduler(queue=custom_queue, max_concurrent=0)
     s.submit(_exec("a1"))
@@ -144,6 +145,7 @@ def test_no_queue_priority_queue_acoplamiento() -> None:
     import inspect
 
     import motor.agents.scheduler as mod
+
     source = inspect.getsource(mod)
     assert "from queue import PriorityQueue" not in source
     assert "import queue" not in source

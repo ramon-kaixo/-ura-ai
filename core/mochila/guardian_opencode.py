@@ -9,7 +9,7 @@ logger = logging.getLogger("mochila.guardian")
 
 
 class OpenCodeGuardian:
-    def __init__(self, req_id: str = ""):
+    def __init__(self, req_id: str = "") -> None:
         self._req_id = req_id
         self._ultimo_pattern: str | None = None
         self.vagancy_patterns = [
@@ -59,14 +59,14 @@ class OpenCodeGuardian:
                         break
         return len(problematicas) < 2, problematicas
 
-    def verificar_sintaxis_final(self, file_path: str, raw_content: str) -> bool:
+    def verificar_sintaxis_final(self, file_path: str, raw_content: str) -> bool:  # noqa: PLR0911
         clean_content = raw_content.strip()
         if not clean_content or len(clean_content.splitlines()) < 3:
             return False
 
         if file_path.endswith(".py"):
             try:
-                res = subprocess.run(  # noqa: S603  -- file_path validado por extensión .py
+                res = subprocess.run(  # noqa: PLW1510, S603
                     ["python3", "-m", "py_compile", file_path],  # noqa: S607  -- file_path validado por extensión .py
                     capture_output=True,
                     timeout=5,
@@ -77,7 +77,7 @@ class OpenCodeGuardian:
 
         elif file_path.endswith(".sh"):
             if shutil.which("bash"):
-                res = subprocess.run(  # noqa: S603  -- file_path validado por extensión .sh
+                res = subprocess.run(  # noqa: PLW1510, S603
                     ["bash", "-n", file_path],  # noqa: S607  -- file_path validado por extensión .sh
                     capture_output=True,
                     timeout=5,

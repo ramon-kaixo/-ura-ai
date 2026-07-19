@@ -28,16 +28,13 @@ if TYPE_CHECKING:
 
 class Transport(ABC):
     @abstractmethod
-    async def send(self, envelope: ProtocolEnvelope) -> None:
-        ...
+    async def send(self, envelope: ProtocolEnvelope) -> None: ...
 
     @abstractmethod
-    async def receive(self) -> ProtocolEnvelope:
-        ...
+    async def receive(self) -> ProtocolEnvelope: ...
 
     @abstractmethod
-    async def request(self, envelope: ProtocolEnvelope) -> ProtocolEnvelope:
-        ...
+    async def request(self, envelope: ProtocolEnvelope) -> ProtocolEnvelope: ...
 
 
 class LocalTransport(Transport):
@@ -63,7 +60,8 @@ class LocalTransport(Transport):
 
     async def send(self, envelope: ProtocolEnvelope) -> None:
         if not isinstance(envelope, ProtocolEnvelope):
-            raise ProtocolException("send() requires a ProtocolEnvelope")
+            msg = "send() requires a ProtocolEnvelope"
+            raise ProtocolException(msg)
         with self._lock:
             self._received.append(envelope)
         if self._metrics is not None:
@@ -82,7 +80,8 @@ class LocalTransport(Transport):
     async def receive(self) -> ProtocolEnvelope:
         with self._lock:
             if not self._received:
-                raise RuntimeError("No messages available")
+                msg = "No messages available"
+                raise RuntimeError(msg)
             env = self._received.pop(0)
         if self._metrics is not None:
             try:
@@ -111,5 +110,6 @@ class LocalTransport(Transport):
                         )
                     except Exception:
                         log.debug("Metrics record_error failed", exc_info=True)
-                raise RuntimeError(f"No handler for {envelope.routing.message_type}")
+                msg = f"No handler for {envelope.routing.message_type}"
+                raise RuntimeError(msg)
             return handler(envelope)

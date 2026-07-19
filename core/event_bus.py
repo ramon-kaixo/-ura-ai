@@ -55,7 +55,7 @@ def _write_journal(topic: str, data: dict) -> None:
             "topic": topic,
             "data": data,
         }
-        with open(_journal_path(), "a") as f:
+        with open(_journal_path(), "a") as f:  # noqa: PTH123
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except Exception as e:
         log.debug("journal: %s", e)
@@ -70,7 +70,7 @@ def replay_events(date: str | None = None, topic: str | None = None) -> list[dic
     events = []
     try:
         for line in p.read_text().strip().split("\n"):
-            line = line.strip()
+            line = line.strip()  # noqa: PLW2901
             if not line:
                 continue
             try:
@@ -86,27 +86,27 @@ def replay_events(date: str | None = None, topic: str | None = None) -> list[dic
 
 
 def _get_ctx() -> Any:
-    global _zmq_ctx
+    global _zmq_ctx  # noqa: PLW0603
     if _zmq_ctx is None:
         _zmq_ctx = zmq.Context()
     return _zmq_ctx
 
 
 def ensure_publisher() -> None:
-    global _pub_sock
+    global _pub_sock  # noqa: PLW0602
     if _pub_sock is not None:
         return
     _run_async(_ensure_publisher_async())
 
 
 async def _ensure_publisher_async() -> None:
-    global _pub_sock
+    global _pub_sock  # noqa: PLW0603
     async with _pub_lock:
         if _pub_sock is not None:
             return
         _pub_sock = _get_ctx().socket(zmq.PUB)
         _pub_sock.bind(IPC_PUB)
-        os.chmod(IPC_PUB.replace("ipc://", ""), 0o700)
+        os.chmod(IPC_PUB.replace("ipc://", ""), 0o700)  # noqa: PTH101
         log.info("event_bus: PUB en %s", IPC_PUB)
 
 
@@ -149,12 +149,12 @@ def create_subscriber(topics: list[str]) -> Any:
 
 
 def close() -> None:
-    global _pub_sock, _zmq_ctx
+    global _pub_sock, _zmq_ctx  # noqa: PLW0602
     _run_async(_close_async())
 
 
 async def _close_async() -> None:
-    global _pub_sock, _zmq_ctx
+    global _pub_sock, _zmq_ctx  # noqa: PLW0603
     async with _pub_lock:
         if _pub_sock:
             try:
@@ -169,9 +169,9 @@ async def _close_async() -> None:
             log.debug("term: %s", e)
         _zmq_ctx = None
     sock_path = IPC_PUB.replace("ipc://", "")
-    if os.path.exists(sock_path):
+    if Path(sock_path).exists():  # noqa: ASYNC240
         with contextlib.suppress(Exception):
-            os.unlink(sock_path)
+            os.unlink(sock_path)  # noqa: PTH108
 
 
 # ─── AsyncEventBus — Nueva API async pura para futuros consumidores ───

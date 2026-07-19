@@ -21,7 +21,7 @@ PUSHOVER_TOKEN = get_secret("PUSHOVER_APP_TOKEN", "")
 
 
 def _get_telegram_token() -> str | None:
-    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID
+    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID  # noqa: PLW0603
     if _TELEGRAM_TOKEN is None:
         _TELEGRAM_TOKEN = get_secret("TELEGRAM_TOKEN", "")
         _TELEGRAM_CHAT_ID = get_secret("TELEGRAM_CHAT_ID", "")
@@ -80,7 +80,7 @@ def notify(
     if channels is None:
         channels = ["telegram", "pushover"]
 
-    tag = {"info": "ℹ️", "warning": "⚠️", "critical": "🚨"}.get(level, "⚠️")
+    tag = {"info": "ℹ️", "warning": "⚠️", "critical": "🚨"}.get(level, "⚠️")  # noqa: RUF001
     formatted = f"{tag} URA [{level.upper()}]: {message}"
 
     ok = False

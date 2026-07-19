@@ -35,7 +35,7 @@ MEJORAS = Path("/opt/ura/config/prompts/mejoras.txt")
 
 
 def log(msg) -> None:
-    with open(LOG, "a") as f:
+    with open(LOG, "a") as f:  # noqa: PTH123
         f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
@@ -49,12 +49,12 @@ def llm(prompt, model="auto"):
                 "temperature": 0.3,
             },
         ).encode()
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             f"{MODEL_ROUTER}/v1/chat/completions",
             data=payload,
             headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
         )
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310
             data = json.loads(r.read())
         return data.get("choices", [{}])[0].get("message", {}).get("content", "")
     except Exception as e:
@@ -64,18 +64,18 @@ def llm(prompt, model="auto"):
 def recopilar_estado():
     estado = {}
     try:
-        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5, check=False)
+        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5, check=False)  # noqa: S607
         estado["mac_uptime"] = r.stdout.strip()
     except Exception:
         estado["mac_uptime"] = "error"
     try:
-        r = subprocess.run(
-            [
+        r = subprocess.run(  # noqa: S603
+            [  # noqa: S607
                 "ssh",
                 "-o",
                 "ConnectTimeout=5",
                 os.environ.get("ASUS_SSH", "ramon@10.164.1.99"),
-                "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router",
+                "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router",  # noqa: E501
             ],
             capture_output=True,
             text=True,
@@ -87,7 +87,7 @@ def recopilar_estado():
         estado["gx10"] = "no alcanzable"
     try:
         r = subprocess.run(
-            ["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -98,7 +98,7 @@ def recopilar_estado():
         estado["mcp"] = "no responde"
     try:
         r = subprocess.run(
-            ["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -113,7 +113,7 @@ def recopilar_estado():
 def analizar_monologo():
     if not MONOLOGO.exists():
         return {"status": "no existe", "sugerencias": []}
-    with open(MONOLOGO) as f:
+    with open(MONOLOGO) as f:  # noqa: PTH123
         acciones = json.load(f)
     if len(acciones) < 10:
         return {"status": "pocos datos", "total": len(acciones), "sugerencias": []}
@@ -144,7 +144,7 @@ def analizar_monologo():
 def reflexionar_acciones():
     if not ACCIONES.exists():
         return {"status": "sin acciones", "reflexion": "No hay acciones para analizar"}
-    with open(ACCIONES) as f:
+    with open(ACCIONES) as f:  # noqa: PTH123
         acciones = json.load(f)
     ultimas = acciones[-10:]
     exitosos = sum(1 for a in ultimas if a.get("ok", False))
@@ -158,7 +158,7 @@ def reflexionar_acciones():
     if fallidos > exitosos:
         reflexion += " — Alta tasa de fallos"
         sugerencias.append("Revisar herramientas MCP/API y permisos")
-    with open(REFLEXIONES, "a") as f:
+    with open(REFLEXIONES, "a") as f:  # noqa: PTH123
         f.write(f"{datetime.now(UTC).isoformat()} - {reflexion}\n")
     return {
         "status": "ok",

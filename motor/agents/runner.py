@@ -19,37 +19,30 @@ from motor.agents.models import ToolContract, ToolRequest, ToolResult
 
 class ToolError(Exception):
     """Error base de herramientas. Todas las excepciones heredan de aquí."""
-    pass
 
 
 class ToolTimeoutError(ToolError):
     """La herramienta excedió el timeout."""
-    pass
 
 
 class ToolCancelledError(ToolError):
     """La herramienta fue cancelada."""
-    pass
 
 
 class ToolTransientError(ToolError):
     """Error transitorio (reintentable)."""
-    pass
 
 
 class ToolPermanentError(ToolError):
     """Error permanente (no reintentable)."""
-    pass
 
 
 class ToolNotFoundError(ToolError):
     """Herramienta no registrada."""
-    pass
 
 
 class ToolAdapterError(ToolError):
     """Error en el adaptador de la herramienta."""
-    pass
 
 
 # ── ToolRunner concreto ────────────────────
@@ -77,9 +70,9 @@ class RateLimiter:
             cutoff = now - self._window
             bucket[:] = [t for t in bucket if t > cutoff]
             if len(bucket) >= self._max_calls:
+                msg = f"Rate limit exceeded for '{tool_name}': {self._max_calls} calls per {self._window}s"
                 raise ToolTransientError(
-                    f"Rate limit exceeded for '{tool_name}': "
-                    f"{self._max_calls} calls per {self._window}s"
+                    msg,
                 )
             bucket.append(now)
 
@@ -117,7 +110,8 @@ class AgentToolRunner(ToolRunnerABC):
 
     def get_contract(self, tool_name: str) -> ToolContract:
         if tool_name not in self._contracts:
-            raise ToolNotFoundError(f"Tool '{tool_name}' not registered")
+            msg = f"Tool '{tool_name}' not registered"
+            raise ToolNotFoundError(msg)
         return self._contracts[tool_name]
 
     def run(
@@ -131,7 +125,8 @@ class AgentToolRunner(ToolRunnerABC):
         # Backpressure: esperar si hay demasiadas herramientas concurrentes
         acquired = self._semaphore.acquire(timeout=timeout)
         if not acquired:
-            raise ToolTimeoutError(f"Backpressure timeout for '{tool_name}'")
+            msg = f"Backpressure timeout for '{tool_name}'"
+            raise ToolTimeoutError(msg)
         try:
             request = self._build_request(tool_name, params, timeout)
             result = self._execute(request)
@@ -147,7 +142,8 @@ class AgentToolRunner(ToolRunnerABC):
         from motor.agents.models import ToolRequest, make_tool_execution_id
 
         if tool_name not in self._adapters:
-            raise ToolNotFoundError(f"Tool '{tool_name}' not registered")
+            msg = f"Tool '{tool_name}' not registered"
+            raise ToolNotFoundError(msg)
 
         eid = make_tool_execution_id("runner", tool_name, time.time())
         return ToolRequest(

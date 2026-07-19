@@ -68,7 +68,7 @@ def test_content_type_never_empty(text_in: str) -> None:
 
 @given(text(max_size=100), booleans(), booleans(), integers(min_value=1, max_value=20))
 @settings(max_examples=50)
-def test_cache_key_properties(query: str, reranker: bool, hybrid: bool, top_k: int) -> None:
+def test_cache_key_properties(query: str, reranker: bool, hybrid: bool, top_k: int) -> None:  # noqa: FBT001
     cache = AsyncQueryCache()
     key1 = cache.compute_key(query, use_reranker=reranker, use_hybrid=hybrid, top_k=top_k)
     assert len(key1) == 64, "Cache key must be 64 characters"

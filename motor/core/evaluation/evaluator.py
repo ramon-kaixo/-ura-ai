@@ -114,13 +114,16 @@ class EvaluationEngine:
 
         Returns:
             EvaluationRun con métricas agregadas.
+
         """
         corpus = self._corpora.get(corpus_name)
         if corpus is None:
-            raise ValueError(f"Corpus not found: {corpus_name}")
+            msg = f"Corpus not found: {corpus_name}"
+            raise ValueError(msg)
         retrieve_fn = self._retrievers.get(config_name)
         if retrieve_fn is None:
-            raise ValueError(f"Retriever not found: {config_name}")
+            msg = f"Retriever not found: {config_name}"
+            raise ValueError(msg)
 
         per_query: list[dict[str, Any]] = []
         latencies: list[float] = []
@@ -141,7 +144,9 @@ class EvaluationEngine:
                 "precision": precision_at_k(query.relevant_docs, retrieved, k),
                 "mrr": mrr(query.relevant_docs, retrieved),
                 "ndcg": ndcg_at_k(
-                    query.relevant_docs, retrieved, k,
+                    query.relevant_docs,
+                    retrieved,
+                    k,
                     relevance_scores=query.relevance_scores if relevance_scores else None,
                 ),
                 "latency_ms": round(elapsed, 1),

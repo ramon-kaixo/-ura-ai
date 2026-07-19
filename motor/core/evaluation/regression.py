@@ -60,7 +60,8 @@ class RegressionFinding:
         self.threshold = threshold
         self.direction = "up" if current_value > baseline_value else "down"
         self.change_pct = round(
-            ((current_value - baseline_value) / max(abs(baseline_value), 0.001)) * 100, 1,
+            ((current_value - baseline_value) / max(abs(baseline_value), 0.001)) * 100,
+            1,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -202,10 +203,7 @@ class RegressionBaseline:
                 "name": self._name,
                 "created_at": self._created_at,
                 "updated_at": self._updated_at,
-                "baselines": {
-                    f"{cfg}.{met}": val
-                    for (cfg, met), val in self._data.items()
-                },
+                "baselines": {f"{cfg}.{met}": val for (cfg, met), val in self._data.items()},
             }
 
     def save(self, path: str | Path) -> None:
@@ -252,6 +250,7 @@ class RegressionDetector:
 
         Returns:
             RegressionReport con todos los hallazgos.
+
         """
         findings: list[RegressionFinding] = []
         configs_seen: set[str] = set()

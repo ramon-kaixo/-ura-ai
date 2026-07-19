@@ -23,7 +23,7 @@ WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 
 MODEL = os.environ.get("REFACTOR_MODEL", "deepseek-coder:6.7b")
 MODEL_FALLBACK = os.environ.get("REFACTOR_MODEL_FALLBACK", "qwen2.5-coder:14b")
-URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
+URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 MAX_FUNCTIONS = int(os.environ.get("MAX_FUNCTIONS", "999"))
 MIN_LINES = int(os.environ.get("MIN_LINES", "100"))
@@ -60,12 +60,12 @@ def llm(prompt: str, model: str | None = None) -> str:
             "options": {"temperature": 0.1, "num_predict": n_predict},
         },
     ).encode()
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         f"{OLLAMA_URL}/api/generate",
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=600) as r:
+    with urllib.request.urlopen(req, timeout=600) as r:  # noqa: S310
         data = json.loads(r.read())
     return data.get("response", "")
 
@@ -85,7 +85,7 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
             source = py_file.read_text(encoding="utf-8")
             tree = ast.parse(source)
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
                     if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
                         n_lines = node.end_lineno - node.lineno
                         if n_lines > threshold:
@@ -176,7 +176,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
     except SyntaxError as e:
         log(f"  ❌ Error sintaxis post-reemplazo: {e}")
         log("  🔄 Reintentando con reparación...")
-        fix_prompt = f"El código tiene un error de sintaxis: {e}. Corrígelo SIN cambiar la lógica. Código:\n```python\n{new_code}\n```\nDevuelve SOLO el código corregido."
+        fix_prompt = f"El código tiene un error de sintaxis: {e}. Corrígelo SIN cambiar la lógica. Código:\n```python\n{new_code}\n```\nDevuelve SOLO el código corregido."  # noqa: E501
         fix_resp = llm(fix_prompt)
         fix_code = clean_llm_response(fix_resp)
         if fix_code:
@@ -190,13 +190,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                     if not backup.exists():
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
-                    subprocess.run(
-                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+                    subprocess.run(  # noqa: S603
+                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
                         capture_output=True,
                         timeout=30,
                         check=False,
                     )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
                 log("  ✅ Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -212,18 +212,18 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
 
-    subprocess.run(
-        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
+    subprocess.run(  # noqa: S603
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
         capture_output=True,
         timeout=30,
         check=False,
     )
-    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
     return True
 
 
-def main() -> None:
-    global REFACTORED, SKIPPED, ERRORS
+def main() -> None:  # noqa: PLR0915
+    global REFACTORED, SKIPPED, ERRORS  # noqa: PLW0603
     start_time = time.time()
     log("🚀 Refactorización de funciones grandes vía LLM")
     log(f"📁 Root: {URA_ROOT}")

@@ -100,11 +100,11 @@ class ConcurrentVRAMGuard:
 
     @property
     def slots_disponibles(self) -> int:
-        return self._semaphore._value
+        return self._semaphore._value  # noqa: SLF001
 
     @property
     def esperando_cola(self) -> int:
-        waiters = self._semaphore._waiters
+        waiters = self._semaphore._waiters  # noqa: SLF001
         return len(waiters) if waiters is not None else 0
 
     def metricas(self) -> dict:
@@ -236,9 +236,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")
+        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", _URLS["primary"])
             return _URLS["primary"]
     except Exception as e:
@@ -367,9 +367,9 @@ def _fallback_count_last_hour() -> int:
 def _measare_asus_latency() -> float:
     try:
         t0 = time.monotonic()
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")
+        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             elapsed = (time.monotonic() - t0) * 1000
             return round(elapsed, 1)
     except Exception:
@@ -377,7 +377,7 @@ def _measare_asus_latency() -> float:
 
 
 def _update_asus_latency() -> None:
-    global _asus_latency_ms, _asus_latency_updated
+    global _asus_latency_ms, _asus_latency_updated  # noqa: PLW0603
     ms = _measare_asus_latency()
     with _asus_latency_lock:
         _asus_latency_ms = ms
@@ -527,9 +527,9 @@ def clasificar_peticion(messages: list) -> str:
 def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
     target = url or OLLAMA_URL
     try:
-        req = urllib.request.Request(f"{target}/api/tags")
+        req = urllib.request.Request(f"{target}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             data = json.loads(resp.read())
             return {m["name"] for m in data.get("models", [])}
     except Exception as e:
@@ -557,7 +557,7 @@ def _apply_model_params(data: dict, model_name: str) -> dict:
     return data
 
 
-def _record_success(modelo: str, tipo: str, ok: bool) -> None:
+def _record_success(modelo: str, tipo: str, ok: bool) -> None:  # noqa: FBT001
     with success_rates_lock:
         sr = success_rates[modelo][tipo]
         sr["total"] += 1
@@ -608,16 +608,16 @@ def proxy_request(
     tipo: str = "",
     client_ip: str = "",
 ) -> tuple:
-    global OLLAMA_URL
+    global OLLAMA_URL  # noqa: PLW0602
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = _URLS["primary"] if resolved_mode == "TURBO" else _URLS["fallback"]
     url = f"{active_url}{path}"
-    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)
+    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
     req.add_header("Content-Type", "application/json")
 
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:  # noqa: S310
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:
@@ -792,7 +792,7 @@ setInterval(refresh,5000)
 
 </script>
 </body>
-</html>"""
+</html>"""  # noqa: E501
 
 
 def _render_dashboard() -> str:
@@ -1014,7 +1014,6 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             tasks_data = json.loads(sock.recv())
         except Exception:
             log.exception("Failed to fetch supervisor tasks")
-            pass
         finally:
             if sock:
                 with contextlib.suppress(Exception):
@@ -1033,7 +1032,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             color = "#3fb950" if ok else "#f85149"
             html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
         html += "</div></div></div>"
-        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
+        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"  # noqa: E501
         html += "</body></html>"
         self._send_html(html)
 
@@ -1054,7 +1053,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self) -> None:
+    def do_GET(self) -> None:  # noqa: C901, PLR0912
         if not self._check_rate_limit():
             return
         if self.path in {"/api/tags", "/api/tags/"}:
@@ -1093,7 +1092,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_power_mode(self) -> bool:
         """Maneja /power_mode. Retorna True si se procesó (no continuar con routing normal)."""
-        global POWER_MODE
+        global POWER_MODE  # noqa: PLW0603
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         params_str = body.decode() if body else ""
@@ -1131,7 +1130,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(resp_body)
 
-    def do_POST(self) -> None:
+    def do_POST(self) -> None:  # noqa: C901, PLR0912, PLR0915
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return

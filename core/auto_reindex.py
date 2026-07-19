@@ -76,7 +76,7 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
 
             # Convert REST response to dict format (point-like with .payload key)
             for p in points:
-                all_stale.append({"payload": p.get("payload", {}), "id": p.get("id")})
+                all_stale.append({"payload": p.get("payload", {}), "id": p.get("id")})  # noqa: PERF401
 
             if len(points) < BATCH_SIZE:
                 break
@@ -105,7 +105,7 @@ async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS) -> list:
         from qdrant_client.http import models
 
         while True:
-            scroll_result = qdrant._cliente.scroll(
+            scroll_result = qdrant._cliente.scroll(  # noqa: SLF001
                 collection_name=COLLECTION,
                 scroll_filter=models.Filter(
                     must=[
@@ -131,7 +131,7 @@ async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS) -> list:
         return []
 
 
-async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:
+async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:  # noqa: ASYNC109
     try:
         html = await fetch_stealth(url, timeout=timeout)
         if html and len(html) > 50:
@@ -180,7 +180,7 @@ async def atomic_upsert(html: str, url: str) -> bool:
     return guardados > 0
 
 
-async def reindex_stale(dry_run: bool = True) -> dict:
+async def reindex_stale(dry_run: bool = True) -> dict:  # noqa: FBT001, FBT002
     stale = await find_stale_docs()
     stats = {"found": len(stale), "reindexed": 0, "failed": 0, "skipped": 0}
 

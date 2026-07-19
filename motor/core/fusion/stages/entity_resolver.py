@@ -68,10 +68,9 @@ class CachePolicy(StrEnum):
         try:
             return cls(value)
         except ValueError as err:
-                valid = ", ".join(f"'{m.value}'" for m in cls)
-                raise ValueError(
-                    f"Invalid cache policy: '{value}'. Valid values: {valid}"
-                ) from err
+            valid = ", ".join(f"'{m.value}'" for m in cls)
+            msg = f"Invalid cache policy: '{value}'. Valid values: {valid}"
+            raise ValueError(msg) from err
 
 
 # ── Registro de entidades (inyectable) ───────────────────
@@ -165,6 +164,7 @@ class ScoringStrategy(ABC):
         Returns:
             int: índice en entries de la mejor candidata.
             None: ambiguo (no se puede decidir, empate, o ninguna es válida).
+
         """
         ...
 
@@ -191,139 +191,235 @@ class KeywordScorer(ScoringStrategy):
 _DEFAULT_ENTRIES: dict[str, list[EntityDef]] = {
     "apple": [
         EntityDef(
-            entity_id="E0001", canonical_name="Apple Inc.", category="organization",
+            entity_id="E0001",
+            canonical_name="Apple Inc.",
+            category="organization",
             aliases=["apple inc.", "apple computer"],
-            keywords=["company", "inc", "iphone", "mac", "tim cook", "cupertino",
-                      "sells", "stock", "ceo", "revenue", "product", "store",
-                      "app store", "ios", "ipad", "watch", "airpods"],
+            keywords=[
+                "company",
+                "inc",
+                "iphone",
+                "mac",
+                "tim cook",
+                "cupertino",
+                "sells",
+                "stock",
+                "ceo",
+                "revenue",
+                "product",
+                "store",
+                "app store",
+                "ios",
+                "ipad",
+                "watch",
+                "airpods",
+            ],
         ),
         EntityDef(
-            entity_id="E0009", canonical_name="Apple (fruit)", category="food",
+            entity_id="E0009",
+            canonical_name="Apple (fruit)",
+            category="food",
             aliases=["apple fruit", "manzana"],
-            keywords=["fruit", "eat", "delicious", "red", "green", "orchard",
-                      "pie", "juice", "ripe", "tree", "fresh", "sweet"],
+            keywords=[
+                "fruit",
+                "eat",
+                "delicious",
+                "red",
+                "green",
+                "orchard",
+                "pie",
+                "juice",
+                "ripe",
+                "tree",
+                "fresh",
+                "sweet",
+            ],
         ),
     ],
     "microsoft": [
         EntityDef(
-            entity_id="E0002", canonical_name="Microsoft", category="organization",
+            entity_id="E0002",
+            canonical_name="Microsoft",
+            category="organization",
             aliases=["microsoft corp.", "ms", "microsoft corporation"],
-            keywords=["software", "windows", "office", "azure", "satya", "bill gates",
-                      "company", "ceo", "revenue", "product"],
+            keywords=[
+                "software",
+                "windows",
+                "office",
+                "azure",
+                "satya",
+                "bill gates",
+                "company",
+                "ceo",
+                "revenue",
+                "product",
+            ],
         ),
     ],
     "google": [
         EntityDef(
-            entity_id="E0003", canonical_name="Google", category="organization",
+            entity_id="E0003",
+            canonical_name="Google",
+            category="organization",
             aliases=["google inc.", "alphabet"],
-            keywords=["search", "android", "chrome", "youtube", "sundar pichai",
-                      "company", "ads", "cloud", "gmail"],
+            keywords=["search", "android", "chrome", "youtube", "sundar pichai", "company", "ads", "cloud", "gmail"],
         ),
     ],
     "amazon": [
         EntityDef(
-            entity_id="E0004", canonical_name="Amazon.com Inc.", category="organization",
+            entity_id="E0004",
+            canonical_name="Amazon.com Inc.",
+            category="organization",
             aliases=["amazon.com", "amazon web services", "aws"],
-            keywords=["company", "ecommerce", "aws", "cloud", "jeff bezos",
-                      "prime", "delivery", "store", "revenue"],
+            keywords=["company", "ecommerce", "aws", "cloud", "jeff bezos", "prime", "delivery", "store", "revenue"],
         ),
         EntityDef(
-            entity_id="E0010", canonical_name="Amazon River", category="location",
+            entity_id="E0010",
+            canonical_name="Amazon River",
+            category="location",
             aliases=["amazon river", "rio amazonas"],
-            keywords=["river", "rainforest", "brazil", "peru", "water", "flow",
-                      "longest", "basin", "tributary"],
+            keywords=["river", "rainforest", "brazil", "peru", "water", "flow", "longest", "basin", "tributary"],
         ),
     ],
     "tesla": [
         EntityDef(
-            entity_id="E0006", canonical_name="Tesla Inc.", category="organization",
+            entity_id="E0006",
+            canonical_name="Tesla Inc.",
+            category="organization",
             aliases=["tesla inc.", "tesla motors"],
-            keywords=["car", "electric", "vehicle", "elon musk", "company",
-                      "stock", "revenue", "battery", "autopilot", "model"],
+            keywords=[
+                "car",
+                "electric",
+                "vehicle",
+                "elon musk",
+                "company",
+                "stock",
+                "revenue",
+                "battery",
+                "autopilot",
+                "model",
+            ],
         ),
         EntityDef(
-            entity_id="E0011", canonical_name="Nikola Tesla", category="person",
+            entity_id="E0011",
+            canonical_name="Nikola Tesla",
+            category="person",
             aliases=["nikola tesla"],
-            keywords=["inventor", "scientist", "ac", "electricity", "coil",
-                      "patent", "history", "died", "born", "invention"],
+            keywords=[
+                "inventor",
+                "scientist",
+                "ac",
+                "electricity",
+                "coil",
+                "patent",
+                "history",
+                "died",
+                "born",
+                "invention",
+            ],
         ),
     ],
     "meta": [
         EntityDef(
-            entity_id="E0005", canonical_name="Meta Platforms", category="organization",
+            entity_id="E0005",
+            canonical_name="Meta Platforms",
+            category="organization",
             aliases=["meta platforms", "facebook", "facebook inc."],
-            keywords=["social", "network", "zuckerberg", "company", "revenue",
-                      "ads", "instagram", "whatsapp", "platform"],
+            keywords=[
+                "social",
+                "network",
+                "zuckerberg",
+                "company",
+                "revenue",
+                "ads",
+                "instagram",
+                "whatsapp",
+                "platform",
+            ],
         ),
     ],
     "nvidia": [
         EntityDef(
-            entity_id="E0007", canonical_name="NVIDIA Corporation", category="organization",
+            entity_id="E0007",
+            canonical_name="NVIDIA Corporation",
+            category="organization",
             aliases=["nvidia corporation"],
-            keywords=["gpu", "graphics", "chip", "ai", "jensen huang", "company",
-                      "cuda", "datacenter", "gaming"],
+            keywords=["gpu", "graphics", "chip", "ai", "jensen huang", "company", "cuda", "datacenter", "gaming"],
         ),
     ],
     "openai": [
         EntityDef(
-            entity_id="E0008", canonical_name="OpenAI", category="organization",
+            entity_id="E0008",
+            canonical_name="OpenAI",
+            category="organization",
             aliases=["open ai"],
-            keywords=["ai", "gpt", "chatgpt", "research", "language model",
-                      "sam altman", "company"],
+            keywords=["ai", "gpt", "chatgpt", "research", "language model", "sam altman", "company"],
         ),
     ],
     "open ai": [
         EntityDef(
-            entity_id="E0008", canonical_name="OpenAI", category="organization",
+            entity_id="E0008",
+            canonical_name="OpenAI",
+            category="organization",
             aliases=["open ai", "openai"],
-            keywords=["ai", "gpt", "chatgpt", "research", "language model",
-                      "sam altman", "company"],
+            keywords=["ai", "gpt", "chatgpt", "research", "language model", "sam altman", "company"],
         ),
     ],
     "washington": [
         EntityDef(
-            entity_id="E0012", canonical_name="Washington (state)", category="location",
+            entity_id="E0012",
+            canonical_name="Washington (state)",
+            category="location",
             aliases=["washington state"],
             keywords=["state", "seattle", "olympia", "evergreen", "west coast"],
         ),
         EntityDef(
-            entity_id="E0013", canonical_name="Washington, D.C.", category="location",
+            entity_id="E0013",
+            canonical_name="Washington, D.C.",
+            category="location",
             aliases=["washington dc", "district of columbia"],
-            keywords=["capital", "dc", "government", "congress", "white house",
-                      "senate", "president", "federal"],
+            keywords=["capital", "dc", "government", "congress", "white house", "senate", "president", "federal"],
         ),
         EntityDef(
-            entity_id="E0014", canonical_name="George Washington", category="person",
+            entity_id="E0014",
+            canonical_name="George Washington",
+            category="person",
             aliases=["george washington"],
-            keywords=["president", "founding father", "revolution", "general",
-                      "first", "mount vernon"],
+            keywords=["president", "founding father", "revolution", "general", "first", "mount vernon"],
         ),
     ],
     "berkshire hathaway": [
         EntityDef(
-            entity_id="E0015", canonical_name="Berkshire Hathaway", category="organization",
+            entity_id="E0015",
+            canonical_name="Berkshire Hathaway",
+            category="organization",
             aliases=["berkshire"],
-            keywords=["warren buffett", "investment", "company", "stock", "holding",
-                      "revenue", "ceo"],
+            keywords=["warren buffett", "investment", "company", "stock", "holding", "revenue", "ceo"],
         ),
     ],
     "jensen huang": [
         EntityDef(
-            entity_id="E0016", canonical_name="Jensen Huang", category="person",
+            entity_id="E0016",
+            canonical_name="Jensen Huang",
+            category="person",
             aliases=["jen hsun huang"],
             keywords=["nvidia", "ceo", "founder", "gpu"],
         ),
     ],
     "tim cook": [
         EntityDef(
-            entity_id="E0017", canonical_name="Tim Cook", category="person",
+            entity_id="E0017",
+            canonical_name="Tim Cook",
+            category="person",
             aliases=["timothy cook"],
             keywords=["apple", "ceo", "apple inc."],
         ),
     ],
     "elon musk": [
         EntityDef(
-            entity_id="E0018", canonical_name="Elon Musk", category="person",
+            entity_id="E0018",
+            canonical_name="Elon Musk",
+            category="person",
             aliases=["elon reeve musk"],
             keywords=["tesla", "spacex", "twitter", "x", "ceo", "entrepreneur"],
         ),
@@ -391,7 +487,7 @@ def _extract_entity_candidates(text: str, registry: EntityRegistry, max_ngram: i
     known = registry.known_names
     for n in range(1, max_ngram + 1):
         for i in range(len(words) - n + 1):
-            phrase = " ".join(words[i:i + n]).strip().lower()
+            phrase = " ".join(words[i : i + n]).strip().lower()
             if phrase in known and phrase not in seen:
                 seen.add(phrase)
                 candidates.append(phrase)
@@ -408,7 +504,7 @@ class RuleBasedEntityResolver(EntityResolver):
     para producción: soporta desambiguación contextual y cache.
     """
 
-    _LEGACY: dict[str, dict[str, str | list[str]]] = {
+    _LEGACY: dict[str, dict[str, str | list[str]]] = {  # noqa: RUF012
         "apple": {"id": "E0001", "name": "Apple", "aliases": ["apple inc.", "apple computer"]},
         "microsoft": {"id": "E0002", "name": "Microsoft", "aliases": ["microsoft corp.", "ms"]},
         "google": {"id": "E0003", "name": "Google", "aliases": ["google inc.", "alphabet"]},
@@ -555,7 +651,9 @@ class ContextualEntityResolver(EntityResolver):
         return result
 
     def resolve_many(
-        self, texts: list[str], context: dict | None = None,
+        self,
+        texts: list[str],
+        context: dict | None = None,
     ) -> list[ResolvedEntity]:
         return [self.resolve(t, context=context) for t in texts]
 
@@ -648,9 +746,7 @@ class EntityResolutionStage(BaseStage):
                     unknown_count += 1
 
         if ambiguous_entity_ids:
-            context.warnings.append(
-                f"Ambiguous entities: {', '.join(sorted(set(ambiguous_entity_ids)))}"
-            )
+            context.warnings.append(f"Ambiguous entities: {', '.join(sorted(set(ambiguous_entity_ids)))}")
 
         context.entities = entities
         context.statistics["entities_resolved"] = resolved_count

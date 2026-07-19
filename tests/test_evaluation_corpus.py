@@ -35,38 +35,38 @@ class TestCorpusIntegrity:
         assert f.exists(), f"Missing: {f}"
 
     def test_corpus_has_200_queries(self):
-        count = sum(1 for _ in open(CORPUS_DIR / "queries.jsonl"))
+        count = sum(1 for _ in open(CORPUS_DIR / "queries.jsonl"))  # noqa: PTH123, SIM115
         assert count >= 200, f"Only {count} queries"
 
     def test_no_duplicate_qids(self):
-        qids = [json.loads(line)["qid"] for line in open(CORPUS_DIR / "queries.jsonl")]
+        qids = [json.loads(line)["qid"] for line in open(CORPUS_DIR / "queries.jsonl")]  # noqa: PTH123, SIM115
         assert len(qids) == len(set(qids)), "Duplicate qids found"
 
     def test_all_qids_follow_convention(self):
-        for line in open(CORPUS_DIR / "queries.jsonl"):
+        for line in open(CORPUS_DIR / "queries.jsonl"):  # noqa: PTH123, SIM115
             qid = json.loads(line)["qid"]
             assert qid.startswith(("sys_", "code_", "know_")), f"Bad qid: {qid}"
 
     def test_at_least_3_domains(self):
         domains = set()
-        for line in open(CORPUS_DIR / "queries.jsonl"):
+        for line in open(CORPUS_DIR / "queries.jsonl"):  # noqa: PTH123, SIM115
             domains.add(json.loads(line).get("domain", ""))
         assert len(domains) >= 2
 
     def test_all_relevance_scores_valid(self):
-        for line in open(CORPUS_DIR / "relevance.jsonl"):
+        for line in open(CORPUS_DIR / "relevance.jsonl"):  # noqa: PTH123, SIM115
             rel = json.loads(line)["relevance"]
             assert rel in (0, 1, 2, 3), f"Invalid relevance: {rel}"
 
     def test_all_qids_in_reference_are_in_queries(self):
-        query_qids = {json.loads(line)["qid"] for line in open(CORPUS_DIR / "queries.jsonl")}
-        for line in open(CORPUS_DIR / "relevance.jsonl"):
+        query_qids = {json.loads(line)["qid"] for line in open(CORPUS_DIR / "queries.jsonl")}  # noqa: PTH123, SIM115
+        for line in open(CORPUS_DIR / "relevance.jsonl"):  # noqa: PTH123, SIM115
             qid = json.loads(line)["qid"]
             assert qid in query_qids, f"Relevance references unknown qid: {qid}"
 
     def test_no_duplicate_relevance_pairs(self):
         pairs = set()
-        for line in open(CORPUS_DIR / "relevance.jsonl"):
+        for line in open(CORPUS_DIR / "relevance.jsonl"):  # noqa: PTH123, SIM115
             d = json.loads(line)
             pair = (d["qid"], d["doc_id"])
             assert pair not in pairs, f"Duplicate relevance: {pair}"
@@ -166,14 +166,14 @@ class TestBenchmarkDirect:
 
 class TestJSONLFormat:
     def test_queries_jsonl_valid(self):
-        for line in open(CORPUS_DIR / "queries.jsonl"):
+        for line in open(CORPUS_DIR / "queries.jsonl"):  # noqa: PTH123, SIM115
             d = json.loads(line)
             assert "qid" in d
             assert "query" in d
             assert "domain" in d
 
     def test_relevance_jsonl_valid(self):
-        for line in open(CORPUS_DIR / "relevance.jsonl"):
+        for line in open(CORPUS_DIR / "relevance.jsonl"):  # noqa: PTH123, SIM115
             d = json.loads(line)
             assert "qid" in d
             assert "doc_id" in d

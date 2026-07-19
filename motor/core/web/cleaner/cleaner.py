@@ -24,9 +24,7 @@ class CleanedStats:
     @property
     def documents_removed(self) -> int:
         return (
-            self.documents_removed_empty
-            + self.documents_removed_duplicate_url
-            + self.documents_removed_duplicate_hash
+            self.documents_removed_empty + self.documents_removed_duplicate_url + self.documents_removed_duplicate_hash
         )
 
     @property
@@ -65,7 +63,7 @@ class DocumentCleaner:
     - Elimina documentos vacíos o con muy poco contenido
     """
 
-    def __init__(self, min_words: int = _MIN_WORDS):
+    def __init__(self, min_words: int = _MIN_WORDS) -> None:
         self._min_words = min_words
 
     def clean(self, documents: list[WebDocument]) -> CleanedResult:

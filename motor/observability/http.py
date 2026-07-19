@@ -19,7 +19,7 @@ def create_router(
     try:
         from fastapi import APIRouter
     except ImportError:
-        log.error("FastAPI no disponible — no se puede crear router HTTP")
+        log.exception("FastAPI no disponible — no se puede crear router HTTP")
         return None
 
     router = APIRouter()

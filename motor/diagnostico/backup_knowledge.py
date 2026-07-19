@@ -17,5 +17,5 @@ def backup_incidente(config, incidente: dict | None = None) -> str:
         log.info("backup metadata en %s", dest)
         return str(dest)
     except (OSError, json.JSONEncodeError) as e:
-        log.error("error backup: %s", e)
+        log.exception("error backup: %s", e)
         return ""

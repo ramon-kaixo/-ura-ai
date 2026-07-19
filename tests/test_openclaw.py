@@ -28,8 +28,8 @@ class TestOpenClawDeterminism(unittest.TestCase):
 
     def setUp(self) -> None:
         """Setup: crear state file temporal y runbook de prueba."""
-        self.test_state = Path("/tmp/ura_snc_state_test.json")
-        self.test_stats = Path("/tmp/ura_openclaw_stats_test.json")
+        self.test_state = Path("/tmp/ura_snc_state_test.json")  # noqa: S108
+        self.test_stats = Path("/tmp/ura_openclaw_stats_test.json")  # noqa: S108
 
         # Runbook de prueba
         self.test_runbook = {
@@ -193,7 +193,7 @@ class TestOpenClawIntegration(unittest.TestCase):
 
     def setUp(self) -> None:
         """Setup: state file de emergencia simulada."""
-        self.test_state = Path("/tmp/ura_snc_state_integration.json")
+        self.test_state = Path("/tmp/ura_snc_state_integration.json")  # noqa: S108
         self.emergency_state = {
             "timestamp": "2026-06-03T18:00:00",
             "status": "CRITICAL",
@@ -236,7 +236,7 @@ class TestOpenClawIntegration(unittest.TestCase):
         assert "network" in runbook.get("commands", {})
 
         # 4. Verificar que OpenClaw puede procesar la emergencia
-        with patch("monitor.openclaw.run_command", return_value=(True, "ok")):
+        with patch("monitor.openclaw.run_command", return_value=(True, "ok")):  # noqa: SIM117
             with patch("monitor.openclaw.execute_runbook_action") as mock_exec:
                 process_emergency(state, runbook)
                 # Network debería ser procesado
@@ -251,7 +251,7 @@ class TestOpenClawIntegration(unittest.TestCase):
             "openclaw_active": False,
         }
 
-        with patch("monitor.openclaw.run_command"):
+        with patch("monitor.openclaw.run_command"):  # noqa: SIM117
             with patch("monitor.openclaw.execute_runbook_action") as mock_exec:
                 # No debería ejecutarse nada
                 if is_emergency(ok_state):

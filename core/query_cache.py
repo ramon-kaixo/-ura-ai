@@ -15,8 +15,8 @@ class AsyncQueryCache:
     def compute_key(
         self,
         query_text: str,
-        use_reranker: bool = False,
-        use_hybrid: bool = False,
+        use_reranker: bool = False,  # noqa: FBT001, FBT002
+        use_hybrid: bool = False,  # noqa: FBT001, FBT002
         top_k: int = 5,
     ) -> str:
         payload = {

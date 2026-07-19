@@ -39,15 +39,15 @@ def buscar_ruff() -> str | None:
     for c in [
         shutil.which("ruff"),
         "/home/ramon/URA/ura_ia_1972/.venv/bin/ruff",
-        os.path.expanduser("~/.local/bin/ruff"),
+        Path("~/.local/bin/ruff").expanduser(),
         "/usr/local/bin/ruff",
     ]:
-        if c and os.path.isfile(c):
+        if c and Path(c).is_file():
             return c
     return None
 
 
-def eliminar_comentarios_no_docstring(codigo: str) -> tuple[str, int]:
+def eliminar_comentarios_no_docstring(codigo: str) -> tuple[str, int]:  # noqa: C901
     """Elimina comentarios de línea (#) que NO sean parte de docstrings.
 
     Returns:
@@ -141,17 +141,17 @@ def poda_mecanica(ruta: Path) -> tuple[str, int, int, int]:
         try:
             fd, tmp_path = tempfile.mkstemp(suffix=".py")
             os.close(fd)
-            with open(tmp_path, "w") as f:
+            with open(tmp_path, "w") as f:  # noqa: PTH123
                 f.write(codigo_original)
 
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 [ruff_bin, "check", "--fix", "--select", "F841,F401,F811", tmp_path],
                 capture_output=True,
                 timeout=15,
                 check=False,
             )
             codigo_post_ruff = Path(tmp_path).read_text(encoding="utf-8")
-            os.unlink(tmp_path)
+            os.unlink(tmp_path)  # noqa: PTH108
         except Exception:
             codigo_post_ruff = codigo_original
     else:
@@ -165,7 +165,7 @@ def poda_mecanica(ruta: Path) -> tuple[str, int, int, int]:
     return codigo_podado, chars_original, chars_podado, lineas_eliminadas
 
 
-def anclaje_cromatico(codigo: str) -> dict:
+def anclaje_cromatico(codigo: str) -> dict:  # noqa: C901, PLR0912
     """Genera mapa cromático 🔴🟢 del código limpio.
 
     🔴 Roja: end_line de cada instrucción lógica (función, clase, asignación)
@@ -198,23 +198,23 @@ def anclaje_cromatico(codigo: str) -> dict:
 
     # 🔴 Rojas de funciones y clases
     for nodo in ast.walk(arbol):
-        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):  # noqa: SIM102
             if hasattr(nodo, "end_lineno") and nodo.end_lineno:
                 rojas.append(nodo.end_lineno)
         if isinstance(nodo, (ast.For, ast.While, ast.If, ast.Try, ast.With)):
             # Bloques de control: su último body
             for body_node in getattr(nodo, "body", []):
                 if hasattr(body_node, "end_lineno") and body_node.end_lineno:
-                    rojas.append(body_node.end_lineno)
+                    rojas.append(body_node.end_lineno)  # noqa: PERF401
             for body_node in getattr(nodo, "orelse", []):
                 if hasattr(body_node, "end_lineno") and body_node.end_lineno:
-                    rojas.append(body_node.end_lineno)
+                    rojas.append(body_node.end_lineno)  # noqa: PERF401
 
     # 🟢 Verdes: líneas en blanco entre bloques (PEP 8)
     for i, linea in enumerate(lineas, 1):
         if i > 0 and i <= total_lineas:
             idx = i - 1
-            if not linea.strip() and idx > 0:
+            if not linea.strip() and idx > 0:  # noqa: SIM102
                 # Línea en blanco
                 if idx + 1 < total_lineas and lineas[idx + 1].strip():
                     # Entre código → es gap estructural
@@ -223,7 +223,7 @@ def anclaje_cromatico(codigo: str) -> dict:
     # Añadir gaps entre funciones (PEP 8: 2 blank lines)
     for i in range(1, total_lineas - 1):
         if not lineas[i].strip() and not lineas[i - 1].strip() and i + 1 < total_lineas and lineas[i + 1].strip():
-            verdes.append(i + 1)
+            verdes.append(i + 1)  # noqa: PERF401
 
     rojas = sorted(set(rojas))
     verdes = sorted(set(verdes))
@@ -312,7 +312,7 @@ def scan_project() -> None:
             lines = content.splitlines()
             dead = sum(1 for l in lines if l.strip().startswith("# ") and "TODO" not in l)
             results[p] = {"dead_comments": dead, "total_lines": len(lines)}
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 

@@ -12,7 +12,7 @@ _PROJECT_ROOT: Path | None = None
 
 
 def setup_path() -> None:
-    global _PROJECT_ROOT
+    global _PROJECT_ROOT  # noqa: PLW0603
     if _PROJECT_ROOT is not None:
         return
 

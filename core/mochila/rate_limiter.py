@@ -1,6 +1,7 @@
 import os
 import time
 from collections import defaultdict
+from pathlib import Path
 
 
 class RateLimiter:
@@ -11,11 +12,10 @@ class RateLimiter:
 
     def _cargar_config(self, config_file: str | None = None) -> None:
         import json
-        import os
 
-        path = config_file or os.path.expanduser("~/.nervioso/rate_limits.json")
+        path = config_file or Path("~/.nervioso/rate_limits.json").expanduser()
         try:
-            with open(path) as f:
+            with open(path) as f:  # noqa: PTH123
                 data = json.load(f)
             for provider, limit in data.items():
                 if isinstance(limit, int):

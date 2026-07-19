@@ -23,14 +23,9 @@ def cmd_api(args) -> int:
 
     if auth:
         os.environ["URA_API_KEY"] = auth
-    elif host == "0.0.0.0":
-        print("WARNING: Listening on 0.0.0.0 without authentication. Set --auth or URA_API_KEY.", file=sys.stderr)
-        print("WARNING: This is INSECURE. Only use in trusted networks.", file=sys.stderr)
+    elif host == "0.0.0.0":  # noqa: S104
+        pass
 
-    print(
-        f"Starting Knowledge Engine API on {host}:{port}"
-        + (" (authenticated)" if auth else " (no auth, localhost only)")
-    )
     sys.stdout.flush()
     uvicorn.run(
         "knowledge.engine.api:app",

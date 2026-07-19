@@ -58,11 +58,7 @@ def make_fact_id(
 
     Usa normalize_identity() canónica. version NO participa en la identidad.
     """
-    raw = (
-        f"{normalize_identity(subject)}:"
-        f"{normalize_identity(predicate)}:"
-        f"{normalize_identity(obj)}"
-    )
+    raw = f"{normalize_identity(subject)}:{normalize_identity(predicate)}:{normalize_identity(obj)}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
@@ -347,9 +343,7 @@ class KnowledgeDelta:
 
     @property
     def has_changes(self) -> bool:
-        return bool(
-            self.facts_added or self.facts_updated or self.facts_removed
-        )
+        return bool(self.facts_added or self.facts_updated or self.facts_removed)
 
 
 # ── EvidenceSet (claims extraídos) ─────────

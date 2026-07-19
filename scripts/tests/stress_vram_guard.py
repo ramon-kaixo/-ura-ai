@@ -33,7 +33,7 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
             else:
                 pass
 
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 

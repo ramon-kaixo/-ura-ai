@@ -71,6 +71,7 @@ class TestSSRFProtection:
         import pytest
 
         from motor.core.web.crawler.providers.httpx_crawler import _validate_url
+
         with pytest.raises(ValueError):
             _validate_url("http://127.0.0.1/test")
 

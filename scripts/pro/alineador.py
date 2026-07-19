@@ -28,14 +28,14 @@ _qdrant = None
 
 
 def _get_qdrant():
-    global _qdrant
+    global _qdrant  # noqa: PLW0603
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
 
 
 def log(msg) -> None:
-    with open(LOG, "a") as f:
+    with open(LOG, "a") as f:  # noqa: PTH123
         f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
@@ -103,7 +103,7 @@ def check_monologo() -> bool:
         log("Monologo interno no encontrado")
         return False
 
-    with open(MONOLOGO) as f:
+    with open(MONOLOGO) as f:  # noqa: PTH123
         acciones = json.load(f)
 
     if not acciones:
@@ -134,7 +134,7 @@ def check_monologo() -> bool:
 def agregar_sugerencia(problema, solucion) -> None:
     sugerencias = []
     if SUGERENCIAS.exists():
-        with open(SUGERENCIAS) as f:
+        with open(SUGERENCIAS) as f:  # noqa: PTH123
             sugerencias = json.load(f)
     sugerencias.append(
         {
@@ -144,7 +144,7 @@ def agregar_sugerencia(problema, solucion) -> None:
             "solucion": solucion,
         },
     )
-    with open(SUGERENCIAS, "w") as f:
+    with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
         json.dump(sugerencias, f, indent=2)
 
 
@@ -178,7 +178,7 @@ def main() -> None:
     if args.check_all:
         log("=== Verificacion de desviacion en ultimas acciones ===")
         if MONOLOGO.exists():
-            with open(MONOLOGO) as f:
+            with open(MONOLOGO) as f:  # noqa: PTH123
                 acciones = json.load(f)
             for accion in acciones[-3:]:
                 msg = accion.get("mensaje", accion.get("output", ""))

@@ -13,24 +13,42 @@ from motor.core.llm.router import LLMRouter
 class _MockOK(BaseLLMProvider):
     def __init__(self):
         self._provider_name = "mock_ok"
-    def generate(self, prompt, model=None, options=None): return "ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def generate(self, prompt, model=None, options=None):
+        return "ok"
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _MockFail(BaseLLMProvider):
     def __init__(self):
         self._provider_name = "mock_fail"
-    def generate(self, prompt, model=None, options=None): raise ValueError("fail")
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def generate(self, prompt, model=None, options=None):
+        msg = "fail"
+        raise ValueError(msg)
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class TestBenchmarkAllProviders:
     def test_benchmark_all_providers(self) -> None:
         from scripts.pro.benchmark_llm import bench_generate
+
         reg = ProviderRegistry()
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
@@ -41,6 +59,7 @@ class TestBenchmarkAllProviders:
     def test_provider_ranking(self) -> None:
         """Verifica que el ranking ordena por P50 ascendente."""
         from scripts.pro.benchmark_llm import bench_generate
+
         reg = ProviderRegistry()
         reg.register("fast", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
@@ -50,6 +69,7 @@ class TestBenchmarkAllProviders:
     def test_json_schema(self, tmp_path: Path) -> None:
         """Verifica schema del JSON exportado."""
         from scripts.pro.benchmark_llm import bench_embed, bench_generate
+
         reg = ProviderRegistry()
         reg.register("p", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
@@ -72,7 +92,7 @@ class TestBenchmarkAllProviders:
                         "p99_ms": r_emb.get("latencia_p99_ms", 0),
                         "errors": r_emb.get("fallos", 0),
                     },
-                }
+                },
             },
         }
         path = tmp_path / "schema.json"
@@ -89,9 +109,9 @@ class TestBenchmarkAllProviders:
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
         import pytest
+
         with pytest.raises(RuntimeError):
             router.generate("test", provider="nonexistent")
-            pass
 
     def test_partial_failures(self) -> None:
         """Un proveedor que falla no debe afectar a otros."""
@@ -106,4 +126,8 @@ class TestBenchmarkAllProviders:
 
     def test_backward_compatibility(self) -> None:
         from motor.core.llm import embed, embed_async, generate, health
-        assert callable(generate) and callable(embed) and callable(embed_async) and callable(health)
+
+        assert callable(generate)
+        assert callable(embed)
+        assert callable(embed_async)
+        assert callable(health)

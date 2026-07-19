@@ -224,24 +224,23 @@ class PerformanceBaseline:
             threshold = self._thresholds.get(metric, 2.0)
             min_abs = max(expected * 0.3, 2.0)
             if current > expected * threshold and current > expected + min_abs:
-                regressions.append(RegressionResult(
-                    provider=provider,
-                    operation=operation,
-                    metric=metric,
-                    baseline_value=expected,
-                    current_value=current,
-                    threshold=threshold,
-                ))
+                regressions.append(
+                    RegressionResult(
+                        provider=provider,
+                        operation=operation,
+                        metric=metric,
+                        baseline_value=expected,
+                        current_value=current,
+                        threshold=threshold,
+                    ),
+                )
 
         return regressions
 
     def get_all_baselines(self) -> dict[str, Any]:
         """Todas las baselines como dict."""
         with self._lock:
-            return {
-                f"{k[0]}.{k[1]}": v.to_dict()
-                for k, v in self._baselines.items()
-            }
+            return {f"{k[0]}.{k[1]}": v.to_dict() for k, v in self._baselines.items()}
 
     def save(self, path: str | Path) -> None:
         """Persiste baselines a JSON."""

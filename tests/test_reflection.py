@@ -14,7 +14,7 @@ from motor.intelligence.agents.reflection import (
 )
 
 
-def _result(success: bool, output: dict | None = None, agent_id: str = "") -> AgentResult:
+def _result(success: bool, output: dict | None = None, agent_id: str = "") -> AgentResult:  # noqa: FBT001
     return AgentResult(task_id="t1", agent_id=agent_id or "test", success=success, output=output or {})
 
 
@@ -35,54 +35,54 @@ class TestReflectionStrategyABC:
 class TestRuleBasedReflectionStrategy:
     def test_accept_high_confidence(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.7)
-        result = _result(True, {"confidence": 0.9})
+        result = _result(True, {"confidence": 0.9})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.ACCEPT
 
     def test_revise_low_confidence(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.7)
-        result = _result(True, {"confidence": 0.3})
+        result = _result(True, {"confidence": 0.3})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.REVISE
 
     def test_revise_on_failure(self):
         strategy = RuleBasedReflectionStrategy()
-        result = _result(False)
+        result = _result(False)  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.REVISE
 
     def test_confidence_from_output(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.5)
-        result = _result(True, {"confidence": 0.6})
+        result = _result(True, {"confidence": 0.6})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.ACCEPT
         assert d.confidence == 0.6
 
     def test_confidence_default_one(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.9)
-        result = _result(True, {})
+        result = _result(True, {})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.confidence == 1.0
 
     def test_confidence_clamped(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.5)
-        result = _result(True, {"confidence": 1.5})
+        result = _result(True, {"confidence": 1.5})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.confidence == 1.0
-        result2 = _result(True, {"confidence": -0.5})
+        result2 = _result(True, {"confidence": -0.5})  # noqa: FBT003
         d2 = strategy.reflect(result2, iteration=0)
         assert d2.confidence == 0.0
 
     def test_iteration_propagated(self):
         strategy = RuleBasedReflectionStrategy()
-        d = strategy.reflect(_result(True, {"confidence": 0.9}), iteration=5)
+        d = strategy.reflect(_result(True, {"confidence": 0.9}), iteration=5)  # noqa: FBT003
         assert d.iteration == 5
 
 
 class TestAlwaysRejectStrategy:
     def test_always_rejects(self):
         strategy = AlwaysRejectStrategy()
-        d = strategy.reflect(_result(True, {}), iteration=0)
+        d = strategy.reflect(_result(True, {}), iteration=0)  # noqa: FBT003
         assert d.action == ReflectionAction.REJECT
 
 
@@ -93,13 +93,13 @@ class TestReflectionAgent:
 
     def test_status_restored(self):
         agent = ReflectionAgent(max_iterations=1)
-        task = AgentTask(objective="reflect", input_data={"initial_result": _result(True, {"confidence": 0.9})})
+        task = AgentTask(objective="reflect", input_data={"initial_result": _result(True, {"confidence": 0.9})})  # noqa: FBT003
         agent.run(task)
         assert agent.status == AgentStatus.IDLE
 
     def test_accept_immediate(self):
         agent = ReflectionAgent(max_iterations=3, min_confidence=0.7)
-        result = _result(True, {"confidence": 0.9})
+        result = _result(True, {"confidence": 0.9})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.success
@@ -108,7 +108,7 @@ class TestReflectionAgent:
     def test_one_revision(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.9)
         agent = ReflectionAgent(strategy=strategy, max_iterations=3, min_confidence=0.9)
-        result = _result(True, {"confidence": 0.5})
+        result = _result(True, {"confidence": 0.5})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.success
@@ -117,7 +117,7 @@ class TestReflectionAgent:
     def test_max_iterations(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=1.0)
         agent = ReflectionAgent(strategy=strategy, max_iterations=3, min_confidence=1.0)
-        result = _result(True, {"confidence": 0.5})
+        result = _result(True, {"confidence": 0.5})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.success
@@ -127,7 +127,7 @@ class TestReflectionAgent:
     def test_reject_stops(self):
         strategy = AlwaysRejectStrategy()
         agent = ReflectionAgent(strategy=strategy, max_iterations=5)
-        result = _result(True, {"a": 1})
+        result = _result(True, {"a": 1})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert not r.success
@@ -155,28 +155,28 @@ class TestReflectionAgent:
     def test_max_iterations_one(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.99)
         agent = ReflectionAgent(strategy=strategy, max_iterations=1, min_confidence=0.99)
-        result = _result(True, {"confidence": 0.5})
+        result = _result(True, {"confidence": 0.5})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.output.get("iterations") == 1
 
     def test_reflection_history(self):
         agent = ReflectionAgent(max_iterations=3, min_confidence=1.0)
-        result = _result(True, {"confidence": 0.5})
+        result = _result(True, {"confidence": 0.5})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert len(r.output.get("reflections", [])) > 0
 
     def test_last_decision_included(self):
         agent = ReflectionAgent(max_iterations=3, min_confidence=1.0)
-        result = _result(True, {"confidence": 0.5})
+        result = _result(True, {"confidence": 0.5})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert "final_decision" in r.output
 
     def test_reflect_on_direct(self):
         agent = ReflectionAgent()
-        result = _result(True, {"confidence": 0.9})
+        result = _result(True, {"confidence": 0.9})  # noqa: FBT003
         d = agent.reflect_on(result)
         assert isinstance(d, ReflectionDecision)
         assert d.action == ReflectionAction.ACCEPT
@@ -187,20 +187,20 @@ class TestReflectionAgent:
                 return ReflectionDecision(action=ReflectionAction.ACCEPT, reason="custom", iteration=iteration)
 
         agent = ReflectionAgent(strategy=CustomStrategy(), max_iterations=1)
-        result = _result(True, {"a": 1})
+        result = _result(True, {"a": 1})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.success
 
     def test_confidence_edge_zero(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.5)
-        result = _result(True, {"confidence": 0.0})
+        result = _result(True, {"confidence": 0.0})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.REVISE
 
     def test_confidence_edge_one(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.99)
-        result = _result(True, {"confidence": 1.0})
+        result = _result(True, {"confidence": 1.0})  # noqa: FBT003
         d = strategy.reflect(result, iteration=0)
         assert d.action == ReflectionAction.ACCEPT
 
@@ -210,27 +210,27 @@ class TestReflectionAgent:
                 return ReflectionDecision(action=ReflectionAction.STOP, reason="stop", iteration=iteration)
 
         agent = ReflectionAgent(strategy=StopStrategy(), max_iterations=5)
-        result = _result(True, {"a": 1})
+        result = _result(True, {"a": 1})  # noqa: FBT003
         task = AgentTask(objective="reflect", input_data={"initial_result": result})
         r = agent.run(task)
         assert r.output.get("stopped_by") == "stop"
 
     def test_metadata_propagated(self):
         strategy = RuleBasedReflectionStrategy(min_confidence=0.5)
-        result = _result(True, {"confidence": 0.9})
+        result = _result(True, {"confidence": 0.9})  # noqa: FBT003
         d = strategy.reflect(result, iteration=2)
         assert d.metadata.get("confidence") == 0.9
         assert d.metadata.get("threshold") == 0.5
 
     def test_config_invalid_max_iterations(self):
         agent = ReflectionAgent(max_iterations=0)
-        assert agent._max_iterations == 1  # clamped to min 1
+        assert agent._max_iterations == 1  # clamped to min 1  # noqa: SLF001
 
     def test_config_invalid_min_confidence(self):
         agent = ReflectionAgent(min_confidence=-0.5)
-        assert agent._min_confidence == 0.0
+        assert agent._min_confidence == 0.0  # noqa: SLF001
         agent2 = ReflectionAgent(min_confidence=1.5)
-        assert agent2._min_confidence == 1.0
+        assert agent2._min_confidence == 1.0  # noqa: SLF001
 
 
 class TestThreadSafety:
@@ -238,7 +238,7 @@ class TestThreadSafety:
         import concurrent.futures
 
         agent = ReflectionAgent(max_iterations=3, min_confidence=1.0)
-        results = [_result(True, {"confidence": 0.5}) for _ in range(20)]
+        results = [_result(True, {"confidence": 0.5}) for _ in range(20)]  # noqa: FBT003
         tasks = [AgentTask(objective="reflect", input_data={"initial_result": r}) for r in results]
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as exe:
             futures = [exe.submit(agent.run, t) for t in tasks]

@@ -51,12 +51,25 @@ class TestLLMPublicAPI:
 # ── 2. motor.core.evaluation ─────────────────────────
 
 EXPECTED_EVAL = {
-    "ContinuousEvaluationResult", "ContinuousEvaluator",
-    "EvaluationCorpus", "EvaluationEngine", "EvaluationQuery", "EvaluationRun",
-    "Experiment", "ExperimentConfig", "ExperimentResult",
-    "RegressionBaseline", "RegressionDetector", "RegressionFinding", "RegressionReport",
+    "ContinuousEvaluationResult",
+    "ContinuousEvaluator",
+    "EvaluationCorpus",
+    "EvaluationEngine",
+    "EvaluationQuery",
+    "EvaluationRun",
+    "Experiment",
+    "ExperimentConfig",
+    "ExperimentResult",
+    "RegressionBaseline",
+    "RegressionDetector",
+    "RegressionFinding",
+    "RegressionReport",
     "RetrievalResult",
-    "map_at_k", "mrr", "ndcg_at_k", "precision_at_k", "recall_at_k",
+    "map_at_k",
+    "mrr",
+    "ndcg_at_k",
+    "precision_at_k",
+    "recall_at_k",
 }
 
 
@@ -75,20 +88,22 @@ class TestEvaluationPublicAPI:
 
 # ── 3. Cross-module ────────────────────────────────
 
+
 class TestCrossModule:
     def test_llm_does_not_import_evaluation(self) -> None:
         """motor.core.llm no debe importar motor.core.evaluation como dependencia."""
         import inspect
+
         llm_source = inspect.getsource(motor.core.llm)
-        assert "motor.core.evaluation" not in llm_source, (
-            "motor.core.llm importa motor.core.evaluation"
-        )
+        assert "motor.core.evaluation" not in llm_source, "motor.core.llm importa motor.core.evaluation"
 
     def test_evaluation_does_not_import_llm_router(self) -> None:
         """motor.core.evaluation no debe importar motor.core.llm.router."""
         import sys
+
         _prev = set(sys.modules)
         import motor.core.evaluation  # noqa: F401
+
         _new = set(sys.modules)
         leaked = _new - _prev
         assert "motor.core.llm.router" not in leaked
@@ -99,18 +114,31 @@ class TestCrossModule:
         NOTA: Restaura sys.modules después del test para no contaminar
         el estado global de otros tests."""
         import sys as _sys
+
         modules = [
-            "motor.core.llm", "motor.core.llm.base", "motor.core.llm.registry",
-            "motor.core.llm.router", "motor.core.llm.ollama",
-            "motor.core.llm.openai", "motor.core.llm.anthropic",
-            "motor.core.llm.gemini", "motor.core.llm.openrouter",
-            "motor.core.llm.lmstudio", "motor.core.llm.vllm",
-            "motor.core.llm.circuit_breaker", "motor.core.llm.observability",
-            "motor.core.llm.profiler", "motor.core.llm.detector",
-            "motor.core.llm.baseline", "motor.core.llm.monitor",
-            "motor.core.evaluation", "motor.core.evaluation.corpus",
-            "motor.core.evaluation.evaluator", "motor.core.evaluation.metrics",
-            "motor.core.evaluation.experiment", "motor.core.evaluation.regression",
+            "motor.core.llm",
+            "motor.core.llm.base",
+            "motor.core.llm.registry",
+            "motor.core.llm.router",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openai",
+            "motor.core.llm.anthropic",
+            "motor.core.llm.gemini",
+            "motor.core.llm.openrouter",
+            "motor.core.llm.lmstudio",
+            "motor.core.llm.vllm",
+            "motor.core.llm.circuit_breaker",
+            "motor.core.llm.observability",
+            "motor.core.llm.profiler",
+            "motor.core.llm.detector",
+            "motor.core.llm.baseline",
+            "motor.core.llm.monitor",
+            "motor.core.evaluation",
+            "motor.core.evaluation.corpus",
+            "motor.core.evaluation.evaluator",
+            "motor.core.evaluation.metrics",
+            "motor.core.evaluation.experiment",
+            "motor.core.evaluation.regression",
             "motor.core.evaluation.continuous",
         ]
         saved = {mod: _sys.modules[mod] for mod in modules if mod in _sys.modules}
@@ -120,6 +148,7 @@ class TestCrossModule:
             for mod in modules:
                 __import__(mod)
         except Exception as e:
-            raise AssertionError(f"Error al importar {mod}: {e}") from e
+            msg = f"Error al importar {mod}: {e}"
+            raise AssertionError(msg) from e
         finally:
             _sys.modules.update(saved)

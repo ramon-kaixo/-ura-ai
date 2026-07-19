@@ -27,8 +27,8 @@ LOAD_THRESHOLD = 8
 
 def ssh_run(cmd: str) -> str:
     try:
-        result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
+        result = subprocess.run(  # noqa: S603
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=SSH_TIMEOUT,
@@ -61,9 +61,9 @@ def measure_http_latency() -> float:
 
         start = time.time()
         url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url)  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             return (time.time() - start) * 1000
     except Exception:
         return -1
@@ -207,7 +207,7 @@ def main() -> int:
     # Resumen
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
         timestamp = datetime.now(UTC).isoformat()
-        with open(ALERT_FILE, "a") as f:
+        with open(ALERT_FILE, "a") as f:  # noqa: PTH123
             f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:
         pass

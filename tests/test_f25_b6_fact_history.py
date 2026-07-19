@@ -23,6 +23,8 @@ from motor.core.fusion.fact_history import FactHistory
 @pytest.fixture(autouse=True)
 def _reset_ts_counter() -> None:
     _TS_COUNTER[0] = 1000.0
+
+
 import contextlib
 
 from motor.core.fusion.fact_index import FactIndex
@@ -125,8 +127,10 @@ def test_history_create_version_mismatch_raises() -> None:
 def test_history_create_initial_not_current_raises() -> None:
     fact = _make_fact()
     v = FactVersion(
-        version_id="v1", fact_id=fact.fact_id,
-        confidence=0.9, state=VersionState.SUPERSEDED,
+        version_id="v1",
+        fact_id=fact.fact_id,
+        confidence=0.9,
+        state=VersionState.SUPERSEDED,
     )
     with pytest.raises(ValueError, match="CURRENT"):
         FactHistory.create(fact, v)
@@ -187,7 +191,8 @@ def test_rollback() -> None:
     assert restored.state == VersionState.CURRENT
     # v2 queda como ROLLED_BACK
     v2 = h.get_version("v2")
-    assert v2 is not None and v2.state == VersionState.ROLLED_BACK
+    assert v2 is not None
+    assert v2.state == VersionState.ROLLED_BACK
     # timeline preserva ambas
     assert len(h.timeline()) == 2
 
@@ -206,8 +211,10 @@ def test_rollback_to_tombstone_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     v2 = FactVersion(
-        version_id="v2", fact_id=fact.fact_id,
-        confidence=0.0, state=VersionState.TOMBSTONE,
+        version_id="v2",
+        fact_id=fact.fact_id,
+        confidence=0.0,
+        state=VersionState.TOMBSTONE,
     )
     h.tombstone(v2)
     with pytest.raises(ValueError, match="tombstone"):
@@ -228,14 +235,17 @@ def test_tombstone() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     v2 = FactVersion(
-        version_id="v2", fact_id=fact.fact_id,
-        confidence=0.0, state=VersionState.TOMBSTONE,
+        version_id="v2",
+        fact_id=fact.fact_id,
+        confidence=0.0,
+        state=VersionState.TOMBSTONE,
     )
     h.tombstone(v2)
     assert h.current.version_id == "v2"
     assert h.has_tombstone
     v1 = h.get_version("v1")
-    assert v1 is not None and v1.state == VersionState.SUPERSEDED
+    assert v1 is not None
+    assert v1.state == VersionState.SUPERSEDED
 
 
 # ── B6.6: version_at (consulta temporal) ───────────────
@@ -279,9 +289,7 @@ def test_invariant_v01_version_belongs_to_history() -> None:
 def test_invariant_v02_current_in_versions() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
-    assert h.current.version_id in [
-        v.version_id for v in h.timeline()
-    ], "V02"
+    assert h.current.version_id in [v.version_id for v in h.timeline()], "V02"
 
 
 def test_invariant_v03_no_cycles() -> None:
@@ -366,8 +374,11 @@ def test_serialization_with_tombstone() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
     v2 = FactVersion(
-        version_id="v2", fact_id=fact.fact_id,
-        confidence=0.0, created_at=2000, state=VersionState.TOMBSTONE,
+        version_id="v2",
+        fact_id=fact.fact_id,
+        confidence=0.0,
+        created_at=2000,
+        state=VersionState.TOMBSTONE,
     )
     h.tombstone(v2)
     data = h.to_dict()
@@ -424,7 +435,8 @@ def test_fact_index_build_from_versions() -> None:
         obj = ["oranges", "cars"][idx_num]
         fact = _make_fact(subj, pred, obj)
         v = FactVersion(
-            version_id=f"v{idx_num}", fact_id=fact.fact_id,
+            version_id=f"v{idx_num}",
+            fact_id=fact.fact_id,
             confidence=0.9,
         )
         entries.append((fact, v))
@@ -439,6 +451,7 @@ def test_fact_index_build_from_versions() -> None:
 def _random_sequence(seed: int, length: int) -> list[str]:
     """Genera una secuencia pseudoaleatoria de operaciones."""
     import hashlib
+
     ops = []
     for i in range(length):
         h = hashlib.sha256(f"{seed}:{i}".encode()).hexdigest()
@@ -448,9 +461,10 @@ def _random_sequence(seed: int, length: int) -> list[str]:
     return ops
 
 
-def test_property_random_sequences() -> None:
+def test_property_random_sequences() -> None:  # noqa: C901, PLR0912
     """Secuencias aleatorias no deben corromper invariantes."""
     import random
+
     random.seed(42)
     for seq_len in [5, 10, 20]:
         for _ in range(10):
@@ -459,21 +473,22 @@ def test_property_random_sequences() -> None:
             h = FactHistory.create(fact, v1)
             version_counter = 1
             try:
-                for op in _random_sequence(random.randint(0, 1000), seq_len):
+                for op in _random_sequence(random.randint(0, 1000), seq_len):  # noqa: S311
                     if op == "create":
                         pass  # ya tenemos un history
                     elif op == "update":
                         version_counter += 1
                         v = _make_version(
-                            fact.fact_id, f"v{version_counter}",
+                            fact.fact_id,
+                            f"v{version_counter}",
                             created_at=1000 + version_counter,
-                            confidence=random.random(),
+                            confidence=random.random(),  # noqa: S311
                         )
                         h.add_version(v)
                     elif op == "rollback":
-                        versions = list(h._versions.keys())
+                        versions = list(h._versions.keys())  # noqa: SLF001
                         if versions and h.current.state != VersionState.TOMBSTONE:
-                            target = random.choice(versions)
+                            target = random.choice(versions)  # noqa: S311
                             with contextlib.suppress(ValueError, KeyError):
                                 h.rollback(target)
                     elif op == "tombstone":
@@ -516,7 +531,7 @@ def test_benchmark_add_10() -> None:
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=i + 1))
     t = time.perf_counter() - start
     assert h.version_count == 11
-    assert t < 0.01, f"10 versions took {t*1000:.1f}ms"
+    assert t < 0.01, f"10 versions took {t * 1000:.1f}ms"
 
 
 def test_benchmark_add_1000() -> None:
@@ -527,7 +542,7 @@ def test_benchmark_add_1000() -> None:
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=i + 1))
     t = time.perf_counter() - start
     assert h.version_count == 1001
-    assert t < 0.1, f"1K versions took {t*1000:.1f}ms"
+    assert t < 0.1, f"1K versions took {t * 1000:.1f}ms"
 
 
 def test_benchmark_rollback_amid_1000() -> None:
@@ -538,7 +553,7 @@ def test_benchmark_rollback_amid_1000() -> None:
     start = time.perf_counter()
     h.rollback("v500")
     t = time.perf_counter() - start
-    assert t < 0.001, f"Rollback amid 1K took {t*1000:.1f}ms"
+    assert t < 0.001, f"Rollback amid 1K took {t * 1000:.1f}ms"
 
 
 def test_benchmark_version_at_1000() -> None:
@@ -550,7 +565,7 @@ def test_benchmark_version_at_1000() -> None:
     for ts in range(0, 1000, 50):
         h.version_at(float(ts))
     t = time.perf_counter() - start
-    assert t < 0.1, f"20 version_at queries took {t*1000:.1f}ms"
+    assert t < 0.1, f"20 version_at queries took {t * 1000:.1f}ms"
 
 
 def test_benchmark_peak_memory() -> None:
@@ -560,6 +575,5 @@ def test_benchmark_peak_memory() -> None:
     for i in range(10000):
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=i + 1))
     # Tamaño del historial
-    size = sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())
-    print(f"\n  FactHistory 10K versions: ~{size / 1024:.1f} KB")
+    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())  # noqa: SLF001
     assert h.version_count == 10001

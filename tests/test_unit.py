@@ -19,7 +19,7 @@ FAIL = 0
 
 
 def check(desc, expr, *args):
-    global PASS, FAIL
+    global PASS, FAIL  # noqa: PLW0603
     try:
         result = expr(*args)
         if result is False:
@@ -257,7 +257,7 @@ if compose_file.exists():
     try:
         import yaml
 
-        with open(compose_file) as f:
+        with open(compose_file) as f:  # noqa: PTH123
             dc = yaml.safe_load(f)
         check("docker-compose tiene services", lambda: "services" in dc)
         check(
@@ -305,12 +305,12 @@ check("_chunk_text: produce múltiples chunks", lambda: len(chunks1) > 3)
 # Test SHA-256 determinista
 import tempfile
 
-tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)  # noqa: SIM115
 tmp.write("test content for hashing")
 tmp.close()
 h1 = _sha256(Path(tmp.name))
 h2 = _sha256(Path(tmp.name))
-os.unlink(tmp.name)
+os.unlink(tmp.name)  # noqa: PTH108
 check("_sha256: determinista (mismo archivo → mismo hash)", lambda: h1 == h2)
 check("_sha256: hash es string hexadecimal", lambda: len(h1) == 64 and all(c in "0123456789abcdef" for c in h1))
 
@@ -467,7 +467,7 @@ check(
 all_repair_cmds = []
 for cfg in rb.get("commands", {}).values():
     for cmd in cfg.get("repair", []):
-        all_repair_cmds.append(cmd)
+        all_repair_cmds.append(cmd)  # noqa: PERF402
 check(
     "T8: comandos repair sin 'read' interactivo",
     lambda: not any("read " in c or "confirm" in c.lower() for c in all_repair_cmds),

@@ -36,10 +36,10 @@ CHUNKING_BASELINE = {
 
 def load_queries():
     queries, relevance_map = [], {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for line in f:
-            queries.append(json.loads(line))
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+            queries.append(json.loads(line))  # noqa: PERF401
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             relevance_map.setdefault(d["qid"], []).append(d)
@@ -178,18 +178,18 @@ STRATEGIES = {
     "RRF (k=100)": lambda v, l: strategy_rrf(v, l, 100),
     "Weighted RRF (k_v=60,k_l=120)": lambda v, l: strategy_weighted_rrf(v, l, 60, 120),
     "Weighted RRF (k_v=40,k_l=100)": lambda v, l: strategy_weighted_rrf(v, l, 40, 100),
-    "Score α=0.7 β=0.3": lambda v, l: strategy_score_fusion(v, l, 0.7, 0.3),
-    "Score α=0.8 β=0.2": lambda v, l: strategy_score_fusion(v, l, 0.8, 0.2),
-    "Score α=0.9 β=0.1": lambda v, l: strategy_score_fusion(v, l, 0.9, 0.1),
-    "Dynamic (θ=0.75,α=0.7)": lambda v, l: strategy_dynamic(v, l, 0.75, 0.7, 0.3),
-    "Dynamic (θ=0.80,α=0.8)": lambda v, l: strategy_dynamic(v, l, 0.80, 0.8, 0.2),
-    "Dynamic (θ=0.85,α=0.9)": lambda v, l: strategy_dynamic(v, l, 0.85, 0.9, 0.1),
-    "Parallel (α=0.7)": lambda v, l: strategy_parallel(v, l, 0.7, 0.3),
-    "Parallel (α=0.8)": lambda v, l: strategy_parallel(v, l, 0.8, 0.2),
+    "Score α=0.7 β=0.3": lambda v, l: strategy_score_fusion(v, l, 0.7, 0.3),  # noqa: RUF001
+    "Score α=0.8 β=0.2": lambda v, l: strategy_score_fusion(v, l, 0.8, 0.2),  # noqa: RUF001
+    "Score α=0.9 β=0.1": lambda v, l: strategy_score_fusion(v, l, 0.9, 0.1),  # noqa: RUF001
+    "Dynamic (θ=0.75,α=0.7)": lambda v, l: strategy_dynamic(v, l, 0.75, 0.7, 0.3),  # noqa: RUF001
+    "Dynamic (θ=0.80,α=0.8)": lambda v, l: strategy_dynamic(v, l, 0.80, 0.8, 0.2),  # noqa: RUF001
+    "Dynamic (θ=0.85,α=0.9)": lambda v, l: strategy_dynamic(v, l, 0.85, 0.9, 0.1),  # noqa: RUF001
+    "Parallel (α=0.7)": lambda v, l: strategy_parallel(v, l, 0.7, 0.3),  # noqa: RUF001
+    "Parallel (α=0.8)": lambda v, l: strategy_parallel(v, l, 0.8, 0.2),  # noqa: RUF001
 }
 
 
-def main():
+def main() -> int:  # noqa: C901, PLR0915
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.retrieval.lexical import LexicalRetriever
@@ -267,11 +267,6 @@ def main():
         }
 
     # Print comparison table
-    print(f"\n{'=' * 120}")
-    print(
-        f"  {'Strategy':<32} {'R@10':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'TPS':<8} {'NoCtx':<8} {'Pass':<6}"
-    )
-    print(f"{'=' * 120}")
 
     def passes(name, r):
         b = CHUNKING_BASELINE
@@ -286,10 +281,6 @@ def main():
     best_score = -1
     for name, r in sorted(results.items()):
         p = passes(name, r)
-        flag = "✅" if p else "❌"
-        print(
-            f"  {name:<32} {r['Recall@10']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG@10']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['Throughput']:<8.2f} {r['No-context']:<8.2%} {flag:<6}"
-        )
         if p:
             # Objective: maximize R@10 + MAP + nDCG, penalize P95 > baseline
             obj = r["Recall@10"] + r["MAP"] + r["nDCG@10"]
@@ -298,21 +289,15 @@ def main():
                 best_score = obj
                 best = name
 
-    print(f"\n{'=' * 60}")
     if best:
-        print(f"  🏆 Best strategy: {best}")
-        print(f"  Objective score: {best_score:.4f}")
+        pass
     else:
-        print("  ❌ No strategy passes all criteria")
         # Show closest
-        best_all = max(
-            results.keys(), key=lambda n: results[n]["Recall@10"] + results[n]["MAP"] + results[n]["nDCG@10"]
+        max(
+            results.keys(),
+            key=lambda n: results[n]["Recall@10"] + results[n]["MAP"] + results[n]["nDCG@10"],
         )
-        print(f"  Closest: {best_all}")
 
-    print(
-        f"\n  {'✅ APROBADO — continuar con Reranking' if best else '❌ Ninguna estrategia supera todos los criterios'}"
-    )
     return 0 if best else 1
 
 

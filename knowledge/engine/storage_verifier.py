@@ -85,7 +85,7 @@ def check_fts_sync(conn: sqlite3.Connection) -> list[str]:
         # Second-level check: verify every kg_nodes id has a corresponding FTS entry
         if node_count > 0:
             missing = conn.execute(
-                "SELECT n.id FROM kg_nodes n WHERE NOT EXISTS (SELECT 1 FROM kg_nodes_fts f WHERE f.id = n.id) LIMIT 11"
+                "SELECT n.id FROM kg_nodes n WHERE NOT EXISTS (SELECT 1 FROM kg_nodes_fts f WHERE f.id = n.id) LIMIT 11",  # noqa: E501
             ).fetchall()
             if missing:
                 ids_str = ", ".join(r["id"] for r in missing[:10])

@@ -19,12 +19,16 @@ from motor.core.llm.router import LLMRouter
 class _ValidProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "valid_test"
+
     def generate(self, prompt, model=None, options=None):
         return "ok"
+
     def embed(self, texts, model=None):
         return [[0.0]]
+
     async def embed_async(self, texts, model=None):
         return [[0.0]]
+
     def health(self):
         return {"provider": "valid_test", "status": "ok", "latency_ms": 0}
 
@@ -32,10 +36,13 @@ class _ValidProvider(BaseLLMProvider):
 class _NoNameProvider(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         return "ok"
+
     def embed(self, texts, model=None):
         return [[0.0]]
+
     async def embed_async(self, texts, model=None):
         return [[0.0]]
+
     def health(self):
         return {"status": "ok"}
 
@@ -43,6 +50,7 @@ class _NoNameProvider(BaseLLMProvider):
 class _MissingMethod(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         return "ok"
+
     # Falta embed y embed_async
     def health(self):
         return {"status": "ok"}
@@ -51,12 +59,16 @@ class _MissingMethod(BaseLLMProvider):
 class _WrongReturn(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "wrong_return"
+
     def generate(self, prompt, model=None, options=None):
         return 123  # Debe retornar str
+
     def embed(self, texts, model=None):
         return "not_a_list"  # Debe retornar list
+
     async def embed_async(self, texts, model=None):
         return [[0.0]]
+
     def health(self):
         return {"status": "ok"}
 
@@ -85,15 +97,20 @@ class TestProviderContractValidation:
 
     def test_non_subclass_rejected(self) -> None:
         """Clase que no hereda de BaseLLMProvider debe fallar."""
+
         class _NotAProvider:
             def generate(self, prompt, model=None, options=None):
                 return "ok"
+
             def embed(self, texts, model=None):
                 return [[0.0]]
+
             async def embed_async(self, texts, model=None):
                 return [[0.0]]
+
             def health(self):
                 return {"status": "ok"}
+
         result = validate_provider(_NotAProvider)
         assert not result.valid
         assert "No hereda" in result.errors[0]
@@ -123,7 +140,7 @@ class TestProviderContractValidation:
         assert "status" in h
 
     def test_validation_result_repr(self) -> None:
-        r = ProviderValidationResult(True, [], "test")
+        r = ProviderValidationResult(True, [], "test")  # noqa: FBT003
         assert "valid=True" in repr(r)
-        r2 = ProviderValidationResult(False, ["error1"])
+        r2 = ProviderValidationResult(False, ["error1"])  # noqa: FBT003
         assert "valid=False" in repr(r2)

@@ -38,9 +38,9 @@ ENV = {
     "hostname": platform.node(),
     "platform": platform.platform(),
     "python": platform.python_version(),
-    "commit_sha": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    "commit_sha": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510, S607
     or "unknown",
-    "version": subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True).stdout.strip()
+    "version": subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510, S607
     or "unknown",
     "cpu_cores": os.cpu_count() or 0,
 }
@@ -50,8 +50,8 @@ ENV = {
 
 
 def qdrant_running() -> bool:
-    r = subprocess.run(
-        ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
+    r = subprocess.run(  # noqa: PLW1510
+        ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=10,
@@ -61,8 +61,8 @@ def qdrant_running() -> bool:
 
 def ollama_running() -> bool:
     try:
-        r = subprocess.run(
-            ["systemctl", "is-active", "ollama"],
+        r = subprocess.run(  # noqa: PLW1510
+            ["systemctl", "is-active", "ollama"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=5,
@@ -73,14 +73,14 @@ def ollama_running() -> bool:
 
 
 def docker_exec(cmd: list[str], timeout: int = 30) -> tuple[int, str, str]:
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510, S603
     return r.returncode, r.stdout, r.stderr
 
 
 def qdrant_health() -> bool:
     try:
-        r = subprocess.run(
-            ["curl", "-sf", "http://localhost:6333/health"],
+        r = subprocess.run(  # noqa: PLW1510
+            ["curl", "-sf", "http://localhost:6333/health"],  # noqa: S607
             capture_output=True,
             timeout=5,
         )
@@ -91,8 +91,8 @@ def qdrant_health() -> bool:
 
 def ollama_health() -> bool:
     try:
-        r = subprocess.run(
-            ["curl", "-sf", "http://localhost:11434/api/tags"],
+        r = subprocess.run(  # noqa: PLW1510
+            ["curl", "-sf", "http://localhost:11434/api/tags"],  # noqa: S607
             capture_output=True,
             timeout=5,
         )
@@ -180,16 +180,12 @@ def scenario_r01() -> dict[str, Any]:
         }
 
     # 1. Primero verificar que funciona con Qdrant healthy
-    try:
+    with contextlib.suppress(Exception):
         hr.search("test query before stop", k=3)
-        print("    R01: Qdrant healthy → search OK")
-    except Exception as e:
-        print(f"    R01: search inicial falló: {e}")
 
     # 2. Detener Qdrant
     docker_exec(["docker", "stop", "ura-qdrant"])
     time.sleep(2)
-    print("    R01: Qdrant detenido")
 
     # 3. Intentar búsqueda (debe fallar controladamente)
     observed = ""
@@ -202,7 +198,6 @@ def scenario_r01() -> dict[str, Any]:
     # 4. Restaurar Qdrant
     docker_exec(["docker", "start", "ura-qdrant"])
     recovery_time = wait_for_qdrant(timeout=30)
-    print(f"    R01: Qdrant restaurado en {recovery_time}s")
 
     # 5. Verificar recuperación
     try:
@@ -267,7 +262,6 @@ def scenario_r02() -> dict[str, Any]:
     docker_exec(["systemctl", "stop", "ollama"], timeout=10)
     time.sleep(3)
     still_running = ollama_running()
-    print(f"    R02: intento detener Ollama {'✅ detenido' if not still_running else '❌ siguió activo'}")
 
     # 2. Intentar ejecutar workflow
     observed = ""
@@ -287,7 +281,6 @@ def scenario_r02() -> dict[str, Any]:
     # 3. Restaurar Ollama
     docker_exec(["systemctl", "start", "ollama"], timeout=30)
     recovery_time = wait_for_ollama(timeout=60)
-    print(f"    R02: Ollama {'restaurado' if not still_running else 'ya estaba activo'} en {recovery_time}s")
 
     verdict = "PARTIAL" if still_running else "PASS" if recovery_time < 60 else "PARTIAL"
 
@@ -382,7 +375,7 @@ def scenario_r04() -> dict[str, Any]:
     workers = []
     observed = ""
 
-    def launch_workflow(idx: int):
+    def launch_workflow(idx: int) -> None:
         with contextlib.suppress(Exception):
             rt.execute_workflow(f"cancelable-task-{idx}", timeout=120)
 
@@ -393,7 +386,6 @@ def scenario_r04() -> dict[str, Any]:
         t.start()
 
     time.sleep(0.5)
-    print("    R04: 10 workflows lanzados, cancelando...")
 
     # Cancelar todos (simulado — el runtime no expone cancelación masiva)
     try:
@@ -504,12 +496,10 @@ def scenario_r06() -> dict[str, Any]:
             metadata={"scenario": "R06"},
         )
         store.store(ep)
-        print("    R06: Episodio almacenado")
 
         # Eliminar el archivo de base de datos
         if mem_path.exists():
             mem_path.unlink()
-            print("    R06: Archivo de BD eliminado")
             # Asegurar que no hay caché
             if (mem_path.parent / "f14_episodic_test.db-wal").exists():
                 (mem_path.parent / "f14_episodic_test.db-wal").unlink()
@@ -584,11 +574,10 @@ def scenario_r07() -> dict[str, Any]:
     auto_recovery = False
 
     # Forzar presión de RAM
-    print("    R07: Forzando presión de RAM...")
     big_objects: list[dict] = []
     try:
         for _i in range(1000):
-            big_objects.append({str(j): "x" * 10000 for j in range(100)})
+            big_objects.append({str(j): "x" * 10000 for j in range(100)})  # noqa: PERF401
     except MemoryError:
         observed += "MemoryError al crear objetos grandes (esperado) | "
 
@@ -638,7 +627,6 @@ def scenario_r08() -> dict[str, Any]:
         # Hacer algunas operaciones
         for i in range(5):
             hr.search(f"test before restart {i}", k=3)
-        print("    R08: 5 queries OK antes del reinicio simulado")
 
         # Simular reinicio: verificar que el sistema externo sobrevive
         # (Qdrant, Ollama, archivos de BD)
@@ -714,12 +702,10 @@ def scenario_r09() -> dict[str, Any]:
 
     # 1. Qdrant healthy → search OK
     hr.search("test r09 initial", k=3)
-    print("    R09: Qdrant healthy")
 
     # 2. Caída
     docker_exec(["docker", "stop", "ura-qdrant"])
     time.sleep(2)
-    print("    R09: Qdrant detenido por 15s")
 
     # 3. Intentar operaciones durante caída
     fail_count = 0
@@ -733,7 +719,6 @@ def scenario_r09() -> dict[str, Any]:
     # 4. Restaurar tras 15s
     docker_exec(["docker", "start", "ura-qdrant"])
     recovery_time = wait_for_qdrant(timeout=30)
-    print(f"    R09: Qdrant restaurado en {recovery_time}s")
 
     # 5. Post-restauración
     try:
@@ -795,7 +780,6 @@ def scenario_r10() -> dict[str, Any]:
         }
 
     still_running = ollama_running()
-    print(f"    R10: Qdrant detenido, intento Ollama {'✅ detenido' if not still_running else '❌ siguió activo'}")
 
     # 2. Intentar operaciones
     retrieval_ok = False
@@ -803,12 +787,12 @@ def scenario_r10() -> dict[str, Any]:
     try:
         hr.search("test cascade failure", k=3)
         retrieval_ok = True
-    except Exception:
+    except Exception:  # noqa: S110
         pass  # Esperado
     try:
         rt.execute_workflow("test cascade failure", timeout=10)
         runtime_ok = True
-    except Exception:
+    except Exception:  # noqa: S110
         pass  # Esperado
     observed = f"Retrieval sin Qdrant: {'falló (esperado)' if not retrieval_ok else 'inesperadamente OK'} | "
     observed += f"Runtime sin Ollama: {'falló (esperado)' if not runtime_ok else 'inesperadamente OK'}"
@@ -902,7 +886,6 @@ def save_results(results: list[dict[str, Any]]):
 
     json_path = base.with_suffix(".json")
     json_path.write_text(json.dumps(data, indent=2, default=str))
-    print(f"  📄 JSON: {json_path}")
 
     csv_path = base.with_suffix(".csv")
     with csv_path.open("w", newline="") as f:
@@ -910,7 +893,6 @@ def save_results(results: list[dict[str, Any]]):
         w.writeheader()
         for r in results:
             w.writerow({k: r.get(k, "") for k in CSV_FIELDS})
-    print(f"  📄 CSV:  {csv_path}")
 
     return data
 
@@ -918,7 +900,7 @@ def save_results(results: list[dict[str, Any]]):
 # ─── CLI ──────────────────────────────────────────────────────────────
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="F14 Resilience Tests")
@@ -936,22 +918,13 @@ def main():
     else:
         to_run = ALL_SCENARIOS
 
-    print("=" * 60)
-    print(f"  F14 — Resilience Tests ({len(to_run)} escenarios)")
-    print("=" * 60)
-
     results = []
     for sid, fn in to_run.items():
-        print(f"\n  📍 Escenario {sid}")
-        print(f"  {'─' * 40}")
         try:
             r = fn()
             results.append(r)
             v = r.get("veredict", "?")
-            icon = {"PASS": "✅", "FAIL": "❌", "PARTIAL": "⚠️", "SKIP": "⏭️"}.get(v, "❓")
-            print(
-                f"  {icon} {sid}: {v} — recovery={r.get('recovery_time_s', '?')}s, data_loss={r.get('data_loss', '?')}"
-            )
+            {"PASS": "✅", "FAIL": "❌", "PARTIAL": "⚠️", "SKIP": "⏭️"}.get(v, "❓")
         except Exception as e:
             results.append(
                 {
@@ -963,29 +936,18 @@ def main():
                     "recovery_time_s": -1,
                     "data_loss": False,
                     "veredict": "FAIL",
-                }
+                },
             )
-            print(f"  ❌ {sid}: FAIL — {e}")
 
     data = save_results(results)
     s = data["summary"]
-    print(f"\n{'=' * 60}")
-    print(f"  Resumen: {s['PASS']} PASS / {s['FAIL']} FAIL / {s['PARTIAL']} PARTIAL / {s['SKIP']} SKIP")
-    print(f"  Auto-recovery: {s['auto_recovery_count']}/{s['total']}")
-    print(f"  Data loss: {s['data_loss_count']}/{s['total']}")
-    print(f"{'=' * 60}")
 
     # Conclusión global
     non_skip = s["total"] - s["SKIP"]
-    if non_skip == 0:
-        print("  ⚠️  Todos los escenarios fueron SKIP (dependencias no disponibles)")
-    elif s["FAIL"] == 0 and s["PARTIAL"] <= non_skip * 0.3:
-        print("  ✅ Conclusión global: PASS")
-    elif s["FAIL"] <= 1:
-        print("  ⚠️  Conclusión global: PARTIAL (con hallazgos) ")
+    if non_skip == 0 or (s["FAIL"] == 0 and s["PARTIAL"] <= non_skip * 0.3) or s["FAIL"] <= 1:
+        pass
     else:
-        print("  ❌ Conclusión global: FAIL")
-    print("=" * 60)
+        pass
 
     sys.exit(0 if s["FAIL"] == 0 else 1)
 

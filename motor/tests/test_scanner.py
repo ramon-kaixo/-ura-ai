@@ -24,7 +24,6 @@ def test_diff():
     assert cnt >= 3
     assert any("docker" in a for a in anom)
     assert any("hw_health" in a for a in anom)
-    print("  ✅ test_diff")
 
 
 def test_correlacion():
@@ -35,7 +34,6 @@ def test_correlacion():
     assert "docker" in [x["causa_raiz"] for x in g2]
     assert resumir_incidentes([]) == "Sin incidencias activas"
     assert "docker" in resumir_incidentes([{"tipo": "ServiceFailure", "subtipo": "docker"}])
-    print("  ✅ test_correlacion")
 
 
 def test_calibration():
@@ -47,17 +45,15 @@ def test_calibration():
         assert not cal.hay_baseline
 
         class FakeScan:
-            recursos = {"ram_pct": 45, "disk_pct": 60, "load_1m": 0.5}
+            recursos = {"ram_pct": 45, "disk_pct": 60, "load_1m": 0.5}  # noqa: RUF012
 
         cal.learn(FakeScan())
         cal2 = Calibration(cfg)
         assert cal2.hay_baseline
         assert cal2._baseline.get("ram_pct_max", 0) > 0
-    print("  ✅ test_calibration")
 
 
 if __name__ == "__main__":
     test_diff()
     test_correlacion()
     test_calibration()
-    print("🎯 Todos OK")

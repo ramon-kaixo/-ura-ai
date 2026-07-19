@@ -21,33 +21,58 @@ from motor.core.llm.router import LLMRouter
 
 # ── Helpers ─────────────────────────────────
 
+
 class _MockOK(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None): return "ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+    def generate(self, prompt, model=None, options=None):
+        return "ok"
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _MockFail(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None): raise ValueError("fail")
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+    def generate(self, prompt, model=None, options=None):
+        msg = "fail"
+        raise ValueError(msg)
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _MockTransient(BaseLLMProvider):
     _count: int = 0
+
     def generate(self, prompt, model=None, options=None):
         self._count += 1
         if self._count < 3:
-            raise TimeoutError("transient")
+            msg = "transient"
+            raise TimeoutError(msg)
         return "ok_after_retry"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 # ── B2: Circuit Breaker ─────────────────────────
+
 
 class TestCircuitBreaker:
     def test_initial_state_closed(self) -> None:
@@ -60,10 +85,12 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         def _fail() -> None:
-            raise _Transient("fail")
+            msg = "fail"
+            raise _Transient(msg)
 
         for _ in range(2):
             with pytest.raises(_Transient):
@@ -76,6 +103,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         with pytest.raises(_Transient):
@@ -89,6 +117,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         with pytest.raises(_Transient):
@@ -105,6 +134,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         with pytest.raises(_Transient):
@@ -121,7 +151,8 @@ class TestCircuitBreaker:
         cb = CircuitBreaker("test", failure_threshold=2)
 
         def _fail() -> None:
-            raise ValueError("validation error")
+            msg = "validation error"
+            raise ValueError(msg)
 
         for _ in range(5):
             with pytest.raises(ValueError):
@@ -133,6 +164,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         with pytest.raises(_Transient):
@@ -152,10 +184,12 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         def _fail() -> None:
-            raise _Transient("fail")
+            msg = "fail"
+            raise _Transient(msg)
 
         n_threads = 10
         with ThreadPoolExecutor(max_workers=n_threads) as pool:
@@ -179,6 +213,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         with pytest.raises(_Transient):
@@ -200,8 +235,7 @@ class TestCircuitBreaker:
                     open_count += 1
 
         assert cb.state == CircuitState.CLOSED, (
-            f"Expected CLOSED after recovery, got {cb.state}. "
-            f"success={success_count}, open={open_count}"
+            f"Expected CLOSED after recovery, got {cb.state}. success={success_count}, open={open_count}"
         )
         # Solo 1 llamada debería pasar (half_open_max_calls=1),
         # pero tras el éxito el resto también pueden pasar si el circuito
@@ -214,10 +248,12 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         def _fail() -> None:
-            raise _Transient("fail")
+            msg = "fail"
+            raise _Transient(msg)
 
         with ThreadPoolExecutor(max_workers=2) as pool:
             futures = [pool.submit(lambda: cb.call(_fail)) for _ in range(2)]
@@ -242,6 +278,7 @@ class TestCircuitBreaker:
 
         class _Transient(Exception):
             pass
+
         cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         before = time.monotonic()
@@ -251,12 +288,12 @@ class TestCircuitBreaker:
 
         assert cb.state == CircuitState.OPEN
         assert before <= cb._last_open_time <= after, (
-            f"_last_open_time ({cb._last_open_time}) fuera del rango "
-            f"[{before}, {after}]"
+            f"_last_open_time ({cb._last_open_time}) fuera del rango [{before}, {after}]"
         )
 
 
 # ── B3: Retry ─────────────────────────
+
 
 class TestRetry:
     def test_retry_transient_success(self) -> None:
@@ -285,6 +322,7 @@ class TestRetry:
 
 # ── H3: Política de retry por código HTTP ─────
 
+
 class TestRetryPolicy:
     """Valida que cada código HTTP recibe el tratamiento correcto de retry."""
 
@@ -302,14 +340,22 @@ class TestRetryPolicy:
 
                     response = httpx.Response(status_code=status_code)
                     request = httpx.Request("POST", "http://test")
+                    msg = f"HTTP {status_code}"
                     raise httpx.HTTPStatusError(
-                        f"HTTP {status_code}", request=request, response=response,
+                        msg,
+                        request=request,
+                        response=response,
                     )
                 return "ok_after_retry"
 
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "ok"}
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "ok"}
 
         return _MockHTTPError()
 
@@ -378,13 +424,22 @@ class TestRetryPolicy:
     def test_retry_on_timeout(self) -> None:
         class _MockTimeout(BaseLLMProvider):
             _calls: int = 0
+
             def generate(self, prompt, model=None, options=None):
                 self._calls += 1
                 import httpx
-                raise httpx.TimeoutException("timeout", request=httpx.Request("POST", "http://test"))
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "ok"}
+
+                msg = "timeout"
+                raise httpx.TimeoutException(msg, request=httpx.Request("POST", "http://test"))
+
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "ok"}
 
         prov = _MockTimeout()
         reg = ProviderRegistry()
@@ -409,6 +464,7 @@ class TestRetryPolicy:
 
 
 # ── B4: Fallback ─────────────────────────
+
 
 class TestFallback:
     def test_fallback_to_secondary(self) -> None:
@@ -470,10 +526,12 @@ class TestFallback:
 
         class _Transient(Exception):
             pass
+
         cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         def _fail_b() -> None:
-            raise _Transient("fail")
+            msg = "fail"
+            raise _Transient(msg)
 
         with pytest.raises(_Transient):
             cb_b.call(_fail_b)
@@ -489,23 +547,39 @@ class TestFallback:
 
     def test_fallback_no_chain(self) -> None:
         """Si el fallback falla, no se encadena a un tercer proveedor."""
+
         class _MockAlsoFail(BaseLLMProvider):
             _calls: int = 0
+
             def generate(self, prompt, model=None, options=None):
                 self._calls += 1
-                raise ValueError("also fail")
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "ok"}
+                msg = "also fail"
+                raise ValueError(msg)
+
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "ok"}
 
         class _MockThird(BaseLLMProvider):
             _calls: int = 0
+
             def generate(self, prompt, model=None, options=None):
                 self._calls += 1
                 return "third_ok"
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "ok"}
+
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "ok"}
 
         reg = ProviderRegistry()
         reg.register("a", _MockFail(), default=True)
@@ -514,7 +588,11 @@ class TestFallback:
         router = LLMRouter(registry=reg, fallback_enabled=True, fallback_max_providers=3)
 
         _, provider_used = router._call_with_fallback(
-            reg.get("a"), "generate", "generate", "a", "test",
+            reg.get("a"),
+            "generate",
+            "generate",
+            "a",
+            "test",
         )
         assert provider_used == "a", f"Expected primary error, got fallback {provider_used}"
         assert reg.get("c")._calls == 0, "c should not be called (no chain)"
@@ -532,10 +610,12 @@ class TestFallback:
 
         class _Transient(Exception):
             pass
+
         cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
 
         def _fail_b() -> None:
-            raise _Transient("fail")
+            msg = "fail"
+            raise _Transient(msg)
 
         with pytest.raises(_Transient):
             cb_b.call(_fail_b)
@@ -548,21 +628,29 @@ class TestFallback:
         state_after = cb_b.state
 
         assert state_after == state_before, (
-            f"Fallback should not modify CB state of provider b: "
-            f"{state_before} → {state_after}"
+            f"Fallback should not modify CB state of provider b: {state_before} → {state_after}"
         )
         assert "Error" in result, "Fallback should fail (only provider is OPEN b)"
 
     def test_fallback_max_providers(self) -> None:
         """Verificar que fallback_max_providers limita los intentos."""
+
         class _MockFailWithCounter(BaseLLMProvider):
             _calls: int = 0
+
             def generate(self, prompt, model=None, options=None):
                 self._calls += 1
-                raise ValueError("fail")
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "ok"}
+                msg = "fail"
+                raise ValueError(msg)
+
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "ok"}
 
         # Registrar múltiples fallbacks que también fallan
         reg = ProviderRegistry()
@@ -582,6 +670,7 @@ class TestFallback:
 
 
 # ── B1: Observabilidad ─────────────────────────
+
 
 class TestObservabilidad:
     def test_metrics_record(self) -> None:
@@ -648,6 +737,7 @@ class TestObservabilidad:
 
 # ── B5: Health Monitor ─────────────────────────
 
+
 class TestHealthMonitor:
     def test_health_cache(self) -> None:
         reg = ProviderRegistry()
@@ -655,13 +745,20 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingOK(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
             def health(self):
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}
+
         reg2 = ProviderRegistry()
         reg2.register("c", _CountingOK(), default=True)
         router = LLMRouter(registry=reg2, health_cache_ttl=999)
@@ -675,13 +772,20 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingOK(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
             def health(self):
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}
+
         reg = ProviderRegistry()
         reg.register("c", _CountingOK(), default=True)
         router = LLMRouter(registry=reg, health_cache_ttl=0.05)
@@ -702,9 +806,15 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingHealth(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
             def health(self):
                 nonlocal call_count
                 call_count += 1
@@ -725,19 +835,22 @@ class TestHealthMonitor:
 
         # El proveedor debe ser llamado <= 3 veces (idealmente 1, pero
         # la ventana de concurrencia puede permitir 2-3)
-        assert call_count <= 3, (
-            f"Expected <= 3 calls, got {call_count}. "
-            "Cache deduplication may be degraded."
-        )
+        assert call_count <= 3, f"Expected <= 3 calls, got {call_count}. Cache deduplication may be degraded."
 
     def test_health_cache_invalidate(self) -> None:
         """Invalidación explícita fuerza una nueva llamada al proveedor."""
         call_count = 0
 
         class _CountingHealth(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
             def health(self):
                 nonlocal call_count
                 call_count += 1
@@ -766,6 +879,7 @@ class TestHealthMonitor:
 
 # ── B6: Logging ─────────────────────────
 
+
 class TestLogging:
     def test_logging_on_success(self) -> None:
         reg = ProviderRegistry()
@@ -786,6 +900,7 @@ class TestLogging:
 
 # ── H6: Logging hardening ───────────────
 
+
 class TestLoggingSafety:
     """Verifica que los logs no exponen información sensible y contienen
     únicamente los campos estructurados previstos."""
@@ -800,9 +915,7 @@ class TestLoggingSafety:
             router.generate(self.SENSITIVE_PROMPT)
         for record in caplog.records:
             msg = record.getMessage()
-            assert self.SENSITIVE_PROMPT not in msg, (
-                f"Prompt leaked in log: {msg[:200]}"
-            )
+            assert self.SENSITIVE_PROMPT not in msg, f"Prompt leaked in log: {msg[:200]}"
             assert "sk-abc12345" not in msg, f"API key leaked in log: {msg[:200]}"
 
     def test_logs_do_not_contain_api_key(self, caplog: pytest.LogCaptureFixture) -> None:
@@ -825,9 +938,7 @@ class TestLoggingSafety:
         for record in caplog.records:
             msg = record.getMessage()
             assert "texto sensible" not in msg, f"Embedding input leaked in log: {msg[:200]}"
-            assert "0.0" not in msg or "latency" in msg, (
-                f"Vector data may have leaked: {msg[:200]}"
-            )
+            assert "0.0" not in msg or "latency" in msg, f"Vector data may have leaked: {msg[:200]}"
 
     def test_logs_do_not_contain_raw_request(self, caplog: pytest.LogCaptureFixture) -> None:
         raw_prompt = "raw sensitive request content"
@@ -847,10 +958,7 @@ class TestLoggingSafety:
         with caplog.at_level(logging.INFO, logger="motor.core.llm.router"):
             router.generate("test prompt")
         # Buscar al menos un registro con formato llm_call
-        llm_records = [
-            r for r in caplog.records
-            if "llm_call" in r.getMessage()
-        ]
+        llm_records = [r for r in caplog.records if "llm_call" in r.getMessage()]
         assert len(llm_records) >= 1, "No se encontraron registros llm_call"
 
         record = llm_records[0]
@@ -861,6 +969,7 @@ class TestLoggingSafety:
 
 
 # ── Regresión ─────────────────────────
+
 
 class TestRegresion:
     """Verifica que no se rompe la API existente."""

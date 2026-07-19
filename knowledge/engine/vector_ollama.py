@@ -18,7 +18,7 @@ log = logging.getLogger("ura.knowledge.vector_ollama")
 class _LRUCache:
     """Cache LRU simple con TTL. No thread-safe (uso interno embebido)."""
 
-    def __init__(self, ttl: int = 300, maxsize: int = 1024):
+    def __init__(self, ttl: int = 300, maxsize: int = 1024) -> None:
         self._ttl = ttl
         self._maxsize = maxsize
         self._cache: OrderedDict[str, tuple[float, list[float]]] = OrderedDict()
@@ -53,13 +53,14 @@ class OllamaEmbedder:
     Args:
         model: Nombre del modelo en Ollama.
         cache_ttl: TTL del cache LRU en segundos.
+
     """
 
     def __init__(
         self,
         model: str = "nomic-embed-text",
         cache_ttl: int = 300,
-    ):
+    ) -> None:
         self._model = model
         self._cache = _LRUCache(ttl=cache_ttl)
         self._degraded = False

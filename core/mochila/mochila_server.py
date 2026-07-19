@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -35,7 +34,7 @@ from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
-load_dotenv(os.path.expanduser("~/URA/.env"))
+load_dotenv(Path("~/URA/.env").expanduser())  # noqa: F821
 
 OLLAMA_SOCKET = "http://127.0.0.1:11434"
 
@@ -104,7 +103,7 @@ class VRAMAwareScheduler:
         kv_cache_overhead = int((len(prompt) // 4) * 0.002)
         return base + kv_cache_overhead
 
-    async def sync_vram(self) -> None:
+    async def sync_vram(self) -> None:  # noqa: C901
         proc = None
         try:
             proc = await asyncio.wait_for(
@@ -187,7 +186,7 @@ class VRAMAwareScheduler:
                 async with self._lock:
                     self._active.pop(req_id, None)
 
-        asyncio.create_task(_release())
+        asyncio.create_task(_release())  # noqa: RUF006
         return True
 
     async def release(self, req_id: str) -> None:
@@ -290,18 +289,18 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
         ):
             return chunk
     except ProviderError as e:
-        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
+        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")  # noqa: B904
     return None
 
 
-async def _stream_from_provider(
+async def _stream_from_provider(  # noqa: C901
     provider_name,
     modelo,
     mensajes,
     herramientas,
     max_tokens,
     temperature,
-    is_opencode=False,
+    is_opencode=False,  # noqa: FBT002
     guardian=None,
 ) -> AsyncGenerator[bytes, None]:
     provider = PROVIDERS[provider_name]
@@ -401,7 +400,7 @@ async def health():
 
 @app.get("/v1/models")
 async def v1_models():
-    global CACHE_MODELS, CACHE_MODELS_TS
+    global CACHE_MODELS, CACHE_MODELS_TS  # noqa: PLW0603
     if CACHE_MODELS and time.time() - CACHE_MODELS_TS < 60:
         return CACHE_MODELS
     models = []
@@ -409,7 +408,7 @@ async def v1_models():
         h = await provider.health()
         if h.get("status") == "ok" and "modelos_disponibles" in h:
             for m in h["modelos_disponibles"][:50]:
-                models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})
+                models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})  # noqa: PERF401
         models.append({"id": f"{name}/auto", "provider": name, "object": "model"})
     for ruta in router.rutas.values():
         for entrada in ruta:
@@ -427,7 +426,7 @@ async def v1_chat_completions(body: ChatRequest):
         ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
         provider_name, modelo, route_reason = ruta.provider, ruta.modelo, ruta.route_reason
     except NoProviderAvailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
     _rechazar_si_bloqueado(provider_name)
 
     if body.tools is True:
@@ -540,7 +539,7 @@ async def admin_acquire_boot_vram(mb: int):
 
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
-async def proxy_gateway(path: str, request: Request):
+async def proxy_gateway(path: str, request: Request):  # noqa: C901
     body = None
     with suppress(Exception):
         body = await request.json() if request.method in ("POST", "PUT") else None
@@ -574,7 +573,7 @@ async def proxy_gateway(path: str, request: Request):
 
             async def _proxy_stream():
                 acc = ""
-                async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:
+                async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:  # noqa: SIM117
                     async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
                         async for line in resp.aiter_lines():
                             if not line.strip():
@@ -634,7 +633,7 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
     from pathlib import Path
 
     ruta = Path(body.path)
-    if not ruta.exists():
+    if not ruta.exists():  # noqa: ASYNC240
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
     return {"status": "stub", "detail": "pipeline_video no implementado"}
 

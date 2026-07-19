@@ -30,17 +30,15 @@ PASS = 0
 FAIL = 0
 
 
-def check(label: str, condition: bool, detail: str = "") -> None:
-    global PASS, FAIL
+def check(label: str, condition: bool, detail: str = "") -> None:  # noqa: FBT001
+    global PASS, FAIL  # noqa: PLW0603
     if condition:
         PASS += 1
-        print(f"  ✅ {label}")
     else:
         FAIL += 1
         msg = f"  ❌ {label}"
         if detail:
             msg += f" — {detail}"
-        print(msg)
 
 
 def check_eq(label: str, actual, expected) -> None:
@@ -51,12 +49,11 @@ def check_gt(label: str, actual, minimum: int) -> None:
     check(label, actual >= minimum, f"expected >= {minimum}, got {actual}")
 
 
-def main() -> int:
-    work = Path("/tmp/e2e_fase7")
+def main() -> int:  # noqa: PLR0915
+    work = Path("/tmp/e2e_fase7")  # noqa: S108
     work.mkdir(parents=True, exist_ok=True)
 
     # ── Paso 1: Fresh init con schema completo ───────────────────────────
-    print("\n═══ 1. Fresh DB init ═══")
     db = work / "e2e_full.db"
     if db.exists():
         db.unlink()
@@ -76,28 +73,26 @@ def main() -> int:
     check("op_assets_fts existe", "op_assets_fts" in tables)
     check("op_memory_fts existe", "op_memory_fts" in tables)
     check("op_lineage_edges existe", "op_lineage_edges" in tables)
-    check("op_jobs.result_data existe", True)  # validado por schema
+    check("op_jobs.result_data existe", True)  # validado por schema  # noqa: FBT003
 
     # ── Paso 2: Schema version ──────────────────────────────────────────
-    print("\n═══ 2. Schema version ═══")
     check_eq("SCHEMA_VERSION == 14", SCHEMA_VERSION, 14)
     check("MAXIMUM_SUPPORTED_SCHEMA >= 14", SCHEMA_VERSION >= 14)
 
     # ── Paso 3: FTS5 search (assets) ────────────────────────────────────
-    print("\n═══ 3. Asset FTS5 search ═══")
     store = SQLiteAssetStore(db)
     a1 = KnowledgeAsset(
         asset_id="e2e_doc_1",
         asset_type=AssetType("pdf"),
         metadata={"title": "End-to-End Testing Guide", "text_preview": "how to test FTS5"},
-        source=AssetSource(kind="test", location="/tmp/e2e.pdf"),
+        source=AssetSource(kind="test", location="/tmp/e2e.pdf"),  # noqa: S108
         quality=1.0,
     )
     a2 = KnowledgeAsset(
         asset_id="e2e_doc_2",
         asset_type=AssetType("markdown"),
         metadata={"title": "Cooking Recipes", "text_preview": "how to cook pasta"},
-        source=AssetSource(kind="test", location="/tmp/e2e.md"),
+        source=AssetSource(kind="test", location="/tmp/e2e.md"),  # noqa: S108
         quality=1.0,
     )
     check("save_asset a1", store.save_asset(a1))
@@ -117,7 +112,6 @@ def main() -> int:
     check_eq("search_assets filtered by type", len(results_filtered), 0)
 
     # ── Paso 4: Memory FTS5 search ──────────────────────────────────────
-    print("\n═══ 4. Memory FTS5 search ═══")
     mem_store = SQLiteMemoryStore(db)
     mem_store.save(
         MemoryRecord(
@@ -125,7 +119,7 @@ def main() -> int:
             kind="note",
             title="Meeting notes about FTS5",
             content="Discussed FTS5 implementation for Fase 7",
-        )
+        ),
     )
     mem_store.save(
         MemoryRecord(
@@ -133,7 +127,7 @@ def main() -> int:
             kind="note",
             title="Shopping list",
             content="milk, eggs, bread",
-        )
+        ),
     )
 
     mem_results = mem_store.search("FTS5", limit=10)
@@ -148,7 +142,6 @@ def main() -> int:
     check_eq("memory search empty query", mem_empty_q, [])
 
     # ── Paso 5: Lineage edges ───────────────────────────────────────────
-    print("\n═══ 5. Lineage edges ═══")
     lin_store = SQLiteLineageStore(db)
     event = {
         "eventType": "COMPLETE",
@@ -171,15 +164,14 @@ def main() -> int:
     check_eq("get_upstream no match", upstream_none, [])
 
     # ── Paso 6: Extraction queue ────────────────────────────────────────
-    print("\n═══ 6. Extraction queue ═══")
     ext_service = MetadataExtractionService(db)
 
-    job_id1 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))
+    job_id1 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))  # noqa: S108
     check("queue_extract returns job id", job_id1 is not None)
     check("queue_extract returns str", isinstance(job_id1, str))
 
     # Dedup
-    job_id2 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))
+    job_id2 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))  # noqa: S108
     check_eq("dedup: same location returns same job id", job_id2, job_id1)
 
     status = ext_service.get_queue_status(job_id1)
@@ -190,7 +182,6 @@ def main() -> int:
     check_eq("queue status not found", status_nf["status"], "not_found")
 
     # ── Paso 7: GraphRetriever FTS5 ─────────────────────────────────────
-    print("\n═══ 7. GraphRetriever ═══")
     retriever = SQLiteGraphRetriever(db)
     gr_results = retriever.retrieve_assets("testing", limit=10)
     check_gt("retrieve_assets returns results", len(gr_results), 1)
@@ -201,7 +192,6 @@ def main() -> int:
     check_gt("retrieve_assets case-insensitive", len(gr_results2), 1)
 
     # ── Paso 8: Auto-recovery (mock) ────────────────────────────────────
-    print("\n═══ 8. Auto-recovery (mock) ═══")
     qdrant = QdrantVectorStore(collection="e2e_test")
     check("Qdrant available initially", qdrant.available)
 
@@ -209,13 +199,12 @@ def main() -> int:
     check("Ollama available initially", ollama.available)
 
     # Degradar y verificar estado O(1)
-    qdrant._degraded = True
+    qdrant._degraded = True  # noqa: SLF001
     check("Qdrant degraded = not available", not qdrant.available)
-    ollama._degraded = True
+    ollama._degraded = True  # noqa: SLF001
     check("Ollama degraded = not available", not ollama.available)
 
     # ── Paso 9: Reconcile (dry-run) ─────────────────────────────────────
-    print("\n═══ 9. Reconcile (dry-run) ═══")
     from unittest.mock import MagicMock
 
     graph = MagicMock()
@@ -236,7 +225,6 @@ def main() -> int:
     check("reconcile reports deleted=0 in dry-run", stats["deleted"] == 0)
 
     # ── Resultado final ─────────────────────────────────────────────────
-    print(f"\n═══ RESULTADO: {PASS} pasaron, {FAIL} fallaron ═══")
 
     # cleanup
     if db.exists():

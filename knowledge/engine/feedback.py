@@ -35,9 +35,11 @@ class InvalidDocIdError(ValueError):
 def _validate_doc_id(doc_id: str) -> None:
     """Valida que doc_id sea un hash SHA-256[:12]."""
     if not doc_id or len(doc_id) != 12:
-        raise InvalidDocIdError(f"doc_id must be 12 hex chars, got {len(doc_id)}")
+        msg = f"doc_id must be 12 hex chars, got {len(doc_id)}"
+        raise InvalidDocIdError(msg)
     if not all(c in _DOC_ID_PATTERN for c in doc_id):
-        raise InvalidDocIdError("doc_id must be hexadecimal (0-9 a-f)")
+        msg = "doc_id must be hexadecimal (0-9 a-f)"
+        raise InvalidDocIdError(msg)
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,7 @@ def record_feedback(db_path: Path, doc_id: str, rating: int) -> bool:
 
     Returns:
         True si se registró correctamente.
+
     """
     if rating < _RATING_MIN or rating > _RATING_MAX:
         log.warning("Rating fuera de rango: %d", rating)
@@ -148,6 +151,7 @@ def apply_ranking_overlay(
 
     Returns:
         Nueva lista con overlay aplicado (no muta la original).
+
     """
     if not results:
         return list(results)
@@ -159,7 +163,7 @@ def apply_ranking_overlay(
         doc_ids = [r["doc_id"] for r in results]
         placeholders = ",".join("?" * len(doc_ids))
         rows = conn.execute(
-            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",
+            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",  # noqa: S608
             doc_ids,
         ).fetchall()
         conn.close()

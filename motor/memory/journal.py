@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from motor.memory.crypto import decrypt as _decrypt
@@ -41,13 +42,14 @@ class Journal:
         self._path = path
         mode = "ab" if self._encryption_key else "a"
         enc = None if self._encryption_key else "utf-8"
-        self._file = open(path, mode, encoding=enc)
+        self._file = open(path, mode, encoding=enc)  # noqa: PTH123, SIM115
         self._count = self._count_lines()
 
     def append(self, entry: MemoryEntry) -> None:
         """Append + flush + fsync. Garantiza durabilidad en disco."""
         if self._file is None:
-            raise RuntimeError("Journal not open")
+            msg = "Journal not open"
+            raise RuntimeError(msg)
         raw_line = json.dumps(self._entry_to_dict(entry), ensure_ascii=False) + "\n"
         with self._lock:
             if self._encryption_key:
@@ -60,10 +62,10 @@ class Journal:
 
     def read_all(self) -> list[dict]:
         """Lee todas las líneas del journal, omitiendo las corruptas."""
-        if not self._path or not os.path.exists(self._path):
+        if not self._path or not Path(self._path).exists():
             return []
         result: list[dict] = []
-        with open(self._path, "rb") as f:
+        with open(self._path, "rb") as f:  # noqa: PTH123
             raw = f.read()
         if not raw:
             return []
@@ -75,7 +77,7 @@ class Journal:
             text = raw.decode("utf-8", errors="replace")
 
         for line in text.split("\n"):
-            line = line.strip()
+            line = line.strip()  # noqa: PLW2901
             if not line:
                 continue
             try:
@@ -88,11 +90,14 @@ class Journal:
         with self._lock:
             if self._file is not None:
                 self._file.close()
-            if self._path and os.path.exists(self._path):
-                os.rename(self._path, new_path)
+            if self._path and Path(self._path).exists():
+                os.rename(self._path, new_path)  # noqa: PTH104
             if self._path:
-                self._file = open(self._path, "ab" if self._encryption_key else "a",
-                                  encoding=None if self._encryption_key else "utf-8")
+                self._file = open(  # noqa: PTH123, SIM115
+                    self._path,
+                    "ab" if self._encryption_key else "a",
+                    encoding=None if self._encryption_key else "utf-8",
+                )
             self._count = 0
 
     def close(self) -> None:
@@ -115,7 +120,9 @@ class Journal:
     def _entry_to_dict(entry: MemoryEntry) -> dict:
         return {
             "schema_version": 1,
-            "entry_version": entry.metadata.created_by if hasattr(entry.metadata, 'created_by') and entry.metadata.created_by else "1",
+            "entry_version": entry.metadata.created_by
+            if hasattr(entry.metadata, "created_by") and entry.metadata.created_by
+            else "1",
             "entry_id": entry.entry_id,
             "timestamp": entry.timestamp,
             "fact_refs": [
@@ -141,7 +148,7 @@ class Journal:
         }
 
     def _count_lines(self) -> int:
-        if not self._path or not os.path.exists(self._path):
+        if not self._path or not Path(self._path).exists():
             return 0
-        with open(self._path, encoding="utf-8") as f:
+        with open(self._path, encoding="utf-8") as f:  # noqa: PTH123
             return sum(1 for _ in f)

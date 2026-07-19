@@ -9,7 +9,7 @@ def test_notifier_empty_returns_false() -> None:
     try:
         result = notify("test", level="info")
         assert result is False
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
@@ -25,4 +25,4 @@ def test_logger_creates_and_logs() -> None:
 def test_logger_different_names() -> None:
     log1 = StructuredLogger("svc1")
     log2 = StructuredLogger("svc2")
-    assert log1._logger.name != log2._logger.name
+    assert log1._logger.name != log2._logger.name  # noqa: SLF001

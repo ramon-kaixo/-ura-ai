@@ -24,7 +24,6 @@ from motor.core.secrets import get_secret
 log = logging.getLogger(__name__)
 
 
-
 class GeminiProvider(BaseLLMProvider):
     """Proveedor LLM que conecta con Google Gemini API."""
 
@@ -90,7 +89,9 @@ class GeminiProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usageMetadata", {})
             log_call(
-                self._provider_name, model_name, latency_ms,
+                self._provider_name,
+                model_name,
+                latency_ms,
                 prompt_tokens=usage.get("promptTokenCount"),
                 candidates_tokens=usage.get("candidatesTokenCount"),
             )
@@ -123,10 +124,7 @@ class GeminiProvider(BaseLLMProvider):
                 url,
                 headers=self._headers(),
                 json={
-                    "requests": [
-                        {"model": f"models/{model_name}", "content": {"parts": [{"text": t}]}}
-                        for t in texts
-                    ],
+                    "requests": [{"model": f"models/{model_name}", "content": {"parts": [{"text": t}]}} for t in texts],
                 },
                 timeout=self._timeout,
             )
@@ -143,6 +141,7 @@ class GeminiProvider(BaseLLMProvider):
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         import asyncio
+
         return await asyncio.to_thread(self.embed, texts, model)
 
     def health(self) -> dict[str, Any]:
@@ -155,8 +154,10 @@ class GeminiProvider(BaseLLMProvider):
             if r.is_error:
                 log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
-                    "provider": self._provider_name, "status": "error",
-                    "detail": r.text[:200], "latency_ms": latency_ms,
+                    "provider": self._provider_name,
+                    "status": "error",
+                    "detail": r.text[:200],
+                    "latency_ms": latency_ms,
                 }
             log_call(self._provider_name, "health", latency_ms)
             return {

@@ -13,6 +13,7 @@ import queue
 import re
 import sqlite3
 import subprocess
+from pathlib import Path
 
 import numpy as np
 import sounddevice as sd
@@ -26,11 +27,11 @@ class AnkerMacPipeline:
     def __init__(self, base_path="/Users/ramonesnaola/URA/ura_ia_1972/", model_size="small") -> None:
         self.sample_rate = 16000
         self.block_size = 480
-        self.db_path = os.path.join(base_path, "config/voice_corrections.db")
+        self.db_path = Path(base_path) / "config/voice_corrections.db"
         self.audio_queue = queue.Queue()
         self.is_playing_tts = False
 
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
         self._init_db()
 
         if torch.backends.mps.is_available():
@@ -56,7 +57,7 @@ class AnkerMacPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 

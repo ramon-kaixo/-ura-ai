@@ -35,6 +35,7 @@ def _get_qdrant_port() -> int:
     except Exception:
         return int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
+
 LRU_MAX = 20
 
 
@@ -59,13 +60,13 @@ class SecretarioCache:
             or {"intent": "consulta", "complexity": "simple", "domain": "general", "entities": []},
         }
         try:
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 f"{ASUS_EXEC_URL}/v2/interact",
                 data=json.dumps(payload).encode(),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
                 result = json.loads(resp.read().decode())
         except Exception as e:
             result = {"error": str(e), "validation": {"ok": False, "alert": True}}
@@ -82,13 +83,13 @@ class SecretarioCache:
         """Consulta read-only a Qdrant en ASUS vía REST."""
         try:
             url = f"http://{_get_qdrant_host()}:{_get_qdrant_port()}/collections/{coleccion}/points/scroll"
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 url,
                 data=json.dumps({"limit": limit}).encode(),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
                 data = json.loads(resp.read().decode())
                 return [p.get("payload", {}) for p in data.get("result", {}).get("points", [])]
         except Exception as e:

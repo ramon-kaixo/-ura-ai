@@ -114,11 +114,5 @@ class ContextBuilder:
     def _format_fact(entry) -> str:
         if isinstance(entry, tuple):
             fact, version = entry
-            return (
-                f"- {fact.subject} | {fact.predicate} | {fact.object}"
-                f" (confianza: {version.confidence:.2f})"
-            )
-        return (
-            f"- {entry.subject} | {entry.predicate} | {entry.object}"
-            f" (confianza: {entry.confidence:.2f})"
-        )
+            return f"- {fact.subject} | {fact.predicate} | {fact.object} (confianza: {version.confidence:.2f})"
+        return f"- {entry.subject} | {entry.predicate} | {entry.object} (confianza: {entry.confidence:.2f})"

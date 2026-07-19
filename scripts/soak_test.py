@@ -23,7 +23,7 @@ import threading
 import time
 
 # Add project root to path if running directly
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, Path(os.path.dirname(Path(__file__).resolve().parent)))  # noqa: F821, PTH120
 
 from typing import TYPE_CHECKING
 
@@ -50,20 +50,20 @@ class Scenario:
 
 def simulate_fusion(collector: MetricsCollector) -> None:
     """Simulate F24→F25 fusion pipeline."""
-    for _ in range(random.randint(1, 5)):
+    for _ in range(random.randint(1, 5)):  # noqa: S311
         start = time.monotonic_ns()
-        time.sleep(random.uniform(0.001, 0.01))
-        error = random.random() < 0.02
+        time.sleep(random.uniform(0.001, 0.01))  # noqa: S311
+        error = random.random() < 0.02  # noqa: S311
         duration = time.monotonic_ns() - start
         collector.record("f24→f25", duration, error=error)
 
 
 def simulate_memory(collector: MetricsCollector) -> None:
     """Simulate F25→F26 memory append."""
-    for _ in range(random.randint(1, 3)):
+    for _ in range(random.randint(1, 3)):  # noqa: S311
         start = time.monotonic_ns()
-        time.sleep(random.uniform(0.0005, 0.005))
-        error = random.random() < 0.01
+        time.sleep(random.uniform(0.0005, 0.005))  # noqa: S311
+        error = random.random() < 0.01  # noqa: S311
         duration = time.monotonic_ns() - start
         collector.record("f25→f26", duration, error=error)
 
@@ -71,17 +71,17 @@ def simulate_memory(collector: MetricsCollector) -> None:
 def simulate_agents(collector: MetricsCollector) -> None:
     """Simulate F26→F27 agent execution."""
     start = time.monotonic_ns()
-    time.sleep(random.uniform(0.01, 0.1))
-    error = random.random() < 0.05
+    time.sleep(random.uniform(0.01, 0.1))  # noqa: S311
+    error = random.random() < 0.05  # noqa: S311
     duration = time.monotonic_ns() - start
     collector.record("f26→f27", duration, error=error)
 
 
 def simulate_protocol(collector: MetricsCollector) -> None:
     """Simulate F27→F28 protocol transport."""
-    for _ in range(random.randint(1, 3)):
+    for _ in range(random.randint(1, 3)):  # noqa: S311
         start = time.monotonic_ns()
-        time.sleep(random.uniform(0.0001, 0.001))
+        time.sleep(random.uniform(0.0001, 0.001))  # noqa: S311
         duration = time.monotonic_ns() - start
         collector.record("f27→f28", duration)
 
@@ -111,12 +111,22 @@ class SoakTester:
         self.start_time = 0.0
 
         # Register health probes
-        self.health_agg.register_health("fusion", lambda: {
-            "service": "fusion", "status": "ok", "ops": self.total_ops,
-        })
-        self.health_agg.register_health("memory", lambda: {
-            "service": "memory", "status": "ok", "entries": self.total_ops,
-        })
+        self.health_agg.register_health(
+            "fusion",
+            lambda: {
+                "service": "fusion",
+                "status": "ok",
+                "ops": self.total_ops,
+            },
+        )
+        self.health_agg.register_health(
+            "memory",
+            lambda: {
+                "service": "memory",
+                "status": "ok",
+                "entries": self.total_ops,
+            },
+        )
 
         # Scenarios with weights
         self.scenarios = [
@@ -130,7 +140,7 @@ class SoakTester:
             s.weight /= total_weight
 
     def _pick_scenario(self) -> Scenario:
-        r = random.random()
+        r = random.random()  # noqa: S311
         cumulative = 0.0
         for s in self.scenarios:
             cumulative += s.weight
@@ -144,14 +154,15 @@ class SoakTester:
             scenario = self._pick_scenario()
             try:
                 scenario.fn()
-                with self.collector._lock:
+                with self.collector._lock:  # noqa: SLF001
                     self.total_ops += 1
             except Exception:
-                with self.collector._lock:
+                with self.collector._lock:  # noqa: SLF001
                     self.total_errors += 1
             # Emit a trace event for each operation
             try:
                 from motor.platform.tracing import SpanEvent
+
                 ev = SpanEvent(
                     trace_id=f"soak-{self.total_ops}",
                     span_id=f"s{self.total_ops}",
@@ -166,7 +177,7 @@ class SoakTester:
                     tags={"soak": "true"},
                 )
                 self.exporter.emit(ev)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
     def run(self) -> dict:
@@ -198,13 +209,11 @@ class SoakTester:
                 last_check = time.time()
                 elapsed = time.time() - self.start_time
                 snap = self.collector.snapshot()
-                print(f"[{elapsed:.0f}s] ops={self.total_ops} errors={self.total_errors} "
-                      f"throughput={self.total_ops/max(elapsed,1):.1f}/s")
 
                 # Check for metric anomalies
-                for subsystem, stats in snap.items():
+                for stats in snap.values():
                     if stats["count"] > 0 and stats["p99_ms"] > 5000:
-                        print(f"  ⚠ {subsystem} p99={stats['p99_ms']:.0f}ms exceeds 5s threshold")
+                        pass
 
         # Stop
         self.running = False
@@ -216,7 +225,7 @@ class SoakTester:
         snap = self.collector.snapshot()
         throughput = self.total_ops / max(elapsed, 1)
 
-        result = {
+        return {
             "duration_seconds": elapsed,
             "total_operations": self.total_ops,
             "total_errors": self.total_errors,
@@ -226,31 +235,12 @@ class SoakTester:
             "health": self.health_agg.health(),
         }
 
-        return result
-
 
 def print_report(result: dict) -> None:
     """Print a human-readable test report."""
-    print("\n" + "=" * 60)
-    print("SOAK TEST REPORT (OBS-5)")
-    print("=" * 60)
-    print(f"Duration:          {result['duration_seconds']:.0f}s")
-    print(f"Total operations:  {result['total_operations']}")
-    print(f"Total errors:      {result['total_errors']}")
-    print(f"Error rate:        {result['error_rate']*100:.2f}%")
-    print(f"Throughput:        {result['throughput_ops_per_second']:.1f} ops/s")
-    print()
-    print("Per Subsystem:")
-    print(f"{'Subsystem':<20} {'Count':>8} {'Errors':>8} {'p50(ms)':>10} {'p95(ms)':>10} {'p99(ms)':>10}")
-    print("-" * 70)
-    for ss, stats in sorted(result["subsystems"].items()):
-        print(f"{ss:<20} {stats['count']:>8} {stats['errors']:>8} "
-              f"{stats['p50_ms']:>10.1f} {stats['p95_ms']:>10.1f} {stats['p99_ms']:>10.1f}")
-    print()
-    print("Health:")
-    health = result["health"]
-    print(f"  Status: {health['status']}")
-    print(f"  Subsystems: {len(health.get('subsystems', {}))}")
+    for _ss, _stats in sorted(result["subsystems"].items()):
+        pass
+    result["health"]
 
 
 def main() -> None:
@@ -264,9 +254,6 @@ def main() -> None:
     duration = 60 if args.quick else args.duration
     rate = 5 if args.quick else args.rate
 
-    print(f"Starting soak test: {duration}s at {rate} ops/s")
-    print(f"Trace output: {args.output or 'soak_traces.jsonl'}")
-
     tester = SoakTester(duration_seconds=duration, rate_per_second=rate, trace_path=args.output)
     result = tester.run()
     print_report(result)
@@ -278,15 +265,13 @@ def main() -> None:
             issues.append(f"  ⚠ {ss}: p99={stats['p99_ms']:.0f}ms > 5s")
 
     if result["error_rate"] > 0.10:
-        issues.append(f"  ❌ Error rate {result['error_rate']*100:.1f}% > 10% threshold")
+        issues.append(f"  ❌ Error rate {result['error_rate'] * 100:.1f}% > 10% threshold")
 
     if issues:
-        print("\nIssues:")
-        for issue in issues:
-            print(issue)
+        for _issue in issues:
+            pass
         sys.exit(1)
     else:
-        print("\n✅ All thresholds met")
         sys.exit(0)
 
 

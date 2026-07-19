@@ -24,7 +24,7 @@ class CostTracker:
     def registrar(self, provider: str, modelo: str, prompt_tokens: int, completion_tokens: int) -> dict:
         entrada = {
             "timestamp": time.time(),
-            "date": date.today().isoformat(),
+            "date": date.today().isoformat(),  # noqa: DTZ011
             "provider": provider,
             "modelo": modelo,
             "prompt_tokens": prompt_tokens,
@@ -32,7 +32,7 @@ class CostTracker:
             "total_tokens": prompt_tokens + completion_tokens,
             "cost_estimate": self._calcular_coste(provider, prompt_tokens, completion_tokens),
         }
-        with open(self._cost_file, "a") as f:
+        with open(self._cost_file, "a") as f:  # noqa: PTH123
             f.write(json.dumps(entrada) + "\n")
         return entrada
 
@@ -41,15 +41,15 @@ class CostTracker:
         return (prompt_tokens + completion_tokens) * tarifa
 
     def resumen_hoy(self) -> dict:
-        hoy = date.today().isoformat()
+        hoy = date.today().isoformat()  # noqa: DTZ011
         total_cost = 0.0
         total_tokens = 0
         por_provider: dict[str, int] = {}
         if not self._cost_file.exists():
             return {"date": hoy, "total_cost": 0.0, "total_tokens": 0, "por_provider": {}}
-        with open(self._cost_file) as f:
+        with open(self._cost_file) as f:  # noqa: PTH123
             for line in f:
-                line = line.strip()
+                line = line.strip()  # noqa: PLW2901
                 if not line:
                     continue
                 try:

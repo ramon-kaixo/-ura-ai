@@ -36,7 +36,7 @@ class NaiveConflictResolver(ConflictResolver):
         conflicts: list[Conflict] = []
         for bucket in buckets.values():
             for i, a in enumerate(bucket):
-                for b in bucket[i + 1:]:
+                for b in bucket[i + 1 :]:
                     conflict = self._check_pair(a, b)
                     if conflict is not None:
                         conflicts.append(conflict)
@@ -59,9 +59,7 @@ class NaiveConflictResolver(ConflictResolver):
             if abs(ca.confidence - cb.confidence) > 0.2:
                 winner = ca if ca.confidence > cb.confidence else cb
                 conflict.resolved = True
-                conflict.resolution = (
-                    f"Preferring claim {winner.id} (confidence={winner.confidence:.2f})"
-                )
+                conflict.resolution = f"Preferring claim {winner.id} (confidence={winner.confidence:.2f})"
             else:
                 unresolved.append(conflict)
 
@@ -113,14 +111,13 @@ class ConflictDetectionStage(BaseStage):
 
         ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
         if ambiguous_ids:
-            context.warnings.append(
-                f"Skipping conflict detection for {len(ambiguous_ids)} ambiguous entities"
-            )
+            context.warnings.append(f"Skipping conflict detection for {len(ambiguous_ids)} ambiguous entities")
 
-        claims_to_check = [
-            c for c in context.claims
-            if not any(aid in (c.text + c.normalized_text) for aid in ambiguous_ids)
-        ] if ambiguous_ids else context.claims
+        claims_to_check = (
+            [c for c in context.claims if not any(aid in (c.text + c.normalized_text) for aid in ambiguous_ids)]
+            if ambiguous_ids
+            else context.claims
+        )
 
         if not claims_to_check:
             context.statistics["conflicts_detected"] = 0

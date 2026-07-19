@@ -64,7 +64,7 @@ class TestWorkflows:
     def test_ci_steps(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/ci.yml") as f:
+        with open(ROOT / ".github/workflows/ci.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         jobs = data.get("jobs", {})
         for name in ["lint", "test", "build"]:
@@ -73,7 +73,7 @@ class TestWorkflows:
     def test_ci_matrix(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/ci.yml") as f:
+        with open(ROOT / ".github/workflows/ci.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         test_job = data["jobs"]["test"]
         matrix = test_job.get("strategy", {}).get("matrix", {})
@@ -84,7 +84,7 @@ class TestWorkflows:
     def test_release_triggers_on_tag(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/release.yml") as f:
+        with open(ROOT / ".github/workflows/release.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         # PyYAML parses 'on:' as True; GH Actions handles it correctly
         trigger = data.get(True) or data.get("on") or {}
@@ -95,7 +95,7 @@ class TestWorkflows:
     def test_release_has_build_step(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/release.yml") as f:
+        with open(ROOT / ".github/workflows/release.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         steps = data["jobs"]["release"]["steps"]
         step_names = [s.get("name", "") for s in steps]
@@ -104,7 +104,7 @@ class TestWorkflows:
     def test_ci_cancels_duplicates(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/ci.yml") as f:
+        with open(ROOT / ".github/workflows/ci.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         assert "concurrency" in data
         assert data["concurrency"].get("cancel-in-progress") is True
@@ -112,7 +112,7 @@ class TestWorkflows:
     def test_lint_job_has_ruff(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/ci.yml") as f:
+        with open(ROOT / ".github/workflows/ci.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         steps = data["jobs"]["lint"]["steps"]
         step_names = [s.get("name", "") for s in steps]
@@ -121,7 +121,7 @@ class TestWorkflows:
     def test_build_uploads_artifact(self):
         import yaml
 
-        with open(ROOT / ".github/workflows/ci.yml") as f:
+        with open(ROOT / ".github/workflows/ci.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         steps = data["jobs"]["build"]["steps"]
         step_names = [s.get("uses", "") for s in steps]
@@ -130,7 +130,7 @@ class TestWorkflows:
 
 class TestBuild:
     def test_wheel_generable(self):
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510, S603
             [sys.executable, "-m", "build", "--wheel", str(ROOT)],
             capture_output=True,
             text=True,
@@ -143,7 +143,7 @@ class TestBuild:
             w.unlink()
 
     def test_sdist_generable(self):
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510, S603
             [sys.executable, "-m", "build", "--sdist", str(ROOT)],
             capture_output=True,
             text=True,
@@ -158,7 +158,7 @@ class TestBuild:
 
 class TestInstallation:
     def test_editable_install(self):
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510, S603
             [sys.executable, "-m", "pip", "install", "-e", str(ROOT), "--break-system-packages"],
             capture_output=True,
             text=True,
@@ -171,7 +171,7 @@ class TestInstallation:
         assert result.returncode == 0, result.stderr
 
     def test_import_ura(self):
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, "-c", "import ura; print('OK')"],
             capture_output=True,
             text=True,

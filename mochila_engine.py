@@ -1,4 +1,4 @@
-"""mochila_engine.py — v4.3"""
+"""mochila_engine.py — v4.3."""
 
 from __future__ import annotations
 
@@ -46,29 +46,29 @@ class TipoPipeline(StrEnum):
 class CB:
     __slots__ = ("d", "dt", "er", "f", "ok", "tf", "ti")
 
-    def __init__(s, f):
-        s.f = f
-        s.ti = _now()
-        s.tf = None
-        s.d = None
-        s.ok = False
-        s.er = None
-        s.dt = {}
+    def __init__(self, f) -> None:
+        self.f = f
+        self.ti = _now()
+        self.tf = None
+        self.d = None
+        self.ok = False
+        self.er = None
+        self.dt = {}
 
-    def fin(s, ok=True, er=None):
-        s.tf = _now()
-        s.d = (datetime.fromisoformat(s.tf) - datetime.fromisoformat(s.ti)).total_seconds() * 1000
-        s.ok = ok
-        s.er = er
+    def fin(self, ok=True, er=None) -> None:  # noqa: FBT002
+        self.tf = _now()
+        self.d = (datetime.fromisoformat(self.tf) - datetime.fromisoformat(self.ti)).total_seconds() * 1000
+        self.ok = ok
+        self.er = er
 
-    def ad(s):
-        return {"f": str(s.f), "ti": s.ti, "tf": s.tf, "d": s.d, "ok": s.ok, "er": s.er, **s.dt}
+    def ad(self):
+        return {"f": str(self.f), "ti": self.ti, "tf": self.tf, "d": self.d, "ok": self.ok, "er": self.er, **self.dt}
 
 
 class MochilaEngine:
-    def __init__(s, e):
-        s._e = e
-        s._p = None
+    def __init__(self, e) -> None:
+        self._e = e
+        self._p = None
 
     @classmethod
     def nueva(cls, url, tipo=TipoPipeline.IMAGEN, pid=None, nc="sin_nombre"):
@@ -105,116 +105,117 @@ class MochilaEngine:
         return cls(json.loads(p.read_text()))
 
     @property
-    def id(s):
-        return s._e["id"]
+    def id(self):
+        return self._e["id"]
 
     @property
-    def url(s):
-        return s._e["url"]
+    def url(self):
+        return self._e["url"]
 
     @property
-    def tipo(s):
-        return TipoPipeline(s._e["tp"])
+    def tipo(self):
+        return TipoPipeline(self._e["tp"])
 
     @property
-    def hashes(s):
-        return s._e["h"]
+    def hashes(self):
+        return self._e["h"]
 
     @property
-    def calidad(s):
-        return s._e["c"]
+    def calidad(self):
+        return self._e["c"]
 
     @property
-    def red(s):
-        return s._e["r"]
+    def red(self):
+        return self._e["r"]
 
-    def fc(s, f):
-        return str(f) in s._e["fc"]
+    def fc(self, f):
+        return str(f) in self._e["fc"]
 
-    def fase(s, f, z=False):
-        return _FC(s, f)
+    def fase(self, f, z=False):  # noqa: FBT002
+        return _FC(self, f)
 
-    def _rc(s, c):
+    def _rc(self, c) -> None:
         k = str(c.f)
-        s._e["cc"][k] = c.ad()
-        if c.ok and k not in s._e["fc"]:
-            s._e["fc"].append(k)
-        s._tm()
+        self._e["cc"][k] = c.ad()
+        if c.ok and k not in self._e["fc"]:
+            self._e["fc"].append(k)
+        self._tm()
 
-    def reg_r(s, **k):
-        s._e["r"].update(k)
-        s._tm()
+    def reg_r(self, **k) -> None:
+        self._e["r"].update(k)
+        self._tm()
 
-    def reg_h(s, **k):
-        s._e["h"].update(k)
-        s._tm()
+    def reg_h(self, **k) -> None:
+        self._e["h"].update(k)
+        self._tm()
 
-    def reg_c(s, **k):
-        s._e["c"].update(k)
-        s._tm()
+    def reg_c(self, **k) -> None:
+        self._e["c"].update(k)
+        self._tm()
 
-    def reg_co(s, **k):
-        s._e["co"].update(k)
-        s._tm()
+    def reg_co(self, **k) -> None:
+        self._e["co"].update(k)
+        self._tm()
 
-    def reg_e(s, **k):
-        s._e["es"].update(k)
-        s._tm()
+    def reg_e(self, **k) -> None:
+        self._e["es"].update(k)
+        self._tm()
 
-    def reg_i(s, **k):
-        s._e["in"].update(k)
-        s._tm()
+    def reg_i(self, **k) -> None:
+        self._e["in"].update(k)
+        self._tm()
 
-    def reg_f(s, **k):
-        s._e["fb"].update(k)
-        s._tm()
+    def reg_f(self, **k) -> None:
+        self._e["fb"].update(k)
+        self._tm()
 
-    def mc(s):
-        s._e["st"] = str(EstadoMochila.COMPLETADA)
-        s._tm()
+    def mc(self) -> None:
+        self._e["st"] = str(EstadoMochila.COMPLETADA)
+        self._tm()
 
-    def guardar(s, p=None):
-        d = p or s._p
+    def guardar(self, p=None):
+        d = p or self._p
         if d is None:
-            raise ValueError("no path")
+            msg = "no path"
+            raise ValueError(msg)
         d.parent.mkdir(parents=True, exist_ok=True)
-        d.write_text(json.dumps(s._e, ensure_ascii=False, indent=2))
+        d.write_text(json.dumps(self._e, ensure_ascii=False, indent=2))
         return d
 
-    def ad(s):
-        return dict(s._e)
+    def ad(self):
+        return dict(self._e)
 
-    def cks(s):
-        return hashlib.sha256(json.dumps(s._e, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    def cks(self):
+        return hashlib.sha256(json.dumps(self._e, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
-    def _tm(s):
-        s._e["tm"] = _now()
+    def _tm(self) -> None:
+        self._e["tm"] = _now()
 
     @staticmethod
     def _rd(nc, mid):
         return MOCHILAS_DIR / f"{datetime.now(tz=UTC).strftime('%Y-%m-%d')}_{nc}" / f"mochila_{mid[:8]}.json"
 
-    def __repr__(s):
-        return f"Mochila(id={s.id[:8]}...,tipo={s.tipo})"
+    def __repr__(self) -> str:
+        return f"Mochila(id={self.id[:8]}...,tipo={self.tipo})"
 
 
 class _FC:
-    def __init__(s, m, f):
-        s._m = m
-        s._f = f
-        s._c = None
+    def __init__(self, m, f) -> None:
+        self._m = m
+        self._f = f
+        self._c = None
 
-    async def __aenter__(s):
-        s._c = CB(s._f)
-        return s._c
+    async def __aenter__(self):
+        self._c = CB(self._f)
+        return self._c
 
-    async def __aexit__(s, t, v, b):
+    async def __aexit__(self, t, v, b):
         if t:
-            s._c.fin(False, str(v))
-            s._m._rc(s._c)
+            self._c.fin(False, str(v))  # noqa: FBT003
+            self._m._rc(self._c)  # noqa: SLF001
             return True
-        s._c.fin(True)
-        s._m._rc(s._c)
+        self._c.fin(True)  # noqa: FBT003
+        self._m._rc(self._c)  # noqa: SLF001
         return False
 
 

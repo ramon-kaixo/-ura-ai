@@ -14,7 +14,7 @@ def detectar_f821_en_codigo(codigo: str, archivo: str) -> list[dict]:
     """Detecta F821 en código usando ruff (rápido) o AST fallback."""
     try:
         r = subprocess.run(
-            ["ruff", "check", "--select", "F821", "--output-format", "json", "-"],
+            ["ruff", "check", "--select", "F821", "--output-format", "json", "-"],  # noqa: S607
             input=codigo,
             capture_output=True,
             text=True,
@@ -35,7 +35,7 @@ def detectar_f821_en_codigo(codigo: str, archivo: str) -> list[dict]:
                 ]
             except json.JSONDecodeError:
                 pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return []
 
@@ -52,12 +52,12 @@ def _es_import_estandar(nombre: str) -> dict | None:
         try:
             data = json.loads(config_path.read_text())
             return data.get("imports_estandar", {}).get(nombre)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return None
 
 
-def aplicar_regla_a_codigo(codigo: str, regla: dict) -> tuple[str, bool]:
+def aplicar_regla_a_codigo(codigo: str, regla: dict) -> tuple[str, bool]:  # noqa: C901, PLR0911, PLR0912
     """Aplica una regla de reparación al código.
 
     Returns:

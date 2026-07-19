@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -69,13 +70,13 @@ def pushover(msg, title="URA Sandbox", pri=0) -> None:
             },
             timeout=10,
         )
-        except BaseException:
-            log.exception("Error enviando notificación Pushover")
+    except BaseException:
+        log.exception("Error enviando notificación Pushover")
 
 
 def md5(ruta):
     h = hashlib.md5(usedforsecurity=False)
-    with open(ruta, "rb") as f:
+    with Path(ruta).open("rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -137,8 +138,8 @@ def create_branch(rel, v_old, v_new, origin, reason):
 
 def test_file(file_path):
     try:
-        result = subprocess.run(
-            ["python3", "-m", "py_compile", str(file_path)],
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, "-m", "py_compile", str(file_path)],
             capture_output=True,
             text=True,
             timeout=30,

@@ -24,10 +24,12 @@ if TYPE_CHECKING:
 
 def _crear_corpus() -> EvaluationCorpus:
     corpus = EvaluationCorpus("test")
-    corpus.add_queries([
-        EvaluationQuery("q1", "texto uno", {"d1", "d3"}),
-        EvaluationQuery("q2", "texto dos", {"d2"}),
-    ])
+    corpus.add_queries(
+        [
+            EvaluationQuery("q1", "texto uno", {"d1", "d3"}),
+            EvaluationQuery("q2", "texto dos", {"d2"}),
+        ],
+    )
     return corpus
 
 
@@ -159,4 +161,5 @@ class TestExperiment:
 
     def test_experiment_importable(self) -> None:
         from motor.core.evaluation import Experiment
+
         assert Experiment is not None

@@ -23,13 +23,20 @@ from motor.core.llm.router import LLMRouter
 class _MockProvider(BaseLLMProvider):
     def __init__(self, delay: float = 0.0) -> None:
         self.delay = delay
+
     def generate(self, prompt, model=None, options=None):
         if self.delay > 0:
             time.sleep(self.delay)
         return "ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class TestBenchmarkMonitor:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Create and index golden documents for KE evaluation corpus.
-Run once to populate Qdrant with the 12 reference documents."""
+Run once to populate Qdrant with the 12 reference documents.
+"""
 
 from __future__ import annotations
 
@@ -355,7 +356,7 @@ def main() -> int:
         from motor.core.config import UraConfig
         from motor.core.qdrant_client import QdrantClient
     except ImportError as e:
-        log.error("Import error: %s — cannot index", e)
+        log.exception("Import error: %s — cannot index", e)
         return 1
 
     cfg = UraConfig()

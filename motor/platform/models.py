@@ -28,6 +28,7 @@ class SpanId:
     OBS-03: Every hop generates a unique span_id.
     16 hex chars from os.urandom (8 bytes → 128 bits of entropy).
     """
+
     value: str
 
     def __str__(self) -> str:
@@ -52,6 +53,7 @@ class TraceId:
     OBS-02: No subsystem creates a new one; only propagates.
     16 hex chars from os.urandom (8 bytes).
     """
+
     value: str
 
     def __str__(self) -> str:
@@ -149,6 +151,7 @@ class DeliverySemantics(StrEnum):
 
 class ErrorCode(StrEnum):
     """Canonical error codes per ADR-028-06."""
+
     TIMEOUT = "timeout"
     UNAVAILABLE = "unavailable"
     TRANSIENT = "transient"
@@ -195,6 +198,7 @@ class TraceHeader:
     timestamp: UTC time (OBS-06, for human readability)
     monotonic_ts: time.monotonic_ns() for latency (OBS-06)
     """
+
     trace_id: TraceId
     span_id: SpanId
     parent_span_id: SpanId | None = None
@@ -269,7 +273,7 @@ class ErrorEnvelope:
         error_code: str,
         error_message: str,
         component: str = "",
-        retryable: bool = False,
+        retryable: bool = False,  # noqa: FBT001, FBT002
         retry_delay_ms: int = 0,
     ) -> ErrorEnvelope:
         """Build ErrorEnvelope inheriting causation from original message.

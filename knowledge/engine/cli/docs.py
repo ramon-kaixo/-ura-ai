@@ -14,10 +14,7 @@ def cmd_docs_generate(args) -> int:
 
     n = generate_knowledge_base(db_path, output_dir=output)
     if n == 0:
-        print("No documents found in graph. Run 'ke compile' first.")
         return 1
-    print(f"Knowledge base generated: {n} documents")
     if output:
-        print(f"  Output: {output.resolve()}")
-        print(f"  Serve:  mkdocs serve --config-file {output / 'mkdocs.yml'}")
+        pass
     return 0

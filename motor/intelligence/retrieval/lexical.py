@@ -55,6 +55,6 @@ class LexicalRetriever:
                     "rank": rank,
                     "latency_ms": round((time.monotonic() - start) * 1000, 2),
                     "source": "lexical",
-                }
+                },
             )
         return results

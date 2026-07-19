@@ -24,8 +24,11 @@ class ProtocolValidationError(Exception):
         if envelope is not None and code not in ("invalid_version", "invalid_schema"):
             logger.warning(
                 "SECURITY: %s from=%s to=%s type=%s msg=%s",
-                code, envelope.routing.source, envelope.routing.destination,
-                envelope.routing.message_type, message,
+                code,
+                envelope.routing.source,
+                envelope.routing.destination,
+                envelope.routing.message_type,
+                message,
             )
         super().__init__(f"[{code}] {message}")
 
@@ -36,14 +39,15 @@ class ProtocolValidator:
     MAX_PAYLOAD_SIZE = 10 * 1024 * 1024
 
     def __init__(
-        self, registry: ProtocolRegistry | None = None,
+        self,
+        registry: ProtocolRegistry | None = None,
         metrics: PlatformMetrics | None = None,
     ) -> None:
         self._registry = registry
         self._metrics = metrics
 
     # Size budgets per message type per ADR-028-04
-    SIZE_BUDGETS: dict[str, int] = {
+    SIZE_BUDGETS: dict[str, int] = {  # noqa: RUF012
         "ToolRequest": 1 * 1024 * 1024,
         "ToolResult": 10 * 1024 * 1024,
         "MemoryEntry": 10 * 1024 * 1024,
@@ -53,17 +57,24 @@ class ProtocolValidator:
     # ProtocolEnvelope headers budget: 1 KB (not enforced per-message_type,
     # covered by the total serialized size check)
 
-    FORBIDDEN_PATTERNS = [
-        b"<script", b"javascript:", b"onload=", b"onerror=",
-        b"../", b"..\\", b"${", b"`",
+    FORBIDDEN_PATTERNS = [  # noqa: RUF012
+        b"<script",
+        b"javascript:",
+        b"onload=",
+        b"onerror=",
+        b"../",
+        b"..\\",
+        b"${",
+        b"`",
     ]
 
     def _sanitize_payload(self, envelope: ProtocolEnvelope) -> None:
         """Busca patrones peligrosos en el payload."""
         for pattern in self.FORBIDDEN_PATTERNS:
             if pattern in envelope.payload.lower():
+                msg = "unsafe_payload"
                 raise ProtocolValidationError(
-                    "unsafe_payload",
+                    msg,
                     f"Payload contains forbidden pattern: {pattern[:20]}",
                 )
 
@@ -88,85 +99,89 @@ class ProtocolValidator:
         v = envelope.version
         parts = v.protocol_version.split(".")
         if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
+            msg = "invalid_version"
             raise ProtocolValidationError(
-                "invalid_version", f"protocol_version must be MAJOR.MINOR: {v.protocol_version}"
+                msg,
+                f"protocol_version must be MAJOR.MINOR: {v.protocol_version}",
             )
         sv = v.schema_version.split(".")
         if len(sv) != 2 or not sv[0].isdigit() or not sv[1].isdigit():
-            raise ProtocolValidationError(
-                "invalid_schema", f"schema_version must be MAJOR.MINOR: {v.schema_version}"
-            )
+            msg = "invalid_schema"
+            raise ProtocolValidationError(msg, f"schema_version must be MAJOR.MINOR: {v.schema_version}")
         if v.payload_type not in ("json", "msgpack", "protobuf"):
-            raise ProtocolValidationError(
-                "invalid_payload_type", f"Unknown payload_type: {v.payload_type}"
-            )
+            msg = "invalid_payload_type"
+            raise ProtocolValidationError(msg, f"Unknown payload_type: {v.payload_type}")
 
     def _validate_routing(self, envelope: ProtocolEnvelope) -> None:
         r = envelope.routing
         if not r.message_type:
-            raise ProtocolValidationError("empty_type", "message_type is required")
+            msg = "empty_type"
+            raise ProtocolValidationError(msg, "message_type is required")
         if not r.source or not r.destination:
-            raise ProtocolValidationError(
-                "invalid_routing", "source and destination are required"
-            )
+            msg = "invalid_routing"
+            raise ProtocolValidationError(msg, "source and destination are required")
         # MessageKind validation: check via .value which works for
         # programmatic construction. Deserialization errors are
         # caught by _from_dict in serializer.py.
         if not isinstance(r.message_kind, MessageKind):
-            raise ProtocolValidationError(
-                "invalid_kind", f"Unknown message_kind: {r.message_kind}"
-            )
+            msg = "invalid_kind"
+            raise ProtocolValidationError(msg, f"Unknown message_kind: {r.message_kind}")
 
     def _validate_trace(self, envelope: ProtocolEnvelope) -> None:
         t = envelope.trace
         if not t.trace_id.value:
-            raise ProtocolValidationError("missing_trace", "trace_id is required (OBS-01)")
+            msg = "missing_trace"
+            raise ProtocolValidationError(msg, "trace_id is required (OBS-01)")
         if not t.span_id.value:
-            raise ProtocolValidationError("missing_span", "span_id is required (OBS-03)")
+            msg = "missing_span"
+            raise ProtocolValidationError(msg, "span_id is required (OBS-03)")
 
     def _validate_delivery(self, envelope: ProtocolEnvelope) -> None:
         d = envelope.delivery
         if not isinstance(d.semantics, DeliverySemantics):
-            raise ProtocolValidationError(
-                "invalid_semantics", f"Unknown delivery semantics: {d.semantics}"
-            )
+            msg = "invalid_semantics"
+            raise ProtocolValidationError(msg, f"Unknown delivery semantics: {d.semantics}")
         if d.semantics == DeliverySemantics.EXACTLY_ONCE and d.idempotency_key is None:
-            raise ProtocolValidationError(
-                "missing_idempotency", "EXACTLY_ONCE requires idempotency_key"
-            )
+            msg = "missing_idempotency"
+            raise ProtocolValidationError(msg, "EXACTLY_ONCE requires idempotency_key")
         if d.timeout_ms < 0:
-            raise ProtocolValidationError("invalid_timeout", "timeout_ms must be >= 0")
+            msg = "invalid_timeout"
+            raise ProtocolValidationError(msg, "timeout_ms must be >= 0")
 
     def _validate_payload(self, envelope: ProtocolEnvelope) -> None:
         payload_len = len(envelope.payload)
         if payload_len > self.MAX_PAYLOAD_SIZE:
+            msg = "oversized"
             raise ProtocolValidationError(
-                "oversized", f"Payload {payload_len} exceeds global max {self.MAX_PAYLOAD_SIZE} bytes"
+                msg,
+                f"Payload {payload_len} exceeds global max {self.MAX_PAYLOAD_SIZE} bytes",
             )
         # Per-message-type size budget (ADR-028-04)
         for prefix, budget in self.SIZE_BUDGETS.items():
             if envelope.routing.message_type.startswith(prefix):
                 if payload_len > budget:
+                    msg = "oversized"
                     raise ProtocolValidationError(
-                        "oversized",
+                        msg,
                         f"Payload {payload_len} exceeds {budget} budget for {prefix}",
                     )
                 break
 
     def _validate_checksum_integrity(self, envelope: ProtocolEnvelope) -> None:
         if not envelope.checksum:
-            raise ProtocolValidationError("missing_checksum", "checksum is required")
+            msg = "missing_checksum"
+            raise ProtocolValidationError(msg, "checksum is required")
         if not verify_checksum(envelope.payload, envelope.checksum):
+            msg = "checksum_mismatch"
             raise ProtocolValidationError(
-                "checksum_mismatch",
+                msg,
                 f"Checksum {envelope.checksum} does not match payload",
             )
 
     def validate_checksum(self, payload: bytes, expected: str) -> None:
         if not verify_checksum(payload, expected):
-            raise ProtocolValidationError(
-                "checksum_mismatch", f"Expected {expected}, got {compute_checksum(payload)}"
-            )
+            msg = "checksum_mismatch"
+            raise ProtocolValidationError(msg, f"Expected {expected}, got {compute_checksum(payload)}")
 
     def _validate_schema_compatibility(self, envelope: ProtocolEnvelope) -> None:
         """Verify the recipient can deserialize this message's schema.
@@ -188,10 +203,8 @@ class ProtocolValidator:
         except (ValueError, IndexError):
             return
         if sv_maj > sp_maj:
+            msg = "schema_mismatch"
             raise ProtocolValidationError(
-                "schema_mismatch",
+                msg,
                 f"Schema {schema_version} for {msg_type} requires MAJOR ≤ {supported}",
             )
-
-
-

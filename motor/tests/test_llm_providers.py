@@ -19,6 +19,7 @@ from motor.core.llm.base import BaseLLMProvider
 
 # ── Contrato: todos los proveedores implementan BaseLLMProvider ──
 
+
 class TestContract:
     """Verifica que cada proveedor cumple el contrato BaseLLMProvider."""
 
@@ -67,6 +68,7 @@ class TestContract:
 
 
 # ── Formato y tipos de retorno ──
+
 
 class TestFormatoBase:
     PROVEEDORES: ClassVar[list[tuple[str, Any]]] = []
@@ -119,6 +121,7 @@ class TestFormato(TestFormatoBase):
 
 
 # ── Registry + Router ──
+
 
 class TestRegistryRouter:
     def test_registry_default_ollama(self) -> None:
@@ -186,16 +189,30 @@ class TestRegistryRouter:
         from motor.core.llm.router import LLMRouter
 
         class MockA(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None): return "A"
-            def embed(self, texts, model=None): return [[0.0]]
-            async def embed_async(self, texts, model=None): return [[0.0]]
-            def health(self): return {"status": "A"}
+            def generate(self, prompt, model=None, options=None):
+                return "A"
+
+            def embed(self, texts, model=None):
+                return [[0.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "A"}
 
         class MockB(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None): return "B"
-            def embed(self, texts, model=None): return [[1.0]]
-            async def embed_async(self, texts, model=None): return [[1.0]]
-            def health(self): return {"status": "B"}
+            def generate(self, prompt, model=None, options=None):
+                return "B"
+
+            def embed(self, texts, model=None):
+                return [[1.0]]
+
+            async def embed_async(self, texts, model=None):
+                return [[1.0]]
+
+            def health(self):
+                return {"status": "B"}
 
         reg = ProviderRegistry()
         reg.register("A", MockA(), default=True)
@@ -218,10 +235,17 @@ class TestRegistryRouter:
         from motor.core.llm.router import LLMRouter
 
         class Mock(BaseLLMProvider):
-            def generate(self, *a, **kw): return "x"
-            def embed(self, *a, **kw): return [[0.0]]
-            async def embed_async(self, *a, **kw): return [[0.0]]
-            def health(self): return {"status": "x"}
+            def generate(self, *a, **kw):
+                return "x"
+
+            def embed(self, *a, **kw):
+                return [[0.0]]
+
+            async def embed_async(self, *a, **kw):
+                return [[0.0]]
+
+            def health(self):
+                return {"status": "x"}
 
         reg = ProviderRegistry()
         reg.register("mock", Mock(), default=True)
@@ -231,6 +255,7 @@ class TestRegistryRouter:
 
 
 # ── Configuración ──
+
 
 class TestConfig:
     def test_default_provider_from_config(self) -> None:
@@ -255,6 +280,7 @@ class TestConfig:
 
 
 # ── Error handling (httpx mockeado) ──
+
 
 class TestErrorHandling:
     def test_generate_timeout_error(self) -> None:
@@ -287,10 +313,10 @@ class TestErrorHandling:
         prov = OllamaProvider()
         with patch("motor.core.llm.ollama.httpx.post") as mock_post:
             mock_response = mock_post.return_value
-            mock_response.raise_for_status.side_effect = __import__(
-                "httpx"
-            ).HTTPStatusError(
-                "500 error", request=None, response=__import__("httpx").Response(500)
+            mock_response.raise_for_status.side_effect = __import__("httpx").HTTPStatusError(
+                "500 error",
+                request=None,
+                response=__import__("httpx").Response(500),
             )
             resultado = prov.generate("test")
             assert isinstance(resultado, str)

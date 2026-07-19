@@ -37,12 +37,12 @@ def llamar_ollama(prompt: str, model: str = MODEL, timeout: int = TIMEOUT) -> st
         },
     ).encode()
 
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         f"{OLLAMA_URL}/api/generate",
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310
         return json.loads(r.read()).get("response", "")
 
 

@@ -17,10 +17,7 @@ from motor.core.web.models import SearchResult
 log = logging.getLogger(__name__)
 
 SEARCH_URL = "https://html.duckduckgo.com/html"
-DEFAULT_USER_AGENT = (
-    "Mozilla/5.0 (compatible; URA/1.0; +https://github.com/anomalyco/ura) "
-    "Web Intelligence"
-)
+DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; URA/1.0; +https://github.com/anomalyco/ura) Web Intelligence"
 
 
 def _parse_results(html: str) -> list[dict[str, str]]:
@@ -48,11 +45,13 @@ def _parse_results(html: str) -> list[dict[str, str]]:
         url = urls[i] if i < len(urls) else ""
         snippet = re.sub(r"<[^>]+>", "", snippets[i]) if i < len(snippets) else ""
         if title and url:
-            results.append({
-                "title": title.strip(),
-                "url": url.strip(),
-                "snippet": snippet.strip(),
-            })
+            results.append(
+                {
+                    "title": title.strip(),
+                    "url": url.strip(),
+                    "snippet": snippet.strip(),
+                },
+            )
     return results
 
 
@@ -95,7 +94,8 @@ class DuckDuckGoSearchProvider(SearchProvider):
                 log.warning("ddg connection error (attempt %d/%d): %s", attempt + 1, self._max_retries + 1, e)
                 time.sleep(1.0 * (attempt + 1))
 
-        raise RuntimeError(f"DuckDuckGo search failed after {self._max_retries + 1} attempts") from last_error
+        msg = f"DuckDuckGo search failed after {self._max_retries + 1} attempts"
+        raise RuntimeError(msg) from last_error
 
     def _search_once(self, query: str, limit: int = 10) -> list[SearchResult]:
         r = httpx.post(

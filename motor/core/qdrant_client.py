@@ -479,7 +479,7 @@ class URAQdrantClient:
         await qdrant.close()
     """
 
-    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0):
+    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
         self.base_url = base_url
         self.timeout = timeout
         self._client: httpx.AsyncClient | None = None
@@ -511,10 +511,10 @@ class URAQdrantClient:
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
-            log.error("Error HTTP en Qdrant (%s): %s", e.response.status_code, e.response.text)
+            log.exception("Error HTTP en Qdrant (%s): %s", e.response.status_code, e.response.text)
             return {"result": []}
         except httpx.RequestError as e:
-            log.error("Fallo de red al conectar con Qdrant: %s", e)
+            log.exception("Fallo de red al conectar con Qdrant: %s", e)
             return {"result": []}
 
     async def upsert_puntos(
@@ -532,7 +532,7 @@ class URAQdrantClient:
             response.raise_for_status()
             return len(puntos)
         except Exception as e:
-            log.error("Error upsert en Qdrant: %s", e)
+            log.exception("Error upsert en Qdrant: %s", e)
             return 0
 
     async def close(self) -> None:
@@ -551,7 +551,6 @@ class URAQdrantClient:
                 return True
         except Exception:
             log.exception("Collection existence check failed")
-            pass
         payload = {
             "vectors": {"size": VECTOR_SIZE_EMBEDDING, "distance": "Cosine"},
             "sparse_vectors": {"bm25": {"index": {"on_disk": True}, "modifier": "idf"}},
@@ -560,7 +559,7 @@ class URAQdrantClient:
             resp = await client.put(f"/collections/{coleccion}", json=payload)
             return resp.status_code in (200, 201)
         except Exception as e:
-            log.error("Error creando colección híbrida: %s", e)
+            log.exception("Error creando colección híbrida: %s", e)
             return False
 
     async def buscar_hibrido(

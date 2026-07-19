@@ -20,10 +20,10 @@ API Classification:
 
 from motor.platform.audit import AuditLogger
 from motor.platform.compat import CompatibilityChecker
-from motor.platform.delivery import ErrorDelivery, classify_error
+from motor.platform.delivery import ErrorDelivery, classify_error  # noqa: F401
 from motor.platform.errors import ProtocolException
 from motor.platform.health import HealthAggregator, get_health_aggregator
-from motor.platform.metrics import PlatformMetrics, get_platform_metrics
+from motor.platform.metrics import PlatformMetrics, get_platform_metrics  # noqa: F401
 from motor.platform.middleware import TraceMiddleware, traced
 from motor.platform.models import (
     CausationId,

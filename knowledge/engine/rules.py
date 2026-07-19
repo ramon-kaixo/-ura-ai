@@ -15,7 +15,7 @@ Arquitectura:
   RuleEvaluator:
       sorted(rules, by id) × sorted(documents, by id)
       → list[Finding]
-"""
+"""  # noqa: RUF002
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ _ALLOWED_AST_NODES = frozenset(
         # List/Dict/Set comprehension (NO GeneratorExp)
         ast.ListComp,
         ast.comprehension,
-    }
+    },
 )
 
 # Nodos EXPLÍCITAMENTE PROHIBIDOS (por claridad, aunque no están en _ALLOWED)
@@ -197,29 +197,35 @@ class _SafeEvalChecker(ast.NodeVisitor):
 
         # 1. Verificar nodo permitido
         if node_type not in _ALLOWED_AST_NODES:
-            raise UnsafeExpressionError(f"Nodo no permitido: {type_name}")
+            msg = f"Nodo no permitido: {type_name}"
+            raise UnsafeExpressionError(msg)
 
         # 2. Verificar profundidad máxima
         if self._depth > _MAX_AST_DEPTH:
-            raise UnsafeExpressionError(f"Profundidad máxima excedida ({_MAX_AST_DEPTH})")
+            msg = f"Profundidad máxima excedida ({_MAX_AST_DEPTH})"
+            raise UnsafeExpressionError(msg)
 
         # 3. Verificar número máximo de nodos
         if self._nodes > _MAX_AST_NODES:
-            raise UnsafeExpressionError(f"Número máximo de nodos excedido ({_MAX_AST_NODES})")
+            msg = f"Número máximo de nodos excedido ({_MAX_AST_NODES})"
+            raise UnsafeExpressionError(msg)
 
         # 4. Bloquear dunder methods (__class__, __bases__, etc.)
         if isinstance(node, ast.Attribute) and node.attr.startswith("_"):
-            raise UnsafeExpressionError(f"Acceso a atributo privado/dunder no permitido: {node.attr}")
+            msg = f"Acceso a atributo privado/dunder no permitido: {node.attr}"
+            raise UnsafeExpressionError(msg)
 
         # 5. Verificar llamadas a función
         if isinstance(node, ast.Call):
             self._calls += 1
             if self._calls > _MAX_FUNCTION_CALLS:
-                raise UnsafeExpressionError(f"Máximo de llamadas a funciones excedido ({_MAX_FUNCTION_CALLS})")
+                msg = f"Máximo de llamadas a funciones excedido ({_MAX_FUNCTION_CALLS})"
+                raise UnsafeExpressionError(msg)
             func = node.func
-            if isinstance(func, ast.Name):
+            if isinstance(func, ast.Name):  # noqa: SIM102
                 if func.id not in _FUNCTION_WHITELIST and func.id not in _CONSTANT_WHITELIST:
-                    raise UnsafeExpressionError(f"Función no permitida: {func.id}")
+                    msg = f"Función no permitida: {func.id}"
+                    raise UnsafeExpressionError(msg)
 
         # 6. Registrar nombres usados
         if isinstance(node, ast.Name):
@@ -252,9 +258,11 @@ def safe_eval(
     Nota:
         El timeout debe gestionarlo el llamador (SafeEval no usa señales
         para ser portable a Windows/hilos).
+
     """
     if len(expression) > _MAX_EXPRESSION_LENGTH:
-        raise UnsafeExpressionError(f"Expresión demasiado larga: {len(expression)} > {_MAX_EXPRESSION_LENGTH}")
+        msg = f"Expresión demasiado larga: {len(expression)} > {_MAX_EXPRESSION_LENGTH}"
+        raise UnsafeExpressionError(msg)
 
     tree = ast.parse(expression, mode="eval")
     checker = _SafeEvalChecker()
@@ -266,7 +274,7 @@ def safe_eval(
         env.update(allowed)
 
     code = compile(tree, "<safe_eval>", "eval")
-    return eval(code, {"__builtins__": {}}, env)
+    return eval(code, {"__builtins__": {}}, env)  # noqa: S307
 
 
 # ── Rule Protocol ─────────────────────────────────────────────────────────
@@ -320,6 +328,7 @@ class Rule(Protocol):
 
         Returns:
             Lista de findings (vacía si la regla no se activa).
+
         """
         ...
 
@@ -355,7 +364,7 @@ class BuiltinRule:
                         severity=self.metadata.severity,
                         message=self.metadata.description,
                         metadata={"rule_name": self.metadata.id},
-                    )
+                    ),
                 ]
         except Exception as exc:
             log.debug(
@@ -423,7 +432,7 @@ _BUILTIN_RULES: list[BuiltinRule] = [
             category="coverage",
             cost="O(1)",
         ),
-        expression="len(doc.get('relations', [])) == 0 and doc.get('id', '') not in ctx.get('all_relation_targets', set())",
+        expression="len(doc.get('relations', [])) == 0 and doc.get('id', '') not in ctx.get('all_relation_targets', set())",  # noqa: E501
     ),
 ]
 
@@ -440,7 +449,7 @@ class RuleEvaluator:
       - Los documentos se procesan en orden alfabético por id.
     """
 
-    def __init__(self, rules: list[Rule] | None = None):
+    def __init__(self, rules: list[Rule] | None = None) -> None:
         self._rules = sorted(
             rules or _BUILTIN_RULES,
             key=lambda r: r.metadata.id,
@@ -465,6 +474,7 @@ class RuleEvaluator:
 
         Returns:
             Findings ordenados por (rule_id, doc_id).
+
         """
         context: dict[str, Any] = {
             "all_node_ids": all_node_ids or set(),

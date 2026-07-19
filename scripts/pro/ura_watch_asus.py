@@ -11,27 +11,28 @@ import os
 import socket
 import subprocess
 import time
+from pathlib import Path
 
 ASUS_MAC = "30:c5:99:c0:64:c3"
 ASUS_IPS = ["100.72.103.12", os.environ.get("ASUS_HOST", "10.164.1.99")]
 PING_COUNT = 2
 PING_TIMEOUT = 5
 MAX_FAILS = 3
-FAIL_LOG = "/tmp/ura_asus_watch_fail"
+FAIL_LOG = "/tmp/ura_asus_watch_fail"  # noqa: S108
 LOG = "/Users/ramonesnaola/URA/logs/ura_asus_watch.log"
 
 
 def log(msg: str) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
-    os.makedirs(os.path.dirname(LOG), exist_ok=True)
-    with open(LOG, "a") as f:
+    os.makedirs(Path(LOG).parent, exist_ok=True)  # noqa: PTH103
+    with open(LOG, "a") as f:  # noqa: PTH123
         f.write(line + "\n")
 
 
 def ping(ip: str) -> bool:
-    r = subprocess.run(
-        ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],
+    r = subprocess.run(  # noqa: S603
+        ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],  # noqa: S607
         capture_output=True,
         timeout=10,
         check=False,
@@ -63,26 +64,26 @@ def main() -> None:
     if alive:
         log("ASUS responde")
         with contextlib.suppress(FileNotFoundError):
-            os.remove(FAIL_LOG)
+            os.remove(FAIL_LOG)  # noqa: PTH107
         return
 
     # No responde — incrementar contador
     fails = 0
     try:
-        with open(FAIL_LOG) as f:
+        with open(FAIL_LOG) as f:  # noqa: PTH123
             fails = int(f.read().strip())
     except (FileNotFoundError, ValueError):
         fails = 0
     fails += 1
 
     log(f"ASUS no responde #{fails}/{MAX_FAILS}")
-    with open(FAIL_LOG, "w") as f:
+    with open(FAIL_LOG, "w") as f:  # noqa: PTH123
         f.write(str(fails))
 
     if fails >= MAX_FAILS:
         log("Enviando WoL...")
         send_wol(ASUS_MAC)
-        os.remove(FAIL_LOG)
+        os.remove(FAIL_LOG)  # noqa: PTH107
         log("WoL enviado")
 
 

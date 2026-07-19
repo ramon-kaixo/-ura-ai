@@ -9,6 +9,5 @@ from knowledge.engine.orchestrator import compile_worker
 def cmd_job_process(args) -> int:
     db_path = _resolve_db_path(args)
     source_dir = Path(args.source_dir) if hasattr(args, "source_dir") and args.source_dir else None
-    n = compile_worker(db_path=db_path, source_dir=source_dir)
-    print(f"Processed {n} jobs")
+    compile_worker(db_path=db_path, source_dir=source_dir)
     return 0

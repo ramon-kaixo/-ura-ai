@@ -62,8 +62,8 @@ def to_openlineage(asset: KnowledgeAsset, job_name: str = "metadata_extract", ru
                     "schema": {
                         "_producer": "knowledge.engine.ontology",
                         "fields": [{"name": k, "type": type(v).__name__} for k, v in asset.metadata.items()],
-                    }
+                    },
                 },
-            }
+            },
         ],
     }

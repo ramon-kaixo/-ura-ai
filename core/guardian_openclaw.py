@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Guardián de Seguridad para OpenClaw
+"""Guardián de Seguridad para OpenClaw
 Envuelve cualquier acción de OpenClaw con reglas de seguridad.
 """
 
@@ -39,7 +38,7 @@ class GuardianOpenCLaw:
     """Guardián de seguridad que envuelve acciones de OpenClaw."""
 
     # Reglas de seguridad activas (atributo de clase)
-    reglas: list[str] = [
+    reglas: list[str] = [  # noqa: RUF012
         "policía",
         "copia_previa",
         "caja_de_arena",
@@ -48,7 +47,7 @@ class GuardianOpenCLaw:
         "auditoría",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Inicializar el guardián."""
         self.backup_dir = BACKUP_DIR
         self.audit_log = AUDIT_LOG
@@ -72,25 +71,25 @@ class GuardianOpenCLaw:
 
         logger.info("Guardián de OpenClaw inicializado")
 
-    def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = ""):
+    def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = "") -> None:
         """Registrar acción en log de auditoría."""
         try:
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
-            with open(self.audit_log, "a", encoding="utf-8") as f:
+            with open(self.audit_log, "a", encoding="utf-8") as f:  # noqa: PTH123
                 f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:
-            logger.error(f"Error registrando en audit.log: {e}")
+            logger.exception(f"Error registrando en audit.log: {e}")
 
     def _consultar_policia(self, accion: str, **kwargs) -> tuple[bool, str]:
         # Stub: agente_policia_v2 no operativo en este nodo
         return True, "stub: policia desactivado"
 
     def _crear_backup(self, ruta: str) -> bool:
-        """
-        REGLA 2 - COPIA PREVIA: Crear backup antes de operaciones de borrado.
+        """REGLA 2 - COPIA PREVIA: Crear backup antes de operaciones de borrado.
 
         Returns:
             True si el backup fue exitoso
+
         """
         try:
             ruta_path = Path(ruta)
@@ -119,15 +118,15 @@ class GuardianOpenCLaw:
             return True
 
         except Exception as e:
-            logger.error(f"Error creando backup: {e}")
+            logger.exception(f"Error creando backup: {e}")
             return False
 
     def _ejecutar_sandbox(self, accion: str, **kwargs) -> tuple[bool, str]:
-        """
-        REGLA 3 - CAJA DE ARENA: Ejecutar acción en sandbox.
+        """REGLA 3 - CAJA DE ARENA: Ejecutar acción en sandbox.
 
         Returns:
             (exitoso, mensaje)
+
         """
         try:
             # Ejecutar acción 3 veces en sandbox
@@ -144,12 +143,11 @@ class GuardianOpenCLaw:
             if exitosos == 3:
                 self.stats["sandbox_exitosos"] += 1
                 return True, "Sandbox: 3/3 exitosos"
-            else:
-                self.stats["sandbox_fallidos"] += 1
-                return False, f"Sandbox: {exitosos}/3 exitosos"
+            self.stats["sandbox_fallidos"] += 1
+            return False, f"Sandbox: {exitosos}/3 exitosos"
 
         except Exception as e:
-            logger.error(f"Error en sandbox: {e}")
+            logger.exception(f"Error en sandbox: {e}")
             self.stats["sandbox_fallidos"] += 1
             return False, f"Error en sandbox: {e}"
 
@@ -162,11 +160,11 @@ class GuardianOpenCLaw:
         return all(peligroso not in accion_lower for peligroso in comandos_peligrosos)
 
     def _verificar_licencia(self, paquete: str) -> tuple[bool, str]:
-        """
-        REGLA 4 - CONTROL DE INSTALACIÓN: Verificar si el paquete es gratuito.
+        """REGLA 4 - CONTROL DE INSTALACIÓN: Verificar si el paquete es gratuito.
 
         Returns:
             (es_gratuito, mensaje)
+
         """
         try:
             # Lista de paquetes conocidos de pago (ejemplo básico)
@@ -195,16 +193,16 @@ class GuardianOpenCLaw:
             return True, "Paquete gratuito (asumido)"
 
         except Exception as e:
-            logger.error(f"Error verificando licencia: {e}")
+            logger.exception(f"Error verificando licencia: {e}")
             # Si falla la verificación, por seguridad pedir autorización
             return False, f"Error verificando licencia: {e}"
 
     def _autorizar_instalacion(self, paquete: str, precio: float | None = None) -> bool:
-        """
-        Solicitar autorización explícita al usuario para instalación.
+        """Solicitar autorización explícita al usuario para instalación.
 
         Returns:
             True si el usuario autoriza
+
         """
         try:
             if precio:
@@ -216,15 +214,15 @@ class GuardianOpenCLaw:
             return respuesta in {"s", "si", "sí"}
 
         except Exception as e:
-            logger.error(f"Error solicitando autorización: {e}")
+            logger.exception(f"Error solicitando autorización: {e}")
             return False
 
     def _detectar_password_field(self, formulario: dict[str, Any]) -> bool:
-        """
-        REGLA 5 - CONTRASEÑA FINAL: Detectar campos password en formulario.
+        """REGLA 5 - CONTRASEÑA FINAL: Detectar campos password en formulario.
 
         Returns:
             True si hay campos de password
+
         """
         if not isinstance(formulario, dict):
             return False
@@ -242,9 +240,8 @@ class GuardianOpenCLaw:
 
         return False
 
-    def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:
-        """
-        Ejecutar una acción con todas las reglas de seguridad.
+    def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:  # noqa: C901
+        """Ejecutar una acción con todas las reglas de seguridad.
 
         Args:
             accion: Descripción de la acción a ejecutar
@@ -252,6 +249,7 @@ class GuardianOpenCLaw:
 
         Returns:
             Dict con resultado de la ejecución
+
         """
         self.stats["total_acciones"] += 1
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
@@ -318,7 +316,7 @@ class GuardianOpenCLaw:
             self._log_audit("guardian", accion, "BLOQUEADO", "Campo de password detectado")
             return {
                 "success": False,
-                "message": "Acción bloqueada: Campo de password detectado. Por favor, introduzca la contraseña manualmente.",
+                "message": "Acción bloqueada: Campo de password detectado. Por favor, introduzca la contraseña manualmente.",  # noqa: E501
             }
 
         # Si pasa todas las reglas, ejecutar acción
@@ -334,9 +332,8 @@ class GuardianOpenCLaw:
 
     def mostrar_reglas(self) -> None:
         """Imprimir las reglas de seguridad numeradas."""
-        print("Reglas activas del Guardián OpenClaw:")
-        for i, regla in enumerate(self.reglas, start=1):
-            print(f"  {i}. {regla}")
+        for _i, _regla in enumerate(self.reglas, start=1):
+            pass
 
     def estado(self) -> dict[str, Any]:
         """Devolver estadísticas de seguridad."""
@@ -355,7 +352,7 @@ _guardian_instance: GuardianOpenCLaw | None = None
 
 def get_guardian() -> GuardianOpenCLaw:
     """Obtener instancia global del guardián (singleton)."""
-    global _guardian_instance
+    global _guardian_instance  # noqa: PLW0603
     if _guardian_instance is None:
         _guardian_instance = GuardianOpenCLaw()
     return _guardian_instance
@@ -363,5 +360,3 @@ def get_guardian() -> GuardianOpenCLaw:
 
 if __name__ == "__main__":
     g = get_guardian()
-    print(g.estado())
-    print("✅ Guardián activo")

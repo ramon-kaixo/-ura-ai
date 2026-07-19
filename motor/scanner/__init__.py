@@ -27,7 +27,7 @@ RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode
 class Scanner:
     """Escáner principal del sistema: servicios, recursos, red y hardware."""
 
-    def __init__(self, config: UraConfig):
+    def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.sliding = SlidingWindow()
         self.cal = Calibration(config)
@@ -42,7 +42,7 @@ class Scanner:
         except Exception as e:
             log.debug("systemd-detect-virt falló: %s", e)
             try:
-                with open("/proc/cpuinfo") as f:
+                with open("/proc/cpuinfo") as f:  # noqa: PTH123
                     return "hypervisor" not in f.read()
             except Exception as e2:
                 log.debug("lectura cpuinfo falló: %s", e2)
@@ -120,7 +120,8 @@ class Scanner:
         """Verifica si existe una unit systemd."""
         try:
             r = _executor.run(
-                ["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"], timeout=5
+                ["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"],
+                timeout=5,
             )
             return bool(r.stdout.strip())
         except Exception as e:
@@ -136,7 +137,7 @@ class Scanner:
             log.debug("docker ps falló: %s", e)
             return {}
 
-    def _check_recursos(self) -> dict:
+    def _check_recursos(self) -> dict:  # noqa: C901
         """Recolecta métricas de RAM, disco, CPU y zombies."""
         try:
             import psutil
@@ -161,7 +162,7 @@ class Scanner:
 
         meminfo = {}
         try:
-            with open("/proc/meminfo") as f:
+            with open("/proc/meminfo") as f:  # noqa: PTH123
                 meminfo = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in f if ":" in l)}
         except Exception as e:
             log.warning("fallo lectura /proc/meminfo: %s", e)
@@ -170,7 +171,7 @@ class Scanner:
 
         load = 0.0
         try:
-            with open("/proc/loadavg") as f:
+            with open("/proc/loadavg") as f:  # noqa: PTH123
                 load = float(f.read().split()[0])
         except Exception as e:
             log.debug("fallo lectura /proc/loadavg: %s", e)
@@ -294,13 +295,13 @@ class Scanner:
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
-                with open(archivo, "rb") as f:
+                with open(archivo, "rb") as f:  # noqa: PTH123
                     h.update(f.read())
             except OSError:
                 pass
         return h.hexdigest()[:16]
 
-    def _detectar_orphans(self) -> list:
+    def _detectar_orphans(self) -> list:  # noqa: C901
         """Detecta PIDs huérfanos, hijos de padres muertos, docker dangling y systemd falladas."""
         orphans = []
         try:

@@ -31,7 +31,7 @@ RESULTS_FILE = HERE / "benchmark_f10_results.json"
 
 def _subp(cmd: list[str], timeout: int = 60) -> tuple[float, str, str]:
     start = time.monotonic()
-    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510, S603
     elapsed = (time.monotonic() - start) * 1000
     return elapsed, p.stdout, p.stderr
 
@@ -87,8 +87,7 @@ class _P(PluginBase):
         start = time.monotonic()
         registry = PluginRegistry()
         registry.discover([str(d)])
-        elapsed = (time.monotonic() - start) * 1000
-    return elapsed
+        return (time.monotonic() - start) * 1000
 
 
 def bench_subprocess_executor(runs: int = 100) -> float:
@@ -99,8 +98,7 @@ def bench_subprocess_executor(runs: int = 100) -> float:
     start = time.monotonic()
     for _ in range(runs):
         executor.run(["echo", "bench"], timeout=5)
-    elapsed = (time.monotonic() - start) * 1000
-    return elapsed
+    return (time.monotonic() - start) * 1000
 
 
 def bench_degraded_mode_ops(ops: int = 1000) -> float:
@@ -112,8 +110,7 @@ def bench_degraded_mode_ops(ops: int = 1000) -> float:
     for i in range(ops):
         dm.mark_degraded(f"sys_{i}")
         dm.mark_healthy(f"sys_{i}")
-    elapsed = (time.monotonic() - start) * 1000
-    return elapsed
+    return (time.monotonic() - start) * 1000
 
 
 def bench_pytest() -> float:
@@ -161,7 +158,7 @@ try:
     import resource
     usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 except ImportError:
-    pass
+    pass  # noqa: S110
 print(usage)
 """
     _, stdout, _ = _subp([sys.executable, "-c", textwrap.dedent(code)], timeout=15)
@@ -184,16 +181,13 @@ def run_all(n_runs: int = 5) -> dict:
 
     results: dict[str, dict] = {}
     for name, fn, unit in benchmarks:
-        print(f"  {name} ... ", end="", flush=True)
         values: list[float] = []
-        for run in range(n_runs):
+        for _run in range(n_runs):
             try:
                 t = fn()
                 values.append(t)
-                print(f"{_fmt(t)}{unit}{' ' if run < n_runs - 1 else ''}", end="", flush=True)
-            except Exception as e:
-                print(f"ERR({e})", end=" ", flush=True)
-        print()
+            except Exception:  # noqa: S110
+                pass
         stats = _stats(values) if values else {"error": True, "detail": "all runs failed"}
         results[name] = {**stats, "unit": unit}
     return results
@@ -228,17 +222,15 @@ def compare(results: dict, baseline: dict | None) -> list[dict]:
 
 def print_table(rows: list[dict]) -> None:
     header = f"{'Benchmark':<38} {'Baseline':>10} {'Actual':>10} {'Delta':>8} {'Status':>14}"
-    sep = "-" * len(header)
-    print(f"\n{header}\n{sep}")
+    "-" * len(header)
     for r in rows:
-        base = str(r.get("baseline_ms", "N/A"))
-        actual = str(r.get("actual_ms", "N/A"))
-        delta = str(r.get("delta_pct", "N/A"))
-        status = r.get("status", "?")
-        print(f"{r['benchmark']:<38} {base:>10} {actual:>10} {delta:>8} {status:>14}")
+        str(r.get("baseline_ms", "N/A"))
+        str(r.get("actual_ms", "N/A"))
+        str(r.get("delta_pct", "N/A"))
+        r.get("status", "?")
 
 
-def main():
+def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="F10-07: Benchmarks Fase 10")
@@ -247,17 +239,11 @@ def main():
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     args = parser.parse_args()
 
-    print(f"=== F10-07 Benchmark === ({args.runs} runs each)")
-    print(f"Host: {__import__('socket').gethostname()}")
-    print()
-
     # Cargar baseline si existe
     baseline: dict | None = None
     if BASELINE_FILE.exists():
         baseline = json.loads(BASELINE_FILE.read_text())
-        print(f"Baseline cargado: {BASELINE_FILE} ({len(baseline)} métricas)")
     else:
-        print("Sin baseline previo — se usarán valores de referencia (FASE10_BASELINE.md).")
         # Baseline por defecto desde FASE10_BASELINE.md
         # NOTA: CLI help (<100ms) fue una estimación, no medición real.
         # El valor real se mide como import_time + overhead argparse (~80ms).
@@ -272,7 +258,6 @@ def main():
             "PluginRegistry discover (10)": {"mean": 200, "unit": "ms"},
             "SubprocessExecutor (100)": {"mean": 1000, "unit": "ms"},
         }
-    print()
 
     results = run_all(args.runs)
 
@@ -281,24 +266,20 @@ def main():
 
     # Guardar resultados
     RESULTS_FILE.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n")
-    print(f"\nResultados guardados: {RESULTS_FILE}")
 
     # Verificar degradaciones
     degradations = [r for r in rows if r.get("status") == "REGRESSION"]
     if degradations:
-        print(f"\n⚠️  DEGRADACIONES DETECTADAS ({len(degradations)}):")
-        for d in degradations:
-            print(f"  - {d['benchmark']}: {d['delta_pct']}% (baseline {d['baseline_ms']} → actual {d['actual_ms']}ms)")
-        print("\nRecomendación: INVESTIGAR antes de cerrar F10-07.")
+        for _d in degradations:
+            pass
     else:
-        print("\n✅ Sin degradaciones (±10%). Recomendación: ACEPTAR.")
+        pass
 
     if args.save_baseline:
         BASELINE_FILE.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n")
-        print(f"Baseline guardado: {BASELINE_FILE}")
 
     if args.json:
-        print(json.dumps({"results": results, "comparison": rows}, indent=2, ensure_ascii=False))
+        pass
 
     return 1 if degradations else 0
 

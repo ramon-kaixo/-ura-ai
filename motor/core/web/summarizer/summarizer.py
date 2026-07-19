@@ -140,6 +140,7 @@ class ExtractiveSummarizer:
         Args:
             documents: Documentos a resumir.
             max_length: Número máximo de frases en el resumen.
+
         """
         with self._lock:
             candidates: list[SentenceInfo] = []
@@ -171,7 +172,7 @@ class ExtractiveSummarizer:
                             position=i,
                             document_url=url,
                             document_title=title,
-                        )
+                        ),
                     )
 
             # Seleccionar mejores frases
@@ -182,14 +183,10 @@ class ExtractiveSummarizer:
             selected.sort(key=lambda c: (list(seen_urls).index(c.document_url), c.position))
 
             final_sentences = [s.text for s in selected]
-            total_words_original = sum(
-                len(re.findall(r"\w+", doc.text or "")) for doc in documents
-            )
+            total_words_original = sum(len(re.findall(r"\w+", doc.text or "")) for doc in documents)
             summary_words = sum(len(re.findall(r"\w+", s)) for s in final_sentences)
             compression = (
-                round(1.0 - (summary_words / max(1, total_words_original)), 4)
-                if total_words_original > 0
-                else 0.0
+                round(1.0 - (summary_words / max(1, total_words_original)), 4) if total_words_original > 0 else 0.0
             )
 
             return Summary(

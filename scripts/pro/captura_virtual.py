@@ -1,4 +1,4 @@
-"""captura_virtual.py — Captura programatica en Xvfb :99."""
+"""captura_virtual.py — Captura programatica en Xvfb :99."""  # noqa: INP001
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 DISPLAY = ":99"
-OUT_DIR = Path("/tmp/ura-capturas")
+OUT_DIR = Path("/tmp/ura-capturas")  # noqa: S108
 
 
 class CapturaVirtual:
@@ -22,17 +22,17 @@ class CapturaVirtual:
         ts = int(time.time())
         tmp = OUT_DIR / f".{nombre}_{ts}.png"
         final = OUT_DIR / f"{nombre}_{ts}.png"
-        subprocess.run(["scrot", str(tmp)], env=self.env, capture_output=True, timeout=10, check=False)
+        subprocess.run(["scrot", str(tmp)], env=self.env, capture_output=True, timeout=10, check=False)  # noqa: S603, S607
         if tmp.exists():
             tmp.rename(final)
         return final if final.exists() else Path()
 
     def abrir(self, cmd: list[str]) -> subprocess.Popen:
-        return subprocess.Popen(cmd, env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return subprocess.Popen(cmd, env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
 
     def ventanas(self) -> list[str]:
         r = subprocess.run(
-            ["xdotool", "search", "--onlyvisible", "."],
+            ["xdotool", "search", "--onlyvisible", "."],  # noqa: S607
             env=self.env,
             capture_output=True,
             text=True,
@@ -42,7 +42,7 @@ class CapturaVirtual:
         return [w for w in r.stdout.strip().split("\n") if w]
 
     def cerrar_ventana(self, wid: str) -> None:
-        subprocess.run(["xdotool", "windowkill", wid], env=self.env, capture_output=True, timeout=5, check=False)
+        subprocess.run(["xdotool", "windowkill", wid], env=self.env, capture_output=True, timeout=5, check=False)  # noqa: S603, S607
 
     def limpiar(self) -> None:
         for w in self.ventanas():

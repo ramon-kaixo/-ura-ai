@@ -43,6 +43,7 @@ def _hash_stream(path: str | Path) -> tuple[str, int]:
     Raises:
         FileNotFoundError: si el archivo no existe.
         OSError: si hay error de lectura.
+
     """
     h = hashlib.sha256()
     size = 0
@@ -65,6 +66,7 @@ def _check_import(module_name: str, package: str | None = None) -> bool:
 
     Returns:
         True si el módulo está disponible.
+
     """
     try:
         importlib.import_module(module_name)
@@ -84,6 +86,7 @@ class ExtractionResult:
         warnings: Advertencias durante la extracción.
         errors: Errores durante la extracción.
         duration_ms: Duración de la extracción en milisegundos.
+
     """
 
     asset: KnowledgeAsset | None = None
@@ -122,7 +125,7 @@ class ExtractorRegistry:
     Se puede consultar por MIME type o ID.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._extractors: dict[str, Extractor] = {}
 
     def register(self, extractor: Extractor) -> None:
@@ -155,7 +158,7 @@ _REGISTRY: ExtractorRegistry | None = None
 
 def get_registry() -> ExtractorRegistry:
     """Retorna el registro global de extractores."""
-    global _REGISTRY
+    global _REGISTRY  # noqa: PLW0603
     if _REGISTRY is None:
         _REGISTRY = ExtractorRegistry()
     return _REGISTRY

@@ -29,10 +29,12 @@ class PipelineLoader:
 
             data = json.loads(source)
         else:
-            raise ValueError(f"Pipeline format not supported: {path.suffix}")
+            msg = f"Pipeline format not supported: {path.suffix}"
+            raise ValueError(msg)
 
         if not isinstance(data, dict):
-            raise ValueError("Pipeline definition must be a dict")
+            msg = "Pipeline definition must be a dict"
+            raise ValueError(msg)
 
         return self._from_dict(data)
 
@@ -40,14 +42,14 @@ class PipelineLoader:
         stages_raw = data.get("stages", [])
         stages = []
         for s in stages_raw:
-            stages.append(
+            stages.append(  # noqa: PERF401
                 StageDefinition(
                     name=str(s.get("name", "")),
                     plugin=str(s.get("plugin", "")),
                     config=s.get("config", {}),
                     timeout=int(s.get("timeout", 30)),
                     optional=bool(s.get("optional", False)),
-                )
+                ),
             )
         return PipelineDefinition(
             name=str(data.get("name", "")),

@@ -2,7 +2,7 @@
 """Meta Miner Remoto — Extracción determinista de metadatos de código.
 Sin GPU, sin LLM, sin estado: puro os.walk + regex en frío.
 Uso: meta_miner_remote.py /ruta/a/datos
-Salida: JSON a /tmp/metadata_raw.json
+Salida: JSON a /tmp/metadata_raw.json.
 """
 
 import hashlib
@@ -82,7 +82,6 @@ def _guess_tags(path: str) -> list[str]:
 def scan(data_root: str) -> list[dict]:
     docs_dir = Path(data_root)
     if not docs_dir.exists():
-        print(f"[ERROR] {data_root} no existe", file=sys.stderr)
         return []
 
     items = []
@@ -96,8 +95,7 @@ def scan(data_root: str) -> list[dict]:
         rel = str(fpath.relative_to(docs_dir))
         try:
             text = fpath.read_text(encoding="utf-8", errors="replace")
-        except Exception as e:
-            print(f"[WARN] Saltando {rel}: {e}", file=sys.stderr)
+        except Exception:  # noqa: S112
             continue
 
         items.append(
@@ -115,18 +113,16 @@ def scan(data_root: str) -> list[dict]:
     return items
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
-        print("Uso: meta_miner_remote.py /ruta/a/datos", file=sys.stderr)
         sys.exit(1)
 
     data_root = sys.argv[1]
     items = scan(data_root)
-    tmp_path = "/tmp/metadata_raw.json"
-    with open(tmp_path, "w") as f:
+    tmp_path = "/tmp/metadata_raw.json"  # noqa: S108
+    with open(tmp_path, "w") as f:  # noqa: PTH123
         json.dump(items, f, indent=2, ensure_ascii=False)
 
-    print(f"[OK] {len(items)} archivos minados → {tmp_path}")
     sys.exit(0)
 
 

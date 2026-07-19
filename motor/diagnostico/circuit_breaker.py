@@ -9,7 +9,7 @@ class CircuitBreaker:
     FALLOS_MAX = 3
     VENTANA_SEG = 300
 
-    def __init__(self, qdrant):
+    def __init__(self, qdrant) -> None:
         self._qdrant = qdrant
         self._fallos = 0
         self._abierto = False
@@ -28,7 +28,7 @@ class CircuitBreaker:
                 log.warning("circuit breaker abierto tras %d fallos", self._fallos)
         return ok
 
-    def reset(self):
+    def reset(self) -> None:
         """Cierra el circuit breaker manualmente."""
         self._fallos = 0
         self._abierto = False

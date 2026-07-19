@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate reproducible evaluation corpus for KE benchmarking.
-Outputs to knowledge/evaluation/corpus/"""
+Outputs to knowledge/evaluation/corpus/.
+"""
 
 from __future__ import annotations
 
@@ -220,17 +221,17 @@ QUERIES_KNOWLEDGE = [
 ]
 
 
-def generate_corpus() -> None:
+def generate_corpus() -> None:  # noqa: C901, PLR0912, PLR0915
     queries = QUERIES_SYSTEM + QUERIES_CODE + QUERIES_KNOWLEDGE
     base_dir = __file__[: __file__.rfind("/scripts")] if "/scripts" in __file__ else "."
     base_dir += "/knowledge/evaluation/corpus"
 
     import os
 
-    os.makedirs(base_dir, exist_ok=True)
+    os.makedirs(base_dir, exist_ok=True)  # noqa: PTH103
 
     # Write queries.jsonl
-    with open(f"{base_dir}/queries.jsonl", "w") as f:
+    with open(f"{base_dir}/queries.jsonl", "w") as f:  # noqa: PTH123
         for qid, query in queries:
             domain = "system" if qid.startswith("sys") else "code" if qid.startswith("code") else "knowledge"
             f.write(json.dumps({"qid": qid, "query": query, "domain": domain}, ensure_ascii=False) + "\n")
@@ -337,8 +338,16 @@ def generate_corpus() -> None:
             elif "qdrant" in qid.lower() or "vector" in qid.lower() or "collection" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["knowledge", "qdrant"])
             elif (
-                "latency" in qid.lower() or "p50" in qid.lower() or "p95" in qid.lower() or "throughput" in qid.lower()
-            ) or "ndcg" in qid.lower() or "mrr" in qid.lower() or "map" in qid.lower():
+                (
+                    "latency" in qid.lower()
+                    or "p50" in qid.lower()
+                    or "p95" in qid.lower()
+                    or "throughput" in qid.lower()
+                )
+                or "ndcg" in qid.lower()
+                or "mrr" in qid.lower()
+                or "map" in qid.lower()
+            ):
                 topic_map.setdefault(qid, []).extend(["benchmark", "search"])
             elif (
                 "corpus" in qid.lower()
@@ -360,15 +369,15 @@ def generate_corpus() -> None:
             else:
                 topic_map.setdefault(qid, []).extend(["knowledge", "search"])
 
-    with open(f"{base_dir}/relevance.jsonl", "w") as f:
-        for qid, query in queries:
+    with open(f"{base_dir}/relevance.jsonl", "w") as f:  # noqa: PTH123
+        for qid, query in queries:  # noqa: B007
             topics = topic_map.get(qid, ["system"])
             seen_docs: set[str] = set()
             for topic in topics:
                 for doc in docs_by_topic.get(topic, []):
                     if doc not in seen_docs:
                         seen_docs.add(doc)
-                        grade = random.choice([2, 3]) if topic == topics[0] else random.choice([1, 2])
+                        grade = random.choice([2, 3]) if topic == topics[0] else random.choice([1, 2])  # noqa: S311
                         f.write(
                             json.dumps(
                                 {
@@ -378,7 +387,7 @@ def generate_corpus() -> None:
                                 },
                                 ensure_ascii=False,
                             )
-                            + "\n"
+                            + "\n",
                         )
 
     # Metadata
@@ -387,13 +396,13 @@ def generate_corpus() -> None:
         domain = "system" if qid.startswith("sys") else "code" if qid.startswith("code") else "knowledge"
         domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
-    total_rel = len(open(f"{base_dir}/relevance.jsonl").readlines())
+    total_rel = len(open(f"{base_dir}/relevance.jsonl").readlines())  # noqa: PTH123, SIM115
     unique_docs = len(
         {
             line.split('"doc_id":')[1].split('"')[1]
-            for line in open(f"{base_dir}/relevance.jsonl")
+            for line in open(f"{base_dir}/relevance.jsonl")  # noqa: PTH123, SIM115
             if '"doc_id":' in line
-        }
+        },
     )
 
     metadata = {
@@ -406,12 +415,11 @@ def generate_corpus() -> None:
         "source": "generated from URA codebase knowledge",
         "seed": 42,
     }
-    with open(f"{base_dir}/metadata.json", "w") as f:
+    with open(f"{base_dir}/metadata.json", "w") as f:  # noqa: PTH123
         json.dump(metadata, f, indent=2, ensure_ascii=False)
 
-    print(f"Corpus generado: {len(queries)} queries, {total_rel} relevance judgments, {unique_docs} docs")
-    for d, info in sorted(metadata["domains"].items()):
-        print(f"  {d}: {info['count']} queries ({info['pct']}%)")
+    for _d, _info in sorted(metadata["domains"].items()):
+        pass
 
 
 if __name__ == "__main__":

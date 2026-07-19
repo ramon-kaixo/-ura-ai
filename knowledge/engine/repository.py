@@ -84,7 +84,7 @@ class SQLiteKnowledgeRepository:
     Ningún otro módulo del dominio toca SQLite directamente.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
 
     def get_document(self, doc_id: str) -> Document | None:
@@ -155,7 +155,7 @@ class SQLiteKnowledgeRepository:
                     "tags": fm.get("tags", []),
                     "body": r["body"] or "",
                     "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-                }
+                },
             )
         return docs, node_ids, targets
 

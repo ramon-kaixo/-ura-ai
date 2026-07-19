@@ -8,7 +8,7 @@ def chunk_semantic(text: str, max_words: int = 500, min_words: int = 100) -> lis
     sections = _split_sections(text)
     chunks = []
     for sec in sections:
-        sec = sec.strip()
+        sec = sec.strip()  # noqa: PLW2901
         if not sec:
             continue
         words = sec.split()
@@ -40,7 +40,7 @@ def _split_paragraphs(text: str, max_words: int, min_words: int) -> list[str]:
     buffer: list[str] = []
     buffer_words = 0
     for para in paragraphs:
-        para = para.strip()
+        para = para.strip()  # noqa: PLW2901
         if not para:
             continue
         pw = len(para.split())

@@ -125,13 +125,15 @@ class ImageExtractor:
             with Image.open(path_str) as img:
                 width, height = img.size
                 if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                    msg = f"Image dimensions too large: {width}x{height} (max {MAX_IMAGE_DIMENSION}px per side)"
                     raise ImageSizeError(
-                        f"Image dimensions too large: {width}x{height} (max {MAX_IMAGE_DIMENSION}px per side)"
+                        msg,
                     )
 
                 if width * height > MAX_IMAGE_PIXELS:
+                    msg = f"Image too large: {width}x{height} = {width * height}px (max {MAX_IMAGE_PIXELS}px)"
                     raise ImageSizeError(
-                        f"Image too large: {width}x{height} = {width * height}px (max {MAX_IMAGE_PIXELS}px)"
+                        msg,
                     )
 
                 if width * height >= MAX_IMAGE_PIXELS // 2:

@@ -263,10 +263,12 @@ def test_copy_shares_facts() -> None:
 
 
 def test_copy_independent_lists() -> None:
-    idx = FactIndex.build([
-        _make_fact("f1", subject="Apple"),
-        _make_fact("f2", subject="Apple"),
-    ])
+    idx = FactIndex.build(
+        [
+            _make_fact("f1", subject="Apple"),
+            _make_fact("f2", subject="Apple"),
+        ],
+    )
     mutable = idx.copy()
     # Remove from mutable should not affect original
     mutable.remove_fact("f1")
@@ -288,7 +290,10 @@ def test_index_with_no_evidence() -> None:
 def test_index_empty_subject_predicate() -> None:
     idx = FactIndex()
     f = KnowledgeFact(
-        id="f1", subject="", predicate="", object="raw text",
+        id="f1",
+        subject="",
+        predicate="",
+        object="raw text",
         confidence=0.5,
     )
     idx.add_fact(f)
@@ -348,7 +353,7 @@ def test_benchmark_build_1000() -> None:
     FactIndex.build(facts)
     t = time.perf_counter() - start
     # Should be well under 100ms
-    assert t < 0.1, f"Build 1K facts took {t*1000:.1f}ms"
+    assert t < 0.1, f"Build 1K facts took {t * 1000:.1f}ms"
 
 
 def test_benchmark_build_10000() -> None:
@@ -357,7 +362,7 @@ def test_benchmark_build_10000() -> None:
     FactIndex.build(facts)
     t = time.perf_counter() - start
     # Should be under 500ms
-    assert t < 0.5, f"Build 10K facts took {t*1000:.1f}ms"
+    assert t < 0.5, f"Build 10K facts took {t * 1000:.1f}ms"
 
 
 def test_benchmark_lookup_10000() -> None:
@@ -368,7 +373,7 @@ def test_benchmark_lookup_10000() -> None:
         idx.lookup(f"f{i}")
     t = time.perf_counter() - start
     # Should be under 10ms for 10K lookups
-    assert t < 0.05, f"10K lookups took {t*1000:.1f}ms"
+    assert t < 0.05, f"10K lookups took {t * 1000:.1f}ms"
 
 
 def test_benchmark_incremental_add() -> None:
@@ -383,7 +388,7 @@ def test_benchmark_incremental_add() -> None:
         mutable.add_fact(f)
     t = time.perf_counter() - start
     # Should be well under 50ms
-    assert t < 0.05, f"Incremental add 100 took {t*1000:.1f}ms"
+    assert t < 0.05, f"Incremental add 100 took {t * 1000:.1f}ms"
 
 
 def test_benchmark_memory_estimate() -> None:
@@ -395,8 +400,7 @@ def test_benchmark_memory_estimate() -> None:
     # Just verify it doesn't blow up (practical check)
     assert idx.size == 10000
     # Print memory for visibility (not an assertion)
-    fact_size = sum(sys.getsizeof(f) for f in facts)
-    print(f"\n  10K facts total size: {fact_size / 1024:.1f} KB")
+    sum(sys.getsizeof(f) for f in facts)
 
 
 # ── B4.13: consistency across indexes ──────────────────
@@ -405,13 +409,13 @@ def test_benchmark_memory_estimate() -> None:
 def _all_secondary_fact_ids(idx: FactIndex) -> set[str]:
     """Retorna todos los fact_ids referenciados en índices secundarios."""
     ids: set[str] = set()
-    for inner in idx._by_entity.values():
+    for inner in idx._by_entity.values():  # noqa: SLF001
         ids.update(inner)
-    for inner in idx._by_predicate.values():
+    for inner in idx._by_predicate.values():  # noqa: SLF001
         ids.update(inner)
-    for inner in idx._by_sp.values():
+    for inner in idx._by_sp.values():  # noqa: SLF001
         ids.update(inner)
-    for inner in idx._by_evidence.values():
+    for inner in idx._by_evidence.values():  # noqa: SLF001
         ids.update(inner)
     return ids
 
@@ -458,12 +462,10 @@ def test_consistency_primary_has_all_secondary_keys() -> None:
     ]
     for f in facts:
         idx.add_fact(f)
-    for fid, fact in idx._by_id.items():
+    for fid, fact in idx._by_id.items():  # noqa: SLF001
         assert len(idx.lookup_entity(fact.subject)) > 0, f"Entity index missing for {fid}"
         assert len(idx.lookup_predicate(fact.predicate)) > 0, f"Predicate index missing for {fid}"
-        assert (
-            len(idx.lookup_subject_predicate(fact.subject, fact.predicate)) > 0
-        ), f"SP index missing for {fid}"
+        assert len(idx.lookup_subject_predicate(fact.subject, fact.predicate)) > 0, f"SP index missing for {fid}"
         for eid in fact.evidence_ids:
             if eid:
                 assert len(idx.lookup_evidence(eid)) > 0, f"Evidence index missing for {eid}"
@@ -490,9 +492,8 @@ def test_consistency_build_equals_sequential_add() -> None:
     # Same secondary indexes
     assert len(idx_build.lookup_entity("apple")) == len(idx_seq.lookup_entity("apple"))
     assert len(idx_build.lookup_predicate("sells")) == len(idx_seq.lookup_predicate("sells"))
-    assert (
-        len(idx_build.lookup_subject_predicate("Apple", "sells"))
-        == len(idx_seq.lookup_subject_predicate("Apple", "sells"))
+    assert len(idx_build.lookup_subject_predicate("Apple", "sells")) == len(
+        idx_seq.lookup_subject_predicate("Apple", "sells"),
     )
 
 
@@ -525,5 +526,5 @@ def test_benchmark_skewed_distribution() -> None:
     hot = idx.lookup_entity("hotentity")
     lookup_t = time.perf_counter() - start
     assert len(hot) == 100
-    assert build_t < 0.5, f"Skewed build took {build_t*1000:.1f}ms"
-    assert lookup_t < 0.001, f"Hot entity lookup took {lookup_t*1000:.1f}ms"
+    assert build_t < 0.5, f"Skewed build took {build_t * 1000:.1f}ms"
+    assert lookup_t < 0.001, f"Hot entity lookup took {lookup_t * 1000:.1f}ms"

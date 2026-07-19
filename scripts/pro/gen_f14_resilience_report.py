@@ -16,14 +16,14 @@ def load_latest() -> dict:
     return json.loads(files[-1].read_text())
 
 
-def generate() -> str:
+def generate() -> str:  # noqa: C901, PLR0912, PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])
 
     lines = []
 
-    def out(s=""):
+    def out(s="") -> None:
         lines.append(s)
 
     out("# F14 — Resilience Test Results")
@@ -100,29 +100,29 @@ def generate() -> str:
                 findings.append(
                     (
                         sid,
-                        f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10.",
-                    )
+                        f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10.",  # noqa: E501
+                    ),
                 )
             if sid == "R02":
                 findings.append(
                     (
                         sid,
-                        "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente.",
-                    )
+                        "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente.",  # noqa: E501
+                    ),
                 )
             if sid == "R06" and dl:
                 findings.append(
                     (
                         sid,
-                        "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco.",
-                    )
+                        "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco.",  # noqa: E501
+                    ),
                 )
             if sid == "R10":
                 findings.append(
                     (
                         sid,
-                        "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado.",
-                    )
+                        "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado.",  # noqa: E501
+                    ),
                 )
 
     for sid, desc in findings:
@@ -160,30 +160,28 @@ def generate() -> str:
     out("### Recomendaciones")
     out()
     out(
-        "1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker)."
+        "1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker).",  # noqa: E501
     )
     out(
-        "2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`."
+        "2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`.",  # noqa: E501
     )
     out(
-        "3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`."
+        "3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`.",  # noqa: E501
     )
     out(
-        "4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional."
+        "4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional.",  # noqa: E501
     )
     out(
-        "5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado."
+        "5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado.",  # noqa: E501
     )
 
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     report = generate()
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(report)
-    print(f"✅ Reporte generado: {REPORT_PATH}")
-    print(f"   {len(report.splitlines())} líneas")
 
 
 if __name__ == "__main__":

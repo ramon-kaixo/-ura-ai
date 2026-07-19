@@ -21,13 +21,13 @@ def mcp(nombre, args=None):
     payload = json.dumps({"name": nombre, "arguments": args or {}}).encode()
     inicio = time.time()
     try:
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             f"{MCP_URL}/mcp/call",
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=15) as r:
+        with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310
             result = json.loads(r.read())
         ms = int((time.time() - inicio) * 1000)
         return ms, result
@@ -37,14 +37,14 @@ def mcp(nombre, args=None):
 
 
 def log(msg) -> None:
-    with open(LOG, "a") as f:
+    with open(LOG, "a") as f:  # noqa: PTH123
         f.write(f"{datetime.now(UTC).isoformat()} - {msg}\n")
 
 
 def sugerir(problema, solucion) -> None:
     sugs = []
     if SUGERENCIAS.exists():
-        with open(SUGERENCIAS) as f:
+        with open(SUGERENCIAS) as f:  # noqa: PTH123
             sugs = json.load(f)
     sugs.append(
         {
@@ -54,13 +54,13 @@ def sugerir(problema, solucion) -> None:
             "solucion": solucion,
         },
     )
-    with open(SUGERENCIAS, "w") as f:
+    with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
         json.dump(sugs, f, indent=2)
 
 
 def notificar(msg) -> None:
     if NOTIFICAR.exists():
-        subprocess.run([str(NOTIFICAR), msg], check=False)
+        subprocess.run([str(NOTIFICAR), msg], check=False)  # noqa: S603
 
 
 def test(nombre, accion, args=None):
@@ -110,7 +110,7 @@ def main() -> int:
     resultados.append(("abrir_app", ok))
 
     # 6. Explorar sistema
-    ok, r = test("Explorar sistema", "explorar")
+    ok, r = test("Explorar sistema", "explorar")  # noqa: RUF059
     resultados.append(("explorar", ok))
 
     # 7. Raton

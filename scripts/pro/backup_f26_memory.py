@@ -11,8 +11,9 @@ from __future__ import annotations
 import os
 import sys
 import time
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))  # noqa: PTH118
 
 
 def cmd_backup(path: str) -> None:
@@ -20,30 +21,24 @@ def cmd_backup(path: str) -> None:
 
     memory = Memory()
     path = save_snapshot(memory, path)
-    print(f"Backup saved: {path}")
-    print(f"Size: {os.path.getsize(path)} bytes")
 
 
 def cmd_restore(path: str) -> None:
     from motor.memory import load_snapshot
 
-    if not os.path.exists(path):
-        print(f"Error: {path} not found")
+    if not Path(path).exists():
         sys.exit(1)
 
-    memory = load_snapshot(path)
-    print(f"Restored from: {path}")
-    print(f"Entries: {len(memory._entries) if hasattr(memory, '_entries') else 'N/A'}")
+    load_snapshot(path)
 
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print(__doc__)
         sys.exit(1)
 
     command = sys.argv[1]
     path = (
-        sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"
+        sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"  # noqa: S108
     )
 
     if command == "backup":
@@ -51,7 +46,6 @@ def main() -> None:
     elif command == "restore":
         cmd_restore(path)
     else:
-        print(f"Unknown command: {command}")
         sys.exit(1)
 
 

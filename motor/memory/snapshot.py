@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import tempfile
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from motor.memory.crypto import decrypt as _decrypt
@@ -51,14 +52,14 @@ def save_snapshot(timeline: MemoryTimeline, path: str, version: str = "", encryp
 
     data_to_write = _encrypt(raw_final.encode("utf-8"), encryption_key) if encryption_key else raw_final.encode("utf-8")
 
-    fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(path) or ".", suffix=".tmp")
+    fd, tmp_path = tempfile.mkstemp(dir=Path(path).parent or ".", suffix=".tmp")
     with os.fdopen(fd, "wb") as f:
         f.write(data_to_write)
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp_path, path)
+    os.replace(tmp_path, path)  # noqa: PTH105
     # fsync del directorio para garantizar que el rename es persistente
-    dir_fd = os.open(os.path.dirname(path) or ".", os.O_RDONLY)
+    dir_fd = os.open(Path(path).parent or ".", os.O_RDONLY)
     try:
         os.fsync(dir_fd)
     finally:
@@ -74,10 +75,11 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
     Verifica checksum si está presente.
     Soporta cifrado AES-256-CTR si encryption_key se proporciona.
     """
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Snapshot not found: {path}")
+    if not Path(path).exists():
+        msg = f"Snapshot not found: {path}"
+        raise FileNotFoundError(msg)
 
-    with open(path, "rb") as f:
+    with open(path, "rb") as f:  # noqa: PTH123
         raw = f.read()
 
     if encryption_key:
@@ -88,10 +90,8 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
             data = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             # Intentar descifrar sin clave (snapshot legacy)
-            raise ValueError(
-                "Snapshot is encrypted or corrupted. "
-                "Provide encryption_key or use unencrypted snapshot."
-            )
+            msg = "Snapshot is encrypted or corrupted. Provide encryption_key or use unencrypted snapshot."
+            raise ValueError(msg)  # noqa: B904
 
     header = data.get("header", {})
     entries = data.get("entries", {})
@@ -104,9 +104,8 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
         raw = json.dumps(data_copy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         computed = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
         if computed != stored_checksum:
-            raise ValueError(
-                f"Snapshot checksum mismatch: stored={stored_checksum}, computed={computed}"
-            )
+            msg = f"Snapshot checksum mismatch: stored={stored_checksum}, computed={computed}"
+            raise ValueError(msg)
 
     return header, entries
 

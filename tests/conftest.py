@@ -1,15 +1,15 @@
-import os
+import os  # noqa: EXE002
 import sys
 from pathlib import Path
 
 import pytest
 
 # Avoid /root/.ura/run/ crash in docker read-only filesystem during test collection
-os.environ.setdefault("URA_STATE_DIR", "/tmp/.ura_test_run")
-os.environ.setdefault("URA_LOGS_DIR", "/tmp/.ura_test_logs")
-os.environ.setdefault("URA_DATA_DIR", "/tmp/.ura_test_data")
-os.environ.setdefault("MOCHILA_COST_FILE", "/tmp/.ura_test_data/cost_tracker.jsonl")
-os.environ.setdefault("MOCHILA_HEALTH_FILE", "/tmp/.ura_test_data/provider_health.json")
+os.environ.setdefault("URA_STATE_DIR", "/tmp/.ura_test_run")  # noqa: S108
+os.environ.setdefault("URA_LOGS_DIR", "/tmp/.ura_test_logs")  # noqa: S108
+os.environ.setdefault("URA_DATA_DIR", "/tmp/.ura_test_data")  # noqa: S108
+os.environ.setdefault("MOCHILA_COST_FILE", "/tmp/.ura_test_data/cost_tracker.jsonl")  # noqa: S108
+os.environ.setdefault("MOCHILA_HEALTH_FILE", "/tmp/.ura_test_data/provider_health.json")  # noqa: S108
 
 # Add sandbox packages if available (httpx, etc installed in docker to .sandbox_packages)
 _sandbox_pkgs = Path(__file__).parent.parent / ".sandbox_packages"

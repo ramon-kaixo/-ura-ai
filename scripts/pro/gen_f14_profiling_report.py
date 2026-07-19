@@ -23,13 +23,13 @@ def get_findings() -> list[dict]:
     return []
 
 
-def fmt(val, unit=""):
+def fmt(val, unit="") -> str:
     if val is None:
         return "—"
     return f"{val}{unit}"
 
 
-def generate() -> str:
+def generate() -> str:  # noqa: C901, PLR0912, PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])
@@ -37,7 +37,7 @@ def generate() -> str:
 
     lines = []
 
-    def out(s=""):
+    def out(s="") -> None:
         lines.append(s)
 
     out("# F14 — Profiling Results")
@@ -97,7 +97,7 @@ def generate() -> str:
         rss = sm.get("rss_mb", {})
         if rss:
             out(
-                f"| RSS min/max/mean/p95 | {rss.get('min', '?')}/{rss.get('max', '?')}/{rss.get('mean', '?')}/{rss.get('p95', '?')} MB |"
+                f"| RSS min/max/mean/p95 | {rss.get('min', '?')}/{rss.get('max', '?')}/{rss.get('mean', '?')}/{rss.get('p95', '?')} MB |",  # noqa: E501
             )
         cpu = sm.get("cpu_percent", {})
         if cpu:
@@ -161,12 +161,10 @@ def generate() -> str:
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     report = generate()
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(report)
-    print(f"✅ Reporte generado: {REPORT_PATH}")
-    print(f"   {len(report.splitlines())} líneas")
 
 
 if __name__ == "__main__":

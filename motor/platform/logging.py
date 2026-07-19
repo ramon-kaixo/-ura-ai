@@ -52,7 +52,7 @@ class PlainFormatter(logging.Formatter):
 
 def configure_logging(
     level: str = "INFO",
-    structured: bool = False,
+    structured: bool = False,  # noqa: FBT001, FBT002
     output: str | None = None,
 ) -> None:
     """Configura logging global.
@@ -61,6 +61,7 @@ def configure_logging(
         level: DEBUG, INFO, WARN, ERROR
         structured: True=JSON, False=texto plano
         output: ruta de archivo o None=stdout
+
     """
     handler: logging.Handler
     handler = logging.FileHandler(output) if output else logging.StreamHandler(sys.stdout)

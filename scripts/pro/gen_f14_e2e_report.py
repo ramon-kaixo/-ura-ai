@@ -23,14 +23,14 @@ def get_findings() -> list[dict]:
     return []
 
 
-def generate() -> str:
+def generate() -> str:  # noqa: C901, PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])
 
     lines = []
 
-    def out(s=""):
+    def out(s="") -> None:
         lines.append(s)
 
     out("# F14 — End-to-End Test Results")
@@ -153,12 +153,10 @@ def generate() -> str:
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     report = generate()
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(report)
-    print(f"✅ Reporte generado: {REPORT_PATH}")
-    print(f"   {len(report.splitlines())} líneas")
 
 
 if __name__ == "__main__":

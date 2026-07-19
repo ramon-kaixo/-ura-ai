@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 # Importar desde módulos especializados
-_sys_path = os.path.dirname(os.path.abspath(__file__))
+_sys_path = Path(Path(__file__).resolve().parent)
 if _sys_path not in sys.path:
     sys.path.insert(0, _sys_path)
 
@@ -111,7 +111,7 @@ def scan_project() -> None:
             results[p] = {"status": "error"}
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     import argparse
 
     parser = argparse.ArgumentParser(description="Auto-Reglas de reparación")

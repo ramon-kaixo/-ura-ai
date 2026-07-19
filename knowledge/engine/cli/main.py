@@ -27,7 +27,7 @@ def _get_conn(db_path: Path):
     return open_db(db_path)
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     """Construye el árbol de subcomandos CLI."""
     # Imports diferidos para evitar ciclos y acelerar startup
     from knowledge.engine.cli.agent import cmd_agent_list, cmd_agent_run
@@ -87,7 +87,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_search = sub.add_parser("search", help="Full-text search documents")
     p_search.add_argument("query", help="FTS5 query string")
     p_search.add_argument(
-        "--mode", default="lexical", choices=["lexical", "hybrid"], help="Search mode (default: lexical)"
+        "--mode",
+        default="lexical",
+        choices=["lexical", "hybrid"],
+        help="Search mode (default: lexical)",
     )
     p_search.add_argument("--type", help="Filter by doc type")
     p_search.add_argument("--limit", type=int, default=10, help="Max results (default: 10)")
@@ -215,7 +218,9 @@ def build_parser() -> argparse.ArgumentParser:
     mem_sub = p_mem.add_subparsers(dest="memory_cmd", required=True)
     p_mem_create = mem_sub.add_parser("create", help="Create a memory record")
     p_mem_create.add_argument(
-        "kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Memory kind"
+        "kind",
+        choices=["conversation", "decision", "incident", "learning", "note"],
+        help="Memory kind",
     )
     p_mem_create.add_argument("title", help="Title")
     p_mem_create.add_argument("content", help="Content")
@@ -223,7 +228,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_create.set_defaults(func=cmd_memory_create)
     p_mem_list = mem_sub.add_parser("list", help="List memories")
     p_mem_list.add_argument(
-        "--kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Filter by kind"
+        "--kind",
+        choices=["conversation", "decision", "incident", "learning", "note"],
+        help="Filter by kind",
     )
     p_mem_list.add_argument("--limit", type=int, default=100, help="Max results")
     p_mem_list.set_defaults(func=cmd_memory_list)
@@ -233,7 +240,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_mem_search = mem_sub.add_parser("search", help="Search memories")
     p_mem_search.add_argument("query", help="Search query")
     p_mem_search.add_argument(
-        "--kind", choices=["conversation", "decision", "incident", "learning", "note"], help="Filter by kind"
+        "--kind",
+        choices=["conversation", "decision", "incident", "learning", "note"],
+        help="Filter by kind",
     )
     p_mem_search.add_argument("--limit", type=int, default=10, help="Max results")
     p_mem_search.set_defaults(func=cmd_memory_search)

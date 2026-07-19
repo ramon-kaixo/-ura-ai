@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
+URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 NERVIOSO = URA_ROOT / ".nervioso"
 MAP_FILE = NERVIOSO / "sistema_map.json"
 
@@ -32,7 +32,7 @@ def sign(file_path: str | Path) -> str:
     """Firma un archivo con BLAKE2b (8 bytes). Retorna hex digest."""
     h = hashlib.blake2b(digest_size=8)
     path = Path(file_path)
-    with open(path, "rb") as f:
+    with open(path, "rb") as f:  # noqa: PTH123
         while chunk := f.read(65536):
             h.update(chunk)
     return h.hexdigest()
@@ -47,12 +47,12 @@ def sign_content(content: str | bytes) -> str:
     return h.hexdigest()
 
 
-def load_index(force_reload: bool = False) -> dict[str, Any]:
+def load_index(force_reload: bool = False) -> dict[str, Any]:  # noqa: FBT001, FBT002
     """Carga .nervioso/sistema_map.json en memoria (cacheado).
     Single-Pass: primera llamada carga, siguientes devuelven cache.
     Si el archivo cambio en disco → recarga automatica.
     """
-    global _index_cache, _cache_mtime
+    global _index_cache, _cache_mtime  # noqa: PLW0603
 
     if not MAP_FILE.exists():
         return {}
@@ -127,7 +127,7 @@ def validate_and_abort(file_path: str | Path, worker_pid: int | None = None) -> 
 
 def update_index_node(rel_path: str, new_hash: str, new_size: int) -> None:
     """Actualiza el hash y size de un nodo en el index (post-modificacion)."""
-    global _index_cache
+    global _index_cache  # noqa: PLW0603
 
     index = load_index(force_reload=True)
     deps = index.get("dependency_graph", {})
@@ -157,24 +157,24 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
     try:
         if worker_pid:
             os.kill(worker_pid, 9)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     with contextlib.suppress(Exception):
-        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5, check=False)
+        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5, check=False)  # noqa: S607
 
     # Registrar en audit trail
     audit_log = NERVIOSO / "audit_trail.log"
     audit_log.parent.mkdir(parents=True, exist_ok=True)
     import time as _time
 
-    with open(audit_log, "a") as f:
+    with open(audit_log, "a") as f:  # noqa: PTH123
         f.write(f"[{_time.strftime('%Y-%m-%dT%H:%M:%S')}] | EMERGENCY_ABORT | {motivo}\n")
 
     # TTS alert
     with contextlib.suppress(Exception):
         subprocess.run(
-            ["say", "-v", "Jorge", "Alerta. Integridad del código comprometida."],
+            ["say", "-v", "Jorge", "Alerta. Integridad del código comprometida."],  # noqa: S607
             capture_output=True,
             timeout=5,
             check=False,
@@ -216,7 +216,7 @@ def checkpoint_update(rel_path: str, line: int, total_lines: int, worker_id: int
     """Actualiza la marca de agua en .nervioso/sistema_map.json.
     Registra la ultima linea procesada, total, timestamp, worker y estado.
     """
-    global _index_cache
+    global _index_cache  # noqa: PLW0603
 
     index = load_index(force_reload=True)
     node = index.get("dependency_graph", {}).get(rel_path)
@@ -375,7 +375,7 @@ def delta_check(label: str = "ultimo_ciclo") -> tuple[list[str], list[str], list
 
     for rel in prev:
         if rel not in current_keys:
-            eliminados.append(rel)
+            eliminados.append(rel)  # noqa: PERF401
 
     return modificados, nuevos, eliminados
 

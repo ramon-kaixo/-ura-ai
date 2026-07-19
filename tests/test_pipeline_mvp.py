@@ -45,7 +45,8 @@ class _FailingPlugin(PluginBase):
 
     def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
         self.executed = True
-        raise RuntimeError("stage failed intentionally")
+        msg = "stage failed intentionally"
+        raise RuntimeError(msg)
 
 
 class _CancellingPlugin(PluginBase):

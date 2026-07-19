@@ -3,7 +3,7 @@ import logging
 log = logging.getLogger("ura.diagnostico.pattern")
 
 
-def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:
+def buscar_patrones(scan, qdrant, circuit_breaker, config) -> tuple:  # noqa: C901, PLR0912
     """Busca patrones de incidente en el resultado del escaneo."""
     incidentes = []
     for svc, estado in scan.servicios.items():

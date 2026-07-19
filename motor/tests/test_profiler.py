@@ -22,18 +22,30 @@ class _MockOK(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         time.sleep(0.01)  # Simular trabajo
         return "ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _MockSlow(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         time.sleep(0.05)
         return "slow_ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class TestLLMProfiler:
@@ -86,8 +98,7 @@ class TestLLMProfiler:
         assert prof_b is not None
         assert prof_a.wall_time_ms > 0
         assert prof_b.wall_time_ms >= prof_a.wall_time_ms, (
-            f"b={prof_b.wall_time_ms:.0f}ms debe ser >= a={prof_a.wall_time_ms:.0f}ms "
-            f"(b tuvo 10x iteraciones)"
+            f"b={prof_b.wall_time_ms:.0f}ms debe ser >= a={prof_a.wall_time_ms:.0f}ms (b tuvo 10x iteraciones)"
         )
 
         recent = p.get_recent(5)

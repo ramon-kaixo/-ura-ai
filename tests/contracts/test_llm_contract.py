@@ -17,6 +17,7 @@ from motor.core.llm import embed, embed_async, generate, health
 # 1. API pública exportada
 # ─────────────────────────────────────────────
 
+
 class TestAPIExportada:
     def test_all_exporta_cuatro_funciones(self) -> None:
         assert isinstance(LLM_ALL, list)
@@ -38,20 +39,42 @@ class TestAPIExportada:
     def test_no_hay_imports_no_publicos(self) -> None:
         import motor.core.llm
 
-        exports_no_publicos = {
-            name for name in dir(motor.core.llm)
-            if not name.startswith("_")
-        }
+        exports_no_publicos = {name for name in dir(motor.core.llm) if not name.startswith("_")}
         esperados = {
-            "generate", "embed", "embed_async", "health",
-            "CONFIG", "log", "logging",
-            "OllamaProvider", "OpenAIProvider", "AnthropicProvider",
-            "GeminiProvider", "OpenRouterProvider", "LMStudioProvider", "VLLMProvider",
-            "ollama", "openai", "anthropic", "gemini", "openrouter",
-            "lmstudio", "vllm", "base", "registry",
-            "router", "circuit_breaker", "observability", "profiler",
-            "detector", "baseline", "monitor",
-            "provider_name", "Any", "cls", "name",
+            "generate",
+            "embed",
+            "embed_async",
+            "health",
+            "CONFIG",
+            "log",
+            "logging",
+            "OllamaProvider",
+            "OpenAIProvider",
+            "AnthropicProvider",
+            "GeminiProvider",
+            "OpenRouterProvider",
+            "LMStudioProvider",
+            "VLLMProvider",
+            "ollama",
+            "openai",
+            "anthropic",
+            "gemini",
+            "openrouter",
+            "lmstudio",
+            "vllm",
+            "base",
+            "registry",
+            "router",
+            "circuit_breaker",
+            "observability",
+            "profiler",
+            "detector",
+            "baseline",
+            "monitor",
+            "provider_name",
+            "Any",
+            "cls",
+            "name",
         }
         extras = exports_no_publicos - esperados
         assert not extras, f"Export(s) no declarado(s): {sorted(extras)}"
@@ -60,6 +83,7 @@ class TestAPIExportada:
 # ─────────────────────────────────────────────
 # 2. Firmas de generate, embed, embed_async, health
 # ─────────────────────────────────────────────
+
 
 class TestFirmas:
     def test_generate_signature(self) -> None:
@@ -118,6 +142,7 @@ class TestFirmas:
 # 3. Compatibilidad del Registry
 # ─────────────────────────────────────────────
 
+
 class TestRegistryContract:
     def test_registry_importable(self) -> None:
         from motor.core.llm.registry import ProviderRegistry, registry
@@ -130,10 +155,17 @@ class TestRegistryContract:
         reg = ProviderRegistry()
 
         class _Mock:
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg.register("test", _Mock())  # type: ignore
         assert "test" in reg
@@ -145,10 +177,17 @@ class TestRegistryContract:
         reg = ProviderRegistry()
 
         class _Mock:
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg.register("a", _Mock())  # type: ignore
         reg.register("b", _Mock(), default=True)  # type: ignore
@@ -160,10 +199,17 @@ class TestRegistryContract:
         reg = ProviderRegistry()
 
         class _Mock:
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg.register("a", _Mock(), default=True)  # type: ignore
         reg.unregister("a")
@@ -175,10 +221,17 @@ class TestRegistryContract:
         reg = ProviderRegistry()
 
         class _Mock:
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg.register("a", _Mock())  # type: ignore
         lst = reg.list()
@@ -189,6 +242,7 @@ class TestRegistryContract:
 # ─────────────────────────────────────────────
 # 4. Compatibilidad del Router
 # ─────────────────────────────────────────────
+
 
 class TestRouterContract:
     def test_router_importable(self) -> None:
@@ -204,10 +258,13 @@ class TestRouterContract:
         class MockProvider(BaseLLMProvider):
             def generate(self, prompt, model=None, options=None):
                 return f"mock:{prompt}"
+
             def embed(self, texts, model=None):
                 return [[0.0]]
+
             async def embed_async(self, texts, model=None):
                 return [[0.0]]
+
             def health(self):
                 return {"status": "ok"}
 
@@ -222,11 +279,17 @@ class TestRouterContract:
         from motor.core.llm.router import LLMRouter
 
         class MockProvider(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
+            def generate(self, *a, **kw):
+                return ""
+
             def embed(self, texts, model=None):
                 return [[1.0]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg = ProviderRegistry()
         reg.register("mock", MockProvider(), default=True)
@@ -239,10 +302,17 @@ class TestRouterContract:
         from motor.core.llm.router import LLMRouter
 
         class MockProvider(BaseLLMProvider):
-            def generate(self, *a, **kw): return ""
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {"status": "ok", "provider": "mock"}
+            def generate(self, *a, **kw):
+                return ""
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {"status": "ok", "provider": "mock"}
 
         reg = ProviderRegistry()
         reg.register("mock", MockProvider(), default=True)
@@ -263,16 +333,30 @@ class TestRouterContract:
         from motor.core.llm.router import LLMRouter
 
         class MockA(BaseLLMProvider):
-            def generate(self, *a, **kw): return "A"
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return "A"
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         class MockB(BaseLLMProvider):
-            def generate(self, *a, **kw): return "B"
-            def embed(self, *a, **kw): return [[]]
-            async def embed_async(self, *a, **kw): return [[]]
-            def health(self): return {}
+            def generate(self, *a, **kw):
+                return "B"
+
+            def embed(self, *a, **kw):
+                return [[]]
+
+            async def embed_async(self, *a, **kw):
+                return [[]]
+
+            def health(self):
+                return {}
 
         reg = ProviderRegistry()
         reg.register("a", MockA(), default=True)
@@ -284,6 +368,7 @@ class TestRouterContract:
 # ─────────────────────────────────────────────
 # 5. Compatibilidad de Provider Base
 # ─────────────────────────────────────────────
+
 
 class TestBaseProviderContract:
     def test_base_es_abstracta(self) -> None:
@@ -315,10 +400,17 @@ class TestBaseProviderContract:
         from motor.core.llm.base import BaseLLMProvider
 
         class Complete(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None): return ""
-            def embed(self, texts, model=None): return [[]]
-            async def embed_async(self, texts, model=None): return [[]]
-            def health(self): return {}
+            def generate(self, prompt, model=None, options=None):
+                return ""
+
+            def embed(self, texts, model=None):
+                return [[]]
+
+            async def embed_async(self, texts, model=None):
+                return [[]]
+
+            def health(self):
+                return {}
 
         inst = Complete()
         assert inst.generate("x") == ""
@@ -334,6 +426,7 @@ class TestBaseProviderContract:
 # ─────────────────────────────────────────────
 # 6. Compatibilidad de OllamaProvider
 # ─────────────────────────────────────────────
+
 
 class TestOllamaProviderContract:
     def test_ollama_importable(self) -> None:
@@ -363,9 +456,7 @@ class TestOllamaProviderContract:
             # Verificar que los parámetros (sin self) coinciden
             impl_params = [p for p in sig_impl.parameters if p != "self"]
             base_params = [p for p in sig_base.parameters if p != "self"]
-            assert impl_params == base_params, (
-                f"{method_name}: {impl_params} != {base_params}"
-            )
+            assert impl_params == base_params, f"{method_name}: {impl_params} != {base_params}"
 
     def test_ollama_generate_retorna_str(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
@@ -408,6 +499,7 @@ class TestOllamaProviderContract:
 # 7. Compatibilidad de OpenAIProvider
 # ─────────────────────────────────────────────
 
+
 class TestOpenAIProviderContract:
     def test_openai_importable(self) -> None:
         from motor.core.llm.openai import OpenAIProvider
@@ -435,9 +527,7 @@ class TestOpenAIProviderContract:
             sig_base = inspect.signature(getattr(BaseLLMProvider, method_name))
             impl_params = [p for p in sig_impl.parameters if p != "self"]
             base_params = [p for p in sig_base.parameters if p != "self"]
-            assert impl_params == base_params, (
-                f"{method_name}: {impl_params} != {base_params}"
-            )
+            assert impl_params == base_params, f"{method_name}: {impl_params} != {base_params}"
 
     def test_openai_no_es_default(self) -> None:
         from motor.core.llm import _default
@@ -449,6 +539,7 @@ class TestOpenAIProviderContract:
 # ─────────────────────────────────────────────
 # 8. Compatibilidad con consumidores actuales
 # ─────────────────────────────────────────────
+
 
 class TestCompatibilidadConsumidores:
     """Verifica que los patrones de llamada de los 8 consumidores
@@ -490,7 +581,9 @@ class TestCompatibilidadConsumidores:
             )
             assert isinstance(resultado, str)
             mock_gen.assert_called_once_with(
-                "prompt", model="qwen2.5:7b", options={"num_predict": 10},
+                "prompt",
+                model="qwen2.5:7b",
+                options={"num_predict": 10},
             )
 
     # Consumidor 1: qdrant_client — embed(texts, model)
@@ -515,8 +608,11 @@ class TestCompatibilidadConsumidores:
             with patch.object(_default, "generate", return_value="ok"):
                 loop = asyncio.get_running_loop()
                 resultado = await loop.run_in_executor(
-                    None, _default.generate,
-                    "prompt", "model-test", {"temperature": 0.1},
+                    None,
+                    _default.generate,
+                    "prompt",
+                    "model-test",
+                    {"temperature": 0.1},
                 )
                 assert resultado == "ok"
 

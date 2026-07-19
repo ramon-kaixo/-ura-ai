@@ -6,7 +6,7 @@ import pytest
 
 import mochila_engine
 
-mochila_engine.BASE_DIR = Path("/tmp/datos_prueba")
+mochila_engine.BASE_DIR = Path("/tmp/datos_prueba")  # noqa: S108
 from prompt_injector import JailbreakGuard
 
 g = JailbreakGuard(registrar_log=False)

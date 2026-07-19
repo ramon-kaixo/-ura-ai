@@ -20,7 +20,7 @@ class CircuitState(Enum):
 
 
 class CircuitBreaker:
-    def __init__(self, name: str, failure_threshold: int = 3, recovery_timeout: float = 30.0):
+    def __init__(self, name: str, failure_threshold: int = 3, recovery_timeout: float = 30.0) -> None:
         self.name = name
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -63,7 +63,7 @@ class CircuitBreaker:
 
 
 class Backpressure:
-    def __init__(self, max_queue: int = 100, semaphore_count: int = 5):
+    def __init__(self, max_queue: int = 100, semaphore_count: int = 5) -> None:
         self.max_queue = max_queue
         self._queue: list[Any] = []
         self._lock = Lock()

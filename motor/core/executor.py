@@ -56,7 +56,7 @@ class BaseExecutor(ABC):
     async def arun(
         self,
         cmd: Sequence[str],
-        timeout: int = 30,
+        timeout: int = 30,  # noqa: ASYNC109
         cwd: str | None = None,
         env: dict[str, str] | None = None,
     ) -> ProcessResult: ...
@@ -112,7 +112,7 @@ class SubprocessExecutor(BaseExecutor):
             )
         except FileNotFoundError:
             elapsed = (time.monotonic() - start) * 1000
-            log.error("Comando no encontrado: %s", cmd[0] if cmd else "?")
+            log.exception("Comando no encontrado: %s", cmd[0] if cmd else "?")
             return ProcessResult(
                 ok=False,
                 cmd=cmd,
@@ -138,7 +138,7 @@ class SubprocessExecutor(BaseExecutor):
     async def arun(
         self,
         cmd: Sequence[str],
-        timeout: int = 30,
+        timeout: int = 30,  # noqa: ASYNC109
         cwd: str | None = None,
         env: dict[str, str] | None = None,
     ) -> ProcessResult:

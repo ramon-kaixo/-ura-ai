@@ -25,7 +25,6 @@ def fix_exe_shebang() -> int:
                 try:
                     f.chmod(f.stat().st_mode | 0o111)
                     count += 1
-                    print(f"  +x {f.relative_to(REPO)}")
                 except PermissionError:
                     pass
     return count
@@ -33,7 +32,8 @@ def fix_exe_shebang() -> int:
 
 def fix_e702_semicolons() -> int:
     """E702: split x=1
-    y=2 into two lines."""
+    y=2 into two lines.
+    """
     count = 0
     for dirname in DIRS:
         for f in Path(REPO / dirname).rglob("*.py"):
@@ -48,7 +48,7 @@ def fix_e702_semicolons() -> int:
                     parts = [p.strip() for p in parts]
                     if len(parts) > 1 and all(
                         not p.startswith(
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
                         )
                         for p in parts
                     ):
@@ -102,7 +102,6 @@ def fix_inp001_add_init() -> int:
                 if has_py and ".venv" not in str(d) and "__pycache__" not in str(d):
                     _safe_write(d / "__init__.py", "")
                     count += 1
-                    print(f"  📁 init {d.relative_to(REPO)}")
     return count
 
 
@@ -126,55 +125,40 @@ def fix_s110_try_except_pass() -> int:
     return count
 
 
-def run_ruff_fix():
+def run_ruff_fix() -> None:
     """Ejecuta ruff --fix en todos los directorios."""
     for dirname in DIRS:
-        subprocess.run(
-            ["ruff", "check", str(REPO / dirname), "--fix", "--unsafe-fixes", "--silent"],
+        subprocess.run(  # noqa: PLW1510, S603
+            ["ruff", "check", str(REPO / dirname), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
             timeout=120,
         )
 
 
-def main():
-    print("=== Fix masivo de errores ruff ===\n")
+def main() -> None:
 
-    print("1. EXE001 (shebang +x)...")
-    n = fix_exe_shebang()
-    print(f"   {n} archivos corregidos\n")
+    fix_exe_shebang()
 
-    print("2. E702 (semicolons)...")
-    n = fix_e702_semicolons()
-    print(f"   {n} lineas corregidas\n")
+    fix_e702_semicolons()
 
-    print("3. S603 (check=False)...")
-    n = fix_s603_check_false()
-    print(f"   {n} archivos corregidos\n")
+    fix_s603_check_false()
 
-    print("4. INP001 (__init__.py)...")
-    n = fix_inp001_add_init()
-    print(f"   {n} init files anadidos\n")
+    fix_inp001_add_init()
 
-    print("5. S110 (try/except pass noqa)...")
-    n = fix_s110_try_except_pass()
-    print(f"   {n} archivos corregidos\n")
+    fix_s110_try_except_pass()
 
-    print("6. Ruff --fix --unsafe-fixes final...")
     run_ruff_fix()
-    print("   OK\n")
 
     # Count final
-    result = subprocess.run(
-        ["ruff", "check", *[str(REPO / d) for d in DIRS], "--statistics"],
+    result = subprocess.run(  # noqa: PLW1510, S603
+        ["ruff", "check", *[str(REPO / d) for d in DIRS], "--statistics"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=60,
     )
     lines = result.stdout.strip().split("\n")
     if lines:
-        for line in lines:
-            print(line)
-
-    print("\n✅ Fix masivo completado")
+        for _line in lines:
+            pass
 
 
 if __name__ == "__main__":

@@ -69,6 +69,7 @@ class Agent(ABC):
 
         Returns:
             Lista de hallazgos.
+
         """
 
 
@@ -78,7 +79,7 @@ class KnowledgeGraphAgent(Agent):
     Dependencias: solo usa KnowledgeReader (no escribe, no modifica).
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
         self._id = "knowledge-graph-agent"
 
@@ -104,7 +105,7 @@ class KnowledgeGraphAgent(Agent):
     def _audit_coverage(self, reader) -> list[AgentFinding]:
         """Audita tipos de documentos y cobertura."""
         findings: list[AgentFinding] = []
-        conn = reader._db_path if hasattr(reader, "_db_path") else None
+        conn = reader._db_path if hasattr(reader, "_db_path") else None  # noqa: SLF001
         if conn is None:
             return findings
 
@@ -122,19 +123,19 @@ class KnowledgeGraphAgent(Agent):
                     severity="ERROR",
                     title="Grafo vacío",
                     description="No hay documentos en el grafo de conocimiento",
-                )
+                ),
             )
             return findings
 
         for row in rows:
-            findings.append(
+            findings.append(  # noqa: PERF401
                 AgentFinding(
                     agent_id=self._id,
                     kind="audit",
                     severity="INFO",
                     title=f"Tipo: {row['type']}",
                     description=f"{row['c']} documentos de tipo '{row['type']}'",
-                )
+                ),
             )
 
         return findings
@@ -158,7 +159,7 @@ class KnowledgeGraphAgent(Agent):
                     severity="WARN",
                     title=f"Sin documentos de tipo '{doc_type}'",
                     description=f"No hay documentos de tipo '{doc_type}' en el grafo ({total} docs totales)",
-                )
+                ),
             )
         else:
             findings.append(
@@ -168,7 +169,7 @@ class KnowledgeGraphAgent(Agent):
                     severity="INFO",
                     title=f"Cobertura '{doc_type}': {count}/{total}",
                     description=f"{count} documentos de tipo '{doc_type}' de {total} totales",
-                )
+                ),
             )
         return findings
 
@@ -190,7 +191,7 @@ class KnowledgeGraphAgent(Agent):
 
         findings: list[AgentFinding] = []
         for d in deductions:
-            findings.append(
+            findings.append(  # noqa: PERF401
                 AgentFinding(
                     agent_id=self._id,
                     kind=d.kind,
@@ -198,7 +199,7 @@ class KnowledgeGraphAgent(Agent):
                     title=f"{d.kind}: {d.subject_id}",
                     description=d.description,
                     doc_id=d.subject_id if d.kind == "orphan" else "",
-                )
+                ),
             )
         return findings
 

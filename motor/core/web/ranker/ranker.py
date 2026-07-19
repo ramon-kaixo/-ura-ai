@@ -127,6 +127,7 @@ class DocumentRanker:
             query: Término de búsqueda.
             documents: Documentos a ordenar.
             positions: Mapa URL → posición original en buscador.
+
         """
         with self._lock:
             result: list[RankedDocument] = []
@@ -175,11 +176,7 @@ class DocumentRanker:
         text_hits = self._match_count(text_lower, terms)
         text_score = min(5.0, text_hits) * (self._weights["text_match"] / 5.0)
 
-        canonical = (
-            doc.metadata.get("canonical_url")
-            if isinstance(doc.metadata, dict)
-            else None
-        )
+        canonical = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
         canonical_bonus = self._weights["canonical_bonus"] if canonical else 0.0
         short_penalty = self._weights["short_penalty"] if wc < _SHORT_THRESHOLD else 0.0
         empty_penalty = self._weights["empty_penalty"] if wc < _EMPTY_THRESHOLD else 0.0

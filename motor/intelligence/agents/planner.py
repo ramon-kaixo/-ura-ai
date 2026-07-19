@@ -63,7 +63,7 @@ class PlannerAgent(Agent):
                         "objective": objective,
                         "priority": 0,
                         "timeout": 30,
-                    }
+                    },
                 )
 
         if not subtasks:
@@ -73,7 +73,7 @@ class PlannerAgent(Agent):
                     "objective": objective,
                     "priority": 0,
                     "timeout": 30,
-                }
+                },
             )
 
         if AgentRole.RESEARCHER in [s["agent_role"] for s in subtasks]:

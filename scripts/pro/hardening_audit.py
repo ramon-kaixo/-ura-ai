@@ -20,7 +20,7 @@ HARDENING_CHECKS = [
 
 def get_all_services() -> list[str]:
     result = subprocess.run(
-        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],
+        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=10,
@@ -35,8 +35,8 @@ def get_all_services() -> list[str]:
 
 
 def check_hardening(service: str) -> dict[str, str]:
-    result = subprocess.run(
-        ["systemctl", "show", service],
+    result = subprocess.run(  # noqa: S603
+        ["systemctl", "show", service],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=10,
@@ -76,7 +76,7 @@ def main() -> int:
                 pass
         total += score
 
-    for check, count in sorted(scored.items()):
+    for check, count in sorted(scored.items()):  # noqa: B007
         pct = count / len(services) * 100 if services else 0
         "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
 

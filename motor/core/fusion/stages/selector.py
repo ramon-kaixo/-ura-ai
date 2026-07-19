@@ -29,10 +29,7 @@ class ThresholdSelector(MemoryCandidateSelector):
         max_candidates: int = 100,
     ) -> list[KnowledgeFact]:
         m = min(max_candidates, self.max_candidates)
-        selected = [
-            f for f in fusion_result.accepted
-            if f.confidence >= self.min_confidence
-        ]
+        selected = [f for f in fusion_result.accepted if f.confidence >= self.min_confidence]
         selected.sort(key=lambda f: f.confidence, reverse=True)
         return selected[:m]
 
@@ -65,9 +62,7 @@ class MemoryCandidateSelectionStage(BaseStage):
 
         ambiguous_ids = context.statistics.get("ambiguous_entity_ids", [])
         if ambiguous_ids:
-            context.warnings.append(
-                f"Memory selection skipping {len(ambiguous_ids)} ambiguous entities"
-            )
+            context.warnings.append(f"Memory selection skipping {len(ambiguous_ids)} ambiguous entities")
 
         # Seleccionar candidatos
         selected = self._selector.select(

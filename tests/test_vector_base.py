@@ -191,7 +191,7 @@ class TestVectorStoreProtocol:
             [
                 VectorItem("a", [1.0, 0.0], "doc a"),
                 VectorItem("b", [0.0, 1.0], "doc b"),
-            ]
+            ],
         )
         results = store.search([1.0, 0.0], top_k=2)
         assert len(results) == 2

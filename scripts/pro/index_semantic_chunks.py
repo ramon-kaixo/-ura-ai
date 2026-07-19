@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Index golden documents with SemanticChunker for KE 2.0 comparison.
-Uses a separate Qdrant collection (ura_docs_semantic) to coexist with KE 1.x."""
+Uses a separate Qdrant collection (ura_docs_semantic) to coexist with KE 1.x.
+"""
 
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ KE2_COLLECTION = "ura_docs_semantic"
 DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "knowledge" / "evaluation" / "golden_docs"
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.chunking import SemanticChunker
@@ -31,10 +32,10 @@ def main() -> int:
     try:
         from qdrant_client.http import models
 
-        if qc._cliente:
-            collections = [c.name for c in qc._cliente.get_collections().collections]
+        if qc._cliente:  # noqa: SLF001
+            collections = [c.name for c in qc._cliente.get_collections().collections]  # noqa: SLF001
             if KE2_COLLECTION not in collections:
-                qc._cliente.create_collection(
+                qc._cliente.create_collection(  # noqa: SLF001
                     collection_name=KE2_COLLECTION,
                     vectors_config=models.VectorParams(size=768, distance=models.Distance.COSINE),
                 )
@@ -65,11 +66,11 @@ def main() -> int:
 
             # Generate embedding and upsert
             vector = qc.generar_embedding(texto)
-            if qc._cliente:
+            if qc._cliente:  # noqa: SLF001
                 from qdrant_client.http import models
 
                 point_id = hash(chunk.chunk_id) % (10**12)
-                qc._cliente.upsert(
+                qc._cliente.upsert(  # noqa: SLF001
                     collection_name=KE2_COLLECTION,
                     points=[models.PointStruct(id=point_id, vector=vector, payload=metadata)],
                 )
@@ -84,8 +85,8 @@ def main() -> int:
     for md_file in sorted(DOCS_DIR.glob("*.md")):
         doc_id = md_file.stem
         vector = qc.generar_embedding(doc_id.replace("_", " "))
-        if qc._cliente:
-            hits = qc._cliente.search(
+        if qc._cliente:  # noqa: SLF001
+            hits = qc._cliente.search(  # noqa: SLF001
                 collection_name=KE2_COLLECTION,
                 query_vector=vector,
                 limit=1,
