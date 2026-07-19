@@ -1,7 +1,9 @@
 # ADR-028-10: Platform Observability
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B3  
+**Approved:** 2026-07-19  
+**Verification:** PlatformMetrics in `motor/platform/metrics.py` implements all 10 metric types (4 counters, 3 histograms, 3 gauges) with dynamic labels. Wired into LocalTransport, ProtocolValidator, VersionNegotiator. Health metrics + ComponentLogger + health probes for OB01-OB08 compliance. Prometheus client optional — noop fallback via MetricsRegistry. 138 tests passing.  
 
 ---
 

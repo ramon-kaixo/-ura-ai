@@ -1,8 +1,10 @@
 # ADR-028-04: Serialization Contract (v2)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 **CR resolved:** CR-01 (checksum), CR-07 (metadata)  
+**Approved:** 2026-07-19  
+**Verification:** All SR01-SR07 implemented in `motor/platform/serializer.py` and `motor/platform/validator.py`. Schema registry in `motor/platform/registry.py`. Size budgets enforced in `ProtocolValidator.SIZE_BUDGETS`. Checksum SHA-256 verified before decompression (P1 fix). Compression gzip implemented, zstd raises NotImplementedError. msgpack payload_type registered but not yet implemented — backward compatible.  
 
 ---
 

@@ -10,12 +10,15 @@ Concurrency contract for LocalTransport:
 
 from __future__ import annotations
 
+import logging
 import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from motor.platform.errors import ProtocolException
+
+log = logging.getLogger("ura.platform.transport")
 from motor.platform.models import ProtocolEnvelope
 
 if TYPE_CHECKING:
@@ -73,7 +76,7 @@ class LocalTransport(Transport):
                     duration_ms=0.0,
                 )
             except Exception:
-                pass
+                log.debug("Metrics record_sent failed", exc_info=True)
 
     async def receive(self) -> ProtocolEnvelope:
         with self._lock:
@@ -90,7 +93,7 @@ class LocalTransport(Transport):
                     size_bytes=size,
                 )
             except Exception:
-                pass
+                log.debug("Metrics record_received failed", exc_info=True)
         return env
 
     async def request(self, envelope: ProtocolEnvelope) -> ProtocolEnvelope:
@@ -106,6 +109,6 @@ class LocalTransport(Transport):
                             error_code="no_handler",
                         )
                     except Exception:
-                        pass
+                        log.debug("Metrics record_error failed", exc_info=True)
                 raise RuntimeError(f"No handler for {envelope.routing.message_type}")
             return handler(envelope)

@@ -82,7 +82,7 @@ class ProtocolValidator:
                 ms = (time.monotonic() - start) * 1000
                 self._metrics.record_validation(source=envelope.routing.source, duration_ms=ms)
             except Exception:
-                pass
+                logger.debug("Metrics record_validation failed", exc_info=True)
 
     def _validate_version(self, envelope: ProtocolEnvelope) -> None:
         v = envelope.version

@@ -97,7 +97,9 @@ class TraceMiddleware:
             try:
                 record_latency(f"{self._source}→{self._destination}", duration_ns, error=error)
             except Exception:
-                pass
+                logging.getLogger("ura.platform.middleware").debug(
+                    "record_latency failed", exc_info=True,
+                )
 
 
 # ── Wrapper decorator ───────────────────────

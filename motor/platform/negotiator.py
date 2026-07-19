@@ -99,7 +99,9 @@ class VersionNegotiator:
                 ms = (time.monotonic() - start) * 1000
                 self._metrics.record_negotiation(emitter_version, receiver_version, ms)
             except Exception:
-                pass
+                logging.getLogger("ura.platform.negotiator").debug(
+                    "Metrics record_negotiation failed", exc_info=True,
+                )
         return result
 
     def negotiate_event(

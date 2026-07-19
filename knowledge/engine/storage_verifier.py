@@ -54,6 +54,9 @@ def check_schema(conn: sqlite3.Connection) -> list[str]:
     }
     system_tables = {
         "sqlite_sequence",
+        "sqlite_stat1",
+        "sqlite_stat4",
+        "sqlite_stat",
         "kg_nodes_fts_config",
         "kg_nodes_fts_content",
         "kg_nodes_fts_data",

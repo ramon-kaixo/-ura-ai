@@ -1,8 +1,10 @@
 # ADR-028-01: Internal Platform Protocol Architecture (v2)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 **CR resolved:** CR-01, CR-03, CR-04, CR-05, CR-07  
+**Approved:** 2026-07-19  
+**Verification:** All 32 invariants implemented in `motor/platform/models.py`, `motor/platform/serializer.py`, `motor/platform/validator.py`. Implementation has evolved beyond spec: `TraceHeader` includes `trace_id`, `span_id`, `parent_span_id`, `monotonic_ts` (OBS compliance); `DeliveryHeader.semantics` uses `DeliverySemantics` enum; `RoutingHeader.message_id` uses `MessageId` value object. All additions are backward-compatible supersets. Verified via 67 protocol tests.  
 
 ---
 
