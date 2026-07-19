@@ -1,4 +1,8 @@
-# URA — Multi-Agent Desktop Assistant
+# URA — Multi-Agent Platform
+
+[![CI](https://github.com/ramon-kaixo/-ura-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/ramon-kaixo/-ura-ai/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
+[![Ruff](https://img.shields.io/badge/code%20style-ruff-000000)](https://github.com/astral-sh/ruff)
 
 URA is a modular multi-agent system with semantic retrieval, episodic/semantic memory,
 a consensus-driven agent runtime, and full observability — designed for extensibility.
@@ -149,6 +153,19 @@ docker run -p 8000:8000 ura
 | `/ready` | Readiness check |
 | `/metrics` | Prometheus OpenMetrics |
 
+## Quickstart
+
+```bash
+pip install -e ".[dev]"
+pytest tests/test_f28_b2_protocol.py -q  # 67 tests, ~6s
+```
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed usage.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
 ## Roadmap
 
 | Phase | Focus | Status |
@@ -158,10 +175,11 @@ docker run -p 8000:8000 ura
 | F12 | Intelligence (retrieval, memory, agents) | ✅ Closed |
 | F13 | Production (Docker, CI/CD, docs) | ✅ Closed |
 | F14 | Robustness (load, resiliency, profiling) | ✅ Closed |
-| F25 | Knowledge Fusion (pipeline, Entity Resolution) | ✅ Closed |
-| F26 | Historical Memory (Timeline, Journal, Snapshot) | ✅ Closed |
-| F27 | Autonomous Agents (Gate, Runner, Orchestrator) | ✅ Closed |
-| F28 | Platform Protocols (Envelope, Tracing, Health) | ✅ Closed |
+| F25 | Knowledge Fusion | ✅ Closed |
+| F26 | Historical Memory | ✅ Closed |
+| F27 | Autonomous Agents | ✅ Closed |
+| F28 | Platform Protocols | ✅ Closed |
+| F29 | Production Readiness | ✅ Closed |
 
 ## Architecture
 
