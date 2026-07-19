@@ -13,6 +13,7 @@ from motor.assistant.episodic_memory import EpisodicConversationMemory
 from motor.assistant.implicit_feedback import ImplicitFeedback
 from motor.assistant.intent import IntentEngine
 from motor.assistant.interruption import InterruptionSystem
+from motor.assistant.language import LanguageDetector
 from motor.assistant.message_store import MessageStore
 from motor.assistant.models import (
     Conversation,
@@ -23,6 +24,7 @@ from motor.assistant.models import (
     UserIntent,
 )
 from motor.assistant.proactive_memory import ProactiveMemory
+from motor.assistant.prompt_sanitizer import PromptSanitizer
 from motor.assistant.sentiment import Sentiment, SentimentDetector
 from motor.assistant.trends import TrendAwareness
 
@@ -60,6 +62,8 @@ class ConversationEngine:
         self._trends = trend_awareness or TrendAwareness()
         self._corrections = CorrectiveMemory()
         self._proactive = ProactiveMemory()
+        self._lang = LanguageDetector()
+        self._prompt_sanitizer = PromptSanitizer()
         self._sentiment = SentimentDetector()
         self._feedback = ImplicitFeedback()
         self._max_turns = max_turns
@@ -137,8 +141,10 @@ class ConversationEngine:
         conversation_id: str,
         user_message: str,
     ) -> dict[str, object]:
+        user_message = self._prompt_sanitizer.sanitize(user_message)
         intent = self.detect_intent(user_message)
         conv = self.get_or_create(conversation_id)
+        lang = self._lang.detect(user_message)
 
         is_interruption = self._interruptions.detect_interruption(
             conversation_id, conv.messages,
@@ -187,6 +193,8 @@ class ConversationEngine:
             "is_interruption": is_interruption,
             "interruption_context": interruption_context,
             "episodic_context": episodic_context,
+            "language": lang.code,
+            "language_confidence": lang.confidence,
             "needs_web_search": trend.needs_update,
             "trend_reason": trend.reason,
             "sentiment": sentiment.sentiment.value,
