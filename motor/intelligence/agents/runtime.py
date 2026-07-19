@@ -115,7 +115,9 @@ class MultiAgentRuntime:
             log.exception("Workflow %s failed", workflow_id)
             return self._complete(workflow_id, False, str(exc), start)  # noqa: FBT003
 
-    def cancel(self, workflow_id: str) -> bool:
+    def cancel(self, workflow_id: str | None = None) -> bool | int:
+        if workflow_id is None:
+            return sum(self.cancel(wid) for wid in list(self._workflows))
         with self._lock:
             wf = self._workflows.get(workflow_id)
             if wf and wf["status"] == "running":

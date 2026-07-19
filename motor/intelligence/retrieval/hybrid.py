@@ -25,8 +25,16 @@ class HybridRetriever:
         self._beta = beta
 
     def search(self, query: str, k: int = 10) -> list[dict[str, Any]]:
-        vector_results = self._vector.search(query, k=k)
-        lexical_results = self._lexical.search(query, k=k)
+        try:
+            vector_results = self._vector.search(query, k=k)
+        except Exception:
+            log.warning("Vector search failed, falling back to lexical only")
+            vector_results = []
+        try:
+            lexical_results = self._lexical.search(query, k=k)
+        except Exception:
+            log.warning("Lexical search failed, falling back to vector only")
+            lexical_results = []
         return self._fuse(vector_results, lexical_results, k)
 
     def _fuse(

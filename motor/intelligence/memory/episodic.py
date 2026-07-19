@@ -109,26 +109,47 @@ class EpisodeStore:
             return
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(p), check_same_thread=False)
-        self._conn.execute("""
-            CREATE TABLE IF NOT EXISTS episodes (
-                id TEXT PRIMARY KEY,
-                session_id TEXT,
-                timestamp TEXT,
-                source TEXT,
-                payload TEXT,
-                importance REAL,
-                confidence REAL,
-                tags TEXT,
-                refs TEXT,
-                ttl INTEGER,
-                metadata TEXT
-            )
-        """)
-        self._conn.execute("CREATE INDEX IF NOT EXISTS idx_ep_session ON episodes(session_id)")
-        self._conn.execute("CREATE INDEX IF NOT EXISTS idx_ep_ts ON episodes(timestamp)")
-        self._conn.commit()
-        self._load_from_db()
+        try:
+            self._conn = sqlite3.connect(str(p), check_same_thread=False)
+            self._conn.execute("""
+                CREATE TABLE IF NOT EXISTS episodes (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT,
+                    timestamp TEXT,
+                    source TEXT,
+                    payload TEXT,
+                    importance REAL,
+                    confidence REAL,
+                    tags TEXT,
+                    refs TEXT,
+                    ttl INTEGER,
+                    metadata TEXT
+                )
+            """)
+            self._conn.execute("CREATE INDEX IF NOT EXISTS idx_ep_session ON episodes(session_id)")
+            self._conn.execute("CREATE INDEX IF NOT EXISTS idx_ep_ts ON episodes(timestamp)")
+            self._conn.commit()
+            self._load_from_db()
+        except sqlite3.DatabaseError:
+            log.warning("EpisodeStore DB corrupt at %s, recreating", p)
+            p.unlink(missing_ok=True)
+            self._conn = sqlite3.connect(str(p), check_same_thread=False)
+            self._conn.execute("""
+                CREATE TABLE IF NOT EXISTS episodes (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT,
+                    timestamp TEXT,
+                    source TEXT,
+                    payload TEXT,
+                    importance REAL,
+                    confidence REAL,
+                    tags TEXT,
+                    refs TEXT,
+                    ttl INTEGER,
+                    metadata TEXT
+                )
+            """)
+            self._conn.commit()
 
     def _load_from_db(self) -> None:
         if self._conn is None:
