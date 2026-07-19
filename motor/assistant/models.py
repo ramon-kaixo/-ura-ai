@@ -20,6 +20,7 @@ class UserIntent(Enum):
     CHAT = "chat"
     QUESTION = "question"
     COMMAND = "command"
+    SEARCH = "search"
     CLARIFY = "clarify"
     GREETING = "greeting"
     FAREWELL = "farewell"

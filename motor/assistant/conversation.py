@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from motor.assistant.context_window import ContextWindow
+from motor.assistant.intent import IntentEngine
 from motor.assistant.message_store import MessageStore
 from motor.assistant.models import (
     Conversation,
@@ -16,25 +17,18 @@ from motor.assistant.models import (
     UserIntent,
 )
 
-_GREETINGS = frozenset({"hola", "buenos días", "buenas tardes", "hey", "hello", "hi"})
-_FAREWELLS = frozenset({"adiós", "chao", "hasta luego", "bye", "gracias", "thanks"})
-_CONFIRMS = frozenset({"sí", "si", "ok", "vale", "de acuerdo", "yes", "confirmo"})
-_REJECTS = frozenset({"no", "nop", "nope", "no me gusta", "no es eso"})
-_REPEATS = frozenset({"repite", "otra vez", "no entendí", "puedes repetir"})
-_CORRECT_PREFIXES = ("corrige", "no es correcto", "en realidad")
-_QUESTION_PREFIXES = ("aclara", "explica", "qué", "cómo", "por qué", "cuándo", "dónde", "quién")
-_COMMAND_PREFIXES = ("busca", "crea", "haz", "ejecuta", "muestra", "lista", "navega", "abre", "cierra")
-
 
 class ConversationEngine:
     def __init__(
         self,
         message_store: MessageStore | None = None,
         context_window: ContextWindow | None = None,
+        intent_engine: IntentEngine | None = None,
         max_turns: int = 200,
     ):
         self._store = message_store or MessageStore()
         self._context = context_window or ContextWindow()
+        self._intent = intent_engine or IntentEngine()
         self._max_turns = max_turns
         self._active: dict[str, Conversation] = {}
 
@@ -80,27 +74,7 @@ class ConversationEngine:
         return self._context.build_context(conv.messages, system_prompt)
 
     def detect_intent(self, text: str) -> UserIntent:
-        t = text.strip().lower()
-        if t in _GREETINGS:
-            return UserIntent.GREETING
-        if t in _FAREWELLS:
-            return UserIntent.FAREWELL
-        if t in _CONFIRMS:
-            return UserIntent.CONFIRM
-        if t in _REJECTS:
-            return UserIntent.REJECT
-        if t in _REPEATS:
-            return UserIntent.REPEAT
-        return self._detect_action_intent(t)
-
-    def _detect_action_intent(self, t: str) -> UserIntent:
-        if t.startswith(_CORRECT_PREFIXES):
-            return UserIntent.CORRECT
-        if t.startswith(_QUESTION_PREFIXES) or t.endswith("?"):
-            return UserIntent.QUESTION
-        if t.startswith(_COMMAND_PREFIXES):
-            return UserIntent.COMMAND
-        return UserIntent.CHAT
+        return self._intent.classify(text).intent
 
     def resolve_reference(self, text: str, conversation_id: str) -> str:
         conv = self.get_or_create(conversation_id)
