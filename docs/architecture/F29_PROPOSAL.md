@@ -1,6 +1,6 @@
 # F28.1 — Stabilization (Prerrequisito)
 
-**Estado:** Propuesta
+**Estado:** Cerrada — Tag v0.29.0-fase29 (F28.1 + F29 completados)
 **Fecha:** 2026-07-19
 **Fase base:** F28 (Platform Protocols) — tags v0.28.0-b3, v0.28.1-stabilization, v0.28.2-lockdown
 
