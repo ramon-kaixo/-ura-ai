@@ -27,7 +27,7 @@ class RuleBasedPlanner(PlannerABC):
 
     def plan(self, task: AgentTask, context: AgentContext | None = None) -> AgentPlan:
         """Genera un plan determinista basado en el objetivo."""
-        from motor.agents.models import AgentPlan, PlanStep, make_plan_id, make_step_id
+        from motor.agents.models import AgentPlan, make_plan_id
 
         objective_lower = task.objective.lower()
         steps: list[PlanStep] = []

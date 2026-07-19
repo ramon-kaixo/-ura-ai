@@ -18,6 +18,8 @@ import json
 import logging
 import os
 import subprocess
+
+log = logging.getLogger(__name__)
 import sys
 
 logger = logging.getLogger("ura.debate.validator")

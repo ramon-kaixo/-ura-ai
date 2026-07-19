@@ -1,5 +1,7 @@
 """CLI: vacuum, audit-db."""
 
+import sys
+
 from knowledge.engine.cli.main import _resolve_db_path
 from knowledge.engine.connection import open_db
 

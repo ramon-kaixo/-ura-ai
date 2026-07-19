@@ -253,16 +253,25 @@ The envelope becomes a container of optional headers, not a monolithic struct.
 | 🟠 High | 5 | CON-04 (boundary serialization), DEF-02 (unidirectional negotiation), DEF-03 (error circularity), DEF-04 (causation undefined), RISK-02 (error delivery), RISK-03 (compression order) |
 | 🟡 Medium | 5 | DEF-05 (size_bytes bootstrap), DEF-06 (time determinism), DEF-07 (at-least-once idempotency), RISK-04 (streaming), RISK-05 (clock sync) |
 
-### Must fix before F28-B2
+### All 10 CR resolved in F28-B1A
 
-1. **CON-02 (Critical):** Break checksum/message_id circular dependency
-2. **CON-01 (Critical):** Single ErrorEnvelope definition (ADR-028-06 wins)
-3. **DEF-01 (Critical):** Split ProtocolEnvelope into headers (or accept as intentional trade-off)
-4. **RISK-01 (Critical):** Extend auth scope to ProtocolBoundary
-5. **DEF-03 (High):** Fix rejection mechanism for unknown message types
-6. **DEF-02 (High):** Define versioning for unidirectional EVENT messages
-7. **CON-03 (Critical):** Add metadata to observability trace model
+| CR | Status | Change |
+|----|--------|--------|
+| CR-01 | ✅ Fixed | checksum = SHA-256(payload). No cycle with message_id. |
+| CR-02 | ✅ Fixed | ErrorEnvelope only in ADR-028-06. Removed from ADR-028-01. |
+| CR-03 | ✅ Fixed | ProtocolEnvelope split into 5 headers + opaque payload. |
+| CR-04 | ✅ Fixed | Auth in SecurityHeader (ProtocolBoundary). TransportBoundary does NOT authorize. |
+| CR-05 | ✅ Fixed | Dead-letter for future versions. Reject for known MAJOR. |
+| CR-06 | ✅ Fixed | Per-message-kind negotiation (COMMAND, QUERY, RESPONSE, ERROR, EVENT). |
+| CR-07 | ✅ Fixed | Metadata in DeliveryHeader only (dict[str,str]). Removed from observability. |
+| CR-08 | ✅ Fixed | 52 → 32 invariants. No duplicates. No contradictions. 8 categories. |
+| CR-09 | ✅ Fixed | ADR-028-02 deleted. Merged into ADR-028-03. 7 → 5 ADRs. |
+| CR-10 | ✅ Fixed | Component→ADR→Invariants→Responsibility matrix. No duplicates. |
 
-### Consolidation recommendation
-
-Merge ADR-028-02 into ADR-028-03. Reduce from 7 ADRs to 5 (or even 3). Each ADR must be cross-checked against all others before implementation begins.
+### Architecture consistency verified:
+- ✅ Zero cycles (checksum/message_id)
+- ✅ Zero duplicate responsibilities
+- ✅ Zero contradictory invariants
+- ✅ Zero duplicate models (single ErrorEnvelope)
+- ✅ Zero unnecessary cross-dependencies
+- ✅ 5 ADRs (down from 7)

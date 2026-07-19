@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import time
+
 """TUNELADORA DE MANTENIMIENTO — Flujo unificado con commit/rollback.
 
 FLUJO CORRECTO:

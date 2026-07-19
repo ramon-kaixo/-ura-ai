@@ -43,8 +43,9 @@ cp "$CONFIG_FILE" "$LILDAX_CONFIG_DIR/config.json"
 log "✅ Configuración copiada"
 
 # 5. Establecer contraseña del servicio
+LILDAX_PASSWORD="${LILDAX_PASSWORD:-ura_1972_secure_autonomous}"
 log "Estableciendo contraseña del servicio..."
-/opt/homebrew/lib/node_modules/@opencode-ai/cli/bin/lildax service password ura_1972_secure_autonomous >> "$LOG_FILE" 2>&1
+/opt/homebrew/lib/node_modules/@opencode-ai/cli/bin/lildax service password "$LILDAX_PASSWORD" >> "$LOG_FILE" 2>&1
 log "✅ Contraseña establecida"
 
 # 6. Iniciar servicio lildax

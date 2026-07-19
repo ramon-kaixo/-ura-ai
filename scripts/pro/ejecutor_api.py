@@ -9,6 +9,7 @@ from path_setup import setup_path
 
 setup_path()
 import json
+import logging
 import os
 import subprocess
 import threading
@@ -16,6 +17,8 @@ import time
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+log = logging.getLogger(__name__)
 
 CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")

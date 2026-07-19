@@ -25,6 +25,7 @@ PRODUCCION = Path.home() / "URA" / "ura_ia_1972"
 BACKUP = Path.home() / "URA" / "backup_versiones"
 INVENTARIO = PRODUCCION / "data" / "inventario" / "inventario_codigo.json"
 RAMALES = PRODUCCION / "data" / "ramales"
+BRANCHES = RAMALES
 LOG_DIR = PRODUCCION / "logs"
 INTERVALO = 60
 

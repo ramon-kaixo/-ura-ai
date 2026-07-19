@@ -17,6 +17,7 @@ from pathlib import Path
 from mochila_engine import BASE_DIR
 
 logger = logging.getLogger(__name__)
+log = logger
 MEM = "2g"
 CPU = "2"
 TIMEOUT = 30
