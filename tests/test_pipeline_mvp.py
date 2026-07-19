@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# ruff: noqa: SLF001  — acceso a _instances/_entries para inyectar plugins de test
 from pathlib import Path
 from typing import Any
 

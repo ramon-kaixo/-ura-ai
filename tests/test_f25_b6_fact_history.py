@@ -486,7 +486,7 @@ def test_property_random_sequences() -> None:  # noqa: C901, PLR0912
                         )
                         h.add_version(v)
                     elif op == "rollback":
-                        versions = list(h._versions.keys())  # noqa: SLF001
+                        versions = list(h._versions.keys())
                         if versions and h.current.state != VersionState.TOMBSTONE:
                             target = random.choice(versions)  # noqa: S311
                             with contextlib.suppress(ValueError, KeyError):
@@ -575,5 +575,5 @@ def test_benchmark_peak_memory() -> None:
     for i in range(10000):
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=i + 1))
     # Tamaño del historial
-    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())  # noqa: SLF001
+    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())
     assert h.version_count == 10001

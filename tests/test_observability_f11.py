@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# ruff: noqa: SLF001  — acceso a _instancias para inyectar plugins de test
 import time
 
 from motor.core.executor import SubprocessExecutor

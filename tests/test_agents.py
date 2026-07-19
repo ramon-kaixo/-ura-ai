@@ -151,8 +151,8 @@ class TestResearcherAgent:
         sstore = SemanticMemoryStore()
 
         agent = ResearcherAgent()
-        agent._memory_store = sstore  # noqa: SLF001
-        agent._context_retriever = retriever  # noqa: SLF001
+        agent._memory_store = sstore
+        agent._context_retriever = retriever
 
         task = AgentTask(objective="EventBus")
         result = agent.run(task)

@@ -69,9 +69,9 @@ dl4.release()
 # T5: Cleanup after IOError (simular fallo en release)
 dl6 = DebateLock(path=lock_path)
 dl6.acquire()
-fd = dl6._fd  # noqa: SLF001
+fd = dl6._fd
 os.close(fd)
-dl6._fd = None  # noqa: SLF001
+dl6._fd = None
 # Should not crash, just pass silently
 check("T5: release after close no-crash", lambda: (dl6.release(), True)[1])
 

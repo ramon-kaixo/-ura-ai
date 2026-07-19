@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# ruff: noqa: SLF001 — acceso a _engine del mock
 import json
 from pathlib import Path
 

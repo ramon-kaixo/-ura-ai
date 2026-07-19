@@ -25,4 +25,4 @@ def test_logger_creates_and_logs() -> None:
 def test_logger_different_names() -> None:
     log1 = StructuredLogger("svc1")
     log2 = StructuredLogger("svc2")
-    assert log1._logger.name != log2._logger.name  # noqa: SLF001
+    assert log1._logger.name != log2._logger.name

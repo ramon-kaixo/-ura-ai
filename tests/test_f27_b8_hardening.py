@@ -245,5 +245,5 @@ def test_gate_deterministic() -> None:
         g1.check(AgentCapability.WEB_SEARCH)
     with contextlib.suppress(PermissionError):
         g2.check(AgentCapability.WEB_SEARCH)
-    assert len(g1._decisions) > 0  # noqa: SLF001
-    assert len(g2._decisions) > 0  # noqa: SLF001
+    assert len(g1._decisions) > 0
+    assert len(g2._decisions) > 0

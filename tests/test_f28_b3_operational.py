@@ -75,7 +75,7 @@ def test_f25_to_f26_pipeline(tmp_path: str) -> None:
     ctx = FusionContext(bundle=bundle)
     ctx.statistics["_memory_instance"] = memory
 
-    for stage in pipeline._stages:  # noqa: SLF001
+    for stage in pipeline._stages:
         ctx = stage.execute(ctx)
 
     # Memory debe tener entries escritos por MemoryCandidateSelectionStage

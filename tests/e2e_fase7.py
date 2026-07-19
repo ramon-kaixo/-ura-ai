@@ -199,9 +199,9 @@ def main() -> int:  # noqa: PLR0915
     check("Ollama available initially", ollama.available)
 
     # Degradar y verificar estado O(1)
-    qdrant._degraded = True  # noqa: SLF001
+    qdrant._degraded = True
     check("Qdrant degraded = not available", not qdrant.available)
-    ollama._degraded = True  # noqa: SLF001
+    ollama._degraded = True
     check("Ollama degraded = not available", not ollama.available)
 
     # ── Paso 9: Reconcile (dry-run) ─────────────────────────────────────

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import tempfile
+from pathlib import Path
 
 from motor.intelligence.agents.runtime import MultiAgentRuntime
 from motor.intelligence.memory.episodic import Episode, EpisodeStore, EpisodeStoreConfig
@@ -50,7 +50,7 @@ class TestF14F03EpisodeStoreCorruption:
             loaded = store.get_recent(k=10)
             assert len(loaded) >= 1
         finally:
-            os.unlink(db_path)
+            Path(db_path).unlink(missing_ok=True)
 
     def test_clean_db_works(self):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
@@ -64,7 +64,7 @@ class TestF14F03EpisodeStoreCorruption:
             loaded = store.get_recent(k=10)
             assert len(loaded) >= 1
         finally:
-            os.unlink(db_path)
+            Path(db_path).unlink(missing_ok=True)
 
 
 class TestF14F05HybridRetrieverFallback:
