@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import logging
+import time
+from typing import TYPE_CHECKING
 
 from motor.platform.models import DeliverySemantics, MessageKind, ProtocolEnvelope
+from motor.platform.registry import ProtocolRegistry
 from motor.platform.serializer import compute_checksum, verify_checksum
+
+if TYPE_CHECKING:
+    from motor.platform.metrics import PlatformMetrics
 
 logger = logging.getLogger("ura.security")
 
@@ -28,6 +34,25 @@ class ProtocolValidator:
     """All protocol validation and sanitization in one place."""
 
     MAX_PAYLOAD_SIZE = 10 * 1024 * 1024
+
+    def __init__(
+        self, registry: ProtocolRegistry | None = None,
+        metrics: PlatformMetrics | None = None,
+    ) -> None:
+        self._registry = registry
+        self._metrics = metrics
+
+    # Size budgets per message type per ADR-028-04
+    SIZE_BUDGETS: dict[str, int] = {
+        "ToolRequest": 1 * 1024 * 1024,
+        "ToolResult": 10 * 1024 * 1024,
+        "MemoryEntry": 10 * 1024 * 1024,
+        "AgentAuditRecord": 1 * 1024 * 1024,
+        "Event": 100 * 1024,
+    }
+    # ProtocolEnvelope headers budget: 1 KB (not enforced per-message_type,
+    # covered by the total serialized size check)
+
     FORBIDDEN_PATTERNS = [
         b"<script", b"javascript:", b"onload=", b"onerror=",
         b"../", b"..\\", b"${", b"`",
@@ -43,13 +68,21 @@ class ProtocolValidator:
                 )
 
     def validate(self, envelope: ProtocolEnvelope) -> None:
+        start = time.monotonic()
         self._validate_version(envelope)
         self._validate_routing(envelope)
         self._validate_trace(envelope)
         self._validate_delivery(envelope)
         self._validate_payload(envelope)
         self._validate_checksum_integrity(envelope)
+        self._validate_schema_compatibility(envelope)
         self._sanitize_payload(envelope)
+        if self._metrics is not None:
+            try:
+                ms = (time.monotonic() - start) * 1000
+                self._metrics.record_validation(source=envelope.routing.source, duration_ms=ms)
+            except Exception:
+                pass
 
     def _validate_version(self, envelope: ProtocolEnvelope) -> None:
         v = envelope.version
@@ -105,10 +138,20 @@ class ProtocolValidator:
             raise ProtocolValidationError("invalid_timeout", "timeout_ms must be >= 0")
 
     def _validate_payload(self, envelope: ProtocolEnvelope) -> None:
-        if len(envelope.payload) > self.MAX_PAYLOAD_SIZE:
+        payload_len = len(envelope.payload)
+        if payload_len > self.MAX_PAYLOAD_SIZE:
             raise ProtocolValidationError(
-                "oversized", f"Payload exceeds {self.MAX_PAYLOAD_SIZE} bytes"
+                "oversized", f"Payload {payload_len} exceeds global max {self.MAX_PAYLOAD_SIZE} bytes"
             )
+        # Per-message-type size budget (ADR-028-04)
+        for prefix, budget in self.SIZE_BUDGETS.items():
+            if envelope.routing.message_type.startswith(prefix):
+                if payload_len > budget:
+                    raise ProtocolValidationError(
+                        "oversized",
+                        f"Payload {payload_len} exceeds {budget} budget for {prefix}",
+                    )
+                break
 
     def _validate_checksum_integrity(self, envelope: ProtocolEnvelope) -> None:
         if not envelope.checksum:
@@ -123,6 +166,31 @@ class ProtocolValidator:
         if not verify_checksum(payload, expected):
             raise ProtocolValidationError(
                 "checksum_mismatch", f"Expected {expected}, got {compute_checksum(payload)}"
+            )
+
+    def _validate_schema_compatibility(self, envelope: ProtocolEnvelope) -> None:
+        """Verify the recipient can deserialize this message's schema.
+
+        Per ADR-028-01/S04 and ADR-028-04/4.2:
+        Recipient must support MAJOR ≤ its schema_version for the message_type.
+        """
+        if self._registry is None:
+            return
+        msg_type = envelope.routing.message_type
+        schema_version = envelope.version.schema_version
+        supported = self._registry.get_schema_version(msg_type)
+        if supported is None:
+            return
+        # Parse versions
+        try:
+            sv_maj = int(schema_version.split(".")[0])
+            sp_maj = int(supported.split(".")[0])
+        except (ValueError, IndexError):
+            return
+        if sv_maj > sp_maj:
+            raise ProtocolValidationError(
+                "schema_mismatch",
+                f"Schema {schema_version} for {msg_type} requires MAJOR ≤ {supported}",
             )
 
 

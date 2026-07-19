@@ -26,7 +26,6 @@ import queue
 import random
 import threading
 import time
-from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -35,7 +34,6 @@ from typing import Any
 from motor.platform.models import (
     CausationId,
     CorrelationId,
-    ErrorEnvelope,
     ProtocolEnvelope,
     SpanId,
     TraceHeader,
@@ -145,6 +143,21 @@ def sanitize_tags(tags: dict[str, str]) -> dict[str, str]:
         if len(result) >= MAX_TAGS_PER_EVENT:
             break
     return result
+
+
+# ── DropPolicy (OBS-04 backpressure) ────────
+
+
+class DropPolicy(StrEnum):
+    """Backpressure strategy when the TraceExporter buffer is full.
+
+    DROP_NEWEST: discard the incoming event (default, lowest overhead).
+    DROP_OLDEST: drain the oldest event from the queue to make room.
+    BLOCK: block the caller until space frees up (may impact throughput).
+    """
+    DROP_NEWEST = "drop_newest"
+    DROP_OLDEST = "drop_oldest"
+    BLOCK = "block"
 
 
 # ── SpanTreeValidator (OBS-02/04) ────────────
@@ -583,11 +596,13 @@ class TraceExporter(_SpanEventSink):
         batch_size: int = 10,
         flush_interval: float = 2.0,
         buffer_size: int = 10000,
+        drop_policy: DropPolicy = DropPolicy.DROP_NEWEST,
     ) -> None:
         self._path = path
         self._max_events_per_file = max_events_per_file
         self._batch_size = batch_size
         self._flush_interval = flush_interval
+        self._drop_policy = drop_policy
         self._buffer: queue.Queue = queue.Queue(maxsize=buffer_size)
         self._file_index = 0
         self._event_count = 0
@@ -616,14 +631,41 @@ class TraceExporter(_SpanEventSink):
             self._file = None  # OBS-09: silent on file errors
 
     def emit(self, event: SpanEvent) -> None:
-        """Emit a span event. Non-blocking. OBS-09: silent on failure."""
-        try:
-            self._buffer.put_nowait(event)
+        """Emit a span event. OBS-09: silent on failure.
+
+        Backpressure strategy controlled by drop_policy:
+        - DROP_NEWEST: discard incoming event (default, O(1))
+        - DROP_OLDEST: drain oldest from queue to make room (O(1))
+        - BLOCK: block caller until space frees up (max 5s timeout)
+
+        Metrics via dropped_count / event_count properties.
+        """
+        with self._lock:
             self._event_count += 1
+
+        try:
+            if self._drop_policy == DropPolicy.BLOCK:
+                self._buffer.put(event, timeout=5.0)
+                return
+            self._buffer.put_nowait(event)
+            return
         except queue.Full:
-            self._dropped_count += 1  # OBS-04: backpressure — drop oldest silently
+            pass
         except Exception:
             logger.debug("trace emit failed (OBS-09)", exc_info=True)
+            return
+
+        # Buffer is full — apply drop policy
+        if self._drop_policy == DropPolicy.DROP_OLDEST:
+            try:
+                self._buffer.get_nowait()
+                self._buffer.put_nowait(event)
+                return
+            except (queue.Empty, queue.Full):
+                pass
+
+        with self._lock:
+            self._dropped_count += 1
 
     def _flush_loop(self) -> None:
         """Background thread: flush buffer periodically. OBS-09: silent."""
@@ -706,6 +748,29 @@ class TraceExporter(_SpanEventSink):
     @property
     def path(self) -> str:
         return self._path
+
+    @property
+    def drop_policy(self) -> str:
+        return self._drop_policy.value
+
+    @property
+    def buffer_size(self) -> int:
+        return self._buffer.maxsize
+
+    @property
+    def buffer_used(self) -> int:
+        return self._buffer.qsize()
+
+    def metrics_dict(self) -> dict[str, int | str]:
+        """Prometheus-friendly metrics snapshot."""
+        with self._lock:
+            return {
+                "trace_exporter_emitted_total": self._event_count,
+                "trace_exporter_dropped_total": self._dropped_count,
+                "trace_exporter_buffer_size": self._buffer.maxsize,
+                "trace_exporter_buffer_used": self._buffer.qsize(),
+                "trace_exporter_drop_policy": self._drop_policy.value,
+            }
 
 
 # ── MetricsCollector ────────────────────────

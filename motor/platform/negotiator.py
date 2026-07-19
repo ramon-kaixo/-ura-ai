@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import time
+from typing import TYPE_CHECKING
+
 from motor.platform.models import MessageKind
+
+if TYPE_CHECKING:
+    from motor.platform.metrics import PlatformMetrics
 
 
 class VersionNegotiationResult:
@@ -25,9 +31,15 @@ def _parse_major_minor(version: str) -> tuple[int, int]:
 
 
 class VersionNegotiator:
-    """Negotiates protocol version per message kind."""
+    """Negotiates protocol version per message kind.
+
+    Optionally instruments negotiation latency via PlatformMetrics.
+    """
 
     MIN_EVENT_VERSION = "1.0"
+
+    def __init__(self, metrics: PlatformMetrics | None = None) -> None:
+        self._metrics = metrics
 
     def negotiate(
         self,
@@ -37,57 +49,58 @@ class VersionNegotiator:
         receiver_capabilities: set[str],
         kind: MessageKind,
     ) -> VersionNegotiationResult:
+        start = time.monotonic()
         em_maj, em_min = _parse_major_minor(emitter_version)
         rc_maj, rc_min = _parse_major_minor(receiver_version)
 
         if emitter_version == receiver_version:
             caps = emitter_capabilities & receiver_capabilities
-            return VersionNegotiationResult(
+            result = VersionNegotiationResult(
                 protocol_version=emitter_version,
                 schema_version=emitter_version,
                 capabilities=frozenset(caps),
                 compatible=True,
             )
-
-        # MAJOR mismatch
-        if em_maj != rc_maj:
+        elif em_maj != rc_maj:
             if kind in (MessageKind.EVENT,):
-                # EVENT: dead-letter if emitter is newer
-                # EVENT: reject if receiver is newer
                 if em_maj > rc_maj:
-                    return VersionNegotiationResult(
+                    result = VersionNegotiationResult(
                         protocol_version=emitter_version,
                         schema_version=emitter_version,
                         capabilities=frozenset(),
                         compatible=False,
                     )
-                return VersionNegotiationResult(
-                    protocol_version=receiver_version,
-                    schema_version=receiver_version,
+                else:
+                    result = VersionNegotiationResult(
+                        protocol_version=receiver_version,
+                        schema_version=receiver_version,
+                        capabilities=frozenset(),
+                        compatible=False,
+                    )
+            else:
+                result = VersionNegotiationResult(
+                    protocol_version=emitter_version,
+                    schema_version=emitter_version,
                     capabilities=frozenset(),
                     compatible=False,
                 )
-
-            # COMMAND/QUERY: reject with version_mismatch
-            return VersionNegotiationResult(
-                protocol_version=emitter_version,
-                schema_version=emitter_version,
-                capabilities=frozenset(),
-                compatible=False,
+        else:
+            negotiated_min = min(em_min, rc_min)
+            caps = emitter_capabilities & receiver_capabilities
+            result = VersionNegotiationResult(
+                protocol_version=f"{em_maj}.{negotiated_min}",
+                schema_version=f"{em_maj}.{negotiated_min}",
+                capabilities=frozenset(caps),
+                compatible=True,
             )
 
-        # Same MAJOR, different MINOR → use lower MINOR
-        negotiated_min = min(em_min, rc_min)
-        negotiated_ver = f"{em_maj}.{negotiated_min}"
-        negotiated_schema = f"{em_maj}.{negotiated_min}"
-        caps = emitter_capabilities & receiver_capabilities
-
-        return VersionNegotiationResult(
-            protocol_version=negotiated_ver,
-            schema_version=negotiated_schema,
-            capabilities=frozenset(caps),
-            compatible=True,
-        )
+        if self._metrics is not None:
+            try:
+                ms = (time.monotonic() - start) * 1000
+                self._metrics.record_negotiation(emitter_version, receiver_version, ms)
+            except Exception:
+                pass
+        return result
 
     def negotiate_event(
         self,

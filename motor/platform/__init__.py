@@ -18,15 +18,19 @@ API Classification:
     make_envelope_with_checksum
 """
 
+from motor.platform.audit import AuditLogger
 from motor.platform.compat import CompatibilityChecker
+from motor.platform.delivery import ErrorDelivery, classify_error
 from motor.platform.errors import ProtocolException
 from motor.platform.health import HealthAggregator, get_health_aggregator
+from motor.platform.metrics import PlatformMetrics, get_platform_metrics
 from motor.platform.middleware import TraceMiddleware, traced
 from motor.platform.models import (
     CausationId,
     CorrelationId,
     DeliveryHeader,
     DeliverySemantics,
+    ErrorCode,
     ErrorEnvelope,
     IdempotencyKey,
     MessageId,
@@ -53,6 +57,7 @@ from motor.platform.serializer import (
     verify_checksum,
 )
 from motor.platform.tracing import (
+    DropPolicy,
     InMemoryExporter,
     MetricsCollector,
     Sampler,
@@ -70,11 +75,15 @@ from motor.platform.transport import LocalTransport, Transport
 from motor.platform.validator import ProtocolValidationError, ProtocolValidator
 
 __all__ = [
+    "AuditLogger",
     "CausationId",
     "CompatibilityChecker",
     "CorrelationId",
     "DeliveryHeader",
     "DeliverySemantics",
+    "DropPolicy",
+    "ErrorCode",
+    "ErrorDelivery",
     "ErrorEnvelope",
     "HealthAggregator",
     "IdempotencyKey",
@@ -85,6 +94,7 @@ __all__ = [
     "MessageId",
     "MessageKind",
     "MetricsCollector",
+    "PlatformMetrics",
     "ProtocolDeserializer",
     "ProtocolEnvelope",
     "ProtocolException",
@@ -94,9 +104,9 @@ __all__ = [
     "ProtocolValidator",
     "RetryPolicy",
     "RoutingHeader",
-    "SecurityHeader",
     "Sampler",
     "SamplingStrategy",
+    "SecurityHeader",
     "SpanEvent",
     "SpanId",
     "SpanTreeError",

@@ -147,6 +147,21 @@ class DeliverySemantics(StrEnum):
     EXACTLY_ONCE = "exactly_once"
 
 
+class ErrorCode(StrEnum):
+    """Canonical error codes per ADR-028-06."""
+    TIMEOUT = "timeout"
+    UNAVAILABLE = "unavailable"
+    TRANSIENT = "transient"
+    INVALID_PAYLOAD = "invalid_payload"
+    UNAUTHORIZED = "unauthorized"
+    NOT_FOUND = "not_found"
+    OVERSIZED = "oversized"
+    VERSION_MISMATCH = "version_mismatch"
+    CAPACITY_EXCEEDED = "capacity_exceeded"
+    UNKNOWN_MESSAGE = "unknown_message"
+    INTERNAL_ERROR = "internal_error"
+
+
 # ── Headers ────────────────────────────────
 
 
@@ -197,6 +212,7 @@ class DeliveryHeader:
     cancelable: bool = False
     max_response_bytes: int = 10 * 1024 * 1024
     metadata: tuple[tuple[str, str], ...] = ()
+    retry_policy: RetryPolicy | None = None
 
 
 @dataclass(frozen=True)
@@ -245,3 +261,28 @@ class ErrorEnvelope:
     original_message_type: str = ""
     retryable: bool = False
     retry_delay_ms: int = 0
+
+    @classmethod
+    def from_original(
+        cls,
+        original: ProtocolEnvelope,
+        error_code: str,
+        error_message: str,
+        component: str = "",
+        retryable: bool = False,
+        retry_delay_ms: int = 0,
+    ) -> ErrorEnvelope:
+        """Build ErrorEnvelope inheriting causation from original message.
+
+        Per ADR-028-06 ER04: ERROR causation_id inherits from original.
+        Per ADR-028-06 ER03: original_message_id points to triggering message.
+        """
+        return cls(
+            error_code=error_code,
+            error_message=error_message,
+            component=component or original.routing.destination,
+            original_message_id=str(original.routing.message_id),
+            original_message_type=original.routing.message_type,
+            retryable=retryable,
+            retry_delay_ms=retry_delay_ms,
+        )

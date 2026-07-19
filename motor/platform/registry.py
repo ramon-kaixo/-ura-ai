@@ -33,7 +33,7 @@ class ProtocolRegistry:
     def register_message_type(self, message_type: str, schema_version: str) -> None:
         with self._lock:
             self._message_types[message_type] = schema_version
-            self.register_schema_version(message_type, schema_version)
+            self._schema_versions.setdefault(message_type, set()).add(schema_version)
 
     def supports_protocol(self, version: str) -> bool:
         return version in self._protocol_versions
