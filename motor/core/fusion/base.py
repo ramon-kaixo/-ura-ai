@@ -197,13 +197,15 @@ class BaseStage(PipelineStage):
         input_claims = len(context.claims)
         input_facts = len(context.facts)
         result = self._execute(context)
-        result.transforms.append(StageProvenance(
-            stage_name=self.name,
-            stage_version=self.version,
-            transformer=f"{self.name}:v{self.version}",
-            input_claims=input_claims,
-            output_claims=len(result.claims),
-        ))
+        result.transforms.append(
+            StageProvenance(
+                stage_name=self.name,
+                stage_version=self.version,
+                transformer=f"{self.name}:v{self.version}",
+                input_claims=input_claims,
+                output_claims=len(result.claims),
+            ),
+        )
         if hasattr(self, "_record_stats"):
             result.statistics.setdefault("stages", {})[self.name] = {
                 "version": self.version,
@@ -215,8 +217,7 @@ class BaseStage(PipelineStage):
         return result
 
     @abstractmethod
-    def _execute(self, context: FusionContext) -> FusionContext:
-        ...
+    def _execute(self, context: FusionContext) -> FusionContext: ...
 
 
 class KnowledgeMerger(ABC):

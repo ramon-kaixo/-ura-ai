@@ -153,7 +153,7 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
 
 
 async def web_search(query: str, max_results: int = 5) -> dict:
-    global _last_search
+    global _last_search  # noqa: PLW0603
     async with _rate_limit_lock:
         ahora = time.time()
         if ahora - _last_search < WEBSEARCH_INTERVAL:
@@ -168,14 +168,13 @@ async def web_search(query: str, max_results: int = 5) -> dict:
         if "error" not in fallback:
             return fallback
         return ddg
-    else:
-        sx = await _buscar_searxng(query, max_results)
-        if "error" not in sx:
-            return sx
-        ddg = await _buscar_ddg(query, max_results)
-        if "error" not in ddg:
-            return ddg
+    sx = await _buscar_searxng(query, max_results)
+    if "error" not in sx:
         return sx
+    ddg = await _buscar_ddg(query, max_results)
+    if "error" not in ddg:
+        return ddg
+    return sx
 
 
 async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
@@ -237,7 +236,7 @@ async def file_read(path: str, max_lines: int = 200) -> dict:
     if not ruta.is_file():
         return {"error": f"No es un archivo: {ruta}", "path": path}
     try:
-        with open(ruta, encoding="utf-8", errors="replace") as f:
+        with open(ruta, encoding="utf-8", errors="replace") as f:  # noqa: ASYNC230, PTH123
             lineas = []
             for i, linea in enumerate(f):
                 if i >= max_lines:

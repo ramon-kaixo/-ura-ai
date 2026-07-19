@@ -1,4 +1,4 @@
-"""Entry point: python3 -m knowledge.engine.cli"""
+"""Entry point: python3 -m knowledge.engine.cli."""
 
 import sys
 

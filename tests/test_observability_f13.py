@@ -40,7 +40,8 @@ class TestJSONLogging:
         import sys
 
         try:
-            raise ValueError("test error")
+            msg = "test error"
+            raise ValueError(msg)
         except ValueError:
             exc_info = sys.exc_info()
         record = logging.LogRecord("test", logging.ERROR, "", 0, "fail", (), exc_info=exc_info)
@@ -64,7 +65,7 @@ class TestCorrelationID:
     def test_empty_default(self):
         import motor.observability.logging as obs_logging
 
-        obs_logging._context.correlation_id = ""
+        obs_logging._context.correlation_id = ""  # noqa: SLF001
         assert get_correlation_id() == ""
 
     def test_workflow_id(self):
@@ -164,7 +165,7 @@ class TestDashboard:
     def test_dashboard_valid_json(self):
         import json
 
-        with open("deploy/grafana/dashboard.json") as f:
+        with open("deploy/grafana/dashboard.json") as f:  # noqa: PTH123
             data = json.load(f)
         assert "title" in data
         assert "panels" in data
@@ -173,7 +174,7 @@ class TestDashboard:
     def test_dashboard_has_ura_tag(self):
         import json
 
-        with open("deploy/grafana/dashboard.json") as f:
+        with open("deploy/grafana/dashboard.json") as f:  # noqa: PTH123
             data = json.load(f)
         assert "ura" in data.get("tags", [])
 
@@ -182,7 +183,7 @@ class TestAlertRules:
     def test_alerts_valid_yaml(self):
         import yaml
 
-        with open("deploy/prometheus/alerts.yml") as f:
+        with open("deploy/prometheus/alerts.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         assert "groups" in data
         assert len(data["groups"]) > 0
@@ -190,7 +191,7 @@ class TestAlertRules:
     def test_alerts_have_names(self):
         import yaml
 
-        with open("deploy/prometheus/alerts.yml") as f:
+        with open("deploy/prometheus/alerts.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
         for group in data["groups"]:
             for rule in group.get("rules", []):

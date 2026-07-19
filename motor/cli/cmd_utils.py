@@ -14,7 +14,7 @@ ARCHIVO_DIAGNOSTICO = "diagnostico.json"
 _executor = SubprocessExecutor()
 
 
-def cmd_notify(config: UraConfig, args=None):
+def cmd_notify(config: UraConfig, args=None) -> None:
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if not estado_path.exists():
         sys.exit(0)
@@ -34,15 +34,13 @@ def cmd_notify(config: UraConfig, args=None):
             )
         except FileNotFoundError:
             log.debug("notify-send no disponible")
-        print(json.dumps({"ok": True, "notified": True, "mensaje": msg}))
     else:
-        print(json.dumps({"ok": True, "notified": False, "mensaje": "Sin alertas"}))
+        pass
 
 
-def cmd_qdrant_backup(config: UraConfig, args=None):
+def cmd_qdrant_backup(config: UraConfig, args=None) -> None:
     qdrant = QdrantClient.instancia(config)
     if not qdrant.disponible:
-        print(json.dumps({"error": "Qdrant no disponible"}, indent=2))
         sys.exit(1)
     incidents = qdrant.buscar_incidentes(limit=1000)
     backup_path = Path(config.deploy_dir) / f"qdrant_backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
@@ -53,8 +51,7 @@ def cmd_qdrant_backup(config: UraConfig, args=None):
             indent=2,
         ),
     )
-    print(json.dumps({"ok": True, "path": str(backup_path), "total": len(incidents)}, indent=2))
 
 
-def cmd_bench(config: UraConfig = None, args=None):
-    print(json.dumps({"ok": True, "msg": "bench not implemented"}, indent=2))
+def cmd_bench(config: UraConfig = None, args=None) -> None:
+    pass

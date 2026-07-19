@@ -64,7 +64,7 @@ def transaction(db_path: Path, name: str = "tx"):
 class TransactionManager:
     """Maneja savepoints dentro de una transacción SQLite."""
 
-    def __init__(self, conn, name: str = "tx"):
+    def __init__(self, conn, name: str = "tx") -> None:
         self._conn = conn
         self._name = name
         self._savepoints: list[Savepoint] = []
@@ -104,7 +104,7 @@ class CompileRollback:
     Guarda el estado antes de un compile y permite restaurarlo.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
         self._snapshot_path = db_path.with_suffix(".db.compile_snapshot")
 
@@ -130,7 +130,7 @@ class CompileRollback:
             log.info("Pre-compile state restored")
             return True
         except Exception as exc:
-            log.error("Failed to restore pre-compile state: %s", exc)
+            log.exception("Failed to restore pre-compile state: %s", exc)
             return False
 
     def cleanup(self) -> None:

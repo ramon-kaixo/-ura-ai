@@ -99,7 +99,8 @@ class HotspotDetector:
         allocations_count: int = 0,
     ) -> HotspotRecord | None:
         """Evalúa si una operación es hotspot. Retorna HotspotRecord si supera
-        el umbral, None en caso contrario."""
+        el umbral, None en caso contrario.
+        """
         if wall_time_ms < self._threshold_ms:
             return None
 

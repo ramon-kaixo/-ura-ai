@@ -107,7 +107,8 @@ class GitExtractor:
 
                 repo_size = self._repo_size(work_dir)
                 if repo_size > MAX_CLONE_SIZE:
-                    raise GitLimitError(f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})")
+                    msg = f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})"
+                    raise GitLimitError(msg)
 
                 metadata["size"] = repo_size
                 metadata["_extractor"] = self.id
@@ -154,7 +155,8 @@ class GitExtractor:
         cmd = ["git", "clone", "--depth", "1", "--single-branch", url_clean, target]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=CLONE_TIMEOUT, check=False)  # noqa: S603 — URL sanitized above
         if result.returncode != 0:
-            raise RuntimeError(f"git clone failed for {url}: {result.stderr.strip()}")
+            msg = f"git clone failed for {url}: {result.stderr.strip()}"
+            raise RuntimeError(msg)
         return target
 
     @staticmethod
@@ -194,7 +196,7 @@ class GitExtractor:
                             "email": parts[2],
                             "date": parts[3],
                             "message": parts[4] if len(parts) > 4 else "",
-                        }
+                        },
                     )
             metadata["commits"] = commits
             metadata["commit_count"] = len(commits)
@@ -256,7 +258,7 @@ class GitExtractor:
 def _git_cmd(repo_path: str, args: list[str]) -> str | None:
     cmd = ["git", *args]
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             cmd,
             capture_output=True,
             text=True,

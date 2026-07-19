@@ -11,13 +11,14 @@ import os
 import queue
 import re
 import sqlite3
+from pathlib import Path
 
 import numpy as np
 import sounddevice as sd
 import torch
 import whisper
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "voice_corrections.db"))
+DB_PATH = Path(os.path.join(Path(__file__).resolve().parent, "..", "..", "config", "voice_corrections.db"))  # noqa: PTH118
 DEFAULT_MODEL = "small"
 SAMPLE_RATE = 16000
 BLOCK_SIZE = 480  # 30ms a 16kHz
@@ -31,7 +32,7 @@ class AnkerDeterministicPipeline:
         self.audio_queue: queue.Queue = queue.Queue()
         self.is_playing_tts: bool = False
 
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
         self._init_db()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -63,7 +64,7 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(devices):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 
@@ -73,7 +74,7 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     t = np.linspace(0, 2, int(sr * 2), endpoint=False)
     test_audio = (np.sin(440 * 2 * np.pi * t) * 0.1).astype(np.float32)
 
-    tmp_wav = "/tmp/test_whisper_gx10.wav"
+    tmp_wav = "/tmp/test_whisper_gx10.wav"  # noqa: S108
     import scipy.io.wavfile as wav
 
     wav.write(tmp_wav, sr, test_audio)

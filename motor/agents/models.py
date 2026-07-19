@@ -198,7 +198,7 @@ class ToolRequest:
     trace_id: str = ""
     causation_id: str = ""
 
-    def to_envelope(self) -> ProtocolEnvelope:
+    def to_envelope(self) -> ProtocolEnvelope:  # noqa: F821
         from motor.platform.models import (
             CausationId,
             CorrelationId,
@@ -212,14 +212,16 @@ class ToolRequest:
         )
         from motor.platform.serializer import make_envelope_with_checksum, make_message_id
 
-        payload = json.dumps({
-            "execution_id": self.execution_id,
-            "tool_name": self.tool_name,
-            "params": self.params,
-            "timeout": self.timeout,
-            "attempt": self.attempt,
-            "protocol_version": self.protocol_version,
-        }).encode("utf-8")
+        payload = json.dumps(
+            {
+                "execution_id": self.execution_id,
+                "tool_name": self.tool_name,
+                "params": self.params,
+                "timeout": self.timeout,
+                "attempt": self.attempt,
+                "protocol_version": self.protocol_version,
+            },
+        ).encode("utf-8")
 
         return make_envelope_with_checksum(
             version=VersionHeader(
@@ -228,7 +230,14 @@ class ToolRequest:
                 payload_type="json",
             ),
             routing=RoutingHeader(
-                message_id=make_message_id(self.protocol_version, "1.0", "agent", self.tool_name, "ToolRequest", payload),
+                message_id=make_message_id(
+                    self.protocol_version,
+                    "1.0",
+                    "agent",
+                    self.tool_name,
+                    "ToolRequest",
+                    payload,
+                ),
                 message_type="ToolRequest",
                 message_kind=MessageKind.COMMAND,
                 source="agent",
@@ -245,7 +254,7 @@ class ToolRequest:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolRequest:
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolRequest:  # noqa: F821
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],
@@ -271,7 +280,7 @@ class ToolResult:
     attempt: int = 1
     protocol_version: str = "1.0"
 
-    def to_envelope(self) -> ProtocolEnvelope:
+    def to_envelope(self) -> ProtocolEnvelope:  # noqa: F821
         from motor.platform.models import (
             DeliveryHeader,
             MessageKind,
@@ -281,17 +290,19 @@ class ToolResult:
         )
         from motor.platform.serializer import make_envelope_with_checksum, make_message_id
 
-        payload = json.dumps({
-            "execution_id": self.execution_id,
-            "tool_name": self.tool_name,
-            "success": self.success,
-            "data": self.data,
-            "error": self.error,
-            "error_type": self.error_type,
-            "duration_ms": self.duration_ms,
-            "attempt": self.attempt,
-            "protocol_version": self.protocol_version,
-        }).encode("utf-8")
+        payload = json.dumps(
+            {
+                "execution_id": self.execution_id,
+                "tool_name": self.tool_name,
+                "success": self.success,
+                "data": self.data,
+                "error": self.error,
+                "error_type": self.error_type,
+                "duration_ms": self.duration_ms,
+                "attempt": self.attempt,
+                "protocol_version": self.protocol_version,
+            },
+        ).encode("utf-8")
 
         return make_envelope_with_checksum(
             version=VersionHeader(
@@ -300,7 +311,14 @@ class ToolResult:
                 payload_type="json",
             ),
             routing=RoutingHeader(
-                message_id=make_message_id(self.protocol_version, "1.0", self.tool_name, "agent", "ToolResult", payload),
+                message_id=make_message_id(
+                    self.protocol_version,
+                    "1.0",
+                    self.tool_name,
+                    "agent",
+                    "ToolResult",
+                    payload,
+                ),
                 message_type="ToolResult",
                 message_kind=MessageKind.RESPONSE,
                 source=self.tool_name,
@@ -316,7 +334,7 @@ class ToolResult:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolResult:
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolResult:  # noqa: F821
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],

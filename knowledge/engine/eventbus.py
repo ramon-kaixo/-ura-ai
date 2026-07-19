@@ -31,8 +31,6 @@ log = logging.getLogger("ura.knowledge.eventbus")
 class Event:
     """Base class for all events."""
 
-    pass
-
 
 @dataclass(frozen=True)
 class CompileCompleted(Event):
@@ -117,7 +115,7 @@ class EventBus:
     (síncrono) por ahora. En futura versión podrían ir a un thread pool.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._lock = threading.Lock()
         self._subscribers: dict[type[Event], list[Handler]] = {}
 
@@ -148,7 +146,7 @@ class EventBus:
             try:
                 handler(event)
             except Exception as exc:
-                log.error(
+                log.exception(
                     "Event handler %s failed for %s: %s",
                     handler.__name__,
                     event_type.__name__,
@@ -169,7 +167,7 @@ _BUS_LOCK = threading.Lock()
 
 def get_bus() -> EventBus:
     """Retorna la instancia global del Event Bus."""
-    global _BUS
+    global _BUS  # noqa: PLW0603
     if _BUS is not None:
         return _BUS
     with _BUS_LOCK:
@@ -181,5 +179,5 @@ def get_bus() -> EventBus:
 
 def set_bus(bus: EventBus) -> None:
     """Establece la instancia global (útil en tests)."""
-    global _BUS
+    global _BUS  # noqa: PLW0603
     _BUS = bus

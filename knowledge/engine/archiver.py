@@ -54,10 +54,12 @@ def _resolve_within(path: Path, allowed: Path, label: str = "path") -> Path:
     if not resolved.exists():
         parent = Path(path).parent.resolve()
         if not str(parent).startswith(str(allowed.resolve())):
-            raise PathTraversalError(f"{label}: {path} (resuelto: {parent}) está fuera de {allowed}")
+            msg = f"{label}: {path} (resuelto: {parent}) está fuera de {allowed}"
+            raise PathTraversalError(msg)
 
     if not str(resolved).startswith(str(allowed.resolve())):
-        raise PathTraversalError(f"{label}: {path} (resuelto: {resolved}) está fuera de {allowed}")
+        msg = f"{label}: {path} (resuelto: {resolved}) está fuera de {allowed}"
+        raise PathTraversalError(msg)
     return resolved
 
 
@@ -69,7 +71,8 @@ def _validate_source_dir(source_dir: Path, allowed_root: Path | None = None) -> 
     """
     resolved = source_dir.resolve()
     if allowed_root is not None and not str(resolved).startswith(str(allowed_root.resolve())):
-        raise PathTraversalError(f"source_dir: {source_dir} (resuelto: {resolved}) está fuera de {allowed_root}")
+        msg = f"source_dir: {source_dir} (resuelto: {resolved}) está fuera de {allowed_root}"
+        raise PathTraversalError(msg)
     return resolved
 
 
@@ -105,7 +108,7 @@ def _archive_path(archive_dir: Path, kind: str, timestamp: str) -> Path:
 # ── API pública ────────────────────────────────────────────────────────────────
 
 
-def archive_source(
+def archive_source(  # noqa: PLR0915
     source_dir: Path | None = None,
     archive_dir: Path | None = None,
     db_path: Path | None = None,
@@ -129,7 +132,8 @@ def archive_source(
     # 1. Verificar que es un repo git y obtener el commit actual
     result = _git_cmd("rev-parse", "HEAD", cwd=source_dir)
     if result.returncode != 0:
-        raise ValueError(f"source_dir no es un repositorio git: {source_dir}\nstderr: {result.stderr.strip()}")
+        msg = f"source_dir no es un repositorio git: {source_dir}\nstderr: {result.stderr.strip()}"
+        raise ValueError(msg)
     commit = result.stdout.strip()
 
     # 2. Contar archivos tracked
@@ -147,7 +151,8 @@ def archive_source(
         cwd=source_dir,
     )
     if result.returncode != 0:
-        raise RuntimeError(f"Error creando git bundle: {result.stderr.strip()}")
+        msg = f"Error creando git bundle: {result.stderr.strip()}"
+        raise RuntimeError(msg)
 
     compressed_size = bundle_path.stat().st_size
 
@@ -223,19 +228,19 @@ def archive_source(
             file_count=file_count,
             size_bytes=compressed_size,
         )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     try:
         from knowledge.engine.metrics import archive_duration_seconds
 
         archive_duration_seconds.observe(_time.monotonic() - _t0)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return manifest
 
 
-def verify_archive(
+def verify_archive(  # noqa: PLR0911
     manifest_path: str | Path,
     archive_dir: Path | None = None,
 ) -> bool:
@@ -252,12 +257,13 @@ def verify_archive(
                      Si es None, usa el directorio padre del manifest.
 
     Retorna True si todo es correcto.
+
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
     try:
         manifest_path = _resolve_within(Path(manifest_path), allowed, "manifest_path")
     except PathTraversalError as exc:
-        log.error("Path traversal denegado: %s", exc)
+        log.exception("Path traversal denegado: %s", exc)
         return False
 
     if not manifest_path.exists():
@@ -269,13 +275,13 @@ def verify_archive(
         data = json.loads(raw)
         manifest = ArchiveManifest.from_dict(data)
     except (json.JSONDecodeError, TypeError) as exc:
-        log.error("Manifest inválido: %s", exc)
+        log.exception("Manifest inválido: %s", exc)
         return False
 
     try:
         archive = _resolve_within(Path(manifest.archive_path), allowed, "archive_path")
     except PathTraversalError as exc:
-        log.error("Path traversal denegado en archive_path del manifest: %s", exc)
+        log.exception("Path traversal denegado en archive_path del manifest: %s", exc)
         return False
 
     if not archive.exists():
@@ -319,10 +325,12 @@ def restore_source(
     try:
         manifest_path = _resolve_within(Path(manifest_path), allowed, "manifest_path")
     except PathTraversalError as exc:
-        raise ValueError(f"Path traversal denegado en manifest: {exc}") from exc
+        msg = f"Path traversal denegado en manifest: {exc}"
+        raise ValueError(msg) from exc
 
     if not verify_archive(manifest_path, archive_dir=allowed):
-        raise ValueError(f"Archive no pasó verificación: {manifest_path}")
+        msg = f"Archive no pasó verificación: {manifest_path}"
+        raise ValueError(msg)
 
     raw = manifest_path.read_text()
     data = json.loads(raw)
@@ -335,10 +343,12 @@ def restore_source(
     try:
         bundle_path = _resolve_within(Path(manifest.archive_path), allowed, "archive_path")
     except PathTraversalError as exc:
-        raise ValueError(f"Path traversal denegado en archive_path del manifest: {exc}") from exc
+        msg = f"Path traversal denegado en archive_path del manifest: {exc}"
+        raise ValueError(msg) from exc
 
     if not bundle_path.exists():
-        raise FileNotFoundError(f"Bundle no encontrado: {bundle_path}")
+        msg = f"Bundle no encontrado: {bundle_path}"
+        raise FileNotFoundError(msg)
 
     # Clonar desde bundle
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -349,13 +359,15 @@ def restore_source(
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError(f"Error restaurando desde bundle: {result.stderr.strip()}")
+        msg = f"Error restaurando desde bundle: {result.stderr.strip()}"
+        raise RuntimeError(msg)
 
     # Hacer checkout exacto del commit archivado
     if manifest.source_commit:
         result = _git_cmd("checkout", manifest.source_commit, cwd=dest_dir)
         if result.returncode != 0:
-            raise RuntimeError(f"Error haciendo checkout de {manifest.source_commit}: {result.stderr.strip()}")
+            msg = f"Error haciendo checkout de {manifest.source_commit}: {result.stderr.strip()}"
+            raise RuntimeError(msg)
 
     log.info(
         "Source restored: commit=%s bundle=%s dest=%s",
@@ -393,7 +405,7 @@ def list_archives_from_db(db_path: Path) -> list[dict[str, Any]]:
         rows = conn.execute(
             "SELECT id, kind, source_commit, manifest_path, archive_path, "
             "       compressed_size, content_sha256, archived_at, retention_days "
-            "FROM op_archives ORDER BY archived_at DESC"
+            "FROM op_archives ORDER BY archived_at DESC",
         ).fetchall()
         conn.close()
         return [dict(r) for r in rows]

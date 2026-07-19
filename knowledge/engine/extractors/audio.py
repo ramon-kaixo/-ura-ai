@@ -121,7 +121,7 @@ class AudioExtractor:
             )
 
     @staticmethod
-    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
+    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:  # noqa: C901
         cmd = [
             "ffprobe",
             "-v",

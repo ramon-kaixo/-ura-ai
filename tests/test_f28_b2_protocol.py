@@ -51,8 +51,20 @@ def _make_env(
 ) -> ProtocolEnvelope:
     v = VersionHeader(protocol_version=proto_ver, schema_version=schema_ver)
     mid = make_message_id(proto_ver, schema_ver, source, destination, message_type, payload)
-    r = RoutingHeader(message_id=mid, message_type=message_type, message_kind=kind, source=source, destination=destination)
-    t = TraceHeader(trace_id=TraceId.generate(), span_id=SpanId.generate(), correlation_id=CorrelationId(correlation), causation_id=CausationId.root(), timestamp=1000.0)
+    r = RoutingHeader(
+        message_id=mid,
+        message_type=message_type,
+        message_kind=kind,
+        source=source,
+        destination=destination,
+    )
+    t = TraceHeader(
+        trace_id=TraceId.generate(),
+        span_id=SpanId.generate(),
+        correlation_id=CorrelationId(correlation),
+        causation_id=CausationId.root(),
+        timestamp=1000.0,
+    )
     d = DeliveryHeader(semantics=semantics)
     return make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=payload)
 
@@ -95,20 +107,27 @@ def test_canonical_json_format() -> None:
     ser = JsonProtocolSerializer()
     env = _make_env()
     data = ser.serialize(env).decode("utf-8")
-    assert ':' in data  # compact separators
+    assert ":" in data  # compact separators
     assert '"payload_hex"' in data
 
 
 def test_serialization_with_security() -> None:
     env = _make_env()
-    sec = SecurityHeader(auth_token="tok123", auth_token_type="bearer")
-    env2 = make_envelope_with_checksum(version=env.version, routing=env.routing, trace=env.trace, delivery=env.delivery, payload=env.payload, security=sec)
+    sec = SecurityHeader(auth_token="tok123", auth_token_type="bearer")  # noqa: S106
+    env2 = make_envelope_with_checksum(
+        version=env.version,
+        routing=env.routing,
+        trace=env.trace,
+        delivery=env.delivery,
+        payload=env.payload,
+        security=sec,
+    )
     ser = JsonProtocolSerializer()
     deser = JsonProtocolDeserializer()
     data = ser.serialize(env2)
     restored = deser.deserialize(data)
     assert restored.security is not None
-    assert restored.security.auth_token == "tok123"
+    assert restored.security.auth_token == "tok123"  # noqa: S105
 
 
 # ═══════════════════════════════════════════════════
@@ -184,7 +203,12 @@ def test_validate_missing_trace() -> None:
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "s", "d", "T", b"{}")
     r = RoutingHeader(message_id=mid, message_type="T", message_kind=MessageKind.COMMAND, source="s", destination="d")
-    t = TraceHeader(trace_id=TraceId(""), span_id=SpanId(""), correlation_id=CorrelationId(""), causation_id=CausationId.root())
+    t = TraceHeader(
+        trace_id=TraceId(""),
+        span_id=SpanId(""),
+        correlation_id=CorrelationId(""),
+        causation_id=CausationId.root(),
+    )
     d = DeliveryHeader()
     env = make_envelope_with_checksum(version=v, routing=r, trace=t, delivery=d, payload=b"{}")
     with pytest.raises(ProtocolValidationError):
@@ -281,14 +305,15 @@ def test_concurrent_serialization() -> None:
 
 def test_fuzz_serialization() -> None:
     import random
-    rng = random.Random(42)
+
+    rng = random.Random(42)  # noqa: S311
     deser = JsonProtocolDeserializer()
     for _ in range(100):
         length = rng.randint(1, 500)
         junk = bytes(rng.randint(0, 255) for _ in range(length))
-        try:
+        try:  # noqa: SIM105
             deser.deserialize(junk)
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # expected for invalid data
 
 
@@ -341,8 +366,12 @@ def test_checksum_mismatch_detected() -> None:
     env = _make_env(payload=b"original")
     # Tamper with envelope
     env2 = ProtocolEnvelope(
-        version=env.version, routing=env.routing, trace=env.trace,
-        delivery=env.delivery, payload=b"tampered", checksum=env.checksum,
+        version=env.version,
+        routing=env.routing,
+        trace=env.trace,
+        delivery=env.delivery,
+        payload=b"tampered",
+        checksum=env.checksum,
     )
     with pytest.raises(ProtocolValidationError, match="checksum"):
         val.validate(env2)
@@ -393,18 +422,35 @@ def test_unknown_message_kind_raises_protocol_exception() -> None:
     import json
 
     from motor.platform.errors import ProtocolException
+
     deser = JsonProtocolDeserializer()
-    bad_data = json.dumps({
-        "version": {"protocol_version": "1.0", "schema_version": "1.0",
-                     "payload_type": "json", "capabilities": [], "reserved": []},
-        "routing": {"message_id": "x", "message_type": "T",
-                     "message_kind": "UNKNOWN_FUTURE_KIND",
-                     "source": "s", "destination": "d"},
-        "trace": {"correlation_id": "c", "causation_id": "ROOT", "timestamp": 0},
-        "delivery": {"semantics": "at_most_once", "timeout_ms": 30000,
-                      "cancelable": False, "max_response_bytes": 10000000},
-        "payload_hex": "", "checksum": "",
-    }).encode()
+    bad_data = json.dumps(
+        {
+            "version": {
+                "protocol_version": "1.0",
+                "schema_version": "1.0",
+                "payload_type": "json",
+                "capabilities": [],
+                "reserved": [],
+            },
+            "routing": {
+                "message_id": "x",
+                "message_type": "T",
+                "message_kind": "UNKNOWN_FUTURE_KIND",
+                "source": "s",
+                "destination": "d",
+            },
+            "trace": {"correlation_id": "c", "causation_id": "ROOT", "timestamp": 0},
+            "delivery": {
+                "semantics": "at_most_once",
+                "timeout_ms": 30000,
+                "cancelable": False,
+                "max_response_bytes": 10000000,
+            },
+            "payload_hex": "",
+            "checksum": "",
+        },
+    ).encode()
     with pytest.raises(ProtocolException):
         deser.deserialize(bad_data)
 
@@ -434,6 +480,7 @@ def test_delivery_header_default_retry_policy() -> None:
 def test_delivery_header_with_retry_policy() -> None:
     """DeliveryHeader must accept a RetryPolicy."""
     from motor.platform import RetryPolicy
+
     rp = RetryPolicy(max_attempts=5, backoff_base_ms=200)
     dh = DeliveryHeader(retry_policy=rp)
     assert dh.retry_policy is not None
@@ -444,21 +491,25 @@ def test_delivery_header_with_retry_policy() -> None:
 def test_retry_policy_serialization_roundtrip() -> None:
     """RetryPolicy must survive serialize→deserialize."""
     from motor.platform import RetryPolicy
+
     ser = JsonProtocolSerializer()
     deser = JsonProtocolDeserializer()
-    rp = RetryPolicy(max_attempts=3, backoff_multiplier=2.0,
-                      retryable_errors=("timeout", "unavailable"))
+    rp = RetryPolicy(max_attempts=3, backoff_multiplier=2.0, retryable_errors=("timeout", "unavailable"))
     dh = DeliveryHeader(retry_policy=rp)
     env = ProtocolEnvelope(
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "s", "d", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="s", destination="d",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="s",
+            destination="d",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=dh,
         payload=b"{}",
@@ -479,6 +530,7 @@ def test_retry_policy_serialization_roundtrip() -> None:
 def test_error_code_enum_values() -> None:
     """ErrorCode must define all 11 canonical codes."""
     from motor.platform import ErrorCode
+
     codes = {e.value for e in ErrorCode}
     assert "timeout" in codes
     assert "unavailable" in codes
@@ -497,6 +549,7 @@ def test_error_code_enum_values() -> None:
 def test_error_envelope_from_original() -> None:
     """ErrorEnvelope.from_original must inherit causation from original."""
     from motor.platform import ErrorCode
+
     env = _make_env(message_type="TestOp", source="agent", destination="memory")
     err = ErrorEnvelope.from_original(
         original=env,
@@ -549,6 +602,7 @@ def test_size_budgets_tool_result_allowed() -> None:
 
 def test_compress_decompress_gzip() -> None:
     from motor.platform.serializer import compress_payload, decompress_payload
+
     original = b"Hello, world! " * 1000
     compressed = compress_payload(original, method="gzip")
     assert len(compressed) < len(original)  # actually compresses
@@ -558,6 +612,7 @@ def test_compress_decompress_gzip() -> None:
 
 def test_compress_none_passthrough() -> None:
     from motor.platform.serializer import compress_payload, decompress_payload
+
     data = b"test"
     assert compress_payload(data, method="none") == data
     assert decompress_payload(data, method="none") == data
@@ -570,12 +625,16 @@ def test_make_envelope_with_gzip_compression() -> None:
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "s", "d", "T", payload),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="s", destination="d",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="s",
+            destination="d",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=payload,
@@ -595,12 +654,16 @@ def test_compressed_roundtrip() -> None:
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "s", "d", "T", original),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="s", destination="d",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="s",
+            destination="d",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=original,
@@ -614,6 +677,7 @@ def test_compressed_roundtrip() -> None:
     assert restored.checksum == env.checksum
     # Application layer decompresses when needed
     from motor.platform.serializer import decompress_payload
+
     decompressed = decompress_payload(restored.payload, method="gzip")
     assert decompressed == original
 
@@ -621,6 +685,7 @@ def test_compressed_roundtrip() -> None:
 def test_schema_registry_validation() -> None:
     """ProtocolValidator with registry rejects MAJOR mismatch."""
     from motor.platform import ProtocolRegistry
+
     registry = ProtocolRegistry()
     registry.register_message_type("TestOp", "2.0")
     val = ProtocolValidator(registry=registry)
@@ -674,6 +739,7 @@ def test_deserialize_accepts_valid_checksum() -> None:
 def test_deserialize_skips_empty_checksum() -> None:
     """JsonProtocolDeserializer must skip verification for empty checksum."""
     import json
+
     ser = JsonProtocolSerializer()
     deser = JsonProtocolDeserializer()
     env = _make_env(payload=b"any payload")
@@ -701,6 +767,7 @@ async def test_transport_send_rejects_non_envelope() -> None:
 async def test_transport_concurrent_send_request_no_race() -> None:
     """Concurrent send/request must not lose messages."""
     import asyncio
+
     t = LocalTransport()
     results: list[str] = []
 
@@ -745,16 +812,17 @@ async def test_transport_request_handler_race_free() -> None:
 def test_platform_metrics_basic() -> None:
     """PlatformMetrics counters/histograms record correctly."""
     from motor.platform import PlatformMetrics
+
     m = PlatformMetrics()
 
     m.record_sent("a", "b", "command", 100, 0.5)
-    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1
+    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
 
     m.record_received("a", "b", "command", 100)
-    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1
+    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
 
     m.record_error("a", "b", "timeout")
-    assert m.messages_error._counters["destination=b|error_code=timeout|source=a"].get() == 1
+    assert m.messages_error._counters["destination=b|error_code=timeout|source=a"].get() == 1  # noqa: SLF001
 
 
 @pytest.mark.asyncio
@@ -782,12 +850,16 @@ async def test_transport_metrics_send_receive() -> None:
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="a", destination="b",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
@@ -797,8 +869,8 @@ async def test_transport_metrics_send_receive() -> None:
     rcvd = await t.receive()
 
     assert rcvd.routing.message_type == "T"
-    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1
-    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1
+    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
+    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
 
 
 def test_validator_metrics() -> None:
@@ -824,19 +896,23 @@ def test_validator_metrics() -> None:
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="a", destination="b",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
     )
 
     v.validate(env)
-    assert len(m.validation_duration._histograms) > 0
+    assert len(m.validation_duration._histograms) > 0  # noqa: SLF001
 
 
 def test_negotiator_metrics() -> None:
@@ -849,12 +925,13 @@ def test_negotiator_metrics() -> None:
     result = n.negotiate("1.0", "1.0", {"cap1"}, {"cap1"}, MessageKind.COMMAND)
     assert result.compatible
     # histogram recorded
-    assert len(m.negotiation_duration._histograms) > 0
+    assert len(m.negotiation_duration._histograms) > 0  # noqa: SLF001
 
 
 def test_get_platform_metrics_returns_singleton() -> None:
     """get_platform_metrics returns the same instance on repeated calls."""
     from motor.platform.metrics import get_platform_metrics
+
     m1 = get_platform_metrics()
     m2 = get_platform_metrics()
     assert m1 is m2
@@ -868,8 +945,11 @@ def test_get_platform_metrics_returns_singleton() -> None:
 def test_tool_request_protocol_version_default() -> None:
     """ToolRequest has protocol_version defaulting to 1.0."""
     from motor.agents.models import ToolRequest
+
     req = ToolRequest(
-        execution_id="e1", tool_name="search", params={"q": "hello"},
+        execution_id="e1",
+        tool_name="search",
+        params={"q": "hello"},
     )
     assert req.protocol_version == "1.0"
     assert req.trace_id == ""
@@ -879,10 +959,16 @@ def test_tool_request_protocol_version_default() -> None:
 def test_tool_request_to_envelope_roundtrip() -> None:
     """ToolRequest → ProtocolEnvelope → ToolRequest preserves all fields."""
     from motor.agents.models import ToolRequest
+
     req = ToolRequest(
-        execution_id="e1", tool_name="search",
-        params={"q": "hello"}, timeout=15, attempt=2,
-        protocol_version="2.0", trace_id="tr1", causation_id="c1",
+        execution_id="e1",
+        tool_name="search",
+        params={"q": "hello"},
+        timeout=15,
+        attempt=2,
+        protocol_version="2.0",
+        trace_id="tr1",
+        causation_id="c1",
     )
     env = req.to_envelope()
     assert env.routing.message_type == "ToolRequest"
@@ -903,9 +989,15 @@ def test_tool_request_to_envelope_roundtrip() -> None:
 def test_tool_result_to_envelope_roundtrip() -> None:
     """ToolResult → ProtocolEnvelope → ToolResult preserves all fields."""
     from motor.agents.models import ToolResult
+
     result = ToolResult(
-        execution_id="e1", tool_name="search", success=True,
-        data={"answer": "42"}, error=None, duration_ms=123.4, attempt=1,
+        execution_id="e1",
+        tool_name="search",
+        success=True,
+        data={"answer": "42"},
+        error=None,
+        duration_ms=123.4,
+        attempt=1,
         protocol_version="1.0",
     )
     env = result.to_envelope()
@@ -927,10 +1019,16 @@ def test_tool_result_to_envelope_roundtrip() -> None:
 def test_tool_result_error_roundtrip() -> None:
     """ToolResult with error roundtrips correctly."""
     from motor.agents.models import ToolResult
+
     result = ToolResult(
-        execution_id="e2", tool_name="fetch", success=False,
-        data={}, error="timeout", error_type="TimeoutError",
-        duration_ms=5000.0, attempt=3,
+        execution_id="e2",
+        tool_name="fetch",
+        success=False,
+        data={},
+        error="timeout",
+        error_type="TimeoutError",
+        duration_ms=5000.0,
+        attempt=3,
     )
     env = result.to_envelope()
     restored = ToolResult.from_envelope(env)
@@ -949,8 +1047,10 @@ def test_protocol_tool_runner_adapter() -> None:
     class FakeRunner(ToolRunnerABC):
         def get_contract(self, tool_name: str) -> ToolContract:
             return ToolContract(name=tool_name)
+
         def run(self, tool_name: str, params: dict, timeout: int = 30) -> dict:
             return {"result": f"ran_{tool_name}"}
+
         def cancel(self, tool_name: str) -> None:
             pass
 
@@ -959,8 +1059,10 @@ def test_protocol_tool_runner_adapter() -> None:
     adapter = ProtocolToolRunner(FakeRunner())
 
     req = ToolRequest(
-        execution_id="e1", tool_name="search",
-        params={"q": "test"}, trace_id="tr1",
+        execution_id="e1",
+        tool_name="search",
+        params={"q": "test"},
+        trace_id="tr1",
     )
     response_env = adapter.run_protocol(req.to_envelope())
     restored = ToolResult.from_envelope(response_env)
@@ -1035,10 +1137,10 @@ def test_health_metrics_recorded() -> None:
     from motor.platform import PlatformMetrics
 
     m = PlatformMetrics()
-    m.record_health("f24_web", "ok", True)
-    assert m.health_status._gauges["component=f24_web"].get() == 1.0
-    assert m.health_ready._gauges["component=f24_web"].get() == 1.0
+    m.record_health("f24_web", "ok", True)  # noqa: FBT003
+    assert m.health_status._gauges["component=f24_web"].get() == 1.0  # noqa: SLF001
+    assert m.health_ready._gauges["component=f24_web"].get() == 1.0  # noqa: SLF001
 
-    m.record_health("f26_memory", "degraded", False)
-    assert m.health_status._gauges["component=f26_memory"].get() == 0.0
-    assert m.health_ready._gauges["component=f26_memory"].get() == 0.0
+    m.record_health("f26_memory", "degraded", False)  # noqa: FBT003
+    assert m.health_status._gauges["component=f26_memory"].get() == 0.0  # noqa: SLF001
+    assert m.health_ready._gauges["component=f26_memory"].get() == 0.0  # noqa: SLF001

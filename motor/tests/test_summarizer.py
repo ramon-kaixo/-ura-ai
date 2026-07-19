@@ -118,7 +118,7 @@ class TestExtractiveSummarizer:
     def test_max_length(self) -> None:
         doc = _doc(
             text="One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten."
-            " Eleven. Twelve. Thirteen. Fourteen. Fifteen."
+            " Eleven. Twelve. Thirteen. Fourteen. Fifteen.",
         )
         result = ExtractiveSummarizer().summarize([doc], max_length=3)
         assert len(result.sentences) <= 3
@@ -160,7 +160,7 @@ class TestExtractiveSummarizer:
             "Second sentence also has content for testing compression. "
             "Third sentence here with some more words for the test. "
             "Fourth sentence here with additional content for testing. "
-            "Fifth and final sentence with enough words for the test."
+            "Fifth and final sentence with enough words for the test.",
         )
         result = ExtractiveSummarizer().summarize([doc], max_length=2)
         assert 0.0 <= result.compression_ratio < 1.0

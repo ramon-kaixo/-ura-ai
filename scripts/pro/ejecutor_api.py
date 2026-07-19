@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 log = logging.getLogger(__name__)
 
-CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
+CONTEXT_PATH = Path("~/.config/opencode/ura_context.json").expanduser()
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
 HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
@@ -35,7 +35,7 @@ _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
 
 def _get_qdrant():
-    global _qdrant
+    global _qdrant  # noqa: PLW0603
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -46,27 +46,27 @@ def log_evento(evento, datos=None) -> None:
 
     payload = {"evento": evento, "timestamp": datetime.now(UTC).isoformat(), "data": datos or {}}
     try:
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310
             f"{MCP_SYNC}/log",
             data=json.dumps(payload).encode(),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=5)
-    except Exception:
+        urllib.request.urlopen(req, timeout=5)  # noqa: S310
+    except Exception:  # noqa: S110
         pass
 
 
 def leer_contexto():
-    if os.path.exists(CONTEXT_PATH):
-        with open(CONTEXT_PATH) as f:
+    if Path(CONTEXT_PATH).exists():
+        with open(CONTEXT_PATH) as f:  # noqa: PTH123
             return json.load(f)
     return {}
 
 
 def escribir_contexto(ctx) -> None:
-    os.makedirs(os.path.dirname(CONTEXT_PATH), exist_ok=True)
-    with open(CONTEXT_PATH, "w") as f:
+    os.makedirs(Path(CONTEXT_PATH).parent, exist_ok=True)  # noqa: PTH103
+    with open(CONTEXT_PATH, "w") as f:  # noqa: PTH123
         json.dump(ctx, f, indent=2)
 
 
@@ -85,7 +85,7 @@ def ejecutar_tarea(task_desc, target_files):
     def worker() -> None:
         try:
             cmd = ["opencode", "run-context"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)  # noqa: S603
             output = result.stdout[:1000] if result.stdout else result.stderr[:500]
             ctx = leer_contexto()
             ctx["opencode_agent"]["estado"] = "completado"

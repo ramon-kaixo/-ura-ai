@@ -19,9 +19,7 @@ def _task(objective: str = "search for information about X") -> AgentTask:
 
 
 def _plan_with_steps(*actions: str) -> AgentPlan:
-    steps = tuple(
-        PlanStep(step_id=f"s{i}", action=a) for i, a in enumerate(actions)
-    )
+    steps = tuple(PlanStep(step_id=f"s{i}", action=a) for i, a in enumerate(actions))
     return AgentPlan(plan_id="p1", steps=steps)
 
 
@@ -130,6 +128,7 @@ def test_no_external_dependencies() -> None:
     import inspect
 
     import motor.agents.planner as mod
+
     source = inspect.getsource(mod)
     assert "from motor.agents.base import Scheduler" not in source
     assert "from motor.agents.base import ToolRunner" not in source

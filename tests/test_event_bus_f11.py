@@ -46,7 +46,8 @@ class TestEventBusPublish:
         received = []
 
         def failing_cb(event):
-            raise RuntimeError("fail")
+            msg = "fail"
+            raise RuntimeError(msg)
 
         def good_cb(event):
             received.append(event)
@@ -132,7 +133,7 @@ class TestEventBusEmitSync:
     def test_emit_sync_exception_returns_none(self):
         bus = EventBus()
         bus.subscribe("t", lambda e: 42)
-        bus.subscribe("t", lambda e: exec("raise ValueError('x')"))
+        bus.subscribe("t", lambda e: exec("raise ValueError('x')"))  # noqa: S102
         responses = bus.emit_sync("t", EventPayload())
         assert responses[0] == 42
         assert responses[1] is None
@@ -197,5 +198,5 @@ class TestEventBusEventCreation:
 
     def test_event_frozen(self):
         event = Event(topic="t", payload=EventPayload())
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             event.topic = "other"

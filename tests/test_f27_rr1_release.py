@@ -39,12 +39,14 @@ def test_g01_agents_are_consumers() -> None:
 
 def test_g02_no_direct_modification() -> None:
     """CapabilityGate no permite facts.write."""
-    gate = AgentCapabilityGate(AgentExecution(
-        agent_id="a1",
-        task=AgentTask(task_id="t1", objective="test"),
-        capabilities=set(),
-        policy=AgentPolicy(),
-    ))
+    gate = AgentCapabilityGate(
+        AgentExecution(
+            agent_id="a1",
+            task=AgentTask(task_id="t1", objective="test"),
+            capabilities=set(),
+            policy=AgentPolicy(),
+        ),
+    )
     with pytest.raises(PermissionError):
         gate.check(AgentCapability.FACTS_READ)  # FACTS_READ no está concedida
 
@@ -59,6 +61,7 @@ def test_g03_official_apis() -> None:
     import inspect
 
     import motor.agents.agent as mod
+
     source = inspect.getsource(mod)
     assert "motor.memory" not in source
     assert "motor.core.fusion" not in source
@@ -74,12 +77,24 @@ def test_g03_official_apis() -> None:
 def test_g04_auditability() -> None:
     """AgentAuditRecord contiene todos los campos necesarios."""
     from motor.agents.models import AgentAuditRecord
+
     record = AgentAuditRecord(
-        agent_id="a1", task_id="t1", objective="test",
-        plan=[], capabilities_used=[], tools_used=[],
-        facts_consulted=[], memory_consulted=[], llm_calls=0,
-        decisions=[], result="ok", state="completed",
-        duration_ms=100, cost_units=5, error=None, timestamp=1000,
+        agent_id="a1",
+        task_id="t1",
+        objective="test",
+        plan=[],
+        capabilities_used=[],
+        tools_used=[],
+        facts_consulted=[],
+        memory_consulted=[],
+        llm_calls=0,
+        decisions=[],
+        result="ok",
+        state="completed",
+        duration_ms=100,
+        cost_units=5,
+        error=None,
+        timestamp=1000,
     )
     assert record.agent_id == "a1"
     assert record.objective == "test"
@@ -94,10 +109,14 @@ def test_g04_auditability() -> None:
 def test_g05_no_hidden_state() -> None:
     """AgentScheduler no retiene estado entre shutdowns."""
     s = AgentScheduler(max_concurrent=0)
-    s.submit(AgentExecution(
-        agent_id="a1", task=AgentTask(task_id="t1", objective="test"),
-        capabilities=set(), policy=AgentPolicy(),
-    ))
+    s.submit(
+        AgentExecution(
+            agent_id="a1",
+            task=AgentTask(task_id="t1", objective="test"),
+            capabilities=set(),
+            policy=AgentPolicy(),
+        ),
+    )
     assert s.queue_size == 1
     s.shutdown(timeout=5)
     # shutdown recolecta resultados pero puede dejar cola
@@ -130,6 +149,7 @@ def test_g07_scheduler_no_business_logic() -> None:
     import inspect
 
     import motor.agents.scheduler as mod
+
     source = inspect.getsource(mod)
     assert "Planner" not in source or "from motor.agents.base import Planner" not in source
     assert "ToolRunner" not in source or "from motor.agents.base import ToolRunner" not in source

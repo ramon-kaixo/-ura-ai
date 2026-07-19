@@ -110,13 +110,18 @@ class PerformanceMonitor:
         return self._baseline
 
     def start_operation(
-        self, provider: str, operation: str, model: str | None = None,
+        self,
+        provider: str,
+        operation: str,
+        model: str | None = None,
     ) -> Any | None:
         """Inicia medición para una operación. Retorna perfil en curso."""
         return self._profiler.start(provider, operation, model)
 
     def finish_operation(
-        self, provider: str, operation: str,
+        self,
+        provider: str,
+        operation: str,
     ) -> PerformanceSnapshot | None:
         """Finaliza medición, evalúa hotspot y regresiones.
 
@@ -132,22 +137,29 @@ class PerformanceMonitor:
 
         # Evaluar hotspot
         hotspot_rec = self._detector.evaluate(
-            provider, operation, wall_time_ms=wall_ms,
-            cpu_time_ms=cpu_ms, peak_memory_bytes=profile.peak_memory_bytes,
+            provider,
+            operation,
+            wall_time_ms=wall_ms,
+            cpu_time_ms=cpu_ms,
+            peak_memory_bytes=profile.peak_memory_bytes,
             allocations_count=profile.allocations_count,
         )
 
         # Comparar contra baseline
         regressions = self._baseline.compare(
-            provider, operation,
-            wall_time_ms=wall_ms, cpu_time_ms=cpu_ms,
+            provider,
+            operation,
+            wall_time_ms=wall_ms,
+            cpu_time_ms=cpu_ms,
             peak_memory_bytes=profile.peak_memory_bytes,
         )
 
         # Registrar en baseline (después de comparar para no contaminar)
         self._baseline.record(
-            provider, operation,
-            wall_time_ms=wall_ms, cpu_time_ms=cpu_ms,
+            provider,
+            operation,
+            wall_time_ms=wall_ms,
+            cpu_time_ms=cpu_ms,
             peak_memory_bytes=profile.peak_memory_bytes,
         )
 
@@ -176,18 +188,25 @@ class PerformanceMonitor:
             if snapshot.is_hotspot:
                 log.warning(
                     "perf_hotspot  provider=%s op=%s wall=%.0fms",
-                    provider, operation, wall_ms,
+                    provider,
+                    operation,
+                    wall_ms,
                 )
             for r in regressions:
                 log.warning(
                     "perf_regression  provider=%s op=%s metric=%s ratio=%.1fx",
-                    provider, operation, r.metric, r.ratio,
+                    provider,
+                    operation,
+                    r.metric,
+                    r.ratio,
                 )
 
         return snapshot
 
     def get_history(
-        self, n: int = 50, only_issues: bool = False,  # noqa: FBT001, FBT002
+        self,
+        n: int = 50,
+        only_issues: bool = False,  # noqa: FBT001, FBT002
     ) -> list[dict[str, Any]]:
         """Historial de operaciones."""
         with self._lock:
@@ -214,10 +233,12 @@ class PerformanceMonitor:
             "total_hotspots": self._total_hotspots,
             "total_regressions": self._total_regressions,
             "hotspot_ratio": round(
-                self._total_hotspots / max(1, self._total_operations), 3,
+                self._total_hotspots / max(1, self._total_operations),
+                3,
             ),
             "regression_ratio": round(
-                self._total_regressions / max(1, self._total_operations), 3,
+                self._total_regressions / max(1, self._total_operations),
+                3,
             ),
             "throughput_ops_per_sec": round(throughput, 1),
             "history_size": len(recent),

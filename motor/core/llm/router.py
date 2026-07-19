@@ -25,6 +25,7 @@ DEFAULT_ROUTES: dict[str, str] = {
     "health": "ollama",
 }
 
+
 class LLMRouter:
     """Enruta peticiones LLM con circuit breaker, retry y fallback."""
 
@@ -125,25 +126,30 @@ class LLMRouter:
     def _resolve(self, task: str, provider: str | None) -> Any:
         if provider:
             if provider not in self._registry:
+                msg = (
+                    f"Provider '{provider}' not in registry for task '{task}'. Available: {list(self._registry.list())}"
+                )
                 raise RuntimeError(
-                    f"Provider '{provider}' not in registry for task "
-                    f"'{task}'. Available: {list(self._registry.list())}"
+                    msg,
                 )
             return self._registry.get(provider)
         name = self._routes.get(task) or self._registry.default_name
         if name is None:
+            msg = f"No provider available for task '{task}'. Register a provider first via registry.register()."
             raise RuntimeError(
-                f"No provider available for task '{task}'. "
-                "Register a provider first via registry.register()."
+                msg,
             )
         if name not in self._registry:
             name = self._registry.default_name
         if name is None:
-            raise RuntimeError(
+            msg = (
                 f"No provider available for task '{task}'. "
                 "Route resolved to an unregistered provider "
                 f"and no fallback default is set. "
                 f"Available: {list(self._registry.list())}"
+            )
+            raise RuntimeError(
+                msg,
             )
         return self._registry.get(name)
 
@@ -180,7 +186,8 @@ class LLMRouter:
                                 self._detector.evaluate_from_profile(profile)
                             if self._baseline:
                                 self._baseline.record(
-                                    provider_name, task,
+                                    provider_name,
+                                    task,
                                     wall_time_ms=profile.wall_time_ms,
                                     cpu_time_ms=profile.cpu_time_ms,
                                     peak_memory_bytes=profile.peak_memory_bytes,
@@ -194,7 +201,11 @@ class LLMRouter:
                 metrics.record(provider_name, task, latency_ms, success=True, tokens=tokens)
                 log.info(
                     "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d cb=%s",
-                    provider_name, task, latency_ms, attempt + 1, cb.state.value,
+                    provider_name,
+                    task,
+                    latency_ms,
+                    attempt + 1,
+                    cb.state.value,
                 )
                 return result
 
@@ -203,7 +214,10 @@ class LLMRouter:
                 metrics.record(provider_name, task, latency_ms, success=False, error="circuit_open")
                 log.warning(
                     "llm_call  provider=%s op=%s latency_ms=%.0f error=circuit_open retry_after=%.0fs",
-                    provider_name, task, latency_ms, e.retry_after,
+                    provider_name,
+                    task,
+                    latency_ms,
+                    e.retry_after,
                 )
                 return _build_error(method, "circuit_breaker_open")
 
@@ -215,7 +229,12 @@ class LLMRouter:
                 metrics.record(provider_name, task, latency_ms, success=False, error=error_str)
                 log.warning(
                     "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d error=%s transient=%s",
-                    provider_name, task, latency_ms, attempt + 1, error_str, is_transient,
+                    provider_name,
+                    task,
+                    latency_ms,
+                    attempt + 1,
+                    error_str,
+                    is_transient,
                 )
 
                 if not is_transient or attempt >= max_attempts - 1:
@@ -223,7 +242,7 @@ class LLMRouter:
 
                 # Backoff exponencial
                 backoff = min(
-                    self._retry_backoff_base * (2 ** attempt),
+                    self._retry_backoff_base * (2**attempt),
                     self._retry_backoff_max,
                 )
                 time.sleep(backoff)
@@ -247,7 +266,13 @@ class LLMRouter:
     # ── Fallback ────────────────────────────────────────────
 
     def _call_with_fallback(
-        self, prov_obj: Any, method: str, task: str, primary: str, *args, **kwargs,
+        self,
+        prov_obj: Any,
+        method: str,
+        task: str,
+        primary: str,
+        *args,
+        **kwargs,
     ) -> tuple[Any, str | None]:
         result = self._call_with_retry(prov_obj, method, task, primary, *args, **kwargs)
         if not _is_error_result(result) or not self._fallback_enabled:
@@ -272,7 +297,9 @@ class LLMRouter:
             # Fallback falló — no encadenar, retornar error del primario
             log.warning(
                 "llm_fallback  primary=%s fallback=%s op=%s error=fallback_failed",
-                primary, fallback_name, task,
+                primary,
+                fallback_name,
+                task,
             )
             return result, primary
 
@@ -291,7 +318,13 @@ class LLMRouter:
         prov = self._resolve("generate", provider)
         primary = self._resolve_name("generate", provider)
         result, _used = self._call_with_fallback(
-            prov, "generate", "generate", primary, prompt, model=model, options=options,
+            prov,
+            "generate",
+            "generate",
+            primary,
+            prompt,
+            model=model,
+            options=options,
         )
         return result
 
@@ -305,7 +338,12 @@ class LLMRouter:
         prov = self._resolve("embed", provider)
         primary = self._resolve_name("embed", provider)
         result, _used = self._call_with_fallback(
-            prov, "embed", "embed", primary, texts, model=model,
+            prov,
+            "embed",
+            "embed",
+            primary,
+            texts,
+            model=model,
         )
         return result
 
@@ -413,7 +451,9 @@ class LLMRouter:
         return result
 
     def select_provider_by_capability(
-        self, capability: str, preferred: str | None = None,
+        self,
+        capability: str,
+        preferred: str | None = None,
     ) -> str:
         """Selecciona un proveedor que soporte la capacidad requerida.
 
@@ -426,6 +466,7 @@ class LLMRouter:
 
         Raises:
             RuntimeError: Si ningún proveedor soporta la capacidad.
+
         """
         if preferred:
             try:
@@ -440,10 +481,8 @@ class LLMRouter:
         if capable:
             return capable[0]
 
-        raise RuntimeError(
-            f"No provider supports capability '{capability}'. "
-            f"Available: {list(self._registry.list())}"
-        )
+        msg = f"No provider supports capability '{capability}'. Available: {list(self._registry.list())}"
+        raise RuntimeError(msg)
 
     def generate_with_capability(
         self,
@@ -468,6 +507,7 @@ class LLMRouter:
 
 
 # ── Funciones auxiliares ──────────────────────────────────
+
 
 def _classify_error(exception: Exception) -> str:
     try:

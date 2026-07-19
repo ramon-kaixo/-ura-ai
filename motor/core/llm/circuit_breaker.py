@@ -73,7 +73,8 @@ class CircuitBreaker:
 
     def _try_acquire(self) -> bool:
         """Intenta adquirir permiso para realizar una llamada.
-        Retorna True si la llamada puede proceder."""
+        Retorna True si la llamada puede proceder.
+        """
         with self._lock:
             if self._state == CircuitState.CLOSED:
                 return True
@@ -141,7 +142,4 @@ class CircuitBreaker:
             self._last_open_time = 0.0
 
     def __repr__(self) -> str:
-        return (
-            f"CircuitBreaker(name={self._name!r}, state={self._state.value}, "
-            f"failures={self._failure_count})"
-        )
+        return f"CircuitBreaker(name={self._name!r}, state={self._state.value}, failures={self._failure_count})"

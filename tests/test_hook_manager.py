@@ -39,7 +39,8 @@ class _FailingHookPlugin(PluginBase):
 
     def on_pre_ingest(self, event):
         self.count += 1
-        raise RuntimeError(f"fail #{self.count}")
+        msg = f"fail #{self.count}"
+        raise RuntimeError(msg)
 
 
 class _CancelingPlugin(PluginBase):

@@ -153,7 +153,7 @@ class TestContextRetrieverRanking:
                 payload="important_old",
                 importance=0.9,
                 confidence=0.5,
-            )
+            ),
         )
         store.store(
             Episode(
@@ -161,7 +161,7 @@ class TestContextRetrieverRanking:
                 payload="medium_recent",
                 importance=0.5,
                 confidence=0.5,
-            )
+            ),
         )
         store.store(
             Episode(
@@ -169,7 +169,7 @@ class TestContextRetrieverRanking:
                 payload="recent_low",
                 importance=0.2,
                 confidence=0.5,
-            )
+            ),
         )
         # Default weights: recency=0.35, importance=0.35, confidence=0.30
         # With confidence equal, the combined score depends on recency + importance

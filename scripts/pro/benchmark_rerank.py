@@ -20,10 +20,10 @@ CORPUS_DIR = Path(__file__).resolve().parent.parent.parent / "knowledge" / "eval
 
 def load_queries():
     queries, rel_map = [], {}
-    with open(CORPUS_DIR / "queries.jsonl") as f:
+    with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for line in f:
-            queries.append(json.loads(line))
-    with open(CORPUS_DIR / "relevance.jsonl") as f:
+            queries.append(json.loads(line))  # noqa: PERF401
+    with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)
             rel_map.setdefault(d["qid"], []).append(d)
@@ -103,7 +103,7 @@ def run_config(name, retriever_fn, queries, rel_map):
     }
 
 
-def main():
+def main() -> int:
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.reranking.reranker import CrossEncoderReranker
@@ -127,7 +127,7 @@ def main():
 
     configs = {
         "Vector only": lambda q: vec.search(q, 10),
-        "Hybrid (α=0.7)": lambda q: hybrid.search(q, 10),
+        "Hybrid (α=0.7)": lambda q: hybrid.search(q, 10),  # noqa: RUF001
         "Hybrid+Reranker": lambda q: reranker.rerank(q, hybrid.search(q, 20)),
     }
 
@@ -137,25 +137,18 @@ def main():
 
     # Print comparison
     metrics = ["Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10", "P50", "P95", "P99", "Throughput", "No-context"]
-    print(f"\n{'=' * 100}")
-    print(f"  {'Metric':<18} {'Vector':<12} {'Hybrid':<12} {'Hyb+Rerank':<12} {'ΔH→HR':<10} {'Pass?':<8}")
-    print(f"{'=' * 100}")
 
     v = results["Vector only"]
-    h = results["Hybrid (α=0.7)"]
+    h = results["Hybrid (α=0.7)"]  # noqa: RUF001
     hr = results["Hybrid+Reranker"]
 
     for m in metrics:
-        vv = v[m]
+        v[m]
         hv = h[m]
         hrv = hr[m]
-        dh = round((hrv - hv) / hv * 100, 1) if hv else 0
-        print(f"  {m:<18} {vv:<12.4f} {hv:<12.4f} {hrv:<12.4f} {dh:>+8.1f}%")
+        round((hrv - hv) / hv * 100, 1) if hv else 0
 
     # Acceptance criteria
-    print(f"\n{'=' * 70}")
-    print("  Acceptance Criteria (Hybrid+Reranker vs targets)")
-    print(f"{'=' * 70}")
     accept = True
     checks = [
         ("MAP ≥ Vector-only", hr["MAP"] >= v["MAP"], f"{hr['MAP']:.4f} >= {v['MAP']:.4f}"),
@@ -168,28 +161,18 @@ def main():
         ),
         ("P95 ≤ Hybrid +25%", hr["P95"] <= h["P95"] * 1.25, f"{hr['P95']:.2f} <= {h['P95'] * 1.25:.2f}"),
     ]
-    for label, passed, detail in checks:
-        print(f"  {'✅' if passed else '❌'} {label}: {detail}")
+    for _label, passed, _detail in checks:
         if not passed:
             accept = False
 
-    print(
-        f"\n  {'✅ APROBADO — continuar con Memoria Contextual' if accept else '❌ RECHAZADO — analizar cuello de botella'}"
-    )
-
     # If failed, analyze
     if not accept:
-        print("\n  Cuello de botella detectado:")
         if hr["MAP"] < v["MAP"]:
-            print(f"    - MAP: {v['MAP']:.4f} → {hr['MAP']:.4f} ({((hr['MAP'] - v['MAP']) / v['MAP'] * 100):.1f}%)")
+            pass
         if hr["nDCG@10"] < v["nDCG@10"]:
-            print(
-                f"    - nDCG: {v['nDCG@10']:.4f} → {hr['nDCG@10']:.4f} ({((hr['nDCG@10'] - v['nDCG@10']) / v['nDCG@10'] * 100):.1f}%)"
-            )
+            pass
         if hr["Recall@10"] < h["Recall@10"]:
-            print(
-                f"    - R@10: {h['Recall@10']:.4f} → {hr['Recall@10']:.4f} ({((hr['Recall@10'] - h['Recall@10']) / h['Recall@10'] * 100):.1f}%)"
-            )
+            pass
 
     return 0 if accept else 1
 

@@ -19,7 +19,7 @@ class RelojFalso:
 def test_vuelve():
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
-    m._reloj = r
+    m._reloj = r  # noqa: SLF001
     m.mandar_cubo("c1", "indexer")
     r.avanzar(5)
     m.cubo_volvio("c1")
@@ -29,7 +29,7 @@ def test_vuelve():
 def test_no_vuelve():
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
-    m._reloj = r
+    m._reloj = r  # noqa: SLF001
     m.mandar_cubo("c2", "indexer")
     r.avanzar(45)
     assert m.circulo_sano() is False
@@ -39,7 +39,7 @@ def test_no_vuelve():
 def test_tres_cubos():
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
-    m._reloj = r
+    m._reloj = r  # noqa: SLF001
     m.mandar_cubo("a", "i")
     m.mandar_cubo("b", "g")
     m.mandar_cubo("c", "aud")
@@ -48,13 +48,14 @@ def test_tres_cubos():
     m.cubo_volvio("c")
     r.avanzar(40)
     rotos = m.cubos_sin_volver()
-    assert len(rotos) == 1 and rotos[0].id_cubo == "b"
+    assert len(rotos) == 1
+    assert rotos[0].id_cubo == "b"
 
 
 def test_olvida():
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
-    m._reloj = r
+    m._reloj = r  # noqa: SLF001
     m.mandar_cubo("cx", "indexer")
     m.cubo_volvio("cx")
     r.avanzar(100)

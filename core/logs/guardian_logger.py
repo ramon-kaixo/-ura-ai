@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from datetime import UTC, datetime
+from pathlib import Path
 
 logger = logging.getLogger("ura.guardian")
 
@@ -9,8 +10,8 @@ GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 
 
 def _ensure_log_dir():
-    path = os.path.dirname(GUARDIAN_LOG)
-    if path and not os.path.exists(path):
+    path = Path(GUARDIAN_LOG).parent
+    if path and not Path(path).exists():
         os.makedirs(path, exist_ok=True)
 
 

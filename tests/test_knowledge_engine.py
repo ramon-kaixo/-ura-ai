@@ -422,7 +422,10 @@ class TestKnowledgeEngine:
         doc_file = self.source_dir / "drift.md"
         doc_file.write_text("original content")
         self._insert_node(
-            conn, "drift-test", "drift.md", "0000000000000000000000000000000000000000000000000000000000000000"
+            conn,
+            "drift-test",
+            "drift.md",
+            "0000000000000000000000000000000000000000000000000000000000000000",
         )
         conn.commit()
         conn.close()
@@ -593,7 +596,7 @@ class TestScanner:
         src.mkdir()
         (src / "small.md").write_text("small")
         large = src / "large.md"
-        with open(large, "wb") as f:
+        with open(large, "wb") as f:  # noqa: PTH123
             f.write(b"x" * (20 * 1024 * 1024))  # 20MB > MAX_PARSE_SIZE
         sources, skipped = scan_source(src)
         assert len(sources) == 1
@@ -738,7 +741,8 @@ class TestParser:
 
     def test_parse_relations_from_frontmatter(self):
         so = _content_so(
-            "parent.md", "---\ntitle: Parent\ntype: doc\nrelated:\n  - child.md\n  - sibling.md\n---\nBody"
+            "parent.md",
+            "---\ntitle: Parent\ntype: doc\nrelated:\n  - child.md\n  - sibling.md\n---\nBody",
         )
         result = parse_source(so)
         assert isinstance(result, KnowledgeObject)
@@ -987,7 +991,7 @@ class TestValidator:
 class TestKnowledgeEngineCLI:
     def test_cli_init(self, tmp_path):
         db_path = tmp_path / "test_cli.db"
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
@@ -1000,14 +1004,14 @@ class TestKnowledgeEngineCLI:
 
     def test_cli_verify_empty(self, tmp_path):
         db_path = tmp_path / "test_cli_verify.db"
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
             timeout=15,
             check=False,
         )
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "verify"],
             capture_output=True,
             text=True,
@@ -1017,7 +1021,7 @@ class TestKnowledgeEngineCLI:
         assert "All checks passed" in result.stdout
 
     def test_cli_help(self):
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--help"],
             capture_output=True,
             text=True,
@@ -1035,7 +1039,7 @@ class TestIntegration:
     def test_full_pipeline(self, tmp_path):
         db_path = tmp_path / "test_pipeline.db"
 
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
@@ -1044,7 +1048,7 @@ class TestIntegration:
         )
         assert result.returncode == 0
 
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "verify"],
             capture_output=True,
             text=True,
@@ -1053,7 +1057,7 @@ class TestIntegration:
         )
         assert "All checks passed" in result.stdout
 
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "status"],
             capture_output=True,
             text=True,
@@ -1064,14 +1068,14 @@ class TestIntegration:
 
     def test_compile_returns_ok_when_no_changes(self, tmp_path):
         db = tmp_path / "test_compile.db"
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "init"],
             capture_output=True,
             text=True,
             timeout=15,
             check=False,
         )
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "compile"],
             capture_output=True,
             text=True,
@@ -1157,11 +1161,11 @@ class TestKnowledgeReader:
         src = tmp_path / "source"
         src.mkdir()
         (src / "intro.md").write_text(
-            "---\ntitle: Introduction\ntype: doc\ntags: [guide]\n---\n\nThis is the introduction to the knowledge base."
+            "---\ntitle: Introduction\ntype: doc\ntags: [guide]\n---\n\nThis is the introduction to the knowledge base.",  # noqa: E501
         )
         (src / "api.md").write_text(
             "---\ntitle: API Reference\ntype: api\naliases: [api-docs]\n---\n\n"
-            "The API reference document describes the endpoints."
+            "The API reference document describes the endpoints.",
         )
         init_db(db, SCHEMA_PATH)
         compile_source(source_dir=src, db_path=db)
@@ -1229,7 +1233,7 @@ class TestKnowledgeReader:
 
     def test_search_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "search", "introduction"],
             capture_output=True,
             text=True,
@@ -1240,7 +1244,7 @@ class TestKnowledgeReader:
 
     def test_read_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "read", "e37a304847f4"],
             capture_output=True,
             text=True,
@@ -1251,7 +1255,7 @@ class TestKnowledgeReader:
 
     def test_related_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "related", "e37a304847f4"],
             capture_output=True,
             text=True,
@@ -1372,7 +1376,7 @@ class TestMigration:
 
     def test_cli_init_sets_schema_version(self, tmp_path):
         db = tmp_path / "cli_init.db"
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "init"],
             capture_output=True,
             text=True,
@@ -1479,7 +1483,7 @@ class TestMigration:
     def test_begin_immediate_retry_timeout(self):
         import sqlite3
 
-        db = Path(tempfile.mktemp(suffix=".db"))
+        db = Path(tempfile.mktemp(suffix=".db"))  # noqa: S306
         from knowledge.engine.sqlite_writer import _begin_immediate_with_retry
 
         conn1 = sqlite3.connect(str(db))
@@ -1615,7 +1619,7 @@ class TestHybridSearch:
         src = tmp_path / "source"
         src.mkdir()
         (src / "intro.md").write_text(
-            "---\ntitle: Introduction\ntype: doc\ntags: [guide]\n---\n\nThis is the introduction to the knowledge base."
+            "---\ntitle: Introduction\ntype: doc\ntags: [guide]\n---\n\nThis is the introduction to the knowledge base.",  # noqa: E501
         )
         init_db(db, SCHEMA_PATH)
         compile_source(source_dir=src, db_path=db)
@@ -1651,11 +1655,11 @@ class TestDeterminism:
         src = tmp_path / "source"
         src.mkdir(parents=True, exist_ok=True)
         (src / "test-a.md").write_text(
-            "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
+            "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n",
         )
         (src / "test-b.md").write_text(
             "---\nid: test-b\ntitle: Documento B\ntype: spec\n---\n\n"
-            "Este es el contenido B con referencia a [[test-a]].\n"
+            "Este es el contenido B con referencia a [[test-a]].\n",
         )
         return src
 
@@ -1762,13 +1766,15 @@ class TestArchiveIntegration:
         init_db(db, schema_path)
 
         # Git init en tmp_path (parent de source/), así .git/ no contamina el scan
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(  # noqa: S603
+            ["git", "-C", str(tmp_path), "config", "user.email", "test@test"],  # noqa: S607
+            capture_output=True,
+            check=False,
         )
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "Test"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "initial"], capture_output=True, check=False)
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "Test"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "initial"], capture_output=True, check=False)  # noqa: S603, S607
 
         return src, db
 
@@ -1784,7 +1790,7 @@ class TestArchiveIntegration:
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
         jobs = conn.execute(
-            "SELECT id, job_type, status, error FROM op_jobs WHERE job_type = 'archive_source'"
+            "SELECT id, job_type, status, error FROM op_jobs WHERE job_type = 'archive_source'",
         ).fetchall()
         conn.close()
 
@@ -1898,11 +1904,11 @@ class TestMetricsExport:
             "(status, started_at, completed_at, source_commit, compiler_version, "
             " documents_changed, documents_total, errors, warnings, graph_version, details) "
             "VALUES ('completed', datetime('now'), datetime('now'), 'abc', 'test', "
-            " 10, 100, 2, 1, 5, '{}')"
+            " 10, 100, 2, 1, 5, '{}')",
         )
         conn.execute(
             "INSERT INTO op_compile_errors (run_id, error_code, document, severity) "
-            "VALUES (1, 'KE001', 'test.md', 'ERROR')"
+            "VALUES (1, 'KE001', 'test.md', 'ERROR')",
         )
         conn.commit()
         conn.close()
@@ -1967,11 +1973,11 @@ class TestCorrelationId:
         schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
         return src, db
 
     def test_correlation_id_in_details(self, tmp_path):
@@ -1983,7 +1989,7 @@ class TestCorrelationId:
 
         import uuid
 
-        uuid.uuid4().hex
+        uuid.uuid4().hex  # noqa: B018
 
         # Llamar con correlation_id fijo inyectado via source_dir diferente
         # (el correlation_id real lo genera _execute_compile, pero
@@ -2157,13 +2163,13 @@ class TestAuditBackend:
         """Una línea corrupta en NDJSON no impide leer el resto."""
         audit_file = tmp_path / "test.ndjson"
         audit_file.write_text(
-            '{"action": "search", "actor": "test", "entity_type": "doc", "entity_id": "1", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
+            '{"action": "search", "actor": "test", "entity_type": "doc", "entity_id": "1", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'  # noqa: E501
             "not valid json\n"
-            '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
+            '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n',  # noqa: E501
         )
         backend = NDJSONAuditBackend(tmp_path, "test.ndjson")
-        backend._handle.close()
-        backend._handle = open(audit_file, "a")
+        backend._handle.close()  # noqa: SLF001
+        backend._handle = open(audit_file, "a")  # noqa: PTH123, SIM115, SLF001
         events = backend.read_lines(0)
         assert len(events) == 2, f"Expected 2 valid events, got {len(events)}"
         backend.close()
@@ -2171,8 +2177,8 @@ class TestAuditBackend:
     def test_missing_file_returns_empty(self, tmp_path):
         """Archivo NDJSON inexistente retorna lista vacía."""
         backend = NDJSONAuditBackend(tmp_path, "missing.ndjson")
-        backend._handle.close()
-        backend._handle = open(tmp_path / "nonexistent.ndjson", "a")
+        backend._handle.close()  # noqa: SLF001
+        backend._handle = open(tmp_path / "nonexistent.ndjson", "a")  # noqa: PTH123, SIM115, SLF001
         events = backend.read_lines(0)
         assert events == []
 
@@ -2234,7 +2240,8 @@ class TestAuditBackend:
             backend.write(self._make_event())
             # Si no raise, el test pasa
         except Exception:
-            raise AssertionError("write() no debe lanzar excepción")
+            msg = "write() no debe lanzar excepción"
+            raise AssertionError(msg)  # noqa: B904
         finally:
             tmp_path.chmod(0o755)
         backend.close()
@@ -2331,7 +2338,8 @@ class TestAuditBackend:
         # Simular backend fallando siempre
         class BrokenBackend:
             def write(self, event):
-                raise OSError("disk full")
+                msg = "disk full"
+                raise OSError(msg)
 
             def flush(self):
                 pass
@@ -2369,24 +2377,24 @@ class TestGoldenMaster:
 
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "config", "user.email", "t@t"],
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(  # noqa: S603
+            ["git", "-C", str(tmp_path), "config", "user.email", "t@t"],  # noqa: S607
             capture_output=True,
             check=False,
         )
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "config", "user.name", "T"],
+        subprocess.run(  # noqa: S603
+            ["git", "-C", str(tmp_path), "config", "user.name", "T"],  # noqa: S607
             capture_output=True,
             check=False,
         )
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "add", "source/"],
+        subprocess.run(  # noqa: S603
+            ["git", "-C", str(tmp_path), "add", "source/"],  # noqa: S607
             capture_output=True,
             check=False,
         )
-        subprocess.run(
-            ["git", "-C", str(tmp_path), "commit", "-m", "init"],
+        subprocess.run(  # noqa: S603
+            ["git", "-C", str(tmp_path), "commit", "-m", "init"],  # noqa: S607
             capture_output=True,
             check=False,
         )
@@ -2400,7 +2408,8 @@ class TestGoldenMaster:
         h2 = get_determinism_hash(db)
 
         assert h1 == h2, f"Golden-master: hashes distintos {h1} != {h2}"
-        assert h1 is not None and len(h1) == 64
+        assert h1 is not None
+        assert len(h1) == 64
 
     def test_golden_master_determinism_algorithm(self, tmp_path):
         """La versión del algoritmo se almacena correctamente (Fase B.5)."""
@@ -2424,7 +2433,8 @@ class TestGoldenMaster:
         src.mkdir()
         # Crear 10 ficheros en orden alfabético inverso
         for name in sorted(
-            ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
+            ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"],
+            reverse=True,
         ):
             (src / name).write_text(f"---\ntitle: {name}\ntype: doc\n---\n\nBody {name}\n")
 
@@ -2436,11 +2446,11 @@ class TestGoldenMaster:
         db = tmp_path / "order.db"
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
 
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
@@ -2454,7 +2464,7 @@ class TestGoldenMaster:
         src.mkdir()
         (src / "unicode.md").write_text(
             "---\ntitle: Unicöde 🎉 测试\ntype: doc\ntags: [ñ, 日本語, español]\n---\n\n"
-            "Héllò wörld 👋 你好 こんにちは\n"
+            "Héllò wörld 👋 你好 こんにちは\n",
         )
 
         from knowledge.engine.compiler import compile_source
@@ -2465,11 +2475,11 @@ class TestGoldenMaster:
         db = tmp_path / "unicode.db"
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
 
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
@@ -2493,16 +2503,16 @@ class TestGoldenMaster:
         db = tmp_path / "cross.db"
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
 
         # Compilar con CWD normal
         import os
 
-        old_cwd = os.getcwd()
+        old_cwd = os.getcwd()  # noqa: PTH109
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
 
@@ -2529,11 +2539,11 @@ class TestGoldenMaster:
         db = tmp_path / "extra.db"
         init_db(db, schema_path)
 
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
 
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
@@ -2590,11 +2600,11 @@ class TestJobsCoverage:
         src = tmp_path / "src"
         src.mkdir()
         (src / "a.md").write_text("---\ntitle: A\ntype: doc\n---\n\nBody\n")
-        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "add", "src/"], capture_output=True, check=False)
-        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.email", "t@t"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "T"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "add", "src/"], capture_output=True, check=False)  # noqa: S603, S607
+        subprocess.run(["git", "-C", str(tmp_path), "commit", "-m", "init"], capture_output=True, check=False)  # noqa: S603, S607
         payload = json.dumps({"source_dir": str(src), "db_path": str(db)})
         conn = sqlite3.connect(str(db))
         conn.execute(

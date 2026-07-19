@@ -7,7 +7,7 @@ def compute_diff(actual: dict, prev: dict) -> tuple:
     """Compara dos snapshots y devuelve (diff_count, anomalias)."""
     count = 0
     anomalias = []
-    for key in prev:
+    for key in prev:  # noqa: PLC0206
         if key not in actual:
             continue
         if isinstance(prev[key], dict) and isinstance(actual[key], dict):

@@ -16,13 +16,13 @@ def load_latest(bid: str) -> dict:
     return json.loads(files[-1].read_text())
 
 
-def fmt(val, unit=""):
+def fmt(val, unit="") -> str:
     if val is None:
         return "—"
     return f"{val}{unit}"
 
 
-def generate() -> str:
+def generate() -> str:  # noqa: PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
 
     l01 = load_latest("L01")
@@ -33,7 +33,7 @@ def generate() -> str:
 
     lines = []
 
-    def out(s=""):
+    def out(s="") -> None:
         lines.append(s)
 
     out("# F14 — Load & Stress Testing Results")
@@ -61,19 +61,19 @@ def generate() -> str:
     out("| Benchmark | Resultados | Veredicto |")
     out("|-----------|-----------|-----------|")
     out(
-        f"| L01 — Runtime ({len(l01.get('results', []))} niveles) | {len(l01.get('results', []))} niveles | {l01.get('veredict', '?')} |"
+        f"| L01 — Runtime ({len(l01.get('results', []))} niveles) | {len(l01.get('results', []))} niveles | {l01.get('veredict', '?')} |",  # noqa: E501
     )
     out(
-        f"| L02 — Retrieval ({len(l02.get('results', []))} niveles) | {len(l02.get('results', []))} niveles | {l02.get('veredict', '?')} |"
+        f"| L02 — Retrieval ({len(l02.get('results', []))} niveles) | {len(l02.get('results', []))} niveles | {l02.get('veredict', '?')} |",  # noqa: E501
     )
     out(
-        f"| L03 — Memory ({len(l03.get('results', []))} niveles) | {len(l03.get('results', []))} niveles | {l03.get('veredict', '?')} |"
+        f"| L03 — Memory ({len(l03.get('results', []))} niveles) | {len(l03.get('results', []))} niveles | {l03.get('veredict', '?')} |",  # noqa: E501
     )
     out(
-        f"| L04 — Consensus ({len(l04.get('results', []))} niveles) | {len(l04.get('results', []))} niveles | {l04.get('veredict', '?')} |"
+        f"| L04 — Consensus ({len(l04.get('results', []))} niveles) | {len(l04.get('results', []))} niveles | {l04.get('veredict', '?')} |",  # noqa: E501
     )
     out(
-        f"| L05 — Saturación ({len(l05.get('results', []))} etapas) | {len(l05.get('results', []))} etapas | {l05.get('veredict', '?')} |"
+        f"| L05 — Saturación ({len(l05.get('results', []))} etapas) | {len(l05.get('results', []))} etapas | {l05.get('veredict', '?')} |",  # noqa: E501
     )
     out()
 
@@ -83,15 +83,15 @@ def generate() -> str:
     out(f"**Descripción:** {l01.get('description', '')}")
     out()
     out(
-        "| Nivel | Workflows | Duración (s) | Throughput (wf/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |"
+        "| Nivel | Workflows | Duración (s) | Throughput (wf/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |",  # noqa: E501
     )
     out(
-        "|-------|-----------|-------------|-------------------|----------|----------|----------|---------|----------|---------|"
+        "|-------|-----------|-------------|-------------------|----------|----------|----------|---------|----------|---------|",
     )
     for r in l01.get("results", []):
         p = r.get("latency_ms", {})
         out(
-            f"| {r['level']} | {r['workflows']} | {fmt(r['duration_s'])} | {fmt(r['throughput_wfs'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |"
+            f"| {r['level']} | {r['workflows']} | {fmt(r['duration_s'])} | {fmt(r['throughput_wfs'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |",  # noqa: E501
         )
     out()
     s = l01.get("system_summary", {})
@@ -104,15 +104,15 @@ def generate() -> str:
     out(f"**Descripción:** {l02.get('description', '')}")
     out()
     out(
-        "| Nivel | Queries | Duración (s) | Throughput (q/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |"
+        "| Nivel | Queries | Duración (s) | Throughput (q/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |",  # noqa: E501
     )
     out(
-        "|-------|---------|-------------|-----------------|----------|----------|----------|---------|----------|---------|"
+        "|-------|---------|-------------|-----------------|----------|----------|----------|---------|----------|---------|",
     )
     for r in l02.get("results", []):
         p = r.get("latency_ms", {})
         out(
-            f"| {r['level']} | {r['queries']} | {fmt(r['duration_s'])} | {fmt(r['throughput_qps'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |"
+            f"| {r['level']} | {r['queries']} | {fmt(r['duration_s'])} | {fmt(r['throughput_qps'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |",  # noqa: E501
         )
     out()
     s = l02.get("system_summary", {})
@@ -125,15 +125,15 @@ def generate() -> str:
     out(f"**Descripción:** {l03.get('description', '')}")
     out()
     out(
-        "| Nivel | Episodios | Duración (s) | Throughput (ops/s) | p50 store (ms) | p95 store (ms) | Search (ms) | CPU (%) | RSS (MB) | Errores |"
+        "| Nivel | Episodios | Duración (s) | Throughput (ops/s) | p50 store (ms) | p95 store (ms) | Search (ms) | CPU (%) | RSS (MB) | Errores |",  # noqa: E501
     )
     out(
-        "|-------|-----------|-------------|-------------------|----------------|----------------|-------------|---------|----------|---------|"
+        "|-------|-----------|-------------|-------------------|----------------|----------------|-------------|---------|----------|---------|",
     )
     for r in l03.get("results", []):
         p = r.get("latency_store_ms", {})
         out(
-            f"| {r['level']} | {r['episodes']} | {fmt(r['duration_s'])} | {fmt(r['throughput_ops'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(r.get('search_latency_ms'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |"
+            f"| {r['level']} | {r['episodes']} | {fmt(r['duration_s'])} | {fmt(r['throughput_ops'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(r.get('search_latency_ms'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |",  # noqa: E501
         )
     out()
     s = l03.get("system_summary", {})
@@ -146,15 +146,15 @@ def generate() -> str:
     out(f"**Descripción:** {l04.get('description', '')}")
     out()
     out(
-        "| Nivel | Agentes | Rondas | Duración (s) | Throughput (votes/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |"
+        "| Nivel | Agentes | Rondas | Duración (s) | Throughput (votes/s) | p50 (ms) | p95 (ms) | p99 (ms) | CPU (%) | RSS (MB) | Errores |",  # noqa: E501
     )
     out(
-        "|-------|---------|--------|-------------|---------------------|----------|----------|----------|---------|----------|---------|"
+        "|-------|---------|--------|-------------|---------------------|----------|----------|----------|---------|----------|---------|",
     )
     for r in l04.get("results", []):
         p = r.get("latency_ms", {})
         out(
-            f"| {r['level']} | {r['agents']} | {r['rounds']} | {fmt(r['duration_s'])} | {fmt(r['throughput_votes'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |"
+            f"| {r['level']} | {r['agents']} | {r['rounds']} | {fmt(r['duration_s'])} | {fmt(r['throughput_votes'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(p.get('p99'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |",  # noqa: E501
         )
     out()
     s = l04.get("system_summary", {})
@@ -171,16 +171,16 @@ def generate() -> str:
     for r in l05.get("results", []):
         p = r.get("latency_ms", {})
         out(
-            f"| {r['stage']} | {r['concurrent_queries']} | {fmt(r['stage_duration_s'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |"
+            f"| {r['stage']} | {r['concurrent_queries']} | {fmt(r['stage_duration_s'])} | {fmt(p.get('p50'))} | {fmt(p.get('p95'))} | {fmt(r.get('cpu_percent'))} | {fmt(r.get('rss_mb'))} | {r.get('errors', 0)} |",  # noqa: E501
         )
     out()
     sat = l05.get("saturation", {})
     deg = l05.get("degradation_point", {})
     out(
-        f"**Saturación:** Carga={sat.get('load', 'no_saturation')}, Tiempo={fmt(sat.get('time_s'), 's')}, Comportamiento=`{sat.get('behavior', '?')}`"
+        f"**Saturación:** Carga={sat.get('load', 'no_saturation')}, Tiempo={fmt(sat.get('time_s'), 's')}, Comportamiento=`{sat.get('behavior', '?')}`",  # noqa: E501
     )
     out(
-        f"**Punto de degradación:** Carga={deg.get('load', 'no_detected')}, p95={fmt(deg.get('latency_p95_ms'), 'ms')}, Baseline p95={fmt(deg.get('baseline_p95_ms'), 'ms')}"
+        f"**Punto de degradación:** Carga={deg.get('load', 'no_detected')}, p95={fmt(deg.get('latency_p95_ms'), 'ms')}, Baseline p95={fmt(deg.get('baseline_p95_ms'), 'ms')}",  # noqa: E501
     )
     out()
 
@@ -196,7 +196,7 @@ def generate() -> str:
     total_errors = sum(sum(r.get("errors", 0) for r in d.get("results", [])) for d in [l01, l02, l03, l04, l05])
     error_rate = round(total_errors / max(total_ops, 1) * 100, 2)
 
-    out("- Benchmarks ejecutados: 5 (L01–L05)")
+    out("- Benchmarks ejecutados: 5 (L01–L05)")  # noqa: RUF001
     out(f"- Niveles totales: {results_count}")
     out(f"- Operaciones totales: {total_ops}")
     out(f"- Errores totales: {total_errors} ({error_rate}%)")
@@ -220,12 +220,10 @@ def generate() -> str:
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     report = generate()
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(report)
-    print(f"✅ Reporte generado: {REPORT_PATH}")
-    print(f"   {len(report.splitlines())} líneas")
 
 
 if __name__ == "__main__":

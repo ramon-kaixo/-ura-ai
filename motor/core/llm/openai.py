@@ -31,7 +31,6 @@ from motor.core.secrets import get_secret
 log = logging.getLogger(__name__)
 
 
-
 class OpenAIProvider(BaseLLMProvider):
     """Proveedor LLM compatible con OpenAI API."""
 
@@ -88,7 +87,9 @@ class OpenAIProvider(BaseLLMProvider):
             latency_ms = (time.monotonic() - t0) * 1000
             usage = data.get("usage", {})
             log_call(
-                self._provider_name, model_name, latency_ms,
+                self._provider_name,
+                model_name,
+                latency_ms,
                 prompt_tokens=usage.get("prompt_tokens"),
                 completion_tokens=usage.get("completion_tokens"),
             )
@@ -127,8 +128,11 @@ class OpenAIProvider(BaseLLMProvider):
             embeddings = [item["embedding"] for item in data["data"]]
             latency_ms = (time.monotonic() - t0) * 1000
             log_call(
-                self._provider_name, model_name, latency_ms,
-                batch_size=len(texts), vectors=len(embeddings),
+                self._provider_name,
+                model_name,
+                latency_ms,
+                batch_size=len(texts),
+                vectors=len(embeddings),
             )
             return embeddings
         except Exception:
@@ -167,8 +171,12 @@ class OpenAIProvider(BaseLLMProvider):
                 embeddings = [item["embedding"] for item in data["data"]]
                 latency_ms = (time.monotonic() - t0) * 1000
                 log_call(
-                    self._provider_name, model_name, latency_ms,
-                    async_=True, batch_size=len(texts), vectors=len(embeddings),
+                    self._provider_name,
+                    model_name,
+                    latency_ms,
+                    async_=True,
+                    batch_size=len(texts),
+                    vectors=len(embeddings),
                 )
                 return embeddings
         except Exception:
@@ -203,8 +211,10 @@ class OpenAIProvider(BaseLLMProvider):
             if r.is_error:
                 log_call(self._provider_name, "health", latency_ms, f"http_{r.status_code}")
                 return {
-                    "provider": self._provider_name, "status": "error",
-                    "detail": r.text[:200], "latency_ms": latency_ms,
+                    "provider": self._provider_name,
+                    "status": "error",
+                    "detail": r.text[:200],
+                    "latency_ms": latency_ms,
                 }
             modelos = r.json().get("data", [])
             log_call(self._provider_name, "health", latency_ms, modelos_disponibles=len(modelos))

@@ -203,13 +203,13 @@ class TestPluginRegistryDegradedModeIntegration:
     def test_execution_failure_marks_degraded(self, tmp_path: Path):
         registry, dm = self._clean_env()
         plugin_name = "exec_fail_f10"
-        content = f'''
+        content = f"""
 __plugin__ = {{"name": "{plugin_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         raise RuntimeError("intentional exec failure f10")
-'''
+"""
         f = tmp_path / f"{plugin_name}.py"
         f.write_text(textwrap.dedent(content))
         registry.discover([str(tmp_path)])
@@ -222,13 +222,13 @@ class _P(PluginBase):
     def test_execution_failure_recovers_after_healthy_load(self, tmp_path: Path):
         registry, dm = self._clean_env()
         good_name = "good_recovery_f10"
-        content = f'''
+        content = f"""
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         return {{"ok": True}}
-'''
+"""
         f = tmp_path / f"{good_name}.py"
         f.write_text(textwrap.dedent(content))
         registry.discover([str(tmp_path)])
@@ -242,13 +242,13 @@ class _P(PluginBase):
         fail_name = "isolated_fail_f10"
         good_name = "isolated_good_f10"
         fail_content = f'__plugin__ = {{"name": "{fail_name}", "phase": "pre"}}\nimport nonexistent_mod_xyz_f10\n'
-        good_content = f'''
+        good_content = f"""
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         return {{"ok": True}}
-'''
+"""
         (tmp_path / f"{fail_name}.py").write_text(fail_content)
         (tmp_path / f"{good_name}.py").write_text(textwrap.dedent(good_content))
         registry.discover([str(tmp_path)])
@@ -280,7 +280,7 @@ class TestPluginRegistryEdgeCases:
     def test_exception_during_instantiation_marks_degraded(self, tmp_path: Path):
         registry = PluginRegistry()
         plugin_name = "instantiate_fail_f10"
-        content = f'''
+        content = f"""
 __plugin__ = {{"name": "{plugin_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
@@ -288,7 +288,7 @@ class _P(PluginBase):
         raise ValueError("intentional init fail f10")
     def execute(self, context):
         return {{}}
-'''
+"""
         f = tmp_path / f"{plugin_name}.py"
         f.write_text(textwrap.dedent(content))
         registry.discover([str(tmp_path)])

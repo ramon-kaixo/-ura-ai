@@ -20,7 +20,7 @@ def detect_language(text: str) -> str:
     if not text.strip():
         return "unknown"
     sample = text[:2000]
-    cache_key = hashlib.md5(sample.encode()).hexdigest()
+    cache_key = hashlib.md5(sample.encode()).hexdigest()  # noqa: S324
     if cache_key in _LANG_CACHE:
         return _LANG_CACHE[cache_key]
     try:
@@ -75,7 +75,7 @@ def extract_publication_date(text: str) -> str | None:
         match = re.search(pattern, text[:5000])
         if match:
             try:
-                return datetime.strptime(match.group(0), fmt).isoformat()
+                return datetime.strptime(match.group(0), fmt).isoformat()  # noqa: DTZ007
             except ValueError:
                 continue
     return None

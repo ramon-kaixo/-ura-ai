@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 SNAPSHOT_DIR = Path(os.environ.get("F821_SNAPSHOT_DIR", Path.home() / ".ura" / "f821_snapshots"))
-URA_ROOT = Path(os.environ.get("URA_ROOT", os.path.expanduser("~/URA/ura_ia_1972")))
+URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 
 
 def find_ruff():
@@ -42,7 +42,7 @@ def find_ruff():
 
 def run_ruff() -> list[dict]:
     ruff_bin = find_ruff()
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [ruff_bin, "check", "--select", "F821", "--output-format", "json", str(URA_ROOT)],
         capture_output=True,
         text=True,

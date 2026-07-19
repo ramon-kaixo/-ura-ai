@@ -44,7 +44,7 @@ def log(msg) -> None:
 
 def run(cmd, timeout=30):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)  # noqa: S603
         return r.returncode, r.stdout, r.stderr
     except Exception as e:
         return -1, "", str(e)

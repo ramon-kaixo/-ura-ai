@@ -33,7 +33,7 @@ class TestCheckZombies:
         fake_proc = tmp_path / "12345"
         fake_proc.mkdir()
         (fake_proc / "status").write_text("Name:\tzombie_proc\nState:\tZ (zombie)\n")
-        with patch("monitor.snc.Path", return_value=tmp_path):
+        with patch("monitor.snc.Path", return_value=tmp_path):  # noqa: SIM117
             with patch("monitor.snc.Path.iterdir", return_value=[fake_proc]):
                 zombies = check_zombies()
                 assert 12345 in zombies
@@ -41,7 +41,7 @@ class TestCheckZombies:
     def test_skips_non_digit(self, tmp_path) -> None:
         fake = tmp_path / "abc"
         fake.mkdir()
-        with patch("monitor.snc.Path", return_value=tmp_path):
+        with patch("monitor.snc.Path", return_value=tmp_path):  # noqa: SIM117
             with patch("monitor.snc.Path.iterdir", return_value=[fake]):
                 zombies = check_zombies()
                 assert zombies == []
@@ -54,7 +54,7 @@ class TestLimpiarZombies:
         def fake_kill(pid, sig) -> None:
             killed.append((pid, sig))
 
-        with patch("monitor.snc.check_zombies", return_value=[99999]):
+        with patch("monitor.snc.check_zombies", return_value=[99999]):  # noqa: SIM117
             with patch("monitor.snc.os.kill", side_effect=fake_kill):
                 _limpiar_zombies()
                 assert (99999, signal.SIGKILL) in killed
@@ -108,7 +108,7 @@ class TestAislarBucle:
 
     def test_sends_sigstop_and_schedules_timer(self) -> None:
         _pending_sigcont.clear()
-        with patch("monitor.snc.os.kill") as mock_kill, patch("monitor.snc.threading.Timer") as mock_timer:
+        with patch("monitor.snc.os.kill") as mock_kill, patch("monitor.snc.threading.Timer") as mock_timer:  # noqa: SIM117
             with patch("monitor.snc.Path.mkdir"):
                 with patch("monitor.snc.Path.write_text"):
                     _aislar_bucle(42, "python3", 95.0)
@@ -121,7 +121,7 @@ class TestAislarBucle:
 
     def test_adds_to_pending(self) -> None:
         _pending_sigcont.clear()
-        with patch("monitor.snc.os.kill"), patch("monitor.snc.threading.Timer"):
+        with patch("monitor.snc.os.kill"), patch("monitor.snc.threading.Timer"):  # noqa: SIM117
             with patch("monitor.snc.Path.mkdir"):
                 with patch("monitor.snc.Path.write_text"):
                     _aislar_bucle(42, "python3", 95.0)
@@ -136,7 +136,7 @@ class TestSigcontSeguro:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
         fake_status.write_text("Name:\tpython3\nState:\tT (stopped)\n")
-        with patch("pathlib.Path.exists", return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):  # noqa: SIM117
             with patch("pathlib.Path.read_text", return_value=fake_status.read_text()):
                 with patch("os.kill") as mock_kill:
                     _sigcont_seguro(42, "python3")
@@ -154,7 +154,7 @@ class TestSigcontSeguro:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
         fake_status.write_text("Name:\tpython2\nState:\tT (stopped)\n")
-        with patch("pathlib.Path.exists", return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):  # noqa: SIM117
             with patch("pathlib.Path.read_text", return_value=fake_status.read_text()):
                 with patch("os.kill") as mock_kill:
                     _sigcont_seguro(42, "python3")
@@ -165,7 +165,7 @@ class TestSigcontSeguro:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
         fake_status.write_text("Name:\tpython3\nState:\tS (sleeping)\n")
-        with patch("pathlib.Path.exists", return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):  # noqa: SIM117
             with patch("pathlib.Path.read_text", return_value=fake_status.read_text()):
                 with patch("os.kill") as mock_kill:
                     _sigcont_seguro(42, "python3")

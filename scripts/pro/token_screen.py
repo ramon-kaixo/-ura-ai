@@ -21,7 +21,7 @@ PLUGIN = {
   - Ajusta num_predict = tokens × 1.5 (máx 70% contexto del modelo)
   - Espera hasta 5 min si RAM temporalmente baja
   - Edge cases: código vacío, modelo desconocido, psutil ausente
-"""
+"""  # noqa: RUF001
 
 import sys
 import time
@@ -52,14 +52,14 @@ def _free_ram_mb() -> int:
     if psutil:
         try:
             return max(psutil.virtual_memory().available // (1024 * 1024), 0)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     try:
-        with open("/proc/meminfo") as f:
+        with open("/proc/meminfo") as f:  # noqa: PTH123
             for line in f:
                 if "MemAvailable" in line:
                     return int(line.split()[1]) // 1024
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return 8192
 
@@ -127,7 +127,7 @@ def screen(codigo: str, modelo: str = "deepseek-coder:6.7b") -> dict:
         try:
             ram_total = psutil.virtual_memory().total // (1024 * 1024)
             ram_pct = psutil.virtual_memory().percent
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     # Verificar RAM — si insuficiente, esperar
@@ -180,7 +180,7 @@ def scan_project() -> None:
         try:
             content = py_file.read_text()
             results[p] = {"lines": len(content.splitlines())}
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 

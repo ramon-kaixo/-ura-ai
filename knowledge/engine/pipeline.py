@@ -231,7 +231,7 @@ def _run_ci() -> StageResult:
                 duration_ms=(time.monotonic() - t0) * 1000,
                 error=f"CI script not found: {script}",
             )
-        r = subprocess.run(  # noqa: S603  -- script desde CI config, no input externo
+        r = subprocess.run(  # noqa: PLW1510, S603
             ["bash", str(script)],  # noqa: S607
             capture_output=True,
             text=True,
@@ -280,7 +280,7 @@ def _run_rule_eval(db_path: Path) -> StageResult:
                     "tags": fm.get("tags", []),
                     "body": r["body"] or "",
                     "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-                }
+                },
             )
 
         evaluator = RuleEvaluator()
@@ -320,7 +320,7 @@ class Pipeline:
         source_dir: Path | None = None,
         db_path: Path | None = None,
         archive_dir: Path | None = None,
-    ):
+    ) -> None:
         self._source_dir = source_dir or Path.cwd()
         self._db_path = db_path or Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
         self._archive_dir = archive_dir
@@ -338,6 +338,7 @@ class Pipeline:
 
         Returns:
             Resultado completo del pipeline.
+
         """
         import uuid
 
@@ -365,7 +366,7 @@ class Pipeline:
                         success=False,
                         duration_ms=0,
                         error=f"Unknown stage: {stage}",
-                    )
+                    ),
                 )
                 continue
             log.info("Pipeline stage: %s", stage)

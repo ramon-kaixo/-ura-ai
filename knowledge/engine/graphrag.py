@@ -123,7 +123,7 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
             if days_ago < max_days:
                 recency = 1.0 - (days_ago / max_days)
                 score += _RANKING_WEIGHTS["recency"] * recency
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     # Quality
@@ -140,7 +140,10 @@ class GraphRetriever(Protocol):
     """Contrato para recuperadores de contexto del Knowledge Graph."""
 
     def retrieve_assets(
-        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+        self,
+        query: str,
+        limit: int = 10,
+        asset_type: AssetType | None = None,
     ) -> list[RetrievalResult]: ...
     def retrieve_memory(self, query: str, limit: int = 10, kind: str | None = None) -> list[RetrievalResult]: ...
     def retrieve_lineage(self, asset_id: str) -> list[dict[str, Any]]: ...
@@ -151,8 +154,8 @@ class GraphRetriever(Protocol):
         query: str,
         max_assets: int = 10,
         max_memories: int = 5,
-        include_lineage: bool = True,
-        include_governance: bool = True,
+        include_lineage: bool = True,  # noqa: FBT001, FBT002
+        include_governance: bool = True,  # noqa: FBT001, FBT002
         neighbor_depth: int = 0,
     ) -> ContextBundle: ...
 
@@ -167,7 +170,7 @@ class SQLiteGraphRetriever:
     No accede directamente a SQLite.
     """
 
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
         self._asset_store: Any = None
         self._memory_store: Any = None
@@ -203,7 +206,10 @@ class SQLiteGraphRetriever:
         return self._governance_store
 
     def retrieve_assets(
-        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+        self,
+        query: str,
+        limit: int = 10,
+        asset_type: AssetType | None = None,
     ) -> list[RetrievalResult]:
         """Recupera assets relevantes para una consulta.
 
@@ -223,7 +229,7 @@ class SQLiteGraphRetriever:
                     title=title,
                     kind=a.asset_type.value,
                     snippet=a.metadata.get("content_sha256", "")[:64],
-                )
+                ),
             )
 
         results.sort(key=lambda r: r.score, reverse=True)
@@ -245,7 +251,7 @@ class SQLiteGraphRetriever:
                     kind=r.kind,
                     snippet=r.content[:200],
                     metadata={"tags": list(r.tags), "related_assets": list(r.related_assets)},
-                )
+                ),
             )
 
         results.sort(key=lambda r: r.score, reverse=True)
@@ -263,7 +269,7 @@ class SQLiteGraphRetriever:
                 "upstream": up,
                 "downstream": down,
                 "events": len(events),
-            }
+            },
         ]
 
     def retrieve_governance(self, asset_id: str) -> list[dict[str, Any]]:
@@ -317,8 +323,8 @@ class SQLiteGraphRetriever:
         query: str,
         max_assets: int = 10,
         max_memories: int = 5,
-        include_lineage: bool = True,
-        include_governance: bool = True,
+        include_lineage: bool = True,  # noqa: FBT001, FBT002
+        include_governance: bool = True,  # noqa: FBT001, FBT002
         neighbor_depth: int = 0,
     ) -> ContextBundle:
         """Construye un ContextBundle completo para una consulta.

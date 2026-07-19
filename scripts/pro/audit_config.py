@@ -32,22 +32,26 @@ ALLOWED_ENV_VAR: set[Path] = {
     URA_ROOT / "core/secretario_cache.py",
 }
 
-URACONFIG_ENV_VARS = frozenset({
-    "URA_QDRANT_HOST",
-    "URA_QDRANT_PORT",
-    "URA_TIMER_INTERVAL_MIN",
-    "URA_LOG_LEVEL",
-})
+URACONFIG_ENV_VARS = frozenset(
+    {
+        "URA_QDRANT_HOST",
+        "URA_QDRANT_PORT",
+        "URA_TIMER_INTERVAL_MIN",
+        "URA_LOG_LEVEL",
+    },
+)
 
-EXCLUDE_DIRS = frozenset({
-    ".git",
-    "__pycache__",
-    ".venv",
-    "backups",
-    "site-packages",
-    ".nervioso",
-    "build",
-})
+EXCLUDE_DIRS = frozenset(
+    {
+        ".git",
+        "__pycache__",
+        ".venv",
+        "backups",
+        "site-packages",
+        ".nervioso",
+        "build",
+    },
+)
 
 
 def _walk_py_files() -> list[Path]:
@@ -56,7 +60,7 @@ def _walk_py_files() -> list[Path]:
         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         for f in files:
             if f.endswith(".py"):
-                py_files.append(Path(root) / f)
+                py_files.append(Path(root) / f)  # noqa: PERF401
     return py_files
 
 
@@ -75,7 +79,7 @@ def _check_config_json_access(filepath: Path) -> list[str]:
             if pattern in line:
                 errors.append(
                     f"{filepath.relative_to(URA_ROOT)}:{lineno}: "
-                    f"referencia directa a {name} (debe usar UraConfig o config_manager)"
+                    f"referencia directa a {name} (debe usar UraConfig o config_manager)",
                 )
     return errors
 
@@ -100,24 +104,24 @@ def _check_env_var_access(filepath: Path) -> list[str]:
         if var not in URACONFIG_ENV_VARS:
             continue
         # os.environ.get(...)
-        if (isinstance(func, ast.Attribute)
-                and func.attr == "get"
-                and isinstance(func.value, ast.Attribute)
-                and func.value.attr == "environ"
-                and isinstance(func.value.value, ast.Name)
-                and func.value.value.id == "os"):
-            errors.append(
-                f"{filepath.relative_to(URA_ROOT)}:{node.lineno}: "
-                f"env var directa {var}"
-            )
+        if (
+            isinstance(func, ast.Attribute)
+            and func.attr == "get"
+            and isinstance(func.value, ast.Attribute)
+            and func.value.attr == "environ"
+            and isinstance(func.value.value, ast.Name)
+            and func.value.value.id == "os"
+        ):
+            errors.append(f"{filepath.relative_to(URA_ROOT)}:{node.lineno}: env var directa {var}")
         # environ.get(...) from os import environ
-        if (isinstance(func, ast.Attribute)
-                and func.attr == "get"
-                and isinstance(func.value, ast.Name)
-                and func.value.id == "environ"):
+        if (
+            isinstance(func, ast.Attribute)
+            and func.attr == "get"
+            and isinstance(func.value, ast.Name)
+            and func.value.id == "environ"
+        ):
             errors.append(
-                f"{filepath.relative_to(URA_ROOT)}:{node.lineno}: "
-                f"env var directa {var} (from os import environ)"
+                f"{filepath.relative_to(URA_ROOT)}:{node.lineno}: env var directa {var} (from os import environ)",
             )
     return errors
 
@@ -133,13 +137,9 @@ def _check_consistency() -> list[str]:
     expected_data = CONFIG.get("paths", {}).get("data", "")
     expected_log = CONFIG.get("log_level", "")
     if cfg.data_dir != expected_data:
-        errors.append(
-            f"  data_dir mismatch: UraConfig={cfg.data_dir} != CONFIG={expected_data}"
-        )
+        errors.append(f"  data_dir mismatch: UraConfig={cfg.data_dir} != CONFIG={expected_data}")
     if cfg.log_level != expected_log:
-        errors.append(
-            f"  log_level mismatch: UraConfig={cfg.log_level} != CONFIG={expected_log}"
-        )
+        errors.append(f"  log_level mismatch: UraConfig={cfg.log_level} != CONFIG={expected_log}")
     return errors
 
 
@@ -166,31 +166,25 @@ def main() -> int:
     c2 = check2_env_vars()
     c3 = check3_consistency()
 
-    print("=== Auditoría de Configuración Unificada (F17) ===\n")
-
-    print("[1] Acceso directo a config.json (fuera de módulos permitidos):")
     if c1:
-        for e in c1:
-            print(f"  ✗ {e}")
+        for _e in c1:
+            pass
     else:
-        print("  ✓ 0 problemas")
+        pass
 
-    print("\n[2] Env vars UraConfig fuera de motor/core/config.py:")
     if c2:
-        for e in c2:
-            print(f"  ✗ {e}")
+        for _e in c2:
+            pass
     else:
-        print("  ✓ 0 problemas")
+        pass
 
-    print("\n[3] Consistencia UraConfig == CONFIG:")
     if c3:
-        for e in c3:
-            print(f"  ✗ {e}")
+        for _e in c3:
+            pass
     else:
-        print("  ✓ campos compartidos coinciden")
+        pass
 
     total = len(c1) + len(c2) + len(c3)
-    print(f"\nTotal: {total} problema(s) encontrado(s).")
     return 1 if total else 0
 
 

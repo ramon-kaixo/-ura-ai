@@ -47,9 +47,8 @@ class AgentStateMachine(StateMachineABC):
 
     def transition(self, current: AgentState, target: AgentState) -> AgentState:
         if (current, target) not in _VALID_TRANSITIONS:
-            raise ValueError(
-                f"Invalid state transition: {current.value} → {target.value}"
-            )
+            msg = f"Invalid state transition: {current.value} → {target.value}"
+            raise ValueError(msg)
         return target
 
     def valid_transitions(self, state: AgentState) -> list[AgentState]:

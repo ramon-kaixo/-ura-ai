@@ -100,10 +100,7 @@ class CitationBundle:
     def to_dict(self) -> dict[str, Any]:
         return {
             "summary": self.summary,
-            "citations": [
-                dict(c.__dict__)
-                for c in self.citations
-            ],
+            "citations": [dict(c.__dict__) for c in self.citations],
             "evidence": [e.to_dict() for e in self.evidence],
             "traceability_report": self.traceability_report,
         }
@@ -134,6 +131,7 @@ class CitationEngine:
         Args:
             summary: Resumen extractivo generado por ExtractiveSummarizer.
             documents: Documentos originales que se usaron para el resumen.
+
         """
         with self._lock:
             doc_map: dict[str, WebDocument] = {d.url: d for d in documents}
@@ -150,11 +148,7 @@ class CitationEngine:
                 citations_per_doc[url] = citations_per_doc.get(url, 0) + 1
                 doc_index = _find_doc_index(documents, url)
 
-                canonical_url = (
-                    doc.metadata.get("canonical_url")
-                    if isinstance(doc.metadata, dict)
-                    else None
-                )
+                canonical_url = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
                 doc_id = get_document_id(doc.url, canonical_url)
                 doc_hash = _content_hash(doc.text or "")
                 sent_pos = origin["position"]
@@ -185,7 +179,7 @@ class CitationEngine:
                         fragment=frag,
                         citation_index=sent_idx,
                         document_index=doc_index,
-                    )
+                    ),
                 )
 
             report = {

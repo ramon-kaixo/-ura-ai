@@ -76,7 +76,7 @@ class Telemetria:
             metrics["cpu_pct"] = psutil.cpu_percent(interval=0.1)
         except ImportError:
             try:
-                with open("/proc/meminfo") as f:
+                with open("/proc/meminfo") as f:  # noqa: PTH123
                     for line in f:
                         if "MemAvailable" in line:
                             metrics["ram_libre_mb"] = int(line.split()[1]) // 1024
@@ -175,7 +175,6 @@ class Conciencia:
                 return json.loads(cls.PATH.read_text())
             except Exception:
                 log.exception("Error reading conciencia.json")
-                pass
         return cls._nuevo()
 
     @classmethod
@@ -273,8 +272,8 @@ class AgenteOrquestador:
                 try:
                     tree = ast.parse(py_file.read_text())
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
+                            if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:  # noqa: SIM102
                                 if node.end_lineno - node.lineno > 80:
                                     total += 1
                 except Exception as e:
@@ -302,6 +301,7 @@ class AgenteEjecutor:
             env["REFACTOR_MODEL_FALLBACK"] = "qwen2.5-coder:14b"
             env["MIN_LINES"] = "80"
             from core.config_manager import get_ollama_url
+
             env["OLLAMA_URL"] = get_ollama_url()
             env["URA_ROOT"] = str(URA_ROOT)
 
@@ -456,7 +456,7 @@ class AgenteReparador:
                         },
                         {
                             "role": "user",
-                            "content": f"Repara SIN cambiar lógica:\n{r.stderr or ''}\n\n```python\n{codigo[:6000]}\n```",
+                            "content": f"Repara SIN cambiar lógica:\n{r.stderr or ''}\n\n```python\n{codigo[:6000]}\n```",  # noqa: E501
                         },
                     ],
                     "temperature": 0.0,
@@ -469,7 +469,7 @@ class AgenteReparador:
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=180) as resp:
+            with urllib.request.urlopen(req, timeout=180) as resp:  # noqa: S310
                 fixed = json.loads(resp.read())["choices"][0]["message"]["content"]
 
             if fixed and "```" in fixed:

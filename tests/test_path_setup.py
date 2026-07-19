@@ -17,7 +17,7 @@ def test_notifier_return_false_when_disabled() -> None:
     try:
         result = notify("test message", level="info")
         assert result is False
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 

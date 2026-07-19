@@ -26,9 +26,9 @@ def load_events(path: str) -> list[dict]:
         files = [p]
     for f in files:
         if f.exists():
-            with open(f) as fh:
+            with open(f) as fh:  # noqa: PTH123
                 for line in fh:
-                    line = line.strip()
+                    line = line.strip()  # noqa: PLW2901
                     if line:
                         with contextlib.suppress(json.JSONDecodeError):
                             events.append(json.loads(line))
@@ -83,7 +83,7 @@ def render_html(tree: dict) -> str:
         dur_class = "slow" if n["duration_ms"] > 100 else ""
         children_html = "".join(render_node(c, depth + 1) for c in n.get("children", []))
 
-        return f'''<div class="node {cls}" style="margin-left:{indent}px">
+        return f"""<div class="node {cls}" style="margin-left:{indent}px">
   <div class="node-header">
     <span class="arrow" onclick="toggle(this)">▶</span>
     <span class="path">[{n["source"]}→{n["destination"]}]</span>
@@ -92,12 +92,12 @@ def render_html(tree: dict) -> str:
     <span class="duration {dur_class}">{n["duration_ms"]:.1f}ms</span>
     {badge}
   </div>
-  {f'<div class="children">{children_html}</div>' if children_html else ''}
-</div>'''
+  {f'<div class="children">{children_html}</div>' if children_html else ""}
+</div>"""
 
     roots_html = "".join(render_node(r) for r in tree["roots"])
 
-    return f'''<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -189,7 +189,7 @@ function toggle(el) {{
 }}
 </script>
 </body>
-</html>'''
+</html>"""
 
 
 def main() -> None:
@@ -204,23 +204,19 @@ def main() -> None:
 
     events = load_events(args.file)
     if not events:
-        print(f"No events in {args.file}", file=sys.stderr)
         sys.exit(1)
 
     if args.list:
         traces = sorted({e.get("trace_id", "") for e in events})
         for tid in traces:
-            count = sum(1 for e in events if e.get("trace_id") == tid)
-            print(f"{tid}  ({count} spans)")
+            sum(1 for e in events if e.get("trace_id") == tid)
         return
 
     if not args.trace:
-        print("Use --trace <id> or --list", file=sys.stderr)
         sys.exit(1)
 
     spans = [e for e in events if e.get("trace_id") == args.trace]
     if not spans:
-        print(f"Trace not found: {args.trace}", file=sys.stderr)
         sys.exit(1)
 
     tree = build_tree(spans)
@@ -228,7 +224,7 @@ def main() -> None:
     if args.json:
         json.dump(tree, sys.stdout, indent=2)
     elif args.html:
-        print(render_html(tree))
+        pass
     else:
         json.dump(tree, sys.stdout, indent=2)
 

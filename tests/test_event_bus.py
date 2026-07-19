@@ -10,7 +10,7 @@ def test_event_bus_imports() -> None:
 def test_async_event_bus_creates() -> None:
     bus = AsyncEventBus()
     assert bus is not None
-    assert bus._suscriptores == {}
+    assert bus._suscriptores == {}  # noqa: SLF001
 
 
 def test_async_event_bus_suscribir() -> None:
@@ -25,7 +25,7 @@ def test_async_event_bus_suscribir() -> None:
             called.append(data)
 
         await bus.suscribir("test_event", callback)
-        assert "test_event" in bus._suscriptores
-        assert len(bus._suscriptores["test_event"]) == 1
+        assert "test_event" in bus._suscriptores  # noqa: SLF001
+        assert len(bus._suscriptores["test_event"]) == 1  # noqa: SLF001
 
     asyncio.run(_run())

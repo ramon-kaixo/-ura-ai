@@ -230,13 +230,15 @@ class WebExtractor:
         scheme = parsed.scheme.lower()
 
         if scheme not in _ALLOWED_SCHEMES:
-            raise URLSchemeBlocked(f"Scheme '{scheme}' not allowed (only http/https)")
+            msg = f"Scheme '{scheme}' not allowed (only http/https)"
+            raise URLSchemeBlocked(msg)
 
         hostname = parsed.hostname or ""
         hostname_lower = hostname.lower()
 
         if hostname_lower in _BLOCKED_HOSTS:
-            raise PrivateIPBlocked(f"Host '{hostname}' is blocked")
+            msg = f"Host '{hostname}' is blocked"
+            raise PrivateIPBlocked(msg)
 
         # Es IP literal → validar directamente
         if _is_ip_string(hostname_lower):
@@ -248,7 +250,8 @@ class WebExtractor:
         try:
             addrs = socket.getaddrinfo(hostname_lower, None)
         except socket.gaierror as exc:
-            raise SSRFError(f"DNS resolution failed for '{hostname}': {exc}") from exc
+            msg = f"DNS resolution failed for '{hostname}': {exc}"
+            raise SSRFError(msg) from exc
 
         for addr_info in addrs:
             ip_str = addr_info[4][0]
@@ -262,7 +265,8 @@ class WebExtractor:
         parsed = urlparse(url)
         scheme = parsed.scheme.lower()
         if scheme not in _ALLOWED_SCHEMES:
-            raise URLSchemeBlocked(f"Redirect to blocked scheme: {scheme}")
+            msg = f"Redirect to blocked scheme: {scheme}"
+            raise URLSchemeBlocked(msg)
         hostname = parsed.hostname or ""
         if _is_ip_string(hostname):
             ip = ipaddress.ip_address(hostname)
@@ -290,10 +294,12 @@ def _is_ip_string(s: str) -> bool:
 
 def _check_ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address, hostname: str) -> None:
     if ip == ipaddress.ip_address("169.254.169.254"):
-        raise CloudMetadataBlocked(f"Cloud metadata IP blocked: {ip}")
+        msg = f"Cloud metadata IP blocked: {ip}"
+        raise CloudMetadataBlocked(msg)
     for network in _BLOCKED_NETWORKS:
         if ip in network:
-            raise PrivateIPBlocked(f"IP {ip} (host: {hostname}) is in blocked network {network}")
+            msg = f"IP {ip} (host: {hostname}) is in blocked network {network}"
+            raise PrivateIPBlocked(msg)
 
 
 def _hash_url_stub(url: str) -> str:

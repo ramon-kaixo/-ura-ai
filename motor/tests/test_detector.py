@@ -24,17 +24,29 @@ class _MockHot(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         time.sleep(0.05)
         return "hot_ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class _MockCold(BaseLLMProvider):
     def generate(self, prompt, model=None, options=None):
         return "cold_ok"
-    def embed(self, texts, model=None): return [[0.0]]
-    async def embed_async(self, texts, model=None): return [[0.0]]
-    def health(self): return {"status": "ok"}
+
+    def embed(self, texts, model=None):
+        return [[0.0]]
+
+    async def embed_async(self, texts, model=None):
+        return [[0.0]]
+
+    def health(self):
+        return {"status": "ok"}
 
 
 class TestHotspotDetector:

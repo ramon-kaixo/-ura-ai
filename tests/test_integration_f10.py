@@ -35,13 +35,13 @@ class TestDegradedModePluginRegistryIntegration:
         dm = DegradedMode.instancia()
         registry = PluginRegistry()
         name = "good_plugin_int_f10"
-        content = f'''
+        content = f"""
 __plugin__ = {{"name": "{name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         return {{"ok": True}}
-'''
+"""
         f = tmp_path / f"{name}.py"
         f.write_text(content)
         registry.discover([str(tmp_path)])
@@ -55,13 +55,13 @@ class _P(PluginBase):
         registry = PluginRegistry()
         good_name = "good_mix_f10"
         bad_name = "bad_mix_f10"
-        good_content = f'''
+        good_content = f"""
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def execute(self, context):
         return {{"ok": True}}
-'''
+"""
         (tmp_path / f"{good_name}.py").write_text(good_content)
         self._make_bad_plugin(tmp_path, bad_name)
         registry.discover([str(tmp_path)])

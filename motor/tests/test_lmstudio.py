@@ -14,34 +14,43 @@ from motor.core.llm.router import LLMRouter
 class TestLMStudioProvider:
     def test_lmstudio_importable(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         assert LMStudioProvider is not None
 
     def test_lmstudio_validate(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         result = validate_provider(LMStudioProvider)
         assert result.valid, f"Errors: {result.errors}"
         assert result.provider_name == "lmstudio"
 
     def test_lmstudio_generate(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         p = LMStudioProvider()
         r = p.generate("test")
-        assert isinstance(r, str) and len(r) > 0
+        assert isinstance(r, str)
+        assert len(r) > 0
 
     def test_lmstudio_embed(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         p = LMStudioProvider()
         r = p.embed(["texto"])
-        assert isinstance(r, list) and len(r) == 1
+        assert isinstance(r, list)
+        assert len(r) == 1
 
     def test_lmstudio_health(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         p = LMStudioProvider()
         h = p.health()
-        assert isinstance(h, dict) and "status" in h
+        assert isinstance(h, dict)
+        assert "status" in h
 
     def test_lmstudio_capabilities(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         p = LMStudioProvider()
         caps = p.capabilities
         assert caps["chat"] is True
@@ -51,6 +60,7 @@ class TestLMStudioProvider:
 
     def test_registry_registration(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         reg = ProviderRegistry()
         reg.register("lmstudio", LMStudioProvider(), default=True)
         assert "lmstudio" in reg
@@ -59,6 +69,7 @@ class TestLMStudioProvider:
     def test_router_selection(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
         from motor.core.llm.ollama import OllamaProvider
+
         reg = ProviderRegistry()
         reg.register("ollama", OllamaProvider(), default=True)
         reg.register("lmstudio", LMStudioProvider())
@@ -67,6 +78,7 @@ class TestLMStudioProvider:
 
     def test_retry_integration(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         reg = ProviderRegistry()
         reg.register("lmstudio", LMStudioProvider(), default=True)
         router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=2)
@@ -74,6 +86,7 @@ class TestLMStudioProvider:
 
     def test_breaker_integration(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider
+
         reg = ProviderRegistry()
         reg.register("lmstudio", LMStudioProvider(), default=True)
         router = LLMRouter(registry=reg)
@@ -82,6 +95,7 @@ class TestLMStudioProvider:
     def test_observability(self) -> None:
         global_metrics.reset()
         from motor.core.llm.lmstudio import LMStudioProvider
+
         reg = ProviderRegistry()
         reg.register("lmstudio", LMStudioProvider(), default=True)
         router = LLMRouter(registry=reg, fallback_enabled=False)
@@ -90,6 +104,7 @@ class TestLMStudioProvider:
 
     def test_backward_compatibility(self) -> None:
         from motor.core.llm import embed, embed_async, generate, health
+
         assert callable(generate)
         assert callable(embed)
         assert callable(embed_async)

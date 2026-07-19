@@ -27,7 +27,10 @@ log = logging.getLogger("reindex_vectors")
 def main() -> None:
     parser = argparse.ArgumentParser(description="Reindexa assets en VectorStore")
     parser.add_argument(
-        "--db", default="/home/ramon/URA/ura_ia_1972/data/ura.db", type=Path, help="Ruta a la BD SQLite"
+        "--db",
+        default="/home/ramon/URA/ura_ia_1972/data/ura.db",
+        type=Path,
+        help="Ruta a la BD SQLite",
     )
     parser.add_argument("--execute", action="store_true", help="Ejecutar realmente (dry-run por defecto)")
     parser.add_argument("--batch", type=int, default=100, help="Tamaño de batch")

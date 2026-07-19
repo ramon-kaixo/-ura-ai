@@ -62,7 +62,7 @@ class TestParseManifest:
     def test_parse_with_dependencies(self, tmp_path: Path):
         f = tmp_path / "plugin.yaml"
         f.write_text(
-            "name: dep-test\ndependencies:\n  plugins:\n    - name: base\n      version: '>=1.0.0'\n  python:\n    - 'requests>=2.28'\n"
+            "name: dep-test\ndependencies:\n  plugins:\n    - name: base\n      version: '>=1.0.0'\n  python:\n    - 'requests>=2.28'\n",  # noqa: E501
         )
         manifest = parse_manifest(f)
         assert manifest is not None

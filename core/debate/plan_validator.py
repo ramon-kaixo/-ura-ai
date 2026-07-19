@@ -1,6 +1,6 @@
 from datetime import UTC
 
-#!/usr/bin/env python3
+#!/usr/bin/env python3  # noqa: EXE005
 """plan_validator.py — Inyección de contexto real del sistema en el debate.
 
 Recolecta:
@@ -16,11 +16,11 @@ Uso:
 """
 import json
 import logging
-import os
 import subprocess
 
 log = logging.getLogger(__name__)
 import sys
+from pathlib import Path
 
 logger = logging.getLogger("ura.debate.validator")
 
@@ -32,8 +32,8 @@ SERVICES = [
 ]
 
 STATE_FILES = {
-    "hetzner": "/tmp/ura_hetzner_state.json",
-    "snc": "/tmp/ura_snc_state.json",
+    "hetzner": "/tmp/ura_hetzner_state.json",  # noqa: S108
+    "snc": "/tmp/ura_snc_state.json",  # noqa: S108
 }
 
 
@@ -88,10 +88,10 @@ def get_vram() -> dict | None:
 
 
 def load_state_file(path: str) -> dict | None:
-    if not os.path.exists(path):
+    if not Path(path).exists():
         return None
     try:
-        with open(path) as f:
+        with open(path) as f:  # noqa: PTH123
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None

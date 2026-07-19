@@ -139,11 +139,11 @@ class NodeRepository:
             return
         placeholders = ",".join("?" for _ in doc_ids)
         conn.execute(
-            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",
+            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",  # noqa: S608
             doc_ids + doc_ids,
         )
         conn.execute(
-            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",
+            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",  # noqa: S608
             doc_ids,
         )
 
@@ -169,7 +169,7 @@ class CompilerRunRepository:
                 "duration_ms": duration_ms,
                 "cancelled": _SHOULD_CANCEL,
                 "correlation_id": ctx.metadata.correlation_id,
-            }
+            },
         )
         conn.execute(
             "INSERT INTO op_compiler_runs "
@@ -257,7 +257,7 @@ class SyncPolicy:
         conn.execute("DELETE FROM kg_nodes_fts")
         conn.execute(
             "INSERT INTO kg_nodes_fts (id, title, body, tags) "
-            "SELECT id, json_extract(frontmatter, '$.title'), body, type FROM kg_nodes"
+            "SELECT id, json_extract(frontmatter, '$.title'), body, type FROM kg_nodes",
         )
 
     @staticmethod

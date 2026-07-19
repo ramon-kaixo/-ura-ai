@@ -71,7 +71,7 @@ async def delete_points_before(collection: str, before_ts: str) -> int:
         return result.get("result", {}).get("status", "unknown")
 
 
-async def main(dry_run: bool = True) -> dict:
+async def main(dry_run: bool = True) -> dict:  # noqa: FBT001, FBT002
     stats: dict[str, dict] = {}
 
     collections = await get_collections()

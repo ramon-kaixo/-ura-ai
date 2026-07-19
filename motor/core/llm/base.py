@@ -50,20 +50,16 @@ class BaseLLMProvider(ABC):
         return bool(value)
 
     @abstractmethod
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
-        ...
+    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str: ...
 
     @abstractmethod
-    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        ...
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]: ...
 
     @abstractmethod
-    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        ...
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]: ...
 
     @abstractmethod
-    def health(self) -> dict[str, Any]:
-        ...
+    def health(self) -> dict[str, Any]: ...
 
 
 class ProviderValidationResult:
@@ -94,6 +90,7 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:  # noqa: 
 
     Returns:
         ProviderValidationResult con errores si los hay.
+
     """
     errors: list[str] = []
     provider_name = ""

@@ -10,16 +10,16 @@ Uso:
 import argparse
 import json
 import logging
-import os
 import subprocess
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
 
-STATE_FILE = "/tmp/ura_state.json"
+STATE_FILE = "/tmp/ura_state.json"  # noqa: S108
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,8 +36,8 @@ _shutdown_flag = False
 
 def check_health() -> bool:
     try:
-        req = Request(f"{MOCHILA_URL}{HEALTH_PATH}", method="GET")
-        with urlopen(req, timeout=5) as resp:
+        req = Request(f"{MOCHILA_URL}{HEALTH_PATH}", method="GET")  # noqa: S310
+        with urlopen(req, timeout=5) as resp:  # noqa: S310
             return resp.status == 200
     except (URLError, OSError, ValueError) as e:
         logger.warning("Health check fallo: %s", e)
@@ -45,9 +45,9 @@ def check_health() -> bool:
 
 
 def dump_checkpoint() -> None:
-    if os.path.exists(STATE_FILE):
+    if Path(STATE_FILE).exists():
         try:
-            with open(STATE_FILE) as f:
+            with open(STATE_FILE) as f:  # noqa: PTH123
                 cp = json.load(f)
             logger.critical(
                 "[HEARTBEAT] Checkpoint pendiente detectado antes de restart: task=%s file=%s",
@@ -107,7 +107,7 @@ VRAM_PANIC_MB = 22000
 
 
 def check_vram_pressure() -> None:
-    global vram_critical_cycles
+    global vram_critical_cycles  # noqa: PLW0603
     cmd = [
         "nvidia-smi",
         "--query-compute-apps=used_memory",
@@ -117,7 +117,7 @@ def check_vram_pressure() -> None:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)  # noqa: S603  -- comando constante
         total_used = 0
         for line in res.stdout.strip().split("\n"):
-            line = line.strip()
+            line = line.strip()  # noqa: PLW2901
             if line.isdigit():
                 total_used += int(line)
 
@@ -208,7 +208,7 @@ def main() -> None:
 
         check_vram_pressure()
 
-        global loop_latency_history
+        global loop_latency_history  # noqa: PLW0602
         lat = check_loop_latency()
         if lat > 0:
             loop_latency_history.append(lat)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     import signal
 
     def _handle_signal(sig, frame) -> None:
-        global _shutdown_flag
+        global _shutdown_flag  # noqa: PLW0603
         logger.info("Recibida señal %s, parando heartbeat...", sig)
         _shutdown_flag = True
 

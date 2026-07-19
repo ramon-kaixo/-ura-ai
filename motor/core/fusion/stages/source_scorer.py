@@ -28,9 +28,13 @@ class QualitySourceScorer(SourceScorerABC):
     (corroboration, internal_consistency, citation_quality).
     """
 
-    _TLD_WEIGHTS: dict[str, float] = {
-        "gov": 0.9, "edu": 0.8, "org": 0.6,
-        "io": 0.55, "com": 0.5, "net": 0.5,
+    _TLD_WEIGHTS: dict[str, float] = {  # noqa: RUF012
+        "gov": 0.9,
+        "edu": 0.8,
+        "org": 0.6,
+        "io": 0.55,
+        "com": 0.5,
+        "net": 0.5,
     }
 
     def score(self, claim: KnowledgeClaim) -> SourceScore:
@@ -38,7 +42,7 @@ class QualitySourceScorer(SourceScorerABC):
         url = ev.document_url if ev else "unknown"
         authority = self._score_authority(url)
         freshness = self._score_freshness(ev.fetched_at if ev else 0)
-        overall = (authority * 0.5 + freshness * 0.5)
+        overall = authority * 0.5 + freshness * 0.5
         return SourceScore(
             url=url,
             authority=authority,
@@ -65,6 +69,7 @@ class QualitySourceScorer(SourceScorerABC):
     @staticmethod
     def _score_freshness(fetched_at: float) -> float:
         import time
+
         days_old = (time.time() - fetched_at) / 86400.0
         return max(0.1, 1.0 - days_old / 365.0)
 

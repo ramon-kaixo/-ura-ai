@@ -78,27 +78,30 @@ class MultiAgentRuntime:
 
         try:
             if cancel_check():
-                return self._complete(workflow_id, False, "cancelled", start)
+                return self._complete(workflow_id, False, "cancelled", start)  # noqa: FBT003
 
             plan_task = AgentTask(objective=objective, agent_role=AgentRole.PLANNER, context=context, timeout=timeout)
             plan_result = self._planner.run(plan_task)
 
             if not plan_result.success:
-                return self._complete(workflow_id, False, plan_result.error, start)
+                return self._complete(workflow_id, False, plan_result.error, start)  # noqa: FBT003
 
             if cancel_check():
-                return self._complete(workflow_id, False, "cancelled", start)
+                return self._complete(workflow_id, False, "cancelled", start)  # noqa: FBT003
 
             subtasks = plan_result.output.get("subtasks", [])
             supervisor_context = {**context, "subtasks": subtasks, "_cancellation_check": cancel_check}
 
             supervisor_task = AgentTask(
-                objective=objective, agent_role=AgentRole.SUPERVISOR, context=supervisor_context, timeout=timeout
+                objective=objective,
+                agent_role=AgentRole.SUPERVISOR,
+                context=supervisor_context,
+                timeout=timeout,
             )
             supervisor_result = self._supervisor.run(supervisor_task)
 
             if cancel_check():
-                return self._complete(workflow_id, False, "cancelled", start)
+                return self._complete(workflow_id, False, "cancelled", start)  # noqa: FBT003
 
             return self._complete(
                 workflow_id,
@@ -110,7 +113,7 @@ class MultiAgentRuntime:
 
         except Exception as exc:
             log.exception("Workflow %s failed", workflow_id)
-            return self._complete(workflow_id, False, str(exc), start)
+            return self._complete(workflow_id, False, str(exc), start)  # noqa: FBT003
 
     def cancel(self, workflow_id: str) -> bool:
         with self._lock:
@@ -132,7 +135,7 @@ class MultiAgentRuntime:
         with self._lock:
             return len(self._agents)
 
-    def _complete(self, wf_id: str, success: bool, error: str, start: float, extra: dict | None = None) -> AgentResult:
+    def _complete(self, wf_id: str, success: bool, error: str, start: float, extra: dict | None = None) -> AgentResult:  # noqa: FBT001
         elapsed = (time.monotonic() - start) * 1000
         with self._lock:
             if wf_id in self._workflows:

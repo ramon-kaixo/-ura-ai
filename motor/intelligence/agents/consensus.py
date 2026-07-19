@@ -177,7 +177,8 @@ class VotingEngine:
     def vote_with(self, results: list[AgentResult], strategy_name: str) -> ConsensusResult:
         strategy = self._strategies.get(strategy_name)
         if strategy is None:
-            raise ValueError(f"Unknown strategy: {strategy_name}")
+            msg = f"Unknown strategy: {strategy_name}"
+            raise ValueError(msg)
         return strategy.aggregate(results)
 
 

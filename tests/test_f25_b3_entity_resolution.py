@@ -38,6 +38,7 @@ from motor.core.fusion.stages.entity_resolver import (
 
 # ── B3.1: LRUCache ──────────────────────────────────────
 
+
 def test_lru_cache_get_miss() -> None:
     c = LRUCache(maxsize=10)
     assert c.get("missing") is None
@@ -82,6 +83,7 @@ def test_lru_cache_move_to_end_on_get() -> None:
 
 
 # ── B3.2: ContextualEntityResolver — disambiguation ─────
+
 
 def test_resolve_apple_company_by_context() -> None:
     r = ContextualEntityResolver()
@@ -150,6 +152,7 @@ def test_resolve_washington_person_by_context() -> None:
 
 # ── B3.3: AMBIGUOUS status ──────────────────────────────
 
+
 def test_resolve_ambiguous_no_context() -> None:
     r = ContextualEntityResolver()
     # "apple" without context keywords → ambiguous
@@ -161,13 +164,12 @@ def test_resolve_ambiguous_no_context() -> None:
 def test_resolve_ambiguous_tie() -> None:
     r = ContextualEntityResolver()
     # No disambiguation keywords → tie → AMBIGUOUS
-    e = r.resolve("apple", context={
-        "claim_text": "I looked at the apple"
-    })
+    e = r.resolve("apple", context={"claim_text": "I looked at the apple"})
     assert e.status == ResolutionStatus.AMBIGUOUS
 
 
 # ── B3.4: UNKNOWN status ────────────────────────────────
+
 
 def test_resolve_unknown() -> None:
     r = ContextualEntityResolver()
@@ -183,6 +185,7 @@ def test_resolve_empty_text() -> None:
 
 
 # ── B3.5: Cache integration ─────────────────────────────
+
 
 def test_cache_does_not_cache_multi_entry() -> None:
     """Multi-entry entities (apple) are NOT cached — depends on context."""
@@ -209,7 +212,8 @@ def test_cache_stats_in_stage() -> None:
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "NVIDIA makes GPUs"),
-                text="NVIDIA makes GPUs", confidence=0.9,
+                text="NVIDIA makes GPUs",
+                confidence=0.9,
             ),
         ],
     )
@@ -222,20 +226,17 @@ def test_cache_stats_in_stage() -> None:
 
 # ── B3.6: N-gram extraction ─────────────────────────────
 
+
 def test_extract_candidates_single_word() -> None:
     assert "apple" in _extract_entity_candidates("Apple sells oranges", _DEFAULT_REGISTRY)
 
 
 def test_extract_candidates_multi_word() -> None:
-    assert "berkshire hathaway" in _extract_entity_candidates(
-        "Berkshire Hathaway bought a company", _DEFAULT_REGISTRY
-    )
+    assert "berkshire hathaway" in _extract_entity_candidates("Berkshire Hathaway bought a company", _DEFAULT_REGISTRY)
 
 
 def test_extract_candidates_multi_word_three() -> None:
-    assert "elon musk" in _extract_entity_candidates(
-        "Elon Musk is the CEO of Tesla", _DEFAULT_REGISTRY
-    )
+    assert "elon musk" in _extract_entity_candidates("Elon Musk is the CEO of Tesla", _DEFAULT_REGISTRY)
 
 
 def test_extract_candidates_does_not_include_unknown() -> None:
@@ -250,12 +251,14 @@ def test_extract_candidates_no_duplicates() -> None:
 
 # ── B3.7: EntityResolutionStage ─────────────────────────
 
+
 def test_stage_resolves_apple_vs_fruit() -> None:
     ctx = FusionContext(
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "Apple sold 10M iPhones"),
-                text="Apple sold 10M iPhones", confidence=0.9,
+                text="Apple sold 10M iPhones",
+                confidence=0.9,
             ),
         ],
     )
@@ -275,7 +278,8 @@ def test_stage_ambiguous_when_no_context() -> None:
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "I like apple"),
-                text="I like apple", confidence=0.5,
+                text="I like apple",
+                confidence=0.5,
             ),
         ],
     )
@@ -310,7 +314,8 @@ def test_stage_provenance_records_resolver_version() -> None:
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "NVIDIA makes GPUs"),
-                text="NVIDIA makes GPUs", confidence=0.9,
+                text="NVIDIA makes GPUs",
+                confidence=0.9,
             ),
         ],
     )
@@ -321,6 +326,7 @@ def test_stage_provenance_records_resolver_version() -> None:
 
 
 # ── B3.8: Backward compatibility ────────────────────────
+
 
 def test_legacy_resolver_still_works() -> None:
     resolver = RuleBasedEntityResolver()
@@ -341,10 +347,11 @@ def test_stage_accepts_custom_resolver() -> None:
     """EntityResolutionStage debe aceptar un EntityResolver inyectado."""
     custom = RuleBasedEntityResolver()
     stage = EntityResolutionStage(resolver=custom)
-    assert stage._resolver is custom
+    assert stage._resolver is custom  # noqa: SLF001
 
 
 # ── B3.9: Determinism ──────────────────────────────────
+
 
 def test_resolve_deterministic_same_context() -> None:
     """Mismo texto + mismo contexto → misma entidad."""
@@ -361,11 +368,13 @@ def test_stage_deterministic() -> None:
     claims = [
         KnowledgeClaim(
             id=make_claim_id("ev1", "NVIDIA makes GPUs"),
-            text="NVIDIA makes GPUs", confidence=0.9,
+            text="NVIDIA makes GPUs",
+            confidence=0.9,
         ),
         KnowledgeClaim(
             id=make_claim_id("ev2", "Tim Cook runs Apple"),
-            text="Tim Cook runs Apple", confidence=0.9,
+            text="Tim Cook runs Apple",
+            confidence=0.9,
         ),
     ]
     r1 = EntityResolutionStage().execute(FusionContext(claims=list(claims)))
@@ -374,6 +383,7 @@ def test_stage_deterministic() -> None:
 
 
 # ── B3.10: Resolver respects context parameter ─────────
+
 
 def test_resolve_without_context_fallback() -> None:
     """Sin contexto, entidades sin ambigüedad se resuelven igual."""
@@ -392,14 +402,21 @@ def test_resolve_without_context_ambiguous() -> None:
 
 # ── B3.11: EntityRegistry injection ─────────────────────
 
+
 def test_custom_registry_injection() -> None:
     """El resolver acepta un EntityRegistry personalizado."""
-    custom = EntityRegistry({
-        "customcorp": [
-            EntityDef(entity_id="E9999", canonical_name="Custom Corp",
-                      category="organization", keywords=["custom"]),
-        ],
-    })
+    custom = EntityRegistry(
+        {
+            "customcorp": [
+                EntityDef(
+                    entity_id="E9999",
+                    canonical_name="Custom Corp",
+                    category="organization",
+                    keywords=["custom"],
+                ),
+            ],
+        },
+    )
     r = ContextualEntityResolver(registry=custom)
     assert r.registry is custom
     e = r.resolve("customcorp", context={"claim_text": "Custom Corp makes products"})
@@ -416,11 +433,13 @@ def test_custom_registry_does_not_see_default() -> None:
 
 
 def test_entity_registry_known_names() -> None:
-    reg = EntityRegistry({
-        "test": [
-            EntityDef(entity_id="T1", canonical_name="Test", aliases=["test alias"]),
-        ],
-    })
+    reg = EntityRegistry(
+        {
+            "test": [
+                EntityDef(entity_id="T1", canonical_name="Test", aliases=["test alias"]),
+            ],
+        },
+    )
     assert "test" in reg.known_names
     assert "test alias" in reg.known_names
 
@@ -432,8 +451,10 @@ def test_entity_registry_len() -> None:
 
 # ── B3.12: ScoringStrategy injection ────────────────────
 
+
 class _AlwaysFirst(ScoringStrategy):
     """Estrategia de testing: siempre elige la primera entrada."""
+
     def select(self, entries: list[EntityDef], context: str) -> int | None:
         return 0 if entries else None
 
@@ -451,9 +472,11 @@ def test_custom_scorer_injection() -> None:
 
 def test_custom_scorer_returns_ambiguous() -> None:
     """Un scorer que retorna None genera AMBIGUOUS."""
+
     class _AlwaysAmbiguous(ScoringStrategy):
         def select(self, entries: list[EntityDef], context: str) -> int | None:
             return None
+
     r = ContextualEntityResolver(scorer=_AlwaysAmbiguous())
     e = r.resolve("apple", context={"claim_text": "Apple sells iPhones"})
     assert e.status == ResolutionStatus.AMBIGUOUS
@@ -465,7 +488,8 @@ def test_stage_has_ambiguous_entity_ids() -> None:
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "I like apple"),
-                text="I like apple", confidence=0.5,
+                text="I like apple",
+                confidence=0.5,
             ),
         ],
     )
@@ -478,6 +502,7 @@ def test_stage_has_ambiguous_entity_ids() -> None:
 
 # ── B3.13: CachePolicy validation ───────────────────────
 
+
 def test_cache_policy_from_string_valid() -> None:
     assert CachePolicy.from_string("deterministic_only") == CachePolicy.DETERMINISTIC_ONLY
     assert CachePolicy.from_string("all") == CachePolicy.ALL
@@ -486,6 +511,7 @@ def test_cache_policy_from_string_valid() -> None:
 
 def test_cache_policy_from_string_invalid() -> None:
     import re
+
     with pytest.raises(ValueError, match=re.escape("Invalid cache policy: 'invalid'")):
         CachePolicy.from_string("invalid")
 

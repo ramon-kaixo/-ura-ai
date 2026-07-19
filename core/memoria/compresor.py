@@ -41,11 +41,15 @@ Responde UNICAMENTE con un array JSON valido, sin markdown ni explicacion:
 Texto:
 {texto}
 
-JSON:"""
+JSON:"""  # noqa: E501
 
 
 async def comprimir_a_ideas(
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
+    texto: str,
+    fuente: str = "",
+    hash_origen: str = "",
+    fecha_fuente: str = "",
+    modelo: str = "",
 ) -> list[Idea]:
     if not texto.strip():
         return []

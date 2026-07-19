@@ -36,7 +36,7 @@ class ReadConnectionPool:
     Todas las conexiones usan WAL mode (no bloquean escritores).
     """
 
-    def __init__(self, db_path: Path, max_connections: int = 5):
+    def __init__(self, db_path: Path, max_connections: int = 5) -> None:
         self._db_path = db_path
         self._max = max_connections
         self._lock = threading.Lock()
@@ -78,8 +78,7 @@ class ReadConnectionPool:
     def _new_connection(self) -> sqlite3.Connection:
         from knowledge.engine.connection import open_db
 
-        conn = open_db(self._db_path)
-        return conn
+        return open_db(self._db_path)
 
     @property
     def active_count(self) -> int:

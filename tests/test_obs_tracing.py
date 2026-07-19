@@ -19,6 +19,7 @@ import os
 import tempfile
 import threading
 import time
+from pathlib import Path
 
 import pytest
 
@@ -269,6 +270,7 @@ def test_obs07_error_with_real_span_id() -> None:
 
 def test_obs08_tracing_does_not_modify_result() -> None:
     """OBS-08: Tracing wrapper returns the exact same result."""
+
     def my_fn(x: int) -> int:
         return x * 2
 
@@ -279,11 +281,13 @@ def test_obs08_tracing_does_not_modify_result() -> None:
 
 def test_obs08_tracing_does_not_modify_exception() -> None:
     """OBS-08: Tracing wrapper raises the exact same exception."""
+
     class MySpecificError(ValueError):
         pass
 
     def failing_fn() -> None:
-        raise MySpecificError("my error")
+        msg = "my error"
+        raise MySpecificError(msg)
 
     mw = TraceMiddleware(source="a", destination="b")
     with pytest.raises(MySpecificError, match="my error"):
@@ -310,6 +314,7 @@ def test_obs09_trace_exporter_failure_does_not_break() -> None:
 
 def test_obs09_middleware_failure_does_not_break() -> None:
     """OBS-09: Middleware with broken exporter still returns results."""
+
     def my_fn() -> str:
         return "hello"
 
@@ -331,6 +336,7 @@ def test_obs10_latency_overhead() -> None:
     TraceMiddleware. The middleware creates TraceContext + SpanId
     per call (~random uuid generation overhead).
     """
+
     def fast_fn() -> int:
         return 42
 
@@ -368,23 +374,29 @@ def test_exporter_writes_events() -> None:
     try:
         exporter = TraceExporter(path=path, batch_size=1, flush_interval=999)
         event = SpanEvent(
-            trace_id="trace1", span_id="span1", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="command",
-            timestamp_utc=1000.0, monotonic_ts=5000,
+            trace_id="trace1",
+            span_id="span1",
+            parent_span_id="ROOT",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="command",
+            timestamp_utc=1000.0,
+            monotonic_ts=5000,
         )
         exporter.emit(event)
         exporter.flush()
         exporter.close()
 
-        with open(path) as f:
+        with Path(path).open() as f:
             lines = f.readlines()
         assert len(lines) == 1
         data = json.loads(lines[0])
         assert data["trace_id"] == "trace1"
         assert data["span_id"] == "span1"
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if Path(path).exists():
+            Path(path).unlink()
 
 
 def test_exporter_rotation() -> None:
@@ -396,22 +408,28 @@ def test_exporter_rotation() -> None:
         exporter = TraceExporter(path=path, max_events_per_file=5, batch_size=1, flush_interval=999)
         for i in range(12):
             event = SpanEvent(
-                trace_id=f"t{i}", span_id=f"s{i}", parent_span_id="ROOT",
-                source="a", destination="b", message_type="T", message_kind="command",
-                timestamp_utc=float(i), monotonic_ts=i * 1000,
+                trace_id=f"t{i}",
+                span_id=f"s{i}",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="command",
+                timestamp_utc=float(i),
+                monotonic_ts=i * 1000,
             )
             exporter.emit(event)
         exporter.flush()
         exporter.close()
 
-        base, ext = os.path.splitext(path)
-        assert os.path.exists(f"{base}.0{ext}") or os.path.exists(f"{base}.1{ext}")
-        assert os.path.exists(path)  # at least the main file
+        base, ext = os.path.splitext(path)  # noqa: PTH122
+        assert Path(f"{base}.0{ext}").exists() or Path(f"{base}.1{ext}").exists()
+        assert Path(path).exists()  # at least the main file
     finally:
-        base, ext = os.path.splitext(path)
+        base, ext = os.path.splitext(path)  # noqa: PTH122
         for p in [path, f"{base}.0{ext}", f"{base}.1{ext}"]:
-            if os.path.exists(p):
-                os.unlink(p)
+            if Path(p).exists():
+                Path(p).unlink()
 
 
 # ═══════════════════════════════════════════════════
@@ -598,6 +616,7 @@ def test_middleware_propagates_via_envelope() -> None:
 
 def test_traced_decorator_preserves_result() -> None:
     """@traced decorator does not modify function result (OBS-08)."""
+
     @traced(source="a", destination="b", message_type="add")
     def add(a: int, b: int) -> int:
         return a + b
@@ -643,8 +662,10 @@ def test_full_trace_across_all_subsystems() -> None:
 
     # F24 → F25
     ctx_f24 = TraceContext(
-        source="f24", destination="f25",
-        correlation_id=original_corr, causation_id=original_caus,
+        source="f24",
+        destination="f25",
+        correlation_id=original_corr,
+        causation_id=original_caus,
     )
     h_f24 = ctx_f24.make_header()
 
@@ -750,6 +771,7 @@ def test_obs07_error_envelope_with_span() -> None:
 
 def test_obs10_trace_vs_no_trace_vs_traced_decorator() -> None:
     """Compare baseline, middleware, and decorator overhead."""
+
     def work(n: int) -> int:
         total = 0
         for i in range(n):
@@ -835,9 +857,11 @@ def test_e2e_propagation_across_five_subsystems() -> None:
 
     # F24 → F25: create outgoing message header via span()
     ctx_f24 = TraceContext(
-        source="f24", destination="f25",
+        source="f24",
+        destination="f25",
         trace_id=original_trace,
-        correlation_id=original_corr, causation_id=original_caus,
+        correlation_id=original_corr,
+        causation_id=original_caus,
     )
     ctx_f24.set_exporter(exporter)
     with ctx_f24.span(message_type="web.extract", tags={"doc_id": "d1"}):
@@ -853,8 +877,7 @@ def test_e2e_propagation_across_five_subsystems() -> None:
     ctx_f25.set_exporter(exporter)
     # BEFORE span(): parent_span_id should be h_24.span_id (propagated correctly)
     h_pre_25 = ctx_f25.make_header()
-    assert str(h_pre_25.parent_span_id) == str(h_24.span_id), \
-        "F25: parent should be h_24.span_id after from_header"
+    assert str(h_pre_25.parent_span_id) == str(h_24.span_id), "F25: parent should be h_24.span_id after from_header"
 
     # WITHIN span: execute operation
     with ctx_f25.span(message_type="fusion.run", tags={"fact_count": "42"}):
@@ -865,8 +888,7 @@ def test_e2e_propagation_across_five_subsystems() -> None:
     ctx_f26 = TraceContext.from_header(h_25, "f26", "f27")
     ctx_f26.set_exporter(exporter)
     h_pre_26 = ctx_f26.make_header()
-    assert str(h_pre_26.parent_span_id) == str(h_25.span_id), \
-        "F26: parent should be h_25.span_id after from_header"
+    assert str(h_pre_26.parent_span_id) == str(h_25.span_id), "F26: parent should be h_25.span_id after from_header"
     with ctx_f26.span(message_type="memory.append", tags={"entries": "7"}):
         h_26 = ctx_f26.make_header()
 
@@ -874,8 +896,7 @@ def test_e2e_propagation_across_five_subsystems() -> None:
     ctx_f27 = TraceContext.from_header(h_26, "f27", "f28")
     ctx_f27.set_exporter(exporter)
     h_pre_27 = ctx_f27.make_header()
-    assert str(h_pre_27.parent_span_id) == str(h_26.span_id), \
-        "F27: parent should be h_26.span_id after from_header"
+    assert str(h_pre_27.parent_span_id) == str(h_26.span_id), "F27: parent should be h_26.span_id after from_header"
     with ctx_f27.span(message_type="agent.run", tags={"action": "search"}):
         h_27 = ctx_f27.make_header()
 
@@ -913,15 +934,39 @@ def test_e2e_propagation_across_five_subsystems() -> None:
 def test_span_tree_validator_accepts_valid_tree() -> None:
     """🔴2: Valid tree passes validation."""
     spans = [
-        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=1, monotonic_ts=1000),
-        SpanEvent(trace_id="t1", span_id="s1", parent_span_id="root",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=2, monotonic_ts=2000),
-        SpanEvent(trace_id="t1", span_id="s2", parent_span_id="root",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=3, monotonic_ts=3000),
+        SpanEvent(
+            trace_id="t1",
+            span_id="root",
+            parent_span_id="ROOT",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1,
+            monotonic_ts=1000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="s1",
+            parent_span_id="root",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=2,
+            monotonic_ts=2000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="s2",
+            parent_span_id="root",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=3,
+            monotonic_ts=3000,
+        ),
     ]
     validate_span_tree(spans)  # no error
 
@@ -935,12 +980,28 @@ def test_span_tree_validator_rejects_empty() -> None:
 def test_span_tree_validator_rejects_multiple_roots() -> None:
     """🔴2: Multiple roots raise error."""
     spans = [
-        SpanEvent(trace_id="t1", span_id="root1", parent_span_id="ROOT",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=1, monotonic_ts=1000),
-        SpanEvent(trace_id="t1", span_id="root2", parent_span_id="ROOT",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=2, monotonic_ts=2000),
+        SpanEvent(
+            trace_id="t1",
+            span_id="root1",
+            parent_span_id="ROOT",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1,
+            monotonic_ts=1000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="root2",
+            parent_span_id="ROOT",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=2,
+            monotonic_ts=2000,
+        ),
     ]
     with pytest.raises(SpanTreeError, match="expected 1 root"):
         validate_span_tree(spans)
@@ -949,18 +1010,50 @@ def test_span_tree_validator_rejects_multiple_roots() -> None:
 def test_span_tree_validator_rejects_cycle() -> None:
     """🔴2: Cycle detection."""
     spans = [
-        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=1, monotonic_ts=1000),
-        SpanEvent(trace_id="t1", span_id="a", parent_span_id="c",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=2, monotonic_ts=2000),
-        SpanEvent(trace_id="t1", span_id="b", parent_span_id="a",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=3, monotonic_ts=3000),
-        SpanEvent(trace_id="t1", span_id="c", parent_span_id="b",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=4, monotonic_ts=4000),
+        SpanEvent(
+            trace_id="t1",
+            span_id="root",
+            parent_span_id="ROOT",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1,
+            monotonic_ts=1000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="a",
+            parent_span_id="c",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=2,
+            monotonic_ts=2000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="b",
+            parent_span_id="a",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=3,
+            monotonic_ts=3000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="c",
+            parent_span_id="b",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=4,
+            monotonic_ts=4000,
+        ),
     ]
     with pytest.raises(SpanTreeError, match="cycle"):
         validate_span_tree(spans)
@@ -969,12 +1062,28 @@ def test_span_tree_validator_rejects_cycle() -> None:
 def test_span_tree_validator_rejects_orphans() -> None:
     """🔴2: Orphan spans detected."""
     spans = [
-        SpanEvent(trace_id="t1", span_id="root", parent_span_id="ROOT",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=1, monotonic_ts=1000),
-        SpanEvent(trace_id="t1", span_id="orphan", parent_span_id="nonexistent",
-                  source="a", destination="b", message_type="T", message_kind="cmd",
-                  timestamp_utc=2, monotonic_ts=2000),
+        SpanEvent(
+            trace_id="t1",
+            span_id="root",
+            parent_span_id="ROOT",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1,
+            monotonic_ts=1000,
+        ),
+        SpanEvent(
+            trace_id="t1",
+            span_id="orphan",
+            parent_span_id="nonexistent",
+            source="a",
+            destination="b",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=2,
+            monotonic_ts=2000,
+        ),
     ]
     with pytest.raises(SpanTreeError, match="orphan"):
         validate_span_tree(spans)
@@ -1002,8 +1111,7 @@ def test_concurrency_1000_traces_no_mixing() -> None:
                     h = ctx.make_header()
                     span_ids_global.append(str(h.span_id))
                     # OBS-02: trace_id never changes within a trace
-                    assert ctx.trace_id == my_trace, \
-                        f"Worker {trace_idx}: trace_id changed within trace!"
+                    assert ctx.trace_id == my_trace, f"Worker {trace_idx}: trace_id changed within trace!"
         except Exception as e:
             errors.append(f"worker{trace_idx}: {e}")
 
@@ -1014,7 +1122,7 @@ def test_concurrency_1000_traces_no_mixing() -> None:
         t.join(timeout=30)
 
     assert len(errors) == 0, f"{len(errors)} worker errors: {errors[:3]}"
-    # 1000 workers × 10 span_ids = 10000 span_ids
+    # 1000 workers × 10 span_ids = 10000 span_ids  # noqa: RUF003
     assert len(span_ids_global) >= 10000, f"Expected 10k spans, got {len(span_ids_global)}"
     assert len(set(span_ids_global)) == len(span_ids_global), "SpanId collision detected"
     assert exporter.count >= 10000, f"Expected 10k events, got {exporter.count}"
@@ -1029,16 +1137,24 @@ def test_exporter_backpressure_drops_on_full() -> None:
     """🔴4: When buffer is full, exporter drops events silently."""
     exporter = TraceExporter(
         path="/dev/null",  # no real I/O
-        buffer_size=10,    # tiny buffer
-        batch_size=100,    # don't auto-flush
+        buffer_size=10,  # tiny buffer
+        batch_size=100,  # don't auto-flush
         flush_interval=999,
     )
     for _ in range(100):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     exporter.flush()
     exporter.close()
 
@@ -1057,11 +1173,19 @@ def test_exporter_non_blocking_on_slow_disk() -> None:
     )
     start = time.time()
     for _ in range(100):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     elapsed = time.time() - start
     exporter.close()
 
@@ -1119,15 +1243,39 @@ def test_clock_skew_sort_by_monotonic() -> None:
     """🟠6: Events are sorted by monotonic_ts even if UTC timestamps are
     out of order (simulating clock skew / NTP adjustment)."""
     events = [
-        SpanEvent(trace_id="t1", span_id="a", parent_span_id="ROOT",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=2000, monotonic_ts=3000),  # earlier in monotonic
-        SpanEvent(trace_id="t1", span_id="b", parent_span_id="a",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=1000, monotonic_ts=1000),  # later in monotonic
-        SpanEvent(trace_id="t1", span_id="c", parent_span_id="b",
-                  source="x", destination="y", message_type="T", message_kind="cmd",
-                  timestamp_utc=1500, monotonic_ts=2000),
+        SpanEvent(
+            trace_id="t1",
+            span_id="a",
+            parent_span_id="ROOT",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=2000,
+            monotonic_ts=3000,
+        ),  # earlier in monotonic
+        SpanEvent(
+            trace_id="t1",
+            span_id="b",
+            parent_span_id="a",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1000,
+            monotonic_ts=1000,
+        ),  # later in monotonic
+        SpanEvent(
+            trace_id="t1",
+            span_id="c",
+            parent_span_id="b",
+            source="x",
+            destination="y",
+            message_type="T",
+            message_kind="cmd",
+            timestamp_utc=1500,
+            monotonic_ts=2000,
+        ),
     ]
 
     # Sort by monotonic_ts
@@ -1175,22 +1323,18 @@ def test_sampler_probabilistic() -> None:
 
 def test_sampler_adaptive() -> None:
     """🟠7: ADAPTIVE increases probability with error rate."""
-    s = Sampler(strategy=SamplingStrategy.ADAPTIVE,
-                adaptive_min_p=0.1, adaptive_max_p=1.0,
-                error_rate_window=10)
+    s = Sampler(strategy=SamplingStrategy.ADAPTIVE, adaptive_min_p=0.1, adaptive_max_p=1.0, error_rate_window=10)
 
     # Low error rate → sample rate ~= min_p (0.1)
     for _ in range(10):
-        s.record_error(False)
+        s.record_error(was_error=False)
     low_rate = sum(1 for _ in range(500) if s.should_sample())
     assert low_rate < 300, f"Adaptive too aggressive at low error: {low_rate}"
 
     # High error rate → sample rate ~= max_p (1.0)
-    s2 = Sampler(strategy=SamplingStrategy.ADAPTIVE,
-                 adaptive_min_p=0.1, adaptive_max_p=1.0,
-                 error_rate_window=10)
+    s2 = Sampler(strategy=SamplingStrategy.ADAPTIVE, adaptive_min_p=0.1, adaptive_max_p=1.0, error_rate_window=10)
     for _ in range(10):
-        s2.record_error(True)
+        s2.record_error(was_error=True)
     high_rate = sum(1 for _ in range(500) if s2.should_sample())
     assert high_rate > 400, f"Adaptive not aggressive enough at high error: {high_rate}"
 
@@ -1263,9 +1407,14 @@ def test_privacy_in_exporter_pipeline() -> None:
     exporter = InMemoryExporter()
     ctx = TraceContext(source="a", destination="b")
     ctx.set_exporter(exporter)
-    with ctx.span(message_type="op", tags={
-        "prompt": "sensitive", "api_key": "sk-123", "safe": "ok",
-    }):
+    with ctx.span(
+        message_type="op",
+        tags={
+            "prompt": "sensitive",
+            "api_key": "sk-123",
+            "safe": "ok",
+        },
+    ):
         pass
 
     assert exporter.count == 1
@@ -1307,9 +1456,16 @@ def test_otel_mapping_check() -> None:
 
     # Verify SpanEvent maps to OTel Span attributes
     event = SpanEvent(
-        trace_id=str(tid), span_id=str(sid), parent_span_id="ROOT",
-        source="f24", destination="f25", message_type="extract", message_kind="command",
-        timestamp_utc=1000.0, monotonic_ts=5000, duration_ns=1_000_000,
+        trace_id=str(tid),
+        span_id=str(sid),
+        parent_span_id="ROOT",
+        source="f24",
+        destination="f25",
+        message_type="extract",
+        message_kind="command",
+        timestamp_utc=1000.0,
+        monotonic_ts=5000,
+        duration_ns=1_000_000,
         tags={"key": "value"},
     )
     d = event.to_dict()
@@ -1365,11 +1521,19 @@ def test_budget_exporter_buffer_does_not_grow_unbounded() -> None:
 
     # Emit many more events than buffer size
     for _ in range(1000):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     exporter.flush()
     exporter.close()
 
@@ -1407,17 +1571,22 @@ def test_budget_trace_event_count_under_10k() -> None:
 def test_audit_logger_basic() -> None:
     """AuditLogger records sends and receives."""
     from motor.platform.audit import AuditLogger
+
     al = AuditLogger(max_records=100)
     env = make_envelope_with_checksum(
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="a", destination="b",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("corr1"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr1"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
@@ -1441,17 +1610,22 @@ def test_audit_logger_basic() -> None:
 def test_audit_logger_event_send_only() -> None:
     """OB01-exception: EVENT messages are sender-side only."""
     from motor.platform.audit import AuditLogger
+
     al = AuditLogger()
     env = make_envelope_with_checksum(
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "E", b"{}"),
-            message_type="E", message_kind=MessageKind.EVENT,
-            source="a", destination="b",
+            message_type="E",
+            message_kind=MessageKind.EVENT,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("corr2"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr2"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
@@ -1463,23 +1637,29 @@ def test_audit_logger_event_send_only() -> None:
 def test_audit_logger_processing_time() -> None:
     """OB06: processing time derived from send→receive."""
     from motor.platform.audit import AuditLogger
+
     al = AuditLogger()
     env = make_envelope_with_checksum(
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="a", destination="b",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("corr3"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr3"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
     )
     al.log_send(env)
     import time
+
     time.sleep(0.001)
     al.log_receive(env)
     pt = al.processing_time("corr3")
@@ -1490,17 +1670,22 @@ def test_audit_logger_processing_time() -> None:
 def test_audit_logger_bounded_buffer() -> None:
     """AuditLogger bounded buffer prevents OOM."""
     from motor.platform.audit import AuditLogger
+
     al = AuditLogger(max_records=10)
     env = make_envelope_with_checksum(
         version=VersionHeader(),
         routing=RoutingHeader(
             message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
-            message_type="T", message_kind=MessageKind.COMMAND,
-            source="a", destination="b",
+            message_type="T",
+            message_kind=MessageKind.COMMAND,
+            source="a",
+            destination="b",
         ),
         trace=TraceHeader(
-            trace_id=TraceId.generate(), span_id=SpanId.generate(),
-            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+            trace_id=TraceId.generate(),
+            span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"),
+            causation_id=CausationId.root(),
         ),
         delivery=DeliveryHeader(),
         payload=b"{}",
@@ -1531,11 +1716,19 @@ def test_exporter_drop_newest_policy() -> None:
         drop_policy=DropPolicy.DROP_NEWEST,
     )
     for _ in range(100):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     exporter.flush()
     exporter.close()
     assert exporter.event_count == 100
@@ -1553,11 +1746,19 @@ def test_exporter_drop_oldest_policy() -> None:
         drop_policy=DropPolicy.DROP_OLDEST,
     )
     for _ in range(200):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     exporter.flush()
     exporter.close()
     assert exporter.event_count == 200
@@ -1580,11 +1781,19 @@ def test_exporter_metrics_dict() -> None:
 
     # Emit some events and check metrics update
     for _ in range(5):
-        exporter.emit(SpanEvent(
-            trace_id="t", span_id="s", parent_span_id="ROOT",
-            source="a", destination="b", message_type="T", message_kind="cmd",
-            timestamp_utc=1, monotonic_ts=1,
-        ))
+        exporter.emit(
+            SpanEvent(
+                trace_id="t",
+                span_id="s",
+                parent_span_id="ROOT",
+                source="a",
+                destination="b",
+                message_type="T",
+                message_kind="cmd",
+                timestamp_utc=1,
+                monotonic_ts=1,
+            ),
+        )
     m2 = exporter.metrics_dict()
     assert m2["trace_exporter_emitted_total"] >= 5
 

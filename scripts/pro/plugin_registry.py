@@ -31,12 +31,12 @@ def discover_all():
                             plugin_dict["script"] = str(py_file)
                             name = plugin_dict.get("name", py_file.stem)
                             plugins[name] = plugin_dict
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return plugins
 
 
-def run_phase(phase, context=None, file_path=None):
+def run_phase(phase, context=None, file_path=None):  # noqa: C901
     plugins = discover_all()
     phase_plugins = {name: p for name, p in plugins.items() if p.get("phase") == phase or p.get("phase") == "always"}
 
@@ -63,7 +63,7 @@ def run_phase(phase, context=None, file_path=None):
 
         t0 = time.time()
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # noqa: S603
                 cmd,
                 capture_output=True,
                 text=True,

@@ -31,7 +31,7 @@ CONFIG_PATH = Path(__file__).parent / "committee_config.json"
 
 
 def load_config() -> dict:
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH) as f:  # noqa: PTH123
         return json.load(f)
 
 
@@ -134,7 +134,7 @@ Un solo riesgo menor NO justifica arbitraje humano.
 
 Responde EXACTAMENTE en JSON:
 {{"score": 0.0-1.0, "reason": "explicación de fallos encontrados", "risks": ["fallo1", "fallo2"], "requires_human": true/false}}
-"""
+"""  # noqa: E501
 
 
 async def call_ollama(
@@ -234,7 +234,7 @@ async def run_debate(
 async def main_async() -> int:
     if len(sys.argv) > 1 and sys.argv[1] == "--plan":
         plan_path = sys.argv[2]
-        with open(plan_path) as f:
+        with open(plan_path) as f:  # noqa: ASYNC230, PTH123
             data = json.load(f)
     else:
         data = json.loads(sys.stdin.read())

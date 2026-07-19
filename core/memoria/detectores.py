@@ -62,8 +62,8 @@ def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
 def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
-        result = subprocess.run(  # noqa: S603  -- URL desde detector config, ffprobe no ejecuta shell
-            [
+        result = subprocess.run(  # noqa: PLW1510, S603
+            [  # noqa: S607
                 "ffprobe",
                 "-v",
                 "quiet",
@@ -88,7 +88,7 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
                 "size": fmt.get("size", ""),
                 "bit_rate": fmt.get("bit_rate", ""),
                 "format_name": fmt.get("format_name", ""),
-            }
+            },
         )
         return {"cambio": meta_nuevo != metadatos_anteriores, "metadatos": meta_nuevo}
     except Exception as e:

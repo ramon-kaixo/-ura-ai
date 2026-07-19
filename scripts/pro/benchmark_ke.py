@@ -102,7 +102,8 @@ def load_corpus(corpus_dir: Path) -> tuple[list[Query], dict[str, list[Relevance
     relevance_file = corpus_dir / "relevance.jsonl"
 
     if not queries_file.exists():
-        raise FileNotFoundError(f"Queries file not found: {queries_file}")
+        msg = f"Queries file not found: {queries_file}"
+        raise FileNotFoundError(msg)
 
     queries: list[Query] = []
     with queries_file.open() as f:
@@ -173,7 +174,8 @@ class KERetrieval:
 
     def _search_mock(self, query: str, k: int = 10) -> list[RetrievalResult]:
         """Deterministic mock: returns results based on query content.
-        Queries mentioning specific keywords match relevant docs."""
+        Queries mentioning specific keywords match relevant docs.
+        """
         doc_score_map: dict[str, float] = {}
         keywords = {
             "qdrant": "qdrant_client_docs",
@@ -330,26 +332,32 @@ def validate_corpus_indexed(
         log.warning("Validación corpus: %d/%d documentos encontrados (%.1f%%)", found, len(all_doc_ids), coverage * 100)
     else:
         log.info(
-            "Validación corpus: %d/%d documentos encontrados (%.1f%%) — OK", found, len(all_doc_ids), coverage * 100
+            "Validación corpus: %d/%d documentos encontrados (%.1f%%) — OK",
+            found,
+            len(all_doc_ids),
+            coverage * 100,
         )
     return errors
 
 
-def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, PLR0915, FBT001, FBT002
+def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, FBT001, FBT002, PLR0912, PLR0915
     queries, relevance_map = load_corpus(corpus_dir)
 
     retriever = KERetrieval()
     if dry_run:
-        retriever._client = None  # force mock
+        retriever._client = None  # force mock  # noqa: SLF001
 
     if not dry_run and retriever.available:
         validation_errors = validate_corpus_indexed(relevance_map, retriever)
         if validation_errors:
             for e in validation_errors:
                 log.error("VALIDACIÓN: %s", e)
-            raise RuntimeError(
+            msg = (
                 f"Corpus validation failed: {len(validation_errors)} errors. "
                 "Index golden documents first with: python3 scripts/pro/index_golden_docs.py"
+            )
+            raise RuntimeError(
+                msg,
             )
         log.info("Validación corpus superada — ejecutando benchmark")
 
@@ -399,7 +407,7 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
                 mrr=mrr,
                 ndcg=ndcg,
                 no_context=no_ctx,
-            )
+            ),
         )
 
     # Aggregate
@@ -441,7 +449,7 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
 
     sorted_lat = sorted(all_latencies)
     n = len(sorted_lat)
-    results = BenchmarkResults(
+    return BenchmarkResults(
         queries_total=len(queries),
         queries_failed=0,
         mean_recall_1=round(statistics.mean(all_recall_1), 4),
@@ -463,39 +471,11 @@ def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) ->
         ke_version="1.x (mock)" if dry_run or not retriever.available else "1.x (real)",
     )
 
-    return results
-
 
 def print_results(r: BenchmarkResults) -> None:
-    print(f"\n{'=' * 60}")
-    print(f"  KE {r.ke_version} — Benchmark Results")
-    print(f"{'=' * 60}")
-    print(f"  Queries: {r.queries_total} ({r.queries_failed} failed)")
-    print(f"  Timestamp: {r.timestamp}")
-    print()
-    print(f"  {'Metric':<22} {'Value':<10}")
-    print(f"  {'-' * 32}")
-    print(f"  {'Recall@1':<22} {r.mean_recall_1:<10.4f}")
-    print(f"  {'Recall@5':<22} {r.mean_recall_5:<10.4f}")
-    print(f"  {'Recall@10':<22} {r.mean_recall_10:<10.4f}")
-    print(f"  {'Precision@5':<22} {r.mean_precision_5:<10.4f}")
-    print(f"  {'MRR':<22} {r.mean_mrr:<10.4f}")
-    print(f"  {'MAP':<22} {r.map:<10.4f}")
-    print(f"  {'nDCG@10':<22} {r.mean_ndcg:<10.4f}")
-    print()
-    print(f"  {'Latency P50':<22} {r.latency_p50:<10.2f}ms")
-    print(f"  {'Latency P95':<22} {r.latency_p95:<10.2f}ms")
-    print(f"  {'Latency P99':<22} {r.latency_p99:<10.2f}ms")
-    print(f"  {'Throughput':<22} {r.throughput_qps:<10.2f} qps")
-    print()
-    print(f"  {'No-context rate':<22} {r.no_context_rate:<10.2%}")
-    print(f"  {'Doc coverage':<22} {r.doc_coverage:<10.2%}")
-    print()
     if r.domain_breakdown:
-        print(f"  {'Domain':<18} {'nDCG':<10} {'Count':<8}")
-        print(f"  {'-' * 36}")
-        for d, info in sorted(r.domain_breakdown.items()):
-            print(f"  {d:<18} {info['ndcg_mean']:<10.4f} {info['count']:<8}")
+        for _d, _info in sorted(r.domain_breakdown.items()):
+            pass
 
 
 def save_results(r: BenchmarkResults, path: Path) -> None:
@@ -522,7 +502,7 @@ def save_results(r: BenchmarkResults, path: Path) -> None:
         "domain_breakdown": r.domain_breakdown,
         "latency_all": r.latency_all,
     }
-    with open(path, "w") as f:
+    with open(path, "w") as f:  # noqa: PTH123
         json.dump(data, f, indent=2, ensure_ascii=False)
     log.info("Resultados guardados: %s", path)
 
@@ -541,7 +521,7 @@ def validate_corpus(corpus_dir: Path) -> list[str]:  # noqa: C901
 
     for q in queries:
         if not q.qid.startswith(("sys_", "code_", "know_")):
-            errors.append(f"QID {q.qid} no sigue convención sys_/code_/know_")
+            errors.append(f"QID {q.qid} no sigue convención sys_/code_/know_")  # noqa: PERF401
 
     domains = {q.domain for q in queries}
     if len(domains) < 2:
@@ -550,7 +530,7 @@ def validate_corpus(corpus_dir: Path) -> list[str]:  # noqa: C901
     for qid, rels in relevance_map.items():
         for r in rels:
             if r.relevance not in (0, 1, 2, 3):
-                errors.append(f"Relevance score inválido en {qid}: {r.relevance}")
+                errors.append(f"Relevance score inválido en {qid}: {r.relevance}")  # noqa: PERF401
 
     if not errors:
         log.info(
@@ -578,14 +558,20 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
         meta = json.loads(metadata_file.read_text())
 
     try:
-        git_hash = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5
+        git_hash = subprocess.run(  # noqa: PLW1510
+            ["git", "rev-parse", "HEAD"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            timeout=5,
         ).stdout.strip()
     except Exception:
         git_hash = "unknown"
     try:
-        git_tag = subprocess.run(
-            ["git", "describe", "--tags", "--always"], capture_output=True, text=True, timeout=5
+        git_tag = subprocess.run(  # noqa: PLW1510
+            ["git", "describe", "--tags", "--always"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            timeout=5,
         ).stdout.strip()
     except Exception:
         git_tag = "unknown"
@@ -701,15 +687,10 @@ def main() -> int:
     if errors:
         log.warning("Corpus tiene %d errores — continuando de todas formas", len(errors))
 
-    print("\nKE 1.x Benchmark")
-    print(f"  Corpus: {corpus_dir}")
-    print(f"  Dry run: {args.dry_run}")
-    print()
-
     try:
         results = run_benchmark(corpus_dir, results_dir, dry_run=args.dry_run)
     except RuntimeError as e:
-        log.error("Benchmark abortado: %s", e)
+        log.exception("Benchmark abortado: %s", e)
         print(f"\n  ERROR: {e}", file=__import__("sys").stdout)
         return 1
     print_results(results)

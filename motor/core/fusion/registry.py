@@ -43,7 +43,8 @@ class FusionRegistry:
 
     def get_engine(self, name: str = "default") -> FusionEngine:
         if name not in self._engines:
-            raise KeyError(f"FusionEngine '{name}' not registered")
+            msg = f"FusionEngine '{name}' not registered"
+            raise KeyError(msg)
         return self._engines[name]
 
     def list_engines(self) -> list[str]:
@@ -55,7 +56,8 @@ class FusionRegistry:
 
     def get_conflict_resolver(self, name: str = "default") -> ConflictResolver:
         if name not in self._conflict_resolvers:
-            raise KeyError(f"ConflictResolver '{name}' not registered")
+            msg = f"ConflictResolver '{name}' not registered"
+            raise KeyError(msg)
         return self._conflict_resolvers[name]
 
     def list_conflict_resolvers(self) -> list[str]:
@@ -67,7 +69,8 @@ class FusionRegistry:
 
     def get_source_scorer(self, name: str = "default") -> SourceScorer:
         if name not in self._source_scorers:
-            raise KeyError(f"SourceScorer '{name}' not registered")
+            msg = f"SourceScorer '{name}' not registered"
+            raise KeyError(msg)
         return self._source_scorers[name]
 
     def list_source_scorers(self) -> list[str]:
@@ -79,7 +82,8 @@ class FusionRegistry:
 
     def get_merger(self, name: str = "default") -> KnowledgeMerger:
         if name not in self._mergers:
-            raise KeyError(f"KnowledgeMerger '{name}' not registered")
+            msg = f"KnowledgeMerger '{name}' not registered"
+            raise KeyError(msg)
         return self._mergers[name]
 
     def list_mergers(self) -> list[str]:
@@ -91,7 +95,8 @@ class FusionRegistry:
 
     def get_change_detector(self, name: str = "default") -> ChangeDetector:
         if name not in self._change_detectors:
-            raise KeyError(f"ChangeDetector '{name}' not registered")
+            msg = f"ChangeDetector '{name}' not registered"
+            raise KeyError(msg)
         return self._change_detectors[name]
 
     def list_change_detectors(self) -> list[str]:
@@ -103,7 +108,8 @@ class FusionRegistry:
 
     def get_selector(self, name: str = "default") -> MemoryCandidateSelector:
         if name not in self._selectors:
-            raise KeyError(f"MemoryCandidateSelector '{name}' not registered")
+            msg = f"MemoryCandidateSelector '{name}' not registered"
+            raise KeyError(msg)
         return self._selectors[name]
 
     def list_selectors(self) -> list[str]:
@@ -115,7 +121,8 @@ class FusionRegistry:
 
     def get_entity_resolver(self, name: str = "default") -> EntityResolver:
         if name not in self._entity_resolvers:
-            raise KeyError(f"EntityResolver '{name}' not registered")
+            msg = f"EntityResolver '{name}' not registered"
+            raise KeyError(msg)
         return self._entity_resolvers[name]
 
     def list_entity_resolvers(self) -> list[str]:

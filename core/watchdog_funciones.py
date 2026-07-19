@@ -118,7 +118,7 @@ def _timeout_handler(signum, frame) -> Never:
     raise _TimeoutError(msg)
 
 
-def watchdog(
+def watchdog(  # noqa: C901
     timeout: float = 30.0,
     on_timeout: str = "log",
     extra_context: dict | None = None,
@@ -136,7 +136,7 @@ def watchdog(
 
     """
 
-    def decorator(func):
+    def decorator(func):  # noqa: C901
         @functools.wraps(func)
         def wrapper_sync(*args, **kwargs):
             # Señal solo funciona en el hilo principal
@@ -237,7 +237,7 @@ class AsyncLoopMonitor(threading.Thread):
     Si la latencia supera el umbral, publica alerta en event_bus.
     """
 
-    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True) -> None:
+    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True) -> None:  # noqa: FBT001, FBT002
         super().__init__(daemon=daemon)
         self.interval = interval
         self.threshold_ms = threshold_ms

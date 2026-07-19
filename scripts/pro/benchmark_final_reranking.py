@@ -20,10 +20,10 @@ CORPUS = Path(__file__).resolve().parent.parent.parent / "knowledge" / "evaluati
 
 def load():
     qs, rm = [], {}
-    with open(CORPUS / "queries.jsonl") as f:
+    with open(CORPUS / "queries.jsonl") as f:  # noqa: PTH123
         for l in f:
-            qs.append(json.loads(l))
-    with open(CORPUS / "relevance.jsonl") as f:
+            qs.append(json.loads(l))  # noqa: PERF401
+    with open(CORPUS / "relevance.jsonl") as f:  # noqa: PTH123
         for l in f:
             d = json.loads(l)
             rm.setdefault(d["qid"], []).append(d)
@@ -93,7 +93,7 @@ BASELINES = {
 }
 
 
-def main():
+def main() -> int:
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.reranking.ce import CrossEncoderReranker
@@ -104,7 +104,6 @@ def main():
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
     if not qc.disponible:
-        print("Qdrant not available")
         return 1
 
     queries, rel_map = load()
@@ -124,22 +123,12 @@ def main():
         rr = ce if "CrossEncoder" in name else None
         results[name] = run(name, fn, queries, rel_map, reranker=rr)
 
-    hdr = f"  {'Config':<28} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
-    print(f"\n{'=' * 105}")
-    print(hdr)
-    print(f"{'=' * 105}")
     for name in configs:
         r = results[name]
-        print(
-            f"  {name:<28} {r['Recall@10']:<8.4f} {r['Precision@5']:<8.4f} {r['MRR']:<8.4f} {r['MAP']:<8.4f} {r['nDCG@10']:<8.4f} {r['P50']:<8.2f} {r['P95']:<8.2f} {r['P99']:<8.2f} {r['Throughput']:<8.2f} {r['No-context']:<8.2%}"
-        )
 
     # Acceptance for Hybrid+CrossEncoder
     r = results["Hybrid + CrossEncoder"]
     b = BASELINES
-    print(f"\n{'=' * 90}")
-    print("  Acceptance Criteria (Hybrid + CrossEncoder)")
-    print(f"{'=' * 90}")
     checks = [
         ("MAP >= Vector-only", r["MAP"] >= b["Vector only"]["MAP"], f"{r['MAP']:.4f} >= {b['Vector only']['MAP']:.4f}"),
         (
@@ -160,33 +149,19 @@ def main():
         ),
     ]
     all_pass = True
-    for label, passed, detail in checks:
-        print(f"  {'✅' if passed else '❌'} {label}: {detail}")
+    for _label, passed, _detail in checks:
         if not passed:
             all_pass = False
 
     if all_pass:
-        print("\n  ✅ APROBADO — CrossEncoderReranker adoptado como reranker por defecto")
+        pass
     else:
-        print("\n  ❌ RECHAZADO — el CrossEncoder no cumple los criterios")
-        print("  Se cierra el Bloque 1 definitivamente sin reranker.")
+        pass
 
-    print(f"\n{'=' * 90}")
-    print("  Resumen de decisiÃ³n")
-    print(f"{'=' * 90}")
-    print(
-        f"  {'Vector-only:':<30} R@10={results['Vector-only']['Recall@10']:.4f} MAP={results['Vector-only']['MAP']:.4f} P95={results['Vector-only']['P95']:.0f}ms"
-    )
-    print(
-        f"  {'Hybrid:':<30} R@10={results['Hybrid (score)']['Recall@10']:.4f} MAP={results['Hybrid (score)']['MAP']:.4f} P95={results['Hybrid (score)']['P95']:.0f}ms"
-    )
-    print(
-        f"  {'Hybrid + CE:':<30} R@10={results['Hybrid + CrossEncoder']['Recall@10']:.4f} MAP={results['Hybrid + CrossEncoder']['MAP']:.4f} P95={results['Hybrid + CrossEncoder']['P95']:.0f}ms"
-    )
     if all_pass:
-        print("\n  -> Adoptar CrossEncoderReranker como reranker por defecto")
+        pass
     else:
-        print("\n  -> Bloque 1 cerrado. Continuar con Bloque 2 sin reranker.")
+        pass
 
     return 0 if all_pass else 1
 

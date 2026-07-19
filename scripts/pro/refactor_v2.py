@@ -35,7 +35,7 @@ def find_large(min_lines=80):
                 continue
             try:
                 tree = ast.parse(pf.read_text(), filename=str(pf))
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
             for n in ast.walk(tree):
                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -61,10 +61,10 @@ def already_done():
 def ollama_refactor(fi, model):
     lines = (PROJECT / fi.file).read_text().splitlines()
     "\n".join(lines[fi.start_line - 1 : fi.end_line])
-    prompt = "Refactoriza esta funcion Python. Divide en sub-funciones si >80 lineas. Devuelve SOLO codigo refactorizado.\n\n"
+    prompt = "Refactoriza esta funcion Python. Divide en sub-funciones si >80 lineas. Devuelve SOLO codigo refactorizado.\n\n"  # noqa: E501
     try:
-        r = subprocess.run(
-            ["ollama", "run", model],
+        r = subprocess.run(  # noqa: S603
+            ["ollama", "run", model],  # noqa: S607
             input=prompt,
             capture_output=True,
             text=True,
@@ -73,7 +73,7 @@ def ollama_refactor(fi, model):
         )
         if r.returncode == 0 and r.stdout.strip():
             return r.stdout.strip()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 
@@ -137,7 +137,7 @@ def main() -> None:
     batches = [pending[i : i + bs] for i in range(0, len(pending), bs)]
     models = ["deepseek-coder:6.7b", "qwen2.5:7b"]
 
-    for i, b in enumerate(batches):
+    for i, b in enumerate(batches):  # noqa: B007
         pass
 
     t0 = time.time()

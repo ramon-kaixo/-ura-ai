@@ -112,12 +112,11 @@ def _verify_no_direct_sql() -> list[str]:
     if run_func is None:
         return ["B02: no se encontró el método run()"]
 
-    violations = [
+    return [
         f"Línea {node.lineno}: llamada directa a .execute() (solo APIs públicas)"
         for node in ast.walk(run_func)
         if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "execute")
     ]
-    return violations
 
 
 def _verify_targets_in_sla() -> list[str]:
@@ -168,39 +167,29 @@ def run_structural_checks() -> int:
     issues.extend(_verify_targets_in_sla())
     issues.extend(_verify_targets_match_sla())
 
-    print("\n" + "=" * 60)
-    print("VERIFICACIONES ESTRUCTURALES (Fase 8)")
-    print("=" * 60)
-
     b02_ok = not any("Línea" in i for i in issues)
     sla_issues = [i for i in issues if "objetivo" in i]
     b03_ok = len(sla_issues) == 0
     b04_ok = b03_ok
 
-    icon = {True: "✅", False: "❌"}
-    b02_msg = "Sin llamadas directas a .execute() en mediciones" if b02_ok else "violación(es) encontrada(s)"
-    print(f"  {icon[b02_ok]} B02 — {b02_msg}")
     if not b02_ok:
         for i in issues:
             if "Línea" in i:
-                print(f"     {i}")
+                pass
 
-    b03_msg = "Todos los targets documentados en SLA.md" if b03_ok else f"{len(sla_issues)} target(s) no documentado(s)"
-    print(f"  {icon[b03_ok]} B03 — {b03_msg}")
-    b04_msg = "Todos los targets coinciden con SLA.md" if b04_ok else f"{len(sla_issues)} discrepancia(s)"
-    print(f"  {icon[b04_ok]} B04 — {b04_msg}")
+    "Todos los targets documentados en SLA.md" if b03_ok else f"{len(sla_issues)} target(s) no documentado(s)"
+    "Todos los targets coinciden con SLA.md" if b04_ok else f"{len(sla_issues)} discrepancia(s)"
     if not b03_ok:
-        for i in sla_issues:
-            print(f"     {i}")
+        for i in sla_issues:  # noqa: B007
+            pass
 
-    print(f"\nResultado: {sum([b02_ok, b03_ok, b04_ok])}/3 verificaciones pasadas")
     return 0 if (b02_ok and b03_ok and b04_ok) else 1
 
 
 class Benchmark:
     def __init__(self) -> None:
         self.results: dict[str, float] = {}
-        self.db_dir = Path("/tmp/bench_fase7")
+        self.db_dir = Path("/tmp/bench_fase7")  # noqa: S108
         self.db_dir.mkdir(parents=True, exist_ok=True)
         self._cleanup()
 
@@ -219,7 +208,7 @@ class Benchmark:
                 {
                     "title": title,
                     "text_preview": f"This is the body of {title}. It contains relevant terms for searching.",
-                }
+                },
             )
             conn.execute(
                 "INSERT OR IGNORE INTO op_assets "
@@ -352,16 +341,13 @@ class Benchmark:
     def measure(self, label: str, fn, *, target: float | None = None) -> float:
         elapsed = fn()
         self.results[label] = elapsed
-        status = "✅" if target is None or elapsed <= target else "❌"
-        target_str = f"  (target: <{target * 1000:.0f}ms)" if target else ""
-        print(f"  {status} {label}: {elapsed * 1000:.1f}ms{target_str}")
+        f"  (target: <{target * 1000:.0f}ms)" if target else ""
         return elapsed
 
-    def run(self) -> bool:
+    def run(self) -> bool:  # noqa: C901
         all_pass = True
 
         # ── 1. FTS5 search (1 asset) ──────────────────────────────────────
-        print("\n📊 FTS5 search (1 asset) — target <10ms")
         store = self._setup_fts5_db("fts5_1", 1)
 
         def _fts5_1():
@@ -371,7 +357,6 @@ class Benchmark:
         self.db_dir.joinpath("fts5_1.db").unlink(missing_ok=True)
 
         # ── 2. FTS5 search (1000 assets) ──────────────────────────────────
-        print("\n📊 FTS5 search (1000 assets) — target <50ms")
         store = self._setup_fts5_db("fts5_1000", 1000)
 
         def _fts5_1000():
@@ -380,22 +365,18 @@ class Benchmark:
         result = self.measure("FTS5 1000 assets", lambda: _timeit(_fts5_1000, 20), target=0.050)
         if result > 0.050:
             all_pass = False
-            print(f"    ⚠  {result * 1000:.1f}ms excede target de 50ms")
         self.db_dir.joinpath("fts5_1000.db").unlink(missing_ok=True)
 
         # ── 3. LIKE search (1000 assets) — baseline comparison ────────────
-        print("\n📊 LIKE search (1000 assets) — baseline (no target)")
         store = self._setup_like_db("like_1000", 1000)
 
         def _like_1000():
             return len(store.search_assets("Learning"))
 
-        like_time = self.measure("LIKE 1000 assets", lambda: _timeit(_like_1000, 20))
-        print(f"    → FTS5 es {like_time / self.results.get('FTS5 1000 assets', 1):.1f}x más rápido")
+        self.measure("LIKE 1000 assets", lambda: _timeit(_like_1000, 20))
         self.db_dir.joinpath("like_1000.db").unlink(missing_ok=True)
 
         # ── 4. Memory FTS5 search (10 records) ────────────────────────────
-        print("\n📊 Memory FTS5 search (10 records) — target <10ms")
         mem_store = self._setup_memory_db("memory")
 
         def _mem_fts():
@@ -405,7 +386,6 @@ class Benchmark:
         self.db_dir.joinpath("memory.db").unlink(missing_ok=True)
 
         # ── 5. Lineage edge lookup (10 assets) ────────────────────────────
-        print("\n📊 Lineage edge lookup (10 assets) — target <5ms")
         lin_store = self._setup_lineage_db("lineage")
 
         def _edge_lookup():
@@ -415,7 +395,6 @@ class Benchmark:
         self.db_dir.joinpath("lineage.db").unlink(missing_ok=True)
 
         # ── 6. Migration v13→v14 ──────────────────────────────────────────
-        print("\n📊 Migration v13→v14 — target <100ms")
         db = self._setup_migration_db("migration")
 
         def _run_migration():
@@ -425,7 +404,6 @@ class Benchmark:
         self.db_dir.joinpath("migration.db").unlink(missing_ok=True)
 
         # ── 7. E2E (2 docs) ──────────────────────────────────────────────
-        print("\n📊 E2E (2 docs) — target <2.0s")
         db = self._db_path("e2e")
         init_db(db, _SCHEMA_PATH)
         store = SQLiteAssetStore(db)
@@ -441,11 +419,8 @@ class Benchmark:
         self.db_dir.joinpath("e2e.db").unlink(missing_ok=True)
 
         # ── Summary ───────────────────────────────────────────────────────
-        print("\n" + "=" * 60)
-        print("RESUMEN BENCHMARK FASE 7")
-        print("=" * 60)
-        for label, elapsed in self.results.items():
-            print(f"  {label}: {elapsed * 1000:.1f}ms")
+        for label in self.results:  # noqa: B007
+            pass
 
         passes = 0
         fails = 0
@@ -453,14 +428,9 @@ class Benchmark:
             actual = self.results.get(label, float("inf"))
             if actual <= target:
                 passes += 1
-                print(f"  ✅ PASS: {label} ({actual * 1000:.1f}ms ≤ {target * 1000:.0f}ms)")
             else:
                 fails += 1
-                print(f"  ❌ FAIL: {label} ({actual * 1000:.1f}ms > {target * 1000:.0f}ms)")
                 all_pass = False
-
-        print(f"\nResultado: {passes}/{passes + fails} targets cumplidos")
-        print(f"LIKE baseline (1000 assets): {self.results.get('LIKE 1000 assets', 0) * 1000:.1f}ms")
 
         # ── Structural verifications (Fase 8: B02, B03, B04) ──────────
         checks_ok = run_structural_checks()

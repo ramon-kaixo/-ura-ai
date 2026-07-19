@@ -6,8 +6,9 @@ Ejecutar una vez tras la instalación del pipeline de audio.
 
 import os
 import sqlite3
+from pathlib import Path
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "voice_corrections.db"))
+DB_PATH = Path(os.path.join(Path(__file__).resolve().parent, "..", "..", "config", "voice_corrections.db"))  # noqa: PTH118
 
 # Formato: (mal_escuchado, texto_correcto)
 # Whisper temperature=0 es determinista: fallará igual siempre.
@@ -53,7 +54,7 @@ CORRECCIONES = [
 
 
 def seed() -> None:
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    os.makedirs(Path(DB_PATH).parent, exist_ok=True)  # noqa: PTH103
     conn = sqlite3.connect(DB_PATH)
     conn.execute("CREATE TABLE IF NOT EXISTS corrections (  wrong_text TEXT PRIMARY KEY,  correct_text TEXT NOT NULL)")
 
@@ -71,7 +72,7 @@ def seed() -> None:
                 (key, val),
             )
             inserted += 1
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     conn.commit()

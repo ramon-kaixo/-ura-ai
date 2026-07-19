@@ -15,6 +15,7 @@ import os
 import sys
 from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 
@@ -32,15 +33,15 @@ def parse_duration(s: str) -> timedelta:
 
 
 def load_events(since: datetime | None = None, tail: int | None = None) -> list[dict]:
-    if not os.path.exists(GUARDIAN_LOG):
+    if not Path(GUARDIAN_LOG).exists():
         sys.exit(1)
 
     events = []
-    with open(GUARDIAN_LOG) as f:
+    with open(GUARDIAN_LOG) as f:  # noqa: PTH123
         lines = f.readlines()[-tail:] if tail else f.readlines()
 
     for line in lines:
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if not line:
             continue
         try:
@@ -66,7 +67,7 @@ def print_drift(events: list[dict]) -> None:
         if rtype:
             by_model[model]["results"].append(1 if rtype == "success" else 0)
 
-    for model, data in sorted(by_model.items()):
+    for model, data in sorted(by_model.items()):  # noqa: B007
         sum(data["complexities"]) / len(data["complexities"]) if data["complexities"] else 0
         sum(data["results"]) / len(data["results"]) * 100 if data["results"] else 0
 
@@ -85,7 +86,7 @@ def print_injection_report(events: list[dict]) -> None:
         pass
 
 
-def print_stats(events: list[dict], json_output: bool = False) -> None:
+def print_stats(events: list[dict], json_output: bool = False) -> None:  # noqa: FBT001, FBT002
     total = len(events)
     if total == 0:
         return

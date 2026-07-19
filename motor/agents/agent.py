@@ -62,6 +62,7 @@ class AgentOrchestrator(AgentABC):
         agent_id = make_agent_id(task.task_id, time.time())
 
         from motor.agents.models import AgentPolicy
+
         execution = AgentExecution(
             agent_id=agent_id,
             task=task,
@@ -92,9 +93,7 @@ class AgentOrchestrator(AgentABC):
                     return self._finalize(execution, AgentState.CANCELLED, start_time)
 
                 if execution.cost_units >= execution.policy.max_cost_units:
-                    return self._finalize(
-                        execution, AgentState.CANCELLED, start_time, error="Budget exceeded"
-                    )
+                    return self._finalize(execution, AgentState.CANCELLED, start_time, error="Budget exceeded")
 
                 # Verificar capability para esta acción
                 required = self._required_capabilities.get(step.action)
@@ -103,14 +102,15 @@ class AgentOrchestrator(AgentABC):
                         self._gate.check(required)
                     except PermissionError:
                         return self._finalize(
-                            execution, AgentState.PERMISSION_DENIED,
+                            execution,
+                            AgentState.PERMISSION_DENIED,
                             start_time,
                             error=f"Missing capability '{required.value}' for action '{step.action}'",
                         )
 
                 self._tool_runner.run(step.action, step.params)
                 execution.cost_units += 1
-                if hasattr(step, 'action') and step.action == "llm":
+                if hasattr(step, "action") and step.action == "llm":
                     execution.llm_calls += 1
 
             return self._finalize(execution, AgentState.COMPLETED, start_time)
@@ -128,6 +128,7 @@ class AgentOrchestrator(AgentABC):
 
     def _transition(self, execution: AgentExecution, target: AgentState) -> None:
         from motor.agents.state import AgentStateMachine
+
         sm = AgentStateMachine()
         new_state = sm.transition(execution.state, target)
         execution.state = new_state

@@ -39,8 +39,8 @@ TEMP_LIMIT_ARTIFICIAL_MAX = 55  # Si T.Limit está entre 45-55°C → sospechoso
 
 def _run_nvidia_smi(*args: str) -> list[str]:
     try:
-        r = subprocess.run(
-            ["nvidia-smi", *args],
+        r = subprocess.run(  # noqa: S603
+            ["nvidia-smi", *args],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=10,
@@ -182,7 +182,7 @@ def detect_bug(status: dict) -> dict:
     }
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     import argparse
 
     parser = argparse.ArgumentParser(description="GPU Health Check")

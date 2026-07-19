@@ -57,5 +57,6 @@ class ExecutorAgent(Agent):
             "returncode": result.returncode,
         }
         if result.returncode != 0 and not input_data.get("allow_failure", False):
-            raise RuntimeError(f"Command failed (exit={result.returncode}): {result.stderr[:200]}")
+            msg = f"Command failed (exit={result.returncode}): {result.stderr[:200]}"
+            raise RuntimeError(msg)
         return output

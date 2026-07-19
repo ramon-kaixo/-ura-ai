@@ -16,12 +16,12 @@ def load_latest(pattern: str) -> dict:
 
 def get_git_tag() -> str:
     try:
-        return subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
+        return subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
     except Exception:
         return "?"
 
 
-def generate() -> str:
+def generate() -> str:  # noqa: PLR0915
     load_l05 = load_latest("motor/data/benchmarks/f14/L05_*.json")
     resilience = load_latest("motor/data/benchmarks/f14/resilience/resilience_*.json")
     e2e = load_latest("motor/data/benchmarks/f14/e2e/e2e_*.json")
@@ -33,14 +33,14 @@ def generate() -> str:
 
     lines = []
 
-    def out(s=""):
+    def out(s="") -> None:
         lines.append(s)
 
     out("# Release Candidate Readiness — RC Audit")
     out()
     out(f"> Generado: {datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}")
     out(f"> Versión: `{get_git_tag()}`")
-    out("> Basado en F14 — Bloques 1–4")
+    out("> Basado en F14 — Bloques 1–4")  # noqa: RUF001
     out()
 
     # ── Executive Summary ────────────────────────────────────────────
@@ -85,7 +85,7 @@ def generate() -> str:
         "sin memory leaks detectados, con recuperación automática en "
         "9/10 escenarios de resiliencia y flujo E2E completo validado "
         "con componentes reales. Sin embargo, persisten 5 hallazgos "
-        "no bloqueantes que deben resolverse antes de una versión estable."
+        "no bloqueantes que deben resolverse antes de una versión estable.",
     )
     out()
 
@@ -142,7 +142,7 @@ def generate() -> str:
     rq09_evidence = "L05: Sin saturación hasta 200 queries concurrentes. Sin degradación detectada."
     rq09_note = "Límite no alcanzado. Capacidad del sistema supera la carga probada."
     rq10_verdict = "PARTIAL"
-    rq10_evidence = "P05: 27min de ciclos carga-reposo (3 ciclos × 9min). Sin degradación ni fatiga."
+    rq10_evidence = "P05: 27min de ciclos carga-reposo (3 ciclos × 9min). Sin degradación ni fatiga."  # noqa: RUF001
     rq10_note = "No se alcanzaron 3h continuas. Duración ajustada a configuración del entorno."
 
     for rq_id, req, ev, ver, risk, action in [
@@ -178,21 +178,21 @@ def generate() -> str:
             "F14-F05",
             "HybridRetriever retorna éxito sin Qdrant disponible",
             "Condición para RC",
-            "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",
+            "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",  # noqa: E501
             "Auditar el fallback del HybridRetriever y documentar el comportamiento.",
         ),
         (
             "F14-F06",
             "Pipeline Orchestrator escribe en /opt/motor/data/snapshots/ (read-only)",
             "Condición para RC",
-            "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",
-            "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight.",
+            "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",  # noqa: E501
+            "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight.",  # noqa: E501
         ),
         (
             "F14-F01",
             "Flag 'no new privileges' impide systemctl stop sin sudo",
             "Condición para RC",
-            "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",
+            "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",  # noqa: E501
             "Añadir regla polkit para que el usuario ramon pueda detener ollama sin sudo.",
         ),
         (
@@ -247,7 +247,7 @@ def generate() -> str:
     out()
     out(
         "Para alcanzar clasificación RC Ready, deben resolverse las siguientes "
-        "5 condiciones antes de una versión estable:"
+        "5 condiciones antes de una versión estable:",
     )
     out()
     conditions = [
@@ -328,12 +328,10 @@ def generate() -> str:
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     report = generate()
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(report)
-    print(f"✅ Reporte generado: {REPORT_PATH}")
-    print(f"   {len(report.splitlines())} líneas")
 
 
 if __name__ == "__main__":

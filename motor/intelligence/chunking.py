@@ -3,7 +3,7 @@
 Uso:
     chunker = SemanticChunker(max_tokens=512, overlap_tokens=64)
     chunks = chunker.chunk(document_text, doc_id="doc_001")
-"""
+"""  # noqa: INP001
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ class SemanticChunker:
         self,
         max_tokens: int = 512,
         overlap_tokens: int = 64,
-        respect_headings: bool = True,
+        respect_headings: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         self.max_tokens = max_tokens
         self.overlap_tokens = overlap_tokens
@@ -79,7 +79,7 @@ class SemanticChunker:
 
         return chunks
 
-    def _split_by_headings(self, text: str) -> list[tuple[str, str]]:
+    def _split_by_headings(self, text: str) -> list[tuple[str, str]]:  # noqa: C901
         """Divide texto por títulos markdown (##, ###, etc.)."""
         pattern = re.compile(r"^(#{2,})\s+(.+)$", re.MULTILINE)
         parts = pattern.split(text)
@@ -133,7 +133,7 @@ class SemanticChunker:
                     length=len(text),
                     section=section,
                     texto=text,
-                )
+                ),
             ]
 
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
@@ -146,7 +146,7 @@ class SemanticChunker:
                     length=len(text),
                     section=section,
                     texto=text[: self._char_limit()],
-                )
+                ),
             ]
 
         chunks: list[Chunk] = []
@@ -169,7 +169,7 @@ class SemanticChunker:
                         length=len(chunk_text),
                         section=section,
                         texto=chunk_text,
-                    )
+                    ),
                 )
 
                 # Overlap: keep last paragraph(s) for context
@@ -200,7 +200,7 @@ class SemanticChunker:
                     length=len(chunk_text),
                     section=section,
                     texto=chunk_text[:char_limit],
-                )
+                ),
             )
 
         return chunks

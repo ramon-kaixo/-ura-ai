@@ -151,8 +151,8 @@ class TestResearcherAgent:
         sstore = SemanticMemoryStore()
 
         agent = ResearcherAgent()
-        agent._memory_store = sstore
-        agent._context_retriever = retriever
+        agent._memory_store = sstore  # noqa: SLF001
+        agent._context_retriever = retriever  # noqa: SLF001
 
         task = AgentTask(objective="EventBus")
         result = agent.run(task)
@@ -169,8 +169,8 @@ class TestSupervisorAgent:
             objective="echo test",
             context={
                 "subtasks": [
-                    {"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}
-                ]
+                    {"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}},
+                ],
             },
         )
         result = sup.run(task)
@@ -198,8 +198,8 @@ class TestSupervisorAgent:
                         "agent_role": AgentRole.EXECUTOR,
                         "objective": "fail",
                         "input_data": {"cmd": ["bash", "-c", "exit 1"]},
-                    }
-                ]
+                    },
+                ],
             },
         )
         result = sup.run(task)
@@ -323,7 +323,9 @@ class TestIntegration:
         runtime.register(ExecutorAgent())
 
         result = runtime.execute_workflow(
-            "execute custom command", {"user": "test", "cmd": ["echo", "context_works"]}, timeout=30
+            "execute custom command",
+            {"user": "test", "cmd": ["echo", "context_works"]},
+            timeout=30,
         )
         assert result.success
         assert result.duration_ms > 0
@@ -341,7 +343,7 @@ class TestMockExecutorInjection:
                 self.calls.append(cmd)
                 return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="fake_output")
 
-            async def arun(self, cmd, timeout=30, cwd=None, env=None):
+            async def arun(self, cmd, timeout=30, cwd=None, env=None):  # noqa: ASYNC109
                 return self.run(cmd, timeout, cwd, env)
 
         fake = FakeExecutor()
@@ -359,7 +361,7 @@ class TestMockExecutorInjection:
             def run(self, cmd, timeout=30, cwd=None, env=None):
                 return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="ok")
 
-            async def arun(self, cmd, timeout=30, cwd=None, env=None):
+            async def arun(self, cmd, timeout=30, cwd=None, env=None):  # noqa: ASYNC109
                 return self.run(cmd, timeout, cwd, env)
 
         agent = ExecutorAgent(executor=QuickFake())

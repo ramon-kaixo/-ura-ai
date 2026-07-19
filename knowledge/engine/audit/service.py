@@ -29,7 +29,7 @@ class AuditService:
         audit.log_read(query="foo", docs=2, cid="abc")
     """
 
-    def __init__(self, backend: AuditBackend | None = None):
+    def __init__(self, backend: AuditBackend | None = None) -> None:
         self._backend = backend
 
     @property
@@ -59,7 +59,7 @@ class AuditService:
                 correlation_id=correlation_id,
                 timestamp=datetime.now(UTC).isoformat(),
                 metadata={"docs_returned": docs, **extra},
-            )
+            ),
         )
 
     def log_compile(
@@ -80,7 +80,7 @@ class AuditService:
                 correlation_id=correlation_id,
                 timestamp=datetime.now(UTC).isoformat(),
                 metadata=extra,
-            )
+            ),
         )
 
     def log_archive(
@@ -102,7 +102,7 @@ class AuditService:
                 correlation_id=correlation_id,
                 timestamp=datetime.now(UTC).isoformat(),
                 metadata=extra,
-            )
+            ),
         )
 
     def log(
@@ -127,7 +127,7 @@ class AuditService:
                 correlation_id=correlation_id,
                 timestamp=datetime.now(UTC).isoformat(),
                 metadata=extra,
-            )
+            ),
         )
 
     def ingest(self, db_path: Path) -> int:
@@ -157,7 +157,7 @@ def get_audit() -> AuditService:
     Si no existe y no se puede crear el backend por defecto,
     retorna un AuditService sin backend (no-op).
     """
-    global _AUDIT_INSTANCE
+    global _AUDIT_INSTANCE  # noqa: PLW0603
     if _AUDIT_INSTANCE is not None:
         return _AUDIT_INSTANCE
     with _AUDIT_LOCK:
@@ -175,5 +175,5 @@ def get_audit() -> AuditService:
 
 def set_audit(audit: AuditService) -> None:
     """Establece la instancia global (útil en tests)."""
-    global _AUDIT_INSTANCE
+    global _AUDIT_INSTANCE  # noqa: PLW0603
     _AUDIT_INSTANCE = audit

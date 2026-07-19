@@ -17,8 +17,8 @@ FAIL = 0
 SKIP = 0
 
 
-def check(name: str, ok: bool, detail: str = "") -> None:
-    global PASS, FAIL, SKIP
+def check(name: str, ok: bool, detail: str = "") -> None:  # noqa: FBT001
+    global PASS, FAIL, SKIP  # noqa: PLW0603
     if ok:
         PASS += 1
     elif ok is None:
@@ -27,8 +27,8 @@ def check(name: str, ok: bool, detail: str = "") -> None:
         FAIL += 1
 
 
-def main() -> int:
-    global PASS, FAIL, SKIP
+def main() -> int:  # noqa: C901, PLR0915
+    global PASS, FAIL, SKIP  # noqa: PLW0602
 
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import COLECCION_DOCUMENTOS, QdrantClient
@@ -89,7 +89,7 @@ def main() -> int:
 
     docs = []
     for i in range(100):
-        docs.append(
+        docs.append(  # noqa: PERF401
             (
                 f"bench_test_{i}",
                 f"Documento de prueba número {i}. URA es un asistente multi-agente "
@@ -177,11 +177,11 @@ def main() -> int:
     # ============================================================
 
     # Verificar que ambas rutas están implementadas
-    has_native = hasattr(qdrant, "_cliente") and qdrant._cliente is not None
+    has_native = hasattr(qdrant, "_cliente") and qdrant._cliente is not None  # noqa: SLF001
     has_rest = getattr(qdrant, "_modo_rest", False) or True  # REST siempre es posible
     check("Cliente nativo disponible", has_native, "modo: REST" if not has_native else "nativo")
     check("Modo REST implementado", has_rest)
-    check("Fallback funciona (sin crash)", True)
+    check("Fallback funciona (sin crash)", True)  # noqa: FBT003
 
     # ============================================================
     # 8. 1000 queries — estabilidad de memoria
@@ -202,7 +202,7 @@ def main() -> int:
     stats = snapshot_after.compare_to(snapshot_before, "lineno")
     total_diff = sum(s.size_diff for s in stats)
 
-    check("1000 queries completadas", True, f"{t1 - t0:.1f}s, {1000 / (t1 - t0):.1f} qps")
+    check("1000 queries completadas", True, f"{t1 - t0:.1f}s, {1000 / (t1 - t0):.1f} qps")  # noqa: FBT003
     check("Fuga < 50 MB", abs(total_diff) < 50_000_000, f"diff={total_diff / 1024 / 1024:.1f} MB")
     check("Peak < 2000 MB", peak < 2_000_000_000, f"peak={peak / 1024 / 1024:.1f} MB")
 
@@ -251,7 +251,7 @@ def main() -> int:
 
     results_cb = []
     for _ in range(5):
-        results_cb.append(cb.operacional())
+        results_cb.append(cb.operacional())  # noqa: PERF401
 
     qdrant.health = original_health
 

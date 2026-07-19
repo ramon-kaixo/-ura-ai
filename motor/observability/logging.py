@@ -73,7 +73,7 @@ class ContextFilter(logging.Filter):
 
 def setup_logging(
     level: str = "INFO",
-    json_output: bool = True,
+    json_output: bool = True,  # noqa: FBT001, FBT002
 ) -> None:
     root = logging.getLogger()
     root.setLevel(getattr(logging, level.upper(), logging.INFO))

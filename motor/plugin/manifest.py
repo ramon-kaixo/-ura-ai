@@ -40,7 +40,7 @@ MANIFEST_SCHEMA = frozenset(
         "hooks",
         "phases",
         "tags",
-    }
+    },
 )
 
 REQUIRED_FIELDS = frozenset({"name"})

@@ -19,7 +19,7 @@ FAIL = 0
 
 
 def check(desc, expr, *args):
-    global PASS, FAIL
+    global PASS, FAIL  # noqa: PLW0603
     try:
         result = expr(*args)
         if result is False:
@@ -38,12 +38,12 @@ def check(desc, expr, *args):
 from core.debate.lockfile import DebateLock
 
 # T1: Basic acquire/release
-lock_path = tempfile.mktemp(suffix=".lock")
+lock_path = tempfile.mktemp(suffix=".lock")  # noqa: S306
 dl = DebateLock(path=lock_path)
 check("T1: acquire returns True", lambda: dl.acquire() is True)
-check("T1: lock file exists after acquire", lambda: os.path.exists(lock_path))
+check("T1: lock file exists after acquire", lambda: Path(lock_path).exists())
 dl.release()
-check("T1: lock file removed after release", lambda: not os.path.exists(lock_path))
+check("T1: lock file removed after release", lambda: not Path(lock_path).exists())
 
 # T2: Double acquire fails with LOCK_NB
 dl2 = DebateLock(path=lock_path)
@@ -51,12 +51,12 @@ check("T2: first acquire succeeds", lambda: dl2.acquire() is True)
 dl3 = DebateLock(path=lock_path)
 check("T2: second acquire returns False (would block)", lambda: dl3.acquire() is False)
 dl2.release()
-check("T2: file cleaned after release", lambda: not os.path.exists(lock_path))
+check("T2: file cleaned after release", lambda: not Path(lock_path).exists())
 
 # T3: Context manager
 with DebateLock(path=lock_path) as lock:
-    check("T3: inside context, file exists", lambda: os.path.exists(lock_path))
-check("T3: after context, file removed", lambda: not os.path.exists(lock_path))
+    check("T3: inside context, file exists", lambda: Path(lock_path).exists())
+check("T3: after context, file removed", lambda: not Path(lock_path).exists())
 
 # T4: Nested context fails (no reentrancy)
 dl4 = DebateLock(path=lock_path)
@@ -69,9 +69,9 @@ dl4.release()
 # T5: Cleanup after IOError (simular fallo en release)
 dl6 = DebateLock(path=lock_path)
 dl6.acquire()
-fd = dl6._fd
+fd = dl6._fd  # noqa: SLF001
 os.close(fd)
-dl6._fd = None
+dl6._fd = None  # noqa: SLF001
 # Should not crash, just pass silently
 check("T5: release after close no-crash", lambda: (dl6.release(), True)[1])
 
@@ -103,7 +103,7 @@ check("TC4: config has models.primary", lambda: "primary" in cfg.get("models", {
 check("TC4: config has models.auditor", lambda: "auditor" in cfg.get("models", {}))
 check("TC4: consensus_threshold = 0.85", lambda: cfg["consensus_threshold"] == 0.85)
 check("TC4: auditor is qwen2.5:3b-instruct", lambda: cfg["models"]["auditor"]["name"] == "qwen2.5:3b-instruct")
-check("TC4: plan_path = /tmp/ura_debate_plan.json", lambda: cfg.get("plan_path") == "/tmp/ura_debate_plan.json")
+check("TC4: plan_path = /tmp/ura_debate_plan.json", lambda: cfg.get("plan_path") == "/tmp/ura_debate_plan.json")  # noqa: S108
 
 # ============================================================
 # SECTION 3: debate_engine — call_ollama with mock generate
@@ -169,7 +169,7 @@ def _make_primary_response(score: float, risks=None, suggestions=None, reason="o
     return r
 
 
-def _make_auditor_response(score: float, risks=None, requires_human=False, reason="ok"):
+def _make_auditor_response(score: float, risks=None, requires_human=False, reason="ok"):  # noqa: FBT002
     return {"score": score, "reason": reason, "risks": risks or [], "requires_human": requires_human}
 
 
@@ -182,9 +182,8 @@ class MockTransportFactory:
     def build(self):
         resp = self.primary if self.call_count == 0 else self.auditor
         self.call_count += 1
-        content = json.dumps({"message": {"content": json.dumps(resp)}})
+        return json.dumps({"message": {"content": json.dumps(resp)}})
         # This factory is preserved for reference but no longer active
-        return content
 
 
 async def _run_debate_mocked(primary_resp: dict, auditor_resp: dict, threshold: float = 0.85) -> dict:
@@ -321,28 +320,30 @@ check("TC16: no suggestions still CONSENSUS", lambda: r_no_sugg["verdict"] == "C
 # ============================================================
 # SECTION 5: plan_validator — state files + format + exit codes
 # ============================================================
+from pathlib import Path
+
 from core.debate.plan_validator import collect_context, format_context_for_prompt, load_state_file
 
 # TF1: load_state_file — valid JSON
-tf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+tf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)  # noqa: SIM115
 json.dump({"mode": "EMERGENCY"}, tf)
 tf.close()
 state = load_state_file(tf.name)
 check("TF1: load_state_file reads valid JSON", lambda: state is not None and state.get("mode") == "EMERGENCY")
-os.unlink(tf.name)
+os.unlink(tf.name)  # noqa: PTH108
 
 # TF2: load_state_file — non-existent file
 check(
     "TF2: load_state_file returns None for missing file",
-    lambda: load_state_file("/tmp/nonexistent_debate_test.json") is None,
+    lambda: load_state_file("/tmp/nonexistent_debate_test.json") is None,  # noqa: S108
 )
 
 # TF3: load_state_file — invalid JSON
-tf3 = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+tf3 = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)  # noqa: SIM115
 tf3.write("this is not json")
 tf3.close()
 check("TF3: load_state_file returns None for bad JSON", lambda: load_state_file(tf3.name) is None)
-os.unlink(tf3.name)
+os.unlink(tf3.name)  # noqa: PTH108
 
 # TF4: format_context_for_prompt — services section
 ctx = {
@@ -433,11 +434,11 @@ check(
 )
 
 # TE5: DebateLock idempotent release
-dl_idem = DebateLock(path="/tmp/test_lock_idem.lock")
+dl_idem = DebateLock(path="/tmp/test_lock_idem.lock")  # noqa: S108
 dl_idem.acquire()
 dl_idem.release()
 check("TE5: double release no-crash", lambda: (dl_idem.release(), True)[1])
-check("TE5: file removed after double release", lambda: not os.path.exists("/tmp/test_lock_idem.lock"))
+check("TE5: file removed after double release", lambda: not Path("/tmp/test_lock_idem.lock").exists())  # noqa: S108
 
 
 # ============================================================

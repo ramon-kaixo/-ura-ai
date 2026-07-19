@@ -34,16 +34,26 @@ from motor.core.web.citation.citation import CitationBundle, Evidence
 
 # ── B2.1: Deterministic pipeline stage flag ────────────────
 
+
 class _NonDeterministicStage(BaseStage):
     @property
-    def stage(self) -> FusionStage: return FusionStage.EXTRACTION
+    def stage(self) -> FusionStage:
+        return FusionStage.EXTRACTION
+
     @property
-    def name(self) -> str: return "NonDetStage"
+    def name(self) -> str:
+        return "NonDetStage"
+
     @property
-    def version(self) -> str: return "1.0.0"
+    def version(self) -> str:
+        return "1.0.0"
+
     @property
-    def deterministic(self) -> bool: return False
-    def _execute(self, context: FusionContext) -> FusionContext: return context
+    def deterministic(self) -> bool:
+        return False
+
+    def _execute(self, context: FusionContext) -> FusionContext:
+        return context
 
 
 def test_pipeline_stage_deterministic_default() -> None:
@@ -55,6 +65,7 @@ def test_pipeline_stage_deterministic_override() -> None:
 
 
 # ── B2.2: config_hash ─────────────────────────────────────
+
 
 def test_make_config_hash_deterministic() -> None:
     cfg = FusionConfig()
@@ -77,6 +88,7 @@ def test_make_config_hash_changes_on_change() -> None:
 
 # ── B2.3: BaseStage automatic provenance ──────────────────
 
+
 def _make_context() -> FusionContext:
     return FusionContext(
         bundle=CitationBundle(
@@ -84,11 +96,17 @@ def _make_context() -> FusionContext:
             citations=[],
             evidence=[
                 Evidence(
-                    evidence_id="ev1", document_url="https://example.com",
-                    canonical_url=None, title="Test", document_index=0,
-                    sentence_position=0, fragment="hello world",
-                    content_hash="abc", document_id="doc1",
-                    fetched_at=1000.0, quality_score=0.8,
+                    evidence_id="ev1",
+                    document_url="https://example.com",
+                    canonical_url=None,
+                    title="Test",
+                    document_index=0,
+                    sentence_position=0,
+                    fragment="hello world",
+                    content_hash="abc",
+                    document_id="doc1",
+                    fetched_at=1000.0,
+                    quality_score=0.8,
                 ),
             ],
         ),
@@ -123,6 +141,7 @@ def test_extraction_stage_creates_claims() -> None:
 
 # ── B2.4: NormalizationStage ──────────────────────────────
 
+
 def test_normalization_stage() -> None:
     ctx = FusionContext(
         claims=[
@@ -139,6 +158,7 @@ def test_normalization_stage() -> None:
 
 
 # ── B2.5: EntityResolutionStage ───────────────────────────
+
 
 def test_rule_based_entity_resolver_known() -> None:
     resolver = RuleBasedEntityResolver()
@@ -172,6 +192,7 @@ def test_entity_resolution_stage() -> None:
 
 
 # ── B2.6: ConflictDetectionStage ──────────────────────────
+
 
 def test_naive_conflict_resolver_detects() -> None:
     resolver = NaiveConflictResolver()
@@ -249,6 +270,7 @@ def test_conflict_detection_stage() -> None:
 
 # ── B2.7: SourceScoringStage ──────────────────────────────
 
+
 def test_quality_source_scorer() -> None:
     scorer = QualitySourceScorer()
     claim = KnowledgeClaim(
@@ -256,11 +278,17 @@ def test_quality_source_scorer() -> None:
         text="test",
         confidence=0.5,
         evidence=Evidence(
-            evidence_id="ev1", document_url="https://example.gov/doc",
-            canonical_url=None, title="", document_index=0,
-            sentence_position=0, fragment="test",
-            content_hash="abc", document_id="d",
-            fetched_at=1000000.0, quality_score=0.8,
+            evidence_id="ev1",
+            document_url="https://example.gov/doc",
+            canonical_url=None,
+            title="",
+            document_index=0,
+            sentence_position=0,
+            fragment="test",
+            content_hash="abc",
+            document_id="d",
+            fetched_at=1000000.0,
+            quality_score=0.8,
         ),
     )
     score = scorer.score(claim)
@@ -274,11 +302,17 @@ def test_source_scoring_stage() -> None:
         text="test",
         confidence=0.5,
         evidence=Evidence(
-            evidence_id="ev1", document_url="https://example.gov/doc",
-            canonical_url=None, title="", document_index=0,
-            sentence_position=0, fragment="test",
-            content_hash="abc", document_id="d",
-            fetched_at=1000000.0, quality_score=0.8,
+            evidence_id="ev1",
+            document_url="https://example.gov/doc",
+            canonical_url=None,
+            title="",
+            document_index=0,
+            sentence_position=0,
+            fragment="test",
+            content_hash="abc",
+            document_id="d",
+            fetched_at=1000000.0,
+            quality_score=0.8,
         ),
     )
     ctx = FusionContext(claims=[claim])
@@ -288,6 +322,7 @@ def test_source_scoring_stage() -> None:
 
 
 # ── B2.8: KnowledgeMergerStage ────────────────────────────
+
 
 def test_simple_knowledge_merger() -> None:
     claim = KnowledgeClaim(
@@ -318,10 +353,16 @@ def test_knowledge_merger_stage() -> None:
 
 # ── B2.9: KnowledgeDeltaStage ─────────────────────────────
 
+
 def test_basic_change_detector_added() -> None:
     from motor.core.fusion.models import KnowledgeFact
+
     fact = KnowledgeFact(
-        id="fact1", subject="Apple", predicate="sells", object="oranges", confidence=0.9,
+        id="fact1",
+        subject="Apple",
+        predicate="sells",
+        object="oranges",
+        confidence=0.9,
     )
     detector = BasicChangeDetector()
     delta = detector.detect_delta([fact], [])
@@ -331,8 +372,13 @@ def test_basic_change_detector_added() -> None:
 
 def test_basic_change_detector_confirmed() -> None:
     from motor.core.fusion.models import KnowledgeFact
+
     fact = KnowledgeFact(
-        id="fact1", subject="Apple", predicate="sells", object="oranges", confidence=0.9,
+        id="fact1",
+        subject="Apple",
+        predicate="sells",
+        object="oranges",
+        confidence=0.9,
     )
     detector = BasicChangeDetector()
     delta = detector.detect_delta([fact], [fact])
@@ -342,8 +388,13 @@ def test_basic_change_detector_confirmed() -> None:
 
 def test_knowledge_delta_stage() -> None:
     from motor.core.fusion.models import KnowledgeFact
+
     fact = KnowledgeFact(
-        id="fact1", subject="Apple", predicate="sells", object="oranges", confidence=0.9,
+        id="fact1",
+        subject="Apple",
+        predicate="sells",
+        object="oranges",
+        confidence=0.9,
     )
     ctx = FusionContext(facts=[fact], statistics={"existing_facts": []})
     stage = KnowledgeDeltaStage()
@@ -354,8 +405,10 @@ def test_knowledge_delta_stage() -> None:
 
 # ── B2.10: MemoryCandidateSelectionStage ──────────────────
 
+
 def test_threshold_selector() -> None:
     from motor.core.fusion.models import KnowledgeFact
+
     facts = [
         KnowledgeFact(id="a", subject="S", predicate="P", object="O1", confidence=0.1),
         KnowledgeFact(id="b", subject="S", predicate="P", object="O2", confidence=0.5),
@@ -376,6 +429,7 @@ def test_memory_candidate_selection_stage() -> None:
 
 
 # ── B2.11: config_hash integration ────────────────────────
+
 
 def test_config_hash_in_provenance() -> None:
     cfg = FusionConfig()
@@ -402,13 +456,17 @@ def test_stage_provenance_has_timestamp() -> None:
 
 # ── D01: Bucket-based conflict detection ──────────────────
 
+
 def test_conflict_detection_buckets_different_subjects() -> None:
     """Claims with different subjects are not compared (no O(n²) across subjects)."""
     claims = [
         KnowledgeClaim(
             id=make_claim_id(f"ev{i}", f"Entity{i} sells stuff"),
-            text=f"Entity{i} sells stuff", confidence=0.9,
-            subject=f"entity{i}", predicate="sells", object="stuff",
+            text=f"Entity{i} sells stuff",
+            confidence=0.9,
+            subject=f"entity{i}",
+            predicate="sells",
+            object="stuff",
         )
         for i in range(100)
     ]
@@ -422,18 +480,27 @@ def test_conflict_detection_buckets_same_subject() -> None:
     claims = [
         KnowledgeClaim(
             id=make_claim_id("a", "Apple sells oranges"),
-            text="Apple sells oranges", confidence=0.9,
-            subject="apple", predicate="sells", object="oranges",
+            text="Apple sells oranges",
+            confidence=0.9,
+            subject="apple",
+            predicate="sells",
+            object="oranges",
         ),
         KnowledgeClaim(
             id=make_claim_id("b", "Apple sells bananas"),
-            text="Apple sells bananas", confidence=0.7,
-            subject="apple", predicate="sells", object="bananas",
+            text="Apple sells bananas",
+            confidence=0.7,
+            subject="apple",
+            predicate="sells",
+            object="bananas",
         ),
         KnowledgeClaim(
             id=make_claim_id("c", "Apple sells bananas"),
-            text="Apple sells bananas", confidence=0.8,
-            subject="apple", predicate="sells", object="bananas",
+            text="Apple sells bananas",
+            confidence=0.8,
+            subject="apple",
+            predicate="sells",
+            object="bananas",
         ),
     ]
     resolver = NaiveConflictResolver()
@@ -443,18 +510,27 @@ def test_conflict_detection_buckets_same_subject() -> None:
 
 # ── D02: text_id + evidence_ids ──────────────────────────
 
+
 def test_text_id_in_claim() -> None:
     from motor.core.web.citation.citation import Evidence
+
     ev = Evidence(
-        evidence_id="ev1", document_url="https://example.com",
-        canonical_url=None, title="T", document_index=0,
-        sentence_position=0, fragment="hello",
-        content_hash="abc", document_id="d",
-        fetched_at=1000.0, quality_score=0.8,
+        evidence_id="ev1",
+        document_url="https://example.com",
+        canonical_url=None,
+        title="T",
+        document_index=0,
+        sentence_position=0,
+        fragment="hello",
+        content_hash="abc",
+        document_id="d",
+        fetched_at=1000.0,
+        quality_score=0.8,
     )
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "hello"),
-        text="hello", confidence=0.8,
+        text="hello",
+        confidence=0.8,
         evidence=ev,
         text_id=ev.evidence_id,
     )
@@ -463,10 +539,14 @@ def test_text_id_in_claim() -> None:
 
 def test_evidence_ids_in_fact() -> None:
     from motor.core.fusion.models import make_fact_id
+
     fid = make_fact_id("Apple", "sells", "oranges")
     fact = KnowledgeFact(
-        id=fid, subject="Apple", predicate="sells",
-        object="oranges", confidence=0.9,
+        id=fid,
+        subject="Apple",
+        predicate="sells",
+        object="oranges",
+        confidence=0.9,
         evidence_ids=("ev1", "ev2"),
     )
     assert fact.evidence_ids == ("ev1", "ev2")
@@ -483,7 +563,8 @@ def test_extraction_stage_sets_text_id() -> None:
 def test_merger_uses_evidence_ids() -> None:
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "Apple sells oranges"),
-        text="Apple sells oranges", confidence=0.9,
+        text="Apple sells oranges",
+        confidence=0.9,
         text_id="ev1",
     )
     merger = SimpleKnowledgeMerger()
@@ -495,6 +576,7 @@ def test_merger_uses_evidence_ids() -> None:
 
 
 # ── D03: Complete FusionProvenance ────────────────────────
+
 
 def test_provenance_all_fields_set() -> None:
     """Every stage populates its slice of FusionProvenance."""
@@ -511,8 +593,11 @@ def test_provenance_all_fields_set() -> None:
         claims=[
             KnowledgeClaim(
                 id=make_claim_id("ev1", "Apple sells oranges"),
-                text="Apple sells oranges", confidence=0.9,
-                subject="apple", predicate="sells", object="oranges",
+                text="Apple sells oranges",
+                confidence=0.9,
+                subject="apple",
+                predicate="sells",
+                object="oranges",
                 text_id="ev1",
             ),
         ],

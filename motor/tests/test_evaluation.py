@@ -146,10 +146,7 @@ class TestEvaluationCorpus:
 
     def test_multiple_queries(self) -> None:
         corpus = EvaluationCorpus("multi")
-        queries = [
-            EvaluationQuery(f"q{i}", f"text{i}", {f"d{i}"})
-            for i in range(3)
-        ]
+        queries = [EvaluationQuery(f"q{i}", f"text{i}", {f"d{i}"}) for i in range(3)]
         corpus.add_queries(queries)
         assert len(corpus) == 3
 
@@ -211,6 +208,7 @@ class TestEvaluationEngine:
     def test_engine_invalid_corpus(self) -> None:
         engine = EvaluationEngine()
         import pytest
+
         with pytest.raises(ValueError):
             engine.evaluate("nonexistent", "r")
 
@@ -218,6 +216,7 @@ class TestEvaluationEngine:
         engine = EvaluationEngine()
         engine.register_corpus("c", EvaluationCorpus())
         import pytest
+
         with pytest.raises(ValueError):
             engine.evaluate("c", "nonexistent")
 
@@ -301,9 +300,7 @@ class TestEvaluationEngine:
         import motor.core.evaluation as ev
 
         src = inspect.getsource(ev)
-        assert "motor.core.llm.router" not in src, (
-            "evaluation module should not import motor.core.llm.router"
-        )
+        assert "motor.core.llm.router" not in src, "evaluation module should not import motor.core.llm.router"
 
 
 class TestThreadSafety:

@@ -57,8 +57,7 @@ class ContinuousEvaluationResult:
             "status": self.status,
             "passed": self.passed,
             "metrics_summary": self.metrics_summary,
-            "regression_report": self.regression_report.to_dict()
-                if self.regression_report else None,
+            "regression_report": self.regression_report.to_dict() if self.regression_report else None,
             "experiment_results": self.experiment_results,
             "elapsed_seconds": round(self.elapsed_seconds, 2),
             "errors": self.errors,
@@ -99,12 +98,14 @@ class ContinuousEvaluator:
         params: dict[str, Any] | None = None,
         description: str = "",
     ) -> None:
-        self._configs.append({
-            "name": name,
-            "fn": retrieve_fn,
-            "params": params or {},
-            "description": description,
-        })
+        self._configs.append(
+            {
+                "name": name,
+                "fn": retrieve_fn,
+                "params": params or {},
+                "description": description,
+            },
+        )
 
     def set_fail_on_regression(self, value: bool) -> None:  # noqa: FBT001
         self._fail_on_regression = value
@@ -129,6 +130,7 @@ class ContinuousEvaluator:
 
         Returns:
             ContinuousEvaluationResult con status, reportes y métricas.
+
         """
         t_start = time.time()
         self._errors = []

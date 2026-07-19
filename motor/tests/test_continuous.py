@@ -25,10 +25,12 @@ if TYPE_CHECKING:
 
 def _corpus() -> EvaluationCorpus:
     c = EvaluationCorpus("test")
-    c.add_queries([
-        EvaluationQuery("q1", "texto uno", {"d1", "d3"}),
-        EvaluationQuery("q2", "texto dos", {"d2"}),
-    ])
+    c.add_queries(
+        [
+            EvaluationQuery("q1", "texto uno", {"d1", "d3"}),
+            EvaluationQuery("q2", "texto dos", {"d2"}),
+        ],
+    )
     return c
 
 
@@ -135,7 +137,6 @@ class TestContinuousEvaluator:
                 for cfg in m1.get("general_ranking", []):
                     cfg["config"]
                     # Comparar métricas del experimento
-                    pass
         # Al menos ambos deberían pasar
         assert r1.passed == r2.passed
 

@@ -7,12 +7,12 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import logging
-import os
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger("ura.memory")
 
 import contextlib
+from pathlib import Path
 
 from motor.memory.journal import Journal
 from motor.memory.snapshot import load_snapshot as _load_snapshot
@@ -37,7 +37,7 @@ class Memory:
         self,
         journal_path: str = "",
         snapshot_path: str = "",
-        auto_recover: bool = True,
+        auto_recover: bool = True,  # noqa: FBT001, FBT002
         encryption_key: str = "",
     ) -> None:
         self._timeline = MemoryTimeline()
@@ -51,8 +51,7 @@ class Memory:
             self._journal.open(journal_path)
 
         if auto_recover and (
-            (snapshot_path and os.path.exists(snapshot_path))
-            or (journal_path and os.path.exists(journal_path))
+            (snapshot_path and Path(snapshot_path).exists()) or (journal_path and Path(journal_path).exists())
         ):
             self._recover()
 
@@ -65,7 +64,8 @@ class Memory:
     def append(self, entry: MemoryEntry) -> None:
         """Añade un entry a la timeline y al journal (si está abierto)."""
         if self._shutdown:
-            raise RuntimeError("Memory is shutting down")
+            msg = "Memory is shutting down"
+            raise RuntimeError(msg)
         self._timeline.append(entry)
         if self._journal.path:
             self._journal.append(entry)
@@ -81,13 +81,11 @@ class Memory:
         path = self._snapshot_path
         if not path:
             path = f"memory_snapshot_{int(__import__('time').time())}.json"
-        checksum = _save_snapshot(self._timeline, path, version=version,
-                                  encryption_key=self._encryption_key)
+        checksum = _save_snapshot(self._timeline, path, version=version, encryption_key=self._encryption_key)
         if self._journal.path:
             self._journal.rotate(f"{path}.journal.bak")
         self._entry_count_since_snapshot = 0
-        logger.info("snapshot saved entries=%d checksum=%s path=%s",
-                     self._timeline.size, checksum, path)
+        logger.info("snapshot saved entries=%d checksum=%s path=%s", self._timeline.size, checksum, path)
         return checksum
 
     # ── Persistencia ─────────────────────────────────
@@ -104,9 +102,7 @@ class Memory:
         _header, entries_dict = _load_snapshot(path)
 
         memory = cls(snapshot_path=path, auto_recover=False)
-        for _entry_id, entry_data in sorted(
-            entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)
-        ):
+        for _entry_id, entry_data in sorted(entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)):
             fact_refs = tuple(
                 FactRef(
                     fact_id=r["fact_id"],
@@ -133,7 +129,7 @@ class Memory:
                 ),
                 snapshot=entry_data.get("snapshot", False),
             )
-            try:
+            try:  # noqa: SIM105
                 memory._timeline.append(entry)
             except KeyError:
                 pass  # duplicados tolerados en carga
@@ -149,12 +145,12 @@ class Memory:
             "entries": self._timeline.size,
             "journal": bool(self._journal.path),
             "snapshot": bool(self._snapshot_path),
-            "encryption": bool(self._journal._encryption_key),
+            "encryption": bool(self._journal._encryption_key),  # noqa: SLF001
         }
 
     def readiness(self) -> dict:
         """Readiness check. True si puede aceptar lecturas/escrituras."""
-        journal_ok = not self._journal.path or os.path.exists(self._journal.path)
+        journal_ok = not self._journal.path or Path(self._journal.path).exists()
         return {
             "service": "memory",
             "ready": journal_ok and not self._shutdown,
@@ -177,6 +173,7 @@ class Memory:
         """Graceful shutdown. Cierra journal, espera operaciones en curso."""
         self._shutdown_flag = True
         import time
+
         deadline = time.time() + timeout
         while time.time() < deadline:
             # Esperar a que no haya operaciones en curso
@@ -190,12 +187,12 @@ class Memory:
 
     def subscribe(self, callback: Callable[[MemoryEntry], None]) -> None:
         """Registra un callback que se invoca en cada append."""
-        if not hasattr(self, '_subscribers'):
+        if not hasattr(self, "_subscribers"):
             self._subscribers: list[Callable] = []
         self._subscribers.append(callback)
 
     def _notify_subscribers(self, entry: MemoryEntry) -> None:
-        if hasattr(self, '_subscribers'):
+        if hasattr(self, "_subscribers"):
             for cb in self._subscribers:
                 try:
                     cb(entry)
@@ -217,9 +214,7 @@ class Memory:
         except (FileNotFoundError, ValueError):
             entries_dict = {}  # snapshot no disponible, solo journal
 
-        for _entry_id, entry_data in sorted(
-            entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)
-        ):
+        for _entry_id, entry_data in sorted(entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)):
             fact_refs = tuple(
                 FactRef(
                     fact_id=r["fact_id"],

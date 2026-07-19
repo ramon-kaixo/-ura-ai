@@ -32,29 +32,29 @@ class E:
 
 
 class ColdRefactor:
-    def __init__(s):
+    def __init__(self) -> None:
         DQ.parent.mkdir(parents=True, exist_ok=True)
         RD.mkdir(parents=True, exist_ok=True)
         SD.mkdir(parents=True, exist_ok=True)
 
-    def registrar_deuda(s, did, nom, cod, adv):
+    def registrar_deuda(self, did, nom, cod, adv):
         mc = f"# DEBT_ID: {did}\n" + cod
         sp = SD / f"{nom}.py"
         sp.write_text(mc, encoding="utf-8")
-        s._a(E(did, nom, str(sp), mc, adv, s._n()))
+        self._a(E(did, nom, str(sp), mc, adv, self._n()))
         return sp
 
-    def registrar_limpio(s, nom, cod):
+    def registrar_limpio(self, nom, cod):
         sp = SD / f"{nom}.py"
         sp.write_text(cod, encoding="utf-8")
         return sp
 
-    def _a(s, e):
-        c = [x for x in s._l() if x["debt_id"] != e.debt_id]
+    def _a(self, e) -> None:
+        c = [x for x in self._l() if x["debt_id"] != e.debt_id]
         c.append(asdict(e))
         DQ.write_text(json.dumps(c, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def _l(s):
+    def _l(self):
         if not DQ.exists():
             return []
         try:
@@ -63,52 +63,52 @@ class ColdRefactor:
             logger.exception("Failed to load debt queue from %s", DQ)
             return []
 
-    def estado_deuda(s):
-        c = s._l()
+    def estado_deuda(self):
+        c = self._l()
         p = [e for e in c if not e.get("resuelto")]
         return {"total": len(c), "pend": len(p), "res": len(c) - len(p), "skills": [e["skill_nombre"] for e in p]}
 
-    async def ejecutar_tuneladora(s):
+    async def ejecutar_tuneladora(self):
         from core.guardians.ast_sentinel import ASTSentinel
         from core.sandbox.docker_orchestrator import DockerOrchestrator
 
-        c = s._l()
+        c = self._l()
         p = [E(**e) for e in c if not e.get("resuelto") and e.get("n_intentos", 0) < 3]
         r = {"procesados": 0, "resueltos": 0, "reintentados": 0, "abandonados": 0}
         for e in p:
             r["procesados"] += 1
-            li = await s._ref(e)
+            li = await self._ref(e)
             if not li:
                 e.n_intentos += 1
-                e.ultimo_intento = s._n()
-                s._a(e)
+                e.ultimo_intento = self._n()
+                self._a(e)
                 r["reintentados"] += 1
                 continue
             v = ASTSentinel().analizar(li, e.skill_nombre)
             if not v.ok:
                 e.n_intentos += 1
-                e.ultimo_intento = s._n()
-                s._a(e)
+                e.ultimo_intento = self._n()
+                self._a(e)
                 r["reintentados"] += 1
                 continue
             sb = await DockerOrchestrator().validar(li, e.skill_nombre)
             if not sb.ok:
                 e.n_intentos += 1
-                e.ultimo_intento = s._n()
-                s._a(e)
+                e.ultimo_intento = self._n()
+                self._a(e)
                 r["reintentados"] += 1
                 continue
-            Path(e.skill_path).write_text(li, encoding="utf-8")
+            Path(e.skill_path).write_text(li, encoding="utf-8")  # noqa: ASYNC240
             e.resuelto = True
-            e.resolucion = s._n()
-            s._a(e)
+            e.resolucion = self._n()
+            self._a(e)
             r["resueltos"] += 1
         for e in c:
             if not e.get("resuelto") and e.get("n_intentos", 0) >= 3:
                 r["abandonados"] += 1
         return r
 
-    async def _ref(s, e):
+    async def _ref(self, e):
         try:
             import httpx
 
@@ -129,5 +129,5 @@ class ColdRefactor:
             logger.warning(f"Refactor: {ex}")
             return None
 
-    def _n(s):
+    def _n(self):
         return datetime.now(tz=UTC).isoformat()

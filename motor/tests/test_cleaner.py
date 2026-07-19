@@ -73,16 +73,10 @@ class TestNormalizeUrl:
         assert normalize_url("http://example.com") == "http://example.com/"
 
     def test_query_preserved(self) -> None:
-        assert (
-            normalize_url("http://example.com/page?a=1&b=2")
-            == "http://example.com/page?a=1&b=2"
-        )
+        assert normalize_url("http://example.com/page?a=1&b=2") == "http://example.com/page?a=1&b=2"
 
     def test_fragment_removed_with_query(self) -> None:
-        assert (
-            normalize_url("http://example.com/page?a=1#section")
-            == "http://example.com/page?a=1"
-        )
+        assert normalize_url("http://example.com/page?a=1#section") == "http://example.com/page?a=1"
 
 
 # ── get_document_id ──────────────────────────
@@ -99,10 +93,7 @@ class TestDocumentId:
         )
 
     def test_canonical_takes_precedence(self) -> None:
-        assert (
-            get_document_id("http://example.com/a", canonical_url="http://example.com/b")
-            == "http://example.com/b"
-        )
+        assert get_document_id("http://example.com/a", canonical_url="http://example.com/b") == "http://example.com/b"
 
     def test_url_normalized(self) -> None:
         assert get_document_id("HTTPS://EXAMPLE.COM/Path/") == "https://example.com/Path"

@@ -72,7 +72,7 @@ class AgentCapabilityGate(CapabilityGateABC):
     def __init__(
         self,
         execution: AgentExecution,
-        enable_cache: bool = False,
+        enable_cache: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         self._execution = execution
         self._capabilities = execution.capabilities
@@ -119,10 +119,13 @@ class AgentCapabilityGate(CapabilityGateABC):
         decision = self._decide(required)
 
         if not decision.granted:
-            raise PermissionError(
+            msg = (
                 f"[{decision.denial_code.value}] "
                 f"{decision.denial_reason} "
                 f"(capability: {required.value}, agent: {decision.agent_id})"
+            )
+            raise PermissionError(
+                msg,
             )
 
     def capabilities(self) -> set[AgentCapability]:
@@ -132,7 +135,6 @@ class AgentCapabilityGate(CapabilityGateABC):
 
     def _decide(self, capability: AgentCapability) -> PermissionDecision:
         """Evalúa y registra una decisión. O(1)."""
-
         # Cache hit: devolver decisión previa pero igual registrar
         if self._enable_cache and capability in self._cache:
             cached = self._cache[capability]
@@ -167,7 +169,9 @@ class AgentCapabilityGate(CapabilityGateABC):
         # Gate cerrado
         if self._closed:
             return PermissionDecision(
-                granted=False, capability=capability, agent_id=agent_id,
+                granted=False,
+                capability=capability,
+                agent_id=agent_id,
                 denial_code=DenialCode.GATE_CLOSED,
                 denial_reason="CapabilityGate is closed",
                 timestamp=ts,
@@ -176,7 +180,9 @@ class AgentCapabilityGate(CapabilityGateABC):
         # Capability no reconocida
         if not isinstance(capability, AgentCapability):
             return PermissionDecision(
-                granted=False, capability=capability, agent_id=agent_id,
+                granted=False,
+                capability=capability,
+                agent_id=agent_id,
                 denial_code=DenialCode.CAPABILITY_NOT_RECOGNIZED,
                 denial_reason=f"Unknown capability: {capability}",
                 timestamp=ts,
@@ -185,7 +191,9 @@ class AgentCapabilityGate(CapabilityGateABC):
         # Agente cancelado
         if self._execution.cancelled:
             return PermissionDecision(
-                granted=False, capability=capability, agent_id=agent_id,
+                granted=False,
+                capability=capability,
+                agent_id=agent_id,
                 denial_code=DenialCode.AGENT_CANCELLED,
                 denial_reason="Agent was cancelled",
                 timestamp=ts,
@@ -194,11 +202,12 @@ class AgentCapabilityGate(CapabilityGateABC):
         # Presupuesto excedido
         if self._execution.cost_units >= self._execution.policy.max_cost_units:
             return PermissionDecision(
-                granted=False, capability=capability, agent_id=agent_id,
+                granted=False,
+                capability=capability,
+                agent_id=agent_id,
                 denial_code=DenialCode.BUDGET_EXCEEDED,
                 denial_reason=(
-                    f"Budget exceeded: {self._execution.cost_units} >="
-                    f" {self._execution.policy.max_cost_units}"
+                    f"Budget exceeded: {self._execution.cost_units} >= {self._execution.policy.max_cost_units}"
                 ),
                 timestamp=ts,
             )
@@ -206,7 +215,9 @@ class AgentCapabilityGate(CapabilityGateABC):
         # Capability no concedida
         if capability not in self._capabilities:
             return PermissionDecision(
-                granted=False, capability=capability, agent_id=agent_id,
+                granted=False,
+                capability=capability,
+                agent_id=agent_id,
                 denial_code=DenialCode.CAPABILITY_NOT_GRANTED,
                 denial_reason=f"Capability '{capability.value}' not in agent capabilities",
                 timestamp=ts,
@@ -214,7 +225,9 @@ class AgentCapabilityGate(CapabilityGateABC):
 
         # Concedido
         return PermissionDecision(
-            granted=True, capability=capability, agent_id=agent_id,
+            granted=True,
+            capability=capability,
+            agent_id=agent_id,
             timestamp=ts,
         )
 
@@ -224,15 +237,17 @@ class AgentCapabilityGate(CapabilityGateABC):
         """Genera eventos de auditoría para todas las decisiones."""
         events: list[AuditEvent] = []
         for d in self._decisions:
-            events.append(AuditEvent(
-                event_type="capability.check",
-                agent_id=d.agent_id,
-                timestamp=d.timestamp,
-                data={
-                    "capability": d.capability.value,
-                    "granted": d.granted,
-                    "denial_code": d.denial_code.value if d.denial_code else None,
-                    "cached": d.cached,
-                },
-            ))
+            events.append(  # noqa: PERF401
+                AuditEvent(
+                    event_type="capability.check",
+                    agent_id=d.agent_id,
+                    timestamp=d.timestamp,
+                    data={
+                        "capability": d.capability.value,
+                        "granted": d.granted,
+                        "denial_code": d.denial_code.value if d.denial_code else None,
+                        "cached": d.cached,
+                    },
+                ),
+            )
         return events

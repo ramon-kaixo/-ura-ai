@@ -25,10 +25,9 @@ class CapturadorTarget:
         """Captura segun el nodo actual. Sin cruce de contextos."""
         if self.nodo == "HETZNER_ALEMANIA":
             return self._capturar_vnc()
-        elif self.nodo == "MAC":
+        if self.nodo == "MAC":
             return self._capturar_mac()
-        else:
-            return self._capturar_headless()
+        return self._capturar_headless()
 
     def _capturar_vnc(self) -> str | None:
         """Captura desde el monitor virtual de Hetzner via VNC."""
@@ -68,7 +67,7 @@ class CapturadorTarget:
 
     def _capturar_headless(self) -> None:
         """ASUS GX10: modo headless. Sin captura real."""
-        return None
+        return
 
     def normalizar_coordenadas(self, x: int, y: int) -> tuple[int, int]:
         """Convierte coordenadas Mac Retina a reales."""

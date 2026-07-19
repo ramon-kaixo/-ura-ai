@@ -41,7 +41,7 @@ def enqueue_archive_job(
             "source_dir": str(source_dir),
             "db_path": str(db_path),
             "correlation_id": correlation_id,
-        }
+        },
     )
     try:
         conn = open_db(db_path)
@@ -82,7 +82,7 @@ def process_archive_jobs(
         _recover_stale_jobs(conn)
 
         jobs = conn.execute(
-            "SELECT id, payload FROM op_jobs WHERE job_type = 'archive_source' AND status = 'pending'"
+            "SELECT id, payload FROM op_jobs WHERE job_type = 'archive_source' AND status = 'pending'",
         ).fetchall()
 
         for job in jobs:
@@ -98,12 +98,14 @@ def process_archive_jobs(
             try:
                 src = Path(payload["source_dir"])
                 if not src.is_absolute():
-                    raise ValueError(f"source_dir del payload no es absoluto: {src}")
+                    msg = f"source_dir del payload no es absoluto: {src}"
+                    raise ValueError(msg)
                 src = src.resolve()
                 p = Path(payload.get("db_path", str(db_path)))
                 if p != db_path:
                     if not p.is_absolute():
-                        raise ValueError(f"db_path del payload no es absoluto: {p}")
+                        msg = f"db_path del payload no es absoluto: {p}"
+                        raise ValueError(msg)
                     p = p.resolve()
                 archive_source(source_dir=src, db_path=p)
                 begin_immediate(conn)
@@ -161,7 +163,7 @@ def _inc_job_retry(job_type: str, reason: str, count: int = 1) -> None:
 
         for _ in range(count):
             job_retry_total.labels(job_type=job_type, reason=reason).inc()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
@@ -182,7 +184,7 @@ def compile_worker(db_path: Path, source_dir: Path) -> int:
         jobs = conn.execute(
             "SELECT id, payload FROM op_jobs "
             "WHERE job_type = 'compile' AND status = 'pending' "
-            "ORDER BY priority DESC, created_at ASC"
+            "ORDER BY priority DESC, created_at ASC",
         ).fetchall()
         conn.close()
     except Exception as exc:

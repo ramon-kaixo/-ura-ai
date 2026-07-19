@@ -55,7 +55,8 @@ def _get_qdrant() -> Any | None:
 
 def _chunk_version(doc: Document) -> str:
     """Versión estable del chunk basada en content_sha256.
-    Cambia automáticamente cuando el contenido del documento cambia."""
+    Cambia automáticamente cuando el contenido del documento cambia.
+    """
     return doc.content_sha256[:12] if doc.content_sha256 else "0"
 
 
@@ -153,7 +154,7 @@ def _sync_upsert(client: Any, doc: Document) -> bool:
                     "embed_version": _EMBEDDING_VERSION,
                     "embedding_created_at": __import__("datetime").datetime.now().isoformat(),
                 },
-            }
+            },
         )
 
     if not points:
@@ -182,7 +183,7 @@ def _sync_delete(client: Any, doc_id: str) -> bool:
             client.eliminar_por_filtro(
                 {"must": [{"key": "doc_id", "match": {"value": doc_id}}]},
                 collection=_COLLECTION,
-            )
+            ),
         )
     except Exception as exc:
         log.warning("Error delete %s de Qdrant: %s", doc_id, exc)

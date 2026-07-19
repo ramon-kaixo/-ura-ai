@@ -31,6 +31,7 @@ class QdrantVectorStore:
         port: Puerto REST del servidor Qdrant.
         vector_size: Dimensión de vectores. None = auto-detect.
         timeout: Timeout para requests HTTP.
+
     """
 
     def __init__(
@@ -40,7 +41,7 @@ class QdrantVectorStore:
         port: int = 6333,
         vector_size: int | None = None,
         timeout: float = 10.0,
-    ):
+    ) -> None:
         self._collection = collection
         self._vector_size = vector_size
         self._base_url = f"http://{host}:{port}"
@@ -174,6 +175,7 @@ class QdrantVectorStore:
 
         Returns:
             Tuple de (ids, next_offset). next_offset=None = última página.
+
         """
         if not self.available:
             return [], None

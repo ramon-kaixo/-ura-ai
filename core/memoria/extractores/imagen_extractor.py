@@ -14,22 +14,22 @@ OLLAMA = "http://127.0.0.1:11434/api/chat"
 VISION_MODEL = "llama3.2-vision:11b"
 
 
-def _exif_pillow(ruta: Path) -> dict:
+def _exif_pillow(ruta: Path) -> dict:  # noqa: C901, PLR0912
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         with Image.open(ruta) as img:
-            exif_data = img._getexif()
+            exif_data = img._getexif()  # noqa: SLF001
             if not exif_data:
                 return resultado
 
             for tag_id, valor in exif_data.items():
                 tag_name = TAGS.get(tag_id, tag_id)
                 if isinstance(valor, bytes):
-                    valor = valor.decode(errors="replace")[:200]
+                    valor = valor.decode(errors="replace")[:200]  # noqa: PLW2901
                 elif isinstance(valor, (int, float, str)):
                     pass
                 else:
-                    valor = str(valor)[:200]
+                    valor = str(valor)[:200]  # noqa: PLW2901
                 resultado["exif_raw"][str(tag_name)] = valor
 
                 if tag_name in ("DateTimeOriginal", "DateTime"):
@@ -123,7 +123,7 @@ def _describir_imagen(ruta: Path) -> dict:
                 "messages": [
                     {
                         "role": "user",
-                        "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",
+                        "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",  # noqa: E501
                         "images": [img_b64],
                     },
                 ],
@@ -147,7 +147,7 @@ def _extraer_iptc(ruta: Path) -> dict:
         from iptcinfo3 import IPTCInfo
 
         info = IPTCInfo(str(ruta))
-        data = info._data if hasattr(info, "_data") else {}
+        data = info._data if hasattr(info, "_data") else {}  # noqa: SLF001
 
         def _bytes(val):
             return val.decode() if isinstance(val, bytes) else str(val) if val else ""
@@ -211,7 +211,7 @@ def extraer_imagen(ruta: Path) -> dict:
 async def extraer_caracteristicas_imagen(ruta_imagen: str) -> dict:
     """Versión async: delega I/O de disco al pool de hilos del event-loop."""
     ruta = Path(ruta_imagen)
-    if not ruta.exists():
+    if not ruta.exists():  # noqa: ASYNC240
         log.error("Archivo de imagen no encontrado: %s", ruta_imagen)
         return {"status": "error", "reason": "file_not_found"}
 
@@ -224,5 +224,5 @@ async def extraer_caracteristicas_imagen(ruta_imagen: str) -> dict:
         resultado["status"] = "success"
         return resultado
     except Exception as e:
-        log.error("Fallo en extractor de imágenes: %s", e, exc_info=True)
+        log.error("Fallo en extractor de imágenes: %s", e, exc_info=True)  # noqa: G201
         return {"status": "error", "reason": str(e)}
