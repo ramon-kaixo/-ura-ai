@@ -23,10 +23,12 @@ class LLMBridge:
         engine: ConversationEngine,
         router: Any | None = None,
         fallback_model: str = "qwen2.5:7b",
+        timeout_seconds: int = 30,
     ):
         self._engine = engine
         self._router = router
         self._fallback = fallback_model
+        self._timeout = timeout_seconds
 
     def build_messages(
         self,
@@ -100,22 +102,30 @@ class LLMBridge:
         intent_value: str = "",
         system_prompt: str = "",
     ) -> str:
+        import concurrent.futures
+
         model_key = self.select_model(mode, intent_value)
         messages = self.build_messages(
             conversation_id, system_prompt, user_message,
         )
 
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(self._do_generate, messages, model_key)
+            try:
+                return future.result(timeout=self._timeout)
+            except concurrent.futures.TimeoutError:
+                return "[Error: LLM no respondió en el tiempo límite]"
+            except Exception:
+                return self._local_generate(messages, model_key)
+
+    def _do_generate(self, messages: list[dict[str, str]], model_key: str) -> str:
         if self._router is not None:
             try:
-                response = self._router.generate(
-                    messages,
-                    task=model_key,
-                )
+                response = self._router.generate(messages, task=model_key)
                 if response:
                     return str(response)
             except Exception:  # noqa: S110
                 pass
-
         return self._local_generate(messages, model_key)
 
     def _local_generate(self, messages: list[dict[str, str]], model_key: str) -> str:

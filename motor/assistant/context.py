@@ -123,9 +123,9 @@ class ContextManager:
 
     def _get_conversation_history(self, conversation_id: str) -> list[ContextItem]:
         messages = self._store.get_conversation(conversation_id, limit=self._max_conversation)
-        immediate_messages = self._store.get_conversation(conversation_id, limit=self._max_immediate)
-        immediate_ids = {id(m) for m in immediate_messages}
-        history = [m for m in messages if id(m) not in immediate_ids]
+        immediate = self._store.get_conversation(conversation_id, limit=self._max_immediate)
+        immediate_keys = {(m.timestamp, m.content[:80]) for m in immediate}
+        history = [m for m in messages if (m.timestamp, m.content[:80]) not in immediate_keys]
 
         return [
             ContextItem(

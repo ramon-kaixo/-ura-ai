@@ -2,6 +2,7 @@
 Conectado a LLM real via motor/core/llm/router.py"""
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -11,8 +12,9 @@ from pydantic import BaseModel, Field
 
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.llm_bridge import LLMBridge
-from motor.assistant.models import ConversationMode
+from motor.assistant.models import ConversationMode, UserIntent
 from motor.assistant.streaming import StreamEvent
+from motor.assistant.style import StyleEngine
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -38,22 +40,27 @@ class ChatResponse(BaseModel):
 class _EngineHolder:
     engine: ConversationEngine | None = None
     llm: LLMBridge | None = None
+    lock = threading.Lock()
 
 
 def get_engine() -> ConversationEngine:
     if _EngineHolder.engine is None:
-        _EngineHolder.engine = ConversationEngine()
+        with _EngineHolder.lock:
+            if _EngineHolder.engine is None:
+                _EngineHolder.engine = ConversationEngine()
     return _EngineHolder.engine
 
 
 def get_llm() -> LLMBridge:
     if _EngineHolder.llm is None:
-        try:
-            from motor.core.llm.router import ModelRouter
-            router = ModelRouter()
-            _EngineHolder.llm = LLMBridge(get_engine(), router=router)
-        except Exception:
-            _EngineHolder.llm = LLMBridge(get_engine())
+        with _EngineHolder.lock:
+            if _EngineHolder.llm is None:
+                try:
+                    from motor.core.llm.router import ModelRouter
+                    router = ModelRouter()
+                    _EngineHolder.llm = LLMBridge(get_engine(), router=router)
+                except Exception:
+                    _EngineHolder.llm = LLMBridge(get_engine())
     return _EngineHolder.llm
 
 
@@ -116,9 +123,20 @@ _SYSTEM_PROMPTS = {
 }
 
 
+_style_engine = StyleEngine()
+
+
 def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
     mode_prompts = _SYSTEM_PROMPTS.get(mode_value, _SYSTEM_PROMPTS["conversacion"])
     system_prompt = mode_prompts.get(lang_code, mode_prompts["es"])
+
+    valid_modes = ("conversacion", "trabajo", "explicacion")
+    mode = ConversationMode(mode_value) if mode_value in valid_modes else ConversationMode.CONVERSATION
+    user_intent = analysis.get("intent", UserIntent.CHAT)
+    if not isinstance(user_intent, UserIntent):
+        user_intent = UserIntent.CHAT
+    style_prompt = _style_engine.build_system_prompt(mode, user_intent)
+    system_prompt += " " + style_prompt
 
     if analysis.get("sentiment_action"):
         if lang_code == "en":
