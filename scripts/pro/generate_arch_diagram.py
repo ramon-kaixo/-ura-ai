@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """generate_arch_diagram.py — Genera diagrama Mermaid de la arquitectura URA.
-Salida: docs/architecture.md.
+Salida: docs/architecture_diagram.md.
 """
 
 import re
@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
-OUTPUT = ROOT / "docs" / "architecture.md"
+OUTPUT = ROOT / "docs" / "architecture_diagram.md"
 
 
 def get_systemd_services() -> list[dict]:
