@@ -8,7 +8,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-
 ProbeFn = Callable[[], dict[str, Any]]
 
 
@@ -115,3 +114,17 @@ _global_aggregator = HealthAggregator()
 
 def get_health_aggregator() -> HealthAggregator:
     return _global_aggregator
+
+
+def register_f24_f28_health_probes() -> None:
+    """Registers health probes for F24-F28 subsystems (OB01).
+
+    Each probe returns {"status": "ok"} by default. Subsystems with real
+    health implementations can override by registering their own probe.
+    """
+    _global_aggregator.register_health("f24_web", lambda: {"status": "ok"})
+    _global_aggregator.register_health("f25_fusion", lambda: {"status": "ok"})
+    _global_aggregator.register_health("f26_memory", lambda: {"status": "ok"})
+    _global_aggregator.register_health("f27_agents", lambda: {"status": "ok"})
+    _global_aggregator.register_health("f28_protocol", lambda: {"status": "ok"})
+    _global_aggregator.register_readiness("f28_protocol", lambda: {"ready": True})

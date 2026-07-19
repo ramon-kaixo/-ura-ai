@@ -22,6 +22,7 @@ import time
 
 import pytest
 
+from motor.platform.health import HealthAggregator
 from motor.platform.middleware import TraceMiddleware, traced
 from motor.platform.models import (
     CausationId,
@@ -44,6 +45,7 @@ from motor.platform.serializer import (
     make_message_id,
 )
 from motor.platform.tracing import (
+    DropPolicy,
     InMemoryExporter,
     MetricsCollector,
     Sampler,
@@ -57,8 +59,6 @@ from motor.platform.tracing import (
     sanitize_tags,
     validate_span_tree,
 )
-from motor.platform.health import HealthAggregator
-
 
 # ═══════════════════════════════════════════════════
 # OBS-01: Single trace_id per operation
@@ -1397,3 +1397,195 @@ def test_budget_trace_event_count_under_10k() -> None:
 
     # Tree must be valid
     validate_span_tree(list(exporter.events))
+
+
+# ═══════════════════════════════════════════════════
+# F28.1-P2: AuditLogger (ADR-028-05 OB01-OB06)
+# ═══════════════════════════════════════════════════
+
+
+def test_audit_logger_basic() -> None:
+    """AuditLogger records sends and receives."""
+    from motor.platform.audit import AuditLogger
+    al = AuditLogger(max_records=100)
+    env = make_envelope_with_checksum(
+        version=VersionHeader(),
+        routing=RoutingHeader(
+            message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
+            message_type="T", message_kind=MessageKind.COMMAND,
+            source="a", destination="b",
+        ),
+        trace=TraceHeader(
+            trace_id=TraceId.generate(), span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr1"), causation_id=CausationId.root(),
+        ),
+        delivery=DeliveryHeader(),
+        payload=b"{}",
+    )
+    al.log_send(env)
+    al.log_receive(env)
+    assert al.count == 2
+
+    records = al.by_correlation("corr1")
+    assert len(records) == 2
+    assert records[0].direction == "send"
+    assert records[1].direction == "receive"
+
+    records_sd = al.by_source_destination("a", "b")
+    assert len(records_sd) == 2
+
+    records_kind = al.by_kind("command")
+    assert len(records_kind) == 2
+
+
+def test_audit_logger_event_send_only() -> None:
+    """OB01-exception: EVENT messages are sender-side only."""
+    from motor.platform.audit import AuditLogger
+    al = AuditLogger()
+    env = make_envelope_with_checksum(
+        version=VersionHeader(),
+        routing=RoutingHeader(
+            message_id=make_message_id("1.0", "1.0", "a", "b", "E", b"{}"),
+            message_type="E", message_kind=MessageKind.EVENT,
+            source="a", destination="b",
+        ),
+        trace=TraceHeader(
+            trace_id=TraceId.generate(), span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr2"), causation_id=CausationId.root(),
+        ),
+        delivery=DeliveryHeader(),
+        payload=b"{}",
+    )
+    al.log_send(env)
+    assert al.count == 0  # EVENT: no audit
+
+
+def test_audit_logger_processing_time() -> None:
+    """OB06: processing time derived from send→receive."""
+    from motor.platform.audit import AuditLogger
+    al = AuditLogger()
+    env = make_envelope_with_checksum(
+        version=VersionHeader(),
+        routing=RoutingHeader(
+            message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
+            message_type="T", message_kind=MessageKind.COMMAND,
+            source="a", destination="b",
+        ),
+        trace=TraceHeader(
+            trace_id=TraceId.generate(), span_id=SpanId.generate(),
+            correlation_id=CorrelationId("corr3"), causation_id=CausationId.root(),
+        ),
+        delivery=DeliveryHeader(),
+        payload=b"{}",
+    )
+    al.log_send(env)
+    import time
+    time.sleep(0.001)
+    al.log_receive(env)
+    pt = al.processing_time("corr3")
+    assert pt is not None
+    assert pt > 0.0
+
+
+def test_audit_logger_bounded_buffer() -> None:
+    """AuditLogger bounded buffer prevents OOM."""
+    from motor.platform.audit import AuditLogger
+    al = AuditLogger(max_records=10)
+    env = make_envelope_with_checksum(
+        version=VersionHeader(),
+        routing=RoutingHeader(
+            message_id=make_message_id("1.0", "1.0", "a", "b", "T", b"{}"),
+            message_type="T", message_kind=MessageKind.COMMAND,
+            source="a", destination="b",
+        ),
+        trace=TraceHeader(
+            trace_id=TraceId.generate(), span_id=SpanId.generate(),
+            correlation_id=CorrelationId("c"), causation_id=CausationId.root(),
+        ),
+        delivery=DeliveryHeader(),
+        payload=b"{}",
+    )
+    for _ in range(100):
+        al.log_send(env)
+    assert al.count <= 10  # bounded
+
+
+# ═══════════════════════════════════════════════════
+# F28.1-P1: DropPolicy + backpressure
+# ═══════════════════════════════════════════════════
+
+
+def test_drop_policy_enum_values() -> None:
+    assert DropPolicy.DROP_NEWEST.value == "drop_newest"
+    assert DropPolicy.DROP_OLDEST.value == "drop_oldest"
+    assert DropPolicy.BLOCK.value == "block"
+
+
+def test_exporter_drop_newest_policy() -> None:
+    """DROP_NEWEST drops incoming when buffer is full."""
+    exporter = TraceExporter(
+        path="/dev/null",
+        buffer_size=5,
+        batch_size=100,
+        flush_interval=999,
+        drop_policy=DropPolicy.DROP_NEWEST,
+    )
+    for _ in range(100):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    exporter.flush()
+    exporter.close()
+    assert exporter.event_count == 100
+    assert exporter.dropped_count > 0
+    assert exporter.event_count - exporter.dropped_count <= 5  # buffer drained
+
+
+def test_exporter_drop_oldest_policy() -> None:
+    """DROP_OLDEST drains oldest to make room for newest."""
+    exporter = TraceExporter(
+        path="/dev/null",
+        buffer_size=10,
+        batch_size=100,
+        flush_interval=999,
+        drop_policy=DropPolicy.DROP_OLDEST,
+    )
+    for _ in range(200):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    exporter.flush()
+    exporter.close()
+    assert exporter.event_count == 200
+
+
+def test_exporter_metrics_dict() -> None:
+    """metrics_dict returns Prometheus-friendly snapshot."""
+    exporter = TraceExporter(
+        path="/dev/null",
+        buffer_size=50,
+        batch_size=100,
+        flush_interval=999,
+    )
+    m = exporter.metrics_dict()
+    assert m["trace_exporter_emitted_total"] == 0
+    assert m["trace_exporter_dropped_total"] == 0
+    assert m["trace_exporter_buffer_size"] == 50
+    assert m["trace_exporter_buffer_used"] >= 0
+    assert m["trace_exporter_drop_policy"] == "drop_newest"
+
+    # Emit some events and check metrics update
+    for _ in range(5):
+        exporter.emit(SpanEvent(
+            trace_id="t", span_id="s", parent_span_id="ROOT",
+            source="a", destination="b", message_type="T", message_kind="cmd",
+            timestamp_utc=1, monotonic_ts=1,
+        ))
+    m2 = exporter.metrics_dict()
+    assert m2["trace_exporter_emitted_total"] >= 5
+
+    exporter.close()

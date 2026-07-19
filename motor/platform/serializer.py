@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 from abc import ABC, abstractmethod
@@ -17,6 +18,7 @@ from motor.platform.models import (
     MessageId,
     MessageKind,
     ProtocolEnvelope,
+    RetryPolicy,
     RoutingHeader,
     SecurityHeader,
     SpanId,
@@ -24,6 +26,32 @@ from motor.platform.models import (
     TraceId,
     VersionHeader,
 )
+
+# ── Compression helpers (ADR-028-04 SR05-SR07) ────────
+
+SUPPORTED_COMPRESSION = {"gzip", "zstd", "none"}
+
+
+def compress_payload(data: bytes, method: str = "gzip") -> bytes:
+    if method == "gzip":
+        return gzip.compress(data)
+    if method == "zstd":
+        raise NotImplementedError("zstd compression not yet available")
+    if method == "none":
+        return data
+    raise ValueError(f"Unsupported compression: {method}")
+
+
+def decompress_payload(data: bytes, method: str = "gzip") -> bytes:
+    if method == "gzip":
+        return gzip.decompress(data)
+    if method == "zstd":
+        raise NotImplementedError("zstd decompression not yet available")
+    if method == "none":
+        return data
+    raise ValueError(f"Unsupported compression: {method}")
+
+# ── Serializers ──────────────────────────
 
 
 class ProtocolSerializer(ABC):
@@ -90,6 +118,16 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
     if d.metadata:
         result["delivery"]["metadata"] = [list(pair) for pair in d.metadata]
 
+    if d.retry_policy is not None:
+        rp = d.retry_policy
+        result["delivery"]["retry_policy"] = {
+            "max_attempts": rp.max_attempts,
+            "backoff_base_ms": rp.backoff_base_ms,
+            "backoff_multiplier": rp.backoff_multiplier,
+            "max_backoff_ms": rp.max_backoff_ms,
+            "retryable_errors": list(rp.retryable_errors),
+        }
+
     if s is not None:
         sec: dict[str, Any] = {}
         if s.auth_token is not None:
@@ -108,14 +146,35 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
     dd = data["delivery"]
 
     payload_hex = data.get("payload_hex", "")
-    payload = bytes.fromhex(payload_hex) if payload_hex else b""
+    raw_payload = bytes.fromhex(payload_hex) if payload_hex else b""
     checksum = data.get("checksum", "")
+    if checksum and not verify_checksum(raw_payload, checksum):
+        raise ProtocolException(
+            f"Checksum mismatch: expected {checksum}, got {compute_checksum(raw_payload)}"
+        )
+
+    # Payload stays as-is (compressed if wire format was compressed).
+    # ADR-028-04 SR05: envelope payload is compressed, checksum covers compressed bytes.
+    # Application consumers check payload_type and decompress if needed.
+    payload = raw_payload
 
     metadata_raw = dd.get("metadata", []) or []
     metadata = tuple(tuple(pair) for pair in metadata_raw) if metadata_raw else ()
 
     ik_str = dd.get("idempotency_key")
     idempotency_key = IdempotencyKey(ik_str) if ik_str else None
+
+    rp_raw = dd.get("retry_policy")
+    if rp_raw:
+        retry_policy = RetryPolicy(
+            max_attempts=rp_raw.get("max_attempts", 3),
+            backoff_base_ms=rp_raw.get("backoff_base_ms", 100),
+            backoff_multiplier=rp_raw.get("backoff_multiplier", 2.0),
+            max_backoff_ms=rp_raw.get("max_backoff_ms", 30000),
+            retryable_errors=tuple(rp_raw.get("retryable_errors", [])),
+        )
+    else:
+        retry_policy = None
 
     # CausationId — use from_string to preserve root sentinel
     causation = CausationId.from_string(td.get("causation_id", ""))
@@ -175,6 +234,7 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
             cancelable=dd.get("cancelable", False),
             max_response_bytes=dd.get("max_response_bytes", 10 * 1024 * 1024),
             metadata=metadata,
+            retry_policy=retry_policy,
         ),
         payload=payload,
         checksum=checksum,
@@ -219,15 +279,34 @@ def make_envelope_with_checksum(
     delivery: DeliveryHeader,
     payload: bytes = b"",
     security: SecurityHeader | None = None,
+    compression: str = "none",
 ) -> ProtocolEnvelope:
-    """Creates a ProtocolEnvelope with payload checksum pre-computed."""
-    cs = compute_checksum(payload)
+    """Creates a ProtocolEnvelope with payload checksum pre-computed.
+
+    If compression != "none", the payload is compressed before storage and
+    the payload_type in VersionHeader is updated to reflect compression.
+    Per ADR-028-04 SR05: compression BEFORE checksum.
+    """
+    compressed = compress_payload(payload, method=compression)
+    cs = compute_checksum(compressed)
+
+    # Update payload_type to reflect compression
+    base_type = version.payload_type
+    if compression != "none" and not base_type.endswith(f"+{compression}"):
+        version = VersionHeader(
+            protocol_version=version.protocol_version,
+            schema_version=version.schema_version,
+            payload_type=f"{base_type}+{compression}",
+            capabilities=version.capabilities,
+            reserved=version.reserved,
+        )
+
     return ProtocolEnvelope(
         version=version,
         routing=routing,
         trace=trace,
         delivery=delivery,
-        payload=payload,
+        payload=compressed,
         checksum=cs,
         security=security,
     )
