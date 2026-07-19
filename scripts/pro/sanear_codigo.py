@@ -93,7 +93,7 @@ def fix_magic_values(path: Path) -> int:
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
     except Exception:
-        pass  # noqa: S110
+        pass
 
     return count
 

@@ -41,7 +41,7 @@ class PipelineLoader:
         stages = []
         for s in stages_raw:
             stages.append(
-                StageDefinition(  # noqa: PERF401  -- legibilidad sobre micro-optimización
+                StageDefinition(
                     name=str(s.get("name", "")),
                     plugin=str(s.get("plugin", "")),
                     config=s.get("config", {}),

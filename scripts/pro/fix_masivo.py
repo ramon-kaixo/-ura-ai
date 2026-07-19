@@ -27,7 +27,7 @@ def fix_exe_shebang() -> int:
                     count += 1
                     print(f"  +x {f.relative_to(REPO)}")
                 except PermissionError:
-                    pass  # noqa: S110
+                    pass
     return count
 
 

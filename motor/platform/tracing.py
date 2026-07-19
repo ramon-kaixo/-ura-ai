@@ -212,9 +212,8 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
             return False
 
         for s in trace_spans:
-            if color[s.span_id] == WHITE:
-                if has_cycle(s.span_id):
-                    raise SpanTreeError(f"Trace {trace_id}: cycle detected")
+            if color[s.span_id] == WHITE and has_cycle(s.span_id):
+                raise SpanTreeError(f"Trace {trace_id}: cycle detected")
 
         # Check for spans with non-existent parent (orphans) BEFORE root counting
         missing_parent = [
@@ -233,7 +232,7 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
         roots: list[SpanEvent] = []
         for s in trace_spans:
             p = s.parent_span_id
-            if p == "ROOT" or p == "":
+            if p in {"ROOT", ""}:
                 roots.append(s)
 
         if len(roots) != 1:

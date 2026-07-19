@@ -5,13 +5,17 @@ Thread-safe. Bounded memory. Indexed by correlation_id, source+destionation, mes
 
 from __future__ import annotations
 
+import contextlib
 import threading
 import time
 from collections import defaultdict
-from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from motor.platform.models import ProtocolEnvelope
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from motor.platform.models import ProtocolEnvelope
 
 
 @dataclass
@@ -69,10 +73,8 @@ class AuditLogger:
         for r in removed:
             corr_list = self._by_correlation.get(r.correlation_id)
             if corr_list:
-                try:
+                with contextlib.suppress(ValueError):
                     corr_list.remove(r.correlation_id)
-                except ValueError:
-                    pass
 
     def log_send(self, envelope: ProtocolEnvelope) -> None:
         if envelope.routing.message_kind == "event":

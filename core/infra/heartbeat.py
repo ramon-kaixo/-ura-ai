@@ -13,7 +13,7 @@ import logging
 import os
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -68,7 +68,7 @@ def _save_restart_to_qdrant() -> None:
         if qc and qc.disponible:
             qc.guardar_incidente(
                 {
-                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "ts": datetime.now(UTC).isoformat(),
                     "tipo": "ServiceFailure",
                     "subtipo": "heartbeat_restart",
                     "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
@@ -230,7 +230,7 @@ def main() -> None:
                         },
                     )
                 except ImportError:
-                    pass  # noqa: S110
+                    pass
 
         if not args.daemon:
             break

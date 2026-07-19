@@ -1,6 +1,7 @@
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)"""
 
 from __future__ import annotations
+
 import time
 from dataclasses import dataclass
 

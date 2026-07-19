@@ -7,8 +7,8 @@ Uso:
 
 from __future__ import annotations
 
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -61,10 +61,7 @@ class SemanticChunker:
         if not text:
             return []
 
-        if self.respect_headings:
-            sections = self._split_by_headings(text)
-        else:
-            sections = [("", text)]
+        sections = self._split_by_headings(text) if self.respect_headings else [("", text)]
 
         chunks: list[Chunk] = []
         global_offset = 0

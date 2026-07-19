@@ -10,7 +10,6 @@ import json
 import logging
 import os
 import signal
-import sqlite3
 import threading
 import time
 from contextlib import contextmanager
@@ -28,6 +27,7 @@ from knowledge.engine.models import (
 from knowledge.engine.reader import clear_all_caches
 
 if TYPE_CHECKING:
+    import sqlite3
     from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.writer")

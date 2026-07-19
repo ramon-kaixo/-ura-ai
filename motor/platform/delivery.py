@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from motor.platform.errors import ProtocolException
 from motor.platform.models import (
@@ -25,6 +25,9 @@ from motor.platform.models import (
     VersionHeader,
 )
 from motor.platform.serializer import make_message_id
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Domain vs Transport error classification per ER07/ER08
 DOMAIN_ERROR_CODES = {

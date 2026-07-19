@@ -30,24 +30,20 @@ def _get_conn(db_path: Path):
 def build_parser() -> argparse.ArgumentParser:
     """Construye el árbol de subcomandos CLI."""
     # Imports diferidos para evitar ciclos y acelerar startup
-    from knowledge.engine.cli.compile import cmd_compile, cmd_compile_incremental, cmd_init, cmd_status, cmd_verify
-    from knowledge.engine.cli.search import cmd_read, cmd_related, cmd_search
-    from knowledge.engine.cli.doctor import cmd_doctor
-    from knowledge.engine.cli.audit import cmd_audit_db, cmd_vacuum
+    from knowledge.engine.cli.agent import cmd_agent_list, cmd_agent_run
+    from knowledge.engine.cli.api import cmd_api
     from knowledge.engine.cli.archive import (
         cmd_archive_list,
         cmd_archive_restore,
         cmd_archive_source,
         cmd_archive_verify,
     )
-    from knowledge.engine.cli.jobs import cmd_job_process
-    from knowledge.engine.cli.rules import cmd_deduce, cmd_rules_eval, cmd_rules_list
-    from knowledge.engine.cli.pipeline import cmd_pipeline_run
-    from knowledge.engine.cli.agent import cmd_agent_list, cmd_agent_run
-    from knowledge.engine.cli.api import cmd_api
-    from knowledge.engine.cli.feedback import cmd_feedback_rate, cmd_feedback_top
+    from knowledge.engine.cli.audit import cmd_audit_db, cmd_vacuum
+    from knowledge.engine.cli.compile import cmd_compile, cmd_compile_incremental, cmd_init, cmd_status, cmd_verify
     from knowledge.engine.cli.docs import cmd_docs_generate
-    from knowledge.engine.cli.notify import cmd_notify_test
+    from knowledge.engine.cli.doctor import cmd_doctor
+    from knowledge.engine.cli.feedback import cmd_feedback_rate, cmd_feedback_top
+    from knowledge.engine.cli.jobs import cmd_job_process
     from knowledge.engine.cli.metadata import (
         cmd_memory_create,
         cmd_memory_link,
@@ -59,6 +55,10 @@ def build_parser() -> argparse.ArgumentParser:
         cmd_metadata_policy,
         cmd_metadata_retrieve,
     )
+    from knowledge.engine.cli.notify import cmd_notify_test
+    from knowledge.engine.cli.pipeline import cmd_pipeline_run
+    from knowledge.engine.cli.rules import cmd_deduce, cmd_rules_eval, cmd_rules_list
+    from knowledge.engine.cli.search import cmd_read, cmd_related, cmd_search
 
     parser = argparse.ArgumentParser(description="URA Knowledge Engine")
     parser.add_argument("--db-path", help="Override knowledge.db path (env: URA_KNOWLEDGE_DB)")

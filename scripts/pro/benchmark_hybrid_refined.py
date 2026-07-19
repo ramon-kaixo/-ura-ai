@@ -235,7 +235,7 @@ def main():
             lr = lex.search(q["query"], k=10)
             v_ids = {x["doc_id"] for x in vr}
             l_ids = {x["doc_id"] for x in lr}
-            r_ids = {x["doc_id"] for x in r}
+            {x["doc_id"] for x in r}
             if l_ids - v_ids:
                 exclusive_lexical += 1
             if v_ids - l_ids:
@@ -267,7 +267,6 @@ def main():
         }
 
     # Print comparison table
-    metrics = ["Recall@10", "MRR", "MAP", "nDCG@10", "P50", "P95", "Throughput", "No-context"]
     print(f"\n{'=' * 120}")
     print(
         f"  {'Strategy':<32} {'R@10':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'TPS':<8} {'NoCtx':<8} {'Pass':<6}"
@@ -304,7 +303,7 @@ def main():
         print(f"  🏆 Best strategy: {best}")
         print(f"  Objective score: {best_score:.4f}")
     else:
-        print(f"  ❌ No strategy passes all criteria")
+        print("  ❌ No strategy passes all criteria")
         # Show closest
         best_all = max(
             results.keys(), key=lambda n: results[n]["Recall@10"] + results[n]["MAP"] + results[n]["nDCG@10"]

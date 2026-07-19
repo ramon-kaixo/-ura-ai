@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from knowledge.engine.models import AuditEvent
+if TYPE_CHECKING:
+    from knowledge.engine.models import AuditEvent
 
 log = logging.getLogger("ura.knowledge.audit")
 
@@ -48,4 +49,4 @@ def record_metric() -> None:
 
         audit_write_failures.inc()
     except Exception:
-        pass  # noqa: S110
+        pass

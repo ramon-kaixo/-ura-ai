@@ -17,8 +17,6 @@ from __future__ import annotations
 import threading
 import time
 
-import pytest
-
 from motor.agents import AgentExecution, AgentPolicy, AgentScheduler, AgentTask
 
 
@@ -90,7 +88,6 @@ def test_cancel_before_execution() -> None:
     s.cancel("a1")
     assert s.queue_size == 1
     # Verificar que la tarea cancelada no está en cola
-    from motor.agents.scheduler import _PriorityQueue
     # Solo debe quedar a2
 
 
@@ -145,6 +142,7 @@ def test_shutdown_with_running_tasks() -> None:
 def test_no_queue_priority_queue_acoplamiento() -> None:
     """Scheduler no debe importar queue.PriorityQueue directamente."""
     import inspect
+
     import motor.agents.scheduler as mod
     source = inspect.getsource(mod)
     assert "from queue import PriorityQueue" not in source

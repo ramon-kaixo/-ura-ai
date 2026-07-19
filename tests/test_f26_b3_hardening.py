@@ -13,26 +13,18 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-import tempfile
-import threading
 import time
 
 import pytest
 
 from motor.memory import (
     FactRef,
-    Journal,
     Memory,
     MemoryEntry,
     MemoryEventType,
-    MemoryMetadata,
-    MemoryTimeline,
     load_snapshot,
     make_entry_id,
-    save_snapshot,
 )
-
 
 # ── helpers ─────────────────────────────────────────────
 
@@ -128,7 +120,7 @@ def test_atomic_snapshot_write(tmp_path: str) -> None:
     snap = os.path.join(tmp_path, "snap.json")
     m = Memory(snapshot_path=snap)
     _populate(m, 10)
-    cs = m.snapshot(version="v1")
+    m.snapshot(version="v1")
     # Snapshot debe ser legible y tener checksum válido
     header, entries = load_snapshot(snap)
     assert header["checksum"]
@@ -171,7 +163,7 @@ def test_corrupt_snapshot_checksum(tmp_path: str) -> None:
     m.close()
 
     # Corromper el checksum
-    with open(snap, "r") as f:
+    with open(snap) as f:
         data = json.load(f)
     data["header"]["checksum"] = "bad"
     with open(snap, "w") as f:
@@ -414,9 +406,9 @@ def test_schema_compatibility_v1(tmp_path: str) -> None:
 
 def test_e2e_full_flow(tmp_path: str) -> None:
     """Flujo completo: Fusion → Memory → Snapshot → Recovery → ContextBuilder."""
-    from motor.core.fusion.engine import FusionPipeline
-    from motor.core.fusion.stages import ExtractionStage, NormalizationStage, KnowledgeMergerStage
     from motor.core.fusion.context_builder import ContextBuilder
+    from motor.core.fusion.engine import FusionPipeline
+    from motor.core.fusion.stages import ExtractionStage, KnowledgeMergerStage, NormalizationStage
     from motor.core.web.citation.citation import CitationBundle, Evidence
 
     snap = os.path.join(tmp_path, "e2e_snap.json")

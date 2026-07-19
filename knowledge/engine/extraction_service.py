@@ -13,6 +13,7 @@ o desde un EventBus subscriber.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -252,7 +253,7 @@ def _guess_mime(location: str) -> str:
 def _worker_loop(
     db_path: Path,
     registry: ExtractorRegistry,
-    store: AssetStore,  # noqa: C901, PLR0912, PLR0915
+    store: AssetStore,
     stop: threading.Event,
     running_jobs: dict,
     jobs_lock: threading.Lock,
@@ -391,10 +392,8 @@ def _worker_loop(
             log.exception("Worker loop error: %s", exc)
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
 
 def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, extractor_id: str):
@@ -440,16 +439,12 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
 
     except Exception as exc:
         if conn is not None:
-            try:
+            with contextlib.suppress(Exception):
                 _write_job_fail(conn, job_id, str(exc))
-            except Exception:
-                pass  # noqa: S110
     finally:
         if conn is not None:
-            try:
+            with contextlib.suppress(Exception):
                 conn.close()
-            except Exception:
-                pass  # noqa: S110
 
 
 def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):

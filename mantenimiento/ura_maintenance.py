@@ -115,7 +115,7 @@ class SecurityValidator:
         # Verificar ownership
         try:
             stat_info = path.stat()
-            if stat_info.st_uid != self.current_uid and self.current_uid != 0:
+            if self.current_uid not in (stat_info.st_uid, 0):
                 return False, f"Not owner: {file_path} (uid {stat_info.st_uid})"
         except OSError as e:
             return False, f"Cannot stat: {file_path} ({e})"
@@ -142,10 +142,7 @@ class SecurityValidator:
         """Verificar si path está dentro de directorios permitidos"""
         allowed_dirs = self.config.get("allowed_temp_dirs", []) + self.config.get("allowed_log_dirs", [])
 
-        for allowed_dir in allowed_dirs:
-            if path.startswith(os.path.realpath(allowed_dir)):
-                return True
-        return False
+        return any(path.startswith(os.path.realpath(allowed_dir)) for allowed_dir in allowed_dirs)
 
 
 class MaintenanceConfig:
@@ -363,7 +360,7 @@ class LinuxCleaner(SystemCleaner):
 
             for log_dir in self.config.allowed_log_dirs:
                 if os.path.exists(log_dir):
-                    for root, dirs, files in os.walk(log_dir):
+                    for root, _dirs, files in os.walk(log_dir):
                         for file in files:
                             file_path = os.path.join(root, file)
                             try:
@@ -393,10 +390,9 @@ class LinuxCleaner(SystemCleaner):
                     for item in os.listdir(temp_dir):
                         item_path = os.path.join(temp_dir, item)
                         try:
-                            if os.path.isfile(item_path):
-                                if self.safe_remove(item_path):
-                                    size = os.path.getsize(item_path) / (1024**3)
-                                    total_freed += size
+                            if os.path.isfile(item_path) and self.safe_remove(item_path):
+                                size = os.path.getsize(item_path) / (1024**3)
+                                total_freed += size
                         except OSError:
                             pass
 

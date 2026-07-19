@@ -57,8 +57,9 @@ def cmd_metadata_policy(args) -> int:
 
 
 def cmd_memory_create(args) -> int:
-    from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
     import uuid
+
+    from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
 
     db_path = _resolve_db_path(args)
     kind = args.kind
@@ -145,8 +146,9 @@ def cmd_metadata_retrieve(args) -> int:
 
 def cmd_metadata_context(args) -> int:
     """Build a detailed context bundle for a query."""
-    from knowledge.engine.graphrag import SQLiteGraphRetriever
     import json
+
+    from knowledge.engine.graphrag import SQLiteGraphRetriever
 
     db_path = _resolve_db_path(args)
     query = args.query

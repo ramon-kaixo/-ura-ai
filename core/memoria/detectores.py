@@ -1,9 +1,9 @@
 """Detectores multi-tipo para la Reactualización Total."""
 
-import blake3
 import logging
 import subprocess
 
+import blake3
 import httpx
 
 log = logging.getLogger("memoria.detectores")
@@ -68,7 +68,7 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
                 "-v",
                 "quiet",
                 "-print_format",
-                "json",  # noqa: S607  -- URL desde detector config, ffprobe no ejecuta shell
+                "json",
                 "-show_format",
                 url,
             ],

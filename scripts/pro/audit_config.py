@@ -125,8 +125,8 @@ def _check_env_var_access(filepath: Path) -> list[str]:
 def _check_consistency() -> list[str]:
     errors = []
     try:
-        from motor.core.config import UraConfig
         from core.config_manager import CONFIG
+        from motor.core.config import UraConfig
     except ImportError as e:
         return [f"  ERROR: ImportError — {e}"]
     cfg = UraConfig.load()
@@ -168,21 +168,21 @@ def main() -> int:
 
     print("=== Auditoría de Configuración Unificada (F17) ===\n")
 
-    print(f"[1] Acceso directo a config.json (fuera de módulos permitidos):")
+    print("[1] Acceso directo a config.json (fuera de módulos permitidos):")
     if c1:
         for e in c1:
             print(f"  ✗ {e}")
     else:
         print("  ✓ 0 problemas")
 
-    print(f"\n[2] Env vars UraConfig fuera de motor/core/config.py:")
+    print("\n[2] Env vars UraConfig fuera de motor/core/config.py:")
     if c2:
         for e in c2:
             print(f"  ✗ {e}")
     else:
         print("  ✓ 0 problemas")
 
-    print(f"\n[3] Consistencia UraConfig == CONFIG:")
+    print("\n[3] Consistencia UraConfig == CONFIG:")
     if c3:
         for e in c3:
             print(f"  ✗ {e}")

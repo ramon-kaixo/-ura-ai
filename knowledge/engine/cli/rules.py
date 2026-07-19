@@ -18,9 +18,10 @@ def cmd_rules_list(args) -> int:
 
 
 def cmd_rules_eval(args) -> int:
+    import json
+
     from knowledge.engine.connection import open_db
     from knowledge.engine.rules import RuleEvaluator
-    import json
 
     db_path = _resolve_db_path(args)
     if not db_path.exists():

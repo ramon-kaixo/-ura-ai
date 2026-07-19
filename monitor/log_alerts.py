@@ -45,7 +45,7 @@ def load_seen_hashes() -> set:
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
         except Exception:
-            pass  # noqa: S110
+            pass
     return set()
 
 

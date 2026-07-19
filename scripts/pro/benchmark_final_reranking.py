@@ -96,10 +96,10 @@ BASELINES = {
 def main():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
-    from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.lexical import LexicalRetriever
-    from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.reranking.ce import CrossEncoderReranker
+    from motor.intelligence.retrieval.hybrid import HybridRetriever
+    from motor.intelligence.retrieval.lexical import LexicalRetriever
+    from motor.intelligence.retrieval.vector import VectorRetriever
 
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
@@ -114,9 +114,9 @@ def main():
     ce = CrossEncoderReranker(top_k=10, batch_size=10)
 
     configs = {
-        "Vector-only": lambda q, k: vec.search(q, k),
-        "Hybrid (score)": lambda q, k: hybrid.search(q, k),
-        "Hybrid + CrossEncoder": lambda q, k: hybrid.search(q, k),
+        "Vector-only": vec.search,
+        "Hybrid (score)": hybrid.search,
+        "Hybrid + CrossEncoder": hybrid.search,
     }
 
     results = {}
@@ -124,18 +124,6 @@ def main():
         rr = ce if "CrossEncoder" in name else None
         results[name] = run(name, fn, queries, rel_map, reranker=rr)
 
-    metrics_list = [
-        "Recall@10",
-        "Precision@5",
-        "MRR",
-        "MAP",
-        "nDCG@10",
-        "P50",
-        "P95",
-        "P99",
-        "Throughput",
-        "No-context",
-    ]
     hdr = f"  {'Config':<28} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
     print(f"\n{'=' * 105}")
     print(hdr)
@@ -178,10 +166,10 @@ def main():
             all_pass = False
 
     if all_pass:
-        print(f"\n  ✅ APROBADO — CrossEncoderReranker adoptado como reranker por defecto")
+        print("\n  ✅ APROBADO — CrossEncoderReranker adoptado como reranker por defecto")
     else:
-        print(f"\n  ❌ RECHAZADO — el CrossEncoder no cumple los criterios")
-        print(f"  Se cierra el Bloque 1 definitivamente sin reranker.")
+        print("\n  ❌ RECHAZADO — el CrossEncoder no cumple los criterios")
+        print("  Se cierra el Bloque 1 definitivamente sin reranker.")
 
     print(f"\n{'=' * 90}")
     print("  Resumen de decisiÃ³n")
@@ -196,9 +184,9 @@ def main():
         f"  {'Hybrid + CE:':<30} R@10={results['Hybrid + CrossEncoder']['Recall@10']:.4f} MAP={results['Hybrid + CrossEncoder']['MAP']:.4f} P95={results['Hybrid + CrossEncoder']['P95']:.0f}ms"
     )
     if all_pass:
-        print(f"\n  -> Adoptar CrossEncoderReranker como reranker por defecto")
+        print("\n  -> Adoptar CrossEncoderReranker como reranker por defecto")
     else:
-        print(f"\n  -> Bloque 1 cerrado. Continuar con Bloque 2 sin reranker.")
+        print("\n  -> Bloque 1 cerrado. Continuar con Bloque 2 sin reranker.")
 
     return 0 if all_pass else 1
 

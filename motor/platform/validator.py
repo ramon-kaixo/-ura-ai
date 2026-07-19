@@ -7,11 +7,11 @@ import time
 from typing import TYPE_CHECKING
 
 from motor.platform.models import DeliverySemantics, MessageKind, ProtocolEnvelope
-from motor.platform.registry import ProtocolRegistry
 from motor.platform.serializer import compute_checksum, verify_checksum
 
 if TYPE_CHECKING:
     from motor.platform.metrics import PlatformMetrics
+    from motor.platform.registry import ProtocolRegistry
 
 logger = logging.getLogger("ura.security")
 

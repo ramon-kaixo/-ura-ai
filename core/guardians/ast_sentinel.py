@@ -1,9 +1,12 @@
 """ast_sentinel.py — Capa 1"""
 
 from __future__ import annotations
-import ast, hashlib, re
+
+import ast
+import hashlib
+import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 MAX_CC = 10
@@ -11,7 +14,7 @@ MAX_L = 50
 PROH = frozenset(
     {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
 )
-DP = [(re.compile(r"#\s*(TODO|FIXME|HACK|WORKAROUND)", re.I), "deuda")]
+DP = [(re.compile(r"#\s*(TODO|FIXME|HACK|WORKAROUND)", re.IGNORECASE), "deuda")]
 
 
 @dataclass
@@ -21,7 +24,7 @@ class V:
     errs: list[str]
     warns: list[str]
     m: dict[str, Any]
-    ts: str = field(default_factory=lambda: datetime.now(tz=timezone.utc).isoformat())
+    ts: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
 
     def resumen(s):
         e = "OK" if s.ok else "FAIL"

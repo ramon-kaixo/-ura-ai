@@ -12,6 +12,7 @@ Reads JSONL files produced by TraceExporter (motor/platform/tracing.py).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from collections import defaultdict
@@ -33,10 +34,8 @@ def load_events(path: str) -> list[dict]:
                 for line in fh:
                     line = line.strip()
                     if line:
-                        try:
+                        with contextlib.suppress(json.JSONDecodeError):
                             events.append(json.loads(line))
-                        except json.JSONDecodeError:
-                            pass
     return events
 
 
@@ -70,12 +69,12 @@ def replay_trace(events: list[dict], trace_id: str) -> None:
         return
 
     # Build tree
-    span_map = {ev["span_id"]: ev for ev in spans}
+    {ev["span_id"]: ev for ev in spans}
     children: dict[str, list[dict]] = defaultdict(list)
 
     for ev in spans:
         parent = ev.get("parent_span_id", "")
-        if parent and parent != "ROOT" and parent != "":
+        if parent and parent not in {"ROOT", ""}:
             children[parent].append(ev)
 
     # Find root spans
@@ -109,7 +108,7 @@ def summary(events: list[dict]) -> None:
     """Aggregate statistics across all traces."""
     total_spans = len(events)
     total_errors = sum(1 for ev in events if ev.get("error_code"))
-    trace_ids = set(ev.get("trace_id", "") for ev in events)
+    trace_ids = {ev.get("trace_id", "") for ev in events}
     total_duration = sum(ev.get("duration_ns", 0) for ev in events)
 
     # Per subsystem pair
@@ -123,7 +122,7 @@ def summary(events: list[dict]) -> None:
             pairs[pair]["errors"] += 1
         pairs[pair]["total_duration_ns"] += ev.get("duration_ns", 0)
 
-    print(f"\nTrace Summary")
+    print("\nTrace Summary")
     print(f"{'Total traces':<30} {len(trace_ids)}")
     print(f"{'Total spans':<30} {total_spans}")
     print(f"{'Total errors':<30} {total_errors}")

@@ -147,7 +147,7 @@ class _SimplePlugin(PluginBase):
         super().__init__()
         self.manifest = PluginManifest(name=name, version="1.0.0")
         self.executed = False
-    
+
     def execute(self, context=None):
         self.executed = True
         return {"result": "ok"}
@@ -162,10 +162,10 @@ class _HookablePlugin(PluginBase):
         self.manifest = PluginManifest(
             name="hookable", hooks=["pre_ingest"]
         )
-    
+
     def execute(self, context=None):
         return {}
-    
+
     def on_pre_ingest(self, event):
         return event
 ```

@@ -63,10 +63,7 @@ def configure_logging(
         output: ruta de archivo o None=stdout
     """
     handler: logging.Handler
-    if output:
-        handler = logging.FileHandler(output)
-    else:
-        handler = logging.StreamHandler(sys.stdout)
+    handler = logging.FileHandler(output) if output else logging.StreamHandler(sys.stdout)
 
     handler.setFormatter(StructuredFormatter() if structured else PlainFormatter())
 

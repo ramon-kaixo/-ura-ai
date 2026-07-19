@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger("ura.memory")
+
+import contextlib
 
 from motor.memory.journal import Journal
 from motor.memory.snapshot import load_snapshot as _load_snapshot
@@ -19,6 +20,8 @@ from motor.memory.snapshot import save_snapshot as _save_snapshot
 from motor.memory.timeline import MemoryTimeline
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from motor.memory.models import MemoryEntry
 
 
@@ -98,10 +101,10 @@ class Memory:
         """Carga un snapshot y construye una Memory."""
         from motor.memory.models import FactRef, MemoryEntry, MemoryEventType, MemoryMetadata
 
-        header, entries_dict = _load_snapshot(path)
+        _header, entries_dict = _load_snapshot(path)
 
         memory = cls(snapshot_path=path, auto_recover=False)
-        for entry_id, entry_data in sorted(
+        for _entry_id, entry_data in sorted(
             entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)
         ):
             fact_refs = tuple(
@@ -173,7 +176,7 @@ class Memory:
     def shutdown(self, timeout: int = 30) -> None:
         """Graceful shutdown. Cierra journal, espera operaciones en curso."""
         self._shutdown_flag = True
-        import time, threading
+        import time
         deadline = time.time() + timeout
         while time.time() < deadline:
             # Esperar a que no haya operaciones en curso
@@ -214,7 +217,7 @@ class Memory:
         except (FileNotFoundError, ValueError):
             entries_dict = {}  # snapshot no disponible, solo journal
 
-        for entry_id, entry_data in sorted(
+        for _entry_id, entry_data in sorted(
             entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)
         ):
             fact_refs = tuple(
@@ -243,10 +246,8 @@ class Memory:
                 ),
                 snapshot=entry_data.get("snapshot", False),
             )
-            try:
+            with contextlib.suppress(KeyError):
                 self._timeline.append(entry)
-            except KeyError:
-                pass
 
         # Replay journal entries after snapshot (solo los que no están ya en snapshot)
         journal_entries = self._journal.read_all()
@@ -280,7 +281,5 @@ class Memory:
                 ),
                 snapshot=entry_data.get("snapshot", False),
             )
-            try:
+            with contextlib.suppress(KeyError):
                 self._timeline.append(entry)
-            except KeyError:
-                pass

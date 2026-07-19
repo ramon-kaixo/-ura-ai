@@ -171,7 +171,7 @@ class TestSupervisorAgent:
                 "subtasks": [
                     {"agent_role": AgentRole.EXECUTOR, "objective": "echo test", "input_data": {"cmd": ["echo", "ok"]}}
                 ]
-            },  # noqa: E501
+            },
         )
         result = sup.run(task)
         assert result.success
@@ -200,7 +200,7 @@ class TestSupervisorAgent:
                         "input_data": {"cmd": ["bash", "-c", "exit 1"]},
                     }
                 ]
-            },  # noqa: E501
+            },
         )
         result = sup.run(task)
         assert not result.success

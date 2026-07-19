@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import tempfile
 import threading
 import time
 
@@ -27,14 +26,11 @@ from motor.memory import (
     Memory,
     MemoryEntry,
     MemoryEventType,
-    MemoryMetadata,
     MemoryTimeline,
     load_snapshot,
     make_entry_id,
     save_snapshot,
 )
-from motor.memory.models import SnapshotHeader
-
 
 # ── helpers ─────────────────────────────────────────────
 
@@ -270,7 +266,7 @@ def test_snapshot_checksum_validation(tmp_path: str) -> None:
     path = os.path.join(tmp_path, "snapshot.json")
     save_snapshot(tl, path)
     # Corromper el archivo
-    with open(path, "r") as f:
+    with open(path) as f:
         data = json.load(f)
     data["entries"]["corrupted"] = {"entry_id": "bad"}
     with open(path, "w") as f:
