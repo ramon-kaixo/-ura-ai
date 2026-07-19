@@ -13,8 +13,6 @@ from motor.assistant.conversation import ConversationEngine
 from motor.assistant.llm_bridge import LLMBridge
 from motor.assistant.models import ConversationMode
 from motor.assistant.streaming import StreamEvent
-from motor.assistant.style import StyleEngine
-from motor.assistant.web_search import WebSearchIntegration
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -40,8 +38,6 @@ class ChatResponse(BaseModel):
 class _EngineHolder:
     engine: ConversationEngine | None = None
     llm: LLMBridge | None = None
-    style: StyleEngine | None = None
-    web: WebSearchIntegration | None = None
 
 
 def get_engine() -> ConversationEngine:
@@ -59,18 +55,6 @@ def get_llm() -> LLMBridge:
         except Exception:
             _EngineHolder.llm = LLMBridge(get_engine())
     return _EngineHolder.llm
-
-
-def get_style() -> StyleEngine:
-    if _EngineHolder.style is None:
-        _EngineHolder.style = StyleEngine()
-    return _EngineHolder.style
-
-
-def get_web_search() -> WebSearchIntegration:
-    if _EngineHolder.web is None:
-        _EngineHolder.web = WebSearchIntegration()
-    return _EngineHolder.web
 
 
 class _RateLimiter:
@@ -92,6 +76,26 @@ class _RateLimiter:
 _rate_limiter = _RateLimiter()
 
 
+_SYSTEM_PROMPTS = {
+    "conversacion": (
+        "Eres URA, un asistente conversacional inteligente. "
+        "Responde de forma natural y directa, sin extenderte. "
+        "Sé conciso pero completo. Lenguaje natural como entre amigos."
+    ),
+    "trabajo": (
+        "Eres URA, un asistente profesional. "
+        "Responde de forma precisa y estructurada. "
+        "Usa bullet points cuando sea apropiado. Ve al grano."
+    ),
+    "explicacion": (
+        "Eres URA, un tutor experto. "
+        "Explica paso a paso con ejemplos concretos. "
+        "Profundiza en causas, mecanismos y consecuencias. "
+        "Asume que el usuario quiere entender realmente."
+    ),
+}
+
+
 def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str) -> tuple:
     conv = engine.get_or_create(cid)
     if mode_str:
@@ -107,21 +111,13 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 
     engine.add_message(cid, "user", resolved)
 
-    style = get_style()
-    system_prompt = style.build_system_prompt(mode, intent)
-
+    system_prompt = _SYSTEM_PROMPTS.get(mode.value, _SYSTEM_PROMPTS["conversacion"])
     if analysis.get("sentiment_action"):
         system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
     if analysis.get("interruption_context"):
         system_prompt += f" Contexto de interrupción: {analysis['interruption_context']}"
     if analysis.get("episodic_context"):
         system_prompt += f" Contexto de conversaciones anteriores: {analysis['episodic_context']}"
-
-    if analysis.get("needs_web_search"):
-        web = get_web_search()
-        web_result = web.search_if_needed(message, intent.value)
-        if web_result.get("results"):
-            system_prompt += f"\nInformación actualizada de la web: {web_result['results']}"
 
     return intent, mode, resolved, system_prompt, conv
 
