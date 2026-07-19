@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from motor.assistant.config import config as app_config
 from motor.assistant.models import ConversationMode
 
 if TYPE_CHECKING:
@@ -22,13 +23,13 @@ class LLMBridge:
         self,
         engine: ConversationEngine,
         router: Any | None = None,
-        fallback_model: str = "qwen2.5:7b",
-        timeout_seconds: int = 30,
+        fallback_model: str | None = None,
+        timeout_seconds: int | None = None,
     ):
         self._engine = engine
         self._router = router
-        self._fallback = fallback_model
-        self._timeout = timeout_seconds
+        self._fallback = fallback_model or app_config.llm_model_fast
+        self._timeout = timeout_seconds or app_config.llm_timeout
 
     def build_messages(
         self,
