@@ -42,7 +42,7 @@ class Task:
 
 class ProactiveMemory:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/proactive.db"
+        self._db_path = db_path or "/tmp/ura/proactive.db"  # noqa: S108
         self._lock = threading.Lock()
         self._init_db()
 
