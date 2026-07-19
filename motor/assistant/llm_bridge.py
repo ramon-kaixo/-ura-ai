@@ -64,6 +64,34 @@ class LLMBridge:
             return "codigo_rapido"
         return "respuesta_rapida"
 
+    async def generate_async(
+        self,
+        conversation_id: str,
+        user_message: str,
+        mode: ConversationMode,
+        intent_value: str = "",
+        system_prompt: str = "",
+    ) -> str:
+        import asyncio
+        return await asyncio.to_thread(
+            self.generate, conversation_id, user_message,
+            mode, intent_value, system_prompt,
+        )
+
+    async def generate_stream(
+        self,
+        conversation_id: str,
+        user_message: str,
+        mode: ConversationMode,
+        intent_value: str = "",
+        system_prompt: str = "",
+    ) -> str:
+        import asyncio
+        return await asyncio.to_thread(
+            self.generate, conversation_id, user_message,
+            mode, intent_value, system_prompt,
+        )
+
     def generate(
         self,
         conversation_id: str,

@@ -6,11 +6,13 @@ import time
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.llm_bridge import LLMBridge
 from motor.assistant.models import ConversationMode
+from motor.assistant.streaming import StreamEvent
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -94,23 +96,15 @@ _SYSTEM_PROMPTS = {
 }
 
 
-@router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
-    client_ip = http_request.client.host if http_request.client else "unknown"
-    _rate_limiter.check(client_ip)
-
-    engine = get_engine()
-    llm = get_llm()
-
-    cid = request.conversation_id or ""
+def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str) -> tuple:
     conv = engine.get_or_create(cid)
-    if request.mode:
+    if mode_str:
         try:
-            conv.state.mode = ConversationMode(request.mode)
+            conv.state.mode = ConversationMode(mode_str)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid mode: {request.mode}") from None
+            raise HTTPException(status_code=400, detail=f"Invalid mode: {mode_str}") from None
 
-    analysis = engine.process_user_message(cid, request.message)
+    analysis = engine.process_user_message(cid, message)
     intent = analysis["intent"]
     mode = analysis["mode"]
     resolved = analysis["resolved_message"]
@@ -118,7 +112,6 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
     engine.add_message(cid, "user", resolved)
 
     system_prompt = _SYSTEM_PROMPTS.get(mode.value, _SYSTEM_PROMPTS["conversacion"])
-
     if analysis.get("sentiment_action"):
         system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
     if analysis.get("interruption_context"):
@@ -126,12 +119,47 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
     if analysis.get("episodic_context"):
         system_prompt += f" Contexto de conversaciones anteriores: {analysis['episodic_context']}"
 
+    return intent, mode, resolved, system_prompt, conv
+
+
+@router.post("", response_model=ChatResponse)
+async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:
+    client_ip = http_request.client.host if http_request.client else "unknown"
+    _rate_limiter.check(client_ip)
+
+    engine = get_engine()
+    llm = get_llm()
+    cid = request.conversation_id or ""
+
+    intent, mode, resolved, system_prompt, conv = _process(engine, llm, cid, request.message, request.mode)
+
+    if request.stream:
+        async def event_stream():
+            if hasattr(llm, 'generate_async'):
+                reply = await llm.generate_async(
+                    cid, resolved, mode,
+                    intent_value=intent.value,
+                    system_prompt=system_prompt,
+                )
+            else:
+                reply = llm.generate(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt)
+
+            engine.add_message(cid, "assistant", reply)
+            event = StreamEvent("complete", {
+                "reply": reply,
+                "conversation_id": cid,
+                "intent": intent.value,
+                "mode": mode.value,
+            })
+            yield event.to_sse()
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+
     reply = llm.generate(
         cid, resolved, mode,
         intent_value=intent.value,
         system_prompt=system_prompt,
     )
-
     engine.add_message(cid, "assistant", reply)
 
     return ChatResponse(

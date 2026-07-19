@@ -46,7 +46,7 @@ _SATISFACTION_PATTERNS = re.compile(
 _CONFUSION_PATTERNS = re.compile(
     r"\b(no entiendo|cómo dices|qué significa|no me queda claro|"
     r"puedes explicar|a qué te refieres|no sé|no comprendo|"
-    r"huh|eh\|perdona)",
+    r"huh|eh|perdona)",
     re.IGNORECASE,
 )
 
