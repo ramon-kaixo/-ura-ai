@@ -133,22 +133,20 @@ class ConversationalPlanner:
         return plan
 
     def _determine_next_action(self, intent: UserIntent, mode: ConversationMode) -> str:
-        if intent == UserIntent.QUESTION:
-            return "buscar información y formular respuesta"
-        if intent == UserIntent.COMMAND:
-            return "ejecutar la herramienta adecuada"
-        if intent == UserIntent.CLARIFY:
-            return "preguntar qué necesita aclaración"
-        if intent == UserIntent.CONFIRM:
-            return "continuar con la siguiente tarea"
-        if intent == UserIntent.REJECT:
-            return "preguntar qué alternativa prefiere"
+        intent_actions = {
+            UserIntent.QUESTION: "buscar información y formular respuesta",
+            UserIntent.COMMAND: "ejecutar la herramienta adecuada",
+            UserIntent.CLARIFY: "preguntar qué necesita aclaración",
+            UserIntent.CONFIRM: "continuar con la siguiente tarea",
+            UserIntent.REJECT: "preguntar qué alternativa prefiere",
+            UserIntent.REPEAT: "reformular la respuesta anterior",
+        }
+        if intent in intent_actions:
+            return intent_actions[intent]
         if intent == UserIntent.CORRECT:
             if mode == ConversationMode.EXPLANATION:
                 return "explicar el error y cómo evitarlo"
             return "confirmar la corrección y disculparse"
-        if intent == UserIntent.REPEAT:
-            return "reformular la respuesta anterior"
         if mode == ConversationMode.EXPLANATION:
             return "continuar con la explicación"
         if mode == ConversationMode.WORK:

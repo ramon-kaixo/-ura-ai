@@ -63,7 +63,7 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
         UserIntent.QUESTION,
         [re.compile(p) for p in [
             r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
-            r".*\?$",
+            r"^.*\?$",
         ]],
         0.8,
     ),

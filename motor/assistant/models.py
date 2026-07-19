@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Literal
 
+_VALID_ROLES = frozenset({"user", "assistant", "system", "tool"})
+
 MessageRole = Literal["user", "assistant", "system", "tool"]
 
 
@@ -41,11 +43,17 @@ class Message:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not self.timestamp:
+        if self.role not in _VALID_ROLES:
+            raise ValueError(f"Invalid role: {self.role}. Must be one of {_VALID_ROLES}")
+        if not self.timestamp or not self.timestamp.strip():
             self.timestamp = datetime.now(UTC).isoformat()
+        if self.role == "tool" and not self.tool_call_id:
+            raise ValueError("tool_call_id is required when role='tool'")
 
     def token_estimate(self, chars_per_token: float = 4.0) -> int:
-        return int(len(self.content) / chars_per_token) + 1
+        if chars_per_token <= 0:
+            chars_per_token = 4.0
+        return max(1, int(len(self.content) / chars_per_token))
 
 
 @dataclass
@@ -73,6 +81,8 @@ class Conversation:
     state: ConversationState | None = None
 
     def add_message(self, role: MessageRole, content: str, **kwargs: Any) -> Message:
+        if "role" in kwargs or "content" in kwargs:
+            raise ValueError("role and content cannot be passed as kwargs to add_message")
         msg = Message(role=role, content=content, **kwargs)
         self.messages.append(msg)
         if self.state:

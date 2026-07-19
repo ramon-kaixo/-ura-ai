@@ -1,5 +1,4 @@
 """Message store for conversations."""
-
 from __future__ import annotations
 
 import json
@@ -15,12 +14,15 @@ class MessageStore:
     def __init__(self, db_path: str | None = None):
         self._db_path = db_path or str(Path.home() / ".ura" / "conversations.db")
         self._lock = threading.Lock()
+        self._closed = False
         self._init_db()
 
     def _init_db(self) -> None:
         p = Path(self._db_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(p), check_same_thread=False)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA busy_timeout=5000")
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +38,12 @@ class MessageStore:
         self._conn.execute("CREATE INDEX IF NOT EXISTS idx_conv ON messages(conversation_id, timestamp)")
         self._conn.commit()
 
+    def _check_closed(self) -> None:
+        if self._closed:
+            raise RuntimeError("MessageStore is closed")
+
     def append(self, conversation_id: str, message: Message) -> int:
+        self._check_closed()
         with self._lock:
             cur = self._conn.execute(
                 "INSERT INTO messages (conversation_id, role, content, timestamp, tool_call_id, tool_name, metadata) "
@@ -48,18 +55,22 @@ class MessageStore:
                     message.timestamp,
                     message.tool_call_id,
                     message.tool_name,
-                    json.dumps(message.metadata),
+                    json.dumps(message.metadata, skipkeys=True),
                 ),
             )
             self._conn.commit()
             return cur.lastrowid or 0
 
     def get_conversation(self, conversation_id: str, limit: int = 100) -> list[Message]:
-        rows = self._conn.execute(
-            "SELECT role, content, timestamp, tool_call_id, tool_name, metadata "
-            "FROM messages WHERE conversation_id = ? ORDER BY id ASC LIMIT ?",
-            (conversation_id, limit),
-        ).fetchall()
+        self._check_closed()
+        if limit < 1:
+            return []
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT role, content, timestamp, tool_call_id, tool_name, metadata "
+                "FROM messages WHERE conversation_id = ? ORDER BY id ASC LIMIT ?",
+                (conversation_id, limit),
+            ).fetchall()
         return [
             Message(
                 role=row[0],
@@ -73,17 +84,29 @@ class MessageStore:
         ]
 
     def list_conversations(self) -> list[dict[str, Any]]:
-        rows = self._conn.execute(
-            "SELECT conversation_id, COUNT(*) as msg_count, MIN(timestamp) as created, MAX(timestamp) as updated "
-            "FROM messages GROUP BY conversation_id ORDER BY updated DESC"
-        ).fetchall()
+        self._check_closed()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT conversation_id, COUNT(*) as msg_count, MIN(timestamp) as created, MAX(timestamp) as updated "
+                "FROM messages GROUP BY conversation_id ORDER BY updated DESC"
+            ).fetchall()
         return [{"id": r[0], "message_count": r[1], "created_at": r[2], "updated_at": r[3]} for r in rows]
 
     def delete_conversation(self, conversation_id: str) -> bool:
+        self._check_closed()
         with self._lock:
             self._conn.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
             self._conn.commit()
-            return True
+            return self._conn.total_changes > 0
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            if not self._closed:
+                self._conn.close()
+                self._closed = True
+
+    def __enter__(self) -> MessageStore:  # noqa: PYI034
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
