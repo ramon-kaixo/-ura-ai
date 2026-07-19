@@ -6,6 +6,7 @@ Contratos y tipos de datos. Sin lógica de negocio.
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -193,6 +194,62 @@ class ToolRequest:
     params: dict
     timeout: int = 30
     attempt: int = 1
+    protocol_version: str = "1.0"
+    trace_id: str = ""
+    causation_id: str = ""
+
+    def to_envelope(self) -> "ProtocolEnvelope":
+        from motor.platform.models import (
+            CausationId, CorrelationId, DeliveryHeader, MessageKind,
+            RoutingHeader, SpanId, TraceHeader, TraceId, VersionHeader,
+        )
+        from motor.platform.serializer import make_envelope_with_checksum, make_message_id
+
+        payload = json.dumps({
+            "execution_id": self.execution_id,
+            "tool_name": self.tool_name,
+            "params": self.params,
+            "timeout": self.timeout,
+            "attempt": self.attempt,
+            "protocol_version": self.protocol_version,
+        }).encode("utf-8")
+
+        return make_envelope_with_checksum(
+            version=VersionHeader(
+                protocol_version=self.protocol_version,
+                schema_version="1.0",
+                payload_type="json",
+            ),
+            routing=RoutingHeader(
+                message_id=make_message_id(self.protocol_version, "1.0", "agent", self.tool_name, "ToolRequest", payload),
+                message_type="ToolRequest",
+                message_kind=MessageKind.COMMAND,
+                source="agent",
+                destination=self.tool_name,
+            ),
+            trace=TraceHeader(
+                trace_id=TraceId(self.trace_id) if self.trace_id else TraceId.generate(),
+                span_id=SpanId(self.execution_id),
+                correlation_id=CorrelationId(self.execution_id),
+                causation_id=CausationId(self.causation_id) if self.causation_id else CausationId.root(),
+            ),
+            delivery=DeliveryHeader(timeout_ms=self.timeout * 1000),
+            payload=payload,
+        )
+
+    @classmethod
+    def from_envelope(cls, envelope: "ProtocolEnvelope") -> "ToolRequest":
+        data = json.loads(envelope.payload.decode("utf-8"))
+        return cls(
+            execution_id=data["execution_id"],
+            tool_name=data["tool_name"],
+            params=data["params"],
+            timeout=data.get("timeout", 30),
+            attempt=data.get("attempt", 1),
+            protocol_version=data.get("protocol_version", "1.0"),
+            trace_id=str(envelope.trace.trace_id) if envelope.trace.trace_id else "",
+            causation_id=str(envelope.trace.causation_id) if envelope.trace.causation_id else "",
+        )
 
 
 @dataclass(frozen=True)
@@ -205,6 +262,63 @@ class ToolResult:
     error_type: str | None = None
     duration_ms: float = 0.0
     attempt: int = 1
+    protocol_version: str = "1.0"
+
+    def to_envelope(self) -> "ProtocolEnvelope":
+        from motor.platform.models import (
+            DeliveryHeader, MessageKind, RoutingHeader, TraceHeader,
+            VersionHeader,
+        )
+        from motor.platform.serializer import make_envelope_with_checksum, make_message_id
+
+        payload = json.dumps({
+            "execution_id": self.execution_id,
+            "tool_name": self.tool_name,
+            "success": self.success,
+            "data": self.data,
+            "error": self.error,
+            "error_type": self.error_type,
+            "duration_ms": self.duration_ms,
+            "attempt": self.attempt,
+            "protocol_version": self.protocol_version,
+        }).encode("utf-8")
+
+        return make_envelope_with_checksum(
+            version=VersionHeader(
+                protocol_version=self.protocol_version,
+                schema_version="1.0",
+                payload_type="json",
+            ),
+            routing=RoutingHeader(
+                message_id=make_message_id(self.protocol_version, "1.0", self.tool_name, "agent", "ToolResult", payload),
+                message_type="ToolResult",
+                message_kind=MessageKind.RESPONSE,
+                source=self.tool_name,
+                destination="agent",
+            ),
+            trace=TraceHeader(
+                trace_id=self.execution_id,
+                span_id=self.execution_id,
+                correlation_id=self.execution_id,
+            ),
+            delivery=DeliveryHeader(),
+            payload=payload,
+        )
+
+    @classmethod
+    def from_envelope(cls, envelope: "ProtocolEnvelope") -> "ToolResult":
+        data = json.loads(envelope.payload.decode("utf-8"))
+        return cls(
+            execution_id=data["execution_id"],
+            tool_name=data["tool_name"],
+            success=data["success"],
+            data=data.get("data", {}),
+            error=data.get("error"),
+            error_type=data.get("error_type"),
+            duration_ms=data.get("duration_ms", 0.0),
+            attempt=data.get("attempt", 1),
+            protocol_version=data.get("protocol_version", "1.0"),
+        )
 
 
 def make_tool_execution_id(agent_id: str, tool_name: str, timestamp: float) -> str:

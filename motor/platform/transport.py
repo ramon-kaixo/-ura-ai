@@ -13,8 +13,13 @@ from __future__ import annotations
 import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
+from motor.platform.errors import ProtocolException
 from motor.platform.models import ProtocolEnvelope
+
+if TYPE_CHECKING:
+    from motor.platform.metrics import PlatformMetrics
 
 
 class Transport(ABC):
@@ -32,12 +37,17 @@ class Transport(ABC):
 
 
 class LocalTransport(Transport):
-    """In-process transport. Reference implementation. Thread-safe."""
+    """In-process transport. Reference implementation. Thread-safe.
 
-    def __init__(self) -> None:
+    Optionally accepts a PlatformMetrics instance for ADR-028-10
+    metrics instrumentation.
+    """
+
+    def __init__(self, metrics: PlatformMetrics | None = None) -> None:
         self._handlers: dict[str, Callable[[ProtocolEnvelope], ProtocolEnvelope]] = {}
         self._received: list[ProtocolEnvelope] = []
         self._lock = threading.Lock()
+        self._metrics = metrics
 
     def register(self, message_type: str, handler: Callable[[ProtocolEnvelope], ProtocolEnvelope]) -> None:
         self._handlers[message_type] = handler
@@ -48,19 +58,54 @@ class LocalTransport(Transport):
             self._received.clear()
 
     async def send(self, envelope: ProtocolEnvelope) -> None:
+        if not isinstance(envelope, ProtocolEnvelope):
+            raise ProtocolException("send() requires a ProtocolEnvelope")
         with self._lock:
             self._received.append(envelope)
+        if self._metrics is not None:
+            try:
+                size = len(envelope.payload) if envelope.payload else 0
+                self._metrics.record_sent(
+                    source=envelope.routing.source,
+                    destination=envelope.routing.destination,
+                    message_kind=envelope.routing.message_kind.value,
+                    size_bytes=size,
+                    duration_ms=0.0,
+                )
+            except Exception:
+                pass
 
     async def receive(self) -> ProtocolEnvelope:
         with self._lock:
             if not self._received:
                 raise RuntimeError("No messages available")
-            return self._received.pop(0)
+            env = self._received.pop(0)
+        if self._metrics is not None:
+            try:
+                size = len(env.payload) if env.payload else 0
+                self._metrics.record_received(
+                    source=env.routing.source,
+                    destination=env.routing.destination,
+                    message_kind=env.routing.message_kind.value,
+                    size_bytes=size,
+                )
+            except Exception:
+                pass
+        return env
 
     async def request(self, envelope: ProtocolEnvelope) -> ProtocolEnvelope:
         with self._lock:
             self._received.append(envelope)
             handler = self._handlers.get(envelope.routing.message_type)
-        if handler is None:
-            raise RuntimeError(f"No handler for {envelope.routing.message_type}")
-        return handler(envelope)
+            if handler is None:
+                if self._metrics is not None:
+                    try:
+                        self._metrics.record_error(
+                            source=envelope.routing.source,
+                            destination=envelope.routing.destination,
+                            error_code="no_handler",
+                        )
+                    except Exception:
+                        pass
+                raise RuntimeError(f"No handler for {envelope.routing.message_type}")
+            return handler(envelope)

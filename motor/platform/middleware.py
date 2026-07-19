@@ -13,13 +13,10 @@ from typing import Any
 
 from motor.platform.models import (
     ProtocolEnvelope,
-    SpanId,
-    TraceHeader,
 )
 from motor.platform.tracing import (
     TraceContext,
     TraceExporter,
-    get_metrics_collector,
     record_latency,
 )
 
