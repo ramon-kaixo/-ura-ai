@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# ruff: noqa: SLF001
 from datetime import UTC, datetime, timedelta
 
 from motor.intelligence.memory.compression import SummaryRecord

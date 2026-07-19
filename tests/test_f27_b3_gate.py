@@ -210,7 +210,7 @@ def test_cache_hit() -> None:
     # Solo se evaluó 1 vez, pero se registraron 2 decisiones
     assert gate.decision_count == 2
     # Cache tiene la capability MEMORY_READ (1 entrada)
-    assert len(gate._cache) >= 1  # noqa: SLF001
+    assert len(gate._cache) >= 1
 
 
 def test_cache_denied() -> None:
@@ -225,7 +225,7 @@ def test_cache_denied() -> None:
     except PermissionError:
         pass
     assert gate.denied_count == 2
-    assert len(gate._cache) >= 1  # noqa: SLF001
+    assert len(gate._cache) >= 1
 
 
 # ═══════════════════════════════════════════════════
@@ -240,8 +240,8 @@ def test_deterministic_evaluation() -> None:
     gate1 = AgentCapabilityGate(e)
     gate2 = AgentCapabilityGate(e)
 
-    d1 = gate1._evaluate(AgentCapability.MEMORY_READ)  # noqa: SLF001
-    d2 = gate2._evaluate(AgentCapability.MEMORY_READ)  # noqa: SLF001
+    d1 = gate1._evaluate(AgentCapability.MEMORY_READ)
+    d2 = gate2._evaluate(AgentCapability.MEMORY_READ)
 
     assert d1.granted == d2.granted
 
@@ -251,8 +251,8 @@ def test_deterministic_denied() -> None:
     gate1 = AgentCapabilityGate(e)
     gate2 = AgentCapabilityGate(e)
 
-    d1 = gate1._evaluate(AgentCapability.WEB_SEARCH)  # noqa: SLF001
-    d2 = gate2._evaluate(AgentCapability.WEB_SEARCH)  # noqa: SLF001
+    d1 = gate1._evaluate(AgentCapability.WEB_SEARCH)
+    d2 = gate2._evaluate(AgentCapability.WEB_SEARCH)
 
     assert d1.granted == d2.granted  # ambos False
 

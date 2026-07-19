@@ -2168,8 +2168,8 @@ class TestAuditBackend:
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n',  # noqa: E501
         )
         backend = NDJSONAuditBackend(tmp_path, "test.ndjson")
-        backend._handle.close()  # noqa: SLF001
-        backend._handle = open(audit_file, "a")  # noqa: PTH123, SIM115, SLF001
+        backend._handle.close()
+        backend._handle = open(audit_file, "a")  # noqa: PTH123, SIM115
         events = backend.read_lines(0)
         assert len(events) == 2, f"Expected 2 valid events, got {len(events)}"
         backend.close()
@@ -2177,8 +2177,8 @@ class TestAuditBackend:
     def test_missing_file_returns_empty(self, tmp_path):
         """Archivo NDJSON inexistente retorna lista vacía."""
         backend = NDJSONAuditBackend(tmp_path, "missing.ndjson")
-        backend._handle.close()  # noqa: SLF001
-        backend._handle = open(tmp_path / "nonexistent.ndjson", "a")  # noqa: PTH123, SIM115, SLF001
+        backend._handle.close()
+        backend._handle = open(tmp_path / "nonexistent.ndjson", "a")  # noqa: PTH123, SIM115
         events = backend.read_lines(0)
         assert events == []
 

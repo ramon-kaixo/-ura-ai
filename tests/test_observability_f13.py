@@ -65,7 +65,7 @@ class TestCorrelationID:
     def test_empty_default(self):
         import motor.observability.logging as obs_logging
 
-        obs_logging._context.correlation_id = ""  # noqa: SLF001
+        obs_logging._context.correlation_id = ""
         assert get_correlation_id() == ""
 
     def test_workflow_id(self):
