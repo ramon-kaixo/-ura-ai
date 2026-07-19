@@ -4,8 +4,9 @@ import logging
 import time
 from pathlib import Path
 
-from core.memoria.qdrant_store import _get_client
 from qdrant_client import models
+
+from core.memoria.qdrant_store import _get_client
 
 INBOX = Path.home() / ".nervioso" / "inbox"
 CUARENTENA = Path.home() / ".nervioso" / "cuarentena"

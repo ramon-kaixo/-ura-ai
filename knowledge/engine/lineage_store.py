@@ -6,14 +6,17 @@ Permite registrar eventos de lineage y consultar upstream/downstream de un asset
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import sqlite3
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from knowledge.engine.connection import begin_immediate, open_db
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.lineage_store")
 
@@ -85,10 +88,8 @@ class SQLiteLineageStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def get_lineage(self, asset_id: str) -> list[dict[str, Any]]:
         """Retorna eventos de lineage que involucran un asset."""
@@ -110,10 +111,8 @@ class SQLiteLineageStore:
             return []
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def _get_upstream_edges(self, asset_id: str) -> list[str] | None:
         """Retorna upstream desde op_lineage_edges. None si la tabla no existe."""
@@ -161,7 +160,7 @@ class SQLiteLineageStore:
                     if inp != asset_id:
                         upstream.add(inp)
             except (json.JSONDecodeError, KeyError):
-                pass  # noqa: S110
+                pass
         return sorted(upstream)
 
     def get_downstream(self, asset_id: str) -> list[str]:
@@ -186,5 +185,5 @@ class SQLiteLineageStore:
                     if out != asset_id:
                         downstream.add(out)
             except (json.JSONDecodeError, KeyError):
-                pass  # noqa: S110
+                pass
         return sorted(downstream)

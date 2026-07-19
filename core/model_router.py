@@ -1014,7 +1014,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             tasks_data = json.loads(sock.recv())
         except Exception:
             log.exception("Failed to fetch supervisor tasks")
-            pass  # noqa: S110
+            pass
         finally:
             if sock:
                 with contextlib.suppress(Exception):
@@ -1219,7 +1219,7 @@ def main() -> None:
     import sys
 
     if "--test" in sys.argv or "--models" in sys.argv:
-        pass  # noqa: S110 — preflight no necesario para consultas simples
+        pass
     else:
         verificar_politicas_seguridad_preflight()
 
@@ -1261,7 +1261,7 @@ def main() -> None:
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        pass  # noqa: S110
+        pass
     finally:
         log.info("Cerrando servidor...")
         server.server_close()

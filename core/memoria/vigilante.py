@@ -3,7 +3,7 @@ import asyncio
 """Vigilante: re-check de fuentes con cambio de contenido → versionado de ideas."""
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from core.mochila.tools import page_read
@@ -79,7 +79,7 @@ async def revisar_fuente(fuente: dict) -> dict:
     }
 
     fuente["hash_actual"] = hash_nuevo
-    fuente["ultima_revision"] = datetime.now(timezone.utc).isoformat()
+    fuente["ultima_revision"] = datetime.now(UTC).isoformat()
 
     return resultado
 
@@ -125,8 +125,9 @@ async def procesar_cambios() -> list[dict]:
 
 async def generar_parte() -> dict:
     """Genera el parte de la ultima pasada de actualizacion."""
-    from core.memoria.qdrant_store import _get_client
     from qdrant_client import models
+
+    from core.memoria.qdrant_store import _get_client
 
     fuentes = cargar_fuentes()
     if not fuentes:

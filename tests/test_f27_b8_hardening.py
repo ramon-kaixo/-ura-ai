@@ -5,6 +5,7 @@ Estress, concurrencia, caos, determinismo y property-based testing.
 
 from __future__ import annotations
 
+import contextlib
 import random
 import threading
 import time
@@ -21,13 +22,11 @@ from motor.agents import (
     AgentStateMachine,
     AgentTask,
     AgentToolRunner,
-    DenialCode,
     ToolAdapter,
     ToolContract,
     ToolTimeoutError,
     ToolTransientError,
 )
-
 
 # ── Helpers ────────────────────────────────────────────
 
@@ -98,7 +97,7 @@ def test_state_machine_random_sequences() -> None:
 
 def test_scheduler_stress_1000_tasks() -> None:
     s = AgentScheduler(max_concurrent=10)
-    for i in range(1000):
+    for _i in range(1000):
         s.submit(_exec())
     time.sleep(1)
     results = s.shutdown(timeout=10)
@@ -139,7 +138,7 @@ def test_concurrent_agents_50() -> None:
 def test_mass_cancellation_500() -> None:
     s = AgentScheduler(max_concurrent=0)
     ids: list[str] = []
-    for i in range(500):
+    for _i in range(500):
         exec_obj = _exec()
         ids.append(exec_obj.agent_id)
         s.submit(exec_obj)
@@ -227,13 +226,9 @@ def test_gate_deterministic() -> None:
     )
     g1 = AgentCapabilityGate(e1)
     g2 = AgentCapabilityGate(e2)
-    try:
+    with contextlib.suppress(PermissionError):
         g1.check(AgentCapability.WEB_SEARCH)
-    except PermissionError:
-        pass
-    try:
+    with contextlib.suppress(PermissionError):
         g2.check(AgentCapability.WEB_SEARCH)
-    except PermissionError:
-        pass
     assert len(g1._decisions) > 0
     assert len(g2._decisions) > 0

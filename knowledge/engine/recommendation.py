@@ -64,7 +64,6 @@ class RecommendationValidator:
         Returns:
             Resultado de validación.
         """
-        warnings: list[str] = []
 
         if recommendation.kind == "create":
             if recommendation.target_id in all_node_ids:

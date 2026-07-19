@@ -2,12 +2,12 @@
 """main.py — Orquestador principal del sistema URA."""
 
 from __future__ import annotations
+
 import asyncio
 import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-
 
 from app.capturador import CapturadorTarget
 from app.gestor_archivos import GestorArchivosSeguro

@@ -30,6 +30,4 @@ def _es_critico(cat: str, sub: str, old, new) -> bool:
             return True
         if sub == "zombies" and isinstance(new, int) and new > 0:
             return True
-    if cat == "hw_health" and sub == "ok" and new is False:
-        return True
-    return False
+    return bool(cat == "hw_health" and sub == "ok" and new is False)

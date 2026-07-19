@@ -10,11 +10,13 @@ import logging
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from knowledge.engine.audit.backend import AuditBackend
 from knowledge.engine.audit.ndjson_backend import NDJSONAuditBackend
 from knowledge.engine.models import AuditEvent
+
+if TYPE_CHECKING:
+    from knowledge.engine.audit.backend import AuditBackend
 
 log = logging.getLogger("ura.knowledge.audit.service")
 

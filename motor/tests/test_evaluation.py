@@ -296,8 +296,9 @@ class TestEvaluationEngine:
 
     def test_router_independence(self) -> None:
         """El evaluador no depende del router LLM."""
-        import motor.core.evaluation as ev  # noqa: F811
         import inspect
+
+        import motor.core.evaluation as ev
 
         src = inspect.getsource(ev)
         assert "motor.core.llm.router" not in src, (

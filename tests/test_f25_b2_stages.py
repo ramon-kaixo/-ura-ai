@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from motor.core.fusion.base import BaseStage, PipelineStage
+from motor.core.fusion.base import BaseStage
 from motor.core.fusion.config import FusionConfig, make_config_hash
 from motor.core.fusion.engine import FusionStage
 from motor.core.fusion.models import (
-    EvidenceSet,
     FusionContext,
     FusionProvenance,
     FusionResult,
     KnowledgeClaim,
     KnowledgeFact,
-    SourceScore,
     StageProvenance,
     make_claim_id,
 )
@@ -33,7 +31,6 @@ from motor.core.fusion.stages import (
     ThresholdSelector,
 )
 from motor.core.web.citation.citation import CitationBundle, Evidence
-
 
 # ── B2.1: Deterministic pipeline stage flag ────────────────
 
@@ -358,7 +355,7 @@ def test_knowledge_delta_stage() -> None:
 # ── B2.10: MemoryCandidateSelectionStage ──────────────────
 
 def test_threshold_selector() -> None:
-    from motor.core.fusion.models import FusionResult, KnowledgeFact
+    from motor.core.fusion.models import KnowledgeFact
     facts = [
         KnowledgeFact(id="a", subject="S", predicate="P", object="O1", confidence=0.1),
         KnowledgeFact(id="b", subject="S", predicate="P", object="O2", confidence=0.5),
@@ -502,9 +499,12 @@ def test_merger_uses_evidence_ids() -> None:
 def test_provenance_all_fields_set() -> None:
     """Every stage populates its slice of FusionProvenance."""
     from motor.core.fusion.stages import (
-        ConflictDetectionStage, EntityResolutionStage,
-        KnowledgeDeltaStage, KnowledgeMergerStage,
-        MemoryCandidateSelectionStage, SourceScoringStage,
+        ConflictDetectionStage,
+        EntityResolutionStage,
+        KnowledgeDeltaStage,
+        KnowledgeMergerStage,
+        MemoryCandidateSelectionStage,
+        SourceScoringStage,
     )
 
     ctx = FusionContext(

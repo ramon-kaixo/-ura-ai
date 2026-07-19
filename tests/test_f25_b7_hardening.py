@@ -10,13 +10,11 @@ Cubre R07-01 a R07-15:
 
 from __future__ import annotations
 
-import concurrent.futures
 import hashlib
 import random
 import sys
 import threading
 import time
-from typing import Any
 
 import pytest
 
@@ -24,12 +22,9 @@ from motor.core.fusion.fact_history import FactHistory
 from motor.core.fusion.fact_index import FactIndex
 from motor.core.fusion.models import (
     Fact,
-    FactTombstone,
     FactVersion,
     VersionState,
     make_fact_id,
-    make_version_id,
-    normalize_identity,
 )
 
 _TS: list[float] = [0.0]
@@ -125,7 +120,7 @@ def test_concurrent_rollback_during_reads() -> None:
         for _ in range(20):
             with lock:
                 try:
-                    versions = [vid for vid in h._versions.keys() if vid != h.current_version_id]
+                    versions = [vid for vid in h._versions if vid != h.current_version_id]
                     if versions:
                         h.rollback(random.choice(versions))
                 except Exception as e:

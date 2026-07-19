@@ -5,9 +5,9 @@ import logging
 import time
 from typing import Any
 
-from core.memoria.qdrant_store import buscar_ideas
 from core.memoria.bridge import buscar_y_aprender
 from core.memoria.ingesto import procesados_local  # noqa: F401
+from core.memoria.qdrant_store import buscar_ideas
 
 log = logging.getLogger("memoria.consulta")
 
@@ -38,7 +38,6 @@ async def consultar(query: str, forzar_web: bool = False) -> dict:
             "busqueda_web": False,
         }
 
-    procesados_local = set()  # local per-call, not global
     web_results = await buscar_y_aprender(query, max_resultados=2)
 
     ideas_web = 0

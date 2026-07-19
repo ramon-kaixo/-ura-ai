@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -25,6 +24,7 @@ from knowledge.engine.vector_retriever import VectorAugmentedRetriever
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from pathlib import Path
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 

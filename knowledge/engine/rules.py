@@ -167,7 +167,6 @@ _FUNCTION_WHITELIST: dict[str, Any] = {
     "range": range,
     "reversed": reversed,
     "zip": zip,
-    "len": len,
 }
 
 _CONSTANT_WHITELIST = {
@@ -209,9 +208,8 @@ class _SafeEvalChecker(ast.NodeVisitor):
             raise UnsafeExpressionError(f"Número máximo de nodos excedido ({_MAX_AST_NODES})")
 
         # 4. Bloquear dunder methods (__class__, __bases__, etc.)
-        if isinstance(node, ast.Attribute):
-            if node.attr.startswith("_"):
-                raise UnsafeExpressionError(f"Acceso a atributo privado/dunder no permitido: {node.attr}")
+        if isinstance(node, ast.Attribute) and node.attr.startswith("_"):
+            raise UnsafeExpressionError(f"Acceso a atributo privado/dunder no permitido: {node.attr}")
 
         # 5. Verificar llamadas a función
         if isinstance(node, ast.Call):

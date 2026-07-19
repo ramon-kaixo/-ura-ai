@@ -19,17 +19,14 @@ from motor.core.fusion.models import (
     Fact,
     FactVersion,
     FusionResult,
-    KnowledgeClaim,
     KnowledgeFact,
     make_fact_id,
-    make_claim_id,
 )
 from motor.core.fusion.stages import (
     ExtractionStage,
     NormalizationStage,
 )
 from motor.core.web.citation.citation import CitationBundle, Evidence
-
 
 # ── E2E: Pipeline completo → FactIndex → Contexto ─────
 
@@ -208,7 +205,7 @@ Pregunta: ¿Qué vende Apple?
     print("  FLUJO VERTICAL COMPLETO VERIFICADO:")
     print(f"    1. Pipeline produjo {len(result.accepted)} facts")
     print(f"    2. FactIndex indexo {result.index.size} facts")
-    print(f"    3. Proyeccion a SemanticFact disponible")
+    print("    3. Proyeccion a SemanticFact disponible")
     print(f"    4. ContextBuilder genero {len(context)} chars")
     print(f"    5. Prompt listo para LLM ({len(prompt)} chars)")
 
@@ -219,7 +216,7 @@ Pregunta: ¿Qué vende Apple?
 def test_e2e_context_filters_obsolete() -> None:
     """FactIndex con versión SUPERSEDED no debe aparecer en el contexto."""
     from motor.core.fusion.fact_index import FactIndex
-    from motor.core.fusion.models import Fact, FactVersion, VersionState, make_fact_id
+    from motor.core.fusion.models import Fact, FactVersion, make_fact_id
 
     fid = make_fact_id("Apple", "sells", "oranges")
     fact = Fact(fact_id=fid, subject="Apple", predicate="sells", object="oranges")
@@ -240,7 +237,7 @@ def test_e2e_context_after_rollback() -> None:
     """Rollback → solo la versión restaurada aparece en contexto."""
     from motor.core.fusion.fact_history import FactHistory
     from motor.core.fusion.fact_index import FactIndex
-    from motor.core.fusion.models import Fact, FactVersion, VersionState, make_fact_id
+    from motor.core.fusion.models import Fact, FactVersion, make_fact_id
 
     fid = make_fact_id("Tesla", "makes", "cars")
     fact = Fact(fact_id=fid, subject="Tesla", predicate="makes", object="cars")
@@ -294,6 +291,7 @@ def test_e2e_context_after_tombstone() -> None:
 def test_benchmark_e2e_full_flow() -> None:
     """Benchmark del flujo completo: Evidence → Prompt."""
     import time
+
     from motor.core.fusion.stages import KnowledgeMergerStage
 
     pipeline = FusionPipeline(stages=[
@@ -336,7 +334,7 @@ def test_benchmark_e2e_full_flow() -> None:
         sum(sys.getsizeof(kf) for kf in result.accepted) if result.accepted else 0
     )
 
-    print(f"\n  E2E Benchmark (100 evidencias):")
+    print("\n  E2E Benchmark (100 evidencias):")
     print(f"    Pipeline: {pipeline_t*1000:.1f}ms")
     print(f"    ContextBuilder: {context_t*1000:.1f}ms")
     print(f"    Total: {total_t*1000:.1f}ms")

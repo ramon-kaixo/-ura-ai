@@ -23,22 +23,22 @@ Cubre los 18 constraints arquitectónicos:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from motor.agents import (
-    Agent,
-    AgentAuditRecord,
     AgentOrchestrator,
     AgentResult,
     AgentState,
     AgentTask,
     AuditLogger,
-    AuditEvent,
     CapabilityGate,
     Planner,
     Scheduler,
     ToolRunner,
 )
-from motor.agents.models import AgentCapability
 
+if TYPE_CHECKING:
+    from motor.agents.models import AgentCapability
 
 # ── Mocks ──────────────────────────────────────────────
 
@@ -214,6 +214,7 @@ def test_planner_replacement() -> None:
 
 def test_no_direct_imports() -> None:
     import inspect
+
     import motor.agents.agent as mod
     source = inspect.getsource(mod)
     assert "motor.memory" not in source

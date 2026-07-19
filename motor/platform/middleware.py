@@ -8,17 +8,20 @@ OBS-09: System works if tracing fails.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from motor.platform.models import (
-    ProtocolEnvelope,
-)
 from motor.platform.tracing import (
     TraceContext,
     TraceExporter,
     record_latency,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from motor.platform.models import (
+        ProtocolEnvelope,
+    )
 
 _T = Any  # return type
 

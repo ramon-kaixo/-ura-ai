@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
-
+from typing import TYPE_CHECKING
 
 from motor.plugin.base import PluginBase
 from motor.plugin.manifest import PluginManifest
 from motor.plugin.registry_v2 import PluginRegistryV2
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _make_legacy_plugin(path: Path, name: str) -> Path:

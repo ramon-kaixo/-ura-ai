@@ -6,12 +6,16 @@ import logging
 import threading
 import time
 import uuid
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentTask
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from motor.intelligence.agents.base import Agent
 
 log = logging.getLogger("ura.agent.parallel")
 

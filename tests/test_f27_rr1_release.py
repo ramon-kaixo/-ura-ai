@@ -7,8 +7,6 @@ todos los contratos G-01 a G-08.
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from motor.agents import (
@@ -18,14 +16,8 @@ from motor.agents import (
     AgentPolicy,
     AgentScheduler,
     AgentTask,
-    AgentToolRunner,
-    DenialCode,
     RuleBasedPlanner,
-    ToolAdapter,
-    ToolContract,
-    ToolTimeoutError,
 )
-
 
 # ═══════════════════════════════════════════════════
 # RR1.1: G-01 — Agentes son consumidores
@@ -65,6 +57,7 @@ def test_g02_no_direct_modification() -> None:
 def test_g03_official_apis() -> None:
     """AgentOrchestrator solo usa ABCs, no acceso directo."""
     import inspect
+
     import motor.agents.agent as mod
     source = inspect.getsource(mod)
     assert "motor.memory" not in source
@@ -135,6 +128,7 @@ def test_g06_determinism() -> None:
 def test_g07_scheduler_no_business_logic() -> None:
     """Scheduler solo planifica, prioriza, cancela, reintenta."""
     import inspect
+
     import motor.agents.scheduler as mod
     source = inspect.getsource(mod)
     assert "Planner" not in source or "from motor.agents.base import Planner" not in source

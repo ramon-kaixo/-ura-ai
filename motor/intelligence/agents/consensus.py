@@ -5,9 +5,10 @@ from __future__ import annotations
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from motor.intelligence.agents.message import AgentResult
+if TYPE_CHECKING:
+    from motor.intelligence.agents.message import AgentResult
 
 
 @dataclass
@@ -119,7 +120,7 @@ class UnanimousVoting(VotingStrategy):
                 total_votes=1,
                 strategy=self.name(),
             )
-        first_key = self._result_key(results[0])
+        self._result_key(results[0])
         tally: dict[str, list[AgentResult]] = {}
         for r in results:
             key = self._result_key(r)

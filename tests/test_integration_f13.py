@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.extractor import RuleBasedFactExtractor
 from motor.intelligence.memory.extractor_llm import LLMFactExtractor

@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
-from knowledge.engine.models import Document, Relation, SearchResult
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from knowledge.engine.models import Document, Relation, SearchResult
 
 log = logging.getLogger("ura.knowledge.repository")
 
@@ -132,6 +134,7 @@ class SQLiteKnowledgeRepository:
 
     def get_documents_for_rules(self) -> tuple[list[dict], set[str], set[str]]:
         import json
+
         from knowledge.engine.connection import open_db
 
         conn = open_db(self._db_path)

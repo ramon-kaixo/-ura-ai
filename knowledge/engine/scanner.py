@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import datetime
 import hashlib
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from knowledge.engine.models import MAX_PARSE_SIZE, CompileError, Snapshot, SourceObject
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError]]:

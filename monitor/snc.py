@@ -15,7 +15,6 @@ import subprocess
 import sys
 import threading
 import time
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -353,7 +352,7 @@ def poll_services(runbook: dict) -> dict:
             openclaw_stable_since = None
 
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
-            subprocess.run(  # noqa: S603,S607
+            subprocess.run(  # noqa: S603
                 [PKILL, "-TERM", "-f", "openclaw"],
                 capture_output=True,
                 text=True,
@@ -422,7 +421,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 
     result: list[tuple[int, str, float]] = []
     try:
-        out = subprocess.run(  # noqa: S603
+        out = subprocess.run(
             ["ps", "aux", "--sort=-%cpu"],  # noqa: S607
             capture_output=True,
             text=True,
@@ -455,7 +454,7 @@ def check_opencode_colgado() -> int | None:
     """
     try:
         pid = subprocess.run(  # noqa: S603
-            [PGREP, "-x", "opencode"],  # noqa: S607
+            [PGREP, "-x", "opencode"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -569,7 +568,7 @@ def _check_umbrales(state: dict) -> bool:
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
     try:
-        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)  # noqa: S603,S607
+        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)  # noqa: S603
         _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
     except subprocess.TimeoutExpired:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")

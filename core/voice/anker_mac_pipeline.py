@@ -57,7 +57,7 @@ class AnkerMacPipeline:
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
         except Exception:
-            pass  # noqa: S110
+            pass
         return None
 
     def _audio_callback(self, indata, frames, time, status) -> None:

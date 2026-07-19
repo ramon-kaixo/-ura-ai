@@ -3,7 +3,7 @@
 
 import json
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPORT_PATH = Path("docs/architecture/RC_READINESS.md")
@@ -29,7 +29,7 @@ def generate() -> str:
     env_f = Path("motor/data/f14/environment.json")
     env = json.loads(env_f.read_text()) if env_f.exists() else {}
     findings_path = Path("motor/data/f14/findings.json")
-    all_findings = json.loads(findings_path.read_text()) if findings_path.exists() else []
+    json.loads(findings_path.read_text()) if findings_path.exists() else []
 
     lines = []
 
@@ -38,16 +38,16 @@ def generate() -> str:
 
     out("# Release Candidate Readiness — RC Audit")
     out()
-    out(f"> Generado: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}")
+    out(f"> Generado: {datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}")
     out(f"> Versión: `{get_git_tag()}`")
-    out(f"> Basado en F14 — Bloques 1–4")
+    out("> Basado en F14 — Bloques 1–4")
     out()
 
     # ── Executive Summary ────────────────────────────────────────────
     out("## Resumen Ejecutivo")
     out()
     out("Se ejecutaron 4 bloques de validación operativa sobre el sistema URA ")
-    out(f"en GX10 (20 cores ARM, 128GB RAM, NVIDIA GB10):")
+    out("en GX10 (20 cores ARM, 128GB RAM, NVIDIA GB10):")
     out()
     out("| Bloque | Escenarios | PASS | PARTIAL | FAIL | Duración |")
     out("|--------|-----------|:----:|:-------:|:----:|:--------:|")
@@ -55,7 +55,7 @@ def generate() -> str:
     sc_r = resilience.get("scenarios", [])
     sc_e = e2e.get("scenarios", [])
     sc_p = profiling.get("scenarios", [])
-    l05_sat = load_l05.get("saturation", {})
+    load_l05.get("saturation", {})
 
     def counts(scs):
         p = sum(1 for s in scs if s.get("veredict") == "PASS")
@@ -94,16 +94,16 @@ def generate() -> str:
     out()
     out("| Parámetro | Valor |")
     out("|-----------|-------|")
-    out(f"| Hardware | GX10 (NVIDIA GB10) |")
+    out("| Hardware | GX10 (NVIDIA GB10) |")
     out(f"| CPU | {env.get('cpu_cores', '?')} cores ARM |")
     out(f"| RAM | {env.get('ram_total_gb', '?')} GB |")
     out(f"| OS | {env.get('platform', '?')} |")
     out(f"| Python | {env.get('python', '?')} |")
     out(f"| Commit | `{env.get('commit_sha', '?')[:12]}` |")
     out(f"| Tag | `{get_git_tag()}` |")
-    out(f"| Qdrant | Docker (real) |")
-    out(f"| Ollama | 14 modelos nativos |")
-    out(f"| Almacenamiento | NVMe (con restricción read-only en /opt/motor/data/snapshots/) |")
+    out("| Qdrant | Docker (real) |")
+    out("| Ollama | 14 modelos nativos |")
+    out("| Almacenamiento | NVMe (con restricción read-only en /opt/motor/data/snapshots/) |")
     out()
 
     # ── 10 Criteria ──────────────────────────────────────────────────

@@ -213,7 +213,7 @@ class GuardianOpenCLaw:
                 mensaje = f"El paquete '{paquete}' requiere autorización. ¿Autorizar instalación? (s/n): "
 
             respuesta = input(mensaje).strip().lower()
-            return respuesta == "s" or respuesta == "si" or respuesta == "sí"
+            return respuesta in {"s", "si", "sí"}
 
         except Exception as e:
             logger.error(f"Error solicitando autorización: {e}")
@@ -230,7 +230,7 @@ class GuardianOpenCLaw:
             return False
 
         campos_password = []
-        for key, value in formulario.items():
+        for key in formulario:
             key_lower = key.lower()
             if "password" in key_lower or "pass" in key_lower or "pwd" in key_lower:
                 campos_password.append(key)

@@ -113,11 +113,11 @@ def run(name, retriever_fn, queries, rel_map, reranker=None):
 def main():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
-    from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.lexical import LexicalRetriever
-    from motor.intelligence.retrieval.hybrid import HybridRetriever
-    from motor.intelligence.reranking.noop import NoOpReranker
     from motor.intelligence.reranking.llm import LLMReranker
+    from motor.intelligence.reranking.noop import NoOpReranker
+    from motor.intelligence.retrieval.hybrid import HybridRetriever
+    from motor.intelligence.retrieval.lexical import LexicalRetriever
+    from motor.intelligence.retrieval.vector import VectorRetriever
 
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
@@ -133,8 +133,8 @@ def main():
     hybrid = HybridRetriever(vec, lex, alpha=0.7, beta=0.3)
 
     configs = {
-        "Vector only": lambda q, k: vec.search(q, k),
-        "Hybrid (NoOp reranker)": lambda q, k: hybrid.search(q, k),
+        "Vector only": vec.search,
+        "Hybrid (NoOp reranker)": hybrid.search,
     }
 
     all_results = {}
@@ -143,7 +143,7 @@ def main():
 
     # Hybrid + NoOpReranker
     all_results["Hybrid + NoOp"] = run(
-        "Hybrid+NoOp", lambda q, k: hybrid.search(q, k), queries, rel_map, reranker=NoOpReranker()
+        "Hybrid+NoOp", hybrid.search, queries, rel_map, reranker=NoOpReranker()
     )
 
     # Hybrid + LLMReranker (only first 50 queries due to time)
@@ -153,13 +153,12 @@ def main():
     llm = LLMReranker(top_k=5)
     all_results["Hybrid + LLM"] = run(
         "Hybrid+LLM",
-        lambda q, k: hybrid.search(q, k),
+        hybrid.search,
         small_queries,
         small_rel,
         reranker=llm,
     )
 
-    metrics = ["Recall@10", "Precision@5", "MRR", "MAP", "nDCG@10", "P50", "P95", "P99", "Throughput", "No-context"]
     print(f"\n{'=' * 100}")
     print(
         f"  {'Config':<25} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
@@ -175,7 +174,7 @@ def main():
 
     # Acceptance for Hybrid+Reranker vs criteria
     print(f"\n{'=' * 100}")
-    print(f"  Acceptance Criteria (Hybrid + Reranker)")
+    print("  Acceptance Criteria (Hybrid + Reranker)")
     print(f"{'=' * 100}")
 
     for reranker_name in ["Hybrid + NoOp", "Hybrid + LLM"]:

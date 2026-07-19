@@ -37,7 +37,7 @@ def ct1_journal_corrupt() -> dict:
     journal2 = Journal(path=tmp)
     count = 0
     try:
-        for entry in journal2.read():
+        for _entry in journal2.read():
             count += 1
     except Exception as e:
         return {

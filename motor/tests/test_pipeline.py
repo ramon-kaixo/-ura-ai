@@ -36,7 +36,7 @@ def test_diff_in_pipeline():
         "contenedores": {"running": 3},
         "hw_health": {"ok": False},
     }
-    cnt, anom = compute_diff(c, p)
+    cnt, _anom = compute_diff(c, p)
     assert cnt > 0
     print("  ✅ test_diff_in_pipeline")
 

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from enum import Enum
 from threading import Lock
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 T = TypeVar("T")
 

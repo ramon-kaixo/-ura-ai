@@ -91,7 +91,7 @@ def _load_manifest(output: Path) -> dict[str, str]:
         try:
             return json.loads(manifest_file.read_text())
         except (json.JSONDecodeError, OSError):
-            pass  # noqa: S110
+            pass
     return {}
 
 
@@ -203,9 +203,9 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
 
                 content = f"""# {_safe_markdown(title)}
 
-**Type:** {_safe_markdown(doc_type)}  
-**ID:** `{doc_id}`  
-**Path:** `{_safe_markdown(r["path"])}`  
+**Type:** {_safe_markdown(doc_type)}
+**ID:** `{doc_id}`
+**Path:** `{_safe_markdown(r["path"])}`
 **Tags:** {", ".join(_safe_markdown(t) for t in (fm.get("tags", []) or [])) if fm.get("tags") else "none"}
 
 ---
@@ -283,7 +283,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
             "site_name": "Knowledge Base",
             "site_description": "URA Knowledge Engine — Generated Documentation",
             "theme": "material",
-            "nav": [{"Home": "index.md"}] + nav,
+            "nav": [{"Home": "index.md"}, *nav],
             "plugins": ["search"],
             "markdown_extensions": ["admonition", "pymdownx.superfences"],
         }
@@ -296,7 +296,7 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
         # 6. Generar index.md
         index_lines = [
             "# Knowledge Base\n",
-            f"Generated from Knowledge Engine v0.2.0\n",
+            "Generated from Knowledge Engine v0.2.0\n",
             f"**{count} documents**\n",
             "\n## Categories\n",
         ]

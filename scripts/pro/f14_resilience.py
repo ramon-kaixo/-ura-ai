@@ -13,6 +13,7 @@ recovery_time, data_loss, verdict.
 No corrige ningún defecto. Solo mide, documenta, informa.
 """
 
+import contextlib
 import csv
 import json
 import os
@@ -21,10 +22,9 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_PROJECT_ROOT))
@@ -34,7 +34,7 @@ OUTPUT_DIR = _PROJECT_ROOT / "motor" / "data" / "benchmarks" / "f14" / "resilien
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ENV = {
-    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "timestamp": datetime.now(UTC).isoformat(),
     "hostname": platform.node(),
     "platform": platform.platform(),
     "python": platform.python_version(),
@@ -125,9 +125,9 @@ def wait_for_ollama(timeout: int = 60) -> float:
 def _make_hybrid_retriever():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
-    from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.hybrid import HybridRetriever
+    from motor.intelligence.retrieval.lexical import LexicalRetriever
+    from motor.intelligence.retrieval.vector import VectorRetriever
 
     config = UraConfig(qdrant_host="localhost", qdrant_port=6333)
     qdrant = QdrantClient(config)
@@ -289,10 +289,7 @@ def scenario_r02() -> dict[str, Any]:
     recovery_time = wait_for_ollama(timeout=60)
     print(f"    R02: Ollama {'restaurado' if not still_running else 'ya estaba activo'} en {recovery_time}s")
 
-    if still_running:
-        verdict = "PARTIAL"
-    else:
-        verdict = "PASS" if recovery_time < 60 else "PARTIAL"
+    verdict = "PARTIAL" if still_running else "PASS" if recovery_time < 60 else "PARTIAL"
 
     return {
         "id": "R02",
@@ -386,10 +383,8 @@ def scenario_r04() -> dict[str, Any]:
     observed = ""
 
     def launch_workflow(idx: int):
-        try:
+        with contextlib.suppress(Exception):
             rt.execute_workflow(f"cancelable-task-{idx}", timeout=120)
-        except Exception:
-            pass
 
     # Lanzar 10 workflows en paralelo
     for i in range(10):
@@ -398,7 +393,7 @@ def scenario_r04() -> dict[str, Any]:
         t.start()
 
     time.sleep(0.5)
-    print(f"    R04: 10 workflows lanzados, cancelando...")
+    print("    R04: 10 workflows lanzados, cancelando...")
 
     # Cancelar todos (simulado — el runtime no expone cancelación masiva)
     try:
@@ -490,7 +485,7 @@ def scenario_r06() -> dict[str, Any]:
     data_loss = True
     auto_recovery = True
 
-    from motor.intelligence.memory.episodic import EpisodeStore, EpisodeStoreConfig, Episode
+    from motor.intelligence.memory.episodic import Episode, EpisodeStore, EpisodeStoreConfig
 
     mem_path = _PROJECT_ROOT / "motor" / "data" / "f14_episodic_test.db"
 
@@ -592,7 +587,7 @@ def scenario_r07() -> dict[str, Any]:
     print("    R07: Forzando presión de RAM...")
     big_objects: list[dict] = []
     try:
-        for i in range(1000):
+        for _i in range(1000):
             big_objects.append({str(j): "x" * 10000 for j in range(100)})
     except MemoryError:
         observed += "MemoryError al crear objetos grandes (esperado) | "
@@ -647,10 +642,7 @@ def scenario_r08() -> dict[str, Any]:
 
         # Simular reinicio: verificar que el sistema externo sobrevive
         # (Qdrant, Ollama, archivos de BD)
-        if qdrant_health():
-            observed = "Qdrant responde OK después de operaciones"
-        else:
-            observed = "Qdrant no responde"
+        observed = "Qdrant responde OK después de operaciones" if qdrant_health() else "Qdrant no responde"
 
         if memstore_exists():
             observed += " | MemoryStore persistente intacto"
@@ -680,7 +672,7 @@ def scenario_r08() -> dict[str, Any]:
 
 def memstore_exists() -> bool:
     """Check if any memory store files exist."""
-    for p in _PROJECT_ROOT.rglob("*memory*.db"):
+    for _p in _PROJECT_ROOT.rglob("*memory*.db"):
         return True
     return False
 
@@ -826,7 +818,7 @@ def scenario_r10() -> dict[str, Any]:
     # 3. Restaurar ambos
     docker_exec(["docker", "start", "ura-qdrant"])
     docker_exec(["systemctl", "start", "ollama"], timeout=30)
-    t0 = time.monotonic()
+    time.monotonic()
 
     q_recovery = wait_for_qdrant(timeout=30)
     o_recovery = wait_for_ollama(timeout=60)
@@ -842,10 +834,7 @@ def scenario_r10() -> dict[str, Any]:
         observed += f" | Post-restauración: retrieval falló: {e}"
         auto_recovery = False
 
-    if still_running:
-        verdict = "PARTIAL"
-    else:
-        verdict = "PASS" if (auto_recovery and recovery_time < 60) else "PARTIAL"
+    verdict = "PARTIAL" if still_running else "PASS" if auto_recovery and recovery_time < 60 else "PARTIAL"
 
     return {
         "id": "R10",
@@ -887,7 +876,7 @@ CSV_FIELDS = [
 
 
 def save_results(results: list[dict[str, Any]]):
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     base = OUTPUT_DIR / f"resilience_{ts}"
 
     data = {

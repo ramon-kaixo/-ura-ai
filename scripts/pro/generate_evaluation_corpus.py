@@ -315,9 +315,7 @@ def generate_corpus() -> None:
                 topic_map.setdefault(qid, []).extend(["testing"])
             elif "benchmark" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["testing", "benchmark"])
-            elif "coverage" in qid.lower():
-                topic_map.setdefault(qid, []).extend(["testing"])
-            elif "tmp_path" in qid.lower() or "conftest" in qid.lower():
+            elif "coverage" in qid.lower() or "tmp_path" in qid.lower() or "conftest" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["testing"])
             else:
                 topic_map.setdefault(qid, []).extend(["testing", "system"])
@@ -340,9 +338,7 @@ def generate_corpus() -> None:
                 topic_map.setdefault(qid, []).extend(["knowledge", "qdrant"])
             elif (
                 "latency" in qid.lower() or "p50" in qid.lower() or "p95" in qid.lower() or "throughput" in qid.lower()
-            ):
-                topic_map.setdefault(qid, []).extend(["benchmark", "search"])
-            elif "ndcg" in qid.lower() or "mrr" in qid.lower() or "map" in qid.lower():
+            ) or "ndcg" in qid.lower() or "mrr" in qid.lower() or "map" in qid.lower():
                 topic_map.setdefault(qid, []).extend(["benchmark", "search"])
             elif (
                 "corpus" in qid.lower()
@@ -393,11 +389,11 @@ def generate_corpus() -> None:
 
     total_rel = len(open(f"{base_dir}/relevance.jsonl").readlines())
     unique_docs = len(
-        set(
+        {
             line.split('"doc_id":')[1].split('"')[1]
             for line in open(f"{base_dir}/relevance.jsonl")
             if '"doc_id":' in line
-        )
+        }
     )
 
     metadata = {

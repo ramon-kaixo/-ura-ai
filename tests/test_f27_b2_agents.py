@@ -14,21 +14,17 @@ import pytest
 
 from motor.agents import (
     Agent,
-    AgentAuditRecord,
     AgentCapability,
     AgentContext,
     AgentExecution,
-    AgentPlan,
     AgentPolicy,
     AgentResult,
     AgentState,
     AgentStateMachine,
     AgentTask,
-    AuditEvent,
     AuditLogger,
     CapabilityGate,
     Executor,
-    PlanStep,
     Planner,
     Scheduler,
     StateMachine,
@@ -40,7 +36,6 @@ from motor.agents import (
     make_step_id,
     make_task_id,
 )
-
 
 # ═══════════════════════════════════════════════════
 # B2.1: IDs deterministas

@@ -47,7 +47,7 @@ def test_detect_no_trends():
     cfg = UraConfig()
     cal = Calibration(cfg)
     res = cal.detect([])
-    assert res["ok"] == True
+    assert res["ok"]
     assert len(res["anomalias"]) == 0
 
 
@@ -101,7 +101,7 @@ def test_pattern_matcher_empty():
     scan.contenedores_ko = []
     scan.diff_total = 0
     cfg = UraConfig()
-    incidents, costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) == 0
 
 
@@ -118,9 +118,9 @@ def test_pattern_matcher_failure():
     scan.contenedores_ko = ["agent-foo"]
     scan.diff_total = 5
     cfg = UraConfig()
-    incidents, costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) >= 5
-    tipos = set(i["tipo"] for i in incidents)
+    tipos = {i["tipo"] for i in incidents}
     assert "ServiceFailure" in tipos
     assert "ResourcePressure" in tipos
     assert "ConfigConflict" in tipos

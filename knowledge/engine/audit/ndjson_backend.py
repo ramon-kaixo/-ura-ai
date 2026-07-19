@@ -8,6 +8,7 @@ Ingesta atómica: rename() → INSERT → unlink() (nunca pérdida de eventos).
 
 from __future__ import annotations
 
+import contextlib
 import fcntl
 import json
 import logging
@@ -65,23 +66,17 @@ class NDJSONAuditBackend:
             return True
         except (OSError, BlockingIOError):
             if self._lock_fd is not None:
-                try:
+                with contextlib.suppress(OSError):
                     os.close(self._lock_fd)
-                except OSError:
-                    pass  # noqa: S110
                 self._lock_fd = None
             return False
 
     def _release_flock(self) -> None:
         if self._lock_fd is not None:
-            try:
+            with contextlib.suppress(OSError):
                 fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
-            except OSError:
-                pass  # noqa: S110
-            try:
+            with contextlib.suppress(OSError):
                 os.close(self._lock_fd)
-            except OSError:
-                pass  # noqa: S110
             self._lock_fd = None
 
     # ── Public API ────────────────────────────────────────────────────────
@@ -141,10 +136,8 @@ class NDJSONAuditBackend:
             return AuditHealth(healthy=False, error=str(exc))
 
     def close(self) -> None:
-        try:
+        with contextlib.suppress(OSError):
             self._handle.close()
-        except OSError:
-            pass  # noqa: S110
         self._release_flock()
 
     # ── Rotación (con flock) ─────────────────────────────────────────────
@@ -274,11 +267,9 @@ class NDJSONAuditBackend:
 
             audit_ingest_duration_seconds.observe(_time.monotonic() - _t0)
         except Exception:
-            pass  # noqa: S110
+            pass
 
         # Limpiar archivo procesado
-        try:
+        with contextlib.suppress(OSError):
             processing.unlink()
-        except OSError:
-            pass  # noqa: S110
         return ingested

@@ -27,9 +27,12 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from knowledge.engine.connection import open_db
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.determinism")
 

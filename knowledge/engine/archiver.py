@@ -81,7 +81,7 @@ def _ensure_dir(path: Path) -> Path:
     return path
 
 
-def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:  # noqa: S603,S607
+def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     import shutil
 
     git_path = shutil.which("git") or "/usr/bin/git"
@@ -224,14 +224,14 @@ def archive_source(
             size_bytes=compressed_size,
         )
     except Exception:
-        pass  # noqa: S110
+        pass
 
     try:
         from knowledge.engine.metrics import archive_duration_seconds
 
         archive_duration_seconds.observe(_time.monotonic() - _t0)
     except Exception:
-        pass  # noqa: S110
+        pass
     return manifest
 
 
@@ -342,7 +342,7 @@ def restore_source(
 
     # Clonar desde bundle
     dest_dir.mkdir(parents=True, exist_ok=True)
-    result = subprocess.run(  # noqa: S603,S607
+    result = subprocess.run(  # noqa: S603
         ["git", "clone", str(bundle_path), str(dest_dir)],  # noqa: S607  -- paths validados con _resolve_within
         capture_output=True,
         text=True,

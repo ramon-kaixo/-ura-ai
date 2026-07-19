@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import psutil
@@ -18,10 +18,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
-from motor.intelligence.memory import EpisodeStore, Episode, EpisodeStoreConfig
+from motor.intelligence.memory import Episode, EpisodeStore, EpisodeStoreConfig
 from motor.intelligence.retrieval.hybrid import HybridRetriever
-from motor.intelligence.retrieval.vector import VectorRetriever
 from motor.intelligence.retrieval.lexical import LexicalRetriever
+from motor.intelligence.retrieval.vector import VectorRetriever
 from motor.observability import MetricsRegistry
 
 DATA_DIR = Path("motor/data/benchmarks/f14/profiling")
@@ -37,7 +37,7 @@ def record_finding(scenario_id: str, description: str, impact: str):
             "scenario": scenario_id,
             "description": description,
             "impact": impact,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -190,7 +190,7 @@ def scenario_p01(snap: Snapshotter, duration_s: int = 300) -> dict:
     observed = []
     snap.start()
     for _ in range(int(duration_s / snap.interval)):
-        s = snap.snap(load_desc="reposo")
+        snap.snap(load_desc="reposo")
         time.sleep(snap.interval)
     observed.append(f"Reposo mantenido {duration_s}s, {len(snap.series())} muestras")
     summary = snap.summary()
@@ -226,7 +226,7 @@ def scenario_p02(snap: Snapshotter, duration_s: int = 600) -> dict:
         load_task(5)
         load_task_memory(10)
         load_task_metrics(snap._metrics, 10)
-        s = snap.snap(load_desc=f"carga media (step {step})")
+        snap.snap(load_desc=f"carga media (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga media {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
     summary = snap.summary()
@@ -264,7 +264,7 @@ def scenario_p03(snap: Snapshotter, duration_s: int = 180) -> dict:
         load_task(20)
         load_task_memory(50)
         load_task_metrics(snap._metrics, 50)
-        s = snap.snap(load_desc=f"carga pico (step {step})")
+        snap.snap(load_desc=f"carga pico (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga pico {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
     summary = snap.summary()
@@ -295,7 +295,7 @@ def scenario_p04(snap: Snapshotter, duration_s: int = 300) -> dict:
     snap.start()
     for _ in range(int(duration_s / snap.interval)):
         gc.collect()
-        s = snap.snap(load_desc="post-carga (reposo con GC)")
+        snap.snap(load_desc="post-carga (reposo con GC)")
         time.sleep(snap.interval)
     observed.append(f"Post-carga {duration_s}s con GC cada {snap.interval}s, {len(snap.series())} muestras")
     summary = snap.summary()
@@ -383,10 +383,7 @@ def run(scenario_ids: list[str] | None = None, durations: dict | None = None) ->
         "P04": lambda: scenario_p04(Snapshotter(interval=10), durations.get("P04", 300)),
         "P05": lambda: scenario_p05(Snapshotter(interval=10), cycles=3, cycle_duration_s=durations.get("P05", 180)),
     }
-    if scenario_ids:
-        to_run = {k: v for k, v in all_scenarios.items() if k in scenario_ids}
-    else:
-        to_run = all_scenarios
+    to_run = {k: v for k, v in all_scenarios.items() if k in scenario_ids} if scenario_ids else all_scenarios
 
     results = []
     for sid, fn in to_run.items():
@@ -415,7 +412,7 @@ def run(scenario_ids: list[str] | None = None, durations: dict | None = None) ->
 
 
 def save_results(results: list[dict], env: dict):
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     data = {
         "timestamp": timestamp,
         "environment": env,

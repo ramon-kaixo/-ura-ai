@@ -11,7 +11,8 @@ from typing import Optional
 import httpx
 
 from motor.core.config import UraConfig
-from motor.core.llm import embed as llm_embed, embed_async as llm_embed_async
+from motor.core.llm import embed as llm_embed
+from motor.core.llm import embed_async as llm_embed_async
 from motor.core.state import DegradedMode
 
 log = logging.getLogger("ura.qdrant")
@@ -194,7 +195,7 @@ class QdrantClient:
     # Sync wrapper — hilo secundario si el loop ya está corriendo
     def generar_embedding(self, texto: str) -> list[float]:
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             return asyncio.run(self.generar_embedding_async(texto))
         with ThreadPoolExecutor(max_workers=1) as executor:

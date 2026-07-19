@@ -28,7 +28,6 @@ from motor.core.web.citation.citation import CitationBundle, Evidence
 from motor.memory import FactRef as MemoryFactRef
 from motor.memory import Memory, MemoryEntry, MemoryEventType, make_entry_id
 
-
 # ═══════════════════════════════════════════════════
 # B3.1: F25 → F26 integration pipeline
 # ═══════════════════════════════════════════════════
@@ -85,7 +84,7 @@ def test_memory_subscription(tmp_path: str) -> None:
     memory = Memory(snapshot_path=snap, journal_path=journal)
 
     received: list[MemoryEntry] = []
-    memory.subscribe(lambda e: received.append(e))
+    memory.subscribe(received.append)
 
     # Escribir entry via Fusion bridge
     ref = MemoryFactRef(fact_id="f1", version_id="v1", subject="S", predicate="P", object="O")

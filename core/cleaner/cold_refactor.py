@@ -1,10 +1,13 @@
 """cold_refactor.py — Capa 3: Deuda tecnica y tuneladora."""
 
 from __future__ import annotations
-import json, logging
+
+import json
+import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 from mochila_engine import BASE_DIR
 
 logger = logging.getLogger(__name__)
@@ -127,4 +130,4 @@ class ColdRefactor:
             return None
 
     def _n(s):
-        return datetime.now(tz=timezone.utc).isoformat()
+        return datetime.now(tz=UTC).isoformat()

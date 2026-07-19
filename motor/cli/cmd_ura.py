@@ -41,7 +41,7 @@ def cmd_finalize(config: UraConfig, args):
     print("=" * 40, file=sys.stderr)
 
     print("\n[0/5] Unit tests (56 checks: imports, schema, cache, IPs)", file=sys.stderr)
-    ok, output = _run(["python3", "tests/test_unit.py"], "Unit tests")
+    ok, _output = _run(["python3", "tests/test_unit.py"], "Unit tests")
     if not ok:
         print("  Ejecuta: python3 tests/test_unit.py", file=sys.stderr)
         return 1

@@ -157,7 +157,7 @@ def main():
     # Print comparison table
     versions = list(all_results.keys())
     print(f"\n{'=' * 75}")
-    print(f"  KE 1.x vs KE 2.0 — Chunking Comparison")
+    print("  KE 1.x vs KE 2.0 — Chunking Comparison")
     print(f"{'=' * 75}")
     print(f"{'Metric':<22} {'KE 1.x':<12} {'KE 2.0':<12} {'Delta':<10} {'Pass?':<10}")
     print(f"{'-' * 66}")

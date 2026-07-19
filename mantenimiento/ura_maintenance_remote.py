@@ -102,7 +102,7 @@ def get_swarm_devices() -> dict:
         return {}
 
 
-def run_remote_maintenance(ip: str, user: str = None) -> dict:
+def run_remote_maintenance(ip: str, user: str | None = None) -> dict:
     """Ejecutar mantenimiento en nodo remoto de forma segura"""
     if user is None:
         user = CONFIG["ssh_user"]

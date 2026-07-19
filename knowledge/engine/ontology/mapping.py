@@ -9,8 +9,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-from knowledge.engine.ontology.internal import KnowledgeAsset
+if TYPE_CHECKING:
+    from knowledge.engine.ontology.internal import KnowledgeAsset
 
 
 def to_schema_jsonld(asset: KnowledgeAsset) -> str:

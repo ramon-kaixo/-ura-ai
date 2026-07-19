@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 # ruff: noqa: SLF001 — acceso a _engine del mock
-
 import json
 from pathlib import Path
 
@@ -114,7 +113,7 @@ class TestBenchmarkReproducibility:
 
 class TestBenchmarkDirect:
     def test_load_corpus_returns_200_queries(self):
-        queries, relevance = load_corpus(CORPUS_DIR)
+        queries, _relevance = load_corpus(CORPUS_DIR)
         assert len(queries) == 200
 
     def test_load_corpus_populates_relevance(self):

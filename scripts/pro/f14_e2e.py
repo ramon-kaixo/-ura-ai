@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import psutil
@@ -16,24 +16,23 @@ import psutil
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from motor.core.config import UraConfig
-from motor.core.qdrant_client import QdrantClient
 from motor.core.executor import SubprocessExecutor
+from motor.core.qdrant_client import QdrantClient
 from motor.core.state import DegradedMode
 from motor.events import EventBus
-from motor.events.topics import SYSTEM_STARTED
 from motor.events.event import SystemStarted
+from motor.events.topics import SYSTEM_STARTED
 from motor.intelligence.agents import (
+    AgentResult,
+    MajorityVoting,
     MultiAgentRuntime,
     VotingEngine,
-    MajorityVoting,
-    AgentResult,
 )
-from motor.intelligence.memory import EpisodeStore, EpisodeStoreConfig, Episode, SessionMemory
+from motor.intelligence.memory import Episode, EpisodeStore, EpisodeStoreConfig, SessionMemory
 from motor.intelligence.retrieval.hybrid import HybridRetriever
-from motor.intelligence.retrieval.vector import VectorRetriever
 from motor.intelligence.retrieval.lexical import LexicalRetriever
-from motor.observability import HealthRegistry, ReadinessRegistry, MetricsRegistry
-from motor.observability import format_prometheus
+from motor.intelligence.retrieval.vector import VectorRetriever
+from motor.observability import HealthRegistry, MetricsRegistry, ReadinessRegistry, format_prometheus
 
 DATA_DIR = Path("motor/data/benchmarks/f14/e2e")
 ENV_PATH = Path("motor/data/f14/environment.json")
@@ -49,7 +48,7 @@ def record_finding(scenario_id: str, description: str, impact: str):
             "scenario": scenario_id,
             "description": description,
             "impact": impact,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -741,7 +740,7 @@ def run_all() -> list[dict]:
 
 
 def save_results(results: list[dict], env: dict, git_info: dict):
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     data = {
         "timestamp": timestamp,
         "environment": {**env, **git_info},

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
-from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.executor import ExecutorAgent
 from motor.intelligence.agents.message import AgentTask
 from motor.intelligence.agents.parallel import ExecutionResult, ParallelExecutor
 from motor.intelligence.agents.runtime import MultiAgentRuntime
+
+if TYPE_CHECKING:
+    from motor.intelligence.agents.base import Agent
 
 
 def _agent_id(agent: Agent) -> str:
@@ -40,7 +43,7 @@ class TestParallelExecutor:
     def test_single_task(self):
         agents = self._make_agents(1)
         registry = self._make_registry(agents)
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
+        executor = ParallelExecutor(find_agent_fn=registry.get)
         tasks = [(agents[0].id, AgentTask(objective="echo", input_data={"cmd": ["echo", "ok"]}))]
         result = executor.execute(tasks)
         assert result.completed == 1
@@ -49,7 +52,7 @@ class TestParallelExecutor:
     def test_multiple_tasks(self):
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
+        executor = ParallelExecutor(find_agent_fn=registry.get)
         tasks = [
             (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"t{i}"]})) for i, a in enumerate(agents)
         ]
@@ -60,7 +63,7 @@ class TestParallelExecutor:
     def test_all_results_preserved(self):
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
+        executor = ParallelExecutor(find_agent_fn=registry.get)
         tasks = [
             (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", f"msg_{i}"]})) for i, a in enumerate(agents)
         ]
@@ -92,7 +95,7 @@ class TestParallelExecutor:
     def test_cancel_during(self):
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
+        executor = ParallelExecutor(find_agent_fn=registry.get)
         wf_id = "cancel_during"
         tasks = [(a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", "x"]})) for a in agents]
         executor.cancel(wf_id)
@@ -104,7 +107,7 @@ class TestParallelExecutor:
         agents = self._make_agents(1)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(
-            find_agent_fn=lambda aid: registry.get(aid),
+            find_agent_fn=registry.get,
             global_timeout=0.001,
         )
         tasks = [(agents[0].id, AgentTask(objective="echo", input_data={"cmd": ["sleep", "10"]}))]
@@ -116,7 +119,7 @@ class TestParallelExecutor:
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(
-            find_agent_fn=lambda aid: registry.get(aid),
+            find_agent_fn=registry.get,
             fail_fast=True,
         )
         failing = AgentTask(objective="fail", input_data={"cmd": ["bash", "-c", "exit 1"]})
@@ -130,7 +133,7 @@ class TestParallelExecutor:
         agents = self._make_agents(3)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(
-            find_agent_fn=lambda aid: registry.get(aid),
+            find_agent_fn=registry.get,
             cancel_on_error=True,
         )
         failing = AgentTask(objective="fail", input_data={"cmd": ["bash", "-c", "exit 1"]})
@@ -168,7 +171,7 @@ class TestParallelExecutor:
         agents = self._make_agents(2)
         registry = self._make_registry(agents)
         executor = ParallelExecutor(
-            find_agent_fn=lambda aid: registry.get(aid),
+            find_agent_fn=registry.get,
             fail_fast=False,
         )
         ok_task = AgentTask(objective="echo", input_data={"cmd": ["echo", "ok"]})
@@ -189,7 +192,7 @@ class TestExecutionOrder:
     def test_result_order_preserved(self):
         agents = [ExecutorAgent(), ExecutorAgent(), ExecutorAgent()]
         registry = {a.id: a for a in agents}
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid))
+        executor = ParallelExecutor(find_agent_fn=registry.get)
         tasks = [
             (a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", str(i)]})) for i, a in enumerate(agents)
         ]
@@ -216,7 +219,7 @@ class TestIntegration:
         runtime.register(agent)
 
         executor = ParallelExecutor(
-            find_agent_fn=lambda aid: runtime.get_agent(aid),
+            find_agent_fn=runtime.get_agent,
         )
         task = AgentTask(objective="echo", input_data={"cmd": ["echo", "integration"]})
         tasks = [(agent.id, task)]
@@ -226,7 +229,7 @@ class TestIntegration:
     def test_parallel_vs_sequential(self):
         agents = [ExecutorAgent() for _ in range(3)]
         registry = {a.id: a for a in agents}
-        executor = ParallelExecutor(find_agent_fn=lambda aid: registry.get(aid), max_workers=3)
+        executor = ParallelExecutor(find_agent_fn=registry.get, max_workers=3)
         tasks = [(a.id, AgentTask(objective="echo", input_data={"cmd": ["echo", "x"]})) for a in agents]
         start = time.monotonic()
         result = executor.execute(tasks)

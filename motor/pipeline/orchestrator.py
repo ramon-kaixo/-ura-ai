@@ -81,7 +81,7 @@ class Orchestrator:
         self._emit(result)
         return result
 
-    def _registrar_trend(self, result: PipelineResult, perf: dict = None):
+    def _registrar_trend(self, result: PipelineResult, perf: dict | None = None):
         """Registra métricas de tendencia a disco."""
         if not result.scan:
             return

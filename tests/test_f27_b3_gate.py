@@ -15,6 +15,8 @@ Cubre:
 
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from motor.agents import (
@@ -25,7 +27,6 @@ from motor.agents import (
     AgentState,
     AgentTask,
     DenialCode,
-    PermissionDecision,
 )
 
 
@@ -77,11 +78,9 @@ def test_denied_capability_not_granted() -> None:
 
 
 def test_denied_capability_not_recognized() -> None:
-    gate = AgentCapabilityGate(_execution())
+    AgentCapabilityGate(_execution())
     # Pasar un valor que no es AgentCapability no es posible con type hints
     # pero podemos verificar el DenialCode en el método _evaluate
-    from motor.agents.gate import DenialCode
-    from motor.agents.models import AgentCapability
 
 
 # ═══════════════════════════════════════════════════
@@ -211,10 +210,8 @@ def test_cache_denied() -> None:
         _execution(capabilities={AgentCapability.MEMORY_READ}),
         enable_cache=True,
     )
-    try:
+    with contextlib.suppress(PermissionError):
         gate.check(AgentCapability.WEB_SEARCH)
-    except PermissionError:
-        pass
     try:
         gate.check(AgentCapability.WEB_SEARCH)  # cache hit (denied)
     except PermissionError:
@@ -260,6 +257,7 @@ def test_deterministic_denied() -> None:
 def test_no_external_dependencies() -> None:
     """Gate no importa ToolRunner, Scheduler ni Planner."""
     import inspect
+
     import motor.agents.gate as gate_module
     source = inspect.getsource(gate_module)
     assert "ToolRunner" not in source

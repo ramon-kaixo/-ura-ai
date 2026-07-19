@@ -38,7 +38,6 @@ from motor.agents import (
     make_tool_execution_id,
 )
 
-
 # ── Helpers ────────────────────────────────────────────
 
 
@@ -178,6 +177,7 @@ def test_get_contract() -> None:
 
 def test_no_external_dependencies() -> None:
     import inspect
+
     import motor.agents.runner as runner_module
     source = inspect.getsource(runner_module)
     assert "from motor.agents.base import Planner" not in source
@@ -195,7 +195,6 @@ def test_no_external_dependencies() -> None:
 
 
 def test_request_to_result_flow() -> None:
-    from motor.agents.models import ToolRequest
     runner = _make_runner()
     result = runner.run("echo", {"hello": "world"})
     assert result == {"hello": "world"}
@@ -239,6 +238,7 @@ def test_parallel_execution() -> None:
 
 def test_no_globals_or_singletons() -> None:
     import inspect
+
     import motor.agents.runner as runner_module
     source = inspect.getsource(runner_module)
     assert "_instance" not in source

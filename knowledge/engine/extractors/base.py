@@ -16,9 +16,10 @@ import importlib
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from knowledge.engine.ontology.internal import AssetSource, KnowledgeAsset
+if TYPE_CHECKING:
+    from knowledge.engine.ontology.internal import AssetSource, KnowledgeAsset
 
 log = logging.getLogger("ura.knowledge.extractors")
 

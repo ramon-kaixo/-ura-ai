@@ -4,8 +4,9 @@
 Ajusta sys.path para encontrar motor/ desde scripts/.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Flujo vertical: Documento (simulado) -> F24 -> F25 -> F26 -> F27 -> LLM
@@ -99,8 +100,10 @@ def main() -> None:
         MemoryCandidateSelectionStage(),
     ])
 
+    import os
+    import tempfile
+
     from motor.memory import Memory
-    import tempfile, os
     tmpdir = tempfile.mkdtemp(prefix="ura_demo_")
     snap = os.path.join(tmpdir, "snap.json")
     journal = os.path.join(tmpdir, "journal.jsonl")
@@ -132,7 +135,7 @@ def main() -> None:
     memory_entries = memory.timeline.size
     memory.snapshot("demo_v1")
     print(f"     → {memory_entries} entries en MemoryTimeline")
-    print(f"     → Snapshot guardado")
+    print("     → Snapshot guardado")
 
     # ── Paso 5: Context Builder → Prompt LLM (F27) ──
     log("PASO 5: Contexto para LLM (F27)",
@@ -195,7 +198,7 @@ def main() -> None:
 Pregunta: ¿Qué empresas tecnológicas reportaron resultados y cuáles fueron sus métricas clave?
 """
 
-    print(f"\n  Prompt final:")
+    print("\n  Prompt final:")
     print(f"  {'─'*50}")
     for line in prompt.strip().split("\n")[:8]:
         print(f"  {line}")
@@ -208,7 +211,7 @@ Pregunta: ¿Qué empresas tecnológicas reportaron resultados y cuáles fueron s
     print(f"{BOLD}  DEMO COMPLETADA{END}")
     print(f"  Tiempo total: {total_time*1000:.1f}ms")
     print(f"  Facts: {facts_count} | Memoria: {memory_entries} | Prompt: {len(prompt)} chars")
-    print(f"  Pipeline completo: Documento → Evidence → Fact → Memory → Contexto → LLM")
+    print("  Pipeline completo: Documento → Evidence → Fact → Memory → Contexto → LLM")
     print(f"{BOLD}{'='*60}{END}\n")
 
     # Limpieza

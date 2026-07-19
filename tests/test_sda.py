@@ -7,11 +7,12 @@ Verifica:
 """
 
 import asyncio
-import httpx
 import json
 import os
 import sys
 import tempfile
+
+import httpx
 
 PASS = 0
 FAIL = 0

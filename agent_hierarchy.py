@@ -5,7 +5,6 @@ Implements the 3-level agent hierarchy with permission levels and quarantine sys
 
 import json
 import logging
-import os
 import subprocess
 import time
 from datetime import UTC, datetime
@@ -354,11 +353,7 @@ class CriticalAgent(Agent):
             "card",
         ]
 
-        for pattern in suspicious_patterns:
-            if pattern in json.dumps(details).lower():
-                return True
-
-        return False
+        return any(pattern in json.dumps(details).lower() for pattern in suspicious_patterns)
 
     def _halt_operation(self, target_agent: str):
         """Halt a suspicious operation"""

@@ -204,7 +204,7 @@ def test_obs05_ids_never_change() -> None:
     # After multiple hops, still the same
     for _ in range(3):
         with ctx.span(message_type="hop"):
-            h = ctx.make_header()
+            ctx.make_header()
         assert ctx.correlation_id == "my-correlation-123"
         assert ctx.causation_id == "my-causation-456"
 
@@ -250,7 +250,7 @@ def test_obs07_error_has_span_id() -> None:
 def test_obs07_error_with_real_span_id() -> None:
     """OBS-07: Real span_id can be attached to errors."""
     ctx = TraceContext(source="f25", destination="f26")
-    with ctx.span(message_type="memory.append") as span:
+    with ctx.span(message_type="memory.append"):
         span_id = ctx.make_header().span_id.value
 
     err = ErrorEnvelope(
@@ -692,7 +692,7 @@ def test_trace_context_thread_safety() -> None:
         try:
             ctx = TraceContext(source=worker_id, destination="target")
             with ctx.span(message_type="work"):
-                h = ctx.make_header()
+                ctx.make_header()
             results.append(str(ctx.trace_id))
         except Exception as e:
             errors.append(str(e))
@@ -819,7 +819,7 @@ def test_metrics_per_subsystem() -> None:
 def test_e2e_propagation_across_five_subsystems() -> None:
     """🔴1: trace_id, span_id, parent_span_id, correlation_id, causation_id
     survive across F24→F25→F26→F27→F28 via middleware and no field is lost.
-    
+
     The chain works as:
     1. F24 creates a header for its OUTGOING message to F25
     2. F25 receives it via from_header (parent = h_24.span_id)
@@ -880,16 +880,16 @@ def test_e2e_propagation_across_five_subsystems() -> None:
         h_27 = ctx_f27.make_header()
 
     # 🔍 AUDIT: all 5 subsystems must have same trace_id
-    trace_ids = set(str(ctx.trace_id) for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    trace_ids = {str(ctx.trace_id) for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27]}
     assert len(trace_ids) == 1, f"Multiple trace_ids: {trace_ids}"
     assert str(original_trace) in trace_ids
 
     # 🔍 AUDIT: all 5 subsystems must have same correlation_id
-    corrs = set(ctx.correlation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    corrs = {ctx.correlation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27]}
     assert len(corrs) == 1, f"Multiple correlation_ids: {corrs}"
 
     # 🔍 AUDIT: all 5 subsystems must have same causation_id
-    causs = set(ctx.causation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27])
+    causs = {ctx.causation_id for ctx in [ctx_f24, ctx_f25, ctx_f26, ctx_f27]}
     assert len(causs) == 1, f"Multiple causation_ids: {causs}"
 
     # 🔍 AUDIT: parent chain via from_header propagation (pre-span headers)
@@ -1082,13 +1082,13 @@ def test_roundtrip_tree_integrity_via_in_memory_exporter() -> None:
     ctx.set_exporter(exporter)
 
     with ctx.span(message_type="root_op"):
-        h_root = ctx.make_header()
+        ctx.make_header()
         with ctx.span(message_type="child1"):
-            h_c1 = ctx.make_header()
+            ctx.make_header()
             with ctx.span(message_type="grandchild"):
-                h_gc = ctx.make_header()
+                ctx.make_header()
         with ctx.span(message_type="child2"):
-            h_c2 = ctx.make_header()
+            ctx.make_header()
 
     # Original spans
     original_events = list(exporter.events)

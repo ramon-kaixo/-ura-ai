@@ -12,9 +12,8 @@ Cubre:
 
 from __future__ import annotations
 
-import copy
-import time
 import sys
+import time
 
 import pytest
 
@@ -24,17 +23,16 @@ from motor.core.fusion.fact_history import FactHistory
 @pytest.fixture(autouse=True)
 def _reset_ts_counter() -> None:
     _TS_COUNTER[0] = 1000.0
+import contextlib
+
 from motor.core.fusion.fact_index import FactIndex
 from motor.core.fusion.models import (
     Fact,
-    FactTombstone,
     FactVersion,
     VersionState,
     make_fact_id,
     make_version_id,
-    normalize_identity,
 )
-
 
 # ── helpers ─────────────────────────────────────────────
 
@@ -319,7 +317,7 @@ def test_invariant_v09_no_orphan_versions() -> None:
     """Toda FactVersion pertenece a un FactHistory."""
     fact = _make_fact()
     v = _make_version(fact.fact_id)
-    h = FactHistory.create(fact, v)
+    FactHistory.create(fact, v)
     # v pertenece a h. Si intentamos crear otra history con la misma v, falla
     with pytest.raises(KeyError):
         h2 = FactHistory.create(fact, v)
@@ -414,7 +412,7 @@ def test_fact_index_update_current() -> None:
     idx.update_current(fact.fact_id, v2)
     entry = idx.lookup(fact.fact_id)
     assert entry is not None
-    f, v = entry
+    _f, v = entry
     assert v.version_id == "v2"
 
 
@@ -476,10 +474,8 @@ def test_property_random_sequences() -> None:
                         versions = list(h._versions.keys())
                         if versions and h.current.state != VersionState.TOMBSTONE:
                             target = random.choice(versions)
-                            try:
+                            with contextlib.suppress(ValueError, KeyError):
                                 h.rollback(target)
-                            except (ValueError, KeyError):
-                                pass
                     elif op == "tombstone":
                         if not h.has_tombstone:
                             version_counter += 1

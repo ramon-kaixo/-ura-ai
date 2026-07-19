@@ -13,7 +13,6 @@ Verifica:
 from __future__ import annotations
 
 import json
-import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -21,7 +20,6 @@ from motor.core.evaluation.regression import (
     RegressionBaseline,
     RegressionDetector,
     RegressionFinding,
-    RegressionReport,
 )
 
 

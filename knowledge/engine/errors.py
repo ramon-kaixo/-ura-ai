@@ -7,6 +7,7 @@ Severity: ERROR, WARN, DEPRECATED, INFO
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from knowledge.engine._compat import StrEnum
 
 

@@ -8,8 +8,8 @@ import logging
 import time
 from pathlib import Path
 
-from core.mochila.tools import web_search, page_read
 from core.memoria.ingesto import procesar_archivo
+from core.mochila.tools import page_read, web_search
 
 INBOX = Path.home() / ".nervioso" / "inbox"
 log = logging.getLogger("mochila.bridge")
@@ -70,7 +70,7 @@ async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagin
 def _guardar_en_inbox(url: str, title: str, content: str) -> Path | None:
     try:
         INBOX.mkdir(parents=True, exist_ok=True)
-        slug = url.split("//")[-1].split("?")[0].replace("/", "_")[:80] or "pagina"
+        slug = url.rsplit("//", maxsplit=1)[-1].split("?", maxsplit=1)[0].replace("/", "_")[:80] or "pagina"
         nombre = f"{slug}_{int(time.time())}.html"
         ruta = INBOX / nombre
 

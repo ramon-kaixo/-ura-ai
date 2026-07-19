@@ -8,9 +8,6 @@ Si cryptography no está instalado, opera en modo texto plano.
 
 from __future__ import annotations
 
-import hashlib
-import os
-
 _ENCRYPTION_ENABLED = False
 
 try:

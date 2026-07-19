@@ -543,7 +543,7 @@ def validate_corpus(corpus_dir: Path) -> list[str]:  # noqa: C901
         if not q.qid.startswith(("sys_", "code_", "know_")):
             errors.append(f"QID {q.qid} no sigue convención sys_/code_/know_")
 
-    domains = set(q.domain for q in queries)
+    domains = {q.domain for q in queries}
     if len(domains) < 2:
         errors.append(f"Se requieren ≥2 dominios (tiene {len(domains)}: {domains})")
 

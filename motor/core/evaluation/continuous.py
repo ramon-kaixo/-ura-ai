@@ -15,7 +15,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from motor.core.evaluation.corpus import EvaluationCorpus
+    from motor.core.evaluation.corpus import EvaluationCorpus
+
 from motor.core.evaluation.evaluator import EvaluationEngine
 from motor.core.evaluation.experiment import Experiment
 from motor.core.evaluation.regression import (

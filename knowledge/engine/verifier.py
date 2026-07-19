@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from knowledge.engine.knowledge_verifier import (
     check_cycles,
@@ -22,6 +22,9 @@ from knowledge.engine.knowledge_verifier import (
 )
 from knowledge.engine.migrations import SCHEMA_VERSION, get_schema_version
 from knowledge.engine.storage_verifier import check_fts_sync, check_pragmas, check_schema
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.verifier")
 
@@ -109,7 +112,7 @@ def verify_graph(
             for e in errors_from_log:
                 results.append((e["severity"], e["error_code"], e["message"]))
     except sqlite3.OperationalError:
-        pass  # noqa: S110
+        pass
 
     conn.close()
     return results

@@ -27,7 +27,6 @@ from motor.memory import (
     make_entry_id,
 )
 
-
 # ── helpers ─────────────────────────────────────────────
 
 _COUNTER: list[int] = [0]
@@ -169,7 +168,7 @@ def test_soak_continuous_operation(tmp_path: str) -> None:
     journal = os.path.join(tmp_path, "journal_soak.jsonl")
 
     m = Memory(snapshot_path=snap, journal_path=journal)
-    rng = random.Random(42)
+    random.Random(42)
     start = time.perf_counter()
     snapshots = 0
 

@@ -128,6 +128,7 @@ def test_replan_alternatives() -> None:
 
 def test_no_external_dependencies() -> None:
     import inspect
+
     import motor.agents.planner as mod
     source = inspect.getsource(mod)
     assert "from motor.agents.base import Scheduler" not in source

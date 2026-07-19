@@ -14,10 +14,14 @@ Uso:
 
 from __future__ import annotations
 
+import contextlib
 import logging
-import sqlite3
 import threading
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sqlite3
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.connection_pool")
 
@@ -66,10 +70,8 @@ class ReadConnectionPool:
         """Cierra todas las conexiones del pool."""
         with self._lock:
             for conn in self._pool:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
             self._pool.clear()
             self._active = 0
 

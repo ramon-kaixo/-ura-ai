@@ -6,13 +6,16 @@ Permite definir políticas por asset y verificar permisos.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from knowledge.engine.connection import begin_immediate, open_db
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.governance_store")
 
@@ -52,10 +55,8 @@ class SQLiteGovernanceStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def check(self, asset_id: str, action: str, actor: str) -> bool:
         """Verifica si un actor puede realizar una acción sobre un asset.
@@ -80,9 +81,7 @@ class SQLiteGovernanceStore:
                         allowed_roles = p.get("roles", [])
                         if not allowed_roles:
                             continue
-                        if actor in allowed_roles:
-                            return True
-                        return False
+                        return actor in allowed_roles
                 except (json.JSONDecodeError, KeyError, TypeError):
                     continue
 
@@ -92,10 +91,8 @@ class SQLiteGovernanceStore:
             return True
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def get_policies(self, asset_id: str) -> list[dict[str, Any]]:
         """Retorna todas las políticas de un asset."""
@@ -113,10 +110,8 @@ class SQLiteGovernanceStore:
             return []
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def list_policies(self, limit: int = 100) -> list[dict[str, Any]]:
         """Lista todas las políticas."""
@@ -133,7 +128,5 @@ class SQLiteGovernanceStore:
             return []
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110

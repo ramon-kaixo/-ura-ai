@@ -178,11 +178,12 @@ def compile_source(
 
         # Persistir snapshot para compilación incremental
         try:
-            from knowledge.engine.snapshot_store import save_snapshot
             import subprocess
 
+            from knowledge.engine.snapshot_store import save_snapshot
+
             commit = (
-                subprocess.run(  # noqa: S603  -- comando git constante
+                subprocess.run(
                     ["git", "rev-parse", "HEAD"],  # noqa: S607
                     capture_output=True,
                     text=True,
@@ -210,7 +211,7 @@ def compile_source(
             duration_ms=round(duration * 1000),
         )
     except Exception:
-        pass  # noqa: S110
+        pass
 
     return CompileResult(
         success=result.success,

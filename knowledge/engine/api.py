@@ -34,12 +34,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from motor.core.secrets import get_secret
-
 from fastapi import FastAPI, HTTPException, Request, Response, Security
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
+
+from motor.core.secrets import get_secret
 
 # Límites de seguridad
 _MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -214,7 +214,8 @@ async def _auth_middleware_inner(request: Request, call_next):
 
 
 def _validate_doc_id(doc_id: str) -> None:
-    from knowledge.engine.feedback import InvalidDocIdError, _validate_doc_id as _fb_validate
+    from knowledge.engine.feedback import InvalidDocIdError
+    from knowledge.engine.feedback import _validate_doc_id as _fb_validate
 
     try:
         _fb_validate(doc_id)
@@ -290,7 +291,7 @@ async def compile_endpoint(incremental: bool = False):
         if n == 0:
             raise AppError(409, "Compile already running", "Another compile is in progress (flock held)")
         return CompileResponse(success=True, message="compile started")
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AppError(504, "Compile timed out", "Compile exceeded 300s timeout")
     except AppError:
         raise

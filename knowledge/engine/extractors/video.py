@@ -224,7 +224,7 @@ class VideoExtractor:
                 thumb_path,
             ]
             try:
-                subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603,S607
+                subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603
                 if Path(thumb_path).exists():
                     thumbnails.append(thumb_path)
             except subprocess.TimeoutExpired:

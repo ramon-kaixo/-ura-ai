@@ -15,10 +15,12 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
-from knowledge.engine.ontology.internal import AssetType, KnowledgeAsset
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from knowledge.engine.ontology.internal import AssetType, KnowledgeAsset
 
 log = logging.getLogger("ura.knowledge.graphrag")
 
@@ -113,6 +115,7 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
     if updated:
         try:
             from datetime import UTC, datetime
+
             from dateutil import parser
 
             dt = parser.parse(updated)
@@ -121,13 +124,10 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
                 recency = 1.0 - (days_ago / max_days)
                 score += _RANKING_WEIGHTS["recency"] * recency
         except Exception:
-            pass  # noqa: S110
+            pass
 
     # Quality
-    if asset:
-        q = asset.quality
-    else:
-        q = _DEFAULT_QUALITY
+    q = asset.quality if asset else _DEFAULT_QUALITY
     score += _RANKING_WEIGHTS["quality"] * q
 
     return min(score, 1.0)

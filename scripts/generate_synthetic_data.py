@@ -112,7 +112,8 @@ def citation_bundle_json(evidence: list[dict]) -> dict:
 
 def citation_bundle_object(evidence: list[dict]):
     """Retorna un CitationBundle listo para usar."""
-    from motor.core.web.citation.citation import CitationBundle, Evidence as EvidenceObj
+    from motor.core.web.citation.citation import CitationBundle
+    from motor.core.web.citation.citation import Evidence as EvidenceObj
     ev_objs = [EvidenceObj(**ev) for ev in evidence]
     return CitationBundle(summary="Synthetic data", citations=[], evidence=ev_objs)
 
@@ -188,8 +189,10 @@ if __name__ == "__main__":
         print("Ejecutando pipeline con datos generados...")
         from motor.core.fusion.engine import FusionPipeline
         from motor.core.fusion.stages import (
-            ExtractionStage, NormalizationStage, KnowledgeMergerStage,
+            ExtractionStage,
+            KnowledgeMergerStage,
             MemoryCandidateSelectionStage,
+            NormalizationStage,
         )
 
         bundle = citation_bundle_object(evidence)
@@ -198,8 +201,9 @@ if __name__ == "__main__":
             KnowledgeMergerStage(), MemoryCandidateSelectionStage(),
         ])
 
-        from motor.memory import Memory
         import tempfile
+
+        from motor.memory import Memory
         tmpdir = tempfile.mkdtemp(prefix="ura_synth_")
         snap = os.path.join(tmpdir, "snap.json")
         journal = os.path.join(tmpdir, "journal.jsonl")

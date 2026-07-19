@@ -7,16 +7,19 @@ Preparado para sustituir el backend por un vector store en el futuro.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from knowledge.engine.asset_store import _sanitize_fts5
 from knowledge.engine.connection import begin_immediate, open_db
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.memory_store")
 
@@ -111,10 +114,8 @@ class SQLiteMemoryStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def get(self, memory_id: str) -> MemoryRecord | None:
         try:
@@ -166,10 +167,8 @@ class SQLiteMemoryStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def search(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
         """Búsqueda FTS5 sobre memorias. Fallback a LIKE si FTS5 no disponible."""
@@ -232,7 +231,7 @@ class SQLiteMemoryStore:
                 return False
             if asset_id in record.related_assets:
                 return True
-            new_assets = list(record.related_assets) + [asset_id]
+            new_assets = [*list(record.related_assets), asset_id]
             conn = open_db(self._db_path)
             begin_immediate(conn)
             conn.execute(
@@ -246,10 +245,8 @@ class SQLiteMemoryStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def count(self, kind: str | None = None) -> int:
         try:
@@ -273,9 +270,9 @@ class SQLiteMemoryStore:
                 return default if default is not None else ([] if isinstance(default, list) else {})
 
         # sqlite3.Row supports dict-like access with []
-        related = _safe_json(row["related_assets"] if row["related_assets"] else "[]", [])
-        tags = _safe_json(row["tags"] if row["tags"] else "[]", [])
-        meta = _safe_json(row["metadata"] if row["metadata"] else "{}", {})
+        related = _safe_json(row["related_assets"] or "[]", [])
+        tags = _safe_json(row["tags"] or "[]", [])
+        meta = _safe_json(row["metadata"] or "{}", {})
         return MemoryRecord(
             memory_id=row["memory_id"],
             kind=row["kind"],
@@ -284,6 +281,6 @@ class SQLiteMemoryStore:
             related_assets=tuple(related),
             tags=tuple(tags),
             created_at=row["created_at"] or "",
-            updated_at=row["updated_at"] if row["updated_at"] else "",
+            updated_at=row["updated_at"] or "",
             metadata=meta if isinstance(meta, dict) else {},
         )

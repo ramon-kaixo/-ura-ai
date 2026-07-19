@@ -9,7 +9,7 @@ from __future__ import annotations
 import fcntl
 import logging
 import os
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.lock")
@@ -40,11 +40,7 @@ def compile_lock(lock_path: Path = _DEFAULT_LOCK_FILE):
         yield
     finally:
         if lock_fd is not None:
-            try:
+            with suppress(OSError):
                 fcntl.flock(lock_fd, fcntl.LOCK_UN)
-            except OSError:
-                pass  # noqa: S110
-            try:
+            with suppress(OSError):
                 os.close(lock_fd)
-            except OSError:
-                pass  # noqa: S110

@@ -74,8 +74,8 @@ def generate() -> str:
         icon = esc_icons.get(ver, "❓")
         out(f"### {icon} {sid} — {s.get('fault', '?')}")
         out()
-        out(f"| Campo | Valor |")
-        out(f"|-------|-------|")
+        out("| Campo | Valor |")
+        out("|-------|-------|")
         out(f"| **Expected** | {s.get('expected', '?')} |")
         out(f"| **Observed** | {s.get('observed', '?')} |")
         out(f"| **Recovery time** | {s.get('recovery_time_s', '?')}s |")
@@ -93,7 +93,7 @@ def generate() -> str:
         ver = s.get("veredict", "?")
         rid = s.get("recovery_time_s", -1)
         dl = s.get("data_loss", False)
-        obs = s.get("observed", "")
+        s.get("observed", "")
 
         if ver == "PARTIAL":
             if sid in ("R01", "R09") and rid and rid > 30:

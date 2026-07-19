@@ -31,7 +31,7 @@ def _extract_deps(text: str, ext: str) -> list[str]:
     if ext == ".sh":
         bins = re.findall(r"(?:^|\s)(\w+)(?=\s)", text)
         return sorted(
-            set(
+            {
                 b
                 for b in bins
                 if b
@@ -50,7 +50,7 @@ def _extract_deps(text: str, ext: str) -> list[str]:
                     "sed",
                     "awk",
                 }
-            ),
+            },
         )
     return []
 
@@ -68,11 +68,11 @@ def _guess_tags(path: str) -> list[str]:
             tags.append(p)
         if p.endswith(".service"):
             tags.append("systemd")
-    if Path(path).suffix in (".py",):
+    if Path(path).suffix == ".py":
         tags.append("python")
-    elif Path(path).suffix in (".sh",):
+    elif Path(path).suffix == ".sh":
         tags.append("bash")
-    elif Path(path).suffix in (".md",):
+    elif Path(path).suffix == ".md":
         tags.append("documentation")
     if "test" in str(Path(path).stem).lower():
         tags.append("test")

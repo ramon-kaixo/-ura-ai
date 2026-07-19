@@ -143,7 +143,7 @@ def cmd_health_check(config: UraConfig, args=None):
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:
             r = _executor.run(["systemctl", "is-active", unit], timeout=5)
-            ok = "active" in r.stdout or r.stdout.strip() in ("inactive",)
+            ok = "active" in r.stdout or r.stdout.strip() == "inactive"
             checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})
         except Exception as e:
             checks.append({"check": unit, "ok": False, "detail": str(e)})

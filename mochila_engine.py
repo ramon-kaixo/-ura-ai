@@ -1,8 +1,11 @@
 """mochila_engine.py — v4.3"""
 
 from __future__ import annotations
-import hashlib, json, uuid
-from datetime import datetime, timezone
+
+import hashlib
+import json
+import uuid
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
@@ -41,7 +44,7 @@ class TipoPipeline(StrEnum):
 
 
 class CB:
-    __slots__ = ("f", "ti", "tf", "d", "ok", "er", "dt")
+    __slots__ = ("d", "dt", "er", "f", "ok", "tf", "ti")
 
     def __init__(s, f):
         s.f = f
@@ -189,7 +192,7 @@ class MochilaEngine:
 
     @staticmethod
     def _rd(nc, mid):
-        return MOCHILAS_DIR / f"{datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')}_{nc}" / f"mochila_{mid[:8]}.json"
+        return MOCHILAS_DIR / f"{datetime.now(tz=UTC).strftime('%Y-%m-%d')}_{nc}" / f"mochila_{mid[:8]}.json"
 
     def __repr__(s):
         return f"Mochila(id={s.id[:8]}...,tipo={s.tipo})"
@@ -216,4 +219,4 @@ class _FC:
 
 
 def _now():
-    return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.now(tz=UTC).isoformat()

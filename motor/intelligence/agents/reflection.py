@@ -52,10 +52,7 @@ class RuleBasedReflectionStrategy(ReflectionStrategy):
                 metadata={"result_error": result.error, "iteration": iteration},
             )
         confidence = result.output.get("confidence", 1.0) if result.output else 1.0
-        if isinstance(confidence, (int, float)):
-            confidence = max(0.0, min(1.0, float(confidence)))
-        else:
-            confidence = 1.0
+        confidence = max(0.0, min(1.0, float(confidence))) if isinstance(confidence, (int, float)) else 1.0
         if confidence >= self._min_confidence:
             return ReflectionDecision(
                 action=ReflectionAction.ACCEPT,

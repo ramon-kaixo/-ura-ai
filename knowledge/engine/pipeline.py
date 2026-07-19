@@ -20,9 +20,13 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from knowledge.engine._compat import StrEnum
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+from knowledge.engine._compat import StrEnum
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 log = logging.getLogger("ura.knowledge.pipeline")
 
@@ -253,9 +257,10 @@ def _run_rule_eval(db_path: Path) -> StageResult:
     """Stage 6: Rule evaluation — calidad del conocimiento."""
     t0 = time.monotonic()
     try:
+        import json
+
         from knowledge.engine.connection import open_db
         from knowledge.engine.rules import RuleEvaluator
-        import json
 
         conn = open_db(db_path)
         rows = conn.execute("SELECT id, type, path, frontmatter, body FROM kg_nodes").fetchall()
@@ -348,7 +353,7 @@ class Pipeline:
             Stage.ARCHIVE: lambda: _run_archive(self._source_dir, self._db_path, self._archive_dir),
             Stage.QDRANT: lambda: _run_qdrant(self._db_path),
             Stage.RULE_EVAL: lambda: _run_rule_eval(self._db_path),
-            Stage.CI: lambda: _run_ci(),
+            Stage.CI: _run_ci,
         }
 
         for stage in all_stages:

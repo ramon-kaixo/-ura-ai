@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import time
+from typing import TYPE_CHECKING
 
 from motor.core.llm import generate
-from motor.intelligence.memory.episodic import Episode
 from motor.intelligence.memory.extractor import FactExtractor
 from motor.intelligence.memory.semantic import SemanticFact
+
+if TYPE_CHECKING:
+    from motor.intelligence.memory.episodic import Episode
 
 log = logging.getLogger("ura.extractor.llm")
 

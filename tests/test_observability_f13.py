@@ -5,12 +5,12 @@ import logging
 
 from motor.observability.exporter import format_prometheus
 from motor.observability.logging import (
-    JSONFormatter,
     ContextFilter,
+    JSONFormatter,
     get_correlation_id,
+    get_workflow_id,
     set_correlation_id,
     set_workflow_id,
-    get_workflow_id,
 )
 from motor.observability.metrics import MetricsRegistry
 

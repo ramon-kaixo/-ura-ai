@@ -98,12 +98,13 @@ def run(name, fn, queries, rel_map, reranker=None):
 
 
 def main():
+    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
+
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
-    from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.hybrid import HybridRetriever
-    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
+    from motor.intelligence.retrieval.lexical import LexicalRetriever
+    from motor.intelligence.retrieval.vector import VectorRetriever
 
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
@@ -118,8 +119,8 @@ def main():
     hybrid = HybridRetriever(vec, lex, alpha=0.7, beta=0.3)
 
     configs = {
-        "Vector-only": lambda q, k: vec.search(q, k),
-        "Hybrid": lambda q, k: hybrid.search(q, k),
+        "Vector-only": vec.search,
+        "Hybrid": hybrid.search,
     }
 
     # CE needs its own Python with sentence-transformers
@@ -135,11 +136,10 @@ def main():
 
     log.warning("Running: Hybrid + CrossEncoder")
     all_results["Hybrid+CE"] = run(
-        "Hybrid+CE", lambda q, k: hybrid.search(q, k), queries, rel_map, reranker=ce_reranker
+        "Hybrid+CE", hybrid.search, queries, rel_map, reranker=ce_reranker
     )
 
     # Print table
-    metrics = ["R@10", "P@5", "MRR", "MAP", "nDCG", "P50", "P95", "P99", "TPS", "NoCtx"]
     print(f"\n{'=' * 120}")
     print(
         f"  {'Config':<20} {'R@10':<8} {'P@5':<8} {'MRR':<8} {'MAP':<8} {'nDCG':<8} {'P50':<8} {'P95':<8} {'P99':<8} {'TPS':<8} {'NoCtx':<8}"
@@ -155,7 +155,7 @@ def main():
     # Acceptance for Hybrid+CE
     r = all_results["Hybrid+CE"]
     print(f"\n{'=' * 80}")
-    print(f"  Acceptance Criteria (Hybrid + CrossEncoder)")
+    print("  Acceptance Criteria (Hybrid + CrossEncoder)")
     print(f"{'=' * 80}")
     ace_criteria = [
         ("MAP ≥ 0.90", r["MAP"] >= 0.90, f"{r['MAP']:.4f}"),
@@ -171,12 +171,12 @@ def main():
             all_pass = False
 
     if all_pass:
-        print(f"\n  ✅ APROBADO — CrossEncoder cumple todos los criterios")
-        print(f"  Recomendación: Integrar CrossEncoder como etapa estándar de retrieval.")
+        print("\n  ✅ APROBADO — CrossEncoder cumple todos los criterios")
+        print("  Recomendación: Integrar CrossEncoder como etapa estándar de retrieval.")
     else:
-        print(f"\n  ❌ NO APROBADO — CrossEncoder no cumple todos los criterios")
-        print(f"  Recomendación: Cerrar Bloque 1. Mejor configuración: Hybrid (R@10=0.87, NoCtx=0.5%).")
-        print(f"  El reranking CrossEncoder no justifica el incremento de latencia para este corpus.")
+        print("\n  ❌ NO APROBADO — CrossEncoder no cumple todos los criterios")
+        print("  Recomendación: Cerrar Bloque 1. Mejor configuración: Hybrid (R@10=0.87, NoCtx=0.5%).")
+        print("  El reranking CrossEncoder no justifica el incremento de latencia para este corpus.")
 
     return 0 if all_pass else 1
 

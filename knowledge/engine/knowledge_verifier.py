@@ -14,8 +14,11 @@ Chequeos:
 from __future__ import annotations
 
 import hashlib
-import sqlite3
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sqlite3
 
 
 def check_duplicate_ids(conn: sqlite3.Connection) -> list[str]:

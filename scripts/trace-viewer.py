@@ -10,6 +10,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from collections import defaultdict
@@ -29,10 +30,8 @@ def load_events(path: str) -> list[dict]:
                 for line in fh:
                     line = line.strip()
                     if line:
-                        try:
+                        with contextlib.suppress(json.JSONDecodeError):
                             events.append(json.loads(line))
-                        except json.JSONDecodeError:
-                            pass
     return events
 
 
@@ -209,7 +208,7 @@ def main() -> None:
         sys.exit(1)
 
     if args.list:
-        traces = sorted(set(e.get("trace_id", "") for e in events))
+        traces = sorted({e.get("trace_id", "") for e in events})
         for tid in traces:
             count = sum(1 for e in events if e.get("trace_id") == tid)
             print(f"{tid}  ({count} spans)")

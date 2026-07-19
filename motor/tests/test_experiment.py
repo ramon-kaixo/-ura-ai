@@ -13,11 +13,13 @@ Verifica:
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from motor.core.evaluation import EvaluationEngine
 from motor.core.evaluation.corpus import EvaluationCorpus, EvaluationQuery
-from motor.core.evaluation.experiment import Experiment, ExperimentConfig
+from motor.core.evaluation.experiment import Experiment
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _crear_corpus() -> EvaluationCorpus:

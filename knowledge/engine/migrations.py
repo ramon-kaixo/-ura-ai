@@ -13,9 +13,12 @@ Atomicidad:
 from __future__ import annotations
 
 import logging
-import sqlite3
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import sqlite3
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.migrations")
 

@@ -27,8 +27,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from typing import Protocol
-from urllib.request import Request, urlopen
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from motor.core.secrets import get_secret
 
@@ -62,7 +62,7 @@ def _validate_url(url: str) -> str:
     # Resolver DNS y verificar IP
     try:
         addrs = socket.getaddrinfo(host, None)
-        for family, _, _, _, sockaddr in addrs:
+        for _family, _, _, _, sockaddr in addrs:
             ip = sockaddr[0]
             for net in _PRIVATE_NETWORKS:
                 if ipaddress.ip_address(ip) in ipaddress.ip_network(net):
@@ -98,9 +98,7 @@ def _should_retry(exception: Exception) -> bool:
         "503",
         "504",
     ]
-    if any(t in msg for t in transitorios):
-        return True
-    return False
+    return bool(any(t in msg for t in transitorios))
 
 
 def _backoff(attempt: int) -> None:
@@ -133,7 +131,7 @@ def _record_metric(counter_name: str, channel: str, status: str, duration_ms: fl
             )
             h.labels(channel=channel).observe(duration_ms / 1000)
     except Exception:
-        pass  # noqa: S110
+        pass
 
 
 # ── Event payloads ────────────────────────────────────────────────────────
@@ -201,7 +199,7 @@ class WebhookNotifier:
                 "title": notification.title,
                 "message": notification.message,
                 "severity": notification.severity,
-                "fields": {k: v for k, v in notification.fields},
+                "fields": dict(notification.fields),
             }
             headers = {"Content-Type": "application/json"}
             if self._secret:
@@ -363,7 +361,7 @@ class NotificationService:
                     if future.result(timeout=_TIMEOUT_S + 5):
                         ok_count += 1
                 except Exception:
-                    pass  # noqa: S110
+                    pass
         return ok_count
 
     @property

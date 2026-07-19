@@ -13,11 +13,14 @@ Verifica:
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from motor.core.evaluation import EvaluationCorpus, EvaluationQuery
 from motor.core.evaluation.continuous import ContinuousEvaluator
 from motor.core.evaluation.regression import RegressionBaseline
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _corpus() -> EvaluationCorpus:
@@ -130,7 +133,7 @@ class TestContinuousEvaluator:
         if "error" not in m1 and "error" not in m2:
             for metric in ["recall@3", "mrr"]:
                 for cfg in m1.get("general_ranking", []):
-                    name = cfg["config"]
+                    cfg["config"]
                     # Comparar métricas del experimento
                     pass
         # Al menos ambos deberían pasar

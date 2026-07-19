@@ -90,7 +90,7 @@ class MarkdownExtractor:
                 asset_type=AssetType.MARKDOWN,
                 metadata={
                     "title": title,
-                    "frontmatter": fm if fm else {},
+                    "frontmatter": fm or {},
                     "tags": tags,
                     "word_count": word_count,
                     "headings": headings,
@@ -146,7 +146,7 @@ def _parse_frontmatter(raw: str) -> tuple[dict | None, str]:
         if isinstance(fm, dict):
             return fm, body
     except yaml.YAMLError:
-        pass  # noqa: S110
+        pass
     return None, raw
 
 

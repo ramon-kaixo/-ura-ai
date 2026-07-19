@@ -18,7 +18,10 @@ from __future__ import annotations
 import logging
 import sqlite3
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.connection")
 
@@ -69,4 +72,4 @@ def _inc_busy_retry() -> None:
 
         sqlite_busy_retries_total.inc()
     except Exception:
-        pass  # noqa: S110
+        pass

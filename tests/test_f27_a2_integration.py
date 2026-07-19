@@ -10,23 +10,17 @@ Usuario → Agent → CapabilityGate → Planner → Scheduler
 from __future__ import annotations
 
 from motor.agents import (
-    AgentAuditRecord,
     AgentCapability,
-    AgentCapabilityGate,
-    AgentExecution,
     AgentOrchestrator,
-    AgentPolicy,
     AgentResult,
     AgentState,
     AgentTask,
     AuditLogger,
     CapabilityGate,
-    Planner,
     RuleBasedPlanner,
     Scheduler,
     ToolRunner,
 )
-
 
 # ── Mocks de integración ──────────────────────────────
 

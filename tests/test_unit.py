@@ -274,6 +274,10 @@ if compose_file.exists():
 check("memory_engine.py importa", lambda: __import__("core.memory_engine"))
 
 from core.memory_engine import (
+    MAX_TOKENS,
+    OLLAMA_URL,
+    RAG_MODEL,
+    TEMPERATURE,
     _build_context,
     _chromadb_available,
     _chunk_text,
@@ -283,10 +287,6 @@ from core.memory_engine import (
     load_manifest,
     rag_enabled,
     save_manifest,
-    OLLAMA_URL,
-    RAG_MODEL,
-    TEMPERATURE,
-    MAX_TOKENS,
 )
 
 check("_sha256 existe", lambda: callable(_sha256))

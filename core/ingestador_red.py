@@ -25,7 +25,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Tuple
 
 log = logging.getLogger("ura.ingestador_red")
 
@@ -44,11 +43,11 @@ def cargar_inventario() -> dict:
             return json.loads(INVENTARIO_PATH.read_text())
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
-            pass  # noqa: S110
+            pass
     return {"dispositivos": {}}
 
 
-def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> Tuple[int, str, str]:
+def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, str, str]:
     """Ejecuta un comando vía Tailscale SSH (sin password, auth criptográfica).
 
     Returns:
