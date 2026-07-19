@@ -224,13 +224,13 @@ class TestReflectionAgent:
 
     def test_config_invalid_max_iterations(self):
         agent = ReflectionAgent(max_iterations=0)
-        assert agent._max_iterations == 1  # clamped to min 1  # noqa: SLF001
+        assert agent._max_iterations == 1  # clamped to min 1
 
     def test_config_invalid_min_confidence(self):
         agent = ReflectionAgent(min_confidence=-0.5)
-        assert agent._min_confidence == 0.0  # noqa: SLF001
+        assert agent._min_confidence == 0.0
         agent2 = ReflectionAgent(min_confidence=1.5)
-        assert agent2._min_confidence == 1.0  # noqa: SLF001
+        assert agent2._min_confidence == 1.0
 
 
 class TestThreadSafety:

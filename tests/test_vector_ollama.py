@@ -58,7 +58,7 @@ class TestEmbed:
 
     def test_embed_not_available(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
-        embedder._degraded = True  # noqa: SLF001
+        embedder._degraded = True
         assert embedder.embed(["text"]) == []
 
     def test_embed_cache_hit(self, mock_llm):
@@ -115,7 +115,7 @@ class TestEmbedQuery:
 
     def test_embed_query_not_available(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
-        embedder._degraded = True  # noqa: SLF001
+        embedder._degraded = True
         assert embedder.embed_query("test") == []
 
 
@@ -141,13 +141,13 @@ class TestProperties:
 
     def test_available_false(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
-        embedder._degraded = True  # noqa: SLF001
+        embedder._degraded = True
         assert embedder.available is False
 
     def test_available_http_error(self, mock_llm):
         mock_llm["health"].return_value = {"status": "error", "detail": "Connection refused", "latency_ms": 100}
         embedder = OllamaEmbedder(model="test-model")
-        embedder._degraded = True  # noqa: SLF001
+        embedder._degraded = True
         assert embedder.available is False
         assert not embedder.check_available()
 

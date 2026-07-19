@@ -362,7 +362,7 @@ class TestFts5Triggers:
     def test_asset_insert_trigger(self, asset_db: SQLiteAssetStore):
         a1 = _make_asset("a1", title="Test Title", text_preview="Test body")
         asset_db.save_asset(a1)
-        conn = sqlite3.connect(str(asset_db._db_path))  # noqa: SLF001
+        conn = sqlite3.connect(str(asset_db._db_path))
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT title FROM op_assets_fts WHERE id = ?", ("a1",)).fetchone()
         conn.close()
@@ -373,7 +373,7 @@ class TestFts5Triggers:
         """After INSERT trigger puebla op_assets_fts."""
         a1 = _make_asset("a1", title="Test Title", text_preview="Test body")
         asset_db.save_asset(a1)
-        conn = sqlite3.connect(str(asset_db._db_path))  # noqa: SLF001
+        conn = sqlite3.connect(str(asset_db._db_path))
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT title, body FROM op_assets_fts WHERE id = ?", ("a1",)).fetchone()
         conn.close()
@@ -385,7 +385,7 @@ class TestFts5Triggers:
         from knowledge.engine.memory_store import MemoryRecord
 
         memory_db.save(MemoryRecord(memory_id="m1", kind="note", title="Original", content="content"))
-        conn = sqlite3.connect(str(memory_db._db_path))  # noqa: SLF001
+        conn = sqlite3.connect(str(memory_db._db_path))
         conn.row_factory = sqlite3.Row
         count = conn.execute("SELECT count(*) as c FROM op_memory_fts").fetchone()["c"]
         conn.close()
@@ -406,16 +406,16 @@ def mock_qdrant_client():
 class TestQdrantAutoRecovery:
     def test_check_available_resets_degraded(self, mock_qdrant_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True  # noqa: SLF001
-        store._last_check = 0.0  # noqa: SLF001
+        store._degraded = True
+        store._last_check = 0.0
         mock_qdrant_client.get.return_value.status_code = 200
         assert store.check_available()
         assert store.available
 
     def test_check_available_4xx_no_recovery(self, mock_qdrant_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True  # noqa: SLF001
-        store._last_check = 0.0  # noqa: SLF001
+        store._degraded = True
+        store._last_check = 0.0
         resp = MagicMock()
         resp.status_code = 403
         mock_qdrant_client.get.return_value = resp
@@ -424,16 +424,16 @@ class TestQdrantAutoRecovery:
 
     def test_check_available_5xx_backoff(self, mock_qdrant_client):
         store = QdrantVectorStore(collection="test")
-        store._degraded = True  # noqa: SLF001
-        store._last_check = 0.0  # noqa: SLF001
+        store._degraded = True
+        store._last_check = 0.0
         mock_qdrant_client.get.side_effect = httpx.HTTPError("5xx")
         assert not store.check_available()
-        assert store._backoff > 1.0  # noqa: SLF001
+        assert store._backoff > 1.0
 
     def test_available_returns_not_degraded(self, mock_qdrant_client):
         store = QdrantVectorStore(collection="test")
         assert store.available
-        store._degraded = True  # noqa: SLF001
+        store._degraded = True
         assert not store.available
 
 
@@ -449,24 +449,24 @@ def mock_ollama_health():
 class TestOllamaAutoRecovery:
     def test_check_available_resets_degraded(self, mock_ollama_health):
         embedder = OllamaEmbedder()
-        embedder._degraded = True  # noqa: SLF001
-        embedder._last_check = 0.0  # noqa: SLF001
+        embedder._degraded = True
+        embedder._last_check = 0.0
         mock_ollama_health.return_value = {"status": "ok", "modelos_disponibles": [], "latency_ms": 5}
         assert embedder.check_available()
         assert embedder.available
 
     def test_check_available_failure_backoff(self, mock_ollama_health):
         embedder = OllamaEmbedder()
-        embedder._degraded = True  # noqa: SLF001
-        embedder._last_check = 0.0  # noqa: SLF001
+        embedder._degraded = True
+        embedder._last_check = 0.0
         mock_ollama_health.return_value = {"status": "error", "detail": "fail", "latency_ms": 100}
         assert not embedder.check_available()
-        assert embedder._backoff > 1.0  # noqa: SLF001
+        assert embedder._backoff > 1.0
 
     def test_available_returns_boolean(self, mock_ollama_health):
         embedder = OllamaEmbedder()
         assert embedder.available
-        embedder._degraded = True  # noqa: SLF001
+        embedder._degraded = True
         assert not embedder.available
 
 
@@ -658,7 +658,7 @@ class TestListIds:
     def test_qdrant_list_ids_degraded(self, mock_qdrant_client):
         """list_ids() retorna vacío si el store está degradado."""
         store = QdrantVectorStore(collection="test")
-        store._degraded = True  # noqa: SLF001
+        store._degraded = True
         ids, next_offset = store.list_ids()
         assert ids == []
         assert next_offset is None
@@ -693,7 +693,7 @@ class TestListIds:
             embedder,
             vector_store,
         )
-        result = retriever._get_vector_ids()  # noqa: SLF001
+        result = retriever._get_vector_ids()
 
         assert len(result) == 250
         assert calls == 3
@@ -725,7 +725,7 @@ class TestListIds:
         )
 
         with caplog.at_level("WARNING"):
-            result = retriever._get_vector_ids()  # noqa: SLF001
+            result = retriever._get_vector_ids()
 
         assert len(result) == 200
         assert calls == 2
@@ -745,7 +745,7 @@ class TestListIds:
             embedder,
             vector_store,
         )
-        result = retriever._get_vector_ids()  # noqa: SLF001
+        result = retriever._get_vector_ids()
         assert result == set()
 
     def test_get_vector_ids_degraded(self):
@@ -762,7 +762,7 @@ class TestListIds:
             embedder,
             vector_store,
         )
-        result = retriever._get_vector_ids()  # noqa: SLF001
+        result = retriever._get_vector_ids()
         assert result == set()
 
     def test_reconcile_with_many_vectors_completes(self):

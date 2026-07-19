@@ -816,13 +816,13 @@ def test_platform_metrics_basic() -> None:
     m = PlatformMetrics()
 
     m.record_sent("a", "b", "command", 100, 0.5)
-    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
+    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1
 
     m.record_received("a", "b", "command", 100)
-    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
+    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1
 
     m.record_error("a", "b", "timeout")
-    assert m.messages_error._counters["destination=b|error_code=timeout|source=a"].get() == 1  # noqa: SLF001
+    assert m.messages_error._counters["destination=b|error_code=timeout|source=a"].get() == 1
 
 
 @pytest.mark.asyncio
@@ -869,8 +869,8 @@ async def test_transport_metrics_send_receive() -> None:
     rcvd = await t.receive()
 
     assert rcvd.routing.message_type == "T"
-    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
-    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1  # noqa: SLF001
+    assert m.messages_sent._counters["destination=b|message_kind=command|source=a"].get() == 1
+    assert m.messages_received._counters["destination=b|message_kind=command|source=a"].get() == 1
 
 
 def test_validator_metrics() -> None:
@@ -912,7 +912,7 @@ def test_validator_metrics() -> None:
     )
 
     v.validate(env)
-    assert len(m.validation_duration._histograms) > 0  # noqa: SLF001
+    assert len(m.validation_duration._histograms) > 0
 
 
 def test_negotiator_metrics() -> None:
@@ -925,7 +925,7 @@ def test_negotiator_metrics() -> None:
     result = n.negotiate("1.0", "1.0", {"cap1"}, {"cap1"}, MessageKind.COMMAND)
     assert result.compatible
     # histogram recorded
-    assert len(m.negotiation_duration._histograms) > 0  # noqa: SLF001
+    assert len(m.negotiation_duration._histograms) > 0
 
 
 def test_get_platform_metrics_returns_singleton() -> None:
@@ -1138,9 +1138,9 @@ def test_health_metrics_recorded() -> None:
 
     m = PlatformMetrics()
     m.record_health("f24_web", "ok", True)  # noqa: FBT003
-    assert m.health_status._gauges["component=f24_web"].get() == 1.0  # noqa: SLF001
-    assert m.health_ready._gauges["component=f24_web"].get() == 1.0  # noqa: SLF001
+    assert m.health_status._gauges["component=f24_web"].get() == 1.0
+    assert m.health_ready._gauges["component=f24_web"].get() == 1.0
 
     m.record_health("f26_memory", "degraded", False)  # noqa: FBT003
-    assert m.health_status._gauges["component=f26_memory"].get() == 0.0  # noqa: SLF001
-    assert m.health_ready._gauges["component=f26_memory"].get() == 0.0  # noqa: SLF001
+    assert m.health_status._gauges["component=f26_memory"].get() == 0.0
+    assert m.health_ready._gauges["component=f26_memory"].get() == 0.0

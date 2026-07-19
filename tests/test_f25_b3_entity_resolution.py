@@ -347,7 +347,7 @@ def test_stage_accepts_custom_resolver() -> None:
     """EntityResolutionStage debe aceptar un EntityResolver inyectado."""
     custom = RuleBasedEntityResolver()
     stage = EntityResolutionStage(resolver=custom)
-    assert stage._resolver is custom  # noqa: SLF001
+    assert stage._resolver is custom
 
 
 # ── B3.9: Determinism ──────────────────────────────────

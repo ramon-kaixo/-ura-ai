@@ -409,13 +409,13 @@ def test_benchmark_memory_estimate() -> None:
 def _all_secondary_fact_ids(idx: FactIndex) -> set[str]:
     """Retorna todos los fact_ids referenciados en índices secundarios."""
     ids: set[str] = set()
-    for inner in idx._by_entity.values():  # noqa: SLF001
+    for inner in idx._by_entity.values():
         ids.update(inner)
-    for inner in idx._by_predicate.values():  # noqa: SLF001
+    for inner in idx._by_predicate.values():
         ids.update(inner)
-    for inner in idx._by_sp.values():  # noqa: SLF001
+    for inner in idx._by_sp.values():
         ids.update(inner)
-    for inner in idx._by_evidence.values():  # noqa: SLF001
+    for inner in idx._by_evidence.values():
         ids.update(inner)
     return ids
 
@@ -462,7 +462,7 @@ def test_consistency_primary_has_all_secondary_keys() -> None:
     ]
     for f in facts:
         idx.add_fact(f)
-    for fid, fact in idx._by_id.items():  # noqa: SLF001
+    for fid, fact in idx._by_id.items():
         assert len(idx.lookup_entity(fact.subject)) > 0, f"Entity index missing for {fid}"
         assert len(idx.lookup_predicate(fact.predicate)) > 0, f"Predicate index missing for {fid}"
         assert len(idx.lookup_subject_predicate(fact.subject, fact.predicate)) > 0, f"SP index missing for {fid}"

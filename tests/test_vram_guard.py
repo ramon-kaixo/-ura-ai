@@ -81,4 +81,4 @@ class TestVRAMGuard:
 
         result = await g.ejecutar_inferencia_segura(dummy)
         assert result == "ok"
-        assert g._total_enqueue >= 1  # noqa: SLF001
+        assert g._total_enqueue >= 1

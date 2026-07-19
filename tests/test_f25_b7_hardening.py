@@ -120,7 +120,7 @@ def test_concurrent_rollback_during_reads() -> None:  # noqa: C901
         for _ in range(20):
             with lock:
                 try:
-                    versions = [vid for vid in h._versions if vid != h.current_version_id]  # noqa: SLF001
+                    versions = [vid for vid in h._versions if vid != h.current_version_id]
                     if versions:
                         h.rollback(random.choice(versions))  # noqa: S311
                 except Exception as e:
@@ -176,7 +176,7 @@ def test_fuzz_random_operations() -> None:
                     )
                     h.add_version(v)
                 elif op == "rollback":
-                    keys = list(h._versions.keys())  # noqa: SLF001
+                    keys = list(h._versions.keys())
                     if keys and h.current.state != VersionState.TOMBSTONE:
                         target = rng.choice(keys)
                         h.rollback(target)
@@ -213,7 +213,7 @@ def test_corruption_nonexistent_current() -> None:
     """current apunta a version_id inexistente → RuntimeError."""
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
-    h._current = "nonexistent"  # type: ignore  # noqa: PGH003, SLF001
+    h._current = "nonexistent"  # type: ignore  # noqa: PGH003
     with pytest.raises(RuntimeError):
         _ = h.current
 
@@ -224,7 +224,7 @@ def test_corruption_broken_supersedes_chain() -> None:
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     v2 = _make_version(fact.fact_id, "v2", created_at=100)
     h.add_version(v2)
-    h._versions["v2"] = FactVersion(  # type: ignore  # noqa: PGH003, SLF001
+    h._versions["v2"] = FactVersion(  # type: ignore  # noqa: PGH003
         version_id="v2",
         fact_id=fact.fact_id,
         confidence=0.9,
@@ -247,7 +247,7 @@ def test_corruption_cycle_in_supersedes() -> None:
     v2 = _make_version(fact.fact_id, "v2", created_at=100)
     h.add_version(v2)
     # Crear ciclo: v2 -> v1, v1 -> v2
-    h._versions["v1"] = FactVersion(  # noqa: SLF001
+    h._versions["v1"] = FactVersion(
         version_id="v1",
         fact_id=fact.fact_id,
         confidence=0.9,
@@ -355,7 +355,7 @@ def test_benchmark_ram_1m() -> None:
             sys.gettotalrefcount() if hasattr(sys, "gettotalrefcount") else 0
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=_ts() + 1000))
     # Tamaño aproximado
-    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())  # noqa: SLF001
+    sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())
     assert h.version_count == 1_000_001
 
 
@@ -380,7 +380,7 @@ def test_soak_million_operations() -> None:
                 v = _make_version(fact.fact_id, f"v{version_counter}", created_at=_ts() + 1000)
                 h.add_version(v)
             elif op == "rollback":
-                keys = list(h._versions.keys())  # noqa: SLF001
+                keys = list(h._versions.keys())
                 if keys and h.current.state != VersionState.TOMBSTONE:
                     target = keys[rng.randint(0, len(keys) - 1)]
                     h.rollback(target)
@@ -449,7 +449,7 @@ def test_serialization_checksum_stability() -> None:
 
 def _history_checksum(h: FactHistory) -> str:
     """Checksum SHA-256 del historial completo."""
-    raw = f"{h.fact_id}:{h.current_version_id}:{sorted(h._versions.keys())}:{h.version_count}"  # noqa: SLF001
+    raw = f"{h.fact_id}:{h.current_version_id}:{sorted(h._versions.keys())}:{h.version_count}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
