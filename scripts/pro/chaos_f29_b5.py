@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import sys
-import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -17,8 +16,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def ct1_journal_corrupt() -> dict:
     """CT-1: Journal corrupto (F26)."""
     print("\n=== CT-1: Journal corrupto ===")
-    from motor.memory.journal import Journal
     import tempfile
+
+    from motor.memory.journal import Journal
 
     tmp = tempfile.mktemp(suffix=".journal")
     journal = Journal(path=tmp)
@@ -27,7 +27,7 @@ def ct1_journal_corrupt() -> dict:
     journal.flush()
 
     # Corrupt one line
-    with open(tmp, "r") as f:
+    with open(tmp) as f:
         lines = f.readlines()
     if len(lines) > 10:
         lines[10] = "CORRUPTED_LINE\n"
@@ -41,7 +41,8 @@ def ct1_journal_corrupt() -> dict:
             count += 1
     except Exception as e:
         return {
-            "ct": 1, "name": "Journal corrupto",
+            "ct": 1,
+            "name": "Journal corrupto",
             "expected": "Skip línea corrupta, resto intacto",
             "observed": f"Error: {e}",
             "data_loss": "unknown",
@@ -49,7 +50,8 @@ def ct1_journal_corrupt() -> dict:
         }
 
     return {
-        "ct": 1, "name": "Journal corrupto",
+        "ct": 1,
+        "name": "Journal corrupto",
         "expected": "99 entries recuperables (skip corrupted line)",
         "observed": f"{count} entries recuperados",
         "data_loss": "1 entry" if count >= 99 else f"{100 - count} entries",
@@ -65,7 +67,8 @@ def ct2_snapshot_missing() -> dict:
     memory = Memory()
     result = memory.health()
     return {
-        "ct": 2, "name": "Snapshot faltante",
+        "ct": 2,
+        "name": "Snapshot faltante",
         "expected": "Reconstrucción desde Journal (F26 auto-recovery)",
         "observed": f"health status: {result.get('status', 'N/A')}",
         "data_loss": "None (reconstructs from journal)",
@@ -82,7 +85,8 @@ def ct3_scheduler_kill() -> dict:
     scheduler = AgentScheduler()
     task = AgentTask(task_id="ct3", objective="chaos test")
     execution = AgentExecution(
-        agent_id="ct3_agent", task=task,
+        agent_id="ct3_agent",
+        task=task,
         capabilities={AgentCapability.MEMORY_READ},
         policy=AgentPolicy(),
     )
@@ -93,7 +97,8 @@ def ct3_scheduler_kill() -> dict:
     state_after = scheduler.queue_size
 
     return {
-        "ct": 3, "name": "Scheduler kill simulado",
+        "ct": 3,
+        "name": "Scheduler kill simulado",
         "expected": "Queue drained on shutdown",
         "observed": f"before: {state_before}, after shutdown: {state_after}, results: {len(results)}",
         "data_loss": "None" if results else "1 task",
@@ -105,7 +110,8 @@ def ct4_component_unreachable() -> dict:
     """CT-4: Componente inalcanzable (simulado)."""
     print("\n=== CT-4: Componente inalcanzable ===")
     return {
-        "ct": 4, "name": "Componente inalcanzable",
+        "ct": 4,
+        "name": "Componente inalcanzable",
         "expected": "Error delivery ER01-ER08 (3 retries → silent discard)",
         "observed": "Simulado: ErrorDelivery maneja fallo de conexión",
         "data_loss": "None (error message discarded per ER02)",
@@ -117,7 +123,8 @@ def ct5_disk_full() -> dict:
     """CT-5: Disco lleno simulado."""
     print("\n=== CT-5: Disco lleno ===")
     return {
-        "ct": 5, "name": "Disco lleno",
+        "ct": 5,
+        "name": "Disco lleno",
         "expected": "IOError capturado, degradación graceful",
         "observed": "No ejecutable en contenedor (fs RO)",
         "data_loss": "N/A",
@@ -133,7 +140,8 @@ def ct6_extreme_latency() -> dict:
     # Verify timeout is enforced in model
     d = DeliveryHeader(timeout_ms=100, semantics=DeliverySemantics.AT_MOST_ONCE)
     return {
-        "ct": 6, "name": "Latencia extrema",
+        "ct": 6,
+        "name": "Latencia extrema",
         "expected": "Timeout de 100ms respetado (DeliveryHeader)",
         "observed": f"timeout_ms={d.timeout_ms}, semantics={d.semantics.value}",
         "data_loss": "None",
@@ -150,7 +158,8 @@ def ct7_hot_restart() -> dict:
     h = get_health_aggregator().health()
 
     return {
-        "ct": 7, "name": "Reinicio en caliente",
+        "ct": 7,
+        "name": "Reinicio en caliente",
         "expected": "Graceful shutdown + health endpoints OK",
         "observed": f"health status: {h.get('status', 'N/A')}, subsystems: {len(h.get('subsystems', {}))}",
         "data_loss": "None",
@@ -158,8 +167,15 @@ def ct7_hot_restart() -> dict:
     }
 
 
-ALL_TESTS = [ct1_journal_corrupt, ct2_snapshot_missing, ct3_scheduler_kill,
-             ct4_component_unreachable, ct5_disk_full, ct6_extreme_latency, ct7_hot_restart]
+ALL_TESTS = [
+    ct1_journal_corrupt,
+    ct2_snapshot_missing,
+    ct3_scheduler_kill,
+    ct4_component_unreachable,
+    ct5_disk_full,
+    ct6_extreme_latency,
+    ct7_hot_restart,
+]
 
 
 def main() -> None:

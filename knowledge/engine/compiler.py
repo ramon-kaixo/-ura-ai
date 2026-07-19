@@ -210,7 +210,7 @@ def compile_source(
             duration_ms=round(duration * 1000),
         )
     except Exception:
-        pass
+        pass  # noqa: S110
 
     return CompileResult(
         success=result.success,

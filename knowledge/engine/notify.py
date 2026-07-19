@@ -133,7 +133,7 @@ def _record_metric(counter_name: str, channel: str, status: str, duration_ms: fl
             )
             h.labels(channel=channel).observe(duration_ms / 1000)
     except Exception:
-        pass
+        pass  # noqa: S110
 
 
 # ── Event payloads ────────────────────────────────────────────────────────
@@ -363,7 +363,7 @@ class NotificationService:
                     if future.result(timeout=_TIMEOUT_S + 5):
                         ok_count += 1
                 except Exception:
-                    pass
+                    pass  # noqa: S110
         return ok_count
 
     @property

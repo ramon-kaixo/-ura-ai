@@ -69,4 +69,4 @@ def _inc_busy_retry() -> None:
 
         sqlite_busy_retries_total.inc()
     except Exception:
-        pass
+        pass  # noqa: S110

@@ -91,7 +91,7 @@ def _load_manifest(output: Path) -> dict[str, str]:
         try:
             return json.loads(manifest_file.read_text())
         except (json.JSONDecodeError, OSError):
-            pass
+            pass  # noqa: S110
     return {}
 
 

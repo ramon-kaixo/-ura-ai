@@ -224,14 +224,14 @@ def archive_source(
             size_bytes=compressed_size,
         )
     except Exception:
-        pass
+        pass  # noqa: S110
 
     try:
         from knowledge.engine.metrics import archive_duration_seconds
 
         archive_duration_seconds.observe(_time.monotonic() - _t0)
     except Exception:
-        pass
+        pass  # noqa: S110
     return manifest
 
 
