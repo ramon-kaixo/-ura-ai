@@ -50,3 +50,4 @@ benchmark_f10_baseline.json
 build/
 *.egg-info/
 dist/
+memory_snapshot_*.json
