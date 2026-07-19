@@ -16,7 +16,7 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -62,13 +62,17 @@ def benchmark_f26_memory() -> list[BenchmarkResult]:
         latencies.append((time.monotonic() - t0) * 1000)
     total = time.time() - start
     sorted_lats = sorted(latencies)
-    results.append(BenchmarkResult(
-        name="F26 Memory.append",
-        ops=N, total_s=round(total, 3), ops_per_s=round(N / total, 1),
-        p50_ms=round(sorted_lats[N // 2], 3),
-        p95_ms=round(sorted_lats[int(N * 0.95)], 3),
-        p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-    ))
+    results.append(
+        BenchmarkResult(
+            name="F26 Memory.append",
+            ops=N,
+            total_s=round(total, 3),
+            ops_per_s=round(N / total, 1),
+            p50_ms=round(sorted_lats[N // 2], 3),
+            p95_ms=round(sorted_lats[int(N * 0.95)], 3),
+            p99_ms=round(sorted_lats[int(N * 0.99)], 3),
+        )
+    )
 
     # Memory.state_at (only if available)
     if hasattr(memory, "state_at"):
@@ -81,13 +85,17 @@ def benchmark_f26_memory() -> list[BenchmarkResult]:
             latencies.append((time.monotonic() - t0) * 1000)
         total = time.time() - start
         sorted_lats = sorted(latencies)
-        results.append(BenchmarkResult(
-            name="F26 Memory.state_at",
-            ops=N, total_s=round(total, 3), ops_per_s=round(N / total, 1),
-            p50_ms=round(sorted_lats[N // 2], 3),
-            p95_ms=round(sorted_lats[int(N * 0.95)], 3),
-            p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-        ))
+        results.append(
+            BenchmarkResult(
+                name="F26 Memory.state_at",
+                ops=N,
+                total_s=round(total, 3),
+                ops_per_s=round(N / total, 1),
+                p50_ms=round(sorted_lats[N // 2], 3),
+                p95_ms=round(sorted_lats[int(N * 0.95)], 3),
+                p99_ms=round(sorted_lats[int(N * 0.99)], 3),
+            )
+        )
 
     return results
 
@@ -98,7 +106,10 @@ def benchmark_f27_scheduler() -> list[BenchmarkResult]:
 
     try:
         from motor.agents.models import (
-            AgentCapability, AgentExecution, AgentPolicy, AgentTask,
+            AgentCapability,
+            AgentExecution,
+            AgentPolicy,
+            AgentTask,
         )
         from motor.agents.scheduler import AgentScheduler
     except ImportError:
@@ -123,13 +134,17 @@ def benchmark_f27_scheduler() -> list[BenchmarkResult]:
         latencies.append((time.monotonic() - t0) * 1000)
     total = time.time() - start
     sorted_lats = sorted(latencies)
-    results.append(BenchmarkResult(
-        name="F27 Scheduler.submit",
-        ops=N, total_s=round(total, 3), ops_per_s=round(N / total, 1),
-        p50_ms=round(sorted_lats[N // 2], 3),
-        p95_ms=round(sorted_lats[int(N * 0.95)], 3),
-        p99_ms=round(sorted_lats[int(N * 0.99)], 3),
-    ))
+    results.append(
+        BenchmarkResult(
+            name="F27 Scheduler.submit",
+            ops=N,
+            total_s=round(total, 3),
+            ops_per_s=round(N / total, 1),
+            p50_ms=round(sorted_lats[N // 2], 3),
+            p95_ms=round(sorted_lats[int(N * 0.95)], 3),
+            p99_ms=round(sorted_lats[int(N * 0.99)], 3),
+        )
+    )
 
     scheduler.shutdown(timeout=5)
     return results
@@ -141,12 +156,22 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
 
     try:
         from motor.platform.models import (
-            DeliveryHeader, MessageKind, ProtocolEnvelope, RoutingHeader,
-            SpanId, TraceHeader, TraceId, VersionHeader, CorrelationId, CausationId,
+            CausationId,
+            CorrelationId,
+            DeliveryHeader,
+            MessageKind,
+            ProtocolEnvelope,
+            RoutingHeader,
+            SpanId,
+            TraceHeader,
+            TraceId,
+            VersionHeader,
         )
         from motor.platform.serializer import (
-            JsonProtocolDeserializer, JsonProtocolSerializer,
-            make_envelope_with_checksum, make_message_id,
+            JsonProtocolDeserializer,
+            JsonProtocolSerializer,
+            make_envelope_with_checksum,
+            make_message_id,
         )
     except ImportError:
         print("[SKIP] F28 Protocol no disponible")
@@ -164,7 +189,8 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
             message_id=make_message_id("1.0", "1.0", "a", "b", "ToolRequest", payload),
             message_type="ToolRequest",
             message_kind=MessageKind.COMMAND,
-            source="test", destination="bench",
+            source="test",
+            destination="bench",
         ),
         trace=TraceHeader(
             trace_id=TraceId("abcdef1234567890"),
@@ -185,13 +211,17 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
         latencies.append((time.monotonic() - t0) * 1000)
     total = time.time() - start
     sorted_lats = sorted(latencies)
-    results.append(BenchmarkResult(
-        name="F28 Protocol.serialize",
-        ops=N, total_s=round(total, 3), ops_per_s=round(N / total, 1),
-        p50_ms=round(sorted_lats[N // 2], 6),
-        p95_ms=round(sorted_lats[int(N * 0.95)], 6),
-        p99_ms=round(sorted_lats[int(N * 0.99)], 6),
-    ))
+    results.append(
+        BenchmarkResult(
+            name="F28 Protocol.serialize",
+            ops=N,
+            total_s=round(total, 3),
+            ops_per_s=round(N / total, 1),
+            p50_ms=round(sorted_lats[N // 2], 6),
+            p95_ms=round(sorted_lats[int(N * 0.95)], 6),
+            p99_ms=round(sorted_lats[int(N * 0.99)], 6),
+        )
+    )
 
     # Deserialize (with checksum verification)
     raw = serializer.serialize(env)
@@ -203,13 +233,17 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
         latencies.append((time.monotonic() - t0) * 1000)
     total = time.time() - start
     sorted_lats = sorted(latencies)
-    results.append(BenchmarkResult(
-        name="F28 Protocol.deserialize",
-        ops=N, total_s=round(total, 3), ops_per_s=round(N / total, 1),
-        p50_ms=round(sorted_lats[N // 2], 6),
-        p95_ms=round(sorted_lats[int(N * 0.95)], 6),
-        p99_ms=round(sorted_lats[int(N * 0.99)], 6),
-    ))
+    results.append(
+        BenchmarkResult(
+            name="F28 Protocol.deserialize",
+            ops=N,
+            total_s=round(total, 3),
+            ops_per_s=round(N / total, 1),
+            p50_ms=round(sorted_lats[N // 2], 6),
+            p95_ms=round(sorted_lats[int(N * 0.95)], 6),
+            p99_ms=round(sorted_lats[int(N * 0.99)], 6),
+        )
+    )
 
     return results
 
@@ -217,6 +251,7 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
 def main() -> None:
     output = sys.argv[1] if len(sys.argv) > 1 else ""
     import tracemalloc
+
     tracemalloc.start()
 
     all_results: list[dict] = []

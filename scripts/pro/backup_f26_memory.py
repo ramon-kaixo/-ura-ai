@@ -8,7 +8,6 @@ Uso:
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 import time
@@ -26,7 +25,7 @@ def cmd_backup(path: str) -> None:
 
 
 def cmd_restore(path: str) -> None:
-    from motor.memory import Memory, load_snapshot
+    from motor.memory import load_snapshot
 
     if not os.path.exists(path):
         print(f"Error: {path} not found")
@@ -43,7 +42,9 @@ def main() -> None:
         sys.exit(1)
 
     command = sys.argv[1]
-    path = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"
+    path = (
+        sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"
+    )
 
     if command == "backup":
         cmd_backup(path)

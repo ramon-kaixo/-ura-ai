@@ -48,4 +48,4 @@ def record_metric() -> None:
 
         audit_write_failures.inc()
     except Exception:
-        pass
+        pass  # noqa: S110

@@ -545,4 +545,5 @@ if FAIL == 0:
 else:
     pass
 
-sys.exit(0 if FAIL == 0 else 1)
+if __name__ == "__main__":
+    sys.exit(0 if FAIL == 0 else 1)

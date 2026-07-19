@@ -114,7 +114,7 @@ class SQLiteMemoryStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def get(self, memory_id: str) -> MemoryRecord | None:
         try:
@@ -169,7 +169,7 @@ class SQLiteMemoryStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def search(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
         """Búsqueda FTS5 sobre memorias. Fallback a LIKE si FTS5 no disponible."""
@@ -249,7 +249,7 @@ class SQLiteMemoryStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def count(self, kind: str | None = None) -> int:
         try:

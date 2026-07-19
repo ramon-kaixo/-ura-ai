@@ -146,7 +146,7 @@ def _parse_frontmatter(raw: str) -> tuple[dict | None, str]:
         if isinstance(fm, dict):
             return fm, body
     except yaml.YAMLError:
-        pass
+        pass  # noqa: S110
     return None, raw
 
 

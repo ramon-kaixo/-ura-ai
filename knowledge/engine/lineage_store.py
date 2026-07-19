@@ -88,7 +88,7 @@ class SQLiteLineageStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def get_lineage(self, asset_id: str) -> list[dict[str, Any]]:
         """Retorna eventos de lineage que involucran un asset."""
@@ -113,7 +113,7 @@ class SQLiteLineageStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def _get_upstream_edges(self, asset_id: str) -> list[str] | None:
         """Retorna upstream desde op_lineage_edges. None si la tabla no existe."""
@@ -161,7 +161,7 @@ class SQLiteLineageStore:
                     if inp != asset_id:
                         upstream.add(inp)
             except (json.JSONDecodeError, KeyError):
-                pass
+                pass  # noqa: S110
         return sorted(upstream)
 
     def get_downstream(self, asset_id: str) -> list[str]:
@@ -186,5 +186,5 @@ class SQLiteLineageStore:
                     if out != asset_id:
                         downstream.add(out)
             except (json.JSONDecodeError, KeyError):
-                pass
+                pass  # noqa: S110
         return sorted(downstream)
