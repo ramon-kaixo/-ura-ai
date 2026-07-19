@@ -25,7 +25,7 @@ class TestModels:
 
     def test_message_token_estimate(self):
         msg = Message(role="user", content="a" * 100)
-        assert msg.token_estimate() == 26  # 100/4 + 1
+        assert msg.token_estimate() == 25  # max(1, 100/4)
 
     def test_conversation_add_message(self):
         conv = Conversation(conversation_id="test1")
