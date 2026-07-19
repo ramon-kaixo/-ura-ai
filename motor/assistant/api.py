@@ -1,5 +1,6 @@
 """FastAPI endpoint for the conversational assistant.
 Conectado a LLM real via motor/core/llm/router.py"""
+
 from __future__ import annotations
 
 import threading
@@ -56,8 +57,9 @@ def get_llm() -> LLMBridge:
         with _EngineHolder.lock:
             if _EngineHolder.llm is None:
                 try:
-                    from motor.core.llm.router import ModelRouter
-                    router = ModelRouter()
+                    from motor.core.llm.router import LLMRouter
+
+                    router = LLMRouter()
                     _EngineHolder.llm = LLMBridge(get_engine(), router=router)
                 except Exception:
                     _EngineHolder.llm = LLMBridge(get_engine())
@@ -189,11 +191,14 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     intent, mode, resolved, system_prompt, conv, lang_code = _process(engine, llm, cid, request.message, request.mode)
 
     if request.stream:
+
         async def event_stream():
             try:
-                if hasattr(llm, 'generate_async'):
+                if hasattr(llm, "generate_async"):
                     reply = await llm.generate_async(
-                        cid, resolved, mode,
+                        cid,
+                        resolved,
+                        mode,
                         intent_value=intent.value,
                         system_prompt=system_prompt,
                     )
@@ -203,19 +208,24 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
                 reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
             engine.add_message(cid, "assistant", reply)
-            event = StreamEvent("complete", {
-                "reply": reply,
-                "conversation_id": cid,
-                "intent": intent.value,
-                "mode": mode.value,
-            })
+            event = StreamEvent(
+                "complete",
+                {
+                    "reply": reply,
+                    "conversation_id": cid,
+                    "intent": intent.value,
+                    "mode": mode.value,
+                },
+            )
             yield event.to_sse()
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     try:
         reply = llm.generate(
-            cid, resolved, mode,
+            cid,
+            resolved,
+            mode,
             intent_value=intent.value,
             system_prompt=system_prompt,
         )
