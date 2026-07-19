@@ -16,30 +16,25 @@ from __future__ import annotations
 
 import pytest
 
-from motor.core.fusion.base import BaseStage, EntityResolver
-from motor.core.fusion.engine import FusionStage
 from motor.core.fusion.models import (
     FusionContext,
-    FusionProvenance,
     KnowledgeClaim,
-    ResolvedEntity,
     ResolutionStatus,
+    ResolvedEntity,
     make_claim_id,
 )
 from motor.core.fusion.stages.entity_resolver import (
+    _DEFAULT_REGISTRY,
     CachePolicy,
     ContextualEntityResolver,
     EntityDef,
     EntityRegistry,
     EntityResolutionStage,
-    KeywordScorer,
     LRUCache,
     RuleBasedEntityResolver,
     ScoringStrategy,
     _extract_entity_candidates,
-    _DEFAULT_REGISTRY,
 )
-
 
 # ── B3.1: LRUCache ──────────────────────────────────────
 

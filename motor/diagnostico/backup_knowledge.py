@@ -6,7 +6,7 @@ from pathlib import Path
 log = logging.getLogger("ura.diagnostico.backup")
 
 
-def backup_incidente(config, incidente: dict = None) -> str:
+def backup_incidente(config, incidente: dict | None = None) -> str:
     """Guarda backup de un incidente a disco."""
     dest = Path(config.data_dir) / f"backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     data = {"timestamp": datetime.now(UTC).isoformat() + "Z"}

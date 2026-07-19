@@ -5,10 +5,10 @@ Sin dependencias externas. Solo re + typing.
 """
 
 from __future__ import annotations
-import re
-from typing import Dict
 
-PATTERNS: Dict[str, re.Pattern] = {
+import re
+
+PATTERNS: dict[str, re.Pattern] = {
     "IP_ADDRESS": re.compile(
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
     ),
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(sanitize_text(content))

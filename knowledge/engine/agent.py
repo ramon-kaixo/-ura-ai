@@ -18,8 +18,10 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.agent")
 
@@ -192,7 +194,7 @@ class KnowledgeGraphAgent(Agent):
                 AgentFinding(
                     agent_id=self._id,
                     kind=d.kind,
-                    severity="WARN" if d.kind in ("orphan",) else "INFO",
+                    severity="WARN" if d.kind == "orphan" else "INFO",
                     title=f"{d.kind}: {d.subject_id}",
                     description=d.description,
                     doc_id=d.subject_id if d.kind == "orphan" else "",

@@ -11,7 +11,6 @@ Si attempts >= MAX_SYNC_ATTEMPTS (10) → dead_letter (no reintentar más).
 from __future__ import annotations
 
 import logging
-import sqlite3
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +20,7 @@ from knowledge.engine.models import MAX_SYNC_ATTEMPTS
 from motor.core.state import DegradedMode
 
 if TYPE_CHECKING:
+    import sqlite3
     from pathlib import Path
 
     from knowledge.engine.models import Document

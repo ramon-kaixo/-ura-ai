@@ -10,7 +10,7 @@ DEPENDENCIAS = {
 }
 
 
-def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list = None) -> list:
+def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list | None = None) -> list:
     """Agrupa tags en correlaciones con causa raíz y servicios afectados."""
     grupos = []
     procesados = set()
@@ -34,7 +34,7 @@ def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list = None) -
                     "servicios_afectados": DEPENDENCIAS[tag],
                 },
             )
-        elif tag not in ("hw_issue",):
+        elif tag != "hw_issue":
             grupos.append(
                 {
                     "causa_raiz": tag,
@@ -50,7 +50,7 @@ def resumir_incidentes(incidentes: list) -> str:
     """Genera resumen textual de una lista de incidentes."""
     if not incidentes:
         return "Sin incidencias activas"
-    tipos = set(i.get("tipo", "Unknown") for i in incidentes)
+    tipos = {i.get("tipo", "Unknown") for i in incidentes}
     subs = [i.get("subtipo", "") for i in incidentes if i.get("subtipo")]
     resumen = f"{len(incidentes)} incidencia(s): {', '.join(tipos)}"
     if subs:

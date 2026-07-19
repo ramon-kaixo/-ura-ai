@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -28,12 +28,12 @@ class Idea:
 
     def __post_init__(self):
         if not self.fecha_captura:
-            self.fecha_captura = datetime.now(timezone.utc).isoformat()
+            self.fecha_captura = datetime.now(UTC).isoformat()
 
     def texto_para_embedding(self) -> str:
         extras = " ".join(self.etiquetas) if self.etiquetas else ""
         duros = " ".join(f"{k}: {v}" for k, v in self.datos_duros.items()) if self.datos_duros else ""
-        visual = self.resumen_visual if self.resumen_visual else ""
+        visual = self.resumen_visual or ""
         return f"{self.idea} {self.tema} {extras} {duros} {visual}".strip()
 
     def to_payload(self) -> dict[str, Any]:

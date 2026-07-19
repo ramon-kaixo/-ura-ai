@@ -20,7 +20,7 @@ import platform
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +47,7 @@ def gather_environment() -> dict[str, Any]:
         or "unknown"
     )
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "commit_sha": git_hash,
         "version": git_tag,
         "hostname": platform.node(),
@@ -139,9 +139,9 @@ def _import_qdrant():
 
 
 def _import_hybrid_retriever():
-    from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.hybrid import HybridRetriever
+    from motor.intelligence.retrieval.lexical import LexicalRetriever
+    from motor.intelligence.retrieval.vector import VectorRetriever
 
     qdrant = _import_qdrant()
     vr = VectorRetriever(qdrant_client=qdrant)
@@ -281,7 +281,7 @@ def benchmark_l02(levels: list[int]) -> dict[str, Any]:
 
 
 def benchmark_l03(levels: list[int]) -> dict[str, Any]:
-    from motor.intelligence.memory.episodic import EpisodeStore, EpisodeStoreConfig, Episode
+    from motor.intelligence.memory.episodic import Episode, EpisodeStore, EpisodeStoreConfig
 
     store = EpisodeStore(config=EpisodeStoreConfig())
     results = []
@@ -294,7 +294,7 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
 
         for i in range(n_ep):
             ep = Episode(
-                source=f"benchmark-agent",
+                source="benchmark-agent",
                 payload=f"benchmark result {i}",
                 tags=["benchmark", "f14"],
                 references=[],
@@ -353,13 +353,13 @@ def benchmark_l03(levels: list[int]) -> dict[str, Any]:
 
 
 def benchmark_l04(levels: list[int]) -> dict[str, Any]:
-    from motor.intelligence.agents.consensus import (
-        VotingEngine,
-        MajorityVoting,
-        WeightedConsensus,
-        AgentWeightRegistry,
-    )
     from motor.intelligence.agents.base import AgentResult
+    from motor.intelligence.agents.consensus import (
+        AgentWeightRegistry,
+        MajorityVoting,
+        VotingEngine,
+        WeightedConsensus,
+    )
 
     wreg = AgentWeightRegistry()
     wreg.set_weight("agent-a", 1.0)
@@ -529,7 +529,7 @@ def benchmark_l05() -> dict[str, Any]:
 
 def save_results(data: dict[str, Any]) -> Path:
     bid = data["benchmark_id"]
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     base = OUTPUT_DIR / f"{bid}_{ts}"
 
     json_path = base.with_suffix(".json")
@@ -574,15 +574,9 @@ def main() -> None:
         "L05": (benchmark_l05, None),
     }
 
-    if args.benchmark == "all":
-        to_run = list(benchmarks.items())
-    else:
-        to_run = [(args.benchmark, benchmarks[args.benchmark])]
+    to_run = list(benchmarks.items()) if args.benchmark == "all" else [(args.benchmark, benchmarks[args.benchmark])]
 
-    if args.levels:
-        custom_levels = [int(x.strip()) for x in args.levels.split(",")]
-    else:
-        custom_levels = None
+    custom_levels = [int(x.strip()) for x in args.levels.split(",")] if args.levels else None
 
     all_ok = True
     for bid, (fn, default_levels) in to_run:
@@ -590,11 +584,8 @@ def main() -> None:
         print(f"  🏋️  Benchmark {bid}")
         print(f"{'=' * 60}")
         try:
-            levels = custom_levels if custom_levels else default_levels
-            if bid == "L05":
-                data = fn()
-            else:
-                data = fn(levels)
+            levels = custom_levels or default_levels
+            data = fn() if bid == "L05" else fn(levels)
             save_results(data)
             total_errors = sum(r.get("errors", 0) for r in data.get("results", []))
             total_ops = sum(

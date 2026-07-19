@@ -16,18 +16,20 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Final, Literal
+from typing import final as _final
+
 from knowledge.engine._compat import StrEnum
+from knowledge.engine.migrations import SCHEMA_VERSION
 from knowledge.engine.ontology import (  # noqa: F401 — Capa 11 asset model
     AssetRelationship,
     AssetSource,
     AssetType,
     KnowledgeAsset,
 )
-from pathlib import Path
-from typing import Any, Final, Literal
-from typing import final as _final
 
-from knowledge.engine.migrations import SCHEMA_VERSION
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def doc_id_from_path(path: str) -> str:

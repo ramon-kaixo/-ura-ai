@@ -14,10 +14,12 @@ Uso:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.rollback")
 

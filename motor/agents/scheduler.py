@@ -137,7 +137,7 @@ class AgentScheduler(SchedulerABC):
 
         # Esperar a que los hilos en ejecución terminen
         deadline = time.time() + timeout
-        for agent_id, thread in list(self._running.items()):
+        for _agent_id, thread in list(self._running.items()):
             remaining = deadline - time.time()
             if remaining <= 0:
                 break

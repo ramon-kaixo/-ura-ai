@@ -8,10 +8,14 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from knowledge.engine.audit.backend import AuditHealth, record_metric
-from knowledge.engine.models import AuditEvent
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from knowledge.engine.models import AuditEvent
 
 log = logging.getLogger("ura.knowledge.audit.sqlite")
 

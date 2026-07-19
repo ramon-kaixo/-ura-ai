@@ -14,12 +14,9 @@ Cubre:
 
 from __future__ import annotations
 
-import threading
 import time
 
-import pytest
-
-from motor.agents import AgentExecution, AgentPolicy, AgentScheduler, AgentState, AgentTask
+from motor.agents import AgentExecution, AgentPolicy, AgentScheduler, AgentTask
 
 
 def _execution(
@@ -179,6 +176,7 @@ def test_aging_moves_to_higher_priority() -> None:
 
 def test_no_external_dependencies() -> None:
     import inspect
+
     import motor.agents.scheduler as sched_module
     source = inspect.getsource(sched_module)
     assert "from motor.agents.base import Memory" not in source

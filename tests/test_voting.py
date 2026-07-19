@@ -199,7 +199,7 @@ class TestWeightedConsensus:
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
         agents = [(f"a{i}", 1.0, i % 3) for i in range(10)]
-        for aid, w, val in agents:
+        for aid, w, _val in agents:
             reg.set_weight(aid, w)
         results = [_r(True, {"val": val}, aid) for aid, _, val in agents]
         r = wc.aggregate(results)

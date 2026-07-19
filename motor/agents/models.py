@@ -198,10 +198,17 @@ class ToolRequest:
     trace_id: str = ""
     causation_id: str = ""
 
-    def to_envelope(self) -> "ProtocolEnvelope":
+    def to_envelope(self) -> ProtocolEnvelope:
         from motor.platform.models import (
-            CausationId, CorrelationId, DeliveryHeader, MessageKind,
-            RoutingHeader, SpanId, TraceHeader, TraceId, VersionHeader,
+            CausationId,
+            CorrelationId,
+            DeliveryHeader,
+            MessageKind,
+            RoutingHeader,
+            SpanId,
+            TraceHeader,
+            TraceId,
+            VersionHeader,
         )
         from motor.platform.serializer import make_envelope_with_checksum, make_message_id
 
@@ -238,7 +245,7 @@ class ToolRequest:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: "ProtocolEnvelope") -> "ToolRequest":
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolRequest:
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],
@@ -264,9 +271,12 @@ class ToolResult:
     attempt: int = 1
     protocol_version: str = "1.0"
 
-    def to_envelope(self) -> "ProtocolEnvelope":
+    def to_envelope(self) -> ProtocolEnvelope:
         from motor.platform.models import (
-            DeliveryHeader, MessageKind, RoutingHeader, TraceHeader,
+            DeliveryHeader,
+            MessageKind,
+            RoutingHeader,
+            TraceHeader,
             VersionHeader,
         )
         from motor.platform.serializer import make_envelope_with_checksum, make_message_id
@@ -306,7 +316,7 @@ class ToolResult:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: "ProtocolEnvelope") -> "ToolResult":
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolResult:
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from motor.intelligence.memory.episodic import EpisodeStore
 from motor.intelligence.memory.semantic import SemanticMemoryStore, consolidate_episodes
+
+if TYPE_CHECKING:
+    from motor.intelligence.memory.episodic import EpisodeStore
 
 log = logging.getLogger("ura.memory.orchestrator")
 

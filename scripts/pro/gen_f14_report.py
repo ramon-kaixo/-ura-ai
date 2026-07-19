@@ -196,7 +196,7 @@ def generate() -> str:
     total_errors = sum(sum(r.get("errors", 0) for r in d.get("results", [])) for d in [l01, l02, l03, l04, l05])
     error_rate = round(total_errors / max(total_ops, 1) * 100, 2)
 
-    out(f"- Benchmarks ejecutados: 5 (L01–L05)")
+    out("- Benchmarks ejecutados: 5 (L01–L05)")
     out(f"- Niveles totales: {results_count}")
     out(f"- Operaciones totales: {total_ops}")
     out(f"- Errores totales: {total_errors} ({error_rate}%)")

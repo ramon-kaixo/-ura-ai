@@ -261,7 +261,7 @@ def _git_cmd(repo_path: str, args: list[str]) -> str | None:
             capture_output=True,
             text=True,
             timeout=30,
-            check=False,  # noqa: S603 — args are hardcoded
+            check=False,
             cwd=repo_path,
         )
         if result.returncode == 0 and result.stdout.strip():

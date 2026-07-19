@@ -16,20 +16,22 @@ Mide:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import random
 import sys
-import tempfile
 import threading
 import time
-from collections.abc import Callable
 
 # Add project root to path if running directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from typing import TYPE_CHECKING
+
 from motor.platform.health import HealthAggregator
-from motor.platform.tracing import MetricsCollector, TraceExporter, record_latency
+from motor.platform.tracing import MetricsCollector, TraceExporter
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Scenario:
@@ -144,7 +146,7 @@ class SoakTester:
                 scenario.fn()
                 with self.collector._lock:
                     self.total_ops += 1
-            except Exception as e:
+            except Exception:
                 with self.collector._lock:
                     self.total_errors += 1
             # Emit a trace event for each operation

@@ -140,15 +140,15 @@ def print_comp(name, results, baseline, metrics):
             passed = v <= b
         else:
             passed = v >= b
-        print(f"{metric:<22} {v:<12.4f} {(b if b else 0):<12.4f} {delta:>+7.1f}%  {'✅' if passed else '❌'}")
+        print(f"{metric:<22} {v:<12.4f} {(b or 0):<12.4f} {delta:>+7.1f}%  {'✅' if passed else '❌'}")
 
 
 def main():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
+    from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.hybrid import HybridRetriever
 
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
@@ -201,7 +201,7 @@ def main():
     )
     accept = True
     print(f"\n{'=' * 70}")
-    print(f"  Acceptance Criteria (vs semantic chunking baseline)")
+    print("  Acceptance Criteria (vs semantic chunking baseline)")
     print(f"{'=' * 70}")
 
     checks = [

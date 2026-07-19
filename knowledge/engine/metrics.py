@@ -18,11 +18,14 @@ Uso esperado:
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+from prometheus_client import REGISTRY, Counter, Gauge, Histogram, generate_latest
 
 from knowledge.engine.connection import open_db
 
-from prometheus_client import Counter, Gauge, Histogram, generate_latest, REGISTRY
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.metrics")
 

@@ -11,14 +11,13 @@ Cubre:
 
 from __future__ import annotations
 
-import time
 import sys
+import time
 
 import pytest
 
 from motor.core.fusion.fact_index import FactIndex
-from motor.core.fusion.models import KnowledgeFact, make_fact_id
-
+from motor.core.fusion.models import KnowledgeFact
 
 # ── helpers ─────────────────────────────────────────────
 

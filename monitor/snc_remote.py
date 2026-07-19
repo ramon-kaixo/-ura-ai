@@ -46,7 +46,7 @@ def mac_notify(title: str, message: str) -> None:
             check=False,
         )
     except Exception:
-        pass  # noqa: S110
+        pass
 
 
 def sync_state() -> dict:
@@ -60,7 +60,7 @@ def sync_state() -> dict:
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
     except Exception:
-        pass  # noqa: S110
+        pass
     return {}
 
 
@@ -92,7 +92,7 @@ def main() -> None:
 
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
-        pass  # noqa: S110
+        pass
 
 
 if __name__ == "__main__":

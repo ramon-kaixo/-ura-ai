@@ -4,7 +4,9 @@ Requiere: pip install ui-tars pyautogui pillow vncdotool
 """
 
 from __future__ import annotations
-import json, time
+
+import json
+import time
 from pathlib import Path
 
 from motor.core.secrets import get_secret
@@ -18,9 +20,10 @@ REPORTS_DIR = Path("/root/reports")
 def conectar_vnc():
     """Conecta al monitor visual via VNC y devuelve un screenshot."""
     try:
-        import vncdotool.api
-        from io import BytesIO
         import base64
+        from io import BytesIO
+
+        import vncdotool.api
 
         client = vncdotool.api.connect(f"{VNC_HOST}::{VNC_PORT}")
         client.password(VNC_PASS)
@@ -35,11 +38,14 @@ def conectar_vnc():
         return b64
     except ImportError:
         print("  vncdotool no instalado, usando mss local")
-        import mss, base64
+        import base64
+
+        import mss
 
         with mss.mss() as sct:
-            from PIL import Image
             from io import BytesIO
+
+            from PIL import Image
 
             img = sct.grab(sct.monitors[1])
             pil_img = Image.frombytes("RGB", img.size, img.rgb)

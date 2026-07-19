@@ -11,7 +11,8 @@ import os
 import threading
 from typing import TYPE_CHECKING
 
-from motor.memory.crypto import decrypt as _decrypt, encrypt as _encrypt
+from motor.memory.crypto import decrypt as _decrypt
+from motor.memory.crypto import encrypt as _encrypt
 
 if TYPE_CHECKING:
     from motor.memory.models import MemoryEntry

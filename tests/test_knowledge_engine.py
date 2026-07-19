@@ -34,6 +34,7 @@ from knowledge.engine.knowledge_verifier import (
     check_repeated_hashes,
     verify_hashes,
 )
+from knowledge.engine.migrations import SCHEMA_VERSION
 from knowledge.engine.models import (
     AuditEvent,
     CompileContext,
@@ -55,7 +56,6 @@ from knowledge.engine.scanner import scan_incremental, scan_source, take_snapsho
 from knowledge.engine.sqlite_writer import SyncPolicy, init_db
 from knowledge.engine.storage_verifier import check_fts_sync, check_schema
 from knowledge.engine.validator import validate_batch, validate_knowledge_object
-from knowledge.engine.migrations import SCHEMA_VERSION
 from knowledge.engine.verifier import verify_graph
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
 
@@ -612,7 +612,7 @@ class TestScanner:
         src = tmp_path / "source"
         src.mkdir()
         (src / "a.md").write_text("a")
-        changed, snap, skipped, deleted = scan_incremental(None, src)
+        changed, _snap, skipped, deleted = scan_incremental(None, src)
         assert len(changed) == 1
         assert len(skipped) == 0
         assert len(deleted) == 0
@@ -624,7 +624,7 @@ class TestScanner:
         f.write_text("v1")
         _, snap, _, _ = scan_incremental(None, src)
         f.write_text("v2")
-        changed, snap2, _, _ = scan_incremental(snap, src)
+        changed, _snap2, _, _ = scan_incremental(snap, src)
         assert len(changed) == 1
 
     def test_scan_incremental_no_change(self, tmp_path):
@@ -632,7 +632,7 @@ class TestScanner:
         src.mkdir()
         (src / "a.md").write_text("stable")
         _, snap, _, _ = scan_incremental(None, src)
-        changed, snap2, _, _ = scan_incremental(snap, src)
+        changed, _snap2, _, _ = scan_incremental(snap, src)
         assert len(changed) == 0
 
     def test_scan_incremental_new_file_detected(self, tmp_path):
@@ -641,7 +641,7 @@ class TestScanner:
         (src / "a.md").write_text("a")
         _, snap, _, _ = scan_incremental(None, src)
         (src / "b.md").write_text("b")
-        changed, snap2, _, _ = scan_incremental(snap, src)
+        changed, _snap2, _, _ = scan_incremental(snap, src)
         assert len(changed) == 1
 
     def test_scan_incremental_deleted_detected(self, tmp_path):
@@ -651,7 +651,7 @@ class TestScanner:
         (src / "b.md").write_text("b")
         _, snap, _, _ = scan_incremental(None, src)
         (src / "b.md").unlink()
-        changed, snap2, _, deleted = scan_incremental(snap, src)
+        _changed, _snap2, _, deleted = scan_incremental(snap, src)
         assert len(deleted) == 1
         assert deleted[0].path == "b.md"
 
@@ -921,7 +921,7 @@ class TestValidator:
         d1 = Document(doc_id="a", doc_type="doc", path="same.md", content_sha256="abc", frontmatter=fm)
         d2 = Document(doc_id="b", doc_type="doc", path="same.md", content_sha256="def", frontmatter=fm2)
         kos = [KnowledgeObject(document=d1), KnowledgeObject(document=d2)]
-        _, errors, warnings = validate_batch(kos)
+        _, _errors, warnings = validate_batch(kos)
         codes = [w.code for w in warnings]
         assert "KE007" in codes
 
@@ -946,7 +946,7 @@ class TestValidator:
             _make_ko("a", "doc", "Doc A"),
             _make_ko("b", "doc", "Doc B", relations=(("a", "references"),)),
         ]
-        valid, errors, warnings = validate_batch(kos)
+        valid, errors, _warnings = validate_batch(kos)
         assert len(errors) == 0
         assert len(valid) == 2
 
@@ -954,7 +954,7 @@ class TestValidator:
         kos = [
             _make_ko("a", "doc", "Doc A", relations=(("nonexistent", "references"),)),
         ]
-        valid, errors, warnings = validate_batch(kos)
+        valid, errors, _warnings = validate_batch(kos)
         codes = [e.code for e in errors]
         assert "KE004" in codes
         assert len(valid) == 1
@@ -964,7 +964,7 @@ class TestValidator:
             _make_ko("a", "invalid_type", "Doc A"),
             _make_ko("b", "doc", "Doc B"),
         ]
-        valid, errors, warnings = validate_batch(kos)
+        valid, errors, _warnings = validate_batch(kos)
         codes = [e.code for e in errors]
         assert "KE003" in codes
         assert len(valid) == 1
@@ -976,7 +976,7 @@ class TestValidator:
             _make_ko("a", "custom_a", "Doc A"),
             _make_ko("b", "custom_b", "Doc B"),
         ]
-        valid, errors, warnings = validate_batch(kos, valid_types=custom)
+        valid, errors, _warnings = validate_batch(kos, valid_types=custom)
         assert len(errors) == 0
         assert len(valid) == 2
 
@@ -1983,7 +1983,7 @@ class TestCorrelationId:
 
         import uuid
 
-        test_cid = uuid.uuid4().hex
+        uuid.uuid4().hex
 
         # Llamar con correlation_id fijo inyectado via source_dir diferente
         # (el correlation_id real lo genera _execute_compile, pero

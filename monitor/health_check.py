@@ -101,7 +101,7 @@ def check_disk() -> list:
                 if gb < DISK_THRESHOLD_GB:
                     alerts.append(f"Disco {mount}: solo {gb:.1f}GB libres")
             except ValueError:
-                pass  # noqa: S110
+                pass
     return alerts, stats
 
 
@@ -130,7 +130,7 @@ def check_ram() -> list:
                 if avail_num < RAM_THRESHOLD_GB:
                     alerts.append(f"RAM baja: {avail_num:.1f}G disponibles")
             except ValueError:
-                pass  # noqa: S110
+                pass
     return alerts, stats
 
 

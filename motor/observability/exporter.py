@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-from motor.observability.metrics import MetricsRegistry
+if TYPE_CHECKING:
+    from motor.observability.metrics import MetricsRegistry
 
 
 def format_prometheus(registry: MetricsRegistry) -> str:

@@ -2,7 +2,11 @@
 """motor_flujo.py — Motor de flujo con control de RAM y spool en disco."""
 
 from __future__ import annotations
-import asyncio, gc, json, logging
+
+import asyncio
+import gc
+import json
+import logging
 from pathlib import Path
 
 import psutil
@@ -43,7 +47,7 @@ class AlforjaSpooler:
             tarea = json.loads(archivos[0].read_text())
             archivos[0].unlink()
             return tarea
-        except (IOError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             logger.error(f"[ALFORJA] Error leyendo spool: {e}")
             return None
 

@@ -106,10 +106,10 @@ def run_config(name, retriever_fn, queries, rel_map):
 def main():
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
+    from motor.intelligence.reranking.reranker import CrossEncoderReranker
+    from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.vector import VectorRetriever
-    from motor.intelligence.retrieval.hybrid import HybridRetriever
-    from motor.intelligence.reranking.reranker import CrossEncoderReranker
 
     cfg = UraConfig()
     qc = QdrantClient.instancia(cfg)
@@ -154,7 +154,7 @@ def main():
 
     # Acceptance criteria
     print(f"\n{'=' * 70}")
-    print(f"  Acceptance Criteria (Hybrid+Reranker vs targets)")
+    print("  Acceptance Criteria (Hybrid+Reranker vs targets)")
     print(f"{'=' * 70}")
     accept = True
     checks = [
@@ -179,7 +179,7 @@ def main():
 
     # If failed, analyze
     if not accept:
-        print(f"\n  Cuello de botella detectado:")
+        print("\n  Cuello de botella detectado:")
         if hr["MAP"] < v["MAP"]:
             print(f"    - MAP: {v['MAP']:.4f} → {hr['MAP']:.4f} ({((hr['MAP'] - v['MAP']) / v['MAP'] * 100):.1f}%)")
         if hr["nDCG@10"] < v["nDCG@10"]:

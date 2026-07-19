@@ -6,11 +6,11 @@ Operaciones: save, get, exists, delete, list.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import sqlite3
-from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from knowledge.engine.connection import begin_immediate, open_db
 from knowledge.engine.ontology.internal import (
@@ -19,6 +19,9 @@ from knowledge.engine.ontology.internal import (
     AssetType,
     KnowledgeAsset,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 log = logging.getLogger("ura.knowledge.asset_store")
 
@@ -92,10 +95,8 @@ class SQLiteAssetStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def get_asset(self, asset_id: str) -> KnowledgeAsset | None:
         """Obtiene un KnowledgeAsset por ID."""
@@ -115,10 +116,8 @@ class SQLiteAssetStore:
             return None
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def asset_exists(self, asset_id: str) -> bool:
         """Verifica si un asset existe."""
@@ -131,10 +130,8 @@ class SQLiteAssetStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def delete_asset(self, asset_id: str) -> bool:
         """Elimina un KnowledgeAsset."""
@@ -150,10 +147,8 @@ class SQLiteAssetStore:
             return False
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def list_assets(
         self, asset_type: AssetType | None = None, limit: int = 100, offset: int = 0
@@ -180,10 +175,8 @@ class SQLiteAssetStore:
             return []
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def count(self, asset_type: AssetType | None = None) -> int:
         """Cuenta KnowledgeAssets."""
@@ -201,10 +194,8 @@ class SQLiteAssetStore:
             return 0
         finally:
             if conn is not None:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass  # noqa: S110
 
     def search_assets(self, query: str, limit: int = 10, asset_type: AssetType | None = None) -> list[KnowledgeAsset]:
         """Búsqueda FTS5 sobre assets. Fallback a LIKE si FTS5 no disponible.
@@ -263,7 +254,7 @@ class SQLiteAssetStore:
     def _row_to_asset(self, row) -> KnowledgeAsset:
         metadata = json.loads(row["metadata"]) if row["metadata"] else {}
         source_data = json.loads(row["source"]) if row["source"] else {}
-        rels_raw = row["relationships"] if row["relationships"] else "[]"
+        rels_raw = row["relationships"] or "[]"
         rels_data = json.loads(rels_raw)
 
         source = AssetSource(

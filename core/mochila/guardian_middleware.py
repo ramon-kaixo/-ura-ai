@@ -1,9 +1,11 @@
 """Middleware del Guardian para la Mochila."""
 
 import logging
+
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from core.guardian_openclaw import get_guardian
 
 log = logging.getLogger("mochila.guardian")

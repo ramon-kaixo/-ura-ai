@@ -6,12 +6,12 @@ Toda la lógica trabaja sobre models.py, nunca sobre SQL directamente.
 
 from __future__ import annotations
 
+import contextlib
 import json
-import sqlite3
 import weakref
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from knowledge.engine.audit import get_audit
 from knowledge.engine.models import (
@@ -24,6 +24,8 @@ from knowledge.engine.models import (
 )
 from knowledge.engine.qdrant_sync import get_pending_delete_ids, search_semantic
 
+if TYPE_CHECKING:
+    import sqlite3
 
 _READER_POOL: dict[str, Any] = {}  # db_path → ReadConnectionPool
 _READER_POOL_MAX = 10  # máx pools distintos antes de evictar el más antiguo
@@ -142,10 +144,8 @@ class KnowledgeReader:
             results = self._search_hybrid(query, filters, limit)
         else:
             raise ValueError(f"Modo de búsqueda no soportado: {mode!r}")
-        try:
+        with contextlib.suppress(Exception):
             get_audit().log_read(query=query, docs=len(results))
-        except Exception:
-            pass  # noqa: S110
         return results
 
     def _search_lexical(

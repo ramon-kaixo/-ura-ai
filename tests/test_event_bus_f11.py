@@ -5,7 +5,7 @@ import time
 import pytest
 
 from motor.events.bus import EventBus
-from motor.events.event import EventPayload, Event
+from motor.events.event import Event, EventPayload
 
 
 class TestEventBusPublish:
@@ -36,7 +36,7 @@ class TestEventBusPublish:
     def test_publish_does_not_call_unsubscribed(self):
         bus = EventBus()
         received = []
-        sid = bus.subscribe("test.topic", lambda e: received.append(e))
+        sid = bus.subscribe("test.topic", received.append)
         bus.unsubscribe(sid)
         bus.publish("test.topic", EventPayload())
         assert len(received) == 0
@@ -67,7 +67,7 @@ class TestEventBusSubscribe:
     def test_subscribe_pattern_fnmatch(self):
         bus = EventBus()
         received = []
-        bus.subscribe("pipeline.*", lambda e: received.append(e), pattern=True)
+        bus.subscribe("pipeline.*", received.append, pattern=True)
         bus.publish("pipeline.started", EventPayload())
         bus.publish("pipeline.failed", EventPayload())
         assert len(received) == 2
@@ -75,7 +75,7 @@ class TestEventBusSubscribe:
     def test_subscribe_pattern_no_match(self):
         bus = EventBus()
         received = []
-        bus.subscribe("pipeline.*", lambda e: received.append(e), pattern=True)
+        bus.subscribe("pipeline.*", received.append, pattern=True)
         bus.publish("system.started", EventPayload())
         assert len(received) == 0
 
@@ -84,7 +84,7 @@ class TestEventBusUnsubscribe:
     def test_unsubscribe_removes_exact(self):
         bus = EventBus()
         received = []
-        sid = bus.subscribe("t", lambda e: received.append(e))
+        sid = bus.subscribe("t", received.append)
         assert bus.unsubscribe(sid) is True
         bus.publish("t", EventPayload())
         assert len(received) == 0
@@ -92,7 +92,7 @@ class TestEventBusUnsubscribe:
     def test_unsubscribe_removes_pattern(self):
         bus = EventBus()
         received = []
-        sid = bus.subscribe("p.*", lambda e: received.append(e), pattern=True)
+        sid = bus.subscribe("p.*", received.append, pattern=True)
         assert bus.unsubscribe(sid) is True
         bus.publish("p.x", EventPayload())
         assert len(received) == 0
@@ -132,7 +132,7 @@ class TestEventBusEmitSync:
     def test_emit_sync_exception_returns_none(self):
         bus = EventBus()
         bus.subscribe("t", lambda e: 42)
-        bus.subscribe("t", lambda e: exec("raise ValueError('x')"))  # noqa: E202
+        bus.subscribe("t", lambda e: exec("raise ValueError('x')"))
         responses = bus.emit_sync("t", EventPayload())
         assert responses[0] == 42
         assert responses[1] is None

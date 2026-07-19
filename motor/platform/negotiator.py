@@ -62,7 +62,7 @@ class VersionNegotiator:
                 compatible=True,
             )
         elif em_maj != rc_maj:
-            if kind in (MessageKind.EVENT,):
+            if kind == MessageKind.EVENT:
                 if em_maj > rc_maj:
                     result = VersionNegotiationResult(
                         protocol_version=emitter_version,

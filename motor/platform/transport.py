@@ -13,7 +13,6 @@ from __future__ import annotations
 import logging
 import threading
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from motor.platform.errors import ProtocolException
@@ -22,6 +21,8 @@ log = logging.getLogger("ura.platform.transport")
 from motor.platform.models import ProtocolEnvelope
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from motor.platform.metrics import PlatformMetrics
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from motor.core.state import DegradedMode
 from motor.events.bus import EventBus
@@ -9,6 +9,9 @@ from motor.events.event import EventPayload
 from motor.events.hooks import HookManager
 from motor.events.topics import HOOK_PREFIX
 from motor.plugin.registry_v2 import PluginRegistryV2
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Path:

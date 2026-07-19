@@ -6,7 +6,6 @@ import os
 import stat
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -158,7 +157,7 @@ class TestInstallScript:
         content = (ROOT / "install.sh").read_text()
         for line in content.splitlines():
             if line.strip().startswith("/") and not line.strip().startswith("#!/"):
-                assert False, f"Absolute path found: {line.strip()}"
+                raise AssertionError(f"Absolute path found: {line.strip()}")
 
 
 class TestEntrypointScript:

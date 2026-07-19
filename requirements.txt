@@ -67,7 +67,7 @@ docstring_parser==0.18.0
 dparse==0.6.4
 duplicity==2.1.4
 durationpy==0.10
--e git+https://github.com/ramon-kaixo/-ura-ai.git@c74b5a5cc6c72e89cda3fe031f481b6753184453#egg==ura
+-e git+https://github.com/ramon-kaixo/-ura-ai.git@c74b5a5cc6c72e89cda3fe031f481b6753184453#egg=ura
 exceptiongroup==1.2.2
 face==26.0.0
 fail2ban==1.0.2
@@ -407,5 +407,5 @@ yarl==1.23.0
 yt-dlp==2026.3.17
 zipp==3.23.1
 zope.interface==6.1
-# Editable Git install with no remote (ura==2.1.0)
--e /home/ramon/URA/ura_ia_1972
+# Editable install (ura package)
+-e .

@@ -5,11 +5,10 @@ snc.py tiene efectos secundario en import (mkdir ~/.ura/run). Parcheamos Path.mk
 antes de importar para evitar OSError en entornos read-only.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 # snc.py usa import local del directorio monitor/
 import sys
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 _monitor_dir = str(Path(__file__).resolve().parent.parent / "monitor")
 if _monitor_dir not in sys.path:
