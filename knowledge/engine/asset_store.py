@@ -95,7 +95,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def get_asset(self, asset_id: str) -> KnowledgeAsset | None:
         """Obtiene un KnowledgeAsset por ID."""
@@ -118,7 +118,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def asset_exists(self, asset_id: str) -> bool:
         """Verifica si un asset existe."""
@@ -134,7 +134,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def delete_asset(self, asset_id: str) -> bool:
         """Elimina un KnowledgeAsset."""
@@ -153,7 +153,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def list_assets(
         self, asset_type: AssetType | None = None, limit: int = 100, offset: int = 0
@@ -183,7 +183,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def count(self, asset_type: AssetType | None = None) -> int:
         """Cuenta KnowledgeAssets."""
@@ -204,7 +204,7 @@ class SQLiteAssetStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def search_assets(self, query: str, limit: int = 10, asset_type: AssetType | None = None) -> list[KnowledgeAsset]:
         """Búsqueda FTS5 sobre assets. Fallback a LIKE si FTS5 no disponible.

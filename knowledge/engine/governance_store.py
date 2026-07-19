@@ -55,7 +55,7 @@ class SQLiteGovernanceStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def check(self, asset_id: str, action: str, actor: str) -> bool:
         """Verifica si un actor puede realizar una acción sobre un asset.
@@ -95,7 +95,7 @@ class SQLiteGovernanceStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def get_policies(self, asset_id: str) -> list[dict[str, Any]]:
         """Retorna todas las políticas de un asset."""
@@ -116,7 +116,7 @@ class SQLiteGovernanceStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
     def list_policies(self, limit: int = 100) -> list[dict[str, Any]]:
         """Lista todas las políticas."""
@@ -136,4 +136,4 @@ class SQLiteGovernanceStore:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110

@@ -394,7 +394,7 @@ def _worker_loop(
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
 
 
 def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, extractor_id: str):
@@ -443,13 +443,13 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
             try:
                 _write_job_fail(conn, job_id, str(exc))
             except Exception:
-                pass
+                pass  # noqa: S110
     finally:
         if conn is not None:
             try:
                 conn.close()
             except Exception:
-                pass
+                pass  # noqa: S110
 
 
 def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):

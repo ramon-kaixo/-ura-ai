@@ -68,7 +68,7 @@ class NDJSONAuditBackend:
                 try:
                     os.close(self._lock_fd)
                 except OSError:
-                    pass
+                    pass  # noqa: S110
                 self._lock_fd = None
             return False
 
@@ -77,11 +77,11 @@ class NDJSONAuditBackend:
             try:
                 fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
             except OSError:
-                pass
+                pass  # noqa: S110
             try:
                 os.close(self._lock_fd)
             except OSError:
-                pass
+                pass  # noqa: S110
             self._lock_fd = None
 
     # ── Public API ────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ class NDJSONAuditBackend:
         try:
             self._handle.close()
         except OSError:
-            pass
+            pass  # noqa: S110
         self._release_flock()
 
     # ── Rotación (con flock) ─────────────────────────────────────────────
@@ -274,11 +274,11 @@ class NDJSONAuditBackend:
 
             audit_ingest_duration_seconds.observe(_time.monotonic() - _t0)
         except Exception:
-            pass
+            pass  # noqa: S110
 
         # Limpiar archivo procesado
         try:
             processing.unlink()
         except OSError:
-            pass
+            pass  # noqa: S110
         return ingested

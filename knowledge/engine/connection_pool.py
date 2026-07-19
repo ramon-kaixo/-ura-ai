@@ -69,7 +69,7 @@ class ReadConnectionPool:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    pass  # noqa: S110
             self._pool.clear()
             self._active = 0
 

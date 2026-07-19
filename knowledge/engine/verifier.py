@@ -109,7 +109,7 @@ def verify_graph(
             for e in errors_from_log:
                 results.append((e["severity"], e["error_code"], e["message"]))
     except sqlite3.OperationalError:
-        pass
+        pass  # noqa: S110
 
     conn.close()
     return results

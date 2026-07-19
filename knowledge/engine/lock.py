@@ -43,8 +43,8 @@ def compile_lock(lock_path: Path = _DEFAULT_LOCK_FILE):
             try:
                 fcntl.flock(lock_fd, fcntl.LOCK_UN)
             except OSError:
-                pass
+                pass  # noqa: S110
             try:
                 os.close(lock_fd)
             except OSError:
-                pass
+                pass  # noqa: S110

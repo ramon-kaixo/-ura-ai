@@ -145,7 +145,7 @@ class KnowledgeReader:
         try:
             get_audit().log_read(query=query, docs=len(results))
         except Exception:
-            pass
+            pass  # noqa: S110
         return results
 
     def _search_lexical(
