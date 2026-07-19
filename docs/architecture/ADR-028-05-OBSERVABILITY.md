@@ -1,8 +1,10 @@
 # ADR-028-05: Observability Contract (v2)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 **CR resolved:** CR-07 (metadata removed from observability)  
+**Approved:** 2026-07-19  
+**Verification:** Trace model implemented in `motor/platform/models.py` (TraceHeader). AuditLogger OB01-OB06 implemented in `motor/platform/audit.py` with bounded buffer, multi-index, and EVENT sender-only exception. Processing time derived from send→receive timestamps. 5 audit-specific tests passing.  
 
 ---
 
