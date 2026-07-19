@@ -681,7 +681,7 @@ class TraceExporter(_SpanEventSink):
             if self._file:
                 self._file.flush()
         except Exception:
-            pass
+            logger.exception("Error haciendo flush del TraceExporter")
 
     def close(self) -> None:
         """Close exporter. Flushes remaining events."""
@@ -693,7 +693,7 @@ class TraceExporter(_SpanEventSink):
                     self._file.close()
                     self._file = None
         except Exception:
-            pass
+            logger.exception("Error cerrando TraceExporter")
 
     @property
     def event_count(self) -> int:

@@ -197,7 +197,7 @@ class Memory:
                 try:
                     cb(entry)
                 except Exception:
-                    pass
+                    logger.exception("Error notificando a subscriber de memoria")
 
     def close(self) -> None:
         self._journal.close()

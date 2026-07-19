@@ -22,7 +22,10 @@ PING_TIMEOUT = 2  # segundos
 CONSECUTIVE_FAILURES_THRESHOLD = 3
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-_STATE_DIR.chmod(0o700)
+try:
+    _STATE_DIR.chmod(0o700)
+except OSError:
+    pass  # Esperado si ~/.ura/ está en filesystem RO
 HEARTBEAT_FILE = _STATE_DIR / "ura_mac_heartbeat.json"
 
 
