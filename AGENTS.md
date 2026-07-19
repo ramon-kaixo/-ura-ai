@@ -50,16 +50,16 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 
 ### Backlog Deuda Técnica (Cerrado Post-F29)
 
-Todos los items T01-T09 fueron auditados/resueltos el 2026-07-19 (commit `c888dce`).
+Todos los items T01-T09 fueron auditados/resueltos el 2026-07-19 (commits `c888dce`, `8ba50ca`).
 
 | ID | Ítem | Prioridad | Estado |
 |----|------|-----------|--------|
-| T01 | `core/synonyms.json` con `chattr +i` en disco | Mínima | ⏳ Pendiente — requiere `sudo` manual en GX10: `sudo chattr +i /home/ramon/URA/ura_ia_1972/core/synonyms.json` |
+| T01 | `core/synonyms.json` con `chattr +i` en disco | Mínima | ✅ Resuelto — `sudo chattr +i` ejecutado en GX10 |
 | T02 | `scripts/pro/sanear_codigo.py:50` syntax error | Baja | ✅ Resuelto (no había error real) |
 | T03 | 12 archivos .py con caracteres no-ASCII en nombre | Baja | ✅ Resuelto (0 archivos encontrados) |
 | T04 | 5 tests CLI fallan por dependencias del entorno | Baja | ✅ Resuelto (`test_unit.py` sys.exit envuelto en `__name__ == '__main__'`) |
 | T05 | FTS schema verifier falso positivo (tablas extrañas) | Media | ✅ Resuelto (`sqlite_stat*` ignorados en `storage_verifier.py:57-59`) |
-| T06 | ~2.356 lint errors pre-existentes (ruff all rules) | Baja | ⏳ Parcial (~722 corregidos, ~2091 restantes — mayormente intencionales) |
+| T06 | ~2.356 lint errors pre-existentes (ruff all rules) | Baja | ✅ Resuelto — 0 errores (2356 → 0, commit `8ba50ca`) |
 | T07 | `adapters/` directorio nunca creado | Informativa | ℹ️ Informativo — creado como `motor/platform/adapters/` |
 | T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima | ✅ Resuelto (F28.1 añadió logging en `motor/platform/`) |
 | T09 | ~80+ bloques `except: pass` sin auditar | Media | ✅ Resuelto (26 en `knowledge/engine/` auditados — 100% degradación controlada, `# noqa` añadido) |
