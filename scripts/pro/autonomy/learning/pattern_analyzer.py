@@ -1,40 +1,30 @@
 """PatternAnalyzer — detecta patrones repetitivos en el ExecutionLedger.
 
-Responde:
-  ¿Qué plugin falla más?
-  ¿Qué fase consume más tiempo?
-  ¿Qué objetivos generan más errores?
-  ¿Qué herramientas producen mejores resultados?
+Usa LedgerValidator para carga validada (elimina duplicación D1).
 """
 
 from __future__ import annotations
 
-import json
 import statistics
 from pathlib import Path
 from typing import Any
+
+from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
 
 
 class PatternAnalyzer:
     """Analiza el historial del ExecutionLedger y detecta patrones."""
 
     def __init__(self, nervioso: Path) -> None:
-        self._ledger_dir = nervioso / "ledger"
+        self._validator = LedgerValidator(nervioso)
 
-    def _load(self) -> list[dict[str, Any]]:
-        if not self._ledger_dir.exists():
-            return []
-        entries = []
-        for f in sorted(self._ledger_dir.glob("*.json")):
-            try:
-                entries.append(json.loads(f.read_text(encoding="utf-8")))
-            except (json.JSONDecodeError, OSError):
-                continue
-        return entries
+    @property
+    def ledger_stats(self) -> dict:
+        return self._validator.stats
 
     def analyze(self) -> list[dict[str, Any]]:
         """Analiza el historial completo. Retorna patrones detectados."""
-        entries = self._load()
+        entries = self._validator.load()
         if len(entries) < 2:
             return []
 
@@ -42,16 +32,13 @@ class PatternAnalyzer:
 
         # 1. Plugin con más fallos
         plugin_errors: dict[str, int] = {}
-        plugin_time: dict[str, list[float]] = {}
         for e in entries:
-            for p, s in e.get("plugin_status", {}).items():
+            for p, s in (e.get("plugin_status") or {}).items():
                 if s != "ok":
                     plugin_errors[p] = plugin_errors.get(p, 0) + 1
-            for p, d in e.get("plugin_durations", {}).items():
-                plugin_time.setdefault(p, []).append(d)
 
         for plugin, fails in sorted(plugin_errors.items(), key=lambda x: -x[1])[:3]:
-            total = sum(1 for e in entries for p in e.get("plugin_status", {}) if p == plugin)
+            total = sum(1 for e in entries for p in (e.get("plugin_status") or {}) if p == plugin)
             patterns.append({
                 "pattern": f"plugin_fail_{plugin}",
                 "occurrences": fails,
@@ -64,7 +51,7 @@ class PatternAnalyzer:
         # 2. Fase más lenta
         phase_times: dict[str, list[float]] = {}
         for e in entries:
-            for p, d in e.get("plugin_durations", {}).items():
+            for p, d in (e.get("plugin_durations") or {}).items():
                 phase_times.setdefault(p, []).append(d)
         for phase, times in phase_times.items():
             if len(times) >= 2:
@@ -103,9 +90,8 @@ class PatternAnalyzer:
         return patterns
 
     def _calc_trend(self, plugin: str, entries: list[dict]) -> str:
-        """Calcula tendencia de errores: increasing/decreasing/stable."""
-        recent = [e for e in entries[-3:] if e.get("plugin_status", {}).get(plugin) != "ok"]
-        older = [e for e in entries[:3] if e.get("plugin_status", {}).get(plugin) != "ok"]
+        recent = [e for e in entries[-3:] if (e.get("plugin_status") or {}).get(plugin) != "ok"]
+        older = [e for e in entries[:3] if (e.get("plugin_status") or {}).get(plugin) != "ok"]
         if len(recent) > len(older):
             return "increasing"
         if len(recent) < len(older):

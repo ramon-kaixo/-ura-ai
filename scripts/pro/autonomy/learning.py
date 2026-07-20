@@ -1,17 +1,15 @@
-"""Learning Plugin v3.3 — aprendizaje con efecto observable.
+"""Learning Plugin v3.5 — aprendizaje con efecto observable.
 
-Criterio: "La siguiente ejecución es mejor gracias a lo aprendido en la anterior."
-No solo registra información: ajusta timeouts, recomienda estrategias,
-detecta regresiones y sugiere mejoras accionables.
+Usa LedgerValidator compartido (elimina duplicación D1).
+Timeouts con límite superior (fix D5).
 """
 
 from __future__ import annotations
 
-import json
 import statistics
-from pathlib import Path
 from typing import Any
 
+from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
@@ -20,30 +18,21 @@ class LearningPlugin:
 
     def __init__(self, engine: PipelineEngine) -> None:
         self._engine = engine
-        self._ledger_dir = engine.config.nervioso / "ledger"
+        self._validator = LedgerValidator(engine.config.nervioso)
 
-    def _load_entries(self) -> list[dict[str, Any]]:
-        if not self._ledger_dir.exists():
-            return []
-        entries = []
-        for f in sorted(self._ledger_dir.glob("*.json")):
-            try:
-                entries.append(json.loads(f.read_text(encoding="utf-8")))
-            except (json.JSONDecodeError, OSError):
-                continue
-        return entries
+    @property
+    def ledger_stats(self) -> dict:
+        return self._validator.stats
 
-    # ── 1. Ajuste de timeouts por plugin ──
+    def _entries(self) -> list[dict]:
+        return self._validator.load()
 
     def recommended_timeouts(self) -> dict[str, int]:
-        """Recomienda timeouts basados en duración histórica (media + 2σ).
-
-        La siguiente ejecución usará estos timeouts en lugar de los fijos.
-        """
-        entries = self._load_entries()
+        """Recomienda timeouts basados en duración histórica (media + 2σ)."""
+        entries = self._entries()
         plugin_times: dict[str, list[float]] = {}
         for e in entries:
-            for p, d in e.get("plugin_durations", {}).items():
+            for p, d in (e.get("plugin_durations") or {}).items():
                 plugin_times.setdefault(p, []).append(d)
 
         recommendations = {}
@@ -51,24 +40,16 @@ class LearningPlugin:
             if len(times) >= 2:
                 avg = statistics.mean(times)
                 stdev = statistics.stdev(times) if len(times) > 1 else avg * 0.5
-                recommended = int(avg + 2 * stdev) + 5  # media + 2σ + 5s margen
+                recommended = int(avg + 2 * stdev) + 5
             else:
                 recommended = int(statistics.mean(times)) + 10
-            recommendations[plugin] = max(15, min(recommended, 300))  # mínimo 15s, máximo 5min
-
+            recommendations[plugin] = max(15, min(recommended, 300))
         return recommendations
 
-    # ── 2. Recomendación de estrategias ──
-
     def recommended_strategies(self) -> dict[str, str]:
-        """Recomienda la estrategia con mejor tasa de éxito por tipo de objetivo.
-
-        Analiza el ledger histórico para determinar qué estrategia
-        funcionó mejor para cada tipo de objetivo.
-        """
-        entries = self._load_entries()
+        """Recomienda estrategia con mejor tasa de éxito histórica."""
+        entries = self._entries()
         strategy_results: dict[str, list[bool]] = {}
-
         for e in entries:
             plan = e.get("plan") or {}
             strategy = plan.get("strategy", "unknown")
@@ -86,26 +67,20 @@ class LearningPlugin:
                 )
         return recommendations
 
-    # ── 3. Detección de regresiones ──
-
     def detect_regressions(self) -> list[dict[str, Any]]:
-        """Detecta plugins que están tardando más de lo histórico.
-
-        Si un plugin tarda 3x más que su media histórica, se reporta
-        como regresión para que el planificador lo considere.
-        """
-        entries = self._load_entries()
+        """Detecta plugins que están tardando más de lo histórico (3x+)."""
+        entries = self._entries()
         if len(entries) < 3:
             return []
 
         plugin_times: dict[str, list[float]] = {}
-        for e in entries[:-1]:  # excluir la última (actual)
-            for p, d in e.get("plugin_durations", {}).items():
+        for e in entries[:-1]:
+            for p, d in (e.get("plugin_durations") or {}).items():
                 plugin_times.setdefault(p, []).append(d)
 
         last = entries[-1]
         regressions = []
-        for p, d in last.get("plugin_durations", {}).items():
+        for p, d in (last.get("plugin_durations") or {}).items():
             historical = plugin_times.get(p, [])
             if len(historical) >= 2:
                 avg = statistics.mean(historical)
@@ -119,19 +94,12 @@ class LearningPlugin:
                     })
         return regressions
 
-    # ── 4. Sugerencia de plugins a omitir ──
-
     def skip_recommendations(self) -> list[str]:
-        """Sugiere plugins que deberían omitirse por fallos recurrentes.
-
-        Si un plugin falla en >50% de las ejecuciones, se recomienda
-        omitirlo hasta que sea reparado.
-        """
-        entries = self._load_entries()
+        """Sugiere plugins a omitir por fallos recurrentes (>50%)."""
+        entries = self._entries()
         plugin_fails: dict[str, list[bool]] = {}
-
         for e in entries:
-            for p, s in e.get("plugin_status", {}).items():
+            for p, s in (e.get("plugin_status") or {}).items():
                 plugin_fails.setdefault(p, []).append(s == "ok")
 
         to_skip = []
@@ -142,11 +110,9 @@ class LearningPlugin:
                     to_skip.append(plugin)
         return to_skip
 
-    # ── 5. Métricas históricas (análisis original) ──
-
     def analyze(self) -> dict[str, Any]:
         """Analiza el historial completo. Retorna métricas + recomendaciones."""
-        entries = self._load_entries()
+        entries = self._entries()
         if not entries:
             return {"error": "no ledger data", "total": 0}
 
@@ -169,29 +135,23 @@ class LearningPlugin:
                 "regresiones_detectadas": len(regressions),
                 "plugins_a_omitir": len(to_skip),
             },
+            "calidad_datos": self._validator.stats,
         }
 
         if timeouts:
-            # Mostrar principales ajustes
             top_adjustments = sorted(timeouts.items(), key=lambda x: -x[1])[:5]
-            result["ajustes_destacados"] = [
-                f"{p}: {v}s" for p, v in top_adjustments
-            ]
-
+            result["ajustes_destacados"] = [f"{p}: {v}s" for p, v in top_adjustments]
         if strategies:
             result["estrategias"] = strategies
-
         if regressions:
             result["regresiones"] = regressions[:3]
-
         if to_skip:
             result["plugins_a_omitir"] = to_skip
 
-        # Registrar aprendizaje en el ledger
         self._engine.ledger.add_decision("learning_completed", {
             "timeouts_ajustados": len(timeouts),
             "regresiones": len(regressions),
             "plugins_a_omitir": to_skip,
+            "ledger_stats": self._validator.stats,
         })
-
         return result
