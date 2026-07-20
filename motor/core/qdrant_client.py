@@ -479,7 +479,10 @@ class URAQdrantClient:
         await qdrant.close()
     """
 
-    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+    def __init__(self, base_url: str = "", timeout: float = 10.0) -> None:
+        if not base_url:
+            cfg = __import__("motor.core.config", fromlist=["UraConfig"]).UraConfig.load()
+            base_url = f"http://{cfg.qdrant_host}:{cfg.qdrant_port}"
         self.base_url = base_url
         self.timeout = timeout
         self._client: httpx.AsyncClient | None = None
