@@ -3,7 +3,7 @@
 
 # --- CLI y entrada/salida ---
 click>=8.0
-rich>=13.0
+rich>=15.0.0
 typer>=0.9
 pygments>=2.15
 
