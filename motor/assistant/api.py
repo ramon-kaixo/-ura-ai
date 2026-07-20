@@ -215,6 +215,17 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
 
     system_prompt += " Si no sabes la respuesta con certeza, dímelo honestamente en vez de inventar."
 
+    if analysis.get("relevant_corrections", 0) > 0:
+        system_prompt += " Has corregido información antes. Tenlo en cuenta al responder."
+    user_id = analysis.get("user_id", "")
+    if user_id:
+        from motor.assistant.preferences import UserPreferenceLearning
+        prefs = UserPreferenceLearning().get_preferences(user_id)
+        if prefs.get("preferred_length") == "short":
+            system_prompt += " Responde de forma breve."
+        elif prefs.get("preferred_length") == "long":
+            system_prompt += " Puedes extenderte si es necesario."
+
     if analysis.get("proactive_suggestion"):
         system_prompt += f"\n[INFO: {analysis['proactive_suggestion']}]"
 
@@ -235,7 +246,7 @@ _FALLBACK_REPLIES = {
 }
 
 
-def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str) -> tuple:
+def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = "") -> tuple:
     conv = engine.get_or_create(cid)
     if mode_str:
         try:
@@ -252,6 +263,8 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
     engine.add_message(cid, "user", resolved)
 
     analysis["_conv"] = conv
+    if user_id:
+        analysis["user_id"] = user_id
     system_prompt = _build_system_prompt(mode.value, analysis, lang_code)
 
     return intent, mode, resolved, system_prompt, conv, lang_code, analysis
@@ -357,7 +370,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             turn_count=2,
         )
 
-    result = _process(engine, llm, cid, request.message, request.mode)
+    result = _process(engine, llm, cid, request.message, request.mode, request.user_id)
     intent, mode, resolved, system_prompt, conv, lang_code, analysis = result
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
