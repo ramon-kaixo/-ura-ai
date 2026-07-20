@@ -33,9 +33,20 @@
 │         scripts/pro/tuneladora_mejora.py                         │
 │                                                                  │
 │  Responsabilidad: plugins, mejoras, lanzar refactorización.      │
-│  Usa plugin_registry para descubrir plugins (fases pre/refactor/post). │
+│  Usa plugin_registry (fases pre/refactor/post).                  │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  ── Decisión: ¿Hay trabajo de refactorización?              │ │
+│  │                                                             │ │
+│  │  plugins refactor ¿modificaron archivos?                    │ │
+│  │       │                      │                              │ │
+│  │      Sí                      No                             │ │
+│  │       │                      │                              │ │
+│  │       ▼                      ▼                              │ │
+│  │  Pipeline Refactor      Informe y fin                       │ │
+│  └─────────────────────────────────────────────────────────────┘ │
 └────────────────────────┬─────────────────────────────────────────┘
-                         │
+                         │  (solo si hay cambios)
                          ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │               PIPELINE DE REFACTORIZACIÓN                        │
@@ -43,6 +54,8 @@
 │                                                                  │
 │  Responsabilidad: descubrir archivos, distribuir trabajo,        │
 │  lanzar workers, validar cambios, devolver éxito/error.          │
+│  SOLO invocable desde Mejora Continua.                           │
+│  NO tiene timer propio. NO tiene entry point directo.            │
 └────────────────────────┬─────────────────────────────────────────┘
                          │
                          ▼
