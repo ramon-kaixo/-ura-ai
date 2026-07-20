@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.llm_bridge import LLMBridge
 from motor.assistant.models import ConversationMode, UserIntent
+from motor.assistant.moderation import ContentModerator
 from motor.assistant.streaming import StreamEvent
 from motor.assistant.style import StyleEngine
 
@@ -133,6 +134,7 @@ _SYSTEM_PROMPTS = {
 
 
 _style_engine = StyleEngine()
+_moderator = ContentModerator()
 
 
 def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
@@ -196,6 +198,18 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     cid = request.conversation_id or ""
 
     cid = _scoped_cid(request.user_id, cid)
+
+    input_mod = _moderator.moderate_input(request.message)
+    if input_mod.flagged:
+        engine.add_message(cid, "user", request.message)
+        engine.add_message(cid, "assistant", "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.")
+        return ChatResponse(
+            conversation_id=request.conversation_id or cid,
+            reply="No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.",
+            intent="unknown",
+            turn_count=2,
+        )
+
     intent, mode, resolved, system_prompt, conv, lang_code = _process(engine, llm, cid, request.message, request.mode)
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
@@ -210,6 +224,9 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             except Exception:
                 full_reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
+            output_mod = _moderator.moderate_output(full_reply)
+            if output_mod.flagged:
+                full_reply = output_mod.sanitized_text
             engine.add_message(cid, "assistant", full_reply)
             yield StreamEvent("complete", {
                 "reply": full_reply,
@@ -230,6 +247,10 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         )
     except Exception:
         reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
+
+    output_mod = _moderator.moderate_output(reply)
+    if output_mod.flagged:
+        reply = output_mod.sanitized_text
 
     engine.add_message(cid, "assistant", reply)
 
