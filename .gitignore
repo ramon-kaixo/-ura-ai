@@ -51,3 +51,6 @@ build/
 *.egg-info/
 dist/
 memory_snapshot_*.json
+coverage.xml
+.ruff_cache/
+.mypy_cache/
