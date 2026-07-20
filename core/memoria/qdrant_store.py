@@ -1,6 +1,7 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 
 import logging
+import os
 import threading
 import uuid
 
@@ -12,8 +13,8 @@ from motor.core.qdrant_client import URAQdrantClient
 
 log = logging.getLogger("memoria.qdrant")
 
-QDRANT_HOST = "127.0.0.1"
-QDRANT_PORT = 6333
+QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", "127.0.0.1")
+QDRANT_PORT = int(os.environ.get("URA_QDRANT_PORT", "6333"))
 COLLECTION = "ideas"
 EMBED_MODEL = "nomic-embed-text:latest"
 
@@ -34,7 +35,7 @@ def _get_client() -> QdrantClient:
 async def _embed(texto: str) -> list[float]:
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
-            "http://127.0.0.1:11434/api/embeddings",
+            f"http://{os.environ.get('URA_OLLAMA_HOST', '127.0.0.1')}:{os.environ.get('URA_OLLAMA_PORT', '11434')}/api/embeddings",
             json={"model": EMBED_MODEL, "prompt": texto},
         )
         resp.raise_for_status()
