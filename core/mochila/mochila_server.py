@@ -29,7 +29,6 @@ from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
 from core.mochila.guardian_opencode import OpenCodeGuardian
-from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.status_endpoint import system_status
@@ -41,11 +40,81 @@ _OH = os.environ.get("URA_OLLAMA_HOST", "127.0.0.1")
 _OP = os.environ.get("URA_OLLAMA_PORT", "11434")
 OLLAMA_SOCKET = f"http://{_OH}:{_OP}"
 
-PROVIDERS: dict[str, Any] = {
-    "ollama": OllamaProvider(),
-    "openrouter": OpenRouterProvider(),
-    "gemini": GeminiProvider(),
-}
+# ── Adapter: motor providers → mochila chat() API ─────────────
+
+
+def _messages_to_prompt(mensajes: list) -> str:
+    """Convierte mensajes OpenAI [{role, content}] a prompt plano."""
+    partes: list[str] = []
+    for m in mensajes:
+        role = m.get("role", "user")
+        content = m.get("content", "")
+        if isinstance(content, list):
+            texts = [c.get("text", "") for c in content if c.get("type") == "text"]
+            content = "\n".join(texts)
+        partes.append(f"<{role}>{content}</{role}>")
+    return "\n".join(partes)
+
+
+class _MotorChatAdapter:
+    """Adapta un motor provider (generate/embed) a la API chat() de mochila."""
+
+    def __init__(self, name: str, provider: Any) -> None:
+        self._name = name
+        self._provider = provider
+
+    @property
+    def nombre(self) -> str:
+        return self._name
+
+    async def chat(
+        self,
+        modelo: str,
+        mensajes: list,
+        stream: bool = False,
+        tools: list | None = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.0,
+    ) -> AsyncGenerator[dict, None]:
+        prompt = _messages_to_prompt(mensajes)
+        loop = asyncio.get_running_loop()
+        try:
+            text = await loop.run_in_executor(
+                None,
+                self._provider.generate,
+                prompt,
+                modelo,
+                {"temperature": temperature, "num_predict": max_tokens},
+            )
+        except Exception as e:
+            yield {"error": str(e), "type": "provider_error"}
+            return
+
+        yield {
+            "choices": [{"delta": {"content": text}, "finish_reason": "stop", "index": 0}],
+            "model": modelo,
+        }
+
+    async def health(self) -> dict:
+        return self._provider.health()
+
+
+# ── Providers ─────────────────────────────────────────────────
+
+
+def _build_providers() -> dict[str, _MotorChatAdapter]:
+    from motor.core.llm.gemini import GeminiProvider as MotorGemini
+    from motor.core.llm.ollama import OllamaProvider as MotorOllama
+    from motor.core.llm.openrouter import OpenRouterProvider as MotorOpenRouter
+
+    return {
+        "ollama": _MotorChatAdapter("ollama", MotorOllama()),
+        "openrouter": _MotorChatAdapter("openrouter", MotorOpenRouter()),
+        "gemini": _MotorChatAdapter("gemini", MotorGemini()),
+    }
+
+
+PROVIDERS = _build_providers()
 PROVIDER_TIMEOUTS: dict[str, float] = {
     "ollama": 120.0,
     "openrouter": 60.0,
@@ -291,8 +360,8 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
             temperature=temperature,
         ):
             return chunk
-    except ProviderError as e:
-        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")  # noqa: B904
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"provider: {e}")  # noqa: B904
     return None
 
 
@@ -363,16 +432,11 @@ async def _stream_from_provider(
             + b"\n\n"
         )
         yield b"data: [DONE]\n\n"
-    except ProviderError as e:
-        hubo_error = True
-        circuit_breaker.registrar_fallo(provider_name)
-        yield b"data: " + json.dumps({"error": {"message": str(e), "type": "provider_error"}}).encode() + b"\n\n"
-        yield b"data: [DONE]\n\n"
     except Exception as e:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name)
         yield (
-            b"data: " + json.dumps({"error": {"message": f"Error: {e!s}", "type": "internal_error"}}).encode() + b"\n\n"
+            b"data: " + json.dumps({"error": {"message": f"{e}", "type": "provider_error"}}).encode() + b"\n\n"
         )
         yield b"data: [DONE]\n\n"
     finally:
