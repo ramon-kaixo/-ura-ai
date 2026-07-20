@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Autonomía v3.1 — orquestador multi-objetivo con cola priorizada.
+"""Autonomía v3.2 — orquestador multi-objetivo con planificación adaptativa.
 
-Goal Manager → Planner → Executor → Evaluator → Learning
-Gestiona múltiples objetivos con prioridades y dependencias.
+Goal Manager → Planner (multi-estrategia) → Executor → Evaluator → Learning
+Selecciona la mejor estrategia según presupuesto. Replanifica si falla.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
     gm.set_status(goal["goal_id"], "in_progress")
 
     plan = planner.create_plan(goal)
-    engine.log.info(f"    Plan: {plan['phases']}")
+    engine.log.info(f"    Estrategia: {plan['strategy']} → fases {plan['phases']} (estimado: {plan['estimated_s']}s)")
 
     results = planner.execute_plan(plan)
 
@@ -46,7 +46,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
 def main() -> int:
     import argparse  # noqa: PLC0415
 
-    parser = argparse.ArgumentParser(description="URA Autonomía v3.1 — Multi-objetivo")
+    parser = argparse.ArgumentParser(description="URA Autonomía v3.2 — Planificación adaptativa")
     parser.add_argument("goals", nargs="*", default=[],
                         help="Objetivos a ejecutar (si no se especifican, usa la cola)")
     parser.add_argument("--priority", default="medium")
