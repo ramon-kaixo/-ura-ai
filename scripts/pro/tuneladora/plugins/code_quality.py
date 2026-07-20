@@ -60,7 +60,7 @@ class CodeQualityPlugin:
 
     def compactadora(self) -> dict[str, Any]:
         """Ejecuta compactadora + auto_reglas."""
-        self.engine.run_script("scripts/pro/compactadora.py", args=["--estado"], timeout=15)
+        self.engine.run_script("scripts/pro/compactadora.py", args=[], timeout=15)
         self.engine.run_script("scripts/pro/auto_reglas.py", args=["--generar"], timeout=30)
         return {"ok": True}
 
