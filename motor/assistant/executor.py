@@ -5,6 +5,7 @@ Todas las herramientas piden confirmación antes de ejecutar acciones destructiv
 """
 from __future__ import annotations
 
+import asyncio
 import subprocess
 import sys
 from pathlib import Path
@@ -331,7 +332,8 @@ class ConversationalToolManager:
         }
         handler = sync_handlers.get(tool_name)
         if handler:
-            return handler()
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(None, handler)
         if tool_name == "web_search":
             return await self._web_search(params.get("query", ""))
         if tool_name == "weather":

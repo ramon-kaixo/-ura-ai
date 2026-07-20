@@ -1,34 +1,15 @@
-"""json_logger.py — Logging estructurado JSON para todos los servicios URA.
+"""Structured JSON logging — delegates to motor/observability/logging.
 
-Uso:
+Consumers:
     from core.json_logger import StructuredLogger
-    log = StructuredLogger("ura.service_name")
-    log.info("mensaje", extra={"key": "value"})
-    log.error("fallo", extra={"error": str(e), "latency_ms": 150})
 """
 
-import json
+from __future__ import annotations
+
 import logging
-import sys
-from datetime import UTC, datetime
 from typing import Any
 
-
-class JsonFormatter(logging.Formatter):
-    """Formatea logs como JSON de una línea."""
-
-    def format(self, record: logging.LogRecord) -> str:
-        entry: dict[str, Any] = {
-            "ts": datetime.now(UTC).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "msg": record.getMessage(),
-        }
-        if record.exc_info and record.exc_info[0]:
-            entry["exception"] = self.formatException(record.exc_info)
-        if hasattr(record, "extra") and isinstance(record.extra, dict):
-            entry.update(record.extra)
-        return json.dumps(entry, ensure_ascii=False, default=str)
+from motor.observability.logging import JSONFormatter
 
 
 class StructuredLogger:
@@ -39,8 +20,10 @@ class StructuredLogger:
         self._logger.setLevel(level)
         self._logger.handlers.clear()
 
+        import sys
+
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(JsonFormatter())
+        handler.setFormatter(JSONFormatter())
         self._logger.addHandler(handler)
 
     def info(self, msg: str, **extra: Any) -> None:
