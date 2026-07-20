@@ -1,11 +1,12 @@
 """OllamaProvider — implementación del contrato LLM vía Ollama API.
 
-Configuración unificada vía CONFIG:
-    llm.model -> modelo por defecto
-    llm.embedding_model -> modelo de embeddings
-    llm.timeout / rag.timeout -> timeout general
-    llm.temperature / rag.temperature -> temperatura
-    llm.max_tokens / rag.max_tokens -> tokens máximos
+Configuración vía UraConfig (CONFIG → env vars → defaults):
+    ollama_host, ollama_port -> URL del servidor Ollama
+    ollama_model -> modelo por defecto
+    ollama_embedding_model -> modelo de embeddings
+    ollama_timeout -> timeout general
+    ollama_temperature -> temperatura
+    ollama_max_tokens -> tokens máximos
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from typing import Any
 
 import httpx
 
-from core.config_manager import CONFIG, get_ollama_url
+from motor.core.config import UraConfig
 from motor.core.llm._logging import log_call
 from motor.core.llm.base import FALLBACK_EMBEDDING_DIMENSION, BaseLLMProvider
 from motor.core.secrets import get_secret
@@ -43,29 +44,13 @@ class OllamaProvider(BaseLLMProvider):
 
     def __init__(self) -> None:
         self._provider_name = "ollama"
-        _cfg = CONFIG.get("llm", {})
-        self._url = get_ollama_url()
-        self._rag_model: str = (
-            _cfg.get("model") or CONFIG.get("fallback_model") or get_secret("OLLAMA_MODEL") or "qwen2.5:3b"
-        )
-        self._embedding_model: str = (
-            _cfg.get("embedding_model") or get_secret("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text"
-        )
-        self._timeout: int = int(
-            _cfg.get("timeout") or CONFIG.get("rag", {}).get("timeout") or get_secret("OLLAMA_TIMEOUT") or "120",
-        )
-        self._temperature: float = float(
-            _cfg.get("temperature")
-            or CONFIG.get("rag", {}).get("temperature")
-            or get_secret("OLLAMA_TEMPERATURE")
-            or "0.3",
-        )
-        self._max_tokens: int = int(
-            _cfg.get("max_tokens")
-            or CONFIG.get("rag", {}).get("max_tokens")
-            or get_secret("OLLAMA_MAX_TOKENS")
-            or "1024",
-        )
+        cfg = UraConfig.load()
+        self._url = f"http://{cfg.ollama_host}:{cfg.ollama_port}"
+        self._rag_model: str = cfg.ollama_model or get_secret("OLLAMA_MODEL") or "qwen2.5:3b"
+        self._embedding_model: str = cfg.ollama_embedding_model or get_secret("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text"
+        self._timeout: int = cfg.ollama_timeout
+        self._temperature: float = cfg.ollama_temperature
+        self._max_tokens: int = cfg.ollama_max_tokens
 
     def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
         opts = dict(options or {})
