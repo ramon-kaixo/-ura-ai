@@ -71,8 +71,10 @@ def main() -> int:
         cmd = [
             engine.config.venv_python,
             "scripts/pro/pipeline_refactor.py",
-            "--workers", "4",
-            "--model", "qwen2.5-coder:14b",
+            "--workers",
+            "4",
+            "--model",
+            "qwen2.5-coder:14b",
         ]
         result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
         refactor_ejecutado = True
@@ -97,13 +99,16 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("MEJORA CONTINUA FINALIZADA", [
-        f"Duración: {H}h {M}m {S}s",
-        f"Refactor ejecutado: {'sí' if refactor_ejecutado else 'no'}",
-        f"Plugins pre: {result_pre.get('ok', 0)} OK",
-        f"Plugins refactor: {result_refactor.get('ok', 0)} OK",
-        f"Plugins post: {result_post.get('ok', 0)} OK",
-    ])
+    engine.log.report(
+        "MEJORA CONTINUA FINALIZADA",
+        [
+            f"Duración: {H}h {M}m {S}s",
+            f"Refactor ejecutado: {'sí' if refactor_ejecutado else 'no'}",
+            f"Plugins pre: {result_pre.get('ok', 0)} OK",
+            f"Plugins refactor: {result_refactor.get('ok', 0)} OK",
+            f"Plugins post: {result_post.get('ok', 0)} OK",
+        ],
+    )
     return 0
 
 
