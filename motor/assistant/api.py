@@ -202,8 +202,37 @@ async def _execute_command(user_message: str, analysis: dict) -> str:
     for keyword, tool in tool_map.items():
         if keyword in msg:
             result = await _tool_manager.execute(tool)
-            return result.output if result.success else result.error
+            output = result.output if result.success else result.error
+            if tool == "git_status" and output:
+                return _format_git_status(output)
+            return output
     return ""
+
+
+def _format_git_status(raw: str) -> str:
+    if not raw:
+        return ""
+    lines = raw.strip().split("\n")
+    parts = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("M "):
+            parts.append(f"MODIFICADO (sin commit): {line[2:].strip()}")
+        elif line.startswith(" M"):
+            parts.append(f"MODIFICADO en working tree: {line[2:].strip()}")
+        elif line.startswith("A "):
+            parts.append(f"AÑADIDO (staged): {line[2:].strip()}")
+        elif line.startswith("??"):
+            parts.append(f"SIN RASTREAR (untracked): {line[2:].strip()}")
+        elif line.startswith("D "):
+            parts.append(f"ELIMINADO: {line[2:].strip()}")
+        elif line.startswith("R "):
+            parts.append(f"RENOMBRADO: {line[2:].strip()}")
+        else:
+            parts.append(line)
+    return "\n".join(parts) if parts else raw
 
 
 async def _enrich_prompt(system_prompt: str, analysis: dict, engine: ConversationEngine, resolved: str) -> str:
@@ -256,10 +285,10 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     if intent == UserIntent.COMMAND:
         tool_result = await _execute_command(resolved, analysis)
         if tool_result:
+            engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
             enriched_prompt += (
-                f"\n[Resultado de ejecutar el comando en el sistema real:"
-                f"\n{tool_result[:500]}"
-                f"\nEste es el OUTPUT REAL del comando. Responde al usuario basándote en esto.]"
+                f"\n\nEl resultado arriba es de un comando REAL. "
+                f"Responde basándote en ese resultado."
             )
 
     if request.stream:
