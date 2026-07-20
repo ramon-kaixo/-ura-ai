@@ -70,12 +70,108 @@ class DockerTool:
             return ToolResult(False, error=str(e))
 
 
+class FileReadTool:
+    def execute(self, path: str) -> ToolResult:
+        safe_dirs = ("/home/ramon", "/tmp", "/etc/ura")  # noqa: S108
+        resolved = Path(path).resolve()
+        if not any(str(resolved).startswith(d) for d in safe_dirs):
+            return ToolResult(False, error=f"Acceso denegado: {path}")
+        if not resolved.exists() or not resolved.is_file():
+            return ToolResult(False, error=f"Archivo no encontrado: {path}")
+        try:
+            content = resolved.read_text(encoding="utf-8", errors="replace")[:2000]
+            return ToolResult(True, content)
+        except Exception as e:
+            return ToolResult(False, error=str(e))
+
+
+class SystemInfoTool:
+    def execute(self) -> ToolResult:
+        import os
+        lines = []
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            cpu = psutil.cpu_percent(interval=0.1)
+            disk = psutil.disk_usage("/")
+            lines.append(f"RAM: {mem.used // (1024**3)}GB / {mem.total // (1024**3)}GB ({mem.percent}%)")
+            lines.append(f"CPU: {cpu}%")
+            lines.append(f"Disco: {disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB ({disk.percent}%)")
+        except ImportError:
+            import shutil
+            lines.append(f"RAM: {os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES') // (1024**3)}GB")
+            total, used, _free = shutil.disk_usage("/")
+            lines.append(f"Disco: {used // (1024**3)}GB / {total // (1024**3)}GB")
+        return ToolResult(True, "\n".join(lines))
+
+
+class CalculatorTool:
+    def execute(self, expression: str) -> ToolResult:
+        import ast
+        import math
+        safe_names = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
+        safe_names.update({"abs": abs, "min": min, "max": max, "round": round})
+        try:
+            tree = ast.parse(expression.strip(), mode="eval")
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Call, ast.Attribute)):
+                    return ToolResult(False, error="Solo expresiones matemáticas básicas")
+            code = compile(tree, "<calc>", "eval")
+            result = eval(code, {"__builtins__": {}}, safe_names)  # noqa: S307
+            return ToolResult(True, str(result))
+        except Exception as e:
+            return ToolResult(False, error=f"Error: {e}")
+
+
+class NoteTool:
+    def __init__(self):
+        import sqlite3
+        self._conn = sqlite3.connect("/tmp/ura/notes.db")  # noqa: S108
+        self._conn.execute(
+            "CREATE TABLE IF NOT EXISTS notes "
+            "(id INTEGER PRIMARY KEY, content TEXT, "
+            "created_at TEXT DEFAULT (datetime('now')))"
+        )
+        self._conn.commit()
+
+    def save(self, content: str) -> ToolResult:
+        self._conn.execute("INSERT INTO notes (content) VALUES (?)", (content[:500],))
+        self._conn.commit()
+        return ToolResult(True, "Nota guardada")
+
+    def list_recent(self, limit: int = 5) -> ToolResult:
+        sql = "SELECT id, content, created_at FROM notes ORDER BY id DESC LIMIT ?"
+        rows = self._conn.execute(sql, (limit,)).fetchall()
+        if not rows:
+            return ToolResult(True, "No hay notas guardadas")
+        lines = [f"[{r[2][:10]}] {r[1][:80]}" for r in rows]
+        return ToolResult(True, "\n".join(lines))
+
+
+class DateTimeTool:
+    def execute(self) -> ToolResult:
+        from datetime import UTC, datetime
+        now = datetime.now(UTC)
+        days = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+        months = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+                  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+        return ToolResult(True, (
+            f"Son las {now.hour:02d}:{now.minute:02d} del {days[now.weekday()]}, "
+            f"{now.day} de {months[now.month - 1]} de {now.year}."
+        ))
+
+
 class ConversationalToolManager:
     """Gestiona herramientas y las ejecuta según la intención del usuario."""
 
     def __init__(self) -> None:
         self._git = GitTool()
         self._docker = DockerTool()
+        self._datetime = DateTimeTool()
+        self._file_read = FileReadTool()
+        self._system = SystemInfoTool()
+        self._calc = CalculatorTool()
+        self._notes = NoteTool()
 
     async def execute(self, tool_name: str, params: dict[str, Any] | None = None) -> ToolResult:
         params = params or {}
@@ -87,6 +183,12 @@ class ConversationalToolManager:
             "docker_logs": lambda: self._docker.logs(
                 params.get("container", ""), int(params.get("lines", 20))),
             "python": lambda: self._python(params.get("code", "")),
+            "datetime": lambda: self._datetime.execute(),
+            "read_file": lambda: self._file_read.execute(params.get("path", "")),
+            "system_info": lambda: self._system.execute(),
+            "calculator": lambda: self._calc.execute(params.get("expression", "")),
+            "note_save": lambda: self._notes.save(params.get("content", "")),
+            "note_list": lambda: self._notes.list_recent(int(params.get("limit", 5))),
         }
         handler = sync_handlers.get(tool_name)
         if handler:

@@ -62,7 +62,8 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
     (
         UserIntent.QUESTION,
         [re.compile(p) for p in [
-            r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
+            r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*(funciona|se\s*hace)|por\s*qu[eé]|"
+            r"cu[aá]ndo|d[oó]nde|qui[eé]n|d[oó]nde\s*est[aá]|cu[aá]l\s*es|c[uú]anto)",
             r"^.*\?$",
         ]],
         0.8,
@@ -70,7 +71,10 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
     (
         UserIntent.COMMAND,
         [re.compile(p) for p in [
-            r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera|dime|status|log|diff)",
+            r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera|"
+            r"dime|status|log|diff|comprueba|verifica|chequea|analiza|examina|"
+            r"compara|avísame|notifícame|traduce|sintetiza|ordena|organiza|"
+            r"convierte|transforma|instala|configura|borra|elimina)",
         ]],
         0.85,
     ),
