@@ -214,24 +214,24 @@ def _format_git_status(raw: str) -> str:
         return ""
     lines = raw.strip().split("\n")
     parts = []
-    for line in lines:
-        line = line.strip()
-        if not line:
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if not stripped:
             continue
-        if line.startswith("M "):
-            parts.append(f"MODIFICADO (sin commit): {line[2:].strip()}")
-        elif line.startswith(" M"):
-            parts.append(f"MODIFICADO en working tree: {line[2:].strip()}")
-        elif line.startswith("A "):
-            parts.append(f"AÑADIDO (staged): {line[2:].strip()}")
-        elif line.startswith("??"):
-            parts.append(f"SIN RASTREAR (untracked): {line[2:].strip()}")
-        elif line.startswith("D "):
-            parts.append(f"ELIMINADO: {line[2:].strip()}")
-        elif line.startswith("R "):
-            parts.append(f"RENOMBRADO: {line[2:].strip()}")
+        if stripped.startswith("M "):
+            parts.append(f"MODIFICADO (sin commit): {stripped[2:].strip()}")
+        elif stripped.startswith(" M"):
+            parts.append(f"MODIFICADO en working tree: {stripped[2:].strip()}")
+        elif stripped.startswith("A "):
+            parts.append(f"AÑADIDO (staged): {stripped[2:].strip()}")
+        elif stripped.startswith("??"):
+            parts.append(f"SIN RASTREAR (untracked): {stripped[2:].strip()}")
+        elif stripped.startswith("D "):
+            parts.append(f"ELIMINADO: {stripped[2:].strip()}")
+        elif stripped.startswith("R "):
+            parts.append(f"RENOMBRADO: {stripped[2:].strip()}")
         else:
-            parts.append(line)
+            parts.append(stripped)
     return "\n".join(parts) if parts else raw
 
 
@@ -287,8 +287,8 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
             enriched_prompt += (
-                f"\n\nEl resultado arriba es de un comando REAL. "
-                f"Responde basándote en ese resultado."
+                "\n\nEl resultado arriba es de un comando REAL. "
+                "Responde basándote en ese resultado."
             )
 
     if request.stream:

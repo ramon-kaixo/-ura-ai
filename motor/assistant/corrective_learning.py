@@ -10,10 +10,12 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
+
 
 class CorrectiveMemory:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/corrections.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("corrections")
         self._lock = threading.Lock()
         self._cache: dict[str, list[dict[str, Any]]] = {}
         self._init_db()

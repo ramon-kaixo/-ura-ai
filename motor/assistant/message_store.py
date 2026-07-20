@@ -7,12 +7,13 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
 from motor.assistant.models import Message
 
 
 class MessageStore:
     def __init__(self, db_path: str | None = None):
-        self._db_path = db_path or "/tmp/ura/conversations.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("conversations")
         self._lock = threading.Lock()
         self._closed = False
         self._init_db()
