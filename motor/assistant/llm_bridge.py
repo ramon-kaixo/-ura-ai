@@ -60,12 +60,12 @@ class LLMBridge:
 
     def select_model(self, mode: ConversationMode, intent_value: str = "") -> str:
         if mode == ConversationMode.EXPLANATION:
-            return "razonamiento"
+            return self._fallback
         if mode == ConversationMode.WORK:
-            return "codigo_complejo"
+            return "qwen2.5-coder:14b"
         if intent_value in ("command", "search"):
-            return "codigo_rapido"
-        return "respuesta_rapida"
+            return "qwen2.5:7b"
+        return self._fallback
 
     async def generate_async(
         self,
@@ -88,12 +88,39 @@ class LLMBridge:
         mode: ConversationMode,
         intent_value: str = "",
         system_prompt: str = "",
-    ) -> str:
-        import asyncio
-        return await asyncio.to_thread(
-            self.generate, conversation_id, user_message,
-            mode, intent_value, system_prompt,
+    ):
+        import httpx
+
+        model_key = self.select_model(mode, intent_value)
+        messages = self.build_messages(
+            conversation_id, system_prompt, user_message,
         )
+        prompt = self._messages_to_prompt(messages)
+
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(self._timeout)) as client, client.stream(
+                "POST",
+                "http://localhost:11434/api/generate",
+                json={"model": model_key, "prompt": prompt, "stream": True},
+            ) as response:
+                full = ""
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    import json
+                    try:
+                        chunk = json.loads(line)
+                        token = chunk.get("response", "")
+                        if token:
+                            full += token
+                            yield token
+                        if chunk.get("done", False):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+                yield full
+        except Exception as exc:
+            yield f"[Error de streaming: {exc}]"
 
     def generate(
         self,
@@ -123,11 +150,8 @@ class LLMBridge:
         if self._router is not None:
             try:
                 prompt = self._messages_to_prompt(messages)
-                if hasattr(self._router, 'generate_with_capability'):
-                    response = self._router.generate_with_capability(prompt, capability=model_key)
-                else:
-                    response = self._router.generate(prompt, model=model_key)
-                if response:
+                response = self._router.generate(prompt, model=model_key)
+                if response and not response.startswith("[Error"):
                     return str(response)
             except Exception:  # noqa: S110
                 pass
