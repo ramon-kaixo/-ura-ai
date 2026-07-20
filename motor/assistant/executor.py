@@ -229,5 +229,14 @@ class ConversationalToolManager:
         except Exception as e:
             return ToolResult(False, error=str(e))
 
+    def needs_confirmation(self, tool_name: str, msg: str = "") -> bool:
+        dangerous = {"python", "docker_logs", "note_delete", "git_commit", "git_push"}
+        if tool_name in dangerous:
+            return True
+        msg_lower = msg.lower()
+        return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
+        return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
+        return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
+
     def list_tools(self) -> list[str]:
         return ["git_status", "git_log", "git_diff", "docker_ps", "docker_logs", "web_search", "python"]
