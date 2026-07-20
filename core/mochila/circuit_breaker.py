@@ -98,7 +98,7 @@ class CircuitBreaker:
             h.failure_count = 0
         self._persistir()
 
-    def registrar_fallo(self, provider: str, es_timeout: bool = False) -> None:  # noqa: FBT001, FBT002
+    def registrar_fallo(self, provider: str, es_timeout: bool = False) -> None:
         h = self._health_por_provider(provider)
         h.failure_count += 1
         h.last_failure_time = time.time()

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """CLI interactivo para el asistente conversacional."""
-import json
-import sys
 
 import httpx
 

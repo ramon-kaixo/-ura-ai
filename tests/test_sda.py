@@ -169,7 +169,7 @@ def _make_primary_response(score: float, risks=None, suggestions=None, reason="o
     return r
 
 
-def _make_auditor_response(score: float, risks=None, requires_human=False, reason="ok"):  # noqa: FBT002
+def _make_auditor_response(score: float, risks=None, requires_human=False, reason="ok"):
     return {"score": score, "reason": reason, "risks": risks or [], "requires_human": requires_human}
 
 

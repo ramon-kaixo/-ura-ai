@@ -97,7 +97,7 @@ def save_manifest(manifest: dict) -> None:
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
-def index_documents(force: bool = False) -> dict:  # noqa: C901, FBT001, FBT002, PLR0912, PLR0915
+def index_documents(force: bool = False) -> dict:  # noqa: C901, PLR0912, PLR0915
     """Indexa todos los documentos en data/documentos/ en Qdrant.
     - Archivos nuevos → chunk + embed (vía Ollama)
     - Archivos modificados (SHA-256 ≠) → re-indexa

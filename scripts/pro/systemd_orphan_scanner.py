@@ -99,7 +99,7 @@ def is_ura_unit(name: str) -> bool:
     return any(k in lower for k in keywords)
 
 
-def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
+def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     units = collect_units()
 

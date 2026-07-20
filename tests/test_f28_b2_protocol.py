@@ -1137,10 +1137,10 @@ def test_health_metrics_recorded() -> None:
     from motor.platform import PlatformMetrics
 
     m = PlatformMetrics()
-    m.record_health("f24_web", "ok", True)  # noqa: FBT003
+    m.record_health("f24_web", "ok", True)
     assert m.health_status._gauges["component=f24_web"].get() == 1.0
     assert m.health_ready._gauges["component=f24_web"].get() == 1.0
 
-    m.record_health("f26_memory", "degraded", False)  # noqa: FBT003
+    m.record_health("f26_memory", "degraded", False)
     assert m.health_status._gauges["component=f26_memory"].get() == 0.0
     assert m.health_ready._gauges["component=f26_memory"].get() == 0.0

@@ -69,7 +69,7 @@ class NeverCompress(CompressionPolicy):
 
 
 class AgeBasedCompression(CompressionPolicy):
-    def __init__(self, max_age_days: int = 7, delete_after_compress: bool = False) -> None:  # noqa: FBT001, FBT002
+    def __init__(self, max_age_days: int = 7, delete_after_compress: bool = False) -> None:
         self._max_age = timedelta(days=max_age_days)
         self._delete = delete_after_compress
 
@@ -86,7 +86,7 @@ class AgeBasedCompression(CompressionPolicy):
 
 
 class SizeBasedCompression(CompressionPolicy):
-    def __init__(self, max_episodes: int = 5000, delete_after_compress: bool = False) -> None:  # noqa: FBT001, FBT002
+    def __init__(self, max_episodes: int = 5000, delete_after_compress: bool = False) -> None:
         self._max = max_episodes
         self._delete = delete_after_compress
 
@@ -111,7 +111,7 @@ class HybridCompressionPolicy(CompressionPolicy):
         self,
         max_age_days: int = 7,
         max_episodes: int = 5000,
-        delete_after_compress: bool = False,  # noqa: FBT001, FBT002
+        delete_after_compress: bool = False,
     ) -> None:
         self._age_policy = AgeBasedCompression(max_age_days, delete_after_compress)
         self._size_policy = SizeBasedCompression(max_episodes, delete_after_compress)

@@ -6,17 +6,17 @@ Targets: thread safety, connection handling, lock coverage, SQL injection.
 from __future__ import annotations
 
 import concurrent.futures
-import json
 import sqlite3
-import threading
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from motor.assistant.message_store import MessageStore
 from motor.assistant.models import Message
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers

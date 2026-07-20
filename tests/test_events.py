@@ -54,7 +54,6 @@ from motor.events.topics import (
 from motor.plugin.base import PluginBase
 from motor.plugin.manifest import PluginManifest
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 
@@ -770,15 +769,15 @@ class TestTopicsConstants:
 class TestHookSets:
     def test_hook_pipeline_contents(self) -> None:
         expected = {"pre_ingest", "post_ingest", "pre_search", "post_search", "pre_index", "post_index"}
-        assert HOOK_PIPELINE == expected
+        assert expected == HOOK_PIPELINE
 
     def test_hook_system_contents(self) -> None:
         expected = {"on_startup", "on_shutdown", "on_degraded", "on_restore"}
-        assert HOOK_SYSTEM == expected
+        assert expected == HOOK_SYSTEM
 
     def test_hook_cli_contents(self) -> None:
         expected = {"pre_command", "post_command"}
-        assert HOOK_CLI == expected
+        assert expected == HOOK_CLI
 
     def test_all_hooks_union(self) -> None:
         assert ALL_HOOKS == HOOK_PIPELINE | HOOK_SYSTEM | HOOK_CLI

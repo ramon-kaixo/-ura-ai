@@ -65,7 +65,7 @@ class BaseLLMProvider(ABC):
 class ProviderValidationResult:
     """Resultado de validación de un proveedor."""
 
-    def __init__(self, valid: bool, errors: list[str], provider_name: str = "") -> None:  # noqa: FBT001
+    def __init__(self, valid: bool, errors: list[str], provider_name: str = "") -> None:
         self.valid = valid
         self.errors = errors
         self.provider_name = provider_name

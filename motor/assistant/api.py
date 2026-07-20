@@ -284,10 +284,17 @@ def _detect_tool_name(user_message: str) -> str | None:
         "apunta": "note_save", "nota": "note_save",
         "branch": "git_branch", "rama": "git_branch",
         "commit": "git_commit",
+        "clima": "weather", "tiempo": "weather",
+        "weather": "weather", "temperatura": "weather",
+        "noticias": "news", "news": "news",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
             return tool
+    for pname, plugin in _tool_manager._plugins.items():
+        for kw in plugin.keywords:
+            if kw in msg:
+                return pname
     return None
 
 

@@ -102,7 +102,7 @@ class EvaluationEngine:
         corpus_name: str,
         config_name: str,
         k: int = 10,
-        relevance_scores: bool = False,  # noqa: FBT001, FBT002
+        relevance_scores: bool = False,
     ) -> EvaluationRun:
         """Ejecuta evaluación de un config retrieval contra un corpus.
 

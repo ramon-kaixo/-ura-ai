@@ -261,7 +261,7 @@ async def status():
 
 
 @app.post("/compile", status_code=202, response_model=CompileResponse)
-async def compile_endpoint(incremental: bool = False):  # noqa: FBT001, FBT002
+async def compile_endpoint(incremental: bool = False):
     """Trigger compile (asíncrono, retorna 202).
 
     Usa flock para exclusión mutua entre procesos.

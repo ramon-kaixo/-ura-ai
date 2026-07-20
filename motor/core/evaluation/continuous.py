@@ -107,7 +107,7 @@ class ContinuousEvaluator:
             },
         )
 
-    def set_fail_on_regression(self, value: bool) -> None:  # noqa: FBT001
+    def set_fail_on_regression(self, value: bool) -> None:
         self._fail_on_regression = value
 
     def set_critical_thresholds(self, thresholds: dict[str, float]) -> None:

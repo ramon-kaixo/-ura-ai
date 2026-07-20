@@ -86,7 +86,7 @@ class ReflectionAgent(Agent):
         strategy: ReflectionStrategy | None = None,
         max_iterations: int = 3,
         min_confidence: float = 0.90,
-        stop_on_accept: bool = True,  # noqa: FBT001, FBT002
+        stop_on_accept: bool = True,
         agent_id: str = "",
     ) -> None:
         self.id = agent_id or uuid.uuid4().hex[:12]

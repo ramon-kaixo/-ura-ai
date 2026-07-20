@@ -32,7 +32,7 @@ from motor.agents import (
 
 def _execution(
     capabilities: set[AgentCapability] | None = None,
-    cancelled: bool = False,  # noqa: FBT001, FBT002
+    cancelled: bool = False,
     cost_units: int = 0,
     max_cost: int = 1000,
 ) -> AgentExecution:

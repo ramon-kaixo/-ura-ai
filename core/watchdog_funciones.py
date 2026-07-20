@@ -237,7 +237,7 @@ class AsyncLoopMonitor(threading.Thread):
     Si la latencia supera el umbral, publica alerta en event_bus.
     """
 
-    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True) -> None:  # noqa: FBT001, FBT002
+    def __init__(self, interval: float = 30.0, threshold_ms: float = 100.0, daemon: bool = True) -> None:
         super().__init__(daemon=daemon)
         self.interval = interval
         self.threshold_ms = threshold_ms

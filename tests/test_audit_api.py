@@ -6,20 +6,19 @@ unbounded message size, binary data, empty conversation_id.
 
 from __future__ import annotations
 
-import json
 import time
-from pathlib import Path
-from typing import Any
-from unittest.mock import patch
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from motor.assistant.api import ChatRequest, ChatResponse, _EngineHolder, get_engine, router
+from motor.assistant.api import _EngineHolder, get_engine, router
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.message_store import MessageStore
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Fixtures

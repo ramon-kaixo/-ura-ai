@@ -20,7 +20,7 @@ class DomainDecoupledPool:
         self,
         urls: list[str],
         scrape_fn: Callable[[str], Awaitable[None]],
-        wait: bool = False,  # noqa: FBT001, FBT002
+        wait: bool = False,
     ) -> None:
         self._scrape_fn = scrape_fn
         for url in urls:

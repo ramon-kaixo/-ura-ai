@@ -27,7 +27,7 @@ class Orchestrator:
         self.config = config
         self.qdrant = QdrantClient.instancia(config)
 
-    def run(self, dry_run: bool = False) -> PipelineResult:  # noqa: FBT001, FBT002
+    def run(self, dry_run: bool = False) -> PipelineResult:
         """Ejecuta el pipeline completo."""
         result = PipelineResult(timestamp=datetime.now(UTC).isoformat() + "Z")
         t_total = time.time()

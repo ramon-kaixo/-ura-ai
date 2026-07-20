@@ -52,7 +52,7 @@ class PlainFormatter(logging.Formatter):
 
 def configure_logging(
     level: str = "INFO",
-    structured: bool = False,  # noqa: FBT001, FBT002
+    structured: bool = False,
     output: str | None = None,
 ) -> None:
     """Configura logging global.

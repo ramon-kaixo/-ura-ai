@@ -17,7 +17,7 @@ FAIL = 0
 SKIP = 0
 
 
-def check(name: str, ok: bool, detail: str = "") -> None:  # noqa: FBT001
+def check(name: str, ok: bool, detail: str = "") -> None:
     global PASS, FAIL, SKIP  # noqa: PLW0603
     if ok:
         PASS += 1
@@ -181,7 +181,7 @@ def main() -> int:  # noqa: C901, PLR0915
     has_rest = getattr(qdrant, "_modo_rest", False) or True  # REST siempre es posible
     check("Cliente nativo disponible", has_native, "modo: REST" if not has_native else "nativo")
     check("Modo REST implementado", has_rest)
-    check("Fallback funciona (sin crash)", True)  # noqa: FBT003
+    check("Fallback funciona (sin crash)", True)
 
     # ============================================================
     # 8. 1000 queries — estabilidad de memoria
@@ -202,7 +202,7 @@ def main() -> int:  # noqa: C901, PLR0915
     stats = snapshot_after.compare_to(snapshot_before, "lineno")
     total_diff = sum(s.size_diff for s in stats)
 
-    check("1000 queries completadas", True, f"{t1 - t0:.1f}s, {1000 / (t1 - t0):.1f} qps")  # noqa: FBT003
+    check("1000 queries completadas", True, f"{t1 - t0:.1f}s, {1000 / (t1 - t0):.1f} qps")
     check("Fuga < 50 MB", abs(total_diff) < 50_000_000, f"diff={total_diff / 1024 / 1024:.1f} MB")
     check("Peak < 2000 MB", peak < 2_000_000_000, f"peak={peak / 1024 / 1024:.1f} MB")
 

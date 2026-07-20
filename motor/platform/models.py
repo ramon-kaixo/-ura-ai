@@ -273,7 +273,7 @@ class ErrorEnvelope:
         error_code: str,
         error_message: str,
         component: str = "",
-        retryable: bool = False,  # noqa: FBT001, FBT002
+        retryable: bool = False,
         retry_delay_ms: int = 0,
     ) -> ErrorEnvelope:
         """Build ErrorEnvelope inheriting causation from original message.

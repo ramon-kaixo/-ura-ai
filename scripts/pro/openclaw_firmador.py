@@ -47,7 +47,7 @@ def sign_content(content: str | bytes) -> str:
     return h.hexdigest()
 
 
-def load_index(force_reload: bool = False) -> dict[str, Any]:  # noqa: FBT001, FBT002
+def load_index(force_reload: bool = False) -> dict[str, Any]:
     """Carga .nervioso/sistema_map.json en memoria (cacheado).
     Single-Pass: primera llamada carga, siguientes devuelven cache.
     Si el archivo cambio en disco → recarga automatica.

@@ -3,6 +3,7 @@
 Ejecutar diariamente: crontab -e → @daily python3 /path/to/cleanup.py
 """
 import sys
+
 sys.path.insert(0, "/home/ramon/URA/ura_ia_1972")
 from motor.assistant.message_store import MessageStore
 

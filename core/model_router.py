@@ -557,7 +557,7 @@ def _apply_model_params(data: dict, model_name: str) -> dict:
     return data
 
 
-def _record_success(modelo: str, tipo: str, ok: bool) -> None:  # noqa: FBT001
+def _record_success(modelo: str, tipo: str, ok: bool) -> None:
     with success_rates_lock:
         sr = success_rates[modelo][tipo]
         sr["total"] += 1

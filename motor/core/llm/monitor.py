@@ -46,7 +46,7 @@ class PerformanceSnapshot:
         wall_time_ms: float,
         cpu_time_ms: float = 0.0,
         peak_memory_kb: float = 0.0,
-        is_hotspot: bool = False,  # noqa: FBT001, FBT002
+        is_hotspot: bool = False,
         regressions: list[RegressionResult] | None = None,
         hotspot_record: HotspotRecord | None = None,
     ) -> None:
@@ -206,7 +206,7 @@ class PerformanceMonitor:
     def get_history(
         self,
         n: int = 50,
-        only_issues: bool = False,  # noqa: FBT001, FBT002
+        only_issues: bool = False,
     ) -> list[dict[str, Any]]:
         """Historial de operaciones."""
         with self._lock:

@@ -127,7 +127,29 @@ class ConversationEngine:
 
     def get_context(self, conversation_id: str, system_prompt: str = "") -> list[Message]:
         conv = self.get_or_create(conversation_id)
-        return self._context.build_context(conv.messages, system_prompt)
+        messages = conv.messages
+        summary = self._get_summary(conv)
+        if summary and len(messages) > 15:
+            system_prompt = (system_prompt + "\n\n[Resumen de la conversación anterior: " +
+                             summary + "]") if system_prompt else ("[Resumen: " + summary + "]")
+            messages = messages[-10:]
+        return self._context.build_context(messages, system_prompt)
+
+    def _get_summary(self, conv: Conversation) -> str:
+        messages = conv.messages
+        if len(messages) < 10:
+            return ""
+        old = messages[:-8]
+        topics: set[str] = set()
+        for m in old:
+            if m.role == "user":
+                words = m.content.lower().split()[:5]
+                for w in words:
+                    if len(w) > 4:
+                        topics.add(w)
+        topic_list = ", ".join(sorted(topics)[:8])
+        count = len(old) // 2
+        return f"{count} intercambios anteriores. Temas tratados: {topic_list}."
 
     def detect_intent(self, text: str) -> UserIntent:
         return self._intent.classify(text).intent

@@ -201,7 +201,7 @@ def compactar(
     ruta_original: Path,
     ruta_nuevo_codigo: Path,
     metadata: dict,
-    dry_run: bool = False,  # noqa: FBT001, FBT002
+    dry_run: bool = False,
     mapa_cromatico: dict | None = None,
 ) -> dict:
     """Ejecuta el pipeline completo de compactación.

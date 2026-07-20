@@ -125,20 +125,85 @@ class SystemInfoTool:
         return ToolResult(True, "\n".join(lines))
 
 
-class CalculatorTool:
-    def execute(self, expression: str) -> ToolResult:
-        import ast
+class _SafeCalculator:
+    def __init__(self) -> None:
         import math
-        safe_names = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
-        safe_names.update({"abs": abs, "min": min, "max": max, "round": round})
+        self._env = {
+            k: v for k, v in math.__dict__.items() if not k.startswith("_")
+        }
+        self._env.update({"abs": abs, "min": min, "max": max, "round": round})
+
+    def _eval(self, node: ast.AST) -> float | int:  # noqa: F821
+        import ast
+        if isinstance(node, ast.Constant):
+            return node.value
+        if isinstance(node, ast.UnaryOp):
+            val = self._eval(node.operand)
+            if isinstance(node.op, ast.UAdd):
+                return +val
+            if isinstance(node.op, ast.USub):
+                return -val
+            raise ValueError("Operador no soportado")
+        if isinstance(node, ast.BinOp):
+            lhs = self._eval(node.left)
+            rhs = self._eval(node.right)
+            if isinstance(node.op, ast.Add):
+                return lhs + rhs
+            if isinstance(node.op, ast.Sub):
+                return lhs - rhs
+            if isinstance(node.op, ast.Mult):
+                return lhs * rhs
+            if isinstance(node.op, ast.Div):
+                if rhs == 0:
+                    raise ZeroDivisionError("Division por cero")
+                return lhs / rhs
+            if isinstance(node.op, ast.FloorDiv):
+                return lhs // rhs
+            if isinstance(node.op, ast.Mod):
+                return lhs % rhs
+            if isinstance(node.op, ast.Pow):
+                return lhs ** rhs
+            raise ValueError("Operador no soportado")
+        if isinstance(node, ast.Name):
+            name = node.id
+            if name in self._env:
+                val = self._env[name]
+                if isinstance(val, (int, float)):
+                    return val
+                raise ValueError(f"Funcion no permitida: {name}")
+            raise ValueError(f"Nombre no definido: {name}")
+        if isinstance(node, ast.Call):
+            func_name = node.func.id if isinstance(node.func, ast.Name) else ""
+            if func_name in self._env:
+                args = [self._eval(a) for a in node.args]
+                val = self._env[func_name]
+                if callable(val):
+                    result = val(*args)
+                    if isinstance(result, (int, float)):
+                        return result
+                    raise ValueError("Resultado no numerico")
+            raise ValueError(f"Llamada no permitida: {func_name}")
+        raise ValueError(f"Expresion no soportada: {type(node).__name__}")
+
+    def evaluate(self, expression: str) -> str:
+        import ast
+        tree = ast.parse(expression.strip(), mode="eval")
+        result = self._eval(tree.body)
+        if isinstance(result, float) and result == int(result):
+            return str(int(result))
+        return str(result)
+
+
+class CalculatorTool:
+    def __init__(self) -> None:
+        self._calc = _SafeCalculator()
+
+    def execute(self, expression: str) -> ToolResult:
+        if not expression.strip():
+            return ToolResult(False, error="No expression")
         try:
-            tree = ast.parse(expression.strip(), mode="eval")
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.Call, ast.Attribute)):
-                    return ToolResult(False, error="Solo expresiones matemáticas básicas")
-            code = compile(tree, "<calc>", "eval")
-            result = eval(code, {"__builtins__": {}}, safe_names)  # noqa: S307
-            return ToolResult(True, str(result))
+            result = self._calc.evaluate(expression)
+            return ToolResult(True, result)
         except Exception as e:
             return ToolResult(False, error=f"Error: {e}")
 
@@ -146,8 +211,9 @@ class CalculatorTool:
 class NoteTool:
     def __init__(self):
         import sqlite3
+
         from motor.assistant.config import config
-        self._conn = sqlite3.connect(config.db_for("notes"))  # noqa: S108
+        self._conn = sqlite3.connect(config.db_for("notes"))
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS notes "
             "(id INTEGER PRIMARY KEY, content TEXT, "
@@ -182,6 +248,42 @@ class DateTimeTool:
         ))
 
 
+class WeatherTool:
+    async def execute(self, location: str = "") -> ToolResult:
+        if not location:
+            try:
+                ip = (await httpx.get("https://ipapi.co/json/", timeout=5)).json()
+                location = ip.get("city", "Madrid")
+            except Exception:
+                location = "Madrid"
+        try:
+            resp = await httpx.get(
+                f"https://wttr.in/{location}?format=%C+%t+%w+%h",
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                return ToolResult(True, f"Clima en {location}: {resp.text}")
+            return ToolResult(False, error=f"Error clima: {resp.status_code}")
+        except Exception as e:
+            return ToolResult(False, error=str(e))
+
+
+class NewsTool:
+    async def execute(self) -> ToolResult:
+        try:
+            resp = await httpx.get(
+                "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                return ToolResult(False, error=f"Error: {resp.status_code}")
+            import re
+            titles = re.findall(r"<title>(.*?)</title>", resp.text)[:5]
+            return ToolResult(True, "\n".join(f"• {t}" for t in titles))
+        except Exception as e:
+            return ToolResult(False, error=str(e))
+
+
 class ConversationalToolManager:
     """Gestiona herramientas y las ejecuta según la intención del usuario."""
 
@@ -195,6 +297,16 @@ class ConversationalToolManager:
         self._system = SystemInfoTool()
         self._calc = CalculatorTool()
         self._notes = NoteTool()
+        self._weather = WeatherTool()
+        self._news = NewsTool()
+        self._plugins = self._load_plugins()
+
+    def _load_plugins(self) -> dict[str, Any]:
+        try:
+            from motor.assistant.tool_plugin import discover_plugins
+            return discover_plugins()
+        except Exception:
+            return {}
 
     async def execute(self, tool_name: str, params: dict[str, Any] | None = None) -> ToolResult:
         params = params or {}
@@ -221,6 +333,13 @@ class ConversationalToolManager:
             return handler()
         if tool_name == "web_search":
             return await self._web_search(params.get("query", ""))
+        if tool_name == "weather":
+            return await self._weather.execute(params.get("location", ""))
+        if tool_name == "news":
+            return await self._news.execute()
+        plugin = self._plugins.get(tool_name)
+        if plugin:
+            return await plugin.execute(params)
         return ToolResult(False, error=f"Tool '{tool_name}' not found")
 
     async def _web_search(self, query: str) -> ToolResult:
@@ -261,8 +380,7 @@ class ConversationalToolManager:
             return True
         msg_lower = msg.lower()
         return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
-        return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
-        return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
 
     def list_tools(self) -> list[str]:
-        return ["git_status", "git_log", "git_diff", "docker_ps", "docker_logs", "web_search", "python"]
+        return ["git_status", "git_log", "git_diff", "docker_ps", "docker_logs", "web_search",
+                "weather", "news", "python", "datetime", "calculator", "note_save"]
