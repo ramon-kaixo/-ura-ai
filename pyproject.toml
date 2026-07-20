@@ -92,6 +92,8 @@ ignore = [
     "PLR0913", # Too many arguments (API legacy)
     "E402",    # Module import not at top (circular imports)
     "PLC0415", # Import outside top-level (circular imports)
+    "FBT",     # Boolean positional args (estilo, no bug)
+    "PLW0108", # Lambda unnecessary (estilo, no bug)
     "E741",    # Ambiguous variable name (cosmetico)
     "ERA",     # Commented-out code (legacy)
     "N",       # Naming conventions (cosmetico)
