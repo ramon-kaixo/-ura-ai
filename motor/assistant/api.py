@@ -41,6 +41,12 @@ class ChatResponse(BaseModel):
     turn_count: int = 0
 
 
+class FeedbackRequest(BaseModel):
+    conversation_id: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = ""
+
+
 class _EngineHolder:
     engine: ConversationEngine | None = None
     llm: LLMBridge | None = None
@@ -139,6 +145,37 @@ _moderator = ContentModerator()
 _tool_manager = ConversationalToolManager()
 
 
+def _hours_since_last_message(conv: Any) -> float:
+    if not conv or not conv.messages:
+        return 0
+    try:
+        from datetime import UTC, datetime
+        last = conv.messages[-1].timestamp
+        if last:
+            last_dt = datetime.fromisoformat(last)
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=UTC)
+            return (datetime.now(UTC) - last_dt).total_seconds() / 3600
+    except Exception:  # noqa: S110
+        pass
+    return 0
+
+
+def _get_conversation_summary(conv: Any) -> str:
+    if not conv or not conv.messages:
+        return ""
+    msgs = conv.messages[-6:]
+    topics = set()
+    for m in msgs:
+        words = m.content.lower().split()
+        for w in words:
+            if len(w) > 4 and w not in ("está", "este", "esta", "para", "como", "más", "pero"):
+                topics.add(w)
+    if topics:
+        return "Se hablaba de: " + ", ".join(list(topics)[:5]) + "."
+    return ""
+
+
 def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
     mode_prompts = _SYSTEM_PROMPTS.get(mode_value, _SYSTEM_PROMPTS["conversacion"])
     system_prompt = mode_prompts.get(lang_code, mode_prompts["es"])
@@ -160,6 +197,46 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
         system_prompt += f" [Context: {analysis['interruption_context']}]"
     if analysis.get("episodic_context"):
         system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
+
+    system_prompt += " Al final, si es útil, sugiere 1 pregunta de seguimiento breve."
+
+    lang = analysis.get("language", "es")
+    if analysis.get("language_changed"):
+        system_prompt += f" El usuario cambió de idioma. Responde ahora en {lang}. Este es el nuevo idioma."
+
+    conv = analysis.get("_conv")
+    if conv and conv.state and conv.state.turn_count > 0:
+        hours_since = _hours_since_last_message(conv)
+        if hours_since > 2:
+            summary = _get_conversation_summary(conv)
+            if summary:
+                ctx = f"vuelve tras {int(hours_since)}h. Tema: {summary}"
+                system_prompt += f"\n[El usuario {ctx}. Saluda brevemente y retoma.]"
+
+    system_prompt += " Si no sabes la respuesta con certeza, dímelo honestamente en vez de inventar."
+
+    if analysis.get("relevant_corrections", 0) > 0:
+        system_prompt += " Has corregido información antes. Tenlo en cuenta al responder."
+    user_id = analysis.get("user_id", "")
+    if user_id:
+        from motor.assistant.preferences import UserPreferenceLearning
+        prefs = UserPreferenceLearning().get_preferences(user_id)
+        if prefs.get("preferred_length") == "short":
+            system_prompt += " Responde de forma breve."
+        elif prefs.get("preferred_length") == "long":
+            system_prompt += " Puedes extenderte si es necesario."
+
+    if analysis.get("proactive_suggestion"):
+        system_prompt += f"\n[INFO: {analysis['proactive_suggestion']}]"
+
+    adj = analysis.get("response_adjustments", {})
+    if adj.get("apologize"):
+        system_prompt += " El usuario puede estar frustrado. Discúlpate y ofrece ayuda."
+    if adj.get("shorten"):
+        system_prompt += " Responde de forma muy breve y directa, sin extenderte."
+    if adj.get("clarify"):
+        system_prompt += " Pregunta al usuario si necesita una aclaración."
+
     return system_prompt
 
 
@@ -169,7 +246,7 @@ _FALLBACK_REPLIES = {
 }
 
 
-def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str) -> tuple:
+def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = "") -> tuple:
     conv = engine.get_or_create(cid)
     if mode_str:
         try:
@@ -185,28 +262,44 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 
     engine.add_message(cid, "user", resolved)
 
+    analysis["_conv"] = conv
+    if user_id:
+        analysis["user_id"] = user_id
     system_prompt = _build_system_prompt(mode.value, analysis, lang_code)
 
     return intent, mode, resolved, system_prompt, conv, lang_code, analysis
 
 
-async def _execute_command(user_message: str, analysis: dict) -> str:
+def _detect_tool_name(user_message: str) -> str | None:
     msg = user_message.lower().strip()
     tool_map = {
         "status": "git_status", "estado": "git_status",
         "log": "git_log", "diff": "git_diff",
         "docker": "docker_ps", "contenedor": "docker_ps",
-        "busca": "web_search", "search": "web_search", "buscar": "web_search",
+        "busca": "web_search", "search": "web_search",
         "python": "python", "codigo": "python",
+        "hora": "datetime", "fecha": "datetime",
+        "ram": "system_info", "memoria": "system_info",
+        "cuánto es": "calculator", "calcula": "calculator",
+        "apunta": "note_save", "nota": "note_save",
+        "branch": "git_branch", "rama": "git_branch",
+        "commit": "git_commit",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
-            result = await _tool_manager.execute(tool)
-            output = result.output if result.success else result.error
-            if tool == "git_status" and output:
-                return _format_git_status(output)
-            return output
-    return ""
+            return tool
+    return None
+
+
+async def _execute_command(user_message: str, analysis: dict) -> str:
+    tool = _detect_tool_name(user_message)
+    if not tool:
+        return ""
+    result = await _tool_manager.execute(tool)
+    output = result.output if result.success else result.error
+    if tool == "git_status" and output:
+        return _format_git_status(output)
+    return output
 
 
 def _format_git_status(raw: str) -> str:
@@ -241,7 +334,10 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
         try:
             web_results = await engine._web.search(resolved)  # noqa: SLF001
             if web_results:
-                prompt += f"\n[Web: {web_results[:800]!s}]"
+                prompt += (
+                    f"\n[Web: {web_results[:800]!s}]"
+                    f"\nCuando uses información de la web, cita la fuente."
+                )
         except Exception:  # noqa: S110
             pass
     try:
@@ -276,13 +372,19 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             turn_count=2,
         )
 
-    result = _process(engine, llm, cid, request.message, request.mode)
+    result = _process(engine, llm, cid, request.message, request.mode, request.user_id)
     intent, mode, resolved, system_prompt, conv, lang_code, analysis = result
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
     enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
 
     if intent == UserIntent.COMMAND:
+        tool_name = _detect_tool_name(resolved)
+        if tool_name and _tool_manager.needs_confirmation(tool_name, resolved):
+            enriched_prompt += (
+                "\n\n⚠️ Este comando requiere confirmación. "
+                "Pregunta al usuario si está seguro antes de ejecutarlo."
+            )
         tool_result = await _execute_command(resolved, analysis)
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
@@ -299,7 +401,8 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
                 async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):  # noqa: E501
                     yield StreamEvent("token", {"text": token}).to_sse()
                     full_reply = token
-            except Exception:
+            except Exception as exc:
+                yield StreamEvent("error", {"type": type(exc).__name__}).to_sse()
                 full_reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
             output_mod = _moderator.moderate_output(full_reply)
@@ -343,6 +446,17 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 @router.get("/conversations")
 async def list_conversations() -> list[dict[str, Any]]:
     return get_engine().list_conversations()
+
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest) -> dict[str, object]:
+    conv = get_engine().get_conversation(req.conversation_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    from motor.assistant.evaluation import ConversationEvaluator
+    ev = ConversationEvaluator()
+    ev.record_metric(req.conversation_id, "user_rating", float(req.rating), {"comment": req.comment})
+    return {"status": "ok", "rating": req.rating}
 
 
 @router.delete("/conversations/{conversation_id}")
