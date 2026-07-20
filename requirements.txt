@@ -1,6 +1,0 @@
-# URA — Multi-Agent Platform
-# Usa requirements/ para instalaciones específicas:
-#   pip install -r requirements/base.txt    # Core mínimo (Linux/Mac CPU)
-#   pip install -r requirements/gpu.txt     # + GPU (NVIDIA)
-#   pip install -r requirements/dev.txt     # + herramientas dev
--r requirements/dev.txt
