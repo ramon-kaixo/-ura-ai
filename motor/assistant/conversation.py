@@ -28,6 +28,7 @@ from motor.assistant.prompt_sanitizer import PromptSanitizer
 from motor.assistant.rag import RAGContext
 from motor.assistant.sentiment import Sentiment, SentimentDetector
 from motor.assistant.trends import TrendAwareness
+from motor.assistant.vector_memory import VectorMemoryStore
 from motor.assistant.web_search import WebSearch
 
 _MAX_ACTIVE_CONVERSATIONS = 1000
@@ -67,6 +68,7 @@ class ConversationEngine:
         self._trends = trend_awareness or TrendAwareness()
         self._web = WebSearch()
         self._rag = RAGContext()
+        self._vector_memory = VectorMemoryStore()
         self._corrections = CorrectiveMemory()
         self._proactive = ProactiveMemory()
         self._lang = LanguageDetector()
@@ -120,6 +122,7 @@ class ConversationEngine:
             raise RuntimeError(f"Conversation {conversation_id} exceeded max turns ({self._max_turns})")
         msg = conv.add_message(role=role, content=content, **kwargs)
         self._store.append(conversation_id, msg)
+        self._vector_memory.store(conversation_id, role, content)
         return msg
 
     def get_context(self, conversation_id: str, system_prompt: str = "") -> list[Message]:
@@ -175,6 +178,12 @@ class ConversationEngine:
             )
 
         episodic_context = self._episodic.get_relevant_context(user_message)
+
+        vector_matches = self._vector_memory.search(user_message, limit=3)
+        if vector_matches:
+            extra = [f"[Similar: {v['content']}]" for v in vector_matches]
+            extra_str = "\n".join(extra)
+            episodic_context = (episodic_context + "\n" + extra_str) if episodic_context else extra_str
 
         trend = self._trends.analyze_query(user_message, intent.value)
 
