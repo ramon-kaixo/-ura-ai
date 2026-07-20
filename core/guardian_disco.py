@@ -139,7 +139,7 @@ def guardar_historial(cambios: list, total: int) -> None:
 # ── Main ──
 
 
-def main() -> None:  # noqa: C901, PLR0912
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Guardián de Disco SHA-256 v2.0")

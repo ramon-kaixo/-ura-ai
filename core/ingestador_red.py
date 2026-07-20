@@ -54,8 +54,8 @@ def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, 
 
     """
     try:
-        r = subprocess.run(  # noqa: S603  -- hostname y comando desde callers internos
-            [  # noqa: S607  -- hostname y comando desde callers internos
+        r = subprocess.run(
+            [
                 "ssh",
                 "-o",
                 "StrictHostKeyChecking=no",

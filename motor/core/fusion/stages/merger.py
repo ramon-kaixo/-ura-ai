@@ -90,7 +90,7 @@ class KnowledgeMergerStage(BaseStage):
 
         if ambiguous_ids and len(claims_to_merge) < len(context.claims or []):
             context.warnings.append(
-                f"Excluded {len(context.claims or []) - len(claims_to_merge)} claims with ambiguous entities from merge",  # noqa: E501
+                f"Excluded {len(context.claims or []) - len(claims_to_merge)} claims with ambiguous entities from merge",
             )
 
         facts = self._merger.merge(claims_to_merge, context.conflicts or [])

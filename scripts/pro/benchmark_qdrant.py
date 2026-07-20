@@ -27,7 +27,7 @@ def check(name: str, ok: bool, detail: str = "") -> None:
         FAIL += 1
 
 
-def main() -> int:  # noqa: C901, PLR0915
+def main() -> int:  # noqa: PLR0915
     global PASS, FAIL, SKIP  # noqa: PLW0602
 
     from motor.core.config import UraConfig
@@ -177,7 +177,7 @@ def main() -> int:  # noqa: C901, PLR0915
     # ============================================================
 
     # Verificar que ambas rutas están implementadas
-    has_native = hasattr(qdrant, "_cliente") and qdrant._cliente is not None  # noqa: SLF001
+    has_native = hasattr(qdrant, "_cliente") and qdrant._cliente is not None
     has_rest = getattr(qdrant, "_modo_rest", False) or True  # REST siempre es posible
     check("Cliente nativo disponible", has_native, "modo: REST" if not has_native else "nativo")
     check("Modo REST implementado", has_rest)

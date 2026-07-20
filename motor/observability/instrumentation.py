@@ -78,7 +78,7 @@ class Instrumentation:
                 duration = (time.monotonic() - start) * 1000
                 if result is not None:
                     self.metrics.counter("plugins_loaded_total").inc()
-                    self.metrics.gauge("plugins_current_loaded").set(len(registry._instances))  # noqa: SLF001
+                    self.metrics.gauge("plugins_current_loaded").set(len(registry._instances))
                 else:
                     self.metrics.counter("plugins_load_failures_total", labels={"plugin": name}).inc()
                 self.metrics.timer("plugins_load_duration_ms").record(duration)

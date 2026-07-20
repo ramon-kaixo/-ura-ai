@@ -46,7 +46,7 @@ try:
         msg = f"No write access to {LOG_DIR}"
         raise PermissionError(msg)
 except (PermissionError, OSError):
-    LOG_DIR = Path("/tmp/ura_maintenance_logs")  # noqa: S108
+    LOG_DIR = Path("/tmp/ura_maintenance_logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
@@ -103,7 +103,7 @@ def get_swarm_devices() -> dict:
         return {}
 
 
-def run_remote_maintenance(ip: str, user: str | None = None) -> dict:  # noqa: C901, PLR0911
+def run_remote_maintenance(ip: str, user: str | None = None) -> dict:
     """Ejecutar mantenimiento en nodo remoto de forma segura."""
     if user is None:
         user = CONFIG["ssh_user"]
@@ -129,7 +129,7 @@ def run_remote_maintenance(ip: str, user: str | None = None) -> dict:  # noqa: C
         # Usar subprocess sin shell=True para evitar inyección
         # Copiar script usando scp con argumentos separados
         local_script = "/home/ramon/URA/mantenimiento/ura_maintenance.py"
-        remote_script = "/tmp/ura_maintenance.py"  # noqa: S108
+        remote_script = "/tmp/ura_maintenance.py"
 
         if not Path(local_script).exists():
             return {
@@ -139,8 +139,8 @@ def run_remote_maintenance(ip: str, user: str | None = None) -> dict:  # noqa: C
             }
 
         try:
-            subprocess.run(  # noqa: S603
-                ["scp", local_script, f"{user}@{ip}:{remote_script}"],  # noqa: S607
+            subprocess.run(
+                ["scp", local_script, f"{user}@{ip}:{remote_script}"],
                 check=True,
                 timeout=CONFIG["ssh_timeout"],
             )
@@ -165,8 +165,8 @@ def run_remote_maintenance(ip: str, user: str | None = None) -> dict:  # noqa: C
 
         # Ejecutar mantenimiento usando ssh sin shell=True
         try:
-            result = subprocess.run(  # noqa: S603
-                ["ssh", f"{user}@{ip}", "python3", remote_script],  # noqa: S607
+            result = subprocess.run(
+                ["ssh", f"{user}@{ip}", "python3", remote_script],
                 capture_output=True,
                 text=True,
                 timeout=CONFIG["ssh_timeout"],

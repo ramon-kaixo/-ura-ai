@@ -66,7 +66,7 @@ def _cc(f):
 
 
 class ASTSentinel:
-    def analizar(self, codigo, nombre="skill", prod=True):  # noqa: C901, PLR0912
+    def analizar(self, codigo, nombre="skill", prod=True):
         e = []
         w = []
         m = {}

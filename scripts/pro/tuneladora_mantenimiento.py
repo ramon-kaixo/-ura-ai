@@ -82,7 +82,7 @@ def log(msg) -> None:
 
 def run(cmd, timeout=120):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)  # noqa: S603
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         return r.returncode, r.stdout, r.stderr
     except Exception as e:
         return -1, "", str(e)
@@ -203,7 +203,7 @@ def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-code
     procs = []
     for i in range(workers):
         env["REFACTOR_WORKER_ID"] = str(i)
-        proc = subprocess.Popen(  # noqa: S603
+        proc = subprocess.Popen(
             [VENV_PYTHON, "-u", "scripts/pro/refactor_large_functions_v2.py"],
             env=env,
             stdout=subprocess.PIPE,
@@ -324,7 +324,7 @@ def step_auditoria(profundidad: str) -> dict:
 
 def step_forense_aislamientos() -> dict:
     """Lee procesos aislados por el SNC en /tmp/ura_aislados/ y limpia >7 días."""
-    aislados_dir = Path("/tmp/ura_aislados")  # noqa: S108
+    aislados_dir = Path("/tmp/ura_aislados")
     if not aislados_dir.exists():
         return {"total": 0, "activos": [], "limpiados": 0}
 

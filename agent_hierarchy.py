@@ -20,7 +20,7 @@ GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
 LOG_FILE = "/home/ramon/URA/agent_hierarchy.log"
-APPROVAL_SOCKET = "/tmp/ura_approval.sock"  # noqa: S108
+APPROVAL_SOCKET = "/tmp/ura_approval.sock"
 
 # Setup logging
 logging.basicConfig(
@@ -119,7 +119,7 @@ class QuarantineSystem:
         quarantine_path = self.quarantine_dir / f"{source_path.name}_{timestamp}_{agent_id}"
 
         try:
-            subprocess.run(["mv", str(source_path), str(quarantine_path)], check=True)  # noqa: S603, S607
+            subprocess.run(["mv", str(source_path), str(quarantine_path)], check=True)
             logger.info(f"Quarantined {source} to {quarantine_path} (reason: {reason})")
             return str(quarantine_path)
         except Exception as e:
@@ -179,7 +179,7 @@ class ApprovalSystem:
                 "--message",
                 f"APPROVAL NEEDED: {json.dumps(approval_request, indent=2)}",
             ]
-            subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603
+            subprocess.run(cmd, capture_output=True, timeout=30, check=False)
         except Exception as e:
             logger.exception(f"Failed to send approval to Mac: {e}")
 
@@ -401,7 +401,7 @@ class InstallerAgent(Agent):
 
         try:
             cmd = ["npm", "install", package]
-            result = subprocess.run(cmd, cwd=self.sandbox_dir, capture_output=True, text=True, check=False)  # noqa: S603
+            result = subprocess.run(cmd, cwd=self.sandbox_dir, capture_output=True, text=True, check=False)
 
             self.logger.log_action(
                 self.agent_id,
@@ -511,8 +511,8 @@ class ExecutorAgent(Agent):
 
         try:
             # Execute in sandboxed environment
-            result = subprocess.run(  # noqa: S603
-                ["python3", "-c", code],  # noqa: S607
+            result = subprocess.run(
+                ["python3", "-c", code],
                 cwd=self.sandbox_dir,
                 capture_output=True,
                 text=True,
@@ -544,7 +544,7 @@ class ExecutorAgent(Agent):
             return False
 
         try:
-            subprocess.run(["mv", source, dest], check=True)  # noqa: S603, S607
+            subprocess.run(["mv", source, dest], check=True)
             return True
         except Exception as e:
             logger.exception(f"Failed to move file: {e}")

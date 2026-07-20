@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-def compactar(codigo: str) -> tuple:  # noqa: C901, PLR0915
+def compactar(codigo: str) -> tuple:  # noqa: PLR0915
     lineas = codigo.split("\n")
     compactado = []
     anchors = []

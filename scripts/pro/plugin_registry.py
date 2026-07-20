@@ -36,7 +36,7 @@ def discover_all():
     return plugins
 
 
-def run_phase(phase, context=None, file_path=None):  # noqa: C901
+def run_phase(phase, context=None, file_path=None):
     plugins = discover_all()
     phase_plugins = {name: p for name, p in plugins.items() if p.get("phase") == phase or p.get("phase") == "always"}
 
@@ -63,7 +63,7 @@ def run_phase(phase, context=None, file_path=None):  # noqa: C901
 
         t0 = time.time()
         try:
-            r = subprocess.run(  # noqa: S603
+            r = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,

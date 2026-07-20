@@ -240,7 +240,7 @@ class GuardianOpenCLaw:
 
         return False
 
-    def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:  # noqa: C901
+    def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:
         """Ejecutar una acción con todas las reglas de seguridad.
 
         Args:
@@ -316,7 +316,7 @@ class GuardianOpenCLaw:
             self._log_audit("guardian", accion, "BLOQUEADO", "Campo de password detectado")
             return {
                 "success": False,
-                "message": "Acción bloqueada: Campo de password detectado. Por favor, introduzca la contraseña manualmente.",  # noqa: E501
+                "message": "Acción bloqueada: Campo de password detectado. Por favor, introduzca la contraseña manualmente.",
             }
 
         # Si pasa todas las reglas, ejecutar acción

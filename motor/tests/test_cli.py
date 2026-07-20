@@ -167,7 +167,7 @@ def test_status_returns_json():
     import subprocess
 
     r = subprocess.run(
-        ["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],  # noqa: S607
+        ["python3", "-m", "cli.main", "status", "--config", "/etc/ura/config.json"],
         capture_output=True,
         text=True,
         timeout=10,

@@ -64,7 +64,7 @@ def resolver_dns(hostname: str) -> str | None:
 
     # 2. MagicDNS via tailscale
     try:
-        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5, check=False)  # noqa: S607  -- comando constante
+        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=5, check=False)
         if r.returncode == 0:
             data = json.loads(r.stdout)
             peers = data.get("Peer", {})
@@ -89,8 +89,8 @@ def resolver_dns(hostname: str) -> str | None:
 def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
     """Hace ping a una IP y devuelve (success, latencia_ms)."""
     try:
-        r = subprocess.run(  # noqa: S603  -- IP desde caller interno
-            ["ping", "-c", "1", "-W", str(int(timeout)), ip],  # noqa: S607  -- IP desde caller interno
+        r = subprocess.run(
+            ["ping", "-c", "1", "-W", str(int(timeout)), ip],
             capture_output=True,
             text=True,
             timeout=timeout + 1,

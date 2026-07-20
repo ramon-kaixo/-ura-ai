@@ -81,7 +81,7 @@ def detectar_patrones(data: dict, umbral: int = 3) -> list[dict]:
 
 def _diagnosticar(tipo: str) -> str:
     diagnosticos = {
-        "F821": "El refactorizador está omitiendo imports o variables que la función original usaba. Revisar prompt: incluir 'PRESERVA todos los imports y variables globales'.",  # noqa: E501
+        "F821": "El refactorizador está omitiendo imports o variables que la función original usaba. Revisar prompt: incluir 'PRESERVA todos los imports y variables globales'.",
         "SYNTAX": "El LLM devolvió código con errores de sintaxis. El prompt debe ser más restrictivo.",
         "BROKEN_STR": "Cadenas de texto mal cerradas. Añadir verificación de triples comillas en el prompt.",
         "DANGLING": "El refactor creó bloques huérfanos. Dividir funciones respetando la indentación original.",
@@ -176,7 +176,7 @@ def main() -> None:
     if args.auto_reglas and e.get("patrones_sistemicos"):
         with contextlib.suppress(Exception):
             subprocess.run(
-                ["python3", "scripts/pro/auto_reglas.py", "--generar"],  # noqa: S607
+                ["python3", "scripts/pro/auto_reglas.py", "--generar"],
                 capture_output=True,
                 text=True,
                 timeout=15,

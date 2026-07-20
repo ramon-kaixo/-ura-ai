@@ -31,7 +31,7 @@ RESULTS_FILE = HERE / "benchmark_f10_results.json"
 
 def _subp(cmd: list[str], timeout: int = 60) -> tuple[float, str, str]:
     start = time.monotonic()
-    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510, S603
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510
     elapsed = (time.monotonic() - start) * 1000
     return elapsed, p.stdout, p.stderr
 

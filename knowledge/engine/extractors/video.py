@@ -133,7 +133,7 @@ class VideoExtractor:
             )
 
     @staticmethod
-    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:  # noqa: C901
+    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
         cmd = [
             "ffprobe",
             "-v",
@@ -145,7 +145,7 @@ class VideoExtractor:
             path_str,
         ]
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
             if result.returncode != 0:
                 log.warning("ffprobe failed for %s: %s", path_str, result.stderr.strip())
                 metadata["_degraded_ffprobe"] = True
@@ -224,7 +224,7 @@ class VideoExtractor:
                 thumb_path,
             ]
             try:
-                subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603
+                subprocess.run(cmd, capture_output=True, timeout=30, check=False)
                 if Path(thumb_path).exists():
                     thumbnails.append(thumb_path)
             except subprocess.TimeoutExpired:

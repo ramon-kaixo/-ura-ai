@@ -143,7 +143,7 @@ class TestBenchmarkRAG:
         import sys
 
         path = tmp_path / "corpus_ejemplo.json"
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [sys.executable, "-m", "scripts.pro.benchmark_rag", "--example", "--output", str(path)],
             capture_output=True,
             text=True,
@@ -164,14 +164,14 @@ class TestBenchmarkRAG:
         output_path = tmp_path / "resultados.json"
 
         # Generar corpus
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [sys.executable, "-m", "scripts.pro.benchmark_rag", "--example", "--output", str(corpus_path)],
             capture_output=True,
             check=False,
         )
 
         # Ejecutar benchmark
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [
                 sys.executable,
                 "-m",

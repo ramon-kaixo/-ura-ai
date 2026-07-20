@@ -8,7 +8,7 @@ Flujo:
 Usa INSERT OR IGNORE para evitar colisiones de primary key.
 Ejecutar via cron cada 5 minutos en Mac:
   */5 * * * * /usr/bin/python3 /Users/ramonesnaola/URA/ura_ia_1972/scripts/pro/sincronizar_vocabulario.py >> /Users/ramonesnaola/URA/ura_ia_1972/logs/sync.log 2>&1
-"""  # noqa: E501
+"""
 
 import os
 import sqlite3
@@ -19,8 +19,8 @@ from pathlib import Path
 # ── Configuración ──────────────────────────────────────────────────
 BASE = "/Users/ramonesnaola/URA/ura_ia_1972"
 DB_LOCAL = Path(BASE) / "config/voice_corrections.db"
-DUMP_LOCAL = "/tmp/vocabulario_mac.sql"  # noqa: S108
-DUMP_REMOTO = "/tmp/vocabulario_asus.sql"  # noqa: S108
+DUMP_LOCAL = "/tmp/vocabulario_mac.sql"
+DUMP_REMOTO = "/tmp/vocabulario_asus.sql"
 
 ASUS_SSH = "ramon@10.164.1.99"
 DB_ASUS = "/home/ramon/URA/ura_ia_1972/config/voice_corrections.db"
@@ -46,17 +46,17 @@ def sincronizar() -> None:
         with open(DUMP_LOCAL, "w") as f:  # noqa: PTH123
             f.write(dump)
 
-        subprocess.run(  # noqa: S603
-            ["scp", DUMP_LOCAL, f"{ASUS_SSH}:{DUMP_REMOTO}"],  # noqa: S607
+        subprocess.run(
+            ["scp", DUMP_LOCAL, f"{ASUS_SSH}:{DUMP_REMOTO}"],
             check=True,
             capture_output=True,
         )
         cmd = f"sqlite3 {DB_ASUS} < {DUMP_REMOTO} && rm {DUMP_REMOTO}"
-        subprocess.run(["ssh", ASUS_SSH, cmd], check=True, capture_output=True)  # noqa: S603, S607
+        subprocess.run(["ssh", ASUS_SSH, cmd], check=True, capture_output=True)
 
     # 2. Remoto → Local
-    result = subprocess.run(  # noqa: S603
-        ["ssh", ASUS_SSH, f"sqlite3 {DB_ASUS} .dump"],  # noqa: S607
+    result = subprocess.run(
+        ["ssh", ASUS_SSH, f"sqlite3 {DB_ASUS} .dump"],
         capture_output=True,
         text=True,
         check=True,

@@ -145,7 +145,7 @@ class Memory:
             "entries": self._timeline.size,
             "journal": bool(self._journal.path),
             "snapshot": bool(self._snapshot_path),
-            "encryption": bool(self._journal._encryption_key),  # noqa: SLF001
+            "encryption": bool(self._journal._encryption_key),
         }
 
     def readiness(self) -> dict:

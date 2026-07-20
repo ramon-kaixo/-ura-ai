@@ -50,7 +50,7 @@ DEPRECATED_FIELDS: frozenset[str] = frozenset(
 _MIN_BODY_CHARS = 10
 
 
-def validate_knowledge_object(  # noqa: C901
+def validate_knowledge_object(
     obj: KnowledgeObject,
     valid_types: frozenset[str] | None = None,
 ) -> ValidationResult:
@@ -175,7 +175,7 @@ def validate_knowledge_object(  # noqa: C901
     )
 
 
-def validate_batch(  # noqa: C901
+def validate_batch(
     objects: list[KnowledgeObject],
     valid_types: frozenset[str] | None = None,
 ) -> tuple[list[KnowledgeObject], list[CompileError], list[CompileError]]:

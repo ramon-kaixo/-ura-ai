@@ -45,7 +45,7 @@ def cmd_status(args) -> int:
     conn = _get_conn(db_path)
     try:
         version = conn.execute(
-            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",  # noqa: E501
+            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",
         ).fetchone()
         conn.execute("SELECT COUNT(*) as c FROM kg_nodes").fetchone()["c"]
         conn.execute("SELECT COUNT(*) as c FROM kg_edges").fetchone()["c"]

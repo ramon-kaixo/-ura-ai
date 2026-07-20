@@ -136,7 +136,7 @@ class Telemetria:
     def f821_count() -> int:
         """Cuenta F821 en el código."""
         try:
-            r = subprocess.run(  # noqa: S603  -- comando constante
+            r = subprocess.run(
                 [RUFF, "check", "--select", "F821", "."],
                 capture_output=True,
                 text=True,
@@ -305,7 +305,7 @@ class AgenteEjecutor:
             env["OLLAMA_URL"] = get_ollama_url()
             env["URA_ROOT"] = str(URA_ROOT)
 
-            proc = subprocess.Popen(  # noqa: S603  -- sys.executable + ruta interna
+            proc = subprocess.Popen(
                 [sys.executable, "-u", str(SCRIPTS / "refactor_large_functions.py")],
                 env=env,
                 stdout=subprocess.PIPE,
@@ -379,15 +379,15 @@ class AgenteReparador:
     def _nivel_1(self, ruta: Path) -> bool:
         """Reparación determinista: auto_reglas + ruff."""
         try:
-            subprocess.run(  # noqa: S603  -- sys.executable + ruta interna
+            subprocess.run(
                 [sys.executable, str(SCRIPTS / "auto_reglas.py"), "--aplicar", str(ruta)],
                 capture_output=True,
                 timeout=15,
                 cwd=str(URA_ROOT),
                 check=False,
             )
-            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15, check=False)  # noqa: S603  -- ruta interna
-            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10, check=False)  # noqa: S603  -- ruta interna
+            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15, check=False)
+            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10, check=False)
             # Verificar que compile
             compile(ruta.read_text(), str(ruta), "exec")
             return True
@@ -400,7 +400,7 @@ class AgenteReparador:
         try:
             codigo = ruta.read_text()
             # Detectar F821 del archivo
-            r = subprocess.run(  # noqa: S603  -- ruta interna
+            r = subprocess.run(
                 [RUFF, "check", "--select", "F821", str(ruta)],
                 capture_output=True,
                 text=True,
@@ -438,7 +438,7 @@ class AgenteReparador:
         """Reparación con OpenCode (puerto 8081, qwen3:32b-q8_0)."""
         try:
             codigo = ruta.read_text()
-            r = subprocess.run(  # noqa: S603  -- ruta interna
+            r = subprocess.run(
                 [RUFF, "check", "--select", "F821", str(ruta)],
                 capture_output=True,
                 text=True,
@@ -456,7 +456,7 @@ class AgenteReparador:
                         },
                         {
                             "role": "user",
-                            "content": f"Repara SIN cambiar lógica:\n{r.stderr or ''}\n\n```python\n{codigo[:6000]}\n```",  # noqa: E501
+                            "content": f"Repara SIN cambiar lógica:\n{r.stderr or ''}\n\n```python\n{codigo[:6000]}\n```",
                         },
                     ],
                     "temperature": 0.0,
@@ -522,7 +522,7 @@ class SelfHealingLoop:
             Conciencia.actualizar_proceso("reparador", "activo")
             # Encontrar archivos con F821
             try:
-                r = subprocess.run(  # noqa: S603  -- comando constante
+                r = subprocess.run(
                     [RUFF, "check", "--select", "F821", "--output-format", "json", "."],
                     capture_output=True,
                     text=True,
@@ -552,14 +552,14 @@ class SelfHealingLoop:
             time.sleep(30)
 
         # 4. Post-ciclo: ruff fix + auto-reglas
-        subprocess.run(  # noqa: S603  -- comando constante
+        subprocess.run(
             [RUFF, "check", "--fix", "."],
             capture_output=True,
             timeout=60,
             cwd=str(URA_ROOT),
             check=False,
         )
-        subprocess.run(  # noqa: S603  -- sys.executable + script interno
+        subprocess.run(
             [sys.executable, str(SCRIPTS / "auto_reglas.py"), "--generar"],
             capture_output=True,
             timeout=15,

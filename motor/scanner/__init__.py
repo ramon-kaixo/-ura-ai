@@ -137,7 +137,7 @@ class Scanner:
             log.debug("docker ps falló: %s", e)
             return {}
 
-    def _check_recursos(self) -> dict:  # noqa: C901
+    def _check_recursos(self) -> dict:
         """Recolecta métricas de RAM, disco, CPU y zombies."""
         try:
             import psutil
@@ -301,7 +301,7 @@ class Scanner:
                 pass
         return h.hexdigest()[:16]
 
-    def _detectar_orphans(self) -> list:  # noqa: C901
+    def _detectar_orphans(self) -> list:
         """Detecta PIDs huérfanos, hijos de padres muertos, docker dangling y systemd falladas."""
         orphans = []
         try:

@@ -178,7 +178,7 @@ def _mostrar(resultados: list[dict]) -> None:
             pass
 
 
-def _bench_resilience() -> dict:  # noqa: C901
+def _bench_resilience() -> dict:
     """Mide latencia de retry y fallback con proveedores mock."""
     from motor.core.llm.base import BaseLLMProvider
     from motor.core.llm.registry import ProviderRegistry
@@ -284,7 +284,7 @@ def _run_monitored_benchmark(
     if baseline_path:
         p = Path(baseline_path)
         if p.exists():
-            router._monitor.baseline.load(str(p))  # noqa: SLF001
+            router._monitor.baseline.load(str(p))
 
     if provider:
         pass
@@ -301,7 +301,7 @@ def _run_monitored_benchmark(
     _mostrar_observabilidad(resultados)
 
     # Reporte del monitor desde el router
-    monitor = router._monitor  # noqa: SLF001
+    monitor = router._monitor
     if monitor:
         report = monitor.get_report()
         issues = monitor.get_recent_issues(10)

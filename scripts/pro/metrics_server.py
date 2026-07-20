@@ -22,7 +22,7 @@ log = logging.getLogger("ura.metrics")
 LOG_DIR = Path(
     os.environ.get(
         "METRICS_LOG_DIR",
-        "/tmp/ura_search_logs",  # noqa: S108
+        "/tmp/ura_search_logs",
     ),
 )
 TAIL_LINES = int(os.environ.get("METRICS_TAIL_LINES", "1000"))

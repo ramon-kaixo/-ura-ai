@@ -34,7 +34,7 @@ async def _check_mochila_alive() -> bool:
         return False
 
 
-async def process_file(path: Path) -> bool:  # noqa: C901
+async def process_file(path: Path) -> bool:
     if not await _check_mochila_alive():
         log.warning("Mochila no responde — esperando...")
         await asyncio.sleep(30)

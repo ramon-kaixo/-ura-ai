@@ -72,7 +72,7 @@ class ParallelExecutor:
         with self._lock:
             return workflow_id in self._cancelled
 
-    def execute(  # noqa: C901, PLR0912, PLR0915
+    def execute(  # noqa: PLR0915
         self,
         tasks: list[tuple[str, AgentTask]],
         workflow_id: str | None = None,

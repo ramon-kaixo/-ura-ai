@@ -20,10 +20,10 @@ from pathlib import Path
 logger = logging.getLogger("ura.cleanup")
 
 LOCKS_CONOCIDOS = [
-    "/tmp/ura_debate.lock",  # noqa: S108
-    "/tmp/ura_state.json",  # noqa: S108
-    "/tmp/tailscale-selfheal.lock",  # noqa: S108
-    "/tmp/ura-events.pub",  # noqa: S108
+    "/tmp/ura_debate.lock",
+    "/tmp/ura_state.json",
+    "/tmp/tailscale-selfheal.lock",
+    "/tmp/ura-events.pub",
 ]
 SHM_PREFIX = "ura_"
 
@@ -56,8 +56,8 @@ def kill_proceso(pid: int, nombre: str = "") -> bool:
 
 def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
     try:
-        r = subprocess.run(  # noqa: S603  -- puertos internos desde constantes del módulo
-            ["fuser", "-k", f"{port}/{protocol}"],  # noqa: S607  -- puertos internos desde constantes del módulo
+        r = subprocess.run(
+            ["fuser", "-k", f"{port}/{protocol}"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -74,7 +74,7 @@ def purgar_puerto(port: int, protocol: str = "tcp") -> bool:
         return False
 
 
-EXIT_CODE_DIR = Path("/tmp/ura_exit_codes")  # noqa: S108
+EXIT_CODE_DIR = Path("/tmp/ura_exit_codes")
 
 
 def guardar_codigo_exit(service: str, exit_code: int, signal: int = 0) -> None:
@@ -122,7 +122,7 @@ def limpiar_locks(locks: list[str] | None = None) -> None:
 def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
     try:
         r = subprocess.run(
-            ["ipcs", "-m"],  # noqa: S607  -- comando constante
+            ["ipcs", "-m"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -132,8 +132,8 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
             parts = line.split()
             if len(parts) >= 5 and parts[4].startswith(prefix):
                 shmid = parts[1]
-                subprocess.run(  # noqa: S603  -- shmid desde salida de ipcs, interno
-                    ["ipcrm", "-m", shmid],  # noqa: S607  -- shmid desde salida de ipcs, interno
+                subprocess.run(
+                    ["ipcrm", "-m", shmid],
                     capture_output=True,
                     timeout=3,
                     check=False,
@@ -141,10 +141,10 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
                 logger.info("SHM eliminado: id=%s key=%s", shmid, parts[0])
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         logger.warning("ipcs no disponible: %s", e)
-    for f in Path("/dev/shm").glob(f"{prefix}*"):  # noqa: S108
+    for f in Path("/dev/shm").glob(f"{prefix}*"):
         try:
             f.unlink()
-            logger.info("/dev/shm/%s eliminado", f.name)  # noqa: S108
+            logger.info("/dev/shm/%s eliminado", f.name)
         except OSError as e:
             logger.warning("Error eliminando /dev/shm/%s: %s", f.name, e)
 
@@ -152,7 +152,7 @@ def limpiar_shm(prefix: str = SHM_PREFIX) -> None:
 def check_vram_post_kill() -> dict:
     try:
         r = subprocess.run(
-            ["nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader,nounits"],  # noqa: S607  -- comando constante
+            ["nvidia-smi", "--query-compute-apps=used_memory", "--format=csv,noheader,nounits"],
             capture_output=True,
             text=True,
             timeout=5,

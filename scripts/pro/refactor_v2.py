@@ -35,7 +35,7 @@ def find_large(min_lines=80):
                 continue
             try:
                 tree = ast.parse(pf.read_text(), filename=str(pf))
-            except Exception:  # noqa: S112
+            except Exception:
                 continue
             for n in ast.walk(tree):
                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -61,10 +61,10 @@ def already_done():
 def ollama_refactor(fi, model):
     lines = (PROJECT / fi.file).read_text().splitlines()
     "\n".join(lines[fi.start_line - 1 : fi.end_line])
-    prompt = "Refactoriza esta funcion Python. Divide en sub-funciones si >80 lineas. Devuelve SOLO codigo refactorizado.\n\n"  # noqa: E501
+    prompt = "Refactoriza esta funcion Python. Divide en sub-funciones si >80 lineas. Devuelve SOLO codigo refactorizado.\n\n"
     try:
-        r = subprocess.run(  # noqa: S603
-            ["ollama", "run", model],  # noqa: S607
+        r = subprocess.run(
+            ["ollama", "run", model],
             input=prompt,
             capture_output=True,
             text=True,

@@ -145,7 +145,7 @@ def verificar_firma_ast(codigo_original: str, codigo_final: str) -> tuple[bool, 
     return True, []
 
 
-def verificar_mapa_cromatico(  # noqa: C901
+def verificar_mapa_cromatico(
     mapa: dict,
     codigo_original: str,
     codigo_final: str,
@@ -262,14 +262,14 @@ def compactar(
         ruta_original.write_text(codigo_final, encoding="utf-8")
 
         # Ruff fix post-escritura
-        subprocess.run(  # noqa: S603
-            ["ruff", "check", "--fix", "--unsafe-fixes", str(ruta_original)],  # noqa: S607
+        subprocess.run(
+            ["ruff", "check", "--fix", "--unsafe-fixes", str(ruta_original)],
             capture_output=True,
             timeout=30,
             check=False,
         )
-        subprocess.run(  # noqa: S603
-            ["ruff", "format", str(ruta_original)],  # noqa: S607
+        subprocess.run(
+            ["ruff", "format", str(ruta_original)],
             capture_output=True,
             timeout=30,
             check=False,

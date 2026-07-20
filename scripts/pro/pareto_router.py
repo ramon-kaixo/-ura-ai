@@ -83,8 +83,8 @@ def sync_criticos():
 
         try:
             # Sync a Mac (cable directo)
-            r = subprocess.run(  # noqa: S603
-                [  # noqa: S607
+            r = subprocess.run(
+                [
                     "rsync",
                     "-avz",
                     "--timeout=10",
@@ -106,7 +106,7 @@ def sync_criticos():
         # Sync a Hetzner (via Tailscale, solo si online)
         try:
             r = subprocess.run(
-                ["tailscale", "status", "--json"],  # noqa: S607
+                ["tailscale", "status", "--json"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -121,8 +121,8 @@ def sync_criticos():
 
         if hetzner_online:
             try:
-                r = subprocess.run(  # noqa: S603
-                    ["rsync", "-avz", "--timeout=15", str(src), f"ramon@{HETZNER}:{src}"],  # noqa: S607
+                r = subprocess.run(
+                    ["rsync", "-avz", "--timeout=15", str(src), f"ramon@{HETZNER}:{src}"],
                     capture_output=True,
                     text=True,
                     timeout=30,

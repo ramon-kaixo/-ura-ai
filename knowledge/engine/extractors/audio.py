@@ -121,7 +121,7 @@ class AudioExtractor:
             )
 
     @staticmethod
-    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:  # noqa: C901
+    def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
         cmd = [
             "ffprobe",
             "-v",
@@ -133,7 +133,7 @@ class AudioExtractor:
             path_str,
         ]
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)  # noqa: S603 — ffprobe consume el archivo como datos, no lo ejecuta
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             if result.returncode != 0:
                 log.warning("ffprobe failed for %s: %s", path_str, result.stderr.strip())
                 metadata["_degraded_ffprobe"] = True

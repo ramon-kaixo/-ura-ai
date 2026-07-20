@@ -17,7 +17,7 @@ def cmd_vacuum(args) -> int:
     return 0
 
 
-def cmd_audit_db(args) -> int:  # noqa: C901, PLR0912, PLR0915
+def cmd_audit_db(args) -> int:  # noqa: PLR0915
     db_path = _resolve_db_path(args)
     errors = 0
 

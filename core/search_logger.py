@@ -16,7 +16,7 @@ from pathlib import Path
 
 log = logging.getLogger("ura.search_logger")
 
-LOG_DIR = Path("/tmp/ura_search_logs")  # noqa: S108
+LOG_DIR = Path("/tmp/ura_search_logs")
 _LOG_LOCK = threading.Lock()
 _WRITER = None
 

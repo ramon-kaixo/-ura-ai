@@ -105,7 +105,7 @@ class KnowledgeGraphAgent(Agent):
     def _audit_coverage(self, reader) -> list[AgentFinding]:
         """Audita tipos de documentos y cobertura."""
         findings: list[AgentFinding] = []
-        conn = reader._db_path if hasattr(reader, "_db_path") else None  # noqa: SLF001
+        conn = reader._db_path if hasattr(reader, "_db_path") else None
         if conn is None:
             return findings
 

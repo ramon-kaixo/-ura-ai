@@ -105,7 +105,7 @@ def test_concurrent_readers_during_add() -> None:
     assert h.version_count > 0
 
 
-def test_concurrent_rollback_during_reads() -> None:  # noqa: C901
+def test_concurrent_rollback_during_reads() -> None:
     """Rollback concurrente con lecturas."""
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v0"))

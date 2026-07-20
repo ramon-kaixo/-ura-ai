@@ -52,7 +52,7 @@ def _ref(
     fact_id: str = "f1",
     subject: str = "Apple",
     predicate: str = "sells",
-    object: str = "oranges",
+    object: str = "oranges",  # noqa: A002
 ) -> FactRef:
     return FactRef(
         fact_id=fact_id,
@@ -1112,7 +1112,7 @@ class TestThreadSafety:
                     try:
                         tl.state_at(5000.0)
                         tl.by_entity("Apple")
-                        tl.size
+                        _ = tl.size
                     except Exception as e:
                         errors.append(e)
 

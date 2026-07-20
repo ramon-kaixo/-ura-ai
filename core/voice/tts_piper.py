@@ -32,7 +32,7 @@ class PiperTTSMotor:
     ) -> None:
         self.model_path = str(VOICES_DIR / voice)
         self.config_path = f"{self.model_path}.json"
-        self.output_wav = "/tmp/ura_tts_output.wav"  # noqa: S108
+        self.output_wav = "/tmp/ura_tts_output.wav"
         self.pipeline = stt_pipeline
 
         self.device_index = self._find_anker_output_device()
@@ -81,7 +81,7 @@ class PiperTTSMotor:
                 "--output-file",
                 self.output_wav,
             ]
-            proc = subprocess.Popen(  # noqa: S603  -- PIPER_BIN desde env fallback, rutas internas
+            proc = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -123,7 +123,7 @@ class PiperTTSMotor:
             self.pipeline.is_playing_tts = True
         try:
             cmd = [PIPER_BIN, "--model", self.model_path, "--output-file", output_path]
-            proc = subprocess.Popen(  # noqa: S603  -- mismo patrón
+            proc = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,

@@ -233,8 +233,8 @@ class ForgettingEngine:
         start = time.monotonic()
         result = ForgettingResult(dry_run=dry_run)
 
-        protected_ids = set(self._protection._protected)  # noqa: SLF001
-        pinned_ids = set(self._protection._pinned)  # noqa: SLF001
+        protected_ids = set(self._protection._protected)
+        pinned_ids = set(self._protection._pinned)
 
         # Collect referenced episode IDs from summaries
         referenced: set[str] = set()
@@ -268,7 +268,7 @@ class ForgettingEngine:
         return self.run(dry_run=True)
 
     def _evaluate_episodes(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:
-        episodes = list(ctx.episode_store._episodes.values())  # noqa: SLF001  -- incluye expirados para evaluacion
+        episodes = list(ctx.episode_store._episodes.values())
         batch: list[Episode] = []
         for ep in episodes:
             if ep.id in ctx.protected_ids:

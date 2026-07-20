@@ -47,9 +47,9 @@ class TestSubprocessExecutorSync:
 
     def test_cwd_respected(self):
         executor = SubprocessExecutor()
-        result = executor.run(["pwd"], cwd="/tmp")  # noqa: S108  -- /tmp es conocido-writable, cwd controlado
+        result = executor.run(["pwd"], cwd="/tmp")
         assert result.ok is True
-        assert result.stdout.strip() == "/tmp"  # noqa: S108  -- comparación con el mismo path de arriba
+        assert result.stdout.strip() == "/tmp"
 
     def test_cmd_is_recorded(self):
         executor = SubprocessExecutor()

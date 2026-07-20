@@ -156,7 +156,7 @@ def _buscar_ruff() -> str | None:
     return None
 
 
-def check_f821(codigo, lineas, arbol):  # noqa: C901, PLR0912
+def check_f821(codigo, lineas, arbol):
     """Check 4: Fuga de referencias (F821)."""
     ruff_bin = _buscar_ruff()
     if not ruff_bin:
@@ -194,7 +194,7 @@ def check_f821(codigo, lineas, arbol):  # noqa: C901, PLR0912
         return True, 0, "", ""
 
     try:
-        r = subprocess.run(  # noqa: S603
+        r = subprocess.run(
             [ruff_bin, "check", "--select", "F821", "--output-format", "concise", "-"],
             input=codigo,
             capture_output=True,

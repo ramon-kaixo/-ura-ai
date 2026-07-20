@@ -76,7 +76,7 @@ class ProviderValidationResult:
         return f"ProviderValidationResult(valid=False, errors={self.errors})"
 
 
-def validate_provider(provider_cls: type) -> ProviderValidationResult:  # noqa: C901, PLR0912
+def validate_provider(provider_cls: type) -> ProviderValidationResult:
     """Valida que una clase cumple el contrato BaseLLMProvider.
 
     Verifica:

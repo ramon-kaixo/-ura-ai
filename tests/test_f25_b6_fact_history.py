@@ -461,7 +461,7 @@ def _random_sequence(seed: int, length: int) -> list[str]:
     return ops
 
 
-def test_property_random_sequences() -> None:  # noqa: C901, PLR0912
+def test_property_random_sequences() -> None:
     """Secuencias aleatorias no deben corromper invariantes."""
     import random
 
