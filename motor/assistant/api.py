@@ -41,6 +41,12 @@ class ChatResponse(BaseModel):
     turn_count: int = 0
 
 
+class FeedbackRequest(BaseModel):
+    conversation_id: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = ""
+
+
 class _EngineHolder:
     engine: ConversationEngine | None = None
     llm: LLMBridge | None = None
@@ -160,6 +166,20 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
         system_prompt += f" [Context: {analysis['interruption_context']}]"
     if analysis.get("episodic_context"):
         system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
+
+    system_prompt += " Al final, si es útil, sugiere 1 pregunta de seguimiento breve."
+
+    if analysis.get("proactive_suggestion"):
+        system_prompt += f"\n[INFO: {analysis['proactive_suggestion']}]"
+
+    adj = analysis.get("response_adjustments", {})
+    if adj.get("apologize"):
+        system_prompt += " El usuario puede estar frustrado. Discúlpate y ofrece ayuda."
+    if adj.get("shorten"):
+        system_prompt += " Responde de forma muy breve y directa, sin extenderte."
+    if adj.get("clarify"):
+        system_prompt += " Pregunta al usuario si necesita una aclaración."
+
     return system_prompt
 
 
@@ -198,6 +218,11 @@ async def _execute_command(user_message: str, analysis: dict) -> str:
         "docker": "docker_ps", "contenedor": "docker_ps",
         "busca": "web_search", "search": "web_search", "buscar": "web_search",
         "python": "python", "codigo": "python",
+        "hora": "datetime", "fecha": "datetime", "día": "datetime", "tiempo": "datetime",
+        "ram": "system_info", "memoria": "system_info", "disco": "system_info", "cpu": "system_info",
+        "cuánto es": "calculator", "calcula": "calculator", "suma": "calculator",
+        "apunta": "note_save", "anota": "note_save", "nota": "note_save",
+        "notas": "note_list", "apuntes": "note_list",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
@@ -241,7 +266,10 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
         try:
             web_results = await engine._web.search(resolved)  # noqa: SLF001
             if web_results:
-                prompt += f"\n[Web: {web_results[:800]!s}]"
+                prompt += (
+                    f"\n[Web: {web_results[:800]!s}]"
+                    f"\nCuando uses información de la web, cita la fuente."
+                )
         except Exception:  # noqa: S110
             pass
     try:
@@ -299,7 +327,8 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
                 async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):  # noqa: E501
                     yield StreamEvent("token", {"text": token}).to_sse()
                     full_reply = token
-            except Exception:
+            except Exception as exc:
+                yield StreamEvent("error", {"type": type(exc).__name__}).to_sse()
                 full_reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
             output_mod = _moderator.moderate_output(full_reply)
@@ -343,6 +372,17 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 @router.get("/conversations")
 async def list_conversations() -> list[dict[str, Any]]:
     return get_engine().list_conversations()
+
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest) -> dict[str, object]:
+    conv = get_engine().get_conversation(req.conversation_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    from motor.assistant.evaluation import ConversationEvaluator
+    ev = ConversationEvaluator()
+    ev.record_metric(req.conversation_id, "user_rating", float(req.rating), {"comment": req.comment})
+    return {"status": "ok", "rating": req.rating}
 
 
 @router.delete("/conversations/{conversation_id}")
