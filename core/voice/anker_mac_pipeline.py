@@ -67,7 +67,10 @@ class AnkerMacPipeline:
 
     def _trigger_macos_notification(self, title: str, message: str, sound: str = "Tink") -> None:
         """Banner nativo macOS asíncrono — sin bloqueo del pipeline."""
-        script = f'display notification "{message}" with title "{title}" sound name "{sound}"'
+        safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
+        safe_msg = message.replace("\\", "\\\\").replace('"', '\\"')
+        safe_sound = sound.replace("\\", "\\\\").replace('"', '\\"')
+        script = f'display notification "{safe_msg}" with title "{safe_title}" sound name "{safe_sound}"'
         subprocess.Popen(
             ["osascript", "-e", script],
             stdout=subprocess.DEVNULL,

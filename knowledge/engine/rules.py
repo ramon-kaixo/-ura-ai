@@ -179,6 +179,119 @@ _CONSTANT_WHITELIST = {
 }
 
 
+def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
+    """Evalúa un AST directamente sin usar eval()/compile()."""
+    import operator as _operator
+
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Name):
+        if node.id in env:
+            return env[node.id]
+        raise UnsafeExpressionError(f"Nombre no definido: {node.id}")
+    if isinstance(node, ast.UnaryOp):
+        operand = _eval_ast(node.operand, env)
+        if isinstance(node.op, ast.UAdd):
+            return +operand
+        if isinstance(node.op, ast.USub):
+            return -operand
+        if isinstance(node.op, ast.Not):
+            return not operand
+        raise UnsafeExpressionError(f"Operador unario no permitido: {type(node.op).__name__}")
+    if isinstance(node, ast.BinOp):
+        left = _eval_ast(node.left, env)
+        right = _eval_ast(node.right, env)
+        ops = {
+            ast.Add: _operator.add, ast.Sub: _operator.sub,
+            ast.Mult: _operator.mul, ast.Div: _operator.truediv,
+            ast.FloorDiv: _operator.floordiv, ast.Mod: _operator.mod,
+            ast.Pow: _operator.pow, ast.LShift: _operator.lshift,
+            ast.RShift: _operator.rshift, ast.BitOr: _operator.or_,
+            ast.BitXor: _operator.xor, ast.BitAnd: _operator.and_,
+        }
+        for op_type, func in ops.items():
+            if isinstance(node.op, op_type):
+                return func(left, right)
+        raise UnsafeExpressionError(f"Operador binario no permitido: {type(node.op).__name__}")
+    if isinstance(node, ast.BoolOp):
+        values = [_eval_ast(v, env) for v in node.values]
+        if isinstance(node.op, ast.Or):
+            result = False
+            for v in values:
+                result = result or v
+            return result
+        if isinstance(node.op, ast.And):
+            result = True
+            for v in values:
+                result = result and v
+            return result
+    if isinstance(node, ast.Compare):
+        left = _eval_ast(node.left, env)
+        for op, comparator in zip(node.ops, node.comparators):
+            right = _eval_ast(comparator, env)
+            cmp_ops = {
+                ast.Eq: _operator.eq, ast.NotEq: _operator.ne,
+                ast.Lt: _operator.lt, ast.LtE: _operator.le,
+                ast.Gt: _operator.gt, ast.GtE: _operator.ge,
+                ast.Is: _operator.is_, ast.IsNot: _operator.is_not,
+                ast.In: _operator.contains, ast.NotIn: lambda a, b: not _operator.contains(b, a),
+            }
+            for op_type, func in cmp_ops.items():
+                if isinstance(op, op_type):
+                    if not func(left, right):
+                        return False
+                    break
+            left = right
+        return True
+    if isinstance(node, ast.IfExp):
+        test = _eval_ast(node.test, env)
+        return _eval_ast(node.body if test else node.orelse, env)
+    if isinstance(node, ast.List):
+        return [_eval_ast(el, env) for el in node.elts]
+    if isinstance(node, ast.Tuple):
+        return tuple(_eval_ast(el, env) for el in node.elts)
+    if isinstance(node, ast.Set):
+        return {_eval_ast(el, env) for el in node.elts}
+    if isinstance(node, ast.Dict):
+        return {_eval_ast(k, env): _eval_ast(v, env) for k, v in zip(node.keys, node.values)}
+    if isinstance(node, ast.Subscript):
+        value = _eval_ast(node.value, env)
+        if isinstance(node.slice, ast.Slice):
+            lower = _eval_ast(node.slice.lower, env) if node.slice.lower else None
+            upper = _eval_ast(node.slice.upper, env) if node.slice.upper else None
+            step = _eval_ast(node.slice.step, env) if node.slice.step else None
+            return value[slice(lower, upper, step)]
+        return value[_eval_ast(node.slice, env)]
+    if isinstance(node, ast.Call):
+        if not isinstance(node.func, ast.Name):
+            raise UnsafeExpressionError("Solo llamadas a funciones directas")
+        func_name = node.func.id
+        if func_name not in env:
+            raise UnsafeExpressionError(f"Función no permitida: {func_name}")
+        args = [_eval_ast(a, env) for a in node.args]
+        kwargs = {kw.arg: _eval_ast(kw.value, env) for kw in node.keywords}
+        return env[func_name](*args, **kwargs)
+    if isinstance(node, ast.ListComp):
+        return [v for v in _eval_comprehension(node, env)]
+    raise UnsafeExpressionError(f"Nodo no soportado: {type(node).__name__}")
+
+
+def _eval_comprehension(node: ast.ListComp, env: dict[str, Any]) -> list[Any]:
+    """Evalúa una list comprehension."""
+    def _process(generators, idx, current_env):
+        if idx >= len(generators):
+            yield _eval_ast(node.elt, current_env)
+            return
+        gen = generators[idx]
+        iter_val = _eval_ast(gen.iter, current_env)
+        for item in iter_val:
+            new_env = dict(current_env)
+            new_env[gen.target.id if isinstance(gen.target, ast.Name) else str(gen.target)] = item
+            if all(_eval_ast(if_clause, new_env) for if_clause in gen.ifs):
+                yield from _process(generators, idx + 1, new_env)
+    return list(_process(node.generators, 0, env))
+
+
 class _SafeEvalChecker(ast.NodeVisitor):
     """Verifica seguridad del AST: nodos, profundidad, dunders, calls."""
 
@@ -273,8 +386,7 @@ def safe_eval(
         allowed = {k: v for k, v in context.items() if k in checker.names}
         env.update(allowed)
 
-    code = compile(tree, "<safe_eval>", "eval")
-    return eval(code, {"__builtins__": {}}, env)  # noqa: S307
+    return _eval_ast(tree.body, env)
 
 
 # ── Rule Protocol ─────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=simple
 User=ramon
 WorkingDirectory=/opt/ura
-Environment=URA_TOKEN=ura_blackwell_2026
+EnvironmentFile=/etc/ura/gx10-api.env
 Environment=PYTHONUNBUFFERED=1
 
 # Ejecutar auditoría post-caída antes de arrancar la API.
