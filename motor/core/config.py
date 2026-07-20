@@ -49,6 +49,22 @@ def _apply_config_overrides(c: "UraConfig") -> None:
         c.data_dir = _cfg["paths"]["data"]
     if "log_level" in _cfg:
         c.log_level = _cfg["log_level"]
+    ollama = _cfg.get("ollama", {}) if isinstance(_cfg, dict) else {}
+    if ollama.get("host"):
+        c.ollama_host = ollama["host"]
+    if ollama.get("port"):
+        c.ollama_port = int(ollama["port"])
+    llm = _cfg.get("llm", {}) if isinstance(_cfg, dict) else {}
+    if llm.get("model"):
+        c.ollama_model = llm["model"]
+    if llm.get("embedding_model"):
+        c.ollama_embedding_model = llm["embedding_model"]
+    if llm.get("timeout"):
+        c.ollama_timeout = int(llm["timeout"])
+    if llm.get("temperature"):
+        c.ollama_temperature = float(llm["temperature"])
+    if llm.get("max_tokens"):
+        c.ollama_max_tokens = int(llm["max_tokens"])
 
 
 def _apply_env_overrides(c: "UraConfig") -> None:
@@ -61,6 +77,13 @@ def _apply_env_overrides(c: "UraConfig") -> None:
         c.log_level = "INFO"
     else:
         c.log_level = c.log_level.upper()
+    c.ollama_host = os.environ.get("URA_OLLAMA_HOST", c.ollama_host)
+    c.ollama_port = int(os.environ.get("URA_OLLAMA_PORT", str(c.ollama_port)))
+    c.ollama_model = os.environ.get("URA_OLLAMA_MODEL", c.ollama_model)
+    c.ollama_embedding_model = os.environ.get("URA_OLLAMA_EMBEDDING_MODEL", c.ollama_embedding_model)
+    c.ollama_timeout = int(os.environ.get("URA_OLLAMA_TIMEOUT", str(c.ollama_timeout)))
+    c.ollama_temperature = float(os.environ.get("URA_OLLAMA_TEMPERATURE", str(c.ollama_temperature)))
+    c.ollama_max_tokens = int(os.environ.get("URA_OLLAMA_MAX_TOKENS", str(c.ollama_max_tokens)))
 
 
 def _load_config_dict() -> dict | None:
@@ -81,6 +104,15 @@ RUTAS_CONFIG_OPENCODE = [
 ]
 
 
+DEFAULT_OLLAMA_HOST = "localhost"
+DEFAULT_OLLAMA_PORT = 11434
+DEFAULT_OLLAMA_MODEL = "qwen2.5:3b"
+DEFAULT_OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
+DEFAULT_OLLAMA_TIMEOUT = 120
+DEFAULT_OLLAMA_TEMPERATURE = 0.3
+DEFAULT_OLLAMA_MAX_TOKENS = 1024
+
+
 @dataclass
 class UraConfig:
     """Configuración centralizada del motor URA."""
@@ -90,6 +122,13 @@ class UraConfig:
     deploy_dir: str = RUTA_DEPLOY_DEFECTO
     data_dir: str = ""
     log_level: str = "INFO"
+    ollama_host: str = DEFAULT_OLLAMA_HOST
+    ollama_port: int = DEFAULT_OLLAMA_PORT
+    ollama_model: str = DEFAULT_OLLAMA_MODEL
+    ollama_embedding_model: str = DEFAULT_OLLAMA_EMBEDDING_MODEL
+    ollama_timeout: int = DEFAULT_OLLAMA_TIMEOUT
+    ollama_temperature: float = DEFAULT_OLLAMA_TEMPERATURE
+    ollama_max_tokens: int = DEFAULT_OLLAMA_MAX_TOKENS
     is_vm: bool = True
     asus_host: str = HOST_ASUS_DEFECTO
     asus_port: int = PUERTO_ASUS_DEFECTO
