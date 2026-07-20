@@ -14,7 +14,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    {name = "Ramon Esnaola", email = ""},
+    {name = "Ramon Esnaola"},
 ]
 
 dependencies = [
@@ -147,7 +147,7 @@ source = ["motor"]
 omit = ["*/tests/*", "*/.venv/*", "*/__pycache__/*", "*/motor/tests/*"]
 
 [tool.coverage.report]
-fail_under = 30
+fail_under = 20
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

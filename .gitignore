@@ -54,3 +54,4 @@ memory_snapshot_*.json
 coverage.xml
 .ruff_cache/
 .mypy_cache/
+deploy/secrets.env
