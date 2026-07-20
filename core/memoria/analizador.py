@@ -2,13 +2,16 @@
 
 import json
 import logging
+import os
 
 import httpx
 
 from core.memoria.qdrant_store import buscar_ideas
 
 log = logging.getLogger("memoria.analizador")
-OLLAMA = "http://127.0.0.1:11434/api/chat"
+_OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
+_OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+OLLAMA = f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/chat"
 MODELO_ANALISIS = "qwen3:32b-q8_0"
 
 PROMPT_ANALIZADOR = """Eres un analizador de peticiones. Tu trabajo es trocear una peticion en lenguaje natural y decidir que fases de busqueda aplicar.

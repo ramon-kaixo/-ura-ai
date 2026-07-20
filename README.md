@@ -42,13 +42,6 @@ with real-time streaming, multi-language support, vector memory, web search, and
 
 ## Installation
 
-### Quick (pip)
-
-```bash
-pip install ura
-ura --help
-```
-
 ### From source
 
 ```bash
@@ -84,27 +77,20 @@ curl localhost:8000/metrics
 
 ```
 ura-ai/
+├── core/                  → Domain logic, legacy (90 files)
 ├── motor/
-│   ├── core/
-│   │   ├── fusion/         → F25 Knowledge Fusion (pipeline, FactIndex, FactHistory)
-│   │   └── web/citation/   → CitationBundle, Evidence
-│   ├── memory/             → F26 Historical Memory (Timeline, Journal, Snapshot, crypto)
-│   ├── agents/             → F27 Autonomous Agents (CapabilityGate, ToolRunner, Scheduler, Orchestrator)
-│   ├── platform/           → F28 Platform Protocols (Envelope, Tracing, Health, Metrics, RateLimiter)
-│   ├── intelligence/
-│   │   ├── agents/         → Legacy agent ABC, Runtime, Planner
-│   │   ├── retrieval/      → Vector, BM25, Hybrid retrievers
-│   │   ├── reranking/      → NoOp, LLM, CrossEncoder rerankers
-│   │   ├── chunking.py     → SemanticChunker
-│   │   └── memory/         → Episodic, Semantic, Compression, Forgetting
-│   ├── events/             → EventBus, hooks, topics, compat
-│   ├── pipeline/           → Dynamic pipeline executor
-│   ├── plugin/             → Plugin system, manifests, registry
-│   └── observability/      → Metrics, logging, health, exporter
-├── deploy/
-│   ├── grafana/            → Dashboard JSON
-│   └── prometheus/         → Alerting rules
-├── tests/                  → 1065+ tests
+│   ├── core/              → UraConfig, LLM providers, Qdrant, secrets
+│   ├── memory/            → F26 Historical Memory (Timeline, Journal, Snapshot)
+│   ├── agents/            → F27 Autonomous Agents (CapabilityGate, ToolRunner, Scheduler)
+│   ├── platform/          → F28 Platform Protocols (Envelope, Tracing, Health)
+│   ├── events/            → EventBus, hooks, topics
+│   ├── pipeline/          → Dynamic pipeline executor
+│   ├── plugin/            → Plugin system, manifests, registry
+│   └── observability/     → Metrics, structured logging, health
+├── knowledge/
+│   └── engine/            → Knowledge Engine (graph, FTS5, Qdrant sync)
+├── deploy/                → Docker, systemd, grafana, prometheus
+├── tests/                 → 145 test files, 3,218+ tests
 ├── Dockerfile
 ├── docker-compose.yml
 └── pyproject.toml
@@ -116,8 +102,10 @@ Configuration is via environment variables or `.env` file:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `URA_OLLAMA_URL` | `http://localhost:11434` | Ollama endpoint |
-| `URA_QDRANT_URL` | `http://localhost:6333` | Qdrant endpoint |
+| `URA_OLLAMA_HOST` | `localhost` | Ollama host |
+| `URA_OLLAMA_PORT` | `11434` | Ollama port |
+| `URA_QDRANT_HOST` | `localhost` | Qdrant host |
+| `URA_QDRANT_PORT` | `6333` | Qdrant port |
 | `URA_LOG_LEVEL` | `INFO` | Log level |
 | `URA_PORT` | `8000` | HTTP server port |
 | `URA_HOST` | `0.0.0.0` | HTTP bind address |
@@ -139,7 +127,7 @@ docker compose up -d
 
 ```bash
 pip install -e ".[dev]"
-pytest -q --tb=line tests/ motor/tests/
+pytest -q --tb=line tests/
 ```
 
 ## Docker

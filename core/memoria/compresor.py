@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 
 import httpx
 
@@ -9,7 +10,9 @@ from core.memoria.ficha import Idea
 
 log = logging.getLogger("memoria.compresor")
 
-OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
+_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
+_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+OLLAMA_URL = f"http://{_HOST}:{_PORT}/api/chat"
 MODELO_COMPRESOR = "qwen2.5-coder:14b"
 MAX_CHARS_TEXTO = 8000
 

@@ -1,6 +1,7 @@
 """VectorMemoryStore — memoria de conversaciones con búsqueda semántica."""
 from __future__ import annotations
 
+import os
 import sqlite3
 import threading
 from pathlib import Path
@@ -75,7 +76,7 @@ class VectorMemoryStore:
         try:
             import httpx
             resp = httpx.post(
-                "http://localhost:11434/api/embeddings",
+                f"http://{os.environ.get('URA_OLLAMA_HOST', 'localhost')}:{os.environ.get('URA_OLLAMA_PORT', '11434')}/api/embeddings",
                 json={"model": "nomic-embed-text", "prompt": text[:512]},
                 timeout=10,
             )

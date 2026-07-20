@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import subprocess
 from pathlib import Path
 
@@ -10,7 +11,9 @@ from PIL.ExifTags import GPSTAGS, TAGS
 
 log = logging.getLogger(__name__)
 
-OLLAMA = "http://127.0.0.1:11434/api/chat"
+_OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
+_OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+OLLAMA = f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/chat"
 VISION_MODEL = "llama3.2-vision:11b"
 
 
