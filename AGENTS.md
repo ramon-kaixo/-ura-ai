@@ -22,7 +22,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
 - Test: `pytest -q` (needs hypothesis, pytest-asyncio, pytest-timeout)
-- Full audit: `python3 /home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py`
+- Full audit: `python3 /home/ramon/URA/ura_ia_1972/scripts/pro/pipeline_refactor.py --help`
 - Demo: `bash scripts/demo.sh`
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
 
@@ -120,7 +120,7 @@ Organizados por función en las siguientes categorías:
 
 | Categoría | Scripts | Propósito |
 |-----------|---------|-----------|
-| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py`, `tuneladora_master.py` | Pipeline de mejora continua (systemd timer cada 6h) |
+| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py` | Pipeline de mejora continua (v2, motor compartido) |
 | **Diagnóstico/Mantenimiento** | `token_screen.py`, `scanner_autoajuste.py`, `chunk_optimizer.py`, `poda_mecanica.py`, `watermark_aggregator.py`, `inspectores.py`, `compactadora.py`, `compactador_espacios.py`, `auto_reglas.py`, `reglas_loader.py`, `f821_watch.py`, `analizar_fallo_conciencia.py`, `master_conciencia.py`, `sincronizar_vocabulario.py`, `patch_timestamps.py`, `fix_masivo.py`, `hardening_audit.py`, `systemd_orphan_scanner.py` | Auditoría, reparación y optimización automática del código |
 | **Refactor** | `refactor_large_functions.py`, `refactor_large_functions_v2.py`, `refactor_v2.py`, `refactor_4_motores.py`, `ajustar_contexto.py`, `sanear_codigo.py` | Refactorización con LLM + compactación |
 | **Consciencia/Memoria** | `conciencia.py`, `auto_conciencia.py`, `analisis_completo.py`, `ura_self_modify.py` | Sistema de memoria, auto-conciencia y meta-mejora |
@@ -136,7 +136,7 @@ Organizados por función en las siguientes categorías:
 | **RPA/Cámaras** | `bypass_linksys_gui.py`, `rpa_linksys.py`, `rpa_linksys_v2.py`, `rpa_zte_f6640.py`, `deploy_camaras.sh`, `desplegar_dahua_supervisor.sh`, `instalar_servidor_camaras.sh`, `guardian_tmpfs.sh`, `ura-telemetry-pos.ps1` | Automatización RPA, cámaras Dahua y telemetría POS |
 | **Instalación/Deploy** | `instalar_gx10_circuit.sh`, `integracion_opencode.sh`, `conceder_permisos_accesibilidad.sh`, `mcp_config.sh`, `setup_logrotate_newsyslog.sh`, `patch_systemd_limits.sh`, `deploy_copilotos.sh`, `stage_hardening.sh`, `upgrade_pipeline.sh`, `detect_environment.sh`, `trampa_rm.sh` | Instalación, hardening y despliegue |
 | **Pipeline Voz/Visión** | `demo_pipeline_voz.py`, `demo_pipeline_mac.py`, `com.ura.voice.plist`, `seed_correcciones_voz.py`, `daemon_procesamiento_lento.sh`, `supervisor_ciclo.sh` | Pipelines de voz y procesamiento lento |
-| **Evolución/Ciclo** | `evolve.sh`, `ciclo_rapido.sh`, `filtro_cascada.sh`, `conflict_detector.sh`, `conectar_servidor_externo.sh`, `descubrir_puertos.sh`, `maquinas.sh`, `launch_refactor_gx10.sh`, `auto_export_context.sh` | Ciclos de evolución y detección de conflictos |
+| **Evolución/Ciclo** | `evolve.sh`, `ciclo_rapido.sh`, `filtro_cascada.sh`, `conflict_detector.sh`, `conectar_servidor_externo.sh`, `descubrir_puertos.sh`, `maquinas.sh`, `auto_export_context.sh` | Ciclos de evolución y detección de conflictos |
 | **Config/Templates** | `tailscale-acls.json`, `crontab_gpu_health.txt`, `docker-compose.gx10-sandbox.yml`, `gx10-api.service`, `ura-mkdocs.service`, `DEPLOY_MAC.md`, `rotate_secrets.sh` | Configuraciones y templates |
 | **ura-query** | `ura-query.py` | Consulta vectorial del grafo indexado |
 
@@ -298,7 +298,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - **Mac**: `/Users/ramonesnaola/URA/backups_gx10/` (backups desde GX10)
 
 ### Tuneladora Unificada
-- **Ubicación**: `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py`
+- **Ubicación**: `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_mantenimiento.py`
 - **Fases**: 6 fases unificadas (Diagnóstico, Mantenimiento, Auditoría Modelos, Mejora, Rollback, Backup)
 - **Timer**: `tuneladora.timer` - ejecuta cada 6 horas
 - **Rutas corregidas**: Usa `/home/ramon/URA/` (no `/opt/ura/`)
@@ -351,7 +351,7 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - `README.md` — Human-readable project overview
 - `pyproject.toml` — Python project configuration
 - `CLAUDE.md` — Symlink to AGENTS.md (Claude Code compatibility)
-- `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_master.py` — Tuneladora unificada (6 fases)
+- `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_mantenimiento.py` — Tuneladora de mantenimiento (v2, motor compartido)
 - `/home/ramon/URA/core/model_router.py` — Model Router Enhanced
 - `docs/architecture/FASE8_DESIGN.md` — Fase 8 design document (live)
 - `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
