@@ -1,4 +1,5 @@
 """ConversationEngine — core conversational loop."""
+
 from __future__ import annotations
 
 import re
@@ -57,6 +58,7 @@ class ConversationEngine:
         db_path: str | None = None,
     ):
         from motor.assistant.config import config as app_config
+
         db = db_path or app_config.db_path
         store = message_store or MessageStore(db_path=db)
         self._store = store
@@ -130,8 +132,11 @@ class ConversationEngine:
         messages = conv.messages
         summary = self._get_summary(conv)
         if summary and len(messages) > 15:
-            system_prompt = (system_prompt + "\n\n[Resumen de la conversación anterior: " +
-                             summary + "]") if system_prompt else ("[Resumen: " + summary + "]")
+            system_prompt = (
+                (system_prompt + "\n\n[Resumen de la conversación anterior: " + summary + "]")
+                if system_prompt
+                else ("[Resumen: " + summary + "]")
+            )
             messages = messages[-10:]
         return self._context.build_context(messages, system_prompt)
 
@@ -179,11 +184,13 @@ class ConversationEngine:
         lang = self._lang.detect(user_message)
 
         is_interruption = self._interruptions.detect_interruption(
-            conversation_id, conv.messages,
+            conversation_id,
+            conv.messages,
         )
 
         mode_result = self._auto_mode.detect_mode(
-            user_message, intent,
+            user_message,
+            intent,
             previous_mode=conv.state.mode if conv.state else None,
             conversation_id=conversation_id,
         )
@@ -196,7 +203,8 @@ class ConversationEngine:
         interruption_context = ""
         if is_interruption:
             interruption_context = self._interruptions.auto_recover_context(
-                conversation_id, mode_result.mode.value,
+                conversation_id,
+                mode_result.mode.value,
             )
 
         episodic_context = self._episodic.get_relevant_context(user_message)

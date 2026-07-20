@@ -8,6 +8,7 @@ Métricas:
   - Tasa de interrupción (interruption)
   - Satisfacción implícita
 """
+
 from __future__ import annotations
 
 import json
@@ -43,7 +44,14 @@ class ConversationEvaluator:
         self._conn.execute("CREATE INDEX IF NOT EXISTS idx_eval_conv ON evaluations(conversation_id)")
         self._conn.commit()
 
-    def record_metric(self, conversation_id: str, metric_name: str, metric_value: float, details: dict[str, object] | None = None, user_id: str = "") -> None:
+    def record_metric(
+        self,
+        conversation_id: str,
+        metric_name: str,
+        metric_value: float,
+        details: dict[str, object] | None = None,
+        user_id: str = "",
+    ) -> None:
         with self._lock:
             self._conn.execute(
                 "INSERT INTO evaluations (conversation_id, user_id, metric_name, metric_value, details) VALUES (?, ?, ?, ?, ?)",

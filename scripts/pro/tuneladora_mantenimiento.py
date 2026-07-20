@@ -112,10 +112,13 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("INFORME DE MANTENIMIENTO", [
-        f"Nivel: {nivel.upper()}",
-        f"Duración: {H}h {M}m {S}s",
-    ])
+    engine.log.report(
+        "INFORME DE MANTENIMIENTO",
+        [
+            f"Nivel: {nivel.upper()}",
+            f"Duración: {H}h {M}m {S}s",
+        ],
+    )
     reporting.save_maintenance_state(results, nivel)
     return 0
 

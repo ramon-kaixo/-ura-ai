@@ -406,10 +406,7 @@ class TestPluginManifestParse:
     def test_parse_with_hooks_and_tags(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text(
-            "name: tagged\n"
-            "hooks:\n  - pre_search\n"
-            "tags:\n  - search\n  - experimental\n"
-            "phases:\n  - pre\n  - post\n",
+            "name: tagged\nhooks:\n  - pre_search\ntags:\n  - search\n  - experimental\nphases:\n  - pre\n  - post\n",
         )
         manifest = parse_manifest(f)
         assert manifest is not None
@@ -1079,8 +1076,7 @@ class TestRegistryV2DependencyResolution:
         d = tmp_path / "empty_dep"
         d.mkdir()
         (d / "plugin.yaml").write_text(
-            "name: empty_dep\napi_version: '1.0.0'\nentry_point: 'EmptyDepPlugin'\n"
-            "dependencies:\n  plugins:\n    -\n",
+            "name: empty_dep\napi_version: '1.0.0'\nentry_point: 'EmptyDepPlugin'\ndependencies:\n  plugins:\n    -\n",
         )
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
@@ -1211,10 +1207,7 @@ class TestRegistryV2CapabilityDiscovery:
         _make_v2_plugin(tmp_path, "pre_plugin", phases=["pre"])
         _make_v2_plugin(tmp_path, "post_plugin", phases=["post"])
         registry.discover([str(tmp_path)])
-        pre_plugins = [
-            n for n, e in registry.entries.items()
-            if e.manifest and "pre" in e.manifest.phases
-        ]
+        pre_plugins = [n for n, e in registry.entries.items() if e.manifest and "pre" in e.manifest.phases]
         assert "pre_plugin" in pre_plugins
         assert "post_plugin" not in pre_plugins
 
@@ -1223,10 +1216,7 @@ class TestRegistryV2CapabilityDiscovery:
         _make_v2_plugin(tmp_path, "hook_plugin", hooks=["pre_ingest"])
         _make_v2_plugin(tmp_path, "no_hook")
         registry.discover([str(tmp_path)])
-        hook_plugins = [
-            n for n, e in registry.entries.items()
-            if e.manifest and "pre_ingest" in e.manifest.hooks
-        ]
+        hook_plugins = [n for n, e in registry.entries.items() if e.manifest and "pre_ingest" in e.manifest.hooks]
         assert "hook_plugin" in hook_plugins
         assert "no_hook" not in hook_plugins
 
@@ -1235,8 +1225,7 @@ class TestRegistryV2CapabilityDiscovery:
         d = tmp_path / "tagged"
         d.mkdir()
         (d / "plugin.yaml").write_text(
-            "name: tagged\napi_version: '1.0.0'\nentry_point: 'TaggedPlugin'\n"
-            "tags:\n  - search\n  - experimental\n",
+            "name: tagged\napi_version: '1.0.0'\nentry_point: 'TaggedPlugin'\ntags:\n  - search\n  - experimental\n",
         )
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
@@ -1246,10 +1235,7 @@ class TestRegistryV2CapabilityDiscovery:
         )
         _make_v2_plugin(tmp_path, "untagged")
         registry.discover([str(tmp_path)])
-        tagged = [
-            n for n, e in registry.entries.items()
-            if e.manifest and "search" in e.manifest.tags
-        ]
+        tagged = [n for n, e in registry.entries.items() if e.manifest and "search" in e.manifest.tags]
         assert "tagged" in tagged
         assert "untagged" not in tagged
 
@@ -1258,10 +1244,7 @@ class TestRegistryV2CapabilityDiscovery:
         _make_legacy_plugin(tmp_path, "legacy_pre", phase="pre")
         _make_legacy_plugin(tmp_path, "legacy_post", phase="post")
         registry.discover([str(tmp_path)])
-        pre_plugins = [
-            n for n, e in registry.entries.items()
-            if e.legacy_meta and e.legacy_meta.phase == "pre"
-        ]
+        pre_plugins = [n for n, e in registry.entries.items() if e.legacy_meta and e.legacy_meta.phase == "pre"]
         assert "legacy_pre" in pre_plugins
         assert "legacy_post" not in pre_plugins
 
@@ -1271,7 +1254,8 @@ class TestRegistryV2CapabilityDiscovery:
         _make_v2_plugin(tmp_path, "new_plugin", version="2.0.0")
         registry.discover([str(tmp_path)])
         old_plugins = [
-            n for n, e in registry.entries.items()
+            n
+            for n, e in registry.entries.items()
             if e.manifest and e.manifest.version and e.manifest.version.startswith("0.")
         ]
         assert "old_plugin" in old_plugins

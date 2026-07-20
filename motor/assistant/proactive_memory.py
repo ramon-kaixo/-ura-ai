@@ -3,6 +3,7 @@
 El sistema recuerda tareas pendientes, hace seguimiento y sugiere
 acciones al usuario sin que este las pida.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -77,6 +78,7 @@ class ProactiveMemory:
 
     def add_task(self, description: str, conversation_id: str = "", priority: str = "normal") -> Task:
         import uuid
+
         task = Task(
             task_id=uuid.uuid4().hex[:12],
             description=description,
@@ -118,10 +120,8 @@ class ProactiveMemory:
 
     def detect_task_trigger(self, user_message: str) -> str | None:
         triggers = [
-            (["recuérdame", "no olvides", "apunta", "anota", "pendiente",
-              "tengo que", "necesito que"], "add_task"),
-            (["ya lo hice", "completado", "terminado", "listo", "hecho",
-              "resuelto"], "complete_task"),
+            (["recuérdame", "no olvides", "apunta", "anota", "pendiente", "tengo que", "necesito que"], "add_task"),
+            (["ya lo hice", "completado", "terminado", "listo", "hecho", "resuelto"], "complete_task"),
             (["qué tengo", "tareas", "pendientes", "qué falta"], "list_tasks"),
         ]
         msg_lower = user_message.lower()

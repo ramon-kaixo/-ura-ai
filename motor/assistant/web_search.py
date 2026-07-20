@@ -1,4 +1,5 @@
 """WebSearch — búsqueda web real integrada en el asistente."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -29,12 +30,14 @@ class WebSearch:
         for line in html.split("\n"):
             if 'class="result__a"' in line:
                 import re
-                title_match = re.search(r'>(.*?)<', line)
+
+                title_match = re.search(r">(.*?)<", line)
                 title = title_match.group(1) if title_match else ""
                 results.append({"title": title, "snippet": ""})
             if 'class="result__snippet"' in line:
                 import re
-                snippet_match = re.search(r'>(.*?)<', line)
+
+                snippet_match = re.search(r">(.*?)<", line)
                 if results:
                     results[-1]["snippet"] = snippet_match.group(1) if snippet_match else ""
             if len(results) >= max_results:

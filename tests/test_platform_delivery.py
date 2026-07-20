@@ -625,8 +625,14 @@ class TestErrorCodes:
 
     def test_all_non_retryable_error_codes_send_once(self) -> None:
         """All domain error codes send once without retry."""
-        domain_codes = ("invalid_payload", "unauthorized", "not_found",
-                        "unknown_message", "oversized", "version_mismatch")
+        domain_codes = (
+            "invalid_payload",
+            "unauthorized",
+            "not_found",
+            "unknown_message",
+            "oversized",
+            "version_mismatch",
+        )
         for code in domain_codes:
             call_count: int = 0
 

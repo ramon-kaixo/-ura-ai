@@ -435,9 +435,7 @@ async def _stream_from_provider(
     except Exception as e:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name)
-        yield (
-            b"data: " + json.dumps({"error": {"message": f"{e}", "type": "provider_error"}}).encode() + b"\n\n"
-        )
+        yield (b"data: " + json.dumps({"error": {"message": f"{e}", "type": "provider_error"}}).encode() + b"\n\n")
         yield b"data: [DONE]\n\n"
     finally:
         if not hubo_error:

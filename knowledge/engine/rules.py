@@ -202,12 +202,18 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
         left = _eval_ast(node.left, env)
         right = _eval_ast(node.right, env)
         ops = {
-            ast.Add: _operator.add, ast.Sub: _operator.sub,
-            ast.Mult: _operator.mul, ast.Div: _operator.truediv,
-            ast.FloorDiv: _operator.floordiv, ast.Mod: _operator.mod,
-            ast.Pow: _operator.pow, ast.LShift: _operator.lshift,
-            ast.RShift: _operator.rshift, ast.BitOr: _operator.or_,
-            ast.BitXor: _operator.xor, ast.BitAnd: _operator.and_,
+            ast.Add: _operator.add,
+            ast.Sub: _operator.sub,
+            ast.Mult: _operator.mul,
+            ast.Div: _operator.truediv,
+            ast.FloorDiv: _operator.floordiv,
+            ast.Mod: _operator.mod,
+            ast.Pow: _operator.pow,
+            ast.LShift: _operator.lshift,
+            ast.RShift: _operator.rshift,
+            ast.BitOr: _operator.or_,
+            ast.BitXor: _operator.xor,
+            ast.BitAnd: _operator.and_,
         }
         for op_type, func in ops.items():
             if isinstance(node.op, op_type):
@@ -230,11 +236,16 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
         for op, comparator in zip(node.ops, node.comparators):
             right = _eval_ast(comparator, env)
             cmp_ops = {
-                ast.Eq: _operator.eq, ast.NotEq: _operator.ne,
-                ast.Lt: _operator.lt, ast.LtE: _operator.le,
-                ast.Gt: _operator.gt, ast.GtE: _operator.ge,
-                ast.Is: _operator.is_, ast.IsNot: _operator.is_not,
-                ast.In: _operator.contains, ast.NotIn: lambda a, b: not _operator.contains(b, a),
+                ast.Eq: _operator.eq,
+                ast.NotEq: _operator.ne,
+                ast.Lt: _operator.lt,
+                ast.LtE: _operator.le,
+                ast.Gt: _operator.gt,
+                ast.GtE: _operator.ge,
+                ast.Is: _operator.is_,
+                ast.IsNot: _operator.is_not,
+                ast.In: _operator.contains,
+                ast.NotIn: lambda a, b: not _operator.contains(b, a),
             }
             for op_type, func in cmp_ops.items():
                 if isinstance(op, op_type):
@@ -278,6 +289,7 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
 
 def _eval_comprehension(node: ast.ListComp, env: dict[str, Any]) -> list[Any]:
     """Evalúa una list comprehension."""
+
     def _process(generators, idx, current_env):
         if idx >= len(generators):
             yield _eval_ast(node.elt, current_env)
@@ -289,6 +301,7 @@ def _eval_comprehension(node: ast.ListComp, env: dict[str, Any]) -> list[Any]:
             new_env[gen.target.id if isinstance(gen.target, ast.Name) else str(gen.target)] = item
             if all(_eval_ast(if_clause, new_env) for if_clause in gen.ifs):
                 yield from _process(generators, idx + 1, new_env)
+
     return list(_process(node.generators, 0, env))
 
 

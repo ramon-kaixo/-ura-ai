@@ -1,4 +1,5 @@
 """Sanitizador de prompts — protege contra inyección de instrucciones."""
+
 from __future__ import annotations
 
 import re

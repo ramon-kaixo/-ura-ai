@@ -24,11 +24,15 @@ class TestSystemPrompts:
         assert "profundiza" in prompt or "paso" in prompt
 
     def test_sentiment_injected_spanish(self):
-        prompt = _build_system_prompt("conversacion", {"sentiment": "frustrado", "sentiment_action": "disculparse"}, "es")
+        prompt = _build_system_prompt(
+            "conversacion", {"sentiment": "frustrado", "sentiment_action": "disculparse"}, "es"
+        )
         assert "frustrado" in prompt
 
     def test_sentiment_injected_english(self):
-        prompt = _build_system_prompt("conversacion", {"sentiment": "frustrated", "sentiment_action": "apologize"}, "en")
+        prompt = _build_system_prompt(
+            "conversacion", {"sentiment": "frustrated", "sentiment_action": "apologize"}, "en"
+        )
         assert "frustrated" in prompt
 
     def test_fallback_replies_exist(self):

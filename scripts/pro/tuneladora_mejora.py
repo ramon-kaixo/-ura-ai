@@ -52,9 +52,12 @@ def main() -> int:
         import subprocess  # noqa: PLC0415
 
         cmd = [
-            engine.config.venv_python, "scripts/pro/pipeline_refactor.py",
-            "--workers", str(args.refactor_workers),
-            "--model", args.refactor_model,
+            engine.config.venv_python,
+            "scripts/pro/pipeline_refactor.py",
+            "--workers",
+            str(args.refactor_workers),
+            "--model",
+            args.refactor_model,
         ]
         result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
         if result.returncode != 0:
@@ -81,10 +84,13 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("MEJORA CONTINUA FINALIZADA", [
-        f"Duración: {H}h {M}m {S}s",
-        f"Refactor: {'sí' if args.refactor else 'no'}",
-    ])
+    engine.log.report(
+        "MEJORA CONTINUA FINALIZADA",
+        [
+            f"Duración: {H}h {M}m {S}s",
+            f"Refactor: {'sí' if args.refactor else 'no'}",
+        ],
+    )
     return 0
 
 

@@ -150,6 +150,7 @@ def _hours_since_last_message(conv: Any) -> float:
         return 0
     try:
         from datetime import UTC, datetime
+
         last = conv.messages[-1].timestamp
         if last:
             last_dt = datetime.fromisoformat(last)
@@ -220,6 +221,7 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
     user_id = analysis.get("user_id", "")
     if user_id:
         from motor.assistant.preferences import UserPreferenceLearning
+
         prefs = UserPreferenceLearning().get_preferences(user_id)
         if prefs.get("preferred_length") == "short":
             system_prompt += " Responde de forma breve."
@@ -246,7 +248,9 @@ _FALLBACK_REPLIES = {
 }
 
 
-def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = "") -> tuple:
+def _process(
+    engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = ""
+) -> tuple:
     conv = engine.get_or_create(cid)
     if mode_str:
         try:
@@ -273,20 +277,33 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 def _detect_tool_name(user_message: str) -> str | None:
     msg = user_message.lower().strip()
     tool_map = {
-        "status": "git_status", "estado": "git_status",
-        "log": "git_log", "diff": "git_diff",
-        "docker": "docker_ps", "contenedor": "docker_ps",
-        "busca": "web_search", "search": "web_search",
-        "python": "python", "codigo": "python",
-        "hora": "datetime", "fecha": "datetime",
-        "ram": "system_info", "memoria": "system_info",
-        "cuánto es": "calculator", "calcula": "calculator",
-        "apunta": "note_save", "nota": "note_save",
-        "branch": "git_branch", "rama": "git_branch",
+        "status": "git_status",
+        "estado": "git_status",
+        "log": "git_log",
+        "diff": "git_diff",
+        "docker": "docker_ps",
+        "contenedor": "docker_ps",
+        "busca": "web_search",
+        "search": "web_search",
+        "python": "python",
+        "codigo": "python",
+        "hora": "datetime",
+        "fecha": "datetime",
+        "ram": "system_info",
+        "memoria": "system_info",
+        "cuánto es": "calculator",
+        "calcula": "calculator",
+        "apunta": "note_save",
+        "nota": "note_save",
+        "branch": "git_branch",
+        "rama": "git_branch",
         "commit": "git_commit",
-        "clima": "weather", "tiempo": "weather",
-        "weather": "weather", "temperatura": "weather",
-        "noticias": "news", "news": "news",
+        "clima": "weather",
+        "tiempo": "weather",
+        "weather": "weather",
+        "temperatura": "weather",
+        "noticias": "news",
+        "news": "news",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
@@ -341,10 +358,7 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
         try:
             web_results = await engine._web.search(resolved)
             if web_results:
-                prompt += (
-                    f"\n[Web: {web_results[:800]!s}]"
-                    f"\nCuando uses información de la web, cita la fuente."
-                )
+                prompt += f"\n[Web: {web_results[:800]!s}]\nCuando uses información de la web, cita la fuente."
         except Exception:  # noqa: S110
             pass
     try:
@@ -389,23 +403,21 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         tool_name = _detect_tool_name(resolved)
         if tool_name and _tool_manager.needs_confirmation(tool_name, resolved):
             enriched_prompt += (
-                "\n\n⚠️ Este comando requiere confirmación. "
-                "Pregunta al usuario si está seguro antes de ejecutarlo."
+                "\n\n⚠️ Este comando requiere confirmación. Pregunta al usuario si está seguro antes de ejecutarlo."
             )
         tool_result = await _execute_command(resolved, analysis)
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
-            enriched_prompt += (
-                "\n\nEl resultado arriba es de un comando REAL. "
-                "Responde basándote en ese resultado."
-            )
+            enriched_prompt += "\n\nEl resultado arriba es de un comando REAL. Responde basándote en ese resultado."
 
     if request.stream:
 
         async def event_stream():
             full_reply = ""
             try:
-                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):
+                async for token in llm.generate_stream(
+                    cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt
+                ):
                     yield StreamEvent("token", {"text": token}).to_sse()
                     full_reply = token
             except Exception as exc:
@@ -416,12 +428,15 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             if output_mod.flagged:
                 full_reply = output_mod.sanitized_text
             engine.add_message(cid, "assistant", full_reply)
-            yield StreamEvent("complete", {
-                "reply": full_reply,
-                "conversation_id": display_cid,
-                "intent": intent.value,
-                "mode": mode.value,
-            }).to_sse()
+            yield StreamEvent(
+                "complete",
+                {
+                    "reply": full_reply,
+                    "conversation_id": display_cid,
+                    "intent": intent.value,
+                    "mode": mode.value,
+                },
+            ).to_sse()
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -461,6 +476,7 @@ async def submit_feedback(req: FeedbackRequest) -> dict[str, object]:
     if not conv:
         raise HTTPException(status_code=404, detail="Conversación no encontrada")
     from motor.assistant.evaluation import ConversationEvaluator
+
     ev = ConversationEvaluator()
     ev.record_metric(req.conversation_id, "user_rating", float(req.rating), {"comment": req.comment})
     return {"status": "ok", "rating": req.rating}

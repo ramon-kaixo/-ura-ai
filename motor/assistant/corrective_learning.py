@@ -3,6 +3,7 @@
 Cuando el usuario dice "corrige", "no es correcto", "en realidad" etc.,
 el sistema almacena la corrección y la reutiliza en el futuro.
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -49,12 +50,14 @@ class CorrectiveMemory:
             topic = row[0]
             if topic not in self._cache:
                 self._cache[topic] = []
-            self._cache[topic].append({
-                "original": row[1],
-                "corrected": row[2],
-                "timestamp": row[3],
-                "confidence": row[4],
-            })
+            self._cache[topic].append(
+                {
+                    "original": row[1],
+                    "corrected": row[2],
+                    "timestamp": row[3],
+                    "confidence": row[4],
+                }
+            )
 
     def record_correction(
         self,
@@ -121,8 +124,32 @@ class CorrectiveMemory:
 
     def _extract_topic(self, text: str) -> str:
         words = text.lower().split()
-        stop_words = {"el", "la", "los", "las", "un", "una", "y", "e", "o",
-                      "de", "del", "en", "con", "por", "para", "a", "es",
-                      "que", "no", "se", "su", "lo", "le", "como", "más"}
+        stop_words = {
+            "el",
+            "la",
+            "los",
+            "las",
+            "un",
+            "una",
+            "y",
+            "e",
+            "o",
+            "de",
+            "del",
+            "en",
+            "con",
+            "por",
+            "para",
+            "a",
+            "es",
+            "que",
+            "no",
+            "se",
+            "su",
+            "lo",
+            "le",
+            "como",
+            "más",
+        }
         topics = [w for w in words if w not in stop_words and len(w) > 3]
         return topics[0] if topics else text[:30]

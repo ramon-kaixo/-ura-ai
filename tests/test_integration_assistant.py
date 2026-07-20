@@ -1,4 +1,5 @@
 """Tests de integración para el asistente conversacional (endpoint real)."""
+
 from __future__ import annotations
 
 import httpx

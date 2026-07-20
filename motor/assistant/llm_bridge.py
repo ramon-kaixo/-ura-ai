@@ -1,4 +1,5 @@
 """LLM integration bridge — conecta ConversationEngine con Model Router."""
+
 from __future__ import annotations
 
 import os
@@ -52,9 +53,13 @@ class LLMBridge:
             cost = len(msg.content) // 4 + 1
             if token_estimate + cost > max_context:
                 break
-            messages.insert(1 if system_prompt else 0, {
-                "role": msg.role, "content": msg.content,
-            })
+            messages.insert(
+                1 if system_prompt else 0,
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                },
+            )
             token_estimate += cost
 
         if user_message:
@@ -82,9 +87,14 @@ class LLMBridge:
         system_prompt: str = "",
     ) -> str:
         import asyncio
+
         return await asyncio.to_thread(
-            self.generate, conversation_id, user_message,
-            mode, intent_value, system_prompt,
+            self.generate,
+            conversation_id,
+            user_message,
+            mode,
+            intent_value,
+            system_prompt,
         )
 
     async def generate_stream(
@@ -99,21 +109,27 @@ class LLMBridge:
 
         model_key = self.select_model(mode, intent_value)
         messages = self.build_messages(
-            conversation_id, system_prompt, user_message,
+            conversation_id,
+            system_prompt,
+            user_message,
         )
         prompt = self._messages_to_prompt(messages)
 
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(self._timeout)) as client, client.stream(
-                "POST",
-                f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/generate",
-                json={"model": model_key, "prompt": prompt, "stream": True},
-            ) as response:
+            async with (
+                httpx.AsyncClient(timeout=httpx.Timeout(self._timeout)) as client,
+                client.stream(
+                    "POST",
+                    f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/generate",
+                    json={"model": model_key, "prompt": prompt, "stream": True},
+                ) as response,
+            ):
                 full = ""
                 async for line in response.aiter_lines():
                     if not line:
                         continue
                     import json
+
                     try:
                         chunk = json.loads(line)
                         token = chunk.get("response", "")
@@ -140,7 +156,9 @@ class LLMBridge:
 
         model_key = self.select_model(mode, intent_value)
         messages = self.build_messages(
-            conversation_id, system_prompt, user_message,
+            conversation_id,
+            system_prompt,
+            user_message,
         )
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
@@ -166,6 +184,7 @@ class LLMBridge:
     def _local_generate(self, messages: list[dict[str, str]], model_key: str) -> str:
         try:
             from motor.core.llm.ollama import OllamaProvider
+
             provider = OllamaProvider()
             prompt = self._messages_to_prompt(messages)
             return provider.generate(prompt, model=model_key)
@@ -176,9 +195,7 @@ class LLMBridge:
         parts: list[str] = []
         for msg in messages:
             role_prefix = (
-                "System: " if msg["role"] == "system"
-                else "User: " if msg["role"] == "user"
-                else "Assistant: "
+                "System: " if msg["role"] == "system" else "User: " if msg["role"] == "user" else "Assistant: "
             )
             parts.append(f"{role_prefix}{msg['content']}")
         parts.append("Assistant: ")

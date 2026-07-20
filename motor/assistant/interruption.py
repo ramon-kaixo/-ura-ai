@@ -3,6 +3,7 @@
 Permite que el usuario interrumpa una respuesta del asistente,
 preservando el contexto de lo que se estaba diciendo.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -39,18 +40,12 @@ class InterruptionSystem:
             return False
         last = messages[-1]
         second_last = messages[-2]
-        is_interruption = (
-            last.role == "user"
-            and second_last.role == "assistant"
-        )
+        is_interruption = last.role == "user" and second_last.role == "assistant"
         if is_interruption:
             self._interruptions[conversation_id] = InterruptionContext(
                 conversation_id=conversation_id,
                 interrupted_message=second_last.content[:200],
-                context_before_interruption=[
-                    {"role": m.role, "content": m.content[:100]}
-                    for m in messages[-6:-2]
-                ],
+                context_before_interruption=[{"role": m.role, "content": m.content[:100]} for m in messages[-6:-2]],
             )
         return is_interruption
 

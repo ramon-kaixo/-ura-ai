@@ -1,4 +1,5 @@
 """VectorMemoryStore — memoria de conversaciones con búsqueda semántica."""
+
 from __future__ import annotations
 
 import os
@@ -55,8 +56,7 @@ class VectorMemoryStore:
             return []
         with self._lock:
             rows = self._conn.execute(
-                "SELECT conversation_id, role, content, timestamp, embedding "
-                "FROM entries ORDER BY id DESC LIMIT 200"
+                "SELECT conversation_id, role, content, timestamp, embedding FROM entries ORDER BY id DESC LIMIT 200"
             ).fetchall()
         if not rows:
             return []
@@ -65,16 +65,24 @@ class VectorMemoryStore:
             semb = np.frombuffer(row[4], dtype=np.float32)
             sim = self._cosine(qemb, semb)
             if sim > 0.5:
-                scored.append((sim, {
-                    "conversation_id": row[0], "role": row[1],
-                    "content": row[2][:200], "similarity": float(sim),
-                }))
+                scored.append(
+                    (
+                        sim,
+                        {
+                            "conversation_id": row[0],
+                            "role": row[1],
+                            "content": row[2][:200],
+                            "similarity": float(sim),
+                        },
+                    )
+                )
         scored.sort(key=lambda x: -x[0])
         return [s[1] for s in scored[:limit]]
 
     def _embed(self, text: str) -> np.ndarray | None:
         try:
             import httpx
+
             resp = httpx.post(
                 f"http://{os.environ.get('URA_OLLAMA_HOST', 'localhost')}:{os.environ.get('URA_OLLAMA_PORT', '11434')}/api/embeddings",
                 json={"model": "nomic-embed-text", "prompt": text[:512]},

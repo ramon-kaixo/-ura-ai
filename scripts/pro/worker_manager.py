@@ -79,13 +79,15 @@ class WorkerManager:
                 wid = futures[future]
                 try:
                     result = future.result()
-                    results.append({
-                        "worker_id": wid,
-                        "returncode": result.returncode,
-                        "stdout": result.stdout[-300:] if result.stdout else "",
-                        "stderr": result.stderr[-200:] if result.stderr else "",
-                        "ok": result.returncode == 0,
-                    })
+                    results.append(
+                        {
+                            "worker_id": wid,
+                            "returncode": result.returncode,
+                            "stdout": result.stdout[-300:] if result.stdout else "",
+                            "stderr": result.stderr[-200:] if result.stderr else "",
+                            "ok": result.returncode == 0,
+                        }
+                    )
                 except TimeoutError:
                     self.log.error(f"Worker {wid} TIMEOUT ({timeout}s)")
                     results.append({"worker_id": wid, "returncode": -1, "error": "timeout", "ok": False})

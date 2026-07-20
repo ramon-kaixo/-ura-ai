@@ -60,6 +60,7 @@ from motor.agents.scheduler import _PriorityQueue
 # 1. MODELS — comprehensive coverage
 # ════════════════════════════════════════════════════════
 
+
 class TestMakeToolExecutionId:
     def test_deterministic(self) -> None:
         a = make_tool_execution_id("agent1", "web.search", 1000.0)
@@ -105,11 +106,22 @@ class TestAgentAuditRecord:
 
     def test_immutable(self) -> None:
         r = AgentAuditRecord(
-            agent_id="a1", task_id="t1", objective="test",
-            plan=[], capabilities_used=[], tools_used=[],
-            facts_consulted=[], memory_consulted=[], llm_calls=0,
-            decisions=[], result="ok", state="completed",
-            duration_ms=0, cost_units=0, error=None, timestamp=0,
+            agent_id="a1",
+            task_id="t1",
+            objective="test",
+            plan=[],
+            capabilities_used=[],
+            tools_used=[],
+            facts_consulted=[],
+            memory_consulted=[],
+            llm_calls=0,
+            decisions=[],
+            result="ok",
+            state="completed",
+            duration_ms=0,
+            cost_units=0,
+            error=None,
+            timestamp=0,
         )
         with pytest.raises(AttributeError):
             r.agent_id = "a2"
@@ -220,7 +232,9 @@ class TestAgentExecutionEdgeCases:
 class TestAgentResultEdgeCases:
     def test_error_state(self) -> None:
         r = AgentResult(
-            agent_id="a1", task_id="t1", state=AgentState.FAILED,
+            agent_id="a1",
+            task_id="t1",
+            state=AgentState.FAILED,
             error="Something went wrong",
         )
         assert r.error == "Something went wrong"
@@ -228,7 +242,9 @@ class TestAgentResultEdgeCases:
 
     def test_cancelled_state(self) -> None:
         r = AgentResult(
-            agent_id="a1", task_id="t1", state=AgentState.CANCELLED,
+            agent_id="a1",
+            task_id="t1",
+            state=AgentState.CANCELLED,
         )
         assert r.state == AgentState.CANCELLED
         assert r.error is None
@@ -238,9 +254,11 @@ class TestAgentResultEdgeCases:
 # 2. AGENT BASE CLASS — ABC enforcement
 # ════════════════════════════════════════════════════════
 
+
 class TestAgentABC:
     def test_cannot_instantiate_agent(self) -> None:
         from motor.agents.base import Agent
+
         with pytest.raises(TypeError):
             Agent()  # type: ignore[abstract]
 
@@ -269,6 +287,7 @@ class TestAgentABC:
 # 3. CAPABILITY GATE — thread safety and edge cases
 # ════════════════════════════════════════════════════════
 
+
 class TestCapabilityGateThreadSafety:
     def test_concurrent_checks(self) -> None:
         gate = AgentCapabilityGate(
@@ -289,12 +308,8 @@ class TestCapabilityGateThreadSafety:
                 with lock:
                     errors.append(e)
 
-        threads = [
-            threading.Thread(target=check, args=(AgentCapability.MEMORY_READ,))
-            for _ in range(10)
-        ] + [
-            threading.Thread(target=check, args=(AgentCapability.FACTS_READ,))
-            for _ in range(10)
+        threads = [threading.Thread(target=check, args=(AgentCapability.MEMORY_READ,)) for _ in range(10)] + [
+            threading.Thread(target=check, args=(AgentCapability.FACTS_READ,)) for _ in range(10)
         ]
         for t in threads:
             t.start()
@@ -377,11 +392,14 @@ class TestCapabilityGateEdgeCases:
 # 4. TOOL RUNNER — backpressure, RateLimiter, error mappings
 # ════════════════════════════════════════════════════════
 
+
 class _FastAdapter(ToolAdapter):
     def name(self) -> str:
         return "fast"
+
     def run(self, params: dict) -> dict:
         return {"done": True}
+
     def cancel(self) -> None:
         pass
 
@@ -449,10 +467,12 @@ class TestToolRunnerBackpressure:
         class _BlockingAdapter(ToolAdapter):
             def name(self) -> str:
                 return "block"
+
             def run(self, params: dict) -> dict:
                 started.set()
                 can_finish.wait(timeout=5)
                 return {"done": True}
+
             def cancel(self) -> None:
                 pass
 
@@ -468,6 +488,7 @@ class TestToolRunnerBackpressure:
 
         # Start first call (will block on can_finish)
         results: list[dict | Exception] = []
+
         def call_runner() -> None:
             try:
                 r = runner.run("block", {})
@@ -491,12 +512,15 @@ class TestToolRunnerBackpressure:
 
     def test_backpressure_release_on_error(self) -> None:
         """Semaphore is released even if tool raises."""
+
         class _ErrorAdapter(ToolAdapter):
             def name(self) -> str:
                 return "err"
+
             def run(self, params: dict) -> dict:
                 msg = "Always fails"
                 raise ToolPermanentError(msg)
+
             def cancel(self) -> None:
                 pass
 
@@ -533,16 +557,19 @@ class TestToolRunnerErrorMapping:
         class _TransientAdapter(ToolAdapter):
             def name(self) -> str:
                 return "trans"
+
             def run(self, params: dict) -> dict:
                 msg = "Transient failure"
                 raise ToolTransientError(msg)
+
             def cancel(self) -> None:
                 pass
 
         # ToolRunner wraps retryable errors as ToolError after exhausting attempts
         runner = AgentToolRunner()
         runner.register(
-            "test_tool", _TransientAdapter(),
+            "test_tool",
+            _TransientAdapter(),
             ToolContract(name="test_tool", timeout_seconds=5),
         )
         with pytest.raises(ToolError, match="All 3 attempts failed"):
@@ -552,16 +579,19 @@ class TestToolRunnerErrorMapping:
         class _BadAdapter(ToolAdapter):
             def name(self) -> str:
                 return "bad"
+
             def run(self, params: dict) -> dict:
                 msg = "Adapter failure"
                 raise ToolAdapterError(msg)
+
             def cancel(self) -> None:
                 pass
 
         # ToolRunner wraps retryable errors as ToolError after exhausting attempts
         runner = AgentToolRunner()
         runner.register(
-            "test_tool", _BadAdapter(),
+            "test_tool",
+            _BadAdapter(),
             ToolContract(name="test_tool", timeout_seconds=5),
         )
         with pytest.raises(ToolError, match="All 3 attempts failed"):
@@ -571,9 +601,11 @@ class TestToolRunnerErrorMapping:
         class _CrashAdapter(ToolAdapter):
             def name(self) -> str:
                 return "crash"
+
             def run(self, params: dict) -> dict:
                 msg = "Generic crash"
                 raise RuntimeError(msg)
+
             def cancel(self) -> None:
                 pass
 
@@ -594,6 +626,7 @@ class TestToolRunnerDeterminism:
 # ════════════════════════════════════════════════════════
 # 5. AGENT SCHEDULER — concurrency, priority, aging
 # ════════════════════════════════════════════════════════
+
 
 def _execution(
     agent_id: str = "a1",
@@ -802,6 +835,7 @@ class TestAgentSchedulerConcurrency:
 # 6. AGENT PLANNER — edge cases
 # ════════════════════════════════════════════════════════
 
+
 class TestRuleBasedPlannerEdgeCases:
     def test_empty_objective(self) -> None:
         p = RuleBasedPlanner()
@@ -929,6 +963,7 @@ class TestRuleBasedPlannerEdgeCases:
 # 7. AGENT ORCHESTRATOR — full lifecycle
 # ════════════════════════════════════════════════════════
 
+
 class _MockGate(CapabilityGate):
     def __init__(self, caps: set[AgentCapability] | None = None) -> None:
         self.checks: list[AgentCapability] = []
@@ -950,9 +985,7 @@ class _MockGate(CapabilityGate):
 
 class _MockPlanner(Planner):
     def __init__(self, steps: tuple[PlanStep, ...] | None = None) -> None:
-        self._steps = steps or (
-            PlanStep(step_id="s1", action="llm", params={"prompt": "hello"}),
-        )
+        self._steps = steps or (PlanStep(step_id="s1", action="llm", params={"prompt": "hello"}),)
 
     def plan(self, task: AgentTask, context: AgentContext | None = None) -> AgentPlan:
         return AgentPlan(plan_id="p1", steps=self._steps)
@@ -1059,9 +1092,7 @@ class TestAgentOrchestratorPermissions:
         gate = _MockGate(caps={AgentCapability.MEMORY_READ})
         gate._fail_on = AgentCapability.TOOLS_EXECUTE
         tool_runner = _MockToolRunner()
-        planner = _MockPlanner(steps=(
-            PlanStep(step_id="s1", action="tool", params={"tool": "test"}),
-        ))
+        planner = _MockPlanner(steps=(PlanStep(step_id="s1", action="tool", params={"tool": "test"}),))
         agent = _make_orchestrator(
             gate=gate,
             planner=planner,
@@ -1090,10 +1121,7 @@ class TestAgentOrchestratorCancelDuringExecution:
     def test_cancel_mid_execution(self) -> None:
         gate = _MockGate()
         tool_runner = _MockToolRunner()
-        steps = tuple(
-            PlanStep(step_id=f"s{i}", action="llm", params={})
-            for i in range(100)
-        )
+        steps = tuple(PlanStep(step_id=f"s{i}", action="llm", params={}) for i in range(100))
         planner = _MockPlanner(steps=steps)
         agent = _make_orchestrator(
             gate=gate,
@@ -1117,9 +1145,7 @@ class TestAgentOrchestratorComponentsCalled:
 
     def test_tool_runner_called(self) -> None:
         tool_runner = _MockToolRunner()
-        planner = _MockPlanner(steps=(
-            PlanStep(step_id="s1", action="llm", params={}),
-        ))
+        planner = _MockPlanner(steps=(PlanStep(step_id="s1", action="llm", params={}),))
         agent = _make_orchestrator(planner=planner, tool_runner=tool_runner)
         agent.run(AgentTask(task_id="t1", objective="test"))
         assert len(tool_runner.calls) > 0
@@ -1143,6 +1169,7 @@ class TestAgentOrchestratorErrorPaths:
             def plan(self, task, context=None):
                 msg = "Planner crashed"
                 raise RuntimeError(msg)
+
             def replan(self, task, current_plan, context, failed_step=None):
                 msg = "Planner crashed"
                 raise RuntimeError(msg)
@@ -1155,9 +1182,7 @@ class TestAgentOrchestratorErrorPaths:
     def test_tool_error(self) -> None:
         tool_runner = _MockToolRunner()
         tool_runner._fail_on = "llm"
-        planner = _MockPlanner(steps=(
-            PlanStep(step_id="s1", action="llm", params={}),
-        ))
+        planner = _MockPlanner(steps=(PlanStep(step_id="s1", action="llm", params={}),))
         agent = _make_orchestrator(planner=planner, tool_runner=tool_runner)
         result = agent.run(AgentTask(task_id="t1", objective="test"))
         assert result.state == AgentState.FAILED
@@ -1166,6 +1191,7 @@ class TestAgentOrchestratorErrorPaths:
 # ════════════════════════════════════════════════════════
 # 8. STATE MACHINE — additional edge cases
 # ════════════════════════════════════════════════════════
+
 
 class TestAgentStateMachineEdgeCases:
     def test_terminal_states_list(self) -> None:
@@ -1234,11 +1260,14 @@ class TestAgentStateMachineEdgeCases:
 # 9. INTEGRATION: Real components working together
 # ════════════════════════════════════════════════════════
 
+
 class _RealFastAdapter(ToolAdapter):
     def name(self) -> str:
         return "fast"
+
     def run(self, params: dict) -> dict:
         return {"processed": True, **params}
+
     def cancel(self) -> None:
         pass
 

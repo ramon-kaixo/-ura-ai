@@ -1,4 +1,5 @@
 """Tests para auth, config y herramientas."""
+
 from __future__ import annotations
 
 import pytest

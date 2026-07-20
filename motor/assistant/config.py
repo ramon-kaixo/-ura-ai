@@ -1,4 +1,5 @@
 """Configuración del asistente conversacional vía variables de entorno."""
+
 from __future__ import annotations
 
 import os

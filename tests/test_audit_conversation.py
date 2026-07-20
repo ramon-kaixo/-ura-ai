@@ -21,6 +21,7 @@ from motor.assistant.models import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_engine() -> tuple[ConversationEngine, Path]:
     tmp = Path(tempfile.mkstemp(suffix=".db")[1])
     store = MessageStore(db_path=str(tmp))
@@ -36,6 +37,7 @@ def _cleanup(eng: ConversationEngine, tmp: Path) -> None:
 # ===================================================================
 # 1.  Race conditions / Thread safety on _active dict
 # ===================================================================
+
 
 class TestRaceConditions:
     """Probe unprotected _active dict access from multiple threads."""
@@ -96,9 +98,7 @@ class TestRaceConditions:
 
         assert conv is not None
         # BUG: message count may be less than N due to race
-        assert (
-            len(conv.messages) == N
-        ), f"DATA LOSS: expected {N} messages, got {len(conv.messages)}"
+        assert len(conv.messages) == N, f"DATA LOSS: expected {N} messages, got {len(conv.messages)}"
 
     def test_concurrent_create_and_delete(self):
         """One thread creates conversations, another deletes them.
@@ -168,6 +168,7 @@ class TestRaceConditions:
 # 2.  Empty / None inputs
 # ===================================================================
 
+
 class TestEmptyNoneInputs:
     """Probe crashes and silent wrong behavior with bad inputs."""
 
@@ -191,9 +192,7 @@ class TestEmptyNoneInputs:
             pytest.fail("unexpected: empty string gave same ID")
         # This is expected to fail — it's a real bug
         # We assert the bug exists:
-        assert c1.conversation_id != c2.conversation_id, (
-            "BUG CONFIRMED: get_or_create('') yields different conv IDs"
-        )
+        assert c1.conversation_id != c2.conversation_id, "BUG CONFIRMED: get_or_create('') yields different conv IDs"
 
     def test_add_message_empty_content(self):
         """Empty content should be allowed but not crash."""
@@ -215,10 +214,7 @@ class TestEmptyNoneInputs:
         assert "IntegrityError" in type(exc).__name__, (
             f"BUG: should raise ValueError before SQLite, got {type(exc).__name__}"
         )
-        pytest.fail(
-            f"BUG: None content reaches SQLite ({type(exc).__name__}). "
-            "No validation at Python level."
-        )
+        pytest.fail(f"BUG: None content reaches SQLite ({type(exc).__name__}). No validation at Python level.")
 
     def test_get_context_empty_conversation(self):
         eng, tmp = _make_engine()
@@ -278,6 +274,7 @@ class TestEmptyNoneInputs:
 # 3.  Very long conversations (>1000 messages)
 # ===================================================================
 
+
 class TestLongConversations:
     """Probe performance, truncation, and memory behavior."""
 
@@ -320,10 +317,7 @@ class TestLongConversations:
         assert conv is not None
         # BUG: 300 > max_turns=200, but no trimming occurred
         if len(conv.messages) > 200:
-            pytest.fail(
-                f"BUG: max_turns=200 not enforced. Conversation has "
-                f"{len(conv.messages)} messages."
-            )
+            pytest.fail(f"BUG: max_turns=200 not enforced. Conversation has {len(conv.messages)} messages.")
 
     def test_long_conversation_reference_resolution(self):
         eng, tmp = _make_engine()
@@ -339,6 +333,7 @@ class TestLongConversations:
 # ===================================================================
 # 4.  Concurrent access to same conversation
 # ===================================================================
+
 
 class TestConcurrentSameConversation:
     """Multiple threads hitting the same conversation simultaneously."""
@@ -373,9 +368,7 @@ class TestConcurrentSameConversation:
         _cleanup(eng, tmp)
         assert not errors, f"Errors during concurrent access: {errors}"
         assert conv is not None
-        assert len(conv.messages) >= N, (
-            f"Data loss: expected >= {N} messages, got {len(conv.messages)}"
-        )
+        assert len(conv.messages) >= N, f"Data loss: expected >= {N} messages, got {len(conv.messages)}"
 
     def test_detect_intent_during_add_message(self):
         """Simultaneous intent detection and message addition."""
@@ -411,6 +404,7 @@ class TestConcurrentSameConversation:
 # 5.  Memory leak — _active grows unbounded
 # ===================================================================
 
+
 class TestMemoryLeak:
     """Probe unbounded growth of _active dict."""
 
@@ -433,8 +427,7 @@ class TestMemoryLeak:
         # BUG: _active size is 500 with no eviction
         if len(eng._active) >= 500:
             pytest.fail(
-                f"MEMORY LEAK: _active has {len(eng._active)} entries "
-                f"with no eviction mechanism. Unbounded growth."
+                f"MEMORY LEAK: _active has {len(eng._active)} entries with no eviction mechanism. Unbounded growth."
             )
 
     def test_active_grows_on_get_or_create(self):
@@ -445,8 +438,7 @@ class TestMemoryLeak:
         _cleanup(eng, tmp)
         if len(eng._active) == 1000:
             pytest.fail(
-                f"MEMORY LEAK: _active holds {len(eng._active)} entries "
-                f"after 1000 get_or_create calls with no cleanup."
+                f"MEMORY LEAK: _active holds {len(eng._active)} entries after 1000 get_or_create calls with no cleanup."
             )
 
     def test_delete_conversation_removes_from_active(self):
@@ -465,14 +457,13 @@ class TestMemoryLeak:
         eng.detect_intent("hello")
         eng.list_conversations()
         _cleanup(eng, tmp)
-        assert len(eng._active) == before, (
-            "detect_intent or list_conversations leaked into _active"
-        )
+        assert len(eng._active) == before, "detect_intent or list_conversations leaked into _active"
 
 
 # ===================================================================
 # 6.  Intent detection edge cases
 # ===================================================================
+
 
 class TestIntentEdgeCases:
     """Probe detect_intent edge cases through the engine."""
@@ -491,9 +482,7 @@ class TestIntentEdgeCases:
         eng, tmp = _make_engine()
         r = eng.detect_intent("hola!")
         _cleanup(eng, tmp)
-        assert r == UserIntent.CHAT, (
-            "'hola!' should still be GREETING, but pattern requires exact match"
-        )
+        assert r == UserIntent.CHAT, "'hola!' should still be GREETING, but pattern requires exact match"
 
     def test_detect_intent_long_text(self):
         eng, tmp = _make_engine()
@@ -519,6 +508,7 @@ class TestIntentEdgeCases:
 # 7.  Reference resolution edge cases
 # ===================================================================
 
+
 class TestReferenceResolutionEdgeCases:
     """Probe resolve_reference logic errors."""
 
@@ -530,7 +520,7 @@ class TestReferenceResolutionEdgeCases:
         _cleanup(eng, tmp)
         # BUG: even if replacement didn't match, the entire string is lowercased
         # So "Repite ESO" becomes "repite eso" even without replacement
-        if "Repite" not in result and result == "repite eso"[:len("Repite ESO")]:
+        if "Repite" not in result and result == "repite eso"[: len("Repite ESO")]:
             pytest.fail(
                 f"BUG: resolve_reference lowercased entire input. "
                 f"Input='Repite ESO', output='{result}'. "
@@ -546,8 +536,7 @@ class TestReferenceResolutionEdgeCases:
         # 'eso' is a substring of 'esoterico' — should NOT match
         if "(contenido anterior" in result or "contenido" in result:
             pytest.fail(
-                f"BUG: 'eso' in 'esoterico' triggered replacement. "
-                f"Output: '{result}'. Word boundaries not enforced."
+                f"BUG: 'eso' in 'esoterico' triggered replacement. Output: '{result}'. Word boundaries not enforced."
             )
 
     def test_resolve_reference_empty_content_after_replacement(self):
@@ -588,6 +577,7 @@ class TestReferenceResolutionEdgeCases:
 # ===================================================================
 # 8.  Multiple conversations interleaving
 # ===================================================================
+
 
 class TestMultipleConversations:
     """Interleaved operations across conversations."""
@@ -647,10 +637,7 @@ class TestMultipleConversations:
             except Exception as e:
                 errors.append(e)
 
-        threads = [
-            threading.Thread(target=work_on_conv, args=(f"mix-{i}", 50))
-            for i in range(20)
-        ]
+        threads = [threading.Thread(target=work_on_conv, args=(f"mix-{i}", 50)) for i in range(20)]
         for t in threads:
             t.start()
         for t in threads:
@@ -663,6 +650,7 @@ class TestMultipleConversations:
 # ===================================================================
 # 9.  Additional logic errors
 # ===================================================================
+
 
 class TestLogicErrors:
     """Other design flaws."""
@@ -702,9 +690,7 @@ class TestLogicErrors:
         eng._active["stale"].messages.append(Message(role="user", content="direct"))
         ctx = eng.get_context("stale")
         _cleanup(eng, tmp)
-        assert any(
-            m.content == "direct" for m in ctx
-        ), "get_context should reflect _active state"
+        assert any(m.content == "direct" for m in ctx), "get_context should reflect _active state"
 
     def test_resolve_reference_replacement_values_ignored(self):
         """BUG: replacements dict values are never used.
@@ -715,9 +701,7 @@ class TestLogicErrors:
         result = eng.resolve_reference("hazlo", "hazlo1")
         _cleanup(eng, tmp)
         # Code replaces "hazlo" with last.content wrapped in parens, ignoring "ejecuta"
-        assert "ejecuta" not in result, (
-            "replacements dict value ignored — code uses last.content instead"
-        )
+        assert "ejecuta" not in result, "replacements dict value ignored — code uses last.content instead"
         pytest.fail(
             "BUG: replacements{'hazlo': 'ejecuta'} value IGNORED. "
             f"Output: '{result}'. Code replaces with last.content instead."

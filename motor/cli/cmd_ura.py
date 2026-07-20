@@ -13,7 +13,7 @@ from motor.core.executor import SubprocessExecutor
 ROOT = Path(__file__).resolve().parent.parent.parent
 TARGET = "10.164.1.99"
 OLLAMA_PORT = 11434
-MAINTENANCE_SCRIPT = ROOT / "mantenimiento" / "ura_maintenance.py"
+MAINTENANCE_SCRIPT = ROOT / "scripts" / "pro" / "tuneladora_mantenimiento.py"
 _executor = SubprocessExecutor()
 
 
@@ -40,8 +40,8 @@ def cmd_finalize(config: UraConfig, args) -> int:
     for f in [
         "core/config_manager.py",
         "core/model_router.py",
-        "mantenimiento/ura_maintenance.py",
-        "mantenimiento/ura_maintenance_remote.py",
+        "scripts/pro/tuneladora_mantenimiento.py",
+        "scripts/pro/tuneladora_mejora.py",
     ]:
         ok, _ = _run(["python3", "-m", "py_compile", f], f.split("/")[-1])
         if not ok:

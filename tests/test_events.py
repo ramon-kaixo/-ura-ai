@@ -862,6 +862,7 @@ class _MissingMethodPlugin(PluginBase):
 
     def execute(self, context: object) -> dict:
         return {}
+
     # No on_pre_ingest method
 
 
@@ -889,14 +890,18 @@ class TestHookManagerRegistration:
         # HookManager does not deduplicate — each register adds a subscription
         assert bus.count(f"{HOOK_PREFIX}pre_ingest") == 2
 
-    def test_register_unknown_hook_warns(self, bus: EventBus, degraded: DegradedMode, caplog: pytest.LogCaptureFixture) -> None:
+    def test_register_unknown_hook_warns(
+        self, bus: EventBus, degraded: DegradedMode, caplog: pytest.LogCaptureFixture
+    ) -> None:
         hm = HookManager(bus, degraded)
         plugin = _UnknownHookPlugin()
         hm.register_plugin_hooks("unknown", plugin)
         assert "hook desconocido" in caplog.text
         assert bus.count() == 0
 
-    def test_register_missing_method_warns(self, bus: EventBus, degraded: DegradedMode, caplog: pytest.LogCaptureFixture) -> None:
+    def test_register_missing_method_warns(
+        self, bus: EventBus, degraded: DegradedMode, caplog: pytest.LogCaptureFixture
+    ) -> None:
         hm = HookManager(bus, degraded)
         plugin = _MissingMethodPlugin()
         hm.register_plugin_hooks("missing", plugin)

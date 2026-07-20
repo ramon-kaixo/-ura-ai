@@ -7,6 +7,7 @@ Observa el comportamiento del usuario y adapta:
   - Temas frecuentes
   - Horas de uso
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -44,11 +45,15 @@ class UserPreferenceLearning:
         self._conn.commit()
 
     def record(
-        self, user_id: str, intent: str,
-        message_length: int = 0, mode: str = "conversacion",
+        self,
+        user_id: str,
+        intent: str,
+        message_length: int = 0,
+        mode: str = "conversacion",
         success: bool = True,
     ) -> None:
         import time
+
         with self._lock:
             self._conn.execute(
                 "INSERT INTO interactions (user_id, intent, message_length, mode, hour, success) "
@@ -71,8 +76,7 @@ class UserPreferenceLearning:
         }
 
         rows = self._conn.execute(
-            "SELECT intent, message_length, mode, hour FROM interactions "
-            "WHERE user_id = ? ORDER BY id DESC LIMIT 100",
+            "SELECT intent, message_length, mode, hour FROM interactions WHERE user_id = ? ORDER BY id DESC LIMIT 100",
             (user_id,),
         ).fetchall()
 
@@ -95,6 +99,7 @@ class UserPreferenceLearning:
             prefs["preferred_mode"] = max(set(modes), key=modes.count)
 
         from collections import Counter
+
         prefs["common_intents"] = [i for i, _ in Counter(intents).most_common(5)]
         prefs["active_hours"] = sorted(set(hours))
         prefs["avg_message_length"] = int(avg_length)
