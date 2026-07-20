@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import threading
 import weakref
 from collections import OrderedDict
 from pathlib import Path
@@ -29,41 +30,45 @@ if TYPE_CHECKING:
 
 _READER_POOL: dict[str, Any] = {}  # db_path → ReadConnectionPool
 _READER_POOL_MAX = 10  # máx pools distintos antes de evictar el más antiguo
+_READER_POOL_LOCK = threading.Lock()
 
 
 def _get_conn(db_path: Path) -> sqlite3.Connection:
     """Obtiene conexión del pool de lectura. Crea pool si no existe."""
     global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
-    if spath not in _READER_POOL:
-        from knowledge.engine.connection_pool import ReadConnectionPool
+    with _READER_POOL_LOCK:
+        if spath not in _READER_POOL:
+            from knowledge.engine.connection_pool import ReadConnectionPool
 
-        # Si excedemos el límite, cerrar el pool más antiguo
-        if len(_READER_POOL) >= _READER_POOL_MAX:
-            oldest_key = next(iter(_READER_POOL))
-            oldest_pool = _READER_POOL.pop(oldest_key)
-            oldest_pool.close_all()
+            # Si excedemos el límite, cerrar el pool más antiguo
+            if len(_READER_POOL) >= _READER_POOL_MAX:
+                oldest_key = next(iter(_READER_POOL))
+                oldest_pool = _READER_POOL.pop(oldest_key)
+                oldest_pool.close_all()
 
-        _READER_POOL[spath] = ReadConnectionPool(db_path, max_connections=5)
-    return _READER_POOL[spath].acquire()
+            _READER_POOL[spath] = ReadConnectionPool(db_path, max_connections=5)
+        return _READER_POOL[spath].acquire()
 
 
 def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:
     """Devuelve conexión al pool."""
     global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
-    if spath in _READER_POOL:
-        _READER_POOL[spath].release(conn)
-    else:
-        conn.close()
+    with _READER_POOL_LOCK:
+        if spath in _READER_POOL:
+            _READER_POOL[spath].release(conn)
+        else:
+            conn.close()
 
 
 def clear_all_connection_pools() -> None:
     """Cierra todas las conexiones de todos los pools."""
     global _READER_POOL  # noqa: PLW0602
-    for pool in _READER_POOL.values():
-        pool.close_all()
-    _READER_POOL.clear()
+    with _READER_POOL_LOCK:
+        for pool in _READER_POOL.values():
+            pool.close_all()
+        _READER_POOL.clear()
 
 
 _READER_INSTANCES: weakref.WeakSet[KnowledgeReader] = weakref.WeakSet()
