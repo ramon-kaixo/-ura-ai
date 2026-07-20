@@ -35,11 +35,25 @@ def main() -> int:
     from scripts.pro.autonomy.learning.policy_engine import PolicyEngine
     from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
 
+    from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
+
     analyzer = PatternAnalyzer(engine.config.nervioso)
     kb = KnowledgeBase(engine.config.nervioso)
     monitor = TrendMonitor(engine.config.nervioso)
     recommender = RecommendationEngine(analyzer, kb)
     policies = PolicyEngine(kb, monitor, mode=args.mode)
+
+    # ── 0. Validación del Ledger ──
+    engine.log.info("── 0. Validación del ExecutionLedger ──")
+    validator = LedgerValidator(engine.config.nervioso)
+    validator.load()
+    engine.log.info(f"  {validator.summary.split(chr(10))[0]}")
+    if validator.stats["invalidos"] > 0:
+        engine.log.warn(f"  {validator.stats['invalidos']} registros inválidos:")
+        for motivo, count in validator.stats["motivos"].items():
+            engine.log.warn(f"    - {motivo}: {count}")
+    else:
+        engine.log.info("  Todos los registros válidos ✅")
 
     # ── 1. Pattern Analyzer ──
     engine.log.info("── 1. Pattern Analyzer: Detectando patrones ──")
