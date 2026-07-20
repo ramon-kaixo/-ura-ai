@@ -2,11 +2,10 @@
 """tuneladora_master.py — Orquestador de Excavacion Autonoma (AEA).
 
 Modos:
-  --use-delta-check    : Modo Delta diario (solo archivos modificados, ~100% ahorro)
-  --force-all          : Modo Profundo mensual (auditoria total, reset integridad)
-  --intensive-audit    : Auditoria intensiva (ruff + bandit + radon + F821 completo)
+  --force-all    : Modo Profundo mensual (auditoria total, reset integridad)
+  --intensive-audit : Auditoria intensiva (ruff + bandit + radon + F821 completo)
 
-Log: /var/log/ura_tunel.log
+Log: URA_ROOT/logs/ura_tunel.log
 
 Reglas de Oro:
   1. El Guardian es la unica fuente de verdad para limpieza
@@ -14,19 +13,22 @@ Reglas de Oro:
   3. Reporte de auditoria obligatorio tras cada ciclo
 """
 
+import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+from openclaw_firmador import delta_snapshot
+
 URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 LOG_FILE = Path(os.environ.get("TUNEL_LOG", str(URA_ROOT / "logs" / "ura_tunel.log")))
 NERVIOSO = URA_ROOT / ".nervioso"
-
-os.chdir(str(URA_ROOT))
+RUFF = str(URA_ROOT / ".venv" / "bin" / "ruff")
 
 
 def log(msg: str) -> None:
@@ -35,10 +37,20 @@ def log(msg: str) -> None:
     ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
     try:
-        with open(LOG_FILE, "a") as f:  # noqa: PTH123
+        with open(LOG_FILE, "a") as f:
             f.write(line + "\n")
     except PermissionError:
         pass
+
+
+def _run_ruff(select: str = "F821,F841,E402") -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [RUFF, "check", "--select", select, "--output-format", "concise", "."],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
 
 
 def modo_delta() -> int:
@@ -46,7 +58,6 @@ def modo_delta() -> int:
     log("Δ MODO DELTA — Delta-Check activo")
     log("⏱️  Inicio: " + datetime.now(UTC).isoformat()[:19])
 
-    # Handshake con Guardian
     index_path = NERVIOSO / "sistema_map.json"
     if not index_path.exists():
         log("📋 Indexando sistema nervioso...")
@@ -91,20 +102,23 @@ def modo_delta() -> int:
         ["bash", "scripts/pro/launch_refactor_gx10.sh"],
         capture_output=True,
         text=True,
-        timeout=86400,
+        timeout=3600,
         check=False,
     )
 
     elapsed = time.time() - t0
-    log(result.stdout[-500:] if len(result.stdout) > 500 else result.stdout)
-    log(result.stderr[-200:] if len(result.stderr) > 200 else result.stderr)
+    if result.stdout:
+        log(result.stdout[-500:] if len(result.stdout) > 500 else result.stdout)
+    if result.stderr:
+        log(result.stderr[-200:] if len(result.stderr) > 200 else result.stderr)
+    if result.returncode != 0:
+        log(f"⚠️  Workers exit con código {result.returncode}")
 
-    # Guardar delta snapshot
-    from openclaw_firmador import delta_snapshot
+    try:
+        delta_snapshot("ultimo_ciclo")
+    except Exception as e:
+        log(f"⚠️  Delta snapshot falló: {e}")
 
-    delta_snapshot("ultimo_ciclo")
-
-    # Reporte final
     H = int(elapsed // 3600)
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
@@ -126,19 +140,18 @@ def modo_delta() -> int:
     return result.returncode
 
 
-import os
-from pathlib import Path
+def modo_profundo() -> int:
+    """Modo Profundo mensual: audit, reset integrity."""
+    log("⚠️  MODO PROFUNDO — Audit monthly")
+    log("⏱️  Start: " + datetime.now(UTC).isoformat()[:19])
 
-
-def helper1() -> None:
-    """Helper function to clean delta snapshots."""
-    delta_dir = Path("NERVIOSO") / "delta_snapshots"
+    # H1 fix: usar variable NERVIOSO, no string literal
+    delta_dir = NERVIOSO / "delta_snapshots"
     if delta_dir.exists():
-        subprocess.run(["rm", "-rf", str(delta_dir)], check=False)
+        shutil.rmtree(delta_dir, ignore_errors=True)
+        log("🧹 Delta snapshots cleaned")
 
-
-def helper2() -> None:
-    """Helper function to rebuild the nervous system from scratch."""
+    log("🔧 Rebuilding nervous system from scratch...")
     subprocess.run(
         [sys.executable, "scripts/openclaw_indexer.py", "scan"],
         capture_output=True,
@@ -146,59 +159,17 @@ def helper2() -> None:
         check=False,
     )
 
-
-def helper3(label: str) -> None:
-    """Helper function to create a snapshot of F821 errors."""
-    subprocess.run(
-        [sys.executable, "scripts/pro/f821_watch.py", "snapshot", "--label", label],
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-
-
-def helper4(target: str) -> str:
-    """Helper function to compare the F821 errors with a target."""
-    cmp = subprocess.run(
-        [sys.executable, "scripts/pro/f821_watch.py", "compare", "--target", target],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        check=False,
-    )
-    return "OK" if cmp.returncode == 0 else "REG RESION"
-
-
-def helper5() -> None:
-    """Helper function to create a delta snapshot for the next cycle."""
-    from openclaw_firmador import delta_snapshot
-
-    delta_snapshot("ultimo_ciclo")
-
-
-def modo_profundo() -> int:
-    """Modo Profundo mensual: audit, reset integrity."""
-    log("⚠️  MODO PROFUNDO — Audit monthly")
-    log("⏱️  Start: " + datetime.now(UTC).isoformat()[:19])
-
-    helper1()
-    log("🧹 Delta snapshots cleaned")
-
-    helper2()
-    log("🔧 Rebuilding nervous system from scratch...")
-
-    ruff = subprocess.run(
-        ["ruff", "check", "--select", "F821,F841,E402", "--output-format", "concise", "."],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        check=False,
-    )
+    ruff = _run_ruff()
     f821_count = ruff.stdout.count("F821")
     f841_count = ruff.stdout.count("F841")
     log(f"  ruff: {f821_count} F821, {f841_count} F841")
 
-    helper3(f"profundo-{datetime.now(UTC).strftime('%Y%m')}")
+    subprocess.run(
+        [sys.executable, "scripts/pro/f821_watch.py", "snapshot", "--label", f"profundo-{datetime.now(UTC).strftime('%Y%m')}"],
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
 
     log("🚀 Starting full refactoring (--force-all)...")
     t0 = time.time()
@@ -207,7 +178,7 @@ def modo_profundo() -> int:
         ["bash", "scripts/pro/launch_refactor_gx10.sh"],
         capture_output=True,
         text=True,
-        timeout=86400,
+        timeout=3600,
         check=False,
     )
 
@@ -216,9 +187,19 @@ def modo_profundo() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    f821_result = helper4(f"profundo-{datetime.now(UTC).strftime('%Y%m')}")
+    cmp = subprocess.run(
+        [sys.executable, "scripts/pro/f821_watch.py", "compare", "--target", f"profundo-{datetime.now(UTC).strftime('%Y%m')}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    f821_result = "OK" if cmp.returncode == 0 else "REGRESSION"
 
-    helper5()
+    try:
+        delta_snapshot("ultimo_ciclo")
+    except Exception as e:
+        log(f"⚠️  Delta snapshot falló: {e}")
 
     reporte = (
         f"══════════════════════════════════════\n"
@@ -238,9 +219,15 @@ def modo_profundo() -> int:
 
 
 def main() -> None:
-    DIA = datetime.now(UTC).day
+    parser = argparse.ArgumentParser(description="Tuneladora — pipeline de mejora continua")
+    parser.add_argument("--force-all", action="store_true", help="Modo profundo mensual")
+    parser.add_argument("--intensive-audit", action="store_true", help="Auditoría intensiva")
+    args = parser.parse_args()
 
-    if "--force-all" in sys.argv or DIA == 1:
+    os.chdir(str(URA_ROOT))
+
+    DIA = datetime.now(UTC).day
+    if args.force_all or DIA == 1:
         sys.exit(modo_profundo())
     else:
         sys.exit(modo_delta())
