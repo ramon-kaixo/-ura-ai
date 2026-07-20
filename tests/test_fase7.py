@@ -492,7 +492,7 @@ class TestExtractionQueue:
         conn.close()
 
         service = MetadataExtractionService(db)
-        job_id = service.queue_extract(AssetSource("filesystem", "/tmp/test.md"))  # noqa: S108
+        job_id = service.queue_extract(AssetSource("filesystem", "/tmp/test.md"))
 
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row

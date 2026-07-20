@@ -15,8 +15,8 @@ class SandboxClient:
         self.image = image
 
     def _ensure_image(self) -> bool:
-        res = subprocess.run(  # noqa: S603
-            ["docker", "image", "inspect", self.image],  # noqa: S607
+        res = subprocess.run(
+            ["docker", "image", "inspect", self.image],
             capture_output=True,
             timeout=5,
             check=False,
@@ -24,8 +24,8 @@ class SandboxClient:
         if res.returncode == 0:
             return True
         logger.info("Construyendo imagen sandbox: %s", self.image)
-        build = subprocess.run(  # noqa: S603
-            ["docker", "build", "-t", self.image, "-f", "sandbox/Dockerfile", "sandbox/"],  # noqa: S607
+        build = subprocess.run(
+            ["docker", "build", "-t", self.image, "-f", "sandbox/Dockerfile", "sandbox/"],
             capture_output=True,
             text=True,
             timeout=120,
@@ -47,7 +47,7 @@ class SandboxClient:
             )
             return {"passed": False, "errors": ["Sandbox image build failed"]}
 
-        code_path = "/tmp/code"  # noqa: S108
+        code_path = "/tmp/code"
         cmd = [
             "docker",
             "run",
@@ -68,7 +68,7 @@ class SandboxClient:
         ]
 
         try:
-            res = subprocess.run(  # noqa: S603
+            res = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,

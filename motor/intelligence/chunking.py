@@ -79,7 +79,7 @@ class SemanticChunker:
 
         return chunks
 
-    def _split_by_headings(self, text: str) -> list[tuple[str, str]]:  # noqa: C901
+    def _split_by_headings(self, text: str) -> list[tuple[str, str]]:
         """Divide texto por títulos markdown (##, ###, etc.)."""
         pattern = re.compile(r"^(#{2,})\s+(.+)$", re.MULTILINE)
         parts = pattern.split(text)

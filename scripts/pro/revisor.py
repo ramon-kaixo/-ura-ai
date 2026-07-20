@@ -47,7 +47,7 @@ def generar_html(data: dict, tendencia: dict) -> Path:
 
     hallazgos_html = ""
     for h in data.get("hallazgos", []):
-        hallazgos_html += f"<tr><td>{h.get('archivo', '')}:{h.get('linea', '')}</td><td>{h.get('tipo', '')}</td><td>{h.get('fix', '')}</td></tr>\n"  # noqa: E501
+        hallazgos_html += f"<tr><td>{h.get('archivo', '')}:{h.get('linea', '')}</td><td>{h.get('tipo', '')}</td><td>{h.get('fix', '')}</td></tr>\n"
 
     html = f"""<!DOCTYPE html>
 <html><head><title>URA Audit Report</title>
@@ -104,8 +104,8 @@ def main() -> int:
     if not script_path.exists():
         return 1
 
-    result = subprocess.run(  # noqa: S603
-        ["bash", str(script_path), "--profundidad", profundidad],  # noqa: S607
+    result = subprocess.run(
+        ["bash", str(script_path), "--profundidad", profundidad],
         capture_output=True,
         text=True,
         timeout=300,

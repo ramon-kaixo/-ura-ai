@@ -14,7 +14,7 @@ PLUGIN_DIR = Path(__file__).resolve().parent / "tool_plugins"
 class ToolPlugin:
     name: str = ""
     description: str = ""
-    keywords: list[str] = []
+    keywords: list[str] | None = None
 
     async def execute(self, params: dict[str, Any]) -> ToolResult:
         raise NotImplementedError

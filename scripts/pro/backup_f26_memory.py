@@ -38,7 +38,7 @@ def main() -> None:
 
     command = sys.argv[1]
     path = (
-        sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"  # noqa: S108
+        sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--path" else f"/tmp/memory_backup_{int(time.time())}.json"
     )
 
     if command == "backup":

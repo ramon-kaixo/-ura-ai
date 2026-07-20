@@ -136,7 +136,7 @@ def scan(fix: bool = False, ura_only: bool = True) -> list[dict[str, Any]]:
 def _disable_and_delete(unit: str, scope: str) -> None:
     user_flag = ["--user"] if scope == "user" else []
     with contextlib.suppress(Exception):
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [SYSTEMCTL, *user_flag, "disable", "--now", unit],
             capture_output=True,
             timeout=30,
@@ -146,7 +146,7 @@ def _disable_and_delete(unit: str, scope: str) -> None:
         timer = Path(d) / unit.replace(".service", ".timer")
         if timer.exists():
             with contextlib.suppress(Exception):
-                subprocess.run(  # noqa: S603
+                subprocess.run(
                     [SYSTEMCTL, *user_flag, "disable", "--now", timer.name],
                     capture_output=True,
                     timeout=30,

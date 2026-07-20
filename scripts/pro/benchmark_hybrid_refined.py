@@ -189,7 +189,7 @@ STRATEGIES = {
 }
 
 
-def main() -> int:  # noqa: C901, PLR0915
+def main() -> int:  # noqa: PLR0915
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
     from motor.intelligence.retrieval.lexical import LexicalRetriever

@@ -100,11 +100,11 @@ class ConcurrentVRAMGuard:
 
     @property
     def slots_disponibles(self) -> int:
-        return self._semaphore._value  # noqa: SLF001
+        return self._semaphore._value
 
     @property
     def esperando_cola(self) -> int:
-        waiters = self._semaphore._waiters  # noqa: SLF001
+        waiters = self._semaphore._waiters
         return len(waiters) if waiters is not None else 0
 
     def metricas(self) -> dict:
@@ -792,7 +792,7 @@ setInterval(refresh,5000)
 
 </script>
 </body>
-</html>"""  # noqa: E501
+</html>"""
 
 
 def _render_dashboard() -> str:
@@ -1032,7 +1032,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             color = "#3fb950" if ok else "#f85149"
             html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
         html += "</div></div></div>"
-        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"  # noqa: E501
+        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
         html += "</body></html>"
         self._send_html(html)
 
@@ -1053,7 +1053,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self) -> None:  # noqa: C901, PLR0912
+    def do_GET(self) -> None:
         if not self._check_rate_limit():
             return
         if self.path in {"/api/tags", "/api/tags/"}:
@@ -1130,7 +1130,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(resp_body)
 
-    def do_POST(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    def do_POST(self) -> None:  # noqa: PLR0915
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return

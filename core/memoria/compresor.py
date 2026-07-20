@@ -41,7 +41,7 @@ Responde UNICAMENTE con un array JSON valido, sin markdown ni explicacion:
 Texto:
 {texto}
 
-JSON:"""  # noqa: E501
+JSON:"""
 
 
 async def comprimir_a_ideas(

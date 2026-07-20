@@ -28,8 +28,8 @@ PATTERNS = ["ERROR", "CRITICAL", "FATAL", "CRASH", "Traceback", "Exception", "Se
 
 def ssh_run(cmd: str) -> str:
     try:
-        result = subprocess.run(  # noqa: S603
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],  # noqa: S607
+        result = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
             capture_output=True,
             text=True,
             timeout=SSH_TIMEOUT,
@@ -80,7 +80,7 @@ def fetch_critical_logs() -> list:
     return critical
 
 
-def main() -> int:  # noqa: C901
+def main() -> int:
 
     seen = load_seen_hashes()
     critical = fetch_critical_logs()

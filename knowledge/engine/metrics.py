@@ -254,7 +254,7 @@ def export_metrics(db_path: Path | None = None) -> bytes:
 
 def _reset_for_testing() -> None:
     """Reinicia todos los contadores/gauges. Solo para tests."""
-    for collector in list(REGISTRY._collector_to_names):  # noqa: SLF001
+    for collector in list(REGISTRY._collector_to_names):
         if isinstance(collector, Counter | Gauge | Histogram):
             REGISTRY.unregister(collector)
     # Registrar de nuevo

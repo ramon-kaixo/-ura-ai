@@ -154,10 +154,10 @@ class SoakTester:
             scenario = self._pick_scenario()
             try:
                 scenario.fn()
-                with self.collector._lock:  # noqa: SLF001
+                with self.collector._lock:
                     self.total_ops += 1
             except Exception:
-                with self.collector._lock:  # noqa: SLF001
+                with self.collector._lock:
                     self.total_errors += 1
             # Emit a trace event for each operation
             try:

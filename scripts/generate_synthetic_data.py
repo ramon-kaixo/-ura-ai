@@ -134,7 +134,7 @@ def citation_bundle_object(evidence: list[dict]):
     return CitationBundle(summary="Synthetic data", citations=[], evidence=ev_objs)
 
 
-def generate_benchmark_suite(base_dir: str = "/tmp/ura_benchmark_data") -> dict:  # noqa: S108
+def generate_benchmark_suite(base_dir: str = "/tmp/ura_benchmark_data") -> dict:
     """Genera datasets de diferentes tamaños para benchmarks."""
     sizes = {"10": 10, "100": 100, "1000": 1000, "10000": 10000}
     results = {}
@@ -159,7 +159,7 @@ def generate_benchmark_suite(base_dir: str = "/tmp/ura_benchmark_data") -> dict:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="URA Synthetic Data Generator")
-    parser.add_argument("--output", "-o", default="/tmp/ura_synthetic.json", help="Output file path (JSON)")  # noqa: S108
+    parser.add_argument("--output", "-o", default="/tmp/ura_synthetic.json", help="Output file path (JSON)")
     parser.add_argument(
         "--domain",
         "-d",
@@ -239,7 +239,7 @@ if __name__ == "__main__":
         import time
 
         t0 = time.perf_counter()
-        for stage in pipeline._stages:  # noqa: SLF001
+        for stage in pipeline._stages:
             ctx = stage.execute(ctx)
         t = time.perf_counter() - t0
 

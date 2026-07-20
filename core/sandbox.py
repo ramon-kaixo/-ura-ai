@@ -240,7 +240,7 @@ log.info(f'1 + 1 = {x}')
         await sandbox.test_improvement("test_module", test_code)
 
         # Test 3: backup
-        test_file = Path("/tmp/test_sandbox.txt")  # noqa: S108
+        test_file = Path("/tmp/test_sandbox.txt")
         test_file.write_text("contenido original")  # noqa: ASYNC240
         backup = sandbox.create_backup(str(test_file))
 

@@ -87,7 +87,7 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
     return False
 
 
-def bypass_linksys() -> bool:  # noqa: C901, PLR0912, PLR0915
+def bypass_linksys() -> bool:  # noqa: PLR0915
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -217,7 +217,7 @@ def bypass_linksys() -> bool:  # noqa: C901, PLR0912, PLR0915
             page.screenshot(path=str(EVIDENCIA))
 
             # Also save page HTML for debugging
-            html_path = "/tmp/linksys_debug.html"  # noqa: S108
+            html_path = "/tmp/linksys_debug.html"
             with open(html_path, "w") as f:  # noqa: PTH123
                 f.write(page.content())
 

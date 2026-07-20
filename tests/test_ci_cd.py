@@ -130,7 +130,7 @@ class TestWorkflows:
 
 class TestBuild:
     def test_wheel_generable(self):
-        result = subprocess.run(  # noqa: PLW1510, S603
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, "-m", "build", "--wheel", str(ROOT)],
             capture_output=True,
             text=True,
@@ -143,7 +143,7 @@ class TestBuild:
             w.unlink()
 
     def test_sdist_generable(self):
-        result = subprocess.run(  # noqa: PLW1510, S603
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, "-m", "build", "--sdist", str(ROOT)],
             capture_output=True,
             text=True,
@@ -158,7 +158,7 @@ class TestBuild:
 
 class TestInstallation:
     def test_editable_install(self):
-        result = subprocess.run(  # noqa: PLW1510, S603
+        result = subprocess.run(  # noqa: PLW1510
             [sys.executable, "-m", "pip", "install", "-e", str(ROOT), "--break-system-packages"],
             capture_output=True,
             text=True,

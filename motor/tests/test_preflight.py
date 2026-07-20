@@ -11,9 +11,9 @@ def test_preflight_no_dups():
 
 
 def test_preflight_dups():
-    with Path("/tmp/test_ura_opennaut_config_dup.json").open("w") as f:  # noqa: S108
+    with Path("/tmp/test_ura_opennaut_config_dup.json").open("w") as f:
         f.write("{}")
-    with Path("/tmp/test_ura_opennaut_config_dup.jsonc").open("w") as f:  # noqa: S108
+    with Path("/tmp/test_ura_opennaut_config_dup.jsonc").open("w") as f:
         f.write("{}")
     dups = (
         _detectar_configs_duplicadas.__wrapped__(None) if hasattr(_detectar_configs_duplicadas, "__wrapped__") else []

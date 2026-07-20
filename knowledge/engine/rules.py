@@ -432,7 +432,7 @@ _BUILTIN_RULES: list[BuiltinRule] = [
             category="coverage",
             cost="O(1)",
         ),
-        expression="len(doc.get('relations', [])) == 0 and doc.get('id', '') not in ctx.get('all_relation_targets', set())",  # noqa: E501
+        expression="len(doc.get('relations', [])) == 0 and doc.get('id', '') not in ctx.get('all_relation_targets', set())",
     ),
 ]
 

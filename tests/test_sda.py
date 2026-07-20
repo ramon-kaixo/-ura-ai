@@ -103,7 +103,7 @@ check("TC4: config has models.primary", lambda: "primary" in cfg.get("models", {
 check("TC4: config has models.auditor", lambda: "auditor" in cfg.get("models", {}))
 check("TC4: consensus_threshold = 0.85", lambda: cfg["consensus_threshold"] == 0.85)
 check("TC4: auditor is qwen2.5:3b-instruct", lambda: cfg["models"]["auditor"]["name"] == "qwen2.5:3b-instruct")
-check("TC4: plan_path = /tmp/ura_debate_plan.json", lambda: cfg.get("plan_path") == "/tmp/ura_debate_plan.json")  # noqa: S108
+check("TC4: plan_path = /tmp/ura_debate_plan.json", lambda: cfg.get("plan_path") == "/tmp/ura_debate_plan.json")
 
 # ============================================================
 # SECTION 3: debate_engine — call_ollama with mock generate
@@ -335,7 +335,7 @@ os.unlink(tf.name)  # noqa: PTH108
 # TF2: load_state_file — non-existent file
 check(
     "TF2: load_state_file returns None for missing file",
-    lambda: load_state_file("/tmp/nonexistent_debate_test.json") is None,  # noqa: S108
+    lambda: load_state_file("/tmp/nonexistent_debate_test.json") is None,
 )
 
 # TF3: load_state_file — invalid JSON
@@ -434,11 +434,11 @@ check(
 )
 
 # TE5: DebateLock idempotent release
-dl_idem = DebateLock(path="/tmp/test_lock_idem.lock")  # noqa: S108
+dl_idem = DebateLock(path="/tmp/test_lock_idem.lock")
 dl_idem.acquire()
 dl_idem.release()
 check("TE5: double release no-crash", lambda: (dl_idem.release(), True)[1])
-check("TE5: file removed after double release", lambda: not Path("/tmp/test_lock_idem.lock").exists())  # noqa: S108
+check("TE5: file removed after double release", lambda: not Path("/tmp/test_lock_idem.lock").exists())
 
 
 # ============================================================

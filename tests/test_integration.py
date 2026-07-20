@@ -27,8 +27,8 @@ YELLOW = "\033[33m"
 def gx10_accessible() -> bool:
     """Verifica si GX10 es accesible vía SSH."""
     try:
-        result = subprocess.run(  # noqa: S603
-            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],  # noqa: S607
+        result = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -55,7 +55,7 @@ def skip(desc) -> None:
     SKIP += 1
 
 
-def main() -> int:  # noqa: C901
+def main() -> int:
     global PASS, FAIL, SKIP  # noqa: PLW0602
 
     if not gx10_accessible():
@@ -103,8 +103,8 @@ def main() -> int:  # noqa: C901
     # Test 4: SNC state file
     def snc_state():
         try:
-            result = subprocess.run(  # noqa: S603
-                [  # noqa: S607
+            result = subprocess.run(
+                [
                     "ssh",
                     "-o",
                     "ConnectTimeout=3",
@@ -128,8 +128,8 @@ def main() -> int:  # noqa: C901
     # Test 5: Health check
     def health_check():
         try:
-            result = subprocess.run(  # noqa: S603
-                [  # noqa: S607
+            result = subprocess.run(
+                [
                     "ssh",
                     "-o",
                     "ConnectTimeout=3",

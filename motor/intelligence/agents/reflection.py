@@ -136,7 +136,7 @@ class ReflectionAgent(Agent):
     def reflect_on(self, result: AgentResult) -> ReflectionDecision:
         return self._strategy.reflect(result, iteration=0)
 
-    def _reflect(self, task: AgentTask) -> AgentResult:  # noqa: PLR0911
+    def _reflect(self, task: AgentTask) -> AgentResult:
         initial = task.input_data.get("initial_result")
         if initial is None:
             return AgentResult(

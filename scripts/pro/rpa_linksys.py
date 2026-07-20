@@ -51,7 +51,7 @@ def main() -> None:  # noqa: PLR0915
     try:
         # ── PASO 1: Abrir Safari ──
         log("PASO 1: Abriendo Safari...")
-        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"], check=False)  # noqa: S607
+        subprocess.run(["open", "-a", "Safari", "http://192.168.1.1"], check=False)
         time.sleep(4)
 
         # ── PASO 2: Bypass pantalla app móvil ──
@@ -152,7 +152,7 @@ def main() -> None:  # noqa: PLR0915
         log(f"  ✅ Evidencia: {EVIDENCIA}")
 
         # ── PASO 9: Cerrar Safari ──
-        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'], check=False)  # noqa: S607
+        subprocess.run(["osascript", "-e", 'tell application "Safari" to quit'], check=False)
         log("  Safari cerrado")
 
     except pyautogui.FailSafeException:

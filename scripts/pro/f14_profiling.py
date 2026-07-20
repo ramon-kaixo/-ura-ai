@@ -44,8 +44,8 @@ def record_finding(scenario_id: str, description: str, impact: str) -> None:
 
 def get_env() -> dict:
     try:
-        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
-        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
     except Exception:
         sha, tag = "?", "?"
     return {
@@ -227,7 +227,7 @@ def scenario_p02(snap: Snapshotter, duration_s: int = 600) -> dict:
     for step in range(int(duration_s / snap.interval)):
         load_task(5)
         load_task_memory(10)
-        load_task_metrics(snap._metrics, 10)  # noqa: SLF001
+        load_task_metrics(snap._metrics, 10)
         snap.snap(load_desc=f"carga media (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga media {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
@@ -269,7 +269,7 @@ def scenario_p03(snap: Snapshotter, duration_s: int = 180) -> dict:
     for step in range(int(duration_s / snap.interval)):
         load_task(20)
         load_task_memory(50)
-        load_task_metrics(snap._metrics, 50)  # noqa: SLF001
+        load_task_metrics(snap._metrics, 50)
         snap.snap(load_desc=f"carga pico (step {step})")
         time.sleep(snap.interval)
     observed.append(f"Carga pico {duration_s}s, ~{n_ops} ops, {len(snap.series())} muestras")
@@ -316,7 +316,7 @@ def scenario_p04(snap: Snapshotter, duration_s: int = 300) -> dict:
         anomalies.append(f"RSS no retornó a nivel basal: primero={rss_first:.0f}MB vs último={rss_last:.0f}MB")
         record_finding(
             "P04",
-            f"RSS no retornó a nivel basal tras carga. Primera muestra={rss_first:.0f}MB, última={rss_last:.0f}MB, pico={rss_peak:.0f}MB.",  # noqa: E501
+            f"RSS no retornó a nivel basal tras carga. Primera muestra={rss_first:.0f}MB, última={rss_last:.0f}MB, pico={rss_peak:.0f}MB.",
             "alto",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"
@@ -363,7 +363,7 @@ def scenario_p05(snap: Snapshotter, cycles: int = 3, cycle_duration_s: int = 180
         anomalies.append(f"Fatiga detectada: RSS ciclo1={rss_first_cycle:.0f}MB vs ciclofinal={rss_last_cycle:.0f}MB")
         record_finding(
             "P05",
-            f"Fatiga de recursos: RSS creció de {rss_first_cycle:.0f}MB (ciclo 1) a {rss_last_cycle:.0f}MB (ciclo {cycles}). Posible leak acumulativo.",  # noqa: E501
+            f"Fatiga de recursos: RSS creció de {rss_first_cycle:.0f}MB (ciclo 1) a {rss_last_cycle:.0f}MB (ciclo {cycles}). Posible leak acumulativo.",
             "alto",
         )
     verdict = "PASS" if not anomalies else "PARTIAL"

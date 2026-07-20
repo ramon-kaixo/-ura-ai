@@ -162,7 +162,7 @@ class TestCitationEngine:
 
     def test_multiple_citations_same_document(self) -> None:
         summary, docs = _summarize(
-            "First sentence here. Second sentence here. Third sentence here. Fourth sentence here. Fifth sentence here.",  # noqa: E501
+            "First sentence here. Second sentence here. Third sentence here. Fourth sentence here. Fifth sentence here.",
         )
         bundle = CitationEngine().build(summary, docs)
         assert bundle.traceability_report["total_citations"] >= 2

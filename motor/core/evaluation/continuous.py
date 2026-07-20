@@ -113,7 +113,7 @@ class ContinuousEvaluator:
     def set_critical_thresholds(self, thresholds: dict[str, float]) -> None:
         self._critical_thresholds = thresholds
 
-    def run(  # noqa: C901
+    def run(
         self,
         corpus: EvaluationCorpus,
         k: int = 10,

@@ -108,7 +108,7 @@ def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:
 # ── Migration orchestration ────────────────────────────────────────────────────
 
 
-def migrate_db(  # noqa: C901
+def migrate_db(
     conn: sqlite3.Connection,
     schema_path: Path,
     migrations_dir: Path | None = None,

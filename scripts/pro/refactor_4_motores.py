@@ -43,7 +43,7 @@ def worker_task(worker_id):
     env["URA_ROOT"] = str(URA_ROOT)
 
     cmd = [sys.executable, str(REFACTOR_SCRIPT)]
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         cmd,
         env=env,
         capture_output=True,

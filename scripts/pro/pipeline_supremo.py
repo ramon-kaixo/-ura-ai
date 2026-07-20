@@ -36,7 +36,7 @@ GUARDIAN = URA_ROOT / "core" / "guardian_disco.py"  # renamed from guardián_dis
 
 def run_step(cmd, timeout=60, json_output=True):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)  # noqa: S603
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         if json_output and r.stdout:
             return json.loads(r.stdout)
         return {"raw": r.stdout[:200] if r.stdout else "", "returncode": r.returncode}
@@ -46,9 +46,9 @@ def run_step(cmd, timeout=60, json_output=True):
 
 def update_conciencia(proceso, estado, progreso=None) -> None:
     args = [sys.executable, str(SCRIPTS / "conciencia.py"), "--escribir", proceso, estado]
-    subprocess.run(args, capture_output=True, cwd=str(URA_ROOT), check=False)  # noqa: S603
+    subprocess.run(args, capture_output=True, cwd=str(URA_ROOT), check=False)
     if progreso:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [sys.executable, str(SCRIPTS / "conciencia.py"), "--progreso", progreso],
             capture_output=True,
             cwd=str(URA_ROOT),
@@ -95,7 +95,7 @@ def step_poda(ruta):
 
 def step_refactor():
     update_conciencia("refactorer", "activo")
-    r = subprocess.run(  # noqa: S603
+    r = subprocess.run(
         [sys.executable, "-u", str(SCRIPTS / "refactor_large_functions_v2.py")],
         capture_output=True,
         text=True,
@@ -171,7 +171,7 @@ def step_guardian_verify(archivo):
 
 
 def verificar_consenso_SDA(propuesta_plan: str) -> bool:
-    ruta_plan = "/tmp/ura_debate_plan.json"  # noqa: S108
+    ruta_plan = "/tmp/ura_debate_plan.json"
     with open(ruta_plan, "w") as f:  # noqa: PTH123
         json.dump({"plan": propuesta_plan, "author": "pipeline"}, f, ensure_ascii=False)
     cmd = [
@@ -179,7 +179,7 @@ def verificar_consenso_SDA(propuesta_plan: str) -> bool:
         str(SCRIPTS / "plan_validator.py"),
         "--debate",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300, check=False)  # noqa: S603
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300, check=False)
     if proc.returncode == 0:
         return True
     if proc.returncode == 2:
@@ -254,7 +254,7 @@ def ejecutar(ruta):
 
 
 def init_conciencia() -> None:
-    subprocess.run(  # noqa: S603
+    subprocess.run(
         [sys.executable, str(SCRIPTS / "conciencia.py"), "--reset"],
         capture_output=True,
         cwd=str(URA_ROOT),
@@ -270,7 +270,7 @@ def init_conciencia() -> None:
         "openclaw",
         "alineador",
     ]:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [sys.executable, str(SCRIPTS / "conciencia.py"), "--escribir", p, "idle"],
             capture_output=True,
             cwd=str(URA_ROOT),
@@ -278,7 +278,7 @@ def init_conciencia() -> None:
         )
 
 
-def main() -> None:  # noqa: C901, PLR0912
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Pipeline Supremo")
@@ -294,7 +294,7 @@ def main() -> None:  # noqa: C901, PLR0912
         return
 
     if args.status:
-        subprocess.run([sys.executable, str(SCRIPTS / "conciencia.py"), "--leer"], check=False)  # noqa: S603
+        subprocess.run([sys.executable, str(SCRIPTS / "conciencia.py"), "--leer"], check=False)
         return
 
     if args.task:

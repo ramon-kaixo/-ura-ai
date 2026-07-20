@@ -113,7 +113,7 @@ def fix_s110_try_except_pass() -> int:
             if ".venv" in str(f) or "__pycache__" in str(f):
                 continue
             content = f.read_text()
-            # Replace bare `except: pass` with `except: pass  # noqa: S110`
+            # Replace bare `except: pass` with `except: pass  (S110 silenced)
             new_content = re.sub(
                 r"(except\s+\w*\s*:)\s*\n\s*pass",
                 r"\1\n    pass  # noqa: S110",
@@ -128,8 +128,8 @@ def fix_s110_try_except_pass() -> int:
 def run_ruff_fix() -> None:
     """Ejecuta ruff --fix en todos los directorios."""
     for dirname in DIRS:
-        subprocess.run(  # noqa: PLW1510, S603
-            ["ruff", "check", str(REPO / dirname), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
+        subprocess.run(  # noqa: PLW1510
+            ["ruff", "check", str(REPO / dirname), "--fix", "--unsafe-fixes", "--silent"],
             timeout=120,
         )
 
@@ -149,8 +149,8 @@ def main() -> None:
     run_ruff_fix()
 
     # Count final
-    result = subprocess.run(  # noqa: PLW1510, S603
-        ["ruff", "check", *[str(REPO / d) for d in DIRS], "--statistics"],  # noqa: S607
+    result = subprocess.run(  # noqa: PLW1510
+        ["ruff", "check", *[str(REPO / d) for d in DIRS], "--statistics"],
         capture_output=True,
         text=True,
         timeout=60,

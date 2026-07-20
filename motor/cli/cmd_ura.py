@@ -26,7 +26,7 @@ def _run(cmd, desc):
     return False, result.stderr
 
 
-def cmd_finalize(config: UraConfig, args) -> int:  # noqa: C901, PLR0912
+def cmd_finalize(config: UraConfig, args) -> int:
     message = None
     for i, a in enumerate(args):
         if a == "-m" and i + 1 < len(args):
@@ -258,7 +258,7 @@ def cmd_metrics(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_dashboard(config: UraConfig, args) -> int:  # noqa: C901
+def cmd_dashboard(config: UraConfig, args) -> int:
     """Dashboard unificado — lee del SNC state file + Git + Config local."""
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
     local_state = Path.home() / ".ura" / "run" / "ura_snc_state.json"

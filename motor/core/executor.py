@@ -75,7 +75,7 @@ class SubprocessExecutor(BaseExecutor):
         start = time.monotonic()
         log.debug("Ejecutando: %s (timeout=%ds, cwd=%s)", " ".join(str(c) for c in cmd), timeout, cwd or ".")
         try:
-            p = subprocess.run(  # noqa: S603  -- wrapper intencionado, no ejecuta entrada externa sin validar
+            p = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,

@@ -40,7 +40,7 @@ class CrossEncoderReranker(BaseReranker):
     def _load_model(self) -> None:
         import os
 
-        os.environ.setdefault("HF_HOME", "/tmp/hf_cache")  # noqa: S108  -- cache hugginface en /tmp (no datos sensibles)
+        os.environ.setdefault("HF_HOME", "/tmp/hf_cache")
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
 

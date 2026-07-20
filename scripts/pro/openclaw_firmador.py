@@ -161,7 +161,7 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
         pass
 
     with contextlib.suppress(Exception):
-        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5, check=False)  # noqa: S607
+        subprocess.run(["pkill", "-9", "-f", "large_functions.py"], capture_output=True, timeout=5, check=False)
 
     # Registrar en audit trail
     audit_log = NERVIOSO / "audit_trail.log"
@@ -174,7 +174,7 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
     # TTS alert
     with contextlib.suppress(Exception):
         subprocess.run(
-            ["say", "-v", "Jorge", "Alerta. Integridad del código comprometida."],  # noqa: S607
+            ["say", "-v", "Jorge", "Alerta. Integridad del código comprometida."],
             capture_output=True,
             timeout=5,
             check=False,

@@ -29,7 +29,7 @@ def _write_plugin(path: Path, name: str, phase: str = "always", extra: str = "")
 class TestPluginRegistryDiscovery:
     def test_discover_empty_path_returns_zero(self):
         registry = PluginRegistry()
-        count = registry.discover(["/tmp/nonexistent_path_xyz_f10"])  # noqa: S108  -- ruta intencionalmente inexistente, no crea archivos
+        count = registry.discover(["/tmp/nonexistent_path_xyz_f10"])
         assert count == 0
 
     def test_discover_valid_plugin(self, tmp_path: Path):

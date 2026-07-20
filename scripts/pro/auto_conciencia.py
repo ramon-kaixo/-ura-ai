@@ -60,7 +60,7 @@ def sugerir(problema, solucion) -> None:
 
 def notificar(msg) -> None:
     if NOTIFICAR.exists():
-        subprocess.run([str(NOTIFICAR), msg], check=False)  # noqa: S603
+        subprocess.run([str(NOTIFICAR), msg], check=False)
 
 
 def test(nombre, accion, args=None):
