@@ -1,33 +1,85 @@
 # Roadmap de Capacidades — URA post-v2.3
 
-**Infraestructura congelada en v2.3.**  
+**Infraestructura congelada en v2.3 (ADR-030).**  
 Todo nuevo desarrollo será sobre capacidades funcionales, no sobre arquitectura de pipeline.
+La pregunta cambia: de "¿cómo debe ejecutarse URA?" a **"¿qué debe ser capaz de hacer URA por sí misma?"**
+
+---
+
+## Verificaciones periódicas (infraestructura)
+
+Aunque la infraestructura esté congelada, se mantienen estas comprobaciones:
+
+| Check | Frecuencia | Qué detecta |
+|-------|------------|-------------|
+| Compatibilidad API v1 | Cada release | Plugins que usan métodos deprecated |
+| Tiempo medio de pipeline | Semanal | Degradaciones por crecimiento del ledger |
+| Frecuencia rollbacks/promociones | Mensual | Salud del pipeline |
+| Crecimiento del ExecutionLedger | Mensual | Retención y rotación de datos |
+| Compatibilidad de plugins | Cada release | Plugins que requieren versión superior del motor |
 
 ---
 
 ## Orden de ejecución
 
-Cada bloque aprovecha las capacidades del anterior.
-
 ```
 Autonomía ──→ Memoria ──→ Razonamiento ──→ Autoevaluación ──→ Descubrimiento ──→ Agentes
 ```
 
+Cada bloque aprovecha las capacidades del anterior.
+
 ---
 
-## Bloque 1 — Autonomía (prioridad máxima)
+## Bloque 1 — Autonomía (v3.0, prioridad máxima)
 
 **Objetivo:** URA puede trabajar durante horas con mínima supervisión.
 
-| Capacidad | Descripción |
-|-----------|-------------|
-| Planificador de objetivos | Descomponer objetivos grandes en tareas atómicas |
-| Priorización dinámica | Reordenar tareas según contexto y urgencia |
-| Replanificación | Cuando una tarea falla, buscar ruta alternativa |
-| Presupuestos | Tiempo, coste y recursos por tarea |
-| Recuperación automática | Reintentar, degradar o escalar según el error |
+### Componentes
 
-**Implementación como:** plugins del PipelineEngine o componente separado que usa `pipeline_refactor` como herramienta.
+```
+┌──────────────────────────────────────────────────────────┐
+│                    AUTONOMÍA (v3.0)                       │
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │  Goal    │──│ Planner  │──│  Task    │──│ Evaluator│ │
+│  │ Manager  │  │          │  │ Executor │  │          │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│                                    │                     │
+│                                    ▼                     │
+│  ┌──────────┐            ┌──────────────────┐           │
+│  │ Learning │────────────│ ExecutionLedger  │           │
+│  │  Plugin  │            │  (v2.3 base)     │           │
+│  └──────────┘            └──────────────────┘           │
+│                                                          │
+│  Presupuestos: tiempo, coste, llamadas, cambios, memoria │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Goal Manager
+- Mantiene objetivos activos con estado y prioridad
+- Elimina objetivos obsoletos
+- Gestiona dependencias entre objetivos
+
+### Planner
+- Convierte objetivos en planes ejecutables
+- Gestiona dependencias entre tareas
+- Replanifica cuando una tarea falla
+- Respeta presupuestos (tiempo, coste, llamadas, cambios, memoria)
+
+### Task Executor
+- Ejecuta tareas usando herramientas disponibles (plugins, scripts, pipeline_refactor)
+- Reintenta según política de errores (transitorio → reintentar, bug → escalar)
+- Reporta resultados al Evaluator
+
+### Evaluator
+- Comprueba si el objetivo se ha alcanzado
+- Decide: continuar, corregir o finalizar
+- Alimenta al Learning Plugin
+
+### Learning Plugin
+- Extrae lecciones de cada ejecución
+- Actualiza conocimiento utilizable (memoria procedimental)
+- Se apoya en el ExecutionLedger como fuente de datos
 
 ---
 
@@ -113,5 +165,6 @@ Autonomía ──→ Memoria ──→ Razonamiento ──→ Autoevaluación �
 
 1. **Todo como plugin o componente separado** — no modificar el flujo principal del pipeline.
 2. **Cada bloque usa la salida del anterior** — autonomía genera datos → memoria los almacena → razonamiento los analiza → autoevaluación mide el resultado.
-3. **Infraestructura congelada** — no se toca `tuneladora/` salvo bug crítico.
-4. **v2.3 es la base** — ledger, checkpoint, budget son los cimientos de memoria y autonomía.
+3. **Infraestructura congelada (ADR-030)** — no se toca `tuneladora/` salvo bug crítico.
+4. **v2.3 es la base** — ledger, checkpoint, budget son los cimientos de autonomía y memoria.
+5. **Presupuestos en todo** — tiempo, coste, llamadas a modelos, cambios, memoria. Si se supera alguno, el sistema replantea o se detiene de forma controlada.
