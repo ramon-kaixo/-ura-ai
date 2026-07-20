@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class HealthPlugin:
@@ -26,7 +27,7 @@ class HealthPlugin:
 
         # RAM
         try:
-            import subprocess  # noqa: PLC0415
+            import subprocess
 
             rc, out = subprocess.getstatusoutput("free -m")
             if rc == 0:
@@ -35,16 +36,16 @@ class HealthPlugin:
                         parts = line.split()
                         if len(parts) > 2:
                             results["ram_usada_mb"] = int(parts[2])
-        except Exception:  # noqa: BLE001, S110
+        except Exception:  # noqa: S110
             pass
 
         # Zombies
         try:
-            import subprocess  # noqa: PLC0415
+            import subprocess
 
             rc, out = subprocess.getstatusoutput("ps aux")
             results["zombies"] = out.count(" Z ") if rc == 0 else -1
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             results["zombies"] = -1
 
         self.engine.log.info(

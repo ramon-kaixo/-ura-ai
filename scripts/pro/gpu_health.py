@@ -188,6 +188,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="GPU Health Check")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--watch", action="store_true", help="Loop de monitoreo continuo")
+    parser.add_argument("--scan", action="store_true", help="Ejecutar check (compatibilidad plugin)")
     args = parser.parse_args()
 
     if args.watch:

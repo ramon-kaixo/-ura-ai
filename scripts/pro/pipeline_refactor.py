@@ -9,16 +9,15 @@ from __future__ import annotations
 
 import sys
 import time
-from pathlib import Path
 
-from scripts.pro.worker_manager import WorkerManager
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.logger import Logger
 from scripts.pro.tuneladora.snapshot import SnapshotService
+from scripts.pro.worker_manager import WorkerManager
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="Pipeline de Refactorización")
     parser.add_argument("--workers", type=int, default=4, help="Número de workers")
@@ -42,7 +41,7 @@ def main() -> int:
     # ── Handshake ──
     metrics = manager.handshake()
     if metrics.get("activos", 0) == 0:
-        log.warn("Sin archivos activos — puede ser un entorno limpio")
+        log.warning("Sin archivos activos — puede ser un entorno limpio")
 
     # ── Limpieza ──
     manager.clean_temp_files()

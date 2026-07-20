@@ -36,7 +36,7 @@ COLLECTION = "memoria_web"
 CUTOFF_DAYS = 30
 BATCH_SIZE = 100
 
-_cfg = UraConfig.load()  # noqa: F811
+_cfg = UraConfig.load()
 QDRANT_BASE = f"http://{_cfg.qdrant_host}:{_cfg.qdrant_port}"
 
 

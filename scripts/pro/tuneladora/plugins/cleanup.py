@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class CleanupPlugin:
@@ -15,10 +16,9 @@ class CleanupPlugin:
 
     def forense_aislamientos(self) -> dict[str, Any]:
         """Limpia procesos aislados por el SNC con más de 7 días."""
-        import os  # noqa: PLC0415
-        import shutil  # noqa: PLC0415
-        import time  # noqa: PLC0415
-        from pathlib import Path  # noqa: PLC0415
+        import shutil
+        import time
+        from pathlib import Path
 
         aislados_dir = Path("/tmp/ura_aislados")
         if not aislados_dir.exists():
@@ -40,7 +40,7 @@ class CleanupPlugin:
                 activos += 1
 
         if activos:
-            self.engine.log.warn(f"{activos} procesos aislados activos")
+            self.engine.log.warning(f"{activos} procesos aislados activos")
         return {"total": activos + limpiados, "limpiados": limpiados, "activos": activos}
 
     def watermark(self) -> dict[str, Any]:
@@ -74,7 +74,7 @@ class CleanupPlugin:
     def git_commit(self, message: str = "") -> dict[str, Any]:
         """Hace git commit si hay cambios."""
         if not message:
-            from datetime import UTC, datetime  # noqa: PLC0415
+            from datetime import UTC, datetime
 
             message = f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')}"
         self.engine.run_git(["add", "-u"])
@@ -93,13 +93,13 @@ class CleanupPlugin:
         flags = "--full" if profundo else "--quick"
         result = self.engine.run_script("scripts/pro/revisor.py", args=[flags], timeout=120)
         try:
-            import json  # noqa: PLC0415
+            import json
 
             reporte = json.loads(result.stdout) if result.stdout else {}
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             reporte = {}
         score = reporte.get("score", 0)
         bloqueante = reporte.get("bloqueante", False)
         if bloqueante:
-            self.engine.log.warn(f"Score bloqueante: {score}")
+            self.engine.log.warning(f"Score bloqueante: {score}")
         return {"score": score, "bloqueante": bloqueante, "raw": reporte}

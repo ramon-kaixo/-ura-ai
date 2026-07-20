@@ -22,12 +22,12 @@ class SnapshotService:
     def save(self, label: str = "ultimo_ciclo") -> Path | None:
         """Guarda un snapshot delta del estado actual."""
         try:
-            from openclaw_firmador import delta_snapshot  # noqa: PLC0415
+            from openclaw_firmador import delta_snapshot
 
             result = delta_snapshot(label)
             self._log(f"Delta snapshot guardado: {result}")
             return Path(result) if result else None
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             self._log(f"Delta snapshot falló: {e}")
             return None
 
@@ -39,7 +39,7 @@ class SnapshotService:
         """Limpia todos los snapshots delta (modo profundo)."""
         delta_dir = self._nervioso / "delta_snapshots"
         if delta_dir.exists():
-            import shutil  # noqa: PLC0415
+            import shutil
 
             shutil.rmtree(delta_dir, ignore_errors=True)
             self._log("Snapshots delta limpiados")

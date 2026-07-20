@@ -10,12 +10,12 @@ from __future__ import annotations
 import sys
 import time
 
-from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.plugin_registry import discover_all, run_phase
+from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="Tuneladora de Mejora Continua")
     parser.add_argument("--file", type=str, default=None, help="Archivo específico a procesar")
@@ -43,13 +43,13 @@ def main() -> int:
     engine.log.info("── Fase pre: Validación ──")
     result_pre = run_phase("pre", file_path=args.file)
     if result_pre.get("_aborted_by"):
-        engine.log.warn(f"Abortado en pre: {result_pre['_aborted_by']}")
+        engine.log.warning(f"Abortado en pre: {result_pre['_aborted_by']}")
         return 1
 
     # ── Refactorización (si se solicita) ──
     if args.refactor:
         engine.log.info("── Refactorización ──")
-        import subprocess  # noqa: PLC0415
+        import subprocess
 
         cmd = [
             engine.config.venv_python,
@@ -61,20 +61,20 @@ def main() -> int:
         ]
         result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
         if result.returncode != 0:
-            engine.log.warn(f"Refactor exit={result.returncode}")
+            engine.log.warning(f"Refactor exit={result.returncode}")
 
     # ── Fase refactor: Plugins de transformación ──
     engine.log.info("── Fase refactor: Plugins ──")
     result_refactor = run_phase("refactor", file_path=args.file)
     if result_refactor.get("_aborted_by"):
-        engine.log.warn(f"Abortado en refactor: {result_refactor['_aborted_by']}")
+        engine.log.warning(f"Abortado en refactor: {result_refactor['_aborted_by']}")
         return 1
 
     # ── Fase post: Validación final ──
     engine.log.info("── Fase post: Validación ──")
     result_post = run_phase("post", file_path=args.file)
     if result_post.get("_aborted_by"):
-        engine.log.warn(f"Abortado en post: {result_post['_aborted_by']}")
+        engine.log.warning(f"Abortado en post: {result_post['_aborted_by']}")
 
     # ── Snapshot ──
     engine.snapshot.save("ultimo_ciclo")

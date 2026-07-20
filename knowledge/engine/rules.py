@@ -233,7 +233,7 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
             return result
     if isinstance(node, ast.Compare):
         left = _eval_ast(node.left, env)
-        for op, comparator in zip(node.ops, node.comparators):
+        for op, comparator in zip(node.ops, node.comparators, strict=False):
             right = _eval_ast(comparator, env)
             cmp_ops = {
                 ast.Eq: _operator.eq,
@@ -264,7 +264,7 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
     if isinstance(node, ast.Set):
         return {_eval_ast(el, env) for el in node.elts}
     if isinstance(node, ast.Dict):
-        return {_eval_ast(k, env): _eval_ast(v, env) for k, v in zip(node.keys, node.values)}
+        return {_eval_ast(k, env): _eval_ast(v, env) for k, v in zip(node.keys, node.values, strict=False)}
     if isinstance(node, ast.Subscript):
         value = _eval_ast(node.value, env)
         if isinstance(node.slice, ast.Slice):
@@ -283,7 +283,7 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
         kwargs = {kw.arg: _eval_ast(kw.value, env) for kw in node.keywords}
         return env[func_name](*args, **kwargs)
     if isinstance(node, ast.ListComp):
-        return [v for v in _eval_comprehension(node, env)]
+        return list(_eval_comprehension(node, env))
     raise UnsafeExpressionError(f"Nodo no soportado: {type(node).__name__}")
 
 

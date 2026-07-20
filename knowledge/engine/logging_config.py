@@ -10,6 +10,8 @@ import os
 
 from motor.observability.logging import (
     set_correlation_id,
+)
+from motor.observability.logging import (
     setup_logging as _setup_logging,
 )
 

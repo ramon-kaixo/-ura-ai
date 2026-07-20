@@ -11,9 +11,9 @@ import sys
 import time
 
 from scripts.pro.tuneladora.engine import PipelineEngine
-from scripts.pro.tuneladora.plugins.health import HealthPlugin
-from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
 from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
+from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
+from scripts.pro.tuneladora.plugins.health import HealthPlugin
 from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
 
 
@@ -31,7 +31,7 @@ def _detectar_nivel() -> str:
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="Tuneladora de Mantenimiento")
     parser.add_argument("--nivel", choices=["ligero", "medio", "profundo"], default=None)
