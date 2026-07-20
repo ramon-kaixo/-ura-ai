@@ -120,7 +120,7 @@ Organizados por función en las siguientes categorías:
 
 | Categoría | Scripts | Propósito |
 |-----------|---------|-----------|
-| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py` | Pipeline de mejora continua (v2, motor compartido) |
+| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py` | Pipeline de mejora continua (v2, motor compartido). Pipeline de Refactorización solo se inicia desde Mejora Continua. |
 | **Diagnóstico/Mantenimiento** | `token_screen.py`, `scanner_autoajuste.py`, `chunk_optimizer.py`, `poda_mecanica.py`, `watermark_aggregator.py`, `inspectores.py`, `compactadora.py`, `compactador_espacios.py`, `auto_reglas.py`, `reglas_loader.py`, `f821_watch.py`, `analizar_fallo_conciencia.py`, `master_conciencia.py`, `sincronizar_vocabulario.py`, `patch_timestamps.py`, `fix_masivo.py`, `hardening_audit.py`, `systemd_orphan_scanner.py` | Auditoría, reparación y optimización automática del código |
 | **Refactor** | `refactor_large_functions.py`, `refactor_large_functions_v2.py`, `refactor_v2.py`, `refactor_4_motores.py`, `ajustar_contexto.py`, `sanear_codigo.py` | Refactorización con LLM + compactación |
 | **Consciencia/Memoria** | `conciencia.py`, `auto_conciencia.py`, `analisis_completo.py`, `ura_self_modify.py` | Sistema de memoria, auto-conciencia y meta-mejora |
