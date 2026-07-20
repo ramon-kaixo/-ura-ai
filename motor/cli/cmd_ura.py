@@ -83,7 +83,6 @@ def cmd_finalize(config: UraConfig, args) -> int:
 
 
 def cmd_test(config: UraConfig, args) -> int:
-
     from core.config_manager import validate_config, validate_schema
 
     errors = validate_schema()
@@ -248,7 +247,7 @@ def cmd_doctor(config: UraConfig, args) -> int:
 def cmd_metrics(config: UraConfig, args) -> int:
     """Métricas del router: modelos, latencia, cache."""
     try:
-        r = urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5)
+        r = urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5)  # nosec B310 - solo HTTP local controlado
         data = r.read().decode()
         for line in data.split("\n"):
             if any(k in line for k in ("model_selection", "latency_avg", "cache_hit", "prompt_cache")):
