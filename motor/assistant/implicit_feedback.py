@@ -6,6 +6,7 @@ Detecta feedback implícito:
 - Usuario dice gracias y se va → tarea completada
 - Usuario corrige → respuesta anterior fue incorrecta
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -84,8 +85,13 @@ class ImplicitFeedback:
         return prev.lower().strip() == current.lower().strip()
 
     def _store_signal(
-        self, conv_id: str, signal_type: str, original: str,
-        user_msg: str, response: str, score: float,
+        self,
+        conv_id: str,
+        signal_type: str,
+        original: str,
+        user_msg: str,
+        response: str,
+        score: float,
     ) -> None:
         with self._lock:
             self._conn.execute(

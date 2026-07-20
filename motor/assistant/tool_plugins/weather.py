@@ -1,4 +1,5 @@
 """Ejemplo de plugin: consulta de clima."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -18,6 +19,7 @@ class WeatherPlugin(ToolPlugin):
 
     async def execute(self, params: dict[str, Any] | None = None) -> ToolResult:
         from motor.assistant.executor import ToolResult
+
         location = params.get("location", "")
         if not location:
             return ToolResult(False, error="Ciudad no especificada")

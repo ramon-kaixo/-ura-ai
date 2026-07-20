@@ -300,7 +300,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 ### Tuneladora Unificada
 - **Ubicación**: `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_mantenimiento.py`
 - **Fases**: 6 fases unificadas (Diagnóstico, Mantenimiento, Auditoría Modelos, Mejora, Rollback, Backup)
-- **Timer**: `tuneladora.timer` - ejecuta cada 6 horas
+- **Timer**: `ura-maintenance-v2.timer` - ejecuta cada 6 horas (00,06,12,18)
 - **Rutas corregidas**: Usa `/home/ramon/URA/` (no `/opt/ura/`)
 - **Sin teatro**: `|| true` eliminados de pasos críticos
 

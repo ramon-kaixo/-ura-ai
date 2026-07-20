@@ -29,9 +29,7 @@ class TestMessageAudit:
         """
         msg = Message(role="invented_role", content="boom")  # type: ignore[arg-type]
         # This should have raised but doesn't — runtime type gap.
-        assert msg.role == "invented_role", (
-            "Runtime should have rejected 'invented_role', but it didn't"
-        )
+        assert msg.role == "invented_role", "Runtime should have rejected 'invented_role', but it didn't"
 
     def test_empty_role_string(self):
         """Edge case: empty string role accepted with no validation."""
@@ -58,9 +56,7 @@ class TestMessageAudit:
         consume 0 tokens, not 1.
         """
         msg = Message(role="user", content="")
-        assert msg.token_estimate() == 1, (
-            "Empty message reports 1 token — wasteful if many empty messages exist"
-        )
+        assert msg.token_estimate() == 1, "Empty message reports 1 token — wasteful if many empty messages exist"
 
     def test_token_estimate_huge_content(self):
         """Performance edge case: very long strings are handled."""
@@ -78,9 +74,7 @@ class TestMessageAudit:
         # 4 chars / 4 + 1 = 2, but a CJK tokeniser would give ~4 tokens.
         tokens = msg.token_estimate()
         # The test documents the inaccuracy: it returns 2 instead of ~4.
-        assert tokens == 2, (
-            "CJK text severely underestimated at 4.0 chars/token default"
-        )
+        assert tokens == 2, "CJK text severely underestimated at 4.0 chars/token default"
 
     def test_tool_message_no_tool_call_id(self):
         """Missing validation: tool messages should require tool_call_id."""
@@ -99,9 +93,7 @@ class TestMessageAudit:
         """Edge case: a whitespace-only timestamp is treated as truthy."""
         msg = Message(role="user", content="hi", timestamp="   ")
         # "   " is not empty → falsy, so __post_init__ skips overwrite.
-        assert msg.timestamp == "   ", (
-            "Whitespace-only timestamp should probably be treated as empty"
-        )
+        assert msg.timestamp == "   ", "Whitespace-only timestamp should probably be treated as empty"
 
     def test_message_with_extra_unknown_kwarg(self):
         """BUG: unknown kwarg in Message() raises TypeError."""
@@ -122,8 +114,7 @@ class TestConversationStateAudit:
             updated_at="",  # will become datetime.now(UTC)
         )
         assert state.updated_at < state.created_at, (
-            "No invariant: updated_at is before created_at when "
-            "a future created_at is provided"
+            "No invariant: updated_at is before created_at when a future created_at is provided"
         )
 
     def test_turn_count_negative(self):
@@ -269,9 +260,18 @@ class TestEnumAudit:
     def test_user_intent_count(self):
         """Contract: all expected intents are present."""
         expected = {
-            "CHAT", "QUESTION", "COMMAND", "SEARCH", "CLARIFY",
-            "GREETING", "FAREWELL", "CONFIRM", "REJECT", "CORRECT",
-            "REPEAT", "UNKNOWN",
+            "CHAT",
+            "QUESTION",
+            "COMMAND",
+            "SEARCH",
+            "CLARIFY",
+            "GREETING",
+            "FAREWELL",
+            "CONFIRM",
+            "REJECT",
+            "CORRECT",
+            "REPEAT",
+            "UNKNOWN",
         }
         actual = {e.name for e in UserIntent}
         assert actual == expected

@@ -3,6 +3,7 @@
 Analiza consultas del usuario y detecta si necesita información actualizada
 (no cubierta por el conocimiento estático). Opcional: se apoya en web_search.
 """
+
 from __future__ import annotations
 
 import re

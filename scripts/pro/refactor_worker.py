@@ -38,15 +38,17 @@ class RefactorWorker:
     def run(self, timeout: int = 3600) -> subprocess.CompletedProcess:
         """Ejecuta el worker de refactorización."""
         env = os.environ.copy()
-        env.update({
-            "REFACTOR_WORKER_ID": str(self.worker_id),
-            "REFACTOR_WORKER_TOTAL": str(self.total_workers),
-            "REFACTOR_MODEL": self.model,
-            "MONSTER_THRESHOLD": str(self.threshold),
-            "MAX_BATCH_TOKENS": str(self.max_tokens),
-            "PROMPT_OVERHEAD_TOKENS": str(self.overhead),
-            "URA_ROOT": self.ura_root,
-        })
+        env.update(
+            {
+                "REFACTOR_WORKER_ID": str(self.worker_id),
+                "REFACTOR_WORKER_TOTAL": str(self.total_workers),
+                "REFACTOR_MODEL": self.model,
+                "MONSTER_THRESHOLD": str(self.threshold),
+                "MAX_BATCH_TOKENS": str(self.max_tokens),
+                "PROMPT_OVERHEAD_TOKENS": str(self.overhead),
+                "URA_ROOT": self.ura_root,
+            }
+        )
         return subprocess.run(
             [self.venv_python, "-u", "scripts/pro/refactor_large_functions_v2.py"],
             env=env,

@@ -34,8 +34,11 @@ class TestContextItem:
 
     def test_expired(self):
         item = ContextItem(
-            content="a", level=ContextLevel.IMMEDIATE, source="s",
-            ttl_seconds=1, timestamp="2020-01-01T00:00:00+00:00",
+            content="a",
+            level=ContextLevel.IMMEDIATE,
+            source="s",
+            ttl_seconds=1,
+            timestamp="2020-01-01T00:00:00+00:00",
         )
         assert item.is_expired
 

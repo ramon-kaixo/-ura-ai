@@ -1,4 +1,5 @@
 """IntentEngine — comprensión de intención, extracción de entidades y routing."""
+
 from __future__ import annotations
 
 import re
@@ -19,63 +20,87 @@ class IntentResult:
 _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
     (
         UserIntent.GREETING,
-        [re.compile(p) for p in [
-            r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)$",
+            ]
+        ],
         0.95,
     ),
     (
         UserIntent.FAREWELL,
-        [re.compile(p) for p in [
-            r"^(adi[oó]s|chao|hasta\s*(luego|pronto|otra)|bye|gracias|thanks|nos\s*vemos)$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(adi[oó]s|chao|hasta\s*(luego|pronto|otra)|bye|gracias|thanks|nos\s*vemos)$",
+            ]
+        ],
         0.95,
     ),
     (
         UserIntent.CONFIRM,
-        [re.compile(p) for p in [
-            r"^(s[ií]|si|ok|vale|de\s*acuerdo|yes|confirmo|adelante|d[áa]le)$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(s[ií]|si|ok|vale|de\s*acuerdo|yes|confirmo|adelante|d[áa]le)$",
+            ]
+        ],
         0.9,
     ),
     (
         UserIntent.REJECT,
-        [re.compile(p) for p in [
-            r"^(no|nop|nope|no\s*me\s*gusta|no\s*es\s*eso|cancelar|para)$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(no|nop|nope|no\s*me\s*gusta|no\s*es\s*eso|cancelar|para)$",
+            ]
+        ],
         0.9,
     ),
     (
         UserIntent.REPEAT,
-        [re.compile(p) for p in [
-            r"^(repite|otra\s*vez|no\s*entend[ií]|puedes\s*repetir|rep[eé]telo)$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(repite|otra\s*vez|no\s*entend[ií]|puedes\s*repetir|rep[eé]telo)$",
+            ]
+        ],
         0.9,
     ),
     (
         UserIntent.CORRECT,
-        [re.compile(p) for p in [
-            r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)",
+            ]
+        ],
         0.85,
     ),
     (
         UserIntent.QUESTION,
-        [re.compile(p) for p in [
-            r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*(funciona|se\s*hace)|por\s*qu[eé]|"
-            r"cu[aá]ndo|d[oó]nde|qui[eé]n|d[oó]nde\s*est[aá]|cu[aá]l\s*es|c[uú]anto)",
-            r"^.*\?$",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*(funciona|se\s*hace)|por\s*qu[eé]|"
+                r"cu[aá]ndo|d[oó]nde|qui[eé]n|d[oó]nde\s*est[aá]|cu[aá]l\s*es|c[uú]anto)",
+                r"^.*\?$",
+            ]
+        ],
         0.8,
     ),
     (
         UserIntent.COMMAND,
-        [re.compile(p) for p in [
-            r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera|"
-            r"dime|status|log|diff|comprueba|verifica|chequea|analiza|examina|"
-            r"compara|avísame|notifícame|traduce|sintetiza|ordena|organiza|"
-            r"convierte|transforma|instala|configura|borra|elimina)",
-        ]],
+        [
+            re.compile(p)
+            for p in [
+                r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera|"
+                r"dime|status|log|diff|comprueba|verifica|chequea|analiza|examina|"
+                r"compara|avísame|notifícame|traduce|sintetiza|ordena|organiza|"
+                r"convierte|transforma|instala|configura|borra|elimina)",
+            ]
+        ],
         0.85,
     ),
 ]

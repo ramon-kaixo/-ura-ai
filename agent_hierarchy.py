@@ -498,6 +498,7 @@ class ExecutorAgent(Agent):
         """Valida código mediante AST. Solo permite operaciones seguras."""
         try:
             import ast
+
             tree = ast.parse(code, mode="exec")
         except SyntaxError:
             return False
@@ -507,8 +508,15 @@ class ExecutorAgent(Agent):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     name = f"{node.func.value.id}.{node.func.attr}" if isinstance(node.func.value, ast.Name) else ""
-                    if name in ("os.system", "os.popen", "subprocess.run", "subprocess.Popen",
-                                "shutil.rmtree", "shutil.copy", "pathlib.Path.open"):
+                    if name in (
+                        "os.system",
+                        "os.popen",
+                        "subprocess.run",
+                        "subprocess.Popen",
+                        "shutil.rmtree",
+                        "shutil.copy",
+                        "pathlib.Path.open",
+                    ):
                         return False
                     if node.func.attr in ("__import__",):
                         return False

@@ -3,6 +3,7 @@
 Integración con git, docker, shell, búsqueda y más.
 Todas las herramientas piden confirmación antes de ejecutar acciones destructivas.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -30,24 +31,31 @@ class GitTool:
 
     def status(self) -> ToolResult:
         try:
-            r = subprocess.run(["git", "-C", self._repo, "status", "--short"],
-                               capture_output=True, text=True, timeout=10, check=False)
+            r = subprocess.run(
+                ["git", "-C", self._repo, "status", "--short"], capture_output=True, text=True, timeout=10, check=False
+            )
             return ToolResult(True, r.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
 
     def log(self, count: int = 5) -> ToolResult:
         try:
-            r = subprocess.run(["git", "-C", self._repo, "log", f"-{count}", "--oneline"],
-                               capture_output=True, text=True, timeout=10, check=False)
+            r = subprocess.run(
+                ["git", "-C", self._repo, "log", f"-{count}", "--oneline"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
             return ToolResult(True, r.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
 
     def diff(self) -> ToolResult:
         try:
-            r = subprocess.run(["git", "-C", self._repo, "diff", "--stat"],
-                               capture_output=True, text=True, timeout=10, check=False)
+            r = subprocess.run(
+                ["git", "-C", self._repo, "diff", "--stat"], capture_output=True, text=True, timeout=10, check=False
+            )
             return ToolResult(True, r.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -57,7 +65,9 @@ class GitBranchTool:
     def execute(self, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False)
+            res = subprocess.run(
+                ["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False
+            )
             return ToolResult(True, res.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -67,7 +77,9 @@ class GitCommitTool:
     def execute(self, message: str, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False)
+            res = subprocess.run(
+                ["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False
+            )
             return ToolResult(res.returncode == 0, res.stdout[:2000] or res.stderr[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -76,16 +88,26 @@ class GitCommitTool:
 class DockerTool:
     def ps(self) -> ToolResult:
         try:
-            r = subprocess.run(["docker", "ps", "--format", "{{.Names}} {{.Status}}"],
-                               capture_output=True, text=True, timeout=10, check=False)
+            r = subprocess.run(
+                ["docker", "ps", "--format", "{{.Names}} {{.Status}}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
             return ToolResult(True, r.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
 
     def logs(self, container: str, lines: int = 20) -> ToolResult:
         try:
-            r = subprocess.run(["docker", "logs", "--tail", str(lines), container],
-                               capture_output=True, text=True, timeout=10, check=False)
+            r = subprocess.run(
+                ["docker", "logs", "--tail", str(lines), container],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
             return ToolResult(True, r.stdout[:2000] or r.stderr[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -109,9 +131,11 @@ class FileReadTool:
 class SystemInfoTool:
     def execute(self) -> ToolResult:
         import os
+
         lines = []
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             cpu = psutil.cpu_percent(interval=0.1)
             disk = psutil.disk_usage("/")
@@ -120,6 +144,7 @@ class SystemInfoTool:
             lines.append(f"Disco: {disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB ({disk.percent}%)")
         except ImportError:
             import shutil
+
             lines.append(f"RAM: {os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES') // (1024**3)}GB")
             total, used, _free = shutil.disk_usage("/")
             lines.append(f"Disco: {used // (1024**3)}GB / {total // (1024**3)}GB")
@@ -129,13 +154,13 @@ class SystemInfoTool:
 class _SafeCalculator:
     def __init__(self) -> None:
         import math
-        self._env = {
-            k: v for k, v in math.__dict__.items() if not k.startswith("_")
-        }
+
+        self._env = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
         self._env.update({"abs": abs, "min": min, "max": max, "round": round})
 
     def _eval(self, node: ast.AST) -> float | int:  # noqa: F821
         import ast
+
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.UnaryOp):
@@ -163,7 +188,7 @@ class _SafeCalculator:
             if isinstance(node.op, ast.Mod):
                 return lhs % rhs
             if isinstance(node.op, ast.Pow):
-                return lhs ** rhs
+                return lhs**rhs
             raise ValueError("Operador no soportado")
         if isinstance(node, ast.Name):
             name = node.id
@@ -188,6 +213,7 @@ class _SafeCalculator:
 
     def evaluate(self, expression: str) -> str:
         import ast
+
         tree = ast.parse(expression.strip(), mode="eval")
         result = self._eval(tree.body)
         if isinstance(result, float) and result == int(result):
@@ -214,6 +240,7 @@ class NoteTool:
         import sqlite3
 
         from motor.assistant.config import config
+
         config.ensure_data_dir()
         self._conn = sqlite3.connect(config.db_for("notes"))
         self._conn.execute(
@@ -240,14 +267,30 @@ class NoteTool:
 class DateTimeTool:
     def execute(self) -> ToolResult:
         from datetime import UTC, datetime
+
         now = datetime.now(UTC)
         days = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        months = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
-                  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-        return ToolResult(True, (
-            f"Son las {now.hour:02d}:{now.minute:02d} del {days[now.weekday()]}, "
-            f"{now.day} de {months[now.month - 1]} de {now.year}."
-        ))
+        months = [
+            "enero",
+            "febrero",
+            "marzo",
+            "abril",
+            "mayo",
+            "junio",
+            "julio",
+            "agosto",
+            "septiembre",
+            "octubre",
+            "noviembre",
+            "diciembre",
+        ]
+        return ToolResult(
+            True,
+            (
+                f"Son las {now.hour:02d}:{now.minute:02d} del {days[now.weekday()]}, "
+                f"{now.day} de {months[now.month - 1]} de {now.year}."
+            ),
+        )
 
 
 class WeatherTool:
@@ -280,6 +323,7 @@ class NewsTool:
             if resp.status_code != 200:
                 return ToolResult(False, error=f"Error: {resp.status_code}")
             import re
+
             titles = re.findall(r"<title>(.*?)</title>", resp.text)[:5]
             return ToolResult(True, "\n".join(f"• {t}" for t in titles))
         except Exception as e:
@@ -306,6 +350,7 @@ class ConversationalToolManager:
     def _load_plugins(self) -> dict[str, Any]:
         try:
             from motor.assistant.tool_plugin import discover_plugins
+
             return discover_plugins()
         except Exception:
             return {}
@@ -317,8 +362,7 @@ class ConversationalToolManager:
             "git_log": lambda: self._git.log(int(params.get("count", 5))),
             "git_diff": lambda: self._git.diff(),
             "docker_ps": lambda: self._docker.ps(),
-            "docker_logs": lambda: self._docker.logs(
-                params.get("container", ""), int(params.get("lines", 20))),
+            "docker_logs": lambda: self._docker.logs(params.get("container", ""), int(params.get("lines", 20))),
             "python": lambda: self._python(params.get("code", "")),
             "datetime": lambda: self._datetime.execute(),
             "read_file": lambda: self._file_read.execute(params.get("path", "")),
@@ -327,8 +371,7 @@ class ConversationalToolManager:
             "note_save": lambda: self._notes.save(params.get("content", "")),
             "note_list": lambda: self._notes.list_recent(int(params.get("limit", 5))),
             "git_branch": lambda: self._git_branch.execute(params.get("repo", "")),
-            "git_commit": lambda: self._git_commit.execute(
-                params.get("message", "commit"), params.get("repo", "")),
+            "git_commit": lambda: self._git_commit.execute(params.get("message", "commit"), params.get("repo", "")),
         }
         handler = sync_handlers.get(tool_name)
         if handler:
@@ -356,9 +399,10 @@ class ConversationalToolManager:
             )
             texts = []
             import re
+
             for line in resp.text.split("\n"):
                 if 'class="result__snippet"' in line:
-                    m = re.search(r'>(.*?)<', line)
+                    m = re.search(r">(.*?)<", line)
                     if m:
                         texts.append(m.group(1))
             return ToolResult(True, "\n".join(texts[:5]))
@@ -371,7 +415,10 @@ class ConversationalToolManager:
         try:
             result = subprocess.run(
                 [sys.executable, "-c", code],
-                capture_output=True, text=True, timeout=15, check=False,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
             )
             return ToolResult(True, (result.stdout or result.stderr)[:2000])
         except Exception as e:
@@ -385,5 +432,17 @@ class ConversationalToolManager:
         return any(k in msg_lower for k in ("borra", "elimina", "rm ", "drop ", "format", ">"))
 
     def list_tools(self) -> list[str]:
-        return ["git_status", "git_log", "git_diff", "docker_ps", "docker_logs", "web_search",
-                "weather", "news", "python", "datetime", "calculator", "note_save"]
+        return [
+            "git_status",
+            "git_log",
+            "git_diff",
+            "docker_ps",
+            "docker_logs",
+            "web_search",
+            "weather",
+            "news",
+            "python",
+            "datetime",
+            "calculator",
+            "note_save",
+        ]

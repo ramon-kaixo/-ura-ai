@@ -188,7 +188,9 @@ class TestMemoryMetadata:
         assert m.created_by == ""
 
     def test_fields(self) -> None:
-        m = MemoryMetadata(pipeline_version="1.0", fusion_config_hash="abc", fact_count=42, confidence_avg=0.95, created_by="tester")
+        m = MemoryMetadata(
+            pipeline_version="1.0", fusion_config_hash="abc", fact_count=42, confidence_avg=0.95, created_by="tester"
+        )
         assert m.pipeline_version == "1.0"
         assert m.fact_count == 42
 

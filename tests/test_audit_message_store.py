@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_msg(content: str = "hello") -> Message:
     return Message(role="user", content=content)
 
@@ -29,6 +30,7 @@ def _make_msg(content: str = "hello") -> Message:
 # ---------------------------------------------------------------------------
 # B1 — Thread safety: unprotected reads race with concurrent writes
 # ---------------------------------------------------------------------------
+
 
 class TestThreadSafety:
     """B1: get_conversation() and list_conversations() lack lock protection.
@@ -74,8 +76,7 @@ class TestThreadSafety:
         def slow_writer() -> None:
             store._conn.execute("BEGIN IMMEDIATE")
             store._conn.execute(
-                "INSERT INTO messages (conversation_id, role, content, timestamp) "
-                "VALUES ('c1', 'user', ?, 'now')",
+                "INSERT INTO messages (conversation_id, role, content, timestamp) VALUES ('c1', 'user', ?, 'now')",
                 ("x" * 50_000,),
             )
             time.sleep(0.05)  # keep transaction open
@@ -132,6 +133,7 @@ class TestThreadSafety:
 # B2 — Connection / resource handling
 # ---------------------------------------------------------------------------
 
+
 class TestConnectionHandling:
     """B2: message_store leaks the connection when not explicitly closed."""
 
@@ -164,6 +166,7 @@ class TestConnectionHandling:
 # ---------------------------------------------------------------------------
 # B3 — SQL injection probes (parameterised queries are used, verify)
 # ---------------------------------------------------------------------------
+
 
 class TestSQLInjection:
     """B3: All queries use ? placeholders — confirm edge cases are safe."""
@@ -212,6 +215,7 @@ class TestSQLInjection:
 # B4 — Large-data edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestLargeData:
     def test_very_long_message_content(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "big.db"))
@@ -244,6 +248,7 @@ class TestLargeData:
 # B5 — Metadata serialisation edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestMetadataEdgeCases:
     def test_metadata_non_string_keys(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "metakey.db"))
@@ -268,6 +273,7 @@ class TestMetadataEdgeCases:
 # ---------------------------------------------------------------------------
 # B6 — Lock contention under high concurrency
 # ---------------------------------------------------------------------------
+
 
 class TestLockContention:
     """B6: Multiple threads calling append with the lock should not deadlock."""

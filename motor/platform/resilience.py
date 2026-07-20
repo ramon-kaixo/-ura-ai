@@ -80,6 +80,7 @@ class Backpressure:
     def __init__(self, max_queue: int = 100, semaphore_count: int = 5) -> None:
         self.max_queue = max_queue
         import threading
+
         self._sem = threading.Semaphore(semaphore_count)
         self._queue_size = 0
         self._lock = Lock()

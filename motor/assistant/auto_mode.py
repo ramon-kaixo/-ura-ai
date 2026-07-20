@@ -5,6 +5,7 @@ Analiza la intención y el contexto para elegir entre:
 - explicacion: cuando el usuario pide profundidad
 - trabajo: cuando el usuario pide acción/precisión
 """
+
 from __future__ import annotations
 
 import re

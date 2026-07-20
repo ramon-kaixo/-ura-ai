@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def app(tmp_path: Path) -> FastAPI:
     _a = FastAPI()
@@ -49,6 +50,7 @@ def _reset_engine() -> None:
 # D1 — Missing Authentication
 # ---------------------------------------------------------------------------
 
+
 class TestMissingAuth:
     """D1: No authentication on any endpoint.
 
@@ -72,6 +74,7 @@ class TestMissingAuth:
 # ---------------------------------------------------------------------------
 # D2 — Input Validation: message length & content
 # ---------------------------------------------------------------------------
+
 
 class TestInputValidation:
     """D2: No max_length on message field; binary data accepted."""
@@ -131,6 +134,7 @@ class TestInputValidation:
 # D3 — Empty / Missing conversation_id
 # ---------------------------------------------------------------------------
 
+
 class TestConversationIDEdgeCases:
     """D3: Empty conversation_id is accepted but creates a new conv each time."""
 
@@ -164,6 +168,7 @@ class TestConversationIDEdgeCases:
 # ---------------------------------------------------------------------------
 # D4 — Error Handling / Resilience
 # ---------------------------------------------------------------------------
+
 
 class TestErrorHandling:
     """D4: What happens when ConversationEngine crashes mid-request."""
@@ -203,6 +208,7 @@ class TestErrorHandling:
 # D5 — Rate Limiting / Abuse Prevention
 # ---------------------------------------------------------------------------
 
+
 class TestRateLimiting:
     """D5: No rate limiting — sequential or concurrent abuse is unthrottled."""
 
@@ -231,6 +237,7 @@ class TestRateLimiting:
 # D6 — Race Condition in get_engine Singleton
 # ---------------------------------------------------------------------------
 
+
 class TestGetEngineRace:
     """D6: get_engine() has a TOCTOU race — two threads can init simultaneously."""
 
@@ -244,21 +251,21 @@ class TestGetEngineRace:
             created.append(id(e))
 
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
             futures = [pool.submit(call_get_engine) for _ in range(50)]
             concurrent.futures.wait(futures)
 
         engine_ids = set(created)
         # Ideally only 1 engine. Race condition may create more.
-        assert len(engine_ids) == 1, (
-            f"Race condition: {len(engine_ids)} different engine instances created"
-        )
+        assert len(engine_ids) == 1, f"Race condition: {len(engine_ids)} different engine instances created"
         _EngineHolder.engine = None
 
 
 # ---------------------------------------------------------------------------
 # D7 — Chat endpoint response structure
 # ---------------------------------------------------------------------------
+
 
 class TestResponseStructure:
     def test_greeting_response(self, client: TestClient) -> None:

@@ -1,4 +1,5 @@
 """ContentModeration — filtra contenido dañino en entradas y salidas."""
+
 from __future__ import annotations
 
 import re

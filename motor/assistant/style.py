@@ -1,4 +1,5 @@
 """StyleEngine — estilo conversacional adaptativo según modo e intención."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,4 +1,5 @@
 """RAG — Retrieval Augmented Generation con el Knowledge Engine."""
+
 from __future__ import annotations
 
 
@@ -10,6 +11,7 @@ class RAGContext:
     def _check_available(self) -> None:
         try:
             from knowledge.engine.memory_store import MemoryStore
+
             self._store = MemoryStore()
             self._available = True
         except Exception:
@@ -24,6 +26,7 @@ class RAGContext:
 
         try:
             from knowledge.engine.memory_store import MemoryStore
+
             store = MemoryStore()
             results = store.search(query, kind="knowledge", limit=max_results)
             if not results:

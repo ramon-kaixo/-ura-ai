@@ -1,4 +1,5 @@
 """Tests for evaluation, preferences, and auth modules."""
+
 from __future__ import annotations
 
 import json
@@ -21,9 +22,7 @@ def db_path():
 class TestEvaluator:
     def test_init_creates_db(self, db_path):
         ev = ConversationEvaluator(db_path)
-        tables = ev._conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
+        tables = ev._conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert any("evaluations" in t for t in tables[0])
 
     def test_record_and_score(self, db_path):
@@ -40,9 +39,7 @@ class TestEvaluator:
     def test_record_with_details(self, db_path):
         ev = ConversationEvaluator(db_path)
         ev.record_metric("conv1", "quality", 0.9, {"reason": "good"})
-        rows = ev._conn.execute(
-            "SELECT details FROM evaluations"
-        ).fetchall()
+        rows = ev._conn.execute("SELECT details FROM evaluations").fetchall()
         assert json.loads(rows[0][0]) == {"reason": "good"}
 
     def test_summary(self, db_path):
@@ -59,9 +56,7 @@ class TestEvaluator:
 class TestPreferences:
     def test_init_creates_db(self, db_path):
         pref = UserPreferenceLearning(db_path)
-        tables = pref._conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
+        tables = pref._conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert any("interactions" in t for t in tables[0])
 
     def test_record_and_get_preferences(self, db_path):

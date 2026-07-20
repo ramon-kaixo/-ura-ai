@@ -18,6 +18,7 @@ from motor.assistant.models import UserIntent
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_engine() -> IntentEngine:
     return IntentEngine()
 
@@ -25,6 +26,7 @@ def _make_engine() -> IntentEngine:
 # ---------------------------------------------------------------------------
 # C1 — ReDoS / Regex Performance
 # ---------------------------------------------------------------------------
+
 
 class TestReDoS:
     """C1: Entity patterns can cause O(n²) behaviour on adversarial input.
@@ -94,10 +96,13 @@ class TestReDoS:
         assert elapsed < 3.0, f"Crafted ReDoS took {elapsed:.2f}s"
         assert "search_query" in result.entities
 
-    @pytest.mark.parametrize("pattern_src", [
-        r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)",
-        r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
-    ])
+    @pytest.mark.parametrize(
+        "pattern_src",
+        [
+            r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)",
+            r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
+        ],
+    )
     def test_dangling_start_anchor_patterns(self, pattern_src: str) -> None:
         """Patterns anchored only at start can match unexpectedly long strings."""
         pat = re.compile(pattern_src)
@@ -112,6 +117,7 @@ class TestReDoS:
 # ---------------------------------------------------------------------------
 # C2 — Multiline / Newline Edge Cases
 # ---------------------------------------------------------------------------
+
 
 class TestMultiline:
     """C2: .*\\?$ does NOT match across newlines (false negative)."""
@@ -132,9 +138,7 @@ class TestMultiline:
         result = engine.classify(text)
         # BUSCA pattern is anchored at start: ^(busca|...)
         # "first line\nbusca python" does NOT start with busca
-        assert result.intent == UserIntent.COMMAND, (
-            f"Multiline command classified as {result.intent}"
-        )
+        assert result.intent == UserIntent.COMMAND, f"Multiline command classified as {result.intent}"
 
     def test_greeting_with_newline_prefix(self) -> None:
         engine = _make_engine()
@@ -154,6 +158,7 @@ class TestMultiline:
 # ---------------------------------------------------------------------------
 # C3 — Empty / Whitespace / Special Input
 # ---------------------------------------------------------------------------
+
 
 class TestEmptyAndWhitespace:
     def test_empty_string(self) -> None:
@@ -204,6 +209,7 @@ class TestEmptyAndWhitespace:
 # C4 — False Positives / Negatives in Classification
 # ---------------------------------------------------------------------------
 
+
 class TestClassificationBoundaries:
     def test_question_mark_sentence_not_question(self) -> None:
         """.*\\?$ is overly broad — any sentence ending with ? is QUESTION."""
@@ -250,6 +256,7 @@ class TestClassificationBoundaries:
 # C5 — Reference Resolution Edge Cases
 # ---------------------------------------------------------------------------
 
+
 class TestReferenceResolution:
     def test_resolve_references_does_not_mutate_original(self) -> None:
         engine = _make_engine()
@@ -283,12 +290,12 @@ class TestReferenceResolution:
 # C6 — Multiple Entities Extraction
 # ---------------------------------------------------------------------------
 
+
 class TestEntityExtraction:
     def test_multiple_entities_same_input(self) -> None:
         engine = _make_engine()
         result = engine.classify(
-            "busca información sobre python envía a test@example.com "
-            "visita https://example.com usa 42 veces"
+            "busca información sobre python envía a test@example.com visita https://example.com usa 42 veces"
         )
         assert "search_query" in result.entities or "email" in result.entities
         # Only first match per entity type is captured
@@ -310,6 +317,7 @@ class TestEntityExtraction:
 # ---------------------------------------------------------------------------
 # C7 — IntentRouter edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestIntentRouterEdgeCases:
     def test_router_unknown_maps_to_conversation(self) -> None:

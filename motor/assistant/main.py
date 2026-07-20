@@ -15,6 +15,7 @@ Variables de entorno:
   URA_MAX_MESSAGE_LENGTH - Longitud máxima del mensaje (defecto: 100000)
   URA_RATE_LIMIT    - Máximo de requests por minuto (defecto: 60)
 """
+
 from __future__ import annotations
 
 import uvicorn

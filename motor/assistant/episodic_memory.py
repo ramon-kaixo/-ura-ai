@@ -3,6 +3,7 @@
 Almacena resúmenes de conversaciones y los recupera cuando el usuario
 retoma un tema anterior. Se apoya en F25 EpisodeStore/SessionMemory.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -70,10 +71,7 @@ class EpisodicConversationMemory:
         if not summaries:
             return ""
         recent = summaries[-limit:]
-        return "\n---\n".join(
-            f"[Conversación anterior sobre '{topic}']: {s[:200]}"
-            for s in recent
-        )
+        return "\n---\n".join(f"[Conversación anterior sobre '{topic}']: {s[:200]}" for s in recent)
 
     def _compact(self, messages: list[Message]) -> str:
         parts: list[str] = []
@@ -86,10 +84,42 @@ class EpisodicConversationMemory:
 class TopicExtractor:
     def __init__(self) -> None:
         self._stop_words = {
-            "el", "la", "los", "las", "un", "una", "y", "e", "o", "u",
-            "de", "del", "en", "con", "por", "para", "a", "ante", "bajo",
-            "es", "son", "fue", "era", "está", "este", "esta", "que",
-            "como", "más", "pero", "lo", "le", "se", "no", "me", "te",
+            "el",
+            "la",
+            "los",
+            "las",
+            "un",
+            "una",
+            "y",
+            "e",
+            "o",
+            "u",
+            "de",
+            "del",
+            "en",
+            "con",
+            "por",
+            "para",
+            "a",
+            "ante",
+            "bajo",
+            "es",
+            "son",
+            "fue",
+            "era",
+            "está",
+            "este",
+            "esta",
+            "que",
+            "como",
+            "más",
+            "pero",
+            "lo",
+            "le",
+            "se",
+            "no",
+            "me",
+            "te",
         }
 
     def extract(self, text: str) -> list[str]:

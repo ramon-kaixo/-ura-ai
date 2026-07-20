@@ -1,4 +1,5 @@
 """ToolPlugin — plugin system for external tools."""
+
 from __future__ import annotations
 
 import importlib.util

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Backup del asistente conversacional — DBs y configuración."""
+
 import os
 import shutil
 import sys
