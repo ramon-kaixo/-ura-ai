@@ -321,6 +321,9 @@ def main() -> None:  # noqa: PLR0915
         scan_project()
         return
 
+    if args.archivo is None:
+        print("Error: debe especificar un archivo o usar --scan")
+        sys.exit(1)
     ruta = Path(args.archivo)
     if not ruta.exists():
         sys.exit(1)
