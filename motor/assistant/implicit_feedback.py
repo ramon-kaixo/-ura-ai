@@ -13,10 +13,12 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
+
 
 class ImplicitFeedback:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/feedback.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("feedback")
         self._lock = threading.Lock()
         self._last_messages: dict[str, str] = {}
         self._init_db()

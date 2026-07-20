@@ -8,10 +8,12 @@ from typing import Any
 
 import numpy as np
 
+from motor.assistant.config import config
+
 
 class VectorMemoryStore:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/vector_memory.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("vector_memory")
         self._lock = threading.Lock()
         self._dim = 768
         self._init_db()
