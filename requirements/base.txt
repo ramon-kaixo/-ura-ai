@@ -35,6 +35,6 @@ rank-bm25>=0.2
 
 # --- Utilidades ---
 python-dotenv>=1.0
-coloredlogs>=15.0
+coloredlogs>=15.0.1
 blake3>=0.3
 prometheus-client>=0.19
