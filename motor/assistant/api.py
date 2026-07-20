@@ -185,7 +185,26 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 
     system_prompt = _build_system_prompt(mode.value, analysis, lang_code)
 
-    return intent, mode, resolved, system_prompt, conv, lang_code
+    return intent, mode, resolved, system_prompt, conv, lang_code, analysis
+
+
+async def _enrich_prompt(system_prompt: str, analysis: dict, engine: ConversationEngine, resolved: str) -> str:
+    prompt = system_prompt
+    if analysis.get("needs_web_search"):
+        try:
+            web_results = await engine._web.search(resolved)  # noqa: SLF001
+            if web_results:
+                prompt += f"\n[Web: {web_results[:800]!s}]"
+        except Exception:  # noqa: S110
+            pass
+    try:
+        if engine._rag.is_available():  # noqa: SLF001
+            rag_ctx = await engine._rag.retrieve(resolved)  # noqa: SLF001
+            if rag_ctx:
+                prompt += f"\n[Contexto: {rag_ctx[:800]}]"
+    except Exception:  # noqa: S110
+        pass
+    return prompt
 
 
 @router.post("", response_model=ChatResponse)
@@ -210,15 +229,18 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             turn_count=2,
         )
 
-    intent, mode, resolved, system_prompt, conv, lang_code = _process(engine, llm, cid, request.message, request.mode)
+    result = _process(engine, llm, cid, request.message, request.mode)
+    intent, mode, resolved, system_prompt, conv, lang_code, analysis = result
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
+
+    enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
 
     if request.stream:
 
         async def event_stream():
             full_reply = ""
             try:
-                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt):  # noqa: E501
+                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):  # noqa: E501
                     yield StreamEvent("token", {"text": token}).to_sse()
                     full_reply = token
             except Exception:
@@ -243,7 +265,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             resolved,
             mode,
             intent_value=intent.value,
-            system_prompt=system_prompt,
+            system_prompt=enriched_prompt,
         )
     except Exception:
         reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
