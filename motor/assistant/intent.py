@@ -70,7 +70,7 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
     (
         UserIntent.COMMAND,
         [re.compile(p) for p in [
-            r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera)",
+            r"^(busca|crea|haz|ejecuta|muestra|lista|navega|abre|cierra|corre|lanza|genera|dime|status|log|diff)",
         ]],
         0.85,
     ),
