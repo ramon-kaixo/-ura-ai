@@ -65,6 +65,8 @@ def _apply_config_overrides(c: "UraConfig") -> None:
         c.ollama_temperature = float(llm["temperature"])
     if llm.get("max_tokens"):
         c.ollama_max_tokens = int(llm["max_tokens"])
+    if llm.get("provider"):
+        c.llm_provider = llm["provider"]
 
 
 def _apply_env_overrides(c: "UraConfig") -> None:
@@ -84,6 +86,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
     c.ollama_timeout = int(os.environ.get("URA_OLLAMA_TIMEOUT", str(c.ollama_timeout)))
     c.ollama_temperature = float(os.environ.get("URA_OLLAMA_TEMPERATURE", str(c.ollama_temperature)))
     c.ollama_max_tokens = int(os.environ.get("URA_OLLAMA_MAX_TOKENS", str(c.ollama_max_tokens)))
+    c.llm_provider = os.environ.get("URA_LLM_PROVIDER", c.llm_provider)
 
 
 def _load_config_dict() -> dict | None:
@@ -111,6 +114,7 @@ DEFAULT_OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
 DEFAULT_OLLAMA_TIMEOUT = 120
 DEFAULT_OLLAMA_TEMPERATURE = 0.3
 DEFAULT_OLLAMA_MAX_TOKENS = 1024
+DEFAULT_LLM_PROVIDER = "ollama"
 
 
 @dataclass
@@ -129,6 +133,7 @@ class UraConfig:
     ollama_timeout: int = DEFAULT_OLLAMA_TIMEOUT
     ollama_temperature: float = DEFAULT_OLLAMA_TEMPERATURE
     ollama_max_tokens: int = DEFAULT_OLLAMA_MAX_TOKENS
+    llm_provider: str = DEFAULT_LLM_PROVIDER
     is_vm: bool = True
     asus_host: str = HOST_ASUS_DEFECTO
     asus_port: int = PUERTO_ASUS_DEFECTO
