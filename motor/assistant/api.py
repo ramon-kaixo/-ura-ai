@@ -193,8 +193,11 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 async def _execute_command(user_message: str, analysis: dict) -> str:
     msg = user_message.lower().strip()
     tool_map = {
-        "status": "git_status", "log": "git_log", "diff": "git_diff",
-        "docker": "docker_ps", "busca": "web_search", "search": "web_search",
+        "status": "git_status", "estado": "git_status",
+        "log": "git_log", "diff": "git_diff",
+        "docker": "docker_ps", "contenedor": "docker_ps",
+        "busca": "web_search", "search": "web_search", "buscar": "web_search",
+        "python": "python", "codigo": "python",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
