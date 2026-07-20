@@ -42,7 +42,7 @@ def find_ruff():
 
 def run_ruff() -> list[dict]:
     ruff_bin = find_ruff()
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [ruff_bin, "check", "--select", "F821", "--output-format", "json", str(URA_ROOT)],
         capture_output=True,
         text=True,

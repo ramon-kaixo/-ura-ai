@@ -26,8 +26,8 @@ def verificar_agente(ruta_agente):
 
     try:
         # Verificar sintaxis con python -m py_compile
-        result = subprocess.run(  # noqa: S603
-            ["python3", "-m", "py_compile", str(ruta_agente)],  # noqa: S607
+        result = subprocess.run(
+            ["python3", "-m", "py_compile", str(ruta_agente)],
             capture_output=True,
             text=True,
             timeout=5,
@@ -39,11 +39,11 @@ def verificar_agente(ruta_agente):
             return resultado
 
         # Extraer funciones usando ast
-        result = subprocess.run(  # noqa: S603
-            [  # noqa: S607
+        result = subprocess.run(
+            [
                 "python3",
                 "-c",
-                f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])",  # noqa: E501
+                f"import ast; tree = ast.parse(open('{ruta_agente}').read()); print([n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and not n.name.startswith('_')])",
             ],
             capture_output=True,
             text=True,
@@ -114,7 +114,7 @@ def enviar_telegram(mensaje) -> bool:
     """Envía notificación por Telegram."""
     try:
         if Path(TELEGRAM_SCRIPT).exists():
-            subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)  # noqa: S603
+            subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)
             return True
     except Exception:  # noqa: S110
         pass

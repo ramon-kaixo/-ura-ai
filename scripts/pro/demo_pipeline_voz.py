@@ -66,12 +66,12 @@ def _test_semaphore() -> None:
     tts = PiperTTSMotor(stt_pipeline=pipe)
 
     assert pipe.is_playing_tts is False  # noqa: S101
-    tts.speak_to_file("test", "/tmp/sem_test.wav")  # noqa: S108
+    tts.speak_to_file("test", "/tmp/sem_test.wav")
     assert pipe.is_playing_tts is False  # noqa: S101
 
     pipe.is_playing_tts = True
     chunk = np.zeros((480, 1), dtype=np.float32)
-    pipe._audio_callback(chunk, 480, None, None)  # noqa: SLF001
+    pipe._audio_callback(chunk, 480, None, None)
     assert pipe.audio_queue.empty()  # noqa: S101
     pipe.is_playing_tts = False
 
@@ -84,13 +84,13 @@ def _test_corrections() -> None:
         ("olama con open code", "Ollama con OpenCode"),
     ]
     for raw, exp in casos:
-        res = pipe._apply_deterministic_rules(raw)  # noqa: SLF001
+        res = pipe._apply_deterministic_rules(raw)
         assert res == exp, f"{raw} → {res} (esperado: {exp})"  # noqa: S101
 
 
 def _test_tts() -> None:
     tts = PiperTTSMotor()
-    path = tts.speak_to_file("Hola GB10.", "/tmp/tts_orch.wav")  # noqa: S108
+    path = tts.speak_to_file("Hola GB10.", "/tmp/tts_orch.wav")
     import scipy.io.wavfile as wav
 
     _sr, _data = wav.read(path)

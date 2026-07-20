@@ -153,7 +153,7 @@ class GitExtractor:
     def _clone_repo(url: str, target: str) -> str:
         url_clean = _sanitize_git_url(url)
         cmd = ["git", "clone", "--depth", "1", "--single-branch", url_clean, target]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=CLONE_TIMEOUT, check=False)  # noqa: S603 — URL sanitized above
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=CLONE_TIMEOUT, check=False)
         if result.returncode != 0:
             msg = f"git clone failed for {url}: {result.stderr.strip()}"
             raise RuntimeError(msg)
@@ -258,7 +258,7 @@ class GitExtractor:
 def _git_cmd(repo_path: str, args: list[str]) -> str | None:
     cmd = ["git", *args]
     try:
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,

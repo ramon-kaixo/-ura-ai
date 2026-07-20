@@ -134,7 +134,7 @@ Un solo riesgo menor NO justifica arbitraje humano.
 
 Responde EXACTAMENTE en JSON:
 {{"score": 0.0-1.0, "reason": "explicación de fallos encontrados", "risks": ["fallo1", "fallo2"], "requires_human": true/false}}
-"""  # noqa: E501
+"""
 
 
 async def call_ollama(

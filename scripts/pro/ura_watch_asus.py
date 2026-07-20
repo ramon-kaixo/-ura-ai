@@ -18,7 +18,7 @@ ASUS_IPS = ["100.72.103.12", os.environ.get("ASUS_HOST", "10.164.1.99")]
 PING_COUNT = 2
 PING_TIMEOUT = 5
 MAX_FAILS = 3
-FAIL_LOG = "/tmp/ura_asus_watch_fail"  # noqa: S108
+FAIL_LOG = "/tmp/ura_asus_watch_fail"
 LOG = "/Users/ramonesnaola/URA/logs/ura_asus_watch.log"
 
 
@@ -31,8 +31,8 @@ def log(msg: str) -> None:
 
 
 def ping(ip: str) -> bool:
-    r = subprocess.run(  # noqa: S603
-        ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],  # noqa: S607
+    r = subprocess.run(
+        ["ping", "-c", str(PING_COUNT), "-t", str(PING_TIMEOUT), ip],
         capture_output=True,
         timeout=10,
         check=False,

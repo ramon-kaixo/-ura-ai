@@ -117,7 +117,7 @@ class VectorAugmentedRetriever:
 
         return resolved
 
-    def reconcile(self, dry_run: bool = True, batch_size: int = 100) -> dict[str, int]:  # noqa: C901
+    def reconcile(self, dry_run: bool = True, batch_size: int = 100) -> dict[str, int]:
         """Reconcilia AssetStore con VectorStore.
 
         Para cada asset en AssetStore, verifica si existe en VectorStore.

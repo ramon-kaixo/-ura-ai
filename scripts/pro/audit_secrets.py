@@ -103,7 +103,7 @@ def _load_known_secrets() -> set[str]:
         return set()
 
 
-def _check_direct_env_access(  # noqa: C901
+def _check_direct_env_access(
     filepath: Path,
     tree: ast.AST,
     text: str,
@@ -231,7 +231,7 @@ def _check_hardcoded_vars(filepath: Path, tree: ast.AST) -> list[Finding]:
     return findings
 
 
-def main() -> int:  # noqa: C901, PLR0912
+def main() -> int:
     args = sys.argv[1:]
     output_json = "--json" in args
     custom_path = None

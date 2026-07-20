@@ -118,11 +118,11 @@ def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
     """
     segments = [shlex.split(seg.strip()) for seg in cmd.split("|")]
     if len(segments) == 1:
-        return subprocess.run(segments[0], capture_output=True, text=True, timeout=timeout, check=False)  # noqa: S603
+        return subprocess.run(segments[0], capture_output=True, text=True, timeout=timeout, check=False)
     prev_proc = None
     for i, args in enumerate(segments):
         stdin = prev_proc.stdout if prev_proc else None
-        prev_proc = subprocess.Popen(  # noqa: S603
+        prev_proc = subprocess.Popen(
             args,
             stdin=stdin,
             stdout=subprocess.PIPE,
@@ -153,7 +153,7 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
             result = _run_pipeline(cmd, timeout)
         else:
             args = shlex.split(cmd)
-            result = subprocess.run(  # noqa: S603
+            result = subprocess.run(
                 args,
                 capture_output=True,
                 text=True,
@@ -222,8 +222,8 @@ def check_mac_unauthorized_writes() -> bool:
 
     try:
         remote_cmd = "ps aux | grep -E 'vim|nano|emacs|code' | grep -v grep"
-        result = subprocess.run(  # noqa: S603
-            ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],  # noqa: S607
+        result = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=2", os.environ.get("TERMINAL_SSH", "ramon@10.164.1.26"), remote_cmd],
             capture_output=True,
             text=True,
             timeout=5,
@@ -248,7 +248,7 @@ def check_mac_unauthorized_writes() -> bool:
     return False
 
 
-def poll_services(runbook: dict) -> dict:  # noqa: C901, PLR0912, PLR0915
+def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
     """Polling de todos los servicios. Retorna dict de estado.
     Modo Soberanía: GX10 opera independientemente.
     """
@@ -289,7 +289,7 @@ def poll_services(runbook: dict) -> dict:  # noqa: C901, PLR0912, PLR0915
                         context="ASUS",
                         gateway_status="DISCONNECTED",
                         severity="WARN",
-                        message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",  # noqa: E501
+                        message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
                     )
             continue
 
@@ -328,7 +328,7 @@ def poll_services(runbook: dict) -> dict:  # noqa: C901, PLR0912, PLR0915
                 # Lanzar openclaw.py como proceso independiente
                 openclaw_script = Path(__file__).parent / "openclaw.py"
                 if openclaw_script.exists():
-                    proc = subprocess.Popen(  # noqa: S603
+                    proc = subprocess.Popen(
                         [sys.executable, str(openclaw_script)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
@@ -354,7 +354,7 @@ def poll_services(runbook: dict) -> dict:  # noqa: C901, PLR0912, PLR0915
             openclaw_stable_since = None
 
         if openclaw_stable_since and (time.time() - openclaw_stable_since) >= 30:
-            subprocess.run(  # noqa: S603
+            subprocess.run(
                 [PKILL, "-TERM", "-f", "openclaw"],
                 capture_output=True,
                 text=True,
@@ -424,7 +424,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
     result: list[tuple[int, str, float]] = []
     try:
         out = subprocess.run(
-            ["ps", "aux", "--sort=-%cpu"],  # noqa: S607
+            ["ps", "aux", "--sort=-%cpu"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -455,7 +455,7 @@ def check_opencode_colgado() -> int | None:
     Retorna el PID si está colgado, None si no lo encuentra o CPU normal.
     """
     try:
-        pid = subprocess.run(  # noqa: S603
+        pid = subprocess.run(
             [PGREP, "-x", "opencode"],
             capture_output=True,
             text=True,
@@ -465,8 +465,8 @@ def check_opencode_colgado() -> int | None:
         if not pid.stdout.strip():
             return None
         raw_pid = int(pid.stdout.strip().split()[0])
-        cpu = subprocess.run(  # noqa: S603
-            ["ps", "-p", str(raw_pid), "-o", "%cpu="],  # noqa: S607
+        cpu = subprocess.run(
+            ["ps", "-p", str(raw_pid), "-o", "%cpu="],
             capture_output=True,
             text=True,
             timeout=5,
@@ -531,7 +531,7 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
         if pid in _pending_sigcont:
             return
         _pending_sigcont[pid] = nombre
-    sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")  # noqa: S108
+    sandbox_dir = Path(f"/tmp/ura_aislados/{pid}")
     sandbox_dir.mkdir(parents=True, exist_ok=True)
     try:
         os.kill(pid, signal.SIGSTOP)
@@ -570,7 +570,7 @@ def _check_umbrales(state: dict) -> bool:
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
     try:
-        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)  # noqa: S603
+        subprocess.run([SYSTEMCTL, "start", "ura-maintenance.service"], timeout=30, check=False)
         _notify("🔧 Tuneladora activada por detección de anomalía", level="warning")
     except subprocess.TimeoutExpired:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")
@@ -578,7 +578,7 @@ def _trigger_tuneladora() -> None:
         _notify(f"⚠️ Error activando tuneladora: {e}", level="warning")
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 

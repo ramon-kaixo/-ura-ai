@@ -38,7 +38,7 @@ SANDBOX_WORKERS = int(os.environ.get("SANDBOX_WORKERS", "0"))  # 0 = auto-detect
 RAM_CEILING_GB = float(os.environ.get("RAM_CEILING_GB", "96.0"))
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
-SANDBOX_DIR = Path(os.environ.get("SANDBOX_DIR", "/tmp/sandbox_industrial"))  # noqa: S108
+SANDBOX_DIR = Path(os.environ.get("SANDBOX_DIR", "/tmp/sandbox_industrial"))
 
 MONSTER_LIST = [
     "benchmarks/STRESS_TEST_125.py",
@@ -68,7 +68,7 @@ def log(msg: str) -> None:
 def _get_ssh_command_output(command: list[str], timeout: int = 10) -> str:
     """Ejecuta una comando SSH y devuelve la salida."""
     try:
-        out = subprocess.check_output(command, timeout=timeout, text=True)  # noqa: S603
+        out = subprocess.check_output(command, timeout=timeout, text=True)
         return out.strip()
     except Exception:
         return ""
@@ -385,8 +385,8 @@ def helper4(data) -> None:
 
 def _ejecutar_ruff_check(sandbox_file_path) -> None:
     log("   🧹 ruff check --fix --unsafe-fixes...")
-    resultado = subprocess.run(  # noqa: S603
-        ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],  # noqa: S607
+    resultado = subprocess.run(
+        ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],
         capture_output=True,
         text=True,
         timeout=60,
@@ -397,13 +397,13 @@ def _ejecutar_ruff_check(sandbox_file_path) -> None:
 
 
 def _ejecutar_ruff_format(sandbox_file_path) -> None:
-    subprocess.run(["ruff", "format", str(sandbox_file_path)], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
+    subprocess.run(["ruff", "format", str(sandbox_file_path)], capture_output=True, timeout=30, check=False)
 
 
 def _ejecutar_py_compile(sandbox_file_path):
     log("   🔬 python3 -m py_compile...")
-    resultado = subprocess.run(  # noqa: S603
-        ["python3", "-m", "py_compile", str(sandbox_file_path)],  # noqa: S607
+    resultado = subprocess.run(
+        ["python3", "-m", "py_compile", str(sandbox_file_path)],
         capture_output=True,
         text=True,
         timeout=30,
@@ -467,8 +467,8 @@ def _actualizar_contadores(chunks_inyectados: int, archivos_procesados: int) -> 
 
 
 def _ejecutar_ruff_check(sandbox_file_path: Path) -> None:
-    subprocess.run(  # noqa: S603
-        ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],  # noqa: S607
+    subprocess.run(
+        ["ruff", "check", "--fix", "--unsafe-fixes", str(sandbox_file_path)],
         capture_output=True,
         timeout=30,
         check=False,
@@ -476,8 +476,8 @@ def _ejecutar_ruff_check(sandbox_file_path: Path) -> None:
 
 
 def _ejecutar_ruff_format(sandbox_file_path: Path) -> None:
-    subprocess.run(  # noqa: S603
-        ["ruff", "format", str(sandbox_file_path)],  # noqa: S607
+    subprocess.run(
+        ["ruff", "format", str(sandbox_file_path)],
         capture_output=True,
         timeout=30,
         check=False,
@@ -512,14 +512,14 @@ def _inyectar_en_repo_real(sandbox_file_path: Path, path: str) -> None:
 
 
 def _revisar_ruff_ultimo(original_path: Path) -> None:
-    subprocess.run(  # noqa: S603
-        ["ruff", "check", "--fix", "--unsafe-fixes", str(original_path)],  # noqa: S607
+    subprocess.run(
+        ["ruff", "check", "--fix", "--unsafe-fixes", str(original_path)],
         capture_output=True,
         timeout=30,
         check=False,
     )
-    subprocess.run(  # noqa: S603
-        ["ruff", "format", str(original_path)],  # noqa: S607
+    subprocess.run(
+        ["ruff", "format", str(original_path)],
         capture_output=True,
         timeout=30,
         check=False,

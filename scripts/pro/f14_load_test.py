@@ -37,10 +37,10 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def gather_environment() -> dict[str, Any]:
-    git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"  # noqa: PLW1510, S607
+    git_hash = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"  # noqa: PLW1510
     git_tag = (
         subprocess.run(  # noqa: PLW1510
-            ["git", "describe", "--tags", "--always"],  # noqa: S607
+            ["git", "describe", "--tags", "--always"],
             capture_output=True,
             text=True,
         ).stdout.strip()
@@ -79,7 +79,7 @@ class SystemMonitor:
         }
         try:
             r = subprocess.run(  # noqa: PLW1510
-                ["docker", "stats", "ura-qdrant", "--no-stream", "--format", "{{.MemUsage}}"],  # noqa: S607
+                ["docker", "stats", "ura-qdrant", "--no-stream", "--format", "{{.MemUsage}}"],
                 capture_output=True,
                 text=True,
                 timeout=5,

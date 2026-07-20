@@ -39,8 +39,8 @@ def load_queries():
 
 def search_collection(qc, texto, collection, limit=10):
     vector = qc.generar_embedding(texto)
-    if qc._cliente:  # noqa: SLF001
-        hits = qc._cliente.query_points(  # noqa: SLF001
+    if qc._cliente:
+        hits = qc._cliente.query_points(
             collection_name=collection,
             query=vector,
             limit=limit,
@@ -84,7 +84,7 @@ def compute_metrics(retrieved_docs, gold_set, gold_relevance, k=10):
     return r1, r5, r10, p5, mrr, ndcg, ap
 
 
-def main() -> int:  # noqa: C901, PLR0912, PLR0915
+def main() -> int:  # noqa: PLR0915
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
 

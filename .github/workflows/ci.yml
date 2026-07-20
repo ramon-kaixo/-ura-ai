@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install mypy httpx pydantic pyyaml orjson
-      - run: mypy motor/platform/ motor/memory/ motor/agents/models.py
+      - run: mypy motor/platform/ motor/memory/ motor/agents/models.py motor/assistant/evaluation.py motor/assistant/preferences.py
 
   test:
     name: Tests (pytest)

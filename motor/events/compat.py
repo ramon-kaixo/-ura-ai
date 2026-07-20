@@ -43,7 +43,7 @@ def check_api_compatibility(
     return True
 
 
-def check_plugin_dependency(  # noqa: PLR0911
+def check_plugin_dependency(
     dep_name: str,
     dep_version_spec: str,
     installed_version: str,

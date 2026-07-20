@@ -59,7 +59,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             {"key": "version", "match": {"value": idea.version}},
         ]
         try:
-            client = await qdrant_async._get_client()  # noqa: SLF001
+            client = await qdrant_async._get_client()
             resp = await client.post(
                 f"/collections/{COLLECTION}/points/search",
                 json={"filter": {"must": must}, "limit": 1, "with_payload": False},
@@ -82,7 +82,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             "payload": idea.to_payload(),
         }
         try:
-            client = await qdrant_async._get_client()  # noqa: SLF001
+            client = await qdrant_async._get_client()
             resp = await client.put(
                 f"/collections/{COLLECTION}/points",
                 json={"points": [punto]},
@@ -118,7 +118,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
             params["offset"] = offset
 
         try:
-            client = await qdrant_async._get_client()  # noqa: SLF001
+            client = await qdrant_async._get_client()
             resp = await client.post(f"/collections/{COLLECTION}/points/scroll", json=params)
             resp.raise_for_status()
             data = resp.json()
@@ -131,7 +131,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
             payload = point.get("payload", {})
             payload["vigente"] = False
             try:
-                client = await qdrant_async._get_client()  # noqa: SLF001
+                client = await qdrant_async._get_client()
                 await client.put(
                     f"/collections/{COLLECTION}/points",
                     json={"points": [{"id": point["id"], "payload": payload}]},
@@ -198,7 +198,7 @@ class MemoryPipelineStore:
         if not puntos:
             return False
         try:
-            client = await self.qdrant._get_client()  # noqa: SLF001
+            client = await self.qdrant._get_client()
             response = await client.put(
                 f"/collections/{coleccion}/points",
                 json={"points": puntos},

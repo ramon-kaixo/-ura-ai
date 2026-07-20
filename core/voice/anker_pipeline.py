@@ -204,7 +204,7 @@ if __name__ == "__main__":
     t = np.linspace(0, 2, int(sr * 2), endpoint=False)
     test_audio = (np.sin(440 * 2 * np.pi * t) * 0.1).astype(np.float32)
 
-    tmp_wav = "/tmp/test_whisper_gx10.wav"  # noqa: S108
+    tmp_wav = "/tmp/test_whisper_gx10.wav"
     import scipy.io.wavfile as wav
 
     wav.write(tmp_wav, sr, test_audio)

@@ -340,12 +340,12 @@ def validate_corpus_indexed(
     return errors
 
 
-def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, PLR0912, PLR0915
+def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: PLR0915
     queries, relevance_map = load_corpus(corpus_dir)
 
     retriever = KERetrieval()
     if dry_run:
-        retriever._client = None  # force mock  # noqa: SLF001
+        retriever._client = None  # force mock
 
     if not dry_run and retriever.available:
         validation_errors = validate_corpus_indexed(relevance_map, retriever)
@@ -507,7 +507,7 @@ def save_results(r: BenchmarkResults, path: Path) -> None:
     log.info("Resultados guardados: %s", path)
 
 
-def validate_corpus(corpus_dir: Path) -> list[str]:  # noqa: C901
+def validate_corpus(corpus_dir: Path) -> list[str]:
     errors: list[str] = []
     queries, relevance_map = load_corpus(corpus_dir)
 
@@ -559,7 +559,7 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
 
     try:
         git_hash = subprocess.run(  # noqa: PLW1510
-            ["git", "rev-parse", "HEAD"],  # noqa: S607
+            ["git", "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -568,7 +568,7 @@ def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
         git_hash = "unknown"
     try:
         git_tag = subprocess.run(  # noqa: PLW1510
-            ["git", "describe", "--tags", "--always"],  # noqa: S607
+            ["git", "describe", "--tags", "--always"],
             capture_output=True,
             text=True,
             timeout=5,

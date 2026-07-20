@@ -189,7 +189,7 @@ def run_structural_checks() -> int:
 class Benchmark:
     def __init__(self) -> None:
         self.results: dict[str, float] = {}
-        self.db_dir = Path("/tmp/bench_fase7")  # noqa: S108
+        self.db_dir = Path("/tmp/bench_fase7")
         self.db_dir.mkdir(parents=True, exist_ok=True)
         self._cleanup()
 
@@ -344,7 +344,7 @@ class Benchmark:
         f"  (target: <{target * 1000:.0f}ms)" if target else ""
         return elapsed
 
-    def run(self) -> bool:  # noqa: C901
+    def run(self) -> bool:
         all_pass = True
 
         # ── 1. FTS5 search (1 asset) ──────────────────────────────────────

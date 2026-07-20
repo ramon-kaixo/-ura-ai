@@ -79,7 +79,7 @@ def modo_delta() -> int:
 
         ahorro = round(sin_cambio / max(total, 1) * 100, 1)
         log(
-            f"Δ Delta: {total} activos, {cambiados} modificados, {nuevos} nuevos, {sin_cambio} sin cambios ({ahorro}% ahorro)",  # noqa: E501
+            f"Δ Delta: {total} activos, {cambiados} modificados, {nuevos} nuevos, {sin_cambio} sin cambios ({ahorro}% ahorro)",
         )
     else:
         log("Δ Primer ciclo — sin snapshot previo, procesando todo")
@@ -88,7 +88,7 @@ def modo_delta() -> int:
     t0 = time.time()
 
     result = subprocess.run(
-        ["bash", "scripts/pro/launch_refactor_gx10.sh"],  # noqa: S607
+        ["bash", "scripts/pro/launch_refactor_gx10.sh"],
         capture_output=True,
         text=True,
         timeout=86400,
@@ -134,7 +134,7 @@ def helper1() -> None:
     """Helper function to clean delta snapshots."""
     delta_dir = Path("NERVIOSO") / "delta_snapshots"
     if delta_dir.exists():
-        subprocess.run(["rm", "-rf", str(delta_dir)], check=False)  # noqa: S603, S607
+        subprocess.run(["rm", "-rf", str(delta_dir)], check=False)
 
 
 def helper2() -> None:
@@ -149,7 +149,7 @@ def helper2() -> None:
 
 def helper3(label: str) -> None:
     """Helper function to create a snapshot of F821 errors."""
-    subprocess.run(  # noqa: S603
+    subprocess.run(
         [sys.executable, "scripts/pro/f821_watch.py", "snapshot", "--label", label],
         capture_output=True,
         timeout=60,
@@ -159,7 +159,7 @@ def helper3(label: str) -> None:
 
 def helper4(target: str) -> str:
     """Helper function to compare the F821 errors with a target."""
-    cmp = subprocess.run(  # noqa: S603
+    cmp = subprocess.run(
         [sys.executable, "scripts/pro/f821_watch.py", "compare", "--target", target],
         capture_output=True,
         text=True,
@@ -188,7 +188,7 @@ def modo_profundo() -> int:
     log("🔧 Rebuilding nervous system from scratch...")
 
     ruff = subprocess.run(
-        ["ruff", "check", "--select", "F821,F841,E402", "--output-format", "concise", "."],  # noqa: S607
+        ["ruff", "check", "--select", "F821,F841,E402", "--output-format", "concise", "."],
         capture_output=True,
         text=True,
         timeout=300,
@@ -204,7 +204,7 @@ def modo_profundo() -> int:
     t0 = time.time()
 
     result = subprocess.run(
-        ["bash", "scripts/pro/launch_refactor_gx10.sh"],  # noqa: S607
+        ["bash", "scripts/pro/launch_refactor_gx10.sh"],
         capture_output=True,
         text=True,
         timeout=86400,

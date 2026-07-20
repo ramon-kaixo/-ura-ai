@@ -111,7 +111,7 @@ def scan_project() -> None:
             results[p] = {"status": "error"}
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Auto-Reglas de reparación")

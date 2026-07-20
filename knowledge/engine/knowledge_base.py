@@ -107,7 +107,7 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:  # noqa: C901, PLR0912, PLR0915
+def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:  # noqa: PLR0915
     """Genera la documentación MkDocs desde el grafo de conocimiento.
 
     Escritura atómica: primero escribe en un directorio temporal,

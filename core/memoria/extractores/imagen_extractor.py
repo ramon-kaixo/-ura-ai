@@ -14,11 +14,11 @@ OLLAMA = "http://127.0.0.1:11434/api/chat"
 VISION_MODEL = "llama3.2-vision:11b"
 
 
-def _exif_pillow(ruta: Path) -> dict:  # noqa: C901, PLR0912
+def _exif_pillow(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         with Image.open(ruta) as img:
-            exif_data = img._getexif()  # noqa: SLF001
+            exif_data = img._getexif()
             if not exif_data:
                 return resultado
 
@@ -55,8 +55,8 @@ def _exif_pillow(ruta: Path) -> dict:  # noqa: C901, PLR0912
 def _exif_exiftool(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
-        out = subprocess.run(  # noqa: S603  -- ruta desde caller interno
-            [  # noqa: S607  -- ruta desde caller interno
+        out = subprocess.run(
+            [
                 "exiftool",
                 "-json",
                 "-DateTimeOriginal",
@@ -123,7 +123,7 @@ def _describir_imagen(ruta: Path) -> dict:
                 "messages": [
                     {
                         "role": "user",
-                        "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",  # noqa: E501
+                        "content": "Describe esta imagen en espanol en 2 frases: que muestra, colores, estilo y atmosfera.",
                         "images": [img_b64],
                     },
                 ],
@@ -147,7 +147,7 @@ def _extraer_iptc(ruta: Path) -> dict:
         from iptcinfo3 import IPTCInfo
 
         info = IPTCInfo(str(ruta))
-        data = info._data if hasattr(info, "_data") else {}  # noqa: SLF001
+        data = info._data if hasattr(info, "_data") else {}
 
         def _bytes(val):
             return val.decode() if isinstance(val, bytes) else str(val) if val else ""

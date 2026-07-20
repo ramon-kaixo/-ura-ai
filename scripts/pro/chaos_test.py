@@ -140,8 +140,8 @@ def test_restart_limits(dry_run: bool = False) -> None:
 
     servicios = ["ura-ejecutor", "model-router", "ura-openclaw", "ura-mochila", "ura-voice", "opencode"]
     for svc in servicios:
-        r = subprocess.run(  # noqa: S603
-            ["systemctl", "show", "-p", "StartLimitBurst", svc],  # noqa: S607
+        r = subprocess.run(
+            ["systemctl", "show", "-p", "StartLimitBurst", svc],
             capture_output=True,
             text=True,
             timeout=5,
@@ -258,7 +258,7 @@ def test_timestamps_utc(dry_run: bool = False) -> None:
     log.info("\n=== Test 7: Timestamps UTC (sin naive) ===")
 
     r = subprocess.run(
-        ["grep", "-rn", "datetime.now().isoformat()", "--include=*.py", "core/", "motor/", "scripts/pro/", "monitor/"],  # noqa: S607
+        ["grep", "-rn", "datetime.now().isoformat()", "--include=*.py", "core/", "motor/", "scripts/pro/", "monitor/"],
         capture_output=True,
         text=True,
         timeout=15,
@@ -287,7 +287,7 @@ def test_secrets_visible(dry_run: bool = False) -> None:
     log.info("\n=== Test 8: Secretos visibles en código ===")
 
     r = subprocess.run(
-        ["grep", "-rn", "sk-[A-Za-z0-9]\\{20,\\}", "--include=*.py", "core/", "motor/", "scripts/pro/"],  # noqa: S607
+        ["grep", "-rn", "sk-[A-Za-z0-9]\\{20,\\}", "--include=*.py", "core/", "motor/", "scripts/pro/"],
         capture_output=True,
         text=True,
         timeout=15,
@@ -312,8 +312,8 @@ def test_log_path_consistency(dry_run: bool = False) -> None:
     """Verifica que el writer y reader de NDJSON apunten al mismo sitio."""
     log.info("\n=== Test 9: Consistencia de ruta NDJSON ===")
 
-    writer_dir = "/tmp/ura_search_logs"  # noqa: S108
-    reader_dir = "/tmp/ura_search_logs"  # después del parche 0.6  # noqa: S108
+    writer_dir = "/tmp/ura_search_logs"
+    reader_dir = "/tmp/ura_search_logs"  # después del parche 0.6
 
     if not Path(writer_dir).exists():
         if dry_run:
@@ -350,7 +350,7 @@ def test_asyncio_bridge(dry_run: bool = False) -> None:
 # ============================================================
 # MAIN
 # ============================================================
-async def main() -> int:  # noqa: C901, PLR0912
+async def main() -> int:
     parser = argparse.ArgumentParser(description="URA Chaos Engineering Test Suite")
     parser.add_argument("test", nargs="?", help="Nombre del test a ejecutar")
     parser.add_argument("--list", action="store_true", help="Listar tests disponibles")

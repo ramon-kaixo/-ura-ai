@@ -6,10 +6,12 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
+
 
 class ConversationSearch:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/search.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("search")
         self._lock = threading.Lock()
         self._init_db()
 
@@ -52,7 +54,7 @@ class ConversationSearch:
         if not tokens:
             return []
         sql = (
-            "SELECT conversation_id, message_role, message_preview, timestamp, COUNT(*) as match_count "
+            "SELECT conversation_id, message_role, message_preview, timestamp, COUNT(*) as match_count "  # nosec
             "FROM conversation_tokens WHERE token IN (" + ",".join("?" for _ in tokens) + ") "
             "GROUP BY conversation_id, message_preview ORDER BY match_count DESC LIMIT ?"
         )

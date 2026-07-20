@@ -88,7 +88,7 @@ def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     import shutil
 
     git_path = shutil.which("git") or "/usr/bin/git"
-    return subprocess.run(  # noqa: S603  -- git wrapper interno, args desde callers del módulo
+    return subprocess.run(
         [git_path, *args],
         capture_output=True,
         text=True,
@@ -240,7 +240,7 @@ def archive_source(  # noqa: PLR0915
     return manifest
 
 
-def verify_archive(  # noqa: PLR0911
+def verify_archive(
     manifest_path: str | Path,
     archive_dir: Path | None = None,
 ) -> bool:
@@ -352,8 +352,8 @@ def restore_source(
 
     # Clonar desde bundle
     dest_dir.mkdir(parents=True, exist_ok=True)
-    result = subprocess.run(  # noqa: S603
-        ["git", "clone", str(bundle_path), str(dest_dir)],  # noqa: S607  -- paths validados con _resolve_within
+    result = subprocess.run(
+        ["git", "clone", str(bundle_path), str(dest_dir)],
         capture_output=True,
         text=True,
         check=False,

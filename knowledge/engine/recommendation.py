@@ -48,7 +48,7 @@ class RecommendationValidator:
         result = validator.validate(recommendation, all_node_ids, existing_paths)
     """
 
-    def validate(  # noqa: PLR0911
+    def validate(
         self,
         recommendation: Recommendation,
         all_node_ids: set[str],

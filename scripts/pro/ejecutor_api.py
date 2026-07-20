@@ -85,7 +85,7 @@ def ejecutar_tarea(task_desc, target_files):
     def worker() -> None:
         try:
             cmd = ["opencode", "run-context"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)  # noqa: S603
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
             output = result.stdout[:1000] if result.stdout else result.stderr[:500]
             ctx = leer_contexto()
             ctx["opencode_agent"]["estado"] = "completado"

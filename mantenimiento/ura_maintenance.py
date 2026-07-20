@@ -47,7 +47,7 @@ DEFAULT_CONFIG = {
         "cache": 30,  # Mantener cache 30 días
         "docker_build": 7,  # Mantener build cache 7 días
     },
-    "allowed_temp_dirs": ["/tmp", "/var/tmp"],  # noqa: S108
+    "allowed_temp_dirs": ["/tmp", "/var/tmp"],
     "allowed_log_dirs": ["/var/log", "/opt/ura/logs"],
 }
 
@@ -80,7 +80,7 @@ try:
         raise PermissionError(msg)
 except (PermissionError, OSError):
     # Fallback a directorio temporal
-    LOG_DIR = Path("/tmp/ura_maintenance_logs")  # noqa: S108
+    LOG_DIR = Path("/tmp/ura_maintenance_logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.warning(f"Using fallback log directory: {LOG_DIR}")  # noqa: LOG015
 
@@ -240,13 +240,13 @@ class LinuxCleaner(SystemCleaner):
 
             # Verificar si docker está instalado
             try:
-                subprocess.run(["docker", "--version"], capture_output=True, check=True)  # noqa: S607
+                subprocess.run(["docker", "--version"], capture_output=True, check=True)
             except (subprocess.CalledProcessError, FileNotFoundError):
                 logger.info("Docker no instalado, saltando")
                 return 0
 
             result = subprocess.run(
-                ["docker", "system", "prune", "-a", "--volumes", "-f"],  # noqa: S607
+                ["docker", "system", "prune", "-a", "--volumes", "-f"],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -284,12 +284,12 @@ class LinuxCleaner(SystemCleaner):
 
             # Usar -y para evitar prompts (ya incluye non-interactive)
             subprocess.run(
-                ["sudo", "apt-get", "autoremove", "-y"],  # noqa: S607
+                ["sudo", "apt-get", "autoremove", "-y"],
                 check=True,
                 timeout=300,
             )
             subprocess.run(
-                ["sudo", "apt-get", "clean"],  # noqa: S607
+                ["sudo", "apt-get", "clean"],
                 check=True,
                 timeout=300,
             )
@@ -326,7 +326,7 @@ class LinuxCleaner(SystemCleaner):
                 before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
             result = subprocess.run(
-                ["pip3", "cache", "purge"],  # noqa: S607
+                ["pip3", "cache", "purge"],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -423,7 +423,7 @@ class MacCleaner(SystemCleaner):
                 return 0
 
             result = subprocess.run(
-                ["docker", "system", "prune", "-a", "--volumes", "-f"],  # noqa: S607
+                ["docker", "system", "prune", "-a", "--volumes", "-f"],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -456,7 +456,7 @@ class MacCleaner(SystemCleaner):
                 return 0
 
             result = subprocess.run(
-                ["brew", "cleanup", "--prune=all"],  # noqa: S607
+                ["brew", "cleanup", "--prune=all"],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -494,7 +494,7 @@ class MacCleaner(SystemCleaner):
                 before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
             result = subprocess.run(
-                ["pip3", "cache", "purge"],  # noqa: S607
+                ["pip3", "cache", "purge"],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -606,7 +606,7 @@ class MaintenanceOrchestrator:
         # Estado inicial
         initial_usage = self.cleaner.get_disk_usage()
         logger.info(
-            f"Espacio inicial: {initial_usage.get('used', 0):.2f}GB / {initial_usage.get('total', 0):.2f}GB ({initial_usage.get('percent', 0):.1f}%)",  # noqa: E501
+            f"Espacio inicial: {initial_usage.get('used', 0):.2f}GB / {initial_usage.get('total', 0):.2f}GB ({initial_usage.get('percent', 0):.1f}%)",
         )
 
         # Ejecutar limpiezas según sistema
@@ -626,7 +626,7 @@ class MaintenanceOrchestrator:
         # Estado final
         final_usage = self.cleaner.get_disk_usage()
         logger.info(
-            f"Espacio final: {final_usage.get('used', 0):.2f}GB / {final_usage.get('total', 0):.2f}GB ({final_usage.get('percent', 0):.1f}%)",  # noqa: E501
+            f"Espacio final: {final_usage.get('used', 0):.2f}GB / {final_usage.get('total', 0):.2f}GB ({final_usage.get('percent', 0):.1f}%)",
         )
 
         # Resultados

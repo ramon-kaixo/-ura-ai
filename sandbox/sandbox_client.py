@@ -11,7 +11,7 @@ except ImportError:
     RefactorRequiredError = type("RefactorRequiredError", (Exception,), {})
 
 
-def run_validation(temp_path: str, original_name: str) -> dict:  # noqa: C901, PLR0911, PLR0912
+def run_validation(temp_path: str, original_name: str) -> dict:
     ext = Path(original_name).suffix.lower()
     result = {"file": original_name, "passed": False, "errors": [], "ext": ext}
 
@@ -45,7 +45,7 @@ def run_validation(temp_path: str, original_name: str) -> dict:  # noqa: C901, P
 
         # Import test in isolated subprocess
         try:
-            res = subprocess.run(  # noqa: S603
+            res = subprocess.run(
                 [sys.executable, "-c", f"import ast; ast.parse(open('{temp_path}').read())"],
                 capture_output=True,
                 text=True,
@@ -60,8 +60,8 @@ def run_validation(temp_path: str, original_name: str) -> dict:  # noqa: C901, P
             return result
 
     elif ext == ".sh":
-        res = subprocess.run(  # noqa: S603
-            ["bash", "-n", temp_path],  # noqa: S607
+        res = subprocess.run(
+            ["bash", "-n", temp_path],
             capture_output=True,
             text=True,
             timeout=5,

@@ -20,7 +20,7 @@ HARDENING_CHECKS = [
 
 def get_all_services() -> list[str]:
     result = subprocess.run(
-        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],  # noqa: S607
+        ["systemctl", "list-units", "--type=service", "--all", "--no-legend"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -35,8 +35,8 @@ def get_all_services() -> list[str]:
 
 
 def check_hardening(service: str) -> dict[str, str]:
-    result = subprocess.run(  # noqa: S603
-        ["systemctl", "show", service],  # noqa: S607
+    result = subprocess.run(
+        ["systemctl", "show", service],
         capture_output=True,
         text=True,
         timeout=10,

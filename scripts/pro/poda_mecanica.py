@@ -47,7 +47,7 @@ def buscar_ruff() -> str | None:
     return None
 
 
-def eliminar_comentarios_no_docstring(codigo: str) -> tuple[str, int]:  # noqa: C901
+def eliminar_comentarios_no_docstring(codigo: str) -> tuple[str, int]:
     """Elimina comentarios de línea (#) que NO sean parte de docstrings.
 
     Returns:
@@ -144,7 +144,7 @@ def poda_mecanica(ruta: Path) -> tuple[str, int, int, int]:
             with open(tmp_path, "w") as f:  # noqa: PTH123
                 f.write(codigo_original)
 
-            subprocess.run(  # noqa: S603
+            subprocess.run(
                 [ruff_bin, "check", "--fix", "--select", "F841,F401,F811", tmp_path],
                 capture_output=True,
                 timeout=15,
@@ -165,7 +165,7 @@ def poda_mecanica(ruta: Path) -> tuple[str, int, int, int]:
     return codigo_podado, chars_original, chars_podado, lineas_eliminadas
 
 
-def anclaje_cromatico(codigo: str) -> dict:  # noqa: C901, PLR0912
+def anclaje_cromatico(codigo: str) -> dict:
     """Genera mapa cromático 🔴🟢 del código limpio.
 
     🔴 Roja: end_line de cada instrucción lógica (función, clase, asignación)

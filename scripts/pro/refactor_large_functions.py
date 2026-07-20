@@ -176,7 +176,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
     except SyntaxError as e:
         log(f"  ❌ Error sintaxis post-reemplazo: {e}")
         log("  🔄 Reintentando con reparación...")
-        fix_prompt = f"El código tiene un error de sintaxis: {e}. Corrígelo SIN cambiar la lógica. Código:\n```python\n{new_code}\n```\nDevuelve SOLO el código corregido."  # noqa: E501
+        fix_prompt = f"El código tiene un error de sintaxis: {e}. Corrígelo SIN cambiar la lógica. Código:\n```python\n{new_code}\n```\nDevuelve SOLO el código corregido."
         fix_resp = llm(fix_prompt)
         fix_code = clean_llm_response(fix_resp)
         if fix_code:
@@ -190,13 +190,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
                     if not backup.exists():
                         shutil.copy2(path, backup)
                     path.write_text(fix_content, encoding="utf-8")
-                    subprocess.run(  # noqa: S603
-                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
+                    subprocess.run(
+                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
                         capture_output=True,
                         timeout=30,
                         check=False,
                     )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
+                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
                 log("  ✅ Reparado tras reintento")
                 return True
             except SyntaxError:
@@ -212,13 +212,13 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
 
     path.write_text(new_content, encoding="utf-8")
 
-    subprocess.run(  # noqa: S603
-        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],  # noqa: S607
+    subprocess.run(
+        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
         capture_output=True,
         timeout=30,
         check=False,
     )
-    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)  # noqa: S603, S607
+    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
     return True
 
 

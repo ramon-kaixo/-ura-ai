@@ -5,7 +5,7 @@ from datetime import UTC
 from pathlib import Path
 
 logger = logging.getLogger("ura.state")
-STATE_FILE = "/tmp/ura_state.json"  # noqa: S108
+STATE_FILE = "/tmp/ura_state.json"
 
 
 def save_checkpoint(task_id: str, target_file: str, content: str, attempt: int = 1) -> None:

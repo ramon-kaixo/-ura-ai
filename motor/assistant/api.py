@@ -339,7 +339,7 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
     prompt = system_prompt
     if analysis.get("needs_web_search"):
         try:
-            web_results = await engine._web.search(resolved)  # noqa: SLF001
+            web_results = await engine._web.search(resolved)
             if web_results:
                 prompt += (
                     f"\n[Web: {web_results[:800]!s}]"
@@ -348,8 +348,8 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
         except Exception:  # noqa: S110
             pass
     try:
-        if engine._rag.is_available():  # noqa: SLF001
-            rag_ctx = await engine._rag.retrieve(resolved)  # noqa: SLF001
+        if engine._rag.is_available():
+            rag_ctx = await engine._rag.retrieve(resolved)
             if rag_ctx:
                 prompt += f"\n[Contexto: {rag_ctx[:800]}]"
     except Exception:  # noqa: S110
@@ -405,7 +405,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         async def event_stream():
             full_reply = ""
             try:
-                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):  # noqa: E501
+                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt):
                     yield StreamEvent("token", {"text": token}).to_sse()
                     full_reply = token
             except Exception as exc:

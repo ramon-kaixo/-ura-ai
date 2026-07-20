@@ -46,7 +46,7 @@ def _parse_results(output: str) -> dict[str, float]:
 
 
 def run_benchmark() -> dict[str, float]:
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(_BENCHMARK_FILE), "--verbose"],
         capture_output=True,
         text=True,

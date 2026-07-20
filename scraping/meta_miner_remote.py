@@ -95,7 +95,7 @@ def scan(data_root: str) -> list[dict]:
         rel = str(fpath.relative_to(docs_dir))
         try:
             text = fpath.read_text(encoding="utf-8", errors="replace")
-        except Exception:  # noqa: S112
+        except Exception:
             continue
 
         items.append(
@@ -119,7 +119,7 @@ def main() -> None:
 
     data_root = sys.argv[1]
     items = scan(data_root)
-    tmp_path = "/tmp/metadata_raw.json"  # noqa: S108
+    tmp_path = "/tmp/metadata_raw.json"
     with open(tmp_path, "w") as f:  # noqa: PTH123
         json.dump(items, f, indent=2, ensure_ascii=False)
 

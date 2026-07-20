@@ -1,7 +1,7 @@
 """URA Assistant — servidor conversacional FastAPI.
 
 Uso:
-  URA_API_KEY=mi-clave-secreta uvicorn motor.assistant.main:app --host 0.0.0.0 --port 8000
+  URA_API_KEY=mi-clave-secreta uvicorn motor.assistant.main:app --host 127.0.0.1 --port 8000
 
 Variables de entorno:
   URA_API_KEY       - API Key para autenticación (opcional, si no se pone no hay auth)
@@ -10,7 +10,7 @@ Variables de entorno:
   URA_LLM_TIMEOUT   - Timeout en segundos para llamadas LLM (defecto: 30)
   URA_LLM_MODEL_FAST- Modelo rápido (defecto: qwen2.5:7b)
   URA_LLM_MODEL_DEEP- Modelo profundo (defecto: qwen3:32b-q8_0)
-  URA_HOST          - Host de escucha (defecto: 0.0.0.0)
+  URA_HOST          - Host de escucha (defecto: 127.0.0.1)
   URA_PORT          - Puerto de escucha (defecto: 8000)
   URA_MAX_MESSAGE_LENGTH - Longitud máxima del mensaje (defecto: 100000)
   URA_RATE_LIMIT    - Máximo de requests por minuto (defecto: 60)

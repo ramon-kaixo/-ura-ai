@@ -110,7 +110,7 @@ def main() -> None:  # noqa: PLR0915
     ctx.statistics["_memory_instance"] = memory
 
     t0 = time.perf_counter()
-    for stage in pipeline._stages:  # noqa: SLF001
+    for stage in pipeline._stages:
         ctx = stage.execute(ctx)
     time.perf_counter() - t0
 

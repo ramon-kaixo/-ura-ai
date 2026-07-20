@@ -38,9 +38,9 @@ ENV = {
     "hostname": platform.node(),
     "platform": platform.platform(),
     "python": platform.python_version(),
-    "commit_sha": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510, S607
+    "commit_sha": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510
     or "unknown",
-    "version": subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510, S607
+    "version": subprocess.run(["git", "describe", "--tags", "--always"], capture_output=True, text=True).stdout.strip()  # noqa: PLW1510
     or "unknown",
     "cpu_cores": os.cpu_count() or 0,
 }
@@ -51,7 +51,7 @@ ENV = {
 
 def qdrant_running() -> bool:
     r = subprocess.run(  # noqa: PLW1510
-        ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],  # noqa: S607
+        ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -62,7 +62,7 @@ def qdrant_running() -> bool:
 def ollama_running() -> bool:
     try:
         r = subprocess.run(  # noqa: PLW1510
-            ["systemctl", "is-active", "ollama"],  # noqa: S607
+            ["systemctl", "is-active", "ollama"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -73,14 +73,14 @@ def ollama_running() -> bool:
 
 
 def docker_exec(cmd: list[str], timeout: int = 30) -> tuple[int, str, str]:
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510, S603
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)  # noqa: PLW1510
     return r.returncode, r.stdout, r.stderr
 
 
 def qdrant_health() -> bool:
     try:
         r = subprocess.run(  # noqa: PLW1510
-            ["curl", "-sf", "http://localhost:6333/health"],  # noqa: S607
+            ["curl", "-sf", "http://localhost:6333/health"],
             capture_output=True,
             timeout=5,
         )
@@ -92,7 +92,7 @@ def qdrant_health() -> bool:
 def ollama_health() -> bool:
     try:
         r = subprocess.run(  # noqa: PLW1510
-            ["curl", "-sf", "http://localhost:11434/api/tags"],  # noqa: S607
+            ["curl", "-sf", "http://localhost:11434/api/tags"],
             capture_output=True,
             timeout=5,
         )

@@ -100,8 +100,8 @@ def fix_magic_values(path: Path) -> int:
 
 def run_ruff_fix(path: Path) -> int:
     """Ejecuta ruff --fix en un archivo."""
-    subprocess.run(  # noqa: PLW1510, S603
-        ["ruff", "check", str(path), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
+    subprocess.run(  # noqa: PLW1510
+        ["ruff", "check", str(path), "--fix", "--unsafe-fixes", "--silent"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -112,8 +112,8 @@ def run_ruff_fix(path: Path) -> int:
 def main() -> None:
     check_only = "--check-only" in sys.argv
 
-    total_before = subprocess.run(  # noqa: S603
-        ["ruff", "check", *DIRS],  # noqa: S607
+    total_before = subprocess.run(
+        ["ruff", "check", *DIRS],
         capture_output=True,
         text=True,
         timeout=60,
@@ -144,13 +144,13 @@ def main() -> None:
     # Run ruff --fix after our fixes to catch anything we missed
     if not check_only:
         for dir_name in DIRS:
-            subprocess.run(  # noqa: PLW1510, S603
-                ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],  # noqa: S607
+            subprocess.run(  # noqa: PLW1510
+                ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],
                 timeout=120,
             )
 
-    after = subprocess.run(  # noqa: S603
-        ["ruff", "check", *DIRS],  # noqa: S607
+    after = subprocess.run(
+        ["ruff", "check", *DIRS],
         capture_output=True,
         text=True,
         timeout=60,

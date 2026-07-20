@@ -66,7 +66,7 @@ class PluginMeta:
             return PluginMeta(name=path.stem)
 
 
-def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:  # noqa: C901
+def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
     """Convierte un AST Dict literal a dict Python."""
     result: dict[str, Any] = {}
     for key_node, value_node in zip(d.keys, d.values, strict=False):

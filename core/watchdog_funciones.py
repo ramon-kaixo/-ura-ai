@@ -118,7 +118,7 @@ def _timeout_handler(signum, frame) -> Never:
     raise _TimeoutError(msg)
 
 
-def watchdog(  # noqa: C901
+def watchdog(
     timeout: float = 30.0,
     on_timeout: str = "log",
     extra_context: dict | None = None,
@@ -136,7 +136,7 @@ def watchdog(  # noqa: C901
 
     """
 
-    def decorator(func):  # noqa: C901
+    def decorator(func):
         @functools.wraps(func)
         def wrapper_sync(*args, **kwargs):
             # Señal solo funciona en el hilo principal

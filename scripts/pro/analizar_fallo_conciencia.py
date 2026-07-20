@@ -69,7 +69,7 @@ def agregar_sugerencia(problema, solucion) -> None:
 
 def notificar(mensaje) -> None:
     if NOTIFICAR.exists():
-        subprocess.run([str(NOTIFICAR), mensaje], check=False)  # noqa: S603
+        subprocess.run([str(NOTIFICAR), mensaje], check=False)
 
 
 def diagnosticar_y_corregir() -> bool:
@@ -78,7 +78,7 @@ def diagnosticar_y_corregir() -> bool:
 
     # 1. Ejecutar test
     log("Ejecutando test de conciencia...")
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(REPO / "scripts/test_conciencia.py")],
         capture_output=True,
         text=True,
@@ -118,7 +118,7 @@ def diagnosticar_y_corregir() -> bool:
         if info["script"] and Path(info["script"]).exists():
             log(f"Ejecutando script corrector para '{fallo}': {info['script']}")
             try:
-                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30, check=False)  # noqa: S603, S607
+                subprocess.run(["bash", info["script"]], capture_output=True, text=True, timeout=30, check=False)
                 log(f"Correccion aplicada para '{fallo}'")
             except Exception as e:
                 log(f"Error ejecutando correccion '{fallo}': {e}")

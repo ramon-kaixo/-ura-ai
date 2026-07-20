@@ -62,8 +62,8 @@ def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
 def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
-        result = subprocess.run(  # noqa: PLW1510, S603
-            [  # noqa: S607
+        result = subprocess.run(  # noqa: PLW1510
+            [
                 "ffprobe",
                 "-v",
                 "quiet",

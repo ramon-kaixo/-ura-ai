@@ -2,7 +2,7 @@ import fcntl
 import os
 from pathlib import Path
 
-LOCK_PATH = "/tmp/ura_debate.lock"  # noqa: S108
+LOCK_PATH = "/tmp/ura_debate.lock"
 
 
 class DebateLock:

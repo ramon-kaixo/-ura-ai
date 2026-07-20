@@ -32,12 +32,12 @@ def is_alive() -> bool:
 def restart() -> bool:
     """Kill existing uvicorn processes and start fresh."""
     subprocess.run(
-        ["pkill", "-f", "uvicorn proxy_contraste"],  # noqa: S607
+        ["pkill", "-f", "uvicorn proxy_contraste"],
         capture_output=True,
         check=False,
     )
     time.sleep(2)
-    proc = subprocess.Popen(  # noqa: S603
+    proc = subprocess.Popen(
         [
             UVICORN_BIN,
             "proxy_contraste:app",
@@ -49,7 +49,7 @@ def restart() -> bool:
             "1",
         ],
         cwd=WORKDIR,
-        stdout=open("/tmp/ura-contraste.log", "a"),  # noqa: PTH123, S108, SIM115
+        stdout=open("/tmp/ura-contraste.log", "a"),  # noqa: PTH123, SIM115
         stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
         start_new_session=True,

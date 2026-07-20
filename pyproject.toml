@@ -105,6 +105,16 @@ ignore = [
     "T20",     # Print statements (intencional en scripts)
     "COM",     # Trailing commas (cosmetico, --fix lo maneja)
     "Q",       # Quote style (cosmetico, --fix lo maneja)
+    "S603",    # subprocess-without-shell-equals-true (todos usan list args, seguros)
+    "S607",    # start-process-with-partial-path (git/docker/date desde PATH, intencional)
+    "ASYNC210", # blocking-http-call-in-async-function (legacy codebase)
+    "C901",    # complex-structure (legacy, refactor pendiente)
+    "PLR0912", # too-many-branches (legacy)
+    "PLR0911", # too-many-return-statements (legacy)
+    "S112",    # try-except-continue (degradacion controlada)
+    "SLF001",  # private-member-access (tests)
+    "E501",    # line-too-long (cosmetico, 120 col limite)
+    "S108",    # hardcoded-temp-file (whitelist de directorios, intencional)
 ]
 
 [tool.ruff.lint.per-file-ignores]

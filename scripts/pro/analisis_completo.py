@@ -64,18 +64,18 @@ def llm(prompt, model="auto"):
 def recopilar_estado():
     estado = {}
     try:
-        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5, check=False)  # noqa: S607
+        r = subprocess.run(["uptime"], capture_output=True, text=True, timeout=5, check=False)
         estado["mac_uptime"] = r.stdout.strip()
     except Exception:
         estado["mac_uptime"] = "error"
     try:
-        r = subprocess.run(  # noqa: S603
-            [  # noqa: S607
+        r = subprocess.run(
+            [
                 "ssh",
                 "-o",
                 "ConnectTimeout=5",
                 os.environ.get("ASUS_SSH", "ramon@10.164.1.99"),
-                "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router",  # noqa: E501
+                "uptime && free -h | head -2 && docker ps --format '{{.Names}}: {{.Status}}' && systemctl is-active ollama model-router",
             ],
             capture_output=True,
             text=True,
@@ -87,7 +87,7 @@ def recopilar_estado():
         estado["gx10"] = "no alcanzable"
     try:
         r = subprocess.run(
-            ["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],  # noqa: S607
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:9091/"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -98,7 +98,7 @@ def recopilar_estado():
         estado["mcp"] = "no responde"
     try:
         r = subprocess.run(
-            ["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],  # noqa: S607
+            ["curl", "-s", "-m", "3", "http://127.0.0.1:18789/"],
             capture_output=True,
             text=True,
             timeout=5,

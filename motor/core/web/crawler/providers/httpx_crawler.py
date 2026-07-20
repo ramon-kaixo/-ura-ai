@@ -156,7 +156,7 @@ class HttpCrawler(Crawler):
         except Exception:
             return doc.content.decode("utf-8", errors="replace")
 
-    def fetch_raw(  # noqa: C901
+    def fetch_raw(
         self,
         url: str,
         timeout: int | None = None,

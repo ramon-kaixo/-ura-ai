@@ -148,15 +148,15 @@ class PluginRegistryV2:
         from motor.plugin.registry import PluginRegistry
 
         legacy = PluginRegistry()
-        legacy._entries = {}  # noqa: SLF001  -- puente de compatibilidad hacia PluginRegistry legacy
-        legacy._dm = self._dm  # noqa: SLF001  -- puente de compatibilidad hacia PluginRegistry legacy
+        legacy._entries = {}
+        legacy._dm = self._dm
         legacy.discover([str(entry.path)])
         plugin = legacy.get(entry.legacy_meta.name if entry.legacy_meta else "")
         if plugin is not None:
             self._instances[entry.legacy_meta.name] = plugin
         return plugin
 
-    def _load_v2(self, entry: PluginEntryV2) -> PluginBase | None:  # noqa: C901
+    def _load_v2(self, entry: PluginEntryV2) -> PluginBase | None:
         manifest = entry.manifest
         name = manifest.name
 
@@ -352,7 +352,7 @@ class PluginRegistryV2:
 
     # ── Resolución de dependencias ──────────────────────────────────────────
 
-    def _resolve_dependencies(self, plugin_name: str) -> list[str]:  # noqa: C901
+    def _resolve_dependencies(self, plugin_name: str) -> list[str]:
         manifest = self._entries[plugin_name].manifest
         if manifest is None:
             return [plugin_name]

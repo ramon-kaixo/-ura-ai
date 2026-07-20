@@ -15,7 +15,7 @@ class AssistantConfig:
         self.llm_model_deep = os.environ.get("URA_LLM_MODEL_DEEP", "qwen3:32b-q8_0")
         self.max_message_length = int(os.environ.get("URA_MAX_MESSAGE_LENGTH", "100000"))
         self.rate_limit = int(os.environ.get("URA_RATE_LIMIT", "60"))
-        self.host = os.environ.get("URA_HOST", "0.0.0.0")  # noqa: S104
+        self.host = os.environ.get("URA_HOST", "127.0.0.1")
         self.port = int(os.environ.get("URA_PORT", "8000"))
 
     @property

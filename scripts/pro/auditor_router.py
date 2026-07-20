@@ -42,7 +42,7 @@ PUERTOS_HETZNER = [
 def tailscale_status() -> dict:
     """Obtiene estado de Tailscale en JSON."""
     try:
-        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=10, check=False)  # noqa: S607
+        r = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=10, check=False)
         return json.loads(r.stdout) if r.returncode == 0 else {}
     except Exception:
         return {}
@@ -111,7 +111,7 @@ def test_velocidad_internet() -> dict:
     try:
         t0 = time.monotonic()
         r = subprocess.run(
-            [  # noqa: S607
+            [
                 "curl",
                 "-s",
                 "-o",
@@ -156,7 +156,7 @@ def auditoria_completa(target: str = "hetzner-escudo") -> dict:
 
     # 3. NAT type
     try:
-        r = subprocess.run(["tailscale", "netcheck"], capture_output=True, text=True, timeout=10, check=False)  # noqa: S607
+        r = subprocess.run(["tailscale", "netcheck"], capture_output=True, text=True, timeout=10, check=False)
         for line in r.stdout.splitlines():
             if "MappingVariesByDestIP" in line:
                 reporte["nat_varia"] = "true" in line.lower()

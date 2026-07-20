@@ -56,7 +56,7 @@ class GitBranchTool:
     def execute(self, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False)  # noqa: S603, S607
+            res = subprocess.run(["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False)
             return ToolResult(True, res.stdout[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -66,7 +66,7 @@ class GitCommitTool:
     def execute(self, message: str, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False)  # noqa: S603, S607
+            res = subprocess.run(["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False)
             return ToolResult(res.returncode == 0, res.stdout[:2000] or res.stderr[:2000])
         except Exception as e:
             return ToolResult(False, error=str(e))
@@ -92,7 +92,7 @@ class DockerTool:
 
 class FileReadTool:
     def execute(self, path: str) -> ToolResult:
-        safe_dirs = ("/home/ramon", "/tmp", "/etc/ura")  # noqa: S108
+        safe_dirs = ("/home/ramon", str(Path.home() / ".ura"), "/etc/ura")
         resolved = Path(path).resolve()
         if not any(str(resolved).startswith(d) for d in safe_dirs):
             return ToolResult(False, error=f"Acceso denegado: {path}")

@@ -17,7 +17,7 @@ USO:
 import fcntl
 import time
 
-LOCK_FILE = "/tmp/gpu_health_tuneladora.lock"  # noqa: S108
+LOCK_FILE = "/tmp/gpu_health_tuneladora.lock"
 
 
 def acquire_gpu_lock(lock_file: str = LOCK_FILE, timeout: int = 30):

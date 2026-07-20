@@ -23,9 +23,9 @@ def ejecutar_remoto(python_code, env=None):
     if env:
         for k, v in env.items():
             env_args.extend(["-e", f"{k}={v}"])
-    subprocess.run(["scp", tmp, f"ramon@{GX10.rsplit('@', maxsplit=1)[-1]}:/tmp/"], capture_output=True, check=False)  # noqa: S603, S607
-    r = subprocess.run(  # noqa: S603
-        ["ssh", GX10, "docker", "exec", *env_args, "open-webui", "python3", tmp],  # noqa: S607
+    subprocess.run(["scp", tmp, f"ramon@{GX10.rsplit('@', maxsplit=1)[-1]}:/tmp/"], capture_output=True, check=False)
+    r = subprocess.run(
+        ["ssh", GX10, "docker", "exec", *env_args, "open-webui", "python3", tmp],
         capture_output=True,
         text=True,
         timeout=15,
@@ -112,7 +112,7 @@ conn.execute("INSERT OR REPLACE INTO tool (id, user_id, name, content, specs, me
 conn.commit()
 print('OK: tool creada')
 conn.close()
-"""  # noqa: E501
+"""
     out, err = ejecutar_remoto(
         code,
         env={
@@ -129,8 +129,8 @@ conn.close()
 
 def reiniciar():
     """Reinicia Open WebUI para aplicar cambios."""
-    r = subprocess.run(  # noqa: S603
-        ["ssh", GX10, "docker restart open-webui"],  # noqa: S607
+    r = subprocess.run(
+        ["ssh", GX10, "docker restart open-webui"],
         capture_output=True,
         text=True,
         timeout=30,

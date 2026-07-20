@@ -105,7 +105,7 @@ async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS) -> list:
         from qdrant_client.http import models
 
         while True:
-            scroll_result = qdrant._cliente.scroll(  # noqa: SLF001
+            scroll_result = qdrant._cliente.scroll(
                 collection_name=COLLECTION,
                 scroll_filter=models.Filter(
                     must=[

@@ -30,7 +30,7 @@ def iniciar_xvfb() -> bool:
     if not shutil.which("Xvfb"):
         return False
     try:
-        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)  # noqa: PLW1510, S607
+        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)  # noqa: PLW1510
         os.environ["DISPLAY"] = ":99"
         time.sleep(1)
         return True

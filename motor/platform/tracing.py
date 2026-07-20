@@ -103,7 +103,7 @@ class Sampler:
     # Internal state for ADAPTIVE
     _recent_errors: list[bool] = field(default_factory=list)
 
-    def should_sample(self, tags: dict[str, str] | None = None) -> bool:  # noqa: PLR0911
+    def should_sample(self, tags: dict[str, str] | None = None) -> bool:
         if self.strategy == SamplingStrategy.ALWAYS:
             return True
         if self.strategy == SamplingStrategy.NEVER:
@@ -179,7 +179,7 @@ class SpanTreeError(Exception):
     """Error in span tree structure."""
 
 
-def validate_span_tree(spans: list[SpanEvent]) -> None:  # noqa: C901
+def validate_span_tree(spans: list[SpanEvent]) -> None:
     """Validate a span tree.
 
     Checks:

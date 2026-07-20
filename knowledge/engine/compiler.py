@@ -45,7 +45,7 @@ from knowledge.engine.validator import validate_batch
 log = logging.getLogger("ura.knowledge.compiler")
 
 
-def compile_source(  # noqa: C901
+def compile_source(
     source_dir: Path | None = None,
     db_path: Path | None = None,
     compiler_version: str = "0.1.0",
@@ -184,7 +184,7 @@ def compile_source(  # noqa: C901
 
             commit = (
                 subprocess.run(
-                    ["git", "rev-parse", "HEAD"],  # noqa: S607
+                    ["git", "rev-parse", "HEAD"],
                     capture_output=True,
                     text=True,
                     cwd=source_dir,

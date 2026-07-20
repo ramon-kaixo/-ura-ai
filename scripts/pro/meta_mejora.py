@@ -97,13 +97,13 @@ print('OK')
         tmp_f.write(code)
         tmp_path = tmp_f.name
     _asus_ssh = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
-    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True, check=False)  # noqa: S603, S607
-    subprocess.run(  # noqa: S603
+    subprocess.run(["scp", tmp_path, f"{_asus_ssh}:/tmp/"], capture_output=True, check=False)
+    subprocess.run(
         [*GX10_SSH, "docker", "cp", f"{tmp_path}", "open-webui:/tmp/"],
         capture_output=True,
         check=False,
     )
-    r = subprocess.run(  # noqa: S603
+    r = subprocess.run(
         [*GX10_SSH, "docker", "exec", "-e", f"URA_PROMPT_ADD={prompt_add}", "open-webui", "python3", tmp_path],
         capture_output=True,
         text=True,
@@ -112,7 +112,7 @@ print('OK')
     )
     Path(tmp_path).unlink(missing_ok=True)
     if "OK" in r.stdout:
-        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30, check=False)  # noqa: S603
+        subprocess.run([*GX10_SSH, "docker", "restart", "open-webui"], capture_output=True, timeout=30, check=False)
         time.sleep(5)
 
 
@@ -151,7 +151,7 @@ def analizar_reflexiones() -> None:
         )
         with open(SUGERENCIAS, "w") as f:  # noqa: PTH123
             json.dump(sugs, f, indent=2)
-        proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])  # noqa: S603
+        proc = subprocess.Popen([sys.executable, str(PROBAR), str(idx)])
         # No esperamos a que termine, pero registramos el PID
         log(f"Test lanzado con PID {proc.pid}")
     MEJORAS.parent.mkdir(parents=True, exist_ok=True)

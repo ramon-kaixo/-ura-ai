@@ -532,7 +532,7 @@ def video_sample_mov(tmp_path: Path) -> Path:
         "mov",
         str(p),
     ]
-    subprocess.run(cmd, capture_output=True, timeout=30, check=False)  # noqa: S603
+    subprocess.run(cmd, capture_output=True, timeout=30, check=False)
     if not p.exists():
         pytest.skip("ffmpeg could not create test video")
     return p
@@ -676,16 +676,16 @@ class TestGitExtractor:
         repo = tmp_path / "myrepo"
         repo.mkdir()
         (repo / "README.md").write_text("# Test Repo")
-        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
         subprocess.run(
-            ["git", "config", "user.email", "test@test.com"],  # noqa: S607
+            ["git", "config", "user.email", "test@test.com"],
             cwd=str(repo),
             capture_output=True,
             check=False,
         )
-        subprocess.run(["git", "config", "user.name", "Test"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "config", "user.name", "Test"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=str(repo), capture_output=True, check=False)
 
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -701,12 +701,12 @@ class TestGitExtractor:
         repo = tmp_path / "metarepo"
         repo.mkdir()
         (repo / "file.txt").write_text("content")
-        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "commit", "-m", "feat: add file"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "tag", "v1.0.0"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "commit", "-m", "feat: add file"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "tag", "v1.0.0"], cwd=str(repo), capture_output=True, check=False)
 
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -744,11 +744,11 @@ class TestGitExtractor:
         repo = tmp_path / "readme_repo"
         repo.mkdir()
         (repo / "README.md").write_text("# Project Title\n\nDescription here.")
-        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "commit", "-m", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "commit", "-m", "init"], cwd=str(repo), capture_output=True, check=False)
 
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -760,11 +760,11 @@ class TestGitExtractor:
         repo = tmp_path / "qrepo"
         repo.mkdir()
         (repo / "f.txt").write_text("x")
-        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "commit", "-m", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "commit", "-m", "init"], cwd=str(repo), capture_output=True, check=False)
 
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -779,11 +779,11 @@ class TestGitExtractor:
         repo = tmp_path / "largerepo"
         repo.mkdir()
         (repo / "bigfile.bin").write_bytes(b"x" * 100)
-        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
-        subprocess.run(["git", "commit", "-m", "big"], cwd=str(repo), capture_output=True, check=False)  # noqa: S607
+        subprocess.run(["git", "init"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "config", "user.name", "T"], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "add", "."], cwd=str(repo), capture_output=True, check=False)
+        subprocess.run(["git", "commit", "-m", "big"], cwd=str(repo), capture_output=True, check=False)
         from knowledge.engine.extractors.git import GitExtractor
 
         ext = GitExtractor()

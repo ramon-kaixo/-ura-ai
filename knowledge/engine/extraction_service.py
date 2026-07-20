@@ -254,7 +254,7 @@ def _guess_mime(location: str) -> str:
     return mime_map.get(ext, "application/octet-stream")
 
 
-def _worker_loop(  # noqa: C901, PLR0912, PLR0915
+def _worker_loop(  # noqa: PLR0915
     db_path: Path,
     registry: ExtractorRegistry,
     store: AssetStore,

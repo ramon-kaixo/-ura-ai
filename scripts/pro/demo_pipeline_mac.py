@@ -29,7 +29,7 @@ _lock_file = None
 
 def _adquirir_instancia_unica() -> None:
     global _lock_file  # noqa: PLW0603
-    lock_path = "/tmp/com.ura.voice.lock"  # noqa: S108
+    lock_path = "/tmp/com.ura.voice.lock"
     try:
         _lock_file = open(lock_path, "w")  # noqa: PTH123, SIM115
         fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -63,7 +63,7 @@ def ejecutar_nodo_voz() -> None:
     while True:
         if pipeline.device_index is None:
             time.sleep(10)
-            pipeline.device_index = pipeline._find_anker_device()  # noqa: SLF001
+            pipeline.device_index = pipeline._find_anker_device()
             continue
 
         _raw, _corrected, clean = pipeline.listen_and_transcribe(duration_seconds=5)

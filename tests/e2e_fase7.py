@@ -50,7 +50,7 @@ def check_gt(label: str, actual, minimum: int) -> None:
 
 
 def main() -> int:  # noqa: PLR0915
-    work = Path("/tmp/e2e_fase7")  # noqa: S108
+    work = Path("/tmp/e2e_fase7")
     work.mkdir(parents=True, exist_ok=True)
 
     # ── Paso 1: Fresh init con schema completo ───────────────────────────
@@ -85,14 +85,14 @@ def main() -> int:  # noqa: PLR0915
         asset_id="e2e_doc_1",
         asset_type=AssetType("pdf"),
         metadata={"title": "End-to-End Testing Guide", "text_preview": "how to test FTS5"},
-        source=AssetSource(kind="test", location="/tmp/e2e.pdf"),  # noqa: S108
+        source=AssetSource(kind="test", location="/tmp/e2e.pdf"),
         quality=1.0,
     )
     a2 = KnowledgeAsset(
         asset_id="e2e_doc_2",
         asset_type=AssetType("markdown"),
         metadata={"title": "Cooking Recipes", "text_preview": "how to cook pasta"},
-        source=AssetSource(kind="test", location="/tmp/e2e.md"),  # noqa: S108
+        source=AssetSource(kind="test", location="/tmp/e2e.md"),
         quality=1.0,
     )
     check("save_asset a1", store.save_asset(a1))
@@ -166,12 +166,12 @@ def main() -> int:  # noqa: PLR0915
     # ── Paso 6: Extraction queue ────────────────────────────────────────
     ext_service = MetadataExtractionService(db)
 
-    job_id1 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))  # noqa: S108
+    job_id1 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))
     check("queue_extract returns job id", job_id1 is not None)
     check("queue_extract returns str", isinstance(job_id1, str))
 
     # Dedup
-    job_id2 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))  # noqa: S108
+    job_id2 = ext_service.queue_extract(AssetSource("filesystem", "/tmp/e2e.pdf"))
     check_eq("dedup: same location returns same job id", job_id2, job_id1)
 
     status = ext_service.get_queue_status(job_id1)

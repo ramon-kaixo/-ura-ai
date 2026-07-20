@@ -279,7 +279,7 @@ class FactHistory:
     def from_dict(cls, data: dict) -> FactHistory:
         from motor.core.fusion.models import Fact, FactTombstone, FactVersion, VersionState
 
-        # ruff: noqa: SLF001 — acceso controlado a miembros internos para deserialización
+
         raw_versions = data.get("versions", {})
         if isinstance(raw_versions, list):
             versions = {

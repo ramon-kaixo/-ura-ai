@@ -100,7 +100,7 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     """
     try:
         args = shlex.split(cmd)
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             args,
             shell=False,
             capture_output=True,
@@ -123,8 +123,8 @@ def request_human_confirmation(reason: str) -> bool:
         return False
 
     try:
-        result = subprocess.run(  # noqa: S603
-            ["bash", str(CONFIRMATION_SCRIPT), "OPENCLAW_ALERT", reason],  # noqa: S607
+        result = subprocess.run(
+            ["bash", str(CONFIRMATION_SCRIPT), "OPENCLAW_ALERT", reason],
             capture_output=True,
             text=True,
             timeout=DEAD_MAN_TIMEOUT,

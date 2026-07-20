@@ -27,8 +27,8 @@ LOAD_THRESHOLD = 8
 
 def ssh_run(cmd: str) -> str:
     try:
-        result = subprocess.run(  # noqa: S603
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],  # noqa: S607
+        result = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", cmd],
             capture_output=True,
             text=True,
             timeout=SSH_TIMEOUT,
@@ -43,8 +43,8 @@ def measure_ssh_latency() -> float:
     """Mide latencia SSH en ms."""
     start = time.time()
     try:
-        subprocess.run(  # noqa: S603  -- constante, solo mide latencia SSH
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],  # noqa: S607
+        subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes", f"{SSH_USER}@{TARGET}", "echo ok"],
             capture_output=True,
             timeout=5,
             check=False,

@@ -102,7 +102,7 @@ def snapshot(ruta: Path) -> dict:
 
     # F821 actual
     try:
-        r = subprocess.run(  # noqa: S603
+        r = subprocess.run(
             [RUFF, "check", "--select", "F821", "--output-format", "json", str(ruta)],
             capture_output=True,
             text=True,
@@ -196,7 +196,7 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
 
     # 1. Ruff fix (indentación, sintaxis básica)
     try:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [RUFF, "check", "--fix", "--unsafe-fixes", str(ruta)],
             capture_output=True,
             timeout=30,
@@ -208,14 +208,14 @@ def auto_ajustar(ruta: Path, intentos: int = 0) -> tuple[bool, list[str]]:
 
     # 2. Ruff format
     try:
-        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15, check=False)  # noqa: S603
+        subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=15, check=False)
         reparaciones.append("ruff format")
     except Exception:  # noqa: S110
         pass
 
     # 3. Auto-reglas (imports faltantes)
     try:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [sys.executable, "scripts/pro/auto_reglas.py", "--aplicar", str(ruta)],
             capture_output=True,
             text=True,
@@ -307,7 +307,7 @@ def scan_project() -> None:
             pass
 
 
-def main() -> None:  # noqa: C901, PLR0912, PLR0915
+def main() -> None:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="Scanner Auto-ajustable ENTRADA/SALIDA")
@@ -355,7 +355,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
             )
 
         try:
-            r_opt = subprocess.run(  # noqa: S603
+            r_opt = subprocess.run(
                 [
                     sys.executable,
                     str(Path(__file__).parent / "chunk_optimizer.py"),

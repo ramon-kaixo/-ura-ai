@@ -138,7 +138,7 @@ def create_branch(rel, v_old, v_new, origin, reason):
 
 def test_file(file_path):
     try:
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(
             [sys.executable, "-m", "py_compile", str(file_path)],
             capture_output=True,
             text=True,

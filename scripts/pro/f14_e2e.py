@@ -68,8 +68,8 @@ def load_env():
 
 def get_git_info() -> dict:
     try:
-        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()  # noqa: S607
-        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        tag = subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
         return {"commit_sha": sha, "version": tag}
     except Exception:
         return {"commit_sha": "?", "version": "?"}
@@ -103,7 +103,7 @@ def auto_recovery_time(check_fn, timeout=60, interval=1) -> float:
 def qdrant_running() -> bool:
     try:
         r = subprocess.run(  # noqa: PLW1510
-            ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],  # noqa: S607
+            ["docker", "ps", "--filter", "name=ura-qdrant", "--format", "{{.Names}}"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -115,7 +115,7 @@ def qdrant_running() -> bool:
 
 def ollama_running() -> bool:
     try:
-        r = subprocess.run(["systemctl", "is-active", "ollama"], capture_output=True, text=True, timeout=5)  # noqa: PLW1510, S607
+        r = subprocess.run(["systemctl", "is-active", "ollama"], capture_output=True, text=True, timeout=5)  # noqa: PLW1510
         return "active" in r.stdout
     except Exception:
         return False
@@ -200,7 +200,7 @@ def case_e02() -> dict:
     errors = 0
     t0 = time.monotonic()
     try:
-        store = EpisodeStore(EpisodeStoreConfig(persist_path="/tmp/f14_e2e_episodes.db"))  # noqa: S108
+        store = EpisodeStore(EpisodeStoreConfig(persist_path="/tmp/f14_e2e_episodes.db"))
         ep = Episode(
             session_id="e2e_test",
             payload="URA es un asistente multi-agente con consciencia artificial",
@@ -288,7 +288,7 @@ def case_e03() -> dict:
     if "Read-only file system" in "; ".join(observed):
         record_finding(
             "E03",
-            "Pipeline Orchestrator intenta escribir en /opt/motor/data/snapshots/ que es read-only. El pipeline no completa preflight.",  # noqa: E501
+            "Pipeline Orchestrator intenta escribir en /opt/motor/data/snapshots/ que es read-only. El pipeline no completa preflight.",
             "alto",
         )
 
@@ -456,7 +456,7 @@ def case_e06() -> dict:
 
     try:
         if pre_stop:
-            subprocess.run(["docker", "stop", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510, S607
+            subprocess.run(["docker", "stop", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510
             time.sleep(2)
             dm.mark_degraded("qdrant")
             observed.append("Qdrant detenido, DegradedMode marcado como degraded")
@@ -476,7 +476,7 @@ def case_e06() -> dict:
             observed.append(f"Retrieval degradado: excepción controlada — {type(e).__name__}")
 
         if pre_stop:
-            subprocess.run(["docker", "start", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510, S607
+            subprocess.run(["docker", "start", "ura-qdrant"], capture_output=True, timeout=15)  # noqa: PLW1510
             rec_time = auto_recovery_time(qdrant_running, timeout=60)
             dm.mark_healthy("qdrant")
             observed.append(f"Qdrant restaurado en {rec_time}s, DegradedMode marcado como healthy")

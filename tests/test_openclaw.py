@@ -28,8 +28,8 @@ class TestOpenClawDeterminism(unittest.TestCase):
 
     def setUp(self) -> None:
         """Setup: crear state file temporal y runbook de prueba."""
-        self.test_state = Path("/tmp/ura_snc_state_test.json")  # noqa: S108
-        self.test_stats = Path("/tmp/ura_openclaw_stats_test.json")  # noqa: S108
+        self.test_state = Path("/tmp/ura_snc_state_test.json")
+        self.test_stats = Path("/tmp/ura_openclaw_stats_test.json")
 
         # Runbook de prueba
         self.test_runbook = {
@@ -193,7 +193,7 @@ class TestOpenClawIntegration(unittest.TestCase):
 
     def setUp(self) -> None:
         """Setup: state file de emergencia simulada."""
-        self.test_state = Path("/tmp/ura_snc_state_integration.json")  # noqa: S108
+        self.test_state = Path("/tmp/ura_snc_state_integration.json")
         self.emergency_state = {
             "timestamp": "2026-06-03T18:00:00",
             "status": "CRITICAL",

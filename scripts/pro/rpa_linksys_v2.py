@@ -35,7 +35,7 @@ wait(3)
 
 try:
     # ── 1. Abrir Safari ──
-    subprocess.run(["open", "-a", "Safari"], check=False)  # noqa: S607
+    subprocess.run(["open", "-a", "Safari"], check=False)
     wait(3)
     # Cmd+L para barra de URL
     pyautogui.hotkey("command", "l")

@@ -212,10 +212,10 @@ class _FC:
     async def __aexit__(self, t, v, b):
         if t:
             self._c.fin(False, str(v))
-            self._m._rc(self._c)  # noqa: SLF001
+            self._m._rc(self._c)
             return True
         self._c.fin(True)
-        self._m._rc(self._c)  # noqa: SLF001
+        self._m._rc(self._c)
         return False
 
 

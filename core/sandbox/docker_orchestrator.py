@@ -96,7 +96,7 @@ class DockerOrchestrator:
                 "--network=none",
                 "--read-only",
                 "--tmpfs",
-                "/tmp:64m",  # noqa: S108
+                "/tmp:64m",
                 tag,
                 stdout=-1,
                 stderr=-1,
@@ -131,7 +131,7 @@ class DockerOrchestrator:
                 dt.get("error"),
             )
         finally:
-            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: ASYNC221, S603, S607
+            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: ASYNC221
 
     @staticmethod
     def _df(c, n):
@@ -166,11 +166,11 @@ break
 except Exception as e: r["error"]=str(e)
 print(json.dumps(r))
 sys.exit(0 if r["fallidos"]==0 else 1)
-""")  # noqa: E501
+""")
 
     @staticmethod
     def _docker():
         try:
-            return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0  # noqa: S607  -- comando constante
+            return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
         except:  # noqa: E722
             return False

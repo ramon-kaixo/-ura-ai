@@ -72,7 +72,7 @@ class VRAMAwareScheduler:
 
         try:
             res = subprocess.run(
-                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],  # noqa: S607  -- comando constante
+                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
                 capture_output=True,
                 text=True,
                 timeout=2,
@@ -103,7 +103,7 @@ class VRAMAwareScheduler:
         kv_cache_overhead = int((len(prompt) // 4) * 0.002)
         return base + kv_cache_overhead
 
-    async def sync_vram(self) -> None:  # noqa: C901
+    async def sync_vram(self) -> None:
         proc = None
         try:
             proc = await asyncio.wait_for(
@@ -293,7 +293,7 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     return None
 
 
-async def _stream_from_provider(  # noqa: C901
+async def _stream_from_provider(
     provider_name,
     modelo,
     mensajes,
@@ -539,7 +539,7 @@ async def admin_acquire_boot_vram(mb: int):
 
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
-async def proxy_gateway(path: str, request: Request):  # noqa: C901
+async def proxy_gateway(path: str, request: Request):
     body = None
     with suppress(Exception):
         body = await request.json() if request.method in ("POST", "PUT") else None
