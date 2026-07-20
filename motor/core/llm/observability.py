@@ -13,7 +13,6 @@ from typing import Any
 
 from motor.core.llm._logging import percentile
 
-
 MAX_RECORDS = 1000
 
 

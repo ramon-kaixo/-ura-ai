@@ -6,16 +6,14 @@ Mantiene el handshake con sistema nervioso y el watchdog.
 
 from __future__ import annotations
 
-import os
-import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
+from scripts.pro.refactor_worker import RefactorWorker
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.logger import Logger
-from scripts.pro.refactor_worker import RefactorWorker
 
 
 class WorkerManager:
@@ -34,10 +32,10 @@ class WorkerManager:
         result: dict[str, Any] = {"activos": 0, "duplicados": 0}
         smap = self.config.sistema_map
         if not smap.exists():
-            self.log.warn("Sin sistema_map.json — handshake omitido")
+            self.log.warning("Sin sistema_map.json — handshake omitido")
             return result
         try:
-            import json  # noqa: PLC0415
+            import json
 
             data = json.loads(smap.read_text(encoding="utf-8"))
             deps = data.get("dependency_graph", {})
@@ -47,8 +45,8 @@ class WorkerManager:
                     result["duplicados"] += 1
                 elif "ZOMBIE" not in state:
                     result["activos"] += 1
-        except Exception as e:  # noqa: BLE001
-            self.log.warn(f"Handshake falló: {e}")
+        except Exception as e:
+            self.log.warning(f"Handshake falló: {e}")
         self.log.info(f"Handshake: {result['activos']} activos, {result['duplicados']} duplicados")
         return result
 
@@ -91,7 +89,7 @@ class WorkerManager:
                 except TimeoutError:
                     self.log.error(f"Worker {wid} TIMEOUT ({timeout}s)")
                     results.append({"worker_id": wid, "returncode": -1, "error": "timeout", "ok": False})
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     self.log.error(f"Worker {wid} error: {e}")
                     results.append({"worker_id": wid, "returncode": -1, "error": str(e), "ok": False})
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from motor.observability.logging import JSONFormatter, setup_logging
+from motor.observability.logging import setup_logging
 
 configure_logging = setup_logging
 

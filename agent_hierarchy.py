@@ -518,7 +518,7 @@ class ExecutorAgent(Agent):
                         "pathlib.Path.open",
                     ):
                         return False
-                    if node.func.attr in ("__import__",):
+                    if node.func.attr == "__import__":
                         return False
                 elif isinstance(node.func, ast.Name):
                     if node.func.id in ("eval", "exec", "__import__", "open"):
@@ -538,7 +538,7 @@ class ExecutorAgent(Agent):
             return False
 
         if not self._validate_code_ast(code):
-            logger.warning(f"Code contains dangerous patterns — execution blocked")
+            logger.warning("Code contains dangerous patterns — execution blocked")
             return False
 
         logger.info("Executing code in sandbox")

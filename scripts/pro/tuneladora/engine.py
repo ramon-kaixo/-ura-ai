@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
-from pathlib import Path
 from typing import Any
 
 from scripts.pro.tuneladora.config import Configuration
@@ -54,7 +52,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0:
-            self.log.warn(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
+            self.log.warning(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
         return result
 
     def run_bash(
@@ -85,7 +83,7 @@ class PipelineEngine:
         timeout: int | None = None,
     ) -> subprocess.CompletedProcess:
         """Ejecuta ruff con argumentos."""
-        cmd = [self.config.ruff] + args
+        cmd = [self.config.ruff, *args]
         t = timeout or self.config.timeout_ruff
         self.log.info(f"Ruff: {' '.join(args)}")
         result = subprocess.run(
@@ -97,13 +95,13 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0 and result.stderr:
-            self.log.warn(f"Ruff stderr: {result.stderr[:200]}")
+            self.log.warning(f"Ruff stderr: {result.stderr[:200]}")
         return result
 
     def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
         """Ejecuta git con argumentos."""
         return subprocess.run(
-            ["git"] + args,
+            ["git", *args],
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -114,12 +112,12 @@ class PipelineEngine:
     def health_ollama(self) -> list[dict[str, Any]]:
         """Verifica conectividad con Ollama."""
         try:
-            import httpx  # noqa: PLC0415
+            import httpx
 
             r = httpx.get(f"{self.config.ollama_url}/api/tags", timeout=5)
             if r.status_code == 200:
                 return r.json().get("models", [])
-        except Exception:  # noqa: BLE001, S110
+        except Exception:  # noqa: S110
             pass
         return []
 
@@ -128,7 +126,7 @@ class PipelineEngine:
         try:
             usage = os.statvfs("/")
             return {"libre_gb": round((usage.f_frsize * usage.f_bavail) / 1e9, 1)}
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             return {"libre_gb": 0}
 
     def report(self, title: str, data: dict[str, Any]) -> None:

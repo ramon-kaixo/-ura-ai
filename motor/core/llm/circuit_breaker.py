@@ -3,8 +3,10 @@
 Mantiene compatibilidad: call() lanza CircuitBreakerOpenError en OPEN.
 """
 
-from motor.platform.resilience import (  # noqa: F401
+from motor.platform.resilience import (
     CircuitBreaker as _CircuitBreaker,
+)
+from motor.platform.resilience import (
     CircuitBreakerOpenError,
     CircuitState,
 )

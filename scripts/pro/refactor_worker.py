@@ -62,7 +62,7 @@ class RefactorWorker:
 
 def main() -> None:
     """Punto de entrada para ejecución como proceso independiente."""
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="RefactorWorker")
     parser.add_argument("--id", type=int, default=1, dest="worker_id")

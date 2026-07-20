@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class ReportingPlugin:
