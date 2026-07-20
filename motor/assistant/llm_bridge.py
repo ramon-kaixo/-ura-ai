@@ -54,7 +54,9 @@ class LLMBridge:
             token_estimate += cost
 
         if user_message:
-            messages.append({"role": "user", "content": user_message})
+            last_ctx = ctx[-1] if ctx else None
+            if last_ctx is None or last_ctx.content != user_message:
+                messages.append({"role": "user", "content": user_message})
 
         return messages
 
