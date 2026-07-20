@@ -1,13 +1,13 @@
 # CI — URA Platform
-# Runs on every push to plan-refinado and every PR
+# Runs on every push to main and every PR
 
 name: CI
 
 on:
   push:
-    branches: [plan-refinado]
+    branches: [main]
   pull_request:
-    branches: [plan-refinado]
+    branches: [main]
 
 jobs:
   lint:
