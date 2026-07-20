@@ -1,13 +1,8 @@
 """Tests para auth, config y herramientas."""
 from __future__ import annotations
 
-import os
-
 import pytest
-from fastapi import Request
-from starlette.responses import JSONResponse
 
-from motor.assistant.auth import AuthMiddleware
 from motor.assistant.config import AssistantConfig
 from motor.assistant.executor import (
     CalculatorTool,

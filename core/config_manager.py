@@ -13,7 +13,6 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
-_LOCAL_CONFIG_PATH = Path(__file__).parent.parent / "config.local.json"
 
 
 def _detect_profile_key() -> str:
@@ -69,17 +68,6 @@ def load_config() -> dict[str, Any]:
     config: dict[str, Any] = {}
     config.update(raw.get("global_defaults", {}))
     config.update(profile)
-
-    # Sobrescribir con configuración local (no requiere sudo en GX10)
-    if _LOCAL_CONFIG_PATH.exists():
-        log.warning(
-            "config.local.json encontrado — DEPRECATED. Será eliminado en F23. Migre las claves a system_config.json.",
-        )
-        try:
-            local = json.loads(_LOCAL_CONFIG_PATH.read_text())
-            config.update(local)
-        except (json.JSONDecodeError, OSError) as e:
-            log.warning("error al cargar config local %s: %s", _LOCAL_CONFIG_PATH, e)
 
     # Guardar referencia a perfiles raw para validate_schema()
     config["_raw_profiles"] = raw.get("profiles", {})

@@ -25,10 +25,12 @@ from motor.assistant.api import router as chat_router
 from motor.assistant.auth import AuthMiddleware
 from motor.assistant.config import config
 
+_VERSION = "1.0.0"
+
 app = FastAPI(
     title="URA Assistant",
     description="Asistente conversacional inteligente multi-modelo",
-    version="0.29.0",
+    version=_VERSION,
 )
 
 app.add_middleware(
@@ -46,7 +48,7 @@ app.include_router(chat_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.29.0", "auth": config.auth_enabled}
+    return {"status": "ok", "version": _VERSION, "auth": config.auth_enabled}
 
 
 @app.get("/")

@@ -1,6 +1,6 @@
 # ADR-028-09: Platform Unified Configuration
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B3  
 
 ---

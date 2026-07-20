@@ -1,6 +1,6 @@
 # ADR-028-07: Evolution Strategy (v2)
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B1A  
 
 ---
