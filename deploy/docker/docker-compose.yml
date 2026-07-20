@@ -20,7 +20,7 @@ services:
       - openwebui-data:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://10.164.1.99:11434
-      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-ura_webui_secret_2026}
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
     deploy:
       resources:
         limits:
@@ -30,7 +30,7 @@ services:
       - ura-net
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.73.1  # pinned — update manually
     container_name: ura-n8n
     ports:
       - "5678:5678"
@@ -38,7 +38,7 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://10.164.1.99:5678/
-      - N8N_ENCRYPTION_KEY=${N8N_KEY:-ura_n8n_key}
+      - N8N_ENCRYPTION_KEY=${N8N_KEY}
     volumes:
       - n8n-data:/home/node/.n8n
     deploy:
@@ -60,7 +60,7 @@ services:
       - frigate-media:/media/frigate
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - FRIGATE_RTSP_PASSWORD=${FRIGATE_RTSP_PASSWORD:-ura_cam_2026}
+      - FRIGATE_RTSP_PASSWORD=${FRIGATE_RTSP_PASSWORD}
     deploy:
       resources:
         limits:
@@ -86,7 +86,7 @@ services:
       - ura-net
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.55.1  # pinned — update manually
     container_name: ura-prometheus
     ports:
       - "9090:9090"
@@ -105,12 +105,12 @@ services:
       - ura-net
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0  # pinned — update manually
     container_name: ura-grafana
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-grafana123}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
