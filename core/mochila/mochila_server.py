@@ -300,7 +300,7 @@ async def _stream_from_provider(  # noqa: C901
     herramientas,
     max_tokens,
     temperature,
-    is_opencode=False,  # noqa: FBT002
+    is_opencode=False,
     guardian=None,
 ) -> AsyncGenerator[bytes, None]:
     provider = PROVIDERS[provider_name]

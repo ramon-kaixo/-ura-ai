@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any
 
 import pytest
 
-from motor.assistant.intent import IntentEngine, IntentResult, IntentRouter
+from motor.assistant.intent import IntentEngine, IntentRouter
 from motor.assistant.models import UserIntent
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -31,8 +29,8 @@ def _make_engine() -> IntentEngine:
 class TestReDoS:
     """C1: Entity patterns can cause O(n²) behaviour on adversarial input.
 
-    The search_query entity pattern: (?:busca|search)\s*(?:sobre|de|acerca de)?
-    \s*['\"]?(.+?)['\"]?(?:\s|$|\.)
+    The search_query entity pattern: (?:busca|search)\\s*(?:sobre|de|acerca de)?
+    \\s*['\"]?(.+?)['\"]?(?:\\s|$|\\.)
 
     The lazy (.+?) with two optional quotes and a trailing alternation forces
     the engine to expand one char at a time on long strings without spaces.
@@ -74,7 +72,7 @@ class TestReDoS:
         engine = _make_engine()
         user = "a" * self.LARGE
         t0 = time.monotonic()
-        result = engine.classify(f"email {user}@example.com")
+        engine.classify(f"email {user}@example.com")
         elapsed = time.monotonic() - t0
         assert elapsed < 2.0, f"Email entity took {elapsed:.2f}s"
 
@@ -82,7 +80,7 @@ class TestReDoS:
         engine = _make_engine()
         long_input = "ruta " + "a" * self.LARGE
         t0 = time.monotonic()
-        result = engine.classify(long_input)
+        engine.classify(long_input)
         elapsed = time.monotonic() - t0
         assert elapsed < 2.0, f"Path entity took {elapsed:.2f}s"
 

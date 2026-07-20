@@ -340,7 +340,7 @@ def validate_corpus_indexed(
     return errors
 
 
-def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, FBT001, FBT002, PLR0912, PLR0915
+def run_benchmark(corpus_dir: Path, results_dir: Path, dry_run: bool = False) -> BenchmarkResults:  # noqa: C901, PLR0912, PLR0915
     queries, relevance_map = load_corpus(corpus_dir)
 
     retriever = KERetrieval()

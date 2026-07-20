@@ -13,7 +13,7 @@ URL_OLLAMA = "http://localhost:11435/v1/chat/completions"
 TIMEOUT_VERIFY = 3
 
 
-def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> VerifyResult:  # noqa: FBT001, FBT002
+def ejecutar_verificacion(config: UraConfig, hubo_cambios: bool = False) -> VerifyResult:
     """Ejecuta verificación post-cambio preguntando a Ollama."""
     r = VerifyResult()
     if not hubo_cambios:

@@ -54,7 +54,7 @@ class DockerOrchestrator:
 
     async def validar(self, codigo, nombre):
         if not self._docker():
-            return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")  # noqa: FBT003
+            return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")
         with tempfile.TemporaryDirectory() as d:
             return await self._run(Path(d), codigo, nombre)
 
@@ -76,8 +76,8 @@ class DockerOrchestrator:
             _, be = await asyncio.wait_for(b.communicate(), 120)
             if b.returncode:
                 return ResultadoSandbox(
-                    False,  # noqa: FBT003
-                    False,  # noqa: FBT003
+                    False,
+                    False,
                     0,
                     0,
                     [],
@@ -105,7 +105,7 @@ class DockerOrchestrator:
                 so, se = await asyncio.wait_for(rp.communicate(), TIMEOUT)
             except TimeoutError:
                 rp.kill()
-                return ResultadoSandbox(False, False, 0, 0, ["TIMEOUT"], "", "", TIMEOUT * 1000, 0, "timeout")  # noqa: FBT003
+                return ResultadoSandbox(False, False, 0, 0, ["TIMEOUT"], "", "", TIMEOUT * 1000, 0, "timeout")
             t1 = asyncio.get_event_loop().time()
             ms = (t1 - t0) * 1000
             s2 = so.decode(errors="ignore").strip()

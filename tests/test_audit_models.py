@@ -17,7 +17,6 @@ from motor.assistant.models import (
     UserIntent,
 )
 
-
 # ── Message audit ─────────────────────────────────────────────────────────
 
 

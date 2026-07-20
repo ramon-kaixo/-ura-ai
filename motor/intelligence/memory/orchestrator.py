@@ -49,7 +49,7 @@ class MemoryOrchestrator:
             log.info("Compressed %d episodes into %d summaries", result.episodes_compressed, result.summaries_created)
         return result.summaries_created
 
-    def forget(self, dry_run: bool = False) -> dict[str, Any]:  # noqa: FBT001, FBT002
+    def forget(self, dry_run: bool = False) -> dict[str, Any]:
         if self._forgetting is None:
             return {"removed": 0, "dry_run": dry_run}
         result = self._forgetting.run(dry_run=dry_run)
@@ -57,7 +57,7 @@ class MemoryOrchestrator:
             log.info("Forgetting: removed %d records (dry=%s)", result.total_removed, dry_run)
         return {"removed": result.total_removed, "dry_run": dry_run}
 
-    def run_all(self, dry_run: bool = False) -> dict[str, Any]:  # noqa: FBT001, FBT002
+    def run_all(self, dry_run: bool = False) -> dict[str, Any]:
         results: dict[str, Any] = {"consolidated": 0, "compressed": 0, "forgotten": 0}
         results["consolidated"] = self.consolidate()
         results["compressed"] = self.compress()

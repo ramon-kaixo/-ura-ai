@@ -40,7 +40,7 @@ QDRANT_URL = os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 
 
-def check(name: str, cond: bool, detail: str = "") -> None:  # noqa: FBT001
+def check(name: str, cond: bool, detail: str = "") -> None:
     global PASS, FAIL  # noqa: PLW0603
     if cond:
         PASS += 1
@@ -59,7 +59,7 @@ def warn(name: str, detail: str = "") -> None:
 # ============================================================
 # Test 1: Saturar event-loop con tareas bloqueantes
 # ============================================================
-async def test_queue_saturation(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+async def test_queue_saturation(dry_run: bool = False) -> None:
     """Fuerza saturación de la cola de tareas asíncronas.
 
     Envía 50 tareas que simulan bloqueos de 5s cada una.
@@ -95,7 +95,7 @@ async def test_queue_saturation(dry_run: bool = False) -> None:  # noqa: FBT001,
 # ============================================================
 # Test 2: Timeout en Ollama — verificar zero-vector protección
 # ============================================================
-async def test_ollama_timeout(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+async def test_ollama_timeout(dry_run: bool = False) -> None:
     """Fuerza un timeout de Ollama apuntando a un puerto muerto.
 
     Verifica que el zero-vector SEA detectado y NO se inserte en Qdrant.
@@ -131,7 +131,7 @@ async def test_ollama_timeout(dry_run: bool = False) -> None:  # noqa: FBT001, F
 # ============================================================
 # Test 3: systemd restart limits — simular crash
 # ============================================================
-def test_restart_limits(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+def test_restart_limits(dry_run: bool = False) -> None:
     """Verifica que los servicios críticos tengan límites de reinicio.
 
     Comprueba que StartLimitBurst esté presente en los principales servicios.
@@ -157,7 +157,7 @@ def test_restart_limits(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
 # ============================================================
 # Test 4: Port binding conflicts — verificar que no colisionan
 # ============================================================
-async def test_port_conflicts(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+async def test_port_conflicts(dry_run: bool = False) -> None:
     """Verifica que los puertos críticos no tengan colisiones.
 
     Escanea los puertos conocidos y verifica que cada servicio
@@ -182,7 +182,7 @@ async def test_port_conflicts(dry_run: bool = False) -> None:  # noqa: FBT001, F
             if name == "ejecutor":
                 check(f"Puerto {port} ({desc})", port == 4097, "OK — migrado correctamente")
             else:
-                check(f"Puerto {port} ({desc})", True, "responde")  # noqa: FBT003
+                check(f"Puerto {port} ({desc})", True, "responde")
         except (TimeoutError, OSError):
             if dry_run:
                 warn(f"dry-run: Puerto {port} ({desc}) no responde", "omitir")
@@ -193,7 +193,7 @@ async def test_port_conflicts(dry_run: bool = False) -> None:  # noqa: FBT001, F
 # ============================================================
 # Test 5: Graceful shutdown — enviar SIGTERM y medir tiempo
 # ============================================================
-async def test_graceful_shutdown(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+async def test_graceful_shutdown(dry_run: bool = False) -> None:
     """Envía SIGTERM a un worker interno y mide tiempo de parada limpia.
 
     No afecta servicios reales — usa un worker simulado.
@@ -224,7 +224,7 @@ async def test_graceful_shutdown(dry_run: bool = False) -> None:  # noqa: FBT001
 # ============================================================
 # Test 6: REST fallback — verificar que find_stale_docs funciona
 # ============================================================
-async def test_rest_fallback(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+async def test_rest_fallback(dry_run: bool = False) -> None:
     """Verifica que find_stale_docs tenga fallback REST implementado.
 
     Comprueba que el código de auto_reindex.py contenga la ruta REST.
@@ -250,7 +250,7 @@ async def test_rest_fallback(dry_run: bool = False) -> None:  # noqa: FBT001, FB
 # ============================================================
 # Test 7: Timestamps UTC — verificar que no hay naive
 # ============================================================
-def test_timestamps_utc(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+def test_timestamps_utc(dry_run: bool = False) -> None:
     """Busca datetime.now().isoformat() en todo el proyecto.
 
     La presencia de esta llamada indica timestamps naive sin zona horaria.
@@ -279,7 +279,7 @@ def test_timestamps_utc(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
 # ============================================================
 # Test 8: Secretos en disco — verificar que no hay tokens visibles
 # ============================================================
-def test_secrets_visible(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+def test_secrets_visible(dry_run: bool = False) -> None:
     """Busca cadenas con aspecto de API key en archivos de código.
 
     Escanea patrones como 'sk-...' o 'apiKey' en el código fuente.
@@ -308,7 +308,7 @@ def test_secrets_visible(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
 # ============================================================
 # Test 9: Ruta de logging NDJSON — verificar consistencia
 # ============================================================
-def test_log_path_consistency(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+def test_log_path_consistency(dry_run: bool = False) -> None:
     """Verifica que el writer y reader de NDJSON apunten al mismo sitio."""
     log.info("\n=== Test 9: Consistencia de ruta NDJSON ===")
 
@@ -327,7 +327,7 @@ def test_log_path_consistency(dry_run: bool = False) -> None:  # noqa: FBT001, F
 # ============================================================
 # Test 10: Asyncio bridge — verificar implementación correcta
 # ============================================================
-def test_asyncio_bridge(dry_run: bool = False) -> None:  # noqa: FBT001, FBT002
+def test_asyncio_bridge(dry_run: bool = False) -> None:
     """Verifica que qdrant_client.py tenga el bridge seguro.
 
     Comprueba que use ThreadPoolExecutor y NO loop.run_until_complete.

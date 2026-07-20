@@ -72,7 +72,7 @@ class AgentCapabilityGate(CapabilityGateABC):
     def __init__(
         self,
         execution: AgentExecution,
-        enable_cache: bool = False,  # noqa: FBT001, FBT002
+        enable_cache: bool = False,
     ) -> None:
         self._execution = execution
         self._capabilities = execution.capabilities

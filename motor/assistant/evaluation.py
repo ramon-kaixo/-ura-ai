@@ -43,7 +43,7 @@ class ConversationEvaluator:
         self._conn.execute("CREATE INDEX IF NOT EXISTS idx_eval_conv ON evaluations(conversation_id)")
         self._conn.commit()
 
-    def record_metric(self, conversation_id: str, metric_name: str, metric_value: float, details: dict | None = None, user_id: str = "") -> None:  # noqa: E501
+    def record_metric(self, conversation_id: str, metric_name: str, metric_value: float, details: dict[str, object] | None = None, user_id: str = "") -> None:  # noqa: E501
         with self._lock:
             self._conn.execute(
                 "INSERT INTO evaluations (conversation_id, user_id, metric_name, metric_value, details) VALUES (?, ?, ?, ?, ?)",  # noqa: E501
@@ -52,13 +52,15 @@ class ConversationEvaluator:
             self._conn.commit()
 
     def get_conversation_score(self, conversation_id: str) -> float:
-        rows = self._conn.execute(
+        cur = self._conn.execute(
             "SELECT metric_value FROM evaluations WHERE conversation_id = ?",
             (conversation_id,),
-        ).fetchall()
+        )
+        rows = cur.fetchall()
         if not rows:
             return 0.0
-        return sum(r[0] for r in rows) / len(rows)
+        values = [float(r[0]) for r in rows]
+        return sum(values) / len(values)
 
     def get_summary(self, limit: int = 100) -> dict[str, Any]:
         rows = self._conn.execute(

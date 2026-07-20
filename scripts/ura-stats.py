@@ -86,7 +86,7 @@ def print_injection_report(events: list[dict]) -> None:
         pass
 
 
-def print_stats(events: list[dict], json_output: bool = False) -> None:  # noqa: FBT001, FBT002
+def print_stats(events: list[dict], json_output: bool = False) -> None:
     total = len(events)
     if total == 0:
         return

@@ -55,7 +55,7 @@ class CB:
         self.er = None
         self.dt = {}
 
-    def fin(self, ok=True, er=None) -> None:  # noqa: FBT002
+    def fin(self, ok=True, er=None) -> None:
         self.tf = _now()
         self.d = (datetime.fromisoformat(self.tf) - datetime.fromisoformat(self.ti)).total_seconds() * 1000
         self.ok = ok
@@ -131,7 +131,7 @@ class MochilaEngine:
     def fc(self, f):
         return str(f) in self._e["fc"]
 
-    def fase(self, f, z=False):  # noqa: FBT002
+    def fase(self, f, z=False):
         return _FC(self, f)
 
     def _rc(self, c) -> None:
@@ -211,10 +211,10 @@ class _FC:
 
     async def __aexit__(self, t, v, b):
         if t:
-            self._c.fin(False, str(v))  # noqa: FBT003
+            self._c.fin(False, str(v))
             self._m._rc(self._c)  # noqa: SLF001
             return True
-        self._c.fin(True)  # noqa: FBT003
+        self._c.fin(True)
         self._m._rc(self._c)  # noqa: SLF001
         return False
 

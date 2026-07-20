@@ -15,9 +15,7 @@ from motor.assistant.message_store import MessageStore
 from motor.assistant.models import (
     Conversation,
     Message,
-    MessageRole,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -140,7 +138,7 @@ class TestRaceConditions:
         eng, tmp = _make_engine()
         # Pre-populate DB without _active
         eng.create_conversation("toc-1")
-        msg = eng.add_message("toc-1", "user", "hello")
+        eng.add_message("toc-1", "user", "hello")
         # Now remove from _active so it's "in store only"
         eng._active.pop("toc-1", None)
 
@@ -567,7 +565,7 @@ class TestReferenceResolutionEdgeCases:
         eng.create_conversation("nomsg")
         result = eng.resolve_reference("haz eso", "nomsg")
         _cleanup(eng, tmp)
-        assert result == "haz eso" or result == "haz "
+        assert result in {"haz eso", "haz "}
 
     def test_resolve_reference_multiple_refs(self):
         """Multiple reference tokens in one string."""
@@ -741,5 +739,7 @@ class TestLogicErrors:
 
 
 # Need this import at top — redeclared here since module scope
-from motor.assistant.models import UserIntent  # noqa: E402, F811
-from motor.assistant.models import ConversationMode  # noqa: E402, F811
+from motor.assistant.models import (
+    ConversationMode,
+    UserIntent,
+)
