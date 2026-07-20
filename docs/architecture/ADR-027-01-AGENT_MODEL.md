@@ -1,6 +1,6 @@
 # ADR-027-01: Modelo de Agentes
 
-**Estado:** Borrador (pendiente de aprobación)  
+**Estado:** Aprobado  
 **Fase:** F27-B1  
 **Depende de:** F25 (v0.25.0-fase25), F26 (v0.26.0-rc1), F26.5 (Platform Readiness)
 
