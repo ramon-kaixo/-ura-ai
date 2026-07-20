@@ -1,6 +1,6 @@
-"""PipelineEngine — API v1. Orquestador compartido.
+"""PipelineEngine — API v2.3. Orquestador compartido con ledger y checkpoint.
 
-CONTRATO ESTABLE (API v1):
+CONTRATO ESTABLE (API v2.3):
   Este módulo define el contrato entre pipelines y plugins.
   No modificar métodos públicos sin versionar el contrato.
 
@@ -13,17 +13,28 @@ Métodos públicos:
   report(title, data)                → None
 
 Propiedades públicas:
-  config   → Configuration (solo lectura)
-  log      → Logger
-  snapshot → SnapshotService
-  metrics  → MetricsCollector
+  config     → Configuration (solo lectura)
+  log        → Logger
+  snapshot   → SnapshotService
+  ledger     → ExecutionLedger
+  checkpoint → CheckpointManager
+  promotion  → PromotionPolicy
+
+Checkpoint (v2.3):
+  checkpoint.is_done(phase) → True si ya se completó
+  checkpoint.mark_done(phase) → marca como completada
+  checkpoint.resume() → reanuda desde último checkpoint
+
+Change budget (v2.3):
+  promotion.set_budget(max_files=50, max_lines=5000)
+  promotion.check_budget(files, lines) → True si está dentro del presupuesto
 
 Política de promoción (R1):
-  Para que un cambio se considere promocionable deben cumplirse:
-    ruff == 0 errores
-    pytest == 100% pasados
-    benchmarks >= umbral histórico
-    auditoría sin bloqueantes
+  ruff == 0 errores
+  pytest == 100% pasados
+  benchmarks >= umbral histórico
+  auditoría sin bloqueantes
+  cambios dentro del presupuesto
 
 Seguridad contra refactorización recursiva (R6):
   PipelineEngine._refactor_ejecutado impide que un mismo ciclo
@@ -37,24 +48,32 @@ import subprocess
 import time
 from typing import Any
 
+from scripts.pro.tuneladora.checkpoint import CheckpointManager
 from scripts.pro.tuneladora.config import Configuration
+from scripts.pro.tuneladora.ledger import ExecutionLedger
 from scripts.pro.tuneladora.logger import Logger
 from scripts.pro.tuneladora.snapshot import SnapshotService
 
+CHANGE_BUDGET_DEFAULT = {"max_files": 50, "max_lines": 5000}
+
 
 class PromotionPolicy:
-    """Política de promoción: decide si un cambio puede promocionarse.
-
-    Criterios (R1):
-      ruff == 0 errores
-      pytest == 100% passed
-      benchmarks >= umbral
-      auditoría sin bloqueantes
-    """
+    """Política de promoción con presupuesto de cambios (R1 + v2.3)."""
 
     def __init__(self, engine: PipelineEngine) -> None:
         self._engine = engine
         self._results: dict[str, Any] = {}
+        self._budget = dict(CHANGE_BUDGET_DEFAULT)
+
+    def set_budget(self, max_files: int = 50, max_lines: int = 5000) -> None:
+        self._budget["max_files"] = max_files
+        self._budget["max_lines"] = max_lines
+
+    def check_budget(self, files: int, lines: int) -> bool:
+        ok = files <= self._budget["max_files"] and lines <= self._budget["max_lines"]
+        detail = f"{files}f/{lines}l (límite: {self._budget['max_files']}f/{self._budget['max_lines']}l)"
+        self._results["budget"] = {"ok": ok, "detail": detail}
+        return ok
 
     def record(self, check: str, ok: bool, detail: str = "") -> None:
         self._results[check] = {"ok": ok, "detail": detail}
@@ -76,49 +95,11 @@ class PromotionPolicy:
         return lines
 
 
-class MetricsCollector:
-    """Métricas históricas por ejecución (R5).
-
-    Almacena duración, plugins, resultados en .nervioso/.
-    Permite detectar degradaciones con decenas de ejecuciones.
-    """
-
-    def __init__(self, engine: PipelineEngine) -> None:
-        self._engine = engine
-        self._start = time.monotonic()
-        self._plugins: dict[str, float] = {}
-        self._result: str = "unknown"
-
-    def plugin_done(self, name: str, duration_s: float) -> None:
-        self._plugins[name] = duration_s
-
-    def set_result(self, result: str) -> None:
-        self._result = result
-
-    def save(self) -> None:
-        import json  # noqa: PLC0415
-
-        elapsed = time.monotonic() - self._start
-        entry = {
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
-            "duracion_total_s": round(elapsed, 1),
-            "resultado": self._result,
-            "plugins": self._plugins,
-        }
-        hist_file = self._engine.config.nervioso / "metrics" / "historial_ejecuciones.jsonl"
-        hist_file.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with open(hist_file, "a") as f:  # noqa: PTH123
-                f.write(json.dumps(entry) + "\n")
-        except PermissionError:
-            pass
-
-
 class PipelineEngine:
-    """Motor compartido para pipelines — API v1.
+    """Motor compartido para pipelines — API v2.3.
 
     Uso:
-        engine = PipelineEngine()
+        engine = PipelineEngine(pipeline="mejora")
         engine.run_script("scripts/pro/token_screen.py", args=["--json"])
         engine.run_ruff(["check", "--select", "F821", "."])
         engine.snapshot.save("ultimo_ciclo")
@@ -126,11 +107,12 @@ class PipelineEngine:
 
     _refactor_ejecutado = False  # R6: protección recursiva
 
-    def __init__(self, config: Configuration | None = None) -> None:
+    def __init__(self, config: Configuration | None = None, pipeline: str = "") -> None:
         self.config = config or Configuration()
         self.log = Logger(self.config.log_file)
         self.snapshot = SnapshotService(self.config.nervioso, self.log.info)
-        self.metrics = MetricsCollector(self)
+        self.ledger = ExecutionLedger(self.config.nervioso, pipeline or "unknown")
+        self.checkpoint = CheckpointManager(self.config.nervioso, pipeline or "unknown", self.ledger._execution_id)
         self.promotion = PromotionPolicy(self)
 
     def run_script(
