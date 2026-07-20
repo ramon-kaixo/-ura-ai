@@ -256,7 +256,11 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     if intent == UserIntent.COMMAND:
         tool_result = await _execute_command(resolved, analysis)
         if tool_result:
-            enriched_prompt += f"\n[Resultado del comando: {tool_result}]"
+            enriched_prompt += (
+                f"\n[Resultado de ejecutar el comando en el sistema real:"
+                f"\n{tool_result[:500]}"
+                f"\nEste es el OUTPUT REAL del comando. Responde al usuario basándote en esto.]"
+            )
 
     if request.stream:
 
