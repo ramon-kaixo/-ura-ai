@@ -1,9 +1,13 @@
 """LLM integration bridge — conecta ConversationEngine con Model Router."""
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any
 
 from motor.assistant.config import config as app_config
+
+_OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
+_OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
 from motor.assistant.models import ConversationMode
 
 if TYPE_CHECKING:
@@ -102,7 +106,7 @@ class LLMBridge:
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(self._timeout)) as client, client.stream(
                 "POST",
-                "http://localhost:11434/api/generate",
+                f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/generate",
                 json={"model": model_key, "prompt": prompt, "stream": True},
             ) as response:
                 full = ""

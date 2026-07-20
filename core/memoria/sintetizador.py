@@ -1,13 +1,16 @@
 """Sintetizador: ideas de Qdrant → informe estructurado con fuentes."""
 
 import logging
+import os
 
 import httpx
 
 from core.memoria.qdrant_store import buscar_ideas
 
 log = logging.getLogger("memoria.sintetizador")
-OLLAMA = "http://127.0.0.1:11434/api/chat"
+_OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
+_OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+OLLAMA = f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/chat"
 MODELO_SINTESIS = "qwen2.5-coder:14b"
 
 PROMPT_SINTESIS = """Eres Aura, una asistente que sintetiza conocimiento desde su memoria.

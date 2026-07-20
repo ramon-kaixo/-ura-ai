@@ -1,4 +1,5 @@
 import json
+import os
 from collections.abc import AsyncGenerator
 
 import httpx
@@ -7,7 +8,9 @@ from motor.core.state import DegradedMode
 
 from .base import Provider, ProviderError
 
-# OLLAMA_BASE is http://127.0.0.1:11434
+_HOST = os.environ.get("URA_OLLAMA_HOST", "127.0.0.1")
+_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+# OLLAMA_BASE is http://{URA_OLLAMA_HOST}:{URA_OLLAMA_PORT}
 
 OLLAMA_TIMEOUT = 180
 
@@ -48,7 +51,7 @@ class OllamaProvider(Provider):
             if stream:
                 async with client.stream(
                     "POST",
-                    "http://127.0.0.1:11434/api/chat",
+                    f"http://{_HOST}:{_PORT}/api/chat",
                     json=payload,
                 ) as resp:
                     if resp.is_error:
@@ -66,7 +69,7 @@ class OllamaProvider(Provider):
                     return
 
             resp = await client.post(
-                "http://127.0.0.1:11434/api/chat",
+                f"http://{_HOST}:{_PORT}/api/chat",
                 json=payload,
             )
             if resp.is_error:
@@ -82,7 +85,7 @@ class OllamaProvider(Provider):
         dm = DegradedMode.instancia()
         try:
             async with httpx.AsyncClient(**OLLAMA_HTTPX_KW, timeout=5) as client:
-                resp = await client.get("http://127.0.0.1:11434/api/tags")
+                resp = await client.get(f"http://{_HOST}:{_PORT}/api/tags")
                 if resp.is_error:
                     dm.mark_degraded("ollama_provider")
                     return {"status": "error", "detail": resp.text[:100]}

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -36,7 +37,9 @@ from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
 load_dotenv(Path("~/URA/.env").expanduser())  # noqa: F821
 
-OLLAMA_SOCKET = "http://127.0.0.1:11434"
+_OH = os.environ.get("URA_OLLAMA_HOST", "127.0.0.1")
+_OP = os.environ.get("URA_OLLAMA_PORT", "11434")
+OLLAMA_SOCKET = f"http://{_OH}:{_OP}"
 
 PROVIDERS: dict[str, Any] = {
     "ollama": OllamaProvider(),
