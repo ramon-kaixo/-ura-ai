@@ -1,7 +1,8 @@
-"""Planner — descomposición de objetivos en tareas.
+"""Planner v3.1 — planificación multi-objetivo con dependencias.
 
 No duplica lógica de plugin_registry.run_phase().
 La envuelve para traducir objetivo → fase → tareas.
+Respeta dependencias entre objetivos para ordenar la cola.
 """
 
 from __future__ import annotations
@@ -13,17 +14,43 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class Planner:
-    """Planificador mínimo: convierte objetivo en tareas vía run_phase."""
+    """Planificador multi-objetivo: convierte objetivos en tareas vía run_phase."""
 
-    # Mapa objetivo → fases de plugin_registry
     GOAL_PHASE_MAP = {
         "auditar": ["post"],
         "refactor": ["refactor", "post"],
         "optimizar": ["pre", "refactor", "post"],
+        "documentar": ["post"],
+        "test": ["pre", "post"],
     }
 
     def __init__(self, engine: PipelineEngine) -> None:
         self._engine = engine
+
+    def plan_dependency_order(
+        self, goals: list[dict[str, Any]], goal_manager
+    ) -> list[dict[str, Any]]:
+        """Ordena objetivos respetando dependencias.
+
+        Si A depende de B, B debe ejecutarse antes que A.
+        """
+        ordered: list[dict[str, Any]] = []
+        executed: set[str] = set()
+
+        def _resolve(g: dict) -> None:
+            if g["goal_id"] in executed:
+                return
+            for dep_id in g.get("dependencies", []):
+                dep = goal_manager.get(dep_id)
+                if dep:
+                    _resolve(dep)
+            if g["goal_id"] not in executed:
+                ordered.append(g)
+                executed.add(g["goal_id"])
+
+        for g in sorted(goals, key=lambda x: x.get("priority_order", 99)):
+            _resolve(g)
+        return ordered
 
     def create_plan(self, goal: dict) -> dict[str, Any]:
         """Crea un plan de tareas a partir de un objetivo."""
@@ -32,7 +59,7 @@ class Planner:
         for keyword, extra_phases in self.GOAL_PHASE_MAP.items():
             if keyword in title:
                 phases.extend(extra_phases)
-        phases = list(dict.fromkeys(phases))  # dedup, preserve order
+        phases = list(dict.fromkeys(phases))
 
         plan: dict[str, Any] = {
             "goal_id": goal["goal_id"],
