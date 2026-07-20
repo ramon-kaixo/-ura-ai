@@ -25,8 +25,10 @@ from motor.assistant.models import (
 )
 from motor.assistant.proactive_memory import ProactiveMemory
 from motor.assistant.prompt_sanitizer import PromptSanitizer
+from motor.assistant.rag import RAGContext
 from motor.assistant.sentiment import Sentiment, SentimentDetector
 from motor.assistant.trends import TrendAwareness
+from motor.assistant.web_search import WebSearch
 
 _MAX_ACTIVE_CONVERSATIONS = 1000
 
@@ -63,6 +65,8 @@ class ConversationEngine:
         self._interruptions = interruption_system or InterruptionSystem()
         self._episodic = episodic_memory or EpisodicConversationMemory(message_store=store)
         self._trends = trend_awareness or TrendAwareness()
+        self._web = WebSearch()
+        self._rag = RAGContext()
         self._corrections = CorrectiveMemory()
         self._proactive = ProactiveMemory()
         self._lang = LanguageDetector()
@@ -200,6 +204,8 @@ class ConversationEngine:
             "language_confidence": lang.confidence,
             "needs_web_search": trend.needs_update,
             "trend_reason": trend.reason,
+            "web_results": "",
+            "rag_context": "",
             "sentiment": sentiment.sentiment.value,
             "sentiment_score": sentiment.score,
             "sentiment_action": sentiment.suggested_action,
