@@ -63,10 +63,15 @@ class ExecutionLedger:
             "rollback": False,
             "warnings": [],
             "errors": [],
-            "resources": {},
-            "result": "unknown",
-            "report_id": "",
-        }
+    "resources": {},
+    "result": "unknown",
+    "report_id": "",
+    "goal": None,
+    "decisions": [],
+    "alternatives": [],
+    "plan": None,
+    "evaluation": None,
+}
 
     def set_trigger(self, trigger: str) -> None:
         self._entry["trigger"] = trigger
@@ -112,6 +117,32 @@ class ExecutionLedger:
             self._entry["git_commit_after"] = after or before
         except Exception:
             pass
+
+    def set_goal(self, goal: dict) -> None:
+        self._entry["goal"] = goal
+
+    def add_decision(self, decision_type: str, payload: dict) -> None:
+        self._entry.setdefault("decisions", []).append({
+            "type": decision_type,
+            "timestamp": datetime.now(UTC).isoformat(),
+            **payload,
+        })
+
+    def add_alternative(self, strategy: str, reason_not_chosen: str) -> None:
+        self._entry.setdefault("alternatives", []).append({
+            "strategy": strategy,
+            "reason_not_chosen": reason_not_chosen,
+        })
+
+    def set_plan(self, plan: dict) -> None:
+        self._entry["plan"] = plan
+
+    def set_evaluation(self, score: float, action: str, criteria: dict) -> None:
+        self._entry["evaluation"] = {
+            "score": score,
+            "action": action,
+            "criteria": criteria,
+        }
 
     def set_snapshot_id(self, sid: str) -> None:
         self._entry["snapshot_id"] = sid
