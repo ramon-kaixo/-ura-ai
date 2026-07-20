@@ -6,7 +6,7 @@ Exporta solo comportamiento:
     embed_async(texts, model) -> list[list[float]]
     health() -> dict
 
-El proveedor por defecto se selecciona según CONFIG["llm"]["provider"].
+El proveedor por defecto se selecciona según UraConfig.llm_provider.
 Por defecto es OllamaProvider. La selección de proveedor también puede
 realizarse mediante router + registry (ver F18).
 """
@@ -63,9 +63,9 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
 log = logging.getLogger(__name__)
 
 try:
-    from core.config_manager import CONFIG
+    from motor.core.config import UraConfig
 
-    provider_name = CONFIG.get("llm", {}).get("provider", "ollama")
+    provider_name = UraConfig.load().llm_provider
 except Exception:
     provider_name = "ollama"
 
