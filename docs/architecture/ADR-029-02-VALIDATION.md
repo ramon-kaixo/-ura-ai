@@ -1,7 +1,7 @@
 # ADR-029-02: Validación — Técnica y Funcional
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloques B2 + B3
 **Dependencias:** ADR-029-01 (Observabilidad — necesario para medir)
 **Prerrequisito:** F28.1 estable

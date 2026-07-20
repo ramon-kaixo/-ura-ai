@@ -1,7 +1,7 @@
 # ADR-029-04: Resiliencia
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloque B5
 **Dependencias:** ADR-029-01 (Observabilidad), ADR-029-03 (Operación)
 **Prerrequisito:** F28.1 estable (protocolo fiable para circuit breakers)

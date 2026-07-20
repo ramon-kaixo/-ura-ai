@@ -1,7 +1,7 @@
 # ADR-029-03: Operación
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloque B4
 **Dependencias:** ADR-029-01 (Observabilidad), ADR-029-02 (Validación)
 **Nota:** El contenido preciso de B4 se ajusta según los hallazgos de B2 y B3

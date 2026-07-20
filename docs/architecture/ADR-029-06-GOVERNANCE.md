@@ -1,7 +1,7 @@
 # ADR-029-06: Gobernanza
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloque B7
 **Dependencias:** B2—B6 completos (los runbooks y SLOs se basan en datos reales)
 
