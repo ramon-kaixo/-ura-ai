@@ -77,15 +77,21 @@ def main() -> int:
         else:
             engine.log.warn(f"  Sin agente para: {title}")
 
-    # Reporte final
+    # Reporte final con métricas
     assignments = coordinator.summary()
+    m = coordinator.metrics()
     engine.log.report("SWARM FINALIZADO", [
+        f"Sesión: {coordinator.session_id}",
         f"Objetivos: {len(args.goals)}",
         f"Asignaciones: {len(assignments)}",
-        f"Duración: {round(time.time() - t0, 1)}s",
+        f"Conflictos detectados: {m.get('conflictos', 0)}",
+        f"Tiempo medio resolución: {m.get('tiempo_medio_resolucion_s', 0)}s",
+        f"Duración total: {round(time.time() - t0, 1)}s",
     ])
     for a in assignments:
         engine.log.info(f"  [{a.get('result', '?')}] {a.get('agent', '?')} → {a.get('title', '')}")
+        if a.get("conflicts_with"):
+            engine.log.warn(f"    ⚠️  Conflicto con: {a['conflicts_with']}")
 
     return 0
 
