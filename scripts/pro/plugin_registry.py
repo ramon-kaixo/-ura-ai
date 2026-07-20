@@ -11,8 +11,9 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent
 
 
-def log(msg) -> None:
-    datetime.now(UTC).strftime("%H:%M:%S")
+def log(msg: str) -> None:
+    ts = datetime.now(UTC).strftime("%H:%M:%S")
+    print(f"[{ts}] {msg}")
 
 
 def discover_all():
