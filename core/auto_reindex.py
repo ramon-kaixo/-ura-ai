@@ -36,7 +36,8 @@ COLLECTION = "memoria_web"
 CUTOFF_DAYS = 30
 BATCH_SIZE = 100
 
-QDRANT_BASE = "http://127.0.0.1:6333"
+_cfg = UraConfig.load()  # noqa: F811
+QDRANT_BASE = f"http://{_cfg.qdrant_host}:{_cfg.qdrant_port}"
 
 
 async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
