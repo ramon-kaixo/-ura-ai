@@ -71,6 +71,11 @@ class ExecutionLedger:
     "alternatives": [],
     "plan": None,
     "evaluation": None,
+    "pattern_detections": [],
+    "knowledge": [],
+    "recommendations": [],
+    "policies": [],
+    "verifications": [],
 }
 
     def set_trigger(self, trigger: str) -> None:
@@ -146,6 +151,21 @@ class ExecutionLedger:
 
     def set_snapshot_id(self, sid: str) -> None:
         self._entry["snapshot_id"] = sid
+
+    def add_pattern(self, pattern: dict) -> None:
+        self._entry.setdefault("pattern_detections", []).append(pattern)
+
+    def add_knowledge(self, knowledge: dict) -> None:
+        self._entry.setdefault("knowledge", []).append(knowledge)
+
+    def add_recommendation(self, recommendation: dict) -> None:
+        self._entry.setdefault("recommendations", []).append(recommendation)
+
+    def add_policy(self, policy: dict) -> None:
+        self._entry.setdefault("policies", []).append(policy)
+
+    def add_verification(self, verification: dict) -> None:
+        self._entry.setdefault("verifications", []).append(verification)
 
     def resource_sample(self) -> None:
         try:
