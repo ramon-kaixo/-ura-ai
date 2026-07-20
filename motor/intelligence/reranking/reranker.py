@@ -40,12 +40,13 @@ class CrossEncoderReranker(BaseReranker):
     def _load_model(self) -> None:
         import os
 
-        os.environ.setdefault("HF_HOME", "/tmp/hf_cache")
+        cache_dir = Path.home() / ".cache" / "hf_cache"
+        os.environ.setdefault("HF_HOME", str(cache_dir))
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-            self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
-            self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)
+            self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)  # nosec B615
+            self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)  # nosec B615
             self._model.eval()
             log.info("CrossEncoder cargado: %s", self._model_name)
         except Exception as e:

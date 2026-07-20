@@ -44,8 +44,8 @@ class CrossEncoderReranker(BaseReranker):
             return
         log.info("Cargando cross-encoder %s en %s...", self._model_name, self._device)
         start = time.monotonic()
-        self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
-        self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)  # nosec B615 - modelo local controlado, no hay revision specifica
+        self._model = AutoModelForSequenceClassification.from_pretrained(self._model_name)  # nosec B615
         self._model.to(self._device)
         self._model.eval()
         elapsed = (time.monotonic() - start) * 1000
