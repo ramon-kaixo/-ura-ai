@@ -37,7 +37,7 @@ class Memory:
         self,
         journal_path: str = "",
         snapshot_path: str = "",
-        auto_recover: bool = True,  # noqa: FBT001, FBT002
+        auto_recover: bool = True,
         encryption_key: str = "",
     ) -> None:
         self._timeline = MemoryTimeline()

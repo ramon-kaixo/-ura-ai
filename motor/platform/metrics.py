@@ -166,7 +166,7 @@ class PlatformMetrics:
 
     # ── F29 B1: Record health status from HealthAggregator ──
 
-    def record_health(self, component: str, status: str, ready: bool) -> None:  # noqa: FBT001
+    def record_health(self, component: str, status: str, ready: bool) -> None:
         self.health_status.set(1.0 if status == "ok" else 0.0, component=component)
         self.health_ready.set(1.0 if ready else 0.0, component=component)
 

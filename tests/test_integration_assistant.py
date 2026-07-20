@@ -1,8 +1,6 @@
 """Tests de integración para el asistente conversacional (endpoint real)."""
 from __future__ import annotations
 
-import json
-
 import httpx
 import pytest
 

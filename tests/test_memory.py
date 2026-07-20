@@ -14,8 +14,6 @@ Cobertura:
 from __future__ import annotations
 
 import json
-import os
-import sys
 import threading
 import time
 from pathlib import Path
@@ -152,7 +150,7 @@ class TestFactRef:
         a = FactRef(fact_id="f1", version_id="v1", subject="S", predicate="P", object="O")
         b = FactRef(fact_id="f1", version_id="v1", subject="S", predicate="P", object="O")
         assert a == b
-        assert not (a != b)
+        assert a == b
 
 
 class TestMemoryEntry:

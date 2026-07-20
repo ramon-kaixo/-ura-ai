@@ -66,14 +66,14 @@ def _cc(f):
 
 
 class ASTSentinel:
-    def analizar(self, codigo, nombre="skill", prod=True):  # noqa: C901, FBT002, PLR0912
+    def analizar(self, codigo, nombre="skill", prod=True):  # noqa: C901, PLR0912
         e = []
         w = []
         m = {}
         try:
             t = ast.parse(codigo)
         except SyntaxError as ex:
-            return V(False, None, [f"Syntax: {ex}"], [], {})  # noqa: FBT003
+            return V(False, None, [f"Syntax: {ex}"], [], {})
         fs = [n for n in ast.walk(t) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
         m["nf"] = len(fs)
         mx = 0

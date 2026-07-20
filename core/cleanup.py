@@ -172,7 +172,7 @@ def check_vram_post_kill() -> dict:
 def cleanup(
     fault_id: str = "",
     affected: dict | None = None,
-    verify: bool = True,  # noqa: FBT001, FBT002
+    verify: bool = True,
 ) -> dict:
     """Protocolo completo de limpieza.
 

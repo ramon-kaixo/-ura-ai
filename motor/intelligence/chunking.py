@@ -45,7 +45,7 @@ class SemanticChunker:
         self,
         max_tokens: int = 512,
         overlap_tokens: int = 64,
-        respect_headings: bool = True,  # noqa: FBT001, FBT002
+        respect_headings: bool = True,
     ) -> None:
         self.max_tokens = max_tokens
         self.overlap_tokens = overlap_tokens

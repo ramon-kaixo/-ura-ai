@@ -34,7 +34,7 @@ NERVIOSO.mkdir(parents=True, exist_ok=True)
 GUARDIAN = URA_ROOT / "core" / "guardian_disco.py"  # renamed from guardián_disco
 
 
-def run_step(cmd, timeout=60, json_output=True):  # noqa: FBT002
+def run_step(cmd, timeout=60, json_output=True):
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)  # noqa: S603
         if json_output and r.stdout:

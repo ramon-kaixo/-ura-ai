@@ -61,7 +61,7 @@ class CheckResult:
         self,
         check_id: int,
         nombre: str,
-        passed: bool,  # noqa: FBT001
+        passed: bool,
         linea: int = 0,
         tipo: str = "",
         mensaje: str = "",
@@ -103,7 +103,7 @@ class Inspector:
                 passed, linea, tipo, msg = fn(codigo, lineas, arbol)
                 resultados.append(CheckResult(i + 1, nombre, passed, linea, tipo, msg))
             except Exception as e:
-                resultados.append(CheckResult(i + 1, nombre, False, 0, "EXCEPTION", str(e)))  # noqa: FBT003
+                resultados.append(CheckResult(i + 1, nombre, False, 0, "EXCEPTION", str(e)))
         return resultados
 
 
@@ -620,7 +620,7 @@ def inspeccionar(ruta: Path) -> dict:
                 resultados = futuro.result()
                 agregador.agregar(resultados)
             except Exception as e:
-                agregador.agregar([CheckResult(0, nombre, False, 0, "EXEC_ERROR", str(e))])  # noqa: FBT003
+                agregador.agregar([CheckResult(0, nombre, False, 0, "EXEC_ERROR", str(e))])
 
     # Guardar watermarks
     patrones = agregador.guardar_watermarks()

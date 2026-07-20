@@ -32,14 +32,19 @@ def check(desc, expr, *args):
         return False
 
 
-# ============================================================
-# TEST 1: Todos los módulos importan sin crash
-# ============================================================
+def run_tests():
+    global PASS, FAIL  # noqa: PLW0603
+    PASS = 0
+    FAIL = 0
 
-check("config_manager importa", lambda: __import__("core.config_manager"))
-check("model_router importa", lambda: __import__("core.model_router"))
-check("ura_maintenance importa", lambda: __import__("mantenimiento.ura_maintenance"))
-check("ura_maintenance_remote importa", lambda: __import__("mantenimiento.ura_maintenance_remote"))
+    # ============================================================
+    # TEST 1: Todos los módulos importan sin crash
+    # ============================================================
+
+    check("config_manager importa", lambda: __import__("core.config_manager"))
+    check("model_router importa", lambda: __import__("core.model_router"))
+    check("ura_maintenance importa", lambda: __import__("mantenimiento.ura_maintenance"))
+    check("ura_maintenance_remote importa", lambda: __import__("mantenimiento.ura_maintenance_remote"))
 
 
 # ============================================================
@@ -540,10 +545,8 @@ check("P1: PromptCache clear funciona", lambda: cache.get("p1", "test") is None)
 # ============================================================
 # RESULTADO
 # ============================================================
-if FAIL == 0:
-    pass
-else:
-    pass
+
 
 if __name__ == "__main__":
+    run_tests()
     sys.exit(0 if FAIL == 0 else 1)

@@ -122,7 +122,7 @@ class Sampler:
             return priority in ("critical", "high")
         return True
 
-    def record_error(self, was_error: bool) -> None:  # noqa: FBT001
+    def record_error(self, was_error: bool) -> None:
         self._recent_errors.append(was_error)
         if len(self._recent_errors) > self.error_rate_window:
             self._recent_errors.pop(0)
@@ -498,9 +498,9 @@ class TraceContext:
                 self._exporter.emit(event)
                 # Track error for adaptive sampler
                 if self._sampler and error_code:
-                    self._sampler.record_error(True)  # noqa: FBT003
+                    self._sampler.record_error(True)
                 elif self._sampler:
-                    self._sampler.record_error(False)  # noqa: FBT003
+                    self._sampler.record_error(False)
         except Exception:
             logger.debug("trace emit failed (OBS-09)", exc_info=True)
 
@@ -801,7 +801,7 @@ class LatencyStats:
     p95_ns: int = 0
     p99_ns: int = 0
 
-    def record(self, duration_ns: int, error: bool = False) -> None:  # noqa: FBT001, FBT002
+    def record(self, duration_ns: int, error: bool = False) -> None:
         self.count += 1
         if error:
             self.errors += 1
@@ -850,7 +850,7 @@ class MetricsCollector:
         self,
         subsystem: str,
         duration_ns: int,
-        error: bool = False,  # noqa: FBT001, FBT002
+        error: bool = False,
     ) -> None:
         with self._lock:
             if subsystem not in self._stats:
@@ -890,5 +890,5 @@ def get_metrics_collector() -> MetricsCollector:
     return _global_collector
 
 
-def record_latency(subsystem: str, duration_ns: int, error: bool = False) -> None:  # noqa: FBT001, FBT002
+def record_latency(subsystem: str, duration_ns: int, error: bool = False) -> None:
     _global_collector.record(subsystem, duration_ns, error)

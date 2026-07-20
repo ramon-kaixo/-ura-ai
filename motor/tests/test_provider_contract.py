@@ -140,7 +140,7 @@ class TestProviderContractValidation:
         assert "status" in h
 
     def test_validation_result_repr(self) -> None:
-        r = ProviderValidationResult(True, [], "test")  # noqa: FBT003
+        r = ProviderValidationResult(True, [], "test")
         assert "valid=True" in repr(r)
-        r2 = ProviderValidationResult(False, ["error1"])  # noqa: FBT003
+        r2 = ProviderValidationResult(False, ["error1"])
         assert "valid=False" in repr(r2)

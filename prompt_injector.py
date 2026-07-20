@@ -27,7 +27,7 @@ class Resultado:
 
 
 class JailbreakGuard:
-    def __init__(self, registrar_log=True) -> None:  # noqa: FBT002
+    def __init__(self, registrar_log=True) -> None:
         self._log = registrar_log
 
     def sanitizar(self, texto, url=""):

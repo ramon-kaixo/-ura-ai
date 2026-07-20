@@ -181,7 +181,7 @@ class HybridForgetPolicy(ForgettingPolicy):
         ttl_policy: TTLForgetPolicy | None = None,
         importance_policy: ImportanceForgetPolicy | None = None,
         confidence_policy: ConfidenceForgetPolicy | None = None,
-        require_all: bool = False,  # noqa: FBT001, FBT002
+        require_all: bool = False,
     ) -> None:
         self._ttl = ttl_policy or TTLForgetPolicy()
         self._imp = importance_policy or ImportanceForgetPolicy()
@@ -229,7 +229,7 @@ class ForgettingEngine:
         self._batch_size = batch_size
         self._lock = threading.RLock()
 
-    def run(self, dry_run: bool = False) -> ForgettingResult:  # noqa: FBT001, FBT002
+    def run(self, dry_run: bool = False) -> ForgettingResult:
         start = time.monotonic()
         result = ForgettingResult(dry_run=dry_run)
 
@@ -267,7 +267,7 @@ class ForgettingEngine:
     def simulate(self) -> ForgettingResult:
         return self.run(dry_run=True)
 
-    def _evaluate_episodes(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:  # noqa: FBT001
+    def _evaluate_episodes(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:
         episodes = list(ctx.episode_store._episodes.values())  # noqa: SLF001  -- incluye expirados para evaluacion
         batch: list[Episode] = []
         for ep in episodes:
@@ -307,7 +307,7 @@ class ForgettingEngine:
                 break
         return result
 
-    def _evaluate_facts(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:  # noqa: FBT001
+    def _evaluate_facts(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:
         if not self._semantic_store:
             return result
         facts = self._semantic_store.search(text="", k=10000)
@@ -367,5 +367,5 @@ class ForgettingScheduler:
     def disable(self) -> None:
         self._enabled = False
 
-    def run_once(self, dry_run: bool = False) -> ForgettingResult:  # noqa: FBT001, FBT002
+    def run_once(self, dry_run: bool = False) -> ForgettingResult:
         return self._engine.run(dry_run=dry_run)

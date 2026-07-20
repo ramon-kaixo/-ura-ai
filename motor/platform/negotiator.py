@@ -17,7 +17,7 @@ class VersionNegotiationResult:
         protocol_version: str,
         schema_version: str,
         capabilities: frozenset[str],
-        compatible: bool,  # noqa: FBT001
+        compatible: bool,
     ) -> None:
         self.protocol_version = protocol_version
         self.schema_version = schema_version

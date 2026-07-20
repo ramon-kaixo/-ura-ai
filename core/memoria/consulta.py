@@ -22,7 +22,7 @@ def _es_suficiente(resultados_qdrant: list[dict]) -> bool:
     return len(buenas) >= MIN_IDEAS_MEMORIA
 
 
-async def consultar(query: str, forzar_web: bool = False) -> dict:  # noqa: FBT001, FBT002
+async def consultar(query: str, forzar_web: bool = False) -> dict:
     """Busca en memoria Qdrant. Si no hay suficientes ideas, busca en internet
     y las incorpora a la memoria antes de responder.
     """

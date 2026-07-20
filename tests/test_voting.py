@@ -12,29 +12,29 @@ from motor.intelligence.agents.consensus import (
 from motor.intelligence.agents.message import AgentResult
 
 
-def _r(success: bool, output: dict, agent_id: str = "") -> AgentResult:  # noqa: FBT001
+def _r(success: bool, output: dict, agent_id: str = "") -> AgentResult:
     return AgentResult(task_id="t1", agent_id=agent_id, success=success, output=output)
 
 
 class TestNormalizedConfidence:
     def test_default_one(self):
-        r = _r(True, {"ok": True})  # noqa: FBT003
+        r = _r(True, {"ok": True})
         assert normalized_confidence(r) == 1.0
 
     def test_from_output(self):
-        r = _r(True, {"confidence": 0.7})  # noqa: FBT003
+        r = _r(True, {"confidence": 0.7})
         assert normalized_confidence(r) == 0.7
 
     def test_clamps_low(self):
-        r = _r(True, {"confidence": -0.5})  # noqa: FBT003
+        r = _r(True, {"confidence": -0.5})
         assert normalized_confidence(r) == 0.0
 
     def test_clamps_high(self):
-        r = _r(True, {"confidence": 1.5})  # noqa: FBT003
+        r = _r(True, {"confidence": 1.5})
         assert normalized_confidence(r) == 1.0
 
     def test_non_numeric(self):
-        r = _r(True, {"confidence": "high"})  # noqa: FBT003
+        r = _r(True, {"confidence": "high"})
         assert normalized_confidence(r) == 1.0
 
     def test_empty_output(self):
@@ -98,8 +98,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 1.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "cat"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "cat"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -111,8 +111,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 5.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "dog"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -124,8 +124,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 1.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat", "confidence": 0.9}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog", "confidence": 0.1}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat", "confidence": 0.9}, "a1"),
+            _r(True, {"answer": "dog", "confidence": 0.1}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -137,8 +137,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 1.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat", "confidence": 0.1}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog", "confidence": 0.9}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat", "confidence": 0.1}, "a1"),
+            _r(True, {"answer": "dog", "confidence": 0.9}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -148,8 +148,8 @@ class TestWeightedConsensus:
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "cat"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "cat"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -160,8 +160,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 2.0)
         reg.set_weight("a2", 2.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "dog"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert not r.success
@@ -173,8 +173,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 0.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "dog"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.success
@@ -186,8 +186,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 10.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "dog"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.outcome["answer"] == "cat"
@@ -201,7 +201,7 @@ class TestWeightedConsensus:
         agents = [(f"a{i}", 1.0, i % 3) for i in range(10)]
         for aid, w, _val in agents:
             reg.set_weight(aid, w)
-        results = [_r(True, {"val": val}, aid) for aid, _, val in agents]  # noqa: FBT003
+        results = [_r(True, {"val": val}, aid) for aid, _, val in agents]
         r = wc.aggregate(results)
         assert r.success  # 4 agents voted for 0, 3 for 1, 3 for 2
 
@@ -217,8 +217,8 @@ class TestWeightedConsensus:
         reg.set_weight("a1", 2.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "x"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "y"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "x"}, "a1"),
+            _r(True, {"answer": "y"}, "a2"),
         ]
         r = wc.aggregate(results)
         assert r.weight_details is not None
@@ -234,8 +234,8 @@ class TestWeightedCompatibility:
         reg.set_weight("a1", 3.0)
         reg.set_weight("a2", 1.0)
         results = [
-            _r(True, {"answer": "cat"}, "a1"),  # noqa: FBT003
-            _r(True, {"answer": "dog"}, "a2"),  # noqa: FBT003
+            _r(True, {"answer": "cat"}, "a1"),
+            _r(True, {"answer": "dog"}, "a2"),
         ]
         r = engine.vote_with(results, "weighted")
         assert r.success
@@ -245,8 +245,8 @@ class TestWeightedCompatibility:
         engine = VotingEngine()
         engine.strategy = MajorityVoting()
         results = [
-            _r(True, {"a": 1}, "a1"),  # noqa: FBT003
-            _r(True, {"a": 2}, "a2"),  # noqa: FBT003
+            _r(True, {"a": 1}, "a1"),
+            _r(True, {"a": 2}, "a2"),
         ]
         r = engine.vote(results)
         assert not r.success  # tie
@@ -256,8 +256,8 @@ class TestWeightedCompatibility:
         engine = VotingEngine()
         engine.strategy = UnanimousVoting()
         results = [
-            _r(True, {"a": 1}, "a1"),  # noqa: FBT003
-            _r(True, {"a": 1}, "a2"),  # noqa: FBT003
+            _r(True, {"a": 1}, "a1"),
+            _r(True, {"a": 1}, "a2"),
         ]
         r = engine.vote(results)
         assert r.success
@@ -288,7 +288,7 @@ class TestConsensusResultExtended:
 
 class _helper:
     @staticmethod
-    def result(success: bool, output: dict, agent_id: str = "") -> AgentResult:  # noqa: FBT001
+    def result(success: bool, output: dict, agent_id: str = "") -> AgentResult:
         return AgentResult(task_id="t1", agent_id=agent_id, success=success, output=output)
 
 
@@ -296,8 +296,8 @@ class TestMajorityVotingLegacy:
     def test_unanimous_wins(self):
         r = MajorityVoting().aggregate(
             [
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
             ],
         )
         assert r.success
@@ -305,9 +305,9 @@ class TestMajorityVotingLegacy:
     def test_majority_wins(self):
         r = MajorityVoting().aggregate(
             [
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 2}),  # noqa: FBT003
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
             ],
         )
         assert r.success
@@ -315,8 +315,8 @@ class TestMajorityVotingLegacy:
     def test_tie_detected(self):
         r = MajorityVoting().aggregate(
             [
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 2}),  # noqa: FBT003
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
             ],
         )
         assert not r.success
@@ -327,7 +327,7 @@ class TestMajorityVotingLegacy:
         assert not r.success
 
     def test_single(self):
-        r = MajorityVoting().aggregate([_helper.result(True, {"a": 1})])  # noqa: FBT003
+        r = MajorityVoting().aggregate([_helper.result(True, {"a": 1})])
         assert r.success
 
 
@@ -335,8 +335,8 @@ class TestUnanimousVotingLegacy:
     def test_all_agree(self):
         r = UnanimousVoting().aggregate(
             [
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 1}),
             ],
         )
         assert r.success
@@ -344,14 +344,14 @@ class TestUnanimousVotingLegacy:
     def test_disagrees(self):
         r = UnanimousVoting().aggregate(
             [
-                _helper.result(True, {"a": 1}),  # noqa: FBT003
-                _helper.result(True, {"a": 2}),  # noqa: FBT003
+                _helper.result(True, {"a": 1}),
+                _helper.result(True, {"a": 2}),
             ],
         )
         assert not r.success
 
     def test_single(self):
-        r = UnanimousVoting().aggregate([_helper.result(True, {"a": 1})])  # noqa: FBT003
+        r = UnanimousVoting().aggregate([_helper.result(True, {"a": 1})])
         assert r.success
 
 
@@ -367,7 +367,7 @@ class TestVotingEngineLegacy:
     def test_register_and_vote(self):
         e = VotingEngine()
         e.register_strategy(MajorityVoting())
-        r = e.vote_with([_helper.result(True, {"a": 1}), _helper.result(True, {"a": 1})], "majority")  # noqa: FBT003
+        r = e.vote_with([_helper.result(True, {"a": 1}), _helper.result(True, {"a": 1})], "majority")
         assert r.success
 
     def test_unknown_raises(self):

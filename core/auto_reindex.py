@@ -180,7 +180,7 @@ async def atomic_upsert(html: str, url: str) -> bool:
     return guardados > 0
 
 
-async def reindex_stale(dry_run: bool = True) -> dict:  # noqa: FBT001, FBT002
+async def reindex_stale(dry_run: bool = True) -> dict:
     stale = await find_stale_docs()
     stats = {"found": len(stale), "reindexed": 0, "failed": 0, "skipped": 0}
 

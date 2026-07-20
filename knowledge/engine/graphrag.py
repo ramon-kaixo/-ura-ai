@@ -154,8 +154,8 @@ class GraphRetriever(Protocol):
         query: str,
         max_assets: int = 10,
         max_memories: int = 5,
-        include_lineage: bool = True,  # noqa: FBT001, FBT002
-        include_governance: bool = True,  # noqa: FBT001, FBT002
+        include_lineage: bool = True,
+        include_governance: bool = True,
         neighbor_depth: int = 0,
     ) -> ContextBundle: ...
 
@@ -323,8 +323,8 @@ class SQLiteGraphRetriever:
         query: str,
         max_assets: int = 10,
         max_memories: int = 5,
-        include_lineage: bool = True,  # noqa: FBT001, FBT002
-        include_governance: bool = True,  # noqa: FBT001, FBT002
+        include_lineage: bool = True,
+        include_governance: bool = True,
         neighbor_depth: int = 0,
     ) -> ContextBundle:
         """Construye un ContextBundle completo para una consulta.

@@ -30,7 +30,7 @@ PASS = 0
 FAIL = 0
 
 
-def check(label: str, condition: bool, detail: str = "") -> None:  # noqa: FBT001
+def check(label: str, condition: bool, detail: str = "") -> None:
     global PASS, FAIL  # noqa: PLW0603
     if condition:
         PASS += 1
@@ -73,7 +73,7 @@ def main() -> int:  # noqa: PLR0915
     check("op_assets_fts existe", "op_assets_fts" in tables)
     check("op_memory_fts existe", "op_memory_fts" in tables)
     check("op_lineage_edges existe", "op_lineage_edges" in tables)
-    check("op_jobs.result_data existe", True)  # validado por schema  # noqa: FBT003
+    check("op_jobs.result_data existe", True)  # validado por schema
 
     # ── Paso 2: Schema version ──────────────────────────────────────────
     check_eq("SCHEMA_VERSION == 14", SCHEMA_VERSION, 14)

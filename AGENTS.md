@@ -586,8 +586,22 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | **B6** | Compatibilidad y evolución: rolling upgrade, mixed-version | ✅ Completado |
 | **B7** | Gobernanza: ownership, runbooks, SLOs, release checklist | ✅ Completado |
 | **RR1** | Production Readiness Review + tag v0.29.0-fase29 | ✅ Completado |
+| **B8** | Post-F29: Experiencia (F2), Conocimiento (F4), Infra (F1), Herramientas (F3), CLI (F5), Calidad (F6) | ✅ Completado |
+| **B9** | Auditoría Final 2026-07-20: closeouts F25-F29, tests evaluation/preferences/auth, mypy fix, ruff fix, eval() reemplazado | ✅ Completado |
 
-No hay F30+ definida. Ver `docs/architecture/F29_PROPOSAL.md`.
+**Estado del Repositorio (post-auditoría 2026-07-20):**
+
+| Categoría | Antes | Después |
+|-----------|-------|---------|
+| Ruff errors | 313 | 93 (62 EXE001 cosmético, 31 pre-existentes) |
+| Mypy (assistant) | No pasaba (core duplicado) | 0 errores |
+| Tests assistant | 97/97 | 107/107 (+10 tests evaluation + preferences) |
+| eval() en prod | CalculatorTool con eval() | _SafeCalculator (AST puro, sin builtins) |
+| Closeouts F25-F29 | 0/5 | 5/5 creados |
+| build/ duplicado | Causaba `duplicate module "core"` | Eliminado + .gitignore |
+| Working tree | Sucio (4 archivos) | Compromised |
+
+No hay F30+ definida. Ver `docs/architecture/F29_PROPOSAL.md` y `docs/architecture/F29_CLOSEOUT.md`.
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
