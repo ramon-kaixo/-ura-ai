@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from motor.assistant.conversation import ConversationEngine
+from motor.assistant.executor import ConversationalToolManager
 from motor.assistant.llm_bridge import LLMBridge
 from motor.assistant.models import ConversationMode, UserIntent
 from motor.assistant.moderation import ContentModerator
@@ -135,6 +136,7 @@ _SYSTEM_PROMPTS = {
 
 _style_engine = StyleEngine()
 _moderator = ContentModerator()
+_tool_manager = ConversationalToolManager()
 
 
 def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
@@ -188,6 +190,19 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
     return intent, mode, resolved, system_prompt, conv, lang_code, analysis
 
 
+async def _execute_command(user_message: str, analysis: dict) -> str:
+    msg = user_message.lower().strip()
+    tool_map = {
+        "status": "git_status", "log": "git_log", "diff": "git_diff",
+        "docker": "docker_ps", "busca": "web_search", "search": "web_search",
+    }
+    for keyword, tool in tool_map.items():
+        if keyword in msg:
+            result = await _tool_manager.execute(tool)
+            return result.output if result.success else result.error
+    return ""
+
+
 async def _enrich_prompt(system_prompt: str, analysis: dict, engine: ConversationEngine, resolved: str) -> str:
     prompt = system_prompt
     if analysis.get("needs_web_search"):
@@ -234,6 +249,11 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
     enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
+
+    if intent == UserIntent.COMMAND:
+        tool_result = await _execute_command(resolved, analysis)
+        if tool_result:
+            enriched_prompt += f"\n[Resultado del comando: {tool_result}]"
 
     if request.stream:
 
