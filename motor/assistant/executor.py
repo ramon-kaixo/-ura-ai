@@ -126,7 +126,8 @@ class CalculatorTool:
 class NoteTool:
     def __init__(self):
         import sqlite3
-        self._conn = sqlite3.connect("/tmp/ura/notes.db")  # noqa: S108
+        from motor.assistant.config import config
+        self._conn = sqlite3.connect(config.db_for("notes"))  # noqa: S108
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS notes "
             "(id INTEGER PRIMARY KEY, content TEXT, "
