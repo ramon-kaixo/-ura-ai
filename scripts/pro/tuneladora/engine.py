@@ -84,6 +84,17 @@ class PromotionPolicy:
             return False
         return all(r["ok"] for r in self._results.values())
 
+    def evaluate_goal(self, goal: dict, ruff_ok: bool, files_changed: int) -> str:
+        """Evalúa si un objetivo se cumplió. Retorna acción: finalizar/corregir/escalar."""
+        self.record("ruff", ruff_ok, "0 errores" if ruff_ok else f"con errores")
+        budget = goal.get("budget", {})
+        self.check_budget(files_changed, 0)
+        if ruff_ok and self.can_promote:
+            return "finalizar"
+        if not ruff_ok:
+            return "corregir"
+        return "escalar"
+
     @property
     def summary(self) -> list[str]:
         lines = []

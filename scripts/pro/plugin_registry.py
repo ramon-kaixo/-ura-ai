@@ -89,21 +89,30 @@ def discover_all() -> dict[str, Any]:
                             plugin_dict.setdefault("requires", [])
                             plugin_dict.setdefault("incompatible", [])
                             plugin_dict.setdefault("min_engine_version", "1.0")
+                            plugin_dict.setdefault("capability", "infrastructure")
                             plugins[name] = plugin_dict
         except Exception:  # noqa: S110
             pass
     return plugins
 
 
-def run_phase(phase: str, context: Any = None, file_path: str | None = None) -> dict[str, Any]:
+def run_phase(
+    phase: str,
+    context: Any = None,
+    file_path: str | None = None,
+    capability: str | None = None,
+) -> dict[str, Any]:
     """Ejecuta todos los plugins de una fase, ordenados por prioridad.
 
-    R4: los plugins solo reciben contexto vía argumentos CLI, no importan otros plugins.
+    Args:
+        phase: "pre", "refactor", "post", "maintenance"
+        capability: filtrar por capacidad ("infrastructure", "autonomy"). None = todos.
     """
     plugins = discover_all()
     phase_plugins = {
         name: p for name, p in plugins.items()
-        if p.get("phase") == phase or p.get("phase") == "always"
+        if (p.get("phase") == phase or p.get("phase") == "always")
+        and (capability is None or p.get("capability") == capability)
     }
 
     if not phase_plugins:
