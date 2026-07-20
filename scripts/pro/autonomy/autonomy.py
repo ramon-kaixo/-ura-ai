@@ -46,7 +46,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
 def main() -> int:
     import argparse  # noqa: PLC0415
 
-    parser = argparse.ArgumentParser(description="URA Autonomía v3.2 — Planificación adaptativa")
+    parser = argparse.ArgumentParser(description="URA Autonomía v3.3 — Aprendizaje útil")
     parser.add_argument("goals", nargs="*", default=[],
                         help="Objetivos a ejecutar (si no se especifican, usa la cola)")
     parser.add_argument("--priority", default="medium")
@@ -146,6 +146,19 @@ def main() -> int:
     learning = LearningPlugin(engine)
     metrics = learning.analyze()
     engine.log.info(f"  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
+
+    # Mostrar aprendizaje con efecto observable
+    for adj in metrics.get("ajustes_destacados", []):
+        engine.log.info(f"  ⏱️  Ajuste timeout: {adj}")
+
+    for strat, rec in metrics.get("estrategias", {}).items():
+        engine.log.info(f"  📊 Estrategia '{strat}': {rec}")
+
+    for reg in metrics.get("regresiones", []):
+        engine.log.info(f"  ⚠️  Regresión: {reg['plugin']} ({reg['ratio']}x más lento)")
+
+    for plugin in metrics.get("plugins_a_omitir", []):
+        engine.log.info(f"  ⏭️  Omitir: {plugin} (fallos recurrentes)")
 
     # ── Cierre ──
     engine.ledger.resource_sample()
