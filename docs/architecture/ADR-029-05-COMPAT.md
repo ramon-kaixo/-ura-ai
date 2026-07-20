@@ -1,7 +1,7 @@
 # ADR-029-05: Compatibilidad y Evolución
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloque B6
 **Dependencias:** F28.1 estable (versionado de protocolo funcional), ADR-029-03 (Operación)
 

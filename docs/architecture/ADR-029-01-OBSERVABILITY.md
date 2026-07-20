@@ -1,7 +1,7 @@
 # ADR-029-01: Observabilidad de Plataforma
 
-**Estado:** Draft
-**Fecha:** 2026-07-19
+**Estado:** Approved
+**Fecha:** 2026-07-20
 **Fase:** F29 — Bloque B1
 **Dependencias:** F28.1 (Protocolo estable)
 **Prerrequisito:** ADR-028-01..06, ADR-028-10 Approved

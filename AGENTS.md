@@ -43,7 +43,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 | **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
 | **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
 | **Auditoría Post-Fase 8** | ✅ **Cerrada** | Saneamiento arquitectónico: unificación config, eliminación código muerto, actualización docs. Tag `v0.7.1-audit-fase8`. `docs/architecture/AUDIT_FASE8_CLOSEOUT.md` |
-| **15** | ✅ **Cerrada** | Migración HTTP (Ollama) — `core/debate/debate_engine.py`, `core/ura_multi_agent.py`. Tag `v0.15.0-fase15`. Ver `docs/architecture/FASE16_PROPOSAL.md` |
+| **15** | ✅ **Cerrada** | Migración HTTP (Ollama) — `core/debate/debate_engine.py`, `core/ura_multi_agent.py`. Tag `v0.15.0-fase15` |
 | **16** | ✅ **Cerrada** | Empaquetado y Deuda — eliminar dependencias rotas, tests actualizados. Tag `v0.16.0-fase16` |
 | **17** | ✅ **Cerrada** | Configuración Unificada — UraConfig como vista de CONFIG. 0 new ruff, 0 pytest regressions. Tag `v0.17.0-fase17`. Ver `docs/architecture/FASE17_PROPOSAL.md` |
 | **17.5** | ✅ **Cerrada** | Gestión de Secretos — `motor/core/secrets.py`, 15 consumidores migrados, auditoría automática. Tag `v0.17.5-f17.5`. Ver `docs/architecture/SECRETS.md` |
@@ -498,8 +498,6 @@ Solo medir, validar, documentar.
 - Migración de llamadas HTTP directas a Ollama hacia `generate()` + `health()` del motor
 - `core/debate/debate_engine.py`, `core/ura_multi_agent.py` migrados
 - 0 HTTP directo a Ollama en `core/`, `motor/`, `knowledge/`
-- Ver `docs/architecture/FASE16_PROPOSAL.md`
-
 **Fase 16 — Empaquetado y Deuda** ✅ Cerrada (F16-B5..B7)
 - Eliminación de dependencias rotas (`import httpx`), tests actualizados
 - Tag `v0.16.0-fase16`
