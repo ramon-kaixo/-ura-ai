@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
+
 
 class Task:
     def __init__(
@@ -42,7 +44,7 @@ class Task:
 
 class ProactiveMemory:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/proactive.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("proactive")
         self._lock = threading.Lock()
         self._init_db()
 

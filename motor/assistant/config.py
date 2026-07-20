@@ -25,5 +25,8 @@ class AssistantConfig:
     def ensure_data_dir(self) -> None:
         Path(self.data_dir).mkdir(parents=True, exist_ok=True)
 
+    def db_for(self, name: str) -> str:
+        return str(Path(self.data_dir) / f"{name}.db")
+
 
 config = AssistantConfig()

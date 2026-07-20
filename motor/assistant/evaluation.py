@@ -16,10 +16,12 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from motor.assistant.config import config
+
 
 class ConversationEvaluator:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/evaluation.db"  # noqa: S108
+        self._db_path = db_path or config.db_for("evaluation")
         self._lock = threading.Lock()
         self._init_db()
 
