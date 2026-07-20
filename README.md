@@ -5,7 +5,11 @@
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000)](https://github.com/astral-sh/ruff)
 
 URA is a modular multi-agent system with semantic retrieval, episodic/semantic memory,
-a consensus-driven agent runtime, and full observability — designed for extensibility.
+a consensus-driven agent runtime, full observability, and an **intelligent conversational assistant**
+with real-time streaming, multi-language support, vector memory, web search, and tool execution.
+
+🚀 **Asistente desplegado en GX10:** `http://10.164.1.99:8003`
+📖 **API docs:** [docs/API_ASSISTANT.md](docs/API_ASSISTANT.md)
 
 ```
                                         ┌──────────────┐
