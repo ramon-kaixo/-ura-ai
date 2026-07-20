@@ -1,523 +1,122 @@
 #!/usr/bin/env python3
-import time
+"""Tuneladora de Mantenimiento — health checks, limpieza, validaciones.
 
-"""TUNELADORA DE MANTENIMIENTO — Flujo unificado con commit/rollback.
-
-FLUJO CORRECTO:
-  Ligero (6h):   token_screen + scanner + ruff + auto_reglas
-  Medio (24h):   + poda + refactor_v2 + compactadora + scanner_salida + inspectores
-  Profundo (7d): + refactor 4 workers + watermarks + backup + commit/rollback
-
-FUSIONADO CON:
-  - ciclo_autonomo_gx10.py (commit/rollback basado en F821)
-  - analizar_fallo_conciencia.py (diagnóstico de conciencia)
-  - master_conciencia.py (testing de acciones)
-  - pareto_router.py (gestión de datos)
-  - ura_self_modify.py (auto-mejora del prompt)
+Nunca modifica código del proyecto.
+Usa PipelineEngine + plugins (misma base que mejora continua).
 """
 
-import json
-import os
-import socket
-import subprocess
+from __future__ import annotations
+
 import sys
-from datetime import UTC, datetime
-from pathlib import Path
+import time
 
-URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
-MODEL_ROUTER = "http://10.164.1.99:11435"
-RUFF = str(URA_ROOT / ".venv/bin/ruff")
-VENV_PYTHON = str(URA_ROOT / ".venv/bin/python3")
-LOG_DIR = Path("/opt/ura/logs/tuneladora_mantenimiento")
-REPORT_DIR = Path(str(URA_ROOT) + "/docs/pro/reports")
-NERVIOSO = Path(str(URA_ROOT) + "/.nervioso")
-
-MAGICDNS_GX10 = "gx10-64c3-1.tail7b3cf3.ts.net"
-MAGICDNS_MAC = "mac-mini-de-ramon.tail7b3cf3.ts.net"
+from scripts.pro.tuneladora.engine import PipelineEngine
+from scripts.pro.tuneladora.plugins.health import HealthPlugin
+from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
+from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
+from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
 
 
-def _resolve_host(hostname: str, default: str = "") -> str:
-    try:
-        return socket.gethostbyname(hostname)
-    except OSError:
-        return default
+def _detectar_nivel() -> str:
+    """Determina el nivel de mantenimiento según hora/día."""
+    from datetime import UTC, datetime
 
-
-def _load_devices(root: Path) -> dict[str, str]:
-    defaults = {
-        "gx10_principal": "10.164.1.99",
-        "gx10_wifi": "10.164.1.247",
-        "gx10_tailscale": _resolve_host(MAGICDNS_GX10, "100.72.103.12"),
-        "mac_ethernet": "10.164.1.26",
-        "mac_tailscale": _resolve_host(MAGICDNS_MAC, "100.123.81.101"),
-    }
-    try:
-        with open(root / "config" / "dispositivos.json") as f:  # noqa: PTH123
-            cfg = json.load(f)
-        d = cfg.get("dispositivos", {})
-        gx10 = d.get("gx10-64c3", {})
-        mac = d.get("mac-mini-de-ramon", {})
-        result = {
-            "gx10_principal": gx10.get("ip_cable", defaults["gx10_principal"]),
-            "gx10_wifi": gx10.get("ip_wifi", defaults["gx10_wifi"]),
-            "gx10_tailscale": gx10.get("ip_tailscale", defaults["gx10_tailscale"]),
-            "mac_ethernet": mac.get("ip_cable", defaults["mac_ethernet"]),
-            "mac_tailscale": mac.get("ip_tailscale", defaults["mac_tailscale"]),
-        }
-    except (FileNotFoundError, json.JSONDecodeError, KeyError):
-        result = dict(defaults)
-    dynamic = _resolve_host(MAGICDNS_GX10)
-    if dynamic:
-        result["gx10_tailscale"] = dynamic
-    return result
-
-
-DISPOSITIVOS = _load_devices(URA_ROOT)
-
-
-def log(msg) -> None:
-    pass
-
-
-def run(cmd, timeout=120):
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
-        return r.returncode, r.stdout, r.stderr
-    except Exception as e:
-        return -1, "", str(e)
-
-
-def detectar_nivel() -> str:
     now = datetime.now(UTC)
     hora, dia = now.hour, now.weekday()
     if dia == 0 and 2 <= hora <= 4:
         return "profundo"
-    if hora in (0, 6, 12, 18):
-        return "medio" if hora == 3 else "ligero"
+    if hora in (6, 12, 18):
+        return "medio"
     return "ligero"
 
 
-def health_check():
-    metrics = {}
-    rc, out, _ = run(["free", "-m"])
-    if rc == 0:
-        for line in out.splitlines():
-            if "Mem:" in line:
-                parts = line.split()
-                if len(parts) > 2:
-                    metrics["ram_usada_mb"] = int(parts[2])
-    rc, out, _ = run(["ps", "aux"])
-    metrics["zombies"] = out.count(" Z ") if out else 0
-    try:
-        usage = os.statvfs("/")
-        metrics["disco_libre_gb"] = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
-    except Exception:  # noqa: S110
-        pass
-    alertas = []
-    if metrics.get("ram_usada_mb", 0) > 90000:
-        alertas.append("RAM >90GB")
-    if metrics.get("zombies", 0) > 5:
-        alertas.append(f"Zombies: {metrics['zombies']}")
-    return metrics, alertas
-
-
-def check_ollama():
-    try:
-        rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{OLLAMA_URL}/api/tags"])
-        if rc == 0 and "models" in out:
-            return json.loads(out).get("models", [])
-    except Exception:  # noqa: S110
-        pass
-    return []
-
-
-def check_model_router():
-    try:
-        rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{MODEL_ROUTER}/health"])
-        return rc == 0 and "ok" in out
-    except Exception:
-        return False
-
-
-def check_dispositivos():
-    resultados = {}
-    for nombre, ip in DISPOSITIVOS.items():
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            resultados[nombre] = sock.connect_ex((ip, 22)) == 0
-            sock.close()
-        except Exception:
-            resultados[nombre] = False
-    return resultados
-
-
-# -- Steps comunes --
-
-
-def step_token_screen():
-    log("  Token screen (RAM check)...")
-    rc, _, _ = run(
-        [VENV_PYTHON, "scripts/pro/token_screen.py", "--texto", "test", "--json"],
-        timeout=15,
-    )
-    return rc == 0
-
-
-def step_scanner_entrada() -> None:
-    log("  Scanner entrada (snapshot)...")
-    run([VENV_PYTHON, "scripts/pro/scanner_autoajuste.py", "--json"], timeout=30)
-
-
-def step_scanner_salida() -> None:
-    log("  Scanner salida (diff)...")
-    run([VENV_PYTHON, "scripts/pro/scanner_autoajuste.py", "--diff", "--json"], timeout=30)
-
-
-def step_orphan_scanner() -> int:
-    log("  Orphan systemd units...")
-    _rc, out, _ = run([VENV_PYTHON, "scripts/pro/systemd_orphan_scanner.py", "--json"], timeout=30)
-    try:
-        data = json.loads(out)
-        return data.get("total", 0)
-    except (json.JSONDecodeError, TypeError):
-        return -1
-
-
-def step_poda() -> None:
-    log("  Poda mecanica...")
-    run([VENV_PYTHON, "scripts/pro/poda_mecanica.py", "--json"], timeout=30)
-
-
-def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-coder:14b"):
-    log(f"  Refactor ({workers} workers, {model})...")
-    env = os.environ.copy()
-    env["REFACTOR_WORKER_TOTAL"] = str(workers)
-    env["REFACTOR_MODEL"] = model
-    env["REFACTOR_MODEL_FALLBACK"] = fallback
-    env["MIN_LINES"] = "80"
-    env["OLLAMA_URL"] = OLLAMA_URL
-    env["URA_ROOT"] = str(URA_ROOT)
-
-    procs = []
-    for i in range(workers):
-        env["REFACTOR_WORKER_ID"] = str(i)
-        proc = subprocess.Popen(
-            [VENV_PYTHON, "-u", "scripts/pro/refactor_large_functions_v2.py"],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            cwd=str(URA_ROOT),
-        )
-        procs.append(proc)
-
-    total_ok = total_err = 0
-    for i, proc in enumerate(procs):
-        try:
-            out = proc.communicate(timeout=3600)[0] or ""
-            ok = out.count("Refactorizado")
-            err = out.count("Error")
-            total_ok += ok
-            total_err += err
-            log(f"    W{i + 1}: {ok} OK, {err} ERROR")
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            log(f"    W{i + 1}: TIMEOUT")
-    return total_ok, total_err
-
-
-def step_compactadora() -> None:
-    log("  Compactadora + auto-reglas...")
-    run([VENV_PYTHON, "scripts/pro/compactadora.py", "--estado"], timeout=15)
-    run([VENV_PYTHON, "scripts/pro/auto_reglas.py", "--generar"], timeout=30)
-
-
-def step_inspectores():
-    log("  Inspectores (validacion)...")
-    rc, _, _ = run([VENV_PYTHON, "scripts/pro/inspectores.py", "--json"], timeout=60)
-    return rc == 0
-
-
-# -- Steps de ciclo_autonomo (fusionados) --
-
-
-def snapshot_f821(label="pre-mantenimiento") -> None:
-    log("  Snapshot F821...")
-    run([VENV_PYTHON, "scripts/pro/f821_watch.py", "snapshot", "--label", label], timeout=30)
-
-
-def audit_delta(target="pre-mantenimiento"):
-    log("  Auditoria F821 delta...")
-    rc, out, _ = run([VENV_PYTHON, "scripts/pro/f821_watch.py", "compare", "--target", target], timeout=30)
-    return rc == 0, out
-
-
-def git_commit_if_stable() -> None:
-    log("  Git commit (si F821 estable)...")
-    run(["git", "add", "-u"], timeout=30)
-    run(
-        ["git", "commit", "-m", f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')} — F821 estable"],
-        timeout=30,
-    )
-
-
-def git_rollback() -> None:
-    log("  Git rollback (F821 regreso)...")
-    run(["git", "checkout", "."], timeout=30)
-
-
-# -- Steps de analizar_fallo_conciencia (fusionados) --
-
-
-def step_diagnostico_conciencia():
-    log("  Diagnostico de conciencia...")
-    rc, _out, _ = run([VENV_PYTHON, "scripts/pro/analizar_fallo_conciencia.py"], timeout=60)
-    return rc == 0
-
-
-# -- Steps de master_conciencia (fusionados) --
-
-
-def step_testing_acciones():
-    log("  Testing de acciones URA...")
-    rc, _out, _ = run([VENV_PYTHON, "scripts/pro/master_conciencia.py"], timeout=120)
-    return rc == 0
-
-
-# -- Steps de pareto_router (fusionados) --
-
-
-def step_gestion_datos():
-    log("  Gestion de datos (Pareto 20/80)...")
-    rc, _, _ = run([VENV_PYTHON, "scripts/pro/pareto_router.py", "--clasificar"], timeout=60)
-    return rc == 0
-
-
-# -- Steps de ura_self_modify (fusionados) --
-
-
-def step_auto_mejora_prompt():
-    log("  Auto-mejora del prompt URA...")
-    rc, _, _ = run([VENV_PYTHON, "scripts/pro/ura_self_modify.py"], timeout=60)
-    return rc == 0
-
-
-def step_auditoria(profundidad: str) -> dict:
-    """Ejecuta el escudo de auditoría. Retorna score + reporte + html_path."""
-    log(f"  Auditoría ({profundidad})...")
-    flags = "--quick" if profundidad in ("ligero", "medio") else "--full"
-    script = str(URA_ROOT / "scripts/pro/revisor.py")
-    _rc, stdout, _ = run([VENV_PYTHON, script, flags], timeout=120)
-    try:
-        reporte = json.loads(stdout)
-    except (json.JSONDecodeError, ValueError) as e:
-        log(f"  ERROR parseando auditoría: {e}")
-        return {"score": 0, "bloqueante": True, "error": str(e)}
-    score = reporte.get("score", 0)
-    log(f"  Score: {score}/100 | Críticos: {reporte.get('metricas', {}).get('criticos', 0)}")
-    if reporte.get("bloqueante"):
-        log("  ⚠️  SCORE BLOQUEANTE — Revisar reporte antes de continuar")
-    return reporte
-
-
-def step_forense_aislamientos() -> dict:
-    """Lee procesos aislados por el SNC en /tmp/ura_aislados/ y limpia >7 días."""
-    aislados_dir = Path("/tmp/ura_aislados")
-    if not aislados_dir.exists():
-        return {"total": 0, "activos": [], "limpiados": 0}
-
-    ahora = time.time()
-    activos = []
-    limpiados = 0
-
-    for pid_dir in aislados_dir.iterdir():
-        if not pid_dir.is_dir():
-            continue
-        nombre_file = pid_dir / "nombre.txt"
-        nombre = nombre_file.read_text().strip() if nombre_file.exists() else pid_dir.name
-        cpu_file = pid_dir / "cpu.txt"
-        cpu_info = cpu_file.read_text().strip() if cpu_file.exists() else "?"
-
-        # Si el proceso ya no existe (SIGKILL manual), limpiar
-        if not (Path(f"/proc/{pid_dir.name}").exists()):
-            import shutil
-
-            shutil.rmtree(pid_dir, ignore_errors=True)
-            limpiados += 1
-            log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — proceso ya no existe")
-            continue
-
-        # Si el aislamiento tiene más de 7 días, limpiar
-        if ahora - pid_dir.stat().st_mtime > 604800:
-            import shutil
-
-            shutil.rmtree(pid_dir, ignore_errors=True)
-            limpiados += 1
-            log(f"  🧹 Aislamiento {pid_dir.name} ({nombre}) limpiado — >7 días")
-            continue
-
-        activos.append({"pid": pid_dir.name, "nombre": nombre, "cpu": cpu_info})
-
-    resultado = {"total": len(activos) + limpiados, "activos": activos, "limpiados": limpiados}
-    if activos:
-        log(f"  ⚠️ {len(activos)} procesos aislados activos: {[a['nombre'] for a in activos]}")
-    return resultado
-
-
-# -- Niveles --
-
-
-def revision_ligera():
-    log("REVISION LIGERA (6h)")
-    token_ok = step_token_screen()
-    step_scanner_entrada()
-    run([RUFF, "check", "--fix", "--select", "F841,F401", "."], timeout=120)
-    run([RUFF, "format", "."], timeout=60)
-    _rc, out, _ = run([RUFF, "check", "--select", "F821", "."], timeout=60)
-    f821 = out.count("F821")
-    step_compactadora()
-    step_scanner_salida()
-    auditoria = step_auditoria("ligero")
-    return {"ruff_f821": f821, "token_screen": token_ok, "auditoria_score": auditoria.get("score", 0)}
-
-
-def revision_media():
-    log("REVISION MEDIA (24h)")
-    health, alertas = health_check()
-    if alertas:
-        log(f"  ALERTAS: {alertas}")
-    token_ok = step_token_screen()
-    step_scanner_entrada()
-    orphan_count = step_orphan_scanner()
-    run([RUFF, "check", "--fix", "."], timeout=120)
-    run([RUFF, "format", "."], timeout=60)
-    step_poda()
-    ok, err = step_refactor(workers=1)
-    step_compactadora()
-    step_scanner_salida()
-    inspectores_ok = step_inspectores()
-    _rc, out, _ = run([RUFF, "check", "--select", "F821", "."], timeout=60)
-    auditoria = step_auditoria("medio")
-    return {
-        "health": health,
-        "token_screen": token_ok,
-        "orphan_units": orphan_count,
-        "refactor_ok": ok,
-        "refactor_err": err,
-        "inspectores_ok": inspectores_ok,
-        "f821_final": out.count("F821"),
-        "auditoria_score": auditoria.get("score", 0),
-    }
-
-
-def revision_profunda():
-    log("REVISION PROFUNDA (SEMANAL)")
-    results = {}
-    health, alertas = health_check()
-    models = check_ollama()
-    router_ok = check_model_router()
-    dispositivos = check_dispositivos()
-    log(f"  RAM: {health.get('ram_usada_mb', '?')}MB, Router: {'OK' if router_ok else 'DOWN'}")
-
-    # Preflight + Snapshot (de ciclo_autonomo)
-    snapshot_f821("pre-profundo")
-
-    token_ok = step_token_screen()
-    results["token_screen"] = token_ok
-    step_scanner_entrada()
-    results["orphan_units"] = step_orphan_scanner()
-    run([RUFF, "check", "--fix", "--unsafe-fixes", "."], timeout=300)
-    run([RUFF, "format", "."], timeout=120)
-    step_poda()
-    ok, err = step_refactor(workers=4)
-    results["refactor_ok"] = ok
-    results["refactor_err"] = err
-    step_compactadora()
-    step_scanner_salida()
-    inspectores_ok = step_inspectores()
-    results["inspectores_ok"] = inspectores_ok
-    run([VENV_PYTHON, "scripts/pro/watermark_aggregator.py", "--auto-reglas"], timeout=30)
-
-    # Escudo de auditoría profunda
-    auditoria = step_auditoria("profundo")
-    results["auditoria_score"] = auditoria.get("score", 0)
-    results["auditoria_html"] = auditoria.get("html_report", "")
-    results["auditoria_criticos"] = auditoria.get("metricas", {}).get("criticos", 0)
-
-    # Forense de procesos aislados por el SNC
-    results["aislamientos"] = step_forense_aislamientos()
-
-    # Auditoria delta (de ciclo_autonomo)
-    f821_ok, _delta_out = audit_delta("pre-profundo")
-    _rc, out, _ = run([RUFF, "check", "--select", "F821", "."], timeout=60)
-    results["f821_final"] = out.count("F821")
-
-    # Commit o Rollback — bloqueado por auditoría si score < 50
-    if results.get("auditoria_criticos", 0) > 0 or auditoria.get("bloqueante", False):
-        log("  ⛔ Auditoría bloqueante — commit cancelado, revisar reporte")
-        git_rollback()
-        results["git"] = "blocked_by_auditor"
-    elif f821_ok:
-        git_commit_if_stable()
-        results["git"] = "committed"
-    else:
-        git_rollback()
-        results["git"] = "rollback"
-
-    # Nuevos steps fusionados
-    step_diagnostico_conciencia()
-    step_testing_acciones()
-    step_gestion_datos()
-    step_auto_mejora_prompt()
-
-    # Reporte
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    reporte = {
-        "tuneladora": "mantenimiento_profundo",
-        "fecha": datetime.now(UTC).isoformat(),
-        "health": health,
-        "alertas": alertas,
-        "dispositivos": {k: "OK" if v else "DOWN" for k, v in dispositivos.items()},
-        "models_disponibles": len(models),
-        "refactor_ok": ok,
-        "refactor_err": err,
-        "f821_final": results["f821_final"],
-        "git": results["git"],
-    }
-    reporte_path = REPORT_DIR / f"reporte_semanal_{datetime.now(UTC).strftime('%Y%m%d')}.json"
-    reporte_path.write_text(json.dumps(reporte, indent=2, ensure_ascii=False))
-    results["reporte"] = str(reporte_path)
-    return results
-
-
 def main() -> int:
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    NERVIOSO.mkdir(parents=True, exist_ok=True)
-    nivel = detectar_nivel()
-    log("=" * 55)
-    log(f"  TUNELADORA MANTENIMIENTO — Nivel: {nivel.upper()}")
-    log("=" * 55)
-    _health, alertas = health_check()
-    if alertas:
-        log(f"  ALERTAS: {alertas}")
+    import argparse  # noqa: PLC0415
+
+    parser = argparse.ArgumentParser(description="Tuneladora de Mantenimiento")
+    parser.add_argument("--nivel", choices=["ligero", "medio", "profundo"], default=None)
+    parser.add_argument("--force", action="store_true", help="Ignorar nivel, ejecutar todo")
+    args = parser.parse_args()
+
+    engine = PipelineEngine()
+    health = HealthPlugin(engine)
+    quality = CodeQualityPlugin(engine)
+    cleanup = CleanupPlugin(engine)
+    reporting = ReportingPlugin(engine)
+
+    nivel = args.nivel or _detectar_nivel()
+    if args.force:
+        nivel = "profundo"
+
+    engine.log.info("=" * 55)
+    engine.log.info(f"  MANTENIMIENTO — Nivel: {nivel.upper()}")
+    engine.log.info("=" * 55)
+
+    t0 = time.time()
+    results: dict = {}
+
+    # ── Preflight: Health checks (todos los niveles) ──
+    engine.log.info("── Preflight: Health checks ──")
+    results["health"] = health.check_all()
+
+    # ── Ligero: calidad básica ──
+    engine.log.info("── Calidad básica ──")
+    results["token_screen"] = quality.token_screen()
+    quality.scanner(mode="json")
+    quality.ruff_check("F841,F401")
+    quality.ruff_format()
+    f821 = quality.ruff_check("F821")
+    results["f821"] = f821
+    quality.compactadora()
+    quality.scanner(mode="diff")
+
+    # ── Medio: añade poda, inspectores, orphan scanner ──
+    if nivel in ("medio", "profundo"):
+        engine.log.info("── Calidad media ──")
+        results["orphan_scanner"] = engine.run_script(
+            "scripts/pro/systemd_orphan_scanner.py", args=["--json"], timeout=30
+        ).returncode
+        quality.ruff_fix()
+        quality.poda()
+        results["inspectores"] = quality.inspectores()
+
+    # ── Profundo: refactor, forense, snapshot, auditoria, git ──
     if nivel == "profundo":
-        resultado = revision_profunda()
-    elif nivel == "medio":
-        resultado = revision_media()
-    else:
-        resultado = revision_ligera()
-    estado = {
-        "ultima_ejecucion": datetime.now(UTC).isoformat(),
-        "nivel": nivel,
-        "resultado": resultado,
-    }
-    (NERVIOSO / "estado_mantenimiento.json").write_text(
-        json.dumps(estado, indent=2, ensure_ascii=False),
-    )
-    log("Mantenimiento completado")
+        engine.log.info("── Mantenimiento profundo ──")
+        results["ollama"] = {"modelos": len(engine.health_ollama())}
+        results["forense"] = cleanup.forense_aislamientos()
+        quality.f821_snapshot("pre-mantenimiento")
+
+        results["ruff_profundo"] = quality.ruff_fix(unsafe=True)
+
+        # Auditoría
+        results["auditoria"] = cleanup.auditoria(profundo=True)
+
+        # Git: commit si auditoría ok, rollback si no
+        aud = results.get("auditoria", {})
+        if aud.get("bloqueante"):
+            cleanup.git_rollback()
+            results["git"] = "rollback_by_auditor"
+        else:
+            commit_ok = cleanup.git_commit()
+            if commit_ok["ok"]:
+                f821_post = quality.f821_compare("pre-mantenimiento")
+                results["f821_post"] = f821_post
+                results["git"] = "committed" if f821_post["ok"] else "rollback_f821"
+            else:
+                results["git"] = "no_changes"
+
+    # ── Reporte ──
+    elapsed = time.time() - t0
+    H = int(elapsed // 3600)
+    M = int((elapsed % 3600) // 60)
+    S = int(elapsed % 60)
+
+    engine.log.report("INFORME DE MANTENIMIENTO", [
+        f"Nivel: {nivel.upper()}",
+        f"Duración: {H}h {M}m {S}s",
+    ])
+    reporting.save_maintenance_state(results, nivel)
     return 0
 
 
