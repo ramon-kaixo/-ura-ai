@@ -213,6 +213,7 @@ class NoteTool:
         import sqlite3
 
         from motor.assistant.config import config
+        config.ensure_data_dir()
         self._conn = sqlite3.connect(config.db_for("notes"))
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS notes "
