@@ -54,7 +54,7 @@ class LearningPlugin:
                 recommended = int(avg + 2 * stdev) + 5  # media + 2σ + 5s margen
             else:
                 recommended = int(statistics.mean(times)) + 10
-            recommendations[plugin] = max(recommended, 15)  # mínimo 15s
+            recommendations[plugin] = max(15, min(recommended, 300))  # mínimo 15s, máximo 5min
 
         return recommendations
 
