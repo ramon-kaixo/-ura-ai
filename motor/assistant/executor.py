@@ -52,6 +52,26 @@ class GitTool:
             return ToolResult(False, error=str(e))
 
 
+class GitBranchTool:
+    def execute(self, repo: str = "") -> ToolResult:
+        path = repo or str(Path.cwd())
+        try:
+            res = subprocess.run(["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False)  # noqa: S603, S607
+            return ToolResult(True, res.stdout[:2000])
+        except Exception as e:
+            return ToolResult(False, error=str(e))
+
+
+class GitCommitTool:
+    def execute(self, message: str, repo: str = "") -> ToolResult:
+        path = repo or str(Path.cwd())
+        try:
+            res = subprocess.run(["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False)  # noqa: S603, S607
+            return ToolResult(res.returncode == 0, res.stdout[:2000] or res.stderr[:2000])
+        except Exception as e:
+            return ToolResult(False, error=str(e))
+
+
 class DockerTool:
     def ps(self) -> ToolResult:
         try:
@@ -167,6 +187,8 @@ class ConversationalToolManager:
 
     def __init__(self) -> None:
         self._git = GitTool()
+        self._git_branch = GitBranchTool()
+        self._git_commit = GitCommitTool()
         self._docker = DockerTool()
         self._datetime = DateTimeTool()
         self._file_read = FileReadTool()
@@ -190,6 +212,9 @@ class ConversationalToolManager:
             "calculator": lambda: self._calc.execute(params.get("expression", "")),
             "note_save": lambda: self._notes.save(params.get("content", "")),
             "note_list": lambda: self._notes.list_recent(int(params.get("limit", 5))),
+            "git_branch": lambda: self._git_branch.execute(params.get("repo", "")),
+            "git_commit": lambda: self._git_commit.execute(
+                params.get("message", "commit"), params.get("repo", "")),
         }
         handler = sync_handlers.get(tool_name)
         if handler:

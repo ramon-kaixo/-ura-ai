@@ -282,6 +282,8 @@ def _detect_tool_name(user_message: str) -> str | None:
         "ram": "system_info", "memoria": "system_info",
         "cuánto es": "calculator", "calcula": "calculator",
         "apunta": "note_save", "nota": "note_save",
+        "branch": "git_branch", "rama": "git_branch",
+        "commit": "git_commit",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:

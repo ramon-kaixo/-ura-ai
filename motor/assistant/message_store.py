@@ -109,5 +109,14 @@ class MessageStore:
     def __enter__(self) -> MessageStore:  # noqa: PYI034
         return self
 
+    def cleanup_old(self, days: int = 30) -> int:
+        with self._lock:
+            cur = self._conn.execute(
+                "DELETE FROM messages WHERE timestamp < datetime('now', ?)",
+                (f"-{days} days",),
+            )
+            self._conn.commit()
+            return cur.rowcount
+
     def __exit__(self, *args: object) -> None:
         self.close()
