@@ -193,31 +193,21 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     if request.stream:
 
         async def event_stream():
+            full_reply = ""
             try:
-                if hasattr(llm, "generate_async"):
-                    reply = await llm.generate_async(
-                        cid,
-                        resolved,
-                        mode,
-                        intent_value=intent.value,
-                        system_prompt=system_prompt,
-                    )
-                else:
-                    reply = llm.generate(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt)
+                async for token in llm.generate_stream(cid, resolved, mode, intent_value=intent.value, system_prompt=system_prompt):  # noqa: E501
+                    yield StreamEvent("token", {"text": token}).to_sse()
+                    full_reply = token
             except Exception:
-                reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
+                full_reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
-            engine.add_message(cid, "assistant", reply)
-            event = StreamEvent(
-                "complete",
-                {
-                    "reply": reply,
-                    "conversation_id": cid,
-                    "intent": intent.value,
-                    "mode": mode.value,
-                },
-            )
-            yield event.to_sse()
+            engine.add_message(cid, "assistant", full_reply)
+            yield StreamEvent("complete", {
+                "reply": full_reply,
+                "conversation_id": cid,
+                "intent": intent.value,
+                "mode": mode.value,
+            }).to_sse()
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
