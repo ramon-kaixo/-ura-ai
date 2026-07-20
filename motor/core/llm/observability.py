@@ -14,6 +14,9 @@ from typing import Any
 from motor.core.llm._logging import percentile
 
 
+MAX_RECORDS = 1000
+
+
 class LLMMetrics:
     """Métricas por proveedor/operación. Thread-safe."""
 
@@ -39,7 +42,10 @@ class LLMMetrics:
     ) -> None:
         with self._lock:
             key = (provider, operation)
-            self._calls[key].append(latency_ms)
+            lst = self._calls[key]
+            lst.append(latency_ms)
+            if len(lst) > MAX_RECORDS:
+                lst.pop(0)
             self._total_calls[provider] += 1
             if success:
                 self._success_calls[provider] += 1
@@ -48,7 +54,10 @@ class LLMMetrics:
                 if error:
                     self._errors[key][error] += 1
             if tokens is not None:
-                self._tokens[provider].append(float(tokens))
+                tlst = self._tokens[provider]
+                tlst.append(float(tokens))
+                if len(tlst) > MAX_RECORDS:
+                    tlst.pop(0)
 
     def get_stats(self, provider: str | None = None, operation: str | None = None) -> dict[str, Any]:
         """Estadísticas agregadas. Filtra por provider y/u operation."""

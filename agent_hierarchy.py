@@ -493,6 +493,35 @@ class ExecutorAgent(Agent):
 
         return False
 
+    @staticmethod
+    def _validate_code_ast(code: str) -> bool:
+        """Valida código mediante AST. Solo permite operaciones seguras."""
+        try:
+            import ast
+            tree = ast.parse(code, mode="exec")
+        except SyntaxError:
+            return False
+
+        for node in ast.walk(tree):
+            # Bloquear calls a funciones peligrosas
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    name = f"{node.func.value.id}.{node.func.attr}" if isinstance(node.func.value, ast.Name) else ""
+                    if name in ("os.system", "os.popen", "subprocess.run", "subprocess.Popen",
+                                "shutil.rmtree", "shutil.copy", "pathlib.Path.open"):
+                        return False
+                    if node.func.attr in ("__import__",):
+                        return False
+                elif isinstance(node.func, ast.Name):
+                    if node.func.id in ("eval", "exec", "__import__", "open"):
+                        return False
+            # Bloquear import/from
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                return False
+            # Bloquear llamadas a open como función (no Attribute)
+            # Bloquear exec/eval como statements no aplica porque son funciones en 3.x
+        return True
+
     def _execute_code(self, details: dict) -> bool:
         """Execute code in isolated sandbox."""
         code = details.get("code")
@@ -500,19 +529,16 @@ class ExecutorAgent(Agent):
             logger.error(f"Invalid code block: {type(code).__name__}")
             return False
 
-        # Block dangerous operations that could escape sandbox
-        dangerous = ["os.system(", "subprocess.run(", "shutil.rmtree(", "__import__('os')", "open('/"]
-        for pattern in dangerous:
-            if pattern in code:
-                logger.warning(f"Code contains dangerous pattern: {pattern} — execution blocked")
-                return False
+        if not self._validate_code_ast(code):
+            logger.warning(f"Code contains dangerous patterns — execution blocked")
+            return False
 
         logger.info("Executing code in sandbox")
 
         try:
             # Execute in sandboxed environment
             result = subprocess.run(
-                ["python3", "-c", code],
+                ["python3", "-I", "-c", code],
                 cwd=self.sandbox_dir,
                 capture_output=True,
                 text=True,

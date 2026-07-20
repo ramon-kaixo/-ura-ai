@@ -55,3 +55,5 @@ coverage.xml
 .ruff_cache/
 .mypy_cache/
 deploy/secrets.env
+hetzner.env
+backups/env/

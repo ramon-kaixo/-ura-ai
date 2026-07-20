@@ -563,6 +563,8 @@ class _SpanEventSink:
 class InMemoryExporter(_SpanEventSink):
     """Captures all events in memory. Used for roundtrip testing (OBS-05)."""
 
+    MAX_EVENTS = 10_000
+
     def __init__(self) -> None:
         self.events: list[SpanEvent] = []
         self._lock = threading.Lock()
@@ -570,6 +572,8 @@ class InMemoryExporter(_SpanEventSink):
     def emit(self, event: SpanEvent) -> None:
         with self._lock:
             self.events.append(event)
+            if len(self.events) > self.MAX_EVENTS:
+                self.events.pop(0)
 
     def clear(self) -> None:
         with self._lock:
@@ -811,6 +815,8 @@ class LatencyStats:
         if self.count == 1 or duration_ns > self.max_duration_ns:
             self.max_duration_ns = duration_ns
         self.durations_ns.append(duration_ns)
+        if len(self.durations_ns) > 10_000:
+            self.durations_ns.pop(0)
 
     def compute_percentiles(self) -> None:
         if not self.durations_ns:
@@ -820,6 +826,8 @@ class LatencyStats:
         self.p50_ns = sorted_d[int(n * 0.5)]
         self.p95_ns = sorted_d[int(n * 0.95)]
         self.p99_ns = sorted_d[int(n * 0.99)]
+        if len(self.durations_ns) > 1_000:
+            self.durations_ns = self.durations_ns[-1000:]
 
     def to_dict(self) -> dict[str, Any]:
         return {
