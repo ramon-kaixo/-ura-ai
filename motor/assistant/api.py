@@ -25,6 +25,7 @@ _RATE_LIMIT_MAX = 60
 
 
 class ChatRequest(BaseModel):
+    user_id: str = ""
     conversation_id: str = ""
     message: str = Field(..., max_length=_MAX_MESSAGE_LENGTH)
     mode: str = "conversacion"
@@ -83,6 +84,12 @@ class _RateLimiter:
 
 
 _rate_limiter = _RateLimiter()
+
+
+def _scoped_cid(user_id: str, conversation_id: str) -> str:
+    if user_id:
+        return f"usr_{user_id[:16]}__{conversation_id}"
+    return conversation_id
 
 
 _SYSTEM_PROMPTS = {
@@ -188,7 +195,9 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     llm = get_llm()
     cid = request.conversation_id or ""
 
+    cid = _scoped_cid(request.user_id, cid)
     intent, mode, resolved, system_prompt, conv, lang_code = _process(engine, llm, cid, request.message, request.mode)
+    display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
     if request.stream:
 
@@ -204,7 +213,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             engine.add_message(cid, "assistant", full_reply)
             yield StreamEvent("complete", {
                 "reply": full_reply,
-                "conversation_id": cid,
+                "conversation_id": display_cid,
                 "intent": intent.value,
                 "mode": mode.value,
             }).to_sse()
@@ -225,7 +234,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     engine.add_message(cid, "assistant", reply)
 
     return ChatResponse(
-        conversation_id=cid,
+        conversation_id=display_cid,
         reply=reply,
         intent=intent.value,
         turn_count=conv.state.turn_count if conv.state else 0,
