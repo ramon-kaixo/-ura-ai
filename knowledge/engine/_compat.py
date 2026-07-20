@@ -6,6 +6,12 @@ Este módulo proporciona polyfills para features que no existen en versiones ant
 
 from __future__ import annotations
 
+import sys
 
-# StrEnum está disponible desde Python 3.11.
-# En 3.10, usamos un reemplazo basado en Enum + str mixin.
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
