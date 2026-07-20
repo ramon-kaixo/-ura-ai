@@ -83,8 +83,8 @@ class PatternAnalyzer:
         # 3. Objetivos que más fallan
         goal_results: dict[str, list[bool]] = {}
         for e in entries:
-            g = e.get("goal", {})
-            title = g.get("title", "unknown")
+            g = e.get("goal") or {}
+            title = g.get("title", "unknown") if isinstance(g, dict) else "unknown"
             success = e.get("result") in ("finalizar", "completado", "ok")
             goal_results.setdefault(title, []).append(success)
 
