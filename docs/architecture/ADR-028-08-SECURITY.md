@@ -1,6 +1,6 @@
 # ADR-028-08: Platform Security — Inter-Subsystem Authentication
 
-**Status:** Draft  
+**Status:** Approved  
 **Phase:** F28-B3  
 
 ---
