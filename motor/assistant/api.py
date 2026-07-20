@@ -145,6 +145,37 @@ _moderator = ContentModerator()
 _tool_manager = ConversationalToolManager()
 
 
+def _hours_since_last_message(conv: Any) -> float:
+    if not conv or not conv.messages:
+        return 0
+    try:
+        from datetime import UTC, datetime
+        last = conv.messages[-1].timestamp
+        if last:
+            last_dt = datetime.fromisoformat(last)
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=UTC)
+            return (datetime.now(UTC) - last_dt).total_seconds() / 3600
+    except Exception:  # noqa: S110
+        pass
+    return 0
+
+
+def _get_conversation_summary(conv: Any) -> str:
+    if not conv or not conv.messages:
+        return ""
+    msgs = conv.messages[-6:]
+    topics = set()
+    for m in msgs:
+        words = m.content.lower().split()
+        for w in words:
+            if len(w) > 4 and w not in ("está", "este", "esta", "para", "como", "más", "pero"):
+                topics.add(w)
+    if topics:
+        return "Se hablaba de: " + ", ".join(list(topics)[:5]) + "."
+    return ""
+
+
 def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
     mode_prompts = _SYSTEM_PROMPTS.get(mode_value, _SYSTEM_PROMPTS["conversacion"])
     system_prompt = mode_prompts.get(lang_code, mode_prompts["es"])
@@ -168,6 +199,21 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
         system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
 
     system_prompt += " Al final, si es útil, sugiere 1 pregunta de seguimiento breve."
+
+    lang = analysis.get("language", "es")
+    if analysis.get("language_changed"):
+        system_prompt += f" El usuario cambió de idioma. Responde ahora en {lang}. Este es el nuevo idioma."
+
+    conv = analysis.get("_conv")
+    if conv and conv.state and conv.state.turn_count > 0:
+        hours_since = _hours_since_last_message(conv)
+        if hours_since > 2:
+            summary = _get_conversation_summary(conv)
+            if summary:
+                ctx = f"vuelve tras {int(hours_since)}h. Tema: {summary}"
+                system_prompt += f"\n[El usuario {ctx}. Saluda brevemente y retoma.]"
+
+    system_prompt += " Si no sabes la respuesta con certeza, dímelo honestamente en vez de inventar."
 
     if analysis.get("proactive_suggestion"):
         system_prompt += f"\n[INFO: {analysis['proactive_suggestion']}]"
@@ -205,33 +251,40 @@ def _process(engine: ConversationEngine, llm: LLMBridge, cid: str, message: str,
 
     engine.add_message(cid, "user", resolved)
 
+    analysis["_conv"] = conv
     system_prompt = _build_system_prompt(mode.value, analysis, lang_code)
 
     return intent, mode, resolved, system_prompt, conv, lang_code, analysis
 
 
-async def _execute_command(user_message: str, analysis: dict) -> str:
+def _detect_tool_name(user_message: str) -> str | None:
     msg = user_message.lower().strip()
     tool_map = {
         "status": "git_status", "estado": "git_status",
         "log": "git_log", "diff": "git_diff",
         "docker": "docker_ps", "contenedor": "docker_ps",
-        "busca": "web_search", "search": "web_search", "buscar": "web_search",
+        "busca": "web_search", "search": "web_search",
         "python": "python", "codigo": "python",
-        "hora": "datetime", "fecha": "datetime", "día": "datetime", "tiempo": "datetime",
-        "ram": "system_info", "memoria": "system_info", "disco": "system_info", "cpu": "system_info",
-        "cuánto es": "calculator", "calcula": "calculator", "suma": "calculator",
-        "apunta": "note_save", "anota": "note_save", "nota": "note_save",
-        "notas": "note_list", "apuntes": "note_list",
+        "hora": "datetime", "fecha": "datetime",
+        "ram": "system_info", "memoria": "system_info",
+        "cuánto es": "calculator", "calcula": "calculator",
+        "apunta": "note_save", "nota": "note_save",
     }
     for keyword, tool in tool_map.items():
         if keyword in msg:
-            result = await _tool_manager.execute(tool)
-            output = result.output if result.success else result.error
-            if tool == "git_status" and output:
-                return _format_git_status(output)
-            return output
-    return ""
+            return tool
+    return None
+
+
+async def _execute_command(user_message: str, analysis: dict) -> str:
+    tool = _detect_tool_name(user_message)
+    if not tool:
+        return ""
+    result = await _tool_manager.execute(tool)
+    output = result.output if result.success else result.error
+    if tool == "git_status" and output:
+        return _format_git_status(output)
+    return output
 
 
 def _format_git_status(raw: str) -> str:
@@ -311,6 +364,12 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
 
     if intent == UserIntent.COMMAND:
+        tool_name = _detect_tool_name(resolved)
+        if tool_name and _tool_manager.needs_confirmation(tool_name, resolved):
+            enriched_prompt += (
+                "\n\n⚠️ Este comando requiere confirmación. "
+                "Pregunta al usuario si está seguro antes de ejecutarlo."
+            )
         tool_result = await _execute_command(resolved, analysis)
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
