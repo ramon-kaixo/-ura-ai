@@ -75,7 +75,7 @@ class ProtocolValidator:
                 msg = "unsafe_payload"
                 raise ProtocolValidationError(
                     msg,
-                    f"Payload contains forbidden pattern: {pattern[:20]}",
+                    f"Payload contains forbidden pattern: {pattern[:20] if isinstance(pattern, str) else pattern[:20].decode('utf-8', errors='replace')}",
                 )
 
     def validate(self, envelope: ProtocolEnvelope) -> None:

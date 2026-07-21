@@ -54,7 +54,7 @@ class Instrumentation:
                 try:
                     result = original(topic, payload, source=source)
                     self.metrics.counter("eventbus_emitsync_total", labels={"topic": topic}).inc()
-                    return result
+                    return result  # type: ignore[no-any-return]
                 except Exception:
                     self.metrics.counter("eventbus_failures_total", labels={"topic": topic}).inc()
                     raise
