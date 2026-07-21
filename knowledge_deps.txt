@@ -1,0 +1,2088 @@
+{
+    "__main__": {
+        "bacon": 0,
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine._compat",
+            "knowledge.engine.agent",
+            "knowledge.engine.api",
+            "knowledge.engine.archiver",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.chunker",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.__main__",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.api",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.notify",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search",
+            "knowledge.engine.collector",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.connection_pool",
+            "knowledge.engine.deduction",
+            "knowledge.engine.determinism",
+            "knowledge.engine.errors",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.feedback",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.jobs",
+            "knowledge.engine.knowledge_base",
+            "knowledge.engine.knowledge_verifier",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.lock",
+            "knowledge.engine.logging_config",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.migrations",
+            "knowledge.engine.models",
+            "knowledge.engine.notify",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.ontology.schema_org",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.parser",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.reader",
+            "knowledge.engine.recommendation",
+            "knowledge.engine.repository",
+            "knowledge.engine.rollback",
+            "knowledge.engine.rules",
+            "knowledge.engine.scanner",
+            "knowledge.engine.snapshot_store",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.storage_verifier",
+            "knowledge.engine.subscribers",
+            "knowledge.engine.validator",
+            "knowledge.engine.vector_base",
+            "knowledge.engine.vector_ollama",
+            "knowledge.engine.vector_qdrant",
+            "knowledge.engine.vector_retriever",
+            "knowledge.engine.verifier",
+            "knowledge.evaluation",
+            "knowledge.evaluation.corpus"
+        ],
+        "name": "__main__",
+        "path": null
+    },
+    "fastapi": {
+        "bacon": 2,
+        "imported_by": [
+            "fastapi.responses",
+            "knowledge.engine.api"
+        ],
+        "imports": [
+            "fastapi.responses"
+        ],
+        "name": "fastapi",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/fastapi/__init__.py"
+    },
+    "fastapi.responses": {
+        "bacon": 2,
+        "imported_by": [
+            "fastapi",
+            "knowledge.engine.api"
+        ],
+        "imports": [
+            "fastapi"
+        ],
+        "name": "fastapi.responses",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/fastapi/responses.py"
+    },
+    "fastapi.security": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.api"
+        ],
+        "name": "fastapi.security",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/fastapi/security/__init__.py"
+    },
+    "httpx": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.vector_qdrant",
+            "motor.core.qdrant_client"
+        ],
+        "name": "httpx",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/httpx/__init__.py"
+    },
+    "knowledge": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.api",
+            "knowledge.engine.archiver",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.chunker",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.__main__",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.notify",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search",
+            "knowledge.engine.collector",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.connection_pool",
+            "knowledge.engine.determinism",
+            "knowledge.engine.errors",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.feedback",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.jobs",
+            "knowledge.engine.knowledge_base",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.ontology.schema_org",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.parser",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.reader",
+            "knowledge.engine.repository",
+            "knowledge.engine.rollback",
+            "knowledge.engine.scanner",
+            "knowledge.engine.snapshot_store",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.subscribers",
+            "knowledge.engine.validator",
+            "knowledge.engine.vector_qdrant",
+            "knowledge.engine.vector_retriever",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/__init__.py"
+    },
+    "knowledge.engine": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.api",
+            "knowledge.engine.archiver",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.chunker",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.__main__",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.notify",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search",
+            "knowledge.engine.collector",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.connection_pool",
+            "knowledge.engine.determinism",
+            "knowledge.engine.errors",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.feedback",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.jobs",
+            "knowledge.engine.knowledge_base",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.ontology.schema_org",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.parser",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.reader",
+            "knowledge.engine.repository",
+            "knowledge.engine.rollback",
+            "knowledge.engine.scanner",
+            "knowledge.engine.snapshot_store",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.subscribers",
+            "knowledge.engine.validator",
+            "knowledge.engine.vector_qdrant",
+            "knowledge.engine.vector_retriever",
+            "knowledge.engine.verifier"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.archiver",
+            "knowledge.engine.audit",
+            "knowledge.engine.compiler",
+            "knowledge.engine.deduction",
+            "knowledge.engine.determinism",
+            "knowledge.engine.errors",
+            "knowledge.engine.logging_config",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.parser",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.reader",
+            "knowledge.engine.recommendation",
+            "knowledge.engine.rules",
+            "knowledge.engine.scanner",
+            "knowledge.engine.validator",
+            "knowledge.engine.vector_base",
+            "knowledge.engine.vector_ollama",
+            "knowledge.engine.vector_qdrant",
+            "knowledge.engine.vector_retriever",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/__init__.py"
+    },
+    "knowledge.engine._compat": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.errors",
+            "knowledge.engine.models",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.pipeline"
+        ],
+        "name": "knowledge.engine._compat",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/_compat.py"
+    },
+    "knowledge.engine.agent": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.cli.agent"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "knowledge.engine.deduction",
+            "knowledge.engine.reader"
+        ],
+        "name": "knowledge.engine.agent",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/agent.py"
+    },
+    "knowledge.engine.api": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "fastapi",
+            "fastapi.responses",
+            "fastapi.security",
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.archiver",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.feedback",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.migrations",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.repository",
+            "knowledge.engine.rules",
+            "motor",
+            "motor.core",
+            "motor.core.secrets",
+            "pydantic"
+        ],
+        "name": "knowledge.engine.api",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/api.py"
+    },
+    "knowledge.engine.archiver": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.jobs",
+            "knowledge.engine.pipeline"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.connection",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.archiver",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/archiver.py"
+    },
+    "knowledge.engine.asset_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.subscribers",
+            "knowledge.engine.vector_retriever"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.asset_store",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/asset_store.py"
+    },
+    "knowledge.engine.audit": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.archiver",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.compiler",
+            "knowledge.engine.reader",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend"
+        ],
+        "name": "knowledge.engine.audit",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/audit/__init__.py"
+    },
+    "knowledge.engine.audit.backend": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.audit.backend",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/audit/backend.py"
+    },
+    "knowledge.engine.audit.ndjson_backend": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.service"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.connection",
+            "knowledge.engine.metrics",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.audit.ndjson_backend",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/audit/ndjson_backend.py"
+    },
+    "knowledge.engine.audit.service": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.audit"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.audit.service",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/audit/service.py"
+    },
+    "knowledge.engine.audit.sqlite_backend": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.audit"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.connection",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.audit.sqlite_backend",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/audit/sqlite_backend.py"
+    },
+    "knowledge.engine.chunker": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.qdrant_sync"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.chunker",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/chunker.py"
+    },
+    "knowledge.engine.cli": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.__main__",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main"
+        ],
+        "name": "knowledge.engine.cli",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/__init__.py"
+    },
+    "knowledge.engine.cli.__main__": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main"
+        ],
+        "name": "knowledge.engine.cli.__main__",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/__main__.py"
+    },
+    "knowledge.engine.cli.agent": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main"
+        ],
+        "name": "knowledge.engine.cli.agent",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/agent.py"
+    },
+    "knowledge.engine.cli.api": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.secrets",
+            "uvicorn"
+        ],
+        "name": "knowledge.engine.cli.api",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/api.py"
+    },
+    "knowledge.engine.cli.archive": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.archiver",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main"
+        ],
+        "name": "knowledge.engine.cli.archive",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/archive.py"
+    },
+    "knowledge.engine.cli.audit": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.cli.audit",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/audit.py"
+    },
+    "knowledge.engine.cli.compile": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.compiler",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.cli.compile",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/compile.py"
+    },
+    "knowledge.engine.cli.docs": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.knowledge_base"
+        ],
+        "name": "knowledge.engine.cli.docs",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/docs.py"
+    },
+    "knowledge.engine.cli.doctor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.migrations",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.reader",
+            "knowledge.engine.storage_verifier",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.cli.doctor",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/doctor.py"
+    },
+    "knowledge.engine.cli.feedback": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.feedback"
+        ],
+        "name": "knowledge.engine.cli.feedback",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/feedback.py"
+    },
+    "knowledge.engine.cli.jobs": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.orchestrator"
+        ],
+        "name": "knowledge.engine.cli.jobs",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/jobs.py"
+    },
+    "knowledge.engine.cli.main": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.__main__",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.agent",
+            "knowledge.engine.cli.api",
+            "knowledge.engine.cli.archive",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.docs",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.feedback",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.cli.notify",
+            "knowledge.engine.cli.pipeline",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.cli.search",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.cli.main",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/main.py"
+    },
+    "knowledge.engine.cli.metadata": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store"
+        ],
+        "name": "knowledge.engine.cli.metadata",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/metadata.py"
+    },
+    "knowledge.engine.cli.notify": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.notify"
+        ],
+        "name": "knowledge.engine.cli.notify",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/notify.py"
+    },
+    "knowledge.engine.cli.pipeline": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.pipeline"
+        ],
+        "name": "knowledge.engine.cli.pipeline",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/pipeline.py"
+    },
+    "knowledge.engine.cli.rules": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.connection",
+            "knowledge.engine.deduction",
+            "knowledge.engine.rules"
+        ],
+        "name": "knowledge.engine.cli.rules",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/rules.py"
+    },
+    "knowledge.engine.cli.search": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.main"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.cli",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.reader"
+        ],
+        "name": "knowledge.engine.cli.search",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/cli/search.py"
+    },
+    "knowledge.engine.collector": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.orchestrator"
+        ],
+        "name": "knowledge.engine.collector",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/collector.py"
+    },
+    "knowledge.engine.compiler": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.jobs",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.pipeline"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.determinism",
+            "knowledge.engine.models",
+            "knowledge.engine.parser",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.scanner",
+            "knowledge.engine.snapshot_store",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.validator"
+        ],
+        "name": "knowledge.engine.compiler",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/compiler.py"
+    },
+    "knowledge.engine.connection": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.agent",
+            "knowledge.engine.api",
+            "knowledge.engine.archiver",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.cli.audit",
+            "knowledge.engine.cli.main",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.connection_pool",
+            "knowledge.engine.determinism",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.feedback",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.jobs",
+            "knowledge.engine.knowledge_base",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.repository",
+            "knowledge.engine.rollback",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.verifier"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.metrics"
+        ],
+        "name": "knowledge.engine.connection",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/connection.py"
+    },
+    "knowledge.engine.connection_pool": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.reader"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.connection_pool",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/connection_pool.py"
+    },
+    "knowledge.engine.deduction": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.cli.rules"
+        ],
+        "name": "knowledge.engine.deduction",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/deduction.py"
+    },
+    "knowledge.engine.determinism": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.compiler"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.determinism",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/determinism.py"
+    },
+    "knowledge.engine.errors": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine._compat"
+        ],
+        "name": "knowledge.engine.errors",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/errors.py"
+    },
+    "knowledge.engine.eventbus": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.eventbus",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/eventbus.py"
+    },
+    "knowledge.engine.extraction_service": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.connection",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extraction_service",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extraction_service.py"
+    },
+    "knowledge.engine.extractors": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web"
+        ],
+        "name": "knowledge.engine.extractors",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/__init__.py"
+    },
+    "knowledge.engine.extractors.audio": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.audio",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/audio.py"
+    },
+    "knowledge.engine.extractors.base": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.base",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/base.py"
+    },
+    "knowledge.engine.extractors.git": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.git",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/git.py"
+    },
+    "knowledge.engine.extractors.image": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.image",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/image.py"
+    },
+    "knowledge.engine.extractors.markdown": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "yaml"
+        ],
+        "name": "knowledge.engine.extractors.markdown",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/markdown.py"
+    },
+    "knowledge.engine.extractors.office": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.office",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/office.py"
+    },
+    "knowledge.engine.extractors.pdf": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.pdf",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/pdf.py"
+    },
+    "knowledge.engine.extractors.video": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.video",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/video.py"
+    },
+    "knowledge.engine.extractors.web": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.extractors"
+        ],
+        "imports": [
+            "httpx",
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.extractors",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.extractors.web",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/extractors/web.py"
+    },
+    "knowledge.engine.feedback": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.feedback"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.feedback",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/feedback.py"
+    },
+    "knowledge.engine.governance_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.governance_store",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/governance_store.py"
+    },
+    "knowledge.engine.graphrag": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.vector_retriever"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.memory_store",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.graphrag",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/graphrag.py"
+    },
+    "knowledge.engine.jobs": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.archiver",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.lock",
+            "knowledge.engine.metrics"
+        ],
+        "name": "knowledge.engine.jobs",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/jobs.py"
+    },
+    "knowledge.engine.knowledge_base": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.docs"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "yaml"
+        ],
+        "name": "knowledge.engine.knowledge_base",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/knowledge_base.py"
+    },
+    "knowledge.engine.knowledge_verifier": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.knowledge_verifier",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/knowledge_verifier.py"
+    },
+    "knowledge.engine.lineage_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.lineage_store",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/lineage_store.py"
+    },
+    "knowledge.engine.lock": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.jobs",
+            "knowledge.engine.orchestrator"
+        ],
+        "name": "knowledge.engine.lock",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/lock.py"
+    },
+    "knowledge.engine.logging_config": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.orchestrator"
+        ],
+        "imports": [
+            "motor",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "knowledge.engine.logging_config",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/logging_config.py"
+    },
+    "knowledge.engine.memory_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.metadata",
+            "knowledge.engine.graphrag"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.memory_store",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/memory_store.py"
+    },
+    "knowledge.engine.metrics": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.api",
+            "knowledge.engine.archiver",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.connection",
+            "knowledge.engine.jobs",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.subscribers"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "prometheus_client"
+        ],
+        "name": "knowledge.engine.metrics",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/metrics.py"
+    },
+    "knowledge.engine.migrations": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.models",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.migrations",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/migrations.py"
+    },
+    "knowledge.engine.models": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.archiver",
+            "knowledge.engine.audit.backend",
+            "knowledge.engine.audit.ndjson_backend",
+            "knowledge.engine.audit.service",
+            "knowledge.engine.audit.sqlite_backend",
+            "knowledge.engine.chunker",
+            "knowledge.engine.compiler",
+            "knowledge.engine.parser",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.reader",
+            "knowledge.engine.repository",
+            "knowledge.engine.scanner",
+            "knowledge.engine.snapshot_store",
+            "knowledge.engine.sqlite_writer",
+            "knowledge.engine.validator",
+            "knowledge.engine.vector_retriever"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine._compat",
+            "knowledge.engine.migrations",
+            "knowledge.engine.ontology"
+        ],
+        "name": "knowledge.engine.models",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/models.py"
+    },
+    "knowledge.engine.notify": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.notify"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.secrets",
+            "prometheus_client"
+        ],
+        "name": "knowledge.engine.notify",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/notify.py"
+    },
+    "knowledge.engine.ontology": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.models",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.ontology.schema_org",
+            "knowledge.engine.vector_retriever"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.ontology.schema_org"
+        ],
+        "name": "knowledge.engine.ontology",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/ontology/__init__.py"
+    },
+    "knowledge.engine.ontology.internal": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.extraction_service",
+            "knowledge.engine.extractors.audio",
+            "knowledge.engine.extractors.base",
+            "knowledge.engine.extractors.git",
+            "knowledge.engine.extractors.image",
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.extractors.office",
+            "knowledge.engine.extractors.pdf",
+            "knowledge.engine.extractors.video",
+            "knowledge.engine.extractors.web",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.mapping",
+            "knowledge.engine.ontology.registry",
+            "knowledge.engine.vector_retriever"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine._compat",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.schema_org"
+        ],
+        "name": "knowledge.engine.ontology.internal",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/ontology/internal.py"
+    },
+    "knowledge.engine.ontology.mapping": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.ontology"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.schema_org"
+        ],
+        "name": "knowledge.engine.ontology.mapping",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/ontology/mapping.py"
+    },
+    "knowledge.engine.ontology.registry": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.schema_org"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal"
+        ],
+        "name": "knowledge.engine.ontology.registry",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/ontology/registry.py"
+    },
+    "knowledge.engine.ontology.schema_org": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.ontology.mapping"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.registry"
+        ],
+        "name": "knowledge.engine.ontology.schema_org",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/ontology/schema_org.py"
+    },
+    "knowledge.engine.orchestrator": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.jobs",
+            "knowledge.engine.collector"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.compiler",
+            "knowledge.engine.jobs",
+            "knowledge.engine.lock",
+            "knowledge.engine.logging_config",
+            "knowledge.engine.metrics",
+            "knowledge.engine.reader"
+        ],
+        "name": "knowledge.engine.orchestrator",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/orchestrator.py"
+    },
+    "knowledge.engine.parser": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.compiler"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.models",
+            "yaml"
+        ],
+        "name": "knowledge.engine.parser",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/parser.py"
+    },
+    "knowledge.engine.pipeline": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.cli.pipeline"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine._compat",
+            "knowledge.engine.archiver",
+            "knowledge.engine.compiler",
+            "knowledge.engine.connection",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.rules",
+            "knowledge.engine.scanner",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.pipeline",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/pipeline.py"
+    },
+    "knowledge.engine.qdrant_sync": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.compiler",
+            "knowledge.engine.pipeline",
+            "knowledge.engine.reader"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.chunker",
+            "knowledge.engine.connection",
+            "knowledge.engine.models",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.qdrant_client",
+            "motor.core.state"
+        ],
+        "name": "knowledge.engine.qdrant_sync",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/qdrant_sync.py"
+    },
+    "knowledge.engine.reader": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.agent",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.cli.search",
+            "knowledge.engine.orchestrator",
+            "knowledge.engine.repository",
+            "knowledge.engine.sqlite_writer"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.audit",
+            "knowledge.engine.connection_pool",
+            "knowledge.engine.models",
+            "knowledge.engine.qdrant_sync"
+        ],
+        "name": "knowledge.engine.reader",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/reader.py"
+    },
+    "knowledge.engine.recommendation": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine"
+        ],
+        "name": "knowledge.engine.recommendation",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/recommendation.py"
+    },
+    "knowledge.engine.repository": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.api"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "knowledge.engine.models",
+            "knowledge.engine.reader"
+        ],
+        "name": "knowledge.engine.repository",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/repository.py"
+    },
+    "knowledge.engine.rollback": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection"
+        ],
+        "name": "knowledge.engine.rollback",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/rollback.py"
+    },
+    "knowledge.engine.rules": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.api",
+            "knowledge.engine.cli.rules",
+            "knowledge.engine.pipeline"
+        ],
+        "name": "knowledge.engine.rules",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/rules.py"
+    },
+    "knowledge.engine.scanner": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.compiler",
+            "knowledge.engine.pipeline"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.scanner",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/scanner.py"
+    },
+    "knowledge.engine.snapshot_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.compiler"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.snapshot_store",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/snapshot_store.py"
+    },
+    "knowledge.engine.sqlite_writer": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.compiler"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "knowledge.engine.migrations",
+            "knowledge.engine.models",
+            "knowledge.engine.reader"
+        ],
+        "name": "knowledge.engine.sqlite_writer",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/sqlite_writer.py"
+    },
+    "knowledge.engine.storage_verifier": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.verifier"
+        ],
+        "name": "knowledge.engine.storage_verifier",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/storage_verifier.py"
+    },
+    "knowledge.engine.subscribers": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.audit",
+            "knowledge.engine.eventbus",
+            "knowledge.engine.governance_store",
+            "knowledge.engine.jobs",
+            "knowledge.engine.lineage_store",
+            "knowledge.engine.metrics",
+            "knowledge.engine.vector_base"
+        ],
+        "name": "knowledge.engine.subscribers",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/subscribers.py"
+    },
+    "knowledge.engine.validator": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.compiler"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.models"
+        ],
+        "name": "knowledge.engine.validator",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/validator.py"
+    },
+    "knowledge.engine.vector_base": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.subscribers",
+            "knowledge.engine.vector_qdrant",
+            "knowledge.engine.vector_retriever"
+        ],
+        "name": "knowledge.engine.vector_base",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/vector_base.py"
+    },
+    "knowledge.engine.vector_ollama": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.llm"
+        ],
+        "name": "knowledge.engine.vector_ollama",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/vector_ollama.py"
+    },
+    "knowledge.engine.vector_qdrant": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine"
+        ],
+        "imports": [
+            "httpx",
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.vector_base"
+        ],
+        "name": "knowledge.engine.vector_qdrant",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/vector_qdrant.py"
+    },
+    "knowledge.engine.vector_retriever": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.asset_store",
+            "knowledge.engine.graphrag",
+            "knowledge.engine.models",
+            "knowledge.engine.ontology",
+            "knowledge.engine.ontology.internal",
+            "knowledge.engine.vector_base"
+        ],
+        "name": "knowledge.engine.vector_retriever",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/vector_retriever.py"
+    },
+    "knowledge.engine.verifier": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "knowledge.engine",
+            "knowledge.engine.cli.compile",
+            "knowledge.engine.cli.doctor",
+            "knowledge.engine.pipeline"
+        ],
+        "imports": [
+            "knowledge",
+            "knowledge.engine",
+            "knowledge.engine.connection",
+            "knowledge.engine.knowledge_verifier",
+            "knowledge.engine.migrations",
+            "knowledge.engine.storage_verifier"
+        ],
+        "name": "knowledge.engine.verifier",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/engine/verifier.py"
+    },
+    "knowledge.evaluation": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "knowledge.evaluation",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/evaluation/__init__.py"
+    },
+    "knowledge.evaluation.corpus": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "knowledge.evaluation.corpus",
+        "path": "/home/ramon/URA/ura_ia_1972/knowledge/evaluation/corpus/__init__.py"
+    },
+    "motor": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.api",
+            "knowledge.engine.cli.api",
+            "knowledge.engine.logging_config",
+            "knowledge.engine.notify",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.vector_ollama",
+            "motor.core.llm",
+            "motor.core.qdrant_client",
+            "motor.observability"
+        ],
+        "name": "motor",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/__init__.py"
+    },
+    "motor.core": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.api",
+            "knowledge.engine.cli.api",
+            "knowledge.engine.notify",
+            "knowledge.engine.qdrant_sync",
+            "knowledge.engine.vector_ollama",
+            "motor.core.llm",
+            "motor.core.qdrant_client"
+        ],
+        "name": "motor.core",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/__init__.py"
+    },
+    "motor.core.config": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.qdrant_sync",
+            "motor.core.llm",
+            "motor.core.qdrant_client"
+        ],
+        "name": "motor.core.config",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/config.py"
+    },
+    "motor.core.llm": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.vector_ollama",
+            "motor.core.llm",
+            "motor.core.qdrant_client"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.llm"
+        ],
+        "name": "motor.core.llm",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/llm/__init__.py"
+    },
+    "motor.core.qdrant_client": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.qdrant_sync"
+        ],
+        "imports": [
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.llm",
+            "motor.core.state"
+        ],
+        "name": "motor.core.qdrant_client",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/qdrant_client.py"
+    },
+    "motor.core.secrets": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.api",
+            "knowledge.engine.cli.api",
+            "knowledge.engine.notify"
+        ],
+        "name": "motor.core.secrets",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/secrets.py"
+    },
+    "motor.core.state": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.qdrant_sync",
+            "motor.core.qdrant_client"
+        ],
+        "name": "motor.core.state",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/state.py"
+    },
+    "motor.observability": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.logging_config",
+            "motor.observability"
+        ],
+        "imports": [
+            "motor",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "motor.observability",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/observability/__init__.py"
+    },
+    "motor.observability.logging": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.logging_config",
+            "motor.observability"
+        ],
+        "name": "motor.observability.logging",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/observability/logging.py"
+    },
+    "prometheus_client": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.metrics",
+            "knowledge.engine.notify",
+            "prometheus_client"
+        ],
+        "imports": [
+            "prometheus_client"
+        ],
+        "name": "prometheus_client",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/prometheus_client/__init__.py"
+    },
+    "pydantic": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.api",
+            "pydantic"
+        ],
+        "imports": [
+            "pydantic"
+        ],
+        "name": "pydantic",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/pydantic/__init__.py"
+    },
+    "uvicorn": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.cli.api",
+            "uvicorn"
+        ],
+        "imports": [
+            "uvicorn"
+        ],
+        "name": "uvicorn",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/uvicorn/__init__.py"
+    },
+    "yaml": {
+        "bacon": 2,
+        "imported_by": [
+            "knowledge.engine.extractors.markdown",
+            "knowledge.engine.knowledge_base",
+            "knowledge.engine.parser"
+        ],
+        "name": "yaml",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/yaml/__init__.py"
+    }
+}
