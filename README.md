@@ -139,39 +139,23 @@ docker run -p 8000:8000 ura
 
 ## Observability
 
-| Endpoint | Description |
-|----------|-------------|
-| `/health` | Health check (JSON) |
-| `/ready` | Readiness check |
-| `/metrics` | Prometheus OpenMetrics |
-
-## Quickstart
-
-```bash
-pip install -e ".[dev]"
-pytest tests/test_f28_b2_protocol.py -q  # 67 tests, ~6s
-```
-
-See [QUICKSTART.md](QUICKSTART.md) for detailed usage.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+| Endpoint | Description | Status |
+|----------|-------------|--------|
+| `/metrics` | Prometheus OpenMetrics (Counter, Gauge, Histogram) | ✅ |
+| `/health` | Health check with component-level status | ✅ |
+| Tracing | Correlation IDs via ContextFilter, span tree validation | ✅ |
+| Logging | JSON structured logging with correlation_id/workflow_id | ✅ |
 
 ## Roadmap
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| F10 | Stabilization | ✅ Closed |
-| F11 | Platform (plugins, events, pipeline) | ✅ Closed |
-| F12 | Intelligence (retrieval, memory, agents) | ✅ Closed |
-| F13 | Production (Docker, CI/CD, docs) | ✅ Closed |
-| F14 | Robustness (load, resiliency, profiling) | ✅ Closed |
-| F25 | Knowledge Fusion | ✅ Closed |
-| F26 | Historical Memory | ✅ Closed |
-| F27 | Autonomous Agents | ✅ Closed |
-| F28 | Platform Protocols | ✅ Closed |
-| F29 | Production Readiness | ✅ Closed |
+| F0–F9 | Consolidation | ✅ Closed (v4.0.3) |
+| Evolution L1 | **Observabilidad** — tracing, dashboards, alertas | 🚧 |
+| Evolution L2 | **CI/CD** — GitHub Actions, bandit, mypy | 🚧 |
+| Evolution L3 | **Documentación** — README, API reference, ejemplos | 🚧 |
+| Evolution L4 | **Mypy** — 53 errores restantes | 🚧 |
+| Evolution L5 | **Features** — agente investigación, dashboard web, MCP | 🔮 |
 
 ## Architecture
 
