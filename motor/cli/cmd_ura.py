@@ -401,8 +401,21 @@ def cmd_memory(config: UraConfig, args) -> int:
             text = " ".join(args.raw[1:])
             rid = mem.store(payload=text)
             print(f"Almacenado: {rid}")
+        elif cmd == "web" and len(args.raw) > 1:
+            query = " ".join(args.raw[1:])
+            try:
+                import asyncio
+                from core.mochila.tools import web_search as _web_search
+                result = asyncio.run(_web_search(query, max_results=5))
+                print(f"Web search: '{query}'")
+                for item in result.get("results", []):
+                    print(f"  - {item.get('title', '?')}")
+                    print(f"    {item.get('snippet', '')[:120]}")
+            except Exception as e:
+                print(f"Web search falló: {e}")
         else:
             print("Subcomandos:")
             print("  ura memory search <query>   — buscar en memoria")
             print("  ura memory store <text>     — almacenar texto")
+            print("  ura memory web <query>      — buscar en web")
     return 0

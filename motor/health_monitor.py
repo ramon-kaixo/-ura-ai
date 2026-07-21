@@ -18,13 +18,20 @@ import logging
 import os
 import time
 import urllib.request
+from datetime import UTC, datetime
+from pathlib import Path
+from shutil import copy2
 from typing import Any
 
 log = logging.getLogger("ura.health_monitor")
 
 METRICS_URL = os.environ.get("METRICS_URL", "http://127.0.0.1:9091")
 CHECK_INTERVAL = int(os.environ.get("HEALTH_CHECK_INTERVAL", "60"))
+MEMORY_DB = os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db"))
+BACKUP_DIR = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+BACKUP_INTERVAL = int(os.environ.get("HEALTH_BACKUP_INTERVAL", "3600"))
 _PREVIOUS: dict[str, str] = {}
+_last_backup: float = 0
 
 
 def _fetch_health() -> dict[str, Any] | None:
@@ -77,15 +84,42 @@ def check_and_alert() -> dict[str, Any]:
     return changes
 
 
+def _backup_memory() -> None:
+    global _last_backup
+    now = time.time()
+    if now - _last_backup < BACKUP_INTERVAL:
+        return
+    _last_backup = now
+    try:
+        db = Path(MEMORY_DB)
+        if not db.exists():
+            return
+        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        backup_path = BACKUP_DIR / f"memory_{ts}.db"
+        copy2(str(db), str(backup_path))
+        log.info("Memoria respaldada: %s (%d bytes)", backup_path.name, backup_path.stat().st_size)
+        for old in sorted(BACKUP_DIR.glob("memory_*.db"))[:-14]:
+            old.unlink(missing_ok=True)
+    except Exception:
+        log.debug("Backup falló", exc_info=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Monitor de salud URA")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle")
+    parser.add_argument("--backup", action="store_true", help="Solo backup de memoria")
     args = parser.parse_args()
+
+    if args.backup:
+        _backup_memory()
+        return
 
     if args.daemon:
         log.info("Health monitor iniciado (intervalo=%ds)", CHECK_INTERVAL)
         while True:
             check_and_alert()
+            _backup_memory()
             time.sleep(CHECK_INTERVAL)
     else:
         result = check_and_alert()
