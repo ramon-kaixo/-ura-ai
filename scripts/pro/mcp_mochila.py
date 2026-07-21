@@ -67,9 +67,22 @@ _MEMORY_TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "question": {"type": "string", "description": "Pregunta o tema a investigar"},
-                "k": {"type": "integer", "description": "Máximo de fuentes a consultar", "default": 5},
+                "k": {"type": "integer", "description": "Máximo de fuentes locales", "default": 5},
             },
             "required": ["question"],
+        },
+    },
+    {
+        "name": "memory_research",
+        "description": "Investigación completa: web + memoria híbrida + síntesis",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Consulta de investigación"},
+                "web_results": {"type": "integer", "description": "Resultados web", "default": 5},
+                "local_results": {"type": "integer", "description": "Resultados en memoria", "default": 5},
+            },
+            "required": ["query"],
         },
     },
     {
@@ -176,6 +189,49 @@ async def _handle_tools_call(params: dict) -> dict:
                         "id": rid,
                         "synthesis": synthesis,
                         "sources_count": len(sources),
+                    }, ensure_ascii=False)}
+                ]
+            }
+        elif name == "memory_research":
+            query = arguments.get("query", "")
+            web_k = arguments.get("web_results", 5)
+            local_k = arguments.get("local_results", 5)
+
+            web_results: list[dict] = []
+            try:
+                wr = await ejecutar_tool("web_search", {"query": query, "max_results": web_k})
+            except Exception:
+                wr = {"error": "web_search not available", "results": []}
+            if isinstance(wr, dict):
+                for item in (wr.get("results", []) if isinstance(wr.get("results"), list) else []):
+                    web_results.append({"source": "web", "title": item.get("title", ""), "snippet": item.get("snippet", "")[:300]})
+
+            local_sources = _memory.search(query=query, k=local_k)
+            local_results = [{"source": "memory", "title": s.payload[:100], "snippet": s.payload[:300]} for s in local_sources]
+
+            all_sources = web_results + local_results
+            synthesis_lines = [f"## Investigación: {query}", "",
+                               f"### Fuentes ({len(all_sources)})", ""]
+            for src in all_sources:
+                synthesis_lines.append(f"- [{src['source']}] {src['title']}")
+                if src.get("snippet"):
+                    synthesis_lines.append(f"  {src['snippet']}")
+            synthesis_lines.extend(["", "### Síntesis",
+                                    f"Se consultaron {len(web_results)} fuentes web y {len(local_results)} fuentes locales."])
+
+            synthesis = "\n".join(synthesis_lines)
+            rid = _memory.store(
+                payload=synthesis,
+                memory_type=MemoryType.SEMANTIC,
+                metadata={"type": "research_web", "query": query, "web_sources": len(web_results), "local_sources": len(local_results)},
+            )
+            return {
+                "content": [
+                    {"type": "text", "text": json.dumps({
+                        "id": rid,
+                        "synthesis": synthesis,
+                        "web_sources": len(web_results),
+                        "local_sources": len(local_results),
                     }, ensure_ascii=False)}
                 ]
             }
