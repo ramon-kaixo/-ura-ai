@@ -36,8 +36,16 @@ class CircuitBreaker:
         self.recovery_timeout = recovery_timeout
         self._state = CircuitState.CLOSED
         self._failure_count = 0
-        self._last_failure_time = 0.0
+        self._last_failure_time: float = 0.0
         self._lock = Lock()
+
+    @property
+    def _last_open_time(self) -> float:
+        return self._last_failure_time
+
+    @property
+    def _failure_threshold(self) -> int:
+        return self.failure_threshold
 
     @property
     def state(self) -> CircuitState:
@@ -47,16 +55,15 @@ class CircuitBreaker:
             return self._state
 
     def call(self, fn: Callable[..., T], *args: Any, **kwargs: Any) -> T | None:
-        """Ejecuta fn si el circuito lo permite. Retorna None si está OPEN."""
         st = self.state
         if st == CircuitState.OPEN:
             return None
         try:
             result = fn(*args, **kwargs)
         except Exception:
-            self._failure_count += 1
-            if self._failure_count >= self.failure_threshold:
-                with self._lock:
+            with self._lock:
+                self._failure_count += 1
+                if self._failure_count >= self.failure_threshold:
                     self._state = CircuitState.OPEN
                     self._last_failure_time = time.monotonic()
             raise
