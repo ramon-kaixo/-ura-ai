@@ -63,3 +63,30 @@ Dirección esperada (infraestructura → dominio/conocimiento). Bajo riesgo.
    ⏳ Pendiente: Migrar los 12 scripts existentes para usar la fachada.
 
 3. Monitor: Mantener vigilancia, no es urgente.
+
+## CircuitBreaker: No Consolidación (Decisión Arquitectónica)
+
+**Estado:** ✅ No se requiere consolidación. Dos implementaciones con responsabilidades distintas.
+
+### Implementación canónica: `motor/platform/resilience.py`
+- Propósito: Circuit breaker genérico para operaciones del motor
+- API: `call(fn)`, `is_available`, `state`, `reset()`
+- Estado: In-memory, single-state
+- Consumidores: `motor/core/llm/router.py` (vía wrapper que lanza excepción)
+
+### Implementación independiente: `core/mochila/circuit_breaker.py`
+- Propósito: Circuit breaker proveedor-aware con persistencia para Mochila
+- API: `puede_pasar(provider)`, `registrar_exito(provider)`, `registrar_fallo(provider)`, `estado(provider)`, `reset(provider)`
+- Estado: JSON persistido en disco, estado separado por proveedor
+- Consumidores: 6 archivos en `core/mochila/` (`_state.py`, `streaming.py`, `routes/chat.py`, `routes/status.py`, `status_endpoint.py`, `routes/breaker.py`)
+
+### Razón para mantener ambas
+Las dos implementaciones difieren en tres dimensiones arquitectónicas que hacen inviable una unificación sin rediseño:
+1. **Provider-awareness**: Mochila necesita estado independiente por proveedor (Ollama, Gemini, OpenRouter). El canónico es single-state.
+2. **Persistencia**: Mochila persiste estado en disco para supervivencia entre reinicios. El canónico es volátil.
+3. **API**: Mochila expone API en español orientada a operaciones proveedor. El canónico expone API genérica orientada a funciones.
+
+Forzar la fusión requeriría que el canónico adopte provider-awareness + persistencia, lo que constituiría un rediseño, no una consolidación.
+
+### Condiciones para reconsiderar
+Si en el futuro desaparecen los requisitos de estado por proveedor y persistencia en disco, podría unificarse. Mientras ambos existan, se mantienen como implementaciones separadas y justificadas.
