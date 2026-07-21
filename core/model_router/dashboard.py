@@ -134,7 +134,7 @@ setInterval(refresh,5000)
 
 
 def _render_dashboard() -> str:
-    import core.model_router_main as _main
+    from core.model_router import router as _main
     from core.model_router.proxy import (
         _asus_latency_lock,
         _asus_latency_ms,
@@ -143,7 +143,7 @@ def _render_dashboard() -> str:
         _get_active_backend_label,
         _update_asus_latency,
     )
-    from core.model_router_main import OLLAMA_URL
+    from core.model_router.router import OLLAMA_URL
 
     _update_asus_latency()
     backend_label = _get_active_backend_label()
@@ -192,7 +192,7 @@ def _render_dashboard() -> str:
 
 
 def _dashboard_json(client_ip: str = "") -> str:
-    import core.model_router_main as _main
+    from core.model_router import router as _main
     from core.model_router.model_selection import MODELO_ROUTES, obtener_modelos_disponibles
     from core.model_router.proxy import (
         _asus_latency_lock,
@@ -203,7 +203,7 @@ def _dashboard_json(client_ip: str = "") -> str:
         _resolve_mode_for_client,
         _update_asus_latency,
     )
-    from core.model_router_main import OLLAMA_URL
+    from core.model_router.router import OLLAMA_URL
 
     _update_asus_latency()
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")

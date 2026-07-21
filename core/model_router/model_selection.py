@@ -123,7 +123,7 @@ def clasificar_peticion(messages: list) -> str:
 
 def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
     """Obtiene modelos disponibles desde una URL de Ollama."""
-    from core.model_router_main import OLLAMA_URL
+    from core.model_router.router import OLLAMA_URL
     target = url or OLLAMA_URL
     try:
         req = urllib.request.Request(f"{target}/api/tags")  # noqa: S310
