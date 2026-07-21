@@ -86,14 +86,15 @@ _ALL_TOOLS = _MEMORY_TOOL_SCHEMAS + [
     }
     for s in TOOL_SCHEMAS
 ]
-_ALL_TOOL_NAMES = {t["name"] for t in _ALL_TOOLS}
 
 
 async def _handle_initialize(params: dict) -> dict:
     _health.set_healthy("mcp_server")
     mem_health = _memory.health()
-    if mem_health.get("total_records", 0) >= 0:
-        _health.set_healthy("hybrid_memory")
+    if mem_health.get("total_records", -1) >= 0 and mem_health.get("vector_store_ok", True):
+        _health.set_healthy("hybrid_memory", f"{mem_health.get('total_records', 0)} registros")
+    else:
+        _health.set_degraded("hybrid_memory", str(mem_health))
     return {
         "protocolVersion": params.get("protocolVersion", "2024-11-05"),
         "capabilities": {"tools": {}},
@@ -158,10 +159,25 @@ async def _handle_tools_call(params: dict) -> dict:
         result = await ejecutar_tool(name, arguments)
         return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}
     except Exception as e:
+        import logging as _logging
+
+        _logging.getLogger("ura.mcp").exception("Tool call failed: %s", name)
         return {
             "isError": True,
             "content": [{"type": "text", "text": json.dumps({"error": str(e)}, ensure_ascii=False)}],
         }
+
+
+async def _send(response: dict) -> bool:
+    """Envía respuesta JSON-RPC. Retorna False si stdout está roto."""
+    if response.get("id") is None:
+        return True
+    try:
+        sys.stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+        return True
+    except OSError:
+        return False
 
 
 async def main() -> None:
@@ -169,6 +185,7 @@ async def main() -> None:
     protocol = asyncio.StreamReaderProtocol(reader)
     await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
 
+    msg: dict | None = None
     while True:
         try:
             line = await reader.readline()
@@ -177,7 +194,25 @@ async def main() -> None:
             decoded = line.decode("utf-8").strip()
             if not decoded:
                 continue
-            msg = json.loads(decoded)
+            try:
+                msg = json.loads(decoded)
+            except json.JSONDecodeError:
+                if not await _send({
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32700, "message": "Parse error"},
+                }):
+                    break
+                continue
+            if not isinstance(msg, dict):
+                if not await _send({
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32600, "message": "Invalid Request"},
+                }):
+                    break
+                continue
+
             method = msg.get("method", "")
             msg_id = msg.get("id")
             params = msg.get("params", {})
@@ -200,31 +235,26 @@ async def main() -> None:
                     "error": {"code": -32601, "message": f"Method not found: {method}"},
                 }
 
-            if response.get("id") is not None:
-                sys.stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
-                sys.stdout.flush()
+            if not await _send(response):
+                break
 
-        except json.JSONDecodeError:
-            continue
         except Exception:
             traceback.print_exc(file=sys.stderr)
             sys.stderr.flush()
-            try:
-                err_response = {
-                    "jsonrpc": "2.0",
-                    "id": msg.get("id") if "msg" in dir() else None,
-                    "error": {"code": -32603, "message": "Internal error"},
-                }
-                if err_response.get("id") is not None:
-                    sys.stdout.write(json.dumps(err_response, ensure_ascii=False) + "\n")
-                    sys.stdout.flush()
-            except Exception:  # noqa: S110
-                pass
+            err_response = {
+                "jsonrpc": "2.0",
+                "id": msg.get("id") if msg and isinstance(msg, dict) else None,
+                "error": {"code": -32603, "message": "Internal error"},
+            }
+            if not await _send(err_response):
+                break
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        sys.exit(0)
     except Exception:
         traceback.print_exc(file=sys.stderr)
         sys.stderr.flush()

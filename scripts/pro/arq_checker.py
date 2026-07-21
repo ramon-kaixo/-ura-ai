@@ -29,9 +29,7 @@ DEPRECATED_MODULES: dict[str, str] = {
     "knowledge/engine/logging_config.py": "Usar motor.observability.logging (deprecado v3.7.6)",
 }
 
-CORE_MODULES: list[str] = [
-    "core/model_router_main.py",  # eliminado en v4.0
-]
+CORE_MODULES: list[str] = []
 
 
 IGNORED_PLUGIN_PREFIXES = ("_", "Test", "Mock")
@@ -71,14 +69,13 @@ def _find_plugin_classes(filepath: Path) -> list[str]:
         tree = ast.parse(filepath.read_text())
     except SyntaxError:
         return []
-    plugins: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            for base in node.bases:
-                if isinstance(base, ast.Name) and base.id == "PluginBase":
-                    plugins.append(node.name)
-                elif isinstance(base, ast.Attribute) and base.attr == "PluginBase":
-                    plugins.append(node.name)
+    plugins: list[str] = [
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef)
+        for base in node.bases
+        if (isinstance(base, ast.Name) and base.id == "PluginBase") or (isinstance(base, ast.Attribute) and base.attr == "PluginBase")
+    ]
     return plugins
 
 
@@ -109,10 +106,8 @@ def check_orphans(files: list[Path]) -> list[dict[str, Any]]:
         module_name = f.stem
         # Verificar si alguien importa por ruta completa o por nombre corto
         imported = full_module in all_imports or module_name in all_imports
-        if not imported:
-            content = f.read_text()
-            if "class " in content or "def " in content:
-                orphans.append({
+        if not imported and ("class " in content or "def " in content):
+            orphans.append({
                     "type": "orphan",
                     "file": str(rel),
                     "detail": f"No importado por ningún otro módulo (ruta: {full_module})",
@@ -215,7 +210,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(f"\nARQ-600: Validación funcional")
+        print("\nARQ-600: Validación funcional")
         print(f"{'='*50}")
         print(f"Archivos escaneados: {result['files_scanned']}")
         print(f"Hallazgos: {total}\n")
