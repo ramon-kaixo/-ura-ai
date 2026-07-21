@@ -416,9 +416,75 @@ def cmd_memory(config: UraConfig, args) -> int:
                     print(f"    {item.get('snippet', '')[:120]}")
             except Exception as e:
                 print(f"Web search falló: {e}")
+        elif cmd == "backup":
+            import shutil
+            from datetime import UTC, datetime
+
+            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            dest = backup_dir / f"memory_{ts}.db"
+            shutil.copy2(str(Path.home() / ".ura" / "memory.db"), str(dest))
+            print(f"Backup: {dest} ({dest.stat().st_size} bytes)")
+        elif cmd == "restore" and len(args.raw) > 1:
+            src = Path(args.raw[1])
+            import shutil
+
+            if not src.exists():
+                print(f"Error: {src} no existe")
+                return 1
+            dest = Path.home() / ".ura" / "memory.db"
+            # Backup actual antes de restaurar
+            from datetime import UTC, datetime
+
+            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            shutil.copy2(str(dest), str(backup_dir / f"pre_restore_{ts}.db"))
+            shutil.copy2(str(src), str(dest))
+            print(f"Restaurado: {src} → {dest}")
+            print(f"Backup pre-restore: {backup_dir / f'pre_restore_{ts}.db'}")
         else:
             print("Subcomandos:")
-            print("  ura memory search <query>   — buscar en memoria")
-            print("  ura memory store <text>     — almacenar texto")
-            print("  ura memory web <query>      — buscar en web")
+            print("  ura memory search <query>     — buscar en memoria")
+            print("  ura memory store <text>       — almacenar texto")
+            print("  ura memory web <query>        — buscar en web")
+            print("  ura memory backup             — respaldar memoria")
+            print("  ura memory restore <archivo>  — restaurar desde backup")
+    return 0
+
+
+def cmd_service(config: UraConfig, args) -> int:
+    """Gestiona servicios del sistema (start/stop/status)."""
+    import subprocess
+
+    if args and hasattr(args, "raw") and args.raw:
+        action = args.raw[0]
+        service = args.raw[1] if len(args.raw) > 1 else ""
+        if action == "list":
+            r = subprocess.run(["systemctl", "list-units", "--type=service", "--all", "--no-pager", "--plain"],
+                             capture_output=True, text=True, timeout=10, check=False)
+            for line in r.stdout.splitlines():
+                if "ura-" in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        print(f"  {parts[0]:45} {parts[2]:15} {parts[1]}")
+        elif service:
+            r = subprocess.run(["systemctl", action, service], capture_output=True, text=True, timeout=30, check=False)
+            if r.returncode == 0:
+                print(f"systemctl {action} {service}: OK")
+            else:
+                print(f"systemctl {action} {service}: {r.stderr.strip() or r.stdout.strip()}")
+        else:
+            print("Uso: ura service <start|stop|restart|status> <nombre>")
+    else:
+        # Default: list all URA services
+        r = subprocess.run(["systemctl", "list-units", "--type=service", "--all", "--no-pager", "--plain"],
+                         capture_output=True, text=True, timeout=10, check=False)
+        servicios = [l for l in r.stdout.splitlines() if "ura-" in l]
+        print(f"Servicios URA ({len(servicios)}):")
+        for s in servicios:
+            parts = s.split()
+            if len(parts) >= 3:
+                print(f"  {parts[0]:45} {parts[2]:15} {parts[1]}")
     return 0
