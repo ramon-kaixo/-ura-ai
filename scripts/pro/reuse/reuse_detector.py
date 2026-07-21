@@ -16,6 +16,22 @@ from scripts.pro.reuse.similarity import compare
 
 class ReuseDetector:
     _feedback: list[dict] = []  # retroalimentación: aceptado/rechazado
+
+    @classmethod
+    def metrics(cls) -> dict:
+        """Métricas de eficacia del detector."""
+        total = len(cls._feedback)
+        if total == 0:
+            return {"recomendaciones_emitidas": 0, "tasa_aceptacion": 0, "reutilizaciones_efectivas": 0}
+        accepted = sum(1 for f in cls._feedback if f.get("accepted"))
+        rejected = total - accepted
+        return {
+            "recomendaciones_emitidas": total,
+            "recomendaciones_aceptadas": accepted,
+            "recomendaciones_rechazadas": rejected,
+            "tasa_aceptacion": round(accepted / total, 2),
+            "reutilizaciones_efectivas": accepted,
+        }
     """Detector de reutilización. Indexa el repo y compara firmas."""
 
     def __init__(self, project_root: str | Path = "") -> None:
