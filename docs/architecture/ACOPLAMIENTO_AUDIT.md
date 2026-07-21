@@ -1,6 +1,6 @@
 # Auditoría de Acoplamiento entre Paquetes
 
-Fecha: 2026-07-21
+Fecha: 2026-07-21 (actualizado 2026-07-21)
 
 ## Matriz
 
@@ -53,5 +53,13 @@ Dirección esperada (infraestructura → dominio/conocimiento). Bajo riesgo.
 ## Acciones Recomendadas
 
 1. **core → motor**: Crear interfaces abstractas en `core/` (ej. `core/interfaces/`) que motor implemente. Inyectar dependencias, no importarlas directamente.
+
+   ✅ Hito 1: Interfaces creadas — `core/interfaces/` con `IConfigProvider`, `IExecutor`, `IVectorStore`.
+   ⏳ Pendiente: Migrar los 19 archivos de `core/` para usar las interfaces. Cada migración requiere ADR-007.
+
 2. **scripts → motor**: Crear `motor/cli/public_api.py` como fachada oficial para scripts. Los scripts nuevos solo importan de ahí.
+
+   ✅ Fachada creada — `motor/cli/public_api.py` exporta 19 símbolos (UraConfig, QdrantClient, get_secret, etc.).
+   ⏳ Pendiente: Migrar los 12 scripts existentes para usar la fachada.
+
 3. Monitor: Mantener vigilancia, no es urgente.
