@@ -1,5 +1,7 @@
 """CLI: metadata — lineage, gobernanza y memoria."""
 
+import uuid
+
 from knowledge.engine.cli.main import _resolve_db_path
 
 
@@ -51,8 +53,6 @@ def cmd_metadata_policy(args) -> int:
 
 
 def cmd_memory_create(args) -> int:
-    import uuid
-
     from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
 
     db_path = _resolve_db_path(args)

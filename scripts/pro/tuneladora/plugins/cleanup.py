@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -74,8 +76,6 @@ class CleanupPlugin:
     def git_commit(self, message: str = "") -> dict[str, Any]:
         """Hace git commit si hay cambios."""
         if not message:
-            from datetime import UTC, datetime
-
             message = f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')}"
         self.engine.run_git(["add", "-u"])
         result = self.engine.run_git(["commit", "-m", message])
@@ -93,8 +93,6 @@ class CleanupPlugin:
         flags = "--full" if profundo else "--quick"
         result = self.engine.run_script("scripts/pro/revisor.py", args=[flags], timeout=120)
         try:
-            import json
-
             reporte = json.loads(result.stdout) if result.stdout else {}
         except Exception:
             reporte = {}

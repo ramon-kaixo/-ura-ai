@@ -17,7 +17,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import shutil
 import subprocess
+import time as _time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -85,8 +87,6 @@ def _ensure_dir(path: Path) -> Path:
 
 
 def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:
-    import shutil
-
     git_path = shutil.which("git") or "/usr/bin/git"
     return subprocess.run(
         [git_path, *args],
@@ -119,8 +119,6 @@ def archive_source(  # noqa: PLR0915
     El bundle incluye todo el historial de git (--all).
     Si source_dir no es un repo git, la operación falla.
     """
-    import time as _time
-
     _t0 = _time.monotonic()
     if source_dir is None:
         source_dir = _PROJECT_ROOT / "source"

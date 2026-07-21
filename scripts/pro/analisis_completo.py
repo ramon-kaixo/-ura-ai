@@ -189,9 +189,7 @@ def guardar_sugerencia(analisis) -> None:
 
 
 def scan_project() -> None:
-    from pathlib import Path as _Path
-
-    root = _Path.home() / "URA/ura_ia_1972"
+    root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 

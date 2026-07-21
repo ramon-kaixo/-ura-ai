@@ -16,6 +16,7 @@ Retorna puntuación 0-100 y lista de incidencias.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
@@ -343,7 +344,6 @@ def _():
     )
     if result.returncode != 0:
         return False, f"dashboard falla: {result.stderr[:200]}"
-    import json  # noqa: PLC0415
     try:
         data = json.loads(result.stdout)
         return True, f"{data.get('ledger_ejecuciones', '?')} ejecuciones, {data.get('memoria_ejecuciones', '?')} indexadas"

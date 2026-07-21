@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import time
+import tracemalloc
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -248,8 +249,6 @@ def benchmark_f28_protocol() -> list[BenchmarkResult]:
 
 def main() -> None:
     output = sys.argv[1] if len(sys.argv) > 1 else ""
-    import tracemalloc
-
     tracemalloc.start()
 
     all_results: list[dict] = []

@@ -42,11 +42,9 @@ from core.model_router.proxy import (  # noqa: F401
     proxy_request,
 )
 from core.model_router.router import (  # noqa: F401
-    _URLS,
     CACHE_TTL,
     DEFAULT_TIPO,
     FALLBACK_MODEL,
-    OLLAMA_URL,
     POWER_MODE,
     ROUTER_PORT,
     auth_validate,

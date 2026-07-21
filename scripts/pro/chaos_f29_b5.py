@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))  # noqa: PTH118
@@ -16,8 +17,6 @@ sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))  # noqa: PTH
 
 def ct1_journal_corrupt() -> dict:
     """CT-1: Journal corrupto (F26)."""
-    import tempfile
-
     from motor.memory.journal import Journal
 
     tmp = tempfile.mktemp(suffix=".journal")  # noqa: S306

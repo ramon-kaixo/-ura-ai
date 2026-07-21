@@ -21,6 +21,7 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -205,18 +206,16 @@ async def test_graceful_shutdown(dry_run: bool = False) -> None:
         return
 
     # Worker simulado que atrapa SIGTERM
-    import signal as sigmod
-
     shutdown_ok = False
 
     def _handler(signum, frame) -> None:
         nonlocal shutdown_ok
         shutdown_ok = True
 
-    sigmod.signal(sigmod.SIGTERM, _handler)
-    os.kill(os.getpid(), sigmod.SIGTERM)
+    signal.signal(signal.SIGTERM, _handler)
+    os.kill(os.getpid(), signal.SIGTERM)
     time.sleep(0.1)  # noqa: ASYNC251
-    sigmod.signal(sigmod.SIGTERM, sigmod.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
     check("SIGTERM manejado correctamente", shutdown_ok, "handler ejecutado")
 

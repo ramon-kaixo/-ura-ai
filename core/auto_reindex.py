@@ -12,6 +12,7 @@ Uso:
 import asyncio
 import json
 import logging
+import sys
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -209,8 +210,6 @@ async def reindex_stale(dry_run: bool = True) -> dict:
 
 
 def main() -> None:
-    import sys
-
     dry_run = "--execute" not in sys.argv
     stats = asyncio.run(reindex_stale(dry_run=dry_run))
     log.info(json.dumps(stats, indent=2))

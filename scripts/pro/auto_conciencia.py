@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 import time
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -16,8 +17,6 @@ NOTIFICAR = Path("/opt/ura/scripts/notificar.sh")
 
 def mcp(nombre, args=None):
     """Llama al MCP server y devuelve resultado."""
-    import urllib.request
-
     payload = json.dumps({"name": nombre, "arguments": args or {}}).encode()
     inicio = time.time()
     try:

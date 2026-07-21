@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from typing import TYPE_CHECKING
 
@@ -89,8 +90,6 @@ class LLMFactExtractor(FactExtractor):
         return facts
 
     def _fallback_parse(self, raw: str) -> list[dict]:
-        import re
-
         items: list[dict] = []
         for match in re.finditer(r"\{\s*\"subject\"\s*:\s*\"([^\"]+)\"", raw):
             items.append({"subject": match.group(1)})  # noqa: PERF401

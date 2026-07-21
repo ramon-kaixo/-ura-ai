@@ -14,6 +14,7 @@ Uso:
 from __future__ import annotations
 
 import logging
+import shutil
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -110,8 +111,6 @@ class CompileRollback:
 
     def save_pre_compile_state(self) -> None:
         """Guarda el estado actual de kg_* antes del compile."""
-        import shutil
-
         if self._db_path.exists():
             shutil.copy2(self._db_path, self._snapshot_path)
             self._copy_wal(self._db_path, self._snapshot_path)
@@ -119,8 +118,6 @@ class CompileRollback:
 
     def restore_pre_compile_state(self) -> bool:
         """Restaura el estado previo al compile."""
-        import shutil
-
         if not self._snapshot_path.exists():
             return False
         try:
@@ -139,8 +136,6 @@ class CompileRollback:
 
     @staticmethod
     def _copy_wal(src: Path, dst: Path) -> None:
-        import shutil
-
         src_wal = src.with_suffix(".db-wal")
         src_shm = src.with_suffix(".db-shm")
         if src_wal.exists():

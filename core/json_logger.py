@@ -7,6 +7,7 @@ Consumers:
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Any
 
 from motor.observability.logging import JSONFormatter
@@ -19,8 +20,6 @@ class StructuredLogger:
         self._logger = logging.getLogger(name)
         self._logger.setLevel(level)
         self._logger.handlers.clear()
-
-        import sys
 
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(JSONFormatter())

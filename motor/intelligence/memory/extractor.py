@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 
 from motor.intelligence.memory.episodic import Episode  # noqa: TC001
@@ -48,8 +49,6 @@ class RuleBasedFactExtractor(FactExtractor):
         )
 
     def _find_patterns(self, text: str) -> list[tuple[str, str, str, str]]:
-        import re
-
         results: list[tuple[str, str, str, str]] = []
 
         patterns = [

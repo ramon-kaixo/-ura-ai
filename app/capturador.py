@@ -5,8 +5,10 @@ Cada maquina captura su propia pantalla. Sin cruce de contextos.
 
 from __future__ import annotations
 
+import base64
 import os
 import sys
+from io import BytesIO
 
 from motor.core.secrets import get_secret
 
@@ -32,9 +34,6 @@ class CapturadorTarget:
     def _capturar_vnc(self) -> str | None:
         """Captura desde el monitor virtual de Hetzner via VNC."""
         try:
-            import base64
-            from io import BytesIO
-
             import vncdotool.api
 
             client = vncdotool.api.connect("127.0.0.1::5901")
@@ -50,9 +49,6 @@ class CapturadorTarget:
     def _capturar_mac(self) -> str | None:
         """Captura nativa en Mac con normalizacion Retina."""
         try:
-            import base64
-            from io import BytesIO
-
             from PIL import ImageGrab
 
             img = ImageGrab.grab()

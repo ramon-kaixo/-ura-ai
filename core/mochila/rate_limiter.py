@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from collections import defaultdict
@@ -11,8 +12,6 @@ class RateLimiter:
         self._limites: dict[str, int] = {}
 
     def _cargar_config(self, config_file: str | None = None) -> None:
-        import json
-
         path = config_file or Path("~/.nervioso/rate_limits.json").expanduser()
         try:
             with open(path) as f:  # noqa: PTH123

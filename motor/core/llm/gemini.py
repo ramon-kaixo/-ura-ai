@@ -11,6 +11,7 @@ Configuración mediante secretos:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from typing import Any
@@ -140,8 +141,6 @@ class GeminiProvider(BaseLLMProvider):
             return [[0.0] * FALLBACK_EMBEDDING_DIMENSION for _ in texts]
 
     async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
-        import asyncio
-
         return await asyncio.to_thread(self.embed, texts, model)
 
     def health(self) -> dict[str, Any]:

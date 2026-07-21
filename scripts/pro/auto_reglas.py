@@ -12,6 +12,7 @@ PLUGIN = {
 Orquestador que importa de módulos: loader, applier, generator.
 """
 
+import ast
 import os
 import sys
 from pathlib import Path
@@ -88,8 +89,6 @@ def estado() -> dict:
 
 def scan_project() -> None:
     """Escanear todo el proyecto."""
-    from pathlib import Path
-
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
@@ -101,8 +100,6 @@ def scan_project() -> None:
             continue
         try:
             content = py_file.read_text()
-            import ast
-
             ast.parse(content)
             results[p] = {"status": "parsed_ok"}
         except SyntaxError:

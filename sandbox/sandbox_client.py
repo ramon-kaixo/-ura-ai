@@ -1,3 +1,4 @@
+import ast
 import json  # noqa: INP001
 import subprocess
 import sys
@@ -36,8 +37,6 @@ def run_validation(temp_path: str, original_name: str) -> dict:
 
         # Syntax check via ast
         try:
-            import ast
-
             ast.parse(content)
         except SyntaxError as e:
             result["errors"].append(f"SyntaxError: {e}")

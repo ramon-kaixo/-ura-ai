@@ -10,10 +10,12 @@ from path_setup import setup_path
 setup_path()
 import json
 import logging
+import math
 import os
 import subprocess
 import threading
 import time
+import urllib.request
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -42,8 +44,6 @@ def _get_qdrant():
 
 
 def log_evento(evento, datos=None) -> None:
-    import urllib.request
-
     payload = {"evento": evento, "timestamp": datetime.now(UTC).isoformat(), "data": datos or {}}
     try:
         req = urllib.request.Request(  # noqa: S310
@@ -109,8 +109,6 @@ def ejecutar_tarea(task_desc, target_files):
 
 def _distancia_coseno(a: list[float], b: list[float]) -> float:
     """Distancia coseno entre dos vectores. 0 = idénticos, 1 = ortogonales."""
-    import math
-
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))

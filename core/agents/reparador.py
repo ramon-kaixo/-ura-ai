@@ -5,6 +5,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 from core.agents.constants import RUFF, SCRIPTS, URA_ROOT
@@ -120,8 +121,6 @@ class AgenteReparador:
                     "temperature": 0.0,
                 },
             ).encode()
-            import urllib.request
-
             req = urllib.request.Request(
                 "http://localhost:8081/v1/chat/completions",
                 data=payload,

@@ -5,6 +5,7 @@ PLUGIN para plugin_registry.
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -74,8 +75,6 @@ class ReuseDetector:
 
     def analyze_new_code(self, code: str, min_score: float = 0.4) -> list[dict]:
         """Analiza código nuevo contra el índice."""
-        import tempfile
-
         tmp = Path(tempfile.mktemp(suffix=".py"))
         try:
             tmp.write_text(code)

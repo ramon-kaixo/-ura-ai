@@ -8,6 +8,7 @@ Uso:
 """
 
 import argparse
+import asyncio
 import json
 import logging
 import subprocess
@@ -172,16 +173,12 @@ def check_vram_pressure() -> None:
 
 def check_loop_latency() -> float:
     async def _measure():
-        import time as _t
-
-        t0 = _t.monotonic()
+        t0 = time.monotonic()
         await asyncio.sleep(0)
-        t1 = _t.monotonic()
+        t1 = time.monotonic()
         return (t1 - t0) * 1000
 
     try:
-        import asyncio
-
         return asyncio.run(_measure())
     except RuntimeError:
         return 0.0
