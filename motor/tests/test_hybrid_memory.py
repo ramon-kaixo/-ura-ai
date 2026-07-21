@@ -15,7 +15,7 @@ def test_store_and_search():
 
     rid = mem.store(payload="El cielo es azul", metadata={"source": "test"}, memory_type=MemoryType.SEMANTIC)
     assert rid
-    assert len(rid) == 16  # uuid4 hex
+    assert len(rid) == 32  # uuid4 hex
 
     results = mem.search("cielo", k=5)
     assert len(results) == 1
