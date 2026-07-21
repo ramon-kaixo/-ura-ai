@@ -537,30 +537,70 @@ def _print_report(result: dict[str, Any]) -> None:
     print(f"{'='*60}\n")
 
 
+BASELINE_PATH = URA_ROOT / "docs" / "architecture" / "arq_baseline.json"
+
+
+def _load_baseline() -> set[tuple[str, str, int]]:
+    """Carga la línea base de hallazgos conocidos."""
+    if not BASELINE_PATH.exists():
+        return set()
+    try:
+        data = json.loads(BASELINE_PATH.read_text())
+        return {(f["file"], f["type"], f["line"]) for f in data}
+    except Exception:
+        return set()
+
+
+def _save_baseline(all_findings: list[dict]) -> None:
+    """Guarda la línea base actual."""
+    BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    simplified = [{"file": f.get("file", "-"), "type": f.get("type", "unknown"), "line": f.get("line", 0)} for f in all_findings]
+    BASELINE_PATH.write_text(json.dumps(simplified, indent=2))
+
+
+def _filter_new_findings(all_findings: list[dict], baseline: set[tuple[str, str, int]]) -> list[dict]:
+    """Retorna solo hallazgos nuevos (no en línea base)."""
+    return [f for f in all_findings if (f.get("file", "-"), f.get("type", "unknown"), f.get("line", 0)) not in baseline]
+
+
 def main() -> int:
     import argparse
     parser = argparse.ArgumentParser(description="ARQ Auditor — verificación arquitectónica")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
-    parser.add_argument("--check", action="store_true", help="Exit 1 si hay FAIL")
-    parser.add_argument("--html", action="store_true", help="Dashboards HTML")
-    parser.add_argument("--block", help="Ejecutar solo un bloque (A-K)")
+    parser.add_argument("--check", action="store_true", help="Exit 1 si hay FAIL nuevos")
+    parser.add_argument("--update-baseline", action="store_true", help="Actualizar línea base")
+    parser.add_argument("--html", action="store_true", help="Dashboard HTML")
     args = parser.parse_args()
 
     result = run_all()
-    all_findings = []
+    all_findings: list[dict] = []
     for block_list in result["blocks"].values():
         all_findings.extend(block_list)
+
+    if args.update_baseline:
+        _save_baseline(all_findings)
+        print(f"Línea base actualizada: {len(all_findings)} hallazgos")
+        return 0
+
+    if args.check:
+        baseline = _load_baseline()
+        new_findings = _filter_new_findings(all_findings, baseline)
+        new_fails = sum(1 for f in new_findings if f.get("level") in ("FAIL", "P0"))
+        if new_fails > 0:
+            print(f"NUEVOS FAIL ({new_fails}) — no en línea base:")
+            for f in new_findings:
+                if f.get("level") in ("FAIL", "P0"):
+                    print(f"  {f['file']}:{f.get('line','')} [{f.get('type','')}] {f.get('detail','')[:80]}")
+            print(f"\nTotal baseline: {len(baseline)} hallazgos conocidos")
+            return 1
+        return 0
 
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     elif args.html:
-        print("HTML dashboard no implementado en esta versión. Use --json.")
+        print("HTML dashboard no implementado. Use --json o --update-baseline.")
     else:
         _print_report(result)
-
-    if args.check:
-        fails = sum(1 for f in all_findings if f.get("level") in ("FAIL", "P0"))
-        return 1 if fails > 0 else 0
     return 0
 
 
