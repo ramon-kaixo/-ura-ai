@@ -66,6 +66,7 @@ def main() -> None:
         log.info("  %-20s → %s (fallback: %s)", tipo, modelo, fallback)
 
     from http.server import ThreadingHTTPServer
+
     from core.model_router.handler import RouterHandler
 
     server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)

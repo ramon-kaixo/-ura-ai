@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
-import time
 import urllib.error
 import urllib.request
-from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,7 +14,7 @@ logging.basicConfig(
 log = logging.getLogger("core.model_router")
 
 try:
-    from router_rate_limiter import rate_limiter  # noqa: F401
+    from router_rate_limiter import rate_limiter
 except ImportError:
 
     class _NoOpRateLimiter:
@@ -33,12 +30,12 @@ except ImportError:
         def get_metrics(self, *args, **kwargs):
             return {}
 
-    rate_limiter = _NoOpRateLimiter()  # noqa: F811
+    rate_limiter = _NoOpRateLimiter()
 
 
 try:
-    from core.auth_layer import require_auth  # noqa: F401
-    from core.auth_layer import validate as auth_validate  # noqa: F401
+    from core.auth_layer import require_auth
+    from core.auth_layer import validate as auth_validate
 except ImportError:
 
     def auth_validate(*args, **kwargs) -> bool:  # type: ignore[misc]
@@ -63,9 +60,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")
+        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", _URLS["primary"])
             return _URLS["primary"]
     except Exception as e:
