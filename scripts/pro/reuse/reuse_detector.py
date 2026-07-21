@@ -1,4 +1,4 @@
-# PLUGIN = {"name": "reuse_detector", "phase": "pre", "timeout": 60, "priority": 100, "capability": "quality", "args": ["index"]}
+PLUGIN = {"name": "reuse_detector", "phase": "pre", "timeout": 60, "priority": 100, "capability": "quality", "args": ["index"]}
 """ReuseDetector — busca código similar antes de crear código nuevo.
 
 Escanea el repositorio, extrae firmas de funciones con AST,
