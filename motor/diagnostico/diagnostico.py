@@ -31,7 +31,7 @@ class Diagnostico:
         self.config = config
         self.qdrant = qdrant
         self.executor = executor or SubprocessExecutor()
-        self.cb = CircuitBreaker(qdrant)
+        self.cb = CircuitBreaker("qdrant")
 
     def run(self, scan: ScanResult) -> DiagnoseResult:
         r = DiagnoseResult(timestamp=datetime.now(UTC).isoformat() + "Z")
@@ -39,7 +39,7 @@ class Diagnostico:
         if not scan.ok:
             r.ok = False
             log.warning("scan no ok, diagnostico limitado")
-        if not self.cb.operacional():
+        if not self.cb.is_available:
             r.modo_offline = True
             log.warning("modo offline (circuit breaker abierto)")
         incidentes, costes = buscar_patrones(scan, self.qdrant, self.cb, self.config)
@@ -109,4 +109,4 @@ class Diagnostico:
             "hw_ok": scan.hw_health.get("ok", True),
             "hw_issues": scan.hw_health.get("issues", []),
         }
-        self.qdrant.guardar_incidente(incidente)
+        self.cb.call(self.qdrant.guardar_incidente, incidente)
