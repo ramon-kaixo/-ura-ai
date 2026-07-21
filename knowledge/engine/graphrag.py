@@ -15,8 +15,8 @@ from __future__ import annotations
 import logging
 import time
 from collections import deque
-from datetime import UTC, datetime
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:

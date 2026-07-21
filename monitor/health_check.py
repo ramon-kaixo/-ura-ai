@@ -163,7 +163,6 @@ def check_ollama_models() -> list:
 
 
 def main() -> int:
-
     all_alerts = []
 
     # Latencia

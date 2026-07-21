@@ -21,6 +21,7 @@ def _get_state():
     global _LLM_STATE  # noqa: PLW0603
     if _LLM_STATE is None:
         from motor.core.llm._state import build_llm_state
+
         _LLM_STATE = build_llm_state()
     return _LLM_STATE
 
@@ -42,9 +43,9 @@ def health() -> dict:
 
 
 def __getattr__(name):
-    if name == 'registry':
+    if name == "registry":
         return _get_state().registry
-    if name == '_default':
+    if name == "_default":
         return _get_state().default_provider
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

@@ -215,10 +215,18 @@ def _eval_binop(node, env, _op):
     left = _eval_ast(node.left, env)
     right = _eval_ast(node.right, env)
     ops = {
-        ast.Add: _op.add, ast.Sub: _op.sub, ast.Mult: _op.mul, ast.Div: _op.truediv,
-        ast.FloorDiv: _op.floordiv, ast.Mod: _op.mod, ast.Pow: _op.pow,
-        ast.LShift: _op.lshift, ast.RShift: _op.rshift,
-        ast.BitOr: _op.or_, ast.BitXor: _op.xor, ast.BitAnd: _op.and_,
+        ast.Add: _op.add,
+        ast.Sub: _op.sub,
+        ast.Mult: _op.mul,
+        ast.Div: _op.truediv,
+        ast.FloorDiv: _op.floordiv,
+        ast.Mod: _op.mod,
+        ast.Pow: _op.pow,
+        ast.LShift: _op.lshift,
+        ast.RShift: _op.rshift,
+        ast.BitOr: _op.or_,
+        ast.BitXor: _op.xor,
+        ast.BitAnd: _op.and_,
     }
     for op_type, func in ops.items():
         if isinstance(node.op, op_type):
@@ -242,9 +250,16 @@ def _eval_boolop(node, env, _op):
 def _eval_compare(node, env, _op):
     left = _eval_ast(node.left, env)
     cmp_ops = {
-        ast.Eq: _op.eq, ast.NotEq: _op.ne, ast.Lt: _op.lt, ast.LtE: _op.le,
-        ast.Gt: _op.gt, ast.GtE: _op.ge, ast.Is: _op.is_, ast.IsNot: _op.is_not,
-        ast.In: _op.contains, ast.NotIn: lambda a, b: not _op.contains(b, a),
+        ast.Eq: _op.eq,
+        ast.NotEq: _op.ne,
+        ast.Lt: _op.lt,
+        ast.LtE: _op.le,
+        ast.Gt: _op.gt,
+        ast.GtE: _op.ge,
+        ast.Is: _op.is_,
+        ast.IsNot: _op.is_not,
+        ast.In: _op.contains,
+        ast.NotIn: lambda a, b: not _op.contains(b, a),
     }
     for op, comparator in zip(node.ops, node.comparators, strict=False):
         right = _eval_ast(comparator, env)

@@ -40,7 +40,13 @@ class AgenteOrquestador:
                 try:
                     tree = ast.parse(py_file.read_text())
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "end_lineno") and node.end_lineno and node.lineno and node.end_lineno - node.lineno > 80:
+                        if (
+                            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and hasattr(node, "end_lineno")
+                            and node.end_lineno
+                            and node.lineno
+                            and node.end_lineno - node.lineno > 80
+                        ):
                             total += 1
                 except Exception as e:
                     log.warning("Error parseando AST en %s: %s", py_file, e)

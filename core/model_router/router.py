@@ -90,12 +90,15 @@ def get_ollama_url() -> str:
 
 ROUTER_PORT = 11435
 
+
 def __getattr__(name):
-    if name == 'OLLAMA_URL':
+    if name == "OLLAMA_URL":
         return get_ollama_url()
-    if name == '_URLS':
+    if name == "_URLS":
         return get_urls()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 DEFAULT_TIPO = "respuesta_rapida"
 FALLBACK_MODEL = "qwen2.5:3b"
 CACHE_TTL = 7200

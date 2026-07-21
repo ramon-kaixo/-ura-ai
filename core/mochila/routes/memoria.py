@@ -25,7 +25,7 @@ def create_memoria_router(state) -> APIRouter:
     @router.post("/memoria/ingestar/video")
     async def memoria_ingestar_video(body: VideoIngestRequest):
         ruta = Path(body.path)
-        if not ruta.exists():  # noqa: ASYNC240
+        if not ruta.exists():
             raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
         return {"status": "stub", "detail": "pipeline_video no implementado"}
 
