@@ -4,38 +4,51 @@ Soporta Telegram y Pushover. Los tokens se cargan desde variables de entorno
 (TELEGRAM_TOKEN, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN).
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import httpx
 
-from motor.core.secrets import get_secret
+if TYPE_CHECKING:
+    from core.interfaces import ISecretStore
 
 log = logging.getLogger("ura.notifier")
 
 _TELEGRAM_TOKEN: str | None = None
 _TELEGRAM_CHAT_ID: str | None = None
+_PUSHOVER_USER: str = ""
+_PUSHOVER_TOKEN: str = ""
 
-PUSHOVER_USER = get_secret("PUSHOVER_USER_KEY", "")
-PUSHOVER_TOKEN = get_secret("PUSHOVER_APP_TOKEN", "")
 
+def _ensure_secrets(store: ISecretStore | None = None) -> None:
+    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID, _PUSHOVER_USER, _PUSHOVER_TOKEN  # noqa: PLW0603
+    if _TELEGRAM_TOKEN is not None:
+        return
+    _TELEGRAM_TOKEN = ""
+    _TELEGRAM_CHAT_ID = ""
+    if store is not None:
+        _TELEGRAM_TOKEN = store.get_secret("TELEGRAM_TOKEN", "") or ""
+        _TELEGRAM_CHAT_ID = store.get_secret("TELEGRAM_CHAT_ID", "") or ""
+        _PUSHOVER_USER = store.get_secret("PUSHOVER_USER_KEY", "") or ""
+        _PUSHOVER_TOKEN = store.get_secret("PUSHOVER_APP_TOKEN", "") or ""
+    else:
+        from motor.core.secrets import get_secret as _get
 
-def _get_telegram_token() -> str | None:
-    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID  # noqa: PLW0603
-    if _TELEGRAM_TOKEN is None:
-        _TELEGRAM_TOKEN = get_secret("TELEGRAM_TOKEN", "")
-        _TELEGRAM_CHAT_ID = get_secret("TELEGRAM_CHAT_ID", "")
-    return _TELEGRAM_TOKEN or None
+        _TELEGRAM_TOKEN = _get("TELEGRAM_TOKEN", "")
+        _TELEGRAM_CHAT_ID = _get("TELEGRAM_CHAT_ID", "")
+        _PUSHOVER_USER = _get("PUSHOVER_USER_KEY", "")
+        _PUSHOVER_TOKEN = _get("PUSHOVER_APP_TOKEN", "")
 
 
 def _send_telegram(message: str) -> bool:
-    token = _get_telegram_token()
-    if not token or not _TELEGRAM_CHAT_ID:
+    if not _TELEGRAM_TOKEN or not _TELEGRAM_CHAT_ID:
         log.debug("Telegram not configured (TELEGRAM_TOKEN or TELEGRAM_CHAT_ID missing)")
         return False
     try:
         r = httpx.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
+            f"https://api.telegram.org/bot{_TELEGRAM_TOKEN}/sendMessage",
             json={"chat_id": _TELEGRAM_CHAT_ID, "text": message[:4096], "parse_mode": "HTML"},
             timeout=10,
         )
@@ -46,13 +59,13 @@ def _send_telegram(message: str) -> bool:
 
 
 def _send_pushover(message: str) -> bool:
-    if not PUSHOVER_TOKEN or not PUSHOVER_USER:
+    if not _PUSHOVER_TOKEN or not _PUSHOVER_USER:
         log.debug("Pushover not configured")
         return False
     try:
         r = httpx.post(
             "https://api.pushover.net/1/messages.json",
-            json={"token": PUSHOVER_TOKEN, "user": PUSHOVER_USER, "message": message[:1024]},
+            json={"token": _PUSHOVER_TOKEN, "user": _PUSHOVER_USER, "message": message[:1024]},
             timeout=10,
         )
         return r.status_code == 200
@@ -65,18 +78,10 @@ def notify(
     message: str,
     level: Literal["info", "warning", "critical"] = "warning",
     channels: list[str] | None = None,
+    store: ISecretStore | None = None,
 ) -> bool:
-    """Send alert via configured channels.
+    _ensure_secrets(store)
 
-    Args:
-        message: Alert text (plaintext, no HTML).
-        level: Severity level — info, warning, critical.
-        channels: Which channels to use (default: all configured).
-
-    Returns:
-        True if at least one channel delivered.
-
-    """
     if channels is None:
         channels = ["telegram", "pushover"]
 

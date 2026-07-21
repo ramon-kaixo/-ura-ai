@@ -1,5 +1,7 @@
 """Repara errores en 3 niveles: determinista → LLM rápido → LLM potente."""
 
+from __future__ import annotations
+
 import json
 import logging
 import shutil
@@ -7,15 +9,26 @@ import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from core.agents.constants import RUFF, SCRIPTS, URA_ROOT
-from motor.core.llm import generate as _generate
+
+if TYPE_CHECKING:
+    from core.interfaces import ILLMClient
 
 log = logging.getLogger("ura.multi_agent.reparador")
 
 
 class AgenteReparador:
-    """Repara errores en 3 niveles: determinista → LLM rápido → LLM potente."""
+    def __init__(self, llm: ILLMClient | None = None) -> None:
+        self._llm = llm
+
+    def _generate(self, prompt: str, modelo: str, options: dict | None = None) -> str:
+        if self._llm is not None:
+            return self._llm.generate(prompt, model=modelo, options=options)
+        from motor.core.llm import generate as _gen
+
+        return _gen(prompt, model=modelo, options=options)
 
     def reparar(self, archivo: str, errores: list) -> tuple[bool, int, str]:
         ruta = Path(archivo) if isinstance(archivo, str) else archivo
@@ -78,11 +91,7 @@ class AgenteReparador:
                 f"Devuelve SOLO el código reparado."
             )
 
-            fixed = _generate(
-                prompt,
-                model=modelo,
-                options={"temperature": 0.0, "num_predict": 4096},
-            )
+            fixed = self._generate(prompt, modelo, options={"temperature": 0.0, "num_predict": 4096})
 
             if fixed and "```" in fixed:
                 fixed = fixed.split("```python")[1].split("```")[0] if "```python" in fixed else fixed.split("```")[1]
