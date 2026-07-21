@@ -408,7 +408,7 @@ class TraceContext:
         message_type: str,
         message_kind: str = "command",
         tags: dict[str, str] | None = None,
-    ):
+    ) -> Generator[None, None, None]:
         """Context manager for a single span (hop).
 
         OBS-08: never modifies behavior — wraps in try/except.
