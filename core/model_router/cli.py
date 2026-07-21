@@ -33,7 +33,7 @@ def main() -> None:
         obtener_modelos_disponibles,
         seleccionar_modelo,
     )
-    from core.model_router.router import OLLAMA_URL, ROUTER_PORT
+    from core.model_router.router import get_ollama_url, ROUTER_PORT
 
     if "--test" in sys.argv or "--models" in sys.argv:
         pass
@@ -53,7 +53,7 @@ def main() -> None:
         return
 
     log.info("Model Router Enhanced v2.2 iniciando en puerto %s", ROUTER_PORT)
-    log.info("Ollama backend: %s", OLLAMA_URL)
+    log.info("Ollama backend: %s", get_ollama_url())
     log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'")
     log.info("Features: Dashboard, Prompt Caching, Fallback System, Metrics, Context Checker")
 
@@ -61,7 +61,7 @@ def main() -> None:
     if disponibles:
         log.info("Modelos disponibles: %s", ", ".join(sorted(disponibles)))
     else:
-        log.warning("Ollama no accesible en %s — se reintentara", OLLAMA_URL)
+        log.warning("Ollama no accesible en %s — se reintentara", get_ollama_url())
 
     for tipo, info in MODELO_ROUTES.items():
         modelo = seleccionar_modelo(tipo, disponibles) if disponibles else info["modelos"][0]
