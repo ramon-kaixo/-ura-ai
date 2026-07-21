@@ -1,24 +1,12 @@
 """Model Router Enhanced — package completo con submódulos."""
 
-from core.model_router.router import (  # noqa: F401
-    CACHE_TTL,
-    DEFAULT_TIPO,
-    FALLBACK_MODEL,
-    OLLAMA_URL,
-    POWER_MODE,
-    ROUTER_PORT,
-    _URLS,
-    auth_validate,
-    rate_limiter,
-    require_auth,
-)
-from core.model_router.vram_guard import ConcurrentVRAMGuard, vram_guard  # noqa: F401
 from core.model_router.cache import PromptCache, prompt_cache  # noqa: F401
+from core.model_router.cli import main, verificar_politicas_seguridad_preflight  # noqa: F401
+from core.model_router.dashboard import _dashboard_json, _render_dashboard  # noqa: F401
+from core.model_router.handler import RouterHandler  # noqa: F401
 from core.model_router.metrics import MetricsCollector, metrics  # noqa: F401
 from core.model_router.model_selection import (  # noqa: F401
     DEFAULT_MODEL_PARAMS,
-    DEFAULT_TIPO,
-    FALLBACK_MODEL,
     MODELO_ROUTES,
     PATRONES_CLASIFICACION,
     _apply_model_params,
@@ -53,6 +41,16 @@ from core.model_router.proxy import (  # noqa: F401
     _update_asus_latency,
     proxy_request,
 )
-from core.model_router.dashboard import _dashboard_json, _render_dashboard  # noqa: F401
-from core.model_router.handler import RouterHandler  # noqa: F401
-from core.model_router.cli import main, verificar_politicas_seguridad_preflight  # noqa: F401
+from core.model_router.router import (  # noqa: F401
+    _URLS,
+    CACHE_TTL,
+    DEFAULT_TIPO,
+    FALLBACK_MODEL,
+    OLLAMA_URL,
+    POWER_MODE,
+    ROUTER_PORT,
+    auth_validate,
+    rate_limiter,
+    require_auth,
+)
+from core.model_router.vram_guard import ConcurrentVRAMGuard, vram_guard  # noqa: F401
