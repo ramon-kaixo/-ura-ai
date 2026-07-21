@@ -43,7 +43,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
     return evaluation
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Autonomía v3.3 — Aprendizaje útil")

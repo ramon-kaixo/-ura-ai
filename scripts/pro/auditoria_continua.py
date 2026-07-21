@@ -324,11 +324,12 @@ def _():
 
     plugins = plugin_registry.discover_all()
     required = {"name", "phase", "timeout", "priority"}
-    missing = []
-    for name, p in plugins.items():
-        for field in required:
-            if field not in p:
-                missing.append(f"{name}: falta {field}")
+    missing = [
+        f"{name}: falta {field}"
+        for name, p in plugins.items()
+        for field in required
+        if field not in p
+    ]
     if missing:
         return False, "\n".join(missing[:3])
     return True, f"{len(plugins)} plugins, todos OK"

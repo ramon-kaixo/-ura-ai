@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import sys
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, TextIO
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
+from typing import TextIO
 
 
 class Logger:
