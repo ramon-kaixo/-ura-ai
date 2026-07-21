@@ -25,6 +25,11 @@
     "line": 40
   },
   {
+    "file": "motor/cli/cmd_ura.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
     "file": "motor/core/llm/router.py",
     "type": "large_file",
     "line": 1
@@ -51,11 +56,6 @@
   },
   {
     "file": "motor/core/qdrant_client.py",
-    "type": "large_file",
-    "line": 1
-  },
-  {
-    "file": "motor/cli/cmd_ura.py",
     "type": "large_file",
     "line": 1
   },
@@ -217,6 +217,236 @@
   {
     "file": "-",
     "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "motor/cli/cmd_ura.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/core/llm/router.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/assistant/api.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/assistant/executor.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/plugin/registry_v2.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/core/fusion/stages/entity_resolver.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/core/qdrant_client.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/model_router/handler.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/scanner/scanner.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/platform/tracing.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/memory/forgetting.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/memory/episodic.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/platform/tracing_exporter.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/assistant/conversation.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/memory_engine.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/guardian_openclaw.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/memory/compression.py",
+    "type": "refactor_suggest",
+    "line": 0
+  },
+  {
+    "file": "core/watchdog_funciones.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/core/fusion/fact_history.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/agents/consensus.py",
+    "type": "refactor_suggest",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/memory/semantic.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/mochila/tools.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/model_router/proxy.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/memoria/extractores/imagen_extractor.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/error_sandbox.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/resolver_red.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/platform/serializer.py",
+    "type": "refactor_suggest",
+    "line": 0
+  },
+  {
+    "file": "motor/memory/memory.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/intelligence/memory/hybrid.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/infra/heartbeat.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/auto_reindex.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/platform/validator.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/cleanup.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "core/mochila/routes/proxy.py",
+    "type": "refactor_trigger",
+    "line": 0
+  },
+  {
+    "file": "motor/core/qdrant_rest.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "motor/observability/http.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "motor/assistant/tool_plugins/weather.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/infra/state_manager.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/memoria/detectores.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/memoria/ensamblador.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/memoria/limpieza.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/seguridad/rollback_manager.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/memoria/extractores/imagen_extractor.py",
+    "type": "orphan",
+    "line": 0
+  },
+  {
+    "file": "core/json_logger.py",
+    "type": "deprecated_in_use",
+    "line": 0
+  },
+  {
+    "file": "knowledge/engine/logging_config.py",
+    "type": "deprecated_in_use",
+    "line": 0
+  },
+  {
+    "file": "scripts/pro/f14_e2e.py",
+    "type": "plugin_unused",
     "line": 0
   },
   {
