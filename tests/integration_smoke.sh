@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 export PYTHONPATH="$PWD"
 
 ROUTER_URL="http://localhost:11435"
-ROUTER_SCRIPT="core/model_router.py"
+ROUTER_SCRIPT="core/model_router_main.py"
 OLLAMA_URL="http://localhost:11434"
 PASS=0
 FAIL=0

@@ -38,7 +38,7 @@ PROMPT='Actúa como experto en sistemas distribuidos. Revisa los módulos en ./c
 Salida: Formato JSON estrictamente validado. No refactorices nada, solo lista las vulnerabilidades lógicas detectadas.'
 
 # Escanear core/ y enviar a Qwen
-for mod in core/memory_engine.py core/model_router.py core/auth_layer.py; do
+for mod in core/memory_engine.py core/model_router_main.py core/auth_layer.py; do
     if [ -f "$mod" ]; then
         CONTENIDO=$(head -500 "$mod")
         RESPUESTA=$(ollama run qwen2.5-coder:32b "$PROMPT
@@ -55,6 +55,6 @@ done
 # 4. Guardar reporte
 REPORTE="/home/ramon/URA/reports/auditoria_${FECHA//[: ]/_}.json"
 mkdir -p "$(dirname "$REPORTE")"
-echo "{\"fecha\":\"$FECHA\",\"modulos_analizados\":[\"core/memory_engine.py\",\"core/model_router.py\",\"core/auth_layer.py\"],\"resultado\":\"completado\"}" > "$REPORTE"
+echo "{\"fecha\":\"$FECHA\",\"modulos_analizados\":[\"core/memory_engine.py\",\"core/model_router_main.py\",\"core/auth_layer.py\"],\"resultado\":\"completado\"}" > "$REPORTE"
 log "  ✅ Reporte guardado en $REPORTE"
 log "Auditoria completada."

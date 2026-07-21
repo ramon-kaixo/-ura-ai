@@ -18,7 +18,7 @@ python3 -c "
 from core.utils.anonymizer import sanitize_text
 import os, json
 d = {}
-for f in ['core/memory_engine.py', 'core/model_router.py', 'core/auth_layer.py', 'core/guardians/ast_sentinel.py']:
+for f in ['core/memory_engine.py', 'core/model_router_main.py', 'core/auth_layer.py', 'core/guardians/ast_sentinel.py']:
     if os.path.exists(f): d[f] = sanitize_text(open(f).read())[:2000]
 open('/tmp/audit_sanitized.json','w').write(json.dumps(d))
 " 2>/dev/null
@@ -45,7 +45,7 @@ ollama run "$MODELO" "return 1" 2>/dev/null &
 sleep 5
 
 # Auditar modulos
-for mod in core/memory_engine.py core/model_router.py core/auth_layer.py core/guardians/ast_sentinel.py; do
+for mod in core/memory_engine.py core/model_router_main.py core/auth_layer.py core/guardians/ast_sentinel.py; do
     if [ -f "$mod" ]; then
         CODIGO=$(python3 -c "import json; d=json.load(open('/tmp/audit_sanitized.json')); print(d.get('$mod','')[:1500])" 2>/dev/null)
         RESULT=$(ollama run "$MODELO" "Audita este codigo buscando bugs, bloqueos asyncio, vulnerabilidades. Responde SOLO OK o FALLO: $CODIGO" 2>/dev/null || echo "ERROR")
