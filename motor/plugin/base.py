@@ -72,6 +72,8 @@ def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
     for key_node, value_node in zip(d.keys, d.values, strict=False):
         if isinstance(key_node, (ast.Constant, ast.Str)):
             key = key_node.value if isinstance(key_node, ast.Constant) else key_node.s
+            if not isinstance(key, str):
+                continue
         else:
             continue
         if isinstance(value_node, ast.Constant):
