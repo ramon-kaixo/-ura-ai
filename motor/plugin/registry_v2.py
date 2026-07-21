@@ -6,7 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from motor.core.state import DegradedMode
 from motor.plugin.base import PluginBase, PluginMeta, PluginResult
@@ -240,7 +240,7 @@ class PluginRegistryV2:
             cls = getattr(module, manifest.entry_point, None)
             if cls is not None and isinstance(cls, type) and issubclass(cls, PluginBase) and cls is not PluginBase:
                 try:
-                    return cls()
+                    return cast(PluginBase, cls())
                 except Exception as exc:
                     log.warning("[registry_v2] Error instanciando %s.%s: %s", manifest.name, manifest.entry_point, exc)
                     return None
