@@ -97,13 +97,157 @@ def load_history() -> list[dict]:
     return records
 
 
+def collect_metrics() -> dict:
+    """Recoge métricas detalladas del sistema para el histórico."""
+    metrics: dict = {}
+    ROOT = _Path(__file__).resolve().parent.parent.parent
+
+    # Tamaño
+    py_files = list(ROOT.rglob("*.py"))
+    metrics["tamano"] = {
+        "archivos_py": len(py_files),
+        "funciones_indexadas": 0,
+    }
+
+    # Reuse index
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(ROOT / "scripts" / "pro"))
+        from reuse.reuse_detector import ReuseDetector  # noqa: PLC0415
+        d = ReuseDetector(ROOT)
+        metrics["tamano"]["funciones_indexadas"] = d.build_index()
+    except Exception:
+        pass
+
+    # Memoria semántica
+    memory_db = ROOT / ".nervioso" / "memory" / "semantic.db"
+    if memory_db.exists():
+        try:
+            import sqlite3 as _sqlite3
+            conn = _sqlite3.connect(str(memory_db))
+            metrics["memoria"] = {
+                "ejecuciones": conn.execute("SELECT COUNT(*) FROM executions").fetchone()[0],
+                "plugins": conn.execute("SELECT COUNT(*) FROM plugin_durations").fetchone()[0],
+                "decisiones": conn.execute("SELECT COUNT(*) FROM decisions").fetchone()[0],
+                "tamano_kb": round(memory_db.stat().st_size / 1024, 1),
+            }
+            conn.close()
+        except Exception:
+            pass
+
+    # Ledger
+    ledger_dir = ROOT / ".nervioso" / "ledger"
+    if ledger_dir.exists():
+        ledgers = list(ledger_dir.glob("*.json"))
+        metrics["ledger"] = {
+            "ejecuciones": len(ledgers),
+            "tamano_kb": round(sum(f.stat().st_size for f in ledgers) / 1024, 1),
+        }
+
+    # Swarm
+    try:
+        from autonomy.goal_manager import GoalManager as _GM  # noqa: PLC0415
+        from tuneladora.engine import PipelineEngine as _PE
+        engine = _PE(pipeline="metrics")
+        gm = _GM(engine)
+        goals = gm.list_all()
+        metrics["swarm"] = {
+            "objetivos_total": len(goals),
+            "completados": sum(1 for g in goals if g.get("status") == "completed"),
+            "fallidos": sum(1 for g in goals if g.get("status") == "failed"),
+        }
+    except Exception:
+        pass
+
+    # Conocimiento
+    kb_file = ROOT / ".nervioso" / "knowledge" / "knowledge.json"
+    if kb_file.exists():
+        try:
+            kb = _json.loads(kb_file.read_text(encoding="utf-8"))
+            metrics["aprendizaje"] = {
+                "total": len(kb),
+                "activo": sum(1 for e in kb if e.get("status") == "active"),
+                "verificado": sum(1 for e in kb if e.get("verified")),
+            }
+        except Exception:
+            pass
+
+    # Quality Gates
+    try:
+        from reuse.quality_gates import QualityGates as _QG  # noqa: PLC0415
+        gates = _QG(ROOT)
+        g = gates.should_run_maintenance()
+        metrics["consolidacion"] = {
+            "commits_desde_tag": g["commits"],
+            "lineas_modificadas": g["lines_changed"],
+        }
+    except Exception:
+        pass
+
+    return metrics
+
+
+def _compute_health_index(metrics: dict, score: float) -> dict:
+    """Calcula el URA Health Index a partir de métricas y score de auditoría."""
+    # Componentes del índice (cada uno 0-100)
+    calidad = score  # el score de auditoría ya pesa calidad
+
+    rendimiento = 50.0
+    if metrics.get("consolidacion", {}).get("commits_desde_tag", 0) < 10:
+        rendimiento = 80.0
+    elif metrics.get("consolidacion", {}).get("commits_desde_tag", 0) < 20:
+        rendimiento = 60.0
+
+    estabilidad = 70.0
+    if metrics.get("swarm", {}).get("fallidos", 0) == 0:
+        estabilidad = 90.0
+    elif metrics.get("swarm", {}).get("fallidos", 0) < 3:
+        estabilidad = 70.0
+
+    reutilizacion = 50.0
+    if metrics.get("tamano", {}).get("funciones_indexadas", 0) > 10000:
+        reutilizacion = 80.0
+
+    aprendizaje = 50.0
+    if metrics.get("aprendizaje", {}).get("activo", 0) > 0:
+        aprendizaje = 70.0
+    if metrics.get("aprendizaje", {}).get("verificado", 0) > 0:
+        aprendizaje = 85.0
+
+    observabilidad = 70.0
+    if metrics.get("ledger", {}).get("ejecuciones", 0) > 5:
+        observabilidad = 90.0
+
+    health = round(
+        calidad * 0.25 + rendimiento * 0.20 + estabilidad * 0.20 +
+        reutilizacion * 0.15 + aprendizaje * 0.10 + observabilidad * 0.10, 1
+    )
+
+    return {
+        "health_index": health,
+        "componentes": {
+            "calidad": round(calidad, 1),
+            "rendimiento": round(rendimiento, 1),
+            "estabilidad": round(estabilidad, 1),
+            "reutilizacion": round(reutilizacion, 1),
+            "aprendizaje": round(aprendizaje, 1),
+            "observabilidad": round(observabilidad, 1),
+        },
+    }
+
+
 def save_result(score: float, results: dict, elapsed: float) -> None:
     """Guarda el resultado de la auditoría actual en el histórico."""
+    metrics = collect_metrics()
+    health = _compute_health_index(metrics, score)
     record = {
         "timestamp": _datetime.now(UTC).isoformat(),
         "tag": _get_git_tag(),
+        "health_index": health["health_index"],
+        "health_componentes": health["componentes"],
         "score": score,
         "elapsed_s": round(elapsed, 1),
+        "metrics": metrics,
         "checks": {name: {"ok": r["ok"], "msg": r["msg"], "elapsed_s": r["elapsed_s"]}
                    for name, r in results.items()},
     }
@@ -254,26 +398,33 @@ def _():
 
 
 def show_history() -> None:
-    """Muestra el histórico de auditorías y la tendencia."""
+    """Muestra el histórico de auditorías, health index y tendencias."""
     records = load_history()
     if not records:
         return
 
-    print("\n── Histórico de auditorías ──")
-    print(f"  {'Versión':12} {'Score':>6} {'Tiempo':>8} {'Checks OK':>10}")
-    print(f"  {'-'*12} {'-'*6} {'-'*8} {'-'*10}")
+    print("\n── URA Health Index ──")
+    last = records[-1]
+    hi = last.get("health_index", 0)
+    comp = last.get("health_componentes", {})
+    print(f"  Health Index: {hi:.0f}/100 {'🟢' if hi >= 80 else '🟡' if hi >= 50 else '🔴'}")
+    for name, val in comp.items():
+        bar = "█" * int(val / 10) + "░" * (10 - int(val / 10))
+        print(f"    {name:15} {bar} {val:.0f}%")
+
+    print(f"\n── Histórico de auditorías ──")
+    print(f"  {'Versión':12} {'Health':>7} {'Score':>6} {'Tiempo':>8}")
+    print(f"  {'-'*12} {'-'*7} {'-'*6} {'-'*8}")
     for r in records[-10:]:
         tag = r.get("tag", "?")[:12]
-        ok = sum(1 for c in r.get("checks", {}).values() if c.get("ok"))
-        total = len(r.get("checks", {}))
-        print(f"  {tag:12} {r.get('score', 0):>6.0f} {r.get('elapsed_s', 0):>7.1f}s {ok:>3}/{total}")
+        print(f"  {tag:12} {r.get('health_index', 0):>6.0f}  {r.get('score', 0):>5.0f}  {r.get('elapsed_s', 0):>6.1f}s")
 
     if len(records) >= 2:
-        first = records[0].get("score", 0)
-        last_c = records[-1].get("score", 0)
-        diff = last_c - first
+        first_hi = records[0].get("health_index", 0)
+        last_hi = records[-1].get("health_index", 0)
+        diff = last_hi - first_hi
         arrow = "📈" if diff > 0 else "📉" if diff < 0 else "➡️"
-        print(f"\n  Tendencia: {first:.0f} → {last_c:.0f} ({diff:+.0f}) {arrow}")
+        print(f"\n  Health Index: {first_hi:.0f} → {last_hi:.0f} ({diff:+.0f}) {arrow}")
         print(f"  Auditorías registradas: {len(records)}")
 
 
