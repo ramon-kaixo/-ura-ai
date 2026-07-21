@@ -86,7 +86,7 @@ class Coordinator:
         conflicts = self._detect_conflict(domain)
         if conflicts:
             self._metrics["conflictos"] += 1
-            self._engine.log.warn(f"Conflicto potencial: {agent.name} impacta área ya modificada por {conflicts}")
+            self._engine.log.warning(f"Conflicto potencial: {agent.name} impacta área ya modificada por {conflicts}")
 
         assignment = {
             "session_id": self._session_id,
@@ -126,7 +126,7 @@ class Coordinator:
             assignment["result"] = "error"
             assignment["error"] = str(e)
             self._metrics["errors"] += 1
-            self._engine.log.warn(f"Agent {agent.name} failed: {e}")
+            self._engine.log.warning(f"Agent {agent.name} failed: {e}")
 
         return dict(assignment)
 

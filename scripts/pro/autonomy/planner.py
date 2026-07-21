@@ -169,7 +169,7 @@ class Planner:
                 # ── Replanificar: buscar fallback ──
                 if fallbacks:
                     fb = fallbacks.pop(0)
-                    self._engine.log.warn(f"Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'")
+                    self._engine.log.warning(f"Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'")
                     self._engine.ledger.add_decision(
                         "replan",
                         {

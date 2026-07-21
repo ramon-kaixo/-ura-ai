@@ -29,9 +29,7 @@ MODEL_CONFIG = {
     "codestral:22b": {"temperature": 0.1, "top_p": 0.95, "num_predict": 8192},
 }
 
-success_rates: dict[str, dict[str, dict[str, int]]] = defaultdict(
-    lambda: defaultdict(lambda: {"ok": 0, "total": 0})
-)
+success_rates: dict[str, dict[str, dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: {"ok": 0, "total": 0}))
 success_rates_lock = threading.Lock()
 DEFAULT_MODEL_PARAMS = {"temperature": 0.2, "top_p": 0.9, "num_predict": 4096}
 
@@ -124,6 +122,7 @@ def clasificar_peticion(messages: list) -> str:
 def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
     """Obtiene modelos disponibles desde una URL de Ollama."""
     from core.model_router.router import OLLAMA_URL
+
     target = url or OLLAMA_URL
     try:
         req = urllib.request.Request(f"{target}/api/tags")  # noqa: S310
@@ -193,6 +192,7 @@ def seleccionar_modelo(tipo: str, disponibles: set) -> str:
     if fallback in disponibles:
         log.warning("Usando fallback %s para tipo %s", fallback, tipo)
         from core.model_router.metrics import metrics
+
         metrics.increment("model_fallback", {"tipo": tipo, "fallback_model": fallback})
         return fallback
     if disponibles:
