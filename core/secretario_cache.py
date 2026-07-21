@@ -5,45 +5,49 @@
 - Consultas read-only a Qdrant en ASUS vía REST.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import urllib.request
 from collections import OrderedDict
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider
 
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", "http://10.164.1.99:4096")
 
 
-def _get_qdrant_host() -> str:
-    """Obtiene host de Qdrant desde UraConfig, con fallback a env var."""
+def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
+    if config is not None:
+        return config.qdrant_host or os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), \
+               config.qdrant_port or int(os.environ.get("URA_QDRANT_PORT", "6333"))
     try:
         from motor.core.config import UraConfig
 
         c = UraConfig.load()
-        return c.qdrant_host or os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
+        return c.qdrant_host or os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), \
+               c.qdrant_port or int(os.environ.get("URA_QDRANT_PORT", "6333"))
     except Exception:
-        return os.environ.get("URA_QDRANT_HOST", "10.164.1.99")
-
-
-def _get_qdrant_port() -> int:
-    """Obtiene puerto de Qdrant desde UraConfig, con fallback a env var."""
-    try:
-        from motor.core.config import UraConfig
-
-        c = UraConfig.load()
-        return c.qdrant_port or int(os.environ.get("URA_QDRANT_PORT", "6333"))
-    except Exception:
-        return int(os.environ.get("URA_QDRANT_PORT", "6333"))
+        return os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), \
+               int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
 
 LRU_MAX = 20
 
 
 class SecretarioCache:
-    """Cliente Mac hacia ASUS con cache LRU de interacciones."""
-
-    def __init__(self) -> None:
+    def __init__(self, config: IConfigProvider | None = None) -> None:
         self._cache: OrderedDict[str, dict] = OrderedDict()
+        self._config = config
+
+    def _qdrant_host(self) -> str:
+        return _load_config(self._config)[0]
+
+    def _qdrant_port(self) -> int:
+        return _load_config(self._config)[1]
 
     def interact(self, raw: str, structure: dict | None = None) -> dict:
         """Envía interacción a ASUS /v2/interact y cachea el resultado."""
@@ -82,7 +86,7 @@ class SecretarioCache:
     def buscar_qdrant(self, coleccion: str, limit: int = 10) -> list:
         """Consulta read-only a Qdrant en ASUS vía REST."""
         try:
-            url = f"http://{_get_qdrant_host()}:{_get_qdrant_port()}/collections/{coleccion}/points/scroll"
+            url = f"http://{self._qdrant_host()}:{self._qdrant_port()}/collections/{coleccion}/points/scroll"
             req = urllib.request.Request(  # noqa: S310
                 url,
                 data=json.dumps({"limit": limit}).encode(),
@@ -103,7 +107,7 @@ class SecretarioCache:
             "cache_size": len(self._cache),
             "cache_max": LRU_MAX,
             "asus_url": ASUS_EXEC_URL,
-            "qdrant": f"{_get_qdrant_host()}:{_get_qdrant_port()}",
+            "qdrant": f"{self._qdrant_host()}:{self._qdrant_port()}",
         }
 
 

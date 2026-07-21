@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico.
-
-Sin delete previo: el doc_id determinista SHA-256 permite upsert directo.
-Si la descarga falla, el conocimiento original se conserva intacto.
-
-Uso:
-  python3 -m core.auto_reindex              # dry-run (default)
-  python3 -m core.auto_reindex --execute    # reindexa realmente
 """
+
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import sys
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -28,14 +24,17 @@ from core.document_quality import (
     source_reliability,
 )
 from core.stealth_fetcher import fetch_stealth
-from motor.core.config import UraConfig
-from motor.core.qdrant_client import QdrantClient
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider, IVectorStore
 
 log = logging.getLogger("ura.auto_reindex")
 
 COLLECTION = "memoria_web"
 CUTOFF_DAYS = 30
 BATCH_SIZE = 100
+
+from motor.core.config import UraConfig
 
 _cfg = UraConfig.load()
 QDRANT_BASE = f"http://{_cfg.qdrant_host}:{_cfg.qdrant_port}"
@@ -90,8 +89,10 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
     return all_stale
 
 
-async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS) -> list:
-    qdrant = QdrantClient.instancia(UraConfig.load())
+async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS, config: IConfigProvider | None = None) -> list:
+    from motor.core.qdrant_client import QdrantClient
+
+    qdrant: IVectorStore = QdrantClient.instancia(config or UraConfig.load())
     if not qdrant.disponible:
         return []
 
@@ -144,8 +145,10 @@ async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:  #
         return None, False
 
 
-async def atomic_upsert(html: str, url: str) -> bool:
-    qdrant = QdrantClient.instancia(UraConfig.load())
+async def atomic_upsert(html: str, url: str, config: IConfigProvider | None = None) -> bool:
+    from motor.core.qdrant_client import QdrantClient
+
+    qdrant: IVectorStore = QdrantClient.instancia(config or UraConfig.load())
     if not qdrant.disponible:
         return False
 
@@ -182,8 +185,8 @@ async def atomic_upsert(html: str, url: str) -> bool:
     return guardados > 0
 
 
-async def reindex_stale(dry_run: bool = True) -> dict:
-    stale = await find_stale_docs()
+async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = None) -> dict:
+    stale = await find_stale_docs(cutoff_days=CUTOFF_DAYS, config=config)
     stats = {"found": len(stale), "reindexed": 0, "failed": 0, "skipped": 0}
 
     for point in stale:
@@ -200,7 +203,7 @@ async def reindex_stale(dry_run: bool = True) -> dict:
             stats["failed"] += 1
             continue
 
-        success = await atomic_upsert(html, url)
+        success = await atomic_upsert(html, url, config=config)
         if success:
             stats["reindexed"] += 1
         else:
