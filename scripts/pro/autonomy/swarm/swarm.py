@@ -80,7 +80,7 @@ def main() -> int:
             result = coordinator.assign(goal)
             gm.set_status(goal["goal_id"], result.get("result", "unknown"))
         else:
-            engine.log.warn(f"  Sin agente para: {title}")
+            engine.log.warning(f"  Sin agente para: {title}")
 
     # Reporte final con métricas
     assignments = coordinator.summary()
@@ -99,7 +99,7 @@ def main() -> int:
     for a in assignments:
         engine.log.info(f"  [{a.get('result', '?')}] {a.get('agent', '?')} → {a.get('title', '')}")
         if a.get("conflicts_with"):
-            engine.log.warn(f"    ⚠️  Conflicto con: {a['conflicts_with']}")
+            engine.log.warning(f"    ⚠️  Conflicto con: {a['conflicts_with']}")
 
     return 0
 

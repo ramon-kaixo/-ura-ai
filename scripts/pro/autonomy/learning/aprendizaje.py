@@ -48,9 +48,9 @@ def main() -> int:
     validator.load()
     engine.log.info(f"  {validator.summary.split(chr(10))[0]}")
     if validator.stats["invalidos"] > 0:
-        engine.log.warn(f"  {validator.stats['invalidos']} registros inválidos:")
+        engine.log.warning(f"  {validator.stats['invalidos']} registros inválidos:")
         for motivo, count in validator.stats["motivos"].items():
-            engine.log.warn(f"    - {motivo}: {count}")
+            engine.log.warning(f"    - {motivo}: {count}")
     else:
         engine.log.info("  Todos los registros válidos ✅")
 

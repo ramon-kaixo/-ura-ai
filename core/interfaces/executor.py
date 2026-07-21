@@ -22,4 +22,6 @@ class IProcessResult(Protocol):
 class IExecutor(Protocol):
     """Contrato para ejecución de comandos del sistema."""
 
-    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, str] | None = None) -> IProcessResult: ...
+    def run(
+        self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, str] | None = None
+    ) -> IProcessResult: ...

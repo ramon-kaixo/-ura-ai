@@ -93,6 +93,7 @@ class Scanner:
     def _get_hostname(self):
         try:
             import socket
+
             return socket.gethostname()
         except Exception as e:
             log.warning("no se pudo obtener hostname: %s", e)
@@ -139,6 +140,7 @@ class Scanner:
     def _check_recursos(self) -> dict:
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             disk = psutil.disk_usage("/")
             return {
@@ -283,6 +285,7 @@ class Scanner:
 
     def _tomar_snapshot_hash(self) -> str:
         import hashlib
+
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
@@ -307,6 +310,7 @@ class Scanner:
 
         try:
             import psutil
+
             current_pids = {p.info["pid"] for p in psutil.process_iter(["pid", "ppid", "name"])}
             for proc in psutil.process_iter(["pid", "ppid", "name"]):
                 ppid = proc.info["ppid"]
