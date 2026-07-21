@@ -2,17 +2,25 @@
 
 Verifica el protocolo JSON-RPC 2.0 y la integración con HybridMemory.
 Ejecuta los handlers directamente (sin stdio).
+NOTA: Los tests comparten _memory singleton de mcp_mochila.py.
+Usar clear() para aislar tests que dependen de estado previo.
 """
 
 from __future__ import annotations
 
+import importlib
 import json
 
+import scripts.pro.mcp_mochila as _mcp_mod
 from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.record import MemoryType
 
-# Usar HybridMemory en memoria para los tests
-_memory = HybridMemory(db_path=":memory:")
+
+def _reset_memory():
+    """Limpia la memoria compartida entre tests."""
+    import os
+    os.environ["URA_MEMORY_DB"] = ":memory:"
+    importlib.reload(_mcp_mod)
 
 
 def _make_msg(method: str, params: dict | None = None, msg_id: int | str = 1) -> str:
@@ -24,28 +32,18 @@ def _make_msg(method: str, params: dict | None = None, msg_id: int | str = 1) ->
 
 async def _call(method: str, params: dict | None = None) -> dict:
     """Simula una llamada al MCP server."""
-    from scripts.pro.mcp_mochila import _handle_initialize, _handle_tools_list, _handle_tools_call
+    h = _mcp_mod._handle_initialize
+    t = _mcp_mod._handle_tools_list
+    c = _mcp_mod._handle_tools_call
 
     if method == "initialize":
-        result = await _handle_initialize(params or {"protocolVersion": "2024-11-05"})
+        result = await h(params or {"protocolVersion": "2024-11-05"})
         return {"jsonrpc": "2.0", "result": result}
     elif method == "tools/list":
-        result = await _handle_tools_list(params or {})
+        result = await t(params or {})
         return {"jsonrpc": "2.0", "result": result}
-    elif method == "memory_store":
-        result = await _handle_tools_call({"name": "memory_store", "arguments": params or {}})
-        return {"jsonrpc": "2.0", "result": result}
-    elif method == "memory_search":
-        result = await _handle_tools_call({"name": "memory_search", "arguments": params or {}})
-        return {"jsonrpc": "2.0", "result": result}
-    elif method == "memory_stats":
-        result = await _handle_tools_call({"name": "memory_stats", "arguments": params or {}})
-        return {"jsonrpc": "2.0", "result": result}
-    elif method == "ura_health":
-        result = await _handle_tools_call({"name": "ura_health", "arguments": params or {}})
-        return {"jsonrpc": "2.0", "result": result}
-    elif method == "memory_investigate":
-        result = await _handle_tools_call({"name": "memory_investigate", "arguments": params or {}})
+    elif method in ("memory_store", "memory_search", "memory_stats", "ura_health", "memory_investigate"):
+        result = await c({"name": method, "arguments": params or {}})
         return {"jsonrpc": "2.0", "result": result}
     return {"jsonrpc": "2.0", "error": {"code": -32601, "message": "unknown method"}}
 
@@ -165,6 +163,8 @@ def test_memory_store_with_metadata():
 def test_memory_investigate():
     import asyncio
 
+    _reset_memory()
+
     # Store some context first
     asyncio.run(_call("memory_store", {"payload": "la inteligencia artificial permite procesar lenguaje natural"}))
     asyncio.run(_call("memory_store", {"payload": "los modelos transformers revolucionaron el NLP en 2017"}))
@@ -183,7 +183,9 @@ def test_memory_investigate():
 def test_memory_investigate_no_results():
     import asyncio
 
-    resp = asyncio.run(_call("memory_investigate", {"question": "zzzzyxwvutsrqponmlkji", "k": 3}))
+    _reset_memory()
+
+    resp = asyncio.run(_call("memory_investigate", {"question": "UNIQUE_PREFIX_9a8b7c6d5e_UNIQUE", "k": 3}))
     assert "result" in resp
     data = json.loads(resp["result"]["content"][0]["text"])
     assert data["sources_count"] == 0, f"Esperaba 0 fuentes, obtuvo {data['sources_count']}"

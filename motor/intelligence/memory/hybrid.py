@@ -72,6 +72,17 @@ class HybridMemory:
                 finally:
                     self._conn = None
 
+    def clear(self) -> None:
+        """Elimina todos los registros de la base de datos en memoria."""
+        conn = self._get_conn()
+        try:
+            with self._lock:
+                conn.execute("DELETE FROM memory_metadata")
+                conn.execute("DELETE FROM memory_fts")
+                conn.commit()
+        except Exception:
+            log.exception("error clearing hybrid memory")
+
     def __enter__(self) -> HybridMemory:  # noqa: PYI034
         return self
 
