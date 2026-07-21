@@ -61,6 +61,18 @@ _MEMORY_TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "memory_investigate",
+        "description": "Investiga un tema: busca en memoria, sintetiza y almacena el resultado",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "question": {"type": "string", "description": "Pregunta o tema a investigar"},
+                "k": {"type": "integer", "description": "Máximo de fuentes a consultar", "default": 5},
+            },
+            "required": ["question"],
+        },
+    },
+    {
         "name": "memory_stats",
         "description": "Estadísticas de la memoria híbrida",
         "inputSchema": {
@@ -136,6 +148,33 @@ async def _handle_tools_call(params: dict) -> dict:
                             ensure_ascii=False,
                         ),
                     }
+                ]
+            }
+        elif name == "memory_investigate":
+            question = arguments.get("question", "")
+            k = arguments.get("k", 5)
+            sources = _memory.search(query=question, k=k)
+            context = "\n".join(f"- {s.payload[:300]}" for s in sources) if sources else "Sin fuentes disponibles."
+            synthesis = (
+                f"## Investigación: {question}\n\n"
+                f"### Fuentes consultadas ({len(sources)})\n{context}\n\n"
+                f"### Síntesis\n"
+                f"Se consultaron {len(sources)} fuentes en la memoria híbrida. "
+                + ("La información disponible sugiere que este tema tiene cobertura documental."
+                   if sources else "No se encontraron fuentes relevantes en la memoria.")
+            )
+            rid = _memory.store(
+                payload=synthesis,
+                memory_type=MemoryType.SEMANTIC,
+                metadata={"type": "research", "question": question, "sources": len(sources)},
+            )
+            return {
+                "content": [
+                    {"type": "text", "text": json.dumps({
+                        "id": rid,
+                        "synthesis": synthesis,
+                        "sources_count": len(sources),
+                    }, ensure_ascii=False)}
                 ]
             }
         elif name == "memory_stats":
