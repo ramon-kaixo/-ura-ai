@@ -51,28 +51,36 @@ def main() -> int:
     # ── 1. Tuneladora de Mantenimiento ──
     engine.log.info("── 1. Mantenimiento ──")
     import subprocess
+
     subprocess.run(
         [engine.config.venv_python, "scripts/pro/tuneladora_mantenimiento.py", "--nivel", "profundo"],
-        timeout=3600, check=False, cwd=str(engine.config.ura_root),
+        timeout=3600,
+        check=False,
+        cwd=str(engine.config.ura_root),
     )
 
     # ── 2. Tuneladora de Mejora ──
     engine.log.info("── 2. Mejora Continua ──")
     subprocess.run(
         [engine.config.venv_python, "scripts/pro/tuneladora_mejora.py"],
-        timeout=3600, check=False, cwd=str(engine.config.ura_root),
+        timeout=3600,
+        check=False,
+        cwd=str(engine.config.ura_root),
     )
 
     # ── 3. Pipeline de Refactorización ──
     engine.log.info("── 3. Refactorización ──")
     subprocess.run(
         [engine.config.venv_python, "scripts/pro/pipeline_refactor.py", "--workers", "2"],
-        timeout=3600, check=False, cwd=str(engine.config.ura_root),
+        timeout=3600,
+        check=False,
+        cwd=str(engine.config.ura_root),
     )
 
     # ── 4. Reuse Detector ──
     engine.log.info("── 4. Reuse Detector ──")
     from scripts.pro.reuse.reuse_detector import ReuseDetector
+
     detector = ReuseDetector(engine.config.ura_root)
     indexed = detector.build_index()
     engine.log.info(f"  Indexadas {indexed} funciones")
@@ -85,11 +93,14 @@ def main() -> int:
         duplicates = detector.analyze_new_code(code, min_score=0.75)
         if duplicates:
             for d in duplicates[:2]:
-                engine.log.warn(f"  Posible duplicación: {d.get('new_name')} ≈ {d.get('existing_name')} ({d.get('score', 0):.0%})")
+                engine.log.warning(
+                    f"  Posible duplicación: {d.get('new_name')} ≈ {d.get('existing_name')} ({d.get('score', 0):.0%})"
+                )
 
     # ── 5. Conocimiento: olvido ──
     engine.log.info("── 5. Política de olvido ──")
     from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
+
     kb = KnowledgeBase(engine.config.nervioso)
     archived = kb.forget(max_age_days=90, min_confidence=0.3)
     engine.log.info(f"  Conocimiento archivado: {len(archived)} entradas")
@@ -99,6 +110,7 @@ def main() -> int:
     # ── 6. Learning: analizar ──
     engine.log.info("── 6. Aprendizaje ──")
     from scripts.pro.autonomy.learning import LearningPlugin
+
     learning = LearningPlugin(engine)
     metrics = learning.analyze()
     engine.log.info(f"  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
@@ -106,25 +118,30 @@ def main() -> int:
     # ── 7. Verificación ──
     engine.log.info("── 7. Verificación ──")
     from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase as KB
+
     kb2 = KB(engine.config.nervioso)
     vstats = kb2.stats()
     engine.log.info(f"  Conocimiento activo: {vstats['active']}")
     engine.log.info(f"  Conocimiento verificado: {vstats['verified']}")
 
     # Regla: si hay más deprecated que activo, algo va mal
-    if vstats['deprecated'] > vstats['active'] and vstats['active'] > 0:
-        engine.log.warn(f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
+    if vstats["deprecated"] > vstats["active"] and vstats["active"] > 0:
+        engine.log.warning(f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
 
     # Verificar que las políticas aprendidas sigan siendo válidas
     from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
+
     pa = PatternAnalyzer(engine.config.nervioso)
     new_patterns = pa.analyze()
     engine.log.info(f"  Patrones activos: {len(new_patterns)}")
-    engine.ledger.add_decision("consolidation_verified", {
-        "active_knowledge": vstats['active'],
-        "verified_knowledge": vstats['verified'],
-        "new_patterns": len(new_patterns),
-    })
+    engine.ledger.add_decision(
+        "consolidation_verified",
+        {
+            "active_knowledge": vstats["active"],
+            "verified_knowledge": vstats["verified"],
+            "new_patterns": len(new_patterns),
+        },
+    )
 
     # ── Reporte ──
     elapsed = time.time() - t0
@@ -132,14 +149,17 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("CONSOLIDACIÓN FINALIZADA", [
-        f"Motivo: {', '.join(result['reasons']) if result['reasons'] else 'manual'}",
-        f"Duración: {H}h {M}m {S}s",
-        f"Mantenimiento + Mejora + Refactor: ejecutados",
-        f"Reuse: {indexed} funciones indexadas",
-        f"Olvido: {len(archived)} entradas archivadas",
-        f"Aprendizaje: {metrics.get('total_ejecuciones', 0)} ejecuciones analizadas",
-    ])
+    engine.log.report(
+        "CONSOLIDACIÓN FINALIZADA",
+        [
+            f"Motivo: {', '.join(result['reasons']) if result['reasons'] else 'manual'}",
+            f"Duración: {H}h {M}m {S}s",
+            "Mantenimiento + Mejora + Refactor: ejecutados",
+            f"Reuse: {indexed} funciones indexadas",
+            f"Olvido: {len(archived)} entradas archivadas",
+            f"Aprendizaje: {metrics.get('total_ejecuciones', 0)} ejecuciones analizadas",
+        ],
+    )
     return 0
 
 

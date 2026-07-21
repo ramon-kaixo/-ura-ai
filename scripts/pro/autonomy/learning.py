@@ -7,10 +7,12 @@ Timeouts con límite superior (fix D5).
 from __future__ import annotations
 
 import statistics
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
-from scripts.pro.tuneladora.engine import PipelineEngine
+
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class LearningPlugin:
@@ -61,9 +63,7 @@ class LearningPlugin:
             if len(results) >= 2:
                 success_rate = sum(results) / len(results)
                 recommendations[strategy] = (
-                    "recomendada" if success_rate >= 0.8 else
-                    "usar_con_cautela" if success_rate >= 0.5 else
-                    "evitar"
+                    "recomendada" if success_rate >= 0.8 else "usar_con_cautela" if success_rate >= 0.5 else "evitar"
                 )
         return recommendations
 
@@ -85,13 +85,15 @@ class LearningPlugin:
             if len(historical) >= 2:
                 avg = statistics.mean(historical)
                 if d > avg * 3 and d > 10:
-                    regressions.append({
-                        "plugin": p,
-                        "actual_s": round(d, 1),
-                        "historical_avg_s": round(avg, 1),
-                        "ratio": round(d / avg, 1),
-                        "recommendation": "revisar_timeout_o_herramienta",
-                    })
+                    regressions.append(
+                        {
+                            "plugin": p,
+                            "actual_s": round(d, 1),
+                            "historical_avg_s": round(avg, 1),
+                            "ratio": round(d / avg, 1),
+                            "recommendation": "revisar_timeout_o_herramienta",
+                        }
+                    )
         return regressions
 
     def skip_recommendations(self) -> list[str]:
@@ -148,10 +150,13 @@ class LearningPlugin:
         if to_skip:
             result["plugins_a_omitir"] = to_skip
 
-        self._engine.ledger.add_decision("learning_completed", {
-            "timeouts_ajustados": len(timeouts),
-            "regresiones": len(regressions),
-            "plugins_a_omitir": to_skip,
-            "ledger_stats": self._validator.stats,
-        })
+        self._engine.ledger.add_decision(
+            "learning_completed",
+            {
+                "timeouts_ajustados": len(timeouts),
+                "regresiones": len(regressions),
+                "plugins_a_omitir": to_skip,
+                "ledger_stats": self._validator.stats,
+            },
+        )
         return result

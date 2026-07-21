@@ -20,10 +20,7 @@ PHASES = ["pre", "refactor_plugins", "pipeline_refactor", "post"]
 
 def _hay_trabajo_refactor(result_refactor: dict) -> bool:
     plugins = result_refactor.get("results", {})
-    for name, r in plugins.items():
-        if isinstance(r, dict) and r.get("status") == "ok":
-            return True
-    return False
+    return any(isinstance(r, dict) and r.get("status") == "ok" for name, r in plugins.items())
 
 
 def _check_budget(engine: PipelineEngine) -> int:
@@ -31,8 +28,11 @@ def _check_budget(engine: PipelineEngine) -> int:
     try:
         diff = subprocess.run(
             ["git", "diff", "--stat"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
             cwd=str(engine.config.ura_root),
+            check=False,
         )
         lines = diff.stdout.strip().split("\n")
         if not lines or lines == [""]:
@@ -58,10 +58,7 @@ def _run_phase_with_checkpoint(engine: PipelineEngine, phase: str, file_path: st
     engine.ledger.phase_start(phase)
     t0 = time.time()
 
-    if phase == "pipeline_refactor":
-        result = {"status": "noop"}
-    else:
-        result = run_phase(phase, file_path=file_path)
+    result = {"status": "noop"} if phase == "pipeline_refactor" else run_phase(phase, file_path=file_path)
 
     engine.ledger.plugin_done(phase, round(time.time() - t0, 1))
     engine.checkpoint.mark_done(phase)
@@ -96,9 +93,8 @@ def main() -> int:
     # ── Checkpoint: intentar reanudación ──
     if not args.force and engine.checkpoint.resume():
         engine.log.info(f"Checkpoint encontrado: reanudando desde fase '{engine.checkpoint.last_completed}'")
-    else:
-        if not args.force:
-            engine.checkpoint.clear()
+    elif not args.force:
+        engine.checkpoint.clear()
 
     plugins = discover_all()
     engine.log.info(f"Plugins descubiertos: {len(plugins)}")
@@ -137,8 +133,10 @@ def main() -> int:
             cmd = [
                 engine.config.venv_python,
                 "scripts/pro/pipeline_refactor.py",
-                "--workers", "4",
-                "--model", "qwen2.5-coder:14b",
+                "--workers",
+                "4",
+                "--model",
+                "qwen2.5-coder:14b",
             ]
             result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
             engine.ledger.plugin_done("pipeline_refactor", round(time.time() - t_ref, 1))
@@ -197,15 +195,18 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("MEJORA CONTINUA v2.3 FINALIZADA", [
-        f"Duración: {H}h {M}m {S}s",
-        f"Refactor: {'sí' if refactor_ejecutado else 'no'}",
-        f"Plugins pre: {result_pre.get('ok', 0) if isinstance(result_pre, dict) else 0} OK",
-        f"Plugins refactor: {result_refactor.get('ok', 0) if isinstance(result_refactor, dict) else 0} OK",
-        f"Plugins post: {result_post.get('ok', 0) if isinstance(result_post, dict) else 0} OK",
-        f"Promocionable: {'sí' if engine.promotion.can_promote else 'no'}",
-        f"Ledger: {ledger_path}",
-    ])
+    engine.log.report(
+        "MEJORA CONTINUA v2.3 FINALIZADA",
+        [
+            f"Duración: {H}h {M}m {S}s",
+            f"Refactor: {'sí' if refactor_ejecutado else 'no'}",
+            f"Plugins pre: {result_pre.get('ok', 0) if isinstance(result_pre, dict) else 0} OK",
+            f"Plugins refactor: {result_refactor.get('ok', 0) if isinstance(result_refactor, dict) else 0} OK",
+            f"Plugins post: {result_post.get('ok', 0) if isinstance(result_post, dict) else 0} OK",
+            f"Promocionable: {'sí' if engine.promotion.can_promote else 'no'}",
+            f"Ledger: {ledger_path}",
+        ],
+    )
     return 0
 
 

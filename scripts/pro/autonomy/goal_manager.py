@@ -10,10 +10,12 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
@@ -98,12 +100,10 @@ class GoalManager:
         Solo considera objetivos pending cuyas dependencias estén cumplidas.
         """
         ready = [
-            g for g in self._goals.values()
+            g
+            for g in self._goals.values()
             if g["status"] == "pending"
-            and all(
-                self._goals.get(dep, {}).get("status") == "completed"
-                for dep in g.get("dependencies", [])
-            )
+            and all(self._goals.get(dep, {}).get("status") == "completed" for dep in g.get("dependencies", []))
         ]
         if not ready:
             return None
@@ -114,11 +114,9 @@ class GoalManager:
         """Retorna la cola ordenada por prioridad."""
         pending = self.list_by_status("pending")
         ready = [
-            g for g in pending
-            if all(
-                self._goals.get(dep, {}).get("status") == "completed"
-                for dep in g.get("dependencies", [])
-            )
+            g
+            for g in pending
+            if all(self._goals.get(dep, {}).get("status") == "completed" for dep in g.get("dependencies", []))
         ]
         blocked = [g for g in pending if g not in ready]
         ready.sort(key=lambda g: (g.get("priority_order", 99), g.get("created_at", "")))

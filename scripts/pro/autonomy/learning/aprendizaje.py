@@ -7,17 +7,17 @@ Pipeline: Ledger → Pattern Analyzer → Knowledge Base → Recommendation Engi
 from __future__ import annotations
 
 import sys
-import time
 
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="URA Aprendizaje v4.0")
-    parser.add_argument("--mode", choices=["observacion", "asistido", "autonomo"],
-                        default="observacion", help="Modo del Policy Engine")
+    parser.add_argument(
+        "--mode", choices=["observacion", "asistido", "autonomo"], default="observacion", help="Modo del Policy Engine"
+    )
     parser.add_argument("--verify", action="store_true", help="Verificar políticas pendientes")
     args = parser.parse_args()
 
@@ -29,13 +29,12 @@ def main() -> int:
     engine.log.info(f"  Modo: {args.mode}")
 
     # Cargar componentes
-    from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
     from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
-    from scripts.pro.autonomy.learning.recommendation_engine import RecommendationEngine
-    from scripts.pro.autonomy.learning.policy_engine import PolicyEngine
-    from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
-
     from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
+    from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
+    from scripts.pro.autonomy.learning.policy_engine import PolicyEngine
+    from scripts.pro.autonomy.learning.recommendation_engine import RecommendationEngine
+    from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
 
     analyzer = PatternAnalyzer(engine.config.nervioso)
     kb = KnowledgeBase(engine.config.nervioso)
@@ -120,14 +119,17 @@ def main() -> int:
     engine.ledger.set_result("completado")
     ledger_path = engine.ledger.save()
 
-    engine.log.report("APRENDIZAJE v4.0 FINALIZADO", [
-        f"Modo: {args.mode}",
-        f"Patrones detectados: {len(patterns)}",
-        f"Conocimiento generado: {len(knowledge)}",
-        f"Recomendaciones: {len(recommendations)}",
-        f"Políticas aplicadas: {sum(1 for d in decisions if d.get('applied'))}",
-        f"Ledger: {ledger_path}",
-    ])
+    engine.log.report(
+        "APRENDIZAJE v4.0 FINALIZADO",
+        [
+            f"Modo: {args.mode}",
+            f"Patrones detectados: {len(patterns)}",
+            f"Conocimiento generado: {len(knowledge)}",
+            f"Recomendaciones: {len(recommendations)}",
+            f"Políticas aplicadas: {sum(1 for d in decisions if d.get('applied'))}",
+            f"Ledger: {ledger_path}",
+        ],
+    )
     return 0
 
 

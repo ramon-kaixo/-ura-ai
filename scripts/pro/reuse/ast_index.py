@@ -15,8 +15,10 @@ from __future__ import annotations
 
 import ast
 import hashlib
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def index_file(filepath: Path) -> list[dict[str, Any]]:
@@ -45,9 +47,8 @@ def _extract_imports(tree: ast.AST) -> list[str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imports.append(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                imports.append(node.module)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.append(node.module)
     return imports
 
 

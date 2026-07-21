@@ -9,16 +9,15 @@ from __future__ import annotations
 import sys
 import time
 
-from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.autonomy.goal_manager import GoalManager
+from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Swarm Multiagente")
-    parser.add_argument("goals", nargs="*", default=["Auditar el repositorio URA"],
-                        help="Objetivos para los agentes")
+    parser.add_argument("goals", nargs="*", default=["Auditar el repositorio URA"], help="Objetivos para los agentes")
     parser.add_argument("--list-domains", action="store_true", help="Listar dominios disponibles")
     parser.add_argument("--sync", action="store_true", help="Sincronizar memoria semántica primero")
     args = parser.parse_args()
@@ -27,6 +26,7 @@ def main() -> int:
 
     if args.list_domains:
         from scripts.pro.autonomy.swarm import DOMAIN_MAP
+
         engine.log.info("Dominios disponibles:")
         for keyword, domain in sorted(DOMAIN_MAP.items()):
             engine.log.info(f"  {keyword:20} → {domain}")
@@ -36,6 +36,7 @@ def main() -> int:
     if args.sync:
         db_path = engine.config.nervioso / "memory" / "semantic.db"
         from scripts.pro.autonomy.memory import SemanticMemory
+
         mem = SemanticMemory(db_path, engine.config.nervioso)
         engine.log.info("Sincronizando memoria semántica...")
         stats = mem.sync()
@@ -44,9 +45,13 @@ def main() -> int:
 
     # Crear agentes
     from scripts.pro.autonomy.swarm import (
+        ArchitectureAgent,
         Coordinator,
-        ArchitectureAgent, SecurityAgent, PerformanceAgent,
-        DocumentationAgent, ResearchAgent, TestingAgent,
+        DocumentationAgent,
+        PerformanceAgent,
+        ResearchAgent,
+        SecurityAgent,
+        TestingAgent,
     )
 
     agents = [
@@ -80,14 +85,17 @@ def main() -> int:
     # Reporte final con métricas
     assignments = coordinator.summary()
     m = coordinator.metrics()
-    engine.log.report("SWARM FINALIZADO", [
-        f"Sesión: {coordinator.session_id}",
-        f"Objetivos: {len(args.goals)}",
-        f"Asignaciones: {len(assignments)}",
-        f"Conflictos detectados: {m.get('conflictos', 0)}",
-        f"Tiempo medio resolución: {m.get('tiempo_medio_resolucion_s', 0)}s",
-        f"Duración total: {round(time.time() - t0, 1)}s",
-    ])
+    engine.log.report(
+        "SWARM FINALIZADO",
+        [
+            f"Sesión: {coordinator.session_id}",
+            f"Objetivos: {len(args.goals)}",
+            f"Asignaciones: {len(assignments)}",
+            f"Conflictos detectados: {m.get('conflictos', 0)}",
+            f"Tiempo medio resolución: {m.get('tiempo_medio_resolucion_s', 0)}s",
+            f"Duración total: {round(time.time() - t0, 1)}s",
+        ],
+    )
     for a in assignments:
         engine.log.info(f"  [{a.get('result', '?')}] {a.get('agent', '?')} → {a.get('title', '')}")
         if a.get("conflicts_with"):

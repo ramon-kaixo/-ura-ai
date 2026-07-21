@@ -7,18 +7,38 @@ Valida esquema, ignora registros inválidos, contabiliza descartes.
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 REQUIRED_FIELDS = {"execution_id", "start_time", "pipeline"}
 OPTIONAL_FIELDS = {
-    "goal", "decisions", "plan", "evaluation",
-    "pattern_detections", "knowledge", "recommendations", "policies", "verifications",
-    "plugin_status", "plugin_durations", "plugins_activated",
-    "phases_executed", "phases_skipped",
-    "changed_files", "changed_lines", "promotion", "rollback",
-    "warnings", "errors", "resources", "result",
-    "duration_ms", "git_commit_before", "git_commit_after",
+    "goal",
+    "decisions",
+    "plan",
+    "evaluation",
+    "pattern_detections",
+    "knowledge",
+    "recommendations",
+    "policies",
+    "verifications",
+    "plugin_status",
+    "plugin_durations",
+    "plugins_activated",
+    "phases_executed",
+    "phases_skipped",
+    "changed_files",
+    "changed_lines",
+    "promotion",
+    "rollback",
+    "warnings",
+    "errors",
+    "resources",
+    "result",
+    "duration_ms",
+    "git_commit_before",
+    "git_commit_after",
 }
 
 
@@ -80,8 +100,8 @@ class LedgerValidator:
         s = self._stats
         partes = [f"Ledger: {s['total']} registros"]
         partes.append(f"{s['validos']} válidos")
-        if s['invalidos']:
+        if s["invalidos"]:
             partes.append(f"{s['invalidos']} inválidos")
-            for motivo, count in s['motivos'].items():
+            for motivo, count in s["motivos"].items():
                 partes.append(f"  - {motivo}: {count}")
         return "\n".join(partes)

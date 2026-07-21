@@ -25,15 +25,21 @@ class QualityGates:
         try:
             last_tag = subprocess.run(
                 ["git", "describe", "--tags", "--abbrev=0"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(self._root),
+                check=False,
             ).stdout.strip()
             if not last_tag:
                 return 0
             count = subprocess.run(
                 ["git", "rev-list", f"{last_tag}..HEAD", "--count"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(self._root),
+                check=False,
             ).stdout.strip()
             return int(count) if count else 0
         except Exception:
@@ -44,17 +50,24 @@ class QualityGates:
         try:
             last_tag = subprocess.run(
                 ["git", "describe", "--tags", "--abbrev=0"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(self._root),
+                check=False,
             ).stdout.strip()
             if not last_tag:
                 return 0
             diff = subprocess.run(
                 ["git", "diff", f"{last_tag}..HEAD", "--stat"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(self._root),
+                check=False,
             ).stdout.strip()
             import re
+
             nums = re.findall(r"(\d+) insertions?\(\+\)", diff)
             return sum(int(n) for n in nums) if nums else 0
         except Exception:

@@ -10,10 +10,11 @@ Verificación: toda política aplicada se comprueba tras N ejecuciones.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
-from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
-from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
+if TYPE_CHECKING:
+    from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
+    from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
 
 
 class PolicyEngine:
@@ -45,8 +46,8 @@ class PolicyEngine:
                 "recommendation_id": recommendation.get("id"),
                 "action": "proponer",
                 "reason": f"Recomendación: {recommendation.get('title')}. "
-                         f"Confianza: {confidence}. Impacto: {recommendation.get('impact')}. "
-                         f"Riesgo: {risk}. Aprobar con --policy-accept {recommendation.get('id')}",
+                f"Confianza: {confidence}. Impacto: {recommendation.get('impact')}. "
+                f"Riesgo: {risk}. Aprobar con --policy-accept {recommendation.get('id')}",
                 "applied": False,
             }
 
@@ -96,13 +97,15 @@ class PolicyEngine:
         for policy in self._monitor.get_pending_verification():
             before, after = self._monitor.compare_before_after(policy)
             improved = after < before * 0.8 if after else False
-            results.append({
-                "policy_id": policy.get("recommendation_id"),
-                "before": before,
-                "after": after,
-                "improved": improved,
-                "action": "confirmar" if improved else "rollback",
-            })
+            results.append(
+                {
+                    "policy_id": policy.get("recommendation_id"),
+                    "before": before,
+                    "after": after,
+                    "improved": improved,
+                    "action": "confirmar" if improved else "rollback",
+                }
+            )
             if improved:
                 k = self._kb.search(category="politica")
                 for entry in k:

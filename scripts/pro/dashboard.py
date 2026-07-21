@@ -25,6 +25,7 @@ def _fmt(key: str, val) -> str:
 
 def main() -> int:
     import argparse
+
     parser = argparse.ArgumentParser(description="URA Health Dashboard")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--all", action="store_true", help="Todos los indicadores")
@@ -45,7 +46,8 @@ def main() -> int:
     # ── 2. Memoria semántica ──
     memory_db = ROOT / ".nervioso" / "memory" / "semantic.db"
     if memory_db.exists():
-        import sqlite3  # noqa: PLC0415
+        import sqlite3
+
         try:
             conn = sqlite3.connect(str(memory_db))
             results["memoria_ejecuciones"] = conn.execute("SELECT COUNT(*) FROM executions").fetchone()[0]
@@ -60,7 +62,8 @@ def main() -> int:
     # ── 3. Conocimiento ──
     kb_file = ROOT / ".nervioso" / "knowledge" / "knowledge.json"
     if kb_file.exists():
-        import json  # noqa: PLC0415
+        import json
+
         try:
             kb = json.loads(kb_file.read_text(encoding="utf-8"))
             results["conocimiento_total"] = len(kb)
@@ -72,13 +75,15 @@ def main() -> int:
             pass
 
     # ── 4. Reuse Detector ──
-    from scripts.pro.reuse.reuse_detector import ReuseDetector  # noqa: PLC0415
+    from scripts.pro.reuse.reuse_detector import ReuseDetector
+
     reuse_metrics = ReuseDetector.metrics()
     results["reuse_recomendaciones"] = reuse_metrics.get("recomendaciones_emitidas", 0)
     results["reuse_tasa_aceptacion"] = reuse_metrics.get("tasa_aceptacion", 0)
 
     # ── 5. Calidad Gates ──
-    from scripts.pro.reuse.quality_gates import QualityGates  # noqa: PLC0415
+    from scripts.pro.reuse.quality_gates import QualityGates
+
     gates = QualityGates(ROOT)
     gates_result = gates.should_run_maintenance()
     results["gates_commits"] = gates_result["commits"]
@@ -93,8 +98,9 @@ def main() -> int:
         results["logs_tamano_kb"] = round(sum(f.stat().st_size for f in log_files) / 1024, 1)
 
     # ── 7. Swarm ──
-    from scripts.pro.autonomy.goal_manager import GoalManager  # noqa: PLC0415
-    from scripts.pro.tuneladora.engine import PipelineEngine  # noqa: PLC0415
+    from scripts.pro.autonomy.goal_manager import GoalManager
+    from scripts.pro.tuneladora.engine import PipelineEngine
+
     engine = PipelineEngine(pipeline="dashboard")
     gm = GoalManager(engine)
     goals = gm.list_all()
@@ -106,7 +112,8 @@ def main() -> int:
 
     # ── Output ──
     if args.json:
-        import json  # noqa: PLC0415
+        import json
+
         print(json.dumps(results, indent=2, ensure_ascii=False))
     else:
         print("=" * 55)
@@ -115,14 +122,14 @@ def main() -> int:
 
         print("\n── ExecutionLedger ──")
         print(_fmt("Ejecuciones", results.get("ledger_ejecuciones", "?")))
-        print(_fmt("Tamaño total", f'{results.get("ledger_tamano_total_kb", "?")} KB'))
+        print(_fmt("Tamaño total", f"{results.get('ledger_tamano_total_kb', '?')} KB"))
 
         print("\n── Memoria Semántica ──")
         print(_fmt("Ejecuciones indexadas", results.get("memoria_ejecuciones", "?")))
         print(_fmt("Plugins registrados", results.get("memoria_plugins", "?")))
         print(_fmt("Decisiones", results.get("memoria_decisiones", "?")))
         print(_fmt("Objetivos", results.get("memoria_objetivos", "?")))
-        print(_fmt("Base de datos", f'{results.get("memoria_tamano_kb", "?")} KB'))
+        print(_fmt("Base de datos", f"{results.get('memoria_tamano_kb', '?')} KB"))
 
         print("\n── Conocimiento ──")
         print(_fmt("Total", results.get("conocimiento_total", "?")))
@@ -133,7 +140,7 @@ def main() -> int:
 
         print("\n── Reuse Detector ──")
         print(_fmt("Recomendaciones", results.get("reuse_recomendaciones", 0)))
-        print(_fmt("Tasa aceptación", f'{results.get("reuse_tasa_aceptacion", 0):.0%}'))
+        print(_fmt("Tasa aceptación", f"{results.get('reuse_tasa_aceptacion', 0):.0%}"))
 
         print("\n── Quality Gates ──")
         print(_fmt("Commits desde tag", results.get("gates_commits", "?")))
@@ -145,7 +152,7 @@ def main() -> int:
         print(_fmt("Completados", results.get("swarm_objetivos_completados", "?")))
         print(_fmt("Fallidos", results.get("swarm_objetivos_fallidos", "?")))
 
-        print("")
+        print()
     return 0
 
 

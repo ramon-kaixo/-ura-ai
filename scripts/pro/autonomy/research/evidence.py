@@ -5,9 +5,10 @@ Para cada hipótesis, busca datos que la apoyen o la contradigan.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.autonomy.memory.queries import SemanticQueries
+if TYPE_CHECKING:
+    from scripts.pro.autonomy.memory.queries import SemanticQueries
 
 
 class EvidenceSearcher:
@@ -36,34 +37,40 @@ class EvidenceSearcher:
         slow = self._queries.slowest_plugins(limit=10)
         evidence = []
         for i, p in enumerate(slow):
-            evidence.append({
-                "tipo": "apoya" if i == 0 else "contexto",
-                "plugin": p["plugin_name"],
-                "media_s": p["avg_dur"],
-                "ejecuciones": p["runs"],
-                "fuente": "slowest_plugins",
-            })
+            evidence.append(
+                {
+                    "tipo": "apoya" if i == 0 else "contexto",
+                    "plugin": p["plugin_name"],
+                    "media_s": p["avg_dur"],
+                    "ejecuciones": p["runs"],
+                    "fuente": "slowest_plugins",
+                }
+            )
         return evidence
 
     def _search_H2(self) -> list[dict]:
         """Evidencia: tasa de promoción vs duración."""
         rate = self._queries.promotion_rate()
         return [
-            {"tipo": "apoya" if rate.get("rate", 0) < 80 else "contradice",
-             "total": rate.get("total", 0),
-             "promocionadas": rate.get("promoted", 0),
-             "tasa": rate.get("rate", 0),
-             "fuente": "promotion_rate"},
+            {
+                "tipo": "apoya" if rate.get("rate", 0) < 80 else "contradice",
+                "total": rate.get("total", 0),
+                "promocionadas": rate.get("promoted", 0),
+                "tasa": rate.get("rate", 0),
+                "fuente": "promotion_rate",
+            },
         ]
 
     def _search_H3(self, plugin: str) -> list[dict]:
         """Evidencia: histórico de errores de un plugin."""
         stats = self._queries.plugin_stats(plugin)
         return [
-            {"tipo": "apoya" if stats.get("errors", 0) > 0 else "contradice",
-             "plugin": plugin,
-             "ejecuciones": stats.get("runs", 0),
-             "errores": stats.get("errors", 0),
-             "media_s": stats.get("avg_dur", 0),
-             "fuente": "plugin_stats"},
+            {
+                "tipo": "apoya" if stats.get("errors", 0) > 0 else "contradice",
+                "plugin": plugin,
+                "ejecuciones": stats.get("runs", 0),
+                "errores": stats.get("errors", 0),
+                "media_s": stats.get("avg_dur", 0),
+                "fuente": "plugin_stats",
+            },
         ]

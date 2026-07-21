@@ -21,9 +21,14 @@ class ResearchAgent(AgentBase):
         db_path = self._engine.config.nervioso / "memory" / "semantic.db"
         if db_path.exists():
             from scripts.pro.autonomy.research import Researcher
+
             r = Researcher(db_path)
             result = r.research()
             r.close()
             self.log(f"Hipótesis: {result['total_hipotesis']}")
-            return {"status": "ok", "hipotesis": result['total_hipotesis'], "conclusiones": result.get('conclusiones', [])}
+            return {
+                "status": "ok",
+                "hipotesis": result["total_hipotesis"],
+                "conclusiones": result.get("conclusiones", []),
+            }
         return {"status": "ok", "hipotesis": 0, "conclusiones": []}

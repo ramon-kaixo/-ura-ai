@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 from scripts.pro.autonomy.memory.schema import migrate
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class LedgerIngester:
@@ -31,9 +33,7 @@ class LedgerIngester:
         return self._conn
 
     def _execution_exists(self, execution_id: str) -> bool:
-        row = self._conn.execute(
-            "SELECT 1 FROM executions WHERE execution_id = ?", (execution_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT 1 FROM executions WHERE execution_id = ?", (execution_id,)).fetchone()
         return row is not None
 
     def _ingest_execution(self, entry: dict) -> None:
@@ -78,9 +78,12 @@ class LedgerIngester:
                    (goal_id, execution_id, title, priority, status, created_at)
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (
-                    goal["goal_id"], eid,
-                    goal.get("title", ""), goal.get("priority", ""),
-                    goal.get("status", ""), goal.get("created_at", ""),
+                    goal["goal_id"],
+                    eid,
+                    goal.get("title", ""),
+                    goal.get("priority", ""),
+                    goal.get("status", ""),
+                    goal.get("created_at", ""),
                 ),
             )
 
@@ -120,7 +123,7 @@ class LedgerIngester:
                 entry = json.loads(f.read_text(encoding="utf-8"))
                 self._ingest_execution(entry)
                 processed += 1
-            except (json.JSONDecodeError, OSError, sqlite3.Error) as e:
+            except (json.JSONDecodeError, OSError, sqlite3.Error):
                 self._stats["errores"] += 1
 
         conn.commit()

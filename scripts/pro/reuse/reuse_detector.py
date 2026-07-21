@@ -1,4 +1,11 @@
-PLUGIN = {"name": "reuse_detector", "phase": "pre", "timeout": 60, "priority": 100, "capability": "quality", "args": ["index"]}
+PLUGIN = {
+    "name": "reuse_detector",
+    "phase": "pre",
+    "timeout": 60,
+    "priority": 100,
+    "capability": "quality",
+    "args": ["index"],
+}
 """ReuseDetector — busca código similar antes de crear código nuevo.
 
 Escanea el repositorio, extrae firmas de funciones con AST,
@@ -32,6 +39,7 @@ class ReuseDetector:
             "tasa_aceptacion": round(accepted / total, 2),
             "reutilizaciones_efectivas": accepted,
         }
+
     """Detector de reutilización. Indexa el repo y compara firmas."""
 
     def __init__(self, project_root: str | Path = "") -> None:
@@ -67,6 +75,7 @@ class ReuseDetector:
     def analyze_new_code(self, code: str, min_score: float = 0.4) -> list[dict]:
         """Analiza código nuevo contra el índice."""
         import tempfile
+
         tmp = Path(tempfile.mktemp(suffix=".py"))
         try:
             tmp.write_text(code)
@@ -97,10 +106,12 @@ class ReuseDetector:
     @classmethod
     def record_feedback(cls, recommendation: dict, accepted: bool, reason: str = "") -> None:
         """Registra retroalimentación sobre una recomendación para ajustar pesos futuros."""
-        cls._feedback.append({
-            "new_name": recommendation.get("new_name", ""),
-            "existing_name": recommendation.get("existing_name", ""),
-            "score": recommendation.get("score", 0),
-            "accepted": accepted,
-            "reason": reason,
-        })
+        cls._feedback.append(
+            {
+                "new_name": recommendation.get("new_name", ""),
+                "existing_name": recommendation.get("existing_name", ""),
+                "score": recommendation.get("score", 0),
+                "accepted": accepted,
+                "reason": reason,
+            }
+        )

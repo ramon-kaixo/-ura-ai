@@ -7,9 +7,10 @@ La decisión finalizar/corregir/escalar es responsabilidad de autonomía.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 class Evaluator:
@@ -24,19 +25,13 @@ class Evaluator:
         Usa PromotionPolicy.record() y check_budget() como servicios
         de infraestructura, pero la decisión final pertenece a autonomía.
         """
-        ruff_ok = all(
-            r.get("ok", 0) > 0 or True
-            for r in results.values()
-            if isinstance(r, dict) and "ok" in r
-        )
-        files_changed = sum(
-            r.get("ok", 0) for r in results.values() if isinstance(r, dict)
-        )
+        ruff_ok = all(r.get("ok", 0) > 0 or True for r in results.values() if isinstance(r, dict) and "ok" in r)
+        files_changed = sum(r.get("ok", 0) for r in results.values() if isinstance(r, dict))
 
         # Usar infraestructura para checks y presupuesto
         self._engine.promotion.record("ruff", ruff_ok, "0 errores" if ruff_ok else "con errores")
         budget = goal.get("budget", {})
-        budget_files = budget.get("changes_max", 50)
+        budget.get("changes_max", 50)
         self._engine.promotion.check_budget(files_changed, 0)
 
         # Decisión propia de autonomía
@@ -53,6 +48,8 @@ class Evaluator:
             "criteria": {"ruff_ok": ruff_ok, "files_changed": files_changed},
         }
         self._engine.ledger.set_evaluation(
-            evaluation["score"], action, evaluation["criteria"],
+            evaluation["score"],
+            action,
+            evaluation["criteria"],
         )
         return evaluation
