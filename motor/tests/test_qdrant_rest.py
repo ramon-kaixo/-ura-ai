@@ -7,7 +7,7 @@ Usa respuestas simuladas (no requiere Qdrant real).
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from motor.core import qdrant_rest
 

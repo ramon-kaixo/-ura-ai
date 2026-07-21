@@ -5,18 +5,13 @@ Verifica que los exportadores funcionan correctamente sin tracing.py.
 
 from __future__ import annotations
 
-import json
 import tempfile
-import threading
 import time as _time
 from pathlib import Path
-
-import pytest
 
 from motor.platform.tracing_exporter import (
     InMemoryExporter,
     LatencyStats,
-    _SpanEventSink,
 )
 
 
