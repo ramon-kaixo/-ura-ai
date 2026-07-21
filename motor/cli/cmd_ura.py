@@ -458,14 +458,13 @@ def cmd_memory(config: UraConfig, args) -> int:
     return 0
 
 
-def _systemctl(args: list[str]) -> subprocess.CompletedProcess:
-    """Ejecuta systemctl con --user. Fallback a system si no hay user services."""
+def _systemctl(args: list[str]) -> "subprocess.CompletedProcess":
     import subprocess as _sp
 
-    r = _sp.run(["systemctl", "--user"] + args, capture_output=True, text=True, timeout=30, check=False)
+    r = _sp.run([*["systemctl", "--user"], *args], capture_output=True, text=True, timeout=30, check=False)
     if r.returncode == 0 or "Could not connect" not in r.stderr:
         return r
-    return _sp.run(["systemctl"] + args, capture_output=True, text=True, timeout=30, check=False)
+    return _sp.run([*["systemctl"], *args], capture_output=True, text=True, timeout=30, check=False)
 
 
 def cmd_service(config: UraConfig, args) -> int:

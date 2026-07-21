@@ -17,13 +17,12 @@ from motor.cli.cmd_ura import (
     cmd_memory,
     cmd_metrics,
     cmd_rotate,
+    cmd_service,
     cmd_snapshot,
     cmd_snc,
     cmd_system,
     cmd_test,
 )
-
-from motor.cli.cmd_ura import cmd_service  # noqa: F811
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
 from motor.observability.logging import setup_logging
