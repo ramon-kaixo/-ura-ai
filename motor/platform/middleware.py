@@ -7,6 +7,7 @@ OBS-09: System works if tracing fails.
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import TYPE_CHECKING, Any
 

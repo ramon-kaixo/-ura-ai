@@ -27,6 +27,7 @@ import random
 import threading
 import time
 from contextlib import contextmanager
+from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
