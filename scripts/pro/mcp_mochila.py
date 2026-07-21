@@ -1,38 +1,80 @@
 #!/usr/bin/env python3
-"""MCP stdio server wrapping mochila tools for OpenClaw."""
+"""MCP stdio server wrapping mochila tools + HybridMemory for OpenClaw."""
 
 import asyncio
 import json
+import os
 import sys
 import traceback
+from pathlib import Path
 
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
+from motor.intelligence.memory.hybrid import HybridMemory
+from motor.intelligence.memory.record import MemoryType
 
-SERVER_NAME = "mochila-tools"
-SERVER_VERSION = "1.0.0"
+SERVER_NAME = "ura-mcp"
+SERVER_VERSION = "2.0.0"
 
+_db_path = os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db"))
+_memory = HybridMemory(db_path=_db_path)
 
-def _openai_to_mcp(schema: dict) -> dict:
-    func = schema["function"]
-    params = func.get("parameters", {})
-    return {
-        "name": func["name"],
-        "description": func.get("description", ""),
+_MEMORY_TOOL_SCHEMAS = [
+    {
+        "name": "memory_store",
+        "description": "Almacena un texto en la memoria híbrida con metadatos",
         "inputSchema": {
             "type": "object",
-            "properties": params.get("properties", {}),
-            "required": params.get("required", []),
+            "properties": {
+                "payload": {"type": "string", "description": "Texto a almacenar"},
+                "memory_type": {
+                    "type": "string",
+                    "enum": [t.value for t in MemoryType],
+                    "description": "Tipo de memoria",
+                },
+                "metadata": {
+                    "type": "object",
+                    "description": "Metadatos adicionales (source, tags, etc.)",
+                },
+            },
+            "required": ["payload"],
         },
+    },
+    {
+        "name": "memory_search",
+        "description": "Busca en la memoria híbrida por texto completo",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Consulta de búsqueda"},
+                "k": {"type": "integer", "description": "Máximo de resultados", "default": 10},
+                "memory_type": {
+                    "type": "string",
+                    "enum": [t.value for t in MemoryType],
+                    "description": "Filtrar por tipo de memoria",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "memory_stats",
+        "description": "Estadísticas de la memoria híbrida",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+]
+
+_ALL_TOOLS = _MEMORY_TOOL_SCHEMAS + [
+    {
+        "name": s["function"]["name"],
+        "description": s["function"].get("description", ""),
+        "inputSchema": s["function"].get("parameters", {}),
     }
-
-
-def _build_tools() -> list[dict]:
-    return [_openai_to_mcp(s) for s in TOOL_SCHEMAS]
-
-
-_MCP_TOOLS = _build_tools()
-
-TOOL_NAME_MAP = {t["name"] for t in _MCP_TOOLS}
+    for s in TOOL_SCHEMAS
+]
+_ALL_TOOL_NAMES = {t["name"] for t in _ALL_TOOLS}
 
 
 async def _handle_initialize(params: dict) -> dict:
@@ -44,13 +86,49 @@ async def _handle_initialize(params: dict) -> dict:
 
 
 async def _handle_tools_list(params: dict) -> dict:
-    return {"tools": _MCP_TOOLS}
+    return {"tools": _ALL_TOOLS}
 
 
 async def _handle_tools_call(params: dict) -> dict:
     name = params.get("name", "")
     arguments = params.get("arguments", {})
     try:
+        if name == "memory_store":
+            rid = _memory.store(
+                payload=arguments["payload"],
+                memory_type=MemoryType(arguments.get("memory_type", "working")),
+                metadata=arguments.get("metadata"),
+            )
+            return {"content": [{"type": "text", "text": json.dumps({"id": rid}, ensure_ascii=False)}]}
+        elif name == "memory_search":
+            results = _memory.search(
+                query=arguments["query"],
+                k=arguments.get("k", 10),
+                memory_type=MemoryType(arguments["memory_type"]) if arguments.get("memory_type") else None,
+            )
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(
+                            [
+                                {"id": r.id, "payload": r.payload[:500], "type": r.type.value, "metadata": r.metadata}
+                                for r in results
+                            ],
+                            ensure_ascii=False,
+                        ),
+                    }
+                ]
+            }
+        elif name == "memory_stats":
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(_memory.health(), ensure_ascii=False),
+                    }
+                ]
+            }
         result = await ejecutar_tool(name, arguments)
         return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}
     except Exception as e:
