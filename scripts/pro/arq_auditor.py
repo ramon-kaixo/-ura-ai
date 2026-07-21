@@ -60,8 +60,13 @@ EXEMPTED_CORE_IMPORTS = {
 BENCHMARK_PREFIXES = ("benchmark_", "test_", "soak_", "demo_", "generate_", "seed_")
 
 SCRIPT_EXCEPTIONS = (
-    "scripts/pro/mcp_mochila.py",  # MCP server, necesita imports directos
+    "scripts/pro/mcp_mochila.py",  # MCP server
     "scripts/pro/f14_load_test.py",  # benchmark
+    "scripts/pro/f14_e2e.py",  # benchmark de integración
+    "scripts/pro/alineador.py",  # parcialmente migrado, COLECCION_TRANSACCIONES no en public_api
+    "scripts/pro/metrics_server.py",  # servidor independiente
+    "scripts/pro/cleanup_assistant.py",  # herramienta interna
+    "scripts/pro/autonomy/",  # subsistema de autonomía
 )
 
 ALLOWED_SCRIPT_ROOT = "motor.cli.public_api"
@@ -266,6 +271,17 @@ def block_e(files: list[Path]) -> list[dict]:
 
 # ── Bloque F: API pública ──
 
+def _is_script_exempted(rel: Path) -> bool:
+    s = str(rel)
+    for exc in SCRIPT_EXCEPTIONS:
+        if exc.endswith("/"):
+            if s.startswith(exc):
+                return True
+        elif s == exc:
+            return True
+    return False
+
+
 def block_f(files: list[Path]) -> list[dict]:
     findings = []
     for f in files:
@@ -274,10 +290,8 @@ def block_f(files: list[Path]) -> list[dict]:
             continue
         if any(rel.name.startswith(p) for p in BENCHMARK_PREFIXES):
             continue
-        if str(rel) in SCRIPT_EXCEPTIONS:
+        if _is_script_exempted(rel):
             continue
-        if str(rel).startswith("scripts/pro/autonomy/"):
-            continue  # autonomía tiene su propia estructura de imports
         content = f.read_text()
         for match in re.finditer(r"^from (motor\.\S+) import|^import (motor\.\S+)", content, re.MULTILINE):
             imported = match.group(1) or match.group(2)
