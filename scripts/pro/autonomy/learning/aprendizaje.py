@@ -11,7 +11,7 @@ import sys
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Aprendizaje v4.0")

@@ -180,15 +180,15 @@ class ExecutionLedger:
 
     def resource_sample(self) -> None:
         try:
-            rc, out = subprocess.getstatusoutput("free -m")
-            if rc == 0:
-                for line in out.splitlines():
+            r = subprocess.run(["free", "-m"], capture_output=True, text=True, timeout=5, check=False)
+            if r.returncode == 0:
+                for line in r.stdout.splitlines():
                     if "Mem:" in line:
                         parts = line.split()
                         self._entry["resources"]["ram_used_mb"] = int(parts[2])
-            rc, out = subprocess.getstatusoutput("ps aux | grep -c 'python'")
-            if rc == 0:
-                self._entry["resources"]["python_processes"] = int(out.strip())
+            r = subprocess.run(["pgrep", "-c", "python"], capture_output=True, text=True, timeout=5, check=False)
+            if r.returncode == 0:
+                self._entry["resources"]["python_processes"] = int(r.stdout.strip())
         except Exception:
             _log.debug("resource sample falló")
 
