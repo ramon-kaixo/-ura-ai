@@ -25,16 +25,6 @@
     "line": 40
   },
   {
-    "file": "motor/platform/tracing.py",
-    "type": "large_file",
-    "line": 1
-  },
-  {
-    "file": "motor/core/qdrant_client.py",
-    "type": "large_file",
-    "line": 1
-  },
-  {
     "file": "motor/core/llm/router.py",
     "type": "large_file",
     "line": 1
@@ -60,6 +50,11 @@
     "line": 1
   },
   {
+    "file": "motor/core/qdrant_client.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
     "file": "motor/cli/cmd_ura.py",
     "type": "large_file",
     "line": 1
@@ -75,12 +70,22 @@
     "line": 1
   },
   {
+    "file": "motor/platform/tracing.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
     "file": "motor/intelligence/memory/forgetting.py",
     "type": "large_file",
     "line": 1
   },
   {
     "file": "motor/intelligence/memory/episodic.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/platform/tracing_exporter.py",
     "type": "large_file",
     "line": 1
   },
