@@ -7,6 +7,8 @@ Uso:
   python3 core/infra/heartbeat.py --daemon         # bucle cada 30s
 """
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
@@ -15,11 +17,15 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
 from motor.observability.logging import setup_logging
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider, IVectorStore
 
 STATE_FILE = "/tmp/ura_state.json"
 
@@ -56,13 +62,18 @@ def dump_checkpoint() -> None:
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
-def _save_restart_to_qdrant() -> None:
+def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     try:
-        from motor.core.config import UraConfig
-        from motor.core.qdrant_client import instancia
+        if config is None:
+            from motor.core.config import UraConfig
+            from motor.core.qdrant_client import instancia
 
-        cfg = UraConfig()
-        qc = instancia(cfg)
+            cfg: IConfigProvider = UraConfig()
+            qc: IVectorStore = instancia(cfg)
+        else:
+            from motor.core.qdrant_client import instancia
+
+            qc = instancia(config)
         if qc and qc.disponible:
             qc.guardar_incidente(
                 {

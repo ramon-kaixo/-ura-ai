@@ -1,29 +1,21 @@
 #!/usr/bin/env python3
 """debate_engine.py — SDA: Sistema de Debate entre Agentes.
-
-Arquitectura:
-  - primary (qwen2.5-coder:14b): razonador técnico, evalúa el plan
-  - auditor (llama3.2:3b): abogado del diablo, busca fallos adversariales
-
-Uso:
-  echo '{"plan": "...", "author": "code", "context": {...}}' | python3 debate_engine.py
-  python3 debate_engine.py --plan /tmp/ura_debate/plan.json
-
-Salida (stdout):
-  {"consensus": 0.85, "primary_score": 0.9, "auditor_score": 0.8,
-   "primary_reason": "...", "auditor_reason": "...", "verdict": "CONSENSUS",
-   "plan_unified": "..."}
 """
+
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event
-from motor.core.llm import generate
+
+if TYPE_CHECKING:
+    from core.interfaces import ILLMClient
 
 logger = logging.getLogger("ura.debate")
 
@@ -142,10 +134,16 @@ async def call_ollama(
     prompt: str,
     temperature: float = 0.1,
     max_tokens: int = 2048,
+    llm: ILLMClient | None = None,
 ) -> dict | None:
+    if llm is not None:
+        _gen = lambda p, **kw: llm.generate(p, **kw)  # noqa: E731
+    else:
+        from motor.core.llm import generate as _gen
+
     try:
         raw = await asyncio.to_thread(
-            generate,
+            _gen,
             prompt,
             model=model,
             options={"temperature": temperature, "num_predict": max_tokens},

@@ -1,14 +1,21 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 
+from __future__ import annotations
+
 import logging
 import os
 import threading
 import uuid
+from typing import TYPE_CHECKING
 
 import httpx
 from qdrant_client import QdrantClient
 
 from core.memoria.ficha import Idea
+
+if TYPE_CHECKING:
+    from core.interfaces import IVectorStore
+
 from motor.core.qdrant_client import URAQdrantClient
 
 log = logging.getLogger("memoria.qdrant")
@@ -189,9 +196,9 @@ async def buscar_ideas(
 
 
 class MemoryPipelineStore:
-    """Pipeline de memoria asíncrono. Usa URAQdrantClient con connection pooling (Hito 1.1.1)."""
+    def __init__(self, qdrant_client: IVectorStore | None = None) -> None:
+        from motor.core.qdrant_client import URAQdrantClient
 
-    def __init__(self, qdrant_client: URAQdrantClient | None = None) -> None:
         self.qdrant = qdrant_client or URAQdrantClient()
 
     async def guardar_contexto_ingestado(self, coleccion: str, puntos: list) -> bool:
