@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
+@runtime_checkable
 class IProcessResult(Protocol):
     """Resultado de una ejecución de proceso."""
 
@@ -17,6 +18,7 @@ class IProcessResult(Protocol):
     error: str
 
 
+@runtime_checkable
 class IExecutor(Protocol):
     """Contrato para ejecución de comandos del sistema."""
 
