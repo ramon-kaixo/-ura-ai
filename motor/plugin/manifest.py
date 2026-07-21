@@ -18,13 +18,13 @@ class PluginManifest:
     name: str = ""
     version: str = "0.1.0"
     description: str = ""
-    author: dict = field(default_factory=dict)
+    author: dict[str, Any] = field(default_factory=dict)
     entry_point: str = ""
-    dependencies: dict = field(default_factory=lambda: {"plugins": [], "python": []})
-    lifecycle: dict = field(default_factory=lambda: {"on_load": True, "on_unload": True})
-    hooks: list = field(default_factory=list)
-    phases: list = field(default_factory=lambda: ["always"])
-    tags: list = field(default_factory=list)
+    dependencies: dict[str, Any] = field(default_factory=lambda: {"plugins": [], "python": []})
+    lifecycle: dict[str, Any] = field(default_factory=lambda: {"on_load": True, "on_unload": True})
+    hooks: list[str] = field(default_factory=list)
+    phases: list[str] = field(default_factory=lambda: ["always"])
+    tags: list[str] = field(default_factory=list)
 
 
 MANIFEST_SCHEMA = frozenset(

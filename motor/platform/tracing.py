@@ -618,7 +618,7 @@ class TraceExporter(_SpanEventSink):
         self._batch_size = batch_size
         self._flush_interval = flush_interval
         self._drop_policy = drop_policy
-        self._buffer: queue.Queue = queue.Queue(maxsize=buffer_size)
+        self._buffer: queue.Queue[SpanEvent] = queue.Queue(maxsize=buffer_size)
         self._file_index = 0
         self._event_count = 0
         self._dropped_count = 0

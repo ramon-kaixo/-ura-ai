@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("ura.observability.instrumentation")
 
 
-def _wrap(obj: object, name: str, wrapper: Callable) -> None:
+def _wrap(obj: object, name: str, wrapper: Callable[..., Any]) -> None:
     original = getattr(obj, name)
     setattr(obj, name, wrapper(original))
 
@@ -33,7 +33,7 @@ class Instrumentation:
     def instrument_eventbus(self, bus: EventBus) -> EventBus:
         self.health.register_component("eventbus")
 
-        def _wrap_publish(original: Callable) -> Callable:
+        def _wrap_publish(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(topic: str, payload: Any, *, source: str = "system") -> None:  # type: ignore[explicit-any]
                 start = time.monotonic()
                 try:
@@ -48,8 +48,8 @@ class Instrumentation:
 
             return wrapped
 
-        def _wrap_emit_sync(original: Callable) -> Callable:
-            def wrapped(topic: str, payload: Any, *, source: str = "system") -> list:  # type: ignore[explicit-any]
+        def _wrap_emit_sync(original: Callable[..., Any]) -> Callable[..., Any]:
+            def wrapped(topic: str, payload: Any, *, source: str = "system") -> list[Any]:  # type: ignore[explicit-any]
                 start = time.monotonic()
                 try:
                     result = original(topic, payload, source=source)
@@ -71,7 +71,7 @@ class Instrumentation:
     def instrument_registry(self, registry: PluginRegistryV2) -> PluginRegistryV2:
         self.health.register_component("plugins")
 
-        def _wrap_get(original: Callable) -> Callable:
+        def _wrap_get(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(name: str) -> Any:  # type: ignore[explicit-any]
                 start = time.monotonic()
                 result = original(name)
@@ -96,7 +96,7 @@ class Instrumentation:
     def instrument_pipeline(self, executor: PipelineExecutor) -> PipelineExecutor:
         self.health.register_component("pipeline")
 
-        def _wrap_execute(original: Callable) -> Callable:
+        def _wrap_execute(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(pipeline: Any, context: dict[str, Any] | None = None) -> Any:  # type: ignore[explicit-any]
                 start = time.monotonic()
                 self.metrics.counter("pipeline_executed_total", labels={"pipeline": pipeline.name}).inc()
@@ -129,7 +129,7 @@ class Instrumentation:
     def instrument_hooks(self, hook_manager: HookManager) -> HookManager:
         self.health.register_component("hooks")
 
-        def _wrap_register(original: Callable) -> Callable:
+        def _wrap_register(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(plugin_name: str, plugin: Any) -> None:  # type: ignore[explicit-any]
                 original(plugin_name, plugin)
                 self.metrics.counter("hooks_registered_total", labels={"plugin": plugin_name}).inc()
@@ -143,8 +143,8 @@ class Instrumentation:
     def instrument_subprocess(self, executor: SubprocessExecutor) -> SubprocessExecutor:
         self.health.register_component("subprocess")
 
-        def _wrap_run(original: Callable) -> Callable:
-            def wrapped(cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None) -> Any:  # type: ignore[explicit-any]
+        def _wrap_run(original: Callable[..., Any]) -> Callable[..., Any]:
+            def wrapped(cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:  # type: ignore[explicit-any]
                 cmd_name = cmd[0] if cmd else "?"
                 start = time.monotonic()
                 self.metrics.counter("subprocess_started_total", labels={"cmd": cmd_name}).inc()
@@ -163,7 +163,7 @@ class Instrumentation:
         self.health.set_healthy("subprocess")
         return executor
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, Any]:
         return {
             "metrics": self.metrics.snapshot(),
             "health": self.health.snapshot(),

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class StageDefinition:
     name: str
     plugin: str
-    config: dict = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
     timeout: int = 30
     optional: bool = False
 
@@ -25,7 +26,7 @@ class StageResult:
     name: str
     ok: bool
     plugin: str
-    output: dict = field(default_factory=dict)
+    output: dict[str, Any] = field(default_factory=dict)
     error: str = ""
     duration_ms: float = 0.0
 
