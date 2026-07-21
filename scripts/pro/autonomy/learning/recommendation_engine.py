@@ -9,10 +9,11 @@ Cada recomendación tiene:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
-from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
+if TYPE_CHECKING:
+    from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
+    from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
 
 
 class RecommendationEngine:
@@ -35,18 +36,20 @@ class RecommendationEngine:
         # Añadir recomendaciones desde conocimiento no verificado
         for k in self._kb.search(min_confidence=0.7):
             if not k.get("verified"):
-                recommendations.append({
-                    "id": f"rec_{k['id']}",
-                    "title": k["claim"],
-                    "evidence": k["evidence"],
-                    "confidence": k["confidence"],
-                    "impact": "medium",
-                    "risk": "low",
-                    "source": "knowledge_base",
-                    "policy": "revisar_timeout" if "tiempo" in k.get("claim", "") else "revisar_config",
-                })
+                recommendations.append(
+                    {
+                        "id": f"rec_{k['id']}",
+                        "title": k["claim"],
+                        "evidence": k["evidence"],
+                        "confidence": k["confidence"],
+                        "impact": "medium",
+                        "risk": "low",
+                        "source": "knowledge_base",
+                        "policy": "revisar_timeout" if "tiempo" in k.get("claim", "") else "revisar_config",
+                    }
+                )
 
-        recommendations.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}.get(r.get("impact", "low"), 99)))
+        recommendations.sort(key=lambda r: {"high": 0, "medium": 1, "low": 2}.get(r.get("impact", "low"), 99))
         return recommendations
 
     def _pattern_to_recommendation(self, pattern: dict) -> dict | None:

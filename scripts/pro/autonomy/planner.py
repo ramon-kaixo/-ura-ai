@@ -7,11 +7,12 @@ selecciona la mejor según presupuestos y replanifica si falla.
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING
 
 from scripts.pro.plugin_registry import run_phase
-from scripts.pro.tuneladora.engine import PipelineEngine
 
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 # Estrategias: diferentes combinaciones de fases para cada tipo de objetivo
 STRATEGIES = {
@@ -71,12 +72,14 @@ class Planner:
         strategies = []
         for s in candidates:
             estimated_s = s["cost_estimate"] * time_budget
-            strategies.append({
-                "name": s["name"],
-                "phases": s["phases"],
-                "estimated_s": round(estimated_s, 0),
-                "cost": s["cost_estimate"],
-            })
+            strategies.append(
+                {
+                    "name": s["name"],
+                    "phases": s["phases"],
+                    "estimated_s": round(estimated_s, 0),
+                    "cost": s["cost_estimate"],
+                }
+            )
         return strategies
 
     # ── Selección de estrategia ──
@@ -95,12 +98,15 @@ class Planner:
         viable.sort(key=lambda s: (s["cost"], -len(s["phases"])))
         chosen = viable[0]
 
-        self._engine.ledger.add_decision("strategy_selected", {
-            "chosen": chosen["name"],
-            "phases": chosen["phases"],
-            "estimated_s": chosen["estimated_s"],
-            "alternatives": [s["name"] for s in strategies if s["name"] != chosen["name"]],
-        })
+        self._engine.ledger.add_decision(
+            "strategy_selected",
+            {
+                "chosen": chosen["name"],
+                "phases": chosen["phases"],
+                "estimated_s": chosen["estimated_s"],
+                "alternatives": [s["name"] for s in strategies if s["name"] != chosen["name"]],
+            },
+        )
         return chosen
 
     # ── Creación de plan ──
@@ -120,11 +126,14 @@ class Planner:
             "fallbacks": [s for s in strategies if s["name"] != chosen["name"]],
         }
         self._engine.ledger.set_plan(plan)
-        self._engine.ledger.add_decision("plan_created", {
-            "strategy": chosen["name"],
-            "phases": chosen["phases"],
-            "estimated_s": chosen["estimated_s"],
-        })
+        self._engine.ledger.add_decision(
+            "plan_created",
+            {
+                "strategy": chosen["name"],
+                "phases": chosen["phases"],
+                "estimated_s": chosen["estimated_s"],
+            },
+        )
         return plan
 
     # ── Ejecución con replanificación ──
@@ -149,21 +158,26 @@ class Planner:
             }
 
             if phase_result.get("_aborted_by"):
-                self._engine.ledger.add_decision("phase_aborted", {
-                    "phase": phase, "reason": phase_result["_aborted_by"],
-                })
+                self._engine.ledger.add_decision(
+                    "phase_aborted",
+                    {
+                        "phase": phase,
+                        "reason": phase_result["_aborted_by"],
+                    },
+                )
 
                 # ── Replanificar: buscar fallback ──
                 if fallbacks:
                     fb = fallbacks.pop(0)
-                    self._engine.log.warn(
-                        f"Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'"
+                    self._engine.log.warn(f"Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'")
+                    self._engine.ledger.add_decision(
+                        "replan",
+                        {
+                            "from_strategy": plan["strategy"],
+                            "to_strategy": fb["name"],
+                            "reason": f"phase_{phase}_aborted",
+                        },
                     )
-                    self._engine.ledger.add_decision("replan", {
-                        "from_strategy": plan["strategy"],
-                        "to_strategy": fb["name"],
-                        "reason": f"phase_{phase}_aborted",
-                    })
                     # Ejecutar fases restantes del fallback
                     for fb_phase in fb["phases"]:
                         if fb_phase not in phases_to_run:
@@ -178,9 +192,7 @@ class Planner:
 
         return results
 
-    def plan_dependency_order(
-        self, goals: list[dict], goal_manager
-    ) -> list[dict]:
+    def plan_dependency_order(self, goals: list[dict], goal_manager) -> list[dict]:
         """Ordena objetivos respetando dependencias."""
         ordered: list[dict] = []
         executed: set[str] = set()

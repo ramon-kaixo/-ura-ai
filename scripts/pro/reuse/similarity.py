@@ -10,8 +10,6 @@ Usa:
 
 from __future__ import annotations
 
-from typing import Any
-
 
 def compare(new: dict, existing: dict) -> dict:
     """Compara una función nueva contra una existente. Retorna score de similitud.
@@ -81,7 +79,7 @@ def compare(new: dict, existing: dict) -> dict:
     if active_weights:
         total_weight = sum(active_weights)
         normalized = [w / total_weight for w in active_weights]
-        total_score = sum(s * nw for s, nw in zip(scores, normalized))
+        total_score = sum(s * nw for s, nw in zip(scores, normalized, strict=False))
     else:
         total_score = 0.0
 

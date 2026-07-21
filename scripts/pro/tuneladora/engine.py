@@ -45,7 +45,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import time
 from typing import Any
 
 from scripts.pro.tuneladora.checkpoint import CheckpointManager
@@ -136,7 +135,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0:
-            self.log.warn(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
+            self.log.warning(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
         return result
 
     def run_ruff(
@@ -157,7 +156,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0 and result.stderr:
-            self.log.warn(f"Ruff stderr: {result.stderr[:200]}")
+            self.log.warning(f"Ruff stderr: {result.stderr[:200]}")
         return result
 
     def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
@@ -174,7 +173,7 @@ class PipelineEngine:
     def health_ollama(self) -> list[dict[str, Any]]:
         """Verifica conectividad con Ollama."""
         try:
-            import httpx  # noqa: PLC0415
+            import httpx
 
             r = httpx.get(f"{self.config.ollama_url}/api/tags", timeout=5)
             if r.status_code == 200:

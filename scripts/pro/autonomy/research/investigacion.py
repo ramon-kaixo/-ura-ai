@@ -24,6 +24,7 @@ def main() -> int:
 
     if args.sync:
         from scripts.pro.autonomy.memory import SemanticMemory
+
         mem = SemanticMemory(db_path, engine.config.nervioso)
         engine.log.info("Sincronizando memoria semántica...")
         stats = mem.sync()
@@ -36,6 +37,7 @@ def main() -> int:
         engine.log.info("=" * 55)
 
         from scripts.pro.autonomy.research import Researcher
+
         researcher = Researcher(db_path)
         result = researcher.research()
         researcher.close()
@@ -43,16 +45,21 @@ def main() -> int:
         engine.log.info(f"Hipótesis generadas: {result['total_hipotesis']}")
         for c in result.get("conclusiones", []):
             icon = {"confirmada": "✅", "no_concluyente": "❓", "refutada": "❌", "sin_datos": "⚠️"}
-            engine.log.info(f"  {icon.get(c.get('veredicto', ''), '?')} [{c.get('veredicto', '')}] {c.get('title', '')}")
+            engine.log.info(
+                f"  {icon.get(c.get('veredicto', ''), '?')} [{c.get('veredicto', '')}] {c.get('title', '')}"
+            )
             engine.log.info(f"    Confianza: {c.get('confianza', 0)} | Evidencias: {c.get('total_evidencias', 0)}")
             engine.log.info(f"    {c.get('conclusion', '')[:120]}")
 
-        engine.log.report("INVESTIGACIÓN FINALIZADA", [
-            f"Hipótesis: {result['total_hipotesis']}",
-            f"Confirmadas: {result['resumen']['confirmadas']}",
-            f"No concluyentes: {result['resumen']['no_concluyentes']}",
-            f"Refutadas: {result['resumen']['refutadas']}",
-        ])
+        engine.log.report(
+            "INVESTIGACIÓN FINALIZADA",
+            [
+                f"Hipótesis: {result['total_hipotesis']}",
+                f"Confirmadas: {result['resumen']['confirmadas']}",
+                f"No concluyentes: {result['resumen']['no_concluyentes']}",
+                f"Refutadas: {result['resumen']['refutadas']}",
+            ],
+        )
 
     return 0
 

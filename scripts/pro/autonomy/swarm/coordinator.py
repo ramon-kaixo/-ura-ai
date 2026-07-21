@@ -8,17 +8,25 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scripts.pro.tuneladora.engine import PipelineEngine
+if TYPE_CHECKING:
+    from scripts.pro.tuneladora.engine import PipelineEngine
 
 DOMAIN_MAP = {
-    "arquitectura": "architecture", "deuda": "architecture", "refactor": "architecture",
-    "seguridad": "security", "secrets": "security",
-    "rendimiento": "performance", "benchmark": "performance",
-    "documentacion": "documentation", "docs": "documentation",
-    "investigacion": "research", "explorar": "research",
-    "tests": "testing", "cobertura": "testing",
+    "arquitectura": "architecture",
+    "deuda": "architecture",
+    "refactor": "architecture",
+    "seguridad": "security",
+    "secrets": "security",
+    "rendimiento": "performance",
+    "benchmark": "performance",
+    "documentacion": "documentation",
+    "docs": "documentation",
+    "investigacion": "research",
+    "explorar": "research",
+    "tests": "testing",
+    "cobertura": "testing",
 }
 
 # Áreas de impacto por dominio (para detección de conflictos)
@@ -78,9 +86,7 @@ class Coordinator:
         conflicts = self._detect_conflict(domain)
         if conflicts:
             self._metrics["conflictos"] += 1
-            self._engine.log.warn(
-                f"Conflicto potencial: {agent.name} impacta área ya modificada por {conflicts}"
-            )
+            self._engine.log.warn(f"Conflicto potencial: {agent.name} impacta área ya modificada por {conflicts}")
 
         assignment = {
             "session_id": self._session_id,
@@ -96,13 +102,16 @@ class Coordinator:
         self._metrics["total"] += 1
 
         # Persistir en ledger
-        self._engine.ledger.add_decision("swarm_assign", {
-            "session_id": self._session_id,
-            "goal_id": goal["goal_id"],
-            "agent": agent.name,
-            "domain": domain,
-            "conflicts": conflicts,
-        })
+        self._engine.ledger.add_decision(
+            "swarm_assign",
+            {
+                "session_id": self._session_id,
+                "goal_id": goal["goal_id"],
+                "agent": agent.name,
+                "domain": domain,
+                "conflicts": conflicts,
+            },
+        )
 
         try:
             result = agent.work(goal)

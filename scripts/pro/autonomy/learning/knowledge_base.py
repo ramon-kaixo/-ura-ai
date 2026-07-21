@@ -10,9 +10,11 @@ Cada entrada tiene:
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class KnowledgeBase:
@@ -36,8 +38,9 @@ class KnowledgeBase:
         path = self._dir / "knowledge.json"
         path.write_text(json.dumps(self._entries, indent=2, ensure_ascii=False))
 
-    def add(self, claim: str, evidence: str, confidence: float = 0.5,
-            category: str = "rendimiento", source: str = "") -> dict:
+    def add(
+        self, claim: str, evidence: str, confidence: float = 0.5, category: str = "rendimiento", source: str = ""
+    ) -> dict:
         """Crea una entrada de conocimiento con versionado."""
         entry = {
             "id": f"k{int(datetime.now(UTC).timestamp())}",
@@ -59,8 +62,7 @@ class KnowledgeBase:
         self._save()
         return entry
 
-    def search(self, category: str | None = None, min_confidence: float = 0.0,
-               status: str = "active") -> list[dict]:
+    def search(self, category: str | None = None, min_confidence: float = 0.0, status: str = "active") -> list[dict]:
         """Busca conocimiento activo por categoría y confianza mínima."""
         results = [e for e in self._entries if e.get("status") == status]
         if category:
@@ -91,17 +93,21 @@ class KnowledgeBase:
                     e["confidence"] = new_conf
                     if new_conf < 0.2:
                         e["status"] = "deprecated"
-                        e["history"].append({
-                            "action": "deprecated",
-                            "reason": f"confidence dropped to {new_conf}",
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        })
+                        e["history"].append(
+                            {
+                                "action": "deprecated",
+                                "reason": f"confidence dropped to {new_conf}",
+                                "timestamp": datetime.now(UTC).isoformat(),
+                            }
+                        )
 
-                e["verification_history"].append({
-                    "success": success,
-                    "confidence_after": e["confidence"],
-                    "timestamp": datetime.now(UTC).isoformat(),
-                })
+                e["verification_history"].append(
+                    {
+                        "success": success,
+                        "confidence_after": e["confidence"],
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
                 e["updated_at"] = datetime.now(UTC).isoformat()
                 self._save()
                 break
@@ -111,11 +117,13 @@ class KnowledgeBase:
         for e in self._entries:
             if e["id"] == entry_id:
                 e["version"] = e.get("version", 1) + 1
-                e["history"].append({
-                    "action": f"updated_to_v{e['version']}",
-                    "old_claim": e.get("claim", ""),
-                    "timestamp": datetime.now(UTC).isoformat(),
-                })
+                e["history"].append(
+                    {
+                        "action": f"updated_to_v{e['version']}",
+                        "old_claim": e.get("claim", ""),
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
                 e["claim"] = new_claim
                 e["evidence"] = new_evidence
                 e["updated_at"] = datetime.now(UTC).isoformat()
@@ -128,11 +136,13 @@ class KnowledgeBase:
         for e in self._entries:
             if e["id"] == entry_id:
                 e["status"] = "deprecated"
-                e["history"].append({
-                    "action": "deprecated",
-                    "reason": reason,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                })
+                e["history"].append(
+                    {
+                        "action": "deprecated",
+                        "reason": reason,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
                 e["updated_at"] = datetime.now(UTC).isoformat()
                 self._save()
                 break
@@ -157,20 +167,22 @@ class KnowledgeBase:
             age = (now - created).days
 
             should_archive = False
-            if e.get("status") == "deprecated" and age > max_age_days:
-                should_archive = True
-            elif e.get("status") == "active" and not e.get("verified") and age > max_age_days:
-                should_archive = True
-            elif (e.get("confidence") or 0) < min_confidence and age > max_age_days // 2:
+            if (
+                (e.get("status") == "deprecated" and age > max_age_days)
+                or (e.get("status") == "active" and not e.get("verified") and age > max_age_days)
+                or ((e.get("confidence") or 0) < min_confidence and age > max_age_days // 2)
+            ):
                 should_archive = True
 
             if should_archive:
                 e["status"] = "archived"
-                e["history"].append({
-                    "action": "archived",
-                    "reason": f"forget policy: age={age}d, confidence={e.get('confidence', 0)}",
-                    "timestamp": now.isoformat(),
-                })
+                e["history"].append(
+                    {
+                        "action": "archived",
+                        "reason": f"forget policy: age={age}d, confidence={e.get('confidence', 0)}",
+                        "timestamp": now.isoformat(),
+                    }
+                )
                 archived.append(e["id"])
 
         if archived:
@@ -195,7 +207,7 @@ class KnowledgeBase:
             return self.add(
                 claim=f"El plugin {plugin} tiene una tasa de fallo del {pattern.get('tasa_fallo', 0) * 100}%",
                 evidence=f"Detectado en {pattern.get('occurrences', 0)} de {pattern.get('total_ejecuciones', 0)} ejecuciones",
-                confidence=1.0 - pattern.get('tasa_fallo', 0),
+                confidence=1.0 - pattern.get("tasa_fallo", 0),
                 category="fiabilidad",
                 source="pattern_analyzer",
             )

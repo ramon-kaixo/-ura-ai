@@ -5,13 +5,15 @@ Flujo: Memoria Semántica → Hipótesis → Evidencias → Síntesis → Inform
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.pro.autonomy.memory.queries import SemanticQueries
-from scripts.pro.autonomy.research.hypothesis import HypothesisGenerator
 from scripts.pro.autonomy.research.evidence import EvidenceSearcher
+from scripts.pro.autonomy.research.hypothesis import HypothesisGenerator
 from scripts.pro.autonomy.research.synthesis import SynthesisEngine
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Researcher:

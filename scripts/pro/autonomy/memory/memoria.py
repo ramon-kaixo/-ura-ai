@@ -12,7 +12,7 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="URA Memoria Semántica")
     parser.add_argument("--sync", action="store_true", help="Sincronizar ledger → SQLite")
@@ -28,7 +28,7 @@ def main() -> int:
     db_path = engine.config.nervioso / "memory" / "semantic.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    from scripts.pro.autonomy.memory import SemanticMemory  # noqa: PLC0415
+    from scripts.pro.autonomy.memory import SemanticMemory
 
     mem = SemanticMemory(db_path, engine.config.nervioso)
 
@@ -67,7 +67,9 @@ def main() -> int:
 
     if args.recent:
         for e in mem.queries.executions_by_date(days=args.recent):
-            engine.log.info(f"  {e['execution_id'][:12]} {e['pipeline']:12} {e['result']:12} {e.get('duration_ms', 0)}ms")
+            engine.log.info(
+                f"  {e['execution_id'][:12]} {e['pipeline']:12} {e['result']:12} {e.get('duration_ms', 0)}ms"
+            )
 
     mem.close()
     return 0

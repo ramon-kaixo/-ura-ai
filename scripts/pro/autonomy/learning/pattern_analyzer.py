@@ -6,10 +6,12 @@ Usa LedgerValidator para carga validada (elimina duplicación D1).
 from __future__ import annotations
 
 import statistics
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.pro.autonomy.learning.ledger_utils import LedgerValidator
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class PatternAnalyzer:
@@ -39,14 +41,16 @@ class PatternAnalyzer:
 
         for plugin, fails in sorted(plugin_errors.items(), key=lambda x: -x[1])[:3]:
             total = sum(1 for e in entries for p in (e.get("plugin_status") or {}) if p == plugin)
-            patterns.append({
-                "pattern": f"plugin_fail_{plugin}",
-                "occurrences": fails,
-                "total_ejecuciones": len(entries),
-                "tasa_fallo": round(fails / max(total, 1), 2) if total else 1.0,
-                "severity": "high" if fails >= 3 else "medium" if fails >= 1 else "low",
-                "trend": self._calc_trend(plugin, entries),
-            })
+            patterns.append(
+                {
+                    "pattern": f"plugin_fail_{plugin}",
+                    "occurrences": fails,
+                    "total_ejecuciones": len(entries),
+                    "tasa_fallo": round(fails / max(total, 1), 2) if total else 1.0,
+                    "severity": "high" if fails >= 3 else "medium" if fails >= 1 else "low",
+                    "trend": self._calc_trend(plugin, entries),
+                }
+            )
 
         # 2. Fase más lenta
         phase_times: dict[str, list[float]] = {}
@@ -58,14 +62,16 @@ class PatternAnalyzer:
                 avg = statistics.mean(times)
                 max_t = max(times)
                 if max_t > avg * 2 and max_t > 30:
-                    patterns.append({
-                        "pattern": f"phase_slow_{phase}",
-                        "occurrences": len([t for t in times if t > avg * 2]),
-                        "avg_s": round(avg, 1),
-                        "max_s": round(max_t, 1),
-                        "severity": "medium",
-                        "trend": "stable",
-                    })
+                    patterns.append(
+                        {
+                            "pattern": f"phase_slow_{phase}",
+                            "occurrences": len([t for t in times if t > avg * 2]),
+                            "avg_s": round(avg, 1),
+                            "max_s": round(max_t, 1),
+                            "severity": "medium",
+                            "trend": "stable",
+                        }
+                    )
 
         # 3. Objetivos que más fallan
         goal_results: dict[str, list[bool]] = {}
@@ -79,13 +85,15 @@ class PatternAnalyzer:
             if len(results) >= 2:
                 fail_rate = 1 - (sum(results) / len(results))
                 if fail_rate > 0.3:
-                    patterns.append({
-                        "pattern": f"goal_fail_{title[:30]}",
-                        "occurrences": len([r for r in results if not r]),
-                        "tasa_fallo": round(fail_rate, 2),
-                        "severity": "medium" if fail_rate > 0.5 else "low",
-                        "trend": "stable",
-                    })
+                    patterns.append(
+                        {
+                            "pattern": f"goal_fail_{title[:30]}",
+                            "occurrences": len([r for r in results if not r]),
+                            "tasa_fallo": round(fail_rate, 2),
+                            "severity": "medium" if fail_rate > 0.5 else "low",
+                            "trend": "stable",
+                        }
+                    )
 
         return patterns
 

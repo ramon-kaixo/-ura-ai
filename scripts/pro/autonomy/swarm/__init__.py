@@ -4,15 +4,24 @@ Coordinator asigna objetivos a agentes especializados.
 Cada agente usa PipelineEngine, SemanticMemory y Research como herramientas.
 """
 
-from scripts.pro.autonomy.swarm.coordinator import Coordinator, DOMAIN_MAP
 from scripts.pro.autonomy.swarm.agent_base import AgentBase
 from scripts.pro.autonomy.swarm.agents import (
-    ArchitectureAgent, SecurityAgent, PerformanceAgent,
-    DocumentationAgent, ResearchAgent, TestingAgent,
+    ArchitectureAgent,
+    DocumentationAgent,
+    PerformanceAgent,
+    ResearchAgent,
+    SecurityAgent,
+    TestingAgent,
 )
+from scripts.pro.autonomy.swarm.coordinator import DOMAIN_MAP, Coordinator
 
 __all__ = [
-    "Coordinator", "AgentBase",
-    "ArchitectureAgent", "SecurityAgent", "PerformanceAgent",
-    "DocumentationAgent", "ResearchAgent", "TestingAgent",
+    "AgentBase",
+    "ArchitectureAgent",
+    "Coordinator",
+    "DocumentationAgent",
+    "PerformanceAgent",
+    "ResearchAgent",
+    "SecurityAgent",
+    "TestingAgent",
 ]

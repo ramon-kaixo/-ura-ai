@@ -110,7 +110,8 @@ def run_phase(
     """
     plugins = discover_all()
     phase_plugins = {
-        name: p for name, p in plugins.items()
+        name: p
+        for name, p in plugins.items()
         if (p.get("phase") == phase or p.get("phase") == "always")
         and (capability is None or p.get("capability") == capability)
     }

@@ -7,11 +7,13 @@ Respeta ADR-030: no modifica infraestructura existente.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.pro.autonomy.memory.ingester import LedgerIngester
 from scripts.pro.autonomy.memory.queries import SemanticQueries
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class SemanticMemory:

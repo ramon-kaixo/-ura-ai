@@ -47,16 +47,14 @@ def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Autonomía v3.3 — Aprendizaje útil")
-    parser.add_argument("goals", nargs="*", default=[],
-                        help="Objetivos a ejecutar (si no se especifican, usa la cola)")
+    parser.add_argument("goals", nargs="*", default=[], help="Objetivos a ejecutar (si no se especifican, usa la cola)")
     parser.add_argument("--priority", default="medium")
     parser.add_argument("--list", action="store_true", help="Listar cola de objetivos")
     parser.add_argument("--show", type=str, default=None, help="Mostrar detalle de un objetivo")
     parser.add_argument("--suspend", type=str, default=None, metavar="GOAL_ID")
     parser.add_argument("--resume", type=str, default=None, metavar="GOAL_ID")
     parser.add_argument("--cancel", type=str, default=None, metavar="GOAL_ID")
-    parser.add_argument("--reprioritize", type=str, default=None, nargs=2,
-                        metavar=("GOAL_ID", "PRIORITY"))
+    parser.add_argument("--reprioritize", type=str, default=None, nargs=2, metavar=("GOAL_ID", "PRIORITY"))
     parser.add_argument("--budget-time", type=int, default=3600)
     parser.add_argument("--budget-changes", type=int, default=50)
     args = parser.parse_args()
@@ -69,9 +67,11 @@ def main() -> int:
         for g in gm.queue():
             deps = f" (dep: {g['dependencies']})" if g.get("dependencies") else ""
             print(f"  [{g['status']:12}] {g['priority']:8} {g['title']}{deps}")
-        print(f"\n  Total: {gm.summary()['total']} | "
-              f"Pendientes: {gm.summary()['pending']} | "
-              f"Completados: {gm.summary()['completed']}")
+        print(
+            f"\n  Total: {gm.summary()['total']} | "
+            f"Pendientes: {gm.summary()['pending']} | "
+            f"Completados: {gm.summary()['completed']}"
+        )
         return 0
 
     if args.show:
@@ -135,11 +135,13 @@ def main() -> int:
     for goal in ordered:
         engine.log.info(f"── Objetivo: {goal['title']} ──")
         evaluation = _run_goal(engine, gm, planner, goal)
-        results_summary.append({
-            "goal_id": goal["goal_id"],
-            "title": goal["title"],
-            "action": evaluation["action"],
-        })
+        results_summary.append(
+            {
+                "goal_id": goal["goal_id"],
+                "title": goal["title"],
+                "action": evaluation["action"],
+            }
+        )
 
     # ── Learning ──
     engine.log.info("── Learning: Analizar historial ──")
@@ -170,12 +172,15 @@ def main() -> int:
     M = int((elapsed % 3600) // 60)
     S = int(elapsed % 60)
 
-    engine.log.report("AUTONOMÍA v3.1 FINALIZADA", [
-        f"Objetivos ejecutados: {len(ordered)}",
-        f"Duración: {H}h {M}m {S}s",
-        f"Resultados: {[r['action'] for r in results_summary]}",
-        f"Ledger: {ledger_path}",
-    ])
+    engine.log.report(
+        "AUTONOMÍA v3.1 FINALIZADA",
+        [
+            f"Objetivos ejecutados: {len(ordered)}",
+            f"Duración: {H}h {M}m {S}s",
+            f"Resultados: {[r['action'] for r in results_summary]}",
+            f"Ledger: {ledger_path}",
+        ],
+    )
     return 0 if all(r["action"] == "finalizar" for r in results_summary) else 1
 
 

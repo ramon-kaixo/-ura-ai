@@ -42,7 +42,7 @@ class SynthesisEngine:
             "confirmada": f"Los datos confirman que {hypothesis.get('claim', '')}",
             "no_concluyente": f"Los datos son insuficientes para determinar si {hypothesis.get('claim', '')}",
             "refutada": f"Los datos contradicen que {hypothesis.get('claim', '')}",
-            "sin_datos": f"No hay datos para evaluar la hipótesis",
+            "sin_datos": "No hay datos para evaluar la hipótesis",
         }
 
         return {
@@ -68,7 +68,7 @@ class SynthesisEngine:
             return {**conclusion, "verificada": True, "verificada_en": "sin_cambio"}
 
         apoyan = sum(1 for e in new_evidence if e.get("tipo") == "apoya")
-        contradicen = sum(1 for e in new_evidence if e.get("tipo") == "contradice")
+        sum(1 for e in new_evidence if e.get("tipo") == "contradice")
         total = len(new_evidence)
 
         if total == 0:

@@ -16,7 +16,10 @@ Schema version actual: 1
 from __future__ import annotations
 
 import sqlite3
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 SCHEMA_VERSION = 1
 
@@ -125,7 +128,7 @@ MIGRATIONS = {
 def get_schema_version(db: sqlite3.Connection) -> int:
     try:
         row = db.execute("SELECT MAX(version) FROM migrations").fetchone()
-        return row[0] if row[0] else 0
+        return row[0] or 0
     except sqlite3.OperationalError:
         return 0
 

@@ -9,13 +9,14 @@ Permite responder:
 
 from __future__ import annotations
 
-import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.pro.autonomy.memory.schema import migrate
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class SemanticQueries:
@@ -105,9 +106,7 @@ class SemanticQueries:
 
     def goals_by_status(self, status: str) -> list[dict]:
         conn = self._connect()
-        rows = conn.execute(
-            "SELECT * FROM goals WHERE status = ? ORDER BY created_at DESC", (status,)
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM goals WHERE status = ? ORDER BY created_at DESC", (status,)).fetchall()
         return [dict(r) for r in rows]
 
     def total_size(self) -> dict[str, int]:

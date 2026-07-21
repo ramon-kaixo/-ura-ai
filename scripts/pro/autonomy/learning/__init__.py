@@ -8,16 +8,16 @@ Componentes:
   TrendMonitor       — verifica impacto de políticas aplicadas
 """
 
-from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
 from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase
-from scripts.pro.autonomy.learning.recommendation_engine import RecommendationEngine
+from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
 from scripts.pro.autonomy.learning.policy_engine import PolicyEngine
+from scripts.pro.autonomy.learning.recommendation_engine import RecommendationEngine
 from scripts.pro.autonomy.learning.trend_monitor import TrendMonitor
 
 __all__ = [
-    "PatternAnalyzer",
     "KnowledgeBase",
-    "RecommendationEngine",
+    "PatternAnalyzer",
     "PolicyEngine",
+    "RecommendationEngine",
     "TrendMonitor",
 ]

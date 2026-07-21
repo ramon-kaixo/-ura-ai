@@ -12,14 +12,15 @@ Permite responder:
 from __future__ import annotations
 
 import json
-import os
 import platform
 import subprocess
 import time
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class ExecutionLedger:
@@ -63,20 +64,20 @@ class ExecutionLedger:
             "rollback": False,
             "warnings": [],
             "errors": [],
-    "resources": {},
-    "result": "unknown",
-    "report_id": "",
-    "goal": None,
-    "decisions": [],
-    "alternatives": [],
-    "plan": None,
-    "evaluation": None,
-    "pattern_detections": [],
-    "knowledge": [],
-    "recommendations": [],
-    "policies": [],
-    "verifications": [],
-}
+            "resources": {},
+            "result": "unknown",
+            "report_id": "",
+            "goal": None,
+            "decisions": [],
+            "alternatives": [],
+            "plan": None,
+            "evaluation": None,
+            "pattern_detections": [],
+            "knowledge": [],
+            "recommendations": [],
+            "policies": [],
+            "verifications": [],
+        }
 
     def set_trigger(self, trigger: str) -> None:
         self._entry["trigger"] = trigger
@@ -116,7 +117,10 @@ class ExecutionLedger:
             if not before:
                 before = subprocess.run(
                     ["git", "rev-parse", "HEAD"],
-                    capture_output=True, text=True, timeout=10,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
                 ).stdout.strip()
             self._entry["git_commit_before"] = before
             self._entry["git_commit_after"] = after or before
@@ -127,17 +131,21 @@ class ExecutionLedger:
         self._entry["goal"] = goal
 
     def add_decision(self, decision_type: str, payload: dict) -> None:
-        self._entry.setdefault("decisions", []).append({
-            "type": decision_type,
-            "timestamp": datetime.now(UTC).isoformat(),
-            **payload,
-        })
+        self._entry.setdefault("decisions", []).append(
+            {
+                "type": decision_type,
+                "timestamp": datetime.now(UTC).isoformat(),
+                **payload,
+            }
+        )
 
     def add_alternative(self, strategy: str, reason_not_chosen: str) -> None:
-        self._entry.setdefault("alternatives", []).append({
-            "strategy": strategy,
-            "reason_not_chosen": reason_not_chosen,
-        })
+        self._entry.setdefault("alternatives", []).append(
+            {
+                "strategy": strategy,
+                "reason_not_chosen": reason_not_chosen,
+            }
+        )
 
     def set_plan(self, plan: dict) -> None:
         self._entry["plan"] = plan

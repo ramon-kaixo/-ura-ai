@@ -21,8 +21,7 @@ def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Reuse Detector + Quality Gates")
-    parser.add_argument("action", choices=["index", "search", "check", "gates"],
-                        help="Acción a ejecutar")
+    parser.add_argument("action", choices=["index", "search", "check", "gates"], help="Acción a ejecutar")
     parser.add_argument("target", nargs="?", default="", help="Nombre o archivo a buscar")
     parser.add_argument("--min-score", type=float, default=0.4, help="Score mínimo (0-1)")
     parser.add_argument("--commit-threshold", type=int, default=10)
@@ -57,7 +56,9 @@ def main() -> int:
         if results:
             print(f"Coincidencias para '{args.target}':")
             for r in results:
-                print(f"  {r['categoria']:10} score={r['score']:.0%}  {r['existing_name']:30} {r['existing_file']}:{r['existing_line']}")
+                print(
+                    f"  {r['categoria']:10} score={r['score']:.0%}  {r['existing_name']:30} {r['existing_file']}:{r['existing_line']}"
+                )
         else:
             print(f"Sin coincidencias para '{args.target}'")
         return 0
@@ -70,7 +71,9 @@ def main() -> int:
             print(f"Posible duplicación en {args.target}:")
             for r in results:
                 cat = r.get("categoria_desc", r["categoria"])
-                print(f"  {r['categoria']:10} score={r['score']:.0%}  → {r['existing_name']:30} {r['existing_file']}:{r['existing_line']}")
+                print(
+                    f"  {r['categoria']:10} score={r['score']:.0%}  → {r['existing_name']:30} {r['existing_file']}:{r['existing_line']}"
+                )
                 print(f"    {cat}")
         else:
             print(f"Sin duplicación detectada en {args.target}")
