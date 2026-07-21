@@ -42,7 +42,7 @@ async def _call(method: str, params: dict | None = None) -> dict:
     elif method == "tools/list":
         result = await t(params or {})
         return {"jsonrpc": "2.0", "result": result}
-    elif method in ("memory_store", "memory_search", "memory_stats", "ura_health", "memory_investigate"):
+    elif method in ("memory_store", "memory_search", "memory_stats", "ura_health", "memory_investigate", "memory_research"):
         result = await c({"name": method, "arguments": params or {}})
         return {"jsonrpc": "2.0", "result": result}
     return {"jsonrpc": "2.0", "error": {"code": -32601, "message": "unknown method"}}
@@ -189,3 +189,22 @@ def test_memory_investigate_no_results():
     assert "result" in resp
     data = json.loads(resp["result"]["content"][0]["text"])
     assert data["sources_count"] == 0, f"Esperaba 0 fuentes, obtuvo {data['sources_count']}"
+
+
+def test_memory_research():
+    import asyncio
+
+    _reset_memory()
+
+    # Store local context first
+    asyncio.run(_call("memory_store", {"payload": "la inteligencia artificial es un campo de la computacion"}))
+    asyncio.run(_call("memory_store", {"payload": "los modelos de lenguaje permiten procesar texto natural"}))
+
+    # Research combines local + web (web may fail in test, but local should work)
+    resp = asyncio.run(_call("memory_research", {"query": "inteligencia artificial", "web_results": 1, "local_results": 5}))
+    assert "result" in resp
+    data = json.loads(resp["result"]["content"][0]["text"])
+    assert "id" in data
+    assert data["local_sources"] >= 1
+    assert "synthesis" in data
+    assert "inteligencia" in data["synthesis"].lower()
