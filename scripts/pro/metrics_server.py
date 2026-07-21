@@ -284,6 +284,20 @@ async def handle_pipeline_status(request: web.Request) -> web.Response:
         return web.json_response({"status": "error", "detail": str(e)})
 
 
+TRENDS_PATH = Path(__file__).resolve().parent.parent.parent / "docs" / "architecture" / "arq_trends.jsonl"
+
+
+async def handle_arq_trends(request: web.Request) -> web.Response:
+    if not TRENDS_PATH.exists():
+        return web.json_response({"status": "no_data", "entries": []})
+    try:
+        lines = TRENDS_PATH.read_text().strip().split("\n")
+        entries = [json.loads(l) for l in lines if l.strip()]
+        return web.json_response({"status": "ok", "entries": entries[-50:]})  # últimas 50
+    except Exception as e:
+        return web.json_response({"status": "error", "detail": str(e)})
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     app = web.Application()
@@ -294,6 +308,7 @@ def main() -> None:
     app.router.add_get("/memory", handle_memory)
     app.router.add_get("/version", handle_version)
     app.router.add_get("/pipeline/status", handle_pipeline_status)
+    app.router.add_get("/arq/trends", handle_arq_trends)
     _health.set_healthy("metrics_server")
     _health.register_component("hybrid_memory")
     _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")

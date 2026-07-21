@@ -1,0 +1,1 @@
+{"timestamp": "2026-07-21T21:37:07.060662+00:00", "version": "v4.10.0", "files_scanned": 809, "total_fail": 33, "total_warn": 37, "side_effects": 33, "singletons_forbidden": 0, "modules_over_500_lines": 4, "script_import_violations": 0}
