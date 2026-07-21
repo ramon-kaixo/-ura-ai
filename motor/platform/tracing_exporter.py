@@ -266,3 +266,54 @@ class LatencyStats:
         self.durations_ns.append(duration_ns)
         if len(self.durations_ns) > self.window:
             self.durations_ns.pop(0)
+class MetricsCollector:
+    """Colector de métricas de latencia por subsistema.
+
+    OBS-06: p50/p95/p99 por subsistema.
+    Thread-safe.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._stats: dict[str, LatencyStats] = {}
+
+    def record(
+        self,
+        subsystem: str,
+        duration_ns: int,
+        error: bool = False,
+    ) -> None:
+        with self._lock:
+            if subsystem not in self._stats:
+                self._stats[subsystem] = LatencyStats()
+            self._stats[subsystem].record(duration_ns, error)
+
+    def snapshot(self) -> dict[str, Any]:
+        """Compute and return percentiles for all subsystems."""
+        with self._lock:
+            result: dict[str, Any] = {}
+            for subsystem, stats in self._stats.items():
+                stats.compute_percentiles()
+                result[subsystem] = stats.to_dict()
+            return result
+
+    def throughput(self, window_seconds: float = 60.0) -> dict[str, float]:
+        """Events per second per subsystem (approximate)."""
+        with self._lock:
+            return {s: st.count / max(window_seconds, 1) for s, st in self._stats.items()}
+
+    def error_rates(self) -> dict[str, float]:
+        """Error rate per subsystem."""
+        with self._lock:
+            return {s: st.errors / max(st.count, 1) for s, st in self._stats.items()}
+
+    def clear(self) -> None:
+        with self._lock:
+            self._stats.clear()
+
+
+# ── Global collector ────────────────────────
+
+_global_collector = MetricsCollector()
+
+
