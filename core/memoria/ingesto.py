@@ -2,6 +2,7 @@ import logging
 
 log = logging.getLogger("memoria.ingesto")
 PROCESADOS: set = set()
+procesados_local = PROCESADOS  # alias para import en consulta.py
 
 
 def procesar_archivo(ruta) -> dict | None:
