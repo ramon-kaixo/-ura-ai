@@ -42,7 +42,7 @@ class Diagnostico:
         if not self.cb.is_available:
             r.modo_offline = True
             log.warning("modo offline (circuit breaker abierto)")
-        incidentes, costes = buscar_patrones(scan, self.qdrant, self.cb, self.config)
+        incidentes, costes = buscar_patrones(scan, self.qdrant, self.config)
         r.incidentes = incidentes
         r.coste_historico = costes
         tags = self._extraer_tags(incidentes, scan)

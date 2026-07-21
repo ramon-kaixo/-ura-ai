@@ -28,9 +28,7 @@ HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
 
 # Qdrant + embedding para /v2/interact
-from motor.core.config import UraConfig
-from motor.core.qdrant_client import QdrantClient
-from motor.core.state import DegradedMode
+from motor.cli.public_api import DegradedMode, QdrantClient, UraConfig
 
 _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
