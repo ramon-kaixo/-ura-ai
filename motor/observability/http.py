@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from fastapi import APIRouter
     from motor.observability.health import HealthRegistry
     from motor.observability.metrics import MetricsRegistry
     from motor.observability.readiness import ReadinessRegistry
@@ -15,7 +16,7 @@ def create_router(
     metrics: MetricsRegistry,
     health: HealthRegistry,
     readiness: ReadinessRegistry,
-):
+) -> Any | None:
     try:
         from fastapi import APIRouter
     except ImportError:
@@ -25,15 +26,15 @@ def create_router(
     router = APIRouter()
 
     @router.get("/metrics")
-    def get_metrics():
+    def get_metrics() -> dict[str, Any]:
         return metrics.snapshot()
 
     @router.get("/health")
-    def get_health():
+    def get_health() -> dict[str, Any]:
         return health.snapshot()
 
     @router.get("/ready")
-    def get_ready():
+    def get_ready() -> dict[str, Any]:
         return readiness.snapshot()
 
     return router

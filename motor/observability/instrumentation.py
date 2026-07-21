@@ -34,7 +34,7 @@ class Instrumentation:
         self.health.register_component("eventbus")
 
         def _wrap_publish(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(topic: str, payload: Any, *, source: str = "system") -> None:  # type: ignore[explicit-any]
+            def wrapped(topic: str, payload: Any, *, source: str = "system") -> None:
                 start = time.monotonic()
                 try:
                     original(topic, payload, source=source)
@@ -49,7 +49,7 @@ class Instrumentation:
             return wrapped
 
         def _wrap_emit_sync(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(topic: str, payload: Any, *, source: str = "system") -> list[Any]:  # type: ignore[explicit-any]
+            def wrapped(topic: str, payload: Any, *, source: str = "system") -> list[Any]:
                 start = time.monotonic()
                 try:
                     result = original(topic, payload, source=source)
@@ -72,7 +72,7 @@ class Instrumentation:
         self.health.register_component("plugins")
 
         def _wrap_get(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(name: str) -> Any:  # type: ignore[explicit-any]
+            def wrapped(name: str) -> Any:
                 start = time.monotonic()
                 result = original(name)
                 duration = (time.monotonic() - start) * 1000
@@ -97,7 +97,7 @@ class Instrumentation:
         self.health.register_component("pipeline")
 
         def _wrap_execute(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(pipeline: Any, context: dict[str, Any] | None = None) -> Any:  # type: ignore[explicit-any]
+            def wrapped(pipeline: Any, context: dict[str, Any] | None = None) -> Any:
                 start = time.monotonic()
                 self.metrics.counter("pipeline_executed_total", labels={"pipeline": pipeline.name}).inc()
                 c = self.metrics.counter("pipeline_stages_total", labels={"pipeline": pipeline.name})
@@ -130,7 +130,7 @@ class Instrumentation:
         self.health.register_component("hooks")
 
         def _wrap_register(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(plugin_name: str, plugin: Any) -> None:  # type: ignore[explicit-any]
+            def wrapped(plugin_name: str, plugin: Any) -> None:
                 original(plugin_name, plugin)
                 self.metrics.counter("hooks_registered_total", labels={"plugin": plugin_name}).inc()
 
@@ -144,7 +144,7 @@ class Instrumentation:
         self.health.register_component("subprocess")
 
         def _wrap_run(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:  # type: ignore[explicit-any]
+            def wrapped(cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
                 cmd_name = cmd[0] if cmd else "?"
                 start = time.monotonic()
                 self.metrics.counter("subprocess_started_total", labels={"cmd": cmd_name}).inc()
