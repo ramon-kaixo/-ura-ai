@@ -53,109 +53,18 @@ MAX_TRACE_FILE_BYTES = 1 * 1024**3  # 1 GB max per trace file before rotation
 EXPORTER_BUFFER_SIZE = 10000  # max queued events before drop
 CPU_BUDGET_FRAC = 0.02  # max fraction of wall time for tracing
 LATENCY_BUDGET_NS = 5_000_000  # max 5ms p99 latency for tracing overhead
-FORBIDDEN_TAG_PREFIXES = (  # OBS-08: privacy — prefix match only
-    "prompt",
-    "query_",
-    "document_",
-    "key_",
-    "token",
-    "secret",
-    "password",
-    "credential",
-    "api_key",
-    "auth_",
+
+
+from motor.platform.tracing_sampler import (
+    FORBIDDEN_TAG_EXACT,
+    FORBIDDEN_TAG_PREFIXES,
+    MAX_TAG_KEY_LENGTH,
+    MAX_TAG_VAL_LENGTH,
+    MAX_TAGS_PER_EVENT,
+    Sampler,
+    SamplingStrategy,
+    sanitize_tags,
 )
-FORBIDDEN_TAG_EXACT = {  # whole-word match
-    "query",
-    "document",
-    "key",
-    "secret",
-}
-
-
-# ── Sampler (OBS-07) ────────────────────────
-
-
-class SamplingStrategy(StrEnum):
-    ALWAYS = "always"
-    NEVER = "never"
-    PROBABILISTIC = "probabilistic"
-    ADAPTIVE = "adaptive"
-    PRIORITY = "priority"
-
-
-@dataclass
-class Sampler:
-    """Trace sampling controller.
-
-    Always: sample all traces (default).
-    Never: sample no traces.
-    Probabilistic: sample with probability p (0.0-1.0).
-    Adaptive: increase probability when error rate is high.
-    Priority: sample based on trace priority label.
-    """
-
-    strategy: SamplingStrategy = SamplingStrategy.ALWAYS
-    probability: float = 0.1  # for PROBABILISTIC
-    error_rate_window: int = 100  # for ADAPTIVE
-    adaptive_min_p: float = 0.05
-    adaptive_max_p: float = 1.0
-
-    # Internal state for ADAPTIVE
-    _recent_errors: list[bool] = field(default_factory=list)
-
-    def should_sample(self, tags: dict[str, str] | None = None) -> bool:
-        if self.strategy == SamplingStrategy.ALWAYS:
-            return True
-        if self.strategy == SamplingStrategy.NEVER:
-            return False
-        if self.strategy == SamplingStrategy.PROBABILISTIC:
-            return random.random() < self.probability  # noqa: S311
-        if self.strategy == SamplingStrategy.ADAPTIVE:
-            if self._recent_errors:
-                rate = sum(self._recent_errors) / len(self._recent_errors)
-                p = self.adaptive_min_p + (self.adaptive_max_p - self.adaptive_min_p) * rate
-                return random.random() < p  # noqa: S311
-            return random.random() < self.adaptive_min_p  # noqa: S311
-        if self.strategy == SamplingStrategy.PRIORITY:
-            tags = tags or {}
-            priority = tags.get("priority", "normal")
-            return priority in ("critical", "high")
-        return True
-
-    def record_error(self, was_error: bool) -> None:
-        self._recent_errors.append(was_error)
-        if len(self._recent_errors) > self.error_rate_window:
-            self._recent_errors.pop(0)
-
-
-# ── Privacy: tag sanitization (OBS-08) ──────
-
-
-def sanitize_tags(tags: dict[str, str]) -> dict[str, str]:
-    """Remove or truncate sensitive tag values.
-
-    OBS-08: no prompts, documents, keys, tokens in traces.
-    Uses prefix and exact matching to avoid false positives (e.g., "safe_key").
-    """
-    result: dict[str, str] = {}
-    for k, v in tags.items():
-        k_lower = k.lower().strip()
-        # Check exact match
-        if k_lower in FORBIDDEN_TAG_EXACT:
-            continue
-        # Check prefix match
-        if any(k_lower.startswith(p) for p in FORBIDDEN_TAG_PREFIXES):
-            continue
-        # Truncate key
-        k_clean = k[:MAX_TAG_KEY_LENGTH]
-        # Truncate value
-        v_clean = v[:MAX_TAG_VAL_LENGTH]
-        result[k_clean] = v_clean
-        if len(result) >= MAX_TAGS_PER_EVENT:
-            break
-    return result
-
 
 # ── DropPolicy (OBS-04 backpressure) ────────
 
