@@ -30,7 +30,7 @@ python3 << 'PY'
 from core.utils.anonymizer import sanitize_text
 import os, json
 result = {}
-for f in ['core/memory_engine.py', 'core/model_router.py', 'core/auth_layer.py', 'core/guardians/ast_sentinel.py']:
+for f in ['core/memory_engine.py', 'core/model_router_main.py', 'core/auth_layer.py', 'core/guardians/ast_sentinel.py']:
     if os.path.exists(f):
         c = open(f).read()
         result[f] = sanitize_text(c)[:1500]
@@ -42,7 +42,7 @@ total=0
 
 # Modelos locales (Qwen + DeepSeek)
 for modelo in "qwen2.5-coder:32b" "deepseek-coder:6.7b"; do
-    for archivo in core/memory_engine.py core/model_router.py core/auth_layer.py; do
+    for archivo in core/memory_engine.py core/model_router_main.py core/auth_layer.py; do
         if [ -f "$archivo" ]; then
             CODIGO=$(python3 -c "import json; d=json.load(open('/tmp/audit_codigo.json')); print(d.get('$archivo','')[:1000])")
             RESULT=$(ollama run "$modelo" "Audita este codigo. Responde SOLO 'OK' o 'FALLO: motivo': $CODIGO" 2>/dev/null) || true
@@ -56,7 +56,7 @@ done
 # Groq si hay API key (4 modelos adicionales)
 if [ -n "$GROQ_KEY" ] && command -v tor &>/dev/null; then
     for modelo_en_groq in "llama3-70b-8192" "mixtral-8x7b-32768" "gemma2-9b-it"; do
-        for archivo in core/memory_engine.py core/model_router.py core/auth_layer.py; do
+        for archivo in core/memory_engine.py core/model_router_main.py core/auth_layer.py; do
             if [ -f "$archivo" ]; then
                 CODIGO=$(python3 -c "import json; d=json.load(open('/tmp/audit_codigo.json')); print(d.get('$archivo','')[:1000])")
                 RESP=$(curl -s --max-time 60 -x socks5h://127.0.0.1:9050 \

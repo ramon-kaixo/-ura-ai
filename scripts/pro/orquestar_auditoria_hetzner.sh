@@ -47,7 +47,7 @@ ssh root@${HETZNER_IP} "
     echo '=== Auditoria remota Hetzner ==='
     echo 'Modelo: deepseek-coder:6.7b'
     echo ''
-    for mod in core/memory_engine.py core/model_router.py core/auth_layer.py; do
+    for mod in core/memory_engine.py core/model_router_main.py core/auth_layer.py; do
         if [ -f \"\$mod\" ]; then
             CONTENIDO=\$(head -200 \"\$mod\")
             echo \"Analizando \$mod...\"

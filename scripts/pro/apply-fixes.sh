@@ -7,7 +7,7 @@
 #   ./apply-fixes.sh --status           → muestra estado actual de servicios
 #
 # Servicios afectados por los fixes:
-#   model-router → core/model_router.py, core/inferencia/engine.py
+#   model-router → core/model_router_main.py, core/inferencia/engine.py
 #   snc          → monitor/snc.py
 #
 set -euo pipefail
@@ -22,7 +22,7 @@ TIMESTAMP=$(date +%s)
 
 SERVICES=("model-router" "snc")
 declare -A SERVICE_FILES
-SERVICE_FILES["model-router"]="core/model_router.py core/inferencia/engine.py"
+SERVICE_FILES["model-router"]="core/model_router_main.py core/inferencia/engine.py"
 SERVICE_FILES["snc"]="monitor/snc.py"
 
 # ── Colores ──
