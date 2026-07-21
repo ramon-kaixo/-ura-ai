@@ -129,6 +129,7 @@ def main() -> None:
         "index",
         "ask",
         "memory",
+        "system",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")

@@ -163,11 +163,13 @@ async def _handle_tools_call(params: dict) -> dict:
                 + ("La información disponible sugiere que este tema tiene cobertura documental."
                    if sources else "No se encontraron fuentes relevantes en la memoria.")
             )
-            rid = _memory.store(
-                payload=synthesis,
-                memory_type=MemoryType.SEMANTIC,
-                metadata={"type": "research", "question": question, "sources": len(sources)},
-            )
+            rid = ""
+            if sources:
+                rid = _memory.store(
+                    payload=synthesis,
+                    memory_type=MemoryType.SEMANTIC,
+                    metadata={"type": "research", "question": question, "sources": len(sources)},
+                )
             return {
                 "content": [
                     {"type": "text", "text": json.dumps({
@@ -222,7 +224,8 @@ async def _send(response: dict) -> bool:
 async def main() -> None:
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
-    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+    stdin_pipe = getattr(sys.stdin.buffer, "raw", sys.stdin.buffer)
+    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, stdin_pipe)
 
     msg: dict | None = None
     while True:

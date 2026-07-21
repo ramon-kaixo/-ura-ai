@@ -22,7 +22,6 @@ from pathlib import Path
 from aiohttp import web
 from motor.observability import HealthRegistry
 from motor.intelligence.memory.hybrid import HybridMemory
-from motor.observability import HealthRegistry
 
 log = logging.getLogger("ura.metrics")
 
