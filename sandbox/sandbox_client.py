@@ -1,5 +1,5 @@
 import ast
-import json  # noqa: INP001
+import json
 import subprocess
 import sys
 from pathlib import Path

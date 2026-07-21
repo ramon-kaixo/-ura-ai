@@ -9,6 +9,9 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from scripts.pro.reuse.ast_index import index_file
+from scripts.pro.reuse.similarity import compare
+
 PLUGIN = {
     "name": "reuse_detector",
     "phase": "pre",
@@ -17,9 +20,6 @@ PLUGIN = {
     "capability": "quality",
     "args": ["index"],
 }
-
-from scripts.pro.reuse.ast_index import index_file  # noqa: E402
-from scripts.pro.reuse.similarity import compare  # noqa: E402
 
 
 class ReuseDetector:

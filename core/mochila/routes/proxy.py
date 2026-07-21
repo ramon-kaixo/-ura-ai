@@ -39,7 +39,9 @@ def create_proxy_router(state) -> APIRouter:
                     resp = await client.get(request.url.path, params=dict(request.query_params), headers=headers)
                 return JSONResponse(content=resp.json(), status_code=resp.status_code)
 
-            is_opencode = (body or {}).get("_force_guardian", False) or "opencode" in (body or {}).get("model", "").lower()
+            is_opencode = (body or {}).get("_force_guardian", False) or "opencode" in (body or {}).get(
+                "model", ""
+            ).lower()
             guardian = OpenCodeGuardian() if is_opencode else None
             is_gen = path.endswith(("chat", "generate"))
             is_stream = (body or {}).get("stream", True)
@@ -91,7 +93,9 @@ def create_proxy_router(state) -> APIRouter:
                 return StreamingResponse(_proxy_stream(), media_type="application/x-ndjson")
 
             async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
-                resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
+                resp = await client.post(
+                    request.url.path, json=body, params=dict(request.query_params), headers=headers
+                )
             return JSONResponse(content=resp.json(), status_code=resp.status_code)
         except httpx.ConnectError as e:
             return JSONResponse(status_code=502, content={"error": f"Ollama connect error: {e}"})

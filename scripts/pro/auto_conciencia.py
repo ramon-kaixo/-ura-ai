@@ -109,7 +109,7 @@ def main() -> int:
     resultados.append(("abrir_app", ok))
 
     # 6. Explorar sistema
-    ok, r = test("Explorar sistema", "explorar")  # noqa: RUF059
+    ok, r = test("Explorar sistema", "explorar")
     resultados.append(("explorar", ok))
 
     # 7. Raton

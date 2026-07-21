@@ -87,7 +87,9 @@ def create_chat_router(state) -> APIRouter:
             )
 
         provider = state.providers[provider_name]
-        respuesta = await _chat_no_stream(provider, modelo, body.messages, herramientas, body.max_tokens, body.temperature)
+        respuesta = await _chat_no_stream(
+            provider, modelo, body.messages, herramientas, body.max_tokens, body.temperature
+        )
         if not respuesta:
             raise HTTPException(status_code=502, detail="Respuesta vacia del provider")
         state.circuit_breaker.registrar_exito(provider_name)

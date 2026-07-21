@@ -82,7 +82,6 @@ def fetch_critical_logs() -> list:
 
 
 def main() -> int:
-
     seen = load_seen_hashes()
     critical = fetch_critical_logs()
 

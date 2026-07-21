@@ -9,7 +9,9 @@ def create_status_router(state) -> APIRouter:
 
     @router.get("/status")
     async def system_status_endpoint():
-        return await system_status(state.providers, state.cost_tracker, state.circuit_breaker, len(TOOL_SCHEMAS), state.router)
+        return await system_status(
+            state.providers, state.cost_tracker, state.circuit_breaker, len(TOOL_SCHEMAS), state.router
+        )
 
     @router.get("/metrics")
     async def metrics():

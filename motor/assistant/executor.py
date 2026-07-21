@@ -161,7 +161,7 @@ class _SafeCalculator:
         self._env = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
         self._env.update({"abs": abs, "min": min, "max": max, "round": round})
 
-    def _eval(self, node: ast.AST) -> float | int:  # noqa: F821
+    def _eval(self, node: ast.AST) -> float | int:
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.UnaryOp):
