@@ -11,12 +11,16 @@ from pathlib import Path
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.record import MemoryType
+from motor.observability.health import HealthRegistry
 
 SERVER_NAME = "ura-mcp"
 SERVER_VERSION = "2.0.0"
 
 _db_path = os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db"))
 _memory = HybridMemory(db_path=_db_path)
+_health = HealthRegistry()
+_health.register_component("mcp_server")
+_health.register_component("hybrid_memory")
 
 _MEMORY_TOOL_SCHEMAS = [
     {
@@ -64,6 +68,14 @@ _MEMORY_TOOL_SCHEMAS = [
             "properties": {},
         },
     },
+    {
+        "name": "ura_health",
+        "description": "Estado de salud de todos los componentes del sistema",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
 ]
 
 _ALL_TOOLS = _MEMORY_TOOL_SCHEMAS + [
@@ -78,6 +90,10 @@ _ALL_TOOL_NAMES = {t["name"] for t in _ALL_TOOLS}
 
 
 async def _handle_initialize(params: dict) -> dict:
+    _health.set_healthy("mcp_server")
+    mem_health = _memory.health()
+    if mem_health.get("total_records", 0) >= 0:
+        _health.set_healthy("hybrid_memory")
     return {
         "protocolVersion": params.get("protocolVersion", "2024-11-05"),
         "capabilities": {"tools": {}},
@@ -99,6 +115,7 @@ async def _handle_tools_call(params: dict) -> dict:
                 memory_type=MemoryType(arguments.get("memory_type", "working")),
                 metadata=arguments.get("metadata"),
             )
+            _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
             return {"content": [{"type": "text", "text": json.dumps({"id": rid}, ensure_ascii=False)}]}
         elif name == "memory_search":
             results = _memory.search(
@@ -126,6 +143,15 @@ async def _handle_tools_call(params: dict) -> dict:
                     {
                         "type": "text",
                         "text": json.dumps(_memory.health(), ensure_ascii=False),
+                    }
+                ]
+            }
+        elif name == "ura_health":
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": json.dumps(_health.snapshot(), ensure_ascii=False),
                     }
                 ]
             }
