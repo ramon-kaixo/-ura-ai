@@ -12,7 +12,10 @@ Permite responder:
 from __future__ import annotations
 
 import json
+import logging
 import platform
+
+_log = logging.getLogger(__name__)
 import subprocess
 import time
 import uuid
@@ -125,7 +128,7 @@ class ExecutionLedger:
             self._entry["git_commit_before"] = before
             self._entry["git_commit_after"] = after or before
         except Exception:
-            pass
+            _log.debug("git commit info no disponible")
 
     def set_goal(self, goal: dict) -> None:
         self._entry["goal"] = goal
@@ -187,7 +190,7 @@ class ExecutionLedger:
             if rc == 0:
                 self._entry["resources"]["python_processes"] = int(out.strip())
         except Exception:
-            pass
+            _log.debug("resource sample falló")
 
     def save(self) -> Path:
         elapsed = time.monotonic() - self._start

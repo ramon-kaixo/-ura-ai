@@ -28,7 +28,7 @@ class Logger:
         ts = self._timestamp()
         line = f"[{ts}] [{level}] {msg}"
         try:
-            with open(self._log_file, "a") as f:
+            with Path(self._log_file).open("a") as f:
                 f.write(line + "\n")
         except PermissionError:
             pass
