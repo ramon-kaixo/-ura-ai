@@ -1,3 +1,12 @@
+"""Proxy gateway a Ollama — mantiene HTTP directo por ser un proxy genérico.
+
+EXCEPCIÓN: No se migra a motor.core.llm porque:
+1. Es un proxy HTTP genérico (cualquier path: /api/chat, /api/tags, /api/show...)
+2. Soporta streaming SSE (motor.core.llm.generate() es síncrono)
+3. Las responses se devuelven tal cual (JSON passthrough)
+   motor.core.llm no expone estas capacidades.
+"""
+
 import json
 from contextlib import suppress
 

@@ -1,3 +1,13 @@
+"""VRAM scheduler para Mochila — gestión de memoria GPU.
+
+EXCEPCIÓN (httpx directo a Ollama):
+- sync_vram() consulta /api/ps (modelos CARGADOS en VRAM, no disponibles)
+- motor.core.llm.health() expone modelos DISPONIBLES, no los cargados
+- Son APIs diferentes, no se puede migrar sin perder funcionalidad
+"""
+
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
@@ -5,8 +15,6 @@ import subprocess
 import time
 import uuid
 from typing import Any
-
-import httpx
 
 _OH = os.environ.get("URA_OLLAMA_HOST", "127.0.0.1")
 _OP = os.environ.get("URA_OLLAMA_PORT", "11434")
@@ -25,7 +33,9 @@ class VRAMAwareScheduler:
         self._hot_models: set = set()
         self._consecutive_smi_errors = 0
         self._lock = asyncio.Lock()
-        self._ollama_client = httpx.AsyncClient(base_url=OLLAMA_SOCKET)
+        import httpx as _httpx
+
+        self._ollama_client = _httpx.AsyncClient(base_url=OLLAMA_SOCKET)
         self._scheduler_log = logging.getLogger("mochila.vram")
         self._task: asyncio.Task | None = None
 
