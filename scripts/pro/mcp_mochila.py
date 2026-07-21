@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 import traceback
 from pathlib import Path
 
@@ -21,6 +22,21 @@ _memory = HybridMemory(db_path=_db_path)
 _health = HealthRegistry()
 _health.register_component("mcp_server")
 _health.register_component("hybrid_memory")
+
+# Rate limiter: 60 calls/min
+_RATE_LIMIT = 60
+_RATE_WINDOW = 60.0
+_call_times: list[float] = []
+
+
+def _check_rate_limit() -> bool:
+    now = time.monotonic()
+    global _call_times
+    _call_times = [t for t in _call_times if now - t < _RATE_WINDOW]
+    if len(_call_times) >= _RATE_LIMIT:
+        return False
+    _call_times.append(now)
+    return True
 
 _MEMORY_TOOL_SCHEMAS = [
     {
@@ -314,6 +330,15 @@ async def main() -> None:
             method = msg.get("method", "")
             msg_id = msg.get("id")
             params = msg.get("params", {})
+
+            if method != "initialize" and not _check_rate_limit():
+                if not await _send({
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "error": {"code": -32000, "message": "Rate limit exceeded (60/min)"},
+                }):
+                    break
+                continue
 
             if method == "initialize":
                 result = await _handle_initialize(params)
