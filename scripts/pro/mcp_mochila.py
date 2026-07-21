@@ -38,6 +38,7 @@ def _check_rate_limit() -> bool:
     _call_times.append(now)
     return True
 
+
 _MEMORY_TOOL_SCHEMAS = [
     {
         "name": "memory_store",
@@ -189,8 +190,11 @@ async def _handle_tools_call(params: dict) -> dict:
                 f"### Fuentes consultadas ({len(sources)})\n{context}\n\n"
                 f"### Síntesis\n"
                 f"Se consultaron {len(sources)} fuentes en la memoria híbrida. "
-                + ("La información disponible sugiere que este tema tiene cobertura documental."
-                   if sources else "No se encontraron fuentes relevantes en la memoria.")
+                + (
+                    "La información disponible sugiere que este tema tiene cobertura documental."
+                    if sources
+                    else "No se encontraron fuentes relevantes en la memoria."
+                )
             )
             rid = ""
             if sources:
@@ -201,11 +205,17 @@ async def _handle_tools_call(params: dict) -> dict:
                 )
             return {
                 "content": [
-                    {"type": "text", "text": json.dumps({
-                        "id": rid,
-                        "synthesis": synthesis,
-                        "sources_count": len(sources),
-                    }, ensure_ascii=False)}
+                    {
+                        "type": "text",
+                        "text": json.dumps(
+                            {
+                                "id": rid,
+                                "synthesis": synthesis,
+                                "sources_count": len(sources),
+                            },
+                            ensure_ascii=False,
+                        ),
+                    }
                 ]
             }
         elif name == "memory_research":
@@ -219,36 +229,55 @@ async def _handle_tools_call(params: dict) -> dict:
             except Exception:
                 wr = {"error": "web_search not available", "results": []}
             if isinstance(wr, dict):
-                for item in (wr.get("results", []) if isinstance(wr.get("results"), list) else []):
-                    web_results.append({"source": "web", "title": item.get("title", ""), "snippet": item.get("snippet", "")[:300]})
+                for item in wr.get("results", []) if isinstance(wr.get("results"), list) else []:
+                    web_results.append(
+                        {"source": "web", "title": item.get("title", ""), "snippet": item.get("snippet", "")[:300]}
+                    )
 
             local_sources = _memory.search(query=query, k=local_k)
-            local_results = [{"source": "memory", "title": s.payload[:100], "snippet": s.payload[:300]} for s in local_sources]
+            local_results = [
+                {"source": "memory", "title": s.payload[:100], "snippet": s.payload[:300]} for s in local_sources
+            ]
 
             all_sources = web_results + local_results
-            synthesis_lines = [f"## Investigación: {query}", "",
-                               f"### Fuentes ({len(all_sources)})", ""]
+            synthesis_lines = [f"## Investigación: {query}", "", f"### Fuentes ({len(all_sources)})", ""]
             for src in all_sources:
                 synthesis_lines.append(f"- [{src['source']}] {src['title']}")
                 if src.get("snippet"):
                     synthesis_lines.append(f"  {src['snippet']}")
-            synthesis_lines.extend(["", "### Síntesis",
-                                    f"Se consultaron {len(web_results)} fuentes web y {len(local_results)} fuentes locales."])
+            synthesis_lines.extend(
+                [
+                    "",
+                    "### Síntesis",
+                    f"Se consultaron {len(web_results)} fuentes web y {len(local_results)} fuentes locales.",
+                ]
+            )
 
             synthesis = "\n".join(synthesis_lines)
             rid = _memory.store(
                 payload=synthesis,
                 memory_type=MemoryType.SEMANTIC,
-                metadata={"type": "research_web", "query": query, "web_sources": len(web_results), "local_sources": len(local_results)},
+                metadata={
+                    "type": "research_web",
+                    "query": query,
+                    "web_sources": len(web_results),
+                    "local_sources": len(local_results),
+                },
             )
             return {
                 "content": [
-                    {"type": "text", "text": json.dumps({
-                        "id": rid,
-                        "synthesis": synthesis,
-                        "web_sources": len(web_results),
-                        "local_sources": len(local_results),
-                    }, ensure_ascii=False)}
+                    {
+                        "type": "text",
+                        "text": json.dumps(
+                            {
+                                "id": rid,
+                                "synthesis": synthesis,
+                                "web_sources": len(web_results),
+                                "local_sources": len(local_results),
+                            },
+                            ensure_ascii=False,
+                        ),
+                    }
                 ]
             }
         elif name == "memory_stats":
@@ -311,19 +340,23 @@ async def main() -> None:
             try:
                 msg = json.loads(decoded)
             except json.JSONDecodeError:
-                if not await _send({
-                    "jsonrpc": "2.0",
-                    "id": None,
-                    "error": {"code": -32700, "message": "Parse error"},
-                }):
+                if not await _send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": None,
+                        "error": {"code": -32700, "message": "Parse error"},
+                    }
+                ):
                     break
                 continue
             if not isinstance(msg, dict):
-                if not await _send({
-                    "jsonrpc": "2.0",
-                    "id": None,
-                    "error": {"code": -32600, "message": "Invalid Request"},
-                }):
+                if not await _send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": None,
+                        "error": {"code": -32600, "message": "Invalid Request"},
+                    }
+                ):
                     break
                 continue
 
@@ -332,11 +365,13 @@ async def main() -> None:
             params = msg.get("params", {})
 
             if method != "initialize" and not _check_rate_limit():
-                if not await _send({
-                    "jsonrpc": "2.0",
-                    "id": msg_id,
-                    "error": {"code": -32000, "message": "Rate limit exceeded (60/min)"},
-                }):
+                if not await _send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": msg_id,
+                        "error": {"code": -32000, "message": "Rate limit exceeded (60/min)"},
+                    }
+                ):
                     break
                 continue
 

@@ -165,25 +165,27 @@ def cmd_system(config: UraConfig, args):
 
     version = "unknown"
     try:
-        version = _sp.run(["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False).stdout.strip()
+        version = _sp.run(
+            ["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False
+        ).stdout.strip()
     except Exception:  # noqa: S110
         pass
 
     lines = [
         f"URA v{version}",
-        f"{'='*40}",
+        f"{'=' * 40}",
         f"  Salud:     {hr.snapshot().get('global', 'unknown')}",
         f"  Memoria:   {mem_health.get('total_records', 'N/A')} registros",
         f"  Vector:    {'OK' if mem_health.get('vector_store_ok') else 'OFF'}",
         f"  Python:    3.12",
         f"  Entorno:   {ROOT}",
-        f"{'='*40}",
+        f"{'=' * 40}",
         f"  endpoints:",
-        f"    /health   → metrics_server:{os.environ.get('METRICS_PORT','9091')}",
+        f"    /health   → metrics_server:{os.environ.get('METRICS_PORT', '9091')}",
         f"    /memory   → memoria hibrida",
         f"    /dashboard→ dashboard web",
         f"    /version  → version del sistema",
-        f"{'='*40}",
+        f"{'=' * 40}",
     ]
     for line in lines:
         print(line)
@@ -384,7 +386,7 @@ def cmd_memory(config: UraConfig, args) -> int:
     total = health.get("total_records", 0)
 
     print(f"Memoria Híbrida")
-    print(f"{'='*40}")
+    print(f"{'=' * 40}")
     print(f"  Registros:     {total}")
     print(f"  Vector Store:  {'OK' if health.get('vector_store_ok') else 'OFF'}")
     print()
@@ -406,6 +408,7 @@ def cmd_memory(config: UraConfig, args) -> int:
             try:
                 import asyncio
                 from core.mochila.tools import web_search as _web_search
+
                 result = asyncio.run(_web_search(query, max_results=5))
                 print(f"Web search: '{query}'")
                 for item in result.get("results", []):

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico.
-"""
+"""auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico."""
 
 from __future__ import annotations
 

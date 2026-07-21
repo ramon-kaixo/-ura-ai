@@ -213,8 +213,8 @@ async def handle_dashboard(request: web.Request) -> web.Response:
 
     comp_rows = "".join(
         f'<div class="stat"><span class="label">{name}</span>'
-        f'<span class="{"ok" if c["status"]=="healthy" else "warn" if c["status"]=="degraded" else "err"}">'
-        f'{c["status"]}{": "+c["reason"] if c.get("reason") else ""}</span></div>'
+        f'<span class="{"ok" if c["status"] == "healthy" else "warn" if c["status"] == "degraded" else "err"}">'
+        f"{c['status']}{': ' + c['reason'] if c.get('reason') else ''}</span></div>"
         for name, c in sorted(components.items())
     )
 
@@ -222,18 +222,18 @@ async def handle_dashboard(request: web.Request) -> web.Response:
         "{content}",
         f'<div class="card"><h3>Estado del Sistema</h3>'
         f'<div class="stat"><span class="label">Global</span>'
-        f'<span class="{"ok" if global_status=="healthy" else "warn" if global_status=="degraded" else "err"}">{global_status}</span></div>'
+        f'<span class="{"ok" if global_status == "healthy" else "warn" if global_status == "degraded" else "err"}">{global_status}</span></div>'
         f'<div class="stat"><span class="label">Componentes saludables</span><span class="ok">{healthy_count}</span></div>'
-        f'{comp_rows}</div>'
+        f"{comp_rows}</div>"
         f'<div class="card"><h3>Memoria Híbrida</h3>'
         f'<div class="stat"><span class="label">Registros</span><span class="value">{mem.get("total_records", "N/A")}</span></div>'
         f'<div class="stat"><span class="label">Vector Store</span>'
         f'<span class="{"ok" if mem.get("vector_store_ok") else "err"}">{"OK" if mem.get("vector_store_ok") else "OFF"}</span></div>'
-        f'</div>'
+        f"</div>"
         f'<div class="card"><h3>Recursos</h3>'
         f'<div class="stat"><span class="label">Python</span><span class="value">3.12</span></div>'
         f'<div class="stat"><span class="label">Entorno</span><span class="value">{os.environ.get("URA_ENV", "produccion")}</span></div>'
-        f'</div>',
+        f"</div>",
     )
     return web.Response(text=html, content_type="text/html")
 
@@ -272,14 +272,16 @@ async def handle_pipeline_status(request: web.Request) -> web.Response:
         return web.json_response({"status": "no_data", "detail": "Sin ejecuciones en ledger"})
     try:
         data = json.loads(files[0].read_text())
-        return web.json_response({
-            "status": "ok",
-            "ultima_ejecucion": data.get("timestamp", ""),
-            "pipeline": data.get("pipeline", ""),
-            "resultado": data.get("result", ""),
-            "trigger": data.get("trigger", ""),
-            "archivo": files[0].name,
-        })
+        return web.json_response(
+            {
+                "status": "ok",
+                "ultima_ejecucion": data.get("timestamp", ""),
+                "pipeline": data.get("pipeline", ""),
+                "resultado": data.get("result", ""),
+                "trigger": data.get("trigger", ""),
+                "archivo": files[0].name,
+            }
+        )
     except Exception as e:
         return web.json_response({"status": "error", "detail": str(e)})
 
