@@ -24,8 +24,7 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
-from motor.core.config import UraConfig
-from motor.core.qdrant_client import QdrantClient
+from motor.cli.public_api import QdrantClient, UraConfig
 
 _qdrant = None
 

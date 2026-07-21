@@ -9,7 +9,7 @@ import json
 import time
 from pathlib import Path
 
-from motor.core.secrets import get_secret
+from motor.cli.public_api import get_secret
 
 VNC_HOST = "127.0.0.1"
 VNC_PORT = 5900
