@@ -1,3 +1,13 @@
+"""ReuseDetector — busca código similar antes de crear código nuevo.
+
+PLUGIN para plugin_registry.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
 PLUGIN = {
     "name": "reuse_detector",
     "phase": "pre",
@@ -6,19 +16,9 @@ PLUGIN = {
     "capability": "quality",
     "args": ["index"],
 }
-"""ReuseDetector — busca código similar antes de crear código nuevo.
 
-Escanea el repositorio, extrae firmas de funciones con AST,
-compara contra código nuevo propuesto y recomienda reutilización.
-"""
-
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Any
-
-from scripts.pro.reuse.ast_index import index_file
-from scripts.pro.reuse.similarity import compare
+from scripts.pro.reuse.ast_index import index_file  # noqa: E402
+from scripts.pro.reuse.similarity import compare  # noqa: E402
 
 
 class ReuseDetector:
