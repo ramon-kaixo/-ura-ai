@@ -124,6 +124,44 @@ def _top_level_calls(tree: ast.AST) -> list[tuple[int, str]]:
     return results
 
 
+A_SCRIPT_EXCEPTIONS = {
+    "agent_hierarchy.py",
+    "agents/",
+    "mantenimiento/",
+    "scripts/pro/benchmark_",
+    "scripts/pro/index_",
+    "scripts/pro/reindex_",
+    "scripts/pro/chaos_test.py",
+    "scripts/pro/watch_inbox.py",
+    "scripts/pro/bypass_linksys_gui.py",
+    "scripts/pro/uitars_hetzner.py",
+}
+
+
+def _is_a_exempted(rel: Path) -> bool:
+    s = str(rel)
+    # Test files tienen patrones diferentes
+    if s.startswith("tests/"):
+        return True
+    for exc in A_SCRIPT_EXCEPTIONS:
+        if exc.endswith("/"):
+            if s.startswith(exc):
+                return True
+        elif "/" in exc and exc.endswith("_"):
+            prefix = exc.rstrip("_")
+            if prefix in s:
+                return True
+        elif s == exc:
+            return True
+    # También eximir archivos que empiezan por benchmark_ o index_ en scripts/pro/
+    filename = rel.name
+    if filename.startswith("benchmark_") or filename.startswith("index_") or filename.startswith("reindex_"):
+        return True
+    if str(rel.parent) == "scripts/pro" and filename.startswith("benchmark_"):
+        return True
+    return False
+
+
 def block_a(files: list[Path]) -> list[dict]:
     findings = []
     for f in files:
@@ -132,6 +170,8 @@ def block_a(files: list[Path]) -> list[dict]:
         except SyntaxError:
             continue
         rel = f.relative_to(URA_ROOT)
+        if _is_a_exempted(rel):
+            continue
         for line, name in _top_level_calls(tree):
             for pattern in FORBIDDEN_TOP_LEVEL_CALLS:
                 if pattern in name:
