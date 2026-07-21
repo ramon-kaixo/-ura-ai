@@ -11,7 +11,6 @@ from pathlib import Path
 
 import psutil
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("MotorFlujo")
 
 SPOOL_DIR = str(Path.home() / "URA" / "storage" / "spool")
@@ -116,4 +115,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     asyncio.run(main())

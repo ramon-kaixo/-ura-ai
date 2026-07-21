@@ -255,5 +255,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.WARNING)
+    from motor.observability.logging import setup_logging
+
+    setup_logging(level="WARNING")
     main()
