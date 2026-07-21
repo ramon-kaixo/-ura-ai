@@ -1,22 +1,31 @@
 """Structured JSON logging — delegates to motor/observability/logging.
 
-Consumers:
-    from core.json_logger import StructuredLogger
+DEPRECATED: Use motor.platform.logging.ComponentLogger o
+motor.observability.logging directamente en código nuevo.
 """
 
 from __future__ import annotations
 
 import logging
 import sys
+import warnings
 from typing import Any
 
 from motor.observability.logging import JSONFormatter
 
 
 class StructuredLogger:
-    """Wrapper alrededor de logging.Logger que emite JSON structurado."""
+    """Wrapper alrededor de logging.Logger que emite JSON structurado.
+
+    Deprecated: Usar motor.platform.logging.ComponentLogger.
+    """
 
     def __init__(self, name: str, level: int = logging.INFO) -> None:
+        warnings.warn(
+            "StructuredLogger is deprecated. Use motor.platform.logging.ComponentLogger.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._logger = logging.getLogger(name)
         self._logger.setLevel(level)
         self._logger.handlers.clear()
