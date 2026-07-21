@@ -14,11 +14,16 @@ from typing import Any
 
 
 def compare(new: dict, existing: dict) -> dict:
-    """Compara una función nueva contra una existente. Retorna score de similitud."""
+    """Compara una función nueva contra una existente. Retorna score de similitud.
+
+    Si un campo está vacío en la consulta (search por nombre), no penaliza:
+    los pesos se redistribuyen entre los campos disponibles.
+    """
     scores = []
     details = []
+    active_weights = []
 
-    # 1. Nombre
+    # 1. Nombre (siempre disponible)
     if new.get("name") == existing.get("name"):
         scores.append(1.0)
         details.append("nombre_exacto")
@@ -28,8 +33,9 @@ def compare(new: dict, existing: dict) -> dict:
     else:
         scores.append(0.0)
         details.append("nombre_distinto")
+    active_weights.append(0.30)
 
-    # 2. Parámetros
+    # 2. Parámetros (solo si ambos tienen)
     new_params = set(new.get("params", []))
     existing_params = set(existing.get("params", []))
     if new_params and existing_params:
@@ -37,11 +43,11 @@ def compare(new: dict, existing: dict) -> dict:
         total = max(len(new_params), len(existing_params))
         scores.append(overlap / total)
         details.append(f"params_{overlap}/{total}")
-    else:
-        scores.append(0.0)
-        details.append("sin_params")
+        active_weights.append(0.25)
+    # Si la consulta tiene params pero el existente no, no penalizar
+    # Si la consulta no tiene params (search rápido), saltar
 
-    # 3. Body hash (código idéntico)
+    # 3. Body hash (solo si ambos tienen)
     if new.get("body_hash") and existing.get("body_hash"):
         if new["body_hash"] == existing["body_hash"]:
             scores.append(1.0)
@@ -49,10 +55,9 @@ def compare(new: dict, existing: dict) -> dict:
         else:
             scores.append(0.3)
             details.append("body_distinto")
-    else:
-        scores.append(0.0)
+        active_weights.append(0.25)
 
-    # 4. Llamadas internas
+    # 4. Llamadas internas (solo si ambos tienen)
     new_calls = set(new.get("calls", []))
     existing_calls = set(existing.get("calls", []))
     if new_calls and existing_calls:
@@ -60,10 +65,9 @@ def compare(new: dict, existing: dict) -> dict:
         total = max(len(new_calls), len(existing_calls))
         scores.append(overlap / total)
         details.append(f"calls_{overlap}/{total}")
-    else:
-        scores.append(0.0)
+        active_weights.append(0.10)
 
-    # 5. Docstring
+    # 5. Docstring (solo si ambos tienen)
     new_doc = new.get("docstring_preview", "").strip()
     exist_doc = existing.get("docstring_preview", "").strip()
     if new_doc and exist_doc:
@@ -71,12 +75,15 @@ def compare(new: dict, existing: dict) -> dict:
         total = max(len(new_doc.split()), len(exist_doc.split()))
         scores.append(overlap / total)
         details.append(f"doc_{overlap}/{total}")
-    else:
-        scores.append(0.0)
+        active_weights.append(0.10)
 
-    # Peso: nombre 30%, params 25%, body 25%, calls 10%, doc 10%
-    weights = [0.30, 0.25, 0.25, 0.10, 0.10]
-    total_score = sum(s * w for s, w in zip(scores, weights))
+    # Normalizar pesos según campos activos
+    if active_weights:
+        total_weight = sum(active_weights)
+        normalized = [w / total_weight for w in active_weights]
+        total_score = sum(s * nw for s, nw in zip(scores, normalized))
+    else:
+        total_score = 0.0
 
     return {
         "new_name": new.get("name", ""),
