@@ -1,5 +1,6 @@
 """Decide qué acción tomar según el estado del sistema. Modelo: Qwen 14B."""
 
+import ast
 import logging
 
 from core.agents.constants import MODELOS, URA_ROOT
@@ -30,8 +31,6 @@ class AgenteOrquestador:
 
     @staticmethod
     def _contar_pendientes() -> int:
-        import ast
-
         total = 0
         try:
             for py_file in URA_ROOT.rglob("*.py"):

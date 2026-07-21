@@ -10,6 +10,7 @@ Lógica:
 from __future__ import annotations
 
 import json
+import subprocess
 
 from json_repair import repair_json
 
@@ -62,8 +63,6 @@ def compilar_opinion(
         modelo_reintento = "qwen2.5-coder:32b" if intento > 0 else modelo
 
         try:
-            import subprocess
-
             result = subprocess.run(
                 ["ollama", "run", modelo_reintento, prompt],
                 capture_output=True,

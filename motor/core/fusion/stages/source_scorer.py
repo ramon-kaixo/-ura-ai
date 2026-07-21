@@ -5,6 +5,7 @@ Puntúa fuentes según calidad (autoridad, frescura, etc.).
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 from motor.core.fusion.base import BaseStage
@@ -68,8 +69,6 @@ class QualitySourceScorer(SourceScorerABC):
 
     @staticmethod
     def _score_freshness(fetched_at: float) -> float:
-        import time
-
         days_old = (time.time() - fetched_at) / 86400.0
         return max(0.1, 1.0 - days_old / 365.0)
 

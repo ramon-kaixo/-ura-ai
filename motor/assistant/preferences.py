@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+import time
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -52,8 +54,6 @@ class UserPreferenceLearning:
         mode: str = "conversacion",
         success: bool = True,
     ) -> None:
-        import time
-
         with self._lock:
             self._conn.execute(
                 "INSERT INTO interactions (user_id, intent, message_length, mode, hour, success) "
@@ -97,8 +97,6 @@ class UserPreferenceLearning:
 
         if modes:
             prefs["preferred_mode"] = max(set(modes), key=modes.count)
-
-        from collections import Counter
 
         prefs["common_intents"] = [i for i, _ in Counter(intents).most_common(5)]
         prefs["active_hours"] = sorted(set(hours))

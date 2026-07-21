@@ -19,6 +19,7 @@ Máquina de estados: CompileStage (DISCOVERING → PARSING → VALIDATING → WR
 from __future__ import annotations
 
 import logging
+import subprocess
 import time
 from pathlib import Path
 
@@ -178,8 +179,6 @@ def compile_source(
 
         # Persistir snapshot para compilación incremental
         try:
-            import subprocess
-
             from knowledge.engine.snapshot_store import save_snapshot
 
             commit = (

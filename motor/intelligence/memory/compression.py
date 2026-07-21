@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -157,8 +158,6 @@ class MemoryCompressor:
         self._policy = new_policy
 
     def compress(self) -> CompressionResult:
-        import time
-
         start = time.monotonic()
         result = CompressionResult()
 

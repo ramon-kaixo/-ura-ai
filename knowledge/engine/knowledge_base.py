@@ -18,9 +18,11 @@ Uso:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
+import shutil as _shutil
 import string
 import tempfile
 from pathlib import Path
@@ -102,8 +104,6 @@ def _save_manifest(output: Path, manifest: dict[str, str]) -> None:
 
 def _content_hash(text: str) -> str:
     """SHA-256 del contenido generado para detección de cambios."""
-    import hashlib
-
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -313,8 +313,6 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
         if output.exists():
             backup = output.parent / f"{output.name}.bak"
             if backup.exists():
-                import shutil as _shutil
-
                 _shutil.rmtree(backup)
             output.rename(backup)
         dest.rename(output)
@@ -322,8 +320,6 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
         # Limpiar backup
         backup = output.parent / f"{output.name}.bak"
         if backup.exists():
-            import shutil as _shutil
-
             _shutil.rmtree(backup)
 
         log.info(
@@ -337,8 +333,5 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
 
     except Exception:
         log.exception("Knowledge base generation failed")
-        # Limpiar temp dir (el destino original NO se toca si falló)
-        import shutil as _shutil
-
         _shutil.rmtree(tmp_dir, ignore_errors=True)
         return 0

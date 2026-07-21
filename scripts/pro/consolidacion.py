@@ -7,6 +7,7 @@ Disparadores: cada N commits, cada N líneas, antes de tag, antes de merge
 
 from __future__ import annotations
 
+import subprocess
 import sys
 import time
 
@@ -50,8 +51,6 @@ def main() -> int:
 
     # ── 1. Tuneladora de Mantenimiento ──
     engine.log.info("── 1. Mantenimiento ──")
-    import subprocess
-
     subprocess.run(
         [engine.config.venv_python, "scripts/pro/tuneladora_mantenimiento.py", "--nivel", "profundo"],
         timeout=3600,

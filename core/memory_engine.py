@@ -13,6 +13,7 @@ import contextlib
 import hashlib
 import json
 import logging
+import shutil
 from datetime import UTC, datetime
 
 from core.config_manager import CONFIG
@@ -83,8 +84,6 @@ def load_manifest() -> dict:
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        import shutil
-
         required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:

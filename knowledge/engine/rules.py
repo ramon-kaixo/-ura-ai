@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import ast
 import logging
+import operator as _operator
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -181,8 +182,6 @@ _CONSTANT_WHITELIST = {
 
 def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
     """Evalúa un AST directamente sin usar eval()/compile()."""
-    import operator as _operator
-
     handler = _NODE_HANDLERS.get(type(node))
     if handler:
         return handler(node, env, _operator)

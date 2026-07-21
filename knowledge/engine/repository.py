@@ -11,6 +11,7 @@ Uso:
 
 from __future__ import annotations
 
+import json
 import logging
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Protocol
@@ -133,8 +134,6 @@ class SQLiteKnowledgeRepository:
         return targets
 
     def get_documents_for_rules(self) -> tuple[list[dict], set[str], set[str]]:
-        import json
-
         from knowledge.engine.connection import open_db
 
         conn = open_db(self._db_path)

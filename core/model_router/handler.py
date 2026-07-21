@@ -7,6 +7,7 @@ import http.server
 import json
 import logging
 import time
+import urllib.parse
 
 log = logging.getLogger(__name__)
 
@@ -223,8 +224,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             from core.model_router.dashboard import _dashboard_json
             self._send_json(json.loads(_dashboard_json(client_ip=self.client_address[0])))
         elif self.path.startswith("/api/search"):
-            import urllib.parse as _up
-            q = _up.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
+            q = urllib.parse.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
             if not q:
                 self._send_json({"error": "parametro q requerido"}, 400)
                 return

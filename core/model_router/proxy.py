@@ -167,8 +167,7 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
 
 async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
-    import asyncio as _asyncio
-    return await _asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
+    return await asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
 def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -38,8 +39,6 @@ class CrossEncoderReranker(BaseReranker):
                 self._docs[md_file.stem] = md_file.read_text(encoding="utf-8")
 
     def _load_model(self) -> None:
-        import os
-
         cache_dir = Path.home() / ".cache" / "hf_cache"
         os.environ.setdefault("HF_HOME", str(cache_dir))
         try:

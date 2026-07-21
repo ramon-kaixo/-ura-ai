@@ -16,6 +16,8 @@ import contextlib
 import hashlib
 import json
 import os
+import subprocess
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -135,8 +137,6 @@ def update_index_node(rel_path: str, new_hash: str, new_size: int) -> None:
     if node:
         node["checksum_blake2b_8"] = new_hash
         node["allocation_bytes"] = new_size
-        import time
-
         node["posix_timestamps"] = {
             "st_mtime": int(time.time()),
             "st_atime": int(time.time()),
@@ -148,8 +148,6 @@ def update_index_node(rel_path: str, new_hash: str, new_size: int) -> None:
 
 def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
     """Protocolo de mitigacion atomico."""
-    import subprocess
-
     # Escribir flag de bloqueo
     (URA_ROOT / ".refactor_blocked").write_text(motivo)
 
@@ -166,10 +164,9 @@ def _abortaje_emergencia(motivo: str, worker_pid: int | None = None) -> None:
     # Registrar en audit trail
     audit_log = NERVIOSO / "audit_trail.log"
     audit_log.parent.mkdir(parents=True, exist_ok=True)
-    import time as _time
 
     with open(audit_log, "a") as f:  # noqa: PTH123
-        f.write(f"[{_time.strftime('%Y-%m-%dT%H:%M:%S')}] | EMERGENCY_ABORT | {motivo}\n")
+        f.write(f"[{time.strftime('%Y-%m-%dT%H:%M:%S')}] | EMERGENCY_ABORT | {motivo}\n")
 
     # TTS alert
     with contextlib.suppress(Exception):
@@ -223,11 +220,9 @@ def checkpoint_update(rel_path: str, line: int, total_lines: int, worker_id: int
     if not node:
         return
 
-    import time as _t
-
     node["checkpoint_line"] = line
     node["checkpoint_total_lines"] = total_lines
-    node["checkpoint_timestamp"] = datetime.fromtimestamp(_t.time(), tz=_t.timezone.utc).isoformat()
+    node["checkpoint_timestamp"] = datetime.fromtimestamp(time.time(), tz=time.timezone.utc).isoformat()
     node["checkpoint_worker"] = worker_id
     node["checkpoint_state"] = "completado" if line >= total_lines else "en_curso"
 

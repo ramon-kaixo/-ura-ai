@@ -12,10 +12,14 @@ Uso:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import random
+import shutil
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(Path(__file__).parent, ".."))  # noqa: PTH118
@@ -24,8 +28,6 @@ rng = random.Random(42)  # seed fija para reproducibilidad  # noqa: S311
 
 
 def make_evidence(doc_id: int, text: str, quality: float) -> dict:
-    import hashlib
-
     eid = hashlib.sha256(f"ev{doc_id}:{text[:32]}".encode()).hexdigest()[:16]
     return {
         "evidence_id": eid,
@@ -222,8 +224,6 @@ if __name__ == "__main__":
             ],
         )
 
-        import tempfile
-
         from motor.memory import Memory
 
         tmpdir = tempfile.mkdtemp(prefix="ura_synth_")
@@ -236,15 +236,11 @@ if __name__ == "__main__":
         ctx = FusionContext(bundle=bundle)
         ctx.statistics["_memory_instance"] = memory
 
-        import time
-
         t0 = time.perf_counter()
         for stage in pipeline._stages:
             ctx = stage.execute(ctx)
         t = time.perf_counter() - t0
 
         memory.close()
-
-        import shutil
 
         shutil.rmtree(tmpdir, ignore_errors=True)

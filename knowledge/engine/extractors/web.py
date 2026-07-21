@@ -16,6 +16,7 @@ Protección SSRF:
 
 from __future__ import annotations
 
+import hashlib
 import ipaddress
 import logging
 import socket
@@ -303,14 +304,10 @@ def _check_ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address, hostnam
 
 
 def _hash_url_stub(url: str) -> str:
-    import hashlib
-
     return hashlib.sha256(url.encode()).hexdigest()
 
 
 def hashlib_content(content: bytes) -> str:
-    import hashlib
-
     return hashlib.sha256(content).hexdigest()
 
 

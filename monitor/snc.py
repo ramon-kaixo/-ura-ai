@@ -10,6 +10,7 @@ import json
 import os
 import platform
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -78,9 +79,7 @@ mac_heartbeat = MacHeartbeat()
 def _notify(msg: str, level: str = "warning") -> None:
     """Wrapper lazy de core/notifier.notify para evitar circular imports."""
     try:
-        import sys as _sys
-
-        _sys.path.insert(0, str(Path(__file__).parent.parent))
+        sys.path.insert(0, str(Path(__file__).parent.parent))
         from core.notifier import notify as _n
 
         _n(msg, level=level)
@@ -419,8 +418,6 @@ def check_zombies() -> list[int]:
 
 def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[int, str, float]]:
     """Procesos Python/node con CPU INSTANTÁNEA > umbral (usa ps, no /proc/stat acumulado)."""
-    import subprocess
-
     result: list[tuple[int, str, float]] = []
     try:
         out = subprocess.run(
@@ -543,8 +540,6 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
                 try:
                     dst = sandbox_dir / subdir
                     if src.is_dir():
-                        import shutil
-
                         shutil.copytree(src, dst, dirs_exist_ok=True)
                     else:
                         dst.write_text(src.read_text(errors="replace"))

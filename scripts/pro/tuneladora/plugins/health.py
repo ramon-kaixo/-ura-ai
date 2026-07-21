@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -27,8 +28,6 @@ class HealthPlugin:
 
         # RAM
         try:
-            import subprocess
-
             rc, out = subprocess.getstatusoutput("free -m")
             if rc == 0:
                 for line in out.splitlines():
@@ -41,8 +40,6 @@ class HealthPlugin:
 
         # Zombies
         try:
-            import subprocess
-
             rc, out = subprocess.getstatusoutput("ps aux")
             results["zombies"] = out.count(" Z ") if rc == 0 else -1
         except Exception:

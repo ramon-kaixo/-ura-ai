@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -55,8 +56,6 @@ def medir():
     for t in tests:
         try:
             inicio = time.time()
-            import urllib.request
-
             data = json.dumps({"name": t, "arguments": {}}).encode()
             req = urllib.request.Request(  # noqa: S310
                 f"{MCP}/mcp/call",
@@ -231,9 +230,7 @@ def reindexar_transaccion(tx_id: str, texto_corregido: str) -> bool:
 
 
 def scan_project() -> None:
-    from pathlib import Path as _Path
-
-    root = _Path.home() / "URA/ura_ia_1972"
+    root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 

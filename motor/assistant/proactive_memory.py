@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -77,8 +78,6 @@ class ProactiveMemory:
         self._conn.commit()
 
     def add_task(self, description: str, conversation_id: str = "", priority: str = "normal") -> Task:
-        import uuid
-
         task = Task(
             task_id=uuid.uuid4().hex[:12],
             description=description,

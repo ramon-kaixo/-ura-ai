@@ -17,8 +17,11 @@ Principios:
 
 from __future__ import annotations
 
+import json
 import logging
+import subprocess
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -219,8 +222,6 @@ def _run_ci() -> StageResult:
 
     Convierte el pipeline en un meta-evaluador: puede ejecutarse a sí mismo.
     """
-    import subprocess
-
     t0 = time.monotonic()
     try:
         script = Path(__file__).resolve().parent.parent.parent / "scripts" / "ci.sh"
@@ -257,8 +258,6 @@ def _run_rule_eval(db_path: Path) -> StageResult:
     """Stage 6: Rule evaluation — calidad del conocimiento."""
     t0 = time.monotonic()
     try:
-        import json
-
         from knowledge.engine.connection import open_db
         from knowledge.engine.rules import RuleEvaluator
 
@@ -340,8 +339,6 @@ class Pipeline:
             Resultado completo del pipeline.
 
         """
-        import uuid
-
         cid = correlation_id or uuid.uuid4().hex
         all_stages = stages or list(Stage)
         results: list[StageResult] = []

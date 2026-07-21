@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import time
+import urllib.request
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
@@ -68,8 +69,6 @@ class RespuestaOllama:
 
 
 def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
-    import urllib.request
-
     data = {"model": "llama3.2-vision:11b", "prompt": prompt, "stream": False}
     if imagen_b64:
         data["images"] = [imagen_b64]

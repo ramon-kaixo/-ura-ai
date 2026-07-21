@@ -1,5 +1,6 @@
 """Detectores multi-tipo para la Reactualización Total."""
 
+import json
 import logging
 import subprocess
 
@@ -78,8 +79,6 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
         )
         if result.returncode != 0:
             return {"cambio": False, "error": "FFprobe failed"}
-        import json
-
         data = json.loads(result.stdout)
         fmt = data.get("format", {})
         meta_nuevo = json.dumps(

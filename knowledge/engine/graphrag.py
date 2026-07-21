@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import deque
+from datetime import UTC, datetime
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -114,8 +116,6 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
         updated = ""
     if updated:
         try:
-            from datetime import UTC, datetime
-
             from dateutil import parser
 
             dt = parser.parse(updated)
@@ -284,8 +284,6 @@ class SQLiteGraphRetriever:
         Usa BFS con detección de ciclos (visited set).
         Retorna lista de {"asset_id", "relation", "depth"}.
         """
-        from collections import deque
-
         store = self._get_lineage_store()
         visited: set[str] = {asset_id}
         queue: deque = deque([(asset_id, 0)])

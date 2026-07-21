@@ -68,8 +68,6 @@ class MacHeartbeat:
         try:
             tmp = HEARTBEAT_FILE.with_suffix(".tmp")
             tmp.write_text(json.dumps(state, indent=2))
-            import os
-
             os.replace(str(tmp), str(HEARTBEAT_FILE))  # noqa: PTH105
         except Exception:  # noqa: S110
             pass

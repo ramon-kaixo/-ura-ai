@@ -3,9 +3,13 @@
 Ejecuta contra la BD de Open WebUI en el GX10.
 """
 
+import json as _json
 import os
 import subprocess
 import sys
+import tempfile
+import time
+from pathlib import Path
 
 GX10 = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
 DB_PATH = "/app/backend/data/webui.db"
@@ -13,9 +17,6 @@ DB_PATH = "/app/backend/data/webui.db"
 
 def ejecutar_remoto(python_code, env=None):
     """Ejecuta codigo Python en el contenedor Open WebUI del GX10."""
-    import tempfile
-    from pathlib import Path
-
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(python_code)
         tmp = f.name
@@ -88,9 +89,6 @@ conn.close()
 
 def crear_tool(nombre, descripcion, codigo):
     """Crea una new tool en Open WebUI."""
-    import json as _json
-    import time
-
     tool_id = nombre.lower().replace(" ", "_")
     now = int(time.time())
     specs = _json.dumps(
