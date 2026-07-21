@@ -66,13 +66,13 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_api_version(self) -> None:
         from core.model_router import router as _main
         from core.model_router.model_selection import MODELO_ROUTES
-        from core.model_router.router import OLLAMA_URL, ROUTER_PORT
+        from core.model_router.router import get_ollama_url, ROUTER_PORT
 
         self._send_json(
             {
                 "service": "model_router",
                 "version": "2.2",
-                "ollama": OLLAMA_URL,
+                "ollama": get_ollama_url(),
                 "port": ROUTER_PORT,
                 "power_mode": _main.POWER_MODE.upper(),
                 "routes": {k: v["descripcion"] for k, v in MODELO_ROUTES.items()},
@@ -92,7 +92,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_health(self) -> None:
         from core.model_router import router as _main
         from core.model_router.cache import prompt_cache
-        from core.model_router.router import OLLAMA_URL, auth_validate, require_auth
+        from core.model_router.router import get_ollama_url, auth_validate, require_auth
 
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden"}, 403)
@@ -104,7 +104,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 "status": "ok" if ollama_ok else "degraded",
                 "ollama": "reachable" if ollama_ok else "unreachable",
                 "models_available": len(disponibles),
-                "ollama_url": OLLAMA_URL,
+                "ollama_url": get_ollama_url(),
                 "power_mode": _main.POWER_MODE.upper(),
                 "cache_size": len(prompt_cache.cache),
                 "metrics_enabled": True,
