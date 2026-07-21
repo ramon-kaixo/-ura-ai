@@ -183,7 +183,7 @@ def test_memory_investigate():
 def test_memory_investigate_no_results():
     import asyncio
 
-    resp = asyncio.run(_call("memory_investigate", {"question": "xyz nonexistent topic 12345", "k": 3}))
+    resp = asyncio.run(_call("memory_investigate", {"question": "zzzzyxwvutsrqponmlkji", "k": 3}))
     assert "result" in resp
     data = json.loads(resp["result"]["content"][0]["text"])
-    assert data["sources_count"] == 0
+    assert data["sources_count"] == 0, f"Esperaba 0 fuentes, obtuvo {data['sources_count']}"
