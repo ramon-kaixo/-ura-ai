@@ -15,6 +15,7 @@ from scripts.pro.reuse.similarity import compare
 
 
 class ReuseDetector:
+    _feedback: list[dict] = []  # retroalimentación: aceptado/rechazado
     """Detector de reutilización. Indexa el repo y compara firmas."""
 
     def __init__(self, project_root: str | Path = "") -> None:
@@ -76,3 +77,14 @@ class ReuseDetector:
                     results.append(result)
         results.sort(key=lambda r: -r["score"])
         return results[:15]
+
+    @classmethod
+    def record_feedback(cls, recommendation: dict, accepted: bool, reason: str = "") -> None:
+        """Registra retroalimentación sobre una recomendación para ajustar pesos futuros."""
+        cls._feedback.append({
+            "new_name": recommendation.get("new_name", ""),
+            "existing_name": recommendation.get("existing_name", ""),
+            "score": recommendation.get("score", 0),
+            "accepted": accepted,
+            "reason": reason,
+        })

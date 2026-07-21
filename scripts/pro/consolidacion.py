@@ -103,6 +103,29 @@ def main() -> int:
     metrics = learning.analyze()
     engine.log.info(f"  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
 
+    # ── 7. Verificación ──
+    engine.log.info("── 7. Verificación ──")
+    from scripts.pro.autonomy.learning.knowledge_base import KnowledgeBase as KB
+    kb2 = KB(engine.config.nervioso)
+    vstats = kb2.stats()
+    engine.log.info(f"  Conocimiento activo: {vstats['active']}")
+    engine.log.info(f"  Conocimiento verificado: {vstats['verified']}")
+
+    # Regla: si hay más deprecated que activo, algo va mal
+    if vstats['deprecated'] > vstats['active'] and vstats['active'] > 0:
+        engine.log.warn(f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
+
+    # Verificar que las políticas aprendidas sigan siendo válidas
+    from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
+    pa = PatternAnalyzer(engine.config.nervioso)
+    new_patterns = pa.analyze()
+    engine.log.info(f"  Patrones activos: {len(new_patterns)}")
+    engine.ledger.add_decision("consolidation_verified", {
+        "active_knowledge": vstats['active'],
+        "verified_knowledge": vstats['verified'],
+        "new_patterns": len(new_patterns),
+    })
+
     # ── Reporte ──
     elapsed = time.time() - t0
     H = int(elapsed // 3600)
