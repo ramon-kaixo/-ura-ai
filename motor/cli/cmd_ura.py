@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import os
 import shlex
 import urllib.request
 from datetime import UTC, datetime
@@ -146,6 +147,47 @@ def cmd_rotate(config: UraConfig, args):
 
 def cmd_health(config: UraConfig, args):
     return _executor.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=str(ROOT)).returncode
+
+
+def cmd_system(config: UraConfig, args):
+    """Estado unificado del sistema: salud, memoria, version, pipeline."""
+    from motor.observability.health import HealthRegistry
+    from motor.intelligence.memory.hybrid import HybridMemory
+
+    hr = HealthRegistry()
+    hr.register_component("cli")
+    hr.set_healthy("cli")
+
+    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    mem_health = mem.health()
+
+    import subprocess as _sp
+
+    version = "unknown"
+    try:
+        version = _sp.run(["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False).stdout.strip()
+    except Exception:  # noqa: S110
+        pass
+
+    lines = [
+        f"URA v{version}",
+        f"{'='*40}",
+        f"  Salud:     {hr.snapshot().get('global', 'unknown')}",
+        f"  Memoria:   {mem_health.get('total_records', 'N/A')} registros",
+        f"  Vector:    {'OK' if mem_health.get('vector_store_ok') else 'OFF'}",
+        f"  Python:    3.12",
+        f"  Entorno:   {ROOT}",
+        f"{'='*40}",
+        f"  endpoints:",
+        f"    /health   → metrics_server:{os.environ.get('METRICS_PORT','9091')}",
+        f"    /memory   → memoria hibrida",
+        f"    /dashboard→ dashboard web",
+        f"    /version  → version del sistema",
+        f"{'='*40}",
+    ]
+    for line in lines:
+        print(line)
+    return 0
 
 
 def cmd_alerts(config: UraConfig, args):
