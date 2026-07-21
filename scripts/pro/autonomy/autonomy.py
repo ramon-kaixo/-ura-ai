@@ -10,10 +10,10 @@ from __future__ import annotations
 import sys
 import time
 
-from scripts.pro.autonomy.goal_manager import GoalManager
-from scripts.pro.autonomy.planner import Planner
 from scripts.pro.autonomy.evaluator import Evaluator
+from scripts.pro.autonomy.goal_manager import GoalManager
 from scripts.pro.autonomy.learning import LearningPlugin
+from scripts.pro.autonomy.planner import Planner
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
@@ -44,7 +44,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
 
     parser = argparse.ArgumentParser(description="URA Autonomía v3.3 — Aprendizaje útil")
     parser.add_argument("goals", nargs="*", default=[],
