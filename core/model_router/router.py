@@ -6,6 +6,7 @@ import logging
 import os
 import urllib.error
 import urllib.request
+import warnings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -93,8 +94,18 @@ ROUTER_PORT = 11435
 
 def __getattr__(name):
     if name == "OLLAMA_URL":
+        warnings.warn(
+            "router.OLLAMA_URL is deprecated. Use router.get_ollama_url().",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return get_ollama_url()
     if name == "_URLS":
+        warnings.warn(
+            "router._URLS is deprecated. Use router.get_urls().",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return get_urls()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
