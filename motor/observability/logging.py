@@ -74,16 +74,28 @@ class ContextFilter(logging.Filter):
 def setup_logging(
     level: str = "INFO",
     json_output: bool = True,
+    fmt: str | None = None,
+    handlers: list[logging.Handler] | None = None,
+    force: bool = True,
 ) -> None:
     root = logging.getLogger()
     root.setLevel(getattr(logging, level.upper(), logging.INFO))
 
-    handler = logging.StreamHandler()
-    if json_output:
-        handler.setFormatter(JSONFormatter())
-    else:
-        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    if force:
+        root.handlers.clear()
+        root.filters.clear()
 
-    root.handlers.clear()
-    root.addHandler(handler)
+    if handlers:
+        for h in handlers:
+            root.addHandler(h)
+    else:
+        handler = logging.StreamHandler()
+        if fmt:
+            handler.setFormatter(logging.Formatter(fmt))
+        elif json_output:
+            handler.setFormatter(JSONFormatter())
+        else:
+            handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        root.addHandler(handler)
+
     root.addFilter(ContextFilter())

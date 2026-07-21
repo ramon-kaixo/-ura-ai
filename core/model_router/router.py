@@ -8,10 +8,6 @@ import urllib.error
 import urllib.request
 import warnings
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
 log = logging.getLogger("core.model_router")
 
 try:

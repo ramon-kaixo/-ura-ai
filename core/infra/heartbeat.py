@@ -19,13 +19,10 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
+from motor.observability.logging import setup_logging
 
 STATE_FILE = "/tmp/ura_state.json"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
 logger = logging.getLogger("ura.heartbeat")
 
 MOCHILA_URL = "http://127.0.0.1:4098"
@@ -188,6 +185,8 @@ loop_latency_history: list[float] = []
 
 
 def main() -> None:
+    setup_logging(level="INFO", fmt="%(asctime)s [%(levelname)s] %(message)s")
+
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
     args = parser.parse_args()
