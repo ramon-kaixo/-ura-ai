@@ -45,7 +45,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(text.encode())
 
     def _check_rate_limit(self) -> bool:
-        from core.model_router_main import rate_limiter
+        from core.model_router.router import rate_limiter
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return False
@@ -60,9 +60,9 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _handle_api_version(self) -> None:
-        import core.model_router_main as _main
+        from core.model_router import router as _main
         from core.model_router.model_selection import MODELO_ROUTES
-        from core.model_router_main import OLLAMA_URL, ROUTER_PORT
+        from core.model_router.router import OLLAMA_URL, ROUTER_PORT
         self._send_json(
             {
                 "service": "model_router",
@@ -85,9 +85,9 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         )
 
     def _handle_health(self) -> None:
-        import core.model_router_main as _main
+        from core.model_router import router as _main
         from core.model_router.cache import prompt_cache
-        from core.model_router_main import OLLAMA_URL, auth_validate, require_auth
+        from core.model_router.router import OLLAMA_URL, auth_validate, require_auth
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden"}, 403)
             return
@@ -111,7 +111,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self._send_text(metrics.get_prometheus_format())
 
     def _handle_supervisor(self) -> None:
-        from core.model_router_main import auth_validate, require_auth
+        from core.model_router.router import auth_validate, require_auth
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden: X-API-KEY inválido o faltante"}, 403)
             return
@@ -238,7 +238,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._proxy_get()
 
     def _handle_power_mode(self) -> bool:
-        import core.model_router_main as _main
+        from core.model_router import router as _main
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         params_str = body.decode() if body else ""
@@ -285,7 +285,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             seleccionar_modelo,
         )
         from core.model_router.proxy import _check_context_size, _proxy_con_vram
-        from core.model_router_main import rate_limiter
+        from core.model_router.router import rate_limiter
 
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)

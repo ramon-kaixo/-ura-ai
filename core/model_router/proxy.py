@@ -41,7 +41,7 @@ def _fallback_count_last_hour() -> int:
 
 
 def _measare_asus_latency() -> float:
-    from core.model_router_main import _URLS
+    from core.model_router.router import _URLS
     try:
         t0 = time.monotonic()
         req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
@@ -62,7 +62,7 @@ def _update_asus_latency() -> None:
 
 
 def _get_active_backend_label() -> str:
-    from core.model_router_main import POWER_MODE
+    from core.model_router.router import POWER_MODE
     if POWER_MODE == "TURBO":
         return "ASUS Remoto"
     if POWER_MODE == "ECO":
@@ -125,7 +125,7 @@ def _is_local_ip(ip: str) -> bool:
 
 
 def _resolve_mode_for_client(client_ip: str) -> str:
-    from core.model_router_main import POWER_MODE
+    from core.model_router.router import POWER_MODE
     if POWER_MODE == "TURBO":
         return "TURBO"
     if POWER_MODE == "ECO":
@@ -136,7 +136,7 @@ def _resolve_mode_for_client(client_ip: str) -> str:
 
 
 def _resolve_ollama_url() -> str:
-    from core.model_router_main import _URLS
+    from core.model_router.router import _URLS
     env_url = os.environ.get("OLLAMA_URL")
     if env_url:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
@@ -191,7 +191,7 @@ def proxy_request(
 ) -> tuple:
     from core.model_router.metrics import metrics
     from core.model_router.model_selection import _record_success
-    from core.model_router_main import _URLS
+    from core.model_router.router import _URLS
 
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = _URLS["primary"] if resolved_mode == "TURBO" else _URLS["fallback"]
