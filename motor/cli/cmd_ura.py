@@ -39,7 +39,7 @@ def cmd_finalize(config: UraConfig, args) -> int:
 
     for f in [
         "core/config_manager.py",
-        "core/model_router.py",
+        "core/model_router_main.py",
         "scripts/pro/tuneladora_mantenimiento.py",
         "scripts/pro/tuneladora_mejora.py",
     ]:
@@ -55,7 +55,7 @@ def cmd_finalize(config: UraConfig, args) -> int:
             pass
         return 1
 
-    ok, _ = _run(["python3", "core/model_router.py", "--test", "analizar bug en produccion"], "Router --test")
+    ok, _ = _run(["python3", "core/model_router_main.py", "--test", "analizar bug en produccion"], "Router --test")
     if not ok:
         return 1
 
@@ -98,7 +98,7 @@ def cmd_test(config: UraConfig, args) -> int:
     else:
         pass
 
-    _executor.run(["python3", "core/model_router.py", "--models"], cwd=str(ROOT))
+    _executor.run(["python3", "core/model_router_main.py", "--models"], cwd=str(ROOT))
     _executor.run(["python3", "mantenimiento/ura_maintenance.py", "--dry-run"], cwd=str(ROOT))
     return 0
 
@@ -200,7 +200,7 @@ def cmd_doctor(config: UraConfig, args) -> int:
     else:
         pass
 
-    for f in ["core/config_manager.py", "core/model_router.py", "core/memory_engine.py", "ura.py"]:
+    for f in ["core/config_manager.py", "core/model_router_main.py", "core/memory_engine.py", "ura.py"]:
         r = _executor.run(["python3", "-m", "py_compile", f], cwd=str(ROOT))
 
     r = _executor.run(
