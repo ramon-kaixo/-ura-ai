@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """metrics_server.py — URA Search Quality Dashboard.
 
 Sirve métricas en tiempo real desde search_quality.ndjson usando
@@ -18,6 +19,8 @@ import os
 from pathlib import Path
 
 from aiohttp import web
+
+from motor.intelligence.memory.hybrid import HybridMemory
 from motor.observability import HealthRegistry
 
 log = logging.getLogger("ura.metrics")
@@ -34,6 +37,7 @@ PORT = int(os.environ.get("METRICS_PORT", "9091"))
 
 _health = HealthRegistry()
 _health.register_component("metrics_server")
+_memory = HybridMemory(db_path=os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
 
 
 def _compute_metrics(lines: list[str]) -> dict:
@@ -128,13 +132,127 @@ async def handle_ready(request: web.Request) -> web.Response:
     return web.json_response(snap, status=status)
 
 
+_DASHBOARD_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>URA Dashboard</title>
+<meta http-equiv="refresh" content="15">
+<style>
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem}}
+  h1{{color:#58a6ff;margin-bottom:1rem}}
+  h2{{color:#8b949e;margin:1.5rem 0 0.5rem;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em}}
+  .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}}
+  .card{{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem}}
+  .card h3{{color:#58a6ff;font-size:0.9rem;margin-bottom:0.5rem}}
+  .ok{{color:#3fb950}} .warn{{color:#d29922}} .err{{color:#f85149}}
+  .stat{{display:flex;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid #21262d}}
+  .stat:last-child{{border:none}}
+  .label{{color:#8b949e}} .value{{font-weight:600}}
+  .footer{{margin-top:2rem;color:#484f58;font-size:0.8rem;text-align:center}}
+  pre{{background:#0d1117;padding:0.5rem;border-radius:4px;font-size:0.8rem;overflow-x:auto}}
+</style>
+</head>
+<body>
+<h1>URA System Dashboard</h1>
+<div class="grid" id="root">{content}</div>
+<pre id="raw" style="display:none"></pre>
+<div class="footer">URA v4.5.1 &mdash; auto-refresh 15s</div>
+<script>
+async function refresh(){{
+  try{{
+    const [h,m,mem] = await Promise.all([
+      fetch('/health').then(r=>r.json()),
+      fetch('/metrics').then(r=>r.json()),
+      fetch('/memory').then(r=>r.json()).catch(()=>({{}}))
+    ]);
+    let html = '';
+    // Health card
+    html += '<div class="card"><h3>Estado del Sistema</h3>';
+    const g = h.global||'unknown';
+    html += `<div class="stat"><span class="label">Global</span><span class="${{g==='healthy'?'ok':g==='degraded'?'warn':'err'}}">${{g}}</span></div>`;
+    if(h.components) for(const[name,comp] of Object.entries(h.components)){{
+      html += `<div class="stat"><span class="label">${{name}}</span><span class="${{comp.status==='healthy'?'ok':comp.status==='degraded'?'warn':'err'}}">${{comp.status}}${{comp.reason?': '+comp.reason:''}}</span></div>`;
+    }}
+    html += '</div>';
+    // Metrics card
+    html += '<div class="card"><h3>Métricas de Búsqueda</h3>';
+    if(m.total_queries>0){{
+      html += `<div class="stat"><span class="label">Consultas</span><span class="value">${{m.total_queries}}</span></div>`;
+      html += `<div class="stat"><span class="label">Latencia p50</span><span class="value">${{m.latency_ms?.p50||0}}ms</span></div>`;
+      html += `<div class="stat"><span class="label">Latencia p95</span><span class="value">${{m.latency_ms?.p95||0}}ms</span></div>`;
+      html += `<div class="stat"><span class="label">Híbrido</span><span class="value">${{m.usage?.hybrid_pct||0}}%</span></div>`;
+    }}else{{
+      html += '<div class="stat"><span class="label">Datos</span><span class="warn">sin datos</span></div>';
+    }}
+    html += '</div>';
+    // Memory card
+    html += '<div class="card"><h3>Memoria Híbrida</h3>';
+    html += `<div class="stat"><span class="label">Registros</span><span class="value">${{mem.total_records??'N/A'}}</span></div>`;
+    html += `<div class="stat"><span class="label">Vector Store</span><span class="${{mem.vector_store_ok?'ok':'err'}}">${{mem.vector_store_ok?'OK':'OFF'}}</span></div>`;
+    html += '</div>';
+    document.getElementById('root').innerHTML = html;
+  }}catch(e){{
+    document.getElementById('raw').style.display='block';
+    document.getElementById('raw').textContent = 'Error: '+e;
+  }}
+}}
+refresh();
+</script>
+</body>
+</html>"""
+
+
+async def handle_dashboard(request: web.Request) -> web.Response:
+    snap = _health.snapshot()
+    global_status = snap.get("global", "unknown")
+    healthy_count = snap.get("healthy_count", 0)
+    components = snap.get("components", {})
+    mem = _memory.health()
+
+    comp_rows = "".join(
+        f'<div class="stat"><span class="label">{name}</span>'
+        f'<span class="{"ok" if c["status"]=="healthy" else "warn" if c["status"]=="degraded" else "err"}">'
+        f'{c["status"]}{": "+c["reason"] if c.get("reason") else ""}</span></div>'
+        for name, c in sorted(components.items())
+    )
+
+    html = _DASHBOARD_HTML.replace(
+        "{content}",
+        f'<div class="card"><h3>Estado del Sistema</h3>'
+        f'<div class="stat"><span class="label">Global</span>'
+        f'<span class="{"ok" if global_status=="healthy" else "warn" if global_status=="degraded" else "err"}">{global_status}</span></div>'
+        f'<div class="stat"><span class="label">Componentes saludables</span><span class="ok">{healthy_count}</span></div>'
+        f'{comp_rows}</div>'
+        f'<div class="card"><h3>Memoria Híbrida</h3>'
+        f'<div class="stat"><span class="label">Registros</span><span class="value">{mem.get("total_records", "N/A")}</span></div>'
+        f'<div class="stat"><span class="label">Vector Store</span>'
+        f'<span class="{"ok" if mem.get("vector_store_ok") else "err"}">{"OK" if mem.get("vector_store_ok") else "OFF"}</span></div>'
+        f'</div>'
+        f'<div class="card"><h3>Recursos</h3>'
+        f'<div class="stat"><span class="label">Python</span><span class="value">3.12</span></div>'
+        f'<div class="stat"><span class="label">Entorno</span><span class="value">{os.environ.get("URA_ENV", "produccion")}</span></div>'
+        f'</div>',
+    )
+    return web.Response(text=html, content_type="text/html")
+
+
+async def handle_memory(request: web.Request) -> web.Response:
+    return web.json_response(_memory.health())
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     app = web.Application()
     app.router.add_get("/metrics", handle_metrics)
     app.router.add_get("/health", handle_health)
     app.router.add_get("/ready", handle_ready)
+    app.router.add_get("/dashboard", handle_dashboard)
+    app.router.add_get("/memory", handle_memory)
     _health.set_healthy("metrics_server")
+    _health.register_component("hybrid_memory")
+    _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
     log.info("Metrics server starting on %s:%s (tail -n %s)", HOST, PORT, TAIL_LINES)
     web.run_app(app, host=HOST, port=PORT)
 
