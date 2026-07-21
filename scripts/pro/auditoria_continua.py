@@ -62,6 +62,56 @@ def run_all(verbose: bool = True) -> dict:
     return {"score": round(score, 1), "results": _results}
 
 
+# ── Histórico ──
+
+import json as _json
+from datetime import UTC, datetime as _datetime
+from pathlib import Path as _Path
+
+HISTORIAL = _Path(__file__).resolve().parent.parent.parent / ".nervioso" / "audits"
+HISTORIAL.mkdir(parents=True, exist_ok=True)
+_GIT_TAG = ""
+
+
+def _get_git_tag() -> str:
+    global _GIT_TAG
+    if not _GIT_TAG:
+        try:
+            _GIT_TAG = subprocess.run(
+                ["git", "describe", "--tags", "--abbrev=0"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout.strip()
+        except Exception:
+            _GIT_TAG = "unknown"
+    return _GIT_TAG
+
+
+def load_history() -> list[dict]:
+    """Carga el historial de auditorías anteriores."""
+    records = []
+    for f in sorted(HISTORIAL.glob("*.json")):
+        try:
+            records.append(_json.loads(f.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError):
+            continue
+    return records
+
+
+def save_result(score: float, results: dict, elapsed: float) -> None:
+    """Guarda el resultado de la auditoría actual en el histórico."""
+    record = {
+        "timestamp": _datetime.now(UTC).isoformat(),
+        "tag": _get_git_tag(),
+        "score": score,
+        "elapsed_s": round(elapsed, 1),
+        "checks": {name: {"ok": r["ok"], "msg": r["msg"], "elapsed_s": r["elapsed_s"]}
+                   for name, r in results.items()},
+    }
+    path = HISTORIAL / f"audit_{_datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+    path.write_text(_json.dumps(record, indent=2, ensure_ascii=False))
+    return record
+
+
 # ── 1. Compilación ──
 
 @check("Compilación (py_compile)", 20)
@@ -204,6 +254,30 @@ def _():
     return True, f"{len(plugins)} plugins, contrato OK"
 
 
+def show_history() -> None:
+    """Muestra el histórico de auditorías y la tendencia."""
+    records = load_history()
+    if not records:
+        return
+
+    print("\n── Histórico de auditorías ──")
+    print(f"  {'Versión':12} {'Score':>6} {'Tiempo':>8} {'Checks OK':>10}")
+    print(f"  {'-'*12} {'-'*6} {'-'*8} {'-'*10}")
+    for r in records[-10:]:
+        tag = r.get("tag", "?")[:12]
+        ok = sum(1 for c in r.get("checks", {}).values() if c.get("ok"))
+        total = len(r.get("checks", {}))
+        print(f"  {tag:12} {r.get('score', 0):>6.0f} {r.get('elapsed_s', 0):>7.1f}s {ok:>3}/{total}")
+
+    if len(records) >= 2:
+        first = records[0].get("score", 0)
+        last_c = records[-1].get("score", 0)
+        diff = last_c - first
+        arrow = "📈" if diff > 0 else "📉" if diff < 0 else "➡️"
+        print(f"\n  Tendencia: {first:.0f} → {last_c:.0f} ({diff:+.0f}) {arrow}")
+        print(f"  Auditorías registradas: {len(records)}")
+
+
 def main() -> int:
     import argparse  # noqa: PLC0415
     parser = argparse.ArgumentParser(description="URA Auditoría Continua")
@@ -238,9 +312,13 @@ def main() -> int:
     else:
         print("  🔴 NO SUPERADO")
 
+    # Guardar histórico
+    record = save_result(result["score"], result["results"], elapsed)
+    show_history()
+
     if args.json:
         import json  # noqa: PLC0415
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+        print(json.dumps({"actual": result, "historial": load_history()[-5:]}, indent=2, ensure_ascii=False))
 
     return 0 if result["score"] >= 80 else 1
 
