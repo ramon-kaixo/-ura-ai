@@ -1,0 +1,387 @@
+[
+  {
+    "file": "agent_hierarchy.py",
+    "type": "import_side_effect",
+    "line": 20
+  },
+  {
+    "file": "agent_hierarchy.py",
+    "type": "import_side_effect",
+    "line": 27
+  },
+  {
+    "file": "mantenimiento/ura_maintenance_remote.py",
+    "type": "import_side_effect",
+    "line": 52
+  },
+  {
+    "file": "mantenimiento/ura_maintenance.py",
+    "type": "import_side_effect",
+    "line": 89
+  },
+  {
+    "file": "agents/agente_sandbox_codigo.py",
+    "type": "import_side_effect",
+    "line": 48
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 139
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 153
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 241
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 254
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 265
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 275
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 285
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 295
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 299
+  },
+  {
+    "file": "tests/test_sda.py",
+    "type": "import_side_effect",
+    "line": 310
+  },
+  {
+    "file": "scripts/pro/benchmark_rag.py",
+    "type": "import_side_effect",
+    "line": 29
+  },
+  {
+    "file": "scripts/pro/benchmark_final_reranking.py",
+    "type": "import_side_effect",
+    "line": 16
+  },
+  {
+    "file": "scripts/pro/benchmark_rerank.py",
+    "type": "import_side_effect",
+    "line": 15
+  },
+  {
+    "file": "scripts/pro/benchmark_reranking.py",
+    "type": "import_side_effect",
+    "line": 17
+  },
+  {
+    "file": "scripts/pro/benchmark_hybrid.py",
+    "type": "import_side_effect",
+    "line": 15
+  },
+  {
+    "file": "scripts/pro/watch_inbox.py",
+    "type": "import_side_effect",
+    "line": 14
+  },
+  {
+    "file": "scripts/pro/benchmark_compare_chunking.py",
+    "type": "import_side_effect",
+    "line": 17
+  },
+  {
+    "file": "scripts/pro/benchmark_qdrant.py",
+    "type": "import_side_effect",
+    "line": 13
+  },
+  {
+    "file": "scripts/pro/bypass_linksys_gui.py",
+    "type": "import_side_effect",
+    "line": 64
+  },
+  {
+    "file": "scripts/pro/benchmark_ke.py",
+    "type": "import_side_effect",
+    "line": 25
+  },
+  {
+    "file": "scripts/pro/index_semantic_chunks.py",
+    "type": "import_side_effect",
+    "line": 13
+  },
+  {
+    "file": "scripts/pro/chaos_test.py",
+    "type": "import_side_effect",
+    "line": 33
+  },
+  {
+    "file": "scripts/pro/reindex_vectors.py",
+    "type": "import_side_effect",
+    "line": 23
+  },
+  {
+    "file": "scripts/pro/benchmark_final_retrieval.py",
+    "type": "import_side_effect",
+    "line": 17
+  },
+  {
+    "file": "scripts/pro/uitars_hetzner.py",
+    "type": "import_side_effect",
+    "line": 16
+  },
+  {
+    "file": "scripts/pro/index_golden_docs.py",
+    "type": "import_side_effect",
+    "line": 13
+  },
+  {
+    "file": "scripts/pro/benchmark_llm.py",
+    "type": "import_side_effect",
+    "line": 40
+  },
+  {
+    "file": "scripts/pro/benchmark_hybrid_refined.py",
+    "type": "import_side_effect",
+    "line": 16
+  },
+  {
+    "file": "core/infra/heartbeat.py",
+    "type": "singleton_pending",
+    "line": 32
+  },
+  {
+    "file": "scripts/pro/mcp_mochila.py",
+    "type": "singleton_pending",
+    "line": 21
+  },
+  {
+    "file": "scripts/pro/mcp_mochila.py",
+    "type": "singleton_pending",
+    "line": 22
+  },
+  {
+    "file": "scripts/pro/metrics_server.py",
+    "type": "singleton_pending",
+    "line": 38
+  },
+  {
+    "file": "scripts/pro/metrics_server.py",
+    "type": "singleton_pending",
+    "line": 40
+  },
+  {
+    "file": "motor/platform/tracing.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/qdrant_client.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/llm/router.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/api.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/executor.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/plugin/registry_v2.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/stages/entity_resolver.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/cli/cmd_ura.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/model_router/handler.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/scanner/scanner.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/forgetting.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/episodic.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/conversation.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/memory_engine.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/guardian_openclaw.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/compression.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/watchdog_funciones.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/fact_history.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/agents/consensus.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/semantic.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/mochila/tools.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/model_router/proxy.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/memoria/extractores/imagen_extractor.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/error_sandbox.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/resolver_red.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/platform/serializer.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/memory/memory.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/models.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/hybrid.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/infra/heartbeat.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/auto_reindex.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/platform/validator.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/cleanup.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/mochila/routes/proxy.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "scripts/pro/tuneladora/engine.py",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "trends",
+    "line": 0
+  }
+]
