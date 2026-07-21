@@ -376,14 +376,33 @@ def cmd_ask(config: UraConfig, args):
 
 
 def cmd_memory(config: UraConfig, args) -> int:
-    """Estadisticas de la memoria RAG."""
-    try:
-        from core.memory_engine import load_manifest
+    """Estadísticas y operaciones de la memoria híbrida."""
+    from motor.intelligence.memory.hybrid import HybridMemory
 
-        manifest = load_manifest()
-        if manifest.get("files"):
-            for _fname, _info in sorted(manifest["files"].items()):
-                pass
-    except Exception:
-        return 1
+    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    health = mem.health()
+    total = health.get("total_records", 0)
+
+    print(f"Memoria Híbrida")
+    print(f"{'='*40}")
+    print(f"  Registros:     {total}")
+    print(f"  Vector Store:  {'OK' if health.get('vector_store_ok') else 'OFF'}")
+    print()
+
+    if args and hasattr(args, "raw") and args.raw:
+        cmd = args.raw[0] if args.raw else ""
+        if cmd == "search" and len(args.raw) > 1:
+            query = " ".join(args.raw[1:])
+            results = mem.search(query, k=5)
+            print(f"Búsqueda: '{query}' ({len(results)} resultados)")
+            for i, r in enumerate(results, 1):
+                print(f"  {i}. [{r.type.value}] {r.payload[:100]}...")
+        elif cmd == "store" and len(args.raw) > 1:
+            text = " ".join(args.raw[1:])
+            rid = mem.store(payload=text)
+            print(f"Almacenado: {rid}")
+        else:
+            print("Subcomandos:")
+            print("  ura memory search <query>   — buscar en memoria")
+            print("  ura memory store <text>     — almacenar texto")
     return 0
