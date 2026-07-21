@@ -30,7 +30,7 @@ class HealthRegistry:
         with self._lock:
             if name not in self._components:
                 entry = HealthEntry(component=name, status=_HEALTHY, timestamp=datetime.now(UTC).isoformat())
-            self._components[name] = entry
+                self._components[name] = entry
 
     def set_healthy(self, component: str, reason: str = "") -> None:
         self._set_status(component, _HEALTHY, reason)
