@@ -563,6 +563,35 @@ def _filter_new_findings(all_findings: list[dict], baseline: set[tuple[str, str,
     return [f for f in all_findings if (f.get("file", "-"), f.get("type", "unknown"), f.get("line", 0)) not in baseline]
 
 
+TRENDS_PATH = URA_ROOT / "docs" / "architecture" / "arq_trends.jsonl"
+
+
+def _save_trends(result: dict[str, Any], all_findings: list[dict]) -> None:
+    """Guarda una línea de tendencia con las métricas actuales."""
+    import datetime
+    fails = sum(1 for f in all_findings if f.get("level") in ("FAIL", "P0"))
+    warns = sum(1 for f in all_findings if f.get("level") in ("WARNING", "MEDIUM"))
+    side_effects = sum(1 for f in all_findings if f.get("type") == "import_side_effect")
+    singletons = sum(1 for f in all_findings if f.get("type") == "singleton_forbidden")
+    large_files = sum(1 for f in all_findings if f.get("type") == "large_file" and f.get("lines", 0) > 500)
+    script_violations = sum(1 for f in all_findings if f.get("type") == "script_import_violation")
+
+    entry = {
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "version": result.get("version", "unknown"),
+        "files_scanned": result.get("files_scanned", 0),
+        "total_fail": fails,
+        "total_warn": warns,
+        "side_effects": side_effects,
+        "singletons_forbidden": singletons,
+        "modules_over_500_lines": large_files,
+        "script_import_violations": script_violations,
+    }
+    TRENDS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(TRENDS_PATH, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
 def main() -> int:
     import argparse
     parser = argparse.ArgumentParser(description="ARQ Auditor — verificación arquitectónica")
@@ -576,6 +605,9 @@ def main() -> int:
     all_findings: list[dict] = []
     for block_list in result["blocks"].values():
         all_findings.extend(block_list)
+
+    # Guardar tendencia en cada ejecución
+    _save_trends(result, all_findings)
 
     if args.update_baseline:
         _save_baseline(all_findings)
