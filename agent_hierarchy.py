@@ -28,6 +28,7 @@ def _get_token() -> str:
     global _GATEWAY_TOKEN
     if _GATEWAY_TOKEN is None:
         from motor.core.secrets import get_secret
+
         _GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
     return _GATEWAY_TOKEN
 

@@ -25,26 +25,87 @@ URA_ROOT = Path(__file__).resolve().parent.parent.parent
 # ── Patrones globales ──
 
 FORBIDDEN_TOP_LEVEL_CALLS = [
-    "requests.", "httpx.", "urllib.request.urlopen", "socket.",
-    "sqlite3.connect", "QdrantClient(", "UraConfig.load",
-    "get_secret(", "logging.basicConfig", "asyncio.run",
+    "requests.",
+    "httpx.",
+    "urllib.request.urlopen",
+    "socket.",
+    "sqlite3.connect",
+    "QdrantClient(",
+    "UraConfig.load",
+    "get_secret(",
+    "logging.basicConfig",
+    "asyncio.run",
 ]
 
 STDLIB_MODULES = set(sys.builtin_module_names) | {
-    "abc", "ast", "asyncio", "base64", "collections", "contextlib",
-    "copy", "csv", "dataclasses", "datetime", "decimal", "enum",
-    "functools", "glob", "hashlib", "html", "http", "importlib",
-    "inspect", "io", "itertools", "json", "logging", "math", "os",
-    "pathlib", "pickle", "platform", "pprint", "queue", "random",
-    "re", "secrets", "shutil", "signal", "socket", "sqlite3",
-    "string", "struct", "subprocess", "sys", "tempfile", "textwrap",
-    "threading", "time", "traceback", "types", "typing", "unittest",
-    "urllib", "uuid", "warnings", "weakref", "xml", "zipfile",
+    "abc",
+    "ast",
+    "asyncio",
+    "base64",
+    "collections",
+    "contextlib",
+    "copy",
+    "csv",
+    "dataclasses",
+    "datetime",
+    "decimal",
+    "enum",
+    "functools",
+    "glob",
+    "hashlib",
+    "html",
+    "http",
+    "importlib",
+    "inspect",
+    "io",
+    "itertools",
+    "json",
+    "logging",
+    "math",
+    "os",
+    "pathlib",
+    "pickle",
+    "platform",
+    "pprint",
+    "queue",
+    "random",
+    "re",
+    "secrets",
+    "shutil",
+    "signal",
+    "socket",
+    "sqlite3",
+    "string",
+    "struct",
+    "subprocess",
+    "sys",
+    "tempfile",
+    "textwrap",
+    "threading",
+    "time",
+    "traceback",
+    "types",
+    "typing",
+    "unittest",
+    "urllib",
+    "uuid",
+    "warnings",
+    "weakref",
+    "xml",
+    "zipfile",
 }
 
 FORBIDDEN_STATE_PATTERNS = [
-    "requests.", "httpx.", "router.route", ".chat(",
-    ".execute(", "await ", "for ", "while ", "thread", "asyncio.",
+    "requests.",
+    "httpx.",
+    "router.route",
+    ".chat(",
+    ".execute(",
+    "await ",
+    "for ",
+    "while ",
+    "thread",
+    "asyncio.",
 ]
 
 SINGLETON_ALLOWED = {"SubprocessExecutor", "ProviderRegistry"}
@@ -52,8 +113,10 @@ SINGLETON_PENDING = {"CircuitBreaker", "HybridMemory", "HealthRegistry"}
 SINGLETON_FORBIDDEN = {"QdrantClient", "httpx.AsyncClient", "requests.Session"}
 
 EXEMPTED_CORE_IMPORTS = {
-    "core/infra/heartbeat.py", "core/model_router/cli.py",
-    "core/auto_reindex.py", "core/json_logger.py",
+    "core/infra/heartbeat.py",
+    "core/model_router/cli.py",
+    "core/auto_reindex.py",
+    "core/json_logger.py",
     "core/memoria/qdrant_store.py",
 }
 
@@ -74,7 +137,8 @@ ALLOWED_SCRIPT_ROOT = "motor.cli.public_api"
 
 def _find_py_files(root: Path) -> list[Path]:
     return [
-        p for p in root.rglob("*.py")
+        p
+        for p in root.rglob("*.py")
         if "__pycache__" not in p.parts
         and ".venv" not in p.parts
         and ".sandbox_packages" not in p.parts
@@ -100,6 +164,7 @@ def _get_attr_chain(node: ast.AST) -> str:
 
 
 # ── Bloque A: Side effects en import ──
+
 
 def _top_level_calls(tree: ast.AST) -> list[tuple[int, str]]:
     """Busca llamadas a nivel de módulo (no dentro de funciones/clases)."""
@@ -175,16 +240,21 @@ def block_a(files: list[Path]) -> list[dict]:
         for line, name in _top_level_calls(tree):
             for pattern in FORBIDDEN_TOP_LEVEL_CALLS:
                 if pattern in name:
-                    findings.append({
-                        "block": "A", "type": "import_side_effect",
-                        "file": str(rel), "line": line,
-                        "detail": f"Llamada a '{name}' a nivel de módulo",
-                        "level": "P0",
-                    })
+                    findings.append(
+                        {
+                            "block": "A",
+                            "type": "import_side_effect",
+                            "file": str(rel),
+                            "line": line,
+                            "detail": f"Llamada a '{name}' a nivel de módulo",
+                            "level": "P0",
+                        }
+                    )
     return findings
 
 
 # ── Bloque B: Lazy imports ──
+
 
 def _classify_lazy_import(module: str, names: list[str], filepath: str) -> str:
     if any(n.endswith("TYPE_CHECKING") for n in names):
@@ -212,16 +282,21 @@ def block_b(files: list[Path]) -> list[dict]:
                         names = [a.name for a in child.names]
                         cls = _classify_lazy_import(module or "", names, str(rel))
                         if cls in ("WORKAROUND", "UNKNOWN"):
-                            findings.append({
-                                "block": "B", "type": "lazy_import_" + cls.lower(),
-                                "file": str(rel), "line": child.lineno,
-                                "detail": f"Lazy import clasificado como {cls}: {module}",
-                                "level": "FAIL",
-                            })
+                            findings.append(
+                                {
+                                    "block": "B",
+                                    "type": "lazy_import_" + cls.lower(),
+                                    "file": str(rel),
+                                    "line": child.lineno,
+                                    "detail": f"Lazy import clasificado como {cls}: {module}",
+                                    "level": "FAIL",
+                                }
+                            )
     return findings
 
 
 # ── Bloque C: Estado global ──
+
 
 def block_c(files: list[Path]) -> list[dict]:
     findings = []
@@ -237,19 +312,27 @@ def block_c(files: list[Path]) -> list[dict]:
                     if isinstance(target, ast.Name) and isinstance(node.value, ast.Call):
                         name = _get_call_name(node.value).rstrip("(")
                         if name in SINGLETON_FORBIDDEN:
-                            findings.append({
-                                "block": "C", "type": "singleton_forbidden",
-                                "file": str(rel), "line": node.lineno,
-                                "detail": f"Singleton prohibido: {name}",
-                                "level": "P0",
-                            })
+                            findings.append(
+                                {
+                                    "block": "C",
+                                    "type": "singleton_forbidden",
+                                    "file": str(rel),
+                                    "line": node.lineno,
+                                    "detail": f"Singleton prohibido: {name}",
+                                    "level": "P0",
+                                }
+                            )
                         elif name in SINGLETON_PENDING:
-                            findings.append({
-                                "block": "C", "type": "singleton_pending",
-                                "file": str(rel), "line": node.lineno,
-                                "detail": f"Singleton pendiente de migración: {name}",
-                                "level": "WARNING",
-                            })
+                            findings.append(
+                                {
+                                    "block": "C",
+                                    "type": "singleton_pending",
+                                    "file": str(rel),
+                                    "line": node.lineno,
+                                    "detail": f"Singleton pendiente de migración: {name}",
+                                    "level": "WARNING",
+                                }
+                            )
     return findings
 
 
@@ -258,6 +341,7 @@ def block_c(files: list[Path]) -> list[dict]:
 STATE_FILE_EXCEPTIONS = {
     "motor/core/llm/_state.py",  # for en _get_optional_providers() es construcción, no lógica
 }
+
 
 def block_d(files: list[Path]) -> list[dict]:
     findings = []
@@ -271,16 +355,21 @@ def block_d(files: list[Path]) -> list[dict]:
         for i, line in enumerate(content.split("\n"), 1):
             for pattern in FORBIDDEN_STATE_PATTERNS:
                 if pattern in line and not line.strip().startswith("#"):
-                    findings.append({
-                        "block": "D", "type": "state_business_logic",
-                        "file": str(rel), "line": i,
-                        "detail": f"Patrón '{pattern}' en _state.py",
-                        "level": "FAIL",
-                    })
+                    findings.append(
+                        {
+                            "block": "D",
+                            "type": "state_business_logic",
+                            "file": str(rel),
+                            "line": i,
+                            "detail": f"Patrón '{pattern}' en _state.py",
+                            "level": "FAIL",
+                        }
+                    )
     return findings
 
 
 # ── Bloque E: Factories ──
+
 
 def block_e(files: list[Path]) -> list[dict]:
     findings = []
@@ -294,22 +383,28 @@ def block_e(files: list[Path]) -> list[dict]:
             if isinstance(node, ast.FunctionDef):
                 if node.name.startswith("build_"):
                     has_cache = any(
-                        isinstance(n, ast.Assign) and any(
-                            isinstance(t, ast.Name) and t.id == node.name.split("_", 1)[1] + "_cache"
-                            for t in n.targets
-                        ) for n in ast.walk(node)
+                        isinstance(n, ast.Assign)
+                        and any(
+                            isinstance(t, ast.Name) and t.id == node.name.split("_", 1)[1] + "_cache" for t in n.targets
+                        )
+                        for n in ast.walk(node)
                     )
                     if has_cache:
-                        findings.append({
-                            "block": "E", "type": "factory_caching",
-                            "file": str(rel), "line": node.lineno,
-                            "detail": f"build_{node.name} cachea resultado",
-                            "level": "WARNING",
-                        })
+                        findings.append(
+                            {
+                                "block": "E",
+                                "type": "factory_caching",
+                                "file": str(rel),
+                                "line": node.lineno,
+                                "detail": f"build_{node.name} cachea resultado",
+                                "level": "WARNING",
+                            }
+                        )
     return findings
 
 
 # ── Bloque F: API pública ──
+
 
 def _is_script_exempted(rel: Path) -> bool:
     s = str(rel)
@@ -336,16 +431,21 @@ def block_f(files: list[Path]) -> list[dict]:
         for match in re.finditer(r"^from (motor\.\S+) import|^import (motor\.\S+)", content, re.MULTILINE):
             imported = match.group(1) or match.group(2)
             if imported and not imported.startswith(ALLOWED_SCRIPT_ROOT):
-                findings.append({
-                    "block": "F", "type": "script_import_violation",
-                    "file": str(rel), "line": content[:match.start()].count("\n") + 1,
-                    "detail": f"Importa '{imported}' en lugar de desde {ALLOWED_SCRIPT_ROOT}",
-                    "level": "FAIL",
-                })
+                findings.append(
+                    {
+                        "block": "F",
+                        "type": "script_import_violation",
+                        "file": str(rel),
+                        "line": content[: match.start()].count("\n") + 1,
+                        "detail": f"Importa '{imported}' en lugar de desde {ALLOWED_SCRIPT_ROOT}",
+                        "level": "FAIL",
+                    }
+                )
     return findings
 
 
 # ── Bloque G: Protocolos ──
+
 
 def block_g(files: list[Path]) -> list[dict]:
     findings = []
@@ -359,16 +459,21 @@ def block_g(files: list[Path]) -> list[dict]:
             continue
         content = f.read_text()
         for match in re.finditer(r"^from motor\.|^import motor\.", content, re.MULTILINE):
-            findings.append({
-                "block": "G", "type": "core_import_motor",
-                "file": str(rel), "line": content[:match.start()].count("\n") + 1,
-                "detail": f"core/ importa de motor/: {match.group().strip()}",
-                "level": "FAIL",
-            })
+            findings.append(
+                {
+                    "block": "G",
+                    "type": "core_import_motor",
+                    "file": str(rel),
+                    "line": content[: match.start()].count("\n") + 1,
+                    "detail": f"core/ importa de motor/: {match.group().strip()}",
+                    "level": "FAIL",
+                }
+            )
     return findings
 
 
 # ── Bloque H: Compatibilidad ──
+
 
 def block_h(files: list[Path]) -> list[dict]:
     findings = []
@@ -381,20 +486,26 @@ def block_h(files: list[Path]) -> list[dict]:
         for node in ast.iter_child_nodes(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "__getattr__":
                 has_warning = any(
-                    isinstance(n, ast.Call) and getattr(getattr(n.func, 'attr', None), 'startswith', lambda _: False)('warn')
+                    isinstance(n, ast.Call)
+                    and getattr(getattr(n.func, "attr", None), "startswith", lambda _: False)("warn")
                     for n in ast.walk(node)
                 )
                 if not has_warning:
-                    findings.append({
-                        "block": "H", "type": "compat_without_warning",
-                        "file": str(rel), "line": node.lineno,
-                        "detail": "__getattr__ sin DeprecationWarning",
-                        "level": "FAIL",
-                    })
+                    findings.append(
+                        {
+                            "block": "H",
+                            "type": "compat_without_warning",
+                            "file": str(rel),
+                            "line": node.lineno,
+                            "detail": "__getattr__ sin DeprecationWarning",
+                            "level": "FAIL",
+                        }
+                    )
     return findings
 
 
 # ── Bloque I: Archivos grandes ──
+
 
 def _count_functions(tree: ast.AST) -> int:
     return sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
@@ -410,7 +521,9 @@ def _cclomatic(tree: ast.AST) -> float:
     for n in ast.walk(tree):
         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
             nodes += 1
-            edges += 1 + sum(1 for c in ast.walk(n) if isinstance(c, (ast.If, ast.While, ast.For, ast.ExceptHandler, ast.BoolOp)))
+            edges += 1 + sum(
+                1 for c in ast.walk(n) if isinstance(c, (ast.If, ast.While, ast.For, ast.ExceptHandler, ast.BoolOp))
+            )
     return edges - nodes + 2 if nodes > 0 else 1
 
 
@@ -434,22 +547,27 @@ def block_i(files: list[Path]) -> list[dict]:
         cc = _cclomatic(tree)
         priority = (lines / 100) * 0.3 + (funcs / 10) * 0.2 + (cc / 10) * 0.3 + (deps / 5) * 0.1
         if priority > 2.0 or lines > 500:
-            ranking.append({
-                "block": "I", "type": "large_file",
-                "file": str(rel), "line": 1,
-                "detail": f"L{lines} F{funcs} CC{cc:.0f} D{deps} P{priority:.1f}",
-                "level": "MEDIUM" if priority < 5.0 else "HIGH",
-                "priority_score": round(priority, 1),
-                "lines": lines,
-                "functions": funcs,
-                "complexity": round(cc, 1),
-                "dependencies": deps,
-            })
+            ranking.append(
+                {
+                    "block": "I",
+                    "type": "large_file",
+                    "file": str(rel),
+                    "line": 1,
+                    "detail": f"L{lines} F{funcs} CC{cc:.0f} D{deps} P{priority:.1f}",
+                    "level": "MEDIUM" if priority < 5.0 else "HIGH",
+                    "priority_score": round(priority, 1),
+                    "lines": lines,
+                    "functions": funcs,
+                    "complexity": round(cc, 1),
+                    "dependencies": deps,
+                }
+            )
     ranking.sort(key=lambda x: -x["priority_score"])
     return ranking
 
 
 # ── Bloque J: Tendencias ──
+
 
 def block_j(all_findings: dict[str, list]) -> dict[str, Any]:
     total_lazy = 0
@@ -473,6 +591,7 @@ def block_j(all_findings: dict[str, list]) -> dict[str, Any]:
 
 # ── Bloque K: ADR Enforcement ──
 
+
 def block_k() -> list[dict]:
     findings = []
     adr_checks = {
@@ -483,30 +602,40 @@ def block_k() -> list[dict]:
     }
     for adr, filepath in adr_checks.items():
         if filepath and Path(filepath).exists():
-            findings.append({
-                "block": "K", "type": "adr_check",
-                "file": filepath,
-                "detail": f"{adr}: archivo existe",
-                "level": "PASS",
-            })
+            findings.append(
+                {
+                    "block": "K",
+                    "type": "adr_check",
+                    "file": filepath,
+                    "detail": f"{adr}: archivo existe",
+                    "level": "PASS",
+                }
+            )
         elif filepath:
-            findings.append({
-                "block": "K", "type": "adr_check",
-                "file": filepath,
-                "detail": f"{adr}: archivo no encontrado",
-                "level": "FAIL",
-            })
+            findings.append(
+                {
+                    "block": "K",
+                    "type": "adr_check",
+                    "file": filepath,
+                    "detail": f"{adr}: archivo no encontrado",
+                    "level": "FAIL",
+                }
+            )
         else:
-            findings.append({
-                "block": "K", "type": "adr_check",
-                "file": "-",
-                "detail": f"{adr}: cubierto por otro bloque",
-                "level": "INFO",
-            })
+            findings.append(
+                {
+                    "block": "K",
+                    "type": "adr_check",
+                    "file": "-",
+                    "detail": f"{adr}: cubierto por otro bloque",
+                    "level": "INFO",
+                }
+            )
     return findings
 
 
 # ── Orquestador ──
+
 
 def run_all() -> dict[str, Any]:
     files = _find_py_files(URA_ROOT)
@@ -544,7 +673,7 @@ def run_all() -> dict[str, Any]:
 
 def _print_report(result: dict[str, Any]) -> None:
     print(f"\nARQ Auditor — v{result['version']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Archivos escaneados: {result['files_scanned']}\n")
 
     total_fail = 0
@@ -562,11 +691,13 @@ def _print_report(result: dict[str, Any]) -> None:
         status = "❌" if fails else "⚠️" if warns else "ℹ️"
         print(f"  [{block_id}] {status} — {len(block_data)} hallazgos ({fails} FAIL, {warns} WARN)")
         for f in block_data[:5]:
-            print(f"       {f.get('type','').ljust(25)} {f.get('file','')}:{f.get('line','')}  {f.get('detail','')}")
+            print(
+                f"       {f.get('type', '').ljust(25)} {f.get('file', '')}:{f.get('line', '')}  {f.get('detail', '')}"
+            )
         if len(block_data) > 5:
-            print(f"       ... y {len(block_data)-5} más")
+            print(f"       ... y {len(block_data) - 5} más")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Total: {total_fail} FAIL, {total_warn} WARNING")
     if total_fail > 0:
         print("RESULTADO: ❌ NO SUPERADO")
@@ -574,7 +705,7 @@ def _print_report(result: dict[str, Any]) -> None:
         print("RESULTADO: ⚠️ SUPERADO CON ADVERTENCIAS")
     else:
         print("RESULTADO: ✅ SUPERADO")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 BASELINE_PATH = URA_ROOT / "docs" / "architecture" / "arq_baseline.json"
@@ -594,7 +725,9 @@ def _load_baseline() -> set[tuple[str, str, int]]:
 def _save_baseline(all_findings: list[dict]) -> None:
     """Guarda la línea base actual."""
     BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    simplified = [{"file": f.get("file", "-"), "type": f.get("type", "unknown"), "line": f.get("line", 0)} for f in all_findings]
+    simplified = [
+        {"file": f.get("file", "-"), "type": f.get("type", "unknown"), "line": f.get("line", 0)} for f in all_findings
+    ]
     BASELINE_PATH.write_text(json.dumps(simplified, indent=2))
 
 
@@ -609,6 +742,7 @@ TRENDS_PATH = URA_ROOT / "docs" / "architecture" / "arq_trends.jsonl"
 def _save_trends(result: dict[str, Any], all_findings: list[dict]) -> None:
     """Guarda una línea de tendencia con las métricas actuales."""
     import datetime
+
     fails = sum(1 for f in all_findings if f.get("level") in ("FAIL", "P0"))
     warns = sum(1 for f in all_findings if f.get("level") in ("WARNING", "MEDIUM"))
     side_effects = sum(1 for f in all_findings if f.get("type") == "import_side_effect")
@@ -634,6 +768,7 @@ def _save_trends(result: dict[str, Any], all_findings: list[dict]) -> None:
 
 def main() -> int:
     import argparse
+
     parser = argparse.ArgumentParser(description="ARQ Auditor — verificación arquitectónica")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--check", action="store_true", help="Exit 1 si hay FAIL nuevos")
@@ -662,7 +797,7 @@ def main() -> int:
             print(f"NUEVOS FAIL ({new_fails}) — no en línea base:")
             for f in new_findings:
                 if f.get("level") in ("FAIL", "P0"):
-                    print(f"  {f['file']}:{f.get('line','')} [{f.get('type','')}] {f.get('detail','')[:80]}")
+                    print(f"  {f['file']}:{f.get('line', '')} [{f.get('type', '')}] {f.get('detail', '')[:80]}")
             print(f"\nTotal baseline: {len(baseline)} hallazgos conocidos")
             return 1
         return 0

@@ -19,6 +19,7 @@ from motor.intelligence.memory.record import MemoryType
 def _reset_memory():
     """Limpia la memoria compartida entre tests."""
     import os
+
     os.environ["URA_MEMORY_DB"] = ":memory:"
     importlib.reload(_mcp_mod)
 
@@ -42,7 +43,14 @@ async def _call(method: str, params: dict | None = None) -> dict:
     elif method == "tools/list":
         result = await t(params or {})
         return {"jsonrpc": "2.0", "result": result}
-    elif method in ("memory_store", "memory_search", "memory_stats", "ura_health", "memory_investigate", "memory_research"):
+    elif method in (
+        "memory_store",
+        "memory_search",
+        "memory_stats",
+        "ura_health",
+        "memory_investigate",
+        "memory_research",
+    ):
         result = await c({"name": method, "arguments": params or {}})
         return {"jsonrpc": "2.0", "result": result}
     return {"jsonrpc": "2.0", "error": {"code": -32601, "message": "unknown method"}}
@@ -128,20 +136,35 @@ def test_ura_health():
 def test_memory_search_with_type():
     import asyncio
 
-    asyncio.run(_call("memory_store", {
-        "payload": "working data",
-        "memory_type": "working",
-    }))
-    asyncio.run(_call("memory_store", {
-        "payload": "semantic knowledge",
-        "memory_type": "semantic",
-    }))
+    asyncio.run(
+        _call(
+            "memory_store",
+            {
+                "payload": "working data",
+                "memory_type": "working",
+            },
+        )
+    )
+    asyncio.run(
+        _call(
+            "memory_store",
+            {
+                "payload": "semantic knowledge",
+                "memory_type": "semantic",
+            },
+        )
+    )
 
-    working = asyncio.run(_call("memory_search", {
-        "query": "data",
-        "k": 5,
-        "memory_type": "working",
-    }))
+    working = asyncio.run(
+        _call(
+            "memory_search",
+            {
+                "query": "data",
+                "k": 5,
+                "memory_type": "working",
+            },
+        )
+    )
     working_results = json.loads(working["result"]["content"][0]["text"])
     assert len(working_results) >= 1
     assert "working" in working_results[0]["payload"]
@@ -150,11 +173,16 @@ def test_memory_search_with_type():
 def test_memory_store_with_metadata():
     import asyncio
 
-    resp = asyncio.run(_call("memory_store", {
-        "payload": "metadatos",
-        "metadata": {"source": "test", "tags": ["a", "b"]},
-        "memory_type": "semantic",
-    }))
+    resp = asyncio.run(
+        _call(
+            "memory_store",
+            {
+                "payload": "metadatos",
+                "metadata": {"source": "test", "tags": ["a", "b"]},
+                "memory_type": "semantic",
+            },
+        )
+    )
     assert "result" in resp
     rid = json.loads(resp["result"]["content"][0]["text"])["id"]
     assert rid
@@ -201,7 +229,9 @@ def test_memory_research():
     asyncio.run(_call("memory_store", {"payload": "los modelos de lenguaje permiten procesar texto natural"}))
 
     # Research combines local + web (web may fail in test, but local should work)
-    resp = asyncio.run(_call("memory_research", {"query": "inteligencia artificial", "web_results": 1, "local_results": 5}))
+    resp = asyncio.run(
+        _call("memory_research", {"query": "inteligencia artificial", "web_results": 1, "local_results": 5})
+    )
     assert "result" in resp
     data = json.loads(resp["result"]["content"][0]["text"])
     assert "id" in data
