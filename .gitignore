@@ -57,3 +57,9 @@ coverage.xml
 deploy/secrets.env
 hetzner.env
 backups/env/
+*.svg
+core_deps.txt
+motor_deps.txt
+knowledge_deps.txt
+archivos_python.txt
+imports.txt
