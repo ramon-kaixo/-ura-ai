@@ -92,7 +92,7 @@ def load_history() -> list[dict]:
     for f in sorted(HISTORIAL.glob("*.json")):
         try:
             records.append(_json.loads(f.read_text(encoding="utf-8")))
-        except (json.JSONDecodeError, OSError):
+        except (_json.JSONDecodeError, OSError):
             continue
     return records
 
@@ -231,8 +231,7 @@ def _():
 def _():
     cp = ROOT / ".nervioso" / "checkpoint.json"
     if cp.exists():
-        import json
-        data = json.loads(cp.read_text(encoding="utf-8"))
+        data = _json.loads(cp.read_text(encoding="utf-8"))
         if data.get("pipeline") not in ("mejora", "mantenimiento", "autonomy"):
             return False, f"pipeline desconocido: {data.get('pipeline')}"
         return True, f"checkpoint: {data.get('pipeline')} (fase {data.get('last_completed', '?')})"
@@ -317,8 +316,7 @@ def main() -> int:
     show_history()
 
     if args.json:
-        import json  # noqa: PLC0415
-        print(json.dumps({"actual": result, "historial": load_history()[-5:]}, indent=2, ensure_ascii=False))
+        print(_json.dumps({"actual": result, "historial": load_history()[-5:]}, indent=2, ensure_ascii=False))
 
     return 0 if result["score"] >= 80 else 1
 
