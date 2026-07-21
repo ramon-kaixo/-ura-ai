@@ -36,8 +36,17 @@ BATCH_SIZE = 100
 
 from motor.core.config import UraConfig
 
-_cfg = UraConfig.load()
-QDRANT_BASE = f"http://{_cfg.qdrant_host}:{_cfg.qdrant_port}"
+_cfg: dict[str, str | int] | None = None
+
+
+def _get_qdrant_base() -> str:
+    global _cfg
+    if _cfg is None:
+        c = UraConfig.load()
+        _cfg = {"host": c.qdrant_host, "port": c.qdrant_port}
+    host = _cfg["host"]
+    port = _cfg["port"]
+    return f"http://{host}:{port}"
 
 
 async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
@@ -65,7 +74,7 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
 
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
-                    f"{QDRANT_BASE}/collections/{COLLECTION}/points/scroll",
+                    f"{_get_qdrant_base()}/collections/{COLLECTION}/points/scroll",
                     json=params,
                 )
                 resp.raise_for_status()
