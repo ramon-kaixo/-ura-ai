@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sqlite3
 import threading
 import uuid
@@ -57,6 +58,9 @@ class HybridMemory:
     def _get_conn(self) -> sqlite3.Connection:
         with self._lock:
             if self._conn is None:
+                parent = os.path.dirname(self._db_path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
                 self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
                 self._conn.execute("PRAGMA journal_mode=WAL")
                 self._conn.executescript(_SCHEMA)
@@ -137,6 +141,9 @@ class HybridMemory:
             return []
         k = max(1, k)
         conn = self._get_conn()
+        # Escape FTS5 special chars: wrap as phrase to avoid syntax errors
+        escaped = query.replace('"', '""')
+        fts_query = f'"{escaped}"'
         try:
             with self._lock:
                 if memory_type:
@@ -144,14 +151,14 @@ class HybridMemory:
                         "SELECT m.id, m.memory_type, m.created_at, m.metadata, fts.text "
                         "FROM memory_fts fts JOIN memory_metadata m ON m.id = fts.id "
                         "WHERE fts.text MATCH ? AND m.memory_type = ? ORDER BY rank LIMIT ?",
-                        (query, memory_type.value, k),
+                        (fts_query, memory_type.value, k),
                     )
                 else:
                     cursor = conn.execute(
                         "SELECT m.id, m.memory_type, m.created_at, m.metadata, fts.text "
                         "FROM memory_fts fts JOIN memory_metadata m ON m.id = fts.id "
                         "WHERE fts.text MATCH ? ORDER BY rank LIMIT ?",
-                        (query, k),
+                        (fts_query, k),
                     )
                 rows = cursor.fetchall()
         except sqlite3.OperationalError:
@@ -241,10 +248,11 @@ class HybridMemory:
             total = self.count()
         except Exception:
             log.debug("health check count failed", exc_info=True)
-        vs_ok = True
         if self._vector_store:
             try:
                 vs_ok = self._vector_store.buscar_similares([0.0], limite=1) is not None
             except Exception:
                 vs_ok = False
+        else:
+            vs_ok = False
         return {"total_records": total, "vector_store_ok": vs_ok}
