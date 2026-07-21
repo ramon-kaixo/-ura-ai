@@ -34,20 +34,20 @@ class RecommendationEngine:
                 recommendations.append(rec)
 
         # Añadir recomendaciones desde conocimiento no verificado
-        for k in self._kb.search(min_confidence=0.7):
-            if not k.get("verified"):
-                recommendations.append(
-                    {
-                        "id": f"rec_{k['id']}",
-                        "title": k["claim"],
-                        "evidence": k["evidence"],
-                        "confidence": k["confidence"],
-                        "impact": "medium",
-                        "risk": "low",
-                        "source": "knowledge_base",
-                        "policy": "revisar_timeout" if "tiempo" in k.get("claim", "") else "revisar_config",
-                    }
-                )
+        recommendations.extend(
+            {
+                "id": f"rec_{k['id']}",
+                "title": k["claim"],
+                "evidence": k["evidence"],
+                "confidence": k["confidence"],
+                "impact": "medium",
+                "risk": "low",
+                "source": "knowledge_base",
+                "policy": "revisar_timeout" if "tiempo" in k.get("claim", "") else "revisar_config",
+            }
+            for k in self._kb.search(min_confidence=0.7)
+            if not k.get("verified")
+        )
 
         recommendations.sort(key=lambda r: {"high": 0, "medium": 1, "low": 2}.get(r.get("impact", "low"), 99))
         return recommendations

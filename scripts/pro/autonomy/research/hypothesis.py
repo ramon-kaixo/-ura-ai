@@ -60,18 +60,18 @@ class HypothesisGenerator:
             )
 
         # H3: ¿Hay plugins con tendencia de error creciente?
-        for p in slow:
-            if p.get("errors", 0) > 0:
-                hypotheses.append(
-                    {
-                        "id": f"H3_{p['plugin_name']}",
-                        "title": f"El plugin '{p['plugin_name']}' tiene errores recurrentes",
-                        "claim": f"El plugin '{p['plugin_name']}' tiene {p['errors']} errores "
-                        f"en {p['runs']} ejecuciones. ¿Es un problema de configuración o del plugin?",
-                        "evidence_count": p["runs"],
-                        "status": "pending",
-                        "source": "plugin_errors",
-                    }
-                )
+        hypotheses.extend(
+            {
+                "id": f"H3_{p['plugin_name']}",
+                "title": f"El plugin '{p['plugin_name']}' tiene errores recurrentes",
+                "claim": f"El plugin '{p['plugin_name']}' tiene {p['errors']} errores "
+                f"en {p['runs']} ejecuciones. ¿Es un problema de configuración o del plugin?",
+                "evidence_count": p["runs"],
+                "status": "pending",
+                "source": "plugin_errors",
+            }
+            for p in slow
+            if p.get("errors", 0) > 0
+        )
 
         return hypotheses
