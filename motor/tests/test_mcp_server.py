@@ -44,6 +44,9 @@ async def _call(method: str, params: dict | None = None) -> dict:
     elif method == "ura_health":
         result = await _handle_tools_call({"name": "ura_health", "arguments": params or {}})
         return {"jsonrpc": "2.0", "result": result}
+    elif method == "memory_investigate":
+        result = await _handle_tools_call({"name": "memory_investigate", "arguments": params or {}})
+        return {"jsonrpc": "2.0", "result": result}
     return {"jsonrpc": "2.0", "error": {"code": -32601, "message": "unknown method"}}
 
 
@@ -157,3 +160,30 @@ def test_memory_store_with_metadata():
     assert "result" in resp
     rid = json.loads(resp["result"]["content"][0]["text"])["id"]
     assert rid
+
+
+def test_memory_investigate():
+    import asyncio
+
+    # Store some context first
+    asyncio.run(_call("memory_store", {"payload": "la inteligencia artificial permite procesar lenguaje natural"}))
+    asyncio.run(_call("memory_store", {"payload": "los modelos transformers revolucionaron el NLP en 2017"}))
+    asyncio.run(_call("memory_store", {"payload": "python es el lenguaje mas usado para IA y ML"}))
+
+    # Investigate
+    resp = asyncio.run(_call("memory_investigate", {"question": "inteligencia artificial", "k": 3}))
+    assert "result" in resp
+    data = json.loads(resp["result"]["content"][0]["text"])
+    assert "id" in data
+    assert "synthesis" in data
+    assert data["sources_count"] >= 1
+    assert "inteligencia" in data["synthesis"].lower()
+
+
+def test_memory_investigate_no_results():
+    import asyncio
+
+    resp = asyncio.run(_call("memory_investigate", {"question": "xyz nonexistent topic 12345", "k": 3}))
+    assert "result" in resp
+    data = json.loads(resp["result"]["content"][0]["text"])
+    assert data["sources_count"] == 0
