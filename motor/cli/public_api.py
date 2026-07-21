@@ -1,7 +1,16 @@
 """Fachada pública para scripts — punto de acceso único al motor.
 
-Regla: Los scripts NUEVOS solo importan de aquí.
-       Scripts existentes migran gradualmente.
+POLÍTICA:
+- Destinada EXCLUSIVAMENTE al flujo principal del producto.
+- Los scripts NUEVOS del flujo principal solo importan de aquí.
+- Scripts existentes del flujo principal migran gradualmente.
+- Benchmarks, herramientas internas y utilidades de desarrollo
+  pueden importar directamente APIs internas cuando necesiten
+  capacidades no expuestas por la fachada.
+- NO ampliar la fachada únicamente para cubrir scripts auxiliares.
+- Cualquier nueva exportación debe estar justificada por una
+  necesidad del producto, no por conveniencia de herramientas
+  de desarrollo.
 
 Uso:
     from motor.cli.public_api import UraConfig, QdrantClient, get_secret
