@@ -144,7 +144,9 @@ class Instrumentation:
         self.health.register_component("subprocess")
 
         def _wrap_run(original: Callable[..., Any]) -> Callable[..., Any]:
-            def wrapped(cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
+            def wrapped(
+                cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None
+            ) -> Any:
                 cmd_name = cmd[0] if cmd else "?"
                 start = time.monotonic()
                 self.metrics.counter("subprocess_started_total", labels={"cmd": cmd_name}).inc()

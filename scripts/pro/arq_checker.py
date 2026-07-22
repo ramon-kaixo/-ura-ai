@@ -37,7 +37,8 @@ IGNORED_PLUGIN_PREFIXES = ("_", "Test", "Mock")
 
 def _find_py_files(root: Path) -> list[Path]:
     return [
-        p for p in root.rglob("*.py")
+        p
+        for p in root.rglob("*.py")
         if "__pycache__" not in p.parts
         and ".venv" not in p.parts
         and ".sandbox_packages" not in p.parts
@@ -74,7 +75,8 @@ def _find_plugin_classes(filepath: Path) -> list[str]:
         for node in ast.walk(tree)
         if isinstance(node, ast.ClassDef)
         for base in node.bases
-        if (isinstance(base, ast.Name) and base.id == "PluginBase") or (isinstance(base, ast.Attribute) and base.attr == "PluginBase")
+        if (isinstance(base, ast.Name) and base.id == "PluginBase")
+        or (isinstance(base, ast.Attribute) and base.attr == "PluginBase")
     ]
     return plugins
 
@@ -99,7 +101,7 @@ def check_orphans(files: list[Path]) -> list[dict[str, Any]]:
             continue
         # Saltar scripts standalone (tienen if __name__ == "__main__")
         content = f.read_text()
-        if "if __name__ == \"__main__\":" in content or "if __name__ == '__main__':" in content:
+        if 'if __name__ == "__main__":' in content or "if __name__ == '__main__':" in content:
             continue
         # Ruta de importación completa
         full_module = str(rel.with_suffix("")).replace("/", ".")
@@ -107,11 +109,13 @@ def check_orphans(files: list[Path]) -> list[dict[str, Any]]:
         # Verificar si alguien importa por ruta completa o por nombre corto
         imported = full_module in all_imports or module_name in all_imports
         if not imported and ("class " in content or "def " in content):
-            orphans.append({
+            orphans.append(
+                {
                     "type": "orphan",
                     "file": str(rel),
                     "detail": f"No importado por ningún otro módulo (ruta: {full_module})",
-                })
+                }
+            )
     return orphans
 
 
@@ -126,11 +130,13 @@ def check_deprecated_in_use(files: list[Path]) -> list[dict[str, Any]]:
         dep_module = dep_path.replace("/", ".").replace(".py", "")
         dep_name = Path(dep_path).stem
         if dep_name in all_imports or dep_module in all_imports:
-            findings.append({
-                "type": "deprecated_in_use",
-                "file": dep_path,
-                "detail": reason,
-            })
+            findings.append(
+                {
+                    "type": "deprecated_in_use",
+                    "file": dep_path,
+                    "detail": reason,
+                }
+            )
     return findings
 
 
@@ -156,11 +162,13 @@ def check_plugin_usage(files: list[Path]) -> list[dict[str, Any]]:
                 call_count += code.count(f".{plugin_name}(")
                 call_count += code.count(f"{plugin_name}(")
             if call_count == 0:
-                findings.append({
-                    "type": "plugin_unused",
-                    "file": str(rel),
-                    "detail": f"Plugin '{plugin_name}' definido pero nunca invocado",
-                })
+                findings.append(
+                    {
+                        "type": "plugin_unused",
+                        "file": str(rel),
+                        "detail": f"Plugin '{plugin_name}' definido pero nunca invocado",
+                    }
+                )
     return findings
 
 
@@ -175,11 +183,13 @@ def check_migration_completeness(files: list[Path]) -> list[dict[str, Any]]:
         mod_name = Path(mod).stem
         full_path = mod.replace("/", ".").replace(".py", "")
         if mod_name in all_imports or full_path in all_imports:
-            findings.append({
-                "type": "migration_incomplete",
-                "file": mod,
-                "detail": f"Módulo '{mod_name}' aún tiene consumidores activos",
-            })
+            findings.append(
+                {
+                    "type": "migration_incomplete",
+                    "file": mod,
+                    "detail": f"Módulo '{mod_name}' aún tiene consumidores activos",
+                }
+            )
     return findings
 
 
@@ -211,7 +221,7 @@ def main() -> int:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         print("\nARQ-600: Validación funcional")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         print(f"Archivos escaneados: {result['files_scanned']}")
         print(f"Hallazgos: {total}\n")
         for f in result["findings"]:
@@ -219,7 +229,7 @@ def main() -> int:
             print(f"  {icon.get(f['type'], '•')} [{f['type']}] {f['file']}")
             print(f"    {f['detail']}")
             print()
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
     if args.check and total > 0:
         return 1

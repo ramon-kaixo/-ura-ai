@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
 """URA Agent Hierarchy System
 Implements the 3-level agent hierarchy with permission levels and quarantine system.
 """
+
+from __future__ import annotations
 
 import ast
 import json
@@ -12,27 +13,24 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
-from motor.core.secrets import get_secret
-
-# Configuration
 ORCHESTRATOR_HOST = "10.164.1.99"
 ORCHESTRATOR_PORT = 18789
-GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
 LOG_FILE = "/home/ramon/URA/agent_hierarchy.log"
 APPROVAL_SOCKET = "/tmp/ura_approval.sock"
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler(),
-    ],
-)
 logger = logging.getLogger(__name__)
+_GATEWAY_TOKEN: str | None = None
+
+
+def _get_token() -> str:
+    global _GATEWAY_TOKEN
+    if _GATEWAY_TOKEN is None:
+        from motor.core.secrets import get_secret
+
+        _GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
+    return _GATEWAY_TOKEN
 
 
 class PermissionLevel(Enum):

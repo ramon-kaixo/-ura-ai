@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""debate_engine.py — SDA: Sistema de Debate entre Agentes.
-"""
+"""debate_engine.py — SDA: Sistema de Debate entre Agentes."""
 
 from __future__ import annotations
 
