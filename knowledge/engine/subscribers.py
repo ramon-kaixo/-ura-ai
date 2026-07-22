@@ -26,6 +26,9 @@ from knowledge.engine.eventbus import (
 log = logging.getLogger("ura.knowledge.subscribers")
 
 
+_SUBSCRIBED = False
+
+
 def subscribe_all(
     bus: EventBus,
     db_path: Path,
@@ -35,6 +38,10 @@ def subscribe_all(
 ) -> None:
     """Registra todos los subscriptores del sistema.
 
+    Idempotente: solo registra la primera vez. Llamadas posteriores
+    son no-op para evitar duplicación de handlers cuando varios
+    entry points (CLI, API, collector) inicializan el bus.
+
     Args:
         bus: Instancia del Event Bus.
         db_path: Ruta a la base de datos.
@@ -43,10 +50,14 @@ def subscribe_all(
         vector_store: VectorStore para indexación vectorial (opcional).
 
     """
+    global _SUBSCRIBED  # noqa: PLW0603
+    if _SUBSCRIBED:
+        return
     bus.subscribe(CompileCompleted, _make_compile_archive_handler(db_path, source_dir))
     bus.subscribe(CompileCompleted, _make_compile_audit_handler())
     bus.subscribe(CompileCompleted, _make_compile_metrics_handler())
     bus.subscribe(CompileCompleted, _make_lineage_subscriber(db_path))
+    bus.subscribe(CompileCompleted, _make_fusion_subscriber(db_path))
     bus.subscribe(SearchPerformed, _make_search_audit_handler())
     bus.subscribe(ArchiveCompleted, _make_archive_metrics_handler())
     if vector_embedder is not None and vector_store is not None:
@@ -54,6 +65,7 @@ def subscribe_all(
             MetadataExtracted,
             _make_vector_index_subscriber(db_path, vector_embedder, vector_store),
         )
+    _SUBSCRIBED = True
 
 
 def _make_compile_archive_handler(db_path: Path, source_dir: Path):
@@ -205,6 +217,38 @@ def _make_vector_index_subscriber(
                 vector_store.upsert([item])
         except Exception as exc:
             log.warning("Vector index handler failed: %s", exc)
+
+    return handler
+
+
+def _make_fusion_subscriber(db_path: Path):
+    """Handler: fusión de conocimiento post-compile."""
+
+    def handler(event: CompileCompleted) -> None:
+        import time as _time
+
+        from knowledge.engine.metrics import record_fusion
+        from knowledge.engine.orchestrator import compile_result_to_claims
+        from motor.core.fusion import run_fusion_on_claims
+
+        t0 = _time.monotonic()
+        try:
+            claims = compile_result_to_claims(db_path)
+            if claims:
+                n = run_fusion_on_claims(claims, correlation_id=event.correlation_id)
+                dur = _time.monotonic() - t0
+                record_fusion(claims=len(claims), facts=n, duration=dur)
+                log.info(
+                    "Fusion completed cid=%s claims=%d facts=%d dur=%.2fs",
+                    event.correlation_id[:8],
+                    len(claims),
+                    n,
+                    dur,
+                )
+        except Exception as exc:
+            dur = _time.monotonic() - t0
+            record_fusion(status="error", duration=dur)
+            log.warning("Fusion handler failed cid=%s dur=%.2fs: %s", event.correlation_id[:8], dur, exc)
 
     return handler
 

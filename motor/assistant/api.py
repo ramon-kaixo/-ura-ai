@@ -189,17 +189,7 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
     style_prompt = _style_engine.build_system_prompt(mode, user_intent)
     system_prompt += " " + style_prompt
 
-    if analysis.get("sentiment_action"):
-        if lang_code == "en":
-            system_prompt += f" The user seems {analysis['sentiment']}. {analysis['sentiment_action']}."
-        else:
-            system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
-    if analysis.get("interruption_context"):
-        system_prompt += f" [Context: {analysis['interruption_context']}]"
-    if analysis.get("episodic_context"):
-        system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
-
-    system_prompt += " Al final, si es útil, sugiere 1 pregunta de seguimiento breve."
+    system_prompt = _add_context_sections(system_prompt, analysis, lang_code)
 
     lang = analysis.get("language", "es")
     if analysis.get("language_changed"):
@@ -239,6 +229,24 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
     if adj.get("clarify"):
         system_prompt += " Pregunta al usuario si necesita una aclaración."
 
+    return system_prompt
+
+
+def _add_context_sections(system_prompt: str, analysis: dict, lang_code: str) -> str:
+    if analysis.get("sentiment_action"):
+        if lang_code == "en":
+            system_prompt += f" The user seems {analysis['sentiment']}. {analysis['sentiment_action']}."
+        else:
+            system_prompt += f" El usuario parece {analysis['sentiment']}. {analysis['sentiment_action']}."
+    if analysis.get("interruption_context"):
+        system_prompt += f" [Context: {analysis['interruption_context']}]"
+    if analysis.get("episodic_context"):
+        system_prompt += f" [Previous conversations: {analysis['episodic_context']}]"
+    if analysis.get("rag_context"):
+        system_prompt += f"\n[Contexto documental: {analysis['rag_context']}]"
+    if analysis.get("semantic_context"):
+        system_prompt += f"\n{analysis['semantic_context']}"
+    system_prompt += " Al final, si es útil, sugiere 1 pregunta de seguimiento breve."
     return system_prompt
 
 

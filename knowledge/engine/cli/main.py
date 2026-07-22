@@ -264,9 +264,24 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915
 
 
 def main() -> int:
+    _init_bus()
     parser = build_parser()
     args = parser.parse_args()
     return args.func(args)
+
+
+def _init_bus() -> None:
+    """Inicializa el Event Bus global y registra suscriptores."""
+    from knowledge.engine.eventbus import get_bus
+    from knowledge.engine.subscribers import subscribe_all
+
+    db = Path(os.environ.get("URA_KNOWLEDGE_DB", "")) or DEFAULT_DB_PATH
+    bus = get_bus()
+    subscribe_all(bus, db, Path(os.environ.get("URA_SOURCE_DIR", "") or "."))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
 
 
 if __name__ == "__main__":
