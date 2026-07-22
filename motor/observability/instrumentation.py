@@ -31,8 +31,6 @@ class Instrumentation:
         self.readiness = ReadinessRegistry()
 
     def instrument_eventbus(self, bus: EventBus) -> EventBus:
-        self.health.register_component("eventbus")
-
         def _wrap_publish(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(topic: str, payload: Any, *, source: str = "system") -> None:
                 start = time.monotonic()
@@ -65,12 +63,9 @@ class Instrumentation:
 
         _wrap(bus, "publish", _wrap_publish)
         _wrap(bus, "emit_sync", _wrap_emit_sync)
-        self.health.set_healthy("eventbus")
         return bus
 
     def instrument_registry(self, registry: PluginRegistryV2) -> PluginRegistryV2:
-        self.health.register_component("plugins")
-
         def _wrap_get(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(name: str) -> Any:
                 start = time.monotonic()
@@ -87,10 +82,7 @@ class Instrumentation:
             return wrapped
 
         _wrap(registry, "_load", _wrap_get)
-
-        self.health.set_healthy("plugins")
         self.readiness.register_dependency("plugins")
-
         return registry
 
     def instrument_pipeline(self, executor: PipelineExecutor) -> PipelineExecutor:
@@ -110,6 +102,7 @@ class Instrumentation:
 
                 if result.ok:
                     self.metrics.counter("pipeline_completed_total").inc()
+                    self.health.set_healthy("pipeline", "última ejecución OK")
 
                     rollback_count = sum(1 for sr in result.stages if not sr.ok)
                     if rollback_count > 0:
@@ -117,18 +110,16 @@ class Instrumentation:
                         cnt.inc(rollback_count)
                 else:
                     self.metrics.counter("pipeline_failed_total").inc()
+                    self.health.set_degraded("pipeline", f"fallo en etapa {result.stages}")
 
                 return result
 
             return wrapped
 
         _wrap(executor, "execute", _wrap_execute)
-        self.health.set_healthy("pipeline")
         return executor
 
     def instrument_hooks(self, hook_manager: HookManager) -> HookManager:
-        self.health.register_component("hooks")
-
         def _wrap_register(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(plugin_name: str, plugin: Any) -> None:
                 original(plugin_name, plugin)
@@ -137,12 +128,9 @@ class Instrumentation:
             return wrapped
 
         _wrap(hook_manager, "register_plugin_hooks", _wrap_register)
-        self.health.set_healthy("hooks")
         return hook_manager
 
     def instrument_subprocess(self, executor: SubprocessExecutor) -> SubprocessExecutor:
-        self.health.register_component("subprocess")
-
         def _wrap_run(original: Callable[..., Any]) -> Callable[..., Any]:
             def wrapped(
                 cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None
@@ -162,7 +150,6 @@ class Instrumentation:
             return wrapped
 
         _wrap(executor, "run", _wrap_run)
-        self.health.set_healthy("subprocess")
         return executor
 
     def snapshot(self) -> dict[str, Any]:
