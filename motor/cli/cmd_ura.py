@@ -18,6 +18,10 @@ MAINTENANCE_SCRIPT = ROOT / "scripts" / "pro" / "tuneladora_mantenimiento.py"
 _executor = SubprocessExecutor()
 
 
+def _memory_path() -> Path:
+    return Path(os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
+
+
 def _run(cmd, desc):
     result = _executor.run(cmd, cwd=str(ROOT))
     if result.ok:
@@ -158,7 +162,7 @@ def cmd_system(config: UraConfig, args):
     hr.register_component("cli")
     hr.set_healthy("cli")
 
-    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    mem = HybridMemory(db_path=str(_memory_path()))
     mem_health = mem.health()
 
     import subprocess as _sp
@@ -381,7 +385,7 @@ def cmd_memory(config: UraConfig, args) -> int:
     """Estadísticas y operaciones de la memoria híbrida."""
     from motor.intelligence.memory.hybrid import HybridMemory
 
-    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    mem = HybridMemory(db_path=str(_memory_path()))
     health = mem.health()
     total = health.get("total_records", 0)
 
@@ -416,9 +420,84 @@ def cmd_memory(config: UraConfig, args) -> int:
                     print(f"    {item.get('snippet', '')[:120]}")
             except Exception as e:
                 print(f"Web search falló: {e}")
+        elif cmd == "backup":
+            import shutil
+            from datetime import UTC, datetime
+
+            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            dest = backup_dir / f"memory_{ts}.db"
+            shutil.copy2(str(_memory_path()), str(dest))
+            print(f"Backup: {dest} ({dest.stat().st_size} bytes)")
+        elif cmd == "restore" and len(args.raw) > 1:
+            src = Path(args.raw[1])
+            import shutil
+
+            if not src.exists():
+                print(f"Error: {src} no existe")
+                return 1
+            dest = _memory_path()
+            # Backup actual antes de restaurar
+            from datetime import UTC, datetime
+
+            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            shutil.copy2(str(dest), str(backup_dir / f"pre_restore_{ts}.db"))
+            shutil.copy2(str(src), str(dest))
+            print(f"Restaurado: {src} → {dest}")
+            print(f"Backup pre-restore: {backup_dir / f'pre_restore_{ts}.db'}")
         else:
             print("Subcomandos:")
-            print("  ura memory search <query>   — buscar en memoria")
-            print("  ura memory store <text>     — almacenar texto")
-            print("  ura memory web <query>      — buscar en web")
+            print("  ura memory search <query>     — buscar en memoria")
+            print("  ura memory store <text>       — almacenar texto")
+            print("  ura memory web <query>        — buscar en web")
+            print("  ura memory backup             — respaldar memoria")
+            print("  ura memory restore <archivo>  — restaurar desde backup")
+    return 0
+
+
+def _systemctl(args: list[str]) -> subprocess.CompletedProcess:
+    """Ejecuta systemctl con --user. Fallback a system si no hay user services."""
+    import subprocess as _sp
+
+    r = _sp.run(["systemctl", "--user"] + args, capture_output=True, text=True, timeout=30, check=False)
+    if r.returncode == 0 or "Could not connect" not in r.stderr:
+        return r
+    return _sp.run(["systemctl"] + args, capture_output=True, text=True, timeout=30, check=False)
+
+
+def cmd_service(config: UraConfig, args) -> int:
+    """Gestiona servicios del sistema (start/stop/status)."""
+    if not _systemctl([]).stdout and not _systemctl([]).stderr:
+        print("systemctl no disponible en este sistema")
+        return 1
+
+    if args and hasattr(args, "raw") and args.raw:
+        action = args.raw[0]
+        service = args.raw[1] if len(args.raw) > 1 else ""
+        if action == "list":
+            r = _systemctl(["list-units", "--type=service", "--all", "--no-pager", "--plain"])
+            for line in r.stdout.splitlines():
+                if "ura-" in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        print(f"  {parts[0]:45} {parts[2]:15} {parts[1]}")
+        elif service:
+            r = _systemctl([action, service])
+            if r.returncode == 0:
+                print(f"systemctl {action} {service}: OK")
+            else:
+                print(f"systemctl {action} {service}: {r.stderr.strip() or r.stdout.strip()}")
+        else:
+            print("Uso: ura service <start|stop|restart|status> <nombre>")
+    else:
+        r = _systemctl(["list-units", "--type=service", "--all", "--no-pager", "--plain"])
+        servicios = [l for l in r.stdout.splitlines() if "ura-" in l]
+        print(f"Servicios URA ({len(servicios)}):")
+        for s in servicios:
+            parts = s.split()
+            if len(parts) >= 3:
+                print(f"  {parts[0]:45} {parts[2]:15} {parts[1]}")
     return 0

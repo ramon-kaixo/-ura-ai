@@ -22,6 +22,8 @@ from motor.cli.cmd_ura import (
     cmd_system,
     cmd_test,
 )
+
+from motor.cli.cmd_ura import cmd_service  # noqa: F811
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
 from motor.observability.logging import setup_logging
@@ -68,6 +70,7 @@ URA_COMMANDS: dict[str, object] = {
     "ask": cmd_ask,
     "memory": cmd_memory,
     "system": cmd_system,
+    "service": cmd_service,
 }
 
 
@@ -130,6 +133,7 @@ def main() -> None:
         "ask",
         "memory",
         "system",
+        "service",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")

@@ -634,6 +634,90 @@ def block_k() -> list[dict]:
     return findings
 
 
+# ── Bloque L: ARQ-400 Refactorización (triggers automáticos) ──
+
+
+def block_l(all_findings: dict[str, list]) -> list[dict]:
+    """Analiza los hallazgos de archivos grandes y genera triggers de refactorización.
+
+    Disparadores (ARQ-400):
+    - CC > 15: revisar
+    - CC > 25: refactorizar urgente
+    - Líneas > 800: dividir módulo
+    - Prioridad > 5.0: refactorizar
+    """
+    triggers: list[dict] = []
+    for finding in all_findings.get("I", []):
+        cc = finding.get("complexity", 0)
+        lines = finding.get("lines", 0)
+        priority = finding.get("priority_score", 0)
+        filepath = finding.get("file", "")
+
+        if cc > 25:
+            triggers.append({
+                "block": "L", "type": "refactor_trigger",
+                "file": filepath,
+                "detail": f"CC={cc:.0f} > 25 — REFACTORIZAR URGENTE. Alta complejidad ciclomatica.",
+                "level": "FAIL",
+            })
+        elif cc > 15:
+            triggers.append({
+                "block": "L", "type": "refactor_suggest",
+                "file": filepath,
+                "detail": f"CC={cc:.0f} > 15 — REVISAR. Complejidad ciclomatica elevada.",
+                "level": "WARNING",
+            })
+        if lines > 800:
+            triggers.append({
+                "block": "L", "type": "refactor_suggest",
+                "file": filepath,
+                "detail": f"{lines} lineas > 800 — DIVIDIR MODULO. Archivo demasiado grande.",
+                "level": "WARNING",
+            })
+        if priority > 5.0:
+            triggers.append({
+                "block": "L", "type": "refactor_trigger",
+                "file": filepath,
+                "detail": f"Prioridad {priority:.1f} > 5.0 — REFACTORIZAR. Ranking compuesto elevado.",
+                "level": "FAIL",
+            })
+    return triggers
+
+
+# ── Bloque M: ARQ-600 Validación funcional (integra arq_checker.py) ──
+
+
+def block_m(files: list[Path]) -> list[dict]:
+    """Ejecuta las comprobaciones de arq_checker.py integradas."""
+    try:
+        from scripts.pro.arq_checker import (
+            check_deprecated_in_use,
+            check_migration_completeness,
+            check_orphans,
+            check_plugin_usage,
+        )
+
+        findings: list[dict] = []
+        for check_fn, check_name in [
+            (check_orphans, "orphan"),
+            (check_deprecated_in_use, "deprecated_in_use"),
+            (check_plugin_usage, "plugin_unused"),
+            (check_migration_completeness, "migration_incomplete"),
+        ]:
+            for item in check_fn(files):
+                findings.append({
+                    "block": "M",
+                    "type": item.get("type", check_name),
+                    "file": item.get("file", ""),
+                    "line": 0,
+                    "detail": item.get("detail", ""),
+                    "level": "WARNING" if item.get("type") != "migration_incomplete" else "FAIL",
+                })
+        return findings
+    except ImportError:
+        return [{"block": "M", "type": "info", "file": "-", "detail": "arq_checker.py no disponible", "level": "INFO"}]
+
+
 # ── Orquestador ──
 
 
@@ -661,6 +745,10 @@ def run_all() -> dict[str, Any]:
         except Exception as e:
             findings[block_id] = [{"type": "error", "detail": str(e)}]
 
+    # Bloque L usa resultados de bloque I
+    findings["L"] = block_l(findings)
+    # Bloque M usa los mismos archivos
+    findings["M"] = block_m(files)
     # Bloque J usa resultados de los demás
     findings["J"] = [block_j(findings)]
 

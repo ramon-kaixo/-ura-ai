@@ -1,0 +1,18 @@
+[Unit]
+Description=URA Health Monitor — automatic alerts on component degradation
+After=network.target ura-metrics.service
+
+[Service]
+Type=simple
+User=ramon
+ExecStart=/usr/bin/python3 -m motor.health_monitor --daemon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Restart=on-failure
+RestartSec=10
+Environment="PYTHONPATH=/home/ramon/URA/ura_ia_1972"
+Environment="URA_MEMORY_DB=/home/ramon/.ura/memory.db"
+CPUQuota=10%
+MemoryMax=200M
+
+[Install]
+WantedBy=multi-user.target
