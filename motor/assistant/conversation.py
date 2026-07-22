@@ -227,6 +227,10 @@ class ConversationEngine:
         feedback = self._feedback.analyze(conversation_id, user_message)
 
         self._handle_task_triggers(user_message, conversation_id)
+        rag_text = self._rag.retrieve_sync(user_message) if self._rag.is_available() else ""
+
+        semantic_facts = self._query_semantic_facts(user_message)
+
         proactive_suggestion = self._proactive.suggest_proactive(conversation_id)
 
         response_adjustments = self._build_adjustments(sentiment, feedback)
@@ -244,7 +248,8 @@ class ConversationEngine:
             "needs_web_search": trend.needs_update,
             "trend_reason": trend.reason,
             "web_results": "",
-            "rag_context": "",
+            "rag_context": rag_text,
+            "semantic_context": semantic_facts,
             "sentiment": sentiment.sentiment.value,
             "sentiment_score": sentiment.score,
             "sentiment_action": sentiment.suggested_action,
@@ -295,6 +300,21 @@ class ConversationEngine:
             self._active[conversation_id] = conv
             self._evict_if_needed()
             return conv
+
+    @staticmethod
+    def _query_semantic_facts(query: str, max_facts: int = 5) -> str:
+        """Busca hechos semánticos (Fusion F25) relevantes para la consulta."""
+        try:
+            from motor.intelligence.memory.semantic import SemanticMemoryStore
+
+            store = SemanticMemoryStore()
+            facts = store.search(text=query, k=max_facts)
+            if not facts:
+                return ""
+            lines = [f"- {f.subject} {f.predicate} {f.object_value}" for f in facts]
+            return "[Hechos conocidos:\n" + "\n".join(lines) + "\n]"
+        except Exception:
+            return ""
 
     def _evict_if_needed(self) -> None:
         if len(self._active) > _MAX_ACTIVE_CONVERSATIONS:

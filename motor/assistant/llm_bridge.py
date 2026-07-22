@@ -181,11 +181,10 @@ class LLMBridge:
 
     def _local_generate(self, messages: list[dict[str, str]], model_key: str) -> str:
         try:
-            from motor.core.llm.ollama import OllamaProvider
+            from motor.core.llm import generate as core_generate
 
-            provider = OllamaProvider()
             prompt = self._messages_to_prompt(messages)
-            return provider.generate(prompt, model=model_key)
+            return core_generate(prompt, model=model_key)
         except Exception as exc:
             return f"[Error al conectar con LLM: {exc}]"
 
