@@ -19,6 +19,7 @@ from motor.cli.cmd_ura import (
     cmd_rotate,
     cmd_snapshot,
     cmd_snc,
+    cmd_system,
     cmd_test,
 )
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
@@ -66,6 +67,7 @@ URA_COMMANDS: dict[str, object] = {
     "index": cmd_index,
     "ask": cmd_ask,
     "memory": cmd_memory,
+    "system": cmd_system,
 }
 
 
@@ -127,6 +129,7 @@ def main() -> None:
         "index",
         "ask",
         "memory",
+        "system",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
