@@ -7,15 +7,28 @@ Usa PipelineEngine + plugins (misma base que mejora continua).
 
 from __future__ import annotations
 
+import json
 import sys
 import time
 from datetime import UTC, datetime
 
+from motor.observability import HealthRegistry
 from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
 from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
 from scripts.pro.tuneladora.plugins.health import HealthPlugin
 from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
+
+_HEALTH_STATE_FILE = "/tmp/ura_tuneladora_health.json"
+_health = HealthRegistry()
+
+
+def _persist_health() -> None:
+    try:
+        with open(_HEALTH_STATE_FILE, "w") as f:
+            json.dump(_health.snapshot(), f)
+    except Exception:
+        pass
 
 
 def _detectar_nivel() -> str:
@@ -47,6 +60,9 @@ def main() -> int:  # noqa: PLR0915
     if args.force:
         nivel = "profundo"
 
+    _health.register_component("tuneladora")
+    _health.set_healthy("tuneladora", f"iniciando mantenimiento nivel {nivel}")
+
     engine.log.info("=" * 55)
     engine.log.info(f"  MANTENIMIENTO — Nivel: {nivel.upper()}")
     engine.log.info("=" * 55)
@@ -57,6 +73,11 @@ def main() -> int:  # noqa: PLR0915
     # ── Preflight: Health checks (todos los niveles) ──
     engine.log.info("── Preflight: Health checks ──")
     results["health"] = health.check_all()
+    hr = results.get("health", {})
+    ollama_ok = hr.get("ollama", {}).get("ok", False)
+    if not ollama_ok:
+        _health.set_degraded("tuneladora", "Ollama no disponible en preflight")
+    _persist_health()
 
     # ── Ligero: calidad básica ──
     engine.log.info("── Calidad básica ──")
@@ -78,6 +99,9 @@ def main() -> int:  # noqa: PLR0915
         quality.ruff_fix()
         quality.poda()
         results["inspectores"] = quality.inspectores()
+        if results.get("orphan_scanner", 0) != 0:
+            _health.set_degraded("tuneladora", "orphan_scanner detectó servicios huérfanos")
+            _persist_health()
 
     # ── Profundo: refactor, forense, snapshot, auditoria, git ──
     if nivel == "profundo":
@@ -119,6 +143,11 @@ def main() -> int:  # noqa: PLR0915
         ],
     )
     reporting.save_maintenance_state(results, nivel)
+
+    current = _health.get_status("tuneladora")
+    if current != "degraded":
+        _health.set_healthy("tuneladora", f"mantenimiento {nivel} completado en {H}h{M}m{S}s")
+    _persist_health()
     return 0
 
 

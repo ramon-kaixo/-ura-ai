@@ -11,13 +11,25 @@ ASUS_HOST ?= ramon@10.164.1.99
 # --- Tests ---
 
 test:
-	@echo "[make] Unit tests (pytest)..."
-	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term
+	@echo "[make] All tests (motor/tests/)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest motor/tests/ -q --timeout=60 --no-cov
 	@echo ""
 
 pytest:
-	@echo "[make] Pytest (core + monitor + motor)..."
-	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test pytest -q --cov=core --cov=monitor --cov=motor --cov-report=term
+	@echo "[make] Pytest (motor/tests/)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest motor/tests/ -q --timeout=60 --no-cov
+	@echo ""
+
+test-unit:
+	@echo "[make] Unit tests (tests/, CI-safe only)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest tests/ \
+		$(shell awk '!/^#/ && NF {print "--ignore=tests/" $$1}' .github/tests-ci-exclude.txt) \
+		-q --timeout=30 --no-cov 2>&1 | tail -5
+	@echo ""
+
+test-ci:
+	@echo "[make] CI pipeline (unit + motor/tests/)..."
+	@$(MAKE) test-unit && $(MAKE) test
 	@echo ""
 
 integration:

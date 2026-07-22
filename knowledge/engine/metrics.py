@@ -96,6 +96,23 @@ archive_duration_seconds = Histogram(
     buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
 )
 
+fusion_requests_total = Counter(
+    "ke_fusion_requests_total",
+    "Fusion pipeline executions by status",
+    ["status"],
+)
+
+fusion_facts_total = Counter(
+    "ke_fusion_facts_total",
+    "Facts produced by fusion pipeline",
+)
+
+fusion_duration_seconds = Histogram(
+    "ke_fusion_duration_seconds",
+    "Fusion pipeline execution duration in seconds",
+    buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0),
+)
+
 audit_ingest_duration_seconds = Histogram(
     "ke_audit_ingest_duration_seconds",
     "Audit NDJSON → SQLite ingest duration in seconds",
@@ -170,6 +187,14 @@ def record_qdrant_sync(operation: str = "upsert", status: str = "done") -> None:
     """Registra una operación de sincronización con Qdrant."""
     qdrant_sync_ops.labels(operation=operation, status=status).inc()
     log.debug("Metrics: qdrant sync recorded (op=%s, status=%s)", operation, status)
+
+
+def record_fusion(*, claims: int = 0, facts: int = 0, duration: float = 0.0, status: str = "ok") -> None:
+    """Registra una ejecución del pipeline de fusión."""
+    fusion_requests_total.labels(status=status).inc()
+    fusion_facts_total.inc(facts)
+    if duration > 0:
+        fusion_duration_seconds.observe(duration)
 
 
 def record_archive(kind: str = "source", status: str = "completed") -> None:
@@ -265,7 +290,8 @@ def _reset_for_testing() -> None:
     global compile_queue_length, archive_queue_length  # noqa: PLW0603
     global audit_write_failures  # noqa: PLW0603
     global compile_lock_wait_seconds, sqlite_busy_retries_total  # noqa: PLW0603
-    global job_retry_total, archive_duration_seconds, audit_ingest_duration_seconds  # noqa: PLW0603
+    global job_retry_total, archive_duration_seconds  # noqa: PLW0603
+    global fusion_requests_total, fusion_facts_total, fusion_duration_seconds  # noqa: PLW0603
 
     search_requests = Counter("ke_search_requests_total", "", ["mode"])
     search_duration = Histogram("ke_search_duration_seconds", "", ["mode"])
@@ -294,8 +320,8 @@ def _reset_for_testing() -> None:
         "",
         buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
     )
-    audit_ingest_duration_seconds = Histogram(
-        "ke_audit_ingest_duration_seconds",
-        "",
-        buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
+    fusion_requests_total = Counter("ke_fusion_requests_total", "", ["status"])
+    fusion_facts_total = Counter("ke_fusion_facts_total", "")
+    fusion_duration_seconds = Histogram(
+        "ke_fusion_duration_seconds", "", buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0)
     )
