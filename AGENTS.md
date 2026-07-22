@@ -627,7 +627,36 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | build/ duplicado | Causaba `duplicate module "core"` | Eliminado + .gitignore |
 | Working tree | Sucio (4 archivos) | Compromised |
 
-No hay F30+ definida. Ver `docs/architecture/F29_PROPOSAL.md` y `docs/architecture/F29_CLOSEOUT.md`.
+## Post-F29 — Estabilización (Julio 2026)
+
+| Fase | Estado | Logro clave |
+|------|--------|-------------|
+| **F1** | ✅ Cerrada | Conflicto editable install resuelto, HealthRegistry corregido, rootfs RO documentado como no-problema |
+| **F2** | ✅ Cerrada | Colección 0 errores (2593 tests), CI 20.8%→65.9%, clasificación por categorías |
+| **F3** | ✅ Cerrada | Telemetría fiable: falsos positivos eliminados, tuneladora+LLM+KE integrados |
+| **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
+
+### Policy: Exclusiones de CI
+En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
+1. Verificar si la causa sigue existiendo
+2. Evaluar si el test puede volver a CI
+3. Si está obsoleto, eliminar o retirar el archivo de test
+
+Ninguna exclusión debe permanecer sin revisión indefinidamente.
+
+### CI/CD Pipeline Policy
+Ver `.github/CI_POLICY.md` para la matriz completa.
+
+| Pipeline | Trigger | Contenido |
+|----------|---------|-----------|
+| PR/Commit | push/PR | Lint + typecheck + unit tests rápidos (~2200) + security + architecture |
+| Merge a main | push a main | PR + slow tests |
+| Nightly | 00:00 UTC | Concurrencia, timing, tests frágiles |
+| Pre-release | tag v* | Todo + benchmarks + E2E |
+
+No se persigue el 100% de tests en CI (~94% es el techo práctico). Benchmarks, E2E con servicios reales y tests de hardware específico se ejecutan en pipelines programadas o previas a release.
+
+Ver `.opencode/plans/` para closeouts y propuestas de cada fase.
 
 ## Protocolo de Contexto Vectorial (Knowledge Base)
 Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
