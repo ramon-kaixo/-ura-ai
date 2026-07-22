@@ -1,13 +1,15 @@
-#!/usr/bin/env python3
 """metrics_server.py — URA Search Quality Dashboard.
 
 Sirve métricas en tiempo real desde search_quality.ndjson usando
 tail (-n 1000) para evitar degradación de disco.
 Endpoints:
-  GET /health        → {"status": "ok"}
+  GET /health        → Health check con estado de componentes
+  GET /ready         → Readiness check
   GET /metrics       → JSON con métricas calculadas
   GET /metrics?format=html → tabla HTML con auto-refresh 30s
 """
+
+from __future__ import annotations
 
 import asyncio
 import json
@@ -16,6 +18,7 @@ import os
 from pathlib import Path
 
 from aiohttp import web
+from motor.observability import HealthRegistry
 
 log = logging.getLogger("ura.metrics")
 
@@ -28,6 +31,9 @@ LOG_DIR = Path(
 TAIL_LINES = int(os.environ.get("METRICS_TAIL_LINES", "1000"))
 HOST = os.environ.get("METRICS_HOST", "0.0.0.0")  # noqa: S104
 PORT = int(os.environ.get("METRICS_PORT", "9091"))
+
+_health = HealthRegistry()
+_health.register_component("metrics_server")
 
 
 def _compute_metrics(lines: list[str]) -> dict:
@@ -113,7 +119,13 @@ async def handle_metrics(request: web.Request) -> web.Response:
 
 
 async def handle_health(request: web.Request) -> web.Response:
-    return web.json_response({"status": "ok"})
+    return web.json_response(_health.snapshot())
+
+
+async def handle_ready(request: web.Request) -> web.Response:
+    snap = _health.snapshot()
+    status = 200 if snap.get("global") in ("healthy", "degraded") else 503
+    return web.json_response(snap, status=status)
 
 
 def main() -> None:
@@ -121,6 +133,8 @@ def main() -> None:
     app = web.Application()
     app.router.add_get("/metrics", handle_metrics)
     app.router.add_get("/health", handle_health)
+    app.router.add_get("/ready", handle_ready)
+    _health.set_healthy("metrics_server")
     log.info("Metrics server starting on %s:%s (tail -n %s)", HOST, PORT, TAIL_LINES)
     web.run_app(app, host=HOST, port=PORT)
 

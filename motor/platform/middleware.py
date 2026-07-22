@@ -7,6 +7,7 @@ OBS-09: System works if tracing fails.
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -116,7 +117,7 @@ def traced(
     message_type: str | None = None,
     message_kind: str = "command",
     exporter: TraceExporter | None = None,
-):
+) -> Callable[..., Any]:
     """Decorator that wraps a function with tracing.
 
     Usage:

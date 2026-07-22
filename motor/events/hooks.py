@@ -52,7 +52,7 @@ class HookManager:
                 self._bus.unsubscribe(sub_id)
                 del self._subscription_ids[key]
 
-    def _wrap(self, plugin_name: str, hook_name: str, method: Callable) -> Callable:
+    def _wrap(self, plugin_name: str, hook_name: str, method: Callable[..., Any]) -> Callable[..., Any]:
         key = f"{plugin_name}:{hook_name}"
 
         def wrapper(event: Event) -> Any:

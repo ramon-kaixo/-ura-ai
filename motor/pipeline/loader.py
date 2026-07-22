@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.pipeline.definition import PipelineDefinition, StageDefinition
 
@@ -21,7 +21,7 @@ class PipelineLoader:
         source = path.read_text(encoding="utf-8")
 
         if path.suffix in (".yaml", ".yml"):
-            import yaml
+            import yaml  # type: ignore[import-untyped]
 
             data = yaml.safe_load(source)
         elif path.suffix == ".json":
@@ -38,7 +38,7 @@ class PipelineLoader:
 
         return self._from_dict(data)
 
-    def _from_dict(self, data: dict) -> PipelineDefinition:
+    def _from_dict(self, data: dict[str, Any]) -> PipelineDefinition:
         stages_raw = data.get("stages", [])
         stages = []
         for s in stages_raw:
