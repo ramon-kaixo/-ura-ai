@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import subprocess
+import time
 from pathlib import Path
 
 from aiohttp import web
@@ -38,6 +39,42 @@ PORT = int(os.environ.get("METRICS_PORT", "9091"))
 _health = HealthRegistry()
 _health.register_component("metrics_server")
 _memory = HybridMemory(db_path=os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
+_TUNELADORA_STATE = "/tmp/ura_tuneladora_health.json"
+
+
+def _load_tuneladora_health() -> dict | None:
+    try:
+        with open(_TUNELADORA_STATE) as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _check_llm_health() -> dict:
+    try:
+        r = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10, check=False)
+        if r.returncode == 0 and r.stdout.strip():
+            models = [line.split()[0] for line in r.stdout.splitlines()[1:] if line.strip()]
+            return {"ok": True, "modelos": len(models)}
+        return {"ok": False, "models": "no response"}
+    except FileNotFoundError:
+        return {"ok": False, "error": "ollama not found"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def _check_ke_pipeline() -> dict:
+    try:
+        r = subprocess.run(
+            ["python3", "scripts/pro/tuneladora_mantenimiento.py", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        return {"ok": r.returncode == 0, "returncode": r.returncode}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 def _compute_metrics(lines: list[str]) -> dict:
@@ -122,12 +159,47 @@ async def handle_metrics(request: web.Request) -> web.Response:
     return web.json_response(metrics)
 
 
+_HEALTH_CACHE: dict = {}
+_HEALTH_CACHE_TTL = 30  # segundos entre refrescos
+
+
+def _get_augmented_health() -> dict:
+    """Retorna snapshot aumentado con componentes externos (tuneladora, LLM, KE)."""
+    base = _health.snapshot()
+
+    tuneladora = _load_tuneladora_health()
+    if tuneladora and "components" in tuneladora:
+        for name, info in tuneladora["components"].items():
+            base["components"][f"tuneladora_{name}"] = info
+
+    now = time.monotonic()
+    if "_last_refresh" not in _HEALTH_CACHE or now - _HEALTH_CACHE["_last_refresh"] > _HEALTH_CACHE_TTL:
+        _HEALTH_CACHE["llm"] = _check_llm_health()
+        _HEALTH_CACHE["ke_pipeline"] = _check_ke_pipeline()
+        _HEALTH_CACHE["_last_refresh"] = now
+
+    llm = _HEALTH_CACHE.get("llm", {"ok": False, "error": "no cache"})
+    base["components"]["llm"] = {
+        "status": "healthy" if llm.get("ok") else "degraded",
+        "reason": f"{llm.get('modelos', '?')} modelos" if llm.get("ok") else llm.get("error", "no data"),
+    }
+
+    ke = _HEALTH_CACHE.get("ke_pipeline", {"ok": False})
+    base["components"]["ke_pipeline"] = {
+        "status": "healthy" if ke.get("ok") else "degraded",
+        "reason": f"exit={ke.get('returncode', '?')}" if ke.get("ok") else ke.get("error", "no data"),
+    }
+
+    return base
+
+
 async def handle_health(request: web.Request) -> web.Response:
-    return web.json_response(_health.snapshot())
+    snap = _get_augmented_health()
+    return web.json_response(snap)
 
 
 async def handle_ready(request: web.Request) -> web.Response:
-    snap = _health.snapshot()
+    snap = _get_augmented_health()
     status = 200 if snap.get("global") in ("healthy", "degraded") else 503
     return web.json_response(snap, status=status)
 
@@ -313,9 +385,11 @@ def main() -> None:
     app.router.add_get("/arq/trends", handle_arq_trends)
     _health.set_healthy("metrics_server")
     _health.register_component("hybrid_memory")
-    _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
-    _health.register_component("pipeline")
-    _health.set_healthy("pipeline")
+    mem_health = _memory.health()
+    if mem_health.get("vector_store_ok", True):
+        _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
+    else:
+        _health.set_degraded("hybrid_memory", f"Sin vector store: {mem_health}")
     log.info("Metrics server starting on %s:%s (tail -n %s)", HOST, PORT, TAIL_LINES)
     web.run_app(app, host=HOST, port=PORT)
 

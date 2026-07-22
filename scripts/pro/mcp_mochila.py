@@ -151,6 +151,7 @@ async def _handle_tools_list(params: dict) -> dict:
 async def _handle_tools_call(params: dict) -> dict:
     name = params.get("name", "")
     arguments = params.get("arguments", {})
+    _health.set_healthy("mcp_server", "tool call received")
     try:
         if name == "memory_store":
             rid = _memory.store(
@@ -158,7 +159,11 @@ async def _handle_tools_call(params: dict) -> dict:
                 memory_type=MemoryType(arguments.get("memory_type", "working")),
                 metadata=arguments.get("metadata"),
             )
-            _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
+            mem_health = _memory.health()
+            if mem_health.get("vector_store_ok", True):
+                _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
+            else:
+                _health.set_degraded("hybrid_memory", str(mem_health))
             return {"content": [{"type": "text", "text": json.dumps({"id": rid}, ensure_ascii=False)}]}
         elif name == "memory_search":
             results = _memory.search(
@@ -303,6 +308,7 @@ async def _handle_tools_call(params: dict) -> dict:
     except Exception as e:
         import logging as _logging
 
+        _health.set_degraded("mcp_server", f"tool call failed: {e}")
         _logging.getLogger("ura.mcp").exception("Tool call failed: %s", name)
         return {
             "isError": True,
@@ -397,6 +403,7 @@ async def main() -> None:
                 break
 
         except Exception:
+            _health.set_degraded("mcp_server", "internal dispatch error")
             traceback.print_exc(file=sys.stderr)
             sys.stderr.flush()
             err_response = {
