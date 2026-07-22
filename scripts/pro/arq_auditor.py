@@ -654,33 +654,45 @@ def block_l(all_findings: dict[str, list]) -> list[dict]:
         filepath = finding.get("file", "")
 
         if cc > 25:
-            triggers.append({
-                "block": "L", "type": "refactor_trigger",
-                "file": filepath,
-                "detail": f"CC={cc:.0f} > 25 — REFACTORIZAR URGENTE. Alta complejidad ciclomatica.",
-                "level": "FAIL",
-            })
+            triggers.append(
+                {
+                    "block": "L",
+                    "type": "refactor_trigger",
+                    "file": filepath,
+                    "detail": f"CC={cc:.0f} > 25 — REFACTORIZAR URGENTE. Alta complejidad ciclomatica.",
+                    "level": "FAIL",
+                }
+            )
         elif cc > 15:
-            triggers.append({
-                "block": "L", "type": "refactor_suggest",
-                "file": filepath,
-                "detail": f"CC={cc:.0f} > 15 — REVISAR. Complejidad ciclomatica elevada.",
-                "level": "WARNING",
-            })
+            triggers.append(
+                {
+                    "block": "L",
+                    "type": "refactor_suggest",
+                    "file": filepath,
+                    "detail": f"CC={cc:.0f} > 15 — REVISAR. Complejidad ciclomatica elevada.",
+                    "level": "WARNING",
+                }
+            )
         if lines > 800:
-            triggers.append({
-                "block": "L", "type": "refactor_suggest",
-                "file": filepath,
-                "detail": f"{lines} lineas > 800 — DIVIDIR MODULO. Archivo demasiado grande.",
-                "level": "WARNING",
-            })
+            triggers.append(
+                {
+                    "block": "L",
+                    "type": "refactor_suggest",
+                    "file": filepath,
+                    "detail": f"{lines} lineas > 800 — DIVIDIR MODULO. Archivo demasiado grande.",
+                    "level": "WARNING",
+                }
+            )
         if priority > 5.0:
-            triggers.append({
-                "block": "L", "type": "refactor_trigger",
-                "file": filepath,
-                "detail": f"Prioridad {priority:.1f} > 5.0 — REFACTORIZAR. Ranking compuesto elevado.",
-                "level": "FAIL",
-            })
+            triggers.append(
+                {
+                    "block": "L",
+                    "type": "refactor_trigger",
+                    "file": filepath,
+                    "detail": f"Prioridad {priority:.1f} > 5.0 — REFACTORIZAR. Ranking compuesto elevado.",
+                    "level": "FAIL",
+                }
+            )
     return triggers
 
 
@@ -705,14 +717,16 @@ def block_m(files: list[Path]) -> list[dict]:
             (check_migration_completeness, "migration_incomplete"),
         ]:
             for item in check_fn(files):
-                findings.append({
-                    "block": "M",
-                    "type": item.get("type", check_name),
-                    "file": item.get("file", ""),
-                    "line": 0,
-                    "detail": item.get("detail", ""),
-                    "level": "WARNING" if item.get("type") != "migration_incomplete" else "FAIL",
-                })
+                findings.append(
+                    {
+                        "block": "M",
+                        "type": item.get("type", check_name),
+                        "file": item.get("file", ""),
+                        "line": 0,
+                        "detail": item.get("detail", ""),
+                        "level": "WARNING" if item.get("type") != "migration_incomplete" else "FAIL",
+                    }
+                )
         return findings
     except ImportError:
         return [{"block": "M", "type": "info", "file": "-", "detail": "arq_checker.py no disponible", "level": "INFO"}]
