@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from scripts.pro.tuneladora.engine import PipelineEngine
 
-URA_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+URA_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
 
 
 class ARQCheckPlugin:
