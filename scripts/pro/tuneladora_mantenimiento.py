@@ -29,7 +29,7 @@ def _detectar_nivel() -> str:
     return "ligero"
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="Tuneladora de Mantenimiento")

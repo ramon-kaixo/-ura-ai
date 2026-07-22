@@ -143,7 +143,7 @@ def _render_dashboard() -> str:
         _get_active_backend_label,
         _update_asus_latency,
     )
-    from core.model_router.router import OLLAMA_URL
+    from core.model_router.router import get_ollama_url
 
     _update_asus_latency()
     backend_label = _get_active_backend_label()
@@ -178,7 +178,7 @@ def _render_dashboard() -> str:
     return (
         _DASHBOARD_HTML.replace("{sc}", status_class)
         .replace("{bl}", backend_label)
-        .replace("{bu}", OLLAMA_URL)
+        .replace("{bu}", get_ollama_url())
         .replace("{lc}", latency_class)
         .replace("{al}", asus_latency)
         .replace("{lu}", latency_updated)
@@ -203,7 +203,7 @@ def _dashboard_json(client_ip: str = "") -> str:
         _resolve_mode_for_client,
         _update_asus_latency,
     )
-    from core.model_router.router import OLLAMA_URL
+    from core.model_router.router import get_ollama_url
 
     _update_asus_latency()
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
@@ -226,7 +226,7 @@ def _dashboard_json(client_ip: str = "") -> str:
     return json.dumps(
         {
             "backend_label": backend_label,
-            "backend_url": OLLAMA_URL,
+            "backend_url": get_ollama_url(),
             "power_mode": _main.POWER_MODE.upper(),
             "asus_latency_ms": lat,
             "latency_updated": lat_updated,

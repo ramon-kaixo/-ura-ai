@@ -11,7 +11,7 @@ Usa:
 from __future__ import annotations
 
 
-def compare(new: dict, existing: dict) -> dict:
+def compare(new: dict, existing: dict) -> dict:  # noqa: PLR0915
     """Compara una función nueva contra una existente. Retorna score de similitud.
 
     Si un campo está vacío en la consulta (search por nombre), no penaliza:

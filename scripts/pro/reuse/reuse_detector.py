@@ -23,15 +23,16 @@ PLUGIN = {
 
 
 class ReuseDetector:
-    _feedback: list[dict] = []  # retroalimentación: aceptado/rechazado
+    _feedback: list[dict] | None = None  # init en record_feedback
 
     @classmethod
     def metrics(cls) -> dict:
         """Métricas de eficacia del detector."""
-        total = len(cls._feedback)
+        fb = cls._feedback or []
+        total = len(fb)
         if total == 0:
             return {"recomendaciones_emitidas": 0, "tasa_aceptacion": 0, "reutilizaciones_efectivas": 0}
-        accepted = sum(1 for f in cls._feedback if f.get("accepted"))
+        accepted = sum(1 for f in fb if f.get("accepted"))
         rejected = total - accepted
         return {
             "recomendaciones_emitidas": total,
@@ -74,10 +75,10 @@ class ReuseDetector:
         return results[:10]
 
     def analyze_new_code(self, code: str, min_score: float = 0.4) -> list[dict]:
-        """Analiza código nuevo contra el índice."""
-        tmp = Path(tempfile.mktemp(suffix=".py"))
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as tmpf:
+            tmp = Path(tmpf.name)
+            tmpf.write(code)
         try:
-            tmp.write_text(code)
             new_entries = index_file(tmp)
         finally:
             tmp.unlink(missing_ok=True)
@@ -104,7 +105,8 @@ class ReuseDetector:
 
     @classmethod
     def record_feedback(cls, recommendation: dict, accepted: bool, reason: str = "") -> None:
-        """Registra retroalimentación sobre una recomendación para ajustar pesos futuros."""
+        if cls._feedback is None:
+            cls._feedback = []
         cls._feedback.append(
             {
                 "new_name": recommendation.get("new_name", ""),

@@ -13,20 +13,19 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_detector = None
+_detector: dict[str, object] = {"value": None}
 
 
 def get_detector():
-    global _detector
-    if _detector is None:
+    if _detector["value"] is None:
         from scripts.pro.reuse.reuse_detector import ReuseDetector
 
-        _detector = ReuseDetector(ROOT)
+        _detector["value"] = ReuseDetector(ROOT)
         print("  Indexando...")
         t0 = time.time()
-        _detector.build_index()
-        print(f"  {len(_detector._index)} funciones en {time.time() - t0:.1f}s")
-    return _detector
+        _detector["value"].build_index()
+        print(f"  {len(_detector['value']._index)} funciones en {time.time() - t0:.1f}s")
+    return _detector["value"]
 
 
 REGRESSION_TESTS = [

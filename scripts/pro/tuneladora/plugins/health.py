@@ -28,9 +28,9 @@ class HealthPlugin:
 
         # RAM
         try:
-            rc, out = subprocess.getstatusoutput("free -m")
-            if rc == 0:
-                for line in out.splitlines():
+            r = subprocess.run(["free", "-m"], capture_output=True, text=True, timeout=5, check=False)
+            if r.returncode == 0:
+                for line in r.stdout.splitlines():
                     if "Mem:" in line:
                         parts = line.split()
                         if len(parts) > 2:
@@ -40,8 +40,8 @@ class HealthPlugin:
 
         # Zombies
         try:
-            rc, out = subprocess.getstatusoutput("ps aux")
-            results["zombies"] = out.count(" Z ") if rc == 0 else -1
+            r = subprocess.run(["ps", "aux"], capture_output=True, text=True, timeout=5, check=False)
+            results["zombies"] = r.stdout.count(" Z ") if r.returncode == 0 else -1
         except Exception:
             results["zombies"] = -1
 
