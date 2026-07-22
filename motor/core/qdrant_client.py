@@ -307,6 +307,9 @@ class QdrantClient:
         vector = self.generar_embedding(query_texto)
         return self.buscar_por_similitud(vector, COLECCION_DOCUMENTOS, limit)
 
+    # Alias para compatibilidad con IVectorStore protocol
+    buscar_similares = buscar_por_similitud
+
     def eliminar_por_filtro(self, filtro: dict, collection: str = COLECCION_DOCUMENTOS) -> bool:
         """Elimina puntos que coinciden con un filtro (ej: {"source": "path/to/file"})."""
         if not self.disponible:

@@ -247,8 +247,8 @@ def cmd_doctor(config: UraConfig, args) -> int:
 def cmd_metrics(config: UraConfig, args) -> int:
     """Métricas del router: modelos, latencia, cache."""
     try:
-        r = urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5)  # nosec B310 - solo HTTP local controlado
-        data = r.read().decode()
+        with urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5) as r:  # nosec B310
+            data = r.read().decode()
         for line in data.split("\n"):
             if any(k in line for k in ("model_selection", "latency_avg", "cache_hit", "prompt_cache")):
                 pass
