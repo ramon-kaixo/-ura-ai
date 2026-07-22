@@ -81,35 +81,35 @@ def main() -> int:
     resultados = []
 
     # 1. Sistema
-    ok, r = test("Estado GX10", "sistema")
+    ok, _ = test("Estado GX10", "sistema")
     resultados.append(("sistema", ok))
 
     # 2. Camaras
-    ok, r = test("Camaras", "camaras")
+    ok, _ = test("Camaras", "camaras")
     resultados.append(("camaras", ok))
 
     # 3. Volumen
-    ok, r = test("Volumen", "volumen", {"nivel": 50})
+    ok, _ = test("Volumen", "volumen", {"nivel": 50})
     resultados.append(("volumen", ok))
 
     # 4. Leer archivo via comando
-    ok, r = test("Ejecutar comando", "ejecutar", {"comando": "uptime"})
+    ok, _ = test("Ejecutar comando", "ejecutar", {"comando": "uptime"})
     resultados.append(("comandos", ok))
 
     # 5. Abrir app
-    ok, r = test("Abrir app", "abrir_app", {"nombre": "Safari"})
+    ok, _ = test("Abrir app", "abrir_app", {"nombre": "Safari"})
 
     # 6. Explorar sistema
-    ok, r = test("Explorar sistema", "explorar")
+    ok, _ = test("Explorar sistema", "explorar")
     resultados.append(("explorar", ok))
 
     # 7. Raton
-    ok, r = test("Raton", "raton", {"accion": "posicion"})
+    ok, _ = test("Raton", "raton", {"accion": "posicion"})
     resultados.append(("raton", ok))
     resultados.append(("abrir_app", ok))
 
     # 6. Explorar sistema
-    ok, r = test("Explorar sistema", "explorar")
+    ok, _ = test("Explorar sistema", "explorar")
     resultados.append(("explorar", ok))
 
     # 7. Raton

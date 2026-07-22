@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import sys
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, TextIO
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
+from typing import TextIO
 
 
 class Logger:
@@ -28,7 +26,7 @@ class Logger:
         ts = self._timestamp()
         line = f"[{ts}] [{level}] {msg}"
         try:
-            with open(self._log_file, "a") as f:
+            with Path(self._log_file).open("a") as f:
                 f.write(line + "\n")
         except PermissionError:
             pass

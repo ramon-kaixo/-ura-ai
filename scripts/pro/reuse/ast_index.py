@@ -35,9 +35,11 @@ def index_file(filepath: Path) -> list[dict[str, Any]]:
             entries.append(_extract_function(node, filepath, file_imports))
         elif isinstance(node, ast.ClassDef):
             entries.append(_extract_class(node, filepath, file_imports))
-            for item in ast.iter_child_nodes(node):
-                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    entries.append(_extract_function(item, filepath, file_imports, cls=node.name))
+            entries.extend(
+                _extract_function(item, filepath, file_imports, cls=node.name)
+                for item in ast.iter_child_nodes(node)
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+            )
     return entries
 
 
@@ -45,8 +47,7 @@ def _extract_imports(tree: ast.AST) -> list[str]:
     imports = []
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.Import):
-            for alias in node.names:
-                imports.append(alias.name)
+            imports.extend(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module:
             imports.append(node.module)
     return imports

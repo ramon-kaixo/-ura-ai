@@ -41,11 +41,11 @@ def _fallback_count_last_hour() -> int:
 
 
 def _measare_asus_latency() -> float:
-    from core.model_router.router import _URLS
+    from core.model_router.router import get_urls
 
     try:
         t0 = time.monotonic()
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
         with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             elapsed = (time.monotonic() - t0) * 1000
@@ -139,21 +139,21 @@ def _resolve_mode_for_client(client_ip: str) -> str:
 
 
 def _resolve_ollama_url() -> str:
-    from core.model_router.router import _URLS
+    from core.model_router.router import get_urls
 
     env_url = os.environ.get("OLLAMA_URL")
     if env_url:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
         with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
-            log.info("ASUS conectado: %s", _URLS["primary"])
-            return _URLS["primary"]
+            log.info("ASUS conectado: %s", get_urls()["primary"])
+            return get_urls()["primary"]
     except Exception as e:
         log.warning("ASUS no accesible en startup: %s", e)
-        return _URLS["fallback"]
+        return get_urls()["fallback"]
 
 
 async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
@@ -195,10 +195,10 @@ def proxy_request(
 ) -> tuple:
     from core.model_router.metrics import metrics
     from core.model_router.model_selection import _record_success
-    from core.model_router.router import _URLS
+    from core.model_router.router import get_urls
 
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
-    active_url = _URLS["primary"] if resolved_mode == "TURBO" else _URLS["fallback"]
+    active_url = get_urls()["primary"] if resolved_mode == "TURBO" else get_urls()["fallback"]
     url = f"{active_url}{path}"
     req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
     req.add_header("Content-Type", "application/json")

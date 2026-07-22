@@ -17,9 +17,12 @@ Retorna puntuación 0-100 y lista de incidencias.
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import sys
 import time
+
+log = logging.getLogger(__name__)
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -38,12 +41,11 @@ def check(name: str, weight: int) -> callable:
 
 # Almacén de resultados
 _results: dict[str, dict] = {}
-_total_weight = 0
+_total_weight: dict[str, int] = {"value": 0}
 
 
 def run_all(verbose: bool = True) -> dict:
-    global _total_weight
-    _total_weight = sum(c["weight"] for c in CHECKS)
+    _total_weight["value"] = sum(c["weight"] for c in CHECKS)
     for c in CHECKS:
         t0 = time.time()
         try:
@@ -59,8 +61,8 @@ def run_all(verbose: bool = True) -> dict:
                 print(f"  ❌ {c['name']:35} {e} ({time.time() - t0:.1f}s)")
 
     score = (
-        sum(c["weight"] for c in CHECKS if _results.get(c["name"], {}).get("ok")) / _total_weight * 100
-        if _total_weight
+        sum(c["weight"] for c in CHECKS if _results.get(c["name"], {}).get("ok")) / _total_weight["value"] * 100
+        if _total_weight["value"]
         else 0
     )
 
@@ -76,14 +78,13 @@ from pathlib import Path as _Path
 
 HISTORIAL = _Path(__file__).resolve().parent.parent.parent / ".nervioso" / "audits"
 HISTORIAL.mkdir(parents=True, exist_ok=True)
-_GIT_TAG = ""
+_GIT_TAG: dict[str, str] = {"value": ""}
 
 
 def _get_git_tag() -> str:
-    global _GIT_TAG
-    if not _GIT_TAG:
+    if not _GIT_TAG["value"]:
         try:
-            _GIT_TAG = subprocess.run(
+            _GIT_TAG["value"] = subprocess.run(
                 ["git", "describe", "--tags", "--abbrev=0"],
                 capture_output=True,
                 text=True,
@@ -91,8 +92,8 @@ def _get_git_tag() -> str:
                 check=False,
             ).stdout.strip()
         except Exception:
-            _GIT_TAG = "unknown"
-    return _GIT_TAG
+            _GIT_TAG["value"] = "unknown"
+    return _GIT_TAG["value"]
 
 
 def load_history() -> list[dict]:
@@ -128,7 +129,7 @@ def collect_metrics() -> dict:
         d = ReuseDetector(ROOT)
         metrics["tamano"]["funciones_indexadas"] = d.build_index()
     except Exception:
-        pass
+        log.debug("ReuseDetector no disponible")
 
     # Memoria semántica
     memory_db = ROOT / ".nervioso" / "memory" / "semantic.db"
@@ -145,7 +146,7 @@ def collect_metrics() -> dict:
             }
             conn.close()
         except Exception:
-            pass
+            log.debug("Memoria semántica no disponible")
 
     # Ledger
     ledger_dir = ROOT / ".nervioso" / "ledger"
@@ -170,7 +171,7 @@ def collect_metrics() -> dict:
             "fallidos": sum(1 for g in goals if g.get("status") == "failed"),
         }
     except Exception:
-        pass
+        log.debug("Swarm no disponible")
 
     # Conocimiento
     kb_file = ROOT / ".nervioso" / "knowledge" / "knowledge.json"
@@ -183,7 +184,7 @@ def collect_metrics() -> dict:
                 "verificado": sum(1 for e in kb if e.get("verified")),
             }
         except Exception:
-            pass
+            log.debug("Knowledge base no disponible")
 
     # Quality Gates
     try:
@@ -196,7 +197,7 @@ def collect_metrics() -> dict:
             "lineas_modificadas": g["lines_changed"],
         }
     except Exception:
-        pass
+        log.debug("Quality Gates no disponible")
 
     return metrics
 
@@ -323,11 +324,12 @@ def _():
 
     plugins = plugin_registry.discover_all()
     required = {"name", "phase", "timeout", "priority"}
-    missing = []
-    for name, p in plugins.items():
-        for field in required:
-            if field not in p:
-                missing.append(f"{name}: falta {field}")
+    missing = [
+        f"{name}: falta {field}"
+        for name, p in plugins.items()
+        for field in required
+        if field not in p
+    ]
     if missing:
         return False, "\n".join(missing[:3])
     return True, f"{len(plugins)} plugins, todos OK"
@@ -530,7 +532,7 @@ def main() -> int:
         print("  🔴 NO SUPERADO")
 
     # Guardar histórico
-    record = save_result(result["score"], result["results"], elapsed)
+    _ = save_result(result["score"], result["results"], elapsed)
     show_history()
 
     if args.json:

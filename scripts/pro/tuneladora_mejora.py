@@ -65,7 +65,7 @@ def _run_phase_with_checkpoint(engine: PipelineEngine, phase: str, file_path: st
     return result
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="Tuneladora de Mejora Continua v2.3")

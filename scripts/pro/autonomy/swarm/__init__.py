@@ -13,7 +13,7 @@ from scripts.pro.autonomy.swarm.agents import (
     SecurityAgent,
     TestingAgent,
 )
-from scripts.pro.autonomy.swarm.coordinator import DOMAIN_MAP, Coordinator
+from scripts.pro.autonomy.swarm.coordinator import DOMAIN_MAP  # noqa: F401, Coordinator
 
 __all__ = [
     "AgentBase",
