@@ -107,20 +107,28 @@ def test_mcp_memory_tools():
     from scripts.pro.mcp_mochila import _handle_tools_call
 
     # Store via MCP handler
-    resp = asyncio.run(_handle_tools_call({
-        "name": "memory_store",
-        "arguments": {"payload": "mcp e2e test", "metadata": {"source": "mcp"}},
-    }))
+    resp = asyncio.run(
+        _handle_tools_call(
+            {
+                "name": "memory_store",
+                "arguments": {"payload": "mcp e2e test", "metadata": {"source": "mcp"}},
+            }
+        )
+    )
     assert "content" in resp
     data = json.loads(resp["content"][0]["text"])
     assert "id" in data
     assert len(data["id"]) == 32
 
     # Search via MCP handler
-    resp = asyncio.run(_handle_tools_call({
-        "name": "memory_search",
-        "arguments": {"query": "mcp", "k": 5},
-    }))
+    resp = asyncio.run(
+        _handle_tools_call(
+            {
+                "name": "memory_search",
+                "arguments": {"query": "mcp", "k": 5},
+            }
+        )
+    )
     assert "content" in resp
     results = json.loads(resp["content"][0]["text"])
     assert len(results) >= 1
@@ -133,10 +141,14 @@ def test_mcp_ura_health():
 
     from scripts.pro.mcp_mochila import _handle_tools_call
 
-    resp = asyncio.run(_handle_tools_call({
-        "name": "ura_health",
-        "arguments": {},
-    }))
+    resp = asyncio.run(
+        _handle_tools_call(
+            {
+                "name": "ura_health",
+                "arguments": {},
+            }
+        )
+    )
     assert "content" in resp
     health = json.loads(resp["content"][0]["text"])
     assert "global" in health
