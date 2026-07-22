@@ -1,5 +1,6 @@
 import hashlib
 import re
+import statistics
 from datetime import UTC, datetime
 
 _RELIABILITY_DOMAINS: dict[str, float] = {
@@ -136,8 +137,6 @@ def adaptive_threshold(
     """
     if not scores:
         return base_threshold
-    import statistics
-
     mean = statistics.mean(scores)
     stdev = statistics.stdev(scores) if len(scores) > 1 else 0.0
     if stdev < 0.05:

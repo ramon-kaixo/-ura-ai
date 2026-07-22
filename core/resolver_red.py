@@ -22,6 +22,7 @@ Estrategia de resolución:
 
 import json
 import logging
+import socket
 import subprocess
 import sys
 import time
@@ -54,8 +55,6 @@ def resolver_dns(hostname: str) -> str | None:
     """
     # 1. DNS local
     try:
-        import socket
-
         ip = socket.gethostbyname(hostname)
         if ip and not ip.startswith("127."):
             return ip

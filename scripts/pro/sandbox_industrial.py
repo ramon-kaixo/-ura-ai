@@ -592,8 +592,6 @@ def _procesar_archivo(file_path: str) -> bool:
 
 def _tratar_error(file_path: str, error: Exception) -> None:
     log(f"❌ Error catastrófico en {file_path}: {error}")
-    import traceback
-
     traceback.print_exc()
     global FILES_FAILED  # noqa: PLW0603
     FILES_FAILED += 1

@@ -346,6 +346,34 @@ The core (`core/`) is NOT frozen, but modifications require an ADR with:
 - Agent classes should inherit from existing base patterns
 - Docstrings in Google style
 
+## Reglas Arquitectónicas
+
+### _state.py — Responsabilidad Única
+Los módulos `_state.py` deben limitarse a:
+1. Representar estado (dataclasses frozen)
+2. Construir estado (factories `build_*()`)
+3. Exponer dependencias
+
+NO deben contener lógica de negocio ni convertirse en coordinadores del sistema.
+
+### Convención de Fábricas
+| Prefijo | Uso | Ejemplo |
+|---------|-----|---------|
+| `build_*` | Crear objetos de infraestructura | `build_llm_state()`, `build_scanner_state()` |
+| `create_*` | Componer aplicaciones o servicios | `create_app()` (Mochila) |
+| `get_*` | Instancias existentes o lazy init | `_get_state()`, `get_secret()` |
+
+### Política de Deprecación
+- Las capas de compatibilidad (`__getattr__`, wrappers, re-exports) deben marcarse con `DeprecationWarning` inmediatamente.
+- v3.x → marcar como deprecado.
+- v4.0 → eliminar.
+- Si no se planifica la retirada, las capas de compatibilidad se convierten en deuda permanente.
+
+### Métricas Baseline
+- Ver `docs/architecture/METRICAS_BASELINE.md` para la serie temporal.
+- Actualizar al cerrar cada fase que toque métricas.
+- Si una métrica empeora, documentar por qué y compensar en otra dimensión.
+
 ## Key Files
 - `AGENTS.md` — This file (AI instructions)
 - `README.md` — Human-readable project overview

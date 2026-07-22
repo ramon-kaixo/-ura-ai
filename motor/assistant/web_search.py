@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import httpx
@@ -29,14 +30,10 @@ class WebSearch:
         results: list[dict[str, Any]] = []
         for line in html.split("\n"):
             if 'class="result__a"' in line:
-                import re
-
                 title_match = re.search(r">(.*?)<", line)
                 title = title_match.group(1) if title_match else ""
                 results.append({"title": title, "snippet": ""})
             if 'class="result__snippet"' in line:
-                import re
-
                 snippet_match = re.search(r">(.*?)<", line)
                 if results:
                     results[-1]["snippet"] = snippet_match.group(1) if snippet_match else ""

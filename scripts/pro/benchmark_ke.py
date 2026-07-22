@@ -14,7 +14,9 @@ from __future__ import annotations
 import json
 import logging
 import math
+import platform
 import statistics
+import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
@@ -546,9 +548,6 @@ def validate_corpus(corpus_dir: Path) -> list[str]:
 
 
 def create_baseline_doc(results_path: Path, corpus_dir: Path) -> str:
-    import platform
-    import subprocess
-
     with results_path.open() as f:
         data = json.load(f)
 

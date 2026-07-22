@@ -7,6 +7,7 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger("ura.memory")
@@ -172,7 +173,6 @@ class Memory:
     def shutdown(self, timeout: int = 30) -> None:
         """Graceful shutdown. Cierra journal, espera operaciones en curso."""
         self._shutdown_flag = True
-        import time
 
         deadline = time.time() + timeout
         while time.time() < deadline:

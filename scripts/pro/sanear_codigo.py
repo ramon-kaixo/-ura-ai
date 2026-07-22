@@ -4,6 +4,7 @@
 Uso: python3 scripts/pro/sanear_codigo.py [--check-only]
 """
 
+import ast
 import re
 import subprocess
 import sys
@@ -71,8 +72,6 @@ def fix_magic_values(path: Path) -> int:
     count = 0
 
     # Find common magic values
-    import ast
-
     try:
         ast.parse(content)
     except SyntaxError:

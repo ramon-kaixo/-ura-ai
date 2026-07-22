@@ -36,6 +36,11 @@ class TestNoDeprecatedPublicAPI:
 
 
 class TestNoUnusedRegistryEntries:
+    def setup_method(self) -> None:
+        from motor.core.llm._state import build_llm_state
+
+        build_llm_state()
+
     def test_registry_has_expected_providers(self) -> None:
         providers = list(registry.list())
         expected = {"ollama", "openai", "anthropic", "gemini", "openrouter", "lmstudio", "vllm"}

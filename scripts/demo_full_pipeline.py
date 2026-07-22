@@ -11,6 +11,8 @@ sys.path.insert(0, os.path.join(Path(__file__).parent, ".."))  # noqa: F821, PTH
 
 # Flujo vertical: Documento (simulado) -> F24 -> F25 -> F26 -> F27 -> LLM
 
+import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -94,8 +96,6 @@ def main() -> None:  # noqa: PLR0915
             MemoryCandidateSelectionStage(),
         ],
     )
-
-    import tempfile
 
     from motor.memory import Memory
 
@@ -192,8 +192,6 @@ Pregunta: ¿Qué empresas tecnológicas reportaron resultados y cuáles fueron s
     time.perf_counter() - start
 
     # Limpieza
-    import shutil
-
     memory.close()
     shutil.rmtree(tmpdir, ignore_errors=True)
 

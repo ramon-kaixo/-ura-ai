@@ -4,8 +4,11 @@ Indexa documentos locales en Qdrant y enriquece consultas con contexto.
 Determinista: sin variables globales, todo el estado en disco.
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -13,12 +16,13 @@ import contextlib
 import hashlib
 import json
 import logging
+import shutil
 from datetime import UTC, datetime
 
 from core.config_manager import CONFIG
-from motor.core.config import UraConfig
-from motor.core.llm import generate as llm_generate
-from motor.core.qdrant_client import QdrantClient
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider, ILLMClient, IVectorStore
 
 log = logging.getLogger(__name__)
 
@@ -35,13 +39,16 @@ RAG_MODEL = RAG_CONFIG.get("model", "nomic-embed-text")
 TEMPERATURE = RAG_CONFIG.get("temperature", 0.7)
 MAX_TOKENS = RAG_CONFIG.get("max_tokens", 2048)
 
-_qdrant: QdrantClient | None = None
+_qdrant: IVectorStore | None = None
 
 
-def _get_qdrant() -> QdrantClient:
+def _get_qdrant(config: IConfigProvider | None = None) -> IVectorStore:
     global _qdrant  # noqa: PLW0603
     if _qdrant is None:
-        _qdrant = QdrantClient.instancia(UraConfig.load())
+        from motor.core.config import UraConfig
+        from motor.core.qdrant_client import QdrantClient
+
+        _qdrant = QdrantClient.instancia(config or UraConfig.load())
     return _qdrant
 
 
@@ -83,8 +90,6 @@ def load_manifest() -> dict:
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        import shutil
-
         required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:
@@ -279,10 +284,7 @@ def _build_context(results: list[dict], max_chars: int = 8000) -> str:
     return result
 
 
-def _generate(context: str, question: str) -> str:
-    """Wrapper temporal: delega en motor.core.llm.generate().
-    Se eliminará cuando toda la migración esté validada.
-    """
+def _generate(context: str, question: str, llm: ILLMClient | None = None) -> str:
     if not context:
         return "No se encontraron documentos relevantes para generar una respuesta."
     prompt = (
@@ -293,13 +295,14 @@ def _generate(context: str, question: str) -> str:
         f"Pregunta: {question}\n\n"
         "Respuesta:"
     )
-    return llm_generate(prompt)
+    if llm is not None:
+        return llm.generate(prompt)
+    from motor.core.llm import generate as _llm_gen
+
+    return _llm_gen(prompt)
 
 
-def ask(question: str, top_k: int | None = None) -> str:
-    """RAG completo: recupera documentos relevantes y genera una respuesta.
-    Retorna la respuesta generada por el LLM.
-    """
+def ask(question: str, top_k: int | None = None, llm: ILLMClient | None = None) -> str:
     docs = query(question, top_k=top_k or TOP_K)
     context = _build_context(docs)
-    return _generate(context, question)
+    return _generate(context, question, llm=llm)

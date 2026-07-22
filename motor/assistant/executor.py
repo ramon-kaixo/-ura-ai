@@ -6,9 +6,12 @@ Todas las herramientas piden confirmación antes de ejecutar acciones destructiv
 
 from __future__ import annotations
 
+import ast
 import asyncio
+import re
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -158,9 +161,7 @@ class _SafeCalculator:
         self._env = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
         self._env.update({"abs": abs, "min": min, "max": max, "round": round})
 
-    def _eval(self, node: ast.AST) -> float | int:  # noqa: F821
-        import ast
-
+    def _eval(self, node: ast.AST) -> float | int:
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.UnaryOp):
@@ -212,8 +213,6 @@ class _SafeCalculator:
         raise ValueError(f"Expresion no soportada: {type(node).__name__}")
 
     def evaluate(self, expression: str) -> str:
-        import ast
-
         tree = ast.parse(expression.strip(), mode="eval")
         result = self._eval(tree.body)
         if isinstance(result, float) and result == int(result):
@@ -266,8 +265,6 @@ class NoteTool:
 
 class DateTimeTool:
     def execute(self) -> ToolResult:
-        from datetime import UTC, datetime
-
         now = datetime.now(UTC)
         days = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
         months = [
@@ -322,7 +319,6 @@ class NewsTool:
             )
             if resp.status_code != 200:
                 return ToolResult(False, error=f"Error: {resp.status_code}")
-            import re
 
             titles = re.findall(r"<title>(.*?)</title>", resp.text)[:5]
             return ToolResult(True, "\n".join(f"• {t}" for t in titles))
@@ -398,7 +394,6 @@ class ConversationalToolManager:
                 headers={"User-Agent": "URA/1.0"},
             )
             texts = []
-            import re
 
             for line in resp.text.split("\n"):
                 if 'class="result__snippet"' in line:

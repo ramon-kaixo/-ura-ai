@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import threading
+import time as _time
 from pathlib import Path
 from typing import Any
 
@@ -224,8 +225,6 @@ class NDJSONAuditBackend:
             conn = open_db(db_path)
             conn.execute("PRAGMA synchronous=OFF")
             begin_immediate(conn)
-            import time as _time
-
             _t0 = _time.monotonic()
             with processing.open() as f:
                 for line in f:

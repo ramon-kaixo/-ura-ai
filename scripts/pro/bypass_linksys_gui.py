@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-from motor.core.secrets import get_secret
+from motor.cli.public_api import get_secret
 
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout

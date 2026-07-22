@@ -3,6 +3,7 @@
 Implements the 3-level agent hierarchy with permission levels and quarantine system.
 """
 
+import ast
 import json
 import logging
 import subprocess
@@ -497,8 +498,6 @@ class ExecutorAgent(Agent):
     def _validate_code_ast(code: str) -> bool:
         """Valida código mediante AST. Solo permite operaciones seguras."""
         try:
-            import ast
-
             tree = ast.parse(code, mode="exec")
         except SyntaxError:
             return False

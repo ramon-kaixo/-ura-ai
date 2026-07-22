@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 import time
+from datetime import UTC, datetime
 
 from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
@@ -19,8 +20,6 @@ from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
 
 def _detectar_nivel() -> str:
     """Determina el nivel de mantenimiento según hora/día."""
-    from datetime import UTC, datetime
-
     now = datetime.now(UTC)
     hora, dia = now.hour, now.weekday()
     if dia == 0 and 2 <= hora <= 4:

@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import time
+import urllib.request
 
 UVICORN_BIN = "/home/ramon/.local/bin/uvicorn"
 WORKDIR = "/opt/ura/agents"
@@ -20,8 +21,6 @@ POLL_INTERVAL = 30
 def is_alive() -> bool:
     """Check if uvicorn is responding on port."""
     try:
-        import urllib.request
-
         req = urllib.request.Request(CHECK_URL)  # noqa: S310
         with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
             return resp.status == 200

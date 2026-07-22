@@ -16,13 +16,17 @@ import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from motor.core.config import UraConfig
-from motor.core.qdrant_client import QdrantClient
-from motor.intelligence.memory import Episode, EpisodeStore, EpisodeStoreConfig
-from motor.intelligence.retrieval.hybrid import HybridRetriever
-from motor.intelligence.retrieval.lexical import LexicalRetriever
-from motor.intelligence.retrieval.vector import VectorRetriever
-from motor.observability import MetricsRegistry
+from motor.cli.public_api import (
+    Episode,
+    EpisodeStore,
+    EpisodeStoreConfig,
+    HybridRetriever,
+    LexicalRetriever,
+    MetricsRegistry,
+    QdrantClient,
+    UraConfig,
+    VectorRetriever,
+)
 
 DATA_DIR = Path("motor/data/benchmarks/f14/profiling")
 FINDINGS_PATH = Path("motor/data/f14/findings.json")

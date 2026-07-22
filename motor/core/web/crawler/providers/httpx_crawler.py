@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import socket
 import time
 import urllib.parse
 from dataclasses import dataclass, field
@@ -81,8 +82,6 @@ def _is_private_url(url: str) -> bool:
         if host is None:
             return True
         # Resolver si es nombre de host
-        import socket
-
         try:
             addr = socket.getaddrinfo(host, None)[0][4][0]
         except (socket.gaierror, IndexError, OSError):

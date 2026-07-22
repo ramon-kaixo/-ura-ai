@@ -1,5 +1,7 @@
 """CLI: rules list|eval, deduce."""
 
+import json
+
 from knowledge.engine.cli.main import _resolve_db_path
 
 
@@ -13,8 +15,6 @@ def cmd_rules_list(args) -> int:
 
 
 def cmd_rules_eval(args) -> int:
-    import json
-
     from knowledge.engine.connection import open_db
     from knowledge.engine.rules import RuleEvaluator
 
