@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import os
 import shlex
 import urllib.request
 from datetime import UTC, datetime
@@ -146,6 +147,47 @@ def cmd_rotate(config: UraConfig, args):
 
 def cmd_health(config: UraConfig, args):
     return _executor.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=str(ROOT)).returncode
+
+
+def cmd_system(config: UraConfig, args):
+    """Estado unificado del sistema: salud, memoria, version, pipeline."""
+    from motor.observability.health import HealthRegistry
+    from motor.intelligence.memory.hybrid import HybridMemory
+
+    hr = HealthRegistry()
+    hr.register_component("cli")
+    hr.set_healthy("cli")
+
+    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    mem_health = mem.health()
+
+    import subprocess as _sp
+
+    version = "unknown"
+    try:
+        version = _sp.run(["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False).stdout.strip()
+    except Exception:  # noqa: S110
+        pass
+
+    lines = [
+        f"URA v{version}",
+        f"{'='*40}",
+        f"  Salud:     {hr.snapshot().get('global', 'unknown')}",
+        f"  Memoria:   {mem_health.get('total_records', 'N/A')} registros",
+        f"  Vector:    {'OK' if mem_health.get('vector_store_ok') else 'OFF'}",
+        f"  Python:    3.12",
+        f"  Entorno:   {ROOT}",
+        f"{'='*40}",
+        f"  endpoints:",
+        f"    /health   → metrics_server:{os.environ.get('METRICS_PORT','9091')}",
+        f"    /memory   → memoria hibrida",
+        f"    /dashboard→ dashboard web",
+        f"    /version  → version del sistema",
+        f"{'='*40}",
+    ]
+    for line in lines:
+        print(line)
+    return 0
 
 
 def cmd_alerts(config: UraConfig, args):
@@ -334,14 +376,46 @@ def cmd_ask(config: UraConfig, args):
 
 
 def cmd_memory(config: UraConfig, args) -> int:
-    """Estadisticas de la memoria RAG."""
-    try:
-        from core.memory_engine import load_manifest
+    """Estadísticas y operaciones de la memoria híbrida."""
+    from motor.intelligence.memory.hybrid import HybridMemory
 
-        manifest = load_manifest()
-        if manifest.get("files"):
-            for _fname, _info in sorted(manifest["files"].items()):
-                pass
-    except Exception:
-        return 1
+    mem = HybridMemory(db_path=str(Path.home() / ".ura" / "memory.db"))
+    health = mem.health()
+    total = health.get("total_records", 0)
+
+    print(f"Memoria Híbrida")
+    print(f"{'='*40}")
+    print(f"  Registros:     {total}")
+    print(f"  Vector Store:  {'OK' if health.get('vector_store_ok') else 'OFF'}")
+    print()
+
+    if args and hasattr(args, "raw") and args.raw:
+        cmd = args.raw[0] if args.raw else ""
+        if cmd == "search" and len(args.raw) > 1:
+            query = " ".join(args.raw[1:])
+            results = mem.search(query, k=5)
+            print(f"Búsqueda: '{query}' ({len(results)} resultados)")
+            for i, r in enumerate(results, 1):
+                print(f"  {i}. [{r.type.value}] {r.payload[:100]}...")
+        elif cmd == "store" and len(args.raw) > 1:
+            text = " ".join(args.raw[1:])
+            rid = mem.store(payload=text)
+            print(f"Almacenado: {rid}")
+        elif cmd == "web" and len(args.raw) > 1:
+            query = " ".join(args.raw[1:])
+            try:
+                import asyncio
+                from core.mochila.tools import web_search as _web_search
+                result = asyncio.run(_web_search(query, max_results=5))
+                print(f"Web search: '{query}'")
+                for item in result.get("results", []):
+                    print(f"  - {item.get('title', '?')}")
+                    print(f"    {item.get('snippet', '')[:120]}")
+            except Exception as e:
+                print(f"Web search falló: {e}")
+        else:
+            print("Subcomandos:")
+            print("  ura memory search <query>   — buscar en memoria")
+            print("  ura memory store <text>     — almacenar texto")
+            print("  ura memory web <query>      — buscar en web")
     return 0

@@ -16,12 +16,12 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
 from pathlib import Path
 
 from aiohttp import web
-
-from motor.intelligence.memory.hybrid import HybridMemory
 from motor.observability import HealthRegistry
+from motor.intelligence.memory.hybrid import HybridMemory
 
 log = logging.getLogger("ura.metrics")
 
@@ -238,8 +238,50 @@ async def handle_dashboard(request: web.Request) -> web.Response:
     return web.Response(text=html, content_type="text/html")
 
 
+_GIT_VERSION = ""
+
+
+def _get_version() -> str:
+    global _GIT_VERSION
+    if not _GIT_VERSION:
+        try:
+            _GIT_VERSION = subprocess.run(
+                ["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False
+            ).stdout.strip()
+        except Exception:
+            _GIT_VERSION = "unknown"
+    return _GIT_VERSION
+
+
+LEDGER_DIR = Path.home() / ".nervioso" / "ledger"
+
+
 async def handle_memory(request: web.Request) -> web.Response:
     return web.json_response(_memory.health())
+
+
+async def handle_version(request: web.Request) -> web.Response:
+    return web.json_response({"version": _get_version(), "python": "3.12", "name": "ura"})
+
+
+async def handle_pipeline_status(request: web.Request) -> web.Response:
+    if not LEDGER_DIR.exists():
+        return web.json_response({"status": "no_data", "detail": "LEDGER_DIR no existe"})
+    files = sorted(LEDGER_DIR.glob("*.json"), reverse=True)
+    if not files:
+        return web.json_response({"status": "no_data", "detail": "Sin ejecuciones en ledger"})
+    try:
+        data = json.loads(files[0].read_text())
+        return web.json_response({
+            "status": "ok",
+            "ultima_ejecucion": data.get("timestamp", ""),
+            "pipeline": data.get("pipeline", ""),
+            "resultado": data.get("result", ""),
+            "trigger": data.get("trigger", ""),
+            "archivo": files[0].name,
+        })
+    except Exception as e:
+        return web.json_response({"status": "error", "detail": str(e)})
 
 
 def main() -> None:
@@ -250,9 +292,13 @@ def main() -> None:
     app.router.add_get("/ready", handle_ready)
     app.router.add_get("/dashboard", handle_dashboard)
     app.router.add_get("/memory", handle_memory)
+    app.router.add_get("/version", handle_version)
+    app.router.add_get("/pipeline/status", handle_pipeline_status)
     _health.set_healthy("metrics_server")
     _health.register_component("hybrid_memory")
     _health.set_healthy("hybrid_memory", f"{_memory.count()} registros")
+    _health.register_component("pipeline")
+    _health.set_healthy("pipeline")
     log.info("Metrics server starting on %s:%s (tail -n %s)", HOST, PORT, TAIL_LINES)
     web.run_app(app, host=HOST, port=PORT)
 
