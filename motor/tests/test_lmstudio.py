@@ -18,9 +18,11 @@ class TestLMStudioProvider:
         assert LMStudioProvider is not None
 
     def test_lmstudio_validate(self) -> None:
-        from motor.core.llm.lmstudio import LMStudioProvider
+        import importlib
+        import motor.core.llm.lmstudio as lm_mod
 
-        result = validate_provider(LMStudioProvider)
+        importlib.reload(lm_mod)
+        result = validate_provider(lm_mod.LMStudioProvider)
         assert result.valid, f"Errors: {result.errors}"
         assert result.provider_name == "lmstudio"
 
