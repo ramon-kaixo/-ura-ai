@@ -148,11 +148,15 @@ state = AppState()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from knowledge.engine.connection import open_db
+    from knowledge.engine.eventbus import get_bus
     from knowledge.engine.migrations import get_schema_version
+    from knowledge.engine.subscribers import subscribe_all
 
     conn = open_db(state.db_path)
     version = get_schema_version(conn)
     conn.close()
+    bus = get_bus()
+    subscribe_all(bus, state.db_path, state.source_dir)
     log.info("API started: schema v%s, db=%s, source=%s", version, state.db_path, state.source_dir)
     yield
 
