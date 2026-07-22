@@ -23,45 +23,55 @@ from motor.core.llm.base import BaseLLMProvider
 class TestContract:
     """Verifica que cada proveedor cumple el contrato BaseLLMProvider."""
 
-    PROVEEDORES: ClassVar[list[tuple[str, type[BaseLLMProvider]]]] = []
-
     @classmethod
-    def setup_class(cls) -> None:
-        from motor.core.llm.ollama import OllamaProvider
-        from motor.core.llm.openai import OpenAIProvider
+    def _get_proveedores(cls):
+        from motor.core.llm.base import BaseLLMProvider
 
-        cls.PROVEEDORES = [
-            ("ollama", OllamaProvider),
-            ("openai", OpenAIProvider),
-        ]
+        result: list[tuple[str, type]] = []
+        for mod_path, cls_name in [
+            ("motor.core.llm.ollama", "OllamaProvider"),
+            ("motor.core.llm.openai", "OpenAIProvider"),
+        ]:
+            mod = __import__(mod_path, fromlist=[cls_name])
+            result.append((cls_name, getattr(mod, cls_name)))
+        return result, BaseLLMProvider
 
     def test_todos_implementan_generate(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
+        proveedores, _ = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
             assert hasattr(cls_prov, "generate")
-            metodo = cls_prov.generate
-            assert callable(metodo)
+            assert callable(cls_prov.generate)
 
     def test_todos_implementan_embed(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
+        proveedores, _ = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
             assert hasattr(cls_prov, "embed")
             assert callable(cls_prov.embed)
 
     def test_todos_implementan_embed_async(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
+        proveedores, _ = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
             assert hasattr(cls_prov, "embed_async")
             assert callable(cls_prov.embed_async)
 
     def test_todos_implementan_health(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
+        proveedores, _ = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
             assert hasattr(cls_prov, "health")
             assert callable(cls_prov.health)
 
     def test_todos_son_subclase_de_base(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
-            assert issubclass(cls_prov, BaseLLMProvider)
+        proveedores, base = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
+            names = [c.__name__ for c in cls_prov.__mro__]
+            base_ids = [id(c) for c in cls_prov.__mro__ if c.__name__ == 'BaseLLMProvider']
+            import sys as _sys
+            print(f"[DEBUG] {nombre}: mro={names} base_in_mro={base in cls_prov.__mro__} base_id={id(base)} mro_base_ids={base_ids}", file=_sys.stderr)
+            assert base in cls_prov.__mro__, f"{nombre}: base={base} mro={names}"
 
     def test_todos_tienen_provider_name(self) -> None:
-        for nombre, cls_prov in self.PROVEEDORES:
+        proveedores, _ = self._get_proveedores()
+        for nombre, cls_prov in proveedores:
             inst = cls_prov()
             assert hasattr(inst, "_provider_name")
             assert isinstance(inst._provider_name, str)
@@ -259,10 +269,12 @@ class TestRegistryRouter:
 
 class TestConfig:
     def test_default_provider_from_config(self) -> None:
-        from motor.core.llm import _default
+        from motor.core.llm._state import build_llm_state
+
+        state = build_llm_state()
         from motor.core.llm.ollama import OllamaProvider
 
-        assert isinstance(_default, OllamaProvider)
+        assert isinstance(state.default_provider, OllamaProvider)
 
     def test_registry_poblado_al_importar(self) -> None:
         from motor.core.llm.registry import registry
