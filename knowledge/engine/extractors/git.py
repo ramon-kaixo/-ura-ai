@@ -14,6 +14,7 @@ No tiene MIME type asociado. Se invoca explícitamente por URL scheme
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import logging
 import os
 import shutil
@@ -232,8 +233,6 @@ class GitExtractor:
 
     @staticmethod
     def _hash_git_repo(metadata: dict[str, Any]) -> str:
-        import hashlib
-
         h = hashlib.sha256()
         commits = metadata.get("commits", [])
         for c in commits[:10]:

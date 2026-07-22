@@ -41,7 +41,7 @@ def main() -> int:
     # ── Handshake ──
     metrics = manager.handshake()
     if metrics.get("activos", 0) == 0:
-        log.warn("Sin archivos activos — puede ser un entorno limpio")
+        log.warning("Sin archivos activos — puede ser un entorno limpio")
 
     # ── Limpieza ──
     manager.clean_temp_files()

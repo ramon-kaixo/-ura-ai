@@ -42,6 +42,7 @@ def _fallback_count_last_hour() -> int:
 
 def _measare_asus_latency() -> float:
     from core.model_router.router import _URLS
+
     try:
         t0 = time.monotonic()
         req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
@@ -63,6 +64,7 @@ def _update_asus_latency() -> None:
 
 def _get_active_backend_label() -> str:
     from core.model_router.router import POWER_MODE
+
     if POWER_MODE == "TURBO":
         return "ASUS Remoto"
     if POWER_MODE == "ECO":
@@ -126,6 +128,7 @@ def _is_local_ip(ip: str) -> bool:
 
 def _resolve_mode_for_client(client_ip: str) -> str:
     from core.model_router.router import POWER_MODE
+
     if POWER_MODE == "TURBO":
         return "TURBO"
     if POWER_MODE == "ECO":
@@ -137,6 +140,7 @@ def _resolve_mode_for_client(client_ip: str) -> str:
 
 def _resolve_ollama_url() -> str:
     from core.model_router.router import _URLS
+
     env_url = os.environ.get("OLLAMA_URL")
     if env_url:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
@@ -154,6 +158,7 @@ def _resolve_ollama_url() -> str:
 
 async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     from core.model_router.vram_guard import vram_guard
+
     return await vram_guard.ejecutar_inferencia_segura(
         _proxy_request_async,
         path,
@@ -167,8 +172,7 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
 
 async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
-    import asyncio as _asyncio
-    return await _asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
+    return await asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
 def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):

@@ -9,6 +9,7 @@ No se ejecutan solo por tiempo, sino por evolución del proyecto:
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -66,8 +67,6 @@ class QualityGates:
                 cwd=str(self._root),
                 check=False,
             ).stdout.strip()
-            import re
-
             nums = re.findall(r"(\d+) insertions?\(\+\)", diff)
             return sum(int(n) for n in nums) if nums else 0
         except Exception:

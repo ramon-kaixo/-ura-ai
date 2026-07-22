@@ -7,6 +7,7 @@ import hashlib
 import json
 import subprocess
 import sys
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -81,7 +82,6 @@ def fetch_critical_logs() -> list:
 
 
 def main() -> int:
-
     seen = load_seen_hashes()
     critical = fetch_critical_logs()
 
@@ -107,8 +107,6 @@ def main() -> int:
         save_seen_hashes(seen)
 
         # Agrupar por tipo
-        from collections import Counter
-
         types = Counter()
         for line in new_alerts:
             for p in PATTERNS:

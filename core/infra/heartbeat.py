@@ -7,24 +7,28 @@ Uso:
   python3 core/infra/heartbeat.py --daemon         # bucle cada 30s
 """
 
+from __future__ import annotations
+
 import argparse
+import asyncio
 import json
 import logging
 import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
+from motor.observability.logging import setup_logging
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider, IVectorStore
 
 STATE_FILE = "/tmp/ura_state.json"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
 logger = logging.getLogger("ura.heartbeat")
 
 MOCHILA_URL = "http://127.0.0.1:4098"
@@ -58,13 +62,18 @@ def dump_checkpoint() -> None:
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
-def _save_restart_to_qdrant() -> None:
+def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     try:
-        from motor.core.config import UraConfig
-        from motor.core.qdrant_client import instancia
+        if config is None:
+            from motor.core.config import UraConfig
+            from motor.core.qdrant_client import instancia
 
-        cfg = UraConfig()
-        qc = instancia(cfg)
+            cfg: IConfigProvider = UraConfig()
+            qc: IVectorStore = instancia(cfg)
+        else:
+            from motor.core.qdrant_client import instancia
+
+            qc = instancia(config)
         if qc and qc.disponible:
             qc.guardar_incidente(
                 {
@@ -172,16 +181,12 @@ def check_vram_pressure() -> None:
 
 def check_loop_latency() -> float:
     async def _measure():
-        import time as _t
-
-        t0 = _t.monotonic()
+        t0 = time.monotonic()
         await asyncio.sleep(0)
-        t1 = _t.monotonic()
+        t1 = time.monotonic()
         return (t1 - t0) * 1000
 
     try:
-        import asyncio
-
         return asyncio.run(_measure())
     except RuntimeError:
         return 0.0
@@ -191,6 +196,8 @@ loop_latency_history: list[float] = []
 
 
 def main() -> None:
+    setup_logging(level="INFO", fmt="%(asctime)s [%(levelname)s] %(message)s")
+
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
     args = parser.parse_args()

@@ -6,126 +6,59 @@ Exporta solo comportamiento:
     embed_async(texts, model) -> list[list[float]]
     health() -> dict
 
-El proveedor por defecto se selecciona según UraConfig.llm_provider.
-Por defecto es OllamaProvider. La selección de proveedor también puede
-realizarse mediante router + registry (ver F18).
+La selección de proveedor se difiere hasta el primer uso
+(build_llm_state en _state.py).
 """
 
 import logging
-from typing import Any
-
-from motor.core.llm.ollama import OllamaProvider
-from motor.core.llm.registry import registry
-
-
-def _get_optional_providers() -> list[tuple[Any, str]]:
-    """Retorna lista de (provider_class, provider_name) para registro opcional."""
-    providers: list[tuple[Any, str]] = []
-    try:
-        from motor.core.llm.openai import OpenAIProvider
-
-        providers.append((OpenAIProvider, "openai"))
-    except Exception:  # noqa: S110
-        pass
-    try:
-        from motor.core.llm.anthropic import AnthropicProvider
-
-        providers.append((AnthropicProvider, "anthropic"))
-    except Exception:  # noqa: S110
-        pass
-    try:
-        from motor.core.llm.gemini import GeminiProvider
-
-        providers.append((GeminiProvider, "gemini"))
-    except Exception:  # noqa: S110
-        pass
-    try:
-        from motor.core.llm.openrouter import OpenRouterProvider
-
-        providers.append((OpenRouterProvider, "openrouter"))
-    except Exception:  # noqa: S110
-        pass
-    try:
-        from motor.core.llm.lmstudio import LMStudioProvider
-
-        providers.append((LMStudioProvider, "lmstudio"))
-    except Exception:  # noqa: S110
-        pass
-    try:
-        from motor.core.llm.vllm import VLLMProvider
-
-        providers.append((VLLMProvider, "vllm"))
-    except Exception:  # noqa: S110
-        pass
-    return providers
-
+import warnings
 
 log = logging.getLogger(__name__)
 
-try:
-    from motor.core.config import UraConfig
+_LLM_STATE = None
 
-    provider_name = UraConfig.load().llm_provider
-except Exception:
-    provider_name = "ollama"
 
-_default: OllamaProvider
+def _get_state():
+    global _LLM_STATE  # noqa: PLW0603
+    if _LLM_STATE is None:
+        from motor.core.llm._state import build_llm_state
 
-if provider_name == "openai":
-    from motor.core.llm.openai import OpenAIProvider
+        _LLM_STATE = build_llm_state()
+    return _LLM_STATE
 
-    _default = OpenAIProvider()
-    registry.register("openai", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to openai (from config)")
-elif provider_name == "anthropic":
-    from motor.core.llm.anthropic import AnthropicProvider
 
-    _default = AnthropicProvider()
-    registry.register("anthropic", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to anthropic (from config)")
-elif provider_name == "gemini":
-    from motor.core.llm.gemini import GeminiProvider
+def generate(prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    return _get_state().generate(prompt, model, options)
 
-    _default = GeminiProvider()
-    registry.register("gemini", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to gemini (from config)")
-elif provider_name == "openrouter":
-    from motor.core.llm.openrouter import OpenRouterProvider
 
-    _default = OpenRouterProvider()
-    registry.register("openrouter", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to openrouter (from config)")
-elif provider_name == "lmstudio":
-    from motor.core.llm.lmstudio import LMStudioProvider
+def embed(texts: list[str], model: str | None = None) -> list[list[float]]:
+    return _get_state().embed(texts, model)
 
-    _default = LMStudioProvider()
-    registry.register("lmstudio", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to lmstudio (from config)")
-elif provider_name == "vllm":
-    from motor.core.llm.vllm import VLLMProvider
 
-    _default = VLLMProvider()
-    registry.register("vllm", _default, default=True)
-    registry.register("ollama", OllamaProvider())
-    log.info("LLM provider set to vllm (from config)")
-else:
-    _default = OllamaProvider()
-    registry.register("ollama", _default, default=True)
-    for _prov_cls in _get_optional_providers():
-        try:
-            cls, name = _prov_cls
-            registry.register(name, cls())
-        except Exception as exc:
-            log.debug("%s not available: %s", name, exc)
+async def embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
+    return await _get_state().embed_async(texts, model)
 
-generate = _default.generate
-embed = _default.embed
-embed_async = _default.embed_async
-health = _default.health
+
+def health() -> dict:
+    return _get_state().health()
+
+
+def __getattr__(name):
+    if name == "registry":
+        warnings.warn(
+            "motor.core.llm.registry is deprecated. Use motor.core.llm._state.build_llm_state().registry.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return _get_state().registry
+    if name == "_default":
+        warnings.warn(
+            "motor.core.llm._default is deprecated. Use motor.core.llm._state.build_llm_state().default_provider.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return _get_state().default_provider
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ["embed", "embed_async", "generate", "health"]

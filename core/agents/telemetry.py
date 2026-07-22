@@ -8,15 +8,31 @@ import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from core.agents.constants import NERVIOSO, RUFF, URA_ROOT
-from motor.core.llm import health as _health
+
+if TYPE_CHECKING:
+    from core.interfaces import ILLMClient
 
 log = logging.getLogger("ura.multi_agent.telemetry")
 
 
 class Telemetria:
-    """Sistema de telemetría en tiempo real."""
+    def __init__(self, llm: ILLMClient | None = None) -> None:
+        self._llm = llm
+
+    def _check_ollama(self) -> str:
+        if self._llm is not None:
+            result = self._llm.health()
+        else:
+            from motor.core.llm import health as _health
+
+            result = _health()
+        if result.get("status") == "ok":
+            modelos = result.get("modelos_disponibles", [])
+            return f"{len(modelos)} modelos"
+        return "down"
 
     @staticmethod
     def hardware() -> dict:
@@ -43,8 +59,7 @@ class Telemetria:
                 metrics["ram_total_mb"] = 121920
         return metrics
 
-    @staticmethod
-    def red() -> dict:
+    def red(self) -> dict:
         import httpx
 
         status = {}
@@ -59,12 +74,7 @@ class Telemetria:
             status["model_router"] = "down"
 
         try:
-            result = _health()
-            if result.get("status") == "ok":
-                modelos = result.get("modelos_disponibles", [])
-                status["ollama"] = f"{len(modelos)} modelos"
-            else:
-                status["ollama"] = "down"
+            status["ollama"] = self._check_ollama()
         except Exception:
             log.exception("Error checking Ollama health")
             status["ollama"] = "down"

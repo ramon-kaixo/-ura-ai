@@ -284,8 +284,6 @@ def escanear(ruta: Path) -> dict:
 
 def scan_project() -> None:
     """Escanear todo el proyecto."""
-    from pathlib import Path
-
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
     results = {}
     for py_file in URA_ROOT.rglob("*.py"):
@@ -296,8 +294,6 @@ def scan_project() -> None:
         ):
             continue
         try:
-            import ast
-
             content = py_file.read_text()
             tree = ast.parse(content)
             funcs = sum(1 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))

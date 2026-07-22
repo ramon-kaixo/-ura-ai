@@ -12,7 +12,6 @@ from pathlib import Path
 from app.capturador import CapturadorTarget
 from app.gestor_archivos import GestorArchivosSeguro
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 REPORTS = Path.home() / "URA" / "reports"
@@ -49,4 +48,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     asyncio.run(main())

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from motor.core.secrets import get_secret
+from motor.observability.logging import setup_logging
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ def verificar_politicas_seguridad_preflight() -> None:
 
 
 def main() -> None:
+    setup_logging(level="INFO", fmt="%(asctime)s - %(levelname)s - %(message)s")
+
     from core.model_router.model_selection import (
         MODELO_ROUTES,
         clasificar_peticion,

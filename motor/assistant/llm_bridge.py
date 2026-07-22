@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
+import json
 import os
 from typing import TYPE_CHECKING, Any
 
@@ -86,8 +89,6 @@ class LLMBridge:
         intent_value: str = "",
         system_prompt: str = "",
     ) -> str:
-        import asyncio
-
         return await asyncio.to_thread(
             self.generate,
             conversation_id,
@@ -128,7 +129,6 @@ class LLMBridge:
                 async for line in response.aiter_lines():
                     if not line:
                         continue
-                    import json
 
                     try:
                         chunk = json.loads(line)
@@ -152,8 +152,6 @@ class LLMBridge:
         intent_value: str = "",
         system_prompt: str = "",
     ) -> str:
-        import concurrent.futures
-
         model_key = self.select_model(mode, intent_value)
         messages = self.build_messages(
             conversation_id,

@@ -7,6 +7,7 @@ import http.server
 import json
 import logging
 import time
+import urllib.parse
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             cls._modelos_cache = set()
         if time.time() - cls._cache_ts > 300:
             from core.model_router.model_selection import obtener_modelos_disponibles
+
             cls._modelos_cache = obtener_modelos_disponibles()
             cls._cache_ts = time.time()
         return cls._modelos_cache
@@ -46,6 +48,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _check_rate_limit(self) -> bool:
         from core.model_router.router import rate_limiter
+
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return False
@@ -53,6 +56,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_api_tags(self) -> None:
         from core.model_router.proxy import proxy_request
+
         status, _headers, body = proxy_request("/api/tags", None, "GET", client_ip=self.client_address[0])
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -63,6 +67,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         from core.model_router import router as _main
         from core.model_router.model_selection import MODELO_ROUTES
         from core.model_router.router import OLLAMA_URL, ROUTER_PORT
+
         self._send_json(
             {
                 "service": "model_router",
@@ -88,6 +93,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         from core.model_router import router as _main
         from core.model_router.cache import prompt_cache
         from core.model_router.router import OLLAMA_URL, auth_validate, require_auth
+
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden"}, 403)
             return
@@ -108,10 +114,12 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_metrics(self) -> None:
         from core.model_router.metrics import metrics
+
         self._send_text(metrics.get_prometheus_format())
 
     def _handle_supervisor(self) -> None:
         from core.model_router.router import auth_validate, require_auth
+
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden: X-API-KEY inválido o faltante"}, 403)
             return
@@ -120,6 +128,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         sock = None
         try:
             import zmq
+
             ctx = zmq.Context()
             sock = ctx.socket(zmq.REQ)
             sock.setsockopt(zmq.RCVTIMEO, 3000)
@@ -152,6 +161,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         sock = None
         try:
             import zmq
+
             ctx = zmq.Context()
             sock = ctx.socket(zmq.REQ)
             sock.setsockopt(zmq.RCVTIMEO, 3000)
@@ -185,6 +195,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         results = []
         try:
             from core.search_engine import search as fts_search
+
             results = fts_search(query)
         except Exception as e:
             log.warning("search_engine falló: %s", e)
@@ -192,6 +203,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _proxy_get(self) -> None:
         from core.model_router.proxy import proxy_request
+
         status, headers, body = proxy_request(self.path, None, "GET", client_ip=self.client_address[0])
         self.send_response(status)
         self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
@@ -211,6 +223,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._handle_metrics()
         elif self.path == "/vram/status":
             from core.model_router.vram_guard import vram_guard
+
             self._send_json(vram_guard.metricas())
         elif self.path == "/supervisor":
             self._handle_supervisor()
@@ -218,13 +231,14 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._handle_status()
         elif self.path.startswith("/dashboard") and not self.path.startswith("/dashboard.json"):
             from core.model_router.dashboard import _render_dashboard
+
             self._send_html(_render_dashboard())
         elif self.path in ("/dashboard.json", "/dashboard.json/"):
             from core.model_router.dashboard import _dashboard_json
+
             self._send_json(json.loads(_dashboard_json(client_ip=self.client_address[0])))
         elif self.path.startswith("/api/search"):
-            import urllib.parse as _up
-            q = _up.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
+            q = urllib.parse.parse_qs(self.path.split("?")[1] if "?" in self.path else "").get("q", [None])[0]
             if not q:
                 self._send_json({"error": "parametro q requerido"}, 400)
                 return
@@ -239,6 +253,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_power_mode(self) -> bool:
         from core.model_router import router as _main
+
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         params_str = body.decode() if body else ""
@@ -261,6 +276,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _do_proxy_inference(self, data: dict, modelo: str, tipo: str) -> None:
         from core.model_router.model_selection import _apply_model_params
         from core.model_router.proxy import _proxy_con_vram
+
         data = _apply_model_params(data, modelo)
         status, headers, resp_body = _proxy_con_vram(
             self.path,

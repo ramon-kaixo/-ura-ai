@@ -1,5 +1,6 @@
 """Decide qué acción tomar según el estado del sistema. Modelo: Qwen 14B."""
 
+import ast
 import logging
 
 from core.agents.constants import MODELOS, URA_ROOT
@@ -30,8 +31,6 @@ class AgenteOrquestador:
 
     @staticmethod
     def _contar_pendientes() -> int:
-        import ast
-
         total = 0
         try:
             for py_file in URA_ROOT.rglob("*.py"):
@@ -41,7 +40,13 @@ class AgenteOrquestador:
                 try:
                     tree = ast.parse(py_file.read_text())
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and hasattr(node, "end_lineno") and node.end_lineno and node.lineno and node.end_lineno - node.lineno > 80:
+                        if (
+                            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and hasattr(node, "end_lineno")
+                            and node.end_lineno
+                            and node.lineno
+                            and node.end_lineno - node.lineno > 80
+                        ):
                             total += 1
                 except Exception as e:
                     log.warning("Error parseando AST en %s: %s", py_file, e)

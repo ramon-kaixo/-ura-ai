@@ -1,8 +1,16 @@
+"""Guardian logger — eventos de servicio persistidos a Qdrant."""
+
+from __future__ import annotations
+
 import json
 import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.interfaces import IConfigProvider
 
 logger = logging.getLogger("ura.guardian")
 
@@ -20,15 +28,21 @@ def _publish_to_event_bus(record: dict) -> None:
         from core.event_bus import publish
         publish("alert", {"source": "guardian", "event": record.get("event"), "reason": record.get("reason", "")[:200], "result_type": record.get("result_type", "")})
     except Exception:
-        pass  # noqa: S110
+        pass
 
 
-def _save_to_qdrant(record: dict) -> None:
+def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None:
     try:
-        from motor.core.config import UraConfig
-        from motor.core.qdrant_client import instancia
-        cfg = UraConfig()
-        qc = instancia(cfg)
+        if config is None:
+            from motor.core.config import UraConfig
+            from motor.core.qdrant_client import instancia
+
+            config = UraConfig()
+            qc = instancia(config)
+        else:
+            from motor.core.qdrant_client import instancia
+
+            qc = instancia(config)
         if qc and qc.disponible:
             subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
             qc.guardar_incidente({
@@ -41,7 +55,7 @@ def _save_to_qdrant(record: dict) -> None:
                 "exit_code": -1,
             })
     except Exception:
-        pass  # noqa: S110
+        pass
 
 
 def log_event(

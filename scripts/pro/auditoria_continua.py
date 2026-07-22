@@ -16,6 +16,7 @@ Retorna puntuación 0-100 y lista de incidencias.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
@@ -27,9 +28,11 @@ CHECKS: list[dict] = []
 
 def check(name: str, weight: int) -> callable:
     """Decorador para registrar una comprobación con su peso."""
+
     def decorator(fn):
         CHECKS.append({"name": name, "weight": weight, "fn": fn})
         return fn
+
     return decorator
 
 
@@ -53,11 +56,13 @@ def run_all(verbose: bool = True) -> dict:
         except Exception as e:
             _results[c["name"]] = {"ok": False, "msg": str(e), "elapsed_s": round(time.time() - t0, 1)}
             if verbose:
-                print(f"  ❌ {c['name']:35} {e} ({time.time()-t0:.1f}s)")
+                print(f"  ❌ {c['name']:35} {e} ({time.time() - t0:.1f}s)")
 
-    score = sum(
-        c["weight"] for c in CHECKS if _results.get(c["name"], {}).get("ok")
-    ) / _total_weight * 100 if _total_weight else 0
+    score = (
+        sum(c["weight"] for c in CHECKS if _results.get(c["name"], {}).get("ok")) / _total_weight * 100
+        if _total_weight
+        else 0
+    )
 
     return {"score": round(score, 1), "results": _results}
 
@@ -65,7 +70,8 @@ def run_all(verbose: bool = True) -> dict:
 # ── Histórico ──
 
 import json as _json
-from datetime import UTC, datetime as _datetime
+from datetime import UTC
+from datetime import datetime as _datetime
 from pathlib import Path as _Path
 
 HISTORIAL = _Path(__file__).resolve().parent.parent.parent / ".nervioso" / "audits"
@@ -79,7 +85,10 @@ def _get_git_tag() -> str:
         try:
             _GIT_TAG = subprocess.run(
                 ["git", "describe", "--tags", "--abbrev=0"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             ).stdout.strip()
         except Exception:
             _GIT_TAG = "unknown"
@@ -112,8 +121,10 @@ def collect_metrics() -> dict:
     # Reuse index
     try:
         import sys as _sys
+
         _sys.path.insert(0, str(ROOT / "scripts" / "pro"))
-        from reuse.reuse_detector import ReuseDetector  # noqa: PLC0415
+        from reuse.reuse_detector import ReuseDetector
+
         d = ReuseDetector(ROOT)
         metrics["tamano"]["funciones_indexadas"] = d.build_index()
     except Exception:
@@ -124,6 +135,7 @@ def collect_metrics() -> dict:
     if memory_db.exists():
         try:
             import sqlite3 as _sqlite3
+
             conn = _sqlite3.connect(str(memory_db))
             metrics["memoria"] = {
                 "ejecuciones": conn.execute("SELECT COUNT(*) FROM executions").fetchone()[0],
@@ -146,8 +158,9 @@ def collect_metrics() -> dict:
 
     # Swarm
     try:
-        from autonomy.goal_manager import GoalManager as _GM  # noqa: PLC0415
+        from autonomy.goal_manager import GoalManager as _GM
         from tuneladora.engine import PipelineEngine as _PE
+
         engine = _PE(pipeline="metrics")
         gm = _GM(engine)
         goals = gm.list_all()
@@ -174,7 +187,8 @@ def collect_metrics() -> dict:
 
     # Quality Gates
     try:
-        from reuse.quality_gates import QualityGates as _QG  # noqa: PLC0415
+        from reuse.quality_gates import QualityGates as _QG
+
         gates = _QG(ROOT)
         g = gates.should_run_maintenance()
         metrics["consolidacion"] = {
@@ -219,8 +233,13 @@ def _compute_health_index(metrics: dict, score: float) -> dict:
         observabilidad = 90.0
 
     health = round(
-        calidad * 0.25 + rendimiento * 0.20 + estabilidad * 0.20 +
-        reutilizacion * 0.15 + aprendizaje * 0.10 + observabilidad * 0.10, 1
+        calidad * 0.25
+        + rendimiento * 0.20
+        + estabilidad * 0.20
+        + reutilizacion * 0.15
+        + aprendizaje * 0.10
+        + observabilidad * 0.10,
+        1,
     )
 
     return {
@@ -248,8 +267,7 @@ def save_result(score: float, results: dict, elapsed: float) -> None:
         "score": score,
         "elapsed_s": round(elapsed, 1),
         "metrics": metrics,
-        "checks": {name: {"ok": r["ok"], "msg": r["msg"], "elapsed_s": r["elapsed_s"]}
-                   for name, r in results.items()},
+        "checks": {name: {"ok": r["ok"], "msg": r["msg"], "elapsed_s": r["elapsed_s"]} for name, r in results.items()},
     }
     path = HISTORIAL / f"audit_{_datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(_json.dumps(record, indent=2, ensure_ascii=False))
@@ -258,40 +276,51 @@ def save_result(score: float, results: dict, elapsed: float) -> None:
 
 # ── 1. Compilación ──
 
+
 @check("Compilación (py_compile)", 20)
 def _():
     import py_compile
+
     errors = []
     for pyfile in ROOT.rglob("*.py"):
         if ".venv" in str(pyfile) or ".sandbox" in str(pyfile) or "__pycache__" in str(pyfile):
             continue
         try:
             py_compile.compile(str(pyfile), doraise=True)
-        except py_compile.PyCompileError as e:
+        except py_compile.PyCompileError:
             errors.append(str(pyfile.relative_to(ROOT)))
     if errors:
         return False, f"{len(errors)} archivos no compilan"
     return True, "OK"
 
+
 # ── 2. Logger regression ──
+
 
 @check("Logger: sin .warning()", 10)
 def _():
     result = subprocess.run(
         [sys.executable, "scripts/pro/tests/test_logger_regression.py"],
-        capture_output=True, text=True, timeout=30, cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(ROOT),
+        check=False,
     )
     if result.returncode != 0:
         lines = [l for l in result.stdout.split("\n") if "❌" in l or "Error" in l]
         return False, "\n".join(lines[:3]) if lines else "fallo"
     return True, "OK"
 
+
 # ── 3. Plugin discovery ──
+
 
 @check("Plugin discovery", 10)
 def _():
     sys.path.insert(0, str(ROOT / "scripts" / "pro"))
-    import plugin_registry  # noqa: PLC0415
+    import plugin_registry
+
     plugins = plugin_registry.discover_all()
     required = {"name", "phase", "timeout", "priority"}
     missing = []
@@ -303,20 +332,28 @@ def _():
         return False, "\n".join(missing[:3])
     return True, f"{len(plugins)} plugins, todos OK"
 
+
 # ── 4. Reuse Detector regression ──
+
 
 @check("Reuse Detector regresión", 15)
 def _():
     result = subprocess.run(
         [sys.executable, "scripts/pro/reuse/test_regression.py"],
-        capture_output=True, text=True, timeout=120, cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(ROOT),
+        check=False,
     )
     if result.returncode != 0:
         fails = [l for l in result.stdout.split("\n") if "❌" in l]
         return False, f"{len(fails)} tests fallidos"
     return True, "12/12 passed"
 
+
 # ── 5. Ruff ──
+
 
 @check("Ruff check", 15)
 def _():
@@ -324,52 +361,79 @@ def _():
     if not ruff.exists():
         return True, "ruff no instalado (saltando)"
     result = subprocess.run(
-        [str(ruff), "check", "scripts/pro/tuneladora/", "scripts/pro/autonomy/", "scripts/pro/reuse/",
-         "--ignore", "EXE001,E402"],
-        capture_output=True, text=True, timeout=60, cwd=str(ROOT),
+        [
+            str(ruff),
+            "check",
+            "scripts/pro/tuneladora/",
+            "scripts/pro/autonomy/",
+            "scripts/pro/reuse/",
+            "--ignore",
+            "EXE001,E402",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(ROOT),
+        check=False,
     )
     errors = len([l for l in result.stdout.split("\n") if l.strip() and "|" not in l and l.startswith("scripts")])
     if errors > 0:
         return False, f"{errors} errores (ignorando EXE001, E402)"
     return True, "OK"
 
+
 # ── 6. Health Dashboard ──
+
 
 @check("Health Dashboard", 5)
 def _():
     result = subprocess.run(
         [sys.executable, "scripts/pro/dashboard.py", "--json"],
-        capture_output=True, text=True, timeout=30, cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(ROOT),
+        check=False,
     )
     if result.returncode != 0:
         return False, f"dashboard falla: {result.stderr[:200]}"
-    import json  # noqa: PLC0415
     try:
         data = json.loads(result.stdout)
-        return True, f"{data.get('ledger_ejecuciones', '?')} ejecuciones, {data.get('memoria_ejecuciones', '?')} indexadas"
+        return (
+            True,
+            f"{data.get('ledger_ejecuciones', '?')} ejecuciones, {data.get('memoria_ejecuciones', '?')} indexadas",
+        )
     except json.JSONDecodeError:
         return False, "JSON inválido"
 
+
 # ── 7. Quality Gates ──
+
 
 @check("Quality Gates", 5)
 def _():
     from scripts.pro.reuse.quality_gates import QualityGates
+
     gates = QualityGates(ROOT)
     g = gates.should_run_maintenance()
     msg = f"{g['commits']} commits, {g['lines_changed']} líneas"
     return True, msg
 
+
 # ── 8. Código huérfano ──
+
 
 @check("Código huérfano", 10)
 def _():
     from scripts.pro.reuse.reuse_detector import ReuseDetector
+
     d = ReuseDetector(ROOT)
     indexed = d.build_index()
     return True, f"{indexed} funciones indexadas"
 
+
 # ── 9. Checkpoint validity ──
+
 
 @check("Checkpoint válido", 5)
 def _():
@@ -384,10 +448,12 @@ def _():
 
 # ── 10. Plugins uniformidad ──
 
+
 @check("Plugins uniformes", 5)
 def _():
     sys.path.insert(0, str(ROOT / "scripts" / "pro"))
-    import plugin_registry  # noqa: PLC0415
+    import plugin_registry
+
     plugins = plugin_registry.discover_all()
     fields = {"name", "phase", "timeout", "priority"}
     for name, p in plugins.items():
@@ -412,9 +478,9 @@ def show_history() -> None:
         bar = "█" * int(val / 10) + "░" * (10 - int(val / 10))
         print(f"    {name:15} {bar} {val:.0f}%")
 
-    print(f"\n── Histórico de auditorías ──")
+    print("\n── Histórico de auditorías ──")
     print(f"  {'Versión':12} {'Health':>7} {'Score':>6} {'Tiempo':>8}")
-    print(f"  {'-'*12} {'-'*7} {'-'*6} {'-'*8}")
+    print(f"  {'-' * 12} {'-' * 7} {'-' * 6} {'-' * 8}")
     for r in records[-10:]:
         tag = r.get("tag", "?")[:12]
         print(f"  {tag:12} {r.get('health_index', 0):>6.0f}  {r.get('score', 0):>5.0f}  {r.get('elapsed_s', 0):>6.1f}s")
@@ -429,7 +495,8 @@ def show_history() -> None:
 
 
 def main() -> int:
-    import argparse  # noqa: PLC0415
+    import argparse
+
     parser = argparse.ArgumentParser(description="URA Auditoría Continua")
     parser.add_argument("--verbose", action="store_true", default=True)
     parser.add_argument("--json", action="store_true")

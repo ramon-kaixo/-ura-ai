@@ -2,9 +2,6 @@ import argparse
 import logging
 import sys
 
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("httpcore").setLevel(logging.WARNING)
-
 from motor.cli.cmd_diag import cmd_alerta, cmd_check, cmd_detect, cmd_health_check, cmd_history, cmd_learn, cmd_verify
 from motor.cli.cmd_pipeline import cmd_calibrate, cmd_diagnose, cmd_pipeline, cmd_scan
 from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd_summarise, cmd_trend
@@ -26,6 +23,7 @@ from motor.cli.cmd_ura import (
 )
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
+from motor.observability.logging import setup_logging
 
 COMMANDS = {
     "pipeline": cmd_pipeline,
@@ -72,12 +70,13 @@ URA_COMMANDS: dict[str, object] = {
 
 
 def _setup_logging(level: str) -> None:
+    setup_logging(
+        level=level,
+        fmt="%(name)s %(levelname)s %(message)s",
+        handlers=[logging.StreamHandler(sys.stderr)],
+    )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
-    h = logging.StreamHandler(sys.stderr)
-    h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
-    logging.getLogger().addHandler(h)
-    logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
 
 
 def main() -> None:

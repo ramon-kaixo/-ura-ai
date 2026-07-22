@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -40,7 +42,7 @@ class CleanupPlugin:
                 activos += 1
 
         if activos:
-            self.engine.log.warning(f"{activos} procesos aislados activos")
+            self.engine.log.warn(f"{activos} procesos aislados activos")
         return {"total": activos + limpiados, "limpiados": limpiados, "activos": activos}
 
     def watermark(self) -> dict[str, Any]:
@@ -74,8 +76,6 @@ class CleanupPlugin:
     def git_commit(self, message: str = "") -> dict[str, Any]:
         """Hace git commit si hay cambios."""
         if not message:
-            from datetime import UTC, datetime
-
             message = f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')}"
         self.engine.run_git(["add", "-u"])
         result = self.engine.run_git(["commit", "-m", message])
@@ -93,13 +93,11 @@ class CleanupPlugin:
         flags = "--full" if profundo else "--quick"
         result = self.engine.run_script("scripts/pro/revisor.py", args=[flags], timeout=120)
         try:
-            import json
-
             reporte = json.loads(result.stdout) if result.stdout else {}
         except Exception:
             reporte = {}
         score = reporte.get("score", 0)
         bloqueante = reporte.get("bloqueante", False)
         if bloqueante:
-            self.engine.log.warning(f"Score bloqueante: {score}")
+            self.engine.log.warn(f"Score bloqueante: {score}")
         return {"score": score, "bloqueante": bloqueante, "raw": reporte}

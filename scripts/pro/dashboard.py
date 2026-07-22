@@ -13,6 +13,8 @@ Indicadores:
 
 from __future__ import annotations
 
+import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -46,8 +48,6 @@ def main() -> int:
     # ── 2. Memoria semántica ──
     memory_db = ROOT / ".nervioso" / "memory" / "semantic.db"
     if memory_db.exists():
-        import sqlite3
-
         try:
             conn = sqlite3.connect(str(memory_db))
             results["memoria_ejecuciones"] = conn.execute("SELECT COUNT(*) FROM executions").fetchone()[0]
@@ -62,8 +62,6 @@ def main() -> int:
     # ── 3. Conocimiento ──
     kb_file = ROOT / ".nervioso" / "knowledge" / "knowledge.json"
     if kb_file.exists():
-        import json
-
         try:
             kb = json.loads(kb_file.read_text(encoding="utf-8"))
             results["conocimiento_total"] = len(kb)
@@ -112,8 +110,6 @@ def main() -> int:
 
     # ── Output ──
     if args.json:
-        import json
-
         print(json.dumps(results, indent=2, ensure_ascii=False))
     else:
         print("=" * 55)

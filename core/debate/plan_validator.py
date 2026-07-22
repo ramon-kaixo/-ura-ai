@@ -14,6 +14,7 @@ Uso:
   python3 plan_validator.py                      # imprime JSON con contexto
   echo '{"plan": "..."}' | python3 plan_validator.py --debate  # contexto + debate
 """
+import asyncio
 import json
 import logging
 import subprocess
@@ -151,8 +152,6 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] == "--debate":
         data = json.loads(sys.stdin.read())
         data["context"] = context
-        import asyncio
-
         from core.debate.debate_engine import run_debate
         from core.debate.lockfile import DebateLock
 
