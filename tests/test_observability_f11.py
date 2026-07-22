@@ -245,13 +245,12 @@ class TestInstrumentationPipeline:
 
 
 class TestInstrumentationHealth:
-    def test_components_registered(self):
-        bus = EventBus()
+    def test_only_pipeline_component_registered(self):
+        """Only pipeline registers in HealthRegistry from Instrumentation."""
         ins = Instrumentation()
-        ins.instrument_eventbus(bus)
         h = ins.health.snapshot()
-        assert "eventbus" in h["components"]
-        assert h["components"]["eventbus"]["status"] == "healthy"
+        assert h["components"] == {}
+        assert h["global"] == "healthy"
 
 
 class _SimplePlugin(PluginBase):

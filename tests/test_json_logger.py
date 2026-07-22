@@ -1,10 +1,10 @@
 """Tests de json_logger."""
 
-from core.json_logger import JsonFormatter, StructuredLogger
+from core.json_logger import JSONFormatter, StructuredLogger
 
 
 def test_json_formatter() -> None:
-    formatter = JsonFormatter()
+    formatter = JSONFormatter()
     assert formatter is not None
 
 

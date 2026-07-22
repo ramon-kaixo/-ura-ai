@@ -112,7 +112,7 @@ from unittest.mock import patch
 
 
 async def _test_call_ollama_timeout():
-    with patch("core.debate.debate_engine.generate") as mock_gen:
+    with patch("motor.core.llm.generate") as mock_gen:
         mock_gen.return_value = "Error: La generación excedió el tiempo de espera."
         return await call_ollama("test-model", "test prompt")
 
@@ -121,7 +121,7 @@ check("TC5: call_ollama timeout returns None", lambda: asyncio.run(_test_call_ol
 
 
 async def _test_ollama_not_json():
-    with patch("core.debate.debate_engine.generate") as mock_gen:
+    with patch("motor.core.llm.generate") as mock_gen:
         mock_gen.return_value = "not json at all"
         return await call_ollama("m", "p")
 
@@ -131,7 +131,7 @@ check("TC6: call_ollama bad JSON returns None", lambda: asyncio.run(_test_ollama
 
 async def _test_ollama_markdown_json():
     """Respuesta con markdown code block debe parsearse igual."""
-    with patch("core.debate.debate_engine.generate") as mock_gen:
+    with patch("motor.core.llm.generate") as mock_gen:
         mock_gen.return_value = '```json\n{"score": 0.9, "reason": "ok", "risks": []}\n```'
         return await call_ollama("m", "p")
 
@@ -145,7 +145,7 @@ check(
 
 async def _test_ollama_plain_json():
     """Respuesta JSON plano (sin markdown)."""
-    with patch("core.debate.debate_engine.generate") as mock_gen:
+    with patch("motor.core.llm.generate") as mock_gen:
         mock_gen.return_value = json.dumps({"score": 0.3, "reason": "bad", "risks": ["x"]})
         return await call_ollama("m", "p")
 

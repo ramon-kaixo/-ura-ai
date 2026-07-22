@@ -70,13 +70,12 @@ class TestContract:
                 # BaseLLMProvider para el mismo archivo (misma ruta, distinto id).
                 # Verificamos que al menos el modulo de la clase base coincida.
                 import sys as _sys
+
                 base_mod = _sys.modules.get(base.__module__, None)
                 cls_base_mod = _sys.modules.get(
-                    [c for c in cls_prov.__mro__ if c.__name__ == 'BaseLLMProvider'][0].__module__, None
+                    [c for c in cls_prov.__mro__ if c.__name__ == "BaseLLMProvider"][0].__module__, None
                 )
-                assert base_mod is cls_base_mod, (
-                    f"{nombre}: modulo base {base_mod} != {cls_base_mod}"
-                )
+                assert base_mod is cls_base_mod, f"{nombre}: modulo base {base_mod} != {cls_base_mod}"
 
     def test_todos_tienen_provider_name(self) -> None:
         proveedores, _ = self._get_proveedores()
