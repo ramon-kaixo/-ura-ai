@@ -162,6 +162,18 @@ def main() -> int:  # noqa: PLR0915
     if result_post.get("_aborted_by"):
         engine.log.warn(f"Abortado en post ({result_post['_aborted_by']})")
 
+    # ── ARQ: Verificación arquitectónica ──
+    try:
+        from scripts.pro.tuneladora.plugins.arq_check import ARQCheckPlugin
+
+        arq = ARQCheckPlugin(engine)
+        arq_result = arq.check()
+        engine.log.info(f"ARQ: {arq_result['detail']}")
+        if not arq_result["ok"]:
+            engine.log.warn("ARQ: violaciones arquitectónicas detectadas — la promoción se bloqueará")
+    except Exception as exc:
+        engine.log.warn(f"ARQ check no disponible: {exc}")
+
     # ── R1: Política de promoción ──
     ruff_ok = result_post.get("results", {}).get("post", {}).get("exit_code", 0) == 0
     engine.promotion.record("ruff", ruff_ok, "0 errores" if ruff_ok else "con errores")
