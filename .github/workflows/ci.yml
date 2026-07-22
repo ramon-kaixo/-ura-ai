@@ -32,8 +32,8 @@ jobs:
       - run: pip install mypy==1.18.2 httpx pydantic pyyaml orjson
       - run: mypy motor/observability/ motor/cli/ --no-strict-optional --ignore-missing-imports
 
-  test:
-    name: Tests (pytest)
+  test-motor:
+    name: Motor tests (pytest)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,6 +47,26 @@ jobs:
       - run: |
           pytest motor/tests/ -q --timeout=60 --no-cov 2>&1 | tail -10
         timeout-minutes: 10
+
+  test-unit:
+    name: Unit tests (tests/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: |
+          EXCLUDE=""
+          while IFS= read -r line; do
+            line="${line%%#*}"  # strip inline comments
+            case "$line" in
+              *[![:space:]]*) EXCLUDE="$EXCLUDE --ignore=tests/$(echo $line | awk '{print $1}')" ;;
+            esac
+          done < .github/tests-ci-exclude.txt
+          pytest tests/ $EXCLUDE -q --timeout=30 --no-cov 2>&1 | tail -5
+        timeout-minutes: 15
 
   security:
     name: Security (bandit)
