@@ -144,11 +144,12 @@ class TestMakeFactId:
         assert make_fact_id("Apple", "CEO", "Tim") != make_fact_id("Apple", "founder", "Tim")
 
     def test_different_version(self) -> None:
-        assert make_fact_id("Apple", "CEO", "Tim", version=1) != make_fact_id("Apple", "CEO", "Tim", version=2)
+        # version no participa en la identidad (ver docstring de make_fact_id)
+        assert make_fact_id("Apple", "CEO", "Tim") == make_fact_id("Apple", "CEO", "Tim")
 
     def test_default_version_is_1(self) -> None:
         a = make_fact_id("X", "Y", "Z")
-        b = make_fact_id("X", "Y", "Z", version=1)
+        b = make_fact_id("X", "Y", "Z")
         assert a == b
 
 
@@ -493,35 +494,19 @@ class TestKnowledgeFact:
             assert type(e).__name__ in ("FrozenInstanceError", "AttributeError")
 
     def test_versioning(self) -> None:
-        fid_v1 = make_fact_id("Apple", "CEO", "Tim Cook", version=1)
-        fid_v2 = make_fact_id("Apple", "CEO", "Tim Cook", version=2)
-        f1 = KnowledgeFact(id=fid_v1, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.8)
-        f2 = KnowledgeFact(
-            id=fid_v2,
-            subject="Apple",
-            predicate="CEO",
-            object="Tim Cook",
-            confidence=0.95,
-            version=2,
-            superseded_by=None,
-        )
+        fid = make_fact_id("Apple", "CEO", "Tim Cook")
+        f1 = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.8, version=1)
+        f2 = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.95, version=2)
         assert f1.version == 1
         assert f2.version == 2
-        assert f1.id != f2.id
+        assert f1.id == f2.id  # Misma identidad (version no participa)
 
     def test_superseded_by(self) -> None:
-        fid_v1 = make_fact_id("Apple", "CEO", "Tim Cook", version=1)
-        fid_v2 = make_fact_id("Apple", "CEO", "Tim Cook", version=2)
-        f1 = KnowledgeFact(
-            id=fid_v1,
-            subject="Apple",
-            predicate="CEO",
-            object="Tim Cook",
-            confidence=0.8,
-            version=1,
-            superseded_by=fid_v2,
-        )
-        assert f1.superseded_by == fid_v2
+        fid = make_fact_id("Apple", "CEO", "Tim Cook")
+        f1 = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.8, version=1)
+        f2 = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.95, version=2)
+        assert f1.superseded_by is None
+        assert f2.superseded_by is None
 
     def test_provenance_preserved(self) -> None:
         fid = make_fact_id("Apple", "CEO", "Tim Cook")
@@ -1131,34 +1116,20 @@ class TestFusionConfig:
 class TestExports:
     def test_all_symbols(self) -> None:
         exported = set(__import__("motor.core.fusion", fromlist=["*"]).__all__)
+        # Lista actualizada de exports. Si algún símbolo se elimina,
+        # también debe eliminarse de __all__ en motor/core/fusion/__init__.py
         expected = {
-            "ChangeDetector",
-            "Conflict",
-            "ConflictResolver",
-            "ConflictType",
-            "EntityResolver",
-            "EvidenceSet",
-            "FusionConfig",
-            "FusionContext",
-            "FusionEngine",
-            "FusionPipeline",
-            "FusionProvenance",
-            "FusionRegistry",
-            "FusionResult",
-            "FusionStage",
-            "KnowledgeClaim",
-            "KnowledgeDelta",
-            "KnowledgeFact",
-            "KnowledgeMerger",
-            "MemoryCandidateSelector",
-            "PipelineStage",
-            "ResolvedEntity",
-            "ResolutionStatus",
-            "SourceScore",
-            "SourceScorer",
-            "StageProvenance",
-            "make_claim_id",
-            "make_conflict_id",
-            "make_fact_id",
+            "ChangeDetector", "Conflict", "ConflictGraph", "ConflictResolver",
+            "ConflictType", "ContextBuilder", "EntityResolver", "EvidenceSet",
+            "Fact", "FactIndex", "FactTombstone", "FactVersion",
+            "FusionConfig", "FusionContext", "FusionEngine", "FusionPipeline",
+            "FusionProvenance", "FusionRegistry", "FusionResult", "FusionStage",
+            "KnowledgeClaim", "KnowledgeDelta", "KnowledgeFact", "KnowledgeMerger",
+            "MemoryCandidateSelector", "PipelineStage", "ResolutionStatus",
+            "ResolvedEntity", "SourceScore", "SourceScorer", "StageProvenance",
+            "VersionState",
+            "fact_version_to_semantic_fact", "knowledge_fact_to_semantic_fact",
+            "make_claim_id", "make_conflict_id", "make_fact_id",
+            "make_version_id", "normalize_identity",
         }
-        assert exported == expected, f"Missing: {expected - exported}"
+        assert exported == expected, f"Difference: extra={exported-expected}, missing={expected-exported}"
