@@ -137,6 +137,13 @@ norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_r
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
+markers = [
+    "slow: tests that take more than 30s or marked as long-running",
+    "integration: tests requiring external services (Ollama, Qdrant, Docker, etc.)",
+    "e2e: end-to-end tests involving multiple components",
+    "benchmark: performance or benchmark tests",
+    "experimental: deprecated, frozen, or unstable tests",
+]
 addopts = "-q --cov=core --cov=monitor --cov=motor --cov-report=term --cov-report=xml"
 
 [tool.coverage.run]
