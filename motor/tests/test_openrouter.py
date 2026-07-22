@@ -27,9 +27,11 @@ class TestOpenRouterProvider:
         assert OpenRouterProvider is not None
 
     def test_openrouter_validate(self) -> None:
-        from motor.core.llm.openrouter import OpenRouterProvider
+        import importlib
+        import motor.core.llm.openrouter as or_mod
 
-        result = validate_provider(OpenRouterProvider)
+        importlib.reload(or_mod)
+        result = validate_provider(or_mod.OpenRouterProvider)
         assert result.valid, f"Validation errors: {result.errors}"
         assert result.provider_name == "openrouter"
 
