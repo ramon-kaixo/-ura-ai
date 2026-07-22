@@ -58,3 +58,13 @@ jobs:
           python-version: "3.12"
       - run: pip install bandit==1.9.4
       - run: bandit -r motor/ core/ knowledge/ -ll -q
+
+  architecture:
+    name: Architecture (ARQ)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/pro/arq_auditor.py --check

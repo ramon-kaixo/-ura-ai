@@ -1,0 +1,222 @@
+[
+  {
+    "file": "core/infra/heartbeat.py",
+    "type": "singleton_pending",
+    "line": 32
+  },
+  {
+    "file": "scripts/pro/mcp_mochila.py",
+    "type": "singleton_pending",
+    "line": 21
+  },
+  {
+    "file": "scripts/pro/mcp_mochila.py",
+    "type": "singleton_pending",
+    "line": 22
+  },
+  {
+    "file": "scripts/pro/metrics_server.py",
+    "type": "singleton_pending",
+    "line": 38
+  },
+  {
+    "file": "scripts/pro/metrics_server.py",
+    "type": "singleton_pending",
+    "line": 40
+  },
+  {
+    "file": "motor/platform/tracing.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/qdrant_client.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/llm/router.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/api.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/executor.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/plugin/registry_v2.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/stages/entity_resolver.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/cli/cmd_ura.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/model_router/handler.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/scanner/scanner.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/forgetting.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/episodic.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/assistant/conversation.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/memory_engine.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/guardian_openclaw.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/compression.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/watchdog_funciones.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/fact_history.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/agents/consensus.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/semantic.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/mochila/tools.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/model_router/proxy.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/memoria/extractores/imagen_extractor.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/error_sandbox.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/resolver_red.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/platform/serializer.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/memory/memory.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/core/fusion/models.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/intelligence/memory/hybrid.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/infra/heartbeat.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/auto_reindex.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "motor/platform/validator.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/cleanup.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "core/mochila/routes/proxy.py",
+    "type": "large_file",
+    "line": 1
+  },
+  {
+    "file": "scripts/pro/tuneladora/engine.py",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "adr_check",
+    "line": 0
+  },
+  {
+    "file": "-",
+    "type": "trends",
+    "line": 0
+  }
+]

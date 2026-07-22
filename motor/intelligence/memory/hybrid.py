@@ -120,13 +120,15 @@ class HybridMemory:
 
         if self._vector_store and vector:
             try:
-                self._vector_store.guardar_incidente({
-                    "ts": datetime.now(UTC).isoformat(),
-                    "tipo": "MemoryRecord",
-                    "resumen": payload[:500],
-                    "impacto_memoria": vector,
-                    "metadata": metadata or {},
-                })
+                self._vector_store.guardar_incidente(
+                    {
+                        "ts": datetime.now(UTC).isoformat(),
+                        "tipo": "MemoryRecord",
+                        "resumen": payload[:500],
+                        "impacto_memoria": vector,
+                        "metadata": metadata or {},
+                    }
+                )
             except Exception:
                 log.debug("vector store write failed", exc_info=True)
         return rid
@@ -175,12 +177,14 @@ class HybridMemory:
                 mdata = json.loads(row[3]) if row[3] else {}
             except (json.JSONDecodeError, TypeError):
                 mdata = {}
-            results.append(MemoryRecord(
-                id=row[0],
-                type=mtype,
-                payload=row[4] or "",
-                metadata=mdata,
-            ))
+            results.append(
+                MemoryRecord(
+                    id=row[0],
+                    type=mtype,
+                    payload=row[4] or "",
+                    metadata=mdata,
+                )
+            )
         return results
 
     def get(self, record_id: str) -> MemoryRecord | None:
