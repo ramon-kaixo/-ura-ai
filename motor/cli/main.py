@@ -8,6 +8,7 @@ from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd
 from motor.cli.cmd_ura import cmd_alerts as ura_cmd_alerts
 from motor.cli.cmd_ura import (
     cmd_ask,
+    cmd_audit,
     cmd_dashboard,
     cmd_doctor,
     cmd_finalize,
@@ -17,13 +18,12 @@ from motor.cli.cmd_ura import (
     cmd_memory,
     cmd_metrics,
     cmd_rotate,
+    cmd_service,
     cmd_snapshot,
     cmd_snc,
     cmd_system,
     cmd_test,
 )
-
-from motor.cli.cmd_ura import cmd_service  # noqa: F811
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
 from motor.observability.logging import setup_logging
@@ -71,6 +71,7 @@ URA_COMMANDS: dict[str, object] = {
     "memory": cmd_memory,
     "system": cmd_system,
     "service": cmd_service,
+    "audit": cmd_audit,
 }
 
 
@@ -134,6 +135,7 @@ def main() -> None:
         "memory",
         "system",
         "service",
+        "audit",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")

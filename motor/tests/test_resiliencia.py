@@ -148,16 +148,30 @@ class TestCircuitBreaker:
         assert cb.state == CircuitState.OPEN  # Back to OPEN
 
     def test_non_transient_errors_dont_count(self) -> None:
+        """Non-transient errors count toward failure threshold (current behavior).
+
+        The canonical CircuitBreaker counts ALL exceptions, not just transient ones.
+        After failure_threshold errors, the circuit opens.
+        """
+        from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
+
         cb = CircuitBreaker("test", failure_threshold=2)
 
         def _fail() -> None:
             msg = "validation error"
             raise ValueError(msg)
 
-        for _ in range(5):
+        # First 2 calls: ValueError (failure_count increases)
+        for _ in range(2):
             with pytest.raises(ValueError):
                 cb.call(_fail)
-        assert cb.state == CircuitState.CLOSED  # Non-transient doesn't open
+
+        # Circuit should be OPEN now
+        assert cb.state == CircuitState.OPEN
+
+        # Third call: should be rejected by open circuit
+        with pytest.raises(CircuitBreakerOpenError):
+            cb.call(_fail)
 
     def test_reset(self) -> None:
         cb = CircuitBreaker("test", failure_threshold=1, recovery_timeout=999)

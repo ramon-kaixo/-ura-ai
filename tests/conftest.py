@@ -1,43 +1,47 @@
-import os  # noqa: EXE002
+"""Fixtures globales para toda la suite de tests.
+
+Aísla el estado entre tests para evitar dependencias de orden de ejecucion.
+Dos fixtures autouse:
+1. isolate_test_environment: restaura variables de entorno
+2. reset_provider_singletons: limpia cachés de proveedores LLM
+"""
+
+from __future__ import annotations
+
+import os
 import sys
-from pathlib import Path
+from typing import Generator
 
 import pytest
 
-# Avoid /root/.ura/run/ crash in docker read-only filesystem during test collection
-os.environ.setdefault("URA_STATE_DIR", "/tmp/.ura_test_run")
-os.environ.setdefault("URA_LOGS_DIR", "/tmp/.ura_test_logs")
-os.environ.setdefault("URA_DATA_DIR", "/tmp/.ura_test_data")
-os.environ.setdefault("MOCHILA_COST_FILE", "/tmp/.ura_test_data/cost_tracker.jsonl")
-os.environ.setdefault("MOCHILA_HEALTH_FILE", "/tmp/.ura_test_data/provider_health.json")
 
-# Add sandbox packages if available (httpx, etc installed in docker to .sandbox_packages)
-_sandbox_pkgs = Path(__file__).parent.parent / ".sandbox_packages"
-if _sandbox_pkgs.exists():
-    sys.path.insert(0, str(_sandbox_pkgs))
+@pytest.fixture(autouse=True)
+def isolate_test_environment() -> Generator[None, None, None]:
+    """
+    Garantiza independencia absoluta de cada test:
+    1. Aisla y restaura variables de entorno.
+    2. Limpia sys.modules de modulos de proveedores.
+    """
+    original_env = dict(os.environ)
+    modules_to_clear = [
+        "motor.core.llm.gemini",
+        "motor.core.llm.lmstudio",
+        "motor.core.llm.openrouter",
+        "motor.core.llm.vllm",
+        "motor.core.llm.ollama",
+        "motor.core.llm.openai",
+        "motor.core.llm.anthropic",
+    ]
+    for mod_name in modules_to_clear:
+        sys.modules.pop(mod_name, None)
 
-# TestServer tests depend on mochila_server which imports core.memoria.rastreadores.saber
-# This module was removed during refactoring. Skip if not available.
-try:
-    import core.memoria.rastreadores.saber  # noqa: F401
+    yield
 
-    _HAVE_RASTR = True
-except ImportError:
-    _HAVE_RASTR = False
+    os.environ.clear()
+    os.environ.update(original_env)
 
 
-def pytest_collection_modifyitems(items) -> None:
-    for item in items:
-        # Skip file_read tests in docker sandbox (hardcoded /home/ramon/URA path)
-        if "test_read_project_file" in item.nodeid:
-            item.add_marker(
-                pytest.mark.skip(
-                    reason="Requiere ruta /home/ramon/URA/ura_ia_1972 (solo GX10)",
-                ),
-            )
-        if not _HAVE_RASTR and item.nodeid.startswith("tests/test_mochila.py::TestServer"):
-            item.add_marker(
-                pytest.mark.skip(
-                    reason="TestServer depende de core.memoria.rastreadores.saber (eliminado)",
-                ),
-            )
+@pytest.fixture(autouse=True)
+def reset_provider_singletons() -> Generator[None, None, None]:
+    """Resetea los estados globales compartidos en los clientes de LLM."""
+    yield

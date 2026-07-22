@@ -15,11 +15,29 @@ class TestVLLMProvider:
         assert VLLMProvider is not None
 
     def test_vllm_validate(self) -> None:
-        from motor.core.llm.vllm import VLLMProvider
+        """Valida que la clase cumple el contrato BaseLLMProvider sin conexión real."""
+        import importlib
 
-        r = validate_provider(VLLMProvider)
-        assert r.valid
-        assert r.provider_name == "vllm"
+        from unittest.mock import patch
+
+        secrets = {
+            "VLLM_BASE_URL": "http://localhost:8000/v1",
+            "VLLM_MODEL": "local-model",
+            "VLLM_TIMEOUT": "120",
+            "VLLM_TEMPERATURE": "0.3",
+            "VLLM_MAX_TOKENS": "1024",
+        }
+
+        def mock_get_secret(name: str, default: str = "") -> str:
+            return secrets.get(name, default)
+
+        with patch("motor.core.llm.vllm.get_secret", side_effect=mock_get_secret):
+            import motor.core.llm.vllm as vllm_mod
+
+            importlib.reload(vllm_mod)
+            r = validate_provider(vllm_mod.VLLMProvider)
+            assert r.valid, f"VLLMProvider no válido: {r.errors}"
+            assert r.provider_name == "vllm"
 
     def test_vllm_generate(self) -> None:
         from motor.core.llm.vllm import VLLMProvider

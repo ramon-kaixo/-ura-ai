@@ -28,9 +28,11 @@ class TestGeminiProvider:
         assert GeminiProvider is not None
 
     def test_gemini_validate(self) -> None:
-        from motor.core.llm.gemini import GeminiProvider
+        import importlib
+        import motor.core.llm.gemini as gemini_mod
 
-        result = validate_provider(GeminiProvider)
+        importlib.reload(gemini_mod)
+        result = validate_provider(gemini_mod.GeminiProvider)
         assert result.valid, f"Validation errors: {result.errors}"
         assert result.provider_name == "gemini"
 
