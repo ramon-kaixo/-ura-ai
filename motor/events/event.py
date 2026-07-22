@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -49,13 +50,13 @@ class SystemRestored(EventPayload):
 @dataclass
 class PipelineStarted(EventPayload):
     name: str = ""
-    config: dict = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PipelineCompleted(EventPayload):
     name: str = ""
-    result: dict = field(default_factory=dict)
+    result: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -85,7 +86,7 @@ class PluginError(EventPayload):
 class HookEvent(EventPayload):
     plugin: str = ""
     hook: str = ""
-    context: dict = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -102,6 +103,6 @@ class ExecutorCompleted(EventPayload):
 
 @dataclass
 class ConfigChanged(EventPayload):
-    old: dict = field(default_factory=dict)
-    new: dict = field(default_factory=dict)
-    keys: list = field(default_factory=list)
+    old: dict[str, Any] = field(default_factory=dict)
+    new: dict[str, Any] = field(default_factory=dict)
+    keys: list[str] = field(default_factory=list)

@@ -4,6 +4,7 @@ import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger("ura.config")
 
@@ -89,7 +90,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
     c.llm_provider = os.environ.get("URA_LLM_PROVIDER", c.llm_provider)
 
 
-def _load_config_dict() -> dict | None:
+def _load_config_dict() -> dict[str, Any] | None:
     """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
     try:
         from core.config_manager import CONFIG

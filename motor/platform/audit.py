@@ -74,7 +74,7 @@ class AuditLogger:
             corr_list = self._by_correlation.get(r.correlation_id)
             if corr_list:
                 with contextlib.suppress(ValueError):
-                    corr_list.remove(r.correlation_id)
+                    corr_list.remove(r.correlation_id)  # type: ignore[arg-type]
 
     def log_send(self, envelope: ProtocolEnvelope) -> None:
         if envelope.routing.message_kind == "event":

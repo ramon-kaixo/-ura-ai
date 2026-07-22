@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from motor.plugin.manifest import PluginManifest
+
 
 @dataclass
 class PluginMeta:
@@ -72,6 +74,8 @@ def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
     for key_node, value_node in zip(d.keys, d.values, strict=False):
         if isinstance(key_node, (ast.Constant, ast.Str)):
             key = key_node.value if isinstance(key_node, ast.Constant) else key_node.s
+            if not isinstance(key, str):
+                continue
         else:
             continue
         if isinstance(value_node, ast.Constant):
@@ -114,16 +118,18 @@ class PluginResult:
 
 
 class PluginBase(ABC):
-    """Clase base abstracta para todos los plugins.
+    """Clase base abstracta para todos los plugins."""
 
-    Cada plugin debe:
-    1. Heredar de PluginBase
-    2. Declarar __plugin__ a nivel de módulo con metadatos
-    3. Implementar execute(context) -> dict
-    """
+    manifest: PluginManifest | None = None
 
     def __init__(self) -> None:
         self.meta = PluginMeta(name=self.__class__.__name__)
+
+    def on_load(self) -> None:
+        """Hook opcional — llamado cuando el plugin se registra."""
+
+    def on_unload(self) -> None:
+        """Hook opcional — llamado cuando el plugin se desregistra."""
 
     @abstractmethod
     def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:

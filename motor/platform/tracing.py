@@ -27,6 +27,7 @@ import random
 import threading
 import time
 from contextlib import contextmanager
+from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -408,7 +409,7 @@ class TraceContext:
         message_type: str,
         message_kind: str = "command",
         tags: dict[str, str] | None = None,
-    ):
+    ) -> Generator[None, None, None]:
         """Context manager for a single span (hop).
 
         OBS-08: never modifies behavior — wraps in try/except.
@@ -618,7 +619,7 @@ class TraceExporter(_SpanEventSink):
         self._batch_size = batch_size
         self._flush_interval = flush_interval
         self._drop_policy = drop_policy
-        self._buffer: queue.Queue = queue.Queue(maxsize=buffer_size)
+        self._buffer: queue.Queue[SpanEvent] = queue.Queue(maxsize=buffer_size)
         self._file_index = 0
         self._event_count = 0
         self._dropped_count = 0

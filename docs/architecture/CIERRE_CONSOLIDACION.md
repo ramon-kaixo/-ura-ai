@@ -115,6 +115,45 @@
 
 ## 6. Plan Maestro de Evolución — Próximos Proyectos
 
+### Línea 1: Observabilidad y Monitoreo (Prioridad: Alta) 🚧
+
+**Estado:** La infraestructura existe (motor/observability/ con Counter, Gauge, Histogram, HealthRegistry, tracing, logging JSON). El servidor de métricas (scripts/pro/metrics_server.py) expone `/metrics` y `/health`. El tracing (motor/platform/tracing.py, 902 líneas) tiene validación de span tree, exportadores y samplers.
+
+**Pendiente:** Conectar HealthRegistry a los servicios (heartbeat, API, tuneladora) para que reporten su estado. Actualmente el health endpoint es un `{"status": "ok"}` estático.
+
+---
+
+### Línea 2: CI/CD (Prioridad: Alta) ✅ Parcial
+
+**Estado:** GitHub Actions con ruff, mypy, pytest, bandit en `.github/workflows/ci.yml`. Makefile con objetivos test/lint/mypy/full-audit.
+
+**Logrado:** bandit config añadido a `pyproject.toml`.
+
+---
+
+### Línea 3: Documentación (Prioridad: Media) ✅ Parcial
+
+**Estado:** README.md actualizado (190→174 líneas) con roadmap de evolución. docs/ structure con 7 subdirectorios.
+
+---
+
+### Línea 4: Mypy Cleanup (Prioridad: Baja) ✅ Parcial
+
+**Estado:** 27 errores type-arg corregidos en 7 archivos. 77→53 errores restantes. Los restantes son mayoritariamente `no-untyped-def` y `unused-ignore` que requieren análisis caso por caso.
+
+---
+
+### Línea 5: Features (Prioridad: Baja — post-estabilización) 🔮
+
+**Evaluación de viabilidad:**
+
+| Feature | Viabilidad | Dependencias |
+|---------|-----------|--------------|
+| **Agente autónomo de investigación** | Alta — motor/intelligence/retrieval/ y motor/agents/ ya existen | Línea 1 |
+| **Dashboard web** | Media — scripts/pro/dashboard.py existe pero requiere refactor | Línea 1 |
+| **MCP Server** | Baja — no hay código MCP estructurado, solo referencias a URLs | Nueva |
+| **Memoria híbrida** | Alta — Qdrant + SQLite + FTS5 ya existen como módulos separados | core/interfaces/ listo |
+
 ### Línea 1: Observabilidad y Monitoreo (Prioridad: Alta)
 
 **Objetivo:** Que URA pueda diagnosticarse a sí misma en producción.

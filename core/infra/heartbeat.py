@@ -22,10 +22,15 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
+from motor.observability.health import HealthRegistry
 from motor.observability.logging import setup_logging
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, IVectorStore
+
+logger = logging.getLogger("ura.heartbeat")
+_health = HealthRegistry()
+_health.register_component("heartbeat")
 
 STATE_FILE = "/tmp/ura_state.json"
 
@@ -197,6 +202,7 @@ loop_latency_history: list[float] = []
 
 def main() -> None:
     setup_logging(level="INFO", fmt="%(asctime)s [%(levelname)s] %(message)s")
+    _health.set_healthy("heartbeat")
 
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
@@ -206,9 +212,11 @@ def main() -> None:
     while not _shutdown_flag:
         if check_health():
             fails = 0
+            _health.set_healthy("heartbeat")
         else:
             fails += 1
             logger.error("Fallo %d/%d consecutivo", fails, MAX_FAILS)
+            _health.set_degraded("heartbeat", f"{fails}/{MAX_FAILS} fallos consecutivos")
             if fails >= MAX_FAILS:
                 restart_service()
                 fails = 0
