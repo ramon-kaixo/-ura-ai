@@ -266,6 +266,8 @@ class LatencyStats:
         self.durations_ns.append(duration_ns)
         if len(self.durations_ns) > self.window:
             self.durations_ns.pop(0)
+
+
 class MetricsCollector:
     """Colector de métricas de latencia por subsistema.
 
@@ -315,5 +317,3 @@ class MetricsCollector:
 # ── Global collector ────────────────────────
 
 _global_collector = MetricsCollector()
-
-

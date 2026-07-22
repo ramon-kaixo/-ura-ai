@@ -55,12 +55,26 @@ class Sampler:
 
 # Tag sanitization constants (sync with tracing.py)
 FORBIDDEN_TAG_PREFIXES: tuple[str, ...] = (
-    "prompt", "query_", "document_", "key_", "token",
-    "secret", "password", "credential", "api_key", "auth_",
+    "prompt",
+    "query_",
+    "document_",
+    "key_",
+    "token",
+    "secret",
+    "password",
+    "credential",
+    "api_key",
+    "auth_",
 )
 FORBIDDEN_TAG_EXACT: tuple[str, ...] = (
-    "query", "document", "key", "secret",
-    "password", "token", "auth", "api_key",
+    "query",
+    "document",
+    "key",
+    "secret",
+    "password",
+    "token",
+    "auth",
+    "api_key",
 )
 MAX_TAG_KEY_LENGTH = 64
 MAX_TAG_VAL_LENGTH = 256
