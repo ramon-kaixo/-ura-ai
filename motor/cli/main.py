@@ -8,6 +8,7 @@ from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd
 from motor.cli.cmd_ura import cmd_alerts as ura_cmd_alerts
 from motor.cli.cmd_ura import (
     cmd_ask,
+    cmd_audit,
     cmd_dashboard,
     cmd_doctor,
     cmd_finalize,
@@ -70,6 +71,7 @@ URA_COMMANDS: dict[str, object] = {
     "memory": cmd_memory,
     "system": cmd_system,
     "service": cmd_service,
+    "audit": cmd_audit,
 }
 
 
@@ -133,6 +135,7 @@ def main() -> None:
         "memory",
         "system",
         "service",
+        "audit",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
