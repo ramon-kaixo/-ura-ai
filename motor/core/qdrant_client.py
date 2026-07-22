@@ -249,7 +249,7 @@ class QdrantClient:
             )
             puntos.append({"id": pid, "vector": vectores[i], "payload": payload})
         if getattr(self, "_modo_rest", False):
-            return self._guardar_documentos_rest(puntos, collection)
+            return qdrant_rest.guardar_documentos_rest(self.config, puntos, collection)
         if not self._cliente:
             return 0
         try:
@@ -261,90 +261,6 @@ class QdrantClient:
         except Exception as e:
             log.exception("error guardar documentos batch: %s", e)
             return 0
-
-    def _guardar_documentos_rest(self, puntos: list[dict], collection: str = COLECCION_DOCUMENTOS) -> int:
-        try:
-            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points"
-            r = httpx.put(url, json={"points": puntos}, timeout=10)
-            return len(puntos) if r.status_code in (200, 201) else 0
-        except Exception as e:
-            log.exception("error guardar documentos batch (REST): %s", e)
-            return 0
-
-    def buscar_por_similitud(self, query_vector: list, collection: str = COLECCION_DOCUMENTOS, limit: int = 10) -> list:
-        """Busca puntos por similitud coseno en la colección especificada."""
-        if not self.disponible:
-            return []
-        if getattr(self, "_modo_rest", False):
-            return self._buscar_similitud_rest(query_vector, collection, limit)
-        if not self._cliente:
-            return []
-        try:
-            r = self._cliente.query_points(
-                collection_name=collection,
-                query=query_vector,
-                limit=limit,
-            )
-            return [{"payload": p.payload, "score": p.score} for p in (r.points or [])]
-        except Exception as e:
-            log.exception("error buscar por similitud: %s", e)
-            return []
-
-    def _buscar_similitud_rest(self, query_vector: list, collection: str, limit: int) -> list:
-        try:
-            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/search"
-            r = httpx.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
-            if r.status_code == 200:
-                return [
-                    {"payload": p.get("payload", {}), "score": p.get("score", 0)} for p in r.json().get("result", [])
-                ]
-        except Exception as e:
-            log.warning("buscar_similitud_rest falló: %s", e)
-        return []
-
-    def buscar_documentos(self, query_texto: str, limit: int = 10) -> list:
-        """Conveniencia: genera embedding de la consulta y busca documentos similares."""
-        vector = self.generar_embedding(query_texto)
-        return self.buscar_por_similitud(vector, COLECCION_DOCUMENTOS, limit)
-
-    # Alias para compatibilidad con IVectorStore protocol
-    buscar_similares = buscar_por_similitud
-
-    def eliminar_por_filtro(self, filtro: dict, collection: str = COLECCION_DOCUMENTOS) -> bool:
-        """Elimina puntos que coinciden con un filtro (ej: {"source": "path/to/file"})."""
-        if not self.disponible:
-            return False
-        if getattr(self, "_modo_rest", False):
-            return self._eliminar_por_filtro_rest(filtro, collection)
-        if not self._cliente:
-            return False
-        try:
-            from qdrant_client.http import models
-
-            self._cliente.delete(
-                collection_name=collection,
-                points_selector=models.FilterSelector(
-                    filter=models.Filter(
-                        must=[
-                            models.FieldCondition(key=k, match=models.MatchValue(value=v)) for k, v in filtro.items()
-                        ],
-                    ),
-                ),
-            )
-            return True
-        except Exception as e:
-            log.exception("error eliminar por filtro: %s", e)
-            return False
-
-    def _eliminar_por_filtro_rest(self, filtro: dict, collection: str) -> bool:
-        try:
-            url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/delete"
-            must = [{"key": k, "match": {"value": v}} for k, v in filtro.items()]
-            r = httpx.post(url, json={"filter": {"must": must}}, timeout=5)
-            return r.status_code in (200, 201)
-        except Exception as e:
-            log.warning("eliminar_rest falló: %s", e)
-            return False
 
     def health(self) -> bool:
         """Devuelve True si Qdrant responde."""
@@ -373,7 +289,7 @@ class QdrantClient:
         if not self.disponible:
             return False
         if getattr(self, "_modo_rest", False):
-            return self._guardar_rest(incidente)
+            return qdrant_rest.guardar_rest(self.config, incidente, self._build_payload)
         if not self._cliente:
             return False
         try:
@@ -418,24 +334,6 @@ class QdrantClient:
             "oom_killed": incidente.get("oom_killed", False),
             "segfault": incidente.get("segfault", False),
         }
-
-    def _guardar_rest(self, incidente: dict) -> bool:
-        """Guarda incidente vía REST (fallback)."""
-        try:
-            payload = self._build_payload(incidente)
-            point = {
-                "id": int(hashlib.sha256(payload["timestamp_inicio"].encode()).hexdigest()[:15], 16) % (2**63),
-                "vector": payload["impacto_memoria"],
-                "payload": payload,
-            }
-            url = (
-                f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points"
-            )
-            r = httpx.put(url, json={"points": [point]}, timeout=5)
-            return r.status_code in (200, 201)
-        except Exception as e:
-            log.exception("error guardar incidente (REST): %s", e)
-            return False
 
     def buscar_incidentes(self, vector: list | None = None, limit: int = 10) -> list:
         """Busca incidentes almacenados en Qdrant."""
