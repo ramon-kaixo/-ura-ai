@@ -1,43 +1,55 @@
-import os  # noqa: EXE002
+"""Fixtures globales para toda la suite de tests.
+
+Aísla el estado entre tests para evitar dependencias de orden de ejecución.
+
+Problema: Tests que importan módulos de proveedores (gemini, lmstudio, etc.)
+comparten el caché de Python. Cuando un test importa un módulo, el siguiente
+test obtiene la misma instancia en caché, que puede tener estado residual.
+
+Solución: Restaurar entorno + limpiar módulos problemáticos después de cada test.
+"""
+
+from __future__ import annotations
+
+import os
 import sys
-from pathlib import Path
 
 import pytest
 
-# Avoid /root/.ura/run/ crash in docker read-only filesystem during test collection
-os.environ.setdefault("URA_STATE_DIR", "/tmp/.ura_test_run")
-os.environ.setdefault("URA_LOGS_DIR", "/tmp/.ura_test_logs")
-os.environ.setdefault("URA_DATA_DIR", "/tmp/.ura_test_data")
-os.environ.setdefault("MOCHILA_COST_FILE", "/tmp/.ura_test_data/cost_tracker.jsonl")
-os.environ.setdefault("MOCHILA_HEALTH_FILE", "/tmp/.ura_test_data/provider_health.json")
 
-# Add sandbox packages if available (httpx, etc installed in docker to .sandbox_packages)
-_sandbox_pkgs = Path(__file__).parent.parent / ".sandbox_packages"
-if _sandbox_pkgs.exists():
-    sys.path.insert(0, str(_sandbox_pkgs))
+@pytest.fixture(autouse=True)
+def isolate_test_environment_and_state():
+    """Fixture global que se ejecuta automáticamente en cada test.
 
-# TestServer tests depend on mochila_server which imports core.memoria.rastreadores.saber
-# This module was removed during refactoring. Skip if not available.
-try:
-    import core.memoria.rastreadores.saber  # noqa: F401
+    1. Guarda el entorno de variables antes del test.
+    2. Elimina los módulos de proveedores del caché para forzar
+       re-importación limpia en el siguiente test.
+    3. Restaura el entorno después del test.
+    """
+    # 1. Guardar copia del entorno original
+    original_env = dict(os.environ)
 
-    _HAVE_RASTR = True
-except ImportError:
-    _HAVE_RASTR = False
+    # 2. Eliminar módulos de proveedores del caché de importación
+    #    para que cada test obtenga una instancia fresca.
+    modules_to_clear = [
+        "motor.core.llm.gemini",
+        "motor.core.llm.lmstudio",
+        "motor.core.llm.openrouter",
+        "motor.core.llm.vllm",
+        "motor.core.llm.ollama",
+        "motor.core.llm.openai",
+        "motor.core.llm.anthropic",
+        "motor.core.llm.base",
+    ]
+    for mod_name in modules_to_clear:
+        sys.modules.pop(mod_name, None)
 
+    yield
 
-def pytest_collection_modifyitems(items) -> None:
-    for item in items:
-        # Skip file_read tests in docker sandbox (hardcoded /home/ramon/URA path)
-        if "test_read_project_file" in item.nodeid:
-            item.add_marker(
-                pytest.mark.skip(
-                    reason="Requiere ruta /home/ramon/URA/ura_ia_1972 (solo GX10)",
-                ),
-            )
-        if not _HAVE_RASTR and item.nodeid.startswith("tests/test_mochila.py::TestServer"):
-            item.add_marker(
-                pytest.mark.skip(
-                    reason="TestServer depende de core.memoria.rastreadores.saber (eliminado)",
-                ),
-            )
+    # 3. Restaurar el entorno exacto previo a la ejecución del test
+    os.environ.clear()
+    os.environ.update(original_env)
+
+    # 4. Limpiar nuevamente los módulos de proveedores después del test
+    for mod_name in modules_to_clear:
+        sys.modules.pop(mod_name, None)
