@@ -167,7 +167,7 @@ def _hours_since_last_message(conv: Any) -> float:
             if last_dt.tzinfo is None:
                 last_dt = last_dt.replace(tzinfo=UTC)
             return (datetime.now(UTC) - last_dt).total_seconds() / 3600
-    except Exception:  # noqa: S110
+    except Exception:
         _log.debug("hours since last message failed", exc_info=True)
     return 0
 
@@ -387,9 +387,8 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
                 prompt += f"\n[Contexto: {rag_ctx[:800]}]"
         else:
             get_assistant_health().set_degraded("rag", "not available")
-    except Exception:  # noqa: S110
+    except Exception:
         get_assistant_health().set_unhealthy("rag", "error")
-        pass
     return prompt
 
 

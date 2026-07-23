@@ -178,7 +178,7 @@ class LLMBridge:
                 response = self._router.generate(prompt, model=model_key)
                 if response and not response.startswith("[Error"):
                     return str(response)
-            except Exception:  # noqa: S110
+            except Exception:
                 _log.debug("router generate failed, falling back to local", exc_info=True)
         return self._local_generate(messages, model_key)
 
