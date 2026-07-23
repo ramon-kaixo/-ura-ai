@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 
-from motor.intelligence.memory.episodic import Episode  # noqa: TC001
+from motor.intelligence.memory.episodic import Episode
 from motor.intelligence.memory.semantic import SemanticFact
 
 

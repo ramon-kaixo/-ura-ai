@@ -36,7 +36,7 @@ _last_backup: float = 0
 
 def _fetch_health() -> dict[str, Any] | None:
     try:
-        with urllib.request.urlopen(f"{METRICS_URL}/health", timeout=5) as r:  # nosec
+        with urllib.request.urlopen(f"{METRICS_URL}/health", timeout=5) as r:  # nosec  # noqa: S310
             return json.loads(r.read().decode())
     except Exception as e:
         log.warning("Health fetch falló: %s", e)
@@ -56,7 +56,7 @@ def _send_alert(message: str, level: str = "warning") -> bool:
 
 def check_and_alert() -> dict[str, Any]:
     """Compara health actual con estado previo. Retorna cambios detectados."""
-    global _PREVIOUS
+    global _PREVIOUS  # noqa: PLW0603
     health = _fetch_health()
     if not health:
         return {"status": "error", "detail": "No se pudo obtener health"}
@@ -85,7 +85,7 @@ def check_and_alert() -> dict[str, Any]:
 
 
 def _backup_memory() -> None:
-    global _last_backup
+    global _last_backup  # noqa: PLW0603
     now = time.time()
     if now - _last_backup < BACKUP_INTERVAL:
         return

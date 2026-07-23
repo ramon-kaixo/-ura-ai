@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path  # noqa: TC003
+from pathlib import Path
 
 from motor.core.evaluation import EvaluationEngine
 from motor.core.evaluation.corpus import EvaluationCorpus, EvaluationQuery

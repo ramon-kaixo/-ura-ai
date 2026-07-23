@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from motor.intelligence.memory.episodic import Episode, EpisodeStore  # noqa: TC001
+from motor.intelligence.memory.episodic import Episode, EpisodeStore
 
 log = logging.getLogger("ura.memory.compression")
 

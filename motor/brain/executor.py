@@ -77,7 +77,7 @@ class ProposalExecutor:
             elif isinstance(v, list):
                 for item in v:
                     args.append(f"--{k}={item}")
-            elif isinstance(v, str) or isinstance(v, (int, float)):
+            elif isinstance(v, (str, int, float)):
                 args.append(f"--{k}={v}")
         return args
 

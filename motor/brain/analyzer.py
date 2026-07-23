@@ -6,8 +6,10 @@ Analiza AST, detecta complejidad, duplicados, deuda tecnica.
 from __future__ import annotations
 
 import ast
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class CodeAnalyzer:

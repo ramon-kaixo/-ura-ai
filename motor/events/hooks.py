@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable  # noqa: TC003  -- usado solo en type hints, con annotations future
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from motor.events.topics import (

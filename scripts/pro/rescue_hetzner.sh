@@ -66,7 +66,7 @@ chown -R ramon:ramon /home/ramon/scraping
 
 # 6. Verificar Tailscale
 log "[INFO] Verificando Tailscale..."
-tailscale status 2>/dev/null && log "  → Tailscale activo" || log "  → Tailscale no activo (no crítico)"
+tailscale status 2>/dev/null && log "  → Tailscale activo" || log "  → Tailscale no activo (no critico)"
 
 log "=== RECUPERACION COMPLETADA ==="
 log "SSH: root@178.105.81.83 -p 2222"

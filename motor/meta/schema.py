@@ -49,8 +49,9 @@ class ModuleMeta:
 
     @classmethod
     def from_yaml(cls, path: str) -> ModuleMeta:
+        from pathlib import Path
+
         import yaml
 
-        with open(path) as f:
-            data = yaml.safe_load(f)
+        data = yaml.safe_load(Path(path).read_text())
         return cls(**data)

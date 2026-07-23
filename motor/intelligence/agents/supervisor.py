@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from collections.abc import Callable  # noqa: TC003
+from collections.abc import Callable
 from typing import Any
 
 from motor.intelligence.agents.base import Agent

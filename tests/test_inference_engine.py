@@ -37,7 +37,7 @@ class TestInferenciaStreamEngine:
             "modelo-test",
             {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
-            tokens.append(chunk)  # noqa: PERF401
+            tokens.append(chunk)
         assert tokens
         assert "504" in tokens[0]
         mock_router.liberar_slot_vram.assert_not_called()
@@ -51,7 +51,7 @@ class TestInferenciaStreamEngine:
                 "modelo-test",
                 {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
             ):
-                tokens.append(chunk)  # noqa: PERF401
+                tokens.append(chunk)
         assert tokens == []
 
     @pytest.mark.asyncio
@@ -69,7 +69,7 @@ class TestInferenciaStreamEngine:
             "modelo-test",
             {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
-            tokens.append(chunk)  # noqa: PERF401
+            tokens.append(chunk)
         assert tokens == ["a", "b", "c"]
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")
 
@@ -89,7 +89,7 @@ class TestInferenciaStreamEngine:
                 "modelo-test",
                 {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
             ):
-                tokens.append(chunk)  # noqa: PERF401
+                tokens.append(chunk)
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")
 
     @pytest.mark.asyncio
@@ -107,6 +107,6 @@ class TestInferenciaStreamEngine:
             "modelo-test",
             {"messages": [{"role": "user", "content": "hi"}], "tokens_estimados": 10},
         ):
-            tokens.append(chunk)  # noqa: PERF401
+            tokens.append(chunk)
         assert "Fallo" in tokens[-1]
         mock_router.liberar_slot_vram.assert_awaited_once_with("modelo-test")

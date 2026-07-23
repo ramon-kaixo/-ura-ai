@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from motor.intelligence.memory.episodic import Episode, EpisodeStore  # noqa: TC001
-from motor.intelligence.memory.record import MemoryType  # noqa: TC001
+from motor.intelligence.memory.episodic import Episode, EpisodeStore
+from motor.intelligence.memory.record import MemoryType
 
 log = logging.getLogger("ura.memory.retrieval")
 
