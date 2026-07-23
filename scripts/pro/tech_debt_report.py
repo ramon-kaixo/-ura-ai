@@ -6,16 +6,18 @@ from pathlib import Path
 BASE = Path.home() / "URA" / "ura_ia_1972"
 
 
-def run(cmd):
-    return subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=str(BASE)).stdout
+def _run(*args: str) -> str:
+    return subprocess.run(
+        list(args), capture_output=True, text=True, cwd=str(BASE)
+    ).stdout
 
 
 print("=== TECH DEBT REPORT ===")
-todo = run('grep -rn "TODO" motor/ --include=*.py | wc -l').strip()
-fixme = run('grep -rn "FIXME" motor/ --include=*.py | wc -l').strip()
-exc = run('grep -rn "except:.*pass" motor/ --include=*.py | grep -v __pycache__ | wc -l').strip()
-ruff = run('.venv/bin/ruff check motor/ --output-format=concise 2>&1 | wc -l').strip()
+todo = _run("grep", "-rn", "TODO", "motor/", "--include=*.py").count("\n")
+fixme = _run("grep", "-rn", "FIXME", "motor/", "--include=*.py").count("\n")
+exc = _run("grep", "-rn", "except:", "motor/", "--include=*.py").count("\n")
+ruff = _run(str(BASE / ".venv" / "bin" / "ruff"), "check", "motor/", "--output-format=concise").count("motor/")
 print(f"TODO comments: {todo}")
 print(f"FIXME comments: {fixme}")
-print(f"except:.*pass: {exc}")
+print(f"except: lines: {exc}")
 print(f"Ruff errors: {ruff}")
