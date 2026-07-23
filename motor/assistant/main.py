@@ -77,6 +77,7 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     from fastapi.responses import PlainTextResponse
+
     from motor.observability.prometheus_exporter import export_metrics
 
     return PlainTextResponse(content=export_metrics(), media_type="text/plain")
