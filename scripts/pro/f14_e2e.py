@@ -798,7 +798,6 @@ def print_summary(results: list[dict]) -> None:
 
 
 def main() -> int:
-
     env = load_env()
     git_info = get_git_info()
 

@@ -2,6 +2,7 @@
 
 Un modulo se describe en YAML/JSON y el cerebro lo materializa.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -49,6 +50,7 @@ class ModuleMeta:
     @classmethod
     def from_yaml(cls, path: str) -> ModuleMeta:
         import yaml
+
         with open(path) as f:
             data = yaml.safe_load(f)
         return cls(**data)

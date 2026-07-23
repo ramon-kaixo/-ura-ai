@@ -1,4 +1,5 @@
 """ConversationalLearning — aprende preferencias del usuario (F29 B8)."""
+
 from __future__ import annotations
 
 import sqlite3
@@ -28,7 +29,7 @@ class UserPreferences:
 
 class ConversationalLearning:
     def __init__(self, db_path: str | None = None) -> None:
-        self._db_path = db_path or "/tmp/ura/learning.db"  # noqa: S108
+        self._db_path = db_path or "/tmp/ura/learning.db"
         self._lock = threading.Lock()
         self._preferences: dict[str, UserPreferences] = {}
         self._init_db()
@@ -57,7 +58,7 @@ class ConversationalLearning:
         intent: str,
         message_length: int = 0,
         mode: str = "conversacion",
-        success: bool = True,  # noqa: FBT001, FBT002
+        success: bool = True,
     ) -> None:
         with self._lock:
             self._conn.execute(

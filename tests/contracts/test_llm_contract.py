@@ -378,7 +378,6 @@ class TestBaseProviderContract:
             BaseLLMProvider()  # type: ignore
 
     def test_base_tiene_cuatro_abstractos(self) -> None:
-
         from motor.core.llm.base import BaseLLMProvider
 
         abstractos = []

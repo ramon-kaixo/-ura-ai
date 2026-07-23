@@ -98,10 +98,9 @@ def run(name, fn, queries, rel_map, reranker=None):
 
 
 def main() -> int:
-    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
-
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
+    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
     from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.vector import VectorRetriever

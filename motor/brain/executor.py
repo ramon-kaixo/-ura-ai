@@ -6,6 +6,7 @@ Problema 3 resuelto: convierte params a lista de strings para subprocess.
 Mejora 1: status refleja returncode del script ejecutado.
 Mejora 2: _proposal_to_args maneja bool, list, None, str, int/float.
 """
+
 from __future__ import annotations
 
 import logging
@@ -76,9 +77,7 @@ class ProposalExecutor:
             elif isinstance(v, list):
                 for item in v:
                     args.append(f"--{k}={item}")
-            elif isinstance(v, str):
-                args.append(f"--{k}={v}")
-            elif isinstance(v, (int, float)):
+            elif isinstance(v, str) or isinstance(v, (int, float)):
                 args.append(f"--{k}={v}")
         return args
 

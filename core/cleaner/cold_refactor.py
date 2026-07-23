@@ -98,7 +98,7 @@ class ColdRefactor:
                 self._a(e)
                 r["reintentados"] += 1
                 continue
-            Path(e.skill_path).write_text(li, encoding="utf-8")  # noqa: ASYNC240
+            Path(e.skill_path).write_text(li, encoding="utf-8")
             e.resuelto = True
             e.resolucion = self._n()
             self._a(e)

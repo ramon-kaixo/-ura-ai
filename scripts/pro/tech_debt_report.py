@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Genera reporte de deuda tecnica acumulada. Sin shell=True."""
+
 import ast
 from pathlib import Path
 
@@ -7,8 +8,10 @@ from pathlib import Path
 def count_todos():
     return sum(1 for f in Path("motor").rglob("*.py") for line in f.read_text().splitlines() if "TODO" in line)
 
+
 def count_fixmes():
     return sum(1 for f in Path("motor").rglob("*.py") for line in f.read_text().splitlines() if "FIXME" in line)
+
 
 def count_except_pass():
     c = 0
@@ -24,6 +27,7 @@ def count_except_pass():
         except SyntaxError:
             continue
     return c
+
 
 print("=== TECH DEBT REPORT ===")
 print(f"TODO comments: {count_todos()}")

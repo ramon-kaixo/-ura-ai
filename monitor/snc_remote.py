@@ -65,7 +65,6 @@ def sync_state() -> dict:
 
 
 def main() -> None:
-
     try:
         while True:
             state = sync_state()

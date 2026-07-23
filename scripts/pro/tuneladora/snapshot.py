@@ -6,9 +6,9 @@ Si en el futuro cambia openclaw_firmador, solo se modifica este archivo.
 
 from __future__ import annotations
 
-from typing import Any, Callable
-
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 
 class SnapshotService:

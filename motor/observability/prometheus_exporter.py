@@ -4,6 +4,7 @@ NOTA: Accede a ._histograms y ._counters (atributos privados de
 LabeledCounter/LabeledHistogram). Esto es intencional para el exportador.
 Si LabeledCounter cambia su implementacion interna, este modulo fallara.
 """
+
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 
 
@@ -14,7 +15,7 @@ def _counter_lines(counter, name: str, desc: str) -> list[str]:
         labels = snap.get("labels", {})
         if labels:
             label_str = ",".join(f'{k}="{v}"' for k, v in labels.items())
-            lines.append(f'{name}{{{label_str}}} {snap["value"]}')
+            lines.append(f"{name}{{{label_str}}} {snap['value']}")
         else:
             lines.append(f"{name} {snap['value']}")
     return lines
@@ -26,9 +27,9 @@ def _histogram_lines(hist, name: str, desc: str) -> list[str]:
         snap = h.snapshot()
         labels = snap.get("labels", {})
         label_str = ",".join(f'{k}="{v}"' for k, v in labels.items()) if labels else ""
-        prefix = f'{name}{{{label_str},}}' if label_str else name
-        lines.append(f'{prefix}_count {snap["count"]}')
-        lines.append(f'{prefix}_sum {snap.get("sum", 0)}')
+        prefix = f"{name}{{{label_str},}}" if label_str else name
+        lines.append(f"{prefix}_count {snap['count']}")
+        lines.append(f"{prefix}_sum {snap.get('sum', 0)}")
     return lines
 
 

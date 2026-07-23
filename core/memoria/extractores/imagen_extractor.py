@@ -214,7 +214,7 @@ def extraer_imagen(ruta: Path) -> dict:
 async def extraer_caracteristicas_imagen(ruta_imagen: str) -> dict:
     """Versión async: delega I/O de disco al pool de hilos del event-loop."""
     ruta = Path(ruta_imagen)
-    if not ruta.exists():  # noqa: ASYNC240
+    if not ruta.exists():
         log.error("Archivo de imagen no encontrado: %s", ruta_imagen)
         return {"status": "error", "reason": "file_not_found"}
 

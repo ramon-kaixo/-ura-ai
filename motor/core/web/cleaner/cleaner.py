@@ -33,7 +33,7 @@ class CleanedStats:
             return 0.0
         return round((self.documents_removed / self.documents_received) * 100, 1)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "documents_received": self.documents_received,
             "documents_removed": self.documents_removed,

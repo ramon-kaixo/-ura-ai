@@ -54,7 +54,6 @@ def conectar_vnc():
 
 
 def main() -> None:
-
     # 1. Capturar del VNC
     screenshot = conectar_vnc()
 

@@ -66,7 +66,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_api_version(self) -> None:
         from core.model_router import router as _main
         from core.model_router.model_selection import MODELO_ROUTES
-        from core.model_router.router import get_ollama_url, ROUTER_PORT
+        from core.model_router.router import ROUTER_PORT, get_ollama_url
 
         self._send_json(
             {
@@ -92,7 +92,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_health(self) -> None:
         from core.model_router import router as _main
         from core.model_router.cache import prompt_cache
-        from core.model_router.router import get_ollama_url, auth_validate, require_auth
+        from core.model_router.router import auth_validate, get_ollama_url, require_auth
 
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden"}, 403)

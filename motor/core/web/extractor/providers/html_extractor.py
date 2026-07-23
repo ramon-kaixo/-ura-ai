@@ -14,7 +14,7 @@ from html.parser import HTMLParser
 from motor.core.web.base import Extractor
 from motor.core.web.models import WebDocument
 
-_BLOCK_TAGS: frozenset = frozenset(
+_BLOCK_TAGS: frozenset = frozenset[str](
     {
         "p",
         "div",
@@ -35,7 +35,7 @@ _BLOCK_TAGS: frozenset = frozenset(
         "td",
     },
 )
-_SKIP_TAGS: frozenset = frozenset(
+_SKIP_TAGS: frozenset = frozenset[str](
     {
         "script",
         "style",

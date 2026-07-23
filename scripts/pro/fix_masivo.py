@@ -135,7 +135,6 @@ def run_ruff_fix() -> None:
 
 
 def main() -> None:
-
     fix_exe_shebang()
 
     fix_e702_semicolons()

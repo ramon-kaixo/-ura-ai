@@ -2,6 +2,7 @@
 
 Analiza AST, detecta complejidad, duplicados, deuda tecnica.
 """
+
 from __future__ import annotations
 
 import ast
@@ -24,9 +25,7 @@ class CodeAnalyzer:
             "lines": len(path.read_text().splitlines()),
             "functions": len(functions),
             "classes": len(classes),
-            "complex_functions": [
-                f.name for f in functions if len(f.body) > 50
-            ],
+            "complex_functions": [f.name for f in functions if len(f.body) > 50],
         }
 
     def analyze_module(self, module_path: Path) -> list[dict[str, Any]]:

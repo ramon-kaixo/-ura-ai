@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Elimina logs de motor/observability/logs/ mayores a 30 dias."""
 
-import os
 import time
 from pathlib import Path
 

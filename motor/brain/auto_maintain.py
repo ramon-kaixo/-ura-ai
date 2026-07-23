@@ -13,11 +13,13 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .alerts import Alert, AlertEngine
-from .executor import ProposalExecutor
-from .observer import BrainObserver
+
+if TYPE_CHECKING:
+    from .executor import ProposalExecutor
+    from .observer import BrainObserver
 
 log = logging.getLogger("ura.brain.auto_maintain")
 

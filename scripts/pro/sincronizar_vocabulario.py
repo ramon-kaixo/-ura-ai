@@ -38,7 +38,6 @@ def _dump_conn(conn) -> str:
 
 
 def sincronizar() -> None:
-
     # 1. Local → Remoto
     if Path(DB_LOCAL).exists():
         with sqlite3.connect(DB_LOCAL) as conn:

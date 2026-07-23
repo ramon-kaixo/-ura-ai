@@ -31,7 +31,7 @@ async def test_hashes():
 async def test_guardar():
     p = Path("/tmp/pm/m.json")
     m.guardar(p)
-    assert p.exists()  # noqa: ASYNC240
+    assert p.exists()
 
 
 @pytest.mark.asyncio

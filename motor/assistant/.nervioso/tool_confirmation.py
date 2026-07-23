@@ -1,17 +1,38 @@
 """ToolConfirmation — pide confirmación antes de ejecutar comandos peligrosos."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-DANGEROUS_TOOLS = frozenset({
-    "shell", "git_commit", "git_push", "git_reset", "docker_exec",
-    "rm", "delete", "drop", "alter", "truncate",
-})
+DANGEROUS_TOOLS = frozenset(
+    {
+        "shell",
+        "git_commit",
+        "git_push",
+        "git_reset",
+        "docker_exec",
+        "rm",
+        "delete",
+        "drop",
+        "alter",
+        "truncate",
+    }
+)
 
-SAFE_TOOLS = frozenset({
-    "git_status", "git_log", "git_diff", "web_search", "file_read",
-    "list", "show", "search", "status", "help",
-})
+SAFE_TOOLS = frozenset(
+    {
+        "git_status",
+        "git_log",
+        "git_diff",
+        "web_search",
+        "file_read",
+        "list",
+        "show",
+        "search",
+        "status",
+        "help",
+    }
+)
 
 
 @dataclass
@@ -40,7 +61,9 @@ class ConfirmationManager:
         return False
 
     def request_confirmation(
-        self, request_id: str, tool: str,
+        self,
+        request_id: str,
+        tool: str,
         params: dict[str, str] | None = None,
     ) -> ConfirmationRequest:
         tool_lower = tool.lower()

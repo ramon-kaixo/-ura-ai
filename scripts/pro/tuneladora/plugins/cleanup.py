@@ -107,6 +107,6 @@ def run_auto_cleanup():
     """Ejecuta limpieza automatica semanal."""
     import subprocess
 
-    subprocess.run(["python", "scripts/pro/cleanup_logs.py"])
-    subprocess.run(["python", "scripts/pro/vacuum_sqlite.py"])
-    subprocess.run(["python", "scripts/pro/cleanup_embeddings.py"])
+    subprocess.run(["python", "scripts/pro/cleanup_logs.py"], check=False)
+    subprocess.run(["python", "scripts/pro/vacuum_sqlite.py"], check=False)
+    subprocess.run(["python", "scripts/pro/cleanup_embeddings.py"], check=False)

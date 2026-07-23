@@ -26,7 +26,9 @@ class TestConversationalPlanner:
         assert plan.next_action != ""
 
     def test_create_plan_chat_long(self):
-        plan = self.planner.create_plan("me gusta mucho cómo funciona este sistema de inteligencia artificial", UserIntent.CHAT)
+        plan = self.planner.create_plan(
+            "me gusta mucho cómo funciona este sistema de inteligencia artificial", UserIntent.CHAT
+        )
         assert len(plan.objective) > 10
 
     def test_get_plan(self):

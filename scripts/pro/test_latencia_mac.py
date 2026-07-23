@@ -20,7 +20,6 @@ from core.voice.anker_mac_pipeline import AnkerMacPipeline
 
 
 def testear() -> None:
-
     t0 = time.perf_counter()
     pipeline = AnkerMacPipeline()
     time.perf_counter() - t0

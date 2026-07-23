@@ -23,7 +23,7 @@ def get_findings() -> list[dict]:
     return []
 
 
-def generate() -> str:  # noqa: C901, PLR0915
+def generate() -> str:  # noqa: PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])

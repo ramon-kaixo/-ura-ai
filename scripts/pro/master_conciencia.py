@@ -59,7 +59,6 @@ def test_api(desc, payload, url=MCP_URL):
 
 
 def main() -> None:
-
     # 1. Test conexion MCP
     try:
         r = urllib.request.urlopen(f"{MCP_URL}/", timeout=5)  # noqa: S310

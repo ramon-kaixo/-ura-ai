@@ -1,4 +1,5 @@
 """Adaptador entre modulo web existente (motor.core.web) y cerebro."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -15,12 +16,15 @@ class WebLearningAdapter:
     def _load_modules(self) -> None:
         if self._crawler is None:
             from motor.core.web.crawler.providers.httpx_crawler import HttpCrawler
+
             self._crawler = HttpCrawler
         if self._searcher is None:
             from motor.core.web.searcher.providers.duckduckgo import DuckDuckGoSearchProvider
+
             self._searcher = DuckDuckGoSearchProvider
         if self._summarizer is None:
             from motor.core.web.summarizer.summarizer import ExtractiveSummarizer
+
             self._summarizer = ExtractiveSummarizer
 
     def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:

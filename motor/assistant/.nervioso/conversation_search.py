@@ -1,4 +1,5 @@
 """ConversationSearch — búsqueda semántica en conversaciones pasadas."""
+
 from __future__ import annotations
 
 import sqlite3
@@ -73,10 +74,41 @@ class ConversationSearch:
 
     def _extract_tokens(self, text: str) -> list[str]:
         stop_words = {
-            "el", "la", "los", "las", "un", "una", "y", "e", "o", "u",
-            "de", "del", "en", "con", "por", "para", "a", "ante", "bajo",
-            "es", "son", "fue", "era", "esta", "este", "que",
-            "como", "mas", "pero", "lo", "le", "se", "no", "me", "te",
+            "el",
+            "la",
+            "los",
+            "las",
+            "un",
+            "una",
+            "y",
+            "e",
+            "o",
+            "u",
+            "de",
+            "del",
+            "en",
+            "con",
+            "por",
+            "para",
+            "a",
+            "ante",
+            "bajo",
+            "es",
+            "son",
+            "fue",
+            "era",
+            "esta",
+            "este",
+            "que",
+            "como",
+            "mas",
+            "pero",
+            "lo",
+            "le",
+            "se",
+            "no",
+            "me",
+            "te",
         }
         words = text.lower().split()
         return [w for w in words if len(w) > 3 and w not in stop_words]

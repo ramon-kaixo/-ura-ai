@@ -3,6 +3,7 @@
 Traduce intención del usuario en objetivos, tareas y siguiente acción.
 Reutiliza F27 AgentPlanner para la planificación interna.
 """
+
 from __future__ import annotations
 
 import uuid

@@ -16,7 +16,7 @@ def load_latest(pattern: str) -> dict:
 
 def get_git_tag() -> str:
     try:
-        return subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()  # noqa: S607
+        return subprocess.check_output(["git", "describe", "--tags", "--always"], text=True).strip()
     except Exception:
         return "?"
 
@@ -178,21 +178,21 @@ def generate() -> str:  # noqa: PLR0915
             "F14-F05",
             "HybridRetriever retorna éxito sin Qdrant disponible",
             "Condición para RC",
-            "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",  # noqa: E501
+            "El retriever reportó éxito en búsqueda cuando Qdrant estaba caído. Posible fallback a memoria no documentado que oculta el fallo.",
             "Auditar el fallback del HybridRetriever y documentar el comportamiento.",
         ),
         (
             "F14-F06",
             "Pipeline Orchestrator escribe en /opt/motor/data/snapshots/ (read-only)",
             "Condición para RC",
-            "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",  # noqa: E501
-            "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight.",  # noqa: E501
+            "El preflight del pipeline falla en el entorno actual porque intenta escribir en un path read-only. ok=False reportado pero no crítico.",
+            "Configurar snap_path en UraConfig para usar directorio escribible, o eliminar dependencia de escritura en preflight.",
         ),
         (
             "F14-F01",
             "Flag 'no new privileges' impide systemctl stop sin sudo",
             "Condición para RC",
-            "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",  # noqa: E501
+            "No se pudieron probar completamente R02 y R10 (Ollama stop). No afecta operación normal, pero limita testabilidad.",
             "Añadir regla polkit para que el usuario ramon pueda detener ollama sin sudo.",
         ),
         (

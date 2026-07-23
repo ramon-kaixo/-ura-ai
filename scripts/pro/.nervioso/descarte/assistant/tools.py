@@ -1,4 +1,5 @@
 """Tool adapters and orchestrator for the conversational assistant."""
+
 from __future__ import annotations
 
 import subprocess
@@ -15,9 +16,12 @@ class GitStatusTool(ToolAdapter):
 
     def run(self, params: dict[str, Any]) -> dict[str, Any]:
         repo = params.get("repo", str(Path.cwd()))
-        result = subprocess.run(  # noqa: S603
-            ["git", "-C", repo, "status", "--short"],  # noqa: S607
-            capture_output=True, text=True, timeout=10, check=False,
+        result = subprocess.run(
+            ["git", "-C", repo, "status", "--short"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
         )
         return {"output": result.stdout, "returncode": result.returncode}
 
@@ -32,9 +36,12 @@ class GitLogTool(ToolAdapter):
     def run(self, params: dict[str, Any]) -> dict[str, Any]:
         repo = params.get("repo", str(Path.cwd()))
         n = int(params.get("count", 5))
-        result = subprocess.run(  # noqa: S603
-            ["git", "-C", repo, "log", f"-{n}", "--oneline"],  # noqa: S607
-            capture_output=True, text=True, timeout=10, check=False,
+        result = subprocess.run(
+            ["git", "-C", repo, "log", f"-{n}", "--oneline"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
         )
         return {"output": result.stdout, "returncode": result.returncode}
 
@@ -51,8 +58,13 @@ class ShellTool(ToolAdapter):
         if not cmd:
             return {"error": "no command provided", "returncode": -1}
         cmd_list = cmd if isinstance(cmd, list) else cmd.split()
-        result = subprocess.run(  # noqa: S603
-            cmd_list, shell=False, capture_output=True, text=True, timeout=30, check=False,
+        result = subprocess.run(
+            cmd_list,
+            shell=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
         )
         return {"output": result.stdout, "returncode": result.returncode}
 
@@ -81,7 +93,9 @@ class ToolOrchestrator:
         return None
 
     def execute(
-        self, intent: UserIntent, entities: dict[str, str],
+        self,
+        intent: UserIntent,
+        entities: dict[str, str],
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         tool = self.select_tool(intent, entities)
@@ -91,6 +105,7 @@ class ToolOrchestrator:
 
     def _parse_action(self, text: str) -> tuple[str, str]:
         import re
+
         match = re.match(r"(busca|crea|haz|ejecuta|muestra|lista|navega|status|log|git)\s+(.+)", text.strip().lower())
         if match:
             return match.group(1), match.group(2).strip()
