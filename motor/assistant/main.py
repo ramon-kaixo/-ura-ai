@@ -18,6 +18,9 @@ Variables de entorno:
 
 from __future__ import annotations
 
+import logging
+import uuid
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,8 +28,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.assistant.api import router as chat_router
 from motor.assistant.auth import AuthMiddleware
 from motor.assistant.config import config
+from motor.assistant.health import get_assistant_health
+from motor.observability.logging import JSONFormatter, setup_logging
 
 _VERSION = "1.0.0"
+
+# ── Observability: logging estructurado ─────────────────────
+setup_logging(level="INFO")
+_log = logging.getLogger("ura.assistant")
+for handler in _log.handlers:
+    if isinstance(handler, logging.StreamHandler):
+        handler.setFormatter(JSONFormatter(prefix="assistant"))
+        break
+
+# ── Observability: health registry (inicializado via api.py lazy init) ──
+
 
 app = FastAPI(
     title="URA Assistant",
@@ -49,7 +65,13 @@ app.include_router(chat_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": _VERSION, "auth": config.auth_enabled}
+    snapshot = get_assistant_health().snapshot()
+    return {
+        "status": "ok",
+        "version": _VERSION,
+        "auth": config.auth_enabled,
+        "components": snapshot,
+    }
 
 
 @app.get("/")
@@ -59,6 +81,7 @@ async def root():
 
 def main() -> None:
     config.ensure_data_dir()
+    _log.info("URA Assistant starting", extra={"host": config.host, "port": config.port})
     uvicorn.run(
         "motor.assistant.main:app",
         host=config.host,
