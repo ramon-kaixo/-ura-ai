@@ -65,143 +65,103 @@ def _run_phase_with_checkpoint(engine: PipelineEngine, phase: str, file_path: st
     return result
 
 
-def main() -> int:  # noqa: PLR0915
+def _parse_args():
     import argparse
-
     parser = argparse.ArgumentParser(description="Tuneladora de Mejora Continua v2.3")
     parser.add_argument("--file", type=str, default=None)
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--force-refactor", action="store_true")
     parser.add_argument("--force", action="store_true", help="Ignorar checkpoint, ejecutar completo")
     parser.add_argument("--trigger", default="manual")
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def _setup_engine(args):
     engine = PipelineEngine(pipeline="mejora")
     engine.ledger.set_trigger(args.trigger)
     engine.ledger.set_git_commit()
     engine.ledger.resource_sample()
 
-    # R6: protección recursiva
     if engine._refactor_ejecutado:
-        engine.log.warn("Refactor ya ejecutado en este ciclo — omitiendo")
-        return 0
+        engine.log.warning("Refactor ya ejecutado en este ciclo — omitiendo")
+        return engine, True
 
-    engine.log.info("=" * 55)
-    engine.log.info("  MEJORA CONTINUA v2.3")
-    engine.log.info("=" * 55)
-
-    # ── Checkpoint: intentar reanudación ──
     if not args.force and engine.checkpoint.resume():
         engine.log.info(f"Checkpoint encontrado: reanudando desde fase '{engine.checkpoint.last_completed}'")
     elif not args.force:
         engine.checkpoint.clear()
+    return engine, False
 
-    plugins = discover_all()
-    engine.log.info(f"Plugins descubiertos: {len(plugins)}")
-    if args.list:
-        return 0
 
-    t0 = time.time()
-    refactor_ejecutado = False
-    result_pre = {}
-    result_refactor = {}
-    result_post = {}
-
-    # ── Fase pre ──
-    result_pre = _run_phase_with_checkpoint(engine, "pre", args.file)
-    if result_pre.get("_aborted_by"):
-        engine.log.warn(f"Abortado en pre ({result_pre['_aborted_by']})")
-        engine.ledger.set_result("aborted_pre")
-        engine.ledger.save()
-        return 1
-
-    # ── Fase refactor_plugins ──
-    result_refactor = _run_phase_with_checkpoint(engine, "refactor_plugins", args.file)
-    if result_refactor.get("_aborted_by"):
-        engine.log.warn(f"Abortado en refactor ({result_refactor['_aborted_by']})")
-        engine.ledger.set_result("aborted_refactor")
-        engine.ledger.save()
-        return 1
-
-    # ── Decisión: ¿Hay trabajo de refactorización? ──
-    hay_trabajo = args.force_refactor or _hay_trabajo_refactor(result_refactor)
-    if hay_trabajo:
-        if not engine.checkpoint.is_done("pipeline_refactor"):
-            engine.log.info("── Decisión: Refactorización necesaria ──")
-            engine.ledger.phase_start("pipeline_refactor")
-            t_ref = time.time()
-            cmd = [
-                engine.config.venv_python,
-                "scripts/pro/pipeline_refactor.py",
-                "--workers",
-                "4",
-                "--model",
-                "qwen2.5-coder:14b",
-            ]
-            result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
-            engine.ledger.plugin_done("pipeline_refactor", round(time.time() - t_ref, 1))
-            refactor_ejecutado = True
-            PipelineEngine._refactor_ejecutado = True
-            engine.checkpoint.mark_done("pipeline_refactor")
-            if result.returncode != 0:
-                engine.log.warn(f"Pipeline refactor exit={result.returncode}")
-            else:
-                engine.log.info("Pipeline refactor completado OK")
-        else:
-            engine.log.info("── Pipeline refactor ya completado (checkpoint) — omitiendo")
-            engine.ledger.phase_skip("pipeline_refactor")
-    else:
+def _handle_refactor(engine, hay_trabajo):
+    """Ejecuta o salta el pipeline refactor. Retorna si se ejecutó."""
+    if not hay_trabajo:
         engine.log.info("── Decisión: Sin cambios — refactor omitido ──")
         engine.ledger.phase_skip("pipeline_refactor")
+        return False
 
-    # ── Presupuesto de cambios ──
-    _check_budget(engine)
+    if engine.checkpoint.is_done("pipeline_refactor"):
+        engine.log.info("── Pipeline refactor ya completado (checkpoint) — omitiendo")
+        engine.ledger.phase_skip("pipeline_refactor")
+        return False
 
-    # ── Fase post ──
-    result_post = _run_phase_with_checkpoint(engine, "post", args.file)
-    if result_post.get("_aborted_by"):
-        engine.log.warn(f"Abortado en post ({result_post['_aborted_by']})")
+    engine.log.info("── Decisión: Refactorización necesaria ──")
+    engine.ledger.phase_start("pipeline_refactor")
+    t_ref = time.time()
+    cmd = [
+        engine.config.venv_python,
+        "scripts/pro/pipeline_refactor.py",
+        "--workers", "4",
+        "--model", "qwen2.5-coder:14b",
+    ]
+    result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
+    engine.ledger.plugin_done("pipeline_refactor", round(time.time() - t_ref, 1))
+    PipelineEngine._refactor_ejecutado = True
+    engine.checkpoint.mark_done("pipeline_refactor")
+    if result.returncode != 0:
+        engine.log.warning(f"Pipeline refactor exit={result.returncode}")
+    else:
+        engine.log.info("Pipeline refactor completado OK")
+    return True
 
-    # ── ARQ: Verificación arquitectónica ──
+
+def _run_arq_and_promotion(engine, result_post, refactor_ejecutado):
+    """ARQ check + política de promoción R1."""
     try:
         from scripts.pro.tuneladora.plugins.arq_check import ARQCheckPlugin
-
         arq = ARQCheckPlugin(engine)
         arq_result = arq.check()
         engine.log.info(f"ARQ: {arq_result['detail']}")
         if not arq_result["ok"]:
-            engine.log.warn("ARQ: violaciones arquitectónicas detectadas — la promoción se bloqueará")
+            engine.log.warning("ARQ: violaciones arquitectónicas detectadas — la promoción se bloqueará")
     except Exception as exc:
-        engine.log.warn(f"ARQ check no disponible: {exc}")
+        engine.log.warning(f"ARQ check no disponible: {exc}")
 
-    # ── R1: Política de promoción ──
     ruff_ok = result_post.get("results", {}).get("post", {}).get("exit_code", 0) == 0
     engine.promotion.record("ruff", ruff_ok, "0 errores" if ruff_ok else "con errores")
     engine.promotion.record("refactor_ejecutado", refactor_ejecutado, "")
 
     if not engine.promotion.can_promote:
-        engine.log.warn("Política de promoción NO superada")
+        engine.log.warning("Política de promoción NO superada")
         for line in engine.promotion.summary:
-            engine.log.warn(line)
+            engine.log.warning(line)
         engine.ledger.set_promotion(False)
     else:
         engine.ledger.set_promotion(True)
 
-    # ── Snapshot ──
+
+def _finalize(engine, t0, refactor_ejecutado, result_pre, result_refactor, result_post):
+    """Snapshot, ledger, cleanup checkpoint y reporte final."""
     snap = engine.snapshot.save("ultimo_ciclo")
     if snap:
         engine.ledger.set_snapshot_id(snap.name)
 
-    # ── Ledger ──
     engine.ledger.resource_sample()
     engine.ledger.set_git_commit(after="HEAD")
     engine.ledger.set_result("completado")
     ledger_path = engine.ledger.save()
-
-    # ── Cleanup checkpoint ──
     engine.checkpoint.clear()
 
-    # ── Reporte ──
     elapsed = time.time() - t0
     H = int(elapsed // 3600)
     M = int((elapsed % 3600) // 60)
@@ -219,6 +179,60 @@ def main() -> int:  # noqa: PLR0915
             f"Ledger: {ledger_path}",
         ],
     )
+
+
+def main() -> int:
+    args = _parse_args()
+
+    engine, protegido = _setup_engine(args)
+    if protegido:
+        return 0
+
+    engine.log.info("=" * 55)
+    engine.log.info("  MEJORA CONTINUA v2.3")
+    engine.log.info("=" * 55)
+
+    plugins = discover_all()
+    engine.log.info(f"Plugins descubiertos: {len(plugins)}")
+    if args.list:
+        return 0
+
+    t0 = time.time()
+    refactor_ejecutado = False
+
+    # ── Fase pre ──
+    result_pre = _run_phase_with_checkpoint(engine, "pre", args.file)
+    if result_pre.get("_aborted_by"):
+        engine.log.warning(f"Abortado en pre ({result_pre['_aborted_by']})")
+        engine.ledger.set_result("aborted_pre")
+        engine.ledger.save()
+        return 1
+
+    # ── Fase refactor_plugins ──
+    result_refactor = _run_phase_with_checkpoint(engine, "refactor_plugins", args.file)
+    if result_refactor.get("_aborted_by"):
+        engine.log.warning(f"Abortado en refactor ({result_refactor['_aborted_by']})")
+        engine.ledger.set_result("aborted_refactor")
+        engine.ledger.save()
+        return 1
+
+    # ── Decisión: refactorización ──
+    hay_trabajo = args.force_refactor or _hay_trabajo_refactor(result_refactor)
+    refactor_ejecutado = _handle_refactor(engine, hay_trabajo)
+
+    # ── Presupuesto de cambios ──
+    _check_budget(engine)
+
+    # ── Fase post ──
+    result_post = _run_phase_with_checkpoint(engine, "post", args.file)
+    if result_post.get("_aborted_by"):
+        engine.log.warning(f"Abortado en post ({result_post['_aborted_by']})")
+
+    # ── ARQ + Promoción ──
+    _run_arq_and_promotion(engine, result_post, refactor_ejecutado)
+
+    # ── Finalización ──
+    _finalize(engine, t0, refactor_ejecutado, result_pre, result_refactor, result_post)
     return 0
 
 

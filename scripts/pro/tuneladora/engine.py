@@ -135,7 +135,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0:
-            self.log.warn(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
+            self.log.warning(f"Script exit={result.returncode}: {result.stderr[-200:] if result.stderr else ''}")
         return result
 
     def run_ruff(
@@ -156,7 +156,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0 and result.stderr:
-            self.log.warn(f"Ruff stderr: {result.stderr[:200]}")
+            self.log.warning(f"Ruff stderr: {result.stderr[:200]}")
         return result
 
     def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:

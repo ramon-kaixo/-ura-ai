@@ -27,8 +27,9 @@ def _persist_health() -> None:
     try:
         with open(_HEALTH_STATE_FILE, "w") as f:
             json.dump(_health.snapshot(), f)
-    except Exception:
-        pass
+    except Exception as e:
+        _log = __import__("logging").getLogger("ura.tuneladora.mantenimiento")
+        _log.warning("health persist failed: %s", e)
 
 
 def _detectar_nivel() -> str:
