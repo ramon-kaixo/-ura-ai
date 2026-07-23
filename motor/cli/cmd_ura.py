@@ -22,7 +22,7 @@ def _memory_path() -> Path:
     return Path(os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
 
 
-def _run(cmd, desc):
+def _run(cmd, _desc):
     result = _executor.run(cmd, cwd=str(ROOT))
     if result.ok:
         return True, result.stdout
