@@ -1,0 +1,14 @@
+[Unit]
+Description=URA AI Assistant
+After=network.target
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Environment=URA_ENV=production
+ExecStart=/usr/bin/python3 -m motor.assistant.main
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
