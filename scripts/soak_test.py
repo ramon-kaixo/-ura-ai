@@ -28,7 +28,7 @@ sys.path.insert(0, Path(os.path.dirname(Path(__file__).resolve().parent)))  # no
 from typing import TYPE_CHECKING
 
 from motor.observability.health import HealthRegistry
-from motor.platform.tracing import MetricsCollector, TraceExporter
+from motor.observability.tracing_platform import MetricsCollector, TraceExporter
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -152,7 +152,7 @@ class SoakTester:
                     self.total_errors += 1
             # Emit a trace event for each operation
             try:
-                from motor.platform.tracing import SpanEvent
+                from motor.observability.tracing_platform import SpanEvent
 
                 ev = SpanEvent(
                     trace_id=f"soak-{self.total_ops}",
