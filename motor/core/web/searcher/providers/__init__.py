@@ -1,1 +1,1 @@
-"""Proveedores de búsqueda."""
+"""motor.core.web.searcher.providers package."""

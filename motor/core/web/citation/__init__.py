@@ -1,1 +1,1 @@
-"""Citas y trazabilidad (F24-B8)."""
+"""motor.core.web.citation package."""

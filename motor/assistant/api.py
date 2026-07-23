@@ -168,7 +168,7 @@ def _hours_since_last_message(conv: Any) -> float:
                 last_dt = last_dt.replace(tzinfo=UTC)
             return (datetime.now(UTC) - last_dt).total_seconds() / 3600
     except Exception:  # noqa: S110
-        pass
+        _log.debug("hours since last message failed", exc_info=True)
     return 0
 
 
@@ -377,8 +377,8 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
             web_results = await engine._web.search(resolved)
             if web_results:
                 prompt += f"\n[Web: {web_results[:800]!s}]\nCuando uses información de la web, cita la fuente."
-        except Exception:  # noqa: S110
-            pass
+        except Exception:
+            _log.debug("web search failed", exc_info=True)
     try:
         if engine._rag.is_available():
             get_assistant_health().set_healthy("rag", "available")

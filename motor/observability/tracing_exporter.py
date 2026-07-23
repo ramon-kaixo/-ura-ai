@@ -145,7 +145,7 @@ class FileExporter(_SpanEventSink):
                     self._file_index += 1
                     self._open_file()
             except OSError:
-                pass
+                log.debug("flush error during file rotation", exc_info=True)
         try:
             if self._file is not None:
                 self._file.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
@@ -242,7 +242,7 @@ class TraceExporter(_SpanEventSink):
                         self._file_index += 1
                         self._event_count = 0
                 except OSError:
-                    pass
+                log.debug("flush error during file rotation", exc_info=True)
 
     def close(self) -> None:
         self._running = False

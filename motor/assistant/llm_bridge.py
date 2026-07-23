@@ -5,8 +5,11 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import json
+import logging
 import os
 from typing import TYPE_CHECKING, Any
+
+_log = logging.getLogger("ura.assistant.llm_bridge")
 
 from motor.assistant.config import config as app_config
 
@@ -176,7 +179,7 @@ class LLMBridge:
                 if response and not response.startswith("[Error"):
                     return str(response)
             except Exception:  # noqa: S110
-                pass
+                _log.debug("router generate failed, falling back to local", exc_info=True)
         return self._local_generate(messages, model_key)
 
     def _local_generate(self, messages: list[dict[str, str]], model_key: str) -> str:
