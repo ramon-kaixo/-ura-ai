@@ -1,17 +1,16 @@
 """E2E tests for assistant chat flow. Requires Ollama for chat test."""
 from __future__ import annotations
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
-
 from motor.assistant.main import app
 
 HAS_OLLAMA = False
 try:
-    import httpx
     r = httpx.get("http://localhost:11434/api/tags", timeout=2)
     HAS_OLLAMA = r.status_code == 200
-except Exception:
+except Exception:  # noqa: S110
     pass
 
 
