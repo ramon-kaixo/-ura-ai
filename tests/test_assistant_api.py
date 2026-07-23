@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from motor.assistant.api import _FALLBACK_REPLIES, _build_system_prompt
+from motor.assistant.api.handlers import _FALLBACK_REPLIES, _build_system_prompt
 
 
 class TestSystemPrompts:
