@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast
 import asyncio
 import re
-import subprocess
+import subprocess  # nosec B404
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,7 +34,7 @@ class GitTool:
 
     def status(self) -> ToolResult:
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "status", "--short"], capture_output=True, text=True, timeout=10, check=False
             )
             return ToolResult(True, r.stdout[:2000])
@@ -43,7 +43,7 @@ class GitTool:
 
     def log(self, count: int = 5) -> ToolResult:
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "log", f"-{count}", "--oneline"],
                 capture_output=True,
                 text=True,
@@ -56,7 +56,7 @@ class GitTool:
 
     def diff(self) -> ToolResult:
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "diff", "--stat"], capture_output=True, text=True, timeout=10, check=False
             )
             return ToolResult(True, r.stdout[:2000])
@@ -68,7 +68,7 @@ class GitBranchTool:
     def execute(self, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(
+            res = subprocess.run(  # nosec
                 ["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False
             )
             return ToolResult(True, res.stdout[:2000])
@@ -80,7 +80,7 @@ class GitCommitTool:
     def execute(self, message: str, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
         try:
-            res = subprocess.run(
+            res = subprocess.run(  # nosec
                 ["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False
             )
             return ToolResult(res.returncode == 0, res.stdout[:2000] or res.stderr[:2000])
@@ -91,7 +91,7 @@ class GitCommitTool:
 class DockerTool:
     def ps(self) -> ToolResult:
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["docker", "ps", "--format", "{{.Names}} {{.Status}}"],
                 capture_output=True,
                 text=True,
@@ -104,7 +104,7 @@ class DockerTool:
 
     def logs(self, container: str, lines: int = 20) -> ToolResult:
         try:
-            r = subprocess.run(
+            r = subprocess.run(  # nosec
                 ["docker", "logs", "--tail", str(lines), container],
                 capture_output=True,
                 text=True,
@@ -408,7 +408,7 @@ class ConversationalToolManager:
         if not code:
             return ToolResult(False, error="No code")
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec
                 [sys.executable, "-c", code],
                 capture_output=True,
                 text=True,

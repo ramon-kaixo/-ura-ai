@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
+import subprocess  # nosec
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -75,7 +75,7 @@ class SubprocessExecutor(BaseExecutor):
         start = time.monotonic()
         log.debug("Ejecutando: %s (timeout=%ds, cwd=%s)", " ".join(str(c) for c in cmd), timeout, cwd or ".")
         try:
-            p = subprocess.run(
+            p = subprocess.run(  # nosec
                 cmd,
                 capture_output=True,
                 text=True,

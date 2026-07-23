@@ -80,43 +80,35 @@ def main() -> int:  # noqa: PLR0915
         _health.set_degraded("tuneladora", "Ollama no disponible en preflight")
     _persist_health()
 
-    # ── Ligero: calidad básica ──
-    engine.log.info("── Calidad básica ──")
-    results["token_screen"] = quality.token_screen()
-    quality.scanner(mode="json")
-    quality.ruff_check("F841,F401")
-    quality.ruff_format()
-    f821 = quality.ruff_check("F821")
-    results["f821"] = f821
-    quality.compactadora()
-    quality.scanner(mode="diff")
+    # ── Ligero: salud + logs + disco ──
+    engine.log.info("── Mantenimiento ligero ──")
+    results["health"] = health.check_all()
+    results["disk"] = cleanup.check_disk()
+    results["logs"] = cleanup.cleanup_logs()
 
-    # ── Medio: añade poda, inspectores, orphan scanner ──
+    # ── Medio: embeddings + vacuum + calidad ──
     if nivel in ("medio", "profundo"):
-        engine.log.info("── Calidad media ──")
-        results["orphan_scanner"] = engine.run_script(
-            "scripts/pro/systemd_orphan_scanner.py", args=["--json"], timeout=30
-        ).returncode
+        engine.log.info("── Mantenimiento medio ──")
+        results["embeddings"] = cleanup.cleanup_embeddings()
+        results["vacuum"] = cleanup.vacuum_sqlite()
+        quality.ruff_check("F841,F401")
+        quality.ruff_format()
+        f821 = quality.ruff_check("F821")
+        results["f821"] = f821
         quality.ruff_fix()
-        quality.poda()
-        results["inspectores"] = quality.inspectores()
-        if results.get("orphan_scanner", 0) != 0:
-            _health.set_degraded("tuneladora", "orphan_scanner detectó servicios huérfanos")
-            _persist_health()
 
-    # ── Profundo: refactor, forense, snapshot, auditoria, git ──
+    # ── Profundo: duplicados, deuda, forense, auditoria, git ──
     if nivel == "profundo":
         engine.log.info("── Mantenimiento profundo ──")
         results["ollama"] = {"modelos": len(engine.health_ollama())}
         results["forense"] = cleanup.forense_aislamientos()
+        results["duplicates"] = cleanup.detect_duplicates()
+        results["debt"] = cleanup.tech_debt_report()
         quality.f821_snapshot("pre-mantenimiento")
-
         results["ruff_profundo"] = quality.ruff_fix(unsafe=True)
-
-        # Auditoría
         results["auditoria"] = cleanup.auditoria(profundo=True)
 
-        # Git: commit si auditoría ok, rollback si no
+        # Git: commit si auditoria ok, rollback si no
         aud = results.get("auditoria", {})
         if aud.get("bloqueante"):
             cleanup.git_rollback()

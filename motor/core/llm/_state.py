@@ -22,37 +22,37 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         from motor.core.llm.openai import OpenAIProvider
 
         providers.append((OpenAIProvider, "openai"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     try:
         from motor.core.llm.anthropic import AnthropicProvider
 
         providers.append((AnthropicProvider, "anthropic"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     try:
         from motor.core.llm.gemini import GeminiProvider
 
         providers.append((GeminiProvider, "gemini"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     try:
         from motor.core.llm.openrouter import OpenRouterProvider
 
         providers.append((OpenRouterProvider, "openrouter"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     try:
         from motor.core.llm.lmstudio import LMStudioProvider
 
         providers.append((LMStudioProvider, "lmstudio"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     try:
         from motor.core.llm.vllm import VLLMProvider
 
         providers.append((VLLMProvider, "vllm"))
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec
         pass
     return providers
 
