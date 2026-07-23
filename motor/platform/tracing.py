@@ -18,7 +18,6 @@ Budget (OBS-10): bounded buffer, max events/trace, max trace size.
 
 from __future__ import annotations
 
-import atexit
 import json
 import logging
 import os
