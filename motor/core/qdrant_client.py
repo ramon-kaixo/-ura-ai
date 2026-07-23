@@ -249,6 +249,8 @@ class QdrantClient:
             )
             puntos.append({"id": pid, "vector": vectores[i], "payload": payload})
         if getattr(self, "_modo_rest", False):
+            from motor.core import qdrant_rest
+
             return qdrant_rest.guardar_documentos_rest(self.config, puntos, collection)
         if not self._cliente:
             return 0
@@ -289,6 +291,8 @@ class QdrantClient:
         if not self.disponible:
             return False
         if getattr(self, "_modo_rest", False):
+            from motor.core import qdrant_rest
+
             return qdrant_rest.guardar_rest(self.config, incidente, self._build_payload)
         if not self._cliente:
             return False
