@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Detecta codigo duplicado >20 lineas en motor/."""
+
 import ast
 from pathlib import Path
 from collections import defaultdict
+
 
 def get_function_bodies(root: Path):
     bodies = defaultdict(list)
@@ -16,6 +18,7 @@ def get_function_bodies(root: Path):
         except SyntaxError:
             continue
     return {k: v for k, v in bodies.items() if len(v) > 1 and len(k) > 200}
+
 
 if __name__ == "__main__":
     dups = get_function_bodies(Path("motor"))

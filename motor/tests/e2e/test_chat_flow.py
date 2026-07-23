@@ -1,4 +1,5 @@
 """E2E tests for assistant chat flow."""
+
 from __future__ import annotations
 
 import pytest

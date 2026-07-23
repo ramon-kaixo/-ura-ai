@@ -1,4 +1,5 @@
 """Tests para CodeQualityPlugin."""
+
 from __future__ import annotations
 
 from scripts.pro.tuneladora.engine import PipelineEngine
