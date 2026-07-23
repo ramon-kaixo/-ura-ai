@@ -70,12 +70,6 @@ def analizar_archivo(ruta: Path) -> dict:
     }
 
 
-def scan_project() -> None:
-    root = Path.home() / "URA/ura_ia_1972"
-    list(root.rglob("*.py"))
-
-
-def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Ajuste Dinámico de Contexto")

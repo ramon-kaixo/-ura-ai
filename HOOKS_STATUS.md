@@ -77,3 +77,21 @@ extend-exclude = [
 
 ### Dependencia externa
 - OpenTelemetry/Semgrep requiere fix upstream (dependencia opentelemetry rota)
+## Deuda Técnica Detectada 2026-07-24
+
+### Duplicados
+- scan_project: 6 scripts/pro/*.py (copiar-pegar)
+- version: 11 motor/core/fusion/stages/*.py (constante repetida)
+
+### Complejidad
+- auto_maintain.py: 26 (acumulado, métodos individuales 6-7)
+
+## Deuda Técnica Detectada 2026-07-24
+
+### Duplicados
+- scan_project: 6 scripts/pro/*.py (copiar-pegar)
+- version: 11 motor/core/fusion/stages/*.py (constante repetida)
+
+### Complejidad
+- auto_maintain.py: 26 (acumulado, métodos individuales 6-7)
+
