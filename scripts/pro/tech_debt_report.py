@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Genera reporte de deuda tecnica acumulada. Sin shell=True."""
-from pathlib import Path
 import ast
+from pathlib import Path
+
 
 def count_todos():
     return sum(1 for f in Path("motor").rglob("*.py") for line in f.read_text().splitlines() if "TODO" in line)
