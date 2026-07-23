@@ -4,6 +4,7 @@ from __future__ import annotations
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+
 from motor.assistant.main import app
 
 HAS_OLLAMA = False
