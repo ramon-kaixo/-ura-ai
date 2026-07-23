@@ -75,6 +75,8 @@ class PluginRegistry:
             if pyfile.name.startswith("_"):
                 continue
             meta = PluginMeta.from_file(pyfile)
+            if meta is None:
+                continue
             if meta.name in self._entries:
                 log.warning("[plugin] Nombre duplicado: %s (sobrescribe)", meta.name)
             self._entries[meta.name] = PluginEntry(meta=meta, path=pyfile)
@@ -84,6 +86,8 @@ class PluginRegistry:
 
     def _discover_file(self, pyfile: Path) -> int:
         meta = PluginMeta.from_file(pyfile)
+        if meta is None:
+            return 0
         if meta.name in self._entries:
             log.warning("[plugin] Nombre duplicado: %s (sobrescribe)", meta.name)
         self._entries[meta.name] = PluginEntry(meta=meta, path=pyfile)
