@@ -6,6 +6,8 @@ Si en el futuro cambia openclaw_firmador, solo se modifica este archivo.
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 from pathlib import Path
 
 
@@ -15,14 +17,14 @@ class SnapshotService:
     Único punto de acceso a delta_snapshot desde el pipeline.
     """
 
-    def __init__(self, nervioso: Path, log_fn: callable | None = None) -> None:
+    def __init__(self, nervioso: Path, log_fn: Callable[..., Any] | None = None) -> None:
         self._nervioso = nervioso
         self._log = log_fn or (lambda msg: None)
 
     def save(self, label: str = "ultimo_ciclo") -> Path | None:
         """Guarda un snapshot delta del estado actual."""
         try:
-            from openclaw_firmador import delta_snapshot
+            from openclaw_firmador import delta_snapshot  # type: ignore[import-not-found]
 
             result = delta_snapshot(label)
             self._log(f"Delta snapshot guardado: {result}")

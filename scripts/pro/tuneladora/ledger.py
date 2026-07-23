@@ -133,10 +133,10 @@ class ExecutionLedger:
         except Exception:
             _log.debug("git commit info no disponible")
 
-    def set_goal(self, goal: dict) -> None:
+    def set_goal(self, goal: dict[str, Any]) -> None:
         self._entry["goal"] = goal
 
-    def add_decision(self, decision_type: str, payload: dict) -> None:
+    def add_decision(self, decision_type: str, payload: dict[str, Any]) -> None:
         self._entry.setdefault("decisions", []).append(
             {
                 "type": decision_type,
@@ -153,10 +153,10 @@ class ExecutionLedger:
             }
         )
 
-    def set_plan(self, plan: dict) -> None:
+    def set_plan(self, plan: dict[str, Any]) -> None:
         self._entry["plan"] = plan
 
-    def set_evaluation(self, score: float, action: str, criteria: dict) -> None:
+    def set_evaluation(self, score: float, action: str, criteria: dict[str, Any]) -> None:
         self._entry["evaluation"] = {
             "score": score,
             "action": action,
@@ -166,19 +166,19 @@ class ExecutionLedger:
     def set_snapshot_id(self, sid: str) -> None:
         self._entry["snapshot_id"] = sid
 
-    def add_pattern(self, pattern: dict) -> None:
+    def add_pattern(self, pattern: dict[str, Any]) -> None:
         self._entry.setdefault("pattern_detections", []).append(pattern)
 
-    def add_knowledge(self, knowledge: dict) -> None:
+    def add_knowledge(self, knowledge: dict[str, Any]) -> None:
         self._entry.setdefault("knowledge", []).append(knowledge)
 
-    def add_recommendation(self, recommendation: dict) -> None:
+    def add_recommendation(self, recommendation: dict[str, Any]) -> None:
         self._entry.setdefault("recommendations", []).append(recommendation)
 
-    def add_policy(self, policy: dict) -> None:
+    def add_policy(self, policy: dict[str, Any]) -> None:
         self._entry.setdefault("policies", []).append(policy)
 
-    def add_verification(self, verification: dict) -> None:
+    def add_verification(self, verification: dict[str, Any]) -> None:
         self._entry.setdefault("verifications", []).append(verification)
 
     def resource_sample(self) -> None:

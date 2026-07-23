@@ -119,7 +119,7 @@ class PipelineEngine:
         script: str,
         args: list[str] | None = None,
         timeout: int | None = None,
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess[str]:
         """Ejecuta un script Python del proyecto con el venv."""
         cmd = [self.config.venv_python, script]
         if args:
@@ -142,7 +142,7 @@ class PipelineEngine:
         self,
         args: list[str],
         timeout: int | None = None,
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess[str]:
         """Ejecuta ruff con argumentos."""
         cmd = [self.config.ruff, *args]
         t = timeout or self.config.timeout_ruff
@@ -159,7 +159,7 @@ class PipelineEngine:
             self.log.warning(f"Ruff stderr: {result.stderr[:200]}")
         return result
 
-    def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+    def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
         """Ejecuta git con argumentos."""
         return subprocess.run(
             ["git", *args],
@@ -177,7 +177,7 @@ class PipelineEngine:
 
             r = httpx.get(f"{self.config.ollama_url}/api/tags", timeout=5)
             if r.status_code == 200:
-                return r.json().get("models", [])
+                return list(r.json().get("models", []))
         except Exception:  # noqa: S110
             pass
         return []
