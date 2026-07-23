@@ -1,1 +1,1 @@
-"""Resumidor extractivo (F24-B7)."""
+"""motor.core.web.summarizer package."""

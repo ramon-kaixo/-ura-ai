@@ -1,1 +1,1 @@
-"""Knowledge package — source documents + engine subpackage."""
+"""knowledge package."""

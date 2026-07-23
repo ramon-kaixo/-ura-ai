@@ -1,1 +1,1 @@
-"""Adaptadores de búsqueda web."""
+"""motor.core.web.searcher package."""

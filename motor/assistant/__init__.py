@@ -1,1 +1,1 @@
-"""Motor assistant package — conversational AI engine."""
+"""motor.assistant package."""
