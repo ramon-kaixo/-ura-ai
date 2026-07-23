@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Generator
+from collections.abc import Generator  # noqa: TC003
 
 import pytest
 
