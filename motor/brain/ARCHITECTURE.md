@@ -50,7 +50,7 @@
 | `ProposalExecutor` | `executor.py` | Execute proposals via tuneladora | proposal dict | execution result (status, returncode) |
 | `WebLearningAdapter` | `web_adapter.py` | Search + crawl + summarize web | query string | dict with sources, content, summary |
 
-## Level 1 Maintenance Flow (A1)
+## Level 1 Maintenance Flow (A1) — Manual approval
 
 ```
 Step 1: Observer.observe_all()
@@ -59,21 +59,20 @@ Step 1: Observer.observe_all()
 
 Step 2: AlertEngine.evaluate()
         └─ Input: BrainObserver observations
-        └─ 4 patterns:
-           │ Pattern 1: status == "error" → critical (provider down)
-           │ Pattern 2: disk libre_gb < 10 → emergency; < 50 → warning
-           │ Pattern 3: ≥2 latency_high + ≥1 errors → critical (degradation)
-           │ Pattern 4: latency_high without errors → warning (network)
+        └─ 4 patterns
         └─ Returns: [Alert(severity, title, description)]
 
 Step 3: AutoMaintainer.scan()
         └─ Input: AlertEngine alerts
-        └─ Maps alerts to MaintenanceProposal:
-           │ emergency+DISCO → clean_disk(low risk)
-           │ provider down → restart_provider(medium risk)
-        └─ Returns: [MaintenanceProposal]
+        └─ _classify_risk() asigna risk_level (safe/medium/critical)
+        └─ Returns: [MaintenanceProposal(action, target, risk_level, auto_execute)]
 
-Step 4: Human approves (Y/n)
+Step 4: AutoMaintainer.propose_and_maybe_execute() (A2)
+        ├─ risk_level=safe + auto_execute=True → ejecuta automaticamente
+        ├─ risk_level=medium → pasa a Step 4a (pregunta humano)
+        └─ risk_level=critical → solo propone, no ejecuta
+
+Step 4a: Human approves (Y/n) — solo para risk_level=medium
         └─ AutoMaintainer.approve_and_execute(proposal, approved=True)
 
 Step 5: ProposalExecutor.execute()
@@ -86,6 +85,14 @@ Step 6: AutoMaintainer._verify_resolution()
         └─ Checks if affected subsystem is now ok
         └─ Returns: {resolved: True/False}
 ```
+
+## A2 Risk Classification
+
+| risk_level | auto_execute | Comportamiento | Ejemplos |
+|------------|-------------|----------------|----------|
+| safe | True | Ejecuta automaticamente, no pregunta | `auto_fix_ruff`, `auto_fix_unused_imports`, `check_network` |
+| medium | False | Pregunta humano (Y/n) como A1 | `clean_disk`, `restart_provider`, `scale_resources` |
+| critical | False | Solo propone, NO ejecuta | `emergency_shutdown` |
 
 ## Module Dependencies
 
