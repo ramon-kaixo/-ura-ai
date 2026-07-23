@@ -13,7 +13,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from motor.assistant.api import _EngineHolder, get_engine, router
+from motor.assistant.api import router
+from motor.assistant.api.handlers import _EngineHolder, get_engine
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.message_store import MessageStore
 
