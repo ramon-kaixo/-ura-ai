@@ -9,7 +9,7 @@ import tempfile
 import time as _time
 from pathlib import Path
 
-from motor.platform.tracing_exporter import (
+from motor.observability.tracing_exporter import (
     InMemoryExporter,
     LatencyStats,
 )
@@ -75,7 +75,7 @@ def test_latency_stats_window():
 
 def test_file_exporter_basic():
     with tempfile.TemporaryDirectory() as tmpdir:
-        from motor.platform.tracing_exporter import FileExporter
+        from motor.observability.tracing_exporter import FileExporter
 
         exp = FileExporter(
             path=tmpdir,
@@ -95,7 +95,7 @@ def test_file_exporter_basic():
 def test_trace_exporter_basic():
     with tempfile.TemporaryDirectory() as tmpdir:
         trace_path = str(Path(tmpdir) / "traces.jsonl")
-        from motor.platform.tracing_exporter import TraceExporter
+        from motor.observability.tracing_exporter import TraceExporter
 
         exp = TraceExporter(
             path=trace_path,
@@ -120,7 +120,7 @@ def test_file_exporter_drop_head():
     exp._buffer.put_nowait(FakeSpanEvent("b"))
     exp._buffer.put_nowait(FakeSpanEvent("c"))
     # Now put should block — test that the FileExporter emit doesn't block
-    from motor.platform.tracing_exporter import FileExporter as FE
+    from motor.observability.tracing_exporter import FileExporter as FE
 
     dummy = FE.__new__(FE)
     dummy._buffer = exp._buffer
