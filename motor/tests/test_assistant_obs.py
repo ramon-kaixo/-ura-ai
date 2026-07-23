@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import io
 import json
 import logging
 import uuid
-
-import pytest
 
 from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total

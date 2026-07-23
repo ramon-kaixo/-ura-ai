@@ -6,21 +6,17 @@ Usa aiohttp.test_utils para evitar levantar un servidor real.
 
 from __future__ import annotations
 
-import json
 import os
 
 from aiohttp import web
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
 from motor.intelligence.memory.hybrid import HybridMemory
-from motor.observability import HealthRegistry
 
 
 def _build_app() -> web.Application:
     """Construye una app de prueba equivalente a metrics_server."""
     from scripts.pro.metrics_server import (
-        _health,
-        _memory,
         handle_dashboard,
         handle_health,
         handle_memory,
@@ -111,7 +107,6 @@ class TestMetricsServer(AioHTTPTestCase):
     @unittest_run_loop
     async def test_health_after_store(self):
         """Verifica que almacenar memoria actualiza /memory."""
-        from motor.intelligence.memory.hybrid import HybridMemory
 
         mem = HybridMemory(db_path=":memory:")
         mem.store(payload="test data for health check")

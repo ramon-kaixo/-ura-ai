@@ -155,8 +155,8 @@ def cmd_health(config: UraConfig, args):
 
 def cmd_system(config: UraConfig, args):
     """Estado unificado del sistema: salud, memoria, version, pipeline."""
-    from motor.observability.health import HealthRegistry
     from motor.intelligence.memory.hybrid import HybridMemory
+    from motor.observability.health import HealthRegistry
 
     hr = HealthRegistry()
     hr.register_component("cli")
@@ -181,14 +181,14 @@ def cmd_system(config: UraConfig, args):
         f"  Salud:     {hr.snapshot().get('global', 'unknown')}",
         f"  Memoria:   {mem_health.get('total_records', 'N/A')} registros",
         f"  Vector:    {'OK' if mem_health.get('vector_store_ok') else 'OFF'}",
-        f"  Python:    3.12",
+        "  Python:    3.12",
         f"  Entorno:   {ROOT}",
         f"{'=' * 40}",
-        f"  endpoints:",
+        "  endpoints:",
         f"    /health   → metrics_server:{os.environ.get('METRICS_PORT', '9091')}",
-        f"    /memory   → memoria hibrida",
-        f"    /dashboard→ dashboard web",
-        f"    /version  → version del sistema",
+        "    /memory   → memoria hibrida",
+        "    /dashboard→ dashboard web",
+        "    /version  → version del sistema",
         f"{'=' * 40}",
     ]
     for line in lines:
@@ -389,7 +389,7 @@ def cmd_memory(config: UraConfig, args) -> int:
     health = mem.health()
     total = health.get("total_records", 0)
 
-    print(f"Memoria Híbrida")
+    print("Memoria Híbrida")
     print(f"{'=' * 40}")
     print(f"  Registros:     {total}")
     print(f"  Vector Store:  {'OK' if health.get('vector_store_ok') else 'OFF'}")
@@ -411,6 +411,7 @@ def cmd_memory(config: UraConfig, args) -> int:
             query = " ".join(args.raw[1:])
             try:
                 import asyncio
+
                 from core.mochila.tools import web_search as _web_search
 
                 result = asyncio.run(_web_search(query, max_results=5))
