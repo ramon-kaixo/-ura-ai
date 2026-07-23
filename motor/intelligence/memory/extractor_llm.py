@@ -92,5 +92,5 @@ class LLMFactExtractor(FactExtractor):
     def _fallback_parse(self, raw: str) -> list[dict]:
         items: list[dict] = []
         for match in re.finditer(r"\{\s*\"subject\"\s*:\s*\"([^\"]+)\"", raw):
-            items.append({"subject": match.group(1)})  # noqa: PERF401
+            items.append({"subject": match.group(1)})
         return items

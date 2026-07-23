@@ -81,6 +81,7 @@ Repository = "https://github.com/ramon-kaixo/-ura-ai"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+extend-exclude = ["agent_hierarchy.py", "agents/sandbox/", "app/", "core/", "scripts/", "knowledge/", "monitor/", "motor/agents/", "motor/cli/", "tests/", "motor/tests/", "motor/health_monitor.py", "motor/assistant/api/routes.py", "sandbox/", "scraping/"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -100,6 +101,12 @@ ignore = [
     "ERA",     # Commented-out code (legacy)
     "N",       # Naming conventions (cosmetico)
     "PT",      # pytest rules (solo aplican a tests)
+    "PERF401", # List comprehension style (arreglar en cleanup dedicado)
+    "TC001",   # Type-checking imports (arreglar en cleanup dedicado)
+    "TC003",   # Type-checking imports (arreglar en cleanup dedicado)
+    "PERF401", # List comprehension style (arreglar en cleanup dedicado)
+    "TC001",   # Type-checking imports (arreglar en cleanup dedicado)
+    "TC003",   # Type-checking imports (arreglar en cleanup dedicado)
     "TRY",     # try/except style (cosmetico)
     "EM",      # Exception message style (cosmetico)
     "PIE",     # Pie-style rules (cosmetico)

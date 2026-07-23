@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path  # noqa: TC003  -- usado en runtime en find_manifest/parse_manifest
+from pathlib import Path
 from typing import Any
 
 log = logging.getLogger("ura.manifest")

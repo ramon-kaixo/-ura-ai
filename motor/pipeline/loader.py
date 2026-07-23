@@ -42,7 +42,7 @@ class PipelineLoader:
         stages_raw = data.get("stages", [])
         stages = []
         for s in stages_raw:
-            stages.append(  # noqa: PERF401
+            stages.append(
                 StageDefinition(
                     name=str(s.get("name", "")),
                     plugin=str(s.get("plugin", "")),

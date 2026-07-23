@@ -4,7 +4,7 @@ import fnmatch
 import logging
 import threading
 import uuid
-from collections.abc import Callable  # noqa: TC003  -- usado solo en type hints, con annotations future
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 

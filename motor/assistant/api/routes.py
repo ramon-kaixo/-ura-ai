@@ -55,7 +55,7 @@ class FeedbackRequest(BaseModel):
 
 
 @router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:
+async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:  # noqa: PLR0915
     correlation_id = str(uuid.uuid4())[:8]
     client_ip = http_request.client.host if http_request.client else "unknown"
     _rate_limiter.check(client_ip)

@@ -26,7 +26,7 @@ def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Pat
     if hook_names:
         yaml_lines.append("hooks:")
         for h in hook_names:
-            yaml_lines.append(f"  - {h}")  # noqa: PERF401
+            yaml_lines.append(f"  - {h}")
     (d / "plugin.yaml").write_text("\n".join(yaml_lines) + "\n")
     hook_impl = ""
     for h in hook_names:

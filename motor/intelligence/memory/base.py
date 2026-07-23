@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from motor.intelligence.memory.record import MemoryRecord, MemoryType  # noqa: TC001
+from motor.intelligence.memory.record import MemoryRecord, MemoryType
 
 
 class MemoryStore(ABC):

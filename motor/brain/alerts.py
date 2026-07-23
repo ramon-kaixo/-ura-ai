@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from motor.brain.observer import BrainObserver
+if TYPE_CHECKING:
+    from motor.brain.observer import BrainObserver
 
 log = __import__("logging").getLogger("ura.brain.alerts")
 
@@ -79,7 +81,7 @@ class AlertEngine:
         latency_high = [o for o in observations if o.raw_data.get("latency_ms", 0) > 500]
         errors = [o for o in observations if o.status == "error"]
         if len(latency_high) >= 2 and len(errors) >= 1:
-            subs = list(set([o.subsystem for o in latency_high + errors]))
+            subs = list({o.subsystem for o in latency_high + errors})
             alerts.append(
                 Alert(
                     severity="critical",

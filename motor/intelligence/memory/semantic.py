@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from motor.intelligence.memory.episodic import Episode  # noqa: TC001
+from motor.intelligence.memory.episodic import Episode
 
 if TYPE_CHECKING:
     from motor.intelligence.memory.extractor import FactExtractor

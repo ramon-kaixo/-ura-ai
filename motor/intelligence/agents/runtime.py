@@ -8,7 +8,7 @@ import time
 import uuid
 from typing import Any
 
-from motor.intelligence.agents.base import Agent  # noqa: TC001
+from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentRole, AgentTask
 from motor.intelligence.agents.planner import PlannerAgent
 from motor.intelligence.agents.supervisor import SupervisorAgent

@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sqlite3
 import threading
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
@@ -58,9 +58,9 @@ class HybridMemory:
     def _get_conn(self) -> sqlite3.Connection:
         with self._lock:
             if self._conn is None:
-                parent = os.path.dirname(self._db_path)
+                parent = Path(self._db_path).parent
                 if parent:
-                    os.makedirs(parent, exist_ok=True)
+                    parent.mkdir(parents=True, exist_ok=True)
                 self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
                 self._conn.execute("PRAGMA journal_mode=WAL")
                 self._conn.executescript(_SCHEMA)

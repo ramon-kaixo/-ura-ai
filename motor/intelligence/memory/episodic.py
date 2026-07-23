@@ -225,7 +225,7 @@ class EpisodeStore:
             result = []
             for ep in list(self._episodes.values()):
                 if start <= ep.timestamp <= end and not ep.is_expired:
-                    result.append(ep)  # noqa: PERF401
+                    result.append(ep)
             result.sort(key=lambda e: e.timestamp, reverse=True)
             return result[:limit]
 

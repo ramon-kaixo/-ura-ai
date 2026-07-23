@@ -34,7 +34,7 @@ def _make_v2_plugin(base: Path, name: str, version: str = "1.0.0", extra_hooks: 
     if extra_hooks:
         yaml_lines.append("hooks:")
         for h in extra_hooks:
-            yaml_lines.append(f"  - {h}")  # noqa: PERF401
+            yaml_lines.append(f"  - {h}")
     (d / "plugin.yaml").write_text("\n".join(yaml_lines) + "\n")
     init_content = (
         "from motor.plugin.base import PluginBase\n"

@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections.abc import Generator  # noqa: TC003
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum

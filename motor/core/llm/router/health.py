@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import threading  # noqa: TC003
+import threading
 import time
 from contextlib import suppress
 from typing import Any

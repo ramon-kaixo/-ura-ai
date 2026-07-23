@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path  # noqa: TC003
+from pathlib import Path
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.baseline import PerformanceBaseline

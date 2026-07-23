@@ -9,6 +9,7 @@ import contextlib
 import json
 import logging
 import queue
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -67,7 +68,7 @@ class FileExporter(_SpanEventSink):
 
     def __init__(
         self,
-        path: str = "/tmp/ura/traces",
+        path: str = Path(tempfile.gettempdir()) / "ura" / "traces",
         buffer_size: int = 10000,
         flush_interval: float = 5.0,
         max_file_size: int = 100 * 1024 * 1024,

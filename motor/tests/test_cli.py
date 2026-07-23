@@ -9,7 +9,7 @@ from motor.core.state import ScanResult
 def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
     lines = []
     for i in range(puntos):
-        lines.append(  # noqa: PERF401
+        lines.append(
             json.dumps(
                 {
                     "ts": f"2026-06-15T0{i:02d}:00:00Z",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable  # noqa: TC003  -- usado en runtime en wrappers
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from motor.observability.health import HealthRegistry
