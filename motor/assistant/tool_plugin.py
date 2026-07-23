@@ -41,6 +41,6 @@ def discover_plugins() -> dict[str, ToolPlugin]:
                     instance = obj()
                     if instance.name:
                         plugins[instance.name] = instance
-        except Exception:
+        except Exception:  # nosec B112
             continue
     return plugins

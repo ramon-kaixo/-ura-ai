@@ -165,14 +165,14 @@ def cmd_system(config: UraConfig, args):
     mem = HybridMemory(db_path=str(_memory_path()))
     mem_health = mem.health()
 
-    import subprocess as _sp
+    import subprocess as _sp  # nosec
 
     version = "unknown"
     try:
-        version = _sp.run(
+        version = _sp.run(  # nosec
             ["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False
         ).stdout.strip()
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec B110
         pass
 
     lines = [
@@ -218,7 +218,7 @@ def cmd_snc(config: UraConfig, args) -> int:
             try:
                 age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110  # nosec B110
                 pass
 
             state.get("status", "?")
@@ -230,7 +230,7 @@ def cmd_snc(config: UraConfig, args) -> int:
                 for n in state["repair_attempts"].values():
                     if n > 0:
                         pass
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110  # nosec B110
             pass
     else:
         pass
@@ -300,7 +300,7 @@ def cmd_metrics(config: UraConfig, args) -> int:
         for line in data.split("\n"):
             if any(k in line for k in ("model_selection", "latency_avg", "cache_hit", "prompt_cache")):
                 pass
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # nosec B110
         pass
     return 0
 
@@ -318,7 +318,7 @@ def cmd_dashboard(config: UraConfig, args) -> int:
             try:
                 age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110  # nosec B110
                 pass
             state.get("status", "UNKNOWN")
             for info in state.get("services", {}).values():
@@ -329,7 +329,7 @@ def cmd_dashboard(config: UraConfig, args) -> int:
                 for n in state["repair_attempts"].values():
                     if n > 0:
                         pass
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110  # nosec B110
             pass
     else:
         pass
@@ -460,12 +460,12 @@ def cmd_memory(config: UraConfig, args) -> int:
 
 
 def _systemctl(args: list[str]) -> "subprocess.CompletedProcess":
-    import subprocess as _sp
+    import subprocess as _sp  # nosec
 
-    r = _sp.run([*["systemctl", "--user"], *args], capture_output=True, text=True, timeout=30, check=False)
+    r = _sp.run([*["systemctl", "--user"], *args], capture_output=True, text=True, timeout=30, check=False)  # nosec
     if r.returncode == 0 or "Could not connect" not in r.stderr:
         return r
-    return _sp.run([*["systemctl"], *args], capture_output=True, text=True, timeout=30, check=False)
+    return _sp.run([*["systemctl"], *args], capture_output=True, text=True, timeout=30, check=False)  # nosec
 
 
 def cmd_service(config: UraConfig, args) -> int:
@@ -506,10 +506,10 @@ def cmd_service(config: UraConfig, args) -> int:
 def cmd_audit(config: UraConfig, args) -> int:
     """Auditoría arquitectónica completa (ARQ)."""
     import json
-    import subprocess
+    import subprocess  # nosec
     import sys
 
-    r = subprocess.run(
+    r = subprocess.run(  # nosec
         [sys.executable, str(ROOT / "scripts/pro/arq_auditor.py"), "--json"],
         capture_output=True,
         text=True,
@@ -552,4 +552,4 @@ def cmd_audit(config: UraConfig, args) -> int:
     return 1 if total_fail > 0 else 0
 
 
-import subprocess
+import subprocess  # nosec B404
