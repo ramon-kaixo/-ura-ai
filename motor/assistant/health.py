@@ -22,9 +22,11 @@ def init_assistant_health() -> None:
     _registry.set_healthy("rag", "initialized")
     _registry.set_healthy("conversation", "initialized")
 
+
 def check_health_alert() -> list[str]:
     """Retorna alertas si health esta degradado o unhealthy."""
     import logging
+
     log = logging.getLogger("ura.health")
     registry = get_assistant_health()
     snapshot = registry.snapshot()

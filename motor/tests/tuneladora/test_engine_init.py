@@ -1,4 +1,5 @@
 """Tests para PipelineEngine."""
+
 from __future__ import annotations
 
 from scripts.pro.tuneladora.config import Configuration

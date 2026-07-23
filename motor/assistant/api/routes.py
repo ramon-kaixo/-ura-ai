@@ -206,6 +206,7 @@ async def delete_conversation(conversation_id: str) -> dict[str, bool]:
     ok = get_engine().delete_conversation(conversation_id)
     return {"deleted": ok}
 
+
 @router.get("/metrics")
 async def metrics():
     from fastapi.responses import PlainTextResponse

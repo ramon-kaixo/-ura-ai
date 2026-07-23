@@ -12,9 +12,11 @@ request_latency = LabeledHistogram(
 tokens_total = LabeledCounter("assistant_tokens_total", "Tokens generated per provider")
 errors_total = LabeledCounter("assistant_errors_total", "Total errors by type and component")
 
+
 def check_latency_alert(threshold: float = 5.0) -> list[str]:
     """Retorna alertas si alguna metrica de latencia supera el umbral."""
     import logging
+
     log = logging.getLogger("ura.metrics")
     alerts: list[str] = []
     for key, hist in request_latency._histograms.items():
@@ -29,9 +31,11 @@ def check_latency_alert(threshold: float = 5.0) -> list[str]:
                 alerts.append(msg)
     return alerts
 
+
 def check_error_alert(threshold: float = 0.01) -> list[str]:
     """Retorna alertas si error rate > threshold."""
     import logging
+
     log = logging.getLogger("ura.metrics")
     total = 0
     for c in requests_total._counters.values():

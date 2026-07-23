@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Elimina embeddings sin documento asociado en knowledge/."""
+
 from pathlib import Path
 
 EMB_DIR = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "embeddings"
 DOC_DIR = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "documents"
+
 
 def cleanup():
     if not EMB_DIR.exists():
@@ -17,6 +19,7 @@ def cleanup():
             removed += 1
     print(f"Eliminados {removed} embeddings huerfanos")
     return removed
+
 
 if __name__ == "__main__":
     cleanup()

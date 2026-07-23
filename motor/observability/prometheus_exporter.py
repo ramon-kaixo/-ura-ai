@@ -1,4 +1,5 @@
 """Exporta métricas de URA en formato Prometheus text."""
+
 import time
 
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
@@ -20,7 +21,7 @@ def _counter_lines(counter, name: str, description: str) -> list[str]:
         labels = c.snapshot().get("labels", {})
         if labels:
             label_str = ",".join(f'{k}="{v}"' for k, v in labels.items())
-            lines.append(f'{name}{{{label_str}}} {c.snapshot()["value"]}')
+            lines.append(f"{name}{{{label_str}}} {c.snapshot()['value']}")
         else:
             lines.append(f"{name} {c.snapshot()['value']}")
     return lines
@@ -32,9 +33,9 @@ def _histogram_lines(hist, name: str, description: str) -> list[str]:
         snap = h.snapshot()
         labels = snap.get("labels", {})
         label_str = ",".join(f'{k}="{v}"' for k, v in labels.items()) if labels else ""
-        prefix = f'{name}{{{label_str},}}' if label_str else name
-        lines.append(f'{prefix}_count {snap["count"]}')
-        lines.append(f'{prefix}_sum {snap.get("sum", 0)}')
+        prefix = f"{name}{{{label_str},}}" if label_str else name
+        lines.append(f"{prefix}_count {snap['count']}")
+        lines.append(f"{prefix}_sum {snap.get('sum', 0)}")
     return lines
 
 

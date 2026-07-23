@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Ejecuta VACUUM en las bases SQLite documentadas."""
+
 import sqlite3
 from pathlib import Path
 
 BASES = [
     "knowledge/knowledge.db",
 ]
+
 
 def vacuum():
     for db_path in BASES:
@@ -20,6 +22,7 @@ def vacuum():
             print(f"VACUUM OK: {db_path}")
         except Exception as e:
             print(f"VACUUM FAIL {db_path}: {e}")
+
 
 if __name__ == "__main__":
     vacuum()
