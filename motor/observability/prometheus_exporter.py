@@ -17,19 +17,20 @@ def _counter_value(counter, **labels) -> int:
 
 def _counter_lines(counter, name: str, description: str) -> list[str]:
     lines = [f"# HELP {name} {description}", f"# TYPE {name} counter"]
-    for key, c in counter._counters.items():
-        labels = c.snapshot().get("labels", {})
+    for c in counter._counters.values():
+        snap = c.snapshot()
+        labels = snap.get("labels", {})
         if labels:
             label_str = ",".join(f'{k}="{v}"' for k, v in labels.items())
-            lines.append(f"{name}{{{label_str}}} {c.snapshot()['value']}")
+            lines.append(f'{name}{{{label_str}}} {snap["value"]}')
         else:
-            lines.append(f"{name} {c.snapshot()['value']}")
+            lines.append(f"{name} {snap['value']}")
     return lines
 
 
 def _histogram_lines(hist, name: str, description: str) -> list[str]:
     lines = [f"# HELP {name} {description}", f"# TYPE {name} histogram"]
-    for key, h in hist._histograms.items():
+    for h in hist._histograms.values():
         snap = h.snapshot()
         labels = snap.get("labels", {})
         label_str = ",".join(f'{k}="{v}"' for k, v in labels.items()) if labels else ""
