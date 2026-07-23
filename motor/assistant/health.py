@@ -21,3 +21,20 @@ def init_assistant_health() -> None:
     _registry.set_healthy("memory", "initialized")
     _registry.set_healthy("rag", "initialized")
     _registry.set_healthy("conversation", "initialized")
+
+def check_health_alert() -> list[str]:
+    """Retorna alertas si health esta degradado o unhealthy."""
+    import logging
+    log = logging.getLogger("ura.health")
+    registry = get_assistant_health()
+    snapshot = registry.snapshot()
+    alerts: list[str] = []
+    for name, info in snapshot.get("components", {}).items():
+        status = info.get("status", "")
+        if status in ("degraded", "unhealthy"):
+            msg = f"HEALTH ALERT: {name}={status}"
+            log.warning(msg)
+            alerts.append(msg)
+    if not alerts:
+        log.info("health: all %d components OK", len(snapshot.get("components", {})))
+    return alerts
