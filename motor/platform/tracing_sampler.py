@@ -8,7 +8,6 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
 
 
 class SamplingStrategy(StrEnum):
@@ -35,13 +34,13 @@ class Sampler:
         if self.strategy == SamplingStrategy.NEVER:
             return False
         if self.strategy == SamplingStrategy.PROBABILISTIC:
-            return random.random() < self.probability
+            return random.random() < self.probability  # noqa: S311
         if self.strategy == SamplingStrategy.ADAPTIVE:
             if self._recent_errors:
                 rate = sum(self._recent_errors) / len(self._recent_errors)
                 p = self.adaptive_min_p + (self.adaptive_max_p - self.adaptive_min_p) * rate
-                return random.random() < p
-            return random.random() < self.adaptive_min_p
+                return random.random() < p  # noqa: S311
+            return random.random() < self.adaptive_min_p  # noqa: S311
         if self.strategy == SamplingStrategy.PRIORITY:
             tags = tags or {}
             return tags.get("priority", "normal") in ("critical", "high")
@@ -55,12 +54,26 @@ class Sampler:
 
 # Tag sanitization constants (sync with tracing.py)
 FORBIDDEN_TAG_PREFIXES: tuple[str, ...] = (
-    "prompt", "query_", "document_", "key_", "token",
-    "secret", "password", "credential", "api_key", "auth_",
+    "prompt",
+    "query_",
+    "document_",
+    "key_",
+    "token",
+    "secret",
+    "password",
+    "credential",
+    "api_key",
+    "auth_",
 )
 FORBIDDEN_TAG_EXACT: tuple[str, ...] = (
-    "query", "document", "key", "secret",
-    "password", "token", "auth", "api_key",
+    "query",
+    "document",
+    "key",
+    "secret",
+    "password",
+    "token",
+    "auth",
+    "api_key",
 )
 MAX_TAG_KEY_LENGTH = 64
 MAX_TAG_VAL_LENGTH = 256

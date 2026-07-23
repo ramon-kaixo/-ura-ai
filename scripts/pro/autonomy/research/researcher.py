@@ -63,7 +63,8 @@ class Researcher:
         rid = ""
         if results:
             rid = self._memory.store(
-                payload=synthesis, memory_type=MemoryType.SEMANTIC,
+                payload=synthesis,
+                memory_type=MemoryType.SEMANTIC,
                 metadata={"type": "auto_research", "query": query},
             )
         return {"consulta": query, "fuentes": len(results), "sintesis": synthesis, "id": rid}

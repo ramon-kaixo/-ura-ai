@@ -211,8 +211,6 @@ class PlatformMetrics:
 
     def record_negotiation(
         self,
-
-
         duration_ms: float,
     ) -> None:
         self.negotiation_duration.observe(duration_ms)

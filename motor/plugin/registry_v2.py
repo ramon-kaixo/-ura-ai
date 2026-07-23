@@ -170,7 +170,9 @@ class PluginRegistryV2:
         if not check_api_compatibility(api_version, MOTOR_API_VERSION):
             log.warning(
                 "[registry_v2] %s: API incompatible (plugin=%s, motor=%s)",
-                name, api_version, MOTOR_API_VERSION,
+                name,
+                api_version,
+                MOTOR_API_VERSION,
             )
             self._dm.mark_degraded(f"plugin:{name}")
             return None
@@ -244,7 +246,7 @@ class PluginRegistryV2:
             if cls is not None and isinstance(cls, type) and issubclass(cls, PluginBase) and cls is not PluginBase:
                 try:
                     instance = cls()
-                    assert isinstance(instance, PluginBase)
+                    assert isinstance(instance, PluginBase)  # noqa: S101
                     return instance
                 except Exception as exc:
                     log.warning("[registry_v2] Error instanciando %s.%s: %s", manifest.name, manifest.entry_point, exc)

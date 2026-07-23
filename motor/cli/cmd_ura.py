@@ -511,7 +511,11 @@ def cmd_audit(config: UraConfig, args) -> int:
 
     r = subprocess.run(
         [sys.executable, str(ROOT / "scripts/pro/arq_auditor.py"), "--json"],
-        capture_output=True, text=True, timeout=120, cwd=str(ROOT), check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(ROOT),
+        check=False,
     )
     if r.returncode != 0 or not r.stdout:
         print(f"ARQ Auditor falló: {r.stderr[:200]}")
@@ -524,7 +528,7 @@ def cmd_audit(config: UraConfig, args) -> int:
     files_scanned = data.get("files_scanned", 0)
 
     print(f"\n📊 Auditoría Arquitectónica — {data.get('version', '?')}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Archivos: {files_scanned}  |  FAIL: {total_fail}  |  WARN: {total_warn}")
     print()
 
@@ -539,10 +543,11 @@ def cmd_audit(config: UraConfig, args) -> int:
         print(f"  [{bid}] {icon} — {len(items)} hallazgos ({fails} FAIL, {warns} WARN)")
         for f in items[:2]:
             if f.get("level") in ("FAIL", "P0", "WARNING", "MEDIUM"):
-                print(f"         {f.get('type','').ljust(25)} {f.get('file','')}:{f.get('line','')}")
+                print(f"         {f.get('type', '').ljust(25)} {f.get('file', '')}:{f.get('line', '')}")
 
     veredicto = "❌ NO SUPERADO" if total_fail > 0 else "⚠️ CON ADVERTENCIAS" if total_warn > 0 else "✅ SUPERADO"
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Veredicto: {veredicto}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
     return 1 if total_fail > 0 else 0
+import subprocess
