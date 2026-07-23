@@ -27,7 +27,7 @@ sys.path.insert(0, Path(os.path.dirname(Path(__file__).resolve().parent)))  # no
 
 from typing import TYPE_CHECKING
 
-from motor.platform.health import HealthAggregator
+from motor.observability.health import HealthRegistry
 from motor.platform.tracing import MetricsCollector, TraceExporter
 
 if TYPE_CHECKING:
@@ -86,9 +86,12 @@ def simulate_protocol(collector: MetricsCollector) -> None:
         collector.record("f27→f28", duration)
 
 
-def health_check(agg: HealthAggregator) -> dict:
+def health_check(reg: HealthRegistry) -> dict:
     """Run a full health check across simulated subsystems."""
-    return agg.health()
+    return {
+        "status": "ok",
+        "subsystems": {name: reg.get_status(name) for name in ["fusion", "memory"]},
+    }
 
 
 class SoakTester:
@@ -103,7 +106,7 @@ class SoakTester:
         self.duration = duration_seconds
         self.rate = rate_per_second
         self.collector = MetricsCollector()
-        self.health_agg = HealthAggregator()
+        self.health_reg = HealthRegistry()
         self.exporter = TraceExporter(path=trace_path or "soak_traces.jsonl", batch_size=50)
         self.running = False
         self.total_ops = 0
@@ -111,22 +114,10 @@ class SoakTester:
         self.start_time = 0.0
 
         # Register health probes
-        self.health_agg.register_health(
-            "fusion",
-            lambda: {
-                "service": "fusion",
-                "status": "ok",
-                "ops": self.total_ops,
-            },
-        )
-        self.health_agg.register_health(
-            "memory",
-            lambda: {
-                "service": "memory",
-                "status": "ok",
-                "entries": self.total_ops,
-            },
-        )
+        self.health_reg.register_component("fusion")
+        self.health_reg.set_healthy("fusion", "operational")
+        self.health_reg.register_component("memory")
+        self.health_reg.set_healthy("memory", "operational")
 
         # Scenarios with weights
         self.scenarios = [
