@@ -1,21 +1,29 @@
-"""Automantenimiento nivel 1 + 2 del cerebro.
+"""Automantenimiento nivel 1 + 2 + 3 del cerebro.
 
 A1: Propone fixes, espera aprobacion humana, ejecuta, verifica.
 A2: Autofix sin aprobacion para casos seguros (risk_level=safe).
+A3: Autofix de codigo (ruff) + scheduler proactivo.
 
 Flujo A2:
 1. Observer + AlertEngine detectan anomalia
 2. AutoMaintainer clasifica riesgo (safe/medium/critical)
-3. Si safe → ejecuta automaticamente
-4. Si medium → pregunta humano (como A1)
-5. Si critical → solo propone, no ejecuta
+3. Si safe -> ejecuta automaticamente
+4. Si medium -> pregunta humano (como A1)
+5. Si critical -> solo propone, no ejecuta
+
+Flujo A3:
+1. start_scheduler() inicia pipelines periodicos
+2. auto_fix_code() ejecuta ruff fix + format en codigo
+3. Si hay cambios, los commitea automaticamente
 """
 
 from __future__ import annotations
 
 import logging
+import subprocess  # nosec B404
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .alerts import Alert, AlertEngine
@@ -46,6 +54,7 @@ class AutoMaintainer:
         self._executor = executor
         self._pending: list[MaintenanceProposal] = []
         self._resolved: list[dict[str, Any]] = []
+        self._scheduler: Any = None
 
     # ── API publica ────────────────────────────────────────
 
@@ -82,6 +91,105 @@ class AutoMaintainer:
                 log.info("A2 pending approval: %s (risk=%s)", proposal.action, proposal.risk_level)
                 results.append({"status": "pending", "proposal": proposal, "auto_executed": False})
         return results
+
+    # -*- Integracion con TuneladoraScheduler (A3) -*-
+
+    def start_scheduler(self) -> None:
+        """Inicia el scheduler con pipelines predefinidos."""
+        try:
+            from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
+            self._scheduler = TuneladoraScheduler()
+            self._scheduler.add_pipeline("health", interval_minutes=5, auto_execute_safe=True)
+            self._scheduler.add_pipeline("cleanup", interval_minutes=60, auto_execute_safe=True)
+            self._scheduler.add_pipeline("audit", interval_minutes=360, auto_execute_safe=False)
+            self._scheduler.start()
+            log.info("Scheduler iniciado con %d pipelines", self._scheduler.pipeline_count)
+        except ImportError as e:
+            log.warning("Scheduler no disponible: %s", e)
+
+    def stop_scheduler(self) -> None:
+        """Detiene el scheduler."""
+        if self._scheduler is not None:
+            self._scheduler.stop()
+            log.info("Scheduler detenido")
+
+    def get_scheduler_status(self) -> dict[str, Any]:
+        """Retorna estado actual del scheduler."""
+        if self._scheduler is None:
+            return {"running": False, "pipelines": [], "reason": "Scheduler not started"}
+        return {
+            "running": self._scheduler.is_running,
+            "pipelines": self._scheduler.get_status(),
+            "pipeline_count": self._scheduler.pipeline_count,
+        }
+
+    # -*- Autofix de codigo (A3) -*-
+
+    def auto_fix_code(self, target_dir: str = "motor/brain/") -> dict[str, Any]:
+        """Ejecuta ruff fix + format en el codigo y commitea cambios."""
+        repo_root = Path(__file__).resolve().parents[2]
+        fix_log: list[str] = []
+
+        ruff_cmd = str(repo_root / ".venv" / "bin" / "ruff")
+        try:
+            r = subprocess.run(  # nosec B603
+                [ruff_cmd, "check", "--fix", target_dir],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=str(repo_root),
+                check=False,
+            )
+            fix_log.append(f"ruff check --fix: exit={r.returncode}")
+        except Exception as e:
+            fix_log.append(f"ruff check --fix fallo: {e}")
+
+        try:
+            r = subprocess.run(  # nosec B603
+                [ruff_cmd, "format", target_dir],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=str(repo_root),
+                check=False,
+            )
+            fix_log.append(f"ruff format: exit={r.returncode}")
+        except Exception as e:
+            fix_log.append(f"ruff format fallo: {e}")
+
+        has_changes = False
+        try:
+            r = subprocess.run(  # nosec B603 B607
+                ["git", "diff", "--quiet", target_dir],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(repo_root),
+                check=False,
+            )
+            has_changes = r.returncode != 0
+        except Exception:
+            log.debug("git diff fallo")
+
+        if not has_changes:
+            log.info("auto_fix_code: sin cambios en %s", target_dir)
+            return {"status": "no_changes", "fix_log": fix_log, "committed": False}
+
+        try:
+            subprocess.run(["git", "add", target_dir], capture_output=True, timeout=10, cwd=str(repo_root), check=False)  # nosec B603 B607
+            subprocess.run(  # nosec B603 B607
+                ["git", "commit", "-m", f"style(auto-fix): ruff fix + format {target_dir}"],
+                capture_output=True,
+                timeout=10,
+                cwd=str(repo_root),
+                check=False,
+            )
+            log.info("auto_fix_code: cambios commiteados en %s", target_dir)
+            return {"status": "committed", "fix_log": fix_log, "committed": True}
+        except Exception as e:
+            log.warning("auto_fix_code: commit fallo: %s", e)
+            return {"status": "commit_failed", "fix_log": fix_log, "committed": False}
 
     def approve_and_execute(self, proposal: MaintenanceProposal, approved: bool = True) -> dict[str, Any]:
         """Ejecuta propuesta si esta aprobada o si es auto-executable.
@@ -139,7 +247,7 @@ class AutoMaintainer:
         severity = proposal.alert.severity
 
         # Casos safe: autofix sin aprobacion (acciones cosmeticas o read-only)
-        if action in ("auto_fix_ruff", "auto_fix_unused_imports"):
+        if action in ("auto_fix_code", "auto_fix_ruff", "auto_fix_unused_imports"):
             return "safe"
         if action == "check_network":
             return "safe"
@@ -200,6 +308,7 @@ class AutoMaintainer:
             "restart_provider": "refactor",
             "scale_resources": "refactor",
             "check_network": "test",
+            "auto_fix_code": "format",
             "auto_fix_ruff": "format",
             "auto_fix_unused_imports": "format",
         }
