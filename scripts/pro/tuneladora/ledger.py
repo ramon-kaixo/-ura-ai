@@ -1,4 +1,7 @@
-"""ExecutionLedger — registro inmutable de ejecuciones del pipeline.
+"""ExecutionLedger — registro de ejecuciones del pipeline (append-only).
+
+Mutable hasta que se llama a save(). Después de save(), el archivo JSON
+es inmutable y de solo lectura. No se modifica una vez escrito.
 
 Cada ejecución genera una entrada con:
   estado inicial, acciones, resultados, métricas, artefactos, estado final.

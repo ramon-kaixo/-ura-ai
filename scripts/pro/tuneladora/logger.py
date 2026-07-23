@@ -36,8 +36,11 @@ class Logger:
     def info(self, msg: str) -> None:
         self._write("INFO", msg)
 
+    def warning(self, msg: str) -> None:
+        self._write("WARNING", msg)
+
     def warn(self, msg: str) -> None:
-        self._write("WARN", msg)
+        self.warning(msg)
 
     def error(self, msg: str) -> None:
         self._write("ERROR", msg)

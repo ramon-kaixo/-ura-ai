@@ -42,7 +42,7 @@ class CleanupPlugin:
                 activos += 1
 
         if activos:
-            self.engine.log.warn(f"{activos} procesos aislados activos")
+            self.engine.log.warning(f"{activos} procesos aislados activos")
         return {"total": activos + limpiados, "limpiados": limpiados, "activos": activos}
 
     def watermark(self) -> dict[str, Any]:
@@ -99,5 +99,5 @@ class CleanupPlugin:
         score = reporte.get("score", 0)
         bloqueante = reporte.get("bloqueante", False)
         if bloqueante:
-            self.engine.log.warn(f"Score bloqueante: {score}")
+            self.engine.log.warning(f"Score bloqueante: {score}")
         return {"score": score, "bloqueante": bloqueante, "raw": reporte}
