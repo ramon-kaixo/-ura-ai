@@ -10,11 +10,11 @@ log = logging.getLogger("ura.config")
 
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
-RUTA_CONFIG_DEFECTO = "/etc/ura/config.json"
-RUTA_DEPLOY_DEFECTO = "/home/ramon/URA/ura_ia_1972/deploy"
-HOST_ASUS_DEFECTO = "100.72.103.12"
-PUERTO_ASUS_DEFECTO = 4198
-INTERFAZ_TAILSCALE_DEFECTO = "tailscale0"
+RUTA_CONFIG_DEFECTO = os.environ.get("URA_CONFIG_PATH", "/etc/ura/config.json")
+RUTA_DEPLOY_DEFECTO = os.environ.get("URA_DEPLOY_DIR", "/home/ramon/URA/ura_ia_1972/deploy")
+HOST_ASUS_DEFECTO = os.environ.get("ASUS_HOST", "100.72.103.12")
+PUERTO_ASUS_DEFECTO = int(os.environ.get("ASUS_PORT", "4198"))
+INTERFAZ_TAILSCALE_DEFECTO = os.environ.get("TAILSCALE_IFACE", "tailscale0")
 
 
 def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:

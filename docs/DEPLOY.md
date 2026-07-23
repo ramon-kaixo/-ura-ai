@@ -10,3 +10,13 @@ docker-compose up --build
 - Set URA_ENV=production
 - Configure secrets via environment variables
 - Health endpoint: /health
+## systemd
+sudo cp ura.service /etc/systemd/system/
+sudo systemctl enable --now ura
+
+## Environment Variables
+- `URA_ENV` - Set to "production" for production mode
+- `URA_HOST` - Listen address (default: 0.0.0.0)
+- `URA_PORT` - Listen port (default: 8000)
+- `ASUS_HOST` - ASUS server IP (default: 100.72.103.12)
+- `ASUS_PORT` - ASUS server port (default: 4198)
