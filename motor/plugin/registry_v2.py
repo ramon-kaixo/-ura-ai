@@ -151,23 +151,26 @@ class PluginRegistryV2:
         legacy._entries = {}
         legacy._dm = self._dm
         legacy.discover([str(entry.path)])
-        plugin = legacy.get(entry.legacy_meta.name if entry.legacy_meta else "")
-        if plugin is not None:
+        legacy_name = entry.legacy_meta.name if entry.legacy_meta else ""
+        plugin = legacy.get(legacy_name)
+        if plugin is not None and entry.legacy_meta is not None:
             self._instances[entry.legacy_meta.name] = plugin
         return plugin
 
     def _load_v2(self, entry: PluginEntryV2) -> PluginBase | None:
         manifest = entry.manifest
+        if manifest is None:
+            log.warning("[registry_v2] %s: manifest nulo", entry.path)
+            return None
         name = manifest.name
+        api_version = manifest.api_version
 
         from motor.events.compat import check_api_compatibility
 
-        if not check_api_compatibility(manifest.api_version, MOTOR_API_VERSION):
+        if not check_api_compatibility(api_version, MOTOR_API_VERSION):
             log.warning(
                 "[registry_v2] %s: API incompatible (plugin=%s, motor=%s)",
-                name,
-                manifest.api_version,
-                MOTOR_API_VERSION,
+                name, api_version, MOTOR_API_VERSION,
             )
             self._dm.mark_degraded(f"plugin:{name}")
             return None
@@ -240,7 +243,9 @@ class PluginRegistryV2:
             cls = getattr(module, manifest.entry_point, None)
             if cls is not None and isinstance(cls, type) and issubclass(cls, PluginBase) and cls is not PluginBase:
                 try:
-                    return cast(PluginBase, cls())
+                    instance = cls()
+                    assert isinstance(instance, PluginBase)
+                    return instance
                 except Exception as exc:
                     log.warning("[registry_v2] Error instanciando %s.%s: %s", manifest.name, manifest.entry_point, exc)
                     return None

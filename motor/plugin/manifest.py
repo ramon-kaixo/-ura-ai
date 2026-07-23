@@ -62,7 +62,7 @@ def parse_manifest(path: Path) -> PluginManifest | None:
 
 def _parse_yaml(source: str, path: Path) -> PluginManifest | None:
     try:
-        import yaml  # type: ignore[import-untyped]
+        import yaml
 
         data = yaml.safe_load(source)
     except ImportError:
