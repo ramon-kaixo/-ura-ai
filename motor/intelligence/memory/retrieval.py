@@ -107,7 +107,6 @@ class ContextRetriever:
         return ContextResultList(results=page, total=total, elapsed_ms=round(elapsed, 2), query=query)
 
     def _collect_candidates(self, query: ContextQuery) -> list[Episode]:
-
         if query.session_id:
             episodes = self._store.get_by_session(query.session_id, limit=10000)
         else:

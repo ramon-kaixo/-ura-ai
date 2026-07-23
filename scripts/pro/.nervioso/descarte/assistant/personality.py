@@ -1,4 +1,5 @@
 """PersonalityManager — capa de personalidad independiente del LLM (F29 B7)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

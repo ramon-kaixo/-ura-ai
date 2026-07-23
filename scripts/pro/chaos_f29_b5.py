@@ -155,7 +155,7 @@ def ct7_hot_restart() -> dict:
         "ct": 7,
         "name": "Reinicio en caliente",
         "expected": "Graceful shutdown + health endpoints OK",
-        "observed": f"health status: healthy, subsystems: 1",
+        "observed": "health status: healthy, subsystems: 1",
         "data_loss": "None",
         "recovery_time_s": 0.0,
     }

@@ -24,7 +24,6 @@ def time_operation(name: str, func) -> float:
 
 
 def main() -> int:
-
     total_start = time.perf_counter()
     times = {}
 

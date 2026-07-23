@@ -1,4 +1,5 @@
 """E2E tests for assistant chat flow. Requires Ollama for chat test."""
+
 from __future__ import annotations
 
 import httpx

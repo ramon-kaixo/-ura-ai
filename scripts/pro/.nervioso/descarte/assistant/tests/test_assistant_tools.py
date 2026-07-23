@@ -47,6 +47,7 @@ class TestToolOrchestrator:
 
     def test_execute_command(self):
         from motor.assistant.tools import ShellTool
+
         tool = ShellTool()
         result = tool.run({"command": ["echo", "hello"]})
         assert isinstance(result, dict)
@@ -56,5 +57,6 @@ class TestToolOrchestrator:
         class MockTool(GitStatusTool):
             def name(self) -> str:
                 return "mock"
+
         self.orc.register(MockTool())
         assert "mock" in self.orc.list_tools()

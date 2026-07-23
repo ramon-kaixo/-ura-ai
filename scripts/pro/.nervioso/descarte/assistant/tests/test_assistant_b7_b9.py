@@ -73,6 +73,7 @@ class TestConversationManager:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             self.db_path = Path(f.name)
         from motor.assistant.message_store import MessageStore
+
         self.store = MessageStore(db_path=str(self.db_path))
         self.cm = ConversationManager(message_store=self.store)
 

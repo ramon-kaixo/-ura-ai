@@ -29,7 +29,7 @@ def fmt(val, unit="") -> str:
     return f"{val}{unit}"
 
 
-def generate() -> str:  # noqa: C901, PLR0912, PLR0915
+def generate() -> str:  # noqa: PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])
@@ -97,7 +97,7 @@ def generate() -> str:  # noqa: C901, PLR0912, PLR0915
         rss = sm.get("rss_mb", {})
         if rss:
             out(
-                f"| RSS min/max/mean/p95 | {rss.get('min', '?')}/{rss.get('max', '?')}/{rss.get('mean', '?')}/{rss.get('p95', '?')} MB |",  # noqa: E501
+                f"| RSS min/max/mean/p95 | {rss.get('min', '?')}/{rss.get('max', '?')}/{rss.get('mean', '?')}/{rss.get('p95', '?')} MB |",
             )
         cpu = sm.get("cpu_percent", {})
         if cpu:

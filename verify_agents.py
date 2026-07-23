@@ -122,7 +122,6 @@ def enviar_telegram(mensaje) -> bool:
 
 
 def main() -> None:
-
     # Obtener todos los archivos Python
     agentes = list(AGENTES_DIR.glob("*.py"))
 

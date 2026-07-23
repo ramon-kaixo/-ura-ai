@@ -1,4 +1,5 @@
 """WebSearchIntegration — busca info actualizada cuando se detecta tendencia."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -45,6 +46,7 @@ class WebSearchIntegration:
     def is_available(self) -> bool:
         try:
             import httpx  # noqa: F401
+
             return True
         except ImportError:
             return False

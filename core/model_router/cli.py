@@ -33,7 +33,7 @@ def main() -> None:
         obtener_modelos_disponibles,
         seleccionar_modelo,
     )
-    from core.model_router.router import get_ollama_url, ROUTER_PORT
+    from core.model_router.router import ROUTER_PORT, get_ollama_url
 
     if "--test" in sys.argv or "--models" in sys.argv:
         pass

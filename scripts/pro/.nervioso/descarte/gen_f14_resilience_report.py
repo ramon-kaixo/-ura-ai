@@ -16,7 +16,7 @@ def load_latest() -> dict:
     return json.loads(files[-1].read_text())
 
 
-def generate() -> str:  # noqa: C901, PLR0912, PLR0915
+def generate() -> str:  # noqa: PLR0915
     env = json.loads(ENV_PATH.read_text()) if ENV_PATH.exists() else {}
     data = load_latest()
     scenarios = data.get("scenarios", [])
@@ -100,28 +100,28 @@ def generate() -> str:  # noqa: C901, PLR0912, PLR0915
                 findings.append(
                     (
                         sid,
-                        f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10.",  # noqa: E501
+                        f"Qdrant recovery time ({rid}s) excede el umbral de 30s. Diferencia: {rid - 30:.1f}s — umbral ajustable a 35s para entorno GX10.",
                     ),
                 )
             if sid == "R02":
                 findings.append(
                     (
                         sid,
-                        "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente.",  # noqa: E501
+                        "No se pudo detener Ollama: flag 'no new privileges' impide `systemctl stop` sin sudo. El escenario no pudo probarse completamente.",
                     ),
                 )
             if sid == "R06" and dl:
                 findings.append(
                     (
                         sid,
-                        "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco.",  # noqa: E501
+                        "Data loss confirmado: BD SQLite no se recreó automáticamente tras eliminación manual. Store continuó funcionando (posible caché en memoria), pero archivo no fue restaurado en disco.",
                     ),
                 )
             if sid == "R10":
                 findings.append(
                     (
                         sid,
-                        "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado.",  # noqa: E501
+                        "Cascada no pudo probarse completamente: Ollama no se detuvo (mismo problema que R02). Además, Retrieval reportó éxito inesperado sin Qdrant — el HybridRetriever podría tener un fallback a memoria no detectado.",
                     ),
                 )
 
@@ -160,19 +160,19 @@ def generate() -> str:  # noqa: C901, PLR0912, PLR0915
     out("### Recomendaciones")
     out()
     out(
-        "1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker).",  # noqa: E501
+        "1. **Qdrant recovery time:** Aumentar umbral a 35s en GX10, o investigar por qué tarda ~30s en recuperar (tiempo de warm-up del contenedor Docker).",
     )
     out(
-        "2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`.",  # noqa: E501
+        "2. **No new privileges flag:** Documentar que `R02` y `R10` (Ollama stop) no pueden probarse completamente sin acceso root. Considerar `polkit` rules para el usuario `ramon`.",
     )
     out(
-        "3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`.",  # noqa: E501
+        "3. **R06 — Data loss:** El `EpisodeStore` no recrea BD automáticamente. Evaluar si esto es aceptable para RC o se necesita `auto_create=True`.",
     )
     out(
-        "4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional.",  # noqa: E501
+        "4. **R04 — API de cancelación:** `MultiAgentRuntime.cancel()` requiere `workflow_id`. Verificar documentación y decidir si hacerlo opcional.",
     )
     out(
-        "5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado.",  # noqa: E501
+        "5. **R10 — Fallback no documentado:** `HybridRetriever` retornó éxito sin Qdrant — revisar si hay un fallback a memoria no documentado.",
     )
 
     return "\n".join(lines)

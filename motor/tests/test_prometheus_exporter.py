@@ -1,4 +1,5 @@
 """Tests para motor/observability/prometheus_exporter.py."""
+
 from motor.assistant.metrics import requests_total
 from motor.observability.prometheus_exporter import export_metrics
 

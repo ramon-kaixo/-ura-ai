@@ -3,6 +3,7 @@
 Detecta cambios de objetivo, divide conversaciones largas,
 resume automáticamente, recupera temas antiguos y recuerda tareas.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

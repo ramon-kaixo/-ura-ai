@@ -169,7 +169,7 @@ async def _close_async() -> None:
             log.debug("term: %s", e)
         _zmq_ctx = None
     sock_path = IPC_PUB.replace("ipc://", "")
-    if Path(sock_path).exists():  # noqa: ASYNC240
+    if Path(sock_path).exists():
         with contextlib.suppress(Exception):
             os.unlink(sock_path)  # noqa: PTH108
 

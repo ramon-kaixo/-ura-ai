@@ -3,12 +3,14 @@
 Lee health checks de todos los subsistemas y detecta anomalias.
 NO reinventa metricas — usa los health() que ya existen.
 """
+
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field
-from typing import Any, Callable
 import logging
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 log = logging.getLogger("ura.brain.observer")
 

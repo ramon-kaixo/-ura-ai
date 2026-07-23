@@ -2,8 +2,8 @@
 """Detecta codigo duplicado >20 lineas en motor/."""
 
 import ast
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
 def get_function_bodies(root: Path):

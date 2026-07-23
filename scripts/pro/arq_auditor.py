@@ -13,10 +13,8 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 import re
 import sys
-from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -173,9 +171,9 @@ def _top_level_calls(tree: ast.AST) -> list[tuple[int, str]]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             continue
         calls: list[ast.Call] = []
-        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
-            calls.append(node.value)
-        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+        if (isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)) or (
+            isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+        ):
             calls.append(node.value)
         elif isinstance(node, ast.Assign):
             # Buscar calls en el value (e.g., x = foo() or bar())
@@ -853,7 +851,7 @@ def _save_trends(result: dict[str, Any], all_findings: list[dict]) -> None:
     script_violations = sum(1 for f in all_findings if f.get("type") == "script_import_violation")
 
     entry = {
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
         "version": result.get("version", "unknown"),
         "files_scanned": result.get("files_scanned", 0),
         "total_fail": fails,

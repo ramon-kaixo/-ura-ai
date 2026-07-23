@@ -221,7 +221,7 @@ QUERIES_KNOWLEDGE = [
 ]
 
 
-def generate_corpus() -> None:  # noqa: C901, PLR0912, PLR0915
+def generate_corpus() -> None:  # noqa: PLR0915
     queries = QUERIES_SYSTEM + QUERIES_CODE + QUERIES_KNOWLEDGE
     base_dir = __file__[: __file__.rfind("/scripts")] if "/scripts" in __file__ else "."
     base_dir += "/knowledge/evaluation/corpus"
