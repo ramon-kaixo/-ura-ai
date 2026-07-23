@@ -6,7 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from motor.core.state import DegradedMode
 from motor.plugin.base import PluginBase, PluginMeta, PluginResult
