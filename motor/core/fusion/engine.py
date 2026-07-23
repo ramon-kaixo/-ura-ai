@@ -56,12 +56,12 @@ class FusionPipeline:
     def __init__(
         self,
         engine: FusionEngine | None = None,
-        conflict_resolver: ConflictResolver | None = None,
-        source_scorer: SourceScorer | None = None,
+        conflict_resolver: ConflictResolver | None = None  # Public API — intentionally unused,
+        source_scorer: SourceScorer | None = None  # Public API — intentionally unused,
         merger: KnowledgeMerger | None = None,
-        change_detector: ChangeDetector | None = None,
+        change_detector: ChangeDetector | None = None  # Public API — intentionally unused,
         selector: MemoryCandidateSelector | None = None,
-        entity_resolver: EntityResolver | None = None,
+        entity_resolver: EntityResolver | None = None  # Public API — intentionally unused,
         stages: list[PipelineStage] | None = None,
     ) -> None:
         self._stages: list[PipelineStage] = []
