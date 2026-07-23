@@ -101,3 +101,10 @@ class CleanupPlugin:
         if bloqueante:
             self.engine.log.warning(f"Score bloqueante: {score}")
         return {"score": score, "bloqueante": bloqueante, "raw": reporte}
+
+def run_auto_cleanup():
+    """Ejecuta limpieza automatica semanal."""
+    import subprocess
+    subprocess.run(["python", "scripts/pro/cleanup_logs.py"])
+    subprocess.run(["python", "scripts/pro/vacuum_sqlite.py"])
+    subprocess.run(["python", "scripts/pro/cleanup_embeddings.py"])
