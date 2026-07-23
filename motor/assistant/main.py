@@ -76,18 +76,10 @@ async def health():
 
 @app.get("/metrics")
 async def metrics():
-    from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
+    from fastapi.responses import PlainTextResponse
+    from motor.observability.prometheus_exporter import export_metrics
 
-    def _snapshot(metric):
-        items = getattr(metric, "_counters", None) or getattr(metric, "_histograms", {})
-        return {k: v.snapshot() for k, v in items.items()}
-
-    return {
-        "requests_total": _snapshot(requests_total),
-        "request_latency": _snapshot(request_latency),
-        "tokens_total": _snapshot(tokens_total),
-        "errors_total": _snapshot(errors_total),
-    }
+    return PlainTextResponse(content=export_metrics(), media_type="text/plain")
 
 
 @app.get("/")

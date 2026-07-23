@@ -205,3 +205,10 @@ async def submit_feedback(req: FeedbackRequest) -> dict[str, object]:
 async def delete_conversation(conversation_id: str) -> dict[str, bool]:
     ok = get_engine().delete_conversation(conversation_id)
     return {"deleted": ok}
+
+@router.get("/metrics")
+async def metrics():
+    from fastapi.responses import PlainTextResponse
+    from motor.observability.prometheus_exporter import export_metrics
+
+    return PlainTextResponse(content=export_metrics(), media_type="text/plain")
