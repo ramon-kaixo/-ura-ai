@@ -19,7 +19,6 @@ Variables de entorno:
 from __future__ import annotations
 
 import logging
-import uuid
 
 import uvicorn
 from fastapi import FastAPI
