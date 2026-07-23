@@ -8,7 +8,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any
 
-from motor.platform.errors import ProtocolException
 from motor.platform.models import (
     CausationId,
     CorrelationId,
@@ -18,6 +17,7 @@ from motor.platform.models import (
     MessageId,
     MessageKind,
     ProtocolEnvelope,
+    ProtocolException,
     RetryPolicy,
     RoutingHeader,
     SecurityHeader,
