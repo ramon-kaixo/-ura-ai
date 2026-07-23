@@ -74,9 +74,21 @@ async def health():
     }
 
 
+@app.get("/metrics")
+async def metrics():
+    from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
+
+    return {
+        "requests_total": requests_total.collect(),
+        "request_latency": request_latency.collect(),
+        "tokens_total": tokens_total.collect(),
+        "errors_total": errors_total.collect(),
+    }
+
+
 @app.get("/")
 async def root():
-    return {"name": "URA Assistant", "docs": "/docs", "health": "/health"}
+    return {"name": "URA Assistant", "docs": "/docs", "health": "/health", "metrics": "/metrics"}
 
 
 def main() -> None:

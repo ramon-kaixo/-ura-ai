@@ -17,10 +17,12 @@ from motor.assistant.conversation import ConversationEngine
 from motor.assistant.executor import ConversationalToolManager
 from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.llm_bridge import LLMBridge
+from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 from motor.assistant.models import ConversationMode, UserIntent
 from motor.assistant.moderation import ContentModerator
 from motor.assistant.streaming import StreamEvent
 from motor.assistant.style import StyleEngine
+from motor.observability.tracing_platform import TraceContext
 
 _log = logging.getLogger("ura.assistant.api")
 
@@ -396,6 +398,9 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     correlation_id = str(uuid.uuid4())[:8]
     client_ip = http_request.client.host if http_request.client else "unknown"
     _rate_limiter.check(client_ip)
+    _start_time = time.monotonic()
+
+    trace = TraceContext(source="assistant_api", destination="llm", correlation_id=correlation_id)
 
     _log.info("chat request", extra={
         "correlation_id": correlation_id,
@@ -403,6 +408,8 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         "mode": request.mode,
         "message_len": len(request.message),
     })
+
+    requests_total.inc(mode=request.mode, status="received")
 
     engine = get_engine()
     llm = get_llm()
@@ -471,14 +478,17 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     try:
-        reply = llm.generate(
-            cid,
-            resolved,
-            mode,
-            intent_value=intent.value,
-            system_prompt=enriched_prompt,
-        )
+        with trace.span(message_type="llm.generate", tags={"correlation_id": correlation_id, "mode": mode.value}):
+            reply = llm.generate(
+                cid,
+                resolved,
+                mode,
+                intent_value=intent.value,
+                system_prompt=enriched_prompt,
+            )
+        tokens_total.inc(provider="llm", amount=len(reply.split()))
     except Exception:
+        errors_total.inc(type="llm_error", component="generation")
         reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
     output_mod = _moderator.moderate_output(reply)
@@ -487,11 +497,16 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 
     engine.add_message(cid, "assistant", reply)
 
+    duration = time.monotonic() - _start_time
+    request_latency.observe(duration, mode=mode.value)
+    requests_total.inc(mode=mode.value, status="success")
+
     _log.info("chat response", extra={
         "correlation_id": correlation_id,
         "intent": intent.value,
         "mode": mode.value,
         "reply_len": len(reply),
+        "duration_s": round(duration, 3),
     })
 
     return ChatResponse(
