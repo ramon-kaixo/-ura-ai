@@ -22,9 +22,9 @@ import time
 from pathlib import Path
 
 import pytest
-
 from motor.platform.health import HealthAggregator
 from motor.platform.middleware import TraceMiddleware, traced
+
 from motor.platform.models import (
     CausationId,
     CorrelationId,
