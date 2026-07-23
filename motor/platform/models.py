@@ -7,11 +7,14 @@ OBS-02: No subsystem creates a new trace_id; only propagates.
 OBS-03: Every hop generates a unique span_id.
 OBS-04: parent_span_id is mandatory for tree reconstruction.
 OBS-05: correlation_id and causation_id never change during operation.
-OBS-06: monotonic_ts (time.monotonic_ns) alongside UTC timestamp.
-OBS-07: Every error includes span_id in error_details.
-"""
+OBS-06: monotonic_ts (time.monotonic_ns) alongside UTC timestamp."""
 
 from __future__ import annotations
+
+
+class ProtocolException(Exception):
+    """Base exception for all protocol-level errors."""
+
 
 import hashlib
 import os
