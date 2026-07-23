@@ -83,7 +83,7 @@ class WebLearningAdapter:
         }
 
     @staticmethod
-    def _score(query: str, item: dict) -> float:
+    def _score(query: str, item: dict[str, Any]) -> float:
         text = f"{item.get('title', '')} {item.get('snippet', '')}".lower()
         words = query.lower().split()
         matches = sum(1 for w in words if w in text)
