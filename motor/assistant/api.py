@@ -3,8 +3,10 @@ Conectado a LLM real via motor/core/llm/router.py"""
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -13,11 +15,14 @@ from pydantic import BaseModel, Field
 
 from motor.assistant.conversation import ConversationEngine
 from motor.assistant.executor import ConversationalToolManager
+from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.llm_bridge import LLMBridge
 from motor.assistant.models import ConversationMode, UserIntent
 from motor.assistant.moderation import ContentModerator
 from motor.assistant.streaming import StreamEvent
 from motor.assistant.style import StyleEngine
+
+_log = logging.getLogger("ura.assistant.api")
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -57,7 +62,9 @@ def get_engine() -> ConversationEngine:
     if _EngineHolder.engine is None:
         with _EngineHolder.lock:
             if _EngineHolder.engine is None:
+                init_assistant_health()
                 _EngineHolder.engine = ConversationEngine()
+                get_assistant_health().set_healthy("memory", "loaded")
     return _EngineHolder.engine
 
 
@@ -72,6 +79,7 @@ def get_llm() -> LLMBridge:
                     _EngineHolder.llm = LLMBridge(get_engine(), router=router)
                 except Exception:
                     _EngineHolder.llm = LLMBridge(get_engine())
+                get_assistant_health().set_healthy("llm", "loaded")
     return _EngineHolder.llm
 
 
@@ -371,21 +379,34 @@ async def _enrich_prompt(system_prompt: str, analysis: dict, engine: Conversatio
             pass
     try:
         if engine._rag.is_available():
+            get_assistant_health().set_healthy("rag", "available")
             rag_ctx = await engine._rag.retrieve(resolved)
             if rag_ctx:
                 prompt += f"\n[Contexto: {rag_ctx[:800]}]"
+        else:
+            get_assistant_health().set_degraded("rag", "not available")
     except Exception:  # noqa: S110
+        get_assistant_health().set_unhealthy("rag", "error")
         pass
     return prompt
 
 
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:
+    correlation_id = str(uuid.uuid4())[:8]
     client_ip = http_request.client.host if http_request.client else "unknown"
     _rate_limiter.check(client_ip)
 
+    _log.info("chat request", extra={
+        "correlation_id": correlation_id,
+        "user_id": request.user_id,
+        "mode": request.mode,
+        "message_len": len(request.message),
+    })
+
     engine = get_engine()
     llm = get_llm()
+    get_assistant_health().set_healthy("conversation", f"active: {correlation_id}")
     cid = request.conversation_id or ""
 
     cid = _scoped_cid(request.user_id, cid)
@@ -394,6 +415,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     if input_mod.flagged:
         engine.add_message(cid, "user", request.message)
         engine.add_message(cid, "assistant", "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.")
+        _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": input_mod.reason})
         return ChatResponse(
             conversation_id=request.conversation_id or cid,
             reply="No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.",
@@ -464,6 +486,13 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
         reply = output_mod.sanitized_text
 
     engine.add_message(cid, "assistant", reply)
+
+    _log.info("chat response", extra={
+        "correlation_id": correlation_id,
+        "intent": intent.value,
+        "mode": mode.value,
+        "reply_len": len(reply),
+    })
 
     return ChatResponse(
         conversation_id=display_cid,
