@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING, Any
 from motor.core.llm.router.capability import find_providers_by_capability, select_provider_by_capability
 from motor.core.llm.router.health import health_get_cached, health_remove_cache, health_store_cache
 from motor.core.llm.router.providers import DEFAULT_ROUTES, resolve, resolve_name
-from motor.core.llm.router.strategy import _get_cb, call_with_fallback, call_with_retry
+from motor.core.llm.router.strategy import _get_cb, call_with_fallback
+from motor.core.llm.router.utils import _classify_error
 
 if TYPE_CHECKING:
     from motor.core.llm.registry import ProviderRegistry
