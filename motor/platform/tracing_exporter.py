@@ -260,12 +260,47 @@ class TraceExporter(_SpanEventSink):
 class LatencyStats:
     def __init__(self, window: int = 1000) -> None:
         self.durations_ns: list[int] = []
+        self._error_count: int = 0
         self.window = window
+
+    @property
+    def count(self) -> int:
+        return len(self.durations_ns)
+
+    @property
+    def errors(self) -> int:
+        return self._error_count
 
     def add(self, duration_ns: int) -> None:
         self.durations_ns.append(duration_ns)
         if len(self.durations_ns) > self.window:
             self.durations_ns.pop(0)
+
+    def record(self, duration_ns: int, error: bool = False) -> None:
+        self.add(duration_ns)
+        if error:
+            self._error_count += 1
+
+    def compute_percentiles(self) -> dict[str, float]:
+        if not self.durations_ns:
+            return {'p50': 0.0, 'p95': 0.0, 'p99': 0.0}
+        sorted_durations = sorted(self.durations_ns)
+        n = len(sorted_durations)
+        return {
+            'p50': float(sorted_durations[int(n * 0.50)]),
+            'p95': float(sorted_durations[int(n * 0.95)]),
+            'p99': float(sorted_durations[int(n * 0.99)]),
+        }
+
+    def to_dict(self) -> dict[str, float | int]:
+        percentiles = self.compute_percentiles()
+        return {
+            'count': self.count,
+            'errors': self._error_count,
+            'p50_ns': percentiles['p50'],
+            'p95_ns': percentiles['p95'],
+            'p99_ns': percentiles['p99'],
+        }
 class MetricsCollector:
     """Colector de métricas de latencia por subsistema.
 
