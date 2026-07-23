@@ -22,7 +22,7 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
-        args: [--python-version=3.12, --ignore-missing-imports]
+        args: [--python-version=3.12, --ignore-missing-imports, --explicit-package-bases]
         entry: 'echo "mypy disabled: pre-existing type errors" && exit 0'
         additional_dependencies: [types-requests]
         files: ^(motor/brain)/.*\.py$

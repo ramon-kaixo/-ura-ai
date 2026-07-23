@@ -185,7 +185,7 @@ class PipelineEngine:
             _exec_total.labels(plugin=script.split("/")[-1].replace(".py", ""), status="success" if result.returncode == 0 else "failure").inc()
             _exec_duration.labels(plugin=script.split("/")[-1].replace(".py", "")).observe(duration)
         if result.returncode != 0:
-            self.log.warning("Script exit=%d: %s", result.returncode, (result.stderr or "")[-200:])
+            self.log.warning(f"Script exit={result.returncode}: {(result.stderr or '')[-200:]}")
             self.notify("warning", f"Script falló: {script}", result.stderr or "")
         return result
 
@@ -285,9 +285,9 @@ class PipelineEngine:
                 )
                 self._alert_engine._alert_history.append(alert)
             except Exception as e:
-                self.log.debug("Notificacion falló: %s", e)
+                self.log.debug(f"Notificacion falló: {e}")
         else:
-            self.log.warning("[NOTIFY] %s: %s — %s", severity.upper(), title, description)
+            self.log.warning(f"[NOTIFY] {severity.upper()}: {title} — {description}")
 
     # ── Health checks ──────────────────────────────────────────
 
