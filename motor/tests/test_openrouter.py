@@ -28,6 +28,7 @@ class TestOpenRouterProvider:
 
     def test_openrouter_validate(self) -> None:
         import importlib
+
         import motor.core.llm.openrouter as or_mod
 
         importlib.reload(or_mod)

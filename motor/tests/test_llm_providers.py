@@ -27,7 +27,6 @@ class TestContract:
     def _get_proveedores(cls):
         import importlib
 
-        from motor.core.llm.base import BaseLLMProvider
 
         result: list[tuple[str, type]] = []
         for mod_path, cls_name in [
@@ -178,7 +177,6 @@ class TestRegistryRouter:
         assert reg.default is None
 
     def test_router_with_registry(self) -> None:
-        from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
         from motor.core.llm.router import LLMRouter
 
@@ -203,7 +201,6 @@ class TestRegistryRouter:
         assert resultado == "mock:test"
 
     def test_router_selecciona_por_task(self) -> None:
-        from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
         from motor.core.llm.router import LLMRouter
 
@@ -249,7 +246,6 @@ class TestRegistryRouter:
             empty.generate("test")
 
     def test_router_error_provider_inexistente(self) -> None:
-        from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
         from motor.core.llm.router import LLMRouter
 

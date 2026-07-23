@@ -19,6 +19,7 @@ class TestLMStudioProvider:
 
     def test_lmstudio_validate(self) -> None:
         import importlib
+
         import motor.core.llm.lmstudio as lm_mod
 
         importlib.reload(lm_mod)

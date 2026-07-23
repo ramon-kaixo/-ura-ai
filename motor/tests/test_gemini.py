@@ -29,6 +29,7 @@ class TestGeminiProvider:
 
     def test_gemini_validate(self) -> None:
         import importlib
+
         import motor.core.llm.gemini as gemini_mod
 
         importlib.reload(gemini_mod)

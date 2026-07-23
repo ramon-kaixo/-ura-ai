@@ -17,7 +17,6 @@ class TestVLLMProvider:
     def test_vllm_validate(self) -> None:
         """Valida que la clase cumple el contrato BaseLLMProvider sin conexión real."""
         import importlib
-
         from unittest.mock import patch
 
         secrets = {
