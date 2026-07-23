@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import threading
+import threading  # noqa: TC003
 import time
 from contextlib import suppress
 from typing import Any
-
-from motor.core.llm.router.utils import _classify_error
 
 
 def health_get_cached(

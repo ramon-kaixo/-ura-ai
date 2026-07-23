@@ -32,8 +32,11 @@ class ARQCheckPlugin:
         try:
             r = subprocess.run(
                 [sys.executable, str(URA_ROOT / "scripts/pro/arq_auditor.py"), "--json"],
-                capture_output=True, text=True, timeout=120,
-                cwd=str(URA_ROOT), check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                cwd=str(URA_ROOT),
+                check=False,
             )
         except subprocess.TimeoutExpired:
             return {"status": "error", "detail": "ARQ Auditor timeout (120s)", "ok": False}
@@ -47,13 +50,9 @@ class ARQCheckPlugin:
             return {"status": "error", "detail": "ARQ output no es JSON", "ok": False}
 
         blocks = data.get("blocks", {})
-        total_fail = sum(
-            1 for block_list in blocks.values()
-            for f in block_list if f.get("level") in ("FAIL", "P0")
-        )
+        total_fail = sum(1 for block_list in blocks.values() for f in block_list if f.get("level") in ("FAIL", "P0"))
         total_warn = sum(
-            1 for block_list in blocks.values()
-            for f in block_list if f.get("level") in ("WARNING", "MEDIUM")
+            1 for block_list in blocks.values() for f in block_list if f.get("level") in ("WARNING", "MEDIUM")
         )
 
         ok = total_fail == 0

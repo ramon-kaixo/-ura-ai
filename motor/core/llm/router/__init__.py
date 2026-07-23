@@ -15,7 +15,6 @@ from motor.core.llm.router.capability import find_providers_by_capability, selec
 from motor.core.llm.router.health import health_get_cached, health_remove_cache, health_store_cache
 from motor.core.llm.router.providers import DEFAULT_ROUTES, resolve, resolve_name
 from motor.core.llm.router.strategy import _get_cb, call_with_fallback, call_with_retry
-from motor.core.llm.router.utils import _build_error, _classify_error
 
 if TYPE_CHECKING:
     from motor.core.llm.registry import ProviderRegistry
@@ -57,22 +56,26 @@ class LLMRouter:
         self._profiling_enabled = profiling_enabled
         if profiling_enabled:
             from motor.core.llm.profiler import LLMProfiler
+
             self._profiler = LLMProfiler(enabled=True)
         else:
             self._profiler = None
         self._hotspot_threshold_ms = hotspot_threshold_ms
         if hotspot_threshold_ms > 0:
             from motor.core.llm.detector import HotspotDetector
+
             self._detector = HotspotDetector(threshold_ms=hotspot_threshold_ms)
         else:
             self._detector = None
         if baseline_enabled:
             from motor.core.llm.baseline import PerformanceBaseline
+
             self._baseline = PerformanceBaseline()
         else:
             self._baseline = None
         if monitor_enabled:
             from motor.core.llm.monitor import PerformanceMonitor
+
             self._monitor = PerformanceMonitor(hotspot_threshold_ms=hotspot_threshold_ms or 2000.0)
             self._profiler = None
             self._detector = None
@@ -110,12 +113,25 @@ class LLMRouter:
         prov = resolve("generate", provider, self._registry, self._routes)
         primary = resolve_name("generate", provider, self._registry, self._routes)
         result, _used = call_with_fallback(
-            prov, "generate", "generate", primary, self._registry,
-            self._circuit_breakers, self._fallback_enabled, self._fallback_max_providers,
-            prompt, model=model, options=options,
-            retry_enabled=self._retry_enabled, retry_max_attempts=self._retry_max_attempts,
-            retry_backoff_base=self._retry_backoff_base, retry_backoff_max=self._retry_backoff_max,
-            profiler=self._profiler, detector=self._detector, baseline=self._baseline, monitor=self._monitor,
+            prov,
+            "generate",
+            "generate",
+            primary,
+            self._registry,
+            self._circuit_breakers,
+            self._fallback_enabled,
+            self._fallback_max_providers,
+            prompt,
+            model=model,
+            options=options,
+            retry_enabled=self._retry_enabled,
+            retry_max_attempts=self._retry_max_attempts,
+            retry_backoff_base=self._retry_backoff_base,
+            retry_backoff_max=self._retry_backoff_max,
+            profiler=self._profiler,
+            detector=self._detector,
+            baseline=self._baseline,
+            monitor=self._monitor,
         )
         return result
 
@@ -129,12 +145,24 @@ class LLMRouter:
         prov = resolve("embed", provider, self._registry, self._routes)
         primary = resolve_name("embed", provider, self._registry, self._routes)
         result, _used = call_with_fallback(
-            prov, "embed", "embed", primary, self._registry,
-            self._circuit_breakers, self._fallback_enabled, self._fallback_max_providers,
-            texts, model=model,
-            retry_enabled=self._retry_enabled, retry_max_attempts=self._retry_max_attempts,
-            retry_backoff_base=self._retry_backoff_base, retry_backoff_max=self._retry_backoff_max,
-            profiler=self._profiler, detector=self._detector, baseline=self._baseline, monitor=self._monitor,
+            prov,
+            "embed",
+            "embed",
+            primary,
+            self._registry,
+            self._circuit_breakers,
+            self._fallback_enabled,
+            self._fallback_max_providers,
+            texts,
+            model=model,
+            retry_enabled=self._retry_enabled,
+            retry_max_attempts=self._retry_max_attempts,
+            retry_backoff_base=self._retry_backoff_base,
+            retry_backoff_max=self._retry_backoff_max,
+            profiler=self._profiler,
+            detector=self._detector,
+            baseline=self._baseline,
+            monitor=self._monitor,
         )
         return result
 

@@ -67,6 +67,7 @@ def _run_phase_with_checkpoint(engine: PipelineEngine, phase: str, file_path: st
 
 def _parse_args():
     import argparse
+
     parser = argparse.ArgumentParser(description="Tuneladora de Mejora Continua v2.3")
     parser.add_argument("--file", type=str, default=None)
     parser.add_argument("--list", action="store_true")
@@ -111,8 +112,10 @@ def _handle_refactor(engine, hay_trabajo):
     cmd = [
         engine.config.venv_python,
         "scripts/pro/pipeline_refactor.py",
-        "--workers", "4",
-        "--model", "qwen2.5-coder:14b",
+        "--workers",
+        "4",
+        "--model",
+        "qwen2.5-coder:14b",
     ]
     result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
     engine.ledger.plugin_done("pipeline_refactor", round(time.time() - t_ref, 1))
@@ -129,6 +132,7 @@ def _run_arq_and_promotion(engine, result_post, refactor_ejecutado):
     """ARQ check + política de promoción R1."""
     try:
         from scripts.pro.tuneladora.plugins.arq_check import ARQCheckPlugin
+
         arq = ARQCheckPlugin(engine)
         arq_result = arq.check()
         engine.log.info(f"ARQ: {arq_result['detail']}")

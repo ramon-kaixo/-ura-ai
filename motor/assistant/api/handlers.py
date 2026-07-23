@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import threading
-import time
 from typing import Any
 
 from fastapi import HTTPException
@@ -12,7 +11,6 @@ from motor.assistant.conversation import ConversationEngine
 from motor.assistant.executor import ConversationalToolManager
 from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.llm_bridge import LLMBridge
-from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 from motor.assistant.models import ConversationMode, UserIntent
 from motor.assistant.moderation import ContentModerator
 from motor.assistant.style import StyleEngine

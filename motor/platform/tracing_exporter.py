@@ -283,24 +283,26 @@ class LatencyStats:
 
     def compute_percentiles(self) -> dict[str, float]:
         if not self.durations_ns:
-            return {'p50': 0.0, 'p95': 0.0, 'p99': 0.0}
+            return {"p50": 0.0, "p95": 0.0, "p99": 0.0}
         sorted_durations = sorted(self.durations_ns)
         n = len(sorted_durations)
         return {
-            'p50': float(sorted_durations[int(n * 0.50)]),
-            'p95': float(sorted_durations[int(n * 0.95)]),
-            'p99': float(sorted_durations[int(n * 0.99)]),
+            "p50": float(sorted_durations[int(n * 0.50)]),
+            "p95": float(sorted_durations[int(n * 0.95)]),
+            "p99": float(sorted_durations[int(n * 0.99)]),
         }
 
     def to_dict(self) -> dict[str, float | int]:
         percentiles = self.compute_percentiles()
         return {
-            'count': self.count,
-            'errors': self._error_count,
-            'p50_ns': percentiles['p50'],
-            'p95_ns': percentiles['p95'],
-            'p99_ns': percentiles['p99'],
+            "count": self.count,
+            "errors": self._error_count,
+            "p50_ns": percentiles["p50"],
+            "p95_ns": percentiles["p95"],
+            "p99_ns": percentiles["p99"],
         }
+
+
 class MetricsCollector:
     """Colector de métricas de latencia por subsistema.
 
@@ -350,5 +352,3 @@ class MetricsCollector:
 # ── Global collector ────────────────────────
 
 _global_collector = MetricsCollector()
-
-

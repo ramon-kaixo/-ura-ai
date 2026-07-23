@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from motor.core.llm.router.utils import _build_error, _classify_error, _is_error_result
-
-if TYPE_CHECKING:
-    from motor.core.llm.circuit_breaker import CircuitBreaker
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +78,8 @@ def call_with_retry(
                             detector.evaluate_from_profile(profile)
                         if baseline:
                             baseline.record(
-                                provider_name, task,
+                                provider_name,
+                                task,
                                 wall_time_ms=profile.wall_time_ms,
                                 cpu_time_ms=profile.cpu_time_ms,
                                 peak_memory_bytes=profile.peak_memory_bytes,
@@ -95,7 +93,11 @@ def call_with_retry(
             metrics.record(provider_name, task, latency_ms, success=True, tokens=tokens)
             log.info(
                 "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d cb=%s",
-                provider_name, task, latency_ms, attempt + 1, cb.state.value,
+                provider_name,
+                task,
+                latency_ms,
+                attempt + 1,
+                cb.state.value,
             )
             return result
 
@@ -104,7 +106,10 @@ def call_with_retry(
             metrics.record(provider_name, task, latency_ms, success=False, error="circuit_open")
             log.warning(
                 "llm_call  provider=%s op=%s latency_ms=%.0f error=circuit_open retry_after=%.0fs",
-                provider_name, task, latency_ms, e.retry_after,
+                provider_name,
+                task,
+                latency_ms,
+                e.retry_after,
             )
             return _build_error(method, "circuit_breaker_open")
 
@@ -116,7 +121,12 @@ def call_with_retry(
             metrics.record(provider_name, task, latency_ms, success=False, error=error_str)
             log.warning(
                 "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d error=%s transient=%s",
-                provider_name, task, latency_ms, attempt + 1, error_str, is_transient,
+                provider_name,
+                task,
+                latency_ms,
+                attempt + 1,
+                error_str,
+                is_transient,
             )
             if not is_transient or attempt >= max_attempts - 1:
                 return _build_error(method, error_str)
@@ -140,8 +150,14 @@ def call_with_fallback(
     **kwargs,
 ) -> tuple[Any, str | None]:
     result = call_with_retry(
-        prov_obj, method, task, primary, registry, circuit_breakers,
-        *args, **kwargs,
+        prov_obj,
+        method,
+        task,
+        primary,
+        registry,
+        circuit_breakers,
+        *args,
+        **kwargs,
     )
     if not _is_error_result(result) or not fallback_enabled:
         return result, primary
@@ -158,14 +174,22 @@ def call_with_fallback(
         fallback_obj = registry.get(fallback_name)
         log.info("llm_fallback  primary=%s fallback=%s op=%s", primary, fallback_name, task)
         fallback_result = call_with_retry(
-            fallback_obj, method, task, fallback_name, registry, circuit_breakers,
-            *args, **kwargs,
+            fallback_obj,
+            method,
+            task,
+            fallback_name,
+            registry,
+            circuit_breakers,
+            *args,
+            **kwargs,
         )
         if not _is_error_result(fallback_result):
             return fallback_result, fallback_name
         log.warning(
             "llm_fallback  primary=%s fallback=%s op=%s error=fallback_failed",
-            primary, fallback_name, task,
+            primary,
+            fallback_name,
+            task,
         )
         return result, primary
 

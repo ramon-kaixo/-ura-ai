@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from fastapi import APIRouter
     from motor.observability.health import HealthRegistry
     from motor.observability.metrics import MetricsRegistry
     from motor.observability.readiness import ReadinessRegistry

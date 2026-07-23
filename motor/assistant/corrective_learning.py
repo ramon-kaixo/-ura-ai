@@ -62,7 +62,6 @@ class CorrectiveMemory:
     def record_correction(
         self,
         user_message: str,
-
     ) -> dict[str, Any] | None:
         correction = self._parse_correction(user_message)
         if not correction:

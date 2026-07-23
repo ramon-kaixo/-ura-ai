@@ -125,9 +125,11 @@ class PluginBase(ABC):
     def __init__(self) -> None:
         self.meta = PluginMeta(name=self.__class__.__name__)
 
+    @abstractmethod
     def on_load(self) -> None:
         """Hook opcional — llamado cuando el plugin se registra."""
 
+    @abstractmethod
     def on_unload(self) -> None:
         """Hook opcional — llamado cuando el plugin se desregistra."""
 

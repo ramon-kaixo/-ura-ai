@@ -11,12 +11,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from motor.assistant.api.handlers import (
+    _FALLBACK_REPLIES,
     _detect_tool_name,
     _enrich_prompt,
     _execute_command,
-    _process,
-    _FALLBACK_REPLIES,
     _moderator,
+    _process,
     _tool_manager,
     get_engine,
     get_llm,
@@ -63,12 +63,15 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 
     trace = TraceContext(source="assistant_api", destination="llm", correlation_id=correlation_id)
 
-    _log.info("chat request", extra={
-        "correlation_id": correlation_id,
-        "user_id": request.user_id,
-        "mode": request.mode,
-        "message_len": len(request.message),
-    })
+    _log.info(
+        "chat request",
+        extra={
+            "correlation_id": correlation_id,
+            "user_id": request.user_id,
+            "mode": request.mode,
+            "message_len": len(request.message),
+        },
+    )
 
     requests_total.inc(mode=request.mode, status="received")
 
@@ -162,13 +165,16 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     request_latency.observe(duration, mode=mode.value)
     requests_total.inc(mode=mode.value, status="success")
 
-    _log.info("chat response", extra={
-        "correlation_id": correlation_id,
-        "intent": intent.value,
-        "mode": mode.value,
-        "reply_len": len(reply),
-        "duration_s": round(duration, 3),
-    })
+    _log.info(
+        "chat response",
+        extra={
+            "correlation_id": correlation_id,
+            "intent": intent.value,
+            "mode": mode.value,
+            "reply_len": len(reply),
+            "duration_s": round(duration, 3),
+        },
+    )
 
     return ChatResponse(
         conversation_id=display_cid,

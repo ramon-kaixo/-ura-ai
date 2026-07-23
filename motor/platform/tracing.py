@@ -18,15 +18,11 @@ Budget (OBS-10): bounded buffer, max events/trace, max trace size.
 
 from __future__ import annotations
 
-import json
 import logging
-import os
-import queue
-import random
 import threading
 import time
+from collections.abc import Generator  # noqa: TC003
 from contextlib import contextmanager
-from collections.abc import Generator
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -55,13 +51,7 @@ LATENCY_BUDGET_NS = 5_000_000  # max 5ms p99 latency for tracing overhead
 
 
 from motor.platform.tracing_sampler import (
-    FORBIDDEN_TAG_EXACT,
-    FORBIDDEN_TAG_PREFIXES,
-    MAX_TAG_KEY_LENGTH,
-    MAX_TAG_VAL_LENGTH,
-    MAX_TAGS_PER_EVENT,
     Sampler,
-    SamplingStrategy,
     sanitize_tags,
 )
 
@@ -453,14 +443,8 @@ class TraceContext:
 # ── Abstract Exporter ──────────────────────
 
 
-
-
 from motor.platform.tracing_exporter import (
-    FileExporter,
-    InMemoryExporter,
-    LatencyStats,
     MetricsCollector,
-    TraceExporter,
     _SpanEventSink,
 )
 
