@@ -27,7 +27,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.assistant.api import router as chat_router
 from motor.assistant.auth import AuthMiddleware
 from motor.assistant.config import config
-from motor.assistant.health import get_assistant_health
+from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.observability.logging import JSONFormatter, setup_logging
 
 _VERSION = "1.0.0"
