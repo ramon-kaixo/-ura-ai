@@ -1040,9 +1040,10 @@ def test_tool_result_error_roundtrip() -> None:
 
 def test_protocol_tool_runner_adapter() -> None:
     """ProtocolToolRunner wraps and delegates to inner ToolRunner."""
+    from motor.platform.adapters.tool_runner import ProtocolToolRunner
+
     from motor.agents.base import ToolRunner as ToolRunnerABC
     from motor.agents.models import ToolContract
-    from motor.platform.adapters.tool_runner import ProtocolToolRunner
 
     class FakeRunner(ToolRunnerABC):
         def get_contract(self, tool_name: str) -> ToolContract:
