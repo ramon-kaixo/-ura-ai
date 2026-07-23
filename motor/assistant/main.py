@@ -40,7 +40,8 @@ for handler in _log.handlers:
         handler.setFormatter(JSONFormatter(prefix="assistant"))
         break
 
-# ── Observability: health registry (inicializado via api.py lazy init) ──
+# ── Observability: health registry ──
+init_assistant_health()
 
 
 app = FastAPI(
