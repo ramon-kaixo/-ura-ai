@@ -77,11 +77,15 @@ async def health():
 async def metrics():
     from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 
+    def _snapshot(metric):
+        items = getattr(metric, "_counters", None) or getattr(metric, "_histograms", {})
+        return {k: v.snapshot() for k, v in items.items()}
+
     return {
-        "requests_total": requests_total.collect(),
-        "request_latency": request_latency.collect(),
-        "tokens_total": tokens_total.collect(),
-        "errors_total": errors_total.collect(),
+        "requests_total": _snapshot(requests_total),
+        "request_latency": _snapshot(request_latency),
+        "tokens_total": _snapshot(tokens_total),
+        "errors_total": _snapshot(errors_total),
     }
 
 
