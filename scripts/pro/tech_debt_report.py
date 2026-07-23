@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
-"""Genera reporte de deuda tecnica acumulada."""
-import subprocess
+"""Genera reporte de deuda tecnica acumulada. Sin shell=True."""
 from pathlib import Path
+import ast
 
-BASE = Path.home() / "URA" / "ura_ia_1972"
+def count_todos():
+    return sum(1 for f in Path("motor").rglob("*.py") for line in f.read_text().splitlines() if "TODO" in line)
 
+def count_fixmes():
+    return sum(1 for f in Path("motor").rglob("*.py") for line in f.read_text().splitlines() if "FIXME" in line)
 
-def _run(*args: str) -> str:
-    return subprocess.run(
-        list(args), capture_output=True, text=True, cwd=str(BASE)
-    ).stdout
-
+def count_except_pass():
+    c = 0
+    for f in Path("motor").rglob("*.py"):
+        try:
+            tree = ast.parse(f.read_text())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Try):
+                    for handler in node.handlers:
+                        if handler.type is None and len(handler.body) == 1:
+                            if isinstance(handler.body[0], ast.Pass):
+                                c += 1
+        except SyntaxError:
+            continue
+    return c
 
 print("=== TECH DEBT REPORT ===")
-todo = _run("grep", "-rn", "TODO", "motor/", "--include=*.py").count("\n")
-fixme = _run("grep", "-rn", "FIXME", "motor/", "--include=*.py").count("\n")
-exc = _run("grep", "-rn", "except:", "motor/", "--include=*.py").count("\n")
-ruff = _run(str(BASE / ".venv" / "bin" / "ruff"), "check", "motor/", "--output-format=concise").count("motor/")
-print(f"TODO comments: {todo}")
-print(f"FIXME comments: {fixme}")
-print(f"except: lines: {exc}")
-print(f"Ruff errors: {ruff}")
+print(f"TODO comments: {count_todos()}")
+print(f"FIXME comments: {count_fixmes()}")
+print(f"except: pass: {count_except_pass()}")
