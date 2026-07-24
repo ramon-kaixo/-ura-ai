@@ -75,11 +75,12 @@ class TestOllama:
             assert r.status == "warning"
 
     def test_ollama_down(self, detector):
-        with mock.patch("httpx.get") as m:
+        with mock.patch.object(detector, "restart_ollama") as mock_restart, mock.patch("httpx.get") as m:
             import httpx
             m.side_effect = httpx.ConnectError("connection refused")
             r = detector.check_ollama()
             assert r.status == "critical"
+            mock_restart.assert_called_once()
 
 
 class TestGit:
