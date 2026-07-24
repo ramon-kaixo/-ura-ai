@@ -1,5 +1,4 @@
-"""Fase 1: AutoTrigger — detección automática de mejora continua."""
-
+"""Fase 1: AutoTrigger — detección automática de mejora continua + integración pipeline."""
 from __future__ import annotations
 
 import logging
@@ -31,12 +30,72 @@ class TriggerEvent:
 
 
 class AutoTrigger:
-    def __init__(self, nervioso: Path | None = None) -> None:
+    def __init__(self, nervioso: Path | None = None, strict: bool = True, mode: str = "gate") -> None:
         self._nervioso = nervioso or Path("/tmp/ura_nervioso")
         self._nervioso.mkdir(parents=True, exist_ok=True)
         self._last_trigger: dict[str, float] = {}
         self._cooldown: dict[str, int] = {}
         self._events: list[TriggerEvent] = []
+        self._strict = strict
+        self._mode = mode
+
+    @property
+    def strict(self) -> bool:
+        return self._strict
+
+    @strict.setter
+    def strict(self, value: bool) -> None:
+        self._strict = value
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    @mode.setter
+    def mode(self, value: str) -> None:
+        self._mode = value
+
+    # ── Pipeline integration ─────────────────────────────────
+
+    def validate_with_pipeline(self, files: list[Path]) -> dict[str, Any]:
+        try:
+            from scripts.pro.tuneladora.pipeline.runner import PipelineRunner  # fmt: skip
+            from scripts.pro.tuneladora.config import Configuration  # fmt: skip
+            from scripts.pro.tuneladora.pipeline.tools.base import Status  # fmt: skip
+
+            if not files:
+                return {"status": "skip", "message": "No files to validate"}
+
+            cfg = Configuration()
+            runner = PipelineRunner(cfg, mode=self._mode, files=[str(f) for f in files])
+            result = runner.run()
+
+            if result == Status.OK:
+                return {"status": "ok", "message": "Codigo validado y listo"}
+            if result == Status.WARN:
+                return {"status": "warn", "message": "Codigo validado con advertencias"}
+            return {"status": "fail", "message": "Codigo rechazado, rollback ejecutado. Revisa pending_fixes con --pending"}
+        except Exception as exc:
+            log.warning("Pipeline no disponible, continuando sin validacion: %s", exc)
+            return {"status": "skip", "message": "Pipeline no disponible, continuando sin validacion"}
+
+    def trigger_validation(self, generated_files: list[Path]) -> dict[str, Any]:
+        if not generated_files:
+            return {"status": "skip", "message": "No files to validate"}
+        result = self.validate_with_pipeline(generated_files)
+        s = result["status"]
+        msg = result["message"]
+        if s == "ok":
+            log.info("Pipeline: %s", msg)
+        elif s == "warn":
+            log.warning("Pipeline: %s", msg)
+        elif s == "fail":
+            log.error("Pipeline: %s", msg)
+            if self._strict:
+                return result
+        else:
+            log.warning("Pipeline: %s", msg)
+        return result
 
     # ── Should-run conditions ────────────────────────────────
 
