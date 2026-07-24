@@ -16,6 +16,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from scripts.pro.tuneladora.engine import PipelineEngine
+from scripts.pro.tuneladora.resilience import CircuitBreaker
 
 log = logging.getLogger("ura.tuneladora.scheduler")
 
@@ -38,6 +39,7 @@ class TuneladoraScheduler:
         self._pipelines: list[ScheduledPipeline] = []
         self._running = False
         self._task: asyncio.Task[None] | None = None
+        self._circuit = CircuitBreaker(max_failures=3, timeout=300)
 
     def add_pipeline(self, name: str, interval_minutes: int, auto_execute_safe: bool = True) -> None:
         """Registra un pipeline para ejecucion periodica."""
@@ -91,11 +93,8 @@ class TuneladoraScheduler:
                     pipeline.run_count += 1
             await asyncio.sleep(5)
 
-    async def _execute_pipeline(self, pipeline: ScheduledPipeline) -> None:
-        """Ejecuta un pipeline y registra resultado."""
-        engine = PipelineEngine(pipeline=pipeline.name)
-        log.info("Ejecutando pipeline programado: %s", pipeline.name)
-
+    def _run_pipeline_sync(self, engine: PipelineEngine, pipeline: ScheduledPipeline) -> None:
+        """Ejecución síncrona del pipeline (extraída para CircuitBreaker)."""
         if pipeline.name == "health":
             result = engine.health_disk()
             libre_gb = result.get("libre_gb", 0)
@@ -116,7 +115,6 @@ class TuneladoraScheduler:
                 log.info("Cleanup propuesto para %s (auto_execute_safe=False)", pipeline.name)
 
         elif pipeline.name == "full_audit":
-            # full_audit nunca se auto-ejecuta (auto_execute_safe=False)
             engine.health_disk()
             engine.health_ollama()
             engine.run_ruff(["check", "--output-format", "concise", "."])
@@ -125,8 +123,40 @@ class TuneladoraScheduler:
         else:
             log.warning("Pipeline desconocido: %s", pipeline.name)
 
-        engine.ledger.set_result("completed")
+    async def _execute_pipeline(self, pipeline: ScheduledPipeline) -> None:
+        """Ejecuta un pipeline con CircuitBreaker y registra resultado en SQLite."""
+        start_time = datetime.now(UTC)
+        engine = PipelineEngine(pipeline=pipeline.name)
+        log.info("Ejecutando pipeline programado: %s", pipeline.name)
+
+        error: Exception | None = None
+        try:
+            self._circuit.call(self._run_pipeline_sync, engine, pipeline)
+        except RuntimeError as e:
+            if "OPEN" in str(e):
+                log.critical("Circuit breaker OPEN para %s", pipeline.name)
+                engine.notify("critical", "Circuit breaker", f"Pipeline {pipeline.name} detenido")
+                return
+            error = e
+        except Exception as e:
+            error = e
+            log.error("Pipeline %s fallo: %s", pipeline.name, e)
+            pipeline.failure_count += 1
+
+        engine.ledger.set_result("completed" if not error else "failed")
         engine.ledger.save()
+
+        from scripts.pro.tuneladora.ledger import save_execution
+
+        save_execution(
+            {
+                "pipeline": pipeline.name,
+                "status": "completed" if not error else "failed",
+                "duration_ms": int((datetime.now(UTC) - start_time).total_seconds() * 1000),
+                "error": str(error) if error else None,
+            },
+            nervioso=engine.config.nervioso,
+        )
 
     def start(self) -> None:
         """Inicia el scheduler en background."""

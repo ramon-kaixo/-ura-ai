@@ -47,8 +47,9 @@ _MEM_CRIT_PCT = 95
 class ProactiveDetector:
     """Detecta anomalias antes de que afecten al sistema."""
 
-    def __init__(self, notify: bool = True) -> None:
+    def __init__(self, notify: bool = True, engine: Any = None) -> None:
         self._notify = notify
+        self.engine = engine
         self._alert_engine: Any = None
         if _HAS_ALERTS:
             try:
@@ -81,6 +82,16 @@ class ProactiveDetector:
             libre_gb = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
             total_gb = round((usage.f_frsize * usage.f_blocks) / 1e9, 1)
             used_pct = round((1 - usage.f_bavail / usage.f_blocks) * 100, 1)
+
+            if libre_gb < 5 and self.engine is not None:
+                from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
+
+                cleanup = CleanupPlugin(self.engine)
+                cleanup.cleanup_logs(days=7)
+                usage = os.statvfs(path)
+                libre_gb = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
+                total_gb = round((usage.f_frsize * usage.f_blocks) / 1e9, 1)
+                used_pct = round((1 - usage.f_bavail / usage.f_blocks) * 100, 1)
 
             if libre_gb < _DISK_CRIT_GB:
                 self._alert("emergency", "DISKO KRITIKOA", f"Solo {libre_gb}GB libres de {total_gb}GB ({used_pct}% usado)")
@@ -134,6 +145,7 @@ class ProactiveDetector:
             return DetectionResult("ollama", "warning", f"HTTP {r.status_code}")
         except httpx.ConnectError:
             self._alert("critical", "OLLAMA EZ DAU", "Ollama no responde en localhost:11434")
+            self.restart_ollama()
             return DetectionResult("ollama", "critical", "No conecta")
         except Exception as e:
             return DetectionResult("ollama", "error", str(e))
