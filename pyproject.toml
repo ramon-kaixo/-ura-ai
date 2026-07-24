@@ -78,6 +78,25 @@ ura = "ura:main"
 Homepage = "https://github.com/ramon-kaixo/-ura-ai"
 Repository = "https://github.com/ramon-kaixo/-ura-ai"
 
+# Tuneladora pipeline configuration — see scripts/pro/tuneladora/
+[tool.tuneladora]
+test-target = "tests/test_tuneladora_*.py tests/test_brain_*.py"
+review-model = "qwen3:32b-q8_0"
+llm-fallback-model = "qwen2.5-coder:14b"
+unsafe-fixes = false
+strict-warnings = false
+auto-commit = true
+max-snapshots = 30
+timeout-ruff = 300
+timeout-llm = 120
+timeout-worker = 3600
+sandbox-cpu-sec = 300
+sandbox-max-mem-mb = 2048
+pytest-socket-disable = false
+ollama-host = "localhost"
+ollama-port = 11434
+llm-retries = 2
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
