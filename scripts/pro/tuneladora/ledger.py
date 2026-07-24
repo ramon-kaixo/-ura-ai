@@ -256,7 +256,7 @@ def save_execution(entry, nervioso):
             )
             conn.commit()
     except Exception:
-        pass
+        _log.exception("Failed to save execution entry")
 
 
 def get_history(nervioso, pipeline=None, limit=100):

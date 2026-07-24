@@ -30,8 +30,10 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 from scripts.pro.tuneladora.checkpoint import CheckpointManager
@@ -44,7 +46,7 @@ CHANGE_BUDGET_DEFAULT = {"max_files": 50, "max_lines": 5000}
 
 # ── Alert Engine (notificaciones, import condicional) ─────────────
 try:
-    from motor.brain.alerts import Alert, AlertEngine as _AlertEngine
+    from motor.brain.alerts import Alert, AlertEngine as _AlertEngine  # noqa: I001
     from motor.brain.observer import BrainObserver
 
     _HAS_ALERTS = True
@@ -53,7 +55,7 @@ except ImportError:
 
 # ── Métricas Prometheus ─────────────────────────────────────
 try:
-    from prometheus_client import Counter as _Counter, Gauge as _Gauge, Histogram as _Histogram, start_http_server
+    from prometheus_client import Counter as _Counter, Gauge as _Gauge, Histogram as _Histogram, start_http_server  # noqa: I001
 
     _exec_total = _Counter("tuneladora_executions_total", "Ejecuciones por plugin y estado", ["plugin", "status"])
     _exec_duration = _Histogram("tuneladora_execution_duration_seconds", "Duracion por plugin", ["plugin"], buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0))
@@ -134,7 +136,7 @@ class PipelineEngine:
                 hd = self.health_disk()
                 _disk_free.set(hd.get("libre_gb", 0))
             except Exception:
-                pass
+                self.log.warning("Failed to read disk health for Prometheus gauge")
         # Iniciar servidor Prometheus si esta habilitado
         if os.environ.get("PROMETHEUS_ENABLED") == "true" and _HAS_METRICS:
             try:
@@ -181,9 +183,10 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         duration = time.monotonic() - t0
+        _plugin = Path(script).stem
         if _HAS_METRICS:
-            _exec_total.labels(plugin=script.split("/")[-1].replace(".py", ""), status="success" if result.returncode == 0 else "failure").inc()
-            _exec_duration.labels(plugin=script.split("/")[-1].replace(".py", "")).observe(duration)
+            _exec_total.labels(plugin=_plugin, status="success" if result.returncode == 0 else "failure").inc()
+            _exec_duration.labels(plugin=_plugin).observe(duration)
         if result.returncode != 0:
             self.log.warning(f"Script exit={result.returncode}: {(result.stderr or '')[-200:]}")
             self.notify("warning", f"Script falló: {script}", result.stderr or "")
@@ -237,7 +240,7 @@ class PipelineEngine:
         results: dict[str, Any] = {}
         if _HAS_METRICS:
             _plugins_active.set(len(plugins))
-            for name, fn in plugins:
+            for name, _fn in plugins:
                 _exec_total.labels(plugin=name, status="running").inc()
 
         if parallel and len(plugins) > 1:
@@ -316,6 +319,97 @@ class PipelineEngine:
         except Exception:
             return {"libre_gb": 0}
 
+
+    def health_git(self) -> dict[str, Any]:
+        """Estado del repositorio git."""
+        try:
+            r = subprocess.run(
+                ["git", "status", "--porcelain"],  # nosec B603 B607
+                capture_output=True, text=True, timeout=10, check=False,
+                cwd=str(self.config.ura_root),
+            )
+            if r.returncode != 0:
+                return {"ok": False, "changes": 0, "error": "No es un repo git"}
+            changes = [line for line in r.stdout.split("\n") if line.strip()]
+            count = len(changes)
+            if count > 50:
+                self.notify("critical", "GIT SUCIO", f"{count} archivos sin commitear")
+            elif count > 10:
+                self.notify("warning", "GIT SUCIO", f"{count} archivos sin commitear")
+            return {"ok": count == 0, "changes": count}
+        except Exception as e:
+            return {"ok": False, "changes": 0, "error": str(e)}
+
+    def _parse_count(self, text: str, keyword: str) -> int:
+        """Extrae numero de ocurrencias del output de pytest."""
+        import re
+        match = re.search(rf"(\d+)\s+{keyword}s?(?:\s|$|,)", text)
+        return int(match.group(1)) if match else 0
+
+    def health_tests(self, target: str = "tests/") -> dict[str, Any]:
+        """Ejecuta pytest y reporta resultados."""
+        try:
+            import shlex
+            # Expandir wildcards si los hay
+            if "*" in target:
+                targets = [str(p) for p in Path(self.config.ura_root).glob(target)]
+                if not targets:
+                    return {"ok": False, "error": f"No files match {target}"}
+            else:
+                targets = shlex.split(target)
+            cmd = [sys.executable, "-m", "pytest", *targets, "--no-cov"]
+            r = subprocess.run(
+                cmd,
+                capture_output=True, text=True, timeout=120, check=False,
+                cwd=str(self.config.ura_root),
+            )
+            stdout = r.stdout
+            passed = self._parse_count(stdout, "passed")
+            failed = self._parse_count(stdout, "failed")
+            errors = self._parse_count(stdout, "error")
+            total = passed + failed + errors
+            return {
+                "ok": failed == 0 and errors == 0,
+                "passed": passed,
+                "failed": failed,
+                "errors": errors,
+                "total": total,
+                "returncode": r.returncode,
+            }
+        except Exception as e:
+            return {"ok": False, "passed": 0, "failed": 0, "errors": 0, "error": str(e)}
+
+    def health_ruff(self) -> dict[str, Any]:
+        """Ejecuta ruff check y reporta errores."""
+        try:
+            r = self.run_ruff(["check", "."])
+            lines = r.stdout.strip().split("\n") if r.stdout else []
+            errors = [line for line in lines if line.strip() and not line.startswith("All checks")]
+            count = len(errors)
+            return {"ok": count == 0, "errors": count, "details": errors[:10]}
+        except Exception as e:
+            return {"ok": False, "errors": 0, "error": str(e)}
+
+    def health_bandit(self) -> dict[str, Any]:
+        """Ejecuta bandit y reporta severidad."""
+        try:
+            r = subprocess.run(
+                [sys.executable, "-m", "bandit", "-r", "scripts/pro/tuneladora/"],  # nosec B603 B607
+                capture_output=True, text=True, timeout=120, check=False,
+                cwd=str(self.config.ura_root),
+            )
+            stdout = r.stdout
+            low = stdout.count("Severity: Low")
+            medium = stdout.count("Severity: Medium")
+            high = stdout.count("Severity: High")
+            return {
+                "ok": high == 0 and medium == 0,
+                "low": low,
+                "medium": medium,
+                "high": high,
+            }
+        except Exception as e:
+            return {"ok": False, "low": 0, "medium": 0, "high": 0, "error": str(e)}
     def report(self, title: str, data: dict[str, Any]) -> None:
         """Genera informe formateado desde un diccionario."""
         lines = [f"{k}: {v}" for k, v in data.items()]
