@@ -1,0 +1,16 @@
+[Unit]
+Description=URA Tuneladora
+After=network.target
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python -m scripts.pro.tuneladora.scheduler_daemon
+Restart=always
+RestartSec=60
+Environment=TMPDIR=/tmp
+Environment=PRE_COMMIT_HOME=/tmp/pre-commit-home
+
+[Install]
+WantedBy=multi-user.target
