@@ -90,12 +90,15 @@ max-snapshots = 30
 timeout-ruff = 300
 timeout-llm = 120
 timeout-worker = 3600
+timeout-script = 120
 sandbox-cpu-sec = 300
 sandbox-max-mem-mb = 2048
 pytest-socket-disable = false
 ollama-host = "localhost"
 ollama-port = 11434
 llm-retries = 2
+auto-trigger-mode = "gate"
+auto-trigger-strict = true
 
 [tool.ruff]
 line-length = 120

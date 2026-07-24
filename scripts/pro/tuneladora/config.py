@@ -24,6 +24,7 @@ _TOML_KEY_MAP: dict[str, str] = {
     "timeout-ruff": "timeout_ruff",
     "timeout-llm": "timeout_llm",
     "timeout-worker": "timeout_worker",
+    "timeout-script": "timeout_script",
     "sandbox-cpu-sec": "sandbox_cpu_sec",
     "sandbox-max-mem-mb": "sandbox_max_mem_mb",
     "test-target": "test_target",
@@ -31,6 +32,8 @@ _TOML_KEY_MAP: dict[str, str] = {
     "ollama-host": "ollama_host",
     "ollama-port": "ollama_port",
     "llm-retries": "llm_retries",
+    "auto-trigger-mode": "auto_trigger_mode",
+    "auto-trigger-strict": "auto_trigger_strict",
 }
 
 
@@ -77,6 +80,10 @@ class Configuration:
 
         # Test target
         self.test_target: str = os.environ.get("TUNEL_TEST_TARGET", "tests/")
+
+        # Auto-trigger
+        self.auto_trigger_mode: str = os.environ.get("TUNEL_AUTO_TRIGGER_MODE", "gate")
+        self.auto_trigger_strict: bool = os.environ.get("TUNEL_AUTO_TRIGGER_STRICT", "true").lower() == "true"
 
         # DB
         self.knowledge_db: Path = Path(
