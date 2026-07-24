@@ -5,7 +5,6 @@ v3.0: integra logica de scripts sueltos directamente.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sqlite3
 import time
@@ -101,14 +100,14 @@ class CleanupPlugin:
         from collections import defaultdict
 
         duplicates: dict[str, list[tuple[str, str, int]]] = defaultdict(list)
-        for f in Path(".").rglob("*.py"):
+        for f in Path().rglob("*.py"):
             if any(x in str(f) for x in ["test", "__pycache__", ".venv", ".sandbox_packages", "build"]):
                 continue
             try:
                 tree = ast.parse(f.read_text())
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef) and len(node.body) > 3:
-                        h = hashlib.md5(ast.dump(node).encode()).hexdigest()[:16]
+                        h = hashlib.sha256(ast.dump(node).encode()).hexdigest()[:16]
                         duplicates[h].append((str(f), node.name, node.lineno))
             except SyntaxError:
                 continue
@@ -149,11 +148,11 @@ class CleanupPlugin:
             if not Path(f"/proc/{pid_dir.name}").exists() or ahora - pid_dir.stat().st_mtime > 604800:
                 shutil.rmtree(pid_dir, ignore_errors=True)
                 limpiados += 1
-                self.engine.log.info("Aislamiento %s (%s) limpiado", pid_dir.name, nombre)
+                self.engine.log.info(f"Aislamiento {pid_dir.name} ({nombre}) limpiado")
             else:
                 activos += 1
         if activos:
-            self.engine.log.warning("%d procesos aislados activos", activos)
+            self.engine.log.warning(f"{activos} procesos aislados activos")
         return {"total": activos + limpiados, "limpiados": limpiados, "activos": activos}
 
     def watermark(self) -> dict[str, Any]:
@@ -178,7 +177,7 @@ class CleanupPlugin:
         self.engine.run_git(["add", "-u"])
         result = self.engine.run_git(["commit", "-m", message])
         if result.returncode == 0:
-            self.engine.log.info("Git commit: %s", message)
+            self.engine.log.info(f"Git commit: {message}")
         return {"ok": result.returncode == 0}
 
     def git_rollback(self) -> None:
@@ -193,5 +192,5 @@ class CleanupPlugin:
         except Exception:
             reporte = {}
         if reporte.get("bloqueante"):
-            self.engine.log.warning("Score bloqueante: %s", reporte.get("score", 0))
+            self.engine.log.warning(f"Score bloqueante: {reporte.get("score", 0)}")
         return {"score": reporte.get("score", 0), "bloqueante": reporte.get("bloqueante", False), "raw": reporte}

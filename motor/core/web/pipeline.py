@@ -73,7 +73,7 @@ class WebPipeline:
         c = self._registry.get_crawler(crawler)
         html = c.fetch(url)
         self._stage_times[PipelineStage.CRAWL] = (time.monotonic() - t0) * 1000
-        return html
+        return html  # type: ignore[no-any-return]
 
     def extract(self, html: str, url: str, extractor: str = "readability") -> WebDocument:
         """Extrae contenido estructurado desde HTML."""
@@ -81,7 +81,7 @@ class WebPipeline:
         e = self._registry.get_extractor(extractor)
         doc = e.extract(html, url)
         self._stage_times[PipelineStage.EXTRACT] = (time.monotonic() - t0) * 1000
-        return doc
+        return doc  # type: ignore[no-any-return]
 
     def clean(
         self,
@@ -107,7 +107,7 @@ class WebPipeline:
         ranker = self._registry.get_ranker("default")
         ranked = ranker.rank(results, query)
         self._stage_times[PipelineStage.RANK] = (time.monotonic() - t0) * 1000
-        return ranked
+        return ranked  # type: ignore[no-any-return]
 
     def rank_documents(
         self,

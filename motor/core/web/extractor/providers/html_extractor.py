@@ -14,7 +14,7 @@ from html.parser import HTMLParser
 from motor.core.web.base import Extractor
 from motor.core.web.models import WebDocument
 
-_BLOCK_TAGS: frozenset = frozenset[str](
+_BLOCK_TAGS: frozenset[str] = frozenset[str](
     {
         "p",
         "div",
@@ -35,7 +35,7 @@ _BLOCK_TAGS: frozenset = frozenset[str](
         "td",
     },
 )
-_SKIP_TAGS: frozenset = frozenset[str](
+_SKIP_TAGS: frozenset[str] = frozenset[str](
     {
         "script",
         "style",
@@ -54,8 +54,8 @@ _SKIP_TAGS: frozenset = frozenset[str](
         "aside",
     },
 )
-_WHITESPACE_RE: re.Pattern = re.compile(r"[ \t]+")
-_NEWLINE_RE: re.Pattern = re.compile(r"\n{3,}")
+_WHITESPACE_RE: re.Pattern[str] = re.compile(r"[ \t]+")
+_NEWLINE_RE: re.Pattern[str] = re.compile(r"\n{3,}")
 
 
 def detect_encoding(html: bytes, content_type: str | None = None) -> str:
@@ -107,7 +107,7 @@ def extract_metadata(
             meta["published_time"] = meta[key]
             break
     # canonical
-    m = re.search(
+    m = re.search(  # type: ignore[assignment]
         r'<link\s+[^>]*?rel\s*=\s*["\']canonical["\'][^>]*?href\s*=\s*["\']'
         r'([^"\']+)["\']',
         html,
@@ -185,7 +185,7 @@ def _to_webdocument(
         html=html,
         word_count=word_count,
         quality_score=quality_score,
-        metadata={
+        metadata={  # type: ignore[arg-type]
             "extractor": "html",
             "extraction_time_ms": (time.monotonic() - start_time) * 1000,
             "author": meta.get("author"),
