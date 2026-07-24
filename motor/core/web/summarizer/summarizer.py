@@ -11,7 +11,7 @@ import re
 import threading
 from collections import Counter
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.web.models import WebDocument
@@ -44,7 +44,7 @@ class Summary:
     text: str
     sentences: list[str]
     source_documents: list[str]
-    sentence_origins: list[dict]
+    sentence_origins: list[dict[str, Any]]
     compression_ratio: float
 
 

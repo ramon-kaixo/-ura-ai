@@ -42,22 +42,21 @@ class TestCleanup:
             assert "reason" in result
 
     def test_cleanup_logs_removes_old(self, cleanup):
+        import os as _os
+        import time as _time
+
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch("pathlib.Path.home") as m_home:
                 m_home.return_value = Path(tmp)
                 with mock.patch("pathlib.Path.exists") as m_ex:
                     m_ex.return_value = True
-                    # Create old log file
                     log_dir = Path(tmp) / "URA" / "ura_ia_1972" / "motor" / "observability" / "logs"
                     log_dir.mkdir(parents=True)
                     old_file = log_dir / "old.log"
                     old_file.touch()
-                    import time
-                    time_shift = time.time() - 31 * 86400
-                    os.utime(str(old_file), (time_shift, time_shift))
-                    import os
+                    time_shift = _time.time() - 31 * 86400
+                    _os.utime(str(old_file), (time_shift, time_shift))
                     result = cleanup.cleanup_logs(days=30)
-                    # Should remove or at least not crash
                     assert isinstance(result, dict)
 
     def test_vacuum_sqlite_ok(self, cleanup):
