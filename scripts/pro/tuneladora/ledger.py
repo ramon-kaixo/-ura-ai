@@ -206,3 +206,91 @@ class ExecutionLedger:
         path = ledger_dir / f"{self._execution_id}.json"
         path.write_text(json.dumps(self._entry, indent=2, ensure_ascii=False))
         return path
+
+
+# ── Persistencia SQLite (v4.0) ─────────────────────────
+
+def _init_sqlite(nervioso):
+    import sqlite3
+    db_path = nervioso / "tuneladora.db"
+    with sqlite3.connect(str(db_path)) as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS executions ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "execution_id TEXT UNIQUE,"
+            "pipeline TEXT NOT NULL,"
+            "status TEXT,"
+            "duration_ms INTEGER,"
+            "error TEXT,"
+            "created_at TEXT DEFAULT (datetime('now'))"
+            ")"
+        )
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS metrics ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "metric_name TEXT NOT NULL,"
+            "value REAL,"
+            "labels TEXT,"
+            "created_at TEXT DEFAULT (datetime('now'))"
+            ")"
+        )
+
+
+def save_execution(entry, nervioso):
+    import sqlite3
+    try:
+        _init_sqlite(nervioso)
+        db_path = nervioso / "tuneladora.db"
+        with sqlite3.connect(str(db_path)) as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO executions "
+                "(execution_id, pipeline, status, duration_ms, error) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    entry.get("execution_id", ""),
+                    entry.get("pipeline", "unknown"),
+                    entry.get("result", "unknown"),
+                    entry.get("duration_ms", 0),
+                    "; ".join(entry.get("errors", []))[:500],
+                ),
+            )
+            conn.commit()
+    except Exception:
+        pass
+
+
+def get_history(nervioso, pipeline=None, limit=100):
+    import sqlite3
+    try:
+        _init_sqlite(nervioso)
+        db_path = nervioso / "tuneladora.db"
+        with sqlite3.connect(str(db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            if pipeline:
+                rows = conn.execute(
+                    "SELECT * FROM executions WHERE pipeline = ? ORDER BY created_at DESC LIMIT ?",
+                    (pipeline, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM executions ORDER BY created_at DESC LIMIT ?", (limit,)
+                ).fetchall()
+            return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
+def cleanup_history(nervioso, days=90):
+    import sqlite3
+    try:
+        _init_sqlite(nervioso)
+        db_path = nervioso / "tuneladora.db"
+        with sqlite3.connect(str(db_path)) as conn:
+            r = conn.execute(
+                "DELETE FROM executions WHERE created_at < datetime('now', ?)",
+                (f"-{days} days",),
+            )
+            conn.commit()
+            return r.rowcount
+    except Exception:
+        return 0

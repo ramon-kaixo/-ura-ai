@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-import subprocess
+import subprocess  # nosec B404
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -144,7 +144,7 @@ class ProactiveDetector:
             repo = Path(__file__).resolve().parent.parent.parent.parent
             r = subprocess.run(
                 ["git", "status", "--porcelain"],
-                capture_output=True, text=True, timeout=10, cwd=str(repo), check=False,
+                capture_output=True, text=True, timeout=10, cwd=str(repo), check=False,  # nosec B603 B607
             )
             if r.returncode != 0:
                 return DetectionResult("git", "error", "No es un repo git")
@@ -174,3 +174,51 @@ class ProactiveDetector:
     def get_critical(self, results: list[DetectionResult]) -> list[DetectionResult]:
         """Filtra solo resultados criticos."""
         return [r for r in results if r.status == "critical"]
+
+
+    # ── Auto-healing (v4.0) ─────────────────────────────
+
+    def restart_ollama(self) -> dict:
+        try:
+            import shutil
+            import subprocess  # nosec B404
+            if shutil.which("systemctl"):
+                r = subprocess.run(["systemctl", "restart", "ollama"], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
+                return {"ok": r.returncode == 0, "method": "systemctl", "output": (r.stdout or "")[:200]}
+            r = subprocess.run(["docker", "restart", "ollama"], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
+            return {"ok": r.returncode == 0, "method": "docker", "output": (r.stdout or "")[:200]}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def clear_zombies(self) -> dict:
+        """Mata procesos zombies (estado Z) del sistema, no procesos URA."""
+        import os as _os
+        killed = 0
+        try:
+            for entry in Path("/proc").iterdir():
+                pid = entry.name
+                if not pid.isdigit():
+                    continue
+                try:
+                    Path(f"/proc/{pid}/exe").readlink()
+                    with Path(f"/proc/{pid}/status").open() as f:
+                        status = f.read()
+                    if "State:\tZ" in status:
+                        _os.kill(int(pid), 9)
+                        killed += 1
+                except (OSError, PermissionError, FileNotFoundError):
+                    continue
+            return {"ok": True, "killed": killed}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def restart_service(self, service: str = "ura-tuneladora") -> dict:
+        import shutil
+        import subprocess  # nosec B404
+        if not shutil.which("systemctl"):
+            return {"ok": False, "error": "systemctl no disponible"}
+        try:
+            r = subprocess.run(["systemctl", "restart", service], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
+            return {"ok": r.returncode == 0, "service": service, "output": (r.stdout or "")[:200]}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
