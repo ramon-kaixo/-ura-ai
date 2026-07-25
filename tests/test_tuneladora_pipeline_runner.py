@@ -61,7 +61,9 @@ class TestPipelineRunnerRun:
             phase_index=mock.DEFAULT,
             phase_integrity=mock.DEFAULT,
             phase_verdict=mock.DEFAULT,
+            _acquire_lock=mock.DEFAULT,
         ):
+            runner._acquire_lock.return_value = True
             runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
             runner.phase_static.return_value = [mock.Mock(name="static", status=Status.OK)]
             runner.phase_dynamic.return_value = [mock.Mock(name="dynamic", status=Status.OK)]
