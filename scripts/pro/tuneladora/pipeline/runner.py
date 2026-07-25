@@ -4,6 +4,7 @@ from __future__ import annotations
 import ast
 import compileall
 import contextlib
+import json
 import logging
 import os
 import shutil
@@ -21,6 +22,7 @@ from scripts.pro.tuneladora.memory.short_term import ShortTermMemory
 from scripts.pro.tuneladora.pipeline.llm_fallback import LLMFallback
 from scripts.pro.tuneladora.pipeline.pending_queue import PendingQueue
 from scripts.pro.tuneladora.pipeline.snapshot_manager import SnapshotManager
+from scripts.pro.tuneladora.pipeline.sofia import Sofia, SofiaReport
 from scripts.pro.tuneladora.pipeline.tools.bandit_tool import BanditTool
 from scripts.pro.tuneladora.pipeline.tools.base import Status, ToolBase
 from scripts.pro.tuneladora.pipeline.tools.mypy_tool import MypyTool
@@ -28,6 +30,7 @@ from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 
 log = logging.getLogger("tuneladora.runner")
+LOCK_TIMEOUT = 1800
 
 
 def _free_disk_gb(path: Path) -> float | None:
@@ -63,6 +66,34 @@ def _discover_focused_tests(changed_files: list[str]) -> list[str]:
     return focused
 
 
+def _extract_api(tree: ast.AST) -> dict[str, dict[str, str]]:
+    api: dict[str, dict[str, str]] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            args = [a.arg for a in node.args.args]
+            returns = ast.unparse(node.returns) if node.returns else "None"
+            api[f"def {node.name}"] = {"args": ", ".join(args), "returns": returns}
+        elif isinstance(node, ast.ClassDef):
+            bases = [ast.unparse(b) for b in node.bases]
+            api[f"class {node.name}"] = {"bases": ", ".join(bases)}
+    return api
+
+
+def _api_diff(old_api: dict, new_api: dict) -> list[str]:
+    changes: list[str] = []
+    removed = set(old_api) - set(new_api)
+    added = set(new_api) - set(old_api)
+    common = set(old_api) & set(new_api)
+    for k in removed:
+        changes.append(f"  - {k} (ELIMINADO)")
+    for k in added:
+        changes.append(f"  + {k} (NUEVO)")
+    for k in common:
+        if old_api[k] != new_api[k]:
+            changes.append(f"  ~ {k}: {old_api[k]} → {new_api[k]}")
+    return changes
+
+
 class PipelineRunner:
     def __init__(self, cfg: Configuration, mode: str = "check", files: list[str] | None = None) -> None:
         self.cfg = cfg
@@ -75,7 +106,10 @@ class PipelineRunner:
         self.ltm = LongTermMemory(cfg.ltm_db)
         self.semantic = SemanticMemory(cfg.knowledge_db)
         self.cache = ShortTermMemory(max_size=500, default_ttl=60.0)
+        self.sofia = Sofia(cfg)
         self._last_snapshot: Path | None = None
+        self._sofia_report: SofiaReport = SofiaReport()
+        self._telemetry: dict[str, Any] = {"model": cfg.llm_fallback_model}
         self._build_tools()
 
     def _build_tools(self) -> None:
@@ -88,6 +122,33 @@ class PipelineRunner:
             "bandit": BanditTool(self.cfg.ura_root),
             "mypy": MypyTool(self.cfg.ura_root),
         }
+
+    # ── Lock management ──────────────────────────────────────
+
+    def _acquire_lock(self) -> bool:
+        lock_path = self.cfg.tuneladora_dir / "pipeline.lock"
+        try:
+            self.cfg.tuneladora_dir.mkdir(parents=True, exist_ok=True)
+            if lock_path.exists():
+                age = time.time() - lock_path.stat().st_mtime
+                if age < LOCK_TIMEOUT:
+                    log.warning("Pipeline lock activo (%ds restantes) — abortando", int(LOCK_TIMEOUT - age))
+                    return False
+                log.warning("Lock stale (%ds) — sobrescribiendo", int(age))
+                lock_path.unlink(missing_ok=True)
+            lock_path.write_text(json.dumps({"pid": os.getpid(), "start": time.time(), "mode": self.mode}))
+            return True
+        except OSError as exc:
+            log.warning("Cannot create lock: %s", exc)
+            return True  # degrade: proceed without lock
+
+    def _release_lock(self) -> None:
+        lock_path = self.cfg.tuneladora_dir / "pipeline.lock"
+        try:
+            if lock_path.exists():
+                lock_path.unlink()
+        except OSError:
+            pass
 
     # ── Pre-flight ───────────────────────────────────────────
 
@@ -293,7 +354,54 @@ class PipelineRunner:
             ToolResult(name="index", status=Status.OK, summary=f"{n_concepts} concepts, {n_relations} relations"),
         ])]
 
-    # ── Fase 4: Integridad ───────────────────────────────────
+    # ── Fase 4: API diff ──────────────────────────────────────
+
+    def phase_api_diff(self) -> list[PhaseResult]:
+        from scripts.pro.tuneladora.pipeline.tools.base import ToolResult
+
+        changes: list[str] = []
+        for f in self.files:
+            fp = Path(f)
+            if not fp.exists():
+                fp = self.cfg.ura_root / f
+            if not fp.exists() or not f.endswith(".py"):
+                continue
+            try:
+                new_tree = ast.parse(fp.read_text(encoding="utf-8", errors="replace"))
+            except SyntaxError:
+                continue
+            new_api = _extract_api(new_tree)
+
+            old_content = ""
+            try:
+                r = subprocess.run(
+                    ["git", "show", f"HEAD:{f}"], capture_output=True, text=True,
+                    timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                )
+                if r.returncode == 0:
+                    old_content = r.stdout
+            except Exception as exc:
+                log.debug("git show HEAD:%s failed: %s", f, exc)
+
+            if old_content:
+                try:
+                    old_tree = ast.parse(old_content)
+                    old_api = _extract_api(old_tree)
+                    diffs = _api_diff(old_api, new_api)
+                    changes.extend(diffs)
+                except SyntaxError:
+                    pass
+
+        if changes:
+            log.info("API changes:\n%s", "\n".join(changes))
+            return [PhaseResult("api_diff", Status.WARN, [
+                ToolResult(name="api_diff", status=Status.WARN, summary=f"{len(changes)} API changes"),
+            ])]
+        return [PhaseResult("api_diff", Status.OK, [
+            ToolResult(name="api_diff", status=Status.OK, summary="No API changes"),
+        ])]
+
+    # ── Fase 5: Integridad ───────────────────────────────────
 
     def phase_integrity(self) -> list[PhaseResult]:
         from scripts.pro.tuneladora.pipeline.tools.base import ToolResult
@@ -339,6 +447,16 @@ class PipelineRunner:
         else:
             results.append(PhaseResult("blast_radius", Status.OK))
 
+        # Test manipulation detection
+        test_files = [f for f in changed_files if Path(f).name.startswith("test_")]
+        src_files = [f for f in changed_files if not Path(f).name.startswith("test_") and f.endswith(".py")]
+        if test_files and src_files:
+            msg = f"Tests modificados junto al código: {len(test_files)} tests, {len(src_files)} fuentes"
+            log.warning("INTEGRITY: %s", msg)
+            results.append(PhaseResult("test_manipulation", Status.WARN, [
+                ToolResult(name="test_manipulation", status=Status.WARN, summary=msg),
+            ]))
+
         free_gb: float | None = None
         try:
             free_gb = _free_disk_gb(self.cfg.ura_root)
@@ -357,12 +475,13 @@ class PipelineRunner:
 
         self.ltm.store(LTMEntry(
             key=f"integrity_{self.mode}_{int(time.time())}",
-            value={"files": len(changed_files), "lines": changed_lines, "disk_gb": free_gb or 0},
+            value={"files": len(changed_files), "lines": changed_lines, "disk_gb": free_gb or 0,
+                   "test_files": len(test_files), "src_files": len(src_files)},
             source="runner.phase_integrity", tags=("integrity", "blast"),
         ))
         return results
 
-    # ── Fase 4: Veredicto ────────────────────────────────────
+    # ── Fase 6: Veredicto ────────────────────────────────────
 
     def phase_verdict(self, phase_results: list[list[PhaseResult]]) -> tuple[Status, str]:
         any_fail = False
@@ -379,7 +498,7 @@ class PipelineRunner:
             return Status.WARN, f"Pipeline passed with {n_warn} warnings"
         return Status.OK, "Pipeline passed all checks"
 
-    # ── Fase 5: Commit (solo gate) ───────────────────────────
+    # ── Fase 7: Commit (solo gate) ───────────────────────────
 
     def phase_commit(self) -> list[PhaseResult]:
         if self.mode != "gate":
@@ -454,59 +573,100 @@ class PipelineRunner:
         episode_id = f"tuneladora_{int(t_start)}_{self.mode}"
         all_phase_results: list[list[PhaseResult]] = []
 
-        pre = self.preflight()
-        all_phase_results.append(pre)
-        if any(pr.status == Status.FAIL for pr in pre):
-            return self._finish(episode_id, Status.FAIL, "Pre-flight failed", t_start)
+        if not self._acquire_lock():
+            log.error("Pipeline bloqueado por otro proceso")
+            return self._finish(episode_id, Status.FAIL, "Lock activo", t_start)
 
-        p0 = self.phase_snapshot()
-        all_phase_results.append(p0)
+        try:
+            self._telemetry["start"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-        p1 = self.phase_static()
-        all_phase_results.append(p1)
+            pre = self.preflight()
+            all_phase_results.append(pre)
+            if any(pr.status == Status.FAIL for pr in pre):
+                return self._finish(episode_id, Status.FAIL, "Pre-flight failed", t_start)
 
-        p2 = self.phase_dynamic()
-        all_phase_results.append(p2)
+            p0 = self.phase_snapshot()
+            all_phase_results.append(p0)
 
-        p_index = self.phase_index()
-        all_phase_results.append(p_index)
+            p1 = self.phase_static()
+            all_phase_results.append(p1)
 
-        p3 = self.phase_integrity()
-        all_phase_results.append(p3)
+            # Sofía review (between static and dynamic)
+            if self.mode in ("gate", "fix"):
+                diff = subprocess.run(
+                    ["git", "diff"], capture_output=True, text=True, timeout=10,
+                    check=False, cwd=str(self.cfg.ura_root),
+                ).stdout[:8000]
+                self._sofia_report = self.sofia.review(
+                    diff=diff,
+                    tests_modified="",
+                    api_diff="",
+                )
+                self._telemetry["sofia_criticos"] = self._sofia_report.n_criticos
+                self._telemetry["sofia_advertencias"] = self._sofia_report.n_advertencias
+                if self._sofia_report.hallazgos:
+                    all_phase_results.append([PhaseResult("sofia", Status.WARN)])
 
-        # Commit (gate mode only, before verdict so gate always tries to commit)
-        p_commit = self.phase_commit()
-        all_phase_results.append(p_commit)
+            p2 = self.phase_dynamic()
+            all_phase_results.append(p2)
 
-        verdict, msg = self.phase_verdict(all_phase_results)
+            p_api = self.phase_api_diff()
+            all_phase_results.append(p_api)
 
-        if verdict == Status.FAIL and self._last_snapshot is not None:
-            log.warning("Pipeline FAILED — restoring snapshot %s", self._last_snapshot.name)
-            self.snapshot_manager.restore(self._last_snapshot)
-            msg = "Pipeline FAILED — rollback executed"
+            p_index = self.phase_index()
+            all_phase_results.append(p_index)
 
-        head = ""
-        with contextlib.suppress(Exception):
-            head = subprocess.run(
-                ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
-                timeout=5, check=False, cwd=str(self.cfg.ura_root),
-            ).stdout.strip()
+            p3 = self.phase_integrity()
+            all_phase_results.append(p3)
 
-        self.pending_queue.record_run(
-            mode=self.mode, verdict=verdict.value, seconds=time.monotonic() - t_start,
-            n_files=len(self.files), head=head, failures=msg if verdict != Status.OK else "",
-        )
+            p_commit = self.phase_commit()
+            all_phase_results.append(p_commit)
 
-        log.info("Pipeline %s: %s (%.1fs)", self.mode, msg, time.monotonic() - t_start)
-        return self._finish(episode_id, verdict, msg, t_start)
+            verdict, msg = self.phase_verdict(all_phase_results)
+
+            if verdict == Status.FAIL and self._last_snapshot is not None:
+                log.warning("Pipeline FAILED — restoring snapshot %s", self._last_snapshot.name)
+                self.snapshot_manager.restore(self._last_snapshot)
+                msg = "Pipeline FAILED — rollback executed"
+
+            head = ""
+            with contextlib.suppress(Exception):
+                head = subprocess.run(
+                    ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                    timeout=5, check=False, cwd=str(self.cfg.ura_root),
+                ).stdout.strip()
+
+            self._telemetry["duration_s"] = time.monotonic() - t_start
+            self._telemetry["verdict"] = verdict.name
+            self._telemetry["n_files"] = len(self.files)
+            self._telemetry["head"] = head
+
+            self.pending_queue.record_run(
+                mode=self.mode, verdict=verdict.value, seconds=time.monotonic() - t_start,
+                n_files=len(self.files), head=head, failures=msg if verdict != Status.OK else "",
+            )
+
+            log.info("Pipeline %s: %s (%.1fs) [sofia: %d/%d]",
+                     self.mode, msg, time.monotonic() - t_start,
+                     self._sofia_report.n_criticos, self._sofia_report.n_advertencias)
+            return self._finish(episode_id, verdict, msg, t_start)
+        finally:
+            self._release_lock()
 
     def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
         duration_ms = (time.monotonic() - t_start) * 1000
+        details = {
+            "mode": self.mode,
+            "n_files": len(self.files),
+            "sofia_criticos": self._sofia_report.n_criticos,
+            "sofia_advertencias": self._sofia_report.n_advertencias,
+            "telemetry": self._telemetry,
+        }
         self.episodic.record(Episode(
             episode_id=episode_id, pipeline="tuneladora", status=verdict.name,
             started=time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(t_start)),
             finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
-            summary=msg, details={"mode": self.mode, "n_files": len(self.files)},
+            summary=msg, details=details,
             duration_ms=duration_ms, error=msg if verdict == Status.FAIL else None,
         ))
         if verdict == Status.OK:

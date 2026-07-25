@@ -53,6 +53,7 @@ class PendingQueue:
     def _ensure_tables(self) -> None:
         self._db.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(str(self._db)) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(_SCHEMA)
 
     def _ok_or(self) -> bool:
