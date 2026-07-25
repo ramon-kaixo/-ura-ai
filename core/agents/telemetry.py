@@ -116,3 +116,10 @@ class Telemetria:
             "llm": self.llm_stats(),
             "f821": self.f821_count(),
         }
+
+    # Shadow Health hooks
+    def on_layer_start(self, layer: int, name: str) -> None:
+        log.debug("Shadow Health layer %d (%s) starting", layer, name)
+
+    def on_layer_end(self, layer: int, name: str, status: str, duration_ms: float) -> None:
+        log.info("Shadow Health layer %d (%s): %s in %.0fms", layer, name, status, duration_ms)
