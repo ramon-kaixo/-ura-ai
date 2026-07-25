@@ -11,7 +11,10 @@ import logging
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import os
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -84,11 +87,15 @@ async def comprimir_a_ideas(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     texto: str,
     fuente: str = "",
     hash_origen: str = "",
     fecha_fuente: str = "",
     modelo: str = "",
+=======
+    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
+>>>>>>> Stashed changes
 =======
     texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
 >>>>>>> Stashed changes

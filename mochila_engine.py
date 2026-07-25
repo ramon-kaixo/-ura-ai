@@ -10,6 +10,9 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -83,6 +86,7 @@ class CB:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def __init__(self, f) -> None:
         self.f = f
         self.ti = _now()
@@ -106,6 +110,31 @@ class MochilaEngine:
     def __init__(self, e) -> None:
         self._e = e
         self._p = None
+=======
+    def __init__(s, f):
+        s.f = f
+        s.ti = _now()
+        s.tf = None
+        s.d = None
+        s.ok = False
+        s.er = None
+        s.dt = {}
+
+    def fin(s, ok=True, er=None):
+        s.tf = _now()
+        s.d = (datetime.fromisoformat(s.tf) - datetime.fromisoformat(s.ti)).total_seconds() * 1000
+        s.ok = ok
+        s.er = er
+
+    def ad(s):
+        return {"f": str(s.f), "ti": s.ti, "tf": s.tf, "d": s.d, "ok": s.ok, "er": s.er, **s.dt}
+
+
+class MochilaEngine:
+    def __init__(s, e):
+        s._e = e
+        s._p = None
+>>>>>>> Stashed changes
 =======
     def __init__(s, f):
         s.f = f
@@ -367,6 +396,7 @@ class MochilaEngine:
         return cls(json.loads(p.read_text()))
 
     @property
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -1162,6 +1192,84 @@ class MochilaEngine:
         return d
 
 >>>>>>> Stashed changes
+=======
+    def id(s):
+        return s._e["id"]
+
+    @property
+    def url(s):
+        return s._e["url"]
+
+    @property
+    def tipo(s):
+        return TipoPipeline(s._e["tp"])
+
+    @property
+    def hashes(s):
+        return s._e["h"]
+
+    @property
+    def calidad(s):
+        return s._e["c"]
+
+    @property
+    def red(s):
+        return s._e["r"]
+
+    def fc(s, f):
+        return str(f) in s._e["fc"]
+
+    def fase(s, f, z=False):
+        return _FC(s, f)
+
+    def _rc(s, c):
+        k = str(c.f)
+        s._e["cc"][k] = c.ad()
+        if c.ok and k not in s._e["fc"]:
+            s._e["fc"].append(k)
+        s._tm()
+
+    def reg_r(s, **k):
+        s._e["r"].update(k)
+        s._tm()
+
+    def reg_h(s, **k):
+        s._e["h"].update(k)
+        s._tm()
+
+    def reg_c(s, **k):
+        s._e["c"].update(k)
+        s._tm()
+
+    def reg_co(s, **k):
+        s._e["co"].update(k)
+        s._tm()
+
+    def reg_e(s, **k):
+        s._e["es"].update(k)
+        s._tm()
+
+    def reg_i(s, **k):
+        s._e["in"].update(k)
+        s._tm()
+
+    def reg_f(s, **k):
+        s._e["fb"].update(k)
+        s._tm()
+
+    def mc(s):
+        s._e["st"] = str(EstadoMochila.COMPLETADA)
+        s._tm()
+
+    def guardar(s, p=None):
+        d = p or s._p
+        if d is None:
+            raise ValueError("no path")
+        d.parent.mkdir(parents=True, exist_ok=True)
+        d.write_text(json.dumps(s._e, ensure_ascii=False, indent=2))
+        return d
+
+>>>>>>> Stashed changes
     def ad(s):
         return dict(s._e)
 
@@ -1178,6 +1286,9 @@ class MochilaEngine:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -1200,6 +1311,7 @@ class MochilaEngine:
     def _rd(nc, mid):
         return MOCHILAS_DIR / f"{datetime.now(tz=UTC).strftime('%Y-%m-%d')}_{nc}" / f"mochila_{mid[:8]}.json"
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -1337,6 +1449,18 @@ class _FC:
         s._c = None
 
 >>>>>>> Stashed changes
+=======
+    def __repr__(s):
+        return f"Mochila(id={s.id[:8]}...,tipo={s.tipo})"
+
+
+class _FC:
+    def __init__(s, m, f):
+        s._m = m
+        s._f = f
+        s._c = None
+
+>>>>>>> Stashed changes
     async def __aenter__(s):
         s._c = CB(s._f)
         return s._c
@@ -1356,6 +1480,9 @@ class _FC:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

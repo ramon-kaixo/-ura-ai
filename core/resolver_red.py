@@ -31,7 +31,10 @@ import logging
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import socket
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -64,7 +67,11 @@ from pathlib import Path
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.resolver_red")
+=======
+logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 =======
 logger = logging.getLogger(__name__)
 >>>>>>> Stashed changes
@@ -112,8 +119,13 @@ def cargar_inventario() -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
+        except Exception as e:
+            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
@@ -190,8 +202,13 @@ def resolver_dns(hostname: str) -> str | None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error querying Tailscale status for %s", hostname)
+=======
+    except Exception as e:
+        logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
@@ -262,8 +279,13 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error pinging %s", ip)
+=======
+    except Exception as e:
+        logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
