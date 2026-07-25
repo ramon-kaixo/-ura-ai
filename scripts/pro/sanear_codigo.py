@@ -10,7 +10,10 @@ Uso: python3 scripts/pro/sanear_codigo.py [--check-only]
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import ast
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -61,7 +64,11 @@ def fix_multiline_statements(path: Path) -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """E702: split statements joined with."""
+=======
+    """E702: split statements joined with"""
+>>>>>>> Stashed changes
 =======
     """E702: split statements joined with"""
 >>>>>>> Stashed changes
@@ -93,7 +100,10 @@ def fix_multiline_statements(path: Path) -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             # Check if it's actually multiple statements
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -118,7 +128,11 @@ def fix_multiline_statements(path: Path) -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
+=======
+                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+>>>>>>> Stashed changes
 =======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
 >>>>>>> Stashed changes
@@ -183,6 +197,9 @@ def fix_magic_values(path: Path) -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -220,6 +237,7 @@ def main() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     total_before = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -229,6 +247,8 @@ def main() -> None:
     )
     len([l for l in total_before.stderr.split("\n") if "Found" in l])
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -278,6 +298,7 @@ def main() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     after = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -287,6 +308,8 @@ def main() -> None:
     )
     len([l for l in after.stderr.split("\n") if "Found" in l])
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

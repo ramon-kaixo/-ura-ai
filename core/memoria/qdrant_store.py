@@ -6,8 +6,11 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from __future__ import annotations
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -99,8 +102,13 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error buscando punto existente en Qdrant")
+=======
+        except Exception as e:
+            log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
