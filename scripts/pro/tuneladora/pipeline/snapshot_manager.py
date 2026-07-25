@@ -28,12 +28,15 @@ class SnapshotManager:
         snapshot_dir.mkdir(parents=True, exist_ok=True)
 
         copied: list[str] = []
+        created: list[str] = []
         for f in files:
             if f.exists():
                 dest = snapshot_dir / f.relative_to(f.anchor) if f.is_absolute() else snapshot_dir / f
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(str(f), str(dest))
                 copied.append(str(f))
+            else:
+                created.append(str(f))
 
         meta = {
             "label": label,
@@ -41,10 +44,11 @@ class SnapshotManager:
             "head": head,
             "model": model,
             "files": copied,
+            "created_files": created,
             "count": len(copied),
         }
         (snapshot_dir / "meta.json").write_text(json.dumps(meta, indent=2))
-        self._log(f"Snapshot {label}: {len(copied)} files → {snapshot_dir}")
+        self._log(f"Snapshot {label}: {len(copied)} restored + {len(created)} new → {snapshot_dir}")
         return snapshot_dir
 
     def restore(self, snapshot_dir: Path) -> bool:
@@ -62,7 +66,13 @@ class SnapshotManager:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(str(src), str(dest))
                 restored += 1
-        self._log(f"Restored {restored}/{meta.get('count', 0)} files from {snapshot_dir.name}")
+        deleted = 0
+        for f in meta.get("created_files", []):
+            target = Path(f)
+            if target.exists():
+                target.unlink()
+                deleted += 1
+        self._log(f"Restored {restored}/{meta.get('count', 0)} files, deleted {deleted} created files from {snapshot_dir.name}")
         return True
 
     def latest(self) -> Path | None:
