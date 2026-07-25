@@ -205,20 +205,7 @@ def main() -> int:
     # Resumen
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
         timestamp = datetime.now(UTC).isoformat()
-<<<<<<< Updated upstream
         with open(ALERT_FILE, "a") as f:  # noqa: PTH123
-=======
-        with open(ALERT_FILE, "a") as f:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:
         pass

@@ -30,28 +30,8 @@ async def _ram_info() -> dict:
                 used = int(parts[2]) if len(parts) > 2 else 0
                 riesgo = "alto" if used > total * 0.95 else "medio" if used > total * 0.85 else "bajo"
                 return {"total_gb": total, "usado_gb": used, "libre_gb": total - used, "riesgo": riesgo}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    except Exception:  # noqa: S110
-        pass
-=======
     except Exception as e:
         logger.warning("_ram_info: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_ram_info: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_ram_info: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_ram_info: %s", e)
->>>>>>> Stashed changes
     return {"error": "free -g not available"}
 
 
@@ -104,55 +84,15 @@ async def _tunnel_status() -> dict:
         )
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         active = stdout.decode().strip() == "active"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    except Exception:  # noqa: S110
-        pass
-=======
     except Exception as e:
         logger.warning("_external_services tunnel: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services tunnel: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services tunnel: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services tunnel: %s", e)
->>>>>>> Stashed changes
     searxng_ok = False
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get("http://127.0.0.1:8888/search?q=health&format=json")
             searxng_ok = resp.status_code == 200
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    except Exception:  # noqa: S110
-        pass
-=======
     except Exception as e:
         logger.warning("_external_services searxng: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services searxng: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services searxng: %s", e)
->>>>>>> Stashed changes
-=======
-    except Exception as e:
-        logger.warning("_external_services searxng: %s", e)
->>>>>>> Stashed changes
     return {"tunnel_active": active, "searxng_accessible": searxng_ok}
 
 
