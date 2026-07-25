@@ -11,7 +11,10 @@ from core.memoria.bridge import buscar_y_aprender
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from core.memoria.ingesto import procesados_local  # noqa: F401
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
