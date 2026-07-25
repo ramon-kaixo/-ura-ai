@@ -1,6 +1,4 @@
-import shlex
-
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 """Sistema Nervioso Central (SNC) — Polling activo cada 10s.
 Monitoriza procesos vía HTTP/socket, escribe estado en ~/.ura/run/ura_snc_state.json.
 Ejecuta emergency_runbook.json ante fallos. Autónomo, sin dependencia de red.
@@ -11,14 +9,8 @@ Modo Soberanía: GX10 opera independientemente del Mac.
 import json
 import os
 import platform
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import shlex
 import shutil
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import signal
 import subprocess
 import sys
