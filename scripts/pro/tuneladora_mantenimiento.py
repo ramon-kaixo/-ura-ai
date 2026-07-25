@@ -90,6 +90,7 @@ def _detectar_nivel() -> str:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if hora in (6, 12, 18):
         return "medio"
     return "ligero"
@@ -156,6 +157,8 @@ def main() -> int:  # noqa: PLR0915
 
     # ── Profundo: duplicados, deuda, forense, auditoria, git ──
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
