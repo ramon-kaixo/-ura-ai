@@ -509,7 +509,7 @@ class PipelineRunner:
         if not self.cfg.auto_commit:
             return [PhaseResult("commit", Status.SKIP)]
         try:
-            msg = f"tuneladora: auto-fix {self.mode} — {len(self.files)} file(s)"
+            msg = f"tuneladora: auto-fix {self.mode} - {len(self.files)} file(s)"
             r = subprocess.run(
                 ["git", "add", "-u"], capture_output=True, text=True, timeout=30,
                 check=False, cwd=str(self.cfg.ura_root),
