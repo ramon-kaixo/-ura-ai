@@ -209,6 +209,9 @@ def main() -> int:
         with open(ALERT_FILE, "a") as f:  # noqa: PTH123
 =======
         with open(ALERT_FILE, "a") as f:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:

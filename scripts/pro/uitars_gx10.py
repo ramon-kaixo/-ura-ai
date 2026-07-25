@@ -15,8 +15,12 @@ import time
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import urllib.request
 from datetime import UTC, datetime
+=======
+from datetime import datetime
+>>>>>>> Stashed changes
 =======
 from datetime import datetime
 >>>>>>> Stashed changes
@@ -56,7 +60,11 @@ def iniciar_xvfb() -> bool:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)  # noqa: PLW1510
+=======
+        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
 =======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
 >>>>>>> Stashed changes
@@ -117,6 +125,9 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -140,8 +151,11 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -164,8 +178,11 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def main() -> None:
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -188,6 +205,7 @@ def main():
     resultado = analizar_con_ollama(imagen, "Describe esta interfaz en detalle")
     path = REPORTS_DIR / f"uitars_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"modo": modo, "resultado": resultado.texto}, indent=2))
+
 
 
 

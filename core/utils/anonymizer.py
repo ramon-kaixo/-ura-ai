@@ -15,7 +15,11 @@ PATTERNS: dict[str, re.Pattern] = {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
+=======
+        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+>>>>>>> Stashed changes
 =======
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
 >>>>>>> Stashed changes
@@ -57,6 +61,7 @@ def sanitize_text(text: str) -> str:
 
 
 
+
 if __name__ == "__main__":
     import sys
 
@@ -67,7 +72,11 @@ if __name__ == "__main__":
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         with open(file_path, encoding="utf-8") as f:  # noqa: PTH123
+=======
+        with open(file_path, encoding="utf-8") as f:
+>>>>>>> Stashed changes
 =======
         with open(file_path, encoding="utf-8") as f:
 >>>>>>> Stashed changes
