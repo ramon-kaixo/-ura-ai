@@ -27,6 +27,7 @@ def _publish_to_event_bus(record: dict) -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     try:
         from core.event_bus import publish
 
@@ -75,6 +76,8 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     from core.event_bus import publish
 
     publish(
@@ -109,6 +112,9 @@ def _save_to_qdrant(record: dict) -> None:
         )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

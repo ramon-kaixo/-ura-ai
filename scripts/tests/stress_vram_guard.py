@@ -39,8 +39,13 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception:
+            logger.exception("Error en petición concurrente %s", id_agente)
+>>>>>>> Stashed changes
 =======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)

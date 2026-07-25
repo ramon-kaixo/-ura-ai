@@ -33,8 +33,13 @@ async def _ram_info() -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception as e:
+        logger.warning("_ram_info: %s", e)
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         logger.warning("_ram_info: %s", e)
@@ -102,8 +107,13 @@ async def _tunnel_status() -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception as e:
+        logger.warning("_external_services tunnel: %s", e)
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         logger.warning("_external_services tunnel: %s", e)
@@ -124,8 +134,13 @@ async def _tunnel_status() -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception as e:
+        logger.warning("_external_services searxng: %s", e)
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         logger.warning("_external_services searxng: %s", e)

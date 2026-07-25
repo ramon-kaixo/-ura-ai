@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider
 
@@ -39,6 +40,8 @@ def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
         return os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

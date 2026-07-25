@@ -82,6 +82,9 @@ class GuardianOpenCLaw:
             with open(self.audit_log, "a", encoding="utf-8") as f:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

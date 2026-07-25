@@ -17,7 +17,12 @@ from pathlib import Path
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 ORCHESTRATOR_HOST = "10.164.1.99"
+=======
+# Configuration
+ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
 =======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
