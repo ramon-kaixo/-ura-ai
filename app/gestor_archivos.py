@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 from core.open_claw_reporte import get_cola_pendiente
 
+
 class GestorArchivosSeguro:
     def __init__(self, root_path: str | None = None) -> None:
         self.root_path = root_path or str(Path.home() / "URA")
@@ -25,17 +26,35 @@ class GestorArchivosSeguro:
         if not Path(self.root_path).exists():
             return []
         try:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return [d for d in os.listdir(self.root_path) if Path(os.path.join(self.root_path, d).is_dir())]  # noqa: PTH118, PTH208
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
+=======
             return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
+>>>>>>> Stashed changes
         except Exception:
             logger.exception("Error listing projects in %s", self.root_path)
             return []

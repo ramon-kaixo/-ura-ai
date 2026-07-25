@@ -1,3 +1,10 @@
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
 import logging
 import os
@@ -5,12 +12,15 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+=======
 """Re-export de UraConfig desde core/config.py.
+>>>>>>> Stashed changes
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+<<<<<<< Updated upstream
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
 RUTA_CONFIG_DEFECTO = os.environ.get("URA_CONFIG_PATH", "/etc/ura/config.json")
@@ -18,6 +28,7 @@ RUTA_DEPLOY_DEFECTO = os.environ.get("URA_DEPLOY_DIR", "/home/ramon/URA/ura_ia_1
 HOST_ASUS_DEFECTO = os.environ.get("ASUS_HOST", "100.72.103.12")
 PUERTO_ASUS_DEFECTO = int(os.environ.get("ASUS_PORT", "4198"))
 INTERFAZ_TAILSCALE_DEFECTO = os.environ.get("TAILSCALE_IFACE", "tailscale0")
+
 
 def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
     """Aplica configuración desde JSON legacy (path arg, URA_CONFIG, /etc/ura/config.json).
@@ -41,6 +52,7 @@ def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
             except (json.JSONDecodeError, OSError) as e:
                 log.warning("error al cargar config %s: %s", p, e)
             break
+
 
 def _apply_config_overrides(c: "UraConfig") -> None:
     """Sobrescribe campos compartidos desde CONFIG (system_config.json)."""
@@ -70,6 +82,7 @@ def _apply_config_overrides(c: "UraConfig") -> None:
     if llm.get("provider"):
         c.llm_provider = llm["provider"]
 
+
 def _apply_env_overrides(c: "UraConfig") -> None:
     """Sobrescribe campos desde env vars (máxima prioridad)."""
     c.qdrant_host = os.environ.get("URA_QDRANT_HOST", c.qdrant_host)
@@ -89,6 +102,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
     c.ollama_max_tokens = int(os.environ.get("URA_OLLAMA_MAX_TOKENS", str(c.ollama_max_tokens)))
     c.llm_provider = os.environ.get("URA_LLM_PROVIDER", c.llm_provider)
 
+
 def _load_config_dict() -> dict[str, Any] | None:
     """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
     try:
@@ -98,12 +112,14 @@ def _load_config_dict() -> dict[str, Any] | None:
     except Exception:
         return None
 
+
 RUTAS_CONFIG_OPENCODE = [
     "/etc/opencode/opencode.json",
     "/etc/opencode/opencode.jsonc",
     "/home/ramon/URA/ura_ia_1972/opencode.json",
     "/home/ramon/URA/ura_ia_1972/opencode.jsonc",
 ]
+
 
 DEFAULT_OLLAMA_HOST = "localhost"
 DEFAULT_OLLAMA_PORT = 11434
@@ -113,6 +129,7 @@ DEFAULT_OLLAMA_TIMEOUT = 120
 DEFAULT_OLLAMA_TEMPERATURE = 0.3
 DEFAULT_OLLAMA_MAX_TOKENS = 1024
 DEFAULT_LLM_PROVIDER = "ollama"
+
 
 @dataclass
 class UraConfig:
@@ -172,61 +189,56 @@ class UraConfig:
         _apply_config_overrides(c)
         _apply_env_overrides(c)
         return c
+=======
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+>>>>>>> Stashed changes
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+>>>>>>> Stashed changes
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+>>>>>>> Stashed changes
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+>>>>>>> Stashed changes
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+>>>>>>> Stashed changes
+=======
 """Re-export de UraConfig desde core/config.py.
 
 Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
-from motor.core.config import (  # noqa: F401
+>>>>>>> Stashed changes
+from core.config import (  # noqa: F401
     HOST_ASUS_DEFECTO,
     INTERFAZ_TAILSCALE_DEFECTO,
     PUERTO_ASUS_DEFECTO,
@@ -235,3 +247,22 @@ from motor.core.config import (  # noqa: F401
     RUTAS_CONFIG_OPENCODE,
     UraConfig,
 )
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes

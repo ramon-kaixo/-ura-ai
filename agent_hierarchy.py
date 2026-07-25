@@ -14,27 +14,42 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 ORCHESTRATOR_HOST = "10.164.1.99"
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
+=======
 # Configuration
 ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
 ORCHESTRATOR_PORT = 18789
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
@@ -44,6 +59,7 @@ APPROVAL_SOCKET = "/tmp/ura_approval.sock"
 logger = logging.getLogger(__name__)
 _GATEWAY_TOKEN: str | None = None
 
+
 def _get_token() -> str:
     global _GATEWAY_TOKEN
     if _GATEWAY_TOKEN is None:
@@ -51,6 +67,7 @@ def _get_token() -> str:
 
         _GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
     return _GATEWAY_TOKEN
+
 
 class PermissionLevel(Enum):
     """Permission levels for agent actions."""
@@ -61,6 +78,7 @@ class PermissionLevel(Enum):
     APPROVE = 3  # Requiere tu ok (prepara y espera)
     USER_ONLY = 4  # Solo tú (nunca delegar)
 
+
 class AgentRole(Enum):
     """Agent roles in the hierarchy."""
 
@@ -69,6 +87,7 @@ class AgentRole(Enum):
     INSTALLER = "installer"
     FORMS = "forms"
     EXECUTOR = "executor"
+
 
 class ActionType(Enum):
     """Types of actions agents can perform."""
@@ -81,6 +100,7 @@ class ActionType(Enum):
     MOVE_FILE = "move_file"
     ACCESS_PAYMENT = "access_payment"
     SYSTEM_CHANGE = "system_change"
+
 
 class ActionLogger:
     """Logs all agent actions with full audit trail."""
@@ -116,6 +136,7 @@ class ActionLogger:
 
         logger.info(f"Action logged: {agent_id} ({role.value}) - {action.value} - {result}")
 
+
 class QuarantineSystem:
     """Never delete - always move to quarantine."""
 
@@ -139,6 +160,7 @@ class QuarantineSystem:
         except Exception as e:
             logger.exception(f"Failed to quarantine {source}: {e}")
             return ""
+
 
 class ApprovalSystem:
     """Handles user approval for sensitive operations."""
@@ -195,6 +217,7 @@ class ApprovalSystem:
             subprocess.run(cmd, capture_output=True, timeout=30, check=False)
         except Exception as e:
             logger.exception(f"Failed to send approval to Mac: {e}")
+
 
 class Agent:
     """Base agent class."""
@@ -302,6 +325,7 @@ class Agent:
         """Notify that user must perform action."""
         logger.warning(f"USER ONLY: {action.value} requires manual user intervention")
 
+
 class Orchestrator(Agent):
     """Level 1: Orchestrator - coordinates everything, never executes directly."""
 
@@ -334,6 +358,7 @@ class Orchestrator(Agent):
 
         logger.error(f"No agent available for task: {task_type.value}")
         return False
+
 
 class CriticalAgent(Agent):
     """Level 2: Critical - shadows every operation, never deletes."""
@@ -368,6 +393,7 @@ class CriticalAgent(Agent):
         """Halt a suspicious operation."""
         logger.critical(f"HALTING OPERATION: {target_agent}")
         # Send alert to orchestrator and user
+
 
 class InstallerAgent(Agent):
     """Level 3: Installer - installs dependencies, configures environments."""
@@ -446,6 +472,7 @@ class InstallerAgent(Agent):
 
         return bool(quarantine_path)
 
+
 class FormsAgent(Agent):
     """Level 3: Forms - fills forms, registrations, data."""
 
@@ -479,6 +506,7 @@ class FormsAgent(Agent):
         # Send to user for approval
 
         return True
+
 
 class ExecutorAgent(Agent):
     """Level 3: Executor - executes code in isolated sandbox."""
@@ -589,6 +617,7 @@ class ExecutorAgent(Agent):
             logger.exception(f"Failed to move file: {e}")
             return False
 
+
 def main() -> None:
     """Initialize the agent hierarchy."""
     logger.info("Initializing URA Agent Hierarchy System")
@@ -614,6 +643,7 @@ def main() -> None:
     # Keep running
     while True:
         time.sleep(60)
+
 
 if __name__ == "__main__":
     main()

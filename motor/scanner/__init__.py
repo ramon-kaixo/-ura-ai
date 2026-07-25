@@ -1,11 +1,13 @@
 """Motor de escaneo — Scanner + fábrica."""
 
+<<<<<<< Updated upstream
 from motor.scanner._state import ScannerState, build_scanner_state  # noqa: F401
 from motor.scanner.scanner import (  # noqa: F401
     SERVICIOS_DOCKER,
     SERVICIOS_SYSTEMD,
     Scanner,
 )
+=======
 from motor.core.config import UraConfig
 from motor.core.state import ScanResult
 from motor.scanner.calibration import Calibration
@@ -22,6 +24,7 @@ SERVICIOS_SYSTEMD = ["sshd", "docker", "opencode"]
 SERVICIOS_DOCKER = ["qdrant", "n8n", "searxng", "vane", "agent-search"]
 DOCKER_ALIASES = {"vane": "perplexica-vane-1", "agent-search": "agent-search-agent-search-1"}
 RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
+
 
 class Scanner:
     """Escáner principal del sistema: servicios, recursos, red y hardware."""
@@ -400,3 +403,4 @@ class Scanner:
         except Exception as e:
             log.debug("systemctl list-failed falló: %s", e)
             return []
+>>>>>>> Stashed changes

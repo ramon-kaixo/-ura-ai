@@ -26,17 +26,35 @@ import sys
 import time
 from pathlib import Path
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.ingestador_red")
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 
 URA = Path(__file__).resolve().parent.parent
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -46,33 +64,50 @@ TAREAS_PESADAS = {"refactorizar", "entrenar", "inferir", "sandbox", "backup", "c
 TAREAS_MEDIAS = {"analizar", "comprimir", "sincronizar", "validar"}
 TAREAS_LIGERAS = {"monitorear", "reportar", "ping", "dashboard"}
 
+
 def cargar_inventario() -> dict:
     if INVENTARIO_PATH.exists():
         try:
             return json.loads(INVENTARIO_PATH.read_text())
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
     return {"dispositivos": {}}
+
 
 def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, str, str]:
     """Ejecuta un comando vía Tailscale SSH (sin password, auth criptográfica).
@@ -104,6 +139,7 @@ def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, 
         return -1, "", "timeout"
     except Exception as e:
         return -1, "", str(e)
+
 
 def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
     """Distribuye una tarea al dispositivo más adecuado según su perfil.
@@ -167,6 +203,7 @@ def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
         "error": stderr[:100],
     }
 
+
 def estado_dispositivos() -> dict:
     """Verifica estado de todos los dispositivos via ping + SSH."""
     inv = cargar_inventario()
@@ -196,6 +233,7 @@ def estado_dispositivos() -> dict:
         "offline": len(resultados) - online_count,
         "dispositivos": resultados,
     }
+
 
 def main() -> None:
     import argparse
@@ -243,6 +281,7 @@ def main() -> None:
             for _dev_id, dev in sorted(estado["dispositivos"].items()):
                 "✅" if dev["online"] else "❌"
                 f"{dev['ip_cable']} | {dev['ip_tailscale']}"
+
 
 if __name__ == "__main__":
     main()

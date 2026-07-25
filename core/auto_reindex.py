@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 from core.chunking import chunk_semantic
-from motor.core.config import UraConfig
+from core.config import UraConfig
 from core.document_quality import (
     content_type as detect_content_type,
 )
@@ -25,9 +25,30 @@ from core.document_quality import (
 )
 from core.qdrant_client import QdrantClient
 from core.stealth_fetcher import fetch_stealth
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, IVectorStore
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 log = logging.getLogger("ura.auto_reindex")
 
@@ -39,6 +60,7 @@ from motor.core.config import UraConfig
 
 _cfg: dict[str, str | int] | None = None
 
+
 def _get_qdrant_base() -> str:
     global _cfg
     if _cfg is None:
@@ -47,6 +69,7 @@ def _get_qdrant_base() -> str:
     host = _cfg["host"]
     port = _cfg["port"]
     return f"http://{host}:{port}"
+
 
 async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
     """REST fallback for find_stale_docs using HTTP API."""
@@ -96,6 +119,7 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
 
     return all_stale
 
+
 async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS, config: IConfigProvider | None = None) -> list:
     from motor.core.qdrant_client import QdrantClient
 
@@ -140,6 +164,7 @@ async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS, config: IConfigProvide
         log.warning("Error finding stale docs: %s", e)
         return []
 
+
 async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:  # noqa: ASYNC109
     try:
         html = await fetch_stealth(url, timeout=timeout)
@@ -149,6 +174,7 @@ async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:  #
     except Exception as e:
         log.debug("Fetch failed for %s: %s", url, e)
         return None, False
+
 
 async def atomic_upsert(html: str, url: str, config: IConfigProvider | None = None) -> bool:
     from motor.core.qdrant_client import QdrantClient
@@ -189,6 +215,7 @@ async def atomic_upsert(html: str, url: str, config: IConfigProvider | None = No
     guardados = qdrant.guardar_documentos_batch(docs, COLLECTION)
     return guardados > 0
 
+
 async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = None) -> dict:
     stale = await find_stale_docs(cutoff_days=CUTOFF_DAYS, config=config)
     stats = {"found": len(stale), "reindexed": 0, "failed": 0, "skipped": 0}
@@ -215,10 +242,12 @@ async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = N
 
     return stats
 
+
 def main() -> None:
     dry_run = "--execute" not in sys.argv
     stats = asyncio.run(reindex_stale(dry_run=dry_run))
     log.info(json.dumps(stats, indent=2))
+
 
 if __name__ == "__main__":
     main()

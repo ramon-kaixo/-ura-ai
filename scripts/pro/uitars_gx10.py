@@ -10,18 +10,36 @@ import os
 import shutil
 import subprocess
 import time
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import urllib.request
 from datetime import UTC, datetime
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
+>>>>>>> Stashed changes
+=======
 from datetime import datetime
-from datetime import datetime
-from datetime import datetime
-from datetime import datetime
+>>>>>>> Stashed changes
 from io import BytesIO
 from pathlib import Path
 
@@ -32,30 +50,51 @@ MAX_PIXEL_AREA = 1280 * 720  # 720p máximo
 REPORTS_DIR = Path("/home/ramon/URA/reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
+
 def tiene_display() -> bool:
     return bool(os.environ.get("DISPLAY"))
+
 
 def iniciar_xvfb() -> bool:
     if not shutil.which("Xvfb"):
         return False
     try:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5)  # noqa: PLW1510
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
+=======
         subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
-        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
-        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
-        subprocess.run(["Xvfb", ":99", "-screen", "0", "1280x720x24"], capture_output=True, timeout=5, check=False)
+>>>>>>> Stashed changes
         os.environ["DISPLAY"] = ":99"
         time.sleep(1)
         return True
     except Exception:
         logger.exception("Failed to start Xvfb")
         return False
+
 
 def capturar_pantalla() -> str | None:
     try:
@@ -74,7 +113,9 @@ def capturar_pantalla() -> str | None:
     except Exception:
         return None
 
+
 from dataclasses import dataclass
+
 
 @dataclass
 class RespuestaOllama:
@@ -82,9 +123,31 @@ class RespuestaOllama:
     modelo: str = "llama3.2-vision:11b"
     confianza: float = 0.0
 
+
 def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
+<<<<<<< Updated upstream
+=======
     import urllib.request
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     data = {"model": "llama3.2-vision:11b", "prompt": prompt, "stream": False}
     if imagen_b64:
         data["images"] = [imagen_b64]
@@ -94,18 +157,60 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
             data=json.dumps(data).encode(),
             headers={"Content-Type": "application/json"},
         )
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310
+=======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         with urllib.request.urlopen(req, timeout=120) as r:
+>>>>>>> Stashed changes
             resp = json.loads(r.read())
         texto = resp.get("response", "")
         return RespuestaOllama(texto=texto, modelo="llama3.2-vision:11b")
     except Exception as e:
         return RespuestaOllama(texto=f"Error: {e}")
 
-def main() -> None:
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+def main() -> None:
+=======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 def main():
     print("=== UI-TARS GX10 ===")
+>>>>>>> Stashed changes
     modo = "headless"
     if tiene_display():
         modo = "display"
@@ -117,6 +222,14 @@ def main():
     resultado = analizar_con_ollama(imagen, "Describe esta interfaz en detalle")
     path = REPORTS_DIR / f"uitars_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"modo": modo, "resultado": resultado.texto}, indent=2))
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     main()

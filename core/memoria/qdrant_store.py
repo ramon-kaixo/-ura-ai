@@ -1,7 +1,28 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from __future__ import annotations
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 import logging
 import os
 import threading
@@ -28,6 +49,7 @@ EMBED_MODEL = "nomic-embed-text:latest"
 _client: QdrantClient | None = None
 _init_lock = threading.Lock()
 
+
 def _get_client() -> QdrantClient:
     global _client  # noqa: PLW0603
     if _client is not None:
@@ -36,6 +58,7 @@ def _get_client() -> QdrantClient:
         if _client is None:
             _client = QdrantClient(QDRANT_HOST, port=QDRANT_PORT)
     return _client
+
 
 async def _embed(texto: str) -> list[float]:
     async with httpx.AsyncClient(timeout=30) as client:
@@ -46,9 +69,11 @@ async def _embed(texto: str) -> list[float]:
         resp.raise_for_status()
         return resp.json()["embedding"]
 
+
 def _make_id(idea: Idea) -> str:
     base = idea.hash_origen or idea.idea[:40]
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{base}:{idea.idea}"))
+
 
 async def almacenar_ideas(ideas: list[Idea]) -> int:
     if not ideas:
@@ -71,28 +96,43 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             existing = resp.json().get("result", [])
             if existing:
                 continue
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error buscando punto existente en Qdrant")
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             log.warning("Qdrant search error: %s", e)
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
 
         try:
             vec = await _embed(idea.texto_para_embedding())
@@ -120,6 +160,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
     if insertados:
         log.info(f"Qdrant: {insertados}/{len(ideas)} ideas nuevas insertadas")
     return insertados
+
 
 async def marcar_antiguas(fuente_url: str) -> int:
     qdrant_async = URAQdrantClient()
@@ -171,6 +212,7 @@ async def marcar_antiguas(fuente_url: str) -> int:
         log.info(f"Qdrant: {marcadas} ideas marcadas vigente=false para {fuente_url[:60]}")
     return marcadas
 
+
 async def buscar_ideas(
     query: str,
     tema: str | None = None,
@@ -207,6 +249,7 @@ async def buscar_ideas(
             }
             for p in resp.json()["result"]
         ]
+
 
 class MemoryPipelineStore:
     def __init__(self, qdrant_client: IVectorStore | None = None) -> None:

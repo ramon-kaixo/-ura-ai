@@ -1,7 +1,9 @@
 """Motor de diagnóstico — Diagnostico + fábrica."""
 
+<<<<<<< Updated upstream
 from motor.diagnostico._state import DiagnosticoState, build_diagnostico_state  # noqa: F401
 from motor.diagnostico.diagnostico import Diagnostico  # noqa: F401
+=======
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
 from motor.core.state import DiagnoseResult, ScanResult
@@ -13,6 +15,7 @@ from motor.diagnostico.pattern_matcher import buscar_patrones
 log = logging.getLogger("ura.diagnostico")
 
 RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
+
 
 class Diagnostico:
     """Motor de diagnóstico: busca patrones, correlaciona, determina causas raíz."""
@@ -110,3 +113,4 @@ class Diagnostico:
             "hw_issues": scan.hw_health.get("issues", []),
         }
         self.qdrant.guardar_incidente(incidente)
+>>>>>>> Stashed changes

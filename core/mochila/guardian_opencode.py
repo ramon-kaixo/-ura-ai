@@ -7,6 +7,7 @@ import subprocess
 
 logger = logging.getLogger("mochila.guardian")
 
+
 class OpenCodeGuardian:
     def __init__(self, req_id: str = "") -> None:
         self._req_id = req_id
@@ -69,16 +70,34 @@ class OpenCodeGuardian:
                     ["python3", "-m", "py_compile", file_path],
                     capture_output=True,
                     timeout=5,
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
-                    check=False,
-                    check=False,
-                    check=False,
+>>>>>>> Stashed changes
                 )
                 return res.returncode == 0
             except subprocess.TimeoutExpired:
@@ -90,16 +109,34 @@ class OpenCodeGuardian:
                     ["bash", "-n", file_path],
                     capture_output=True,
                     timeout=5,
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
+>>>>>>> Stashed changes
+=======
                     check=False,
-                    check=False,
-                    check=False,
-                    check=False,
+>>>>>>> Stashed changes
                 )
                 return res.returncode == 0
 

@@ -16,6 +16,7 @@ VNC_PORT = 5900
 VNC_PASS = get_secret("VNC_PWD", "ura2026")
 REPORTS_DIR = Path("/root/reports")
 
+
 def conectar_vnc():
     """Conecta al monitor visual via VNC y devuelve un screenshot."""
     try:
@@ -36,7 +37,28 @@ def conectar_vnc():
         client.disconnect()
         return b64
     except ImportError:
+<<<<<<< Updated upstream
+=======
         print("  vncdotool no instalado, usando mss local")
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         import base64
 
         import mss
@@ -52,43 +74,74 @@ def conectar_vnc():
             pil_img.save(buf, format="JPEG", quality=50)
             return base64.b64encode(buf.getvalue()).decode()
 
+
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def main() -> None:
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+>>>>>>> Stashed changes
+=======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
-def main():
-    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
-
-def main():
-    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
-
-def main():
-    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
-
-def main():
-    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
-
+>>>>>>> Stashed changes
     # 1. Capturar del VNC
     screenshot = conectar_vnc()
+<<<<<<< Updated upstream
+=======
     print(f"       {len(screenshot)} bytes")
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
     # 2. Analizar con UI-TARS
     try:
@@ -103,6 +156,14 @@ def main():
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     path = REPORTS_DIR / f"uitars_analisis_{time.strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"timestamp": time.time(), "resultado": resultado}, indent=2))
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     main()

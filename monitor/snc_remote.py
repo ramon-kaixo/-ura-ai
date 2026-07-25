@@ -23,10 +23,12 @@ LOCAL_STATE.parent.mkdir(parents=True, exist_ok=True)
 
 REMOTE_STATE = "/home/ramon/.ura/run/ura_snc_state.json"
 
+
 def _escape_applescript(s: str) -> str:
     """Escape string for safe use in osascript double-quoted strings."""
     s = s.replace("\\", "\\\\")
     return s.replace('"', '\\"')
+
 
 def mac_notify(title: str, message: str) -> None:
     try:
@@ -43,9 +45,31 @@ def mac_notify(title: str, message: str) -> None:
             capture_output=True,
             check=False,
         )
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
     except Exception:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         pass
+
 
 def sync_state() -> dict:
     """Sincroniza el state file desde GX10 vía rsync."""
@@ -57,10 +81,32 @@ def sync_state() -> dict:
         )
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
     except Exception:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         pass
     return {}
+
 
 def main() -> None:
     try:
@@ -90,6 +136,7 @@ def main() -> None:
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
         pass
+
 
 if __name__ == "__main__":
     main()

@@ -17,6 +17,7 @@ from motor.core.state import DegradedMode
 
 log = logging.getLogger("ura.qdrant")
 
+
 def generar_sparse_vector(texto: str, max_tokens: int = 512) -> dict:
     """Genera sparse vector (indices + valores TF) para búsqueda híbrida Qdrant."""
     tokens = re.findall(r"\w+", texto.lower())[:max_tokens]
@@ -25,12 +26,14 @@ def generar_sparse_vector(texto: str, max_tokens: int = 512) -> dict:
     values = [f / len(tokens) for f in freqs.values()]
     return {"indices": indices, "values": values}
 
+
 COLECCION_INCIDENTES = "incidente_record"
 VECTOR_SIZE = 7
 COLECCION_DOCUMENTOS = "ura_documents"
 COLECCION_TRANSACCIONES = "ura_transacciones"
 VECTOR_SIZE_EMBEDDING = 768
 MODELO_EMBEDDING = "nomic-embed-text"
+
 
 class QdrantClient:
     """Cliente para Qdrant con fallback REST automático."""
@@ -372,6 +375,7 @@ class QdrantClient:
                 cls._instancia = cls(config)
         return cls._instancia
 
+
 class URAQdrantClient:
     """Cliente Qdrant asíncrono con connection pooling (HTTP/2 keep-alive ready).
 
@@ -381,20 +385,38 @@ class URAQdrantClient:
         await qdrant.close()
     """
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def __init__(self, base_url: str = "", timeout: float = 10.0) -> None:
         if not base_url:
             cfg = __import__("motor.core.config", fromlist=["UraConfig"]).UraConfig.load()
             base_url = f"http://{cfg.qdrant_host}:{cfg.qdrant_port}"
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
+=======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
-    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
-    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
-    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
         self.base_url = base_url
         self.timeout = timeout
         self._client: httpx.AsyncClient | None = None
@@ -510,6 +532,7 @@ class URAQdrantClient:
             log.warning("Búsqueda híbrida falló, fallback a densa: %s", e)
             fallback = await self.buscar_vectores(coleccion, vector_denso, limite)
             return fallback.get("result", [])
+
 
 def _generar_sparse_vector(texto: str) -> dict:
     """Genera un sparse vector simple basado en frecuencia de términos.

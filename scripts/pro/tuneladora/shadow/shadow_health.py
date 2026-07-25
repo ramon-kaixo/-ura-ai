@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import logging
@@ -23,17 +24,10 @@ log = logging.getLogger("shadow.health")
 class LayerResult:
     layer: int
     name: str
-    status: str  # OK / WARN / FAIL / SKIP / ABORT
+    status: str
     checks: list[Any] = field(default_factory=list)
     duration_ms: float = 0.0
     error: str = ""
-
-
-class ShadowHealthError(Exception):
-    pass
-
-
-VERDICT_PRIORITY = {"ABORT": 0, "FAIL": 1, "WARN": 2, "OK": 3, "SKIP": 4}
 
 ROLLBACK_RULES: dict[int, str] = {
     0: "none",
@@ -56,28 +50,43 @@ class ShadowHealth:
         self._results: list[LayerResult] = []
         self._start = 0.0
         self._diff_hash: str = ""
+        self._diff_files: list[str] = []
         self._duration_ms: float = 0.0
+        self._runner: Any = None
+        self._ensure_diff_cache()
 
-    def _git_diff_hash(self) -> str:
-        if self._diff_hash:
-            return self._diff_hash
+    def _ensure_diff_cache(self) -> None:
         try:
             r = subprocess.run(
-                ["git", "diff", "--name-only"], capture_output=True, text=True,
-                timeout=5, check=False, cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--name-only", "HEAD"], capture_output=True, text=True,
+                timeout=10, check=False, cwd=str(self.cfg.ura_root),
             )
-            content = r.stdout or ""
+            self._diff_files = [
+                f.strip() for f in (r.stdout or "").split("\n")
+                if f.strip().endswith(".py")
+            ]
             r2 = subprocess.run(
                 ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
                 timeout=5, check=False, cwd=str(self.cfg.ura_root),
             )
             head = r2.stdout.strip() if r2.returncode == 0 else ""
-            return hashlib.md5(f"{head}:{content}".encode(), usedforsecurity=False).hexdigest()[:12]
-        except Exception:
-            return ""
+            content = r.stdout or ""
+            self._diff_hash = hashlib.md5(
+                f"{head}:{content}".encode(), usedforsecurity=False
+            ).hexdigest()[:12]
+        except Exception as exc:
+            log.debug("git diff cache failed: %s", exc)
+            self._diff_files = []
+            self._diff_hash = ""
 
     def _cache_key(self, layer: int) -> str:
-        return f"shadow_l{layer}:{self._git_diff_hash()}"
+        return f"shadow_l{layer}:{self._diff_hash}"
+
+    def _get_or_create_runner(self):
+        if self._runner is None:
+            from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
+            self._runner = PipelineRunner(self.cfg, mode="check", files=self._diff_files)
+        return self._runner
 
     def _verdict(self) -> str:
         for v in ("ABORT", "FAIL", "WARN"):
@@ -97,8 +106,7 @@ class ShadowHealth:
         cache_key = self._cache_key(layer)
         cached = self.cache.get(cache_key)
         if cached is not None:
-            return LayerResult(cached.layer, cached.name, cached.status,
-                               checks=list(cached.checks), duration_ms=cached.duration_ms, error=cached.error)
+            return copy.deepcopy(cached)
 
         handlers = {
             0: self._layer0_env,
@@ -118,7 +126,7 @@ class ShadowHealth:
             result = handler()
             result.duration_ms = (time.monotonic() - t0) * 1000
             if result.status == "OK":
-                self.cache.set(cache_key, result)
+                self.cache.set(cache_key, copy.deepcopy(result))
             return result
         except Exception as e:
             log.error("Layer %d failed: %s", layer, e)
@@ -170,18 +178,6 @@ class ShadowHealth:
             lines.append("  → Rollback required")
         return "\n".join(lines)
 
-    def _get_changed_files(self) -> list[str]:
-        try:
-            r = subprocess.run(
-                ["git", "diff", "--name-only"], capture_output=True, text=True,
-                timeout=10, check=False, cwd=str(self.cfg.ura_root),
-            )
-            if r.returncode == 0 and r.stdout:
-                return [f.strip() for f in r.stdout.split("\n") if f.strip().endswith(".py")]
-        except Exception as exc:
-            log.debug("git diff failed: %s", exc)
-        return []
-
     def _layer0_env(self) -> LayerResult:
         checks = run_layer0(self.cfg.ura_root, self.cfg.ollama_url)
         status = "FAIL" if any(c.status == "FAIL" for c in checks) else \
@@ -189,12 +185,10 @@ class ShadowHealth:
         return LayerResult(0, "env", status, checks=[vars(c) for c in checks])
 
     def _layer1_static(self) -> LayerResult:
-        from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
         from scripts.pro.tuneladora.pipeline.tools.base import Status as S
-        files = self._get_changed_files()
-        if not files:
+        if not self._diff_files:
             return LayerResult(1, "static", "SKIP", error="No changed files")
-        runner = PipelineRunner(self.cfg, mode="check", files=files)
+        runner = self._get_or_create_runner()
         results = runner.phase_static()
         statuses = [r.status for r in results]
         status = "FAIL" if any(s == S.FAIL for s in statuses) else \
@@ -202,12 +196,10 @@ class ShadowHealth:
         return LayerResult(1, "static", status, checks=[vars(r) for r in results])
 
     def _layer2_runtime(self) -> LayerResult:
-        from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
         from scripts.pro.tuneladora.pipeline.tools.base import Status as S
-        files = self._get_changed_files()
-        if not files:
+        if not self._diff_files:
             return LayerResult(2, "runtime", "SKIP", error="No changed files")
-        runner = PipelineRunner(self.cfg, mode="check", files=files)
+        runner = self._get_or_create_runner()
         results = runner.phase_dynamic()
         statuses = [r.status for r in results]
         status = "FAIL" if any(s == S.FAIL for s in statuses) else \
@@ -215,24 +207,24 @@ class ShadowHealth:
         return LayerResult(2, "runtime", status, checks=[vars(r) for r in results])
 
     def _layer3_shadow(self) -> LayerResult:
-        files = self._get_changed_files()
-        if not files:
+        if not self._diff_files:
             return LayerResult(3, "shadow", "OK", checks=[], error="No changed files")
-        shadow_results = run_layer3(files, self.cfg.ura_root)
+        shadow_results = run_layer3(self._diff_files, self.cfg.ura_root)
         status = "FAIL" if any(r.status == "FAIL" for r in shadow_results) else \
                  "WARN" if any(r.status == "WARN" for r in shadow_results) else "OK"
         return LayerResult(3, "shadow", status, checks=[vars(r) for r in shadow_results])
 
     def _layer4_chaos(self) -> LayerResult:
+        test_path = self.cfg.test_target.rstrip("/") + "/test_tuneladora_pipeline_chaos.py"
         try:
             r = subprocess.run(
-                [sys.executable, "-m", "pytest", "tests/test_tuneladora_pipeline_chaos.py",
-                 "-v", "--no-cov", "-q"],
+                [sys.executable, "-m", "pytest", test_path,
+                 "--no-cov", "-q"],
                 capture_output=True, text=True, timeout=120, check=False,
                 cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0:
-                return LayerResult(4, "chaos", "OK", checks=[{"summary": r.stdout.strip()}])
+                return LayerResult(4, "chaos", "OK", checks=[{"summary": r.stdout.strip()[:200]}])
             return LayerResult(4, "chaos", "FAIL", checks=[{"output": r.stdout[-500:], "errors": r.stderr[-500:]}])
         except subprocess.TimeoutExpired:
             return LayerResult(4, "chaos", "FAIL", error="Timeout after 120s")
@@ -246,12 +238,12 @@ class ShadowHealth:
         return LayerResult(6, "trend", "SKIP", error="Historical data required")
 
     def _layer7_promotion(self) -> LayerResult:
-        verdict = self._verdict()
-        if verdict == "OK":
+        v = self._verdict()
+        if v == "OK":
             return LayerResult(7, "promotion", "OK", checks=[{"action": "promote"}])
-        if verdict == "WARN":
+        if v == "WARN":
             return LayerResult(7, "promotion", "WARN", checks=[{"action": "promote_with_caution"}])
-        return LayerResult(7, "promotion", "FAIL", checks=[{"action": "block", "reason": verdict}])
+        return LayerResult(7, "promotion", "FAIL", checks=[{"action": "block", "reason": v}])
 
 
 def main() -> None:

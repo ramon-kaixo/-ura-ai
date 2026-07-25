@@ -15,6 +15,7 @@ logger = logging.getLogger("MotorFlujo")
 
 SPOOL_DIR = str(Path.home() / "URA" / "storage" / "spool")
 
+
 class ControladorMemoria:
     """Componente 1: Evalua la salud del hardware."""
 
@@ -23,6 +24,7 @@ class ControladorMemoria:
 
     def tiene_luz_verde(self) -> bool:
         return psutil.virtual_memory().percent < self.umbral_ram_pct
+
 
 class AlforjaSpooler:
     """Cola FIFO en disco. Zero RAM impact."""
@@ -45,9 +47,31 @@ class AlforjaSpooler:
             archivos[0].unlink()
             return tarea
         except (OSError, json.JSONDecodeError) as e:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
             logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
+=======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
             logger.error(f"[ALFORJA] Error leyendo spool: {e}")
+>>>>>>> Stashed changes
             return None
+
 
 class CajaRegistradora:
     """Procesamiento con purga de memoria."""
@@ -58,6 +82,7 @@ class CajaRegistradora:
             await asyncio.sleep(0.2)
         finally:
             gc.collect()
+
 
 class AsignadorCanales:
     """Orquestador con prioridad: spool > cola RAM > sleep."""
@@ -101,6 +126,7 @@ class AsignadorCanales:
     def arrancar(self) -> None:
         self._bucle = asyncio.create_task(self.bucle_procesamiento())
 
+
 async def main() -> None:
     a = AsignadorCanales()
     a.arrancar()
@@ -108,6 +134,7 @@ async def main() -> None:
         await a.inyectar_tarea({"id": f"TX_{i}", "payload": "datos"})
         await asyncio.sleep(0.02)
     await asyncio.sleep(5)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

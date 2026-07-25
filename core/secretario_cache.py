@@ -14,10 +14,18 @@ from collections import OrderedDict
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider
 
+<<<<<<< Updated upstream
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", "http://10.164.1.99:4096")
+
 
 def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
     if config is not None:
@@ -34,11 +42,26 @@ def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
     except Exception:
         return os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
+=======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", f"http://{os.environ.get('ASUS_HOST', '10.164.1.99')}:4096")
 QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", os.environ.get("ASUS_HOST", "10.164.1.99"))
 QDRANT_PORT = int(os.environ.get("URA_QDRANT_PORT", "6333"))
+>>>>>>> Stashed changes
 
 LRU_MAX = 20
+
 
 class SecretarioCache:
     def __init__(self, config: IConfigProvider | None = None) -> None:
@@ -111,6 +134,7 @@ class SecretarioCache:
             "asus_url": ASUS_EXEC_URL,
             "qdrant": f"{self._qdrant_host()}:{self._qdrant_port()}",
         }
+
 
 if __name__ == "__main__":
     import sys

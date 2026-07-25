@@ -29,11 +29,34 @@ from typing import Any
 SCRIPT_DIR = Path(__file__).parent
 ENGINE_VERSION = "1.0"
 
+
+<<<<<<< Updated upstream
 def log(msg: str) -> None:
     ts = datetime.now(UTC).strftime("%H:%M:%S")
     print(f"[{ts}] {msg}")
+=======
 def log(msg) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+
 
 def _resolve_dependencies(plugins: dict[str, Any]) -> list[tuple[str, Any]]:
     """Ordena plugins por prioridad, verificando dependencias e incompatibilidades.
@@ -68,6 +91,7 @@ def _resolve_dependencies(plugins: dict[str, Any]) -> list[tuple[str, Any]]:
         _resolve(name)
     return ordered
 
+
 def discover_all() -> dict[str, Any]:
     """Descubre todos los plugins en scripts/pro/ analizando PLUGIN = {...}."""
     plugins: dict[str, Any] = {}
@@ -93,6 +117,7 @@ def discover_all() -> dict[str, Any]:
         except Exception:  # noqa: S110
             pass
     return plugins
+
 
 def run_phase(
     phase: str,
@@ -182,6 +207,7 @@ def run_phase(
 
     return {"status": "completed", "phase": phase, "results": results, "ok": ok, "errors": err}
 
+
 def list_plugins() -> None:
     plugins = discover_all()
     ordered = sorted(plugins.items(), key=lambda x: (x[1].get("phase", "?"), x[1].get("priority", 500)))
@@ -195,6 +221,7 @@ def list_plugins() -> None:
         pri = p.get("priority", 500)
         log(f"  {icon} {p.get('phase', '?'):10} pri={pri:>3} {name:30} (timeout={p.get('timeout', 30)}s){reqs}")
     log("")
+
 
 if __name__ == "__main__":
     if "--list" in sys.argv:
