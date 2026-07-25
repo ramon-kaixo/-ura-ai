@@ -53,7 +53,6 @@ stats = {
     "last_action": None,
 }
 
-
 def load_runbook() -> dict:
     """Carga el runbook de emergencia. Solo intérprete, no decide."""
     try:
@@ -61,47 +60,15 @@ def load_runbook() -> dict:
     except Exception:
         return {"version": "0", "commands": {}, "retry_policy": {}, "forbidden_commands": []}
 
-
 def load_state() -> dict:
     """Lee el state file escrito por snc.py. No lee estados legacy."""
     try:
         if STATE_FILE.exists():
             return json.loads(STATE_FILE.read_text())
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
-=======
     except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         pass
     return {"status": "UNKNOWN", "services": {}, "openclaw_active": False}
-
 
 def save_stats() -> None:
     """Registra stats en stats.json (Perfil A de memoria)."""
@@ -109,53 +76,20 @@ def save_stats() -> None:
         STATS_FILE.parent.mkdir(parents=True, exist_ok=True)
         tmp = STATS_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(stats, indent=2))
-<<<<<<< Updated upstream
         os.replace(str(tmp), str(STATS_FILE))  # noqa: PTH105
     except Exception:  # noqa: S110
-=======
         os.replace(str(tmp), str(STATS_FILE))
     except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         pass
-
 
 def is_emergency(state: dict) -> bool:
     """Determina si el estado del sistema es una emergencia."""
     return state.get("status") in EMERGENCY_STATES
 
-
 def is_forbidden(cmd: str, forbidden: list) -> bool:
     """Verifica que un comando no esté en la lista prohibida."""
     cmd_lower = cmd.lower()
     return any(f.lower() in cmd_lower for f in forbidden)
-
 
 def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     """Ejecuta un comando de forma segura sin shell=True.
@@ -176,7 +110,6 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
         return False, "timeout"
     except Exception as e:
         return False, str(e)
-
 
 def request_human_confirmation(reason: str) -> bool:
     """Solicita confirmación humana via claw_listener en Mac.
@@ -204,7 +137,6 @@ def request_human_confirmation(reason: str) -> bool:
         return False
     except Exception:
         return False
-
 
 def execute_runbook_action(service_name: str, action: dict, runbook: dict) -> str:
     """Ejecuta una acción del runbook. Solo intérprete, no decide.
@@ -247,7 +179,6 @@ def execute_runbook_action(service_name: str, action: dict, runbook: dict) -> st
 
     return "failed"
 
-
 def process_emergency(state: dict, runbook: dict) -> None:
     """Procesa una emergencia: ejecuta runbook para servicios caídos.
     NO toma decisiones propias. Solo interpreta el runbook.
@@ -269,13 +200,11 @@ def process_emergency(state: dict, runbook: dict) -> None:
         # Ejecutar reparación del runbook
         execute_runbook_action(svc_name, svc_config, runbook)
 
-
 def handle_signal(sig, frame) -> None:
     """Manejo de señales para cierre limpio."""
     PID_FILE.unlink(missing_ok=True)
     save_stats()
     sys.exit(0)
-
 
 def main() -> None:
     """Loop principal: lee state file, activa en emergencia, ejecuta runbook."""
@@ -310,7 +239,6 @@ def main() -> None:
     finally:
         PID_FILE.unlink(missing_ok=True)
         save_stats()
-
 
 if __name__ == "__main__":
     main()

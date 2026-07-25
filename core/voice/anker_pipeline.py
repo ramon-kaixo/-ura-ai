@@ -26,7 +26,6 @@ DEFAULT_MODEL = "small"
 SAMPLE_RATE = 16000
 BLOCK_SIZE = 480  # 30ms a 16kHz
 
-
 class AnkerDeterministicPipeline:
     def __init__(self, db_path: str = DB_PATH, model_size: str = DEFAULT_MODEL) -> None:
         self.sample_rate = SAMPLE_RATE
@@ -67,58 +66,28 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(devices):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
         return None
 
     def _find_default_input(self) -> int | None:
@@ -127,58 +96,28 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if dev["max_input_channels"] > 0:
                     return idx
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_default_input: %s", e)
->>>>>>> Stashed changes
         return None
 
     # ── Audio callback ─────────────────────────────────────────────
@@ -297,7 +236,6 @@ class AnkerDeterministicPipeline:
 
     def __exit__(self, *args):
         pass
-
 
 # ── Demo ───────────────────────────────────────────────────────────
 if __name__ == "__main__":

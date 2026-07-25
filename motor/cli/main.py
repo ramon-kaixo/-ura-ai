@@ -74,90 +74,28 @@ URA_COMMANDS: dict[str, object] = {
     "audit": cmd_audit,
 }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
 def _setup_logging(level: str) -> None:
     setup_logging(
         level=level,
         fmt="%(name)s %(levelname)s %(message)s",
         handlers=[logging.StreamHandler(sys.stderr)],
     )
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
 def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
-
 def main() -> None:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
->>>>>>> Stashed changes
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -221,7 +159,6 @@ def main() -> None:
     elif args.command in URA_COMMANDS:
         raw_args = getattr(args, "raw", [])
         sys.exit(URA_COMMANDS[args.command](config, raw_args))
-
 
 if __name__ == "__main__":
     main()

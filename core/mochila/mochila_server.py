@@ -1,6 +1,4 @@
-<<<<<<< Updated upstream
 from core.mochila.app import app  # noqa: F401 — re-exported for uvicorn
-=======
 import asyncio
 import json
 import logging
@@ -54,7 +52,6 @@ PROVIDER_TIMEOUTS: dict[str, float] = {
 }
 CACHE_MODELS: list = []
 CACHE_MODELS_TS: float = 0
-
 
 class VRAMAwareScheduler:
     def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0) -> None:
@@ -222,14 +219,12 @@ class VRAMAwareScheduler:
                 self._log.error("scheduler_loop error: %s", e)
             await asyncio.sleep(0.5)
 
-
 scheduler = VRAMAwareScheduler()
 
 router = Router(providers=PROVIDERS)
 circuit_breaker = CircuitBreaker()
 rate_limiter = RateLimiter()
 cost_tracker = CostTracker()
-
 
 class ChatRequest(BaseModel):
     model: str = Field(default="auto")
@@ -241,7 +236,6 @@ class ChatRequest(BaseModel):
     task: str | None = None
     force_guardian: bool = False
 
-
 class ChatResponse(BaseModel):
     id: str
     object: str = "chat.completion"
@@ -250,10 +244,8 @@ class ChatResponse(BaseModel):
     choices: list
     usage: dict | None = None
 
-
 def _generar_id() -> str:
     return f"mochila-{uuid.uuid4().hex[:12]}"
-
 
 def _rechazar_si_bloqueado(provider_name: str) -> None:
     if not circuit_breaker.puede_pasar(provider_name):
@@ -269,7 +261,6 @@ def _rechazar_si_bloqueado(provider_name: str) -> None:
             detail={"error": f"Rate limit excedido para {provider_name}", "current": actual, "limit": limite},
         )
 
-
 def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> None:
     if respuesta and isinstance(respuesta, dict):
         uso = respuesta.get("usage") or {}
@@ -279,7 +270,6 @@ def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> 
             uso.get("prompt_tokens", 0) or 0,
             uso.get("completion_tokens", 0) or 0,
         )
-
 
 async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:
     try:
@@ -295,7 +285,6 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     except ProviderError as e:
         raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
     return None
-
 
 async def _stream_from_provider(
     provider_name,
@@ -381,7 +370,6 @@ async def _stream_from_provider(
             circuit_breaker.registrar_exito(provider_name)
             rate_limiter.registrar(provider_name)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_guardian()
@@ -392,15 +380,12 @@ async def lifespan(app: FastAPI):
         if hasattr(p, "__aenter__"):
             await p.__aexit__(None, None, None)
 
-
 app = FastAPI(title="Mochila Middleware", version="0.7.0", lifespan=lifespan)
 app.add_middleware(GuardianMiddleware)
-
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "providers": {name: await provider.health() for name, provider in PROVIDERS.items()}}
-
 
 @app.get("/v1/models")
 async def v1_models():
@@ -422,7 +407,6 @@ async def v1_models():
     CACHE_MODELS = models
     CACHE_MODELS_TS = time.time()
     return {"object": "list", "data": models}
-
 
 @app.post("/v1/chat/completions")
 async def v1_chat_completions(body: ChatRequest):
@@ -510,11 +494,9 @@ async def v1_chat_completions(body: ChatRequest):
         },
     )
 
-
 @app.get("/breaker")
 async def breaker_status():
     return {p: circuit_breaker.estado(p) for p in PROVIDERS}
-
 
 @app.post("/breaker/reset/{provider}")
 async def breaker_reset(provider: str):
@@ -523,24 +505,20 @@ async def breaker_reset(provider: str):
     circuit_breaker.reset(provider)
     return {"status": "reset", "provider": provider}
 
-
 @app.get("/metrics/rate/{provider}")
 async def rate_limit_status(provider: str):
     if provider not in PROVIDERS:
         raise HTTPException(status_code=404, detail=f"Provider {provider} no encontrado")
     return rate_limiter.estado(provider)
 
-
 @app.get("/metrics/cost")
 async def cost_summary():
     return cost_tracker.resumen_hoy()
-
 
 @app.post("/admin/acquire_boot_vram")
 async def admin_acquire_boot_vram(mb: int):
     await scheduler.acquire_boot_vram(mb)
     return {"status": "granted"}
-
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
 async def proxy_gateway(path: str, request: Request):
@@ -627,10 +605,8 @@ async def proxy_gateway(path: str, request: Request):
     finally:
         await scheduler.release(req_id)
 
-
 class VideoIngestRequest(BaseModel):
     path: str
-
 
 @app.post("/memoria/ingestar/video")
 async def memoria_ingestar_video(body: VideoIngestRequest):
@@ -641,53 +617,42 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
     return {"status": "stub", "detail": "pipeline_video no implementado"}
 
-
 class AnalizarRequest(BaseModel):
     peticion: str
-
 
 @app.post("/memoria/analizar")
 async def memoria_analizar(body: AnalizarRequest):
     return await analizar(body.peticion)
 
-
 class SintesisRequest(BaseModel):
     peticion: str
-
 
 @app.post("/memoria/sintetizar")
 async def memoria_sintetizar(body: SintesisRequest):
     return await sintetizar(body.peticion)
 
-
 class FaseRequest(BaseModel):
     keywords: str
-
 
 @app.post("/memoria/fase/saber")
 async def memoria_fase_saber(body: FaseRequest):
     return await fase_saber(body.keywords)
 
-
 @app.post("/memoria/fase/hacer")
 async def memoria_fase_hacer(body: FaseRequest):
     return await fase_hacer(body.keywords)
-
 
 @app.post("/memoria/fase/comprar")
 async def memoria_fase_comprar(body: FaseRequest):
     return await fase_comprar(body.keywords)
 
-
 @app.get("/memoria/vigilancia/parte")
 async def memoria_vigilancia_parte():
     return await generar_parte()
 
-
 @app.get("/status")
 async def system_status_endpoint():
     return await system_status(PROVIDERS, cost_tracker, circuit_breaker, len(TOOL_SCHEMAS), router)
-
 
 @app.get("/metrics")
 async def metrics():
@@ -701,16 +666,13 @@ async def metrics():
         "tools_disponibles": len(TOOL_SCHEMAS),
     }
 
-
 class ConsultaRequest(BaseModel):
     query: str
     forzar_web: bool = False
 
-
 @app.post("/memoria/consultar")
 async def memoria_consultar_endpoint(body: ConsultaRequest):
     return await memoria_consultar(body.query, body.forzar_web)
-
 
 @app.get("/memoria/health")
 async def memoria_health():
@@ -728,8 +690,6 @@ async def memoria_health():
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
-
 @app.post("/memoria/ingestar")
 async def memoria_ingestar():
     return await procesar_inbox_completo()
->>>>>>> Stashed changes

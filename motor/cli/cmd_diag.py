@@ -1,36 +1,6 @@
 import json
 import logging
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import subprocess
->>>>>>> Stashed changes
 import sys
 from pathlib import Path
 
@@ -46,22 +16,18 @@ ARCHIVO_TRENDS = "trends.ndjson"
 ARCHIVO_ESTADO = "estado_alemania.json"
 _executor = SubprocessExecutor()
 
-
 def cmd_history(config: UraConfig, args=None) -> None:
     qdrant = QdrantClient.instancia(config)
     if not qdrant.disponible:
         sys.exit(1)
     qdrant.buscar_incidentes(limit=50)
 
-
 def cmd_check(config: UraConfig, args=None) -> None:
     r = ejecutar_preflight(config)
     sys.exit(0 if r.ok else 1)
 
-
 def cmd_verify(config: UraConfig, args=None) -> None:
     ejecutar_verificacion(config, hubo_cambios=True)
-
 
 def cmd_detect(config: UraConfig, args=None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
@@ -70,7 +36,6 @@ def cmd_detect(config: UraConfig, args=None) -> None:
     lines = [json.loads(l) for l in trend_path.read_text().strip().splitlines() if l.strip()]
     cal = Calibration(config)
     cal.detect(lines)
-
 
 def cmd_learn(config: UraConfig, args=None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
@@ -120,40 +85,9 @@ def cmd_learn(config: UraConfig, args=None) -> None:
                 },
             )
 
-
 def cmd_alerta(config: UraConfig = None, args=None) -> None:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     r = _executor.run(
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     r = subprocess.run(
->>>>>>> Stashed changes
         [
             "journalctl",
             "-u",
@@ -170,43 +104,12 @@ def cmd_alerta(config: UraConfig = None, args=None) -> None:
     )
     [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
 
-
 def cmd_health_check(config: UraConfig, args=None) -> None:
     checks = []
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:
-<<<<<<< Updated upstream
             r = _executor.run(["systemctl", "is-active", unit], timeout=5)
-=======
             r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True, timeout=5, check=False)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             ok = "active" in r.stdout or r.stdout.strip() == "inactive"
             checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})
         except Exception as e:

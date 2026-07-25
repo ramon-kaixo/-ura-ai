@@ -27,7 +27,6 @@ SKILL_TO = 5
 IMG = "python:3.12-slim"
 TD = BASE_DIR / "TOOLS" / "tests"
 
-
 @dataclass
 class ResultadoSandbox:
     ok: bool
@@ -48,7 +47,6 @@ class ResultadoSandbox:
         if self.error:
             r.append(f"  ERROR: {self.error}")
         return "\n".join(r)
-
 
 class DockerOrchestrator:
     def __init__(self, td=TD) -> None:
@@ -174,45 +172,15 @@ sys.exit(0 if r["fallidos"]==0 else 1)
     def _docker():
         try:
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except:  # noqa: E722
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
-=======
         except Exception:
->>>>>>> Stashed changes
             return False

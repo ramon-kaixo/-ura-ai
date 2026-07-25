@@ -42,9 +42,7 @@ from pathlib import Path
 
 CONCIENCIA_PATH = Path(os.environ.get("CONCIENCIA_PATH", ".nervioso/conciencia.json"))
 
-
 # ── Core ──
-
 
 def cargar() -> dict:
     if CONCIENCIA_PATH.exists():
@@ -57,7 +55,6 @@ def cargar() -> dict:
         except (json.JSONDecodeError, ValueError, Exception):  # noqa: S110
             pass
     return _nuevo()
-
 
 def _nuevo() -> dict:
     return {
@@ -76,7 +73,6 @@ def _nuevo() -> dict:
         },
     }
 
-
 def guardar(data: dict) -> None:
     """Guarda con fcntl lock + escritura atomica. 0% race conditions."""
     CONCIENCIA_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -88,9 +84,7 @@ def guardar(data: dict) -> None:
         fcntl.flock(lockfile, fcntl.LOCK_UN)
         lockfile.close()
 
-
 # ── API Pública ──
-
 
 def escribir_proceso(nombre: str, estado: str, detalles: dict | None = None) -> None:
     """Registra el estado de un proceso."""
@@ -101,7 +95,6 @@ def escribir_proceso(nombre: str, estado: str, detalles: dict | None = None) -> 
         "detalles": detalles or {},
     }
     guardar(data)
-
 
 def registrar_error(nivel: int, mensaje: str) -> None:
     """Registra un error y ajusta el nivel global."""
@@ -119,7 +112,6 @@ def registrar_error(nivel: int, mensaje: str) -> None:
         data["contexto_global"]["errores_acumulados"] = data["contexto_global"]["errores_acumulados"][-50:]
     guardar(data)
 
-
 def registrar_arreglo(descripcion: str) -> None:
     """Registra un arreglo aplicado."""
     data = cargar()
@@ -133,7 +125,6 @@ def registrar_arreglo(descripcion: str) -> None:
         data["contexto_global"]["arreglos_aplicados"] = data["contexto_global"]["arreglos_aplicados"][-50:]
     guardar(data)
 
-
 def actualizar_progreso(archivo: str, ciclo: int | None = None, progreso: str | None = None) -> None:
     """Actualiza el contexto de progreso."""
     data = cargar()
@@ -146,12 +137,10 @@ def actualizar_progreso(archivo: str, ciclo: int | None = None, progreso: str | 
     data["ultimo_ciclo"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     guardar(data)
 
-
 def reset_ciclo() -> None:
     """Reinicia para nuevo ciclo."""
     data = _nuevo()
     guardar(data)
-
 
 def estado() -> dict:
     """Devuelve el estado consolidado."""
@@ -179,74 +168,41 @@ def estado() -> dict:
         "ultimo_ciclo": data.get("ultimo_ciclo", "—"),
     }
 
-
 # ── Main ──
 
-
 def scan_project() -> None:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-=======
     from scripts.pro.utils import scan_project as _scan
 
     _scan()
->>>>>>> Stashed changes
-
 
 def main() -> None:
     import argparse
@@ -305,7 +261,6 @@ def main() -> None:
 
     if args.arreglo:
         registrar_arreglo(args.arreglo)
-
 
 if __name__ == "__main__":
     main()

@@ -4,8 +4,6 @@
 from path_setup import setup_path
 
 setup_path()
-<<<<<<< Updated upstream
-=======
 import asyncio
 import contextlib
 import hashlib
@@ -56,7 +54,6 @@ except ImportError:
 
         return decorator
 
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -66,7 +63,6 @@ log = logging.getLogger(__name__)
 # ===== SEGURIDAD: Preflight de politicas (Tareas 0.3 y 0.6) =====
 BYPASS_FILE = Path("/home/ramon/.openclaw/bypass_config.json")
 EXIT_CONFIG_ERROR = 78  # sysexits.h: EX_CONFIG
-
 
 def verificar_politicas_seguridad_preflight() -> None:
     """Fuerza el cumplimiento de las tareas 0.3 y 0.6. Detiene el servicio si hay configs inseguras."""
@@ -78,7 +74,6 @@ def verificar_politicas_seguridad_preflight() -> None:
         if not token_valido:
             sys.exit(EXIT_CONFIG_ERROR)
 
-
 verificar_politicas_seguridad_preflight()
 # ===== FIN PREFLIGHT =====
 
@@ -89,10 +84,8 @@ except ImportError:
     def get_ollama_urls() -> dict[str, str]:
         return {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
 
-
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
-
 
 class ConcurrentVRAMGuard:
     """Semáforo asíncrono con TTL y telemetría para control de VRAM."""
@@ -160,9 +153,7 @@ class ConcurrentVRAMGuard:
         self._semaphore.release()
         log.debug("[VRAM] Slot liberado para modelo=%s", modelo)
 
-
 vram_guard = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=30.0)
-
 
 async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     return await vram_guard.ejecutar_inferencia_segura(
@@ -175,13 +166,11 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
         client_ip,
     )
 
-
 async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
     import asyncio as _asyncio
 
     return await _asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
-
 
 def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     """Sync wrapper de _proxy_con_guardia_vram para usar desde do_POST (sync)."""
@@ -192,7 +181,6 @@ def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip="")
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(asyncio.run, _proxy_con_guardia_vram(path, body, method, modelo, tipo, client_ip))
         return future.result()
-
 
 def _is_local_ip(ip: str) -> bool:
     """Detecta si una IP pertenece a la red local."""
@@ -219,7 +207,6 @@ def _is_local_ip(ip: str) -> bool:
     )
     return ip.startswith(local_prefixes)
 
-
 def _resolve_mode_for_client(client_ip: str) -> str:
     """Devuelve TURBO o ECO según la IP del cliente y POWER_MODE actual.
 
@@ -234,7 +221,6 @@ def _resolve_mode_for_client(client_ip: str) -> str:
     if _is_local_ip(client_ip):
         return "TURBO"
     return "ECO"
-
 
 def _resolve_ollama_url() -> str:
     """Resuelve URL por defecto (usada en startup y health checks)."""
@@ -251,7 +237,6 @@ def _resolve_ollama_url() -> str:
     except Exception as e:
         log.warning("ASUS no accesible en startup: %s", e)
         return _URLS["fallback"]
-
 
 OLLAMA_URL = _resolve_ollama_url()
 ROUTER_PORT = 11435
@@ -356,11 +341,9 @@ _asus_latency_ms: float = 0.0
 _asus_latency_updated: float = 0.0
 _asus_latency_lock = threading.Lock()
 
-
 def _register_fallback() -> None:
     with _fallback_lock:
         _fallback_log.append(time.time())
-
 
 def _fallback_count_last_hour() -> int:
     now = time.time()
@@ -369,7 +352,6 @@ def _fallback_count_last_hour() -> int:
         while _fallback_log and _fallback_log[0] < cutoff:
             _fallback_log.popleft()
         return len(_fallback_log)
-
 
 def _measare_asus_latency() -> float:
     try:
@@ -382,14 +364,12 @@ def _measare_asus_latency() -> float:
     except Exception:
         return -1.0
 
-
 def _update_asus_latency() -> None:
     global _asus_latency_ms, _asus_latency_updated
     ms = _measare_asus_latency()
     with _asus_latency_lock:
         _asus_latency_ms = ms
         _asus_latency_updated = time.time()
-
 
 def _get_active_backend_label() -> str:
     if POWER_MODE == "TURBO":
@@ -398,15 +378,12 @@ def _get_active_backend_label() -> str:
         return "Local Mac"
     return "AUTO (según IP)"
 
-
 _CONTEXT_WARN_THRESHOLD = 12000
 _CONTEXT_SUMMARY_THRESHOLD = 24000
 _CHARS_PER_TOKEN = 4.0
 
-
 def _estimate_tokens(text: str) -> int:
     return int(len(text) / _CHARS_PER_TOKEN)
-
 
 def _check_context_size(messages: list[dict] | list | str | None) -> dict[str, Any]:
     text = ""
@@ -431,7 +408,6 @@ def _check_context_size(messages: list[dict] | list | str | None) -> dict[str, A
             "message": f"Contexto grande ({tokens} tokens). Considera reducir el prompt.",
         }
     return {"tokens": tokens, "chars": chars, "level": "ok", "message": f"Contexto normal ({tokens} tokens)."}
-
 
 class MetricsCollector:
     def __init__(self) -> None:
@@ -480,9 +456,7 @@ class MetricsCollector:
                         lines.append(f"{key}_error_{error_type} {count}")
         return "\n".join(lines)
 
-
 metrics = MetricsCollector()
-
 
 class PromptCache:
     def __init__(self, ttl: int = CACHE_TTL) -> None:
@@ -514,9 +488,7 @@ class PromptCache:
         with self.lock:
             self.cache.clear()
 
-
 prompt_cache = PromptCache()
-
 
 def clasificar_peticion(messages: list) -> str:
     if not messages:
@@ -530,7 +502,6 @@ def clasificar_peticion(messages: list) -> str:
     tipo_max = max(scores, key=scores.get)
     return tipo_max if scores[tipo_max] > 0 else DEFAULT_TIPO
 
-
 def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
     target = url or OLLAMA_URL
     try:
@@ -543,7 +514,6 @@ def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
         log.warning("Error obteniendo modelos de %s: %s", target, e)
         return set()
 
-
 def _get_model_params(model_name: str) -> dict:
     base = model_name.split(":", maxsplit=1)[0]
     for name, params in MODEL_CONFIG.items():
@@ -552,7 +522,6 @@ def _get_model_params(model_name: str) -> dict:
         if name.startswith(base):
             return params
     return dict(DEFAULT_MODEL_PARAMS)
-
 
 def _apply_model_params(data: dict, model_name: str) -> dict:
     params = _get_model_params(model_name)
@@ -563,7 +532,6 @@ def _apply_model_params(data: dict, model_name: str) -> dict:
             data["options"][k] = v
     return data
 
-
 def _record_success(modelo: str, tipo: str, ok: bool) -> None:
     with success_rates_lock:
         sr = success_rates[modelo][tipo]
@@ -571,14 +539,12 @@ def _record_success(modelo: str, tipo: str, ok: bool) -> None:
         if ok:
             sr["ok"] += 1
 
-
 def _get_success_rate(modelo: str, tipo: str) -> float:
     with success_rates_lock:
         sr = success_rates[modelo].get(tipo, {"ok": 0, "total": 0})
         if sr["total"] == 0:
             return 0.5
         return sr["ok"] / sr["total"]
-
 
 def seleccionar_modelo(tipo: str, disponibles: set) -> str:
     route = MODELO_ROUTES.get(tipo, MODELO_ROUTES[DEFAULT_TIPO])
@@ -605,7 +571,6 @@ def seleccionar_modelo(tipo: str, disponibles: set) -> str:
     if disponibles:
         return next(iter(disponibles))
     return route["modelos"][-1]
-
 
 def proxy_request(
     path: str,
@@ -659,7 +624,6 @@ def proxy_request(
             metrics.increment("model_error", {"modelo": modelo, "tipo": tipo})
         error_body = json.dumps({"error": str(e)}).encode()
         return 502, {}, error_body
-
 
 _DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="es">
@@ -801,7 +765,6 @@ setInterval(refresh,5000)
 </body>
 </html>"""
 
-
 def _render_dashboard() -> str:
     _update_asus_latency()
     backend_label = _get_active_backend_label()
@@ -847,7 +810,6 @@ def _render_dashboard() -> str:
         .replace("{ph}", power_hint)
     )
 
-
 def _dashboard_json(client_ip: str = "") -> str:
     _update_asus_latency()
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
@@ -878,7 +840,6 @@ def _dashboard_json(client_ip: str = "") -> str:
             "models": models_info,
         },
     )
-
 
 class RouterHandler(http.server.BaseHTTPRequestHandler):
     _modelos_cache: set | None = None
@@ -1220,7 +1181,6 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def log_message(self, fmt, *args) -> None:
         log.debug("%s - %s", self.client_address[0], fmt % args)
 
-
 def main() -> None:
     import sys
 
@@ -1267,7 +1227,6 @@ def main() -> None:
         log.info("Cerrando servidor...")
         server.server_close()
         log.info("Servidor detenido.")
->>>>>>> Stashed changes
 
 from core.model_router.cli import main
 

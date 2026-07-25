@@ -31,7 +31,6 @@ except OSError:
     pass  # Esperado si ~/.ura/ está en filesystem RO
 HEARTBEAT_FILE = _STATE_DIR / "ura_mac_heartbeat.json"
 
-
 class MacHeartbeat:
     """Verifica si Mac es alcanzable via ping."""
 
@@ -56,58 +55,28 @@ class MacHeartbeat:
                 data = json.loads(HEARTBEAT_FILE.read_text())
                 self.consecutive_failures = data.get("consecutive_failures", 0)
                 self.mac_reachable = data.get("mac_reachable", True)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             except Exception:  # noqa: S110
                 pass
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
-=======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
->>>>>>> Stashed changes
 
     def _save_state(self) -> None:
         """Persiste estado a disco."""
@@ -121,44 +90,14 @@ class MacHeartbeat:
         try:
             tmp = HEARTBEAT_FILE.with_suffix(".tmp")
             tmp.write_text(json.dumps(state, indent=2))
-<<<<<<< Updated upstream
             os.replace(str(tmp), str(HEARTBEAT_FILE))  # noqa: PTH105
         except Exception:  # noqa: S110
             pass
-=======
             import os
 
             os.replace(str(tmp), str(HEARTBEAT_FILE))
         except Exception:
             logger.exception("Error guardando heartbeat state en %s", HEARTBEAT_FILE)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
     def check_mac(self) -> bool:
         """Hace ping a Mac. Retorna True si responde."""
@@ -215,15 +154,12 @@ class MacHeartbeat:
             "sync_command": self.get_sync_command(),
         }
 
-
 # Instancia global
 heartbeat = MacHeartbeat()
-
 
 def check() -> bool:
     """Función de conveniencia: verifica Mac y retorna True si responde."""
     return heartbeat.check_mac()
-
 
 def is_connected() -> bool:
     """Función de conveniencia: True si Mac está conectada."""

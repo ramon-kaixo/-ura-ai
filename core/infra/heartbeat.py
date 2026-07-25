@@ -16,38 +16,8 @@ import logging
 import subprocess
 import time
 from datetime import UTC, datetime
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from pathlib import Path
 from typing import TYPE_CHECKING
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -72,7 +42,6 @@ MAX_FAILS = 3
 CHECK_INTERVAL = 30
 _shutdown_flag = False
 
-
 def check_health() -> bool:
     try:
         req = Request(f"{MOCHILA_URL}{HEALTH_PATH}", method="GET")  # noqa: S310
@@ -81,7 +50,6 @@ def check_health() -> bool:
     except (URLError, OSError, ValueError) as e:
         logger.warning("Health check fallo: %s", e)
         return False
-
 
 def dump_checkpoint() -> None:
     if Path(STATE_FILE).exists():
@@ -96,17 +64,6 @@ def dump_checkpoint() -> None:
         except (json.JSONDecodeError, OSError):
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     try:
         if config is None:
@@ -132,65 +89,46 @@ def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
             )
     except Exception:
         logger.exception("Error guardando incidente de reinicio en Qdrant")
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
-=======
 def _save_restart_to_qdrant() -> None:
     from core.config import UraConfig
     from core.qdrant_client import instancia
 
->>>>>>> Stashed changes
     cfg = UraConfig()
     qc = instancia(cfg)
     if qc and qc.disponible:
@@ -204,35 +142,6 @@ def _save_restart_to_qdrant() -> None:
                 "exit_code": -1,
             },
         )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-
 
 def restart_service() -> None:
     dump_checkpoint()
@@ -255,10 +164,8 @@ def restart_service() -> None:
     except FileNotFoundError:
         logger.exception("systemctl no disponible")
 
-
 vram_critical_cycles = 0
 VRAM_PANIC_MB = 22000
-
 
 def check_vram_pressure() -> None:
     global vram_critical_cycles  # noqa: PLW0603
@@ -323,7 +230,6 @@ def check_vram_pressure() -> None:
         )
         logger.warning("VRAM monitor error: %s", e)
 
-
 def check_loop_latency() -> float:
     async def _measure():
         t0 = time.monotonic()
@@ -336,9 +242,7 @@ def check_loop_latency() -> float:
     except RuntimeError:
         return 0.0
 
-
 loop_latency_history: list[float] = []
-
 
 def main() -> None:
     setup_logging(level="INFO", fmt="%(asctime)s [%(levelname)s] %(message)s")
@@ -390,7 +294,6 @@ def main() -> None:
         if not args.daemon:
             break
         time.sleep(CHECK_INTERVAL)
-
 
 if __name__ == "__main__":
     import signal

@@ -26,7 +26,6 @@ VOICES_DIR = Path(__file__).resolve().parent / "voices"
 PIPER_BIN = Path("~/.local/bin/piper").expanduser()
 DEFAULT_VOICE = "es_ES-davefx-medium.onnx"
 
-
 class PiperTTSMotor:
     def __init__(
         self,
@@ -67,58 +66,28 @@ class PiperTTSMotor:
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
->>>>>>> Stashed changes
         return None
 
     def _execute_piper_and_play(self, text: str) -> None:
@@ -150,58 +119,28 @@ class PiperTTSMotor:
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
-=======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)
->>>>>>> Stashed changes
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False

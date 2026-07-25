@@ -5,37 +5,7 @@ Cada maquina captura su propia pantalla. Sin cruce de contextos.
 
 from __future__ import annotations
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import base64
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import os
 import sys
 from io import BytesIO
@@ -44,7 +14,6 @@ from motor.core.secrets import get_secret
 
 # Identificacion del nodo via variable de entorno (default: ASUS_GX10)
 NODO = os.getenv("URA_NODE_ENV", "ASUS_GX10")
-
 
 class CapturadorTarget:
     """Capturador aislado por nodo. Cada maquina solo ve su pantalla."""
@@ -64,66 +33,36 @@ class CapturadorTarget:
     def _capturar_vnc(self) -> str | None:
         """Captura desde el monitor virtual de Hetzner via VNC."""
         try:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
-=======
             import base64
             from io import BytesIO
 
->>>>>>> Stashed changes
             import vncdotool.api
 
             client = vncdotool.api.connect("127.0.0.1::5901")
@@ -139,39 +78,9 @@ class CapturadorTarget:
     def _capturar_mac(self) -> str | None:
         """Captura nativa en Mac con normalizacion Retina."""
         try:
-<<<<<<< Updated upstream
-=======
             import base64
             from io import BytesIO
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             from PIL import ImageGrab
 
             img = ImageGrab.grab()
@@ -194,22 +103,18 @@ class CapturadorTarget:
             return x // 2, y // 2
         return x, y
 
-
 # Mantener compatibilidad hacia atras
 class CapturadorPantallaSeguro(CapturadorTarget):
     pass
-
 
 def capturar_pantalla():
     """Funcion de acceso directo (compatibilidad)."""
     c = CapturadorTarget()
     return c.capturar()
 
-
 def normalizar_coordenadas(x: int, y: int) -> tuple[int, int]:
     c = CapturadorTarget()
     return c.normalizar_coordenadas(x, y)
-
 
 def analizar_con_ollama(imagen_b64: str | None = None, prompt: str = "") -> str:
     from scripts.pro.uitars_gx10 import analizar_con_ollama as _ollama

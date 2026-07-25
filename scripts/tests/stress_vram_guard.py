@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 URL_API = "http://127.0.0.1:11435/v1/chat/completions"
 
-
 async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
     inicio_total = time.time()
 
@@ -36,59 +35,28 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
             else:
                 pass
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-=======
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
->>>>>>> Stashed changes
-
 
 async def main() -> None:
     payload_test = {
@@ -102,7 +70,6 @@ async def main() -> None:
     await asyncio.gather(*tareas)
 
     time.time() - inicio_script
-
 
 if __name__ == "__main__":
     asyncio.run(main())

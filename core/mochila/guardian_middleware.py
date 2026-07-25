@@ -11,7 +11,6 @@ from core.guardian_openclaw import get_guardian
 log = logging.getLogger("mochila.guardian")
 guardian = get_guardian()
 
-
 class GuardianMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -24,51 +23,20 @@ class GuardianMiddleware(BaseHTTPMiddleware):
             if not resultado.get("permitido", True):
                 log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon', '')}")
                 return JSONResponse(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                     status_code=403,
                     content={"error": "Guardian bloqueo la operacion", "detalle": resultado},
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
-=======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
->>>>>>> Stashed changes
                 )
         return await call_next(request)
-
 
 def init_guardian():
     estado = guardian.estado()

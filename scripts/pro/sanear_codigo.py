@@ -4,37 +4,7 @@
 Uso: python3 scripts/pro/sanear_codigo.py [--check-only]
 """
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import ast
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import re
 import subprocess
 import sys
@@ -42,7 +12,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 DIRS = ["core", "monitor", "motor", "agents", "scripts/pro", "tests"]
-
 
 def fix_logging_fstrings(path: Path) -> int:
     """G004: log.info(f'...') -> log.info('...', var)."""
@@ -59,55 +28,23 @@ def fix_logging_fstrings(path: Path) -> int:
         count = 1
     return count
 
-
 def add_noqa_for_untyped_defs(path: Path) -> int:
     """Añade # noqa a funciones sin tipo de retorno donde sea muy complejo."""
     # This would require AST parsing - skip for now
     return 0
 
-
 def fix_multiline_statements(path: Path) -> int:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     """E702: split statements joined with."""
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
-=======
     """E702: split statements joined with"""
->>>>>>> Stashed changes
     content = path.read_text()
     count = 0
     # Simple case: x = 1; y = 2  -> split into two lines
@@ -115,84 +52,24 @@ def fix_multiline_statements(path: Path) -> int:
     new_lines = []
     for line in lines:
         if ";" in line and not line.strip().startswith("#"):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             # Check if it's actually multiple statements
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             parts = line.split(";")
             if len(parts) > 1:
                 stripped = [p.strip() for p in parts]
                 if all(
                     s
                     and not s.startswith(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
                     )
                     for s in stripped
                 ):
@@ -203,7 +80,6 @@ def fix_multiline_statements(path: Path) -> int:
     if count:
         path.write_text("\n".join(new_lines))
     return count
-
 
 def fix_magic_values(path: Path) -> int:
     """PLR2004: replace inline numeric literals with named constants where they appear >2x."""
@@ -230,42 +106,11 @@ def fix_magic_values(path: Path) -> int:
         # Pattern: comparison like `x > 10` or `x >= 5`
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
-=======
     except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         pass
 
     return count
-
 
 def run_ruff_fix(path: Path) -> int:
     """Ejecuta ruff --fix en un archivo."""
@@ -278,20 +123,9 @@ def run_ruff_fix(path: Path) -> int:
     )
     return 0
 
-
 def main() -> None:
     check_only = "--check-only" in sys.argv
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     total_before = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -300,28 +134,8 @@ def main() -> None:
         check=False,
     )
     len([l for l in total_before.stderr.split("\n") if "Found" in l])
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     total_before = subprocess.run(["ruff", "check", *DIRS], capture_output=True, text=True, timeout=60, check=False)
     before_count = len([l for l in total_before.stderr.split("\n") if "Found" in l])
->>>>>>> Stashed changes
 
     fixes = {
         "G004 (logging f-string)": fix_logging_fstrings,
@@ -352,16 +166,6 @@ def main() -> None:
                 check=False,
             )
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     after = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -370,33 +174,12 @@ def main() -> None:
         check=False,
     )
     len([l for l in after.stderr.split("\n") if "Found" in l])
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     after = subprocess.run(["ruff", "check", *DIRS], capture_output=True, text=True, timeout=60, check=False)
     after_count = len([l for l in after.stderr.split("\n") if "Found" in l])
 
     print(f"Fixers aplicados: {total_fixed}")
     print(f"Antes: {before_count} errores")
     print(f"Despues: {after_count} errores")
->>>>>>> Stashed changes
-
 
 if __name__ == "__main__":
     main()

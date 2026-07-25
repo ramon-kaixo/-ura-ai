@@ -16,24 +16,12 @@ logger = logging.getLogger("ura.guardian")
 
 GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 
-
 def _ensure_log_dir():
     path = Path(GUARDIAN_LOG).parent
     if path and not Path(path).exists():
         os.makedirs(path, exist_ok=True)
 
-
 def _publish_to_event_bus(record: dict) -> None:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     try:
         from core.event_bus import publish
 
@@ -48,7 +36,6 @@ def _publish_to_event_bus(record: dict) -> None:
         )
     except Exception:
         pass
-
 
 def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None:
     try:
@@ -77,25 +64,6 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
             )
     except Exception:
         pass
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     from core.event_bus import publish
 
     publish(
@@ -107,7 +75,6 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
             "result_type": record.get("result_type", ""),
         },
     )
-
 
 def _save_to_qdrant(record: dict) -> None:
     from core.config import UraConfig
@@ -128,35 +95,6 @@ def _save_to_qdrant(record: dict) -> None:
                 "exit_code": -1,
             }
         )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-
 
 def log_event(
     event: str,

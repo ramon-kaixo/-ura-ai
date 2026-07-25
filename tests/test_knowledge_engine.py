@@ -57,41 +57,10 @@ from knowledge.engine.sqlite_writer import SyncPolicy, init_db
 from knowledge.engine.storage_verifier import check_fts_sync, check_schema
 from knowledge.engine.validator import validate_batch, validate_knowledge_object
 from knowledge.engine.verifier import verify_graph
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 ENGINE_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "pro" / "knowledge_engine.py"
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
-
 
 def _content_so(path: str, text: str = "") -> SourceObject:
     """Helper: crea SourceObject con contenido en memoria."""
@@ -105,9 +74,7 @@ def _content_so(path: str, text: str = "") -> SourceObject:
         content=raw,
     )
 
-
 # ── Config Tests ─────────────────────────────────────────────────────────────
-
 
 class TestUraConfig:
     def test_load_defaults(self):
@@ -136,9 +103,7 @@ class TestUraConfig:
             assert cfg.qdrant_host == "from-file"
         Path(f.name).unlink()
 
-
 # ── Models Tests ─────────────────────────────────────────────────────────────
-
 
 class TestModels:
     def test_frontmatter_from_dict(self):
@@ -245,9 +210,7 @@ class TestModels:
         assert len(cur.deleted(prev)) == 1
         assert cur.deleted(prev)[0].path == "b.md"
 
-
 # ── Error Code Tests ─────────────────────────────────────────────────────────
-
 
 class TestErrorCodes:
     def test_all_codes_have_unique_numbers(self):
@@ -280,9 +243,7 @@ class TestErrorCodes:
         assert lookup("KE205") is not None
         assert lookup("KE207") is not None
 
-
 # ── Knowledge DB Tests ───────────────────────────────────────────────────────
-
 
 class TestKnowledgeEngine:
     @pytest.fixture(autouse=True)
@@ -495,9 +456,7 @@ class TestKnowledgeEngine:
         assert len(issues) > 0
         assert "KE107" in issues[0]
 
-
 # ── Corruption Tests ─────────────────────────────────────────────────────────
-
 
 class TestCorruption:
     """Pruebas donde la base está dañada deliberadamente.
@@ -586,9 +545,7 @@ class TestCorruption:
             pytest.fail(f"verify_graph raised unexpected exception: {exc}")
         assert len(results) > 0, "Should return results even when DB is corrupt"
 
-
 # ── Scanner Tests ────────────────────────────────────────────────────────────
-
 
 class TestScanner:
     def test_scan_empty_dir(self, tmp_path):
@@ -702,9 +659,7 @@ class TestScanner:
         sources, _ = scan_source(src)
         assert sources[0].content == b"exact content bytes"
 
-
 # ── Parser Tests ─────────────────────────────────────────────────────────────
-
 
 class TestParser:
     def test_parse_basic_doc(self):
@@ -811,9 +766,7 @@ class TestParser:
         assert isinstance(result, KnowledgeObject)
         assert result.document.frontmatter.title == "Ghost"
 
-
 # ── Validator Tests ───────────────────────────────────────────────────────────
-
 
 def _make_ko(
     doc_id: str = "test",
@@ -841,7 +794,6 @@ def _make_ko(
     )
     rels = tuple(Relation(src=doc_id, dst=dst, relation=rel) for dst, rel in relations)
     return KnowledgeObject(document=doc, relations=rels)
-
 
 class TestValidator:
     def test_valid_doc_passes(self):
@@ -1014,9 +966,7 @@ class TestValidator:
         assert len(errors) == 0
         assert len(valid) == 2
 
-
 # ── CLI Tests ────────────────────────────────────────────────────────────────
-
 
 class TestKnowledgeEngineCLI:
     def test_cli_init(self, tmp_path):
@@ -1061,9 +1011,7 @@ class TestKnowledgeEngineCLI:
         assert result.returncode == 0
         assert "URA Knowledge Engine" in result.stdout
 
-
 # ── Integration Test ─────────────────────────────────────────────────────────
-
 
 class TestIntegration:
     def test_full_pipeline(self, tmp_path):
@@ -1181,9 +1129,7 @@ class TestIntegration:
         errors2 = [r for r in v2 if r[0] == "ERROR"]
         assert len(errors2) == 0, f"Verify errors after incremental: {errors2}"
 
-
 # ── Reader Tests ─────────────────────────────────────────────────────────────
-
 
 class TestKnowledgeReader:
     def setup_reader(self, tmp_path):
@@ -1294,9 +1240,7 @@ class TestKnowledgeReader:
         )
         assert "No relations" in result.stdout or "No related" in result.stdout
 
-
 # ── Migration Tests ───────────────────────────────────────────────────────────
-
 
 class TestMigration:
     def test_get_schema_version(self, tmp_path):
@@ -1548,7 +1492,6 @@ class TestMigration:
         conn1.close()
         db.unlink()
 
-
 class TestChunker:
     def test_chunk_single_short_doc(self):
         from knowledge.engine.chunker import chunk_text
@@ -1631,7 +1574,6 @@ class TestChunker:
         chunks = chunk_text(text, max_words=500, overlap=50)
         assert len(chunks) == 2
 
-
 class TestQdrantSync:
     def test_sync_documents_qdrant_unavailable(self, tmp_path, caplog):
         from knowledge.engine.models import Document, Frontmatter
@@ -1650,16 +1592,6 @@ class TestQdrantSync:
             frontmatter=Frontmatter(title="Q"),
             body="test content for qdrant sync",
         )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         result = sync_documents(db_path, [doc], [], run_id=0)
         # Graceful regardless of Qdrant availability:
         #   — unavailable: result == 0, "Qdrant no disponible" in log
@@ -1668,38 +1600,17 @@ class TestQdrantSync:
             assert result == 0
         else:
             assert result >= 1
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         from unittest.mock import patch
 
         with patch("knowledge.engine.qdrant_sync._get_qdrant", return_value=None):
             result = sync_documents(db_path, [doc], [], run_id=0)
         assert result == 0
         assert "Qdrant no disponible" in caplog.text
->>>>>>> Stashed changes
 
     def test_search_semantic_qdrant_unavailable(self):
         from knowledge.engine.qdrant_sync import search_semantic
 
         assert search_semantic("test query") == []
-
 
 class TestHybridSearch:
     def setup_reader(self, tmp_path):
@@ -1728,9 +1639,7 @@ class TestHybridSearch:
         assert len(results) >= 1
         assert any("Introduction" in r.title for r in results)
 
-
 # ── Golden-master tests (Fase 0 — determinismo) ────────────────────────────
-
 
 class TestDeterminism:
     """El grafo compilado es función pura de source@commit + compiler_version.
@@ -1743,47 +1652,17 @@ class TestDeterminism:
         src = tmp_path / "source"
         src.mkdir(parents=True, exist_ok=True)
         (src / "test-a.md").write_text(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n",
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
-=======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
->>>>>>> Stashed changes
         )
         (src / "test-b.md").write_text(
             "---\nid: test-b\ntitle: Documento B\ntype: spec\n---\n\n"
@@ -1864,9 +1743,7 @@ class TestDeterminism:
         assert len(row[0]) == 64, "SHA-256 hex debe tener 64 caracteres"
         assert row[0] != "", "Hash no debe ser vacío"
 
-
 # ── Archive Integration Tests (Fase A) ─────────────────────────────────────
-
 
 class TestArchiveIntegration:
     """El archivado es un efecto secundario asíncrono, no parte crítica del compile.
@@ -1896,49 +1773,19 @@ class TestArchiveIntegration:
         # Git init en tmp_path (parent de source/), así .git/ no contamina el scan
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
         subprocess.run(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"],
             capture_output=True,
             check=False,
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
-=======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
->>>>>>> Stashed changes
         )
         subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "Test"], capture_output=True, check=False)
         subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
@@ -2020,9 +1867,7 @@ class TestArchiveIntegration:
         assert len(h) == 64
         assert h != ""
 
-
 # ── Observability Tests (Fase B) ──────────────────────────────────────────
-
 
 class TestMetricsExport:
     """Pruebas del módulo de métricas (knowledge/engine/metrics.py).
@@ -2126,7 +1971,6 @@ class TestMetricsExport:
 
         assert after_count == initial_count, "export_metrics no debe modificar la BD"
 
-
 class TestCorrelationId:
     """El correlation_id nace en request_compile() y se propaga
     al compilador, SQLite (op_compiler_runs.details), y logs."""
@@ -2182,7 +2026,6 @@ class TestCorrelationId:
 
         meta = CompileMetadata(correlation_id="test-correlation-123")
         assert meta.correlation_id == "test-correlation-123"
-
 
 class TestStructuredLogging:
     """Pruebas de logs estructurados (URA_STRUCTURED_LOGS=true)."""
@@ -2289,9 +2132,7 @@ class TestStructuredLogging:
             assert plain_level == record.levelname
             assert plain_logger == record.name
 
-
 # ── Audit Tests (Fase C) ──────────────────────────────────────────────────
-
 
 class TestAuditBackend:
     """Pruebas del sistema de auditoría NDJSON + SQLite.
@@ -2333,38 +2174,8 @@ class TestAuditBackend:
         audit_file.write_text(
             '{"action": "search", "actor": "test", "entity_type": "doc", "entity_id": "1", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
             "not valid json\n"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n',
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
->>>>>>> Stashed changes
         )
         backend = NDJSONAuditBackend(tmp_path, "test.ndjson")
         backend._handle.close()
@@ -2555,7 +2366,6 @@ class TestAuditBackend:
         results = reader.search("nonexistent")
         assert results == []
 
-
 class TestGoldenMaster:
     """Verifica que los tests golden-master de Fase A/B siguen pasando.
 
@@ -2632,48 +2442,18 @@ class TestGoldenMaster:
         src.mkdir()
         # Crear 10 ficheros en orden alfabético inverso
         for name in sorted(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"],
             reverse=True,
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
-=======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
->>>>>>> Stashed changes
         ):
             (src / name).write_text(f"---\ntitle: {name}\ntype: doc\n---\n\nBody {name}\n")
 
@@ -2751,38 +2531,8 @@ class TestGoldenMaster:
         # Compilar con CWD normal
         import os
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         old_cwd = os.getcwd()  # noqa: PTH109
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         old_cwd = os.getcwd()
->>>>>>> Stashed changes
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
 
@@ -2821,7 +2571,6 @@ class TestGoldenMaster:
         h2 = get_determinism_hash(db)
         assert h1 == h2
 
-
 class TestArchiverCoverage:
     """Cubre paths no ejecutados de archiver.py."""
 
@@ -2838,7 +2587,6 @@ class TestArchiverCoverage:
         bad = tmp_path / "bad.json"
         bad.write_text("not json")
         assert verify_archive(bad) is False
-
 
 class TestJobsCoverage:
     """Cubre paths no ejecutados de jobs.py."""

@@ -1,35 +1,5 @@
-<<<<<<< Updated upstream
 """memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)."""
-=======
 """memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)"""
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 from __future__ import annotations
 
@@ -40,14 +10,12 @@ from datetime import UTC, datetime
 MAX_FALLOS = 5
 UMBRAL_PATRON = 3
 
-
 @dataclass
 class Fallo:
     tipo: str
     mensaje: str
     arreglo: str | None = None
     timestamp: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
-
 
 class MemoriaFallos:
     def __init__(self, nombre_pieza: str, max_fallos: int = MAX_FALLOS, umbral_patron: int = UMBRAL_PATRON) -> None:
