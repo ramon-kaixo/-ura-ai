@@ -88,7 +88,11 @@ def lint_code(code: str) -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         raise SyntaxError(msg)  # noqa: B904
+=======
+        raise SyntaxError(msg)
+>>>>>>> Stashed changes
 =======
         raise SyntaxError(msg)
 >>>>>>> Stashed changes

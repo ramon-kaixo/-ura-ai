@@ -83,6 +83,7 @@ URA_COMMANDS: dict[str, object] = {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 def _setup_logging(level: str) -> None:
     setup_logging(
@@ -90,6 +91,9 @@ def _setup_logging(level: str) -> None:
         fmt="%(name)s %(levelname)s %(message)s",
         handlers=[logging.StreamHandler(sys.stderr)],
     )
+=======
+def _setup_logging(level: str) -> None:
+>>>>>>> Stashed changes
 =======
 def _setup_logging(level: str) -> None:
 >>>>>>> Stashed changes
@@ -131,8 +135,11 @@ def main() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
