@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 REPORTS = Path.home() / "URA" / "reports"
 REPORTS.mkdir(parents=True, exist_ok=True)
 
-
 class Orquestador:
     def __init__(self) -> None:
         self.capturador = CapturadorTarget()
@@ -41,52 +40,10 @@ class Orquestador:
         path.write_text(json.dumps(r, indent=2))
         return r
 
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 async def main() -> None:
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 async def main():
->>>>>>> Stashed changes
     o = Orquestador()
     await o.ciclo()
-
-
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

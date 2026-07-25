@@ -12,7 +12,6 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 DIRS = ["core", "monitor", "motor", "agents", "scripts/pro"]
 
-
 def fix_exe_shebang() -> int:
     """EXE001: archivos con shebang pero sin +x."""
     count = 0
@@ -29,51 +28,20 @@ def fix_exe_shebang() -> int:
                     pass
     return count
 
-
 def fix_e702_semicolons() -> int:
     """E702: split x=1
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     y=2 into two lines.
     """
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
-=======
     y=2 into two lines."""
->>>>>>> Stashed changes
     count = 0
     for dirname in DIRS:
         for f in Path(REPO / dirname).rglob("*.py"):
@@ -88,47 +56,17 @@ def fix_e702_semicolons() -> int:
                     parts = [p.strip() for p in parts]
                     if len(parts) > 1 and all(
                         not p.startswith(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
                         )
                         for p in parts
                     ):
@@ -141,7 +79,6 @@ def fix_e702_semicolons() -> int:
                 _safe_write(f, "\n".join(new_content))
     return count
 
-
 def _safe_write(f: Path, content: str) -> bool:
     """Intenta escribir, salta si el archivo es immutable."""
     try:
@@ -149,7 +86,6 @@ def _safe_write(f: Path, content: str) -> bool:
         return True
     except (PermissionError, OSError):
         return False
-
 
 def fix_s603_check_false() -> int:
     """Añade check=False a subprocess.run() que no lo tienen."""
@@ -169,7 +105,6 @@ def fix_s603_check_false() -> int:
                 count += 1
     return count
 
-
 def fix_inp001_add_init() -> int:
     """INP001: añade __init__.py a paquetes implicitos."""
     count = 0
@@ -183,7 +118,6 @@ def fix_inp001_add_init() -> int:
                     _safe_write(d / "__init__.py", "")
                     count += 1
     return count
-
 
 def fix_s110_try_except_pass() -> int:
     """S110: add log or comment to empty except blocks."""
@@ -204,7 +138,6 @@ def fix_s110_try_except_pass() -> int:
                 count += 1
     return count
 
-
 def run_ruff_fix() -> None:
     """Ejecuta ruff --fix en todos los directorios."""
     for dirname in DIRS:
@@ -213,7 +146,6 @@ def run_ruff_fix() -> None:
             timeout=120,
             check=False,
         )
-
 
 def main() -> None:
     fix_exe_shebang()
@@ -234,52 +166,21 @@ def main() -> None:
         capture_output=True,
         text=True,
         timeout=60,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
-=======
         check=False,
->>>>>>> Stashed changes
     )
     lines = result.stdout.strip().split("\n")
     if lines:
         for _line in lines:
             pass
-
 
 if __name__ == "__main__":
     main()

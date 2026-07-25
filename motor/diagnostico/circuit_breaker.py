@@ -5,9 +5,7 @@ from motor.platform.resilience import (
     CircuitBreakerOpenError,
 )
 
-<<<<<<< Updated upstream
 __all__ = ["CircuitBreaker", "CircuitBreakerOpenError"]
-=======
 
 class CircuitBreaker:
     """Circuit breaker para Qdrant: abre tras N fallos consecutivos."""
@@ -40,4 +38,3 @@ class CircuitBreaker:
         self._fallos = 0
         self._abierto = False
         log.info("circuit breaker cerrado manualmente")
->>>>>>> Stashed changes

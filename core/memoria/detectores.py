@@ -1,36 +1,6 @@
 """Detectores multi-tipo para la Reactualización Total."""
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import json
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import logging
 import subprocess
 
@@ -38,7 +8,6 @@ import blake3
 import httpx
 
 log = logging.getLogger("memoria.detectores")
-
 
 def detector_hash_texto(url: str, hash_anterior: str = "") -> dict:
     """Detecta cambios en una página web vía hash BLAKE3 del contenido."""
@@ -50,7 +19,6 @@ def detector_hash_texto(url: str, hash_anterior: str = "") -> dict:
         return {"cambio": h != hash_anterior, "hash": h, "tamano": len(resp.content)}
     except Exception as e:
         return {"cambio": False, "error": str(e)}
-
 
 def detector_github_releases(repo_url: str, version_anterior: str = "") -> dict:
     """Detecta nuevas releases en un repo GitHub vía API."""
@@ -77,7 +45,6 @@ def detector_github_releases(repo_url: str, version_anterior: str = "") -> dict:
     except Exception as e:
         return {"cambio": False, "error": str(e)}
 
-
 def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
     """Detecta cambios en una imagen vía hash BLAKE3."""
     try:
@@ -89,11 +56,9 @@ def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
     except Exception as e:
         return {"cambio": False, "error": str(e)}
 
-
 def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
-<<<<<<< Updated upstream
         result = subprocess.run(  # noqa: PLW1510
             [
                 "ffprobe",
@@ -110,7 +75,6 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
         )
         if result.returncode != 0:
             return {"cambio": False, "error": "FFprobe failed"}
-=======
         result = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", url],
             capture_output=True,
@@ -122,34 +86,6 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
             return {"cambio": False, "error": "FFprobe failed"}
         import json
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         data = json.loads(result.stdout)
         fmt = data.get("format", {})
         meta_nuevo = json.dumps(
@@ -158,52 +94,21 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
                 "size": fmt.get("size", ""),
                 "bit_rate": fmt.get("bit_rate", ""),
                 "format_name": fmt.get("format_name", ""),
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             },
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
-=======
             }
->>>>>>> Stashed changes
         )
         return {"cambio": meta_nuevo != metadatos_anteriores, "metadatos": meta_nuevo}
     except Exception as e:
         return {"cambio": False, "error": str(e)}
-
 
 DETECTORES = {
     "hash_texto": detector_hash_texto,
@@ -211,7 +116,6 @@ DETECTORES = {
     "hash_imagen": detector_hash_imagen,
     "video_metadata": detector_video_metadata,
 }
-
 
 def ejecutar_detector(tipo: str, url: str, valor_anterior: str = "") -> dict:
     detector = DETECTORES.get(tipo)

@@ -6,37 +6,7 @@ import time
 from typing import Any
 
 from core.memoria.bridge import buscar_y_aprender
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from core.memoria.ingesto import procesados_local  # noqa: F401
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 from core.memoria.qdrant_store import buscar_ideas
 
 log = logging.getLogger("memoria.consulta")
@@ -44,13 +14,11 @@ log = logging.getLogger("memoria.consulta")
 MIN_SCORE_MEMORIA = 0.5
 MIN_IDEAS_MEMORIA = 3
 
-
 def _es_suficiente(resultados_qdrant: list[dict]) -> bool:
     if not resultados_qdrant:
         return False
     buenas = [r for r in resultados_qdrant if r.get("score", 0) >= MIN_SCORE_MEMORIA]
     return len(buenas) >= MIN_IDEAS_MEMORIA
-
 
 async def consultar(query: str, forzar_web: bool = False) -> dict:
     """Busca en memoria Qdrant. Si no hay suficientes ideas, busca en internet
@@ -105,7 +73,6 @@ async def consultar(query: str, forzar_web: bool = False) -> dict:
         "paginas_procesadas": len([r for r in web_results if r.get("procesado")]),
     }
 
-
 class CPUReRanker:
     """Re-ranker semántico en CPU. Post-RRF, pre-LLM. Sin consumo de VRAM."""
 
@@ -138,7 +105,6 @@ class CPUReRanker:
             return sorted(documentos, key=lambda x: x["score_rerank"], reverse=True)[:top_n]
 
         return await asyncio.to_thread(proceso_pool)
-
 
 class PipelineConsultaRAG:
     """Pipeline RAG completo: hybrid search + reranker CPU + contexto óptimo."""

@@ -1,31 +1,7 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 #! /usr/bin/env python3
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import shlex
 
 #!/usr/bin/env python3
->>>>>>> Stashed changes
 """Sistema Nervioso Central (SNC) — Polling activo cada 10s.
 Monitoriza procesos vía HTTP/socket, escribe estado en ~/.ura/run/ura_snc_state.json.
 Ejecuta emergency_runbook.json ante fallos. Autónomo, sin dependencia de red.
@@ -36,32 +12,8 @@ Modo Soberanía: GX10 opera independientemente del Mac.
 import json
 import os
 import platform
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import shlex
 import shutil
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import signal
 import subprocess
 import sys
@@ -126,7 +78,6 @@ _opencode_ciclos_alta: int = 0
 error_logger = ErrorLogger()
 mac_heartbeat = MacHeartbeat()
 
-
 def _notify(msg: str, level: str = "warning") -> None:
     """Wrapper lazy de core/notifier.notify para evitar circular imports."""
     try:
@@ -137,19 +88,14 @@ def _notify(msg: str, level: str = "warning") -> None:
     except Exception as e:
         error_logger.log_error(context="SNC", gateway_status="NOTIFY_FAIL", severity="WARN", message=f"notify: {e}")
 
-
 openclaw_active = False
 openclaw_stable_since = None
 repair_attempts: dict[str, int] = {}
 
-# ============================================================
-# MODO SOBERANÍA: GX10 opera independientemente
+# =====================================================# MODO SOBERANÍA: GX10 opera independientemente
 # Si Mac cae, GX10 continúa sin interrupciones ni avisos.
 # El estado mac_connection_ok se actualiza automáticamente.
-# ============================================================
-
-
-def load_runbook() -> dict:
+# =======================================def load_runbook() -> dict:
     try:
         return json.loads(RUNBOOK_PATH.read_text())
     except Exception as e:
@@ -160,7 +106,6 @@ def load_runbook() -> dict:
             message=f"Error cargando runbook: {e}",
         )
         return {"version": "0", "commands": {}, "retry_policy": {}}
-
 
 def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
     """Ejecuta un pipeline shell (|) sin shell=True.
@@ -192,18 +137,7 @@ def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
         stderr=stderr,
     )
 
-
 def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     """Ejecuta un comando. Sin shell=True: usa PIPE para pipelines.
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
@@ -221,71 +155,50 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
                 check=False,
             )
         return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
-=======
     args = shlex.split(cmd)
     try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
->>>>>>> Stashed changes
     except subprocess.TimeoutExpired:
         return False, "timeout"
     except Exception as e:
         return False, str(e)
-
 
 def check_service(check_cmd: str) -> bool:
     """Verifica un servicio ejecutando su comando de check."""
@@ -294,12 +207,10 @@ def check_service(check_cmd: str) -> bool:
     ok, _ = run_command(check_cmd, timeout=5)
     return ok
 
-
 def is_command_forbidden(cmd: str, forbidden: list) -> bool:
     """Verifica que un comando no esté en la lista prohibida."""
     cmd_lower = cmd.lower()
     return any(f.lower() in cmd_lower for f in forbidden)
-
 
 def repair_service(service_name: str, config: dict, runbook: dict) -> str:
     """Intenta reparar un servicio. Retorna 'ok', 'failed', 'escalated'."""
@@ -329,7 +240,6 @@ def repair_service(service_name: str, config: dict, runbook: dict) -> str:
             return "ok"
 
     return "failed"
-
 
 def check_mac_unauthorized_writes() -> bool:
     """Detecta intentos de escritura no autorizados en Mac.
@@ -366,7 +276,6 @@ def check_mac_unauthorized_writes() -> bool:
         )
 
     return False
-
 
 def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
     """Polling de todos los servicios. Retorna dict de estado.
@@ -492,7 +401,6 @@ def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
 
     return state
 
-
 def write_state(state: dict) -> None:
     """Escribe el estado en /tmp/ura_snc_state.json de forma atómica."""
     try:
@@ -507,16 +415,13 @@ def write_state(state: dict) -> None:
             message=f"Error escribiendo estado: {e}",
         )
 
-
 def handle_signal(sig, frame) -> None:
     state = {"timestamp": datetime.now(UTC).isoformat(), "status": "SHUTDOWN", "services": {}}
     write_state(state)
     PID_FILE.unlink(missing_ok=True)
     sys.exit(0)
 
-
 # ─── Detección de anomalías en caliente ─────────────────────
-
 
 def check_zombies() -> list[int]:
     """Procesos zombie (estado Z) → kill -KILL directo."""
@@ -535,7 +440,6 @@ def check_zombies() -> list[int]:
         except (OSError, PermissionError):
             continue
     return zombies
-
 
 def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[int, str, float]]:
     """Procesos Python/node con CPU INSTANTÁNEA > umbral (usa ps, no /proc/stat acumulado)."""
@@ -563,60 +467,29 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
                 continue
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
-=======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
->>>>>>> Stashed changes
     return result[:10]
-
 
 def check_opencode_colgado() -> int | None:
     """Detecta si OpenCode está congelado (CPU alta + sin respuesta).
@@ -646,7 +519,6 @@ def check_opencode_colgado() -> int | None:
     except (ValueError, subprocess.TimeoutExpired, OSError):
         return None
 
-
 def _limpiar_zombies() -> None:
     zombies = check_zombies()
     for pid in zombies:
@@ -656,7 +528,6 @@ def _limpiar_zombies() -> None:
             error_logger.log_error(context="SNC", gateway_status="ZOMBIE_KILLED", severity="WARN", message=log_msg)
         except (OSError, PermissionError):
             pass
-
 
 def _sigcont_seguro(pid: int, nombre_original: str) -> None:
     """SIGCONT solo si el PID sigue detenido y no se recicló."""
@@ -689,7 +560,6 @@ def _sigcont_seguro(pid: int, nombre_original: str) -> None:
         pass
     with _pending_lock:
         _pending_sigcont.pop(pid, None)
-
 
 def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
     """Aísla un proceso en bucle: SIGSTOP + volcado /proc."""
@@ -724,14 +594,12 @@ def _aislar_bucle(pid: int, nombre: str, cpu: float) -> None:
         msg = f"Error aislando {nombre} PID {pid}: {e}"
         error_logger.log_error(context="SNC", gateway_status="ISOLATE_FAIL", severity="WARN", message=msg)
 
-
 def _check_umbrales(state: dict) -> bool:
     """Retorna True si se deben activar medidas correctivas."""
     servicios = state.get("services", {})
     criticos_caidos = sum(1 for s in UMBRALES["criticos"] if servicios.get(s, {}).get("ok") is False)
     totales_caidos = sum(1 for s in servicios.values() if s.get("ok") is False)
     return criticos_caidos >= UMBRALES["max_fallos_criticos"] or totales_caidos >= UMBRALES["max_fallos_totales"]
-
 
 def _trigger_tuneladora() -> None:
     """Activa el ciclo de mantenimiento de la tuneladora ahora."""
@@ -742,7 +610,6 @@ def _trigger_tuneladora() -> None:
         _notify("⚠️ Tuneladora no respondió en 30s", level="critical")
     except Exception as e:
         _notify(f"⚠️ Error activando tuneladora: {e}", level="warning")
-
 
 def main() -> None:
     signal.signal(signal.SIGTERM, handle_signal)
@@ -802,7 +669,6 @@ def main() -> None:
         pass
     finally:
         PID_FILE.unlink(missing_ok=True)
-
 
 if __name__ == "__main__":
     main()

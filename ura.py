@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-<<<<<<< Updated upstream
 """URA CLI — Punto de entrada central (wrapper hacia motor/cli/main.py)."""
 
-=======
 """URA CLI — Punto de entrada central del sistema.
 Comandos: finalize, test, status, clean.
 """
@@ -12,20 +10,9 @@ import contextlib
 import json
 import logging
 import subprocess
->>>>>>> Stashed changes
 import sys
 from pathlib import Path
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 # Guard: remove editable install finder to guarantee single import source.
 for _f in list(sys.meta_path):
     if "__editable" in str(_f):
@@ -68,27 +55,7 @@ HELP = """URA CLI v3.0
     python3 ura.py finalize -m "fix: corrige cache de prompts"
 """
 
-
 def main() -> int | None:
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent
@@ -104,7 +71,6 @@ OLLAMA_PORT = _CFG["ollama"]["port"]
 # Module load timestamp (used by main() for startup profiling)
 _START = time.perf_counter()
 
-
 def _run(cmd, desc):
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, check=False)
     if result.returncode == 0:
@@ -112,7 +78,6 @@ def _run(cmd, desc):
     if result.stderr:
         pass
     return False, result.stderr
-
 
 def cmd_finalize(args) -> int:
     message = None
@@ -185,7 +150,6 @@ def cmd_finalize(args) -> int:
 
     return 0
 
-
 def cmd_test(args) -> int:
     from core.config_manager import validate_config, validate_schema
 
@@ -208,7 +172,6 @@ def cmd_test(args) -> int:
 
     return 0
 
-
 def cmd_maintenance(args):
     """Mantenimiento: local con dry-run, remoto sin dry-run."""
     dry = "--dry-run" in args or "-d" in args
@@ -220,10 +183,8 @@ def cmd_maintenance(args):
         check=False,
     ).returncode
 
-
 def cmd_rotate(args):
     return subprocess.run(["bash", str(ROOT / "mantenimiento" / "rotate_logs.sh")], cwd=ROOT, check=False).returncode
-
 
 def cmd_snc(args) -> int:
     """Estado del Sistema Nervioso Central — fetch desde GX10."""
@@ -267,14 +228,11 @@ def cmd_snc(args) -> int:
 
     return 0
 
-
 def cmd_health(args):
     return subprocess.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=ROOT, check=False).returncode
 
-
 def cmd_alerts(args):
     return subprocess.run(["python3", str(ROOT / "monitor" / "log_alerts.py")], cwd=ROOT, check=False).returncode
-
 
 def cmd_index(args) -> int:
     """Indexar documentos en la memoria RAG."""
@@ -293,7 +251,6 @@ def cmd_index(args) -> int:
 
     return 0
 
-
 def cmd_ask(args):
     """Consulta RAG: busca en documentos y responde con contexto."""
     question = " ".join(args) if args else None
@@ -310,7 +267,6 @@ def cmd_ask(args):
     cmd = "cd ~/URA/ura_ia_1972 && python3 -c \"exec(__import__('base64').b64decode('%s').decode())\"" % script_b64
     return subprocess.run(["ssh", TARGET, cmd], cwd=ROOT, timeout=30, check=False).returncode
 
-
 def cmd_memory(args) -> int:
     """Estadisticas de la memoria RAG."""
     try:
@@ -323,7 +279,6 @@ def cmd_memory(args) -> int:
     except Exception:
         return 1
     return 0
-
 
 def cmd_snapshot(args) -> int:
     """Guardar snapshot del estado del repo."""
@@ -359,7 +314,6 @@ def cmd_snapshot(args) -> int:
     with open(fname, "w") as f:
         json.dump(snap, f, indent=2)
     return 0
-
 
 def cmd_doctor(args) -> int:
     """Diagnóstico completo del sistema."""
@@ -428,7 +382,6 @@ def cmd_doctor(args) -> int:
 
     return 0
 
-
 def cmd_metrics(args) -> int:
     """Métricas del router: modelos, latencia, cache."""
     try:
@@ -446,7 +399,6 @@ def cmd_metrics(args) -> int:
     except Exception:
         logger.exception("Error obteniendo métricas del router")
     return 0
-
 
 def cmd_status(args) -> int:
     """Dashboard unificado — lee del SNC state file."""
@@ -488,24 +440,20 @@ def cmd_status(args) -> int:
 
     return 0
 
-
 def main():
     _elapsed = time.perf_counter() - _START
 
->>>>>>> Stashed changes
     if len(sys.argv) < 2:
         return 0
 
     if sys.argv[1] in ("-h", "--help"):
         return 0
 
-<<<<<<< Updated upstream
     if sys.argv[1] == "status":
         sys.argv[1] = "dashboard"
 
     _motor_main()
     return None
-=======
     if cmd == "finalize":
         return cmd_finalize(args)
     if cmd == "test":
@@ -533,8 +481,6 @@ def main():
     if cmd == "ask":
         return cmd_ask(args)
     return 1
->>>>>>> Stashed changes
-
 
 if __name__ == "__main__":
     sys.exit(main())

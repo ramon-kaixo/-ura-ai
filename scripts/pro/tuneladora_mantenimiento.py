@@ -22,17 +22,13 @@ from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
 _HEALTH_STATE_FILE = "/tmp/ura_tuneladora_health.json"
 _health = HealthRegistry()
 
-
 def _persist_health() -> None:
     try:
-<<<<<<< Updated upstream
         with open(_HEALTH_STATE_FILE, "w") as f:
             json.dump(_health.snapshot(), f)
-=======
         return socket.gethostbyname(hostname)
     except OSError:
         return default
-
 
 def _load_devices(root: Path) -> dict[str, str]:
     defaults = {
@@ -62,23 +58,18 @@ def _load_devices(root: Path) -> dict[str, str]:
         result["gx10_tailscale"] = dynamic
     return result
 
-
 DISPOSITIVOS = _load_devices(URA_ROOT)
-
 
 def log(msg) -> None:
     print(f"[{datetime.now(UTC).strftime('%H:%M:%S')}] {msg}")
-
 
 def run(cmd, timeout=120):
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         return r.returncode, r.stdout, r.stderr
->>>>>>> Stashed changes
     except Exception as e:
         _log = __import__("logging").getLogger("ura.tuneladora.mantenimiento")
         _log.warning("health persist failed: %s", e)
-
 
 def _detectar_nivel() -> str:
     """Determina el nivel de mantenimiento según hora/día."""
@@ -86,25 +77,12 @@ def _detectar_nivel() -> str:
     hora, dia = now.hour, now.weekday()
     if dia == 0 and 2 <= hora <= 4:
         return "profundo"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     if hora in (6, 12, 18):
         return "medio"
     return "ligero"
-=======
     if hora in (0, 6, 12, 18):
         return "medio" if hora == 3 else "total"
     return "total"
->>>>>>> Stashed changes
-
 
 def main() -> int:  # noqa: PLR0915
     import argparse
@@ -161,27 +139,9 @@ def main() -> int:  # noqa: PLR0915
         quality.ruff_fix()
 
     # ── Profundo: duplicados, deuda, forense, auditoria, git ──
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     if hora in (0, 6, 12, 18):
         return "medio" if hora == 3 else "total"
     return "total"
-
 
 def health_check():
     metrics = {}
@@ -206,7 +166,6 @@ def health_check():
         alertas.append(f"Zombies: {metrics['zombies']}")
     return metrics, alertas
 
-
 def check_ollama():
     try:
         rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{OLLAMA_URL}/api/tags"])
@@ -216,14 +175,12 @@ def check_ollama():
         pass
     return []
 
-
 def check_model_router():
     try:
         rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{MODEL_ROUTER}/health"])
         return rc == 0 and "ok" in out
     except Exception:
         return False
-
 
 def check_dispositivos():
     resultados = {}
@@ -237,9 +194,7 @@ def check_dispositivos():
             resultados[nombre] = False
     return resultados
 
-
 # -- Steps comunes --
-
 
 def step_token_screen():
     log("  Token screen (RAM check)...")
@@ -249,16 +204,13 @@ def step_token_screen():
     )
     return rc == 0
 
-
 def step_scanner_entrada() -> None:
     log("  Scanner entrada (snapshot)...")
     run([VENV_PYTHON, "scripts/pro/scanner_autoajuste.py", "--json"], timeout=30)
 
-
 def step_scanner_salida() -> None:
     log("  Scanner salida (diff)...")
     run([VENV_PYTHON, "scripts/pro/scanner_autoajuste.py", "--diff", "--json"], timeout=30)
-
 
 def step_orphan_scanner() -> int:
     log("  Orphan systemd units...")
@@ -269,11 +221,9 @@ def step_orphan_scanner() -> int:
     except (json.JSONDecodeError, TypeError):
         return -1
 
-
 def step_poda() -> None:
     log("  Poda mecanica...")
     run([VENV_PYTHON, "scripts/pro/poda_mecanica.py", "--json"], timeout=30)
-
 
 def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-coder:14b"):
     log(f"  Refactor ({workers} workers, {model})...")
@@ -312,32 +262,26 @@ def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-code
             log(f"    W{i + 1}: TIMEOUT")
     return total_ok, total_err
 
-
 def step_compactadora() -> None:
     log("  Compactadora + auto-reglas...")
     run([VENV_PYTHON, "scripts/pro/compactadora.py", "--estado"], timeout=15)
     run([VENV_PYTHON, "scripts/pro/auto_reglas.py", "--generar"], timeout=30)
-
 
 def step_inspectores():
     log("  Inspectores (validacion)...")
     rc, _, _ = run([VENV_PYTHON, "scripts/pro/inspectores.py", "--json"], timeout=60)
     return rc == 0
 
-
 # -- Steps de ciclo_autonomo (fusionados) --
-
 
 def snapshot_f821(label="pre-mantenimiento") -> None:
     log("  Snapshot F821...")
     run([VENV_PYTHON, "scripts/pro/f821_watch.py", "snapshot", "--label", label], timeout=30)
 
-
 def audit_delta(target="pre-mantenimiento"):
     log("  Auditoria F821 delta...")
     rc, out, _ = run([VENV_PYTHON, "scripts/pro/f821_watch.py", "compare", "--target", target], timeout=30)
     return rc == 0, out
-
 
 def git_commit_if_stable() -> None:
     log("  Git commit (si F821 estable)...")
@@ -347,47 +291,37 @@ def git_commit_if_stable() -> None:
         timeout=30,
     )
 
-
 def git_rollback() -> None:
     log("  Git rollback (F821 regreso)...")
     run(["git", "checkout", "."], timeout=30)
 
-
 # -- Steps de analizar_fallo_conciencia (fusionados) --
-
 
 def step_diagnostico_conciencia():
     log("  Diagnostico de conciencia...")
     rc, _out, _ = run([VENV_PYTHON, "scripts/pro/analizar_fallo_conciencia.py"], timeout=60)
     return rc == 0
 
-
 # -- Steps de master_conciencia (fusionados) --
-
 
 def step_testing_acciones():
     log("  Testing de acciones URA...")
     rc, _out, _ = run([VENV_PYTHON, "scripts/pro/master_conciencia.py"], timeout=120)
     return rc == 0
 
-
 # -- Steps de pareto_router (fusionados) --
-
 
 def step_gestion_datos():
     log("  Gestion de datos (Pareto 20/80)...")
     rc, _, _ = run([VENV_PYTHON, "scripts/pro/pareto_router.py", "--clasificar"], timeout=60)
     return rc == 0
 
-
 # -- Steps de ura_self_modify (fusionados) --
-
 
 def step_auto_mejora_prompt():
     log("  Auto-mejora del prompt URA...")
     rc, _, _ = run([VENV_PYTHON, "scripts/pro/ura_self_modify.py"], timeout=60)
     return rc == 0
-
 
 def step_auditoria(profundidad: str) -> dict:
     """Ejecuta el escudo de auditoría. Retorna score + reporte + html_path."""
@@ -405,7 +339,6 @@ def step_auditoria(profundidad: str) -> dict:
     if reporte.get("bloqueante"):
         log("  ⚠️  SCORE BLOQUEANTE — Revisar reporte antes de continuar")
     return reporte
-
 
 def step_forense_aislamientos() -> dict:
     """Lee procesos aislados por el SNC en /tmp/ura_aislados/ y limpia >7 días."""
@@ -450,9 +383,7 @@ def step_forense_aislamientos() -> dict:
         log(f"  ⚠️ {len(activos)} procesos aislados activos: {[a['nombre'] for a in activos]}")
     return resultado
 
-
 # -- Niveles --
-
 
 def revision_ligera():
     log("REVISION LIGERA (6h)")
@@ -466,7 +397,6 @@ def revision_ligera():
     step_scanner_salida()
     auditoria = step_auditoria("total")
     return {"ruff_f821": f821, "token_screen": token_ok, "auditoria_score": auditoria.get("score", 0)}
-
 
 def revision_media():
     log("REVISION MEDIA (24h)")
@@ -495,7 +425,6 @@ def revision_media():
         "f821_final": out.count("F821"),
         "auditoria_score": auditoria.get("score", 0),
     }
-
 
 def revision_profunda():
     log("REVISION PROFUNDA (SEMANAL)")
@@ -576,7 +505,6 @@ def revision_profunda():
     results["reporte"] = str(reporte_path)
     return results
 
-
 def main() -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -588,7 +516,6 @@ def main() -> int:
     _health, alertas = health_check()
     if alertas:
         log(f"  ALERTAS: {alertas}")
->>>>>>> Stashed changes
     if nivel == "profundo":
         engine.log.info("── Mantenimiento profundo ──")
         results["ollama"] = {"modelos": len(engine.health_ollama())}
@@ -633,7 +560,6 @@ def main() -> int:
         _health.set_healthy("tuneladora", f"mantenimiento {nivel} completado en {H}h{M}m{S}s")
     _persist_health()
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

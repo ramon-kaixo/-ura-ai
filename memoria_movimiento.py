@@ -1,35 +1,5 @@
-<<<<<<< Updated upstream
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)."""
-=======
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)"""
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 from __future__ import annotations
 
@@ -38,7 +8,6 @@ from dataclasses import dataclass
 
 TIEMPO_MAX = 30.0
 
-
 @dataclass
 class Cubo:
     id_cubo: str
@@ -46,7 +15,6 @@ class Cubo:
     momento_salida: float
     volvio: bool = False
     momento_vuelta: float | None = None
-
 
 class MemoriaMovimiento:
     def __init__(self, nombre_nodo: str, tiempo_max_s: float = TIEMPO_MAX) -> None:

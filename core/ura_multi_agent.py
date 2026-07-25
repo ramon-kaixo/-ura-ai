@@ -4,10 +4,8 @@
 Reexporta todo desde core.agents package.
 """
 
-<<<<<<< Updated upstream
 from core.agents import *  # noqa: F403
 from core.agents.cli import main
-=======
 import contextlib
 import json
 import logging
@@ -41,9 +39,7 @@ MODELOS = {
 
 RUFF = str(URA_ROOT / ".venv/bin/ruff")
 
-
 # ── 1. Telemetría ──────────────────────────────────────────────────────────
-
 
 class Telemetria:
     """Sistema de telemetría en tiempo real."""
@@ -154,9 +150,7 @@ class Telemetria:
             "f821": self.f821_count(),
         }
 
-
 # ── 2. Estado Compartido (Conciencia) ──────────────────────────────────────
-
 
 class Conciencia:
     """Memoria unificada del sistema. Archivo: .nervioso/conciencia.json."""
@@ -227,9 +221,7 @@ class Conciencia:
     def nivel_error(cls) -> int:
         return cls.leer().get("nivel_error", 0)
 
-
 # ── 3. Agentes ─────────────────────────────────────────────────────────────
-
 
 class AgenteOrquestador:
     """Decide qué acción tomar según el estado del sistema. Modelo: Qwen 14B."""
@@ -277,7 +269,6 @@ class AgenteOrquestador:
         except Exception as e:
             logger.warning(f"Error contando funciones pendientes: {e}")
         return total
-
 
 class AgenteEjecutor:
     """Refactoriza funciones grandes. Modelo: DeepSeek 6.7B."""
@@ -336,7 +327,6 @@ class AgenteEjecutor:
                             proc.kill()
 
         return resultados
-
 
 class AgenteReparador:
     """Repara errores en 3 niveles: determinista → LLM rápido → LLM potente."""
@@ -484,9 +474,7 @@ class AgenteReparador:
         except Exception:
             return False
 
-
 # ── 4. Bucle de Auto-Arreglo ───────────────────────────────────────────────
-
 
 class SelfHealingLoop:
     """Bucle completo: DETECTAR → AISLAR → REPARAR → VALIDAR → ACTUALIZAR."""
@@ -592,9 +580,7 @@ class SelfHealingLoop:
 
         return reporte
 
-
 # ── 5. Main ─────────────────────────────────────────────────────────────────
-
 
 def main() -> None:
     import argparse
@@ -632,8 +618,6 @@ def main() -> None:
             pass
         else:
             pass
-
->>>>>>> Stashed changes
 
 if __name__ == "__main__":
     main()

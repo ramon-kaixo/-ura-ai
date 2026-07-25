@@ -5,65 +5,33 @@ import pytest
 from core.json_logger import StructuredLogger
 from core.notifier import notify
 
-
 def test_notifier_empty_returns_false() -> None:
     """Sin tokens configurados, notify debe retornar False sin crashear."""
     try:
         result = notify("test", level="info")
         assert result is False
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-=======
     except Exception:
         pytest.fail("notify() raised unexpected exception")
->>>>>>> Stashed changes
-
 
 def test_logger_creates_and_logs() -> None:
     log = StructuredLogger("test_logger")
@@ -72,7 +40,6 @@ def test_logger_creates_and_logs() -> None:
     log.warning("test warning")
     log.error("test error")
     log.debug("test debug")
-
 
 def test_logger_different_names() -> None:
     log1 = StructuredLogger("svc1")

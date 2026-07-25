@@ -13,14 +13,11 @@ BLOCKED_CALLS = {
     "__import__": "__import__() prohibido en codigo generado",
 }
 
-
 class RefactorRequiredError(Exception):
     pass
 
-
 class InjectionError(Exception):
     pass
-
 
 def cyclomatic_complexity(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
     c = 1
@@ -35,7 +32,6 @@ def cyclomatic_complexity(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> 
             c += len(node.handlers)
     return c
 
-
 def check_complexity(tree: ast.AST) -> list[str]:
     errors = []
     for node in ast.walk(tree):
@@ -47,7 +43,6 @@ def check_complexity(tree: ast.AST) -> list[str]:
                     f"supera el maximo {MAX_COMPLEXITY}. RefactorRequiredError.",
                 )
     return errors
-
 
 def check_injections(tree: ast.AST) -> list[str]:
     errors = []
@@ -73,53 +68,22 @@ def check_injections(tree: ast.AST) -> list[str]:
                     )
     return errors
 
-
 def lint_code(code: str) -> None:
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
         msg = f"SyntaxError: {e}"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         raise SyntaxError(msg)  # noqa: B904
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
-=======
         raise SyntaxError(msg)
->>>>>>> Stashed changes
 
     cpx_errs = check_complexity(tree)
     if cpx_errs:

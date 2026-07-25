@@ -1,36 +1,6 @@
 #!/usr/bin/env python3
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import logging
 import os
->>>>>>> Stashed changes
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -40,7 +10,6 @@ logger = logging.getLogger(__name__)
 AGENTES_DIR = Path("~/URA/ura_ia_1972/agents/").expanduser()
 OUTPUT_DIR = Path("~/Desktop/").expanduser()
 TELEGRAM_SCRIPT = "/opt/ura/scripts/telegram_notify.sh"
-
 
 def verificar_agente(ruta_agente):
     """Verifica un agente usando subprocess para evitar import side effects."""
@@ -94,47 +63,17 @@ def verificar_agente(ruta_agente):
                 else:
                     resultado["estado"] = "⚠️ PARCIAL"
                     resultado["errores"].append("No se encontraron funciones públicas")
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             except:  # noqa: E722
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
-=======
             except Exception:
->>>>>>> Stashed changes
                 resultado["estado"] = "⚠️ PARCIAL"
         else:
             resultado["estado"] = "⚠️ PARCIAL"
@@ -146,7 +85,6 @@ def verificar_agente(ruta_agente):
         resultado["errores"].append(f"Error general: {e}")
 
     return resultado
-
 
 def generar_informe(resultados):
     """Genera el informe en formato Markdown."""
@@ -183,67 +121,35 @@ def generar_informe(resultados):
     ruta_informe.write_text(contenido)
     return ruta_informe
 
-
 def enviar_telegram(mensaje) -> bool:
     """Envía notificación por Telegram."""
     try:
         if Path(TELEGRAM_SCRIPT).exists():
             subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)
             return True
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
-=======
     except Exception:
         logger.exception("Error enviando notificación Telegram")
->>>>>>> Stashed changes
     return False
-
 
 def main() -> None:
     # Obtener todos los archivos Python
@@ -266,7 +172,6 @@ def main() -> None:
     mensaje += f"Total: {len(resultados)} | ✅ {funcionando} | ⚠️ {parcial} | ❌ {rotos}"
 
     enviar_telegram(mensaje)
-
 
 if __name__ == "__main__":
     main()

@@ -51,7 +51,6 @@ DEFAULT_CONFIG = {
     "allowed_log_dirs": ["/var/log", "/opt/ura/logs"],
 }
 
-
 def load_config(config_path: str | None = None) -> dict:
     """Cargar configuración desde archivo."""
     config = DEFAULT_CONFIG.copy()
@@ -65,7 +64,6 @@ def load_config(config_path: str | None = None) -> dict:
             logging.warning(f"Error cargando config: {e}")  # noqa: LOG015
 
     return config
-
 
 # Cargar configuración
 CONFIG = load_config(os.environ.get("URA_MAINTENANCE_CONFIG"))
@@ -95,7 +93,6 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger(__name__)
-
 
 class SecurityValidator:
     """Validador de seguridad para operaciones de archivo."""
@@ -145,7 +142,6 @@ class SecurityValidator:
 
         return any(path.startswith(os.path.realpath(allowed_dir)) for allowed_dir in allowed_dirs)
 
-
 class MaintenanceConfig:
     """Configuración de mantenimiento."""
 
@@ -155,7 +151,6 @@ class MaintenanceConfig:
         self.retention_days = config["retention_days"]
         self.allowed_temp_dirs = config["allowed_temp_dirs"]
         self.allowed_log_dirs = config["allowed_log_dirs"]
-
 
 class SystemCleaner:
     """Clase base para limpieza de sistemas."""
@@ -224,7 +219,6 @@ class SystemCleaner:
         except OSError as e:
             logger.warning(f"Error removing {dir_path}: {e}")
             return False
-
 
 class LinuxCleaner(SystemCleaner):
     """Limpiador específico para Linux."""
@@ -360,38 +354,8 @@ class LinuxCleaner(SystemCleaner):
             retention_days = self.config.retention_days["logs"]
 
             for log_dir in self.config.allowed_log_dirs:
-<<<<<<< Updated upstream
                 if Path(log_dir).exists():
-=======
                 if os.path.exists(log_dir):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     for root, _dirs, files in os.walk(log_dir):
                         for file in files:
                             file_path = os.path.join(root, file)  # noqa: PTH118
@@ -422,58 +386,28 @@ class LinuxCleaner(SystemCleaner):
                     for item in os.listdir(temp_dir):  # noqa: PTH208
                         item_path = os.path.join(temp_dir, item)  # noqa: PTH118
                         try:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                             if Path(item_path).is_file() and self.safe_remove(item_path):
                                 size = Path(item_path).stat().st_size / (1024**3)
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
                                 total_freed += size
                         except OSError:
                             pass
@@ -484,7 +418,6 @@ class LinuxCleaner(SystemCleaner):
         except Exception as e:
             logger.exception(f"Error limpiando temporales: {e}")
             return 0
-
 
 class MacCleaner(SystemCleaner):
     """Limpiador específico para macOS."""
@@ -660,7 +593,6 @@ class MacCleaner(SystemCleaner):
             logger.exception(f"Error limpiando logs: {e}")
             return 0
 
-
 class MaintenanceOrchestrator:
     """Orquestador de mantenimiento para el enjambre."""
 
@@ -728,45 +660,14 @@ class MaintenanceOrchestrator:
 
     def _save_results(self) -> None:
         """Guardar resultados en archivo JSON."""
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         results_file = LOG_DIR / f"maintenance_results_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         results_file = LOG_DIR / f"maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
->>>>>>> Stashed changes
         try:
             with open(results_file, "w") as f:  # noqa: PTH123
                 json.dump(self.results, f, indent=2)
             logger.info(f"Resultados guardados en: {results_file}")
         except OSError as e:
             logger.exception(f"Error guardando resultados: {e}")
-
 
 def main() -> int | None:
     """Función principal."""
@@ -779,7 +680,6 @@ def main() -> int | None:
     except Exception as e:
         logger.exception(f"Error en mantenimiento: {e}")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())
