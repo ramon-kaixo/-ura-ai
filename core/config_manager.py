@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
-"""Config Manager - Carga unificada de configuración con perfiles por sistema operativo.
-Detecta automáticamente Linux (Asus GX10) vs Darwin (Mac) y carga el perfil correcto.
+"""Config Manager — compatibility layer over UraConfig Pydantic model.
+
+Deprecation: este módulo será eliminado en URA v4.
+Migrar imports a 'from motor.core.config import UraConfig' + usar UraConfig.load().
 """
 
 import json
@@ -13,7 +14,6 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
-
 
 def _detect_profile_key() -> str:
     """Detecta qué perfil cargar según SO y hostname.
@@ -31,7 +31,6 @@ def _detect_profile_key() -> str:
     msg = f"Sistema operativo no soportado: {system}"
     raise RuntimeError(msg)
 
-
 def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
     """Expande ~ a home directory en todos los paths del perfil."""
     paths = config.get("paths", {})
@@ -47,46 +46,73 @@ def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
         maintenance["allowed_log_dirs"] = [str(Path(d).expanduser().resolve()) for d in maintenance["allowed_log_dirs"]]
     return config
 
-
 def _load_raw_config() -> dict[str, Any]:
     """Carga el archivo JSON de configuración."""
     with open(_CONFIG_PATH) as f:  # noqa: PTH123
         return json.load(f)
+import warnings
+from pathlib import Path
+from typing import Any
 
+from motor.core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from motor.core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+def _get_config() -> UraConfig:
+    global _CONFIG  # noqa: PLW0603
+    if _CONFIG is None:
+        _CONFIG = UraConfig.load()
+    return _CONFIG
 
 def load_config() -> dict[str, Any]:
-    """Carga y fusiona la configuración para el sistema operativo actual."""
-    raw = _load_raw_config()
-
-    profile_key = _detect_profile_key()
-
-    profile = raw.get("profiles", {}).get(profile_key, {})
-    if not profile:
-        msg = f"Perfil '{profile_key}' no encontrado en system_config.json"
-        raise RuntimeError(msg)
-
-    config: dict[str, Any] = {}
-    config.update(raw.get("global_defaults", {}))
-    config.update(profile)
-
-    # Guardar referencia a perfiles raw para validate_schema()
-    config["_raw_profiles"] = raw.get("profiles", {})
-
-    return _expand_paths(config)
-
+    cfg = _get_config()
+    profile = cfg.profile_data or {}
+    logs_dir = str(Path(profile.get("paths", {}).get("logs", str(Path.home() / "URA" / "logs"))))
+    maint_default = str(Path.home() / "URA" / "logs" / "maintenance")
+    maint_logs = str(Path(profile.get("paths", {}).get("maintenance_logs", maint_default)))
+    return {
+        "paths": {
+            "data": cfg.data_dir or str(Path.home() / "URA" / "data"),
+            "logs": logs_dir,
+            "maintenance_logs": maint_logs,
+        },
+        "ollama": {"host": cfg.ollama_host, "port": cfg.ollama_port},
+        "router": {"host": cfg.router_host, "port": cfg.router_port},
+        "models": cfg.modelos,
+        "fallback_model": cfg.fallback_model,
+        "cache_ttl": cfg.cache_ttl,
+        "role": cfg.role,
+        "hostname": cfg.hostname,
+        "maintenance": profile.get("maintenance", {}),
+        "swarm": profile.get("swarm", {}),
+        "ssh": {"user": cfg.ssh_user, "timeout": cfg.ssh_timeout},
+        "rag": {
+            "enabled": cfg.rag_enabled,
+            "chunk_size": cfg.rag_chunk_size,
+            "chunk_overlap": cfg.rag_chunk_overlap,
+            "top_k": cfg.rag_top_k,
+            "threshold": cfg.rag_threshold,
+        },
+        "patrones_clasificacion": cfg.patrones_clasificacion,
+    }
 
 CONFIG = load_config()
 
-
 def get_base_dir() -> Path:
-    """Devuelve el directorio base URA según el SO: ~/URA en Mac, /home/ramon/URA en Linux."""
     return Path(CONFIG["paths"]["data"]).parent
 
-
 def get_ollama_url() -> str:
-    """Devuelve la URL completa de Ollama para este nodo."""
-    return f"http://{CONFIG['ollama']['host']}:{CONFIG['ollama']['port']}"
+    return _get_config().get_ollama_url()
 
+def get_ollama_urls() -> list[str]:
+    cfg = _get_config()
+    return [cfg.get_ollama_url()]
 
 def get_ollama_urls() -> dict[str, str]:
     """Devuelve URLs primaria y de fallback de Ollama.
@@ -102,16 +128,11 @@ def get_ollama_urls() -> dict[str, str]:
     fallback = f"http://{remote}:{port}"
     return {"primary": primary, "fallback": fallback}
 
-
 def get_role() -> str:
-    """Devuelve el rol de este nodo: 'client' o 'server'."""
-    return CONFIG.get("role", "unknown")
-
+    return _get_config().role
 
 def get_hostname() -> str:
-    """Devuelve el hostname lógico de este nodo según el perfil."""
-    return CONFIG.get("hostname", "unknown")
-
+    return _get_config().hostname
 
 def validate_config() -> list:
     """Valida que los directorios declarados en config existan y tengan permisos.
@@ -136,7 +157,7 @@ def validate_config() -> list:
             warnings.append(f"Directorio log no existe: {dir_path}")  # noqa: PERF401
 
     return warnings
-
+    return _get_config().validate_dirs()
 
 _REQUIRED_KEYS = {
     "ollama": ["host", "port"],
@@ -149,17 +170,13 @@ _REQUIRED_KEYS = {
     "llm": ["provider"],
 }
 
-
-def validate_schema() -> list:
-    """Valida la estructura de CONFIG contra el esquema esperado.
-    Retorna lista de errores (vacia = OK).
-    """
-    errors = []
-
+def _check_required_keys(errors: list[str]) -> None:
     for section, keys in _REQUIRED_KEYS.items():
         if section not in CONFIG:
             errors.append(f"Falta seccion requerida: '{section}'")
-            continue
+        elif isinstance(keys, list):
+            missing = [key for key in keys if key not in CONFIG[section]]
+            errors.extend(f"Falta key '{key}' en seccion '{section}'" for key in missing)
 
         if isinstance(keys, list):
             for key in keys:
@@ -170,37 +187,33 @@ def validate_schema() -> list:
         if profile_name not in CONFIG.get("_raw_profiles", {}):
             errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")  # noqa: PERF401
 
+def validate_schema() -> list:
+    errors: list[str] = []
+    _check_required_keys(errors)
     if "patrones_clasificacion" not in CONFIG:
         errors.append("Falta 'patrones_clasificacion' en global_defaults")
-
     return errors
 
-
 def validate_schema_json() -> list:
-    """Valida system_config.json contra el JSON Schema declarativo (config/schema.json).
-    Requiere jsonschema instalado. Si no está, retorna lista vacía (no bloquea).
-    """
     try:
         import jsonschema
     except ImportError:
         return []
-
-    schema_path = Path(__file__).parent.parent / "config" / "schema.json"
-    config_path = Path(__file__).parent.parent / "config" / "system_config.json"
-
+    schema_path = Path(__file__).resolve().parent.parent / "config" / "schema.json"
+    config_path = Path(__file__).resolve().parent.parent / "config" / "system_config.json"
     if not schema_path.exists():
         return ["Schema file not found: config/schema.json"]
-
-    errors = []
+    errors: list[str] = []
     try:
         schema = json.loads(schema_path.read_text())
         raw_config = json.loads(config_path.read_text())
         validator = jsonschema.Draft202012Validator(schema)
         for err in sorted(validator.iter_errors(raw_config), key=lambda e: e.path):
             errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")  # noqa: PERF401
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
     except json.JSONDecodeError as e:
         errors.append(f"JSON invalido: {e}")
     except Exception as e:
         errors.append(str(e))
-
     return errors

@@ -226,3 +226,12 @@ Este archivo mantiene compatibilidad hacia atrás para todos los imports
 existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
+from motor.core.config import (  # noqa: F401
+    HOST_ASUS_DEFECTO,
+    INTERFAZ_TAILSCALE_DEFECTO,
+    PUERTO_ASUS_DEFECTO,
+    RUTA_CONFIG_DEFECTO,
+    RUTA_DEPLOY_DEFECTO,
+    RUTAS_CONFIG_OPENCODE,
+    UraConfig,
+)

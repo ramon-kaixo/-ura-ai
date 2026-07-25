@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 from core.chunking import chunk_semantic
-from core.config import UraConfig
+from motor.core.config import UraConfig
 from core.document_quality import (
     content_type as detect_content_type,
 )

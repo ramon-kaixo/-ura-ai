@@ -193,6 +193,8 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
         return True, result.stdout
     args = shlex.split(cmd)
     try:
+    args = shlex.split(cmd)
+    try:
         result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
         return True, result.stdout
     except subprocess.TimeoutExpired:

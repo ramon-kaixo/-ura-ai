@@ -19,7 +19,7 @@ import logging
 import shutil
 from datetime import UTC, datetime
 
-from core.config import UraConfig
+from motor.core.config import UraConfig
 from core.config_manager import CONFIG
 
 if TYPE_CHECKING:

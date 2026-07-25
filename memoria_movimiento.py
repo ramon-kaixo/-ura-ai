@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 TIEMPO_MAX = 30.0
 
+
 @dataclass
 class Cubo:
     id_cubo: str
@@ -15,6 +16,7 @@ class Cubo:
     momento_salida: float
     volvio: bool = False
     momento_vuelta: float | None = None
+
 
 class MemoriaMovimiento:
     def __init__(self, nombre_nodo: str, tiempo_max_s: float = TIEMPO_MAX) -> None:

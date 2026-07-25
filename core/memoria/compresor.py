@@ -61,6 +61,8 @@ async def comprimir_a_ideas(
     texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
     texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
     texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
+
+async def comprimir_a_ideas(
     texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
 ) -> list[Idea]:
     if not texto.strip():

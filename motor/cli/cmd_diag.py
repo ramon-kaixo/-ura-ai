@@ -29,6 +29,9 @@ def cmd_check(config: UraConfig, args=None) -> None:
 def cmd_verify(config: UraConfig, args=None) -> None:
     ejecutar_verificacion(config, hubo_cambios=True)
 
+def cmd_verify(config: UraConfig, args=None) -> None:
+    ejecutar_verificacion(config, hubo_cambios=True)
+
 def cmd_detect(config: UraConfig, args=None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not trend_path.exists():
@@ -87,6 +90,8 @@ def cmd_learn(config: UraConfig, args=None) -> None:
 
 def cmd_alerta(config: UraConfig = None, args=None) -> None:
     r = _executor.run(
+
+def cmd_alerta(config: UraConfig = None, args=None) -> None:
     r = subprocess.run(
         [
             "journalctl",

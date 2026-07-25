@@ -39,6 +39,8 @@ def test_notifier_return_false_when_disabled() -> None:
         pytest.fail("notify() raised unexpected exception")
     except Exception:
         pytest.fail("notify() raised unexpected exception")
+    except Exception:
+        pytest.fail("notify() raised unexpected exception")
 
 def test_structured_logger_creates() -> None:
     log = StructuredLogger("test_logger")

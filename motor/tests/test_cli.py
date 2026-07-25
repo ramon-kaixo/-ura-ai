@@ -41,6 +41,7 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0) -> None:
 
 def test_detect_no_trends():
     from motor.scanner.calibration import Calibration
+
 def test_detect_no_trends() -> None:
     from scanner.calibration import Calibration
 
@@ -52,6 +53,7 @@ def test_detect_no_trends() -> None:
 
 def test_detect_with_trends():
     from motor.scanner.calibration import Calibration
+
 def test_detect_with_trends() -> None:
     from scanner.calibration import Calibration
 
@@ -68,6 +70,7 @@ def test_detect_with_trends() -> None:
 
 def test_calibration_with_trends():
     from motor.scanner.calibration import Calibration
+
 def test_calibration_with_trends() -> None:
     from scanner.calibration import Calibration
 
@@ -91,6 +94,7 @@ def test_calibration_with_trends() -> None:
 
 def test_pattern_matcher_empty():
     from motor.diagnostico.pattern_matcher import buscar_patrones
+
 def test_pattern_matcher_empty() -> None:
     from diagnostico.pattern_matcher import buscar_patrones
 
@@ -138,6 +142,8 @@ def test_pattern_matcher_failure():
 
     incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) == 0
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+    assert len(incidents) == 0
 
 def test_pattern_matcher_failure() -> None:
     from diagnostico.pattern_matcher import buscar_patrones
@@ -172,6 +178,7 @@ def test_pattern_matcher_failure() -> None:
 
 def test_correlacion():
     from motor.diagnostico.correlacion import agrupar_incidentes
+
 def test_correlacion() -> None:
     from diagnostico.correlacion import agrupar_incidentes
 
@@ -181,6 +188,7 @@ def test_correlacion() -> None:
 
 def test_sliding_window():
     from motor.scanner.sliding_window import SlidingWindow
+
 def test_sliding_window() -> None:
     from scanner.sliding_window import SlidingWindow
 
@@ -189,6 +197,7 @@ def test_sliding_window() -> None:
 
 def test_diff_detector():
     from motor.scanner.diff_detector import compute_diff
+
 def test_diff_detector() -> None:
     from scanner.diff_detector import compute_diff
 
@@ -225,6 +234,7 @@ def test_status_returns_json() -> None:
 
 def test_preflight_module():
     from motor.guard.preflight import ejecutar_preflight
+
 def test_preflight_module() -> None:
     from guard.preflight import ejecutar_preflight
 

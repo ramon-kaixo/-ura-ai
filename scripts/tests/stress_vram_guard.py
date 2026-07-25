@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 URL_API = "http://127.0.0.1:11435/v1/chat/completions"
 
+URL_API = "http://127.0.0.1:11435/v1/chat/completions"
+
 async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
     inicio_total = time.time()
 
@@ -37,6 +39,8 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
 
         except Exception:  # noqa: S110
             pass
+        except Exception:
+            logger.exception("Error en petición concurrente %s", id_agente)
         except Exception:
             logger.exception("Error en petición concurrente %s", id_agente)
         except Exception:
