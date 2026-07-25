@@ -28,9 +28,13 @@ from core.config_manager import CONFIG
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, ILLMClient, IVectorStore
+=======
+from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
 =======
 from core.qdrant_client import QdrantClient
 >>>>>>> Stashed changes

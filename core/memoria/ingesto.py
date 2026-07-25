@@ -9,7 +9,10 @@ PROCESADOS: set = set()
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 procesados_local = PROCESADOS  # alias para import en consulta.py
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

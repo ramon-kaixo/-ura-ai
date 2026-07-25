@@ -6,6 +6,7 @@ class ErrorLogger:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """Log circular de errores con rotación automática."""
 
     def __init__(self, log_path: Path | None = None, max_entries: int = MAX_ENTRIES) -> None:
@@ -122,6 +123,9 @@ def log_error(context: str, gateway_status: str, severity: str, message: str) ->
 def get_recent(count: int = 10) -> list[dict]:
     """Función de conveniencia para obtener errores recientes."""
     return logger.get_recent_errors(count)
+=======
+    pass
+>>>>>>> Stashed changes
 =======
     pass
 >>>>>>> Stashed changes
