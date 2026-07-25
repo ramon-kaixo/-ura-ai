@@ -30,6 +30,10 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "ht
 OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
+<<<<<<< Updated upstream
+=======
+WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
 
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
@@ -64,7 +68,7 @@ def _estimar_tokens(codigo: str) -> int:
 
 
 def log(msg: str) -> None:
-    pass
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
 
 def _ollama_request(url: str, payload: dict) -> dict:

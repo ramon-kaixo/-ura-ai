@@ -160,7 +160,7 @@ def main() -> None:
                 return await run_debate(data.get("plan", ""), context)
 
         result = asyncio.run(_run())
-        log.info(json.dumps(result, ensure_ascii=False, indent=2))
+        logger.info(json.dumps(result, ensure_ascii=False, indent=2))
         verdict = result.get("verdict", "")
         if verdict == "CONSENSUS":
             sys.exit(0)
@@ -169,7 +169,7 @@ def main() -> None:
         else:
             sys.exit(1)
     else:
-        log.info(json.dumps(context, ensure_ascii=False, indent=2))
+        logger.info(json.dumps(context, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

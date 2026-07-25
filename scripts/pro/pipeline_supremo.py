@@ -28,6 +28,10 @@ from pathlib import Path
 
 URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
 SCRIPTS = URA_ROOT / "scripts/pro"
+
+EXIT_OK = 0
+EXIT_ERROR = 1
+EXIT_BLOCKED = 2
 NERVIOSO = URA_ROOT / ".nervioso"
 NERVIOSO.mkdir(parents=True, exist_ok=True)
 
@@ -315,19 +319,19 @@ def main() -> None:
             else:
                 resultado = report.get("resultado", "?")
                 if resultado in ("BLOQUEADO_SDA", "ROLLBACK", "RECHAZADO"):
-                    sys.exit(2)
+                    sys.exit(EXIT_BLOCKED)
                 elif resultado == "ESCRIBIR":
-                    sys.exit(0)
+                    sys.exit(EXIT_OK)
                 else:
-                    sys.exit(1)
+                    sys.exit(EXIT_ERROR)
         else:
-            sys.exit(2)
+            sys.exit(EXIT_BLOCKED)
         return
 
     if args.archivo:
         ruta = Path(args.archivo)
         if not ruta.exists():
-            sys.exit(1)
+            sys.exit(EXIT_ERROR)
         init_conciencia()
         report = ejecutar(ruta)
         (NERVIOSO / f"report_{time.strftime('%Y%m%d_%H%M%S')}.json").write_text(

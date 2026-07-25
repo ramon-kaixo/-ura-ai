@@ -39,7 +39,7 @@ URA_ROOT = Path(__file__).parent.parent.parent
 
 
 def log(msg) -> None:
-    pass
+    print(f"[{datetime.now(UTC).strftime('%H:%M:%S')}] {msg}")
 
 
 def run(cmd, timeout=30):

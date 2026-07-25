@@ -16,8 +16,11 @@ import logging
 import subprocess
 import time
 from datetime import UTC, datetime
+<<<<<<< Updated upstream
 from pathlib import Path
 from typing import TYPE_CHECKING
+=======
+>>>>>>> Stashed changes
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -67,6 +70,7 @@ def dump_checkpoint() -> None:
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
+<<<<<<< Updated upstream
 def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     try:
         if config is None:
@@ -92,6 +96,25 @@ def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
             )
     except Exception:
         logger.exception("Error guardando incidente de reinicio en Qdrant")
+=======
+def _save_restart_to_qdrant() -> None:
+    from core.config import UraConfig
+    from core.qdrant_client import instancia
+
+    cfg = UraConfig()
+    qc = instancia(cfg)
+    if qc and qc.disponible:
+        qc.guardar_incidente(
+            {
+                "ts": datetime.now(UTC).isoformat(),
+                "tipo": "ServiceFailure",
+                "subtipo": "heartbeat_restart",
+                "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
+                "origin_node": "ASUS",
+                "exit_code": -1,
+            },
+        )
+>>>>>>> Stashed changes
 
 
 def restart_service() -> None:

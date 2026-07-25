@@ -85,7 +85,8 @@ def snapshot(label: str) -> None:
 def compare(target_label: str) -> None:
     target_path = SNAPSHOT_DIR / f"{target_label}.json"
     if not target_path.exists():
-        sys.exit(f"Snapshot '{target_label}' no encontrado en {target_path}")
+        print(f"Snapshot '{target_label}' no encontrado en {target_path}")
+        sys.exit(1)
 
     target = json.loads(target_path.read_text())
     current = run_ruff()

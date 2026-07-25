@@ -45,7 +45,11 @@ def mac_notify(title: str, message: str) -> None:
             capture_output=True,
             check=False,
         )
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
+    except Exception:
+>>>>>>> Stashed changes
         pass
 
 
@@ -59,7 +63,11 @@ def sync_state() -> dict:
         )
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
+    except Exception:
+>>>>>>> Stashed changes
         pass
     return {}
 

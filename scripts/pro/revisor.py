@@ -11,6 +11,7 @@ Uso:
 import argparse
 import contextlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -53,12 +54,25 @@ def generar_html(data: dict, tendencia: dict) -> Path:
 <html><head><title>URA Audit Report</title>
 <meta charset="utf-8"><meta http-equiv="refresh" content="30">
 <style>
-body{{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}}
-h1{{color:#58a6ff}}.score{{font-size:72px;font-weight:bold;color:{color}}}
-.card{{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin:8px 0}}
-table{{width:100%;border-collapse:collapse}}
-th,td{{text-align:left;padding:8px;border-bottom:1px solid #30363d}}
-th{{color:#8b949e;text-transform:uppercase}}
+body{{font-family:monospace
+background:#0d1117
+color:#c9d1d9
+padding:20px}}
+h1{{color:#58a6ff}}.score{{font-size:72px
+font-weight:bold
+color:{color}}}
+.card{{background:#161b22
+border:1px solid #30363d
+border-radius:8px
+padding:16px
+margin:8px 0}}
+table{{width:100%
+border-collapse:collapse}}
+th,td{{text-align:left
+padding:8px
+border-bottom:1px solid #30363d}}
+th{{color:#8b949e
+text-transform:uppercase}}
 </style></head><body>
 <h1>🛡️ URA Security Audit</h1>
 <div class="card">
@@ -98,6 +112,8 @@ def main() -> int:
         tendencia = calcular_tendencias()
         return 0
 
+    if "REPO_DIR" not in os.environ:
+        os.environ["REPO_DIR"] = str(Path(__file__).parent.parent.parent)
     profundidad = "ligero" if (args.quick or args.diff) else "profundo"
     script_path = Path(__file__).parent / "auditoria.sh"
 
@@ -124,6 +140,7 @@ def main() -> int:
     reporte["html_report"] = str(html_file)
 
     # Exit code 78 = configuration error (systemd RestartPreventExitStatus=78)
+    print(json.dumps(reporte))
     if reporte.get("bloqueante", False):
         return 78
     return 0

@@ -62,6 +62,16 @@ def check_schema(conn: sqlite3.Connection) -> list[str]:
         "kg_nodes_fts_data",
         "kg_nodes_fts_docsize",
         "kg_nodes_fts_idx",
+        "op_assets_fts_config",
+        "op_assets_fts_content",
+        "op_assets_fts_data",
+        "op_assets_fts_docsize",
+        "op_assets_fts_idx",
+        "op_memory_fts_config",
+        "op_memory_fts_content",
+        "op_memory_fts_data",
+        "op_memory_fts_docsize",
+        "op_memory_fts_idx",
     }
     # Auto-ignorar tablas compañeras de FTS5 (creadas automáticamente por SQLite)
     fts_companion_suffixes = ("_fts_config", "_fts_content", "_fts_data", "_fts_docsize", "_fts_idx")

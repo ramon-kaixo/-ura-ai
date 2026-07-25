@@ -45,7 +45,11 @@ def load_seen_hashes() -> set:
     if SEEN_HASHES_FILE.exists():
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
+=======
+        except Exception:
+>>>>>>> Stashed changes
             pass
     return set()
 
@@ -70,7 +74,11 @@ def fetch_critical_logs() -> list:
     cmd_parts = []
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
+<<<<<<< Updated upstream
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
+=======
+            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
+>>>>>>> Stashed changes
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)

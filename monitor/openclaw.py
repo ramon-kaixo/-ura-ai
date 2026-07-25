@@ -67,7 +67,11 @@ def load_state() -> dict:
     try:
         if STATE_FILE.exists():
             return json.loads(STATE_FILE.read_text())
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
+    except Exception:
+>>>>>>> Stashed changes
         pass
     return {"status": "UNKNOWN", "services": {}, "openclaw_active": False}
 
@@ -78,8 +82,13 @@ def save_stats() -> None:
         STATS_FILE.parent.mkdir(parents=True, exist_ok=True)
         tmp = STATS_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(stats, indent=2))
+<<<<<<< Updated upstream
         os.replace(str(tmp), str(STATS_FILE))  # noqa: PTH105
     except Exception:  # noqa: S110
+=======
+        os.replace(str(tmp), str(STATS_FILE))
+    except Exception:
+>>>>>>> Stashed changes
         pass
 
 

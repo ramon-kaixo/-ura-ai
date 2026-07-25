@@ -6,17 +6,17 @@ from memoria_movimiento import MemoriaMovimiento
 
 
 class RelojFalso:
-    def __init__(self):
+    def __init__(self) -> None:
         self.t = 1000.0
 
     def __call__(self):
         return self.t
 
-    def avanzar(self, s):
+    def avanzar(self, s) -> None:
         self.t += s
 
 
-def test_vuelve():
+def test_vuelve() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
     m._reloj = r
@@ -26,7 +26,7 @@ def test_vuelve():
     assert m.circulo_sano() is True
 
 
-def test_no_vuelve():
+def test_no_vuelve() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
     m._reloj = r
@@ -36,7 +36,7 @@ def test_no_vuelve():
     assert "indexer" in m.nodos_atascados()
 
 
-def test_tres_cubos():
+def test_tres_cubos() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
     m._reloj = r
@@ -52,7 +52,7 @@ def test_tres_cubos():
     assert rotos[0].id_cubo == "b"
 
 
-def test_olvida():
+def test_olvida() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
     m._reloj = r

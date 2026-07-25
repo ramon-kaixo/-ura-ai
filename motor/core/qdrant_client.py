@@ -49,7 +49,8 @@ class QdrantClient:
         self._conectar()
 
     def _conectar(self) -> None:
-        """Intenta conectar vía cliente nativo; fallback a REST."""
+        """Intenta conectar vía cliente nativo
+        fallback a REST."""
         try:
             from qdrant_client import QdrantClient as QC
 
@@ -384,10 +385,14 @@ class URAQdrantClient:
         await qdrant.close()
     """
 
+<<<<<<< Updated upstream
     def __init__(self, base_url: str = "", timeout: float = 10.0) -> None:
         if not base_url:
             cfg = __import__("motor.core.config", fromlist=["UraConfig"]).UraConfig.load()
             base_url = f"http://{cfg.qdrant_host}:{cfg.qdrant_port}"
+=======
+    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
         self.base_url = base_url
         self.timeout = timeout
         self._client: httpx.AsyncClient | None = None
@@ -477,25 +482,25 @@ class URAQdrantClient:
         vector_denso: list,
         limite: int = 10,
     ) -> list[dict]:
-        """Búsqueda híbrida dense+sparse con RRF."""
+        """Búsqueda híbrida dense+sparse con RRF.
+        Si la generación sparse falla, degrada a búsqueda densa simple.
+        """
         client = await self._get_client()
-        sparse = generar_sparse_vector(texto_query)
-
-        # Prefetch fusionado con RRF
-        payload = {
-            "prefetch": [
-                {"query": vector_denso, "using": "default", "limit": limite * 4},
-                {
-                    "query": {"indices": sparse["indices"], "values": sparse["values"]},
-                    "using": "bm25",
-                    "limit": limite * 4,
-                },
-            ],
-            "query": {"fusion": "rrf"},
-            "limit": limite,
-            "with_payload": True,
-        }
         try:
+            sparse = _generar_sparse_vector(texto_query)
+            payload = {
+                "prefetch": [
+                    {"query": vector_denso, "using": "default", "limit": limite * 4},
+                    {
+                        "query": {"indices": sparse["indices"], "values": sparse["values"]},
+                        "using": "bm25",
+                        "limit": limite * 4,
+                    },
+                ],
+                "query": {"fusion": "rrf"},
+                "limit": limite,
+                "with_payload": True,
+            }
             resp = await client.post(f"/collections/{coleccion}/points/search", json=payload)
             resp.raise_for_status()
             return resp.json().get("result", [])
@@ -503,3 +508,19 @@ class URAQdrantClient:
             log.warning("Búsqueda híbrida falló, fallback a densa: %s", e)
             fallback = await self.buscar_vectores(coleccion, vector_denso, limite)
             return fallback.get("result", [])
+
+
+def _generar_sparse_vector(texto: str) -> dict:
+    """Genera un sparse vector simple basado en frecuencia de términos.
+
+    Returns:
+        dict con 'indices' (list[int]) y 'values' (list[float]).
+    """
+    import collections
+    import re
+
+    tokens = re.findall(r"\w+", texto.lower())
+    freq = collections.Counter(tokens)
+    indices = [hash(t) & 0x7FFFFFFF for t in freq]
+    values = [count / max(freq.values()) for count in freq.values()]
+    return {"indices": indices, "values": values}

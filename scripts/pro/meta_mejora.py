@@ -16,6 +16,7 @@ PLUGIN = {
 }
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -46,7 +47,7 @@ GX10_SSH = ["ssh", os.environ.get("ASUS_SSH", "ramon@10.164.1.99")]
 
 
 def log(msg) -> None:
-    pass
+    print(f"[{datetime.now(UTC).strftime('%H:%M:%S')}] {msg}")
 
 
 def medir():

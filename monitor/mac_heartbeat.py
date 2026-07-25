@@ -6,10 +6,13 @@ Información persistida en ~/.ura/run/ura_mac_heartbeat.json.
 """
 
 import json
+import logging
 import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 _TERMINAL_HOST = os.environ.get("TERMINAL_HOST", "")
 try:
@@ -53,8 +56,13 @@ class MacHeartbeat:
                 data = json.loads(HEARTBEAT_FILE.read_text())
                 self.consecutive_failures = data.get("consecutive_failures", 0)
                 self.mac_reachable = data.get("mac_reachable", True)
+<<<<<<< Updated upstream
             except Exception:  # noqa: S110
                 pass
+=======
+            except Exception:
+                logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
+>>>>>>> Stashed changes
 
     def _save_state(self) -> None:
         """Persiste estado a disco."""
@@ -68,9 +76,17 @@ class MacHeartbeat:
         try:
             tmp = HEARTBEAT_FILE.with_suffix(".tmp")
             tmp.write_text(json.dumps(state, indent=2))
+<<<<<<< Updated upstream
             os.replace(str(tmp), str(HEARTBEAT_FILE))  # noqa: PTH105
         except Exception:  # noqa: S110
             pass
+=======
+            import os
+
+            os.replace(str(tmp), str(HEARTBEAT_FILE))
+        except Exception:
+            logger.exception("Error guardando heartbeat state en %s", HEARTBEAT_FILE)
+>>>>>>> Stashed changes
 
     def check_mac(self) -> bool:
         """Hace ping a Mac. Retorna True si responde."""

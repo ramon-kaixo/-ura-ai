@@ -24,6 +24,7 @@ def _ensure_log_dir():
 
 
 def _publish_to_event_bus(record: dict) -> None:
+<<<<<<< Updated upstream
     try:
         from core.event_bus import publish
 
@@ -67,6 +68,40 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
             )
     except Exception:
         pass
+=======
+    from core.event_bus import publish
+
+    publish(
+        "alert",
+        {
+            "source": "guardian",
+            "event": record.get("event"),
+            "reason": record.get("reason", "")[:200],
+            "result_type": record.get("result_type", ""),
+        },
+    )
+
+
+def _save_to_qdrant(record: dict) -> None:
+    from core.config import UraConfig
+    from core.qdrant_client import instancia
+
+    cfg = UraConfig()
+    qc = instancia(cfg)
+    if qc and qc.disponible:
+        subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
+        qc.guardar_incidente(
+            {
+                "ts": record.get("timestamp", datetime.now(UTC).isoformat()),
+                "tipo": "ServiceFailure",
+                "subtipo": subtipo[:50],
+                "resumen": f"{record.get('event')}: {record.get('reason', '')[:200]}",
+                "pre_state": {"attempts": record.get("attempts", 0), "complexity": record.get("complexity", 0)},
+                "origin_node": "ASUS",
+                "exit_code": -1,
+            }
+        )
+>>>>>>> Stashed changes
 
 
 def log_event(

@@ -1,5 +1,9 @@
 import json
 import logging
+<<<<<<< Updated upstream
+=======
+import subprocess
+>>>>>>> Stashed changes
 import sys
 from pathlib import Path
 
@@ -91,7 +95,11 @@ def cmd_learn(config: UraConfig, args=None) -> None:
 
 
 def cmd_alerta(config: UraConfig = None, args=None) -> None:
+<<<<<<< Updated upstream
     r = _executor.run(
+=======
+    r = subprocess.run(
+>>>>>>> Stashed changes
         [
             "journalctl",
             "-u",
@@ -113,7 +121,11 @@ def cmd_health_check(config: UraConfig, args=None) -> None:
     checks = []
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:
+<<<<<<< Updated upstream
             r = _executor.run(["systemctl", "is-active", unit], timeout=5)
+=======
+            r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True, timeout=5, check=False)
+>>>>>>> Stashed changes
             ok = "active" in r.stdout or r.stdout.strip() == "inactive"
             checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})
         except Exception as e:

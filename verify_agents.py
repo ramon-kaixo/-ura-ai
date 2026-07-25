@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
+<<<<<<< Updated upstream
+=======
+import logging
+import os
+>>>>>>> Stashed changes
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 AGENTES_DIR = Path("~/URA/ura_ia_1972/agents/").expanduser()
 OUTPUT_DIR = Path("~/Desktop/").expanduser()
@@ -60,7 +67,11 @@ def verificar_agente(ruta_agente):
                 else:
                     resultado["estado"] = "⚠️ PARCIAL"
                     resultado["errores"].append("No se encontraron funciones públicas")
+<<<<<<< Updated upstream
             except:  # noqa: E722
+=======
+            except Exception:
+>>>>>>> Stashed changes
                 resultado["estado"] = "⚠️ PARCIAL"
         else:
             resultado["estado"] = "⚠️ PARCIAL"
@@ -116,8 +127,13 @@ def enviar_telegram(mensaje) -> bool:
         if Path(TELEGRAM_SCRIPT).exists():
             subprocess.run([TELEGRAM_SCRIPT, mensaje], check=True, capture_output=True)
             return True
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception:
+        logger.exception("Error enviando notificación Telegram")
+>>>>>>> Stashed changes
     return False
 
 

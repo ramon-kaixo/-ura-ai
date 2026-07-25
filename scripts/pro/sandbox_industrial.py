@@ -62,7 +62,7 @@ RAM_CEILING_GB = 16.0
 
 
 def log(msg: str) -> None:
-    pass
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
 
 def _get_ssh_command_output(command: list[str], timeout: int = 10) -> str:

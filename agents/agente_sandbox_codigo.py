@@ -115,10 +115,14 @@ def actualizar_inventario(rel, h, ver) -> None:
         INVENTARIO.write_text(json.dumps(inv, indent=2, ensure_ascii=False))
 
 
+BRANCHES_DIR = Path(__file__).resolve().parent.parent / ".nervioso" / "branches"
+
+
 def create_branch(rel, v_old, v_new, origin, reason):
     ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     name = f"change_{ts}_{rel.replace('/', '_')}.json"
-    (BRANCHES / name).write_text(
+    branch_path = BRANCHES_DIR / name
+    branch_path.write_text(
         json.dumps(
             {
                 "date": datetime.now(UTC).isoformat(),

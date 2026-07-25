@@ -47,7 +47,11 @@ class AlforjaSpooler:
             archivos[0].unlink()
             return tarea
         except (OSError, json.JSONDecodeError) as e:
+<<<<<<< Updated upstream
             logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
+=======
+            logger.error(f"[ALFORJA] Error leyendo spool: {e}")
+>>>>>>> Stashed changes
             return None
 
 

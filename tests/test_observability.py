@@ -1,5 +1,7 @@
 """Tests de notifier y json_logger."""
 
+import pytest
+
 from core.json_logger import StructuredLogger
 from core.notifier import notify
 
@@ -9,8 +11,13 @@ def test_notifier_empty_returns_false() -> None:
     try:
         result = notify("test", level="info")
         assert result is False
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception:
+        pytest.fail("notify() raised unexpected exception")
+>>>>>>> Stashed changes
 
 
 def test_logger_creates_and_logs() -> None:

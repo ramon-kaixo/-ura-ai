@@ -24,8 +24,12 @@ class GuardianMiddleware(BaseHTTPMiddleware):
             if not resultado.get("permitido", True):
                 log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon', '')}")
                 return JSONResponse(
+<<<<<<< Updated upstream
                     status_code=403,
                     content={"error": "Guardian bloqueo la operacion", "detalle": resultado},
+=======
+                    status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
+>>>>>>> Stashed changes
                 )
         return await call_next(request)
 

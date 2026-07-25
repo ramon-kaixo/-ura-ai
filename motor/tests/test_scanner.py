@@ -7,7 +7,7 @@ from motor.scanner.calibration import Calibration
 from motor.scanner.diff_detector import compute_diff
 
 
-def test_diff():
+def test_diff() -> None:
     p = {
         "servicios": {"ssh": "ok", "docker": "ok"},
         "recursos": {"ram_pct": 45, "disk_pct": 60, "load_1m": 0.5},
@@ -26,7 +26,7 @@ def test_diff():
     assert any("hw_health" in a for a in anom)
 
 
-def test_correlacion():
+def test_correlacion() -> None:
     g = agrupar_incidentes(["docker", "exit_node_offline"], hw_ok=False, hw_issues=["dmesg error"])
     causas = [x["causa_raiz"] for x in g]
     assert "hardware" in causas
@@ -36,7 +36,7 @@ def test_correlacion():
     assert "docker" in resumir_incidentes([{"tipo": "ServiceFailure", "subtipo": "docker"}])
 
 
-def test_calibration():
+def test_calibration() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         cfg = UraConfig()
         cfg.data_dir = tmp

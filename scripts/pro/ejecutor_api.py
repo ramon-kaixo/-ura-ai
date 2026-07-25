@@ -10,19 +10,31 @@ from path_setup import setup_path
 setup_path()
 import json
 import logging
+<<<<<<< Updated upstream
 import math
+=======
+>>>>>>> Stashed changes
 import os
 import subprocess
 import threading
 import time
+<<<<<<< Updated upstream
 import urllib.request
+=======
+>>>>>>> Stashed changes
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+<<<<<<< Updated upstream
 log = logging.getLogger(__name__)
 
 CONTEXT_PATH = Path("~/.config/opencode/ura_context.json").expanduser()
+=======
+log = logging.getLogger("ura.ejecutor")
+
+CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
+>>>>>>> Stashed changes
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
 HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))

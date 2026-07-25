@@ -32,11 +32,16 @@ class E:
 
 
 class ColdRefactor:
+<<<<<<< Updated upstream
     def __init__(self) -> None:
+=======
+    def __init__(s):
+>>>>>>> Stashed changes
         DQ.parent.mkdir(parents=True, exist_ok=True)
         RD.mkdir(parents=True, exist_ok=True)
         SD.mkdir(parents=True, exist_ok=True)
 
+<<<<<<< Updated upstream
     def registrar_deuda(self, did, nom, cod, adv):
         mc = f"# DEBT_ID: {did}\n" + cod
         sp = SD / f"{nom}.py"
@@ -45,16 +50,35 @@ class ColdRefactor:
         return sp
 
     def registrar_limpio(self, nom, cod):
+=======
+    def registrar_deuda(s, did, nom, cod, adv):
+        mc = f"# DEBT_ID: {did}\n" + cod
+        sp = SD / f"{nom}.py"
+        sp.write_text(mc, encoding="utf-8")
+        s._a(E(did, nom, str(sp), mc, adv, s._n()))
+        return sp
+
+    def registrar_limpio(s, nom, cod):
+>>>>>>> Stashed changes
         sp = SD / f"{nom}.py"
         sp.write_text(cod, encoding="utf-8")
         return sp
 
+<<<<<<< Updated upstream
     def _a(self, e) -> None:
         c = [x for x in self._l() if x["debt_id"] != e.debt_id]
         c.append(asdict(e))
         DQ.write_text(json.dumps(c, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def _l(self):
+=======
+    def _a(s, e):
+        c = [x for x in s._l() if x["debt_id"] != e.debt_id]
+        c.append(asdict(e))
+        DQ.write_text(json.dumps(c, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _l(s):
+>>>>>>> Stashed changes
         if not DQ.exists():
             return []
         try:
@@ -63,6 +87,7 @@ class ColdRefactor:
             logger.exception("Failed to load debt queue from %s", DQ)
             return []
 
+<<<<<<< Updated upstream
     def estado_deuda(self):
         c = self._l()
         p = [e for e in c if not e.get("resuelto")]
@@ -73,42 +98,81 @@ class ColdRefactor:
         from core.sandbox.docker_orchestrator import DockerOrchestrator
 
         c = self._l()
+=======
+    def estado_deuda(s):
+        c = s._l()
+        p = [e for e in c if not e.get("resuelto")]
+        return {"total": len(c), "pend": len(p), "res": len(c) - len(p), "skills": [e["skill_nombre"] for e in p]}
+
+    async def ejecutar_tuneladora(s):
+        from core.guardians.ast_sentinel import ASTSentinel
+        from core.sandbox.docker_orchestrator import DockerOrchestrator
+
+        c = s._l()
+>>>>>>> Stashed changes
         p = [E(**e) for e in c if not e.get("resuelto") and e.get("n_intentos", 0) < 3]
         r = {"procesados": 0, "resueltos": 0, "reintentados": 0, "abandonados": 0}
         for e in p:
             r["procesados"] += 1
+<<<<<<< Updated upstream
             li = await self._ref(e)
             if not li:
                 e.n_intentos += 1
                 e.ultimo_intento = self._n()
                 self._a(e)
+=======
+            li = await s._ref(e)
+            if not li:
+                e.n_intentos += 1
+                e.ultimo_intento = s._n()
+                s._a(e)
+>>>>>>> Stashed changes
                 r["reintentados"] += 1
                 continue
             v = ASTSentinel().analizar(li, e.skill_nombre)
             if not v.ok:
                 e.n_intentos += 1
+<<<<<<< Updated upstream
                 e.ultimo_intento = self._n()
                 self._a(e)
+=======
+                e.ultimo_intento = s._n()
+                s._a(e)
+>>>>>>> Stashed changes
                 r["reintentados"] += 1
                 continue
             sb = await DockerOrchestrator().validar(li, e.skill_nombre)
             if not sb.ok:
                 e.n_intentos += 1
+<<<<<<< Updated upstream
                 e.ultimo_intento = self._n()
                 self._a(e)
+=======
+                e.ultimo_intento = s._n()
+                s._a(e)
+>>>>>>> Stashed changes
                 r["reintentados"] += 1
                 continue
             Path(e.skill_path).write_text(li, encoding="utf-8")
             e.resuelto = True
+<<<<<<< Updated upstream
             e.resolucion = self._n()
             self._a(e)
+=======
+            e.resolucion = s._n()
+            s._a(e)
+>>>>>>> Stashed changes
             r["resueltos"] += 1
         for e in c:
             if not e.get("resuelto") and e.get("n_intentos", 0) >= 3:
                 r["abandonados"] += 1
         return r
 
+<<<<<<< Updated upstream
     async def _ref(self, e):
+=======
+    async def _ref(s, e):
+>>>>>>> Stashed changes
         try:
             import httpx
 
@@ -129,5 +193,9 @@ class ColdRefactor:
             logger.warning(f"Refactor: {ex}")
             return None
 
+<<<<<<< Updated upstream
     def _n(self):
+=======
+    def _n(s):
+>>>>>>> Stashed changes
         return datetime.now(tz=UTC).isoformat()

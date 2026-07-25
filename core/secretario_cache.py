@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider
 
+<<<<<<< Updated upstream
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", "http://10.164.1.99:4096")
 
 
@@ -35,6 +36,11 @@ def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
     except Exception:
         return os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
+=======
+ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", f"http://{os.environ.get('ASUS_HOST', '10.164.1.99')}:4096")
+QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", os.environ.get("ASUS_HOST", "10.164.1.99"))
+QDRANT_PORT = int(os.environ.get("URA_QDRANT_PORT", "6333"))
+>>>>>>> Stashed changes
 
 LRU_MAX = 20
 

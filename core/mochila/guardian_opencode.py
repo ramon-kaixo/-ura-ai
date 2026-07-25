@@ -70,6 +70,10 @@ class OpenCodeGuardian:
                     ["python3", "-m", "py_compile", file_path],
                     capture_output=True,
                     timeout=5,
+<<<<<<< Updated upstream
+=======
+                    check=False,
+>>>>>>> Stashed changes
                 )
                 return res.returncode == 0
             except subprocess.TimeoutExpired:
@@ -81,6 +85,10 @@ class OpenCodeGuardian:
                     ["bash", "-n", file_path],
                     capture_output=True,
                     timeout=5,
+<<<<<<< Updated upstream
+=======
+                    check=False,
+>>>>>>> Stashed changes
                 )
                 return res.returncode == 0
 
