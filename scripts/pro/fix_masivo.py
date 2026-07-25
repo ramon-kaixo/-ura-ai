@@ -40,8 +40,12 @@ def fix_e702_semicolons() -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     y=2 into two lines.
     """
+=======
+    y=2 into two lines."""
+>>>>>>> Stashed changes
 =======
     y=2 into two lines."""
 >>>>>>> Stashed changes
@@ -88,7 +92,11 @@ def fix_e702_semicolons() -> int:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
+=======
+                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+>>>>>>> Stashed changes
 =======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
 >>>>>>> Stashed changes
@@ -226,6 +234,10 @@ def main() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+        check=False,
+>>>>>>> Stashed changes
 =======
         check=False,
 >>>>>>> Stashed changes

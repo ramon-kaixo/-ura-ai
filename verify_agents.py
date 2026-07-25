@@ -7,7 +7,10 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -96,7 +99,11 @@ def verificar_agente(ruta_agente):
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             except:  # noqa: E722
+=======
+            except Exception:
+>>>>>>> Stashed changes
 =======
             except Exception:
 >>>>>>> Stashed changes
@@ -184,8 +191,13 @@ def enviar_telegram(mensaje) -> bool:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception:
+        logger.exception("Error enviando notificación Telegram")
+>>>>>>> Stashed changes
 =======
     except Exception:
         logger.exception("Error enviando notificación Telegram")

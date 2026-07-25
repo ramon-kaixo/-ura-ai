@@ -68,8 +68,13 @@ class AnkerMacPipeline:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception as e:
+            logger.warning("_find_anker_device: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             logger.warning("_find_anker_device: %s", e)

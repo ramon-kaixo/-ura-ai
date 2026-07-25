@@ -9,6 +9,9 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -45,7 +48,11 @@ PROH = frozenset(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"},
+=======
+    {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
+>>>>>>> Stashed changes
 =======
     {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
 >>>>>>> Stashed changes
@@ -91,12 +98,15 @@ class V:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def resumen(self):
         e = "OK" if self.ok else "FAIL"
         r = [f"[AST] {e}"] + [f"  - {x}" for x in self.errs] + [f"  D {w}" for w in self.warns]
         if self.debt:
             r.append(f"  DEBT_ID: {self.debt}")
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -123,6 +133,9 @@ class V:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -142,6 +155,7 @@ class V:
 
 
 class _CV(ast.NodeVisitor):
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -187,6 +201,8 @@ class _CV(ast.NodeVisitor):
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     def __init__(s):
         s.c = 1
 
@@ -216,6 +232,9 @@ class _CV(ast.NodeVisitor):
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -251,6 +270,9 @@ class ASTSentinel:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -295,7 +317,11 @@ class ASTSentinel:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     e.append(f"'{f.name}': arg '{a.arg}' sin tipo")  # noqa: PERF401
+=======
+                    e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
+>>>>>>> Stashed changes
 =======
                     e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
 >>>>>>> Stashed changes
@@ -341,11 +367,19 @@ class ASTSentinel:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         e.append(f"import: '{a.name}'")  # noqa: PERF401
             elif isinstance(n, ast.ImportFrom):
                 for a in n.names:
                     if f"{n.module or ''}.{a.name}" in PROH:
                         e.append(f"import: '{n.module}.{a.name}'")  # noqa: PERF401
+=======
+                        e.append(f"import: '{a.name}'")
+            elif isinstance(n, ast.ImportFrom):
+                for a in n.names:
+                    if f"{n.module or ''}.{a.name}" in PROH:
+                        e.append(f"import: '{n.module}.{a.name}'")
+>>>>>>> Stashed changes
 =======
                         e.append(f"import: '{a.name}'")
             elif isinstance(n, ast.ImportFrom):
@@ -420,7 +454,11 @@ class ASTSentinel:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 w.append(f"L{n.lineno}: magic {n.value}")  # noqa: PERF401
+=======
+                w.append(f"L{n.lineno}: magic {n.value}")
+>>>>>>> Stashed changes
 =======
                 w.append(f"L{n.lineno}: magic {n.value}")
 >>>>>>> Stashed changes
