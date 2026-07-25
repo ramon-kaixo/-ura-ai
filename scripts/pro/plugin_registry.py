@@ -39,6 +39,9 @@ def log(msg) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

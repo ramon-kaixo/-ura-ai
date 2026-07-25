@@ -1,6 +1,9 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 #! /usr/bin/env python3
 =======
+=======
+>>>>>>> Stashed changes
 import shlex
 
 #!/usr/bin/env python3
@@ -16,8 +19,11 @@ import json
 import os
 import platform
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import shlex
 import shutil
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import signal
@@ -155,6 +161,7 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """Ejecuta un comando. Sin shell=True: usa PIPE para pipelines.
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
@@ -172,6 +179,12 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
                 check=False,
             )
         return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
+=======
+    args = shlex.split(cmd)
+    try:
+        result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
+        return True, result.stdout
+>>>>>>> Stashed changes
 =======
     args = shlex.split(cmd)
     try:
@@ -475,8 +488,13 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception as e:
+        error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
+>>>>>>> Stashed changes
 =======
     except Exception as e:
         error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))

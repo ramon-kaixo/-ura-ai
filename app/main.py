@@ -45,8 +45,11 @@ class Orquestador:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 async def main() -> None:
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -55,6 +58,7 @@ async def main():
 >>>>>>> Stashed changes
     o = Orquestador()
     await o.ciclo()
+
 
 
 

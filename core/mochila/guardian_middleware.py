@@ -27,8 +27,12 @@ class GuardianMiddleware(BaseHTTPMiddleware):
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     status_code=403,
                     content={"error": "Guardian bloqueo la operacion", "detalle": resultado},
+=======
+                    status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
+>>>>>>> Stashed changes
 =======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
 >>>>>>> Stashed changes

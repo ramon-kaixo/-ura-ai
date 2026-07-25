@@ -177,7 +177,11 @@ sys.exit(0 if r["fallidos"]==0 else 1)
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except:  # noqa: E722
+=======
+        except Exception:
+>>>>>>> Stashed changes
 =======
         except Exception:
 >>>>>>> Stashed changes

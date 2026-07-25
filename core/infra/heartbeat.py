@@ -19,8 +19,11 @@ from datetime import UTC, datetime
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from pathlib import Path
 from typing import TYPE_CHECKING
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -79,6 +82,7 @@ def dump_checkpoint() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     try:
         if config is None:
@@ -121,6 +125,12 @@ def _save_restart_to_qdrant() -> None:
     from core.qdrant_client import instancia
 
 >>>>>>> Stashed changes
+=======
+def _save_restart_to_qdrant() -> None:
+    from core.config import UraConfig
+    from core.qdrant_client import instancia
+
+>>>>>>> Stashed changes
     cfg = UraConfig()
     qc = instancia(cfg)
     if qc and qc.disponible:
@@ -136,6 +146,9 @@ def _save_restart_to_qdrant() -> None:
         )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

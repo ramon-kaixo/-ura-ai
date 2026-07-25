@@ -4,6 +4,9 @@
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)"""
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
