@@ -365,6 +365,9 @@ class LinuxCleaner(SystemCleaner):
 =======
                 if os.path.exists(log_dir):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -400,8 +403,13 @@ class LinuxCleaner(SystemCleaner):
                         try:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             if Path(item_path).is_file() and self.safe_remove(item_path):
                                 size = Path(item_path).stat().st_size / (1024**3)
+=======
+                            if os.path.isfile(item_path) and self.safe_remove(item_path):
+                                size = os.path.getsize(item_path) / (1024**3)
+>>>>>>> Stashed changes
 =======
                             if os.path.isfile(item_path) and self.safe_remove(item_path):
                                 size = os.path.getsize(item_path) / (1024**3)
@@ -666,8 +674,11 @@ class MaintenanceOrchestrator:
         """Guardar resultados en archivo JSON."""
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         results_file = LOG_DIR / f"maintenance_results_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         results_file = LOG_DIR / f"maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

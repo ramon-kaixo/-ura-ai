@@ -92,6 +92,9 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
 =======
 def bypass_linksys() -> bool:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

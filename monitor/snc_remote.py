@@ -50,6 +50,9 @@ def mac_notify(title: str, message: str) -> None:
 =======
     except Exception:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -71,6 +74,9 @@ def sync_state() -> dict:
 =======
     except Exception:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

@@ -59,7 +59,10 @@ from knowledge.engine.validator import validate_batch, validate_knowledge_object
 from knowledge.engine.verifier import verify_graph
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1628,6 +1631,7 @@ class TestQdrantSync:
         )
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         result = sync_documents(db_path, [doc], [], run_id=0)
         # Graceful regardless of Qdrant availability:
         #   — unavailable: result == 0, "Qdrant no disponible" in log
@@ -1637,6 +1641,8 @@ class TestQdrantSync:
         else:
             assert result >= 1
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         from unittest.mock import patch
@@ -1697,7 +1703,11 @@ class TestDeterminism:
         (src / "test-a.md").write_text(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n",
+=======
+            "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
+>>>>>>> Stashed changes
 =======
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
 >>>>>>> Stashed changes
@@ -1818,9 +1828,13 @@ class TestArchiveIntegration:
         subprocess.run(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"],
             capture_output=True,
             check=False,
+=======
+            ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
+>>>>>>> Stashed changes
 =======
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
 >>>>>>> Stashed changes
@@ -2223,8 +2237,11 @@ class TestAuditBackend:
             "not valid json\n"
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n',
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
@@ -2498,8 +2515,12 @@ class TestGoldenMaster:
         for name in sorted(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"],
             reverse=True,
+=======
+            ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
+>>>>>>> Stashed changes
 =======
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
 >>>>>>> Stashed changes
@@ -2585,8 +2606,11 @@ class TestGoldenMaster:
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         old_cwd = os.getcwd()  # noqa: PTH109
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         old_cwd = os.getcwd()

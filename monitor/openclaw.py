@@ -72,6 +72,9 @@ def load_state() -> dict:
 =======
     except Exception:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -92,6 +95,9 @@ def save_stats() -> None:
         os.replace(str(tmp), str(STATS_FILE))
     except Exception:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

@@ -58,8 +58,13 @@ class MacHeartbeat:
                 self.mac_reachable = data.get("mac_reachable", True)
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             except Exception:  # noqa: S110
                 pass
+=======
+            except Exception:
+                logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
+>>>>>>> Stashed changes
 =======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
@@ -92,6 +97,9 @@ class MacHeartbeat:
         except Exception:
             logger.exception("Error guardando heartbeat state en %s", HEARTBEAT_FILE)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

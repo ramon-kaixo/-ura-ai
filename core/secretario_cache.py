@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider
 
@@ -38,6 +39,8 @@ def _load_config(config: IConfigProvider | None = None) -> tuple[str, int]:
         return os.environ.get("URA_QDRANT_HOST", "10.164.1.99"), int(os.environ.get("URA_QDRANT_PORT", "6333"))
 
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 ASUS_EXEC_URL = os.environ.get("ASUS_EXEC_URL", f"http://{os.environ.get('ASUS_HOST', '10.164.1.99')}:4096")

@@ -144,9 +144,15 @@ try:
 except pyautogui.FailSafeException:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     pass
 except Exception:  # noqa: S110
     pass
+=======
+    logger.warning("FailSafe activado durante automatización Linksys")
+except Exception:
+    logger.exception("Error inesperado durante automatización Linksys")
+>>>>>>> Stashed changes
 =======
     logger.warning("FailSafe activado durante automatización Linksys")
 except Exception:
