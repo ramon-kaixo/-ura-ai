@@ -31,7 +31,8 @@ class BanditTool(ToolBase):
 
     def run_check(self, files: list[str] | None = None) -> ToolResult:
         t0 = time.monotonic()
-        targets = files or ["-r", "."]
+        active_files = [f for f in (files or []) if f]
+        targets = active_files or ["-r", "."]
         try:
             r = subprocess.run(
                 [sys.executable, "-m", "bandit", *targets],

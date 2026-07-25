@@ -75,6 +75,17 @@ class TestSnapshotManagerRestore:
         assert meta["count"] == 1
         assert meta["label"] == "restore_test"
 
+    def test_restore_file(self, snap: SnapshotManager, tmp_path: Path):
+        work = tmp_path / "sub"
+        work.mkdir()
+        src = work / "original.py"
+        src.write_text("original")
+        snap_path = snap.take("restore_test", [src])
+        src.write_text("modified")
+        ok = snap.restore(snap_path)
+        assert ok is True
+        assert src.read_text() == "original"
+
     def test_restore_nonexistent(self, snap: SnapshotManager):
         ok = snap.restore(Path("/nonexistent_snapshot"))
         assert ok is False
