@@ -1,7 +1,10 @@
 """Detectores multi-tipo para la Reactualización Total."""
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import logging
@@ -95,6 +98,9 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
             return {"cambio": False, "error": "FFprobe failed"}
         import json
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         data = json.loads(result.stdout)
         fmt = data.get("format", {})
@@ -105,7 +111,11 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
                 "bit_rate": fmt.get("bit_rate", ""),
                 "format_name": fmt.get("format_name", ""),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             },
+=======
+            }
+>>>>>>> Stashed changes
 =======
             }
 >>>>>>> Stashed changes

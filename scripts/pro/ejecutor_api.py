@@ -11,7 +11,10 @@ setup_path()
 import json
 import logging
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import math
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import os
@@ -19,7 +22,10 @@ import subprocess
 import threading
 import time
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import urllib.request
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import uuid
@@ -27,10 +33,13 @@ from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 log = logging.getLogger(__name__)
 
 CONTEXT_PATH = Path("~/.config/opencode/ura_context.json").expanduser()
 =======
+=======
+>>>>>>> Stashed changes
 log = logging.getLogger("ura.ejecutor")
 
 CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")

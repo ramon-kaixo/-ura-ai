@@ -71,6 +71,10 @@ class OpenCodeGuardian:
                     capture_output=True,
                     timeout=5,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                    check=False,
+>>>>>>> Stashed changes
 =======
                     check=False,
 >>>>>>> Stashed changes
@@ -86,6 +90,10 @@ class OpenCodeGuardian:
                     capture_output=True,
                     timeout=5,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                    check=False,
+>>>>>>> Stashed changes
 =======
                     check=False,
 >>>>>>> Stashed changes

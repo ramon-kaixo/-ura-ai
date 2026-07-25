@@ -4,7 +4,10 @@ Ejecuta contra la BD de Open WebUI en el GX10.
 """
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json as _json
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import os

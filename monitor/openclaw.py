@@ -71,6 +71,9 @@ def load_state() -> dict:
     except Exception:  # noqa: S110
 =======
     except Exception:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         pass
     return {"status": "UNKNOWN", "services": {}, "openclaw_active": False}
@@ -88,6 +91,9 @@ def save_stats() -> None:
 =======
         os.replace(str(tmp), str(STATS_FILE))
     except Exception:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         pass
 

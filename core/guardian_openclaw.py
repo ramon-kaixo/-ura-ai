@@ -80,6 +80,9 @@ class GuardianOpenCLaw:
 =======
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:

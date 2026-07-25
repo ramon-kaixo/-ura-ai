@@ -57,8 +57,13 @@ class MacHeartbeat:
                 self.consecutive_failures = data.get("consecutive_failures", 0)
                 self.mac_reachable = data.get("mac_reachable", True)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             except Exception:  # noqa: S110
                 pass
+=======
+            except Exception:
+                logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
+>>>>>>> Stashed changes
 =======
             except Exception:
                 logger.exception("Error cargando heartbeat state desde %s", HEARTBEAT_FILE)
@@ -86,6 +91,9 @@ class MacHeartbeat:
             os.replace(str(tmp), str(HEARTBEAT_FILE))
         except Exception:
             logger.exception("Error guardando heartbeat state en %s", HEARTBEAT_FILE)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     def check_mac(self) -> bool:

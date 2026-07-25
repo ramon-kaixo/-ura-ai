@@ -87,9 +87,15 @@ def _detectar_nivel() -> str:
     if dia == 0 and 2 <= hora <= 4:
         return "profundo"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if hora in (6, 12, 18):
         return "medio"
     return "ligero"
+=======
+    if hora in (0, 6, 12, 18):
+        return "medio" if hora == 3 else "total"
+    return "total"
+>>>>>>> Stashed changes
 
 
 def main() -> int:  # noqa: PLR0915

@@ -1,7 +1,10 @@
 name: CI
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 on: [push, pull_request]
 =======
+=======
+>>>>>>> Stashed changes
 
 on: [push, pull_request]
 
@@ -16,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
           python-version: '3.12'
       - run: pip install -e ".[dev]"
@@ -40,6 +44,8 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: python scripts/pro/tech_debt_report.py
 =======
+=======
+>>>>>>> Stashed changes
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
@@ -49,4 +55,7 @@ jobs:
         run: bash scripts/ci.sh
       - name: Run fuzzing
         run: bash scripts/fuzz_ci.sh
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes

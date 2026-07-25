@@ -26,9 +26,12 @@ from core.document_quality import (
 from core.qdrant_client import QdrantClient
 from core.stealth_fetcher import fetch_stealth
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, IVectorStore
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 

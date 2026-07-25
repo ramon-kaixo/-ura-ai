@@ -6,7 +6,10 @@ Cada maquina captura su propia pantalla. Sin cruce de contextos.
 from __future__ import annotations
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import base64
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import os
@@ -38,6 +41,12 @@ class CapturadorTarget:
         """Captura desde el monitor virtual de Hetzner via VNC."""
         try:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+            import base64
+            from io import BytesIO
+
+>>>>>>> Stashed changes
 =======
             import base64
             from io import BytesIO
@@ -63,6 +72,9 @@ class CapturadorTarget:
             import base64
             from io import BytesIO
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             from PIL import ImageGrab
 

@@ -49,6 +49,9 @@ def load_seen_hashes() -> set:
         except Exception:  # noqa: S110
 =======
         except Exception:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             pass
     return set()
@@ -78,6 +81,9 @@ def fetch_critical_logs() -> list:
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
 =======
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 

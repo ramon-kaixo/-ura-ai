@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
 import logging
 import os
@@ -184,6 +185,14 @@ class UraConfig:
         _apply_env_overrides(c)
         return c
 =======
+=======
+"""Re-export de UraConfig desde core/config.py.
+
+Este archivo mantiene compatibilidad hacia atrás para todos los imports
+existentes de `motor.core.config`. La definición real vive en `core/config.py`.
+"""
+
+>>>>>>> Stashed changes
 from core.config import (  # noqa: F401
     HOST_ASUS_DEFECTO,
     INTERFAZ_TAILSCALE_DEFECTO,
@@ -193,4 +202,7 @@ from core.config import (  # noqa: F401
     RUTAS_CONFIG_OPENCODE,
     UraConfig,
 )
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
