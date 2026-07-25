@@ -282,6 +282,25 @@ class MochilaEngine:
         return {"f": str(s.f), "ti": s.ti, "tf": s.tf, "d": s.d, "ok": s.ok, "er": s.er, **s.dt}
 
 class MochilaEngine:
+    def __init__(s, f):
+        s.f = f
+        s.ti = _now()
+        s.tf = None
+        s.d = None
+        s.ok = False
+        s.er = None
+        s.dt = {}
+
+    def fin(s, ok=True, er=None):
+        s.tf = _now()
+        s.d = (datetime.fromisoformat(s.tf) - datetime.fromisoformat(s.ti)).total_seconds() * 1000
+        s.ok = ok
+        s.er = er
+
+    def ad(s):
+        return {"f": str(s.f), "ti": s.ti, "tf": s.tf, "d": s.d, "ok": s.ok, "er": s.er, **s.dt}
+
+class MochilaEngine:
     def __init__(s, e):
         s._e = e
         s._p = None
@@ -1166,6 +1185,82 @@ class MochilaEngine:
         d.write_text(json.dumps(s._e, ensure_ascii=False, indent=2))
         return d
 
+    def id(s):
+        return s._e["id"]
+
+    @property
+    def url(s):
+        return s._e["url"]
+
+    @property
+    def tipo(s):
+        return TipoPipeline(s._e["tp"])
+
+    @property
+    def hashes(s):
+        return s._e["h"]
+
+    @property
+    def calidad(s):
+        return s._e["c"]
+
+    @property
+    def red(s):
+        return s._e["r"]
+
+    def fc(s, f):
+        return str(f) in s._e["fc"]
+
+    def fase(s, f, z=False):
+        return _FC(s, f)
+
+    def _rc(s, c):
+        k = str(c.f)
+        s._e["cc"][k] = c.ad()
+        if c.ok and k not in s._e["fc"]:
+            s._e["fc"].append(k)
+        s._tm()
+
+    def reg_r(s, **k):
+        s._e["r"].update(k)
+        s._tm()
+
+    def reg_h(s, **k):
+        s._e["h"].update(k)
+        s._tm()
+
+    def reg_c(s, **k):
+        s._e["c"].update(k)
+        s._tm()
+
+    def reg_co(s, **k):
+        s._e["co"].update(k)
+        s._tm()
+
+    def reg_e(s, **k):
+        s._e["es"].update(k)
+        s._tm()
+
+    def reg_i(s, **k):
+        s._e["in"].update(k)
+        s._tm()
+
+    def reg_f(s, **k):
+        s._e["fb"].update(k)
+        s._tm()
+
+    def mc(s):
+        s._e["st"] = str(EstadoMochila.COMPLETADA)
+        s._tm()
+
+    def guardar(s, p=None):
+        d = p or s._p
+        if d is None:
+            raise ValueError("no path")
+        d.parent.mkdir(parents=True, exist_ok=True)
+        d.write_text(json.dumps(s._e, ensure_ascii=False, indent=2))
+        return d
+
     def ad(s):
         return dict(s._e)
 
@@ -1199,6 +1294,15 @@ class _FC:
             return True
         self._c.fin(True)
         self._m._rc(self._c)
+    def __repr__(s):
+        return f"Mochila(id={s.id[:8]}...,tipo={s.tipo})"
+
+class _FC:
+    def __init__(s, m, f):
+        s._m = m
+        s._f = f
+        s._c = None
+
     def __repr__(s):
         return f"Mochila(id={s.id[:8]}...,tipo={s.tipo})"
 

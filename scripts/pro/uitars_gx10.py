@@ -103,6 +103,7 @@ def analizar_con_ollama(imagen_b64: str | None, prompt: str) -> RespuestaOllama:
         return RespuestaOllama(texto=f"Error: {e}")
 
 def main() -> None:
+
 def main():
     print("=== UI-TARS GX10 ===")
     modo = "headless"

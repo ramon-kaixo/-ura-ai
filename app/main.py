@@ -41,6 +41,7 @@ class Orquestador:
         return r
 
 async def main() -> None:
+
 async def main():
     o = Orquestador()
     await o.ciclo()

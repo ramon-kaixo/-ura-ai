@@ -90,43 +90,61 @@ def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
     except Exception:
         logger.exception("Error guardando incidente de reinicio en Qdrant")
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
+    from core.qdrant_client import instancia
+
+    cfg = UraConfig()
+    qc = instancia(cfg)
+    if qc and qc.disponible:
+        qc.guardar_incidente(
+            {
+                "ts": datetime.now(UTC).isoformat(),
+                "tipo": "ServiceFailure",
+                "subtipo": "heartbeat_restart",
+                "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
+                "origin_node": "ASUS",
+                "exit_code": -1,
+            },
+        )
+
+def _save_restart_to_qdrant() -> None:
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
 def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
     cfg = UraConfig()

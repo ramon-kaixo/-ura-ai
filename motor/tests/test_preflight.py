@@ -11,6 +11,7 @@ def test_preflight_dups(tmp_path):
     f2 = tmp_path / "test_ura_opennaut_config_dup.jsonc"
     f1.write_text("{}")
     f2.write_text("{}")
+
 def test_preflight_dups() -> None:
     with Path("/tmp/test_ura_opennaut_config_dup.json").open("w") as f:
         f.write("{}")

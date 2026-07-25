@@ -26,6 +26,9 @@ PROH = frozenset(
     {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
 )
 DP = [(re.compile(r"#\s*(TODO|FIXME|HACK|WORKAROUND)", re.IGNORECASE), "deuda")]
+    {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
+)
+DP = [(re.compile(r"#\s*(TODO|FIXME|HACK|WORKAROUND)", re.IGNORECASE), "deuda")]
 
 @dataclass
 class V:
@@ -71,6 +74,8 @@ class _CV(ast.NodeVisitor):
     def visit_BoolOp(self, n) -> None:
         self.c += len(n.values) - 1
         self.generic_visit(n)
+
+class _CV(ast.NodeVisitor):
     def __init__(s):
         s.c = 1
 
@@ -201,6 +206,10 @@ class ASTSentinel:
             elif isinstance(n, ast.ImportFrom):
                 for a in n.names:
                     if f"{n.module or ''}.{a.name}" in PROH:
+                        e.append(f"import: '{a.name}'")
+            elif isinstance(n, ast.ImportFrom):
+                for a in n.names:
+                    if f"{n.module or ''}.{a.name}" in PROH:
                         e.append(f"import: '{n.module}.{a.name}'")
         for i, l in enumerate(codigo.splitlines(), 1):
             for p, ti in DP:
@@ -213,6 +222,7 @@ class ASTSentinel:
                 and n.value not in (0, 1, -1, 2, True, False)
             ):
                 w.append(f"L{n.lineno}: magic {n.value}")  # noqa: PERF401
+                w.append(f"L{n.lineno}: magic {n.value}")
                 w.append(f"L{n.lineno}: magic {n.value}")
                 w.append(f"L{n.lineno}: magic {n.value}")
                 w.append(f"L{n.lineno}: magic {n.value}")

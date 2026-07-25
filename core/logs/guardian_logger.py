@@ -75,9 +75,20 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
             "result_type": record.get("result_type", ""),
         },
     )
+    from core.event_bus import publish
+
+    publish(
+        "alert",
+        {
+            "source": "guardian",
+            "event": record.get("event"),
+            "reason": record.get("reason", "")[:200],
+            "result_type": record.get("result_type", ""),
+        },
+    )
 
 def _save_to_qdrant(record: dict) -> None:
-    from core.config import UraConfig
+    from motor.core.config import UraConfig
     from core.qdrant_client import instancia
 
     cfg = UraConfig()

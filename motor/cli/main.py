@@ -95,6 +95,8 @@ def _setup_logging(level: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
+
+def main() -> None:
     parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")

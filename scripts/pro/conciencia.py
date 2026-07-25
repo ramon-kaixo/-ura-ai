@@ -174,6 +174,9 @@ def scan_project() -> None:
     root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
     from scripts.pro.utils import scan_project as _scan
+    from scripts.pro.utils import scan_project as _scan
+
+    _scan()
 
     _scan()
     from scripts.pro.utils import scan_project as _scan

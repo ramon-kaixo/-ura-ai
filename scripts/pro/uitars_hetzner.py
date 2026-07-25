@@ -83,6 +83,9 @@ def main():
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
 
+def main():
+    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
+
     # 1. Capturar del VNC
     screenshot = conectar_vnc()
     print(f"       {len(screenshot)} bytes")
