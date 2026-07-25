@@ -33,7 +33,11 @@ from pathlib import Path
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.ingestador_red")
+=======
+logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 =======
 logger = logging.getLogger(__name__)
 >>>>>>> Stashed changes
@@ -76,8 +80,13 @@ def cargar_inventario() -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
+        except Exception as e:
+            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)

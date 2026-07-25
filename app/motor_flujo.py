@@ -54,8 +54,11 @@ class AlforjaSpooler:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

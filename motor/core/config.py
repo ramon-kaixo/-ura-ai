@@ -5,6 +5,7 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
 import logging
 import os
@@ -238,6 +239,14 @@ existentes de `motor.core.config`. La definición real vive en `core/config.py`.
 """
 
 >>>>>>> Stashed changes
+=======
+"""Re-export de UraConfig desde core/config.py.
+
+Este archivo mantiene compatibilidad hacia atrás para todos los imports
+existentes de `motor.core.config`. La definición real vive en `core/config.py`.
+"""
+
+>>>>>>> Stashed changes
 from core.config import (  # noqa: F401
     HOST_ASUS_DEFECTO,
     INTERFAZ_TAILSCALE_DEFECTO,
@@ -253,6 +262,9 @@ from core.config import (  # noqa: F401
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
