@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # Guard: remove editable install finder to guarantee single import source.
 for _f in list(sys.meta_path):
     if "__editable" in str(_f):
@@ -62,6 +63,8 @@ HELP = """URA CLI v3.0
 
 def main() -> int | None:
 =======
+=======
+>>>>>>> Stashed changes
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent

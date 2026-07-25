@@ -25,8 +25,12 @@ class GuardianMiddleware(BaseHTTPMiddleware):
                 log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon', '')}")
                 return JSONResponse(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     status_code=403,
                     content={"error": "Guardian bloqueo la operacion", "detalle": resultado},
+=======
+                    status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
+>>>>>>> Stashed changes
 =======
                     status_code=403, content={"error": "Guardian bloqueo la operacion", "detalle": resultado}
 >>>>>>> Stashed changes

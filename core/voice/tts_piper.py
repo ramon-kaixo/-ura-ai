@@ -68,8 +68,13 @@ class PiperTTSMotor:
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception as e:
+            logger.warning("_find_anker_output_device: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             logger.warning("_find_anker_output_device: %s", e)
@@ -106,8 +111,13 @@ class PiperTTSMotor:
             sd.wait()
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception as e:
+            logger.warning("_execute_piper_and_play: %s", e)
+>>>>>>> Stashed changes
 =======
         except Exception as e:
             logger.warning("_execute_piper_and_play: %s", e)

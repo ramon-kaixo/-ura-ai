@@ -652,12 +652,15 @@ def scan_project() -> None:
         if any(x in p for x in skip):
             continue
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         try:
             content = py_file.read_text()
             results[p] = {"lines": len(content.splitlines())}
         except Exception:  # noqa: S110
             pass
 =======
+=======
+>>>>>>> Stashed changes
         total += 1
         reporte = inspeccionar(py_file)
         if reporte["accion"] != "OK":
@@ -666,6 +669,9 @@ def scan_project() -> None:
     print(f"\n📊 scan_project: {total} archivos, {fallos} fallos")
     if fallos:
         sys.exit(1)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 

@@ -37,6 +37,9 @@ def log(msg: str) -> None:
 =======
 def log(msg) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 

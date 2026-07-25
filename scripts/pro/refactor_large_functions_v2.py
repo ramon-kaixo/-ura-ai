@@ -31,6 +31,10 @@ OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
 =======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 >>>>>>> Stashed changes

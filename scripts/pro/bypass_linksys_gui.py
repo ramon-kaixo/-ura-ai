@@ -91,6 +91,9 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
 def bypass_linksys() -> bool:  # noqa: PLR0915
 =======
 def bypass_linksys() -> bool:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     with sync_playwright() as p:
         browser = p.chromium.launch(

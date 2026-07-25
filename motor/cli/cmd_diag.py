@@ -1,7 +1,10 @@
 import json
 import logging
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 import subprocess
 >>>>>>> Stashed changes
 import sys
@@ -96,8 +99,11 @@ def cmd_learn(config: UraConfig, args=None) -> None:
 
 def cmd_alerta(config: UraConfig = None, args=None) -> None:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     r = _executor.run(
 =======
+=======
+>>>>>>> Stashed changes
     r = subprocess.run(
 >>>>>>> Stashed changes
         [
@@ -125,6 +131,9 @@ def cmd_health_check(config: UraConfig, args=None) -> None:
             r = _executor.run(["systemctl", "is-active", unit], timeout=5)
 =======
             r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True, timeout=5, check=False)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             ok = "active" in r.stdout or r.stdout.strip() == "inactive"
             checks.append({"check": unit, "ok": ok, "detail": r.stdout.strip()})

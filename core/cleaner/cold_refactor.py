@@ -36,11 +36,15 @@ class ColdRefactor:
     def __init__(self) -> None:
 =======
     def __init__(s):
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         DQ.parent.mkdir(parents=True, exist_ok=True)
         RD.mkdir(parents=True, exist_ok=True)
         SD.mkdir(parents=True, exist_ok=True)
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     def registrar_deuda(self, did, nom, cod, adv):
         mc = f"# DEBT_ID: {did}\n" + cod
@@ -51,6 +55,8 @@ class ColdRefactor:
 
     def registrar_limpio(self, nom, cod):
 =======
+=======
+>>>>>>> Stashed changes
     def registrar_deuda(s, did, nom, cod, adv):
         mc = f"# DEBT_ID: {did}\n" + cod
         sp = SD / f"{nom}.py"
@@ -59,11 +65,15 @@ class ColdRefactor:
         return sp
 
     def registrar_limpio(s, nom, cod):
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         sp = SD / f"{nom}.py"
         sp.write_text(cod, encoding="utf-8")
         return sp
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     def _a(self, e) -> None:
         c = [x for x in self._l() if x["debt_id"] != e.debt_id]
@@ -72,12 +82,17 @@ class ColdRefactor:
 
     def _l(self):
 =======
+=======
+>>>>>>> Stashed changes
     def _a(s, e):
         c = [x for x in s._l() if x["debt_id"] != e.debt_id]
         c.append(asdict(e))
         DQ.write_text(json.dumps(c, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def _l(s):
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         if not DQ.exists():
             return []
@@ -87,6 +102,7 @@ class ColdRefactor:
             logger.exception("Failed to load debt queue from %s", DQ)
             return []
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     def estado_deuda(self):
         c = self._l()
@@ -99,6 +115,8 @@ class ColdRefactor:
 
         c = self._l()
 =======
+=======
+>>>>>>> Stashed changes
     def estado_deuda(s):
         c = s._l()
         p = [e for e in c if not e.get("resuelto")]
@@ -109,11 +127,15 @@ class ColdRefactor:
         from core.sandbox.docker_orchestrator import DockerOrchestrator
 
         c = s._l()
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         p = [E(**e) for e in c if not e.get("resuelto") and e.get("n_intentos", 0) < 3]
         r = {"procesados": 0, "resueltos": 0, "reintentados": 0, "abandonados": 0}
         for e in p:
             r["procesados"] += 1
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
             li = await self._ref(e)
             if not li:
@@ -121,11 +143,16 @@ class ColdRefactor:
                 e.ultimo_intento = self._n()
                 self._a(e)
 =======
+=======
+>>>>>>> Stashed changes
             li = await s._ref(e)
             if not li:
                 e.n_intentos += 1
                 e.ultimo_intento = s._n()
                 s._a(e)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 r["reintentados"] += 1
                 continue
@@ -133,8 +160,13 @@ class ColdRefactor:
             if not v.ok:
                 e.n_intentos += 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 e.ultimo_intento = self._n()
                 self._a(e)
+=======
+                e.ultimo_intento = s._n()
+                s._a(e)
+>>>>>>> Stashed changes
 =======
                 e.ultimo_intento = s._n()
                 s._a(e)
@@ -145,8 +177,13 @@ class ColdRefactor:
             if not sb.ok:
                 e.n_intentos += 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 e.ultimo_intento = self._n()
                 self._a(e)
+=======
+                e.ultimo_intento = s._n()
+                s._a(e)
+>>>>>>> Stashed changes
 =======
                 e.ultimo_intento = s._n()
                 s._a(e)
@@ -156,8 +193,13 @@ class ColdRefactor:
             Path(e.skill_path).write_text(li, encoding="utf-8")
             e.resuelto = True
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             e.resolucion = self._n()
             self._a(e)
+=======
+            e.resolucion = s._n()
+            s._a(e)
+>>>>>>> Stashed changes
 =======
             e.resolucion = s._n()
             s._a(e)
@@ -169,7 +211,11 @@ class ColdRefactor:
         return r
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     async def _ref(self, e):
+=======
+    async def _ref(s, e):
+>>>>>>> Stashed changes
 =======
     async def _ref(s, e):
 >>>>>>> Stashed changes
@@ -194,7 +240,11 @@ class ColdRefactor:
             return None
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def _n(self):
+=======
+    def _n(s):
+>>>>>>> Stashed changes
 =======
     def _n(s):
 >>>>>>> Stashed changes

@@ -7,7 +7,10 @@ from typing import Any
 
 from core.memoria.bridge import buscar_y_aprender
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from core.memoria.ingesto import procesados_local  # noqa: F401
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 from core.memoria.qdrant_store import buscar_ideas

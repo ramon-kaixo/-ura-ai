@@ -80,7 +80,11 @@ def lint_code(code: str) -> None:
     except SyntaxError as e:
         msg = f"SyntaxError: {e}"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         raise SyntaxError(msg)  # noqa: B904
+=======
+        raise SyntaxError(msg)
+>>>>>>> Stashed changes
 =======
         raise SyntaxError(msg)
 >>>>>>> Stashed changes

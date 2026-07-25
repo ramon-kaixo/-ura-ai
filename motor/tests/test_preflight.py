@@ -9,12 +9,15 @@ def test_preflight_no_dups() -> None:
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_preflight_dups(tmp_path):
     f1 = tmp_path / "test_ura_opennaut_config_dup.json"
     f2 = tmp_path / "test_ura_opennaut_config_dup.jsonc"
     f1.write_text("{}")
     f2.write_text("{}")
 =======
+=======
+>>>>>>> Stashed changes
 def test_preflight_dups() -> None:
     with Path("/tmp/test_ura_opennaut_config_dup.json").open("w") as f:
         f.write("{}")
@@ -35,6 +38,9 @@ def test_snapshot_hash() -> None:
     assert "configs" in open(r.snapshot_path).read()  # noqa: PTH123, SIM115
 =======
     assert "configs" in open(r.snapshot_path).read()
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 

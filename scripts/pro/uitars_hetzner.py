@@ -40,6 +40,9 @@ def conectar_vnc():
 <<<<<<< Updated upstream
 =======
         print("  vncdotool no instalado, usando mss local")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         import base64
 
@@ -58,7 +61,13 @@ def conectar_vnc():
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def main() -> None:
+=======
+def main():
+    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
+
+>>>>>>> Stashed changes
 =======
 def main():
     print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
@@ -69,6 +78,9 @@ def main():
 <<<<<<< Updated upstream
 =======
     print(f"       {len(screenshot)} bytes")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     # 2. Analizar con UI-TARS
@@ -84,6 +96,7 @@ def main():
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     path = REPORTS_DIR / f"uitars_analisis_{time.strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"timestamp": time.time(), "resultado": resultado}, indent=2))
+
 
 
 

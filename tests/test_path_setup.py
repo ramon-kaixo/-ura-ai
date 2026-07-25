@@ -20,8 +20,13 @@ def test_notifier_return_false_when_disabled() -> None:
         result = notify("test message", level="info")
         assert result is False
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception:
+        pytest.fail("notify() raised unexpected exception")
+>>>>>>> Stashed changes
 =======
     except Exception:
         pytest.fail("notify() raised unexpected exception")

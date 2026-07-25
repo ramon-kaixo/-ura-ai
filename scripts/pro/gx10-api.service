@@ -8,7 +8,11 @@ Type=simple
 User=ramon
 WorkingDirectory=/opt/ura
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 EnvironmentFile=/etc/ura/gx10-api.env
+=======
+Environment=URA_TOKEN=ura_tok_4e09f5bb62c7d1883ea21d0a5146c2bf98305
+>>>>>>> Stashed changes
 =======
 Environment=URA_TOKEN=ura_tok_4e09f5bb62c7d1883ea21d0a5146c2bf98305
 >>>>>>> Stashed changes
