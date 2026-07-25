@@ -107,3 +107,116 @@ class TestInternal:
         f = tmp_path / "ok.txt"
         f.write_text("\n".join(f"line {i}" for i in range(20)))
         assert not trigger._file_needs_refinement(f)
+
+
+# ── Pipeline integration tests ─────────────────────────────────────────────
+
+
+class TestValidateWithPipeline:
+    def test_ok(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("scripts.pro.tuneladora.auto_trigger.PipelineRunner") as m_runner, \
+             patch("scripts.pro.tuneladora.auto_trigger.Configuration"):
+            from scripts.pro.tuneladora.pipeline.tools.base import Status
+            inst = m_runner.return_value
+            inst.run.return_value = Status.OK
+            result = trigger.validate_with_pipeline([f])
+            assert result["status"] == "ok"
+
+    def test_warn(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("scripts.pro.tuneladora.auto_trigger.PipelineRunner") as m_runner, \
+             patch("scripts.pro.tuneladora.auto_trigger.Configuration"):
+            from scripts.pro.tuneladora.pipeline.tools.base import Status
+            inst = m_runner.return_value
+            inst.run.return_value = Status.WARN
+            result = trigger.validate_with_pipeline([f])
+            assert result["status"] == "warn"
+
+    def test_fail(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("scripts.pro.tuneladora.auto_trigger.PipelineRunner") as m_runner, \
+             patch("scripts.pro.tuneladora.auto_trigger.Configuration"):
+            from scripts.pro.tuneladora.pipeline.tools.base import Status
+            inst = m_runner.return_value
+            inst.run.return_value = Status.FAIL
+            result = trigger.validate_with_pipeline([f])
+            assert result["status"] == "fail"
+
+    def test_skip_on_empty_files(self, trigger: AutoTrigger) -> None:
+        result = trigger.validate_with_pipeline([])
+        assert result["status"] == "skip"
+
+    def test_graceful_degradation(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", False):
+            result = trigger.validate_with_pipeline([f])
+            assert result["status"] == "skip"
+            assert "Pipeline no disponible" in result["message"]
+
+
+class TestTriggerValidation:
+    def test_strict_blocks_on_fail(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        trigger.strict = True
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch.object(trigger, "validate_with_pipeline", return_value={"status": "fail", "message": "nope"}):
+            result = trigger.trigger_validation([f])
+            assert result["status"] == "fail"
+
+    def test_non_strict_continues_on_fail(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        trigger.strict = False
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch.object(trigger, "validate_with_pipeline", return_value={"status": "fail", "message": "nope"}):
+            result = trigger.trigger_validation([f])
+            assert result["status"] == "fail"
+
+    def test_ok_passes_through(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch.object(trigger, "validate_with_pipeline", return_value={"status": "ok", "message": "good"}):
+            result = trigger.trigger_validation([f])
+            assert result["status"] == "ok"
+
+    def test_warn_passes_through(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch.object(trigger, "validate_with_pipeline", return_value={"status": "warn", "message": "warn"}):
+            result = trigger.trigger_validation([f])
+            assert result["status"] == "warn"
+
+    def test_skip_passes_through(self, trigger: AutoTrigger, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch.object(trigger, "validate_with_pipeline", return_value={"status": "skip", "message": "skip"}):
+            result = trigger.trigger_validation([f])
+            assert result["status"] == "skip"
+
+    def test_empty_files(self, trigger: AutoTrigger) -> None:
+        result = trigger.trigger_validation([])
+        assert result["status"] == "skip"
+
+
+class TestAutoTriggerConstructor:
+    def test_default_mode(self) -> None:
+        t = AutoTrigger()
+        assert t.mode == "gate"
+        assert t.strict is True
+
+    def test_custom_mode(self) -> None:
+        t = AutoTrigger(mode="check", strict=False)
+        assert t.mode == "check"
+        assert t.strict is False
+
+    def test_mode_setter(self, trigger: AutoTrigger) -> None:
+        trigger.mode = "fix"
+        assert trigger.mode == "fix"
+
+    def test_strict_setter(self, trigger: AutoTrigger) -> None:
+        trigger.strict = False
+        assert trigger.strict is False

@@ -14,13 +14,13 @@ log = logging.getLogger("tuneladora.block_reviewer")
 
 REVIEW_PROMPT = """Eres un revisor de código senior. Revisa el siguiente diff:
 
-{diff}
+{DIFF_HERE}
 
 Tests existentes:
-{tests}
+{TESTS_HERE}
 
 API diff:
-{api_diff}
+{API_DIFF_HERE}
 
 Genera un reporte en formato markdown con:
 - Cambios de comportamiento detectados
@@ -55,7 +55,7 @@ def _do_review(
     diff = _get_diff(cfg.ura_root, head)
     tests_str = "\n".join(tests) if tests else "(none)"
 
-    prompt = REVIEW_PROMPT.format(diff=diff, tests=tests_str, api_diff=api_diff)
+    prompt = REVIEW_PROMPT.replace("{DIFF_HERE}", diff).replace("{TESTS_HERE}", tests_str).replace("{API_DIFF_HERE}", api_diff)
 
     report = f"# Revisión bloque {block_name}\n\n"
     try:

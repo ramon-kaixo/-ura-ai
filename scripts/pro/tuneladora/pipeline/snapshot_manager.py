@@ -55,7 +55,8 @@ class SnapshotManager:
         meta = json.loads(meta_file.read_text())
         restored = 0
         for f in meta.get("files", []):
-            src = snapshot_dir / f
+            original = Path(f)
+            src = snapshot_dir / original.relative_to(original.anchor) if original.is_absolute() else snapshot_dir / original
             if src.exists():
                 dest = Path(f)
                 dest.parent.mkdir(parents=True, exist_ok=True)

@@ -55,7 +55,7 @@ class PendingQueue:
         with sqlite3.connect(str(self._db)) as conn:
             conn.executescript(_SCHEMA)
 
-    def _ok_or(self, default: Any = 0) -> bool:
+    def _ok_or(self) -> bool:
         return self.ok
 
     def add(
@@ -81,7 +81,7 @@ class PendingQueue:
             return cur.lastrowid or 0
 
     def list_pending(self, severidad: str | None = None) -> list[dict[str, Any]]:
-        if not self._ok_or([]):
+        if not self._ok_or():
             return []
         with sqlite3.connect(str(self._db)) as conn:
             conn.row_factory = sqlite3.Row
@@ -127,7 +127,7 @@ class PendingQueue:
             return cur.lastrowid or 0
 
     def stats(self) -> dict[str, Any]:
-        if not self._ok_or({"pending_fixes": 0, "total_runs": 0, "ok_runs": 0, "fail_runs": 0}):
+        if not self._ok_or():
             return {"pending_fixes": 0, "total_runs": 0, "ok_runs": 0, "fail_runs": 0}
         with sqlite3.connect(str(self._db)) as conn:
             total_pending = conn.execute("SELECT COUNT(*) FROM pending_fixes WHERE estado='pendiente'").fetchone()[0]

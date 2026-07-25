@@ -1,7 +1,8 @@
 """PipelineRunner — orquesta fases del pipeline de validación."""
-
 from __future__ import annotations
 
+import ast
+import compileall
 import contextlib
 import logging
 import os
@@ -13,6 +14,10 @@ from pathlib import Path
 from typing import Any
 
 from scripts.pro.tuneladora.config import Configuration
+from scripts.pro.tuneladora.memory.episodic import Episode, EpisodicMemory
+from scripts.pro.tuneladora.memory.long_term import LongTermMemory, LTMEntry
+from scripts.pro.tuneladora.memory.semantic import Concept, Relation, SemanticMemory
+from scripts.pro.tuneladora.memory.short_term import ShortTermMemory
 from scripts.pro.tuneladora.pipeline.llm_fallback import LLMFallback
 from scripts.pro.tuneladora.pipeline.pending_queue import PendingQueue
 from scripts.pro.tuneladora.pipeline.snapshot_manager import SnapshotManager
@@ -50,9 +55,11 @@ def _discover_focused_tests(changed_files: list[str]) -> list[str]:
         if not f.endswith(".py"):
             continue
         stem = Path(f).stem
-        test_file = f"tests/test_{stem}.py"
-        if Path(test_file).exists():
-            focused.append(test_file)
+        for pattern in (f"tests/test_{stem}.py", f"tests/test_{stem}_*.py"):
+            matches = sorted(Path().glob(pattern))
+            for m in matches:
+                if str(m) not in focused:
+                    focused.append(str(m))
     return focused
 
 
@@ -64,6 +71,10 @@ class PipelineRunner:
         self.pending_queue = PendingQueue(cfg.knowledge_db)
         self.snapshot_manager = SnapshotManager(cfg.tuneladora_dir, log.info)
         self.llm_fallback = LLMFallback(cfg, self.pending_queue)
+        self.episodic = EpisodicMemory(cfg.episodic_db)
+        self.ltm = LongTermMemory(cfg.ltm_db)
+        self.semantic = SemanticMemory(cfg.knowledge_db)
+        self.cache = ShortTermMemory(max_size=500, default_ttl=60.0)
         self._last_snapshot: Path | None = None
         self._build_tools()
 
@@ -134,7 +145,6 @@ class PipelineRunner:
     def phase_static(self) -> list[PhaseResult]:
         results: list[PhaseResult] = []
 
-        # py_compile
         pr = self._run_py_compile()
         results.append(PhaseResult("py_compile", pr.status, [pr]))
         if pr.status == Status.FAIL:
@@ -167,22 +177,26 @@ class PipelineRunner:
 
         t0 = time.monotonic()
         try:
-            targets = self.files or ["scripts/pro/tuneladora/"]
+            targets = self.files or []
+            if not targets:
+                ok = compileall.compile_dir(
+                    str(self.cfg.ura_root / "scripts" / "pro" / "tuneladora"),
+                    force=False, quiet=1, rx=Path("__pycache__"),
+                )
+                if not ok:
+                    return ToolResult(name="py_compile", status=Status.FAIL, summary="compileall errors")
+                return ToolResult(name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK")
             for t in targets:
                 r = subprocess.run(
-                    [sys.executable, "-m", "py_compile", t], capture_output=True, text=True, timeout=self.cfg.timeout_script, check=False
+                    [sys.executable, "-m", "py_compile", t], capture_output=True, text=True,
+                    timeout=self.cfg.timeout_script, check=False,
                 )
                 if r.returncode != 0:
                     return ToolResult(
-                        name="py_compile",
-                        status=Status.FAIL,
-                        seconds=time.monotonic() - t0,
-                        summary=f"Syntax error in {t}",
-                        detail=r.stderr[:1000],
+                        name="py_compile", status=Status.FAIL, seconds=time.monotonic() - t0,
+                        summary=f"Syntax error in {t}", detail=r.stderr[:1000],
                     )
-            return ToolResult(
-                name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK"
-            )
+            return ToolResult(name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK")
         except Exception as e:
             return ToolResult(name="py_compile", status=Status.FAIL, summary=str(e))
 
@@ -194,41 +208,92 @@ class PipelineRunner:
         if not tool.is_available():
             return [PhaseResult("pytest", Status.SKIP)]
 
-        # focused tests
         focused = _discover_focused_tests(self.files)
         if focused:
             log.info("Focused tests: %s", focused)
+            cache_key = f"pytest:{':'.join(focused)}"
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                return [PhaseResult("pytest_focused", Status.OK, [cached])]
             r = tool.run_check(focused)
+            if r.status == Status.OK:
+                self.cache.set(cache_key, r, ttl=120.0)
             results.append(PhaseResult("pytest_focused", r.status, [r]))
             if r.status == Status.FAIL:
                 archivo_ref = ", ".join(focused)
                 sugerencia = self.llm_fallback.analyze(r.detail, archivo_ref, "pytest")
                 self.pending_queue.add(
-                    archivo=archivo_ref,
-                    herramienta="pytest",
-                    severidad="high",
-                    error_raw=r.detail,
-                    bloque="dynamic_focused",
-                    sugerencia_llm=sugerencia or "",
-                    modelo_generador=self.cfg.llm_fallback_model,
+                    archivo=archivo_ref, herramienta="pytest", severidad="high",
+                    error_raw=r.detail, bloque="dynamic_focused",
+                    sugerencia_llm=sugerencia or "", modelo_generador=self.cfg.llm_fallback_model,
                 )
                 return results
             log.info("Focused tests passed — skipping full suite")
             return results
 
-        # full suite
         r = tool.run_check()
         results.append(PhaseResult("pytest_full", r.status, [r]))
         if r.status == Status.FAIL:
             sugerencia = self.llm_fallback.analyze(r.detail, ".", "pytest")
             self.pending_queue.add(
-                archivo=".", herramienta="pytest", severidad="high", error_raw=r.detail, bloque="dynamic_full",
-                sugerencia_llm=sugerencia or "",
+                archivo=".", herramienta="pytest", severidad="high", error_raw=r.detail,
+                bloque="dynamic_full", sugerencia_llm=sugerencia or "",
                 modelo_generador=self.cfg.llm_fallback_model,
             )
         return results
 
-    # ── Fase 3: Integridad ───────────────────────────────────
+    # ── Fase 3: Indexación semántica ─────────────────────────
+
+    def phase_index(self) -> list[PhaseResult]:
+        from scripts.pro.tuneladora.pipeline.tools.base import ToolResult
+
+        changed_files = self.files
+        if not changed_files:
+            try:
+                r = subprocess.run(
+                    ["git", "diff", "--name-only"], capture_output=True, text=True,
+                    timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                )
+                if r.returncode == 0 and r.stdout:
+                    changed_files = [f.strip() for f in r.stdout.split("\n") if f.strip().endswith(".py")]
+            except Exception as exc:
+                log.debug("git diff in phase_index failed: %s", exc)
+
+        n_concepts = 0
+        n_relations = 0
+        for f in changed_files:
+            fp = Path(f)
+            if not fp.exists():
+                fp = self.cfg.ura_root / f
+            if not fp.exists() or not f.endswith(".py"):
+                continue
+            try:
+                tree = ast.parse(fp.read_text(encoding="utf-8", errors="replace"))
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    self.semantic.learn_concept(Concept(
+                        name=node.name, context=str(f), weight=1.0, tags=("function",),
+                    ))
+                    n_concepts += 1
+                elif isinstance(node, ast.ClassDef):
+                    self.semantic.learn_concept(Concept(
+                        name=node.name, context=str(f), weight=1.0, tags=("class",),
+                    ))
+                    n_concepts += 1
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+                    self.semantic.learn_relation(Relation(
+                        source=node.func.value.id, target=node.func.attr, relation_type="calls",
+                    ))
+                    n_relations += 1
+
+        log.info("Index: %d conceptos, %d relaciones en %d archivos", n_concepts, n_relations, len(changed_files))
+        return [PhaseResult("index", Status.OK, [
+            ToolResult(name="index", status=Status.OK, summary=f"{n_concepts} concepts, {n_relations} relations"),
+        ])]
+
+    # ── Fase 4: Integridad ───────────────────────────────────
 
     def phase_integrity(self) -> list[PhaseResult]:
         from scripts.pro.tuneladora.pipeline.tools.base import ToolResult
@@ -237,30 +302,20 @@ class PipelineRunner:
         changed_files: list[str] = []
         changed_lines = 0
 
-        # blast radius via git diff --name-only
         try:
             r = subprocess.run(
-                ["git", "diff", "--name-only"],
-                capture_output=True,
-                text=True,
-                timeout=self.cfg.timeout_script,
-                check=False,
-                cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--name-only"], capture_output=True, text=True,
+                timeout=self.cfg.timeout_script, check=False, cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0 and r.stdout:
                 changed_files = [f for f in r.stdout.strip().split("\n") if f]
         except Exception:
             log.warning("Failed to get git diff stats")
 
-        # line count via git diff --numstat
         try:
             r = subprocess.run(
-                ["git", "diff", "--numstat"],
-                capture_output=True,
-                text=True,
-                timeout=self.cfg.timeout_script,
-                check=False,
-                cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--numstat"], capture_output=True, text=True,
+                timeout=self.cfg.timeout_script, check=False, cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0 and r.stdout:
                 for line in r.stdout.strip().split("\n"):
@@ -274,58 +329,36 @@ class PipelineRunner:
         max_files = 50
         max_lines = 5000
         if len(changed_files) > max_files:
-            results.append(
-                PhaseResult(
-                    "blast_radius",
-                    Status.FAIL,
-                    [
-                        ToolResult(
-                            name="blast_radius",
-                            status=Status.FAIL,
-                            summary=f"{len(changed_files)} files exceeds {max_files}",
-                        )
-                    ],
-                )
-            )
+            results.append(PhaseResult("blast_radius", Status.FAIL, [
+                ToolResult(name="blast_radius", status=Status.FAIL, summary=f"{len(changed_files)} files exceeds {max_files}"),
+            ]))
         elif changed_lines > max_lines:
-            results.append(
-                PhaseResult(
-                    "blast_radius",
-                    Status.FAIL,
-                    [
-                        ToolResult(
-                            name="blast_radius",
-                            status=Status.FAIL,
-                            summary=f"{changed_lines} lines exceeds {max_lines}",
-                        )
-                    ],
-                )
-            )
+            results.append(PhaseResult("blast_radius", Status.FAIL, [
+                ToolResult(name="blast_radius", status=Status.FAIL, summary=f"{changed_lines} lines exceeds {max_lines}"),
+            ]))
         else:
             results.append(PhaseResult("blast_radius", Status.OK))
 
-        # disk
         try:
             free_gb = _free_disk_gb(self.cfg.ura_root)
             if free_gb is None:
                 results.append(PhaseResult("disk", Status.WARN))
             elif free_gb < 1:
-                results.append(
-                    PhaseResult(
-                        "disk",
-                        Status.FAIL,
-                        [ToolResult(name="disk", status=Status.FAIL, summary=f"Only {free_gb:.1f} GB free")],
-                    )
-                )
+                results.append(PhaseResult("disk", Status.FAIL, [
+                    ToolResult(name="disk", status=Status.FAIL, summary=f"Only {free_gb:.1f} GB free"),
+                ]))
             else:
-                results.append(
-                    PhaseResult(
-                        "disk", Status.OK, [ToolResult(name="disk", status=Status.OK, summary=f"{free_gb:.1f} GB free")]
-                    )
-                )
+                results.append(PhaseResult("disk", Status.OK, [
+                    ToolResult(name="disk", status=Status.OK, summary=f"{free_gb:.1f} GB free"),
+                ]))
         except Exception:
             results.append(PhaseResult("disk", Status.WARN))
 
+        self.ltm.store(LTMEntry(
+            key=f"integrity_{self.mode}_{int(time.time())}",
+            value={"files": len(changed_files), "lines": changed_lines, "disk_gb": free_gb or 0},
+            source="runner.phase_integrity", tags=("integrity", "blast"),
+        ))
         return results
 
     # ── Fase 4: Veredicto ────────────────────────────────────
@@ -344,6 +377,38 @@ class PipelineRunner:
         if n_warn > 0:
             return Status.WARN, f"Pipeline passed with {n_warn} warnings"
         return Status.OK, "Pipeline passed all checks"
+
+    # ── Fase 5: Commit (solo gate) ───────────────────────────
+
+    def phase_commit(self) -> list[PhaseResult]:
+        if self.mode != "gate":
+            return [PhaseResult("commit", Status.SKIP)]
+        if not self.cfg.auto_commit:
+            return [PhaseResult("commit", Status.SKIP)]
+        try:
+            msg = f"tuneladora: auto-fix {self.mode} — {len(self.files)} file(s)"
+            r = subprocess.run(
+                ["git", "add", "-A"], capture_output=True, text=True, timeout=30,
+                check=False, cwd=str(self.cfg.ura_root),
+            )
+            if r.returncode != 0:
+                return [PhaseResult("commit", Status.FAIL, [
+                    type("ToolResult", (), {"name": "commit", "status": Status.FAIL, "summary": f"git add failed: {r.stderr[:500]}"})(),
+                ])]
+            r = subprocess.run(
+                ["git", "commit", "-m", msg, "--no-verify"], capture_output=True, text=True, timeout=30,
+                check=False, cwd=str(self.cfg.ura_root),
+            )
+            if r.returncode == 0:
+                log.info("Committed: %s", r.stdout.strip()[:100])
+                return [PhaseResult("commit", Status.OK)]
+            if "nothing to commit" in r.stdout:
+                return [PhaseResult("commit", Status.OK)]
+            return [PhaseResult("commit", Status.WARN)]
+        except Exception as e:
+            return [PhaseResult("commit", Status.WARN, [
+                type("ToolResult", (), {"name": "commit", "status": Status.WARN, "summary": str(e)})(),
+            ])]
 
     # ── Retry helper ─────────────────────────────────────────
 
@@ -368,10 +433,8 @@ class PipelineRunner:
                         args, capture_output=True, text=True, timeout=tool._timeout, check=False, cwd=str(tool._root)
                     )
                     result = ToolResult(
-                        name=tool.name,
-                        status=Status.OK if r.returncode == 0 else Status.FAIL,
-                        seconds=time.monotonic() - t0,
-                        detail=r.stdout[:2000],
+                        name=tool.name, status=Status.OK if r.returncode == 0 else Status.FAIL,
+                        seconds=time.monotonic() - t0, detail=r.stdout[:2000],
                     )
             if result.status == Status.FAIL:
                 archivo_ref = ", ".join(files) if files else "."
@@ -387,34 +450,31 @@ class PipelineRunner:
 
     def run(self) -> Status:
         t_start = time.monotonic()
+        episode_id = f"tuneladora_{int(t_start)}_{self.mode}"
         all_phase_results: list[list[PhaseResult]] = []
 
-        # Pre-flight
         pre = self.preflight()
         all_phase_results.append(pre)
         if any(pr.status == Status.FAIL for pr in pre):
-            log.error("Pre-flight failed — aborting")
-            return Status.FAIL
+            return self._finish(episode_id, Status.FAIL, "Pre-flight failed", t_start)
 
-        # Phase 0: Snapshot
         p0 = self.phase_snapshot()
         all_phase_results.append(p0)
 
-        # Phase 1: Static
         p1 = self.phase_static()
         all_phase_results.append(p1)
 
-        # Phase 2: Dynamic
         p2 = self.phase_dynamic()
         all_phase_results.append(p2)
 
-        # Phase 3: Integrity
         p3 = self.phase_integrity()
         all_phase_results.append(p3)
 
-        # Phase 4: Verdict
+        # Commit (gate mode only, before verdict so gate always tries to commit)
+        p_commit = self.phase_commit()
+        all_phase_results.append(p_commit)
+
         verdict, msg = self.phase_verdict(all_phase_results)
-        elapsed = time.monotonic() - t_start
 
         if verdict == Status.FAIL and self._last_snapshot is not None:
             log.warning("Pipeline FAILED — restoring snapshot %s", self._last_snapshot.name)
@@ -424,22 +484,31 @@ class PipelineRunner:
         head = ""
         with contextlib.suppress(Exception):
             head = subprocess.run(
-                ["git", "rev-parse", "--short", "HEAD"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                check=False,
-                cwd=str(self.cfg.ura_root),
+                ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                timeout=5, check=False, cwd=str(self.cfg.ura_root),
             ).stdout.strip()
 
         self.pending_queue.record_run(
-            mode=self.mode,
-            verdict=verdict.value,
-            seconds=elapsed,
-            n_files=len(self.files),
-            head=head,
-            failures=msg if verdict != Status.OK else "",
+            mode=self.mode, verdict=verdict.value, seconds=time.monotonic() - t_start,
+            n_files=len(self.files), head=head, failures=msg if verdict != Status.OK else "",
         )
 
-        log.info("Pipeline %s: %s (%.1fs)", self.mode, msg, elapsed)
+        log.info("Pipeline %s: %s (%.1fs)", self.mode, msg, time.monotonic() - t_start)
+        return self._finish(episode_id, verdict, msg, t_start)
+
+    def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
+        duration_ms = (time.monotonic() - t_start) * 1000
+        self.episodic.record(Episode(
+            episode_id=episode_id, pipeline="tuneladora", status=verdict.value,
+            started=time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(t_start)),
+            finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
+            summary=msg, details={"mode": self.mode, "n_files": len(self.files)},
+            duration_ms=duration_ms, error=msg if verdict == Status.FAIL else None,
+        ))
+        if verdict == Status.OK:
+            self.ltm.store(LTMEntry(
+                key=f"ok_{episode_id}",
+                value={"mode": self.mode, "files": self.files, "duration_ms": duration_ms, "msg": msg},
+                source="runner.run", tags=("pipeline", "ok"),
+            ))
         return verdict

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from pathlib import Path
 
 try:
@@ -43,7 +44,7 @@ class Configuration:
         self.log_dir: Path = Path(os.environ.get("TUNEL_LOG_DIR", str(self.ura_root / "logs")))
         self.nervioso: Path = self.ura_root / ".nervioso"
         self.venv_python: str = str(self.ura_root / ".venv" / "bin" / "python3")
-        self.ruff: str = str(self.ura_root / ".venv" / "bin" / "ruff")
+        self.ruff: str = shutil.which("ruff") or os.environ.get("TUNEL_RUFF_PATH", str(self.ura_root / ".venv" / "bin" / "ruff"))
         self.tuneladora_dir: Path = self.ura_root / ".tuneladora"
 
         # Ollama
@@ -89,6 +90,12 @@ class Configuration:
         self.knowledge_db: Path = Path(
             os.environ.get("TUNEL_KNOWLEDGE_DB", str(self.ura_root / "knowledge" / "knowledge.db"))
         )
+        self.episodic_db: Path = Path(
+            os.environ.get("TUNEL_EPISODIC_DB", str(self.ura_root / "knowledge" / "episodic.db"))
+        )
+        self.ltm_db: Path = Path(
+            os.environ.get("TUNEL_LTM_DB", str(self.ura_root / "knowledge" / "ltm.db"))
+        )
 
         self._load_from_pyproject()
 
@@ -133,3 +140,6 @@ class Configuration:
     @property
     def delta_snapshot_file(self) -> Path:
         return self.nervioso / "delta_snapshots" / "ultimo_ciclo.json"
+
+
+
