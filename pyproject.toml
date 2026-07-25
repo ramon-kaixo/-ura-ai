@@ -71,6 +71,16 @@ asyncio_mode = "auto"
 python_version = "3.12"
 ignore_missing_imports = true
 
+[tool.tuneladora.shadow]
+layers = [0, 1, 2, 3, 4, 5, 6, 7]
+timeout_layer_0 = 10
+timeout_layer_1 = 300
+timeout_layer_2 = 600
+timeout_layer_3 = 120
+cache_ttl = 300
+fail_fast = true
+json_output = false
+
 [tool.tuneladora]
 review-model = "qwen3:32b-q8_0"
 llm-fallback-model = "qwen2.5-coder:14b"
