@@ -13,15 +13,19 @@ from scripts.pro.tuneladora.config import Configuration
 
 log = logging.getLogger("tuneladora.sofia")
 
-SOFIA_PROMPT = """Eres un revisor de código senior. Revisa el siguiente diff:
+_SOFIA_DIFF_MARKER = "___SOFIA_DIFF___"
+_SOFIA_TESTS_MARKER = "___SOFIA_TESTS___"
+_SOFIA_API_MARKER = "___SOFIA_API___"
 
-{DIFF_HERE}
+SOFIA_PROMPT = f"""Eres un revisor de código senior. Revisa el siguiente diff:
+
+{_SOFIA_DIFF_MARKER}
 
 Tests modificados:
-{TESTS_MODIFIED}
+{_SOFIA_TESTS_MARKER}
 
 API changes:
-{API_DIFF}
+{_SOFIA_API_MARKER}
 
 Responde ÚNICAMENTE con un JSON con esta estructura:
 {{
@@ -40,7 +44,7 @@ Responde ÚNICAMENTE con un JSON con esta estructura:
 Reglas:
 - Temperatura: 0 (determinista)
 - No alucines líneas: cada hallazgo debe citar código real del diff
-- Si el diff está vacío, responde {"hallazgos": [], "resumen": "sin cambios"}
+- Si el diff está vacío, responde {{"hallazgos": [], "resumen": "sin cambios"}}
 - No inventes issues que no existen
 - JSON válido, sin markdown ni comillas extra"""
 
@@ -85,9 +89,9 @@ class Sofia:
         if not self.should_review(diff, api_diff, bool(tests_modified.strip()), n_files):
             return report
 
-        prompt = SOFIA_PROMPT.replace("{DIFF_HERE}", diff[:8000])
-        prompt = prompt.replace("{TESTS_MODIFIED}", tests_modified or "(ninguno)")
-        prompt = prompt.replace("{API_DIFF}", api_diff or "(sin cambios)")
+        prompt = SOFIA_PROMPT.replace(_SOFIA_DIFF_MARKER, diff[:8000])
+        prompt = prompt.replace(_SOFIA_TESTS_MARKER, tests_modified or "(ninguno)")
+        prompt = prompt.replace(_SOFIA_API_MARKER, api_diff or "(sin cambios)")
 
         try:
             r = requests.post(
