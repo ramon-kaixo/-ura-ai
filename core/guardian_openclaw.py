@@ -33,6 +33,7 @@ FREE_LICENSES = [
     "Public Domain",
 ]
 
+
 class GuardianOpenCLaw:
     """Guardián de seguridad que envuelve acciones de OpenClaw."""
 
@@ -73,10 +74,31 @@ class GuardianOpenCLaw:
     def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = "") -> None:
         """Registrar acción en log de auditoría."""
         try:
+<<<<<<< Updated upstream
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:  # noqa: PTH123
+=======
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
                 f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:
             logger.exception(f"Error registrando en audit.log: {e}")
@@ -346,8 +368,10 @@ class GuardianOpenCLaw:
             "estadisticas": self.stats,
         }
 
+
 # Instancia global del guardián
 _guardian_instance: GuardianOpenCLaw | None = None
+
 
 def get_guardian() -> GuardianOpenCLaw:
     """Obtener instancia global del guardián (singleton)."""
@@ -355,6 +379,7 @@ def get_guardian() -> GuardianOpenCLaw:
     if _guardian_instance is None:
         _guardian_instance = GuardianOpenCLaw()
     return _guardian_instance
+
 
 if __name__ == "__main__":
     g = get_guardian()

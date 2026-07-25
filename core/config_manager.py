@@ -1,10 +1,17 @@
 """Config Manager — compatibility layer over UraConfig Pydantic model.
 
 Deprecation: este módulo será eliminado en URA v4.
-Migrar imports a 'from motor.core.config import UraConfig' + usar UraConfig.load().
+Migrar imports a 'from core.config import UraConfig' + usar UraConfig.load().
 """
 
 import json
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import logging
 import os
 import platform
@@ -14,6 +21,7 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 _CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
+
 
 def _detect_profile_key() -> str:
     """Detecta qué perfil cargar según SO y hostname.
@@ -31,6 +39,7 @@ def _detect_profile_key() -> str:
     msg = f"Sistema operativo no soportado: {system}"
     raise RuntimeError(msg)
 
+
 def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
     """Expande ~ a home directory en todos los paths del perfil."""
     paths = config.get("paths", {})
@@ -46,29 +55,154 @@ def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
         maintenance["allowed_log_dirs"] = [str(Path(d).expanduser().resolve()) for d in maintenance["allowed_log_dirs"]]
     return config
 
+
 def _load_raw_config() -> dict[str, Any]:
     """Carga el archivo JSON de configuración."""
     with open(_CONFIG_PATH) as f:  # noqa: PTH123
         return json.load(f)
+=======
 import warnings
 from pathlib import Path
 from typing import Any
 
-from motor.core.config import UraConfig
+from core.config import UraConfig
 
 warnings.warn(
-    "core.config_manager será eliminado en URA v4. Migrar a: from motor.core.config import UraConfig; cfg = UraConfig.load()",
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
     DeprecationWarning,
     stacklevel=2,
 )
 
 _CONFIG: UraConfig | None = None
 
+
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
 def _get_config() -> UraConfig:
     global _CONFIG  # noqa: PLW0603
     if _CONFIG is None:
         _CONFIG = UraConfig.load()
     return _CONFIG
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+
 
 def load_config() -> dict[str, Any]:
     cfg = _get_config()
@@ -102,17 +236,28 @@ def load_config() -> dict[str, Any]:
         "patrones_clasificacion": cfg.patrones_clasificacion,
     }
 
+
 CONFIG = load_config()
+
 
 def get_base_dir() -> Path:
     return Path(CONFIG["paths"]["data"]).parent
 
+
 def get_ollama_url() -> str:
     return _get_config().get_ollama_url()
+
 
 def get_ollama_urls() -> list[str]:
     cfg = _get_config()
     return [cfg.get_ollama_url()]
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+
 
 def get_ollama_urls() -> dict[str, str]:
     """Devuelve URLs primaria y de fallback de Ollama.
@@ -127,14 +272,36 @@ def get_ollama_urls() -> dict[str, str]:
     primary = f"http://{host}:{port}"
     fallback = f"http://{remote}:{port}"
     return {"primary": primary, "fallback": fallback}
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+
 
 def get_role() -> str:
     return _get_config().role
 
+
 def get_hostname() -> str:
     return _get_config().hostname
 
+
 def validate_config() -> list:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     """Valida que los directorios declarados en config existan y tengan permisos.
     Retorna lista de warnings.
     """
@@ -157,7 +324,28 @@ def validate_config() -> list:
             warnings.append(f"Directorio log no existe: {dir_path}")  # noqa: PERF401
 
     return warnings
+=======
     return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
+
 
 _REQUIRED_KEYS = {
     "ollama": ["host", "port"],
@@ -170,6 +358,7 @@ _REQUIRED_KEYS = {
     "llm": ["provider"],
 }
 
+
 def _check_required_keys(errors: list[str]) -> None:
     for section, keys in _REQUIRED_KEYS.items():
         if section not in CONFIG:
@@ -178,6 +367,13 @@ def _check_required_keys(errors: list[str]) -> None:
             missing = [key for key in keys if key not in CONFIG[section]]
             errors.extend(f"Falta key '{key}' en seccion '{section}'" for key in missing)
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         if isinstance(keys, list):
             for key in keys:
                 if key not in CONFIG[section]:
@@ -186,6 +382,20 @@ def _check_required_keys(errors: list[str]) -> None:
     for profile_name in ("linux_asus", "darwin_mac", "linux_terminal"):
         if profile_name not in CONFIG.get("_raw_profiles", {}):
             errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")  # noqa: PERF401
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 def validate_schema() -> list:
     errors: list[str] = []
@@ -193,6 +403,7 @@ def validate_schema() -> list:
     if "patrones_clasificacion" not in CONFIG:
         errors.append("Falta 'patrones_clasificacion' en global_defaults")
     return errors
+
 
 def validate_schema_json() -> list:
     try:
@@ -209,9 +420,42 @@ def validate_schema_json() -> list:
         raw_config = json.loads(config_path.read_text())
         validator = jsonschema.Draft202012Validator(schema)
         for err in sorted(validator.iter_errors(raw_config), key=lambda e: e.path):
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
             errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")  # noqa: PERF401
+=======
             path_str = ".".join(str(p) for p in err.path)
             errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
     except json.JSONDecodeError as e:
         errors.append(f"JSON invalido: {e}")
     except Exception as e:

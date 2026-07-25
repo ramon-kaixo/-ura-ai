@@ -30,16 +30,34 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "ht
 OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
+=======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
 
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
@@ -54,6 +72,7 @@ REFACTORED = 0
 SKIPPED = 0
 ERRORS = 0
 
+
 def _ajustar_contexto(tokens_funcion: int, max_modelo: int = 100000, factor: float = 1.5) -> int:
     optimo = int(max(tokens_funcion * factor, 2048))
     # Leer chunk_config.json si existe (bucle cerrado chunk_optimizer)
@@ -67,11 +86,14 @@ def _ajustar_contexto(tokens_funcion: int, max_modelo: int = 100000, factor: flo
             pass
     return min(optimo, max_modelo)
 
+
 def _estimar_tokens(codigo: str) -> int:
     return max(len(codigo) // 4, 1)
 
+
 def log(msg: str) -> None:
     print(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
 
 def _ollama_request(url: str, payload: dict) -> dict:
     """Envía request a Ollama/router. Retorna respuesta JSON o dict vacío."""
@@ -82,6 +104,7 @@ def _ollama_request(url: str, payload: dict) -> dict:
     )
     with urllib.request.urlopen(req, timeout=600) as r:  # noqa: S310
         return json.loads(r.read())
+
 
 def llm(prompt: str, model: str | None = None) -> str:
     """Llama al LLM vía model_router para temperatura optimizada por modelo.
@@ -122,6 +145,7 @@ def llm(prompt: str, model: str | None = None) -> str:
         log(f"  ❌ Error LLM: {e}")
         return ""
 
+
 def is_excluded(path: str) -> bool:
     excl = [
         "/venv/",
@@ -133,6 +157,7 @@ def is_excluded(path: str) -> bool:
         "/node_modules/",
     ]
     return any(e in path for e in excl)
+
 
 def get_large_functions(threshold: int = 80) -> list[dict]:
     large = []
@@ -161,11 +186,13 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
             pass
     return large
 
+
 def clean_llm_response(text: str) -> str:
     text = text.strip()
     text = re.sub(r"(?s)^```(?:python)?\s*\n?", "", text)
     text = re.sub(r"(?s)\n?```\s*$", "", text)
     return text.strip()
+
 
 def build_refactor_prompt(func_name: str, func_source: str, n_lines: int) -> str:
     return f"""Eres un ingeniero senior de Python con 20 anos de experiencia en refactorizacion.
@@ -201,6 +228,7 @@ VERIFICACION (antes de responder, marca cada punto):
 
 [CODIGO]
 {func_source}"""
+
 
 def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str) -> bool:
     path = Path(file_path)
@@ -270,6 +298,7 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
     subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
     return True
 
+
 def refactor_one(func: dict) -> bool:
     """Refactoriza una funcion con compactacion."""
     global REFACTORED, SKIPPED, ERRORS  # noqa: PLW0602, PLW0603
@@ -326,9 +355,11 @@ def refactor_one(func: dict) -> bool:
     ERRORS += 1
     return False
 
+
 def scan_project() -> None:
     root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
+
 
 def main() -> None:
     import argparse
@@ -370,6 +401,7 @@ def main() -> None:
     log(f"  Errores: {ERRORS}")
     log(f"  Tiempo: {elapsed}s")
     log(f"{'=' * 60}")
+
 
 if __name__ == "__main__":
     main()

@@ -107,8 +107,10 @@ def run(files: list[str], ura_root: Path) -> list[ShadowResult]:
             if old_f["args"] != new_f["args"]:
                 changes.append(f"  ~ {name}: args {old_f['args']} -> {new_f['args']}")
 
-        if removed or any("args" in ch for ch in changes if "~" in ch):
-            results.append(ShadowResult(f, "WARN", f"API surface changed: {len(removed)} removed, {len(added)} added"))
+        args_changed = any("~" in ch for ch in changes)
+        if removed or args_changed:
+            n_msg = len(removed) + (1 if args_changed else 0)
+            results.append(ShadowResult(f, "WARN", f"API surface changed ({n_msg}): removed={len(removed)}, args_changed={args_changed}"))
         else:
             results.append(ShadowResult(f, "OK", f"{len(added)} new functions"))
 

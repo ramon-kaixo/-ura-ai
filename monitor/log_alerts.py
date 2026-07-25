@@ -26,6 +26,7 @@ MAX_SEEN = 500  # máximo de hashes guardados para evitar crecimiento infinito
 
 PATTERNS = ["ERROR", "CRITICAL", "FATAL", "CRASH", "Traceback", "Exception", "Segfault", "OOM", "Killed", "Panic"]
 
+
 def ssh_run(cmd: str) -> str:
     try:
         result = subprocess.run(
@@ -39,19 +40,43 @@ def ssh_run(cmd: str) -> str:
     except Exception:
         return ""
 
+
 def load_seen_hashes() -> set:
     if SEEN_HASHES_FILE.exists():
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
+=======
         except Exception:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
             pass
     return set()
+
 
 def save_seen_hashes(hashes: set) -> None:
     # Mantener solo los últimos MAX_SEEN
     hashes_list = list(hashes)[-MAX_SEEN:]
     SEEN_HASHES_FILE.write_text(json.dumps(hashes_list))
+
 
 def hash_line(line: str) -> str:
     """Hash normalizado: ignora timestamp, solo contenido semántico."""
@@ -61,13 +86,35 @@ def hash_line(line: str) -> str:
     core = core.split(" - ", 1)[-1] if " - " in core else core
     return hashlib.sha256(core.encode()).hexdigest()[:16]
 
+
 def fetch_critical_logs() -> list:
     critical = []
     cmd_parts = []
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
+<<<<<<< Updated upstream
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
+=======
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
@@ -76,6 +123,7 @@ def fetch_critical_logs() -> list:
             if line.strip():
                 critical.append(line.strip())  # noqa: PERF401
     return critical
+
 
 def main() -> int:
     seen = load_seen_hashes()
@@ -118,6 +166,7 @@ def main() -> int:
                 pass
         return 1
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

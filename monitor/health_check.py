@@ -25,6 +25,7 @@ DISK_THRESHOLD_PCT = 95
 RAM_THRESHOLD_GB = 4
 LOAD_THRESHOLD = 8
 
+
 def ssh_run(cmd: str) -> str:
     try:
         result = subprocess.run(
@@ -37,6 +38,7 @@ def ssh_run(cmd: str) -> str:
         return result.stdout.strip() if result.returncode == 0 else ""
     except Exception:
         return ""
+
 
 def measure_ssh_latency() -> float:
     """Mide latencia SSH en ms."""
@@ -52,6 +54,7 @@ def measure_ssh_latency() -> float:
     except Exception:
         return -1
 
+
 def measure_http_latency() -> float:
     """Mide latencia HTTP Ollama en ms."""
     try:
@@ -63,6 +66,7 @@ def measure_http_latency() -> float:
             return (time.time() - start) * 1000
     except Exception:
         return -1
+
 
 def check_disk() -> list:
     alerts = []
@@ -99,6 +103,7 @@ def check_disk() -> list:
                 pass
     return alerts, stats
 
+
 def check_ram() -> list:
     alerts = []
     stats = {}
@@ -127,6 +132,7 @@ def check_ram() -> list:
                 pass
     return alerts, stats
 
+
 def check_load() -> list:
     alerts = []
     stats = {}
@@ -142,6 +148,7 @@ def check_load() -> list:
             alerts.append(f"CPU load alta: {loads[0]:.1f} (límite {LOAD_THRESHOLD})")
     return alerts, stats
 
+
 def check_ollama_models() -> list:
     models = []
     output = ssh_run("ollama ps 2>/dev/null")
@@ -153,6 +160,7 @@ def check_ollama_models() -> list:
         if parts:
             models.append({"model": parts[0], "size": parts[2] if len(parts) > 2 else "?"})
     return models
+
 
 def main() -> int:
     all_alerts = []
@@ -198,7 +206,6 @@ def main() -> int:
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
         timestamp = datetime.now(UTC).isoformat()
         with open(ALERT_FILE, "a") as f:  # noqa: PTH123
-        with open(ALERT_FILE, "a") as f:
             f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:
         pass
@@ -206,6 +213,7 @@ def main() -> int:
     # Latencia resumen
 
     return 0 if not [a for a in all_alerts if "⚠" in a] else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

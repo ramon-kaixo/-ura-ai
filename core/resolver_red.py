@@ -22,56 +22,112 @@ Estrategia de resolución:
 
 import json
 import logging
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import socket
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 import subprocess
 import sys
 import time
 from pathlib import Path
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.resolver_red")
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
+=======
 logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 
 URA = Path(__file__).resolve().parent.parent  # /home/ramon/URA/ura_ia_1972
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
 CABLE_LATENCY_THRESHOLD_MS = 5  # Si cable >5ms → conmutar a Tailscale
 TAILSCALE_LATENCY_THRESHOLD_MS = 50  # Si Tailscale >50ms → dispositivo DOWN
 
+
 def cargar_inventario() -> dict:
     if INVENTARIO_PATH.exists():
         try:
             return json.loads(INVENTARIO_PATH.read_text())
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
+=======
         except Exception as e:
             logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
     return {"dispositivos": {}}
+
 
 def resolver_dns(hostname: str) -> str | None:
     """Resuelve un hostname a IP usando DNS local + MagicDNS.
@@ -101,28 +157,43 @@ def resolver_dns(hostname: str) -> str | None:
                     ips = peer.get("TailscaleIPs", [])
                     if ips:
                         return ips[0]
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error querying Tailscale status for %s", hostname)
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("resolver_dns tailscale: %s", e)
-    except Exception as e:
-        logger.warning("resolver_dns tailscale: %s", e)
-    except Exception as e:
-        logger.warning("resolver_dns tailscale: %s", e)
-    except Exception as e:
-        logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
 
     # 3. Fallback: inventario
     inventario = cargar_inventario()
@@ -131,6 +202,7 @@ def resolver_dns(hostname: str) -> str | None:
             return dev.get("ip_cable") or dev.get("ip_tailscale")
 
     return None
+
 
 def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
     """Hace ping a una IP y devuelve (success, latencia_ms)."""
@@ -147,29 +219,45 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
                 if "time=" in line:
                     ms = float(line.split("time=")[1].split()[0])
                     return True, ms
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error pinging %s", ip)
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
+=======
     except Exception as e:
         logger.warning("ping_latencia %s: %s", ip, e)
-    except Exception as e:
-        logger.warning("ping_latencia %s: %s", ip, e)
-    except Exception as e:
-        logger.warning("ping_latencia %s: %s", ip, e)
-    except Exception as e:
-        logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
     return False, 999
+
 
 def seleccionar_ruta(hostname: str, inventario: dict | None = None) -> dict:
     """Selecciona la mejor ruta de conexión para un dispositivo.
@@ -210,6 +298,7 @@ def seleccionar_ruta(hostname: str, inventario: dict | None = None) -> dict:
     # DOWN
     return {"ruta": "down", "ip": None, "latencia_ms": 999, "metodo": "sin_conexion", "ok": False}
 
+
 def estado_red() -> dict:
     """Escanea toda la red y devuelve estado de cada dispositivo."""
     inv = cargar_inventario()
@@ -245,6 +334,7 @@ def estado_red() -> dict:
         "por_ruta": por_ruta,
     }
 
+
 def main() -> None:
     import argparse
 
@@ -278,6 +368,7 @@ def main() -> None:
                 "✅" if dev["ok"] else "❌"
                 ip = dev["ip"] or "—"
                 dev["latencia_ms"]
+
 
 if __name__ == "__main__":
     main()

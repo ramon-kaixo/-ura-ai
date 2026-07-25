@@ -29,6 +29,7 @@ except ImportError:
 
 URA_ROOT = Path(__file__).resolve().parents[2]
 
+
 def _load_config():
     dispositivos = URA_ROOT / "config" / "dispositivos.json"
     try:
@@ -45,6 +46,7 @@ def _load_config():
     licencia = cfg.get("licencia_servidor", "K0513893926")
     owner = cfg.get("propietario", "Ramon Esnaola")
     return router_ip, asus_wifi, asus_cable, email, licencia, owner
+
 
 CONFIG = _load_config()
 if CONFIG:
@@ -71,6 +73,7 @@ PUERTOS_A_ABRIR = [
     {"nombre": "Tailscale_STUN", "externo": 3478, "interno": 3478, "protocolo": "UDP"},
 ]
 
+
 def find_and_click(page, selectors, timeout=5000) -> bool:
     """Busca el primer selector que existe y hace click."""
     for sel in selectors:
@@ -83,8 +86,30 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
             continue
     return False
 
+
+<<<<<<< Updated upstream
 def bypass_linksys() -> bool:  # noqa: PLR0915
+=======
 def bypass_linksys() -> bool:
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
@@ -224,6 +249,7 @@ def bypass_linksys() -> bool:
             browser.close()
 
     return True
+
 
 if __name__ == "__main__":
     import argparse

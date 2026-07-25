@@ -19,21 +19,39 @@ import logging
 import shutil
 from datetime import UTC, datetime
 
-from motor.core.config import UraConfig
+from core.config import UraConfig
 from core.config_manager import CONFIG
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, ILLMClient, IVectorStore
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
+=======
 from core.qdrant_client import QdrantClient
-from core.qdrant_client import QdrantClient
-from core.qdrant_client import QdrantClient
-from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +70,7 @@ MAX_TOKENS = RAG_CONFIG.get("max_tokens", 2048)
 
 _qdrant: IVectorStore | None = None
 
+
 def _get_qdrant(config: IConfigProvider | None = None) -> IVectorStore:
     global _qdrant  # noqa: PLW0603
     if _qdrant is None:
@@ -61,12 +80,14 @@ def _get_qdrant(config: IConfigProvider | None = None) -> IVectorStore:
         _qdrant = QdrantClient.instancia(config or UraConfig.load())
     return _qdrant
 
+
 def _sha256(filepath: Path) -> str:
     h = hashlib.sha256()
     with open(filepath, "rb") as f:  # noqa: PTH123
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
+
 
 def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     words = text.split()
@@ -80,14 +101,20 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
         start += size - overlap
     return chunks
 
-# =====================================================# Indexación (determinista: mismo input → mismo índice)
-# =======================================def load_manifest() -> dict:
+
+# ============================================================
+# Indexación (determinista: mismo input → mismo índice)
+# ============================================================
+
+
+def load_manifest() -> dict:
     if MANIFEST_PATH.exists():
         try:
             return json.loads(MANIFEST_PATH.read_text())
         except Exception as e:
             log.warning(f"Error cargando manifest: {e}")
     return {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
+
 
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -102,6 +129,7 @@ def save_manifest(manifest: dict) -> None:
         log.exception(f"Error verificando espacio en disco: {e}")
         raise
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+
 
 def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
     """Indexa todos los documentos en data/documentos/ en Qdrant.
@@ -200,8 +228,13 @@ def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
 
     return stats
 
-# =====================================================# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
-# =======================================def query(question: str, top_k: int = TOP_K) -> list[dict]:
+
+# ============================================================
+# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
+# ============================================================
+
+
+def query(question: str, top_k: int = TOP_K) -> list[dict]:
     """Busca los chunks más relevantes para una pregunta en Qdrant.
     Retorna lista de {content, source, chunk_index, similarity}.
     """
@@ -234,6 +267,7 @@ def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
 
     return output
 
+
 def get_sources(results: list[dict]) -> list[dict]:
     """Extrae fuentes únicas de los resultados de query()."""
     seen = set()
@@ -249,9 +283,11 @@ def get_sources(results: list[dict]) -> list[dict]:
                     s["chunks_used"] += 1
     return sources
 
+
 def _chromadb_available() -> bool:
     """ChromaDB fue desinstalado — retorna False siempre."""
     return False
+
 
 def rag_enabled() -> bool:
     """Verifica si RAG está configurado y disponible."""
@@ -259,6 +295,7 @@ def rag_enabled() -> bool:
         return False
     qdrant = _get_qdrant()
     return qdrant.disponible and DOCS_DIR.exists()
+
 
 def _build_context(results: list[dict], max_chars: int = 8000) -> str:
     """Construye un string de contexto a partir de los resultados de query()."""
@@ -274,6 +311,7 @@ def _build_context(results: list[dict], max_chars: int = 8000) -> str:
     if len(result) > max_chars:
         result = result[:max_chars]
     return result
+
 
 def _generate(context: str, question: str, llm: ILLMClient | None = None) -> str:
     if not context:
@@ -291,6 +329,7 @@ def _generate(context: str, question: str, llm: ILLMClient | None = None) -> str
     from motor.core.llm import generate as _llm_gen
 
     return _llm_gen(prompt)
+
 
 def ask(question: str, top_k: int | None = None, llm: ILLMClient | None = None) -> str:
     docs = query(question, top_k=top_k or TOP_K)

@@ -3,7 +3,28 @@
 Ejecuta contra la BD de Open WebUI en el GX10.
 """
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json as _json
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 import os
 import subprocess
 import sys
@@ -13,6 +34,7 @@ from pathlib import Path
 
 GX10 = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
 DB_PATH = "/app/backend/data/webui.db"
+
 
 def ejecutar_remoto(python_code, env=None):
     """Ejecuta codigo Python en el contenedor Open WebUI del GX10."""
@@ -34,6 +56,7 @@ def ejecutar_remoto(python_code, env=None):
     Path(tmp).unlink(missing_ok=True)
     return r.stdout, r.stderr
 
+
 def leer_prompt():
     """Lee el system prompt actual de URA."""
     code = """
@@ -47,6 +70,7 @@ conn.close()
 """
     out, err = ejecutar_remoto(code)
     return out.strip() or err.strip()
+
 
 def actualizar_prompt(nuevo_prompt):
     """Actualiza el system prompt de URA en Open WebUI."""
@@ -69,6 +93,7 @@ conn.close()
     out, err = ejecutar_remoto(code, env={"URA_NEW_PROMPT": nuevo_prompt})
     return out.strip() or err.strip()
 
+
 def listar_tools():
     """Lista las tools disponibles para URA."""
     code = """
@@ -81,6 +106,7 @@ conn.close()
 """
     out, err = ejecutar_remoto(code)
     return out.strip() or err.strip()
+
 
 def crear_tool(nombre, descripcion, codigo):
     """Crea una new tool en Open WebUI."""
@@ -119,6 +145,7 @@ conn.close()
     )
     return out.strip() or err.strip()
 
+
 def reiniciar():
     """Reinicia Open WebUI para aplicar cambios."""
     r = subprocess.run(
@@ -129,6 +156,7 @@ def reiniciar():
         check=False,
     )
     return r.stdout.strip()
+
 
 if __name__ == "__main__":
     import sys

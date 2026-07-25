@@ -88,7 +88,7 @@ def _git_available(ura_root: Path) -> bool:
         return False
 
 
-def _disk_io_ok(path: Path = Path("/tmp")) -> bool:
+def _disk_io_ok(path: Path) -> bool:
     test = path / ".shadow_health_write_test"
     try:
         test.write_text("ok")
@@ -142,7 +142,7 @@ def run(ura_root: Path, ollama_url: str = "http://localhost:11434") -> list[EnvC
     results[-1].duration_ms = (time.monotonic() - t0) * 1000
 
     t0 = time.monotonic()
-    if _disk_io_ok():
+    if _disk_io_ok(ura_root):
         results.append(EnvCheck("disk_io", "OK", "Filesystem writable"))
     else:
         results.append(EnvCheck("disk_io", "WARN", "Filesystem read-only (expected on GX10)"))
