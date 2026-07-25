@@ -44,7 +44,7 @@ def _estimar_tokens(codigo: str) -> int:
 
 
 def log(msg: str) -> None:
-    pass
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
 
 def llm(prompt: str, model: str | None = None) -> str:

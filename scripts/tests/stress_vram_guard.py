@@ -13,9 +13,12 @@ Monitorear:
 """
 
 import asyncio
+import logging
 import time
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 URL_API = "http://127.0.0.1:11435/v1/chat/completions"
 
@@ -33,8 +36,13 @@ async def lanzar_peticion_concurrente(id_agente: int, payload: dict) -> None:
             else:
                 pass
 
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception:
+            logger.exception("Error en petición concurrente %s", id_agente)
+>>>>>>> Stashed changes
 
 
 async def main() -> None:

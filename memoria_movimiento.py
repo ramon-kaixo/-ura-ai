@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 """memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)."""
+=======
+"""memoria_movimiento.py — URA / Memoria 3 (movimiento / cubos)"""
+>>>>>>> Stashed changes
 
 from __future__ import annotations
 

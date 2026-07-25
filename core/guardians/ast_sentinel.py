@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 """ast_sentinel.py — Capa 1."""
+=======
+"""ast_sentinel.py — Capa 1"""
+>>>>>>> Stashed changes
 
 from __future__ import annotations
 
@@ -12,7 +16,11 @@ from typing import Any
 MAX_CC = 10
 MAX_L = 50
 PROH = frozenset(
+<<<<<<< Updated upstream
     {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"},
+=======
+    {"os.system", "subprocess.call", "subprocess.Popen", "eval", "exec", "compile", "__import__", "pickle", "marshal"}
+>>>>>>> Stashed changes
 )
 DP = [(re.compile(r"#\s*(TODO|FIXME|HACK|WORKAROUND)", re.IGNORECASE), "deuda")]
 
@@ -26,15 +34,24 @@ class V:
     m: dict[str, Any]
     ts: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
 
+<<<<<<< Updated upstream
     def resumen(self):
         e = "OK" if self.ok else "FAIL"
         r = [f"[AST] {e}"] + [f"  - {x}" for x in self.errs] + [f"  D {w}" for w in self.warns]
         if self.debt:
             r.append(f"  DEBT_ID: {self.debt}")
+=======
+    def resumen(s):
+        e = "OK" if s.ok else "FAIL"
+        r = [f"[AST] {e}"] + [f"  - {x}" for x in s.errs] + [f"  D {w}" for w in s.warns]
+        if s.debt:
+            r.append(f"  DEBT_ID: {s.debt}")
+>>>>>>> Stashed changes
         return "\n".join(r)
 
 
 class _CV(ast.NodeVisitor):
+<<<<<<< Updated upstream
     def __init__(self) -> None:
         self.c = 1
 
@@ -57,6 +74,30 @@ class _CV(ast.NodeVisitor):
     def visit_BoolOp(self, n) -> None:
         self.c += len(n.values) - 1
         self.generic_visit(n)
+=======
+    def __init__(s):
+        s.c = 1
+
+    def visit_If(s, n):
+        s.c += 1
+        s.generic_visit(n)
+
+    def visit_For(s, n):
+        s.c += 1
+        s.generic_visit(n)
+
+    def visit_While(s, n):
+        s.c += 1
+        s.generic_visit(n)
+
+    def visit_ExceptHandler(s, n):
+        s.c += 1
+        s.generic_visit(n)
+
+    def visit_BoolOp(s, n):
+        s.c += len(n.values) - 1
+        s.generic_visit(n)
+>>>>>>> Stashed changes
 
 
 def _cc(f):
@@ -66,7 +107,11 @@ def _cc(f):
 
 
 class ASTSentinel:
+<<<<<<< Updated upstream
     def analizar(self, codigo, nombre="skill", prod=True):
+=======
+    def analizar(s, codigo, nombre="skill", prod=True):
+>>>>>>> Stashed changes
         e = []
         w = []
         m = {}
@@ -88,7 +133,11 @@ class ASTSentinel:
                 w.append(f"'{f.name}': sin doc")
             for a in f.args.args:
                 if a.annotation is None and a.arg != "self":
+<<<<<<< Updated upstream
                     e.append(f"'{f.name}': arg '{a.arg}' sin tipo")  # noqa: PERF401
+=======
+                    e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
+>>>>>>> Stashed changes
         m["cc_max"] = mx
         for n in ast.walk(t):
             if isinstance(n, ast.Try):
@@ -102,11 +151,19 @@ class ASTSentinel:
             elif isinstance(n, ast.Import):
                 for a in n.names:
                     if a.name in PROH:
+<<<<<<< Updated upstream
                         e.append(f"import: '{a.name}'")  # noqa: PERF401
             elif isinstance(n, ast.ImportFrom):
                 for a in n.names:
                     if f"{n.module or ''}.{a.name}" in PROH:
                         e.append(f"import: '{n.module}.{a.name}'")  # noqa: PERF401
+=======
+                        e.append(f"import: '{a.name}'")
+            elif isinstance(n, ast.ImportFrom):
+                for a in n.names:
+                    if f"{n.module or ''}.{a.name}" in PROH:
+                        e.append(f"import: '{n.module}.{a.name}'")
+>>>>>>> Stashed changes
         for i, l in enumerate(codigo.splitlines(), 1):
             for p, ti in DP:
                 if p.search(l):
@@ -117,7 +174,11 @@ class ASTSentinel:
                 and isinstance(n.value, (int, float))
                 and n.value not in (0, 1, -1, 2, True, False)
             ):
+<<<<<<< Updated upstream
                 w.append(f"L{n.lineno}: magic {n.value}")  # noqa: PERF401
+=======
+                w.append(f"L{n.lineno}: magic {n.value}")
+>>>>>>> Stashed changes
         m["lines"] = len(codigo.splitlines())
         d = None
         if w:

@@ -30,9 +30,14 @@ SCRIPT_DIR = Path(__file__).parent
 ENGINE_VERSION = "1.0"
 
 
+<<<<<<< Updated upstream
 def log(msg: str) -> None:
     ts = datetime.now(UTC).strftime("%H:%M:%S")
     print(f"[{ts}] {msg}")
+=======
+def log(msg) -> None:
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+>>>>>>> Stashed changes
 
 
 def _resolve_dependencies(plugins: dict[str, Any]) -> list[tuple[str, Any]]:

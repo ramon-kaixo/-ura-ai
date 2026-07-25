@@ -74,8 +74,13 @@ class GuardianOpenCLaw:
     def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = "") -> None:
         """Registrar acción en log de auditoría."""
         try:
+<<<<<<< Updated upstream
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
             with open(self.audit_log, "a", encoding="utf-8") as f:  # noqa: PTH123
+=======
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(self.audit_log, "a", encoding="utf-8") as f:
+>>>>>>> Stashed changes
                 f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:
             logger.exception(f"Error registrando en audit.log: {e}")

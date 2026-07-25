@@ -37,6 +37,10 @@ def conectar_vnc():
         client.disconnect()
         return b64
     except ImportError:
+<<<<<<< Updated upstream
+=======
+        print("  vncdotool no instalado, usando mss local")
+>>>>>>> Stashed changes
         import base64
 
         import mss
@@ -53,9 +57,19 @@ def conectar_vnc():
             return base64.b64encode(buf.getvalue()).decode()
 
 
+<<<<<<< Updated upstream
 def main() -> None:
+=======
+def main():
+    print("=== UI-TARS Hetzner (VNC + monitor visual) ===")
+
+>>>>>>> Stashed changes
     # 1. Capturar del VNC
     screenshot = conectar_vnc()
+<<<<<<< Updated upstream
+=======
+    print(f"       {len(screenshot)} bytes")
+>>>>>>> Stashed changes
 
     # 2. Analizar con UI-TARS
     try:
@@ -70,6 +84,7 @@ def main() -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     path = REPORTS_DIR / f"uitars_analisis_{time.strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps({"timestamp": time.time(), "resultado": resultado}, indent=2))
+
 
 
 if __name__ == "__main__":

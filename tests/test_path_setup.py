@@ -1,5 +1,7 @@
 """Tests de path_setup, notifier, json_logger."""
 
+import pytest
+
 from core.json_logger import StructuredLogger
 from core.notifier import notify
 from path_setup import get_project_root, setup_path
@@ -17,8 +19,13 @@ def test_notifier_return_false_when_disabled() -> None:
     try:
         result = notify("test message", level="info")
         assert result is False
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception:
+        pytest.fail("notify() raised unexpected exception")
+>>>>>>> Stashed changes
 
 
 def test_structured_logger_creates() -> None:

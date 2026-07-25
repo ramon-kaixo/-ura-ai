@@ -42,9 +42,14 @@ class Orquestador:
         return r
 
 
+<<<<<<< Updated upstream
 async def main() -> None:
+=======
+async def main():
+>>>>>>> Stashed changes
     o = Orquestador()
     await o.ciclo()
+
 
 
 if __name__ == "__main__":

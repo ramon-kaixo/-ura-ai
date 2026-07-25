@@ -1,3 +1,5 @@
+import shlex
+
 #!/usr/bin/env python3
 """Sistema Nervioso Central (SNC) — Polling activo cada 10s.
 Monitoriza procesos vía HTTP/socket, escribe estado en ~/.ura/run/ura_snc_state.json.
@@ -9,8 +11,11 @@ Modo Soberanía: GX10 opera independientemente del Mac.
 import json
 import os
 import platform
+<<<<<<< Updated upstream
 import shlex
 import shutil
+=======
+>>>>>>> Stashed changes
 import signal
 import subprocess
 import sys
@@ -143,6 +148,7 @@ def _run_pipeline(cmd: str, timeout: int) -> subprocess.CompletedProcess:
 
 
 def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
+<<<<<<< Updated upstream
     """Ejecuta un comando. Sin shell=True: usa PIPE para pipelines.
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
@@ -160,6 +166,12 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
                 check=False,
             )
         return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
+=======
+    args = shlex.split(cmd)
+    try:
+        result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=timeout, check=False)
+        return True, result.stdout
+>>>>>>> Stashed changes
     except subprocess.TimeoutExpired:
         return False, "timeout"
     except Exception as e:
@@ -442,8 +454,13 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
                 continue
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
         pass
+=======
+    except Exception as e:
+        error_logger.log_error("snc_top_cpu", "warning", "warning", str(e))
+>>>>>>> Stashed changes
     return result[:10]
 
 

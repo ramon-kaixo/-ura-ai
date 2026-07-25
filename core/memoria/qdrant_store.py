@@ -1,7 +1,10 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 
+<<<<<<< Updated upstream
 from __future__ import annotations
 
+=======
+>>>>>>> Stashed changes
 import logging
 import os
 import threading
@@ -75,8 +78,13 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             existing = resp.json().get("result", [])
             if existing:
                 continue
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error buscando punto existente en Qdrant")
+=======
+        except Exception as e:
+            log.warning("Qdrant search error: %s", e)
+>>>>>>> Stashed changes
 
         try:
             vec = await _embed(idea.texto_para_embedding())

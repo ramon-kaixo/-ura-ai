@@ -1,4 +1,8 @@
-"""Config loader — reads dispositivos.json and system_config.json."""
+"""Config loader — reads dispositivos.json and system_config.json.
+
+Deprecation: La nueva config (core/config.py UraConfig.load()) lee
+system_config.json directamente. Este módulo solo se mantiene para
+dispositivos.json. Migrar a UraConfig.load() para config general."""
 
 import json
 from pathlib import Path

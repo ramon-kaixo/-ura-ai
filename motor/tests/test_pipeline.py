@@ -4,7 +4,7 @@ from motor.pipeline.orchestrator import Orchestrator
 from motor.scanner.diff_detector import compute_diff
 
 
-def test_pipeline_orchestrator_init():
+def test_pipeline_orchestrator_init() -> None:
     cfg = UraConfig()
     from motor.core.qdrant_client import QdrantClient
 
@@ -12,7 +12,7 @@ def test_pipeline_orchestrator_init():
     assert qdrant is not None
 
 
-def test_pipeline_in_memory_state():
+def test_pipeline_in_memory_state() -> None:
     cfg = UraConfig()
     orch = Orchestrator(cfg)
     r = orch.run(dry_run=True)
@@ -21,7 +21,7 @@ def test_pipeline_in_memory_state():
     assert r.scan is None  # dry-run
 
 
-def test_diff_in_pipeline():
+def test_diff_in_pipeline() -> None:
     p = {
         "servicios": {"ssh": "ok", "docker": "ok"},
         "recursos": {"ram_pct": 45},
@@ -38,7 +38,7 @@ def test_diff_in_pipeline():
     assert cnt > 0
 
 
-def test_correlacion_root_cause():
+def test_correlacion_root_cause() -> None:
     g = agrupar_incidentes(["docker", "exit_node_offline"], hw_ok=False, hw_issues=["dmesg error"])
     causas = [x["causa_raiz"] for x in g]
     assert "hardware" in causas or "exit_node_offline" in causas

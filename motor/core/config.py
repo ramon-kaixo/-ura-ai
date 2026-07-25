@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import json
 import logging
 import os
@@ -5,9 +6,15 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+=======
+"""Re-export de UraConfig desde core/config.py.
+>>>>>>> Stashed changes
 
-log = logging.getLogger("ura.config")
+Este archivo mantiene compatibilidad hacia atrás para todos los imports
+existentes de `motor.core.config`. La definición real vive en `core/config.py`.
+"""
 
+<<<<<<< Updated upstream
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
 RUTA_CONFIG_DEFECTO = os.environ.get("URA_CONFIG_PATH", "/etc/ura/config.json")
@@ -176,3 +183,14 @@ class UraConfig:
         _apply_config_overrides(c)
         _apply_env_overrides(c)
         return c
+=======
+from core.config import (  # noqa: F401
+    HOST_ASUS_DEFECTO,
+    INTERFAZ_TAILSCALE_DEFECTO,
+    PUERTO_ASUS_DEFECTO,
+    RUTA_CONFIG_DEFECTO,
+    RUTA_DEPLOY_DEFECTO,
+    RUTAS_CONFIG_OPENCODE,
+    UraConfig,
+)
+>>>>>>> Stashed changes

@@ -22,13 +22,20 @@ Estrategia de resolución:
 
 import json
 import logging
+<<<<<<< Updated upstream
 import socket
+=======
+>>>>>>> Stashed changes
 import subprocess
 import sys
 import time
 from pathlib import Path
 
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.resolver_red")
+=======
+logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 
 URA = Path(__file__).resolve().parent.parent  # /home/ramon/URA/ura_ia_1972
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -40,8 +47,13 @@ def cargar_inventario() -> dict:
     if INVENTARIO_PATH.exists():
         try:
             return json.loads(INVENTARIO_PATH.read_text())
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
+        except Exception as e:
+            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
     return {"dispositivos": {}}
 
 
@@ -59,7 +71,7 @@ def resolver_dns(hostname: str) -> str | None:
         if ip and not ip.startswith("127."):
             return ip
     except socket.gaierror:
-        pass
+        logger.warning("resolver_dns falló para %s", hostname)
 
     # 2. MagicDNS via tailscale
     try:
@@ -73,8 +85,13 @@ def resolver_dns(hostname: str) -> str | None:
                     ips = peer.get("TailscaleIPs", [])
                     if ips:
                         return ips[0]
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error querying Tailscale status for %s", hostname)
+=======
+    except Exception as e:
+        logger.warning("resolver_dns tailscale: %s", e)
+>>>>>>> Stashed changes
 
     # 3. Fallback: inventario
     inventario = cargar_inventario()
@@ -100,8 +117,13 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
                 if "time=" in line:
                     ms = float(line.split("time=")[1].split()[0])
                     return True, ms
+<<<<<<< Updated upstream
     except Exception:
         log.exception("Error pinging %s", ip)
+=======
+    except Exception as e:
+        logger.warning("ping_latencia %s: %s", ip, e)
+>>>>>>> Stashed changes
     return False, 999
 
 

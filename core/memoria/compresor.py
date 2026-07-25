@@ -2,7 +2,10 @@
 
 import json
 import logging
+<<<<<<< Updated upstream
 import os
+=======
+>>>>>>> Stashed changes
 
 import httpx
 
@@ -48,11 +51,15 @@ JSON:"""
 
 
 async def comprimir_a_ideas(
+<<<<<<< Updated upstream
     texto: str,
     fuente: str = "",
     hash_origen: str = "",
     fecha_fuente: str = "",
     modelo: str = "",
+=======
+    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
+>>>>>>> Stashed changes
 ) -> list[Idea]:
     if not texto.strip():
         return []

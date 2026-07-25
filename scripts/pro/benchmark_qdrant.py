@@ -55,7 +55,7 @@ def main() -> int:  # noqa: PLR0915
 
     same = all(i is instances[0] for i in instances)
     check("10 hilos → misma instancia", same, f"got {len({id(i) for i in instances})} distintas")
-    check("0 errores en singleton race", len(errors) == 0, "; ".join(errors[:3]))
+    check("0 errores en singleton race", len(errors) == 0, "\n".join(errors[:3]))
 
     qdrant = QdrantClient.instancia(config)
     check("Qdrant disponible", qdrant.disponible)

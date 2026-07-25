@@ -26,7 +26,11 @@ import sys
 import time
 from pathlib import Path
 
+<<<<<<< Updated upstream
 log = logging.getLogger("ura.ingestador_red")
+=======
+logger = logging.getLogger(__name__)
+>>>>>>> Stashed changes
 
 URA = Path(__file__).resolve().parent.parent
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -41,8 +45,13 @@ def cargar_inventario() -> dict:
     if INVENTARIO_PATH.exists():
         try:
             return json.loads(INVENTARIO_PATH.read_text())
+<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
+=======
+        except Exception as e:
+            logger.warning("cargar_inventario: %s", e)
+>>>>>>> Stashed changes
     return {"dispositivos": {}}
 
 

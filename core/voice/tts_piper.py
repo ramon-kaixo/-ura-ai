@@ -7,10 +7,13 @@ el altavoz Anker S500 emite la respuesta).
 """
 
 import contextlib
+import logging
 import os
 import subprocess
 import threading
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from typing import TYPE_CHECKING, Optional
 
 import sounddevice as sd
@@ -64,8 +67,13 @@ class PiperTTSMotor:
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception as e:
+            logger.warning("_find_anker_output_device: %s", e)
+>>>>>>> Stashed changes
         return None
 
     def _execute_piper_and_play(self, text: str) -> None:
@@ -97,8 +105,13 @@ class PiperTTSMotor:
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
+<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
+=======
+        except Exception as e:
+            logger.warning("_execute_piper_and_play: %s", e)
+>>>>>>> Stashed changes
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False

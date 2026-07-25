@@ -5,7 +5,7 @@ PLUGIN = {
     "phase": "post",
     "timeout": 60,
     "args": ["--json"],
-    "blocking": False,
+    "blocking": True,
     "needs_file": False,
 }
 """10 Inspectores Paralelos — 120 checks de calidad en ~0.12s.
@@ -285,7 +285,7 @@ def _max_nesting(node, depth=0):
 
 def check_debug_code(codigo, lineas, arbol):
     """Check 10: Código de debug/residual."""
-    patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME", r"import pdb;", r"breakpoint\(\)"]
+    patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME", r"import pdb", r"breakpoint\(\)"]
     for i, line in enumerate(lineas, 1):
         for pat in patterns:
             if re.search(pat, line, re.IGNORECASE):
@@ -631,21 +631,42 @@ def inspeccionar(ruta: Path) -> dict:
 
 
 def scan_project() -> None:
-    """Escanear todo el proyecto."""
+    """Escanear todo el proyecto ejecutando inspeccionar() en cada archivo."""
     from pathlib import Path
 
     URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
-    results = {}
-    for py_file in URA_ROOT.rglob("*.py"):
+    fallos = 0
+    total = 0
+    for py_file in sorted(URA_ROOT.rglob("*.py")):
         p = str(py_file)
-        skip = ["/.venv/", "/.git/", "/__pycache__/", "/backups/", "/site-packages/", "/scripts_eliminados/"]
+        skip = [
+            "/.venv/",
+            "/.git/",
+            "/__pycache__/",
+            "/backups/",
+            "/site-packages/",
+            "/scripts_eliminados/",
+            "/.sandbox_packages/",
+            "/.nervioso/",
+        ]
         if any(x in p for x in skip):
             continue
+<<<<<<< Updated upstream
         try:
             content = py_file.read_text()
             results[p] = {"lines": len(content.splitlines())}
         except Exception:  # noqa: S110
             pass
+=======
+        total += 1
+        reporte = inspeccionar(py_file)
+        if reporte["accion"] != "OK":
+            fallos += 1
+            print(f"FAIL: {p} — {reporte['accion']}: {reporte.get('fallos_por_tipo', {})}")
+    print(f"\n📊 scan_project: {total} archivos, {fallos} fallos")
+    if fallos:
+        sys.exit(1)
+>>>>>>> Stashed changes
 
 
 def main() -> None:

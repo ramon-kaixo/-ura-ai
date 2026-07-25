@@ -5,20 +5,20 @@ import pytest
 from memoria_fallos import MemoriaFallos
 
 
-def test_aislado():
+def test_aislado() -> None:
     m = MemoriaFallos("p1")
     m.registrar("timeout", "tardo")
     assert not m.es_patron("timeout")
 
 
-def test_patron():
+def test_patron() -> None:
     m = MemoriaFallos("p2")
     for _ in range(3):
         m.registrar("timeout", "x")
     assert m.es_patron("timeout")
 
 
-def test_corta():
+def test_corta() -> None:
     m = MemoriaFallos("p3", max_fallos=5)
     for i in range(8):
         m.registrar(f"f{i}", str(i))
@@ -26,14 +26,14 @@ def test_corta():
     assert "f0" not in [x.tipo for x in m.fallos_recientes()]
 
 
-def test_arreglo():
+def test_arreglo() -> None:
     m = MemoriaFallos("p4")
     m.registrar("err", "msg", arreglo="hacer X")
     assert m.arreglo_conocido("err") == "hacer X"
     assert m.arreglo_conocido("otro") is None
 
 
-def test_detectar():
+def test_detectar() -> None:
     m = MemoriaFallos("p5")
     m.registrar("raro", "a")
     for _ in range(3):

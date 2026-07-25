@@ -19,10 +19,15 @@ import logging
 import shutil
 from datetime import UTC, datetime
 
+from core.config import UraConfig
 from core.config_manager import CONFIG
+<<<<<<< Updated upstream
 
 if TYPE_CHECKING:
     from core.interfaces import IConfigProvider, ILLMClient, IVectorStore
+=======
+from core.qdrant_client import QdrantClient
+>>>>>>> Stashed changes
 
 log = logging.getLogger(__name__)
 

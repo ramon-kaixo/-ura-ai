@@ -2,7 +2,10 @@ import logging
 
 log = logging.getLogger("memoria.ingesto")
 PROCESADOS: set = set()
+<<<<<<< Updated upstream
 procesados_local = PROCESADOS  # alias para import en consulta.py
+=======
+>>>>>>> Stashed changes
 
 
 def procesar_archivo(ruta) -> dict | None:

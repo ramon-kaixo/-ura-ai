@@ -7,17 +7,17 @@ from core.guardians.ast_sentinel import ASTSentinel
 s = ASTSentinel()
 
 
-def test_limpio():
+def test_limpio() -> None:
     v = s.analizar('def f(a:int,b:int)->int:\n """S"""\n return a+b', "b")
     assert v.ok
 
 
-def test_malo():
+def test_malo() -> None:
     v = s.analizar("def f():\n try:\n  pass\n except:\n  pass", "m")
     assert not v.ok
 
 
-def test_sin_tipos():
+def test_sin_tipos() -> None:
     v = s.analizar("def f(a,b):\n return a", "s")
     assert not v.ok
 

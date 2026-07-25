@@ -184,8 +184,14 @@ def estado() -> dict:
 
 
 def scan_project() -> None:
+<<<<<<< Updated upstream
     root = Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
+=======
+    from scripts.pro.utils import scan_project as _scan
+
+    _scan()
+>>>>>>> Stashed changes
 
 
 def main() -> None:

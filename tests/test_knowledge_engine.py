@@ -57,7 +57,10 @@ from knowledge.engine.sqlite_writer import SyncPolicy, init_db
 from knowledge.engine.storage_verifier import check_fts_sync, check_schema
 from knowledge.engine.validator import validate_batch, validate_knowledge_object
 from knowledge.engine.verifier import verify_graph
+<<<<<<< Updated upstream
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
+=======
+>>>>>>> Stashed changes
 
 ENGINE_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "pro" / "knowledge_engine.py"
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
@@ -1348,6 +1351,17 @@ class TestMigration:
                 archived_at TEXT NOT NULL DEFAULT (datetime('now')),
                 retention_days INTEGER NOT NULL DEFAULT 90
             );
+            CREATE TABLE IF NOT EXISTS op_assets (
+                id TEXT PRIMARY KEY, asset_type TEXT NOT NULL,
+                metadata TEXT NOT NULL DEFAULT '{}', source TEXT NOT NULL DEFAULT '{}',
+                quality REAL NOT NULL DEFAULT 0.0, created_at TEXT, updated_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS op_lineage (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL, event_time TEXT NOT NULL,
+                input_ids TEXT NOT NULL DEFAULT '[]', output_ids TEXT NOT NULL DEFAULT '[]',
+                metadata TEXT NOT NULL DEFAULT '{}'
+            );
         """)
         conn.execute("PRAGMA user_version = 6")
         conn.commit()
@@ -1448,6 +1462,17 @@ class TestMigration:
                 content_sha256 TEXT NOT NULL,
                 archived_at TEXT NOT NULL DEFAULT (datetime('now')),
                 retention_days INTEGER NOT NULL DEFAULT 90
+            );
+            CREATE TABLE IF NOT EXISTS op_assets (
+                id TEXT PRIMARY KEY, asset_type TEXT NOT NULL,
+                metadata TEXT NOT NULL DEFAULT '{}', source TEXT NOT NULL DEFAULT '{}',
+                quality REAL NOT NULL DEFAULT 0.0, created_at TEXT, updated_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS op_lineage (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL, event_time TEXT NOT NULL,
+                input_ids TEXT NOT NULL DEFAULT '[]', output_ids TEXT NOT NULL DEFAULT '[]',
+                metadata TEXT NOT NULL DEFAULT '{}'
             );
         """)
         conn.execute("PRAGMA user_version = 5")
@@ -1598,6 +1623,7 @@ class TestQdrantSync:
             frontmatter=Frontmatter(title="Q"),
             body="test content for qdrant sync",
         )
+<<<<<<< Updated upstream
         result = sync_documents(db_path, [doc], [], run_id=0)
         # Graceful regardless of Qdrant availability:
         #   — unavailable: result == 0, "Qdrant no disponible" in log
@@ -1606,6 +1632,14 @@ class TestQdrantSync:
             assert result == 0
         else:
             assert result >= 1
+=======
+        from unittest.mock import patch
+
+        with patch("knowledge.engine.qdrant_sync._get_qdrant", return_value=None):
+            result = sync_documents(db_path, [doc], [], run_id=0)
+        assert result == 0
+        assert "Qdrant no disponible" in caplog.text
+>>>>>>> Stashed changes
 
     def test_search_semantic_qdrant_unavailable(self):
         from knowledge.engine.qdrant_sync import search_semantic
@@ -1655,7 +1689,11 @@ class TestDeterminism:
         src = tmp_path / "source"
         src.mkdir(parents=True, exist_ok=True)
         (src / "test-a.md").write_text(
+<<<<<<< Updated upstream
             "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n",
+=======
+            "---\nid: test-a\ntitle: Documento A\ntype: doc\n---\n\nEste es el contenido del documento A.\n"
+>>>>>>> Stashed changes
         )
         (src / "test-b.md").write_text(
             "---\nid: test-b\ntitle: Documento B\ntype: spec\n---\n\n"
@@ -1768,9 +1806,13 @@ class TestArchiveIntegration:
         # Git init en tmp_path (parent de source/), así .git/ no contamina el scan
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
         subprocess.run(
+<<<<<<< Updated upstream
             ["git", "-C", str(tmp_path), "config", "user.email", "test@test"],
             capture_output=True,
             check=False,
+=======
+            ["git", "-C", str(tmp_path), "config", "user.email", "test@test"], capture_output=True, check=False
+>>>>>>> Stashed changes
         )
         subprocess.run(["git", "-C", str(tmp_path), "config", "user.name", "Test"], capture_output=True, check=False)
         subprocess.run(["git", "-C", str(tmp_path), "add", "source/"], capture_output=True, check=False)
@@ -2165,7 +2207,11 @@ class TestAuditBackend:
         audit_file.write_text(
             '{"action": "search", "actor": "test", "entity_type": "doc", "entity_id": "1", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
             "not valid json\n"
+<<<<<<< Updated upstream
             '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n',
+=======
+            '{"action": "compile", "actor": "test", "entity_type": "graph", "entity_id": "2", "result": "ok", "correlation_id": "", "timestamp": "2024-01-01", "metadata": {}}\n'
+>>>>>>> Stashed changes
         )
         backend = NDJSONAuditBackend(tmp_path, "test.ndjson")
         backend._handle.close()
@@ -2433,8 +2479,12 @@ class TestGoldenMaster:
         src.mkdir()
         # Crear 10 ficheros en orden alfabético inverso
         for name in sorted(
+<<<<<<< Updated upstream
             ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"],
             reverse=True,
+=======
+            ["z.md", "a.md", "m.md", "b.md", "y.md", "c.md", "x.md", "d.md", "w.md", "e.md"], reverse=True
+>>>>>>> Stashed changes
         ):
             (src / name).write_text(f"---\ntitle: {name}\ntype: doc\n---\n\nBody {name}\n")
 
@@ -2512,7 +2562,11 @@ class TestGoldenMaster:
         # Compilar con CWD normal
         import os
 
+<<<<<<< Updated upstream
         old_cwd = os.getcwd()  # noqa: PTH109
+=======
+        old_cwd = os.getcwd()
+>>>>>>> Stashed changes
         compile_source(source_dir=src, db_path=db)
         h1 = get_determinism_hash(db)
 

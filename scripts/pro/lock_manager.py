@@ -23,18 +23,19 @@ LOCK_FILE = "/tmp/gpu_health_tuneladora.lock"
 def acquire_gpu_lock(lock_file: str = LOCK_FILE, timeout: int = 30):
     """Adquiere un cerrojo exclusivo (LOCK_EX) sobre lock_file.
 
-    Usa LOCK_NB para no bloquear el hilo; reintenta cada 1s hasta `timeout`.
-    Lanza RuntimeError si no puede adquirirlo en el tiempo límite.
+    Usa LOCK_NB para no bloquear el hilo
+    reintenta cada 1s hasta `timeout`.
+        Lanza RuntimeError si no puede adquirirlo en el tiempo límite.
 
-    Args:
-        lock_file: Ruta al archivo de lock (/tmp/...).
-        timeout: Segundos máximos de espera (default 10).
+        Args:
+            lock_file: Ruta al archivo de lock (/tmp/...).
+            timeout: Segundos máximos de espera (default 10).
 
-    Returns:
-        File object con el lock adquirido (pasar a release_gpu_lock).
+        Returns:
+            File object con el lock adquirido (pasar a release_gpu_lock).
 
-    Raises:
-        RuntimeError: Si no se pudo adquirir el lock en `timeout` segundos.
+        Raises:
+            RuntimeError: Si no se pudo adquirir el lock en `timeout` segundos.
 
     """
     fp = open(lock_file, "w")  # noqa: PTH123, SIM115

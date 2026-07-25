@@ -74,6 +74,7 @@ URA_COMMANDS: dict[str, object] = {
     "audit": cmd_audit,
 }
 
+<<<<<<< Updated upstream
 
 def _setup_logging(level: str) -> None:
     setup_logging(
@@ -81,12 +82,19 @@ def _setup_logging(level: str) -> None:
         fmt="%(name)s %(levelname)s %(message)s",
         handlers=[logging.StreamHandler(sys.stderr)],
     )
+=======
+def _setup_logging(level: str) -> None:
+>>>>>>> Stashed changes
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 def main() -> None:
+<<<<<<< Updated upstream
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
+=======
+    parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
+>>>>>>> Stashed changes
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")
     sub = parser.add_subparsers(dest="command", required=True)

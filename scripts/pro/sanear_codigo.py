@@ -4,7 +4,10 @@
 Uso: python3 scripts/pro/sanear_codigo.py [--check-only]
 """
 
+<<<<<<< Updated upstream
 import ast
+=======
+>>>>>>> Stashed changes
 import re
 import subprocess
 import sys
@@ -37,7 +40,11 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 
 def fix_multiline_statements(path: Path) -> int:
+<<<<<<< Updated upstream
     """E702: split statements joined with."""
+=======
+    """E702: split statements joined with"""
+>>>>>>> Stashed changes
     content = path.read_text()
     count = 0
     # Simple case: x = 1; y = 2  -> split into two lines
@@ -45,15 +52,21 @@ def fix_multiline_statements(path: Path) -> int:
     new_lines = []
     for line in lines:
         if ";" in line and not line.strip().startswith("#"):
+<<<<<<< Updated upstream
             # Check if it's actually multiple statements
+=======
+>>>>>>> Stashed changes
             parts = line.split(";")
             if len(parts) > 1:
-                # Only fix if all parts look like simple statements
                 stripped = [p.strip() for p in parts]
                 if all(
                     s
                     and not s.startswith(
+<<<<<<< Updated upstream
                         ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
+=======
+                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+>>>>>>> Stashed changes
                     )
                     for s in stripped
                 ):
@@ -91,7 +104,11 @@ def fix_magic_values(path: Path) -> int:
         # Pattern: comparison like `x > 10` or `x >= 5`
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
+<<<<<<< Updated upstream
     except Exception:  # noqa: S110
+=======
+    except Exception:
+>>>>>>> Stashed changes
         pass
 
     return count
@@ -104,6 +121,7 @@ def run_ruff_fix(path: Path) -> int:
         capture_output=True,
         text=True,
         timeout=30,
+        check=False,
     )
     return 0
 
@@ -111,6 +129,7 @@ def run_ruff_fix(path: Path) -> int:
 def main() -> None:
     check_only = "--check-only" in sys.argv
 
+<<<<<<< Updated upstream
     total_before = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -119,6 +138,10 @@ def main() -> None:
         check=False,
     )
     len([l for l in total_before.stderr.split("\n") if "Found" in l])
+=======
+    total_before = subprocess.run(["ruff", "check", *DIRS], capture_output=True, text=True, timeout=60, check=False)
+    before_count = len([l for l in total_before.stderr.split("\n") if "Found" in l])
+>>>>>>> Stashed changes
 
     fixes = {
         "G004 (logging f-string)": fix_logging_fstrings,
@@ -146,8 +169,10 @@ def main() -> None:
             subprocess.run(  # noqa: PLW1510
                 ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],
                 timeout=120,
+                check=False,
             )
 
+<<<<<<< Updated upstream
     after = subprocess.run(
         ["ruff", "check", *DIRS],
         capture_output=True,
@@ -156,6 +181,14 @@ def main() -> None:
         check=False,
     )
     len([l for l in after.stderr.split("\n") if "Found" in l])
+=======
+    after = subprocess.run(["ruff", "check", *DIRS], capture_output=True, text=True, timeout=60, check=False)
+    after_count = len([l for l in after.stderr.split("\n") if "Found" in l])
+
+    print(f"Fixers aplicados: {total_fixed}")
+    print(f"Antes: {before_count} errores")
+    print(f"Despues: {after_count} errores")
+>>>>>>> Stashed changes
 
 
 if __name__ == "__main__":

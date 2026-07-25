@@ -7,13 +7,19 @@ from __future__ import annotations
 import ast
 import json
 import logging
+import os
 import subprocess
 import time
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
+<<<<<<< Updated upstream
 ORCHESTRATOR_HOST = "10.164.1.99"
+=======
+# Configuration
+ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
+>>>>>>> Stashed changes
 ORCHESTRATOR_PORT = 18789
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"

@@ -29,7 +29,7 @@ WORKER_TIMEOUT = 600
 
 
 def log(msg) -> None:
-    time.strftime("%H:%M:%S")
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
 
 def worker_task(worker_id):

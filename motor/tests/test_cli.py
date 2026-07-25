@@ -6,7 +6,7 @@ from motor.core.config import UraConfig
 from motor.core.state import ScanResult
 
 
-def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
+def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0) -> None:
     lines = []
     for i in range(puntos):
         lines.append(
@@ -41,8 +41,13 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
     Path(path).write_text("\n".join(lines) + "\n")
 
 
+<<<<<<< Updated upstream
 def test_detect_no_trends():
     from motor.scanner.calibration import Calibration
+=======
+def test_detect_no_trends() -> None:
+    from scanner.calibration import Calibration
+>>>>>>> Stashed changes
 
     cfg = UraConfig()
     cal = Calibration(cfg)
@@ -51,8 +56,13 @@ def test_detect_no_trends():
     assert len(res["anomalias"]) == 0
 
 
+<<<<<<< Updated upstream
 def test_detect_with_trends():
     from motor.scanner.calibration import Calibration
+=======
+def test_detect_with_trends() -> None:
+    from scanner.calibration import Calibration
+>>>>>>> Stashed changes
 
     cfg = UraConfig()
     cal = Calibration(cfg)
@@ -66,8 +76,13 @@ def test_detect_with_trends():
     assert len(anomalias) > 0
 
 
+<<<<<<< Updated upstream
 def test_calibration_with_trends():
     from motor.scanner.calibration import Calibration
+=======
+def test_calibration_with_trends() -> None:
+    from scanner.calibration import Calibration
+>>>>>>> Stashed changes
 
     cfg = UraConfig()
     cfg.data_dir = tempfile.mkdtemp()
@@ -88,8 +103,13 @@ def test_calibration_with_trends():
     assert "ram_pct_max" in bl
 
 
+<<<<<<< Updated upstream
 def test_pattern_matcher_empty():
     from motor.diagnostico.pattern_matcher import buscar_patrones
+=======
+def test_pattern_matcher_empty() -> None:
+    from diagnostico.pattern_matcher import buscar_patrones
+>>>>>>> Stashed changes
 
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "active", "docker": "active"}
@@ -101,12 +121,21 @@ def test_pattern_matcher_empty():
     scan.contenedores_ko = []
     scan.diff_total = 0
     cfg = UraConfig()
+<<<<<<< Updated upstream
     incidents, _costs = buscar_patrones(scan, None, cfg)
     assert len(incidents) == 0
 
 
 def test_pattern_matcher_failure():
     from motor.diagnostico.pattern_matcher import buscar_patrones
+=======
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+    assert len(incidents) == 0
+
+
+def test_pattern_matcher_failure() -> None:
+    from diagnostico.pattern_matcher import buscar_patrones
+>>>>>>> Stashed changes
 
     scan = ScanResult(ok=True, timestamp="test")
     scan.servicios = {"sshd": "failed", "docker": "active"}
@@ -118,7 +147,11 @@ def test_pattern_matcher_failure():
     scan.contenedores_ko = ["agent-foo"]
     scan.diff_total = 5
     cfg = UraConfig()
+<<<<<<< Updated upstream
     incidents, _costs = buscar_patrones(scan, None, cfg)
+=======
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+>>>>>>> Stashed changes
     assert len(incidents) >= 5
     tipos = {i["tipo"] for i in incidents}
     assert "ServiceFailure" in tipos
@@ -127,23 +160,38 @@ def test_pattern_matcher_failure():
     assert "HardwareFailure" in tipos
 
 
+<<<<<<< Updated upstream
 def test_correlacion():
     from motor.diagnostico.correlacion import agrupar_incidentes
+=======
+def test_correlacion() -> None:
+    from diagnostico.correlacion import agrupar_incidentes
+>>>>>>> Stashed changes
 
     tags = ["ServiceFailure", "docker"]
     r = agrupar_incidentes(tags, hw_ok=True, hw_issues=[])
     assert isinstance(r, list)
 
 
+<<<<<<< Updated upstream
 def test_sliding_window():
     from motor.scanner.sliding_window import SlidingWindow
+=======
+def test_sliding_window() -> None:
+    from scanner.sliding_window import SlidingWindow
+>>>>>>> Stashed changes
 
     sw = SlidingWindow()
     assert sw is not None
 
 
+<<<<<<< Updated upstream
 def test_diff_detector():
     from motor.scanner.diff_detector import compute_diff
+=======
+def test_diff_detector() -> None:
+    from scanner.diff_detector import compute_diff
+>>>>>>> Stashed changes
 
     actual = {
         "servicios": {"sshd": "active", "docker": "inactive"},
@@ -162,7 +210,7 @@ def test_diff_detector():
     assert len(anomalias) > 0
 
 
-def test_status_returns_json():
+def test_status_returns_json() -> None:
     import json
     import subprocess
 
@@ -178,8 +226,13 @@ def test_status_returns_json():
         assert "hostname" in d or "health_score" in d
 
 
+<<<<<<< Updated upstream
 def test_preflight_module():
     from motor.guard.preflight import ejecutar_preflight
+=======
+def test_preflight_module() -> None:
+    from guard.preflight import ejecutar_preflight
+>>>>>>> Stashed changes
 
     cfg = UraConfig()
     r = ejecutar_preflight(cfg)
