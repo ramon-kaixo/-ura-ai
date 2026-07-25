@@ -13,13 +13,10 @@ description = "URA — Multi-agent desktop assistant with retrieval, memory, and
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
-<<<<<<< Updated upstream
 authors = [
     {name = "Ramon Esnaola"},
 ]
 
-=======
->>>>>>> Stashed changes
 dependencies = [
     "httpx>=0.27.0",
     "fastapi>=0.111.0",
@@ -29,10 +26,7 @@ dependencies = [
     "pyyaml>=6.0.1",
     "rich>=13.7.1",
     "prometheus-client>=0.19.0",
-<<<<<<< Updated upstream
     "requests>=2.31",
-=======
->>>>>>> Stashed changes
 ]
 
 [project.optional-dependencies]
@@ -47,13 +41,67 @@ test = [
 [project.scripts]
 ura = "ura:main"
 
-[project.urls]
-Homepage = "https://github.com/ramon-kaixo/-ura-ai"
-Repository = "https://github.com/ramon-kaixo/-ura-ai"
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["agent_hierarchy.py", "agents/sandbox/", "app/", "core/", "scripts/", "knowledge/", "monitor/", "motor/agents/", "motor/cli/", "tests/", "motor/tests/", "motor/health_monitor.py", "motor/assistant/api/routes.py", "sandbox/", "scraping/"]
 
-# Tuneladora pipeline configuration — see scripts/pro/tuneladora/
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN",
+    "D",
+    "BLE001",
+    "ARG",
+    "G004",
+    "PLR2004",
+    "PLR0913",
+    "E402",
+    "PLC0415",
+    "FBT",
+    "PLW0108",
+    "E741",
+    "ERA",
+    "N",
+    "PT",
+    "PERF401",
+    "TC001",
+    "TC003",
+    "TRY",
+    "EM",
+    "PIE",
+    "RET",
+    "T20",
+    "COM",
+    "Q",
+    "S603",
+    "S607",
+    "ASYNC210",
+    "C901",
+    "PLR0912",
+    "PLR0911",
+    "S112",
+    "SLF001",
+    "E501",
+    "S108",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 60
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+
 [tool.tuneladora]
-test-target = "tests/test_tuneladora_*.py tests/test_brain_*.py"
 review-model = "qwen3:32b-q8_0"
 llm-fallback-model = "qwen2.5-coder:14b"
 unsafe-fixes = false
@@ -66,125 +114,10 @@ timeout-worker = 3600
 timeout-script = 120
 sandbox-cpu-sec = 300
 sandbox-max-mem-mb = 2048
+test-target = "tests/"
 pytest-socket-disable = false
 ollama-host = "localhost"
-ollama-port = 11434
+ollama-port = "11434"
 llm-retries = 2
 auto-trigger-mode = "gate"
 auto-trigger-strict = true
-
-[tool.ruff]
-line-length = 120
-target-version = "py312"
-extend-exclude = ["agent_hierarchy.py", "agents/sandbox/", "app/", "core/", "scripts/", "knowledge/", "monitor/", "motor/agents/", "motor/cli/", "tests/", "motor/tests/", "motor/health_monitor.py", "motor/assistant/api/routes.py", "sandbox/", "scraping/"]
-
-[tool.ruff.lint]
-select = ["ALL"]
-ignore = [
-    "ANN",     # Type annotations (legacy codebase, requeriria rewrite)
-    "D",       # Docstrings (requeriria generacion bulk con IA)
-    "BLE001",  # Blind except (intencional en codigo de red)
-    "ARG",     # Unused arguments (callback APIs legacy)
-    "G004",    # Logging f-strings (cosmetico, no bug)
-    "PLR2004", # Magic values (cosmetico)
-    "PLR0913", # Too many arguments (API legacy)
-    "E402",    # Module import not at top (circular imports)
-    "PLC0415", # Import outside top-level (circular imports)
-    "FBT",     # Boolean positional args (estilo, no bug)
-    "PLW0108", # Lambda unnecessary (estilo, no bug)
-    "E741",    # Ambiguous variable name (cosmetico)
-    "ERA",     # Commented-out code (legacy)
-    "N",       # Naming conventions (cosmetico)
-    "PT",      # pytest rules (solo aplican a tests)
-    "PERF401", # List comprehension style (arreglar en cleanup dedicado)
-    "TC001",   # Type-checking imports (arreglar en cleanup dedicado)
-    "TC003",   # Type-checking imports (arreglar en cleanup dedicado)
-    "PERF401", # List comprehension style (arreglar en cleanup dedicado)
-    "TC001",   # Type-checking imports (arreglar en cleanup dedicado)
-    "TC003",   # Type-checking imports (arreglar en cleanup dedicado)
-    "TRY",     # try/except style (cosmetico)
-    "EM",      # Exception message style (cosmetico)
-    "PIE",     # Pie-style rules (cosmetico)
-    "RET",     # Return style (cosmetico)
-    "T20",     # Print statements (intencional en scripts)
-    "COM",     # Trailing commas (cosmetico, --fix lo maneja)
-    "Q",       # Quote style (cosmetico, --fix lo maneja)
-    "S603",    # subprocess-without-shell-equals-true (todos usan list args, seguros)
-    "S607",    # start-process-with-partial-path (git/docker/date desde PATH, intencional)
-    "ASYNC210", # blocking-http-call-in-async-function (legacy codebase)
-    "C901",    # complex-structure (legacy, refactor pendiente)
-    "PLR0912", # too-many-branches (legacy)
-    "PLR0911", # too-many-return-statements (legacy)
-    "S112",    # try-except-continue (degradacion controlada)
-    "SLF001",  # private-member-access (tests)
-    "E501",    # line-too-long (cosmetico, 120 col limite)
-    "S108",    # hardcoded-temp-file (whitelist de directorios, intencional)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
-"motor/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "B007"]
-"tests/contracts/*" = ["S101", "D", "ANN", "ARG", "SLF001", "B007", "PGH003"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-testpaths = ["tests", "motor/tests"]
-python_files = ["test_*.py"]
-norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_reports", ".nervioso", ".sandbox_packages"]
-filterwarnings = ["ignore::DeprecationWarning"]
-timeout = 60
-asyncio_mode = "auto"
-markers = [
-    "slow: tests that take more than 30s or marked as long-running",
-    "integration: tests requiring external services (Ollama, Qdrant, Docker, etc.)",
-    "e2e: end-to-end tests involving multiple components",
-    "benchmark: performance or benchmark tests",
-    "experimental: deprecated, frozen, or unstable tests",
-]
-addopts = "-q --cov=core --cov=monitor --cov=motor --cov-report=term --cov-report=xml"
-
-[tool.coverage.run]
-source = ["motor"]
-omit = ["*/tests/*", "*/.venv/*", "*/__pycache__/*", "*/motor/tests/*"]
-
-[tool.coverage.report]
-fail_under = 20
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if __name__ == .__main__.:",
-    "raise AssertionError",
-    "raise NotImplementedError",
-]
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-show_error_codes = true
-
-[[tool.mypy.overrides]]
-module = ["pytest", "semgrep", "mutmut", "httpx", "tqdm", "zmq"]
-ignore_missing_imports = true
-
-[tool.bandit]
-exclude_dirs = ["tests", ".venv", "__pycache__", ".sandbox_packages", "build", ".nervioso"]
-skips = ["B101", "B311", "B403", "B404", "B603", "B607"]
-
-[tool.mutmut]
-paths = ["core", "monitor", "motor"]
-backup = false
-runner = "python3 -m pytest tests/ -x -q"
-dict_sync = false

@@ -69,10 +69,11 @@ def _discover_focused_tests(changed_files: list[str]) -> list[str]:
 def _extract_api(tree: ast.AST) -> dict[str, dict[str, str]]:
     api: dict[str, dict[str, str]] = {}
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             args = [a.arg for a in node.args.args]
             returns = ast.unparse(node.returns) if node.returns else "None"
-            api[f"def {node.name}"] = {"args": ", ".join(args), "returns": returns}
+            prefix = "async def " if isinstance(node, ast.AsyncFunctionDef) else "def "
+            api[f"{prefix}{node.name}"] = {"args": ", ".join(args), "returns": returns}
         elif isinstance(node, ast.ClassDef):
             bases = [ast.unparse(b) for b in node.bases]
             api[f"class {node.name}"] = {"bases": ", ".join(bases)}
@@ -110,6 +111,7 @@ class PipelineRunner:
         self._last_snapshot: Path | None = None
         self._sofia_report: SofiaReport = SofiaReport()
         self._telemetry: dict[str, Any] = {"model": cfg.llm_fallback_model}
+        self._lock_acquired = False
         self._build_tools()
 
     def _build_tools(self) -> None:
@@ -126,6 +128,7 @@ class PipelineRunner:
     # ── Lock management ──────────────────────────────────────
 
     def _acquire_lock(self) -> bool:
+        self._lock_acquired = False
         lock_path = self.cfg.tuneladora_dir / "pipeline.lock"
         try:
             self.cfg.tuneladora_dir.mkdir(parents=True, exist_ok=True)
@@ -137,18 +140,18 @@ class PipelineRunner:
                 log.warning("Lock stale (%ds) — sobrescribiendo", int(age))
                 lock_path.unlink(missing_ok=True)
             lock_path.write_text(json.dumps({"pid": os.getpid(), "start": time.time(), "mode": self.mode}))
+            self._lock_acquired = True
             return True
         except OSError as exc:
             log.warning("Cannot create lock: %s", exc)
             return True  # degrade: proceed without lock
 
     def _release_lock(self) -> None:
+        if not self._lock_acquired:
+            return
         lock_path = self.cfg.tuneladora_dir / "pipeline.lock"
-        try:
-            if lock_path.exists():
-                lock_path.unlink()
-        except OSError:
-            pass
+        with contextlib.suppress(OSError):
+            lock_path.unlink(missing_ok=True)
 
     # ── Pre-flight ───────────────────────────────────────────
 
@@ -598,9 +601,8 @@ class PipelineRunner:
                     check=False, cwd=str(self.cfg.ura_root),
                 ).stdout[:8000]
                 self._sofia_report = self.sofia.review(
-                    diff=diff,
-                    tests_modified="",
-                    api_diff="",
+                    diff=diff, n_files=len(self.files),
+                    tests_modified="", api_diff="",
                 )
                 self._telemetry["sofia_criticos"] = self._sofia_report.n_criticos
                 self._telemetry["sofia_advertencias"] = self._sofia_report.n_advertencias
