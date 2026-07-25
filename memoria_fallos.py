@@ -3,6 +3,9 @@
 =======
 """memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)"""
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

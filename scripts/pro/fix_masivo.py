@@ -34,8 +34,12 @@ def fix_e702_semicolons() -> int:
     """E702: split x=1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     y=2 into two lines.
     """
+=======
+    y=2 into two lines."""
+>>>>>>> Stashed changes
 =======
     y=2 into two lines."""
 >>>>>>> Stashed changes
@@ -58,7 +62,11 @@ def fix_e702_semicolons() -> int:
                         not p.startswith(
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
+=======
+                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
+>>>>>>> Stashed changes
 =======
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
 >>>>>>> Stashed changes
@@ -172,6 +180,10 @@ def main() -> None:
         timeout=60,
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+        check=False,
+>>>>>>> Stashed changes
 =======
         check=False,
 >>>>>>> Stashed changes

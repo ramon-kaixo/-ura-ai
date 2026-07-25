@@ -176,7 +176,11 @@ sys.exit(0 if r["fallidos"]==0 else 1)
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         except:  # noqa: E722
+=======
+        except Exception:
+>>>>>>> Stashed changes
 =======
         except Exception:
 >>>>>>> Stashed changes

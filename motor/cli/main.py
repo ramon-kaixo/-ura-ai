@@ -76,6 +76,7 @@ URA_COMMANDS: dict[str, object] = {
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 def _setup_logging(level: str) -> None:
     setup_logging(
@@ -89,6 +90,9 @@ def _setup_logging(level: str) -> None:
 =======
 def _setup_logging(level: str) -> None:
 >>>>>>> Stashed changes
+=======
+def _setup_logging(level: str) -> None:
+>>>>>>> Stashed changes
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
@@ -96,8 +100,11 @@ def _setup_logging(level: str) -> None:
 def main() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")

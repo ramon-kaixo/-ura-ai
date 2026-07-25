@@ -49,8 +49,11 @@ class AlforjaSpooler:
         except (OSError, json.JSONDecodeError) as e:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             logger.error(f"[ALFORJA] Error leyendo spool: {e}")

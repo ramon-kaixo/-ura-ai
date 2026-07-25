@@ -7,6 +7,7 @@ Migrar imports a 'from core.config import UraConfig' + usar UraConfig.load().
 import json
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import logging
 import os
 import platform
@@ -88,12 +89,32 @@ _CONFIG: UraConfig | None = None
 
 
 >>>>>>> Stashed changes
+=======
+import warnings
+from pathlib import Path
+from typing import Any
+
+from core.config import UraConfig
+
+warnings.warn(
+    "core.config_manager será eliminado en URA v4. Migrar a: from core.config import UraConfig; cfg = UraConfig.load()",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+_CONFIG: UraConfig | None = None
+
+
+>>>>>>> Stashed changes
 def _get_config() -> UraConfig:
     global _CONFIG  # noqa: PLW0603
     if _CONFIG is None:
         _CONFIG = UraConfig.load()
     return _CONFIG
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -147,6 +168,7 @@ def get_ollama_urls() -> list[str]:
     cfg = _get_config()
     return [cfg.get_ollama_url()]
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 
 def get_ollama_urls() -> dict[str, str]:
@@ -164,6 +186,8 @@ def get_ollama_urls() -> dict[str, str]:
     return {"primary": primary, "fallback": fallback}
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 
 def get_role() -> str:
@@ -175,6 +199,7 @@ def get_hostname() -> str:
 
 
 def validate_config() -> list:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
     """Valida que los directorios declarados en config existan y tengan permisos.
@@ -205,6 +230,9 @@ def validate_config() -> list:
 =======
     return _get_config().validate_dirs()
 >>>>>>> Stashed changes
+=======
+    return _get_config().validate_dirs()
+>>>>>>> Stashed changes
 
 
 _REQUIRED_KEYS = {
@@ -229,6 +257,7 @@ def _check_required_keys(errors: list[str]) -> None:
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         if isinstance(keys, list):
             for key in keys:
                 if key not in CONFIG[section]:
@@ -237,6 +266,8 @@ def _check_required_keys(errors: list[str]) -> None:
     for profile_name in ("linux_asus", "darwin_mac", "linux_terminal"):
         if profile_name not in CONFIG.get("_raw_profiles", {}):
             errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")  # noqa: PERF401
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -267,7 +298,12 @@ def validate_schema_json() -> list:
         for err in sorted(validator.iter_errors(raw_config), key=lambda e: e.path):
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")  # noqa: PERF401
+=======
+            path_str = ".".join(str(p) for p in err.path)
+            errors.append(f"{path_str}: {err.message}")
+>>>>>>> Stashed changes
 =======
             path_str = ".".join(str(p) for p in err.path)
             errors.append(f"{path_str}: {err.message}")

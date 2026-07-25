@@ -50,6 +50,9 @@ def load_seen_hashes() -> set:
 =======
         except Exception:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -82,6 +85,9 @@ def fetch_critical_logs() -> list:
 =======
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
