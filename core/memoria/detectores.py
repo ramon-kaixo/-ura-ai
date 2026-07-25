@@ -8,7 +8,10 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -123,6 +126,9 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -154,7 +160,11 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             },
+=======
+            }
+>>>>>>> Stashed changes
 =======
             }
 >>>>>>> Stashed changes
