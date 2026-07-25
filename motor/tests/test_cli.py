@@ -47,9 +47,12 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0) -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_detect_no_trends():
     from motor.scanner.calibration import Calibration
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -77,9 +80,12 @@ def test_detect_no_trends() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_detect_with_trends():
     from motor.scanner.calibration import Calibration
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -112,9 +118,12 @@ def test_detect_with_trends() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_calibration_with_trends():
     from motor.scanner.calibration import Calibration
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -154,9 +163,12 @@ def test_calibration_with_trends() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_pattern_matcher_empty():
     from motor.diagnostico.pattern_matcher import buscar_patrones
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -187,6 +199,7 @@ def test_pattern_matcher_empty() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     incidents, _costs = buscar_patrones(scan, None, cfg)
     assert len(incidents) == 0
 
@@ -198,6 +211,12 @@ def test_pattern_matcher_failure():
     assert len(incidents) == 0
 
 
+=======
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+    assert len(incidents) == 0
+
+
+>>>>>>> Stashed changes
 =======
     incidents, _costs = buscar_patrones(scan, None, None, cfg)
     assert len(incidents) == 0
@@ -248,7 +267,11 @@ def test_pattern_matcher_failure() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     incidents, _costs = buscar_patrones(scan, None, cfg)
+=======
+    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+>>>>>>> Stashed changes
 =======
     incidents, _costs = buscar_patrones(scan, None, None, cfg)
 >>>>>>> Stashed changes
@@ -281,9 +304,12 @@ def test_pattern_matcher_failure() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_correlacion():
     from motor.diagnostico.correlacion import agrupar_incidentes
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -309,9 +335,12 @@ def test_correlacion() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_sliding_window():
     from motor.scanner.sliding_window import SlidingWindow
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -336,9 +365,12 @@ def test_sliding_window() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_diff_detector():
     from motor.scanner.diff_detector import compute_diff
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -392,9 +424,12 @@ def test_status_returns_json() -> None:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def test_preflight_module():
     from motor.guard.preflight import ejecutar_preflight
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

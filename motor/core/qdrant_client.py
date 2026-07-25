@@ -391,10 +391,14 @@ class URAQdrantClient:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def __init__(self, base_url: str = "", timeout: float = 10.0) -> None:
         if not base_url:
             cfg = __import__("motor.core.config", fromlist=["UraConfig"]).UraConfig.load()
             base_url = f"http://{cfg.qdrant_host}:{cfg.qdrant_port}"
+=======
+    def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
+>>>>>>> Stashed changes
 =======
     def __init__(self, base_url: str = "http://127.0.0.1:6333", timeout: float = 10.0) -> None:
 >>>>>>> Stashed changes

@@ -36,6 +36,10 @@ WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
+>>>>>>> Stashed changes
 =======
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 >>>>>>> Stashed changes
