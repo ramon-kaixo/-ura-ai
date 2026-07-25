@@ -92,7 +92,7 @@ class SemanticMemory:
                 )
             else:
                 conn.execute(
-                    "INSERT INTO concepts (name, context, weight, tags, created, last_seen, occurrences) "
+                    "INSERT OR IGNORE INTO concepts (name, context, weight, tags, created, last_seen, occurrences) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (concept.name, concept.context, concept.weight,
                      json.dumps(list(concept.tags)), concept.created, now, concept.occurrences),
