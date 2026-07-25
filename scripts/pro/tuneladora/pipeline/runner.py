@@ -339,6 +339,7 @@ class PipelineRunner:
         else:
             results.append(PhaseResult("blast_radius", Status.OK))
 
+        free_gb: float | None = None
         try:
             free_gb = _free_disk_gb(self.cfg.ura_root)
             if free_gb is None:
@@ -388,7 +389,7 @@ class PipelineRunner:
         try:
             msg = f"tuneladora: auto-fix {self.mode} — {len(self.files)} file(s)"
             r = subprocess.run(
-                ["git", "add", "-A"], capture_output=True, text=True, timeout=30,
+                ["git", "add", "-u"], capture_output=True, text=True, timeout=30,
                 check=False, cwd=str(self.cfg.ura_root),
             )
             if r.returncode != 0:
@@ -467,6 +468,9 @@ class PipelineRunner:
         p2 = self.phase_dynamic()
         all_phase_results.append(p2)
 
+        p_index = self.phase_index()
+        all_phase_results.append(p_index)
+
         p3 = self.phase_integrity()
         all_phase_results.append(p3)
 
@@ -499,7 +503,7 @@ class PipelineRunner:
     def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
         duration_ms = (time.monotonic() - t_start) * 1000
         self.episodic.record(Episode(
-            episode_id=episode_id, pipeline="tuneladora", status=verdict.value,
+            episode_id=episode_id, pipeline="tuneladora", status=verdict.name,
             started=time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(t_start)),
             finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
             summary=msg, details={"mode": self.mode, "n_files": len(self.files)},

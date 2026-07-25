@@ -58,12 +58,14 @@ class TestPipelineRunnerRun:
             phase_snapshot=mock.DEFAULT,
             phase_static=mock.DEFAULT,
             phase_dynamic=mock.DEFAULT,
+            phase_index=mock.DEFAULT,
             phase_integrity=mock.DEFAULT,
             phase_verdict=mock.DEFAULT,
         ):
             runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
             runner.phase_static.return_value = [mock.Mock(name="static", status=Status.OK)]
             runner.phase_dynamic.return_value = [mock.Mock(name="dynamic", status=Status.OK)]
+            runner.phase_index.return_value = [mock.Mock(name="index", status=Status.OK)]
             runner.phase_integrity.return_value = [mock.Mock(name="integrity", status=Status.OK)]
             runner.phase_verdict.return_value = (Status.OK, "all good")
             result = runner.run()

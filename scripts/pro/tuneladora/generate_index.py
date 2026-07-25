@@ -72,7 +72,7 @@ def build_index(cfg: Configuration, changed_files: list[Path] | None = None) -> 
                 tags=(fn["type"],),
             ))
         for caller, callee in calls:
-            semantic.learn_relation(Relation(from_=caller, to=callee, type="calls"))
+            semantic.learn_relation(Relation(source=caller, target=callee, relation_type="calls"))
         index["sources"][str(rel)] = {"functions": funcs, "calls": calls}
         index["stats"]["files"] += 1
         index["stats"]["functions"] += len(funcs)
