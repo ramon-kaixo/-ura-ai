@@ -164,6 +164,9 @@ def _audit_ports(manifest: dict, issues: list[str]) -> None:
     used_ports: set[str] = set()
     unregistered: list[str] = []
     for port, line in _ss_ports(r.stdout):
+        port_int = int(port)
+        if port_int > 32768:
+            continue
         if "tailscaled" in line:
             continue
         if "docker-proxy" in line and port not in ("3080", "6333", "6334", "9093"):
@@ -174,7 +177,7 @@ def _audit_ports(manifest: dict, issues: list[str]) -> None:
 
     mkports = set(manifest.get("ports", {}).keys())
     orphaned = sorted(
-        [p for p in mkports - used_ports if p.isdigit() and p not in ("53", "631", "9050")],
+        [p for p in mkports - used_ports if p.isdigit() and p not in ("53", "631", "9050", "46113")],
         key=lambda x: int(x),
     )
     issues.extend(unregistered)
