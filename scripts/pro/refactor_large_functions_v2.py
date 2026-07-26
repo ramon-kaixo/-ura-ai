@@ -30,34 +30,6 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "ht
 OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
-=======
-WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
->>>>>>> Stashed changes
 
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
@@ -92,7 +64,7 @@ def _estimar_tokens(codigo: str) -> int:
 
 
 def log(msg: str) -> None:
-    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
+    pass
 
 
 def _ollama_request(url: str, payload: dict) -> dict:
@@ -357,7 +329,9 @@ def refactor_one(func: dict) -> bool:
 
 
 def scan_project() -> None:
-    root = Path.home() / "URA/ura_ia_1972"
+    from pathlib import Path as _Path
+
+    root = _Path.home() / "URA/ura_ia_1972"
     list(root.rglob("*.py"))
 
 

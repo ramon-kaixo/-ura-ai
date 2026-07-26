@@ -1,13 +1,7 @@
-"""Circuit breaker — delegates to motor.platform.resilience (canonical)."""
+import logging
 
-from motor.platform.resilience import (
-    CircuitBreaker,
-    CircuitBreakerOpenError,
-)
+log = logging.getLogger("ura.diagnostico.circuit")
 
-<<<<<<< Updated upstream
-__all__ = ["CircuitBreaker", "CircuitBreakerOpenError"]
-=======
 
 class CircuitBreaker:
     """Circuit breaker para Qdrant: abre tras N fallos consecutivos."""
@@ -21,8 +15,7 @@ class CircuitBreaker:
         self._abierto = False
 
     def operacional(self) -> bool:
-        """Devuelve True si Qdrant responde
-        abre el circuito tras FALLOS_MAX fallos."""
+        """Devuelve True si Qdrant responde; abre el circuito tras FALLOS_MAX fallos."""
         if self._abierto:
             return False
         ok = self._qdrant.health()
@@ -40,4 +33,3 @@ class CircuitBreaker:
         self._fallos = 0
         self._abierto = False
         log.info("circuit breaker cerrado manualmente")
->>>>>>> Stashed changes

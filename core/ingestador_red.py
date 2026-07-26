@@ -26,35 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 log = logging.getLogger("ura.ingestador_red")
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
-=======
-logger = logging.getLogger(__name__)
->>>>>>> Stashed changes
 
 URA = Path(__file__).resolve().parent.parent
 INVENTARIO_PATH = URA / "config" / "dispositivos.json"
@@ -69,43 +41,8 @@ def cargar_inventario() -> dict:
     if INVENTARIO_PATH.exists():
         try:
             return json.loads(INVENTARIO_PATH.read_text())
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("cargar_inventario: %s", e)
->>>>>>> Stashed changes
     return {"dispositivos": {}}
 
 
@@ -252,7 +189,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.ssh:
-        exit_code, out, err = tailscale_ssh(args.ssh, "hostname && free -h | head -2")
+        exit_code, out, err = tailscale_ssh(args.ssh, "hostname && free -h | head -2")  # noqa: RUF059
         sys.exit(exit_code)
 
     if args.enviar:

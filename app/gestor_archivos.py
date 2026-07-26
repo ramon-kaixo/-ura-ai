@@ -26,35 +26,7 @@ class GestorArchivosSeguro:
         if not Path(self.root_path).exists():
             return []
         try:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             return [d for d in os.listdir(self.root_path) if Path(os.path.join(self.root_path, d).is_dir())]  # noqa: PTH118, PTH208
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
-=======
-            return [d for d in os.listdir(self.root_path) if os.path.isdir(os.path.join(self.root_path, d))]
->>>>>>> Stashed changes
         except Exception:
             logger.exception("Error listing projects in %s", self.root_path)
             return []

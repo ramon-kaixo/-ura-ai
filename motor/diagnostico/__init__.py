@@ -1,10 +1,11 @@
-"""Motor de diagnóstico — Diagnostico + fábrica."""
+import hashlib
+import json  # noqa: F401
+import logging
+from datetime import UTC, datetime
+from pathlib import Path
 
-<<<<<<< Updated upstream
-from motor.diagnostico._state import DiagnosticoState, build_diagnostico_state  # noqa: F401
-from motor.diagnostico.diagnostico import Diagnostico  # noqa: F401
-=======
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.qdrant_client import QdrantClient
 from motor.core.state import DiagnoseResult, ScanResult
 from motor.diagnostico.backup_knowledge import backup_incidente
@@ -13,6 +14,7 @@ from motor.diagnostico.correlacion import agrupar_incidentes, resumir_incidentes
 from motor.diagnostico.pattern_matcher import buscar_patrones
 
 log = logging.getLogger("ura.diagnostico")
+_executor = SubprocessExecutor()
 
 RUTAS_CONFIG_OPENCODE = ["/etc/opencode/opencode.jsonc", "/etc/opencode/opencode.json"]
 
@@ -59,13 +61,7 @@ class Diagnostico:
             if p.exists():
                 snap[archivo] = {"hash": hashlib.sha256(p.read_bytes()).hexdigest()[:16], "size": p.stat().st_size}
         try:
-            r = subprocess.run(
-                ["ps", "-eo", "pid,comm", "--sort=-pid"],
-                capture_output=True,
-                text=True,
-                timeout=3,
-                check=False,
-            )
+            r = _executor.run(["ps", "-eo", "pid,comm", "--sort=-pid"], timeout=3)
             snap["procesos"] = [l.strip() for l in r.stdout.strip().split("\n")[:20]]
         except Exception as e:
             log.debug("snapshot procesos falló: %s", e)
@@ -113,4 +109,3 @@ class Diagnostico:
             "hw_issues": scan.hw_health.get("issues", []),
         }
         self.qdrant.guardar_incidente(incidente)
->>>>>>> Stashed changes

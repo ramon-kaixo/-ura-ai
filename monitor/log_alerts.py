@@ -7,7 +7,6 @@ import hashlib
 import json
 import subprocess
 import sys
-from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -45,29 +44,7 @@ def load_seen_hashes() -> set:
     if SEEN_HASHES_FILE.exists():
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
-=======
-        except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             pass
     return set()
 
@@ -92,29 +69,7 @@ def fetch_critical_logs() -> list:
     cmd_parts = []
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
-<<<<<<< Updated upstream
             cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
-=======
-            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
@@ -126,6 +81,7 @@ def fetch_critical_logs() -> list:
 
 
 def main() -> int:
+
     seen = load_seen_hashes()
     critical = fetch_critical_logs()
 
@@ -151,6 +107,8 @@ def main() -> int:
         save_seen_hashes(seen)
 
         # Agrupar por tipo
+        from collections import Counter
+
         types = Counter()
         for line in new_alerts:
             for p in PATTERNS:

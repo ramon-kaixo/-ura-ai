@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico."""
+"""auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico.
 
-from __future__ import annotations
+Sin delete previo: el doc_id determinista SHA-256 permite upsert directo.
+Si la descarga falla, el conocimiento original se conserva intacto.
+
+Uso:
+  python3 -m core.auto_reindex              # dry-run (default)
+  python3 -m core.auto_reindex --execute    # reindexa realmente
+"""
 
 import asyncio
 import json
 import logging
-import sys
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
 
 import httpx
 
 from core.chunking import chunk_semantic
-from core.config import UraConfig
 from core.document_quality import (
     content_type as detect_content_type,
 )
@@ -23,32 +26,9 @@ from core.document_quality import (
     extract_publication_date,
     source_reliability,
 )
-from core.qdrant_client import QdrantClient
 from core.stealth_fetcher import fetch_stealth
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-if TYPE_CHECKING:
-    from core.interfaces import IConfigProvider, IVectorStore
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
 
 log = logging.getLogger("ura.auto_reindex")
 
@@ -56,19 +36,7 @@ COLLECTION = "memoria_web"
 CUTOFF_DAYS = 30
 BATCH_SIZE = 100
 
-from motor.core.config import UraConfig
-
-_cfg: dict[str, str | int] | None = None
-
-
-def _get_qdrant_base() -> str:
-    global _cfg
-    if _cfg is None:
-        c = UraConfig.load()
-        _cfg = {"host": c.qdrant_host, "port": c.qdrant_port}
-    host = _cfg["host"]
-    port = _cfg["port"]
-    return f"http://{host}:{port}"
+QDRANT_BASE = "http://127.0.0.1:6333"
 
 
 async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
@@ -96,7 +64,7 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
 
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
-                    f"{_get_qdrant_base()}/collections/{COLLECTION}/points/scroll",
+                    f"{QDRANT_BASE}/collections/{COLLECTION}/points/scroll",
                     json=params,
                 )
                 resp.raise_for_status()
@@ -120,10 +88,8 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
     return all_stale
 
 
-async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS, config: IConfigProvider | None = None) -> list:
-    from motor.core.qdrant_client import QdrantClient
-
-    qdrant: IVectorStore = QdrantClient.instancia(config or UraConfig.load())
+async def find_stale_docs(cutoff_days: int = CUTOFF_DAYS) -> list:
+    qdrant = QdrantClient.instancia(UraConfig.load())
     if not qdrant.disponible:
         return []
 
@@ -176,10 +142,8 @@ async def fetch_safe(url: str, timeout: int = 30) -> tuple[str | None, bool]:  #
         return None, False
 
 
-async def atomic_upsert(html: str, url: str, config: IConfigProvider | None = None) -> bool:
-    from motor.core.qdrant_client import QdrantClient
-
-    qdrant: IVectorStore = QdrantClient.instancia(config or UraConfig.load())
+async def atomic_upsert(html: str, url: str) -> bool:
+    qdrant = QdrantClient.instancia(UraConfig.load())
     if not qdrant.disponible:
         return False
 
@@ -216,8 +180,8 @@ async def atomic_upsert(html: str, url: str, config: IConfigProvider | None = No
     return guardados > 0
 
 
-async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = None) -> dict:
-    stale = await find_stale_docs(cutoff_days=CUTOFF_DAYS, config=config)
+async def reindex_stale(dry_run: bool = True) -> dict:
+    stale = await find_stale_docs()
     stats = {"found": len(stale), "reindexed": 0, "failed": 0, "skipped": 0}
 
     for point in stale:
@@ -234,7 +198,7 @@ async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = N
             stats["failed"] += 1
             continue
 
-        success = await atomic_upsert(html, url, config=config)
+        success = await atomic_upsert(html, url)
         if success:
             stats["reindexed"] += 1
         else:
@@ -244,6 +208,8 @@ async def reindex_stale(dry_run: bool = True, config: IConfigProvider | None = N
 
 
 def main() -> None:
+    import sys
+
     dry_run = "--execute" not in sys.argv
     stats = asyncio.run(reindex_stale(dry_run=dry_run))
     log.info(json.dumps(stats, indent=2))

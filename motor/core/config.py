@@ -1,33 +1,19 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import json
 import logging
 import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-=======
-"""Re-export de UraConfig desde core/config.py.
->>>>>>> Stashed changes
 
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
+log = logging.getLogger("ura.config")
 
-<<<<<<< Updated upstream
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
-RUTA_CONFIG_DEFECTO = os.environ.get("URA_CONFIG_PATH", "/etc/ura/config.json")
-RUTA_DEPLOY_DEFECTO = os.environ.get("URA_DEPLOY_DIR", "/home/ramon/URA/ura_ia_1972/deploy")
-HOST_ASUS_DEFECTO = os.environ.get("ASUS_HOST", "100.72.103.12")
-PUERTO_ASUS_DEFECTO = int(os.environ.get("ASUS_PORT", "4198"))
-INTERFAZ_TAILSCALE_DEFECTO = os.environ.get("TAILSCALE_IFACE", "tailscale0")
+RUTA_CONFIG_DEFECTO = "/etc/ura/config.json"
+RUTA_DEPLOY_DEFECTO = "/home/ramon/URA/ura_ia_1972/deploy"
+HOST_ASUS_DEFECTO = "100.72.103.12"
+PUERTO_ASUS_DEFECTO = 4198
+INTERFAZ_TAILSCALE_DEFECTO = "tailscale0"
 
 
 def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
@@ -103,7 +89,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
     c.llm_provider = os.environ.get("URA_LLM_PROVIDER", c.llm_provider)
 
 
-def _load_config_dict() -> dict[str, Any] | None:
+def _load_config_dict() -> dict | None:
     """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
     try:
         from core.config_manager import CONFIG
@@ -189,80 +175,3 @@ class UraConfig:
         _apply_config_overrides(c)
         _apply_env_overrides(c)
         return c
-=======
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-=======
-"""Re-export de UraConfig desde core/config.py.
-
-Este archivo mantiene compatibilidad hacia atrás para todos los imports
-existentes de `motor.core.config`. La definición real vive en `core/config.py`.
-"""
-
->>>>>>> Stashed changes
-from core.config import (  # noqa: F401
-    HOST_ASUS_DEFECTO,
-    INTERFAZ_TAILSCALE_DEFECTO,
-    PUERTO_ASUS_DEFECTO,
-    RUTA_CONFIG_DEFECTO,
-    RUTA_DEPLOY_DEFECTO,
-    RUTAS_CONFIG_OPENCODE,
-    UraConfig,
-)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes

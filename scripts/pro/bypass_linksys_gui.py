@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-from motor.cli.public_api import get_secret
+from motor.core.secrets import get_secret
 
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeout
@@ -87,29 +87,8 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
     return False
 
 
-<<<<<<< Updated upstream
 def bypass_linksys() -> bool:  # noqa: PLR0915
-=======
-def bypass_linksys() -> bool:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,

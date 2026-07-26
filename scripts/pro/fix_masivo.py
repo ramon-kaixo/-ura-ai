@@ -32,36 +32,8 @@ def fix_exe_shebang() -> int:
 
 def fix_e702_semicolons() -> int:
     """E702: split x=1
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     y=2 into two lines.
     """
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
-=======
-    y=2 into two lines."""
->>>>>>> Stashed changes
     count = 0
     for dirname in DIRS:
         for f in Path(REPO / dirname).rglob("*.py"):
@@ -76,35 +48,7 @@ def fix_e702_semicolons() -> int:
                     parts = [p.strip() for p in parts]
                     if len(parts) > 1 and all(
                         not p.startswith(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                             ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
-=======
-                            ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ")
->>>>>>> Stashed changes
                         )
                         for p in parts
                     ):
@@ -187,11 +131,11 @@ def run_ruff_fix() -> None:
         subprocess.run(  # noqa: PLW1510
             ["ruff", "check", str(REPO / dirname), "--fix", "--unsafe-fixes", "--silent"],
             timeout=120,
-            check=False,
         )
 
 
 def main() -> None:
+
     fix_exe_shebang()
 
     fix_e702_semicolons()
@@ -210,34 +154,6 @@ def main() -> None:
         capture_output=True,
         text=True,
         timeout=60,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
-=======
-        check=False,
->>>>>>> Stashed changes
     )
     lines = result.stdout.strip().split("\n")
     if lines:

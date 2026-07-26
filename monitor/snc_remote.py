@@ -45,29 +45,7 @@ def mac_notify(title: str, message: str) -> None:
             capture_output=True,
             check=False,
         )
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
-=======
-    except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         pass
 
 
@@ -81,34 +59,13 @@ def sync_state() -> dict:
         )
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
-<<<<<<< Updated upstream
     except Exception:  # noqa: S110
-=======
-    except Exception:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         pass
     return {}
 
 
 def main() -> None:
+
     try:
         while True:
             state = sync_state()

@@ -12,8 +12,6 @@ import tempfile
 import textwrap
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-
-log = logging.getLogger(__name__)
 from pathlib import Path
 
 from mochila_engine import BASE_DIR
@@ -174,33 +172,5 @@ sys.exit(0 if r["fallidos"]==0 else 1)
     def _docker():
         try:
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except:  # noqa: E722
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
-=======
-        except Exception:
->>>>>>> Stashed changes
             return False

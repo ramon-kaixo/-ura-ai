@@ -1,34 +1,44 @@
 #!/usr/bin/env python3
-"""Tuneladora de Mantenimiento — health checks, limpieza, validaciones.
+import time
 
-Nunca modifica código del proyecto.
-Usa PipelineEngine + plugins (misma base que mejora continua).
+"""TUNELADORA DE MANTENIMIENTO — Flujo unificado con commit/rollback.
+
+FLUJO CORRECTO:
+  Ligero (6h):   token_screen + scanner + ruff + auto_reglas
+  Medio (24h):   + poda + refactor_v2 + compactadora + scanner_salida + inspectores
+  Profundo (7d): + refactor 4 workers + watermarks + backup + commit/rollback
+
+FUSIONADO CON:
+  - ciclo_autonomo_gx10.py (commit/rollback basado en F821)
+  - analizar_fallo_conciencia.py (diagnóstico de conciencia)
+  - master_conciencia.py (testing de acciones)
+  - pareto_router.py (gestión de datos)
+  - ura_self_modify.py (auto-mejora del prompt)
 """
 
-from __future__ import annotations
-
 import json
+import os
+import socket
+import subprocess
 import sys
-import time
 from datetime import UTC, datetime
+from pathlib import Path
 
-from motor.observability import HealthRegistry
-from scripts.pro.tuneladora.engine import PipelineEngine
-from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
-from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
-from scripts.pro.tuneladora.plugins.health import HealthPlugin
-from scripts.pro.tuneladora.plugins.reporting import ReportingPlugin
+URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
+MODEL_ROUTER = "http://10.164.1.99:11435"
+RUFF = str(URA_ROOT / ".venv/bin/ruff")
+VENV_PYTHON = str(URA_ROOT / ".venv/bin/python3")
+LOG_DIR = Path("/opt/ura/logs/tuneladora_mantenimiento")
+REPORT_DIR = Path(str(URA_ROOT) + "/docs/pro/reports")
+NERVIOSO = Path(str(URA_ROOT) + "/.nervioso")
 
-_HEALTH_STATE_FILE = "/tmp/ura_tuneladora_health.json"
-_health = HealthRegistry()
+MAGICDNS_GX10 = "gx10-64c3-1.tail7b3cf3.ts.net"
+MAGICDNS_MAC = "mac-mini-de-ramon.tail7b3cf3.ts.net"
 
 
-def _persist_health() -> None:
+def _resolve_host(hostname: str, default: str = "") -> str:
     try:
-<<<<<<< Updated upstream
-        with open(_HEALTH_STATE_FILE, "w") as f:
-            json.dump(_health.snapshot(), f)
-=======
         return socket.gethostbyname(hostname)
     except OSError:
         return default
@@ -38,12 +48,12 @@ def _load_devices(root: Path) -> dict[str, str]:
     defaults = {
         "gx10_principal": "10.164.1.99",
         "gx10_wifi": "10.164.1.247",
-        "gx10_tailscale": _resolve_host(MAGICDNS_GX10, os.environ.get("GX10_TAILSCALE_IP", "100.72.103.12")),
+        "gx10_tailscale": _resolve_host(MAGICDNS_GX10, "100.72.103.12"),
         "mac_ethernet": "10.164.1.26",
-        "mac_tailscale": _resolve_host(MAGICDNS_MAC, os.environ.get("MAC_TAILSCALE_IP", "100.123.81.101")),
+        "mac_tailscale": _resolve_host(MAGICDNS_MAC, "100.123.81.101"),
     }
     try:
-        with open(root / "config" / "dispositivos.json") as f:
+        with open(root / "config" / "dispositivos.json") as f:  # noqa: PTH123
             cfg = json.load(f)
         d = cfg.get("dispositivos", {})
         gx10 = d.get("gx10-64c3", {})
@@ -67,111 +77,25 @@ DISPOSITIVOS = _load_devices(URA_ROOT)
 
 
 def log(msg) -> None:
-    print(f"[{datetime.now(UTC).strftime('%H:%M:%S')}] {msg}")
+    pass
 
 
 def run(cmd, timeout=120):
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(URA_ROOT), check=False)
         return r.returncode, r.stdout, r.stderr
->>>>>>> Stashed changes
     except Exception as e:
-        _log = __import__("logging").getLogger("ura.tuneladora.mantenimiento")
-        _log.warning("health persist failed: %s", e)
+        return -1, "", str(e)
 
 
-def _detectar_nivel() -> str:
-    """Determina el nivel de mantenimiento según hora/día."""
+def detectar_nivel() -> str:
     now = datetime.now(UTC)
     hora, dia = now.hour, now.weekday()
     if dia == 0 and 2 <= hora <= 4:
         return "profundo"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    if hora in (6, 12, 18):
-        return "medio"
+    if hora in (0, 6, 12, 18):
+        return "medio" if hora == 3 else "ligero"
     return "ligero"
-=======
-    if hora in (0, 6, 12, 18):
-        return "medio" if hora == 3 else "total"
-    return "total"
->>>>>>> Stashed changes
-
-
-def main() -> int:  # noqa: PLR0915
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Tuneladora de Mantenimiento")
-    parser.add_argument("--nivel", choices=["ligero", "medio", "profundo"], default=None)
-    parser.add_argument("--force", action="store_true", help="Ignorar nivel, ejecutar todo")
-    args = parser.parse_args()
-
-    engine = PipelineEngine()
-    health = HealthPlugin(engine)
-    quality = CodeQualityPlugin(engine)
-    cleanup = CleanupPlugin(engine)
-    reporting = ReportingPlugin(engine)
-
-    nivel = args.nivel or _detectar_nivel()
-    if args.force:
-        nivel = "profundo"
-
-    _health.register_component("tuneladora")
-    _health.set_healthy("tuneladora", f"iniciando mantenimiento nivel {nivel}")
-
-    engine.log.info("=" * 55)
-    engine.log.info(f"  MANTENIMIENTO — Nivel: {nivel.upper()}")
-    engine.log.info("=" * 55)
-
-    t0 = time.time()
-    results: dict = {}
-
-    # ── Preflight: Health checks (todos los niveles) ──
-    engine.log.info("── Preflight: Health checks ──")
-    results["health"] = health.check_all()
-    hr = results.get("health", {})
-    ollama_ok = hr.get("ollama", {}).get("ok", False)
-    if not ollama_ok:
-        _health.set_degraded("tuneladora", "Ollama no disponible en preflight")
-    _persist_health()
-
-    # ── Ligero: salud + logs + disco ──
-    engine.log.info("── Mantenimiento ligero ──")
-    results["health"] = health.check_all()
-    results["disk"] = cleanup.check_disk()
-    results["logs"] = cleanup.cleanup_logs()
-
-    # ── Medio: embeddings + vacuum + calidad ──
-    if nivel in ("medio", "profundo"):
-        engine.log.info("── Mantenimiento medio ──")
-        results["embeddings"] = cleanup.cleanup_embeddings()
-        results["vacuum"] = cleanup.vacuum_sqlite()
-        quality.ruff_check("F841,F401")
-        quality.ruff_format()
-        f821 = quality.ruff_check("F821")
-        results["f821"] = f821
-        quality.ruff_fix()
-
-    # ── Profundo: duplicados, deuda, forense, auditoria, git ──
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    if hora in (0, 6, 12, 18):
-        return "medio" if hora == 3 else "total"
-    return "total"
 
 
 def health_check():
@@ -188,7 +112,7 @@ def health_check():
     try:
         usage = os.statvfs("/")
         metrics["disco_libre_gb"] = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     alertas = []
     if metrics.get("ram_usada_mb", 0) > 90000:
@@ -203,7 +127,7 @@ def check_ollama():
         rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{OLLAMA_URL}/api/tags"])
         if rc == 0 and "models" in out:
             return json.loads(out).get("models", [])
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return []
 
@@ -334,7 +258,7 @@ def git_commit_if_stable() -> None:
     log("  Git commit (si F821 estable)...")
     run(["git", "add", "-u"], timeout=30)
     run(
-        ["git", "commit", "-m", f"mantenimiento: {datetime.now().strftime('%Y-%m-%d %H:%M')} — F821 estable"],
+        ["git", "commit", "-m", f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')} — F821 estable"],
         timeout=30,
     )
 
@@ -383,9 +307,9 @@ def step_auto_mejora_prompt():
 def step_auditoria(profundidad: str) -> dict:
     """Ejecuta el escudo de auditoría. Retorna score + reporte + html_path."""
     log(f"  Auditoría ({profundidad})...")
-    flags = "--quick" if profundidad in ("total", "medio") else "--full"
+    flags = "--quick" if profundidad in ("ligero", "medio") else "--full"
     script = str(URA_ROOT / "scripts/pro/revisor.py")
-    _rc, stdout, _ = run([VENV_PYTHON, script, "--full"], timeout=120)
+    _rc, stdout, _ = run([VENV_PYTHON, script, flags], timeout=120)
     try:
         reporte = json.loads(stdout)
     except (json.JSONDecodeError, ValueError) as e:
@@ -455,7 +379,7 @@ def revision_ligera():
     f821 = out.count("F821")
     step_compactadora()
     step_scanner_salida()
-    auditoria = step_auditoria("total")
+    auditoria = step_auditoria("ligero")
     return {"ruff_f821": f821, "token_screen": token_ok, "auditoria_score": auditoria.get("score", 0)}
 
 
@@ -562,7 +486,7 @@ def revision_profunda():
         "f821_final": results["f821_final"],
         "git": results["git"],
     }
-    reporte_path = REPORT_DIR / f"reporte_semanal_{datetime.now().strftime('%Y%m%d')}.json"
+    reporte_path = REPORT_DIR / f"reporte_semanal_{datetime.now(UTC).strftime('%Y%m%d')}.json"
     reporte_path.write_text(json.dumps(reporte, indent=2, ensure_ascii=False))
     results["reporte"] = str(reporte_path)
     return results
@@ -579,50 +503,21 @@ def main() -> int:
     _health, alertas = health_check()
     if alertas:
         log(f"  ALERTAS: {alertas}")
->>>>>>> Stashed changes
     if nivel == "profundo":
-        engine.log.info("── Mantenimiento profundo ──")
-        results["ollama"] = {"modelos": len(engine.health_ollama())}
-        results["forense"] = cleanup.forense_aislamientos()
-        results["duplicates"] = cleanup.detect_duplicates()
-        results["debt"] = cleanup.tech_debt_report()
-        quality.f821_snapshot("pre-mantenimiento")
-        results["ruff_profundo"] = quality.ruff_fix(unsafe=True)
-        results["auditoria"] = cleanup.auditoria(profundo=True)
-
-        # Git: commit si auditoria ok, rollback si no
-        aud = results.get("auditoria", {})
-        if aud.get("bloqueante"):
-            cleanup.git_rollback()
-            results["git"] = "rollback_by_auditor"
-        else:
-            commit_ok = cleanup.git_commit()
-            if commit_ok["ok"]:
-                f821_post = quality.f821_compare("pre-mantenimiento")
-                results["f821_post"] = f821_post
-                results["git"] = "committed" if f821_post["ok"] else "rollback_f821"
-            else:
-                results["git"] = "no_changes"
-
-    # ── Reporte ──
-    elapsed = time.time() - t0
-    H = int(elapsed // 3600)
-    M = int((elapsed % 3600) // 60)
-    S = int(elapsed % 60)
-
-    engine.log.report(
-        "INFORME DE MANTENIMIENTO",
-        [
-            f"Nivel: {nivel.upper()}",
-            f"Duración: {H}h {M}m {S}s",
-        ],
+        resultado = revision_profunda()
+    elif nivel == "medio":
+        resultado = revision_media()
+    else:
+        resultado = revision_ligera()
+    estado = {
+        "ultima_ejecucion": datetime.now(UTC).isoformat(),
+        "nivel": nivel,
+        "resultado": resultado,
+    }
+    (NERVIOSO / "estado_mantenimiento.json").write_text(
+        json.dumps(estado, indent=2, ensure_ascii=False),
     )
-    reporting.save_maintenance_state(results, nivel)
-
-    current = _health.get_status("tuneladora")
-    if current != "degraded":
-        _health.set_healthy("tuneladora", f"mantenimiento {nivel} completado en {H}h{M}m{S}s")
-    _persist_health()
+    log("Mantenimiento completado")
     return 0
 
 

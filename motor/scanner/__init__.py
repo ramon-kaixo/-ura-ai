@@ -1,14 +1,11 @@
-"""Motor de escaneo — Scanner + fábrica."""
+import logging
+import os
+import time
+from datetime import UTC, datetime
+from pathlib import Path
 
-<<<<<<< Updated upstream
-from motor.scanner._state import ScannerState, build_scanner_state  # noqa: F401
-from motor.scanner.scanner import (  # noqa: F401
-    SERVICIOS_DOCKER,
-    SERVICIOS_SYSTEMD,
-    Scanner,
-)
-=======
 from motor.core.config import UraConfig
+from motor.core.executor import SubprocessExecutor
 from motor.core.state import ScanResult
 from motor.scanner.calibration import Calibration
 from motor.scanner.collector_asus import escanear_asus
@@ -19,6 +16,7 @@ from motor.scanner.diff_detector import compute_diff
 from motor.scanner.sliding_window import SlidingWindow
 
 log = logging.getLogger("ura.scanner")
+_executor = SubprocessExecutor()
 
 SERVICIOS_SYSTEMD = ["sshd", "docker", "opencode"]
 SERVICIOS_DOCKER = ["qdrant", "n8n", "searxng", "vane", "agent-search"]
@@ -39,12 +37,12 @@ class Scanner:
     def _es_fisico() -> bool:
         """Determina si el hardware es físico (no VM)."""
         try:
-            r = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=5, check=False)
+            r = _executor.run(["systemd-detect-virt"], timeout=5)
             return "none" in r.stdout.strip()
         except Exception as e:
             log.debug("systemd-detect-virt falló: %s", e)
             try:
-                with open("/proc/cpuinfo") as f:
+                with open("/proc/cpuinfo") as f:  # noqa: PTH123
                     return "hypervisor" not in f.read()
             except Exception as e2:
                 log.debug("lectura cpuinfo falló: %s", e2)
@@ -103,13 +101,7 @@ class Scanner:
         s = {}
         for svc in SERVICIOS_SYSTEMD:
             try:
-                r = subprocess.run(
-                    ["systemctl", "is-active", svc],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                    check=False,
-                )
+                r = _executor.run(["systemctl", "is-active", svc], timeout=5)
                 out = r.stdout.strip()
                 s[svc] = "not_found" if out in ("unknown", "inactive") and not self._unit_exists(svc) else out
             except FileNotFoundError:
@@ -127,12 +119,9 @@ class Scanner:
     def _unit_exists(self, name: str) -> bool:
         """Verifica si existe una unit systemd."""
         try:
-            r = subprocess.run(
+            r = _executor.run(
                 ["systemctl", "list-units", "--all", "--type=service", f"{name}.service", "--no-legend"],
-                capture_output=True,
-                text=True,
                 timeout=5,
-                check=False,
             )
             return bool(r.stdout.strip())
         except Exception as e:
@@ -142,13 +131,7 @@ class Scanner:
     def _list_docker_containers(self) -> dict:
         """Lista contenedores docker y su estado."""
         try:
-            r = subprocess.run(
-                ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
+            r = _executor.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"], timeout=10)
             return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
         except Exception as e:
             log.debug("docker ps falló: %s", e)
@@ -179,7 +162,7 @@ class Scanner:
 
         meminfo = {}
         try:
-            with open("/proc/meminfo") as f:
+            with open("/proc/meminfo") as f:  # noqa: PTH123
                 meminfo = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in f if ":" in l)}
         except Exception as e:
             log.warning("fallo lectura /proc/meminfo: %s", e)
@@ -188,7 +171,7 @@ class Scanner:
 
         load = 0.0
         try:
-            with open("/proc/loadavg") as f:
+            with open("/proc/loadavg") as f:  # noqa: PTH123
                 load = float(f.read().split()[0])
         except Exception as e:
             log.debug("fallo lectura /proc/loadavg: %s", e)
@@ -232,13 +215,7 @@ class Scanner:
         """Cuenta contenedores docker por estado."""
         c = {"total": 0, "running": 0, "exited": 0}
         try:
-            r = subprocess.run(
-                ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
+            r = _executor.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"], timeout=10)
             for line in r.stdout.strip().split("\n"):
                 if not line:
                     continue
@@ -295,7 +272,7 @@ class Scanner:
         """Detecta procesos duplicados (opencode, node, docker)."""
         d = {}
         try:
-            r = subprocess.run(["ps", "-eo", "args="], capture_output=True, text=True, timeout=5, check=False)
+            r = _executor.run(["ps", "-eo", "args="], timeout=5)
             vistos = {}
             for line in r.stdout.strip().split("\n"):
                 args = line.strip()
@@ -318,7 +295,7 @@ class Scanner:
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
-                with open(archivo, "rb") as f:
+                with open(archivo, "rb") as f:  # noqa: PTH123
                     h.update(f.read())
             except OSError:
                 pass
@@ -358,13 +335,7 @@ class Scanner:
             log.debug("deteccion hijos huerfanos fallo: %s", e)
 
         try:
-            r = subprocess.run(
-                ["docker", "images", "-f", "dangling=true", "-q"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
+            r = _executor.run(["docker", "images", "-f", "dangling=true", "-q"], timeout=10)
             dangling = [i for i in r.stdout.strip().split("\n") if i]
             if dangling:
                 orphans.append({"tipo": "docker_dangling", "cantidad": len(dangling)})
@@ -372,13 +343,7 @@ class Scanner:
             log.debug("deteccion docker dangling falló: %s", e)
 
         try:
-            r = subprocess.run(
-                ["systemctl", "list-units", "--state=failed", "--no-legend"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
+            r = _executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
             failed = [
                 l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()
             ]
@@ -392,15 +357,8 @@ class Scanner:
     def _detectar_systemd_failed(self) -> list:
         """Devuelve lista de unidades systemd en estado failed."""
         try:
-            r = subprocess.run(
-                ["systemctl", "list-units", "--state=failed", "--no-legend"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
+            r = _executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
             return [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
         except Exception as e:
             log.debug("systemctl list-failed falló: %s", e)
             return []
->>>>>>> Stashed changes

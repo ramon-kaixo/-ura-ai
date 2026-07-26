@@ -11,6 +11,7 @@ from pathlib import Path
 
 import psutil
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("MotorFlujo")
 
 SPOOL_DIR = str(Path.home() / "URA" / "storage" / "spool")
@@ -47,29 +48,7 @@ class AlforjaSpooler:
             archivos[0].unlink()
             return tarea
         except (OSError, json.JSONDecodeError) as e:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             logger.exception(f"[ALFORJA] Error leyendo spool: {e}")
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-            logger.error(f"[ALFORJA] Error leyendo spool: {e}")
->>>>>>> Stashed changes
             return None
 
 
@@ -137,5 +116,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     asyncio.run(main())

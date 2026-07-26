@@ -8,7 +8,6 @@
 - Semáforo: is_playing_tts para evitar auto-escucha del Anker S500
 """
 
-import logging
 import os
 import queue
 import re
@@ -17,8 +16,6 @@ import subprocess
 from pathlib import Path
 
 import numpy as np
-
-logger = logging.getLogger(__name__)
 import sounddevice as sd
 import torch
 import whisper
@@ -60,43 +57,8 @@ class AnkerMacPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:  # noqa: S110
             pass
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            logger.warning("_find_anker_device: %s", e)
->>>>>>> Stashed changes
         return None
 
     def _audio_callback(self, indata, frames, time, status) -> None:

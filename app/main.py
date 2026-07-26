@@ -12,6 +12,7 @@ from pathlib import Path
 from app.capturador import CapturadorTarget
 from app.gestor_archivos import GestorArchivosSeguro
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 REPORTS = Path.home() / "URA" / "reports"
@@ -42,40 +43,10 @@ class Orquestador:
         return r
 
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 async def main() -> None:
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-async def main():
->>>>>>> Stashed changes
     o = Orquestador()
     await o.ciclo()
 
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     asyncio.run(main())
