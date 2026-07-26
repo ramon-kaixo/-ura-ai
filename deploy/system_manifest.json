@@ -1,32 +1,42 @@
 {
-  "version": "2026-07-26",
+  "version": "2026-07-27",
   "hostname": "gx10-64c3",
-  "notes": "Fuente de verdad del sistema. Actualizar al a\u00f1adir/eliminar servicios, puertos o screens.",
+  "notes": "Fuente de verdad del sistema. Actualizar al añadir/eliminar servicios, puertos o screens.",
   "services": {
     "system": {
       "ura-mochila": {
         "port": 4098,
         "file": "/etc/systemd/system/ura-mochila.service",
         "status": "active",
-        "description": "FastAPI Mochila API \u2014 Router principal"
+        "auth": "Bearer (URA_API_KEY)",
+        "description": "FastAPI Mochila API — Router principal"
       },
       "model-router": {
         "port": 11435,
         "file": "/etc/systemd/system/model-router.service",
         "status": "active",
+        "auth": "NO — core.auth_layer no existe, fallback a no-op",
+        "auth_action": "CORREGIR — implementar Bearer middleware como mochila",
         "description": "Model Router inteligente (system level)"
+      },
+      "ura-openclaw": {
+        "port": 18789,
+        "file": "/etc/systemd/system/ura-openclaw.service",
+        "status": "active",
+        "auth": "Bearer (token propio OpenClaw)",
+        "description": "OpenClaw Gateway Nativo (MCP)"
       },
       "ura-api": {
         "port": 9090,
         "file": "/etc/systemd/system/ura-api.service",
         "status": "active",
-        "description": "URA GX10 API \u2014 Remote endpoint"
+        "description": "URA GX10 API — Remote endpoint"
       },
       "ura-assistant": {
         "port": 8003,
         "file": "/etc/systemd/system/ura-assistant.service",
         "status": "active",
-        "description": "URA Assistant Conversacional \u2014 FastAPI"
+        "description": "URA Assistant Conversacional — FastAPI"
       },
       "ura-audit-api": {
         "port": 5053,
@@ -44,6 +54,7 @@
         "port": null,
         "file": "/etc/systemd/system/ura-heartbeat.service",
         "status": "active",
+        "auth": "Bearer (URA_API_KEY)",
         "description": "Monitoreo Mochila health"
       },
       "ura-metrics": {
@@ -56,25 +67,25 @@
         "port": 8088,
         "file": "/etc/systemd/system/ura-mkdocs.service",
         "status": "active",
-        "description": "URA MkDocs \u2014 Base de Conocimiento"
+        "description": "URA MkDocs — Base de Conocimiento"
       },
       "ura-watch-daemon": {
         "port": null,
         "file": "/etc/systemd/system/ura-watch-daemon.service",
         "status": "active",
-        "description": "Detecci\u00f3n cambios .py + pipeline"
+        "description": "Detección cambios .py + pipeline"
       },
       "ura-watcher": {
         "port": null,
         "file": "/etc/systemd/system/ura-watcher.service",
         "status": "active",
-        "description": "Indexaci\u00f3n sectorizada en tiempo real"
+        "description": "Indexación sectorizada en tiempo real"
       },
       "ura-watcher-auditoria": {
         "port": null,
         "file": "/etc/systemd/system/ura-watcher-auditoria.service",
         "status": "active",
-        "description": "Dispara auditor\u00eda al recibir datos"
+        "description": "Dispara auditoría al recibir datos"
       },
       "ura-watchdog-buffer": {
         "port": null,
@@ -98,6 +109,7 @@
         "port": 8081,
         "file": "/etc/systemd/system/opencode.service",
         "status": "active",
+        "auth": "Bearer (token propio OpenCode)",
         "description": "OpenCode Web UI (OpenClaw + Ollama)"
       },
       "smbd": {
@@ -169,10 +181,9 @@
     },
     "user": {
       "model-router": {
-        "status": "DISABLED",
-        "reason": "duplicado del system service",
-        "file": "/home/ramon/.config/systemd/user/model-router.service",
-        "action": "NO USAR \u2014 eliminar si se encuentra activo"
+        "status": "REMOVED",
+        "reason": "duplicado del system service — eliminado 27 Jul 2026",
+        "action": "N/A — archivo service eliminado"
       },
       "ura-maintenance": {
         "status": "active",
@@ -189,6 +200,48 @@
         "reason": "duplicado del system service",
         "action": "Eliminado el 26 Jul 2026"
       }
+    }
+  },
+  "timers": {
+    "ura-mochila-guard.timer": {
+      "interval": "cada 5 min",
+      "status": "active",
+      "description": "Guardián de Mochila API"
+    },
+    "ura-watchdog.timer": {
+      "interval": "cada 5 min",
+      "status": "active",
+      "description": "Watchdog general"
+    },
+    "ura-memory-watchdog.timer": {
+      "interval": "cada 5 min",
+      "status": "active",
+      "description": "Watchdog de memoria"
+    },
+    "ura-auditd-watchdog.timer": {
+      "interval": "cada 5 min",
+      "status": "active",
+      "description": "Watchdog de auditoría"
+    },
+    "ura-pipeline.timer": {
+      "interval": "cada 5 min",
+      "status": "active",
+      "description": "Pipeline automático"
+    },
+    "ura-cleanup.timer": {
+      "interval": "diario",
+      "status": "active",
+      "description": "Limpieza diaria"
+    },
+    "ura-maintenance-v2.timer": {
+      "interval": "06:00 daily",
+      "status": "active",
+      "description": "Tuneladora mantenimiento semanal"
+    },
+    "ura-auto-reindex.timer": {
+      "interval": "?",
+      "status": "inactive",
+      "description": "Auto-reindexado (no configurado)"
     }
   },
   "docker": {
@@ -210,8 +263,8 @@
     "open-webui": {
       "ports": "3080",
       "status": "active",
-      "description": "Open WebUI (mapeado a 8080 interno)",
-      "auth": "WEBUI_AUTH=true — API 401 sin token"
+      "auth": "WEBUI_AUTH=true — API 401 sin token",
+      "description": "Open WebUI (mapeado a 8080 interno)"
     },
     "n8n": {
       "ports": "5678/5679",
@@ -268,6 +321,7 @@
     "11434": "ollama",
     "11435": "model-router",
     "11436": "llama-server",
+    "18789": "ura-openclaw",
     "22000": "syncthing",
     "46113": "tailscale (inter-node)"
   }
