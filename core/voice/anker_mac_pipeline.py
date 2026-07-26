@@ -65,11 +65,16 @@ class AnkerMacPipeline:
         if not self.is_playing_tts:
             self.audio_queue.put(indata.copy())
 
+    _ALLOWED_SOUNDS = frozenset({
+        "Tink", "Glass", "Hero", "Basso", "Blow", "Bottle", "Frog",
+        "Funk", "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tweet",
+    })
+
     def _trigger_macos_notification(self, title: str, message: str, sound: str = "Tink") -> None:
         """Banner nativo macOS asíncrono — sin bloqueo del pipeline."""
         safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
         safe_msg = message.replace("\\", "\\\\").replace('"', '\\"')
-        safe_sound = sound.replace("\\", "\\\\").replace('"', '\\"')
+        safe_sound = sound if sound in self._ALLOWED_SOUNDS else "Tink"
         script = f'display notification "{safe_msg}" with title "{safe_title}" sound name "{safe_sound}"'
         subprocess.Popen(
             ["osascript", "-e", script],

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import secrets
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -17,6 +18,7 @@ from core.logs.guardian_logger import log_event
 from core.memoria.analizador import analizar
 from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
+from motor.core.secrets import require_secret as _require_secret
 
 log = logging.getLogger(__name__)
 from core.memoria.rastreadores.comprar import fase_comprar
@@ -35,6 +37,9 @@ from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
 load_dotenv(Path("~/URA/.env").expanduser())  # noqa: F821
+
+_API_KEY = _require_secret("URA_API_KEY")
+_AUTH_EXEMPT = frozenset({"/health", "/metrics", "/openapi.json", "/docs", "/redoc"})
 
 OLLAMA_SOCKET = "http://127.0.0.1:11434"
 
@@ -199,6 +204,10 @@ class VRAMAwareScheduler:
     async def stop_loop(self) -> None:
         if self._task:
             self._task.cancel()
+
+    async def close(self) -> None:
+        await self.stop_loop()
+        await self._ollama_client.aclose()
 
     async def _scheduler_loop(self) -> None:
         while True:
@@ -383,7 +392,7 @@ async def lifespan(app: FastAPI):
     init_guardian()
     await scheduler.start_loop()
     yield
-    await scheduler.stop_loop()
+    await scheduler.close()
     for p in PROVIDERS.values():
         if hasattr(p, "__aenter__"):
             await p.__aexit__(None, None, None)
@@ -391,6 +400,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Mochila Middleware", version="0.7.0", lifespan=lifespan)
 app.add_middleware(GuardianMiddleware)
+
+
+@app.middleware("http")
+async def _auth_middleware(request: Request, call_next):
+    path = request.url.path
+    if any(path.startswith(ex) for ex in _AUTH_EXEMPT):
+        return await call_next(request)
+    auth = request.headers.get("Authorization", "")
+    expected = f"Bearer {_API_KEY}"
+    if not secrets.compare_digest(auth, expected):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    return await call_next(request)
 
 
 @app.get("/health")
@@ -408,7 +429,7 @@ async def v1_models():
         h = await provider.health()
         if h.get("status") == "ok" and "modelos_disponibles" in h:
             for m in h["modelos_disponibles"][:50]:
-                models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})  # noqa: PERF401
+                models.append({"id": f"{name}/{m}", "provider": name, "object": "model"})
         models.append({"id": f"{name}/auto", "provider": name, "object": "model"})
     for ruta in router.rutas.values():
         for entrada in ruta:

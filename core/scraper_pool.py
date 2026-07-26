@@ -36,7 +36,10 @@ class DomainDecoupledPool:
 
     async def join(self) -> None:
         """Wait for all queues to drain, then cancel workers."""
-        await asyncio.gather(*(q.join() for q in self.queues.values()))
+        results = await asyncio.gather(*(q.join() for q in self.queues.values()), return_exceptions=True)
+        for r in results:
+            if isinstance(r, BaseException):
+                log.warning("Queue join error: %s", r)
         for task in list(self._workers):
             if task is not asyncio.current_task():
                 task.cancel()

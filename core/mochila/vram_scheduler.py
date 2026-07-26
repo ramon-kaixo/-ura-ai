@@ -171,6 +171,10 @@ class VRAMAwareScheduler:
         if self._task:
             self._task.cancel()
 
+    async def close(self) -> None:
+        await self.stop_loop()
+        await self._ollama_client.aclose()
+
     async def _scheduler_loop(self) -> None:
         while True:
             try:
