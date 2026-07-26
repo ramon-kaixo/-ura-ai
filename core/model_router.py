@@ -940,10 +940,13 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             },
         )
 
+    def _get_api_key(self) -> str | None:
+        auth = self.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            return auth[7:]
+        return self.headers.get("X-API-KEY")
+
     def _handle_health(self) -> None:
-        if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
-            self._send_json({"error": "Forbidden"}, 403)
-            return
         disponibles = self._get_modelos()
         ollama_ok = len(disponibles) > 0
         self._send_json(
@@ -963,8 +966,8 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self._send_text(metrics.get_prometheus_format())
 
     def _handle_supervisor(self) -> None:
-        if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
-            self._send_json({"error": "Forbidden: X-API-KEY inválido o faltante"}, 403)
+        if require_auth() and not auth_validate(self._get_api_key()):
+            self._send_json({"error": "Forbidden: API key inválida o faltante"}, 403)
             return
         supervisor_data = "{}"
         ctx = None
