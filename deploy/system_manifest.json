@@ -1,14 +1,14 @@
 {
   "version": "2026-07-26",
   "hostname": "gx10-64c3",
-  "notes": "Fuente de verdad del sistema. Actualizar al añadir/eliminar servicios, puertos o screens.",
+  "notes": "Fuente de verdad del sistema. Actualizar al a\u00f1adir/eliminar servicios, puertos o screens.",
   "services": {
     "system": {
       "ura-mochila": {
         "port": 4098,
         "file": "/etc/systemd/system/ura-mochila.service",
         "status": "active",
-        "description": "FastAPI Mochila API — Router principal"
+        "description": "FastAPI Mochila API \u2014 Router principal"
       },
       "model-router": {
         "port": 11435,
@@ -20,13 +20,13 @@
         "port": 9090,
         "file": "/etc/systemd/system/ura-api.service",
         "status": "active",
-        "description": "URA GX10 API — Remote endpoint"
+        "description": "URA GX10 API \u2014 Remote endpoint"
       },
       "ura-assistant": {
         "port": 8003,
         "file": "/etc/systemd/system/ura-assistant.service",
         "status": "active",
-        "description": "URA Assistant Conversacional — FastAPI"
+        "description": "URA Assistant Conversacional \u2014 FastAPI"
       },
       "ura-audit-api": {
         "port": 5053,
@@ -56,25 +56,25 @@
         "port": 8088,
         "file": "/etc/systemd/system/ura-mkdocs.service",
         "status": "active",
-        "description": "URA MkDocs — Base de Conocimiento"
+        "description": "URA MkDocs \u2014 Base de Conocimiento"
       },
       "ura-watch-daemon": {
         "port": null,
         "file": "/etc/systemd/system/ura-watch-daemon.service",
         "status": "active",
-        "description": "Detección cambios .py + pipeline"
+        "description": "Detecci\u00f3n cambios .py + pipeline"
       },
       "ura-watcher": {
         "port": null,
         "file": "/etc/systemd/system/ura-watcher.service",
         "status": "active",
-        "description": "Indexación sectorizada en tiempo real"
+        "description": "Indexaci\u00f3n sectorizada en tiempo real"
       },
       "ura-watcher-auditoria": {
         "port": null,
         "file": "/etc/systemd/system/ura-watcher-auditoria.service",
         "status": "active",
-        "description": "Dispara auditoría al recibir datos"
+        "description": "Dispara auditor\u00eda al recibir datos"
       },
       "ura-watchdog-buffer": {
         "port": null,
@@ -160,7 +160,22 @@
         "status": "DISABLED",
         "reason": "duplicado del system service",
         "file": "/home/ramon/.config/systemd/user/model-router.service",
-        "action": "NO USAR — eliminar si se encuentra activo"
+        "action": "NO USAR \u2014 eliminar si se encuentra activo"
+      },
+      "ura-maintenance": {
+        "status": "active",
+        "description": "Limpieza automatizada (apt, pip, logs)",
+        "trigger": "timer",
+        "file": "/home/ramon/.config/systemd/user/ura-maintenance.service"
+      },
+      "ura-fallback": {
+        "status": "static",
+        "description": "Servicio fallback URA"
+      },
+      "start_router_user": {
+        "status": "REMOVED",
+        "reason": "duplicado del system service",
+        "action": "Eliminado el 26 Jul 2026"
       }
     }
   },
