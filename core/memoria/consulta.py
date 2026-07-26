@@ -6,7 +6,6 @@ import time
 from typing import Any
 
 from core.memoria.bridge import buscar_y_aprender
-from core.memoria.ingesto import procesados_local  # noqa: F401
 from core.memoria.qdrant_store import buscar_ideas
 
 log = logging.getLogger("memoria.consulta")

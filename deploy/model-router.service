@@ -9,8 +9,8 @@ WorkingDirectory=/home/ramon/URA/ura_ia_1972
 Environment="URA_AUTH_ENABLED=false"
 ExecStartPre=/bin/bash -c '/bin/fuser -k 11435/tcp 2>/dev/null || true'
 ExecStart=/usr/bin/python3 -m core.model_router
-Restart=always
-RestartSec=5
+Restart=on-failure
+RestartSec=30
 StandardOutput=journal
 StandardError=journal
 
