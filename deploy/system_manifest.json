@@ -142,17 +142,29 @@
         "status": "failed",
         "description": "Limpieza automatizada (legacy)"
       },
-      "ura-router-health": {
-        "port": null,
-        "file": "/etc/systemd/system/ura-router-health.service",
-        "status": "failed",
-        "description": "Model Router Health Check (conflictivo con model-router)"
-      },
       "ura-voice": {
         "port": null,
         "file": "/etc/systemd/system/ura-voice.service",
         "status": "failed",
         "description": "Voice Agent Pipeline (hardware-dependente)"
+      },
+      "ollama": {
+        "port": 11434,
+        "file": "/etc/systemd/system/ollama.service",
+        "status": "active",
+        "description": "LLM inference server"
+      },
+      "qdrant": {
+        "port": 6333,
+        "file": "/etc/systemd/system/qdrant.service",
+        "status": "active",
+        "description": "Vector DB (Docker)"
+      },
+      "redis": {
+        "port": 6379,
+        "file": "/etc/systemd/system/redis.service",
+        "status": "active",
+        "description": "Cache / PubSub (Docker)"
       }
     },
     "user": {
@@ -182,26 +194,33 @@
   "docker": {
     "ura-qdrant": {
       "ports": "6333-6334",
+      "status": "active",
       "description": "Qdrant vector database"
     },
     "ura-grafana": {
       "ports": "3000",
+      "status": "active",
       "description": "Grafana dashboards"
     },
     "ura-prometheus": {
       "ports": "9093",
+      "status": "active",
       "description": "Prometheus (mapeado a 9090 interno)"
     },
     "open-webui": {
       "ports": "3080",
-      "description": "Open WebUI (mapeado a 8080 interno)"
+      "status": "active",
+      "description": "Open WebUI (mapeado a 8080 interno)",
+      "auth": "WEBUI_AUTH=true — API 401 sin token"
     },
     "n8n": {
       "ports": "5678/5679",
+      "status": "active",
       "description": "n8n workflow automation"
     },
     "ura-mejora-continua": {
       "ports": null,
+      "status": "active",
       "description": "sandbox mejora continua"
     }
   },
