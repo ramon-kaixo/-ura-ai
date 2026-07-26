@@ -28,6 +28,8 @@ deploy/ura-pool/node_modules/
 node_modules/
 *.db
 knowledge/knowledge.db
+knowledge/knowledge.db-shm
+knowledge/knowledge.db-wal
 knowledge/interacciones/
 knowledge/evaluation/results/
 *.onnx
