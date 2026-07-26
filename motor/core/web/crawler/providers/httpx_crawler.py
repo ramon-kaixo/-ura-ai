@@ -174,7 +174,6 @@ class HttpCrawler(Crawler):
                 max_redirects=self._max_redirects,
                 headers={"User-Agent": self._user_agent},
             ) as client:
-
                 # HEAD request primero para validar
                 head = client.head(url)
                 doc.status_code = head.status_code
