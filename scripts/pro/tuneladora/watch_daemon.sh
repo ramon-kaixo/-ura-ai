@@ -1,7 +1,13 @@
 #!/bin/bash
-# Watch daemon: ejecuta pipeline cuando detecta cambios en .py
+# Watch daemon v2.1 — con pre-flight check
 # Uso: ./scripts/pro/tuneladora/watch_daemon.sh
 REPO="$HOME/URA/ura_ia_1972"
+
+# PRE-FLIGHT: Verificar que no hay duplicados antes de arrancar
+python3 "$REPO/scripts/pro/tuneladora/preflight_system.py" audit || {
+    echo "[$(date '+%H:%M:%S')]  PRE-FLIGHT: audit fallo — abortando"
+    exit 1
+}
 PIPELINE="python3 $REPO/scripts/pro/tuneladora/tuneladora_pipeline.py"
 DEBOUNCE_SEC=2
 COOLDOWN_SEC=10
