@@ -18,6 +18,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
+from motor.core.secrets import get_secret
 
 STATE_FILE = "/tmp/ura_state.json"
 
@@ -36,7 +37,13 @@ _shutdown_flag = False
 
 def check_health() -> bool:
     try:
-        req = Request(f"{MOCHILA_URL}{HEALTH_PATH}", method="GET")  # noqa: S310
+        token = get_secret("URA_API_KEY") or ""
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        req = Request(  # noqa: S310
+            f"{MOCHILA_URL}{HEALTH_PATH}",
+            method="GET",
+            headers=headers,
+        )
         with urlopen(req, timeout=5) as resp:  # noqa: S310
             return resp.status == 200
     except (URLError, OSError, ValueError) as e:

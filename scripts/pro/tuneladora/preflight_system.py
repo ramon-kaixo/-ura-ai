@@ -163,7 +163,11 @@ def _audit_ports(manifest: dict, issues: list[str]) -> None:
     r = _run(["ss", "-tlnp"])
     used_ports: set[str] = set()
     unregistered: list[str] = []
-    for port, _ in _ss_ports(r.stdout):
+    for port, line in _ss_ports(r.stdout):
+        if "tailscaled" in line:
+            continue
+        if "docker-proxy" in line and port not in ("3080", "6333", "6334", "9093"):
+            continue
         used_ports.add(port)
         if port not in manifest.get("ports", {}):
             unregistered.append(f"Puerto {port} en uso pero NO en manifiesto")
