@@ -22,3 +22,4 @@
 - Conflicts: grep -rl '<<<<<<<' --include='*.py' .
 - Daemon bucle: sudo rm -f /tmp/tuneladora_watch.lock
 - Auth rollback: comentar middleware en mochila_server.py
+# Flujo Mac→Asus Verificado ✅\n\n- Cambio desde Mac vía Samba detectado en <2s\n- Pipeline ejecuta: ruff → pytest focused → index → OK\n- Tiempo total: ~6.5s\n- Auth Bearer funciona correctamente\n\nFecha: 2026-07-26
