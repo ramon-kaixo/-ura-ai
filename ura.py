@@ -9,6 +9,7 @@ import base64
 import contextlib
 import json
 import logging
+import shlex
 import subprocess
 import sys
 from pathlib import Path
