@@ -8,7 +8,11 @@ from pathlib import Path
 
 import httpx
 
+from motor.core.secrets import get_secret as _get_secret
+
 MOCHILA = "http://127.0.0.1:4098"
+_MOCHILA_TOKEN = _get_secret("URA_API_KEY")
+_MOCHILA_HEADERS = {"Authorization": f"Bearer {_MOCHILA_TOKEN}"} if _MOCHILA_TOKEN else {}
 INBOX = Path.home() / ".nervioso" / "inbox"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [watch] %(message)s")
@@ -27,7 +31,7 @@ def hash_file(path: Path) -> str:
 
 async def _check_mochila_alive() -> bool:
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
+        async with httpx.AsyncClient(timeout=5, headers=_MOCHILA_HEADERS) as client:
             resp = await client.get(f"{MOCHILA}/health")
             return resp.status_code == 200
     except Exception:
@@ -45,7 +49,7 @@ async def process_file(path: Path) -> bool:
     last_error = ""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
+            async with httpx.AsyncClient(timeout=120, headers=_MOCHILA_HEADERS) as client:
                 resp = await client.post(f"{MOCHILA}/memoria/ingestar")
 
             if resp.status_code == 200:
