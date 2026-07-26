@@ -175,9 +175,38 @@ class PipelineRunner:
             elif available:
                 log.info("[PRE-FLIGHT] %s ✓", name)
         if not all_ok:
-            results.append(PhaseResult("preflight", Status.FAIL))
+            results.append(PhaseResult("preflight_tools", Status.FAIL))
         else:
-            results.append(PhaseResult("preflight", Status.OK))
+            results.append(PhaseResult("preflight_tools", Status.OK))
+
+        # System manifest audit
+        preflight_script = self.cfg.ura_root / "scripts/pro/tuneladora/preflight_system.py"
+        if preflight_script.exists():
+            try:
+                r = subprocess.run(
+                    [sys.executable, str(preflight_script), "audit"],
+                    capture_output=True, text=True, timeout=15,
+                    check=False, cwd=str(self.cfg.ura_root),
+                )
+                if r.returncode == 0:
+                    log.info("[PRE-FLIGHT] system manifest ✓")
+                    results.append(PhaseResult("preflight_manifest", Status.OK))
+                elif self.mode == "gate":
+                    log.error("[PRE-FLIGHT] system manifest FAIL — discrepancias detectadas")
+                    log.error(r.stdout)
+                    results.append(PhaseResult("preflight_manifest", Status.FAIL))
+                    all_ok = False
+                else:
+                    log.warning("[PRE-FLIGHT] system manifest WARN — discrepancias (modo %s)", self.mode)
+                    for line in r.stdout.splitlines():
+                        log.warning("  %s", line)
+                    results.append(PhaseResult("preflight_manifest", Status.WARN))
+            except Exception as exc:
+                log.warning("[PRE-FLIGHT] system manifest error: %s", exc)
+                results.append(PhaseResult("preflight_manifest", Status.WARN))
+        else:
+            log.warning("[PRE-FLIGHT] preflight_system.py no encontrado")
+            results.append(PhaseResult("preflight_manifest", Status.SKIP))
         return results
 
     # ── Fase 0: Snapshot ─────────────────────────────────────

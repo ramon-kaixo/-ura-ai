@@ -496,6 +496,22 @@ def main() -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     NERVIOSO.mkdir(parents=True, exist_ok=True)
+
+    # System manifest preflight check
+    preflight_script = URA_ROOT / "scripts/pro/tuneladora/preflight_system.py"
+    if preflight_script.exists():
+        rc, out, _ = run(
+            [str(VENV_PYTHON), str(preflight_script), "audit"],
+            timeout=15,
+        )
+        if rc != 0:
+            log("  ⚠️  PRE-FLIGHT: discrepancias en system manifest")
+            for line in out.splitlines():
+                log(f"    {line}")
+            log("  ⚠️  Continuando con mantenimiento (no bloqueante)")
+        else:
+            log("  ✅ System manifest OK")
+
     nivel = detectar_nivel()
     log("=" * 55)
     log(f"  TUNELADORA MANTENIMIENTO — Nivel: {nivel.upper()}")

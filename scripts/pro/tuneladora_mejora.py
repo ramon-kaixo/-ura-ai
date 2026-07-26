@@ -196,6 +196,25 @@ def main() -> int:
     engine.log.info("  MEJORA CONTINUA v2.3")
     engine.log.info("=" * 55)
 
+    # System manifest preflight check
+    preflight_script = engine.config.ura_root / "scripts/pro/tuneladora/preflight_system.py"
+    if preflight_script.exists():
+        try:
+            r = subprocess.run(
+                [sys.executable, str(preflight_script), "audit"],
+                capture_output=True, text=True, timeout=15,
+                check=False, cwd=str(engine.config.ura_root),
+            )
+            if r.returncode == 0:
+                engine.log.info("  System manifest OK")
+            else:
+                engine.log.warning("  System manifest: discrepancias detectadas")
+                for line in r.stdout.splitlines():
+                    engine.log.warning("    %s", line)
+                engine.log.info("  Continuando con mejora (no bloqueante)")
+        except Exception as exc:
+            engine.log.warning("  System manifest check fallo: %s", exc)
+
     plugins = discover_all()
     engine.log.info(f"Plugins descubiertos: {len(plugins)}")
     if args.list:
