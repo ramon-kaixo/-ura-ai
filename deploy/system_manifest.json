@@ -1,0 +1,240 @@
+{
+  "version": "2026-07-26",
+  "hostname": "gx10-64c3",
+  "notes": "Fuente de verdad del sistema. Actualizar al añadir/eliminar servicios, puertos o screens.",
+  "services": {
+    "system": {
+      "ura-mochila": {
+        "port": 4098,
+        "file": "/etc/systemd/system/ura-mochila.service",
+        "status": "active",
+        "description": "FastAPI Mochila API — Router principal"
+      },
+      "model-router": {
+        "port": 11435,
+        "file": "/etc/systemd/system/model-router.service",
+        "status": "active",
+        "description": "Model Router inteligente (system level)"
+      },
+      "ura-api": {
+        "port": 9090,
+        "file": "/etc/systemd/system/ura-api.service",
+        "status": "active",
+        "description": "URA GX10 API — Remote endpoint"
+      },
+      "ura-assistant": {
+        "port": 8003,
+        "file": "/etc/systemd/system/ura-assistant.service",
+        "status": "active",
+        "description": "URA Assistant Conversacional — FastAPI"
+      },
+      "ura-audit-api": {
+        "port": 5053,
+        "file": "/etc/systemd/system/ura-audit-api.service",
+        "status": "active",
+        "description": "URA Audit API (FastAPI)"
+      },
+      "ura-go2rtc": {
+        "port": "1984/8554/8555",
+        "file": "/etc/systemd/system/ura-go2rtc.service",
+        "status": "active",
+        "description": "go2rtc Camera Stream Proxy"
+      },
+      "ura-heartbeat": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-heartbeat.service",
+        "status": "active",
+        "description": "Monitoreo Mochila health"
+      },
+      "ura-metrics": {
+        "port": 9091,
+        "file": "/etc/systemd/system/ura-metrics.service",
+        "status": "active",
+        "description": "URA Metrics Server"
+      },
+      "ura-mkdocs": {
+        "port": 8088,
+        "file": "/etc/systemd/system/ura-mkdocs.service",
+        "status": "active",
+        "description": "URA MkDocs — Base de Conocimiento"
+      },
+      "ura-watch-daemon": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-watch-daemon.service",
+        "status": "active",
+        "description": "Detección cambios .py + pipeline"
+      },
+      "ura-watcher": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-watcher.service",
+        "status": "active",
+        "description": "Indexación sectorizada en tiempo real"
+      },
+      "ura-watcher-auditoria": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-watcher-auditoria.service",
+        "status": "active",
+        "description": "Dispara auditoría al recibir datos"
+      },
+      "ura-watchdog-buffer": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-watchdog-buffer.service",
+        "status": "active",
+        "description": "Watchdog de Buffer de 30GB"
+      },
+      "ura-ssh-guard": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-ssh-guard.service",
+        "status": "active",
+        "description": "URA SSH Guard"
+      },
+      "ura-xvfb": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-xvfb.service",
+        "status": "active",
+        "description": "URA Xvfb Virtual Display"
+      },
+      "opencode": {
+        "port": 8081,
+        "file": "/etc/systemd/system/opencode.service",
+        "status": "active",
+        "description": "OpenCode Web UI (OpenClaw + Ollama)"
+      },
+      "smbd": {
+        "port": "139/445",
+        "file": "/etc/systemd/system/smbd.service",
+        "status": "active",
+        "description": "Samba compartida Mac"
+      },
+      "snc": {
+        "port": null,
+        "file": "/etc/systemd/system/snc.service",
+        "status": "failed",
+        "description": "Sistema Nervioso Central (monitor/snc.py)"
+      },
+      "ura-contraste": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-contraste.service",
+        "status": "failed",
+        "description": "Proxy Contraste (requiere proxy_contraste.py externo)"
+      },
+      "ura-detector": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-detector.service",
+        "status": "failed",
+        "description": "YOLOv8 Detector + ByteTrack"
+      },
+      "ura-hetzner-tunnel": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-hetzner-tunnel.service",
+        "status": "failed",
+        "description": "SSH Tunnel to Hetzner"
+      },
+      "ura-maintenance-v2": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-maintenance-v2.service",
+        "status": "failed",
+        "description": "Tuneladora unificada (timer-driven)"
+      },
+      "ura-maintenance": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-maintenance.service",
+        "status": "failed",
+        "description": "Limpieza automatizada (legacy)"
+      },
+      "ura-router-health": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-router-health.service",
+        "status": "failed",
+        "description": "Model Router Health Check (conflictivo con model-router)"
+      },
+      "ura-voice": {
+        "port": null,
+        "file": "/etc/systemd/system/ura-voice.service",
+        "status": "failed",
+        "description": "Voice Agent Pipeline (hardware-dependente)"
+      }
+    },
+    "user": {
+      "model-router": {
+        "status": "DISABLED",
+        "reason": "duplicado del system service",
+        "file": "/home/ramon/.config/systemd/user/model-router.service",
+        "action": "NO USAR — eliminar si se encuentra activo"
+      }
+    }
+  },
+  "docker": {
+    "ura-qdrant": {
+      "ports": "6333-6334",
+      "description": "Qdrant vector database"
+    },
+    "ura-grafana": {
+      "ports": "3000",
+      "description": "Grafana dashboards"
+    },
+    "ura-prometheus": {
+      "ports": "9093",
+      "description": "Prometheus (mapeado a 9090 interno)"
+    },
+    "open-webui": {
+      "ports": "3080",
+      "description": "Open WebUI (mapeado a 8080 interno)"
+    },
+    "n8n": {
+      "ports": "5678/5679",
+      "description": "n8n workflow automation"
+    },
+    "ura-mejora-continua": {
+      "ports": null,
+      "description": "sandbox mejora continua"
+    }
+  },
+  "screens": {
+    "ura-main": {
+      "purpose": "Monitor principal",
+      "created": "2026-07-20",
+      "status": "inactive (rootfs RO impide /run/screen)"
+    },
+    "ura-pipeline": {
+      "purpose": "Pipeline tuneladora",
+      "created": "2026-07-20",
+      "status": "inactive (rootfs RO impide /run/screen)"
+    }
+  },
+  "ports": {
+    "22": "ssh",
+    "53": "systemd-resolved (DNS local)",
+    "139": "smbd",
+    "443": "tailscale (serve/funnel)",
+    "445": "smbd",
+    "631": "cups",
+    "1984": "ura-go2rtc (stream proxy)",
+    "2222": "dropbear (SSH alternativo)",
+    "3000": "ura-grafana (Docker)",
+    "3080": "open-webui (Docker)",
+    "4098": "ura-mochila",
+    "5053": "ura-audit-api",
+    "5678": "n8n (Docker)",
+    "5679": "n8n (Docker)",
+    "6333": "ura-qdrant (Docker)",
+    "6334": "ura-qdrant (Docker)",
+    "6379": "redis (Qdrant/Docker)",
+    "8003": "ura-assistant",
+    "8081": "opencode",
+    "8088": "ura-mkdocs",
+    "8384": "syncthing",
+    "8554": "ura-go2rtc",
+    "8555": "ura-go2rtc",
+    "9050": "tor (anon)",
+    "9090": "ura-api (/opt/ura)",
+    "9091": "ura-metrics",
+    "9093": "ura-prometheus (Docker)",
+    "11000": "dgx-dashboard (NVIDIA)",
+    "11434": "ollama",
+    "11435": "model-router",
+    "11436": "llama-server",
+    "22000": "syncthing",
+    "46113": "tailscale (inter-node)"
+  }
+}
