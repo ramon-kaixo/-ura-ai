@@ -1,11 +1,35 @@
+#!/usr/bin/env python3
+"""Error Logger — Log circular de errores para URA.
+
+Formato: JSON Lines (.jsonl)
+Rotación: Máximo 1000 entradas, elimina las más antiguas.
+Cada entrada: timestamp, error_id, context, gateway_status, severity, message.
+Detecta plataforma automáticamente (Mac vs ASUS).
+"""
+
+import json
+import os
+import platform
+import time
+import uuid
+from contextlib import suppress
+from datetime import UTC, datetime
+from pathlib import Path
+
+# Detectar plataforma automáticamente (sobrescribible via URA_ROOT)
+_system = platform.system().lower()
+_ura_root = os.environ.get("URA_ROOT", "")
+_base = (
+    Path(_ura_root)
+    if _ura_root
+    else (Path("/home/ramon/URA") if _system == "linux" else Path("/Users/ramonesnaola/URA"))
+)
+
+DEFAULT_LOG_PATH = _base / "logs" / "ura_errors.log"
+MAX_ENTRIES = 1000
+
+
 class ErrorLogger:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     """Log circular de errores con rotación automática."""
 
     def __init__(self, log_path: Path | None = None, max_entries: int = MAX_ENTRIES) -> None:
@@ -122,24 +146,3 @@ def log_error(context: str, gateway_status: str, severity: str, message: str) ->
 def get_recent(count: int = 10) -> list[dict]:
     """Función de conveniencia para obtener errores recientes."""
     return logger.get_recent_errors(count)
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes
-=======
-    pass
->>>>>>> Stashed changes

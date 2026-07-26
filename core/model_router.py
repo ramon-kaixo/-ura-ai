@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Model Router Enhanced — entrypoint para systemd y ejecución directa."""
+"""Model Router Enhanced - Con prompt caching, fallback system, dashboard y POWER_MODE."""
 
 from path_setup import setup_path
 
 setup_path()
-<<<<<<< Updated upstream
-=======
 import asyncio
 import contextlib
 import hashlib
@@ -22,6 +20,8 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+
+from motor.core.secrets import get_secret
 
 try:
     from router_rate_limiter import rate_limiter
@@ -65,30 +65,23 @@ log = logging.getLogger(__name__)
 
 # ===== SEGURIDAD: Preflight de politicas (Tareas 0.3 y 0.6) =====
 BYPASS_FILE = Path("/home/ramon/.openclaw/bypass_config.json")
-EXIT_CONFIG_ERROR = 78  # sysexits.h: EX_CONFIG
 
 
 def verificar_politicas_seguridad_preflight() -> None:
     """Fuerza el cumplimiento de las tareas 0.3 y 0.6. Detiene el servicio si hay configs inseguras."""
     if BYPASS_FILE.exists():
         BYPASS_FILE.unlink(missing_ok=True)
-    auth_state = os.getenv("URA_AUTH_ENABLED", "false").lower()
-    if auth_state == "true":
-        token_valido = os.getenv("OPENCLAW_GATEWAY_TOKEN")
-        if not token_valido:
-            sys.exit(EXIT_CONFIG_ERROR)
+    os.environ["URA_AUTH_ENABLED"] = "true"
+    token_valido = get_secret("OPENCLAW_GATEWAY_TOKEN")
+    if not token_valido:
+        sys.exit(78)
 
 
-verificar_politicas_seguridad_preflight()
+# NOTA: verificar_politicas_seguridad_preflight() se llama dentro de main()
+# para no matar el proceso en imports (permite colección de pytest).
 # ===== FIN PREFLIGHT =====
 
-try:
-    from core.config_manager import get_ollama_urls
-except ImportError:
-
-    def get_ollama_urls() -> dict[str, str]:
-        return {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
-
+from core.config_manager import get_ollama_urls
 
 POWER_MODE: str = "AUTO"
 _URLS = get_ollama_urls()
@@ -243,9 +236,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")
+        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", _URLS["primary"])
             return _URLS["primary"]
     except Exception as e:
@@ -374,9 +367,9 @@ def _fallback_count_last_hour() -> int:
 def _measare_asus_latency() -> float:
     try:
         t0 = time.monotonic()
-        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")
+        req = urllib.request.Request(f"{_URLS['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             elapsed = (time.monotonic() - t0) * 1000
             return round(elapsed, 1)
     except Exception:
@@ -384,7 +377,7 @@ def _measare_asus_latency() -> float:
 
 
 def _update_asus_latency() -> None:
-    global _asus_latency_ms, _asus_latency_updated
+    global _asus_latency_ms, _asus_latency_updated  # noqa: PLW0603
     ms = _measare_asus_latency()
     with _asus_latency_lock:
         _asus_latency_ms = ms
@@ -534,9 +527,9 @@ def clasificar_peticion(messages: list) -> str:
 def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
     target = url or OLLAMA_URL
     try:
-        req = urllib.request.Request(f"{target}/api/tags")
+        req = urllib.request.Request(f"{target}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             data = json.loads(resp.read())
             return {m["name"] for m in data.get("models", [])}
     except Exception as e:
@@ -615,16 +608,16 @@ def proxy_request(
     tipo: str = "",
     client_ip: str = "",
 ) -> tuple:
-    global OLLAMA_URL
+    global OLLAMA_URL  # noqa: PLW0602
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = _URLS["primary"] if resolved_mode == "TURBO" else _URLS["fallback"]
     url = f"{active_url}{path}"
-    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)
+    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
     req.add_header("Content-Type", "application/json")
 
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:  # noqa: S310
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:
@@ -1019,8 +1012,8 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             sock.connect("ipc:///tmp/ura-supervisor.ipc")
             sock.send(b"tasks")
             tasks_data = json.loads(sock.recv())
-        except Exception as e:
-            log.warning("ZMQ supervisor tasks: %s", e)
+        except Exception:
+            log.exception("Failed to fetch supervisor tasks")
         finally:
             if sock:
                 with contextlib.suppress(Exception):
@@ -1099,7 +1092,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _handle_power_mode(self) -> bool:
         """Maneja /power_mode. Retorna True si se procesó (no continuar con routing normal)."""
-        global POWER_MODE
+        global POWER_MODE  # noqa: PLW0603
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         params_str = body.decode() if body else ""
@@ -1137,7 +1130,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(resp_body)
 
-    def do_POST(self) -> None:
+    def do_POST(self) -> None:  # noqa: PLR0915
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
             return
@@ -1224,6 +1217,11 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 def main() -> None:
     import sys
 
+    if "--test" in sys.argv or "--models" in sys.argv:
+        pass
+    else:
+        verificar_politicas_seguridad_preflight()
+
     if "--test" in sys.argv:
         idx = sys.argv.index("--test")
         texto = " ".join(sys.argv[idx + 1 :]) if idx + 1 < len(sys.argv) else "hola"
@@ -1267,9 +1265,10 @@ def main() -> None:
         log.info("Cerrando servidor...")
         server.server_close()
         log.info("Servidor detenido.")
->>>>>>> Stashed changes
 
-from core.model_router.cli import main
 
 if __name__ == "__main__":
+    import sys
+    import urllib.parse
+
     main()

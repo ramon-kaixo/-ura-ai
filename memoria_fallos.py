@@ -1,26 +1,4 @@
-<<<<<<< Updated upstream
 """memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)."""
-=======
-"""memoria_fallos.py — URA / Memoria 2 (fallos y arreglos)"""
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 from __future__ import annotations
 

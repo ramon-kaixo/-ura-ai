@@ -2,13 +2,15 @@ import argparse
 import logging
 import sys
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 from motor.cli.cmd_diag import cmd_alerta, cmd_check, cmd_detect, cmd_health_check, cmd_history, cmd_learn, cmd_verify
 from motor.cli.cmd_pipeline import cmd_calibrate, cmd_diagnose, cmd_pipeline, cmd_scan
 from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd_summarise, cmd_trend
 from motor.cli.cmd_ura import cmd_alerts as ura_cmd_alerts
 from motor.cli.cmd_ura import (
     cmd_ask,
-    cmd_audit,
     cmd_dashboard,
     cmd_doctor,
     cmd_finalize,
@@ -18,15 +20,12 @@ from motor.cli.cmd_ura import (
     cmd_memory,
     cmd_metrics,
     cmd_rotate,
-    cmd_service,
     cmd_snapshot,
     cmd_snc,
-    cmd_system,
     cmd_test,
 )
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
-from motor.observability.logging import setup_logging
 
 COMMANDS = {
     "pipeline": cmd_pipeline,
@@ -69,74 +68,20 @@ URA_COMMANDS: dict[str, object] = {
     "index": cmd_index,
     "ask": cmd_ask,
     "memory": cmd_memory,
-    "system": cmd_system,
-    "service": cmd_service,
-    "audit": cmd_audit,
 }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
 def _setup_logging(level: str) -> None:
-    setup_logging(
-        level=level,
-        fmt="%(name)s %(levelname)s %(message)s",
-        handlers=[logging.StreamHandler(sys.stderr)],
-    )
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
-=======
-def _setup_logging(level: str) -> None:
->>>>>>> Stashed changes
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+    h = logging.StreamHandler(sys.stderr)
+    h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
+    logging.getLogger().addHandler(h)
+    logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
 
 
 def main() -> None:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    parser = argparse.ArgumentParser(prog="ura", description="Motor de Conocimiento unificado")
->>>>>>> Stashed changes
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -183,9 +128,6 @@ def main() -> None:
         "index",
         "ask",
         "memory",
-        "system",
-        "service",
-        "audit",
     ):
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")

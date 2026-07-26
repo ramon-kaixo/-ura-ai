@@ -7,54 +7,24 @@ Uso:
   python3 core/infra/heartbeat.py --daemon         # bucle cada 30s
 """
 
-from __future__ import annotations
-
 import argparse
-import asyncio
 import json
 import logging
 import subprocess
 import time
 from datetime import UTC, datetime
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from pathlib import Path
-from typing import TYPE_CHECKING
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from core.logs.guardian_logger import log_event
-from motor.observability.health import HealthRegistry
-from motor.observability.logging import setup_logging
-
-if TYPE_CHECKING:
-    from core.interfaces import IConfigProvider, IVectorStore
-
-logger = logging.getLogger("ura.heartbeat")
-_health = HealthRegistry()
-_health.register_component("heartbeat")
 
 STATE_FILE = "/tmp/ura_state.json"
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 logger = logging.getLogger("ura.heartbeat")
 
 MOCHILA_URL = "http://127.0.0.1:4098"
@@ -88,25 +58,13 @@ def dump_checkpoint() -> None:
             logger.warning("[HEARTBEAT] Checkpoint ilegible, ignorando")
 
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
+def _save_restart_to_qdrant() -> None:
     try:
-        if config is None:
-            from motor.core.config import UraConfig
-            from motor.core.qdrant_client import instancia
+        from motor.core.config import UraConfig
+        from motor.core.qdrant_client import instancia
 
-            cfg: IConfigProvider = UraConfig()
-            qc: IVectorStore = instancia(cfg)
-        else:
-            from motor.core.qdrant_client import instancia
-
-            qc = instancia(config)
+        cfg = UraConfig()
+        qc = instancia(cfg)
         if qc and qc.disponible:
             qc.guardar_incidente(
                 {
@@ -120,79 +78,6 @@ def _save_restart_to_qdrant(config: IConfigProvider | None = None) -> None:
             )
     except Exception:
         logger.exception("Error guardando incidente de reinicio en Qdrant")
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-=======
-def _save_restart_to_qdrant() -> None:
-    from core.config import UraConfig
-    from core.qdrant_client import instancia
-
->>>>>>> Stashed changes
-    cfg = UraConfig()
-    qc = instancia(cfg)
-    if qc and qc.disponible:
-        qc.guardar_incidente(
-            {
-                "ts": datetime.now(UTC).isoformat(),
-                "tipo": "ServiceFailure",
-                "subtipo": "heartbeat_restart",
-                "resumen": "ura-mochila.service reiniciado por heartbeat tras 3 fallos consecutivos",
-                "origin_node": "ASUS",
-                "exit_code": -1,
-            },
-        )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 
 def restart_service() -> None:
@@ -287,12 +172,16 @@ def check_vram_pressure() -> None:
 
 def check_loop_latency() -> float:
     async def _measure():
-        t0 = time.monotonic()
+        import time as _t
+
+        t0 = _t.monotonic()
         await asyncio.sleep(0)
-        t1 = time.monotonic()
+        t1 = _t.monotonic()
         return (t1 - t0) * 1000
 
     try:
+        import asyncio
+
         return asyncio.run(_measure())
     except RuntimeError:
         return 0.0
@@ -302,9 +191,6 @@ loop_latency_history: list[float] = []
 
 
 def main() -> None:
-    setup_logging(level="INFO", fmt="%(asctime)s [%(levelname)s] %(message)s")
-    _health.set_healthy("heartbeat")
-
     parser = argparse.ArgumentParser(description="Heartbeat para ura-mochila")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en bucle cada 30s")
     args = parser.parse_args()
@@ -313,11 +199,9 @@ def main() -> None:
     while not _shutdown_flag:
         if check_health():
             fails = 0
-            _health.set_healthy("heartbeat")
         else:
             fails += 1
             logger.error("Fallo %d/%d consecutivo", fails, MAX_FAILS)
-            _health.set_degraded("heartbeat", f"{fails}/{MAX_FAILS} fallos consecutivos")
             if fails >= MAX_FAILS:
                 restart_service()
                 fails = 0

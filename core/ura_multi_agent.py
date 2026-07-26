@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
-"""URA Multi-Agent System — wrapper de compatibilidad hacia atrás.
+"""URA Multi-Agent System — Boilerplate de Arquitectura Autónoma.
 
-Reexporta todo desde core.agents package.
+📖 MANUAL DE USO RÁPIDO:
+  python3 core/ura_multi_agent.py                     # Iniciar bucle principal
+  python3 core/ura_multi_agent.py --modo orquestar    # Solo orquestar (decidir)
+  python3 core/ura_multi_agent.py --modo reparar      # Solo reparar errores
+  python3 core/ura_multi_agent.py --modo ciclo        # Ciclo completo (detectar→reparar→validar)
+
+🔒 ARQUITECTURA:
+  3 Agentes:
+    ORQUESTADOR (Qwen 14B): Decide qué hacer según estado del sistema
+    EJECUTOR (DeepSeek 6.7B): Refactoriza funciones grandes
+    REPARADOR (auto_reglas + LLM): Repara errores en 3 niveles
+
+  Bucle de auto-arreglo:
+    DETECTAR → AISLAR → REPARAR (3 niveles) → VALIDAR → ACTUALIZAR
+
+  Estado compartido: .nervioso/conciencia.json
+  Telemetría: RAM, CPU, tokens, F821, modelos disponibles
 """
 
-<<<<<<< Updated upstream
-from core.agents import *  # noqa: F403
-from core.agents.cli import main
-=======
 import contextlib
 import json
 import logging
@@ -20,13 +32,14 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from motor.core.llm import generate as _generate
+from motor.core.llm import health as _health
+
+log = logging.getLogger("ura.multi_agent")
 
 # ── Configuración ──────────────────────────────────────────────────────────
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-_asus_host = os.environ.get("ASUS_HOST", "10.164.1.99")
-OLLAMA_URL = os.environ.get("OLLAMA_URL", f"http://{_asus_host}:11434")
 SCRIPTS = URA_ROOT / "scripts/pro"
 NERVIOSO = URA_ROOT / ".nervioso"
 MAX_CICLO_S = 300  # Timeout global del ciclo de auto-mejora (5 minutos)
@@ -38,6 +51,7 @@ MODELOS = {
     "reparador_potente": "qwen3:32b-q8_0",
     "revisor": "qwen2.5-coder:14b-instruct-q8_0",
 }
+
 
 RUFF = str(URA_ROOT / ".venv/bin/ruff")
 
@@ -62,14 +76,14 @@ class Telemetria:
             metrics["cpu_pct"] = psutil.cpu_percent(interval=0.1)
         except ImportError:
             try:
-                with open("/proc/meminfo") as f:
+                with open("/proc/meminfo") as f:  # noqa: PTH123
                     for line in f:
                         if "MemAvailable" in line:
                             metrics["ram_libre_mb"] = int(line.split()[1]) // 1024
                         elif "MemTotal" in line:
                             metrics["ram_total_mb"] = int(line.split()[1]) // 1024
             except Exception as e:
-                logger.warning(f"Error leyendo /proc/meminfo: {e}")
+                log.warning(f"Error leyendo /proc/meminfo: {e}")
                 metrics["ram_libre_mb"] = 8192
                 metrics["ram_total_mb"] = 121920
         return metrics
@@ -77,41 +91,30 @@ class Telemetria:
     @staticmethod
     def red() -> dict:
         """Estado de la red y servicios."""
+        import httpx
+
         status = {}
         # Model Router
         try:
-            r = subprocess.run(
-                [
-                    "curl",
-                    "-s",
-                    "--max-time",
-                    "2",
-                    f"{os.environ.get('MODEL_ROUTER_URL', f'http://{_asus_host}:11435')}/health",
-                ],
-                capture_output=True,
-                text=True,
+            r = httpx.get(
+                f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health",
                 timeout=3,
-                check=False,
             )
-            status["model_router"] = "ok" if r.returncode == 0 and "ok" in r.stdout else "down"
+            status["model_router"] = "ok" if r.status_code < 500 and "ok" in r.text else "down"
         except Exception:
+            log.exception("Error checking model router health")
             status["model_router"] = "down"
 
         # Ollama
         try:
-            r = subprocess.run(
-                ["curl", "-s", "--max-time", "2", f"{OLLAMA_URL}/api/tags"],
-                capture_output=True,
-                text=True,
-                timeout=3,
-                check=False,
-            )
-            if r.returncode == 0:
-                data = json.loads(r.stdout)
-                status["ollama"] = f"{len(data.get('models', []))} modelos"
+            result = _health()
+            if result.get("status") == "ok":
+                modelos = result.get("modelos_disponibles", [])
+                status["ollama"] = f"{len(modelos)} modelos"
             else:
                 status["ollama"] = "down"
         except Exception:
+            log.exception("Error checking Ollama health")
             status["ollama"] = "down"
 
         return status
@@ -143,6 +146,7 @@ class Telemetria:
             )
             return r.stdout.count("F821")
         except Exception:
+            log.exception("Error counting F821")
             return -1
 
     def reporte_completo(self) -> dict:
@@ -169,8 +173,8 @@ class Conciencia:
         if cls.PATH.exists():
             try:
                 return json.loads(cls.PATH.read_text())
-            except Exception as e:
-                logger.warning("Conciencia.leer: %s", e)
+            except Exception:
+                log.exception("Error reading conciencia.json")
         return cls._nuevo()
 
     @classmethod
@@ -268,14 +272,14 @@ class AgenteOrquestador:
                 try:
                     tree = ast.parse(py_file.read_text())
                     for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
+                            if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:  # noqa: SIM102
                                 if node.end_lineno - node.lineno > 80:
                                     total += 1
                 except Exception as e:
-                    logger.warning(f"Error parseando AST en {py_file}: {e}")
+                    log.warning(f"Error parseando AST en {py_file}: {e}")
         except Exception as e:
-            logger.warning(f"Error contando funciones pendientes: {e}")
+            log.warning(f"Error contando funciones pendientes: {e}")
         return total
 
 
@@ -296,7 +300,9 @@ class AgenteEjecutor:
             env["REFACTOR_MODEL"] = self.MODELO
             env["REFACTOR_MODEL_FALLBACK"] = "qwen2.5-coder:14b"
             env["MIN_LINES"] = "80"
-            env["OLLAMA_URL"] = OLLAMA_URL
+            from core.config_manager import get_ollama_url
+
+            env["OLLAMA_URL"] = get_ollama_url()
             env["URA_ROOT"] = str(URA_ROOT)
 
             proc = subprocess.Popen(
@@ -332,6 +338,7 @@ class AgenteEjecutor:
                         proc.terminate()
                         proc.wait(timeout=5)
                     except Exception:
+                        log.exception("Error terminating worker process")
                         with contextlib.suppress(Exception):
                             proc.kill()
 
@@ -385,6 +392,7 @@ class AgenteReparador:
             compile(ruta.read_text(), str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_1 repair for %s", ruta)
             return False
 
     def _nivel_2(self, ruta: Path, modelo: str) -> bool:
@@ -410,23 +418,11 @@ class AgenteReparador:
                 f"Devuelve SOLO el código reparado."
             )
 
-            payload = json.dumps(
-                {
-                    "model": modelo,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.0, "num_predict": 4096},
-                },
-            ).encode()
-            import urllib.request
-
-            req = urllib.request.Request(
-                f"{OLLAMA_URL}/api/generate",
-                data=payload,
-                headers={"Content-Type": "application/json"},
+            fixed = _generate(
+                prompt,
+                model=modelo,
+                options={"temperature": 0.0, "num_predict": 4096},
             )
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                fixed = json.loads(resp.read()).get("response", "")
 
             if fixed and "```" in fixed:
                 fixed = fixed.split("```python")[1].split("```")[0] if "```python" in fixed else fixed.split("```")[1]
@@ -435,6 +431,7 @@ class AgenteReparador:
             compile(fixed, str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_2 repair for %s", ruta)
             return False
 
     def _nivel_3(self, ruta: Path) -> bool:
@@ -472,7 +469,7 @@ class AgenteReparador:
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=180) as resp:
+            with urllib.request.urlopen(req, timeout=180) as resp:  # noqa: S310
                 fixed = json.loads(resp.read())["choices"][0]["message"]["content"]
 
             if fixed and "```" in fixed:
@@ -482,6 +479,7 @@ class AgenteReparador:
             compile(fixed, str(ruta), "exec")
             return True
         except Exception:
+            log.exception("Error in nivel_3 repair for %s", ruta)
             return False
 
 
@@ -633,7 +631,6 @@ def main() -> None:
         else:
             pass
 
->>>>>>> Stashed changes
 
 if __name__ == "__main__":
     main()

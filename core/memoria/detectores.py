@@ -1,27 +1,5 @@
 """Detectores multi-tipo para la Reactualización Total."""
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import json
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import logging
 import subprocess
 
@@ -84,7 +62,6 @@ def detector_hash_imagen(url: str, hash_anterior: str = "") -> dict:
 def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
     """Detecta cambios en metadata de vídeo vía FFprobe (sin descargar el vídeo entero)."""
     try:
-<<<<<<< Updated upstream
         result = subprocess.run(  # noqa: PLW1510
             [
                 "ffprobe",
@@ -101,37 +78,8 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
         )
         if result.returncode != 0:
             return {"cambio": False, "error": "FFprobe failed"}
-=======
-        result = subprocess.run(
-            ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", url],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        if result.returncode != 0:
-            return {"cambio": False, "error": "FFprobe failed"}
         import json
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         data = json.loads(result.stdout)
         fmt = data.get("format", {})
         meta_nuevo = json.dumps(
@@ -140,35 +88,7 @@ def detector_video_metadata(url: str, metadatos_anteriores: str = "") -> dict:
                 "size": fmt.get("size", ""),
                 "bit_rate": fmt.get("bit_rate", ""),
                 "format_name": fmt.get("format_name", ""),
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             },
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
-=======
-            }
->>>>>>> Stashed changes
         )
         return {"cambio": meta_nuevo != metadatos_anteriores, "metadatos": meta_nuevo}
     except Exception as e:

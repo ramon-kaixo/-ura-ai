@@ -10,91 +10,25 @@ from path_setup import setup_path
 setup_path()
 import json
 import logging
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import math
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import os
 import subprocess
 import threading
 import time
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import urllib.request
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 log = logging.getLogger(__name__)
 
 CONTEXT_PATH = Path("~/.config/opencode/ura_context.json").expanduser()
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-log = logging.getLogger("ura.ejecutor")
-
-CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
->>>>>>> Stashed changes
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
 HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
 
 # Qdrant + embedding para /v2/interact
-from motor.cli.public_api import DegradedMode, QdrantClient, UraConfig
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
+from motor.core.state import DegradedMode
 
 _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -108,6 +42,8 @@ def _get_qdrant():
 
 
 def log_evento(evento, datos=None) -> None:
+    import urllib.request
+
     payload = {"evento": evento, "timestamp": datetime.now(UTC).isoformat(), "data": datos or {}}
     try:
         req = urllib.request.Request(  # noqa: S310
@@ -173,6 +109,8 @@ def ejecutar_tarea(task_desc, target_files):
 
 def _distancia_coseno(a: list[float], b: list[float]) -> float:
     """Distancia coseno entre dos vectores. 0 = idénticos, 1 = ortogonales."""
+    import math
+
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))

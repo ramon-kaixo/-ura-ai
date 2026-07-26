@@ -1,48 +1,19 @@
 """Almacen Qdrant: ideas -> embedding -> insert + busqueda."""
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-from __future__ import annotations
-
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import logging
-import os
 import threading
 import uuid
-from typing import TYPE_CHECKING
 
 import httpx
 from qdrant_client import QdrantClient
 
 from core.memoria.ficha import Idea
-
-if TYPE_CHECKING:
-    from core.interfaces import IVectorStore
-
 from motor.core.qdrant_client import URAQdrantClient
 
 log = logging.getLogger("memoria.qdrant")
 
-QDRANT_HOST = os.environ.get("URA_QDRANT_HOST", "127.0.0.1")
-QDRANT_PORT = int(os.environ.get("URA_QDRANT_PORT", "6333"))
+QDRANT_HOST = "127.0.0.1"
+QDRANT_PORT = 6333
 COLLECTION = "ideas"
 EMBED_MODEL = "nomic-embed-text:latest"
 
@@ -63,7 +34,7 @@ def _get_client() -> QdrantClient:
 async def _embed(texto: str) -> list[float]:
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
-            f"http://{os.environ.get('URA_OLLAMA_HOST', '127.0.0.1')}:{os.environ.get('URA_OLLAMA_PORT', '11434')}/api/embeddings",
+            "http://127.0.0.1:11434/api/embeddings",
             json={"model": EMBED_MODEL, "prompt": texto},
         )
         resp.raise_for_status()
@@ -96,43 +67,8 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             existing = resp.json().get("result", [])
             if existing:
                 continue
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         except Exception:
             log.exception("Error buscando punto existente en Qdrant")
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
-=======
-        except Exception as e:
-            log.warning("Qdrant search error: %s", e)
->>>>>>> Stashed changes
 
         try:
             vec = await _embed(idea.texto_para_embedding())
@@ -252,9 +188,9 @@ async def buscar_ideas(
 
 
 class MemoryPipelineStore:
-    def __init__(self, qdrant_client: IVectorStore | None = None) -> None:
-        from motor.core.qdrant_client import URAQdrantClient
+    """Pipeline de memoria asíncrono. Usa URAQdrantClient con connection pooling (Hito 1.1.1)."""
 
+    def __init__(self, qdrant_client: URAQdrantClient | None = None) -> None:
         self.qdrant = qdrant_client or URAQdrantClient()
 
     async def guardar_contexto_ingestado(self, coleccion: str, puntos: list) -> bool:

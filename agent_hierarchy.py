@@ -1,72 +1,37 @@
+#!/usr/bin/env python3
 """URA Agent Hierarchy System
 Implements the 3-level agent hierarchy with permission levels and quarantine system.
 """
 
-from __future__ import annotations
-
-import ast
 import json
 import logging
-import os
 import subprocess
 import time
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+from motor.core.secrets import get_secret
+
+# Configuration
 ORCHESTRATOR_HOST = "10.164.1.99"
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
-=======
-# Configuration
-ORCHESTRATOR_HOST = os.environ.get("ASUS_HOST", "10.164.1.99")
->>>>>>> Stashed changes
 ORCHESTRATOR_PORT = 18789
+GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
 QUARANTINE_DIR = "/home/ramon/URA/cuarentena"
 SANDBOX_DIR = "/home/ramon/URA/sandbox"
 LOG_FILE = "/home/ramon/URA/agent_hierarchy.log"
 APPROVAL_SOCKET = "/tmp/ura_approval.sock"
 
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(),
+    ],
+)
 logger = logging.getLogger(__name__)
-_GATEWAY_TOKEN: str | None = None
-
-
-def _get_token() -> str:
-    global _GATEWAY_TOKEN
-    if _GATEWAY_TOKEN is None:
-        from motor.core.secrets import get_secret
-
-        _GATEWAY_TOKEN = get_secret("OPENCLAW_GATEWAY_TOKEN", "")
-    return _GATEWAY_TOKEN
 
 
 class PermissionLevel(Enum):
@@ -532,6 +497,7 @@ class ExecutorAgent(Agent):
     def _validate_code_ast(code: str) -> bool:
         """Valida código mediante AST. Solo permite operaciones seguras."""
         try:
+            import ast
             tree = ast.parse(code, mode="exec")
         except SyntaxError:
             return False
@@ -541,17 +507,10 @@ class ExecutorAgent(Agent):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     name = f"{node.func.value.id}.{node.func.attr}" if isinstance(node.func.value, ast.Name) else ""
-                    if name in (
-                        "os.system",
-                        "os.popen",
-                        "subprocess.run",
-                        "subprocess.Popen",
-                        "shutil.rmtree",
-                        "shutil.copy",
-                        "pathlib.Path.open",
-                    ):
+                    if name in ("os.system", "os.popen", "subprocess.run", "subprocess.Popen",
+                                "shutil.rmtree", "shutil.copy", "pathlib.Path.open"):
                         return False
-                    if node.func.attr == "__import__":
+                    if node.func.attr in ("__import__",):
                         return False
                 elif isinstance(node.func, ast.Name):
                     if node.func.id in ("eval", "exec", "__import__", "open"):
@@ -571,7 +530,7 @@ class ExecutorAgent(Agent):
             return False
 
         if not self._validate_code_ast(code):
-            logger.warning("Code contains dangerous patterns — execution blocked")
+            logger.warning(f"Code contains dangerous patterns — execution blocked")
             return False
 
         logger.info("Executing code in sandbox")

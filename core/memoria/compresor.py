@@ -2,28 +2,6 @@
 
 import json
 import logging
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import os
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 import httpx
 
@@ -31,9 +9,7 @@ from core.memoria.ficha import Idea
 
 log = logging.getLogger("memoria.compresor")
 
-_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
-_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
-OLLAMA_URL = f"http://{_HOST}:{_PORT}/api/chat"
+OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
 MODELO_COMPRESOR = "qwen2.5-coder:14b"
 MAX_CHARS_TEXTO = 8000
 
@@ -69,39 +45,11 @@ JSON:"""
 
 
 async def comprimir_a_ideas(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     texto: str,
     fuente: str = "",
     hash_origen: str = "",
     fecha_fuente: str = "",
     modelo: str = "",
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
-=======
-    texto: str, fuente: str = "", hash_origen: str = "", fecha_fuente: str = "", modelo: str = ""
->>>>>>> Stashed changes
 ) -> list[Idea]:
     if not texto.strip():
         return []

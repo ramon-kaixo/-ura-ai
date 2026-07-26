@@ -360,29 +360,7 @@ class LinuxCleaner(SystemCleaner):
             retention_days = self.config.retention_days["logs"]
 
             for log_dir in self.config.allowed_log_dirs:
-<<<<<<< Updated upstream
                 if Path(log_dir).exists():
-=======
-                if os.path.exists(log_dir):
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     for root, _dirs, files in os.walk(log_dir):
                         for file in files:
                             file_path = os.path.join(root, file)  # noqa: PTH118
@@ -413,43 +391,8 @@ class LinuxCleaner(SystemCleaner):
                     for item in os.listdir(temp_dir):  # noqa: PTH208
                         item_path = os.path.join(temp_dir, item)  # noqa: PTH118
                         try:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                             if Path(item_path).is_file() and self.safe_remove(item_path):
                                 size = Path(item_path).stat().st_size / (1024**3)
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
-=======
-                            if os.path.isfile(item_path) and self.safe_remove(item_path):
-                                size = os.path.getsize(item_path) / (1024**3)
->>>>>>> Stashed changes
                                 total_freed += size
                         except OSError:
                             pass
@@ -704,29 +647,7 @@ class MaintenanceOrchestrator:
 
     def _save_results(self) -> None:
         """Guardar resultados en archivo JSON."""
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         results_file = LOG_DIR / f"maintenance_results_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        results_file = LOG_DIR / f"maintenance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
->>>>>>> Stashed changes
         try:
             with open(results_file, "w") as f:  # noqa: PTH123
                 json.dump(self.results, f, indent=2)

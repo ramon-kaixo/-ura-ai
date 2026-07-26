@@ -10,35 +10,7 @@ import re
 
 PATTERNS: dict[str, re.Pattern] = {
     "IP_ADDRESS": re.compile(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
-=======
-        r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
->>>>>>> Stashed changes
     ),
     "SYSTEM_PATHS": re.compile(r"(?:/home/ramon|/root|/Users/ramon)[a-zA-Z0-9_\-\.\/]*"),
     "GENERIC_SECRET": re.compile(r'(?i)(password|passwd|secret|token|api_key|passphrase)\s*[:=]\s*["\']([^"\']+)["\']'),
@@ -60,47 +32,12 @@ def sanitize_text(text: str) -> str:
     return PATTERNS["GENERIC_SECRET"].sub(r'\1: "[CREDENTIAL_REDACTADA]"', text)
 
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         with open(file_path, encoding="utf-8") as f:  # noqa: PTH123
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
-=======
-        with open(file_path, encoding="utf-8") as f:
->>>>>>> Stashed changes
             content = f.read()
         with open(file_path, "w", encoding="utf-8") as f:  # noqa: PTH123
             f.write(sanitize_text(content))
