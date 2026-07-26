@@ -15,12 +15,17 @@ AUTH_ENABLED = os.environ.get("URA_AUTH_ENABLED", "true").lower() == "true"
 
 def _get_api_key(store: ISecretStore | None = None) -> str:
     if store is not None:
-        key = store.get_secret("URA_API_KEY", "ura_1972_secure_default")
+        key = store.get_secret("URA_API_KEY")
         if key is not None:
             return key
     from motor.core.secrets import get_secret as _get_secret
 
-    return _get_secret("URA_API_KEY", "ura_1972_secure_default") or "ura_1972_secure_default"
+    key = _get_secret("URA_API_KEY")
+    if key is not None:
+        return key
+    raise RuntimeError(
+        "URA_API_KEY not configured. Set URA_API_KEY env var or configure in /etc/ura/secrets.env"
+    )
 
 
 def validate(api_key: str | None, store: ISecretStore | None = None) -> bool:
