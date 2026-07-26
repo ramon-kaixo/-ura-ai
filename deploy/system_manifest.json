@@ -15,8 +15,8 @@
         "port": 11435,
         "file": "/etc/systemd/system/model-router.service",
         "status": "active",
-        "auth": "NO — core.auth_layer no existe, fallback a no-op",
-        "auth_action": "CORREGIR — implementar Bearer middleware como mochila",
+        "auth": "PARCIAL — solo /supervisor autenticado, health exento",
+        "auth_action": "EXTENDER — anadir auth a /api/tags + /status + /vram/status",
         "description": "Model Router inteligente (system level)"
       },
       "ura-openclaw": {
@@ -125,10 +125,10 @@
         "description": "Sistema Nervioso Central (monitor/snc.py)"
       },
       "ura-contraste": {
-        "port": null,
+        "port": 8002,
         "file": "/etc/systemd/system/ura-contraste.service",
-        "status": "failed",
-        "description": "Proxy Contraste (requiere proxy_contraste.py externo)"
+        "status": "failed (start-limit-hit, PartOf=ura-openclaw eliminado)",
+        "description": "Proxy Contraste — PartOf=ura-openclaw removido, necesita restart manual tras reboot"
       },
       "ura-detector": {
         "port": null,
