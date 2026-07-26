@@ -41,8 +41,9 @@ class TestPipelineRunnerPhases:
         assert isinstance(results, list)
 
     def test_phase_dynamic(self, runner: PipelineRunner):
-        results = runner.phase_dynamic()
-        assert isinstance(results, list)
+        with mock.patch.object(runner.tools["pytest"], "run_check", return_value=mock.Mock(status=Status.OK, seconds=1.0, summary="1 passed")):
+            results = runner.phase_dynamic()
+            assert isinstance(results, list)
 
     def test_phase_integrity(self, runner: PipelineRunner):
         results = runner.phase_integrity()
