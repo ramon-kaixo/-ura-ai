@@ -9,11 +9,13 @@ import httpx
 
 from core.infra.state_manager import clear_checkpoint, load_checkpoint, save_checkpoint
 from core.seguridad.rollback_manager import RollbackManager
+from motor.core.secrets import get_secret as _get_secret
 from sandbox.sandbox_runner import SandboxClient
 
 logger = logging.getLogger("ura.wrapper")
 
 MOCHILA_URL = os.getenv("MOCHILA_URL", "http://127.0.0.1:4098")
+_MOCHILA_TOKEN = _get_secret("URA_API_KEY")
 MAX_RETRIES = 3
 TEMPS = [0.0, 0.3, 0.6]
 
@@ -49,7 +51,10 @@ async def solicitar_inferencia_con_backoff(client, payload: dict, max_retries: i
 class OpenCodeWrapper:
     def __init__(self, repo_path: str | None = None) -> None:
         self.rollback = RollbackManager(repo_path=repo_path or "/home/ramon/URA/ura_ia_1972")
-        self._http = httpx.AsyncClient(timeout=180.0)
+        headers = {}
+        if _MOCHILA_TOKEN:
+            headers["Authorization"] = f"Bearer {_MOCHILA_TOKEN}"
+        self._http = httpx.AsyncClient(timeout=180.0, headers=headers)
 
     async def _chat(
         self,
