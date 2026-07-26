@@ -193,9 +193,12 @@ async def run_debate(
             max_tokens=auditor_cfg["max_tokens"],
         ),
     ]
-    results = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
     primary_result, auditor_result = results
+
+    primary_result = None if isinstance(primary_result, BaseException) else primary_result
+    auditor_result = None if isinstance(auditor_result, BaseException) else auditor_result
 
     primary_score = primary_result.get("score", 0.0) if primary_result else 0.0
     auditor_score = auditor_result.get("score", 0.0) if auditor_result else 0.0

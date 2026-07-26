@@ -168,52 +168,52 @@ class HttpCrawler(Crawler):
         doc = CrawledDocument(url=url, final_url=url)
 
         try:
-            client = httpx.Client(
+            with httpx.Client(
                 timeout=httpx.Timeout(timeout or self._timeout),
                 follow_redirects=True,
                 max_redirects=self._max_redirects,
                 headers={"User-Agent": self._user_agent},
-            )
+            ) as client:
 
-            # HEAD request primero para validar
-            head = client.head(url)
-            doc.status_code = head.status_code
-            doc.headers = dict(head.headers)
-            doc.content_type = head.headers.get("content-type", "").split(";")[0].strip()
-            doc.charset = _extract_charset(head.headers.get("content-type", ""))
+                # HEAD request primero para validar
+                head = client.head(url)
+                doc.status_code = head.status_code
+                doc.headers = dict(head.headers)
+                doc.content_type = head.headers.get("content-type", "").split(";")[0].strip()
+                doc.charset = _extract_charset(head.headers.get("content-type", ""))
 
-            # Validar Content-Type
-            ct = doc.content_type
-            if self._allowed_content_types and ct not in self._allowed_content_types:
-                doc.error = f"Content-Type '{ct}' not in allowed list"
-                doc.elapsed_ms = (time.monotonic() - t0) * 1000
-                return doc
+                # Validar Content-Type
+                ct = doc.content_type
+                if self._allowed_content_types and ct not in self._allowed_content_types:
+                    doc.error = f"Content-Type '{ct}' not in allowed list"
+                    doc.elapsed_ms = (time.monotonic() - t0) * 1000
+                    return doc
 
-            # Validar Content-Length
-            cl = head.headers.get("content-length")
-            if cl:
-                try:
-                    if int(cl) > self._max_size:
-                        doc.error = f"Content-Length {cl} exceeds max_size {self._max_size}"
-                        doc.elapsed_ms = (time.monotonic() - t0) * 1000
-                        return doc
-                except ValueError:
-                    pass
+                # Validar Content-Length
+                cl = head.headers.get("content-length")
+                if cl:
+                    try:
+                        if int(cl) > self._max_size:
+                            doc.error = f"Content-Length {cl} exceeds max_size {self._max_size}"
+                            doc.elapsed_ms = (time.monotonic() - t0) * 1000
+                            return doc
+                    except ValueError:
+                        pass
 
-            # GET request para contenido
-            r = client.get(url)
-            doc.final_url = str(r.url)
-            doc.status_code = r.status_code
-            doc.headers = dict(r.headers)
-            doc.content_type = r.headers.get("content-type", "").split(";")[0].strip()
-            doc.charset = _extract_charset(r.headers.get("content-type", ""))
-            doc.content = r.content
-            doc.content_length = len(r.content)
+                # GET request para contenido
+                r = client.get(url)
+                doc.final_url = str(r.url)
+                doc.status_code = r.status_code
+                doc.headers = dict(r.headers)
+                doc.content_type = r.headers.get("content-type", "").split(";")[0].strip()
+                doc.charset = _extract_charset(r.headers.get("content-type", ""))
+                doc.content = r.content
+                doc.content_length = len(r.content)
 
-            if len(r.content) > self._max_size:
-                doc.error = f"Response size {len(r.content)} exceeds max_size {self._max_size}"
-                doc.content = b""
-                doc.content_length = 0
+                if len(r.content) > self._max_size:
+                    doc.error = f"Response size {len(r.content)} exceeds max_size {self._max_size}"
+                    doc.content = b""
+                    doc.content_length = 0
 
         except httpx.TimeoutException:
             doc.error = "timeout"

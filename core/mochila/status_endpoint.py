@@ -120,8 +120,13 @@ async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_co
             _timer_status("ura-cola-nocturna.timer"),
             _timer_status("ura-memoria-vigilante.timer"),
             _timer_status("ura-watch-inbox.service"),
+            return_exceptions=True,
         ),
+        return_exceptions=True,
     )
+
+    def _to(r):
+        return r if not isinstance(r, BaseException) else {"ok": False, "detalle": str(r)}
 
     return {
         "mochila": {
@@ -131,16 +136,16 @@ async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_co
         },
         "circuit_breaker": {p: circuit_breaker.estado(p) for p in providers},
         "cost_hoy": cost_tracker.resumen_hoy(),
-        "openclaw": openclaw,
-        "ram": ram,
+        "openclaw": _to(openclaw),
+        "ram": _to(ram),
         "fs_bug": _fs_bug_status(),
-        "alemania": alem,
-        "tunnel_hetzner": tunnel,
+        "alemania": _to(alem),
+        "tunnel_hetzner": _to(tunnel),
         "timers": {
-            "guard": timers_list[0],
-            "backup": timers_list[1],
-            "cola": timers_list[2],
-            "vigilante": timers_list[3],
-            "watchdog": timers_list[4],
+            "guard": _to(timers_list[0]) if len(timers_list) > 0 else {"ok": False, "detalle": "no data"},
+            "backup": _to(timers_list[1]) if len(timers_list) > 1 else {"ok": False, "detalle": "no data"},
+            "cola": _to(timers_list[2]) if len(timers_list) > 2 else {"ok": False, "detalle": "no data"},
+            "vigilante": _to(timers_list[3]) if len(timers_list) > 3 else {"ok": False, "detalle": "no data"},
+            "watchdog": _to(timers_list[4]) if len(timers_list) > 4 else {"ok": False, "detalle": "no data"},
         },
     }

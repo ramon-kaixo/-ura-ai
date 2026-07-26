@@ -388,11 +388,12 @@ class ConversationalToolManager:
         if not query:
             return ToolResult(False, error="No query")
         try:
-            resp = await httpx.AsyncClient(timeout=10).get(
-                "https://html.duckduckgo.com/html/",
-                params={"q": query},
-                headers={"User-Agent": "URA/1.0"},
-            )
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(
+                    "https://html.duckduckgo.com/html/",
+                    params={"q": query},
+                    headers={"User-Agent": "URA/1.0"},
+                )
             texts = []
 
             for line in resp.text.split("\n"):

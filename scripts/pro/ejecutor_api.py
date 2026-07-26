@@ -11,6 +11,7 @@ setup_path()
 import json
 import logging
 import os
+import secrets
 import subprocess
 import threading
 import time
@@ -24,6 +25,11 @@ CONTEXT_PATH = Path("~/.config/opencode/ura_context.json").expanduser()
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
 HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
+
+from motor.core.secrets import require_secret as _require_secret
+
+_API_KEY = _require_secret("URA_API_KEY")
+_AUTH_EXEMPT = frozenset({"/health", "/metrics"})
 
 # Qdrant + embedding para /v2/interact
 from motor.core.config import UraConfig
@@ -172,7 +178,21 @@ def handle_interact(body: dict) -> dict:
 
 
 class ExecutorHandler(BaseHTTPRequestHandler):
+    def _check_auth(self) -> bool:
+        auth = self.headers.get("Authorization", "")
+        expected = f"Bearer {_API_KEY}"
+        return secrets.compare_digest(auth, expected)
+
+    def _send_unauthorized(self) -> None:
+        self.send_response(401)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": "Unauthorized"}).encode())
+
     def do_POST(self) -> None:
+        if not self._check_auth():
+            self._send_unauthorized()
+            return
         length = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(length)) if length else {}
 
@@ -236,6 +256,10 @@ class ExecutorHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
             self.wfile.write(metrics.encode())
+            return
+
+        if not self._check_auth():
+            self._send_unauthorized()
             return
 
         if self.path == "/api/v1/status":
