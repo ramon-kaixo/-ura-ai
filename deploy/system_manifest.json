@@ -22,7 +22,7 @@
       "ura-openclaw": {
         "port": 18789,
         "file": "/etc/systemd/system/ura-openclaw.service",
-        "status": "active",
+        "status": "restart-loop (2316 reinicios)",
         "auth": "Bearer (token propio OpenClaw)",
         "description": "OpenClaw Gateway Nativo (MCP)"
       },
