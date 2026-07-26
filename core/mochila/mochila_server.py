@@ -6,6 +6,7 @@ import time
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -36,7 +37,7 @@ from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
-load_dotenv(Path("~/URA/.env").expanduser())  # noqa: F821
+load_dotenv(Path("~/URA/.env").expanduser())
 
 _API_KEY = _require_secret("URA_API_KEY")
 _AUTH_EXEMPT = frozenset({"/health", "/metrics", "/openapi.json", "/docs", "/redoc"})
