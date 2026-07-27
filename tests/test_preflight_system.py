@@ -246,8 +246,12 @@ class TestPreflight:
 class TestAuditServices:
     def test_active_service_no_issues(self, sample_manifest):
         issues: list[str] = []
-        with mock.patch("scripts.pro.tuneladora.preflight_system.check_systemd_service") as m:
-            m.return_value = {"exists": True, "active": True, "scopes": ["system"]}
+        with (
+            mock.patch("scripts.pro.tuneladora.preflight_system.check_systemd_service") as m_svc,
+            mock.patch("scripts.pro.tuneladora.preflight_system.check_port") as m_port,
+        ):
+            m_svc.return_value = {"exists": True, "active": True, "scopes": ["system"]}
+            m_port.return_value = {"in_use": True, "process": "test"}
             _audit_services(sample_manifest, issues)
             assert issues == []
 
