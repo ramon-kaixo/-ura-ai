@@ -148,9 +148,18 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     Excepción documentada: los comandos vienen del runbook whitelist (no input usuario).
     """
     try:
+<<<<<<< Updated upstream
         has_pipe = "|" in cmd
         if has_pipe:
             result = _run_pipeline(cmd, timeout)
+=======
+        needs_shell = any(op in cmd for op in ['|', '&&', '||', ';', '$('])
+        if needs_shell:
+            result = subprocess.run(
+                cmd, shell=True, capture_output=True, text=True, timeout=timeout,
+                executable='/bin/bash',
+            )
+>>>>>>> Stashed changes
         else:
             args = shlex.split(cmd)
             result = subprocess.run(
@@ -244,6 +253,7 @@ def check_mac_unauthorized_writes() -> bool:
             severity="WARN",
             message=f"Error verificando escrituras no autorizadas: {e}",
         )
+        pass
 
     return False
 

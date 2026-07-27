@@ -11,19 +11,13 @@
   Firma: Ramon Esnaola (K0513893926)
 """
 
-import contextlib
-import json
-import os
-import subprocess
-import sys
-import time
+import contextlib, json, os, subprocess, sys, time
 from pathlib import Path
 
 from motor.core.secrets import get_secret
 
 try:
-    from playwright.sync_api import TimeoutError as PlaywrightTimeout
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 except ImportError:
     sys.exit(1)
 
@@ -90,6 +84,7 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
 def bypass_linksys() -> bool:  # noqa: PLR0915
 
     with sync_playwright() as p:
+<<<<<<< Updated upstream
         browser = p.chromium.launch(
             headless=True,
             args=[
@@ -99,6 +94,14 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 "--disable-setuid-sandbox",
             ],
         )
+=======
+        browser = p.chromium.launch(headless=True, args=[
+            '--ignore-certificate-errors',
+            '--ignore-ssl-errors',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+        ])
+>>>>>>> Stashed changes
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
 
@@ -120,7 +123,7 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 ".bypass-link",
                 ".continue-link",
             ]
-
+            
             # Try to find the bypass link
             found = find_and_click(page, bypass_selectors, timeout=3000)
             if not found:
@@ -148,12 +151,17 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
 
             if password_field:
                 password_field.fill(RECOVERY_KEY)
+<<<<<<< Updated upstream
 
+=======
+                print(f"  Password introducida: {RECOVERY_KEY}")
+                
+>>>>>>> Stashed changes
                 # Esperar a que JS cifre el password (RSA) y submit el formulario
                 time.sleep(1)
                 password_field.press("Enter")
                 time.sleep(5)  # Esperar a que cargue el dashboard
-
+                
                 # Verificar si el login fue exitoso
                 page.wait_for_load_state("networkidle", timeout=10000)
                 content = page.content()
@@ -170,7 +178,12 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 pass
 
             # ── PASO 4: Navegar a Port Forwarding ──
+<<<<<<< Updated upstream
 
+=======
+            print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
+            
+>>>>>>> Stashed changes
             # Menu items in order of navigation (Linksys Velop UI)
             menu_items = [
                 ("Security", ["Security", "Seguridad"]),
