@@ -19,8 +19,6 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
-<<<<<<< Updated upstream
-
 from motor.core.secrets import get_secret
 
 try:
@@ -55,14 +53,6 @@ except ImportError:
             return f
 
         return decorator
-
-=======
-import sys
-sys.path.insert(0, '/usr/local/bin')
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from router_rate_limiter import rate_limiter
-from core.auth_layer import validate as auth_validate, require_auth
->>>>>>> Stashed changes
 
 logging.basicConfig(
     level=logging.INFO,
@@ -1092,9 +1082,6 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 self._send_json({"error": "parametro q requerido"}, 400)
                 return
             try:
-<<<<<<< Updated upstream
-                self._handle_api_search(q)
-=======
                 # Buscar en FTS5 (search_engine + indexer combinado)
                 results = []
                 try:
@@ -1115,7 +1102,6 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"query": q, "results": results, "total": len(results)}).encode())
->>>>>>> Stashed changes
             except Exception as e:
                 self._send_json({"error": str(e)}, 500)
         elif self.path.startswith("/v1/"):
