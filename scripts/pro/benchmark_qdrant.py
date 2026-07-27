@@ -89,7 +89,7 @@ def main() -> int:  # noqa: PLR0915
 
     docs = []
     for i in range(100):
-        docs.append(  # noqa: PERF401
+        docs.append(
             (
                 f"bench_test_{i}",
                 f"Documento de prueba número {i}. URA es un asistente multi-agente "
@@ -251,7 +251,7 @@ def main() -> int:  # noqa: PLR0915
 
     results_cb = []
     for _ in range(5):
-        results_cb.append(cb.operacional())  # noqa: PERF401
+        results_cb.append(cb.operacional())
 
     qdrant.health = original_health
 

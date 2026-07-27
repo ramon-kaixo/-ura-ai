@@ -22,7 +22,7 @@ def load():
     qs, rm = [], {}
     with open(CORPUS / "queries.jsonl") as f:  # noqa: PTH123
         for l in f:
-            qs.append(json.loads(l))  # noqa: PERF401
+            qs.append(json.loads(l))
     with open(CORPUS / "relevance.jsonl") as f:  # noqa: PTH123
         for l in f:
             d = json.loads(l)

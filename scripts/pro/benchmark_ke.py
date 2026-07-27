@@ -523,7 +523,7 @@ def validate_corpus(corpus_dir: Path) -> list[str]:
 
     for q in queries:
         if not q.qid.startswith(("sys_", "code_", "know_")):
-            errors.append(f"QID {q.qid} no sigue convención sys_/code_/know_")  # noqa: PERF401
+            errors.append(f"QID {q.qid} no sigue convención sys_/code_/know_")
 
     domains = {q.domain for q in queries}
     if len(domains) < 2:
@@ -532,7 +532,7 @@ def validate_corpus(corpus_dir: Path) -> list[str]:
     for qid, rels in relevance_map.items():
         for r in rels:
             if r.relevance not in (0, 1, 2, 3):
-                errors.append(f"Relevance score inválido en {qid}: {r.relevance}")  # noqa: PERF401
+                errors.append(f"Relevance score inválido en {qid}: {r.relevance}")
 
     if not errors:
         log.info(

@@ -205,10 +205,10 @@ def anclaje_cromatico(codigo: str) -> dict:
             # Bloques de control: su último body
             for body_node in getattr(nodo, "body", []):
                 if hasattr(body_node, "end_lineno") and body_node.end_lineno:
-                    rojas.append(body_node.end_lineno)  # noqa: PERF401
+                    rojas.append(body_node.end_lineno)
             for body_node in getattr(nodo, "orelse", []):
                 if hasattr(body_node, "end_lineno") and body_node.end_lineno:
-                    rojas.append(body_node.end_lineno)  # noqa: PERF401
+                    rojas.append(body_node.end_lineno)
 
     # 🟢 Verdes: líneas en blanco entre bloques (PEP 8)
     for i, linea in enumerate(lineas, 1):
@@ -223,7 +223,7 @@ def anclaje_cromatico(codigo: str) -> dict:
     # Añadir gaps entre funciones (PEP 8: 2 blank lines)
     for i in range(1, total_lineas - 1):
         if not lineas[i].strip() and not lineas[i - 1].strip() and i + 1 < total_lineas and lineas[i + 1].strip():
-            verdes.append(i + 1)  # noqa: PERF401
+            verdes.append(i + 1)
 
     rojas = sorted(set(rojas))
     verdes = sorted(set(verdes))

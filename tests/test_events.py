@@ -5,7 +5,6 @@ import time
 
 import pytest
 
-import pytest
 pytest.importorskip("motor.events.bus", reason="event system deprecated")
 from motor.core.state import DegradedMode
 from motor.events.bus import EventBus

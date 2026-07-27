@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import time
 from pathlib import Path
 from unittest import mock
@@ -12,8 +11,6 @@ import pytest
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
 from scripts.pro.tuneladora.pipeline.tools.base import Status
-from scripts.pro.tuneladora.pipeline.tools.bandit_tool import BanditTool
-from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 
 
 @pytest.fixture

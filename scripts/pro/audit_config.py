@@ -60,7 +60,7 @@ def _walk_py_files() -> list[Path]:
         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         for f in files:
             if f.endswith(".py"):
-                py_files.append(Path(root) / f)  # noqa: PERF401
+                py_files.append(Path(root) / f)
     return py_files
 
 

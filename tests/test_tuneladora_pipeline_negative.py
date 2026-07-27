@@ -10,8 +10,8 @@ from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.pipeline.pending_queue import PendingQueue
 from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
 from scripts.pro.tuneladora.pipeline.snapshot_manager import SnapshotManager
-from scripts.pro.tuneladora.pipeline.tools.base import Status
 from scripts.pro.tuneladora.pipeline.tools.bandit_tool import BanditTool
+from scripts.pro.tuneladora.pipeline.tools.base import Status
 from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 

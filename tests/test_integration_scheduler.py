@@ -1,7 +1,6 @@
 """Tests de integracion: Scheduler + Brain (A3)."""
 from __future__ import annotations
 
-import asyncio
 from unittest import mock
 
 import pytest
@@ -113,8 +112,8 @@ class TestAutoFixCode:
         assert result["status"] == "committed"
 
     def test_auto_fix_code_risk_safe(self, maintainer):
-        from motor.brain.auto_maintain import MaintenanceProposal
         from motor.brain.alerts import Alert
+        from motor.brain.auto_maintain import MaintenanceProposal
 
         alert = Alert(severity="info", title="code quality", description="", affected_subsystems=["code"], timestamp=123.0)
         proposal = MaintenanceProposal(alert=alert, action="auto_fix_code", target="motor/brain/", params={})
@@ -123,6 +122,5 @@ class TestAutoFixCode:
 
     def test_auto_fix_code_action_type(self, maintainer):
         """auto_fix_code se mapea a tipo 'format'."""
-        from motor.brain.auto_maintain import MaintenanceProposal
         action = AutoMaintainer._action_to_type("auto_fix_code")
         assert action == "format"

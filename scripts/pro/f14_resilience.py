@@ -577,7 +577,7 @@ def scenario_r07() -> dict[str, Any]:
     big_objects: list[dict] = []
     try:
         for _i in range(1000):
-            big_objects.append({str(j): "x" * 10000 for j in range(100)})  # noqa: PERF401
+            big_objects.append({str(j): "x" * 10000 for j in range(100)})
     except MemoryError:
         observed += "MemoryError al crear objetos grandes (esperado) | "
 

@@ -21,7 +21,7 @@ def detect_language(text: str) -> str:
     if not text.strip():
         return "unknown"
     sample = text[:2000]
-    cache_key = hashlib.md5(sample.encode()).hexdigest()  # noqa: S324
+    cache_key = hashlib.md5(sample.encode(), usedforsecurity=False).hexdigest()
     if cache_key in _LANG_CACHE:
         return _LANG_CACHE[cache_key]
     try:

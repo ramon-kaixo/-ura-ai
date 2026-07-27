@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 pytest.importorskip("motor.events.bus", reason="event system deprecated")
 from motor.core.state import DegradedMode
 from motor.events.bus import EventBus
@@ -58,6 +59,7 @@ class _CancelingPlugin(PluginBase):
 
 
 import pytest
+
 pytestmark = pytest.mark.skip(reason="pre-existing: hook system deprecated")
 
 class TestHookManagerRegistration:

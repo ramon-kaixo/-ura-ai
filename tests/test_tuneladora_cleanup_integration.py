@@ -8,9 +8,9 @@ from unittest import mock
 import pytest
 
 from scripts.pro.tuneladora.engine import PipelineEngine
+from scripts.pro.tuneladora.plugins.backup import BackupPlugin
 from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
 from scripts.pro.tuneladora.plugins.installer import InstallerPlugin
-from scripts.pro.tuneladora.plugins.backup import BackupPlugin
 
 
 @pytest.fixture
@@ -45,19 +45,18 @@ class TestCleanup:
         import os as _os
         import time as _time
 
-        with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch("pathlib.Path.home") as m_home:
-                m_home.return_value = Path(tmp)
-                with mock.patch("pathlib.Path.exists") as m_ex:
-                    m_ex.return_value = True
-                    log_dir = Path(tmp) / "URA" / "ura_ia_1972" / "motor" / "observability" / "logs"
-                    log_dir.mkdir(parents=True)
-                    old_file = log_dir / "old.log"
-                    old_file.touch()
-                    time_shift = _time.time() - 31 * 86400
-                    _os.utime(str(old_file), (time_shift, time_shift))
-                    result = cleanup.cleanup_logs(days=30)
-                    assert isinstance(result, dict)
+        with tempfile.TemporaryDirectory() as tmp, mock.patch("pathlib.Path.home") as m_home:
+            m_home.return_value = Path(tmp)
+            with mock.patch("pathlib.Path.exists") as m_ex:
+                m_ex.return_value = True
+                log_dir = Path(tmp) / "URA" / "ura_ia_1972" / "motor" / "observability" / "logs"
+                log_dir.mkdir(parents=True)
+                old_file = log_dir / "old.log"
+                old_file.touch()
+                time_shift = _time.time() - 31 * 86400
+                _os.utime(str(old_file), (time_shift, time_shift))
+                result = cleanup.cleanup_logs(days=30)
+                assert isinstance(result, dict)
 
     def test_vacuum_sqlite_ok(self, cleanup):
         with mock.patch("sqlite3.connect") as m:

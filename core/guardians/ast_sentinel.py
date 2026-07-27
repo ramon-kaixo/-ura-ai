@@ -88,7 +88,7 @@ class ASTSentinel:
                 w.append(f"'{f.name}': sin doc")
             for a in f.args.args:
                 if a.annotation is None and a.arg != "self":
-                    e.append(f"'{f.name}': arg '{a.arg}' sin tipo")  # noqa: PERF401
+                    e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
         m["cc_max"] = mx
         for n in ast.walk(t):
             if isinstance(n, ast.Try):
@@ -102,11 +102,11 @@ class ASTSentinel:
             elif isinstance(n, ast.Import):
                 for a in n.names:
                     if a.name in PROH:
-                        e.append(f"import: '{a.name}'")  # noqa: PERF401
+                        e.append(f"import: '{a.name}'")
             elif isinstance(n, ast.ImportFrom):
                 for a in n.names:
                     if f"{n.module or ''}.{a.name}" in PROH:
-                        e.append(f"import: '{n.module}.{a.name}'")  # noqa: PERF401
+                        e.append(f"import: '{n.module}.{a.name}'")
         for i, l in enumerate(codigo.splitlines(), 1):
             for p, ti in DP:
                 if p.search(l):
@@ -117,7 +117,7 @@ class ASTSentinel:
                 and isinstance(n.value, (int, float))
                 and n.value not in (0, 1, -1, 2, True, False)
             ):
-                w.append(f"L{n.lineno}: magic {n.value}")  # noqa: PERF401
+                w.append(f"L{n.lineno}: magic {n.value}")
         m["lines"] = len(codigo.splitlines())
         d = None
         if w:

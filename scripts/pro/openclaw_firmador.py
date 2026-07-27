@@ -370,7 +370,7 @@ def delta_check(label: str = "ultimo_ciclo") -> tuple[list[str], list[str], list
 
     for rel in prev:
         if rel not in current_keys:
-            eliminados.append(rel)  # noqa: PERF401
+            eliminados.append(rel)
 
     return modificados, nuevos, eliminados
 

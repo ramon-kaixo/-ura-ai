@@ -129,11 +129,11 @@ def validate_config() -> list:
 
     for dir_path in CONFIG.get("maintenance", {}).get("allowed_temp_dirs", []):
         if not Path(dir_path).exists():
-            warnings.append(f"Directorio temp no existe: {dir_path}")  # noqa: PERF401
+            warnings.append(f"Directorio temp no existe: {dir_path}")
 
     for dir_path in CONFIG.get("maintenance", {}).get("allowed_log_dirs", []):
         if not Path(dir_path).exists():
-            warnings.append(f"Directorio log no existe: {dir_path}")  # noqa: PERF401
+            warnings.append(f"Directorio log no existe: {dir_path}")
 
     return warnings
 
@@ -164,11 +164,11 @@ def validate_schema() -> list:
         if isinstance(keys, list):
             for key in keys:
                 if key not in CONFIG[section]:
-                    errors.append(f"Falta key '{key}' en seccion '{section}'")  # noqa: PERF401
+                    errors.append(f"Falta key '{key}' en seccion '{section}'")
 
     for profile_name in ("linux_asus", "darwin_mac", "linux_terminal"):
         if profile_name not in CONFIG.get("_raw_profiles", {}):
-            errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")  # noqa: PERF401
+            errors.append(f"Perfil '{profile_name}' no encontrado en system_config.json")
 
     if "patrones_clasificacion" not in CONFIG:
         errors.append("Falta 'patrones_clasificacion' en global_defaults")
@@ -197,7 +197,7 @@ def validate_schema_json() -> list:
         raw_config = json.loads(config_path.read_text())
         validator = jsonschema.Draft202012Validator(schema)
         for err in sorted(validator.iter_errors(raw_config), key=lambda e: e.path):
-            errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")  # noqa: PERF401
+            errors.append(f"{'.'.join(str(p) for p in err.path)}: {err.message}")
     except json.JSONDecodeError as e:
         errors.append(f"JSON invalido: {e}")
     except Exception as e:
