@@ -78,7 +78,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     engine = get_engine()
     llm = get_llm()
     get_assistant_health().set_healthy("conversation", f"active: {correlation_id}")
-    cid = request.conversation_id or ""
+    cid = request.conversation_id or uuid.uuid4().hex[:16]
 
     cid = _scoped_cid(request.user_id, cid)
 
