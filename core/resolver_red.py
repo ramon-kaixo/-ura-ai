@@ -23,7 +23,6 @@ Estrategia de resolución:
 import json
 import logging
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -197,7 +196,7 @@ def main() -> None:
         if ip:
             pass
         else:
-            sys.exit(1)
+            raise RuntimeError("No se pudo resolver la IP")
 
     elif args.ping:
         ruta = seleccionar_ruta(args.ping)
