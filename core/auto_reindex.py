@@ -76,7 +76,7 @@ async def _find_stale_docs_rest(qdrant, cutoff_days: int = CUTOFF_DAYS) -> list:
 
             # Convert REST response to dict format (point-like with .payload key)
             for p in points:
-                all_stale.append({"payload": p.get("payload", {}), "id": p.get("id")})  # noqa: PERF401
+                all_stale.append({"payload": p.get("payload", {}), "id": p.get("id")})
 
             if len(points) < BATCH_SIZE:
                 break

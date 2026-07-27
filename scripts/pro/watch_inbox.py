@@ -24,7 +24,7 @@ BACKOFF_BASE = 2
 
 def hash_file(path: Path) -> str:
     try:
-        return hashlib.md5(path.read_bytes()).hexdigest()  # noqa: S324
+        return hashlib.md5(path.read_bytes(), usedforsecurity=False).hexdigest()
     except OSError:
         return ""
 

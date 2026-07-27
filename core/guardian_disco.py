@@ -92,7 +92,7 @@ def comparar(anterior: dict, actual: dict) -> list:
             cambios.append({"file": f, "status": "MODIFICADO", "hash": h})
     for f in anterior:
         if f not in actual:
-            cambios.append({"file": f, "status": "FANTASMA", "hash": "—"})  # noqa: PERF401
+            cambios.append({"file": f, "status": "FANTASMA", "hash": "—"})
     return cambios
 
 

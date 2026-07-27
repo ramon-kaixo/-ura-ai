@@ -19,6 +19,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+
 from motor.core.secrets import get_secret
 
 try:
@@ -808,7 +809,7 @@ def _render_dashboard() -> str:
     elif POWER_MODE.upper() == "TURBO":
         power_hint = "Toda la inferencia va a ASUS. Fallback local bloqueado."
     else:
-        power_hint = "Toda la inferencia va al Mac local." 
+        power_hint = "Toda la inferencia va al Mac local."
     if lat < 0:
         latency_class = "value-red"
         asus_latency = "N/A"
@@ -1255,7 +1256,7 @@ def main() -> None:
 
     log.info("Model Router Enhanced v2.2 iniciando en puerto %s", ROUTER_PORT)
     log.info("Ollama backend: %s", OLLAMA_URL)
-    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'") 
+    log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'")
     log.info("Features: Dashboard, Prompt Caching, Fallback System, Metrics, Context Checker")
 
     disponibles = obtener_modelos_disponibles()

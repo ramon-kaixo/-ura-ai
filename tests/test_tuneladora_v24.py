@@ -6,7 +6,6 @@ from unittest import mock
 
 import pytest
 
-from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
@@ -83,7 +82,6 @@ class TestParallelPlugins:
         assert order == ["1", "2"]
 
     def test_parallel_may_complete(self, engine):
-        import time
         def slow(name: str) -> dict:
             return {"status": "ok", "name": name}
         result = engine.run_plugins([("a", lambda: slow("a")), ("b", lambda: slow("b"))], parallel=True)
@@ -100,7 +98,7 @@ class TestParallelPlugins:
 
 class TestMetrics:
     def test_metrics_module_importable(self):
-        from motor.observability.metrics import Counter, Histogram, Gauge, MetricsRegistry
+        from motor.observability.metrics import Counter, MetricsRegistry
         reg = MetricsRegistry()
         c = Counter("test_counter", "")
         c.inc()

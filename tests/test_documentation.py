@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 import pytest
 
+
 class TestReadme:
     def test_exists(self):
         assert (ROOT / "README.md").exists()

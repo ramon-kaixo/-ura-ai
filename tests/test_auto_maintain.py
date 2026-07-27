@@ -4,8 +4,6 @@ from __future__ import annotations
 import time
 from unittest import mock
 
-import pytest
-
 from motor.brain.alerts import Alert
 from motor.brain.auto_maintain import AutoMaintainer, MaintenanceProposal
 from motor.brain.observer import HealthObservation
@@ -239,7 +237,7 @@ class TestA2AutoExecute:
 
         results = maintainer.propose_and_maybe_execute()
         # Si no coincide, 0 resultados. Si coincide, 1 safe + 1 crit
-        assert len(results) >= 1  # noqa: S101
+        assert len(results) >= 1
 
 
 # ── A1: Execute ───────────────────────────────────────────

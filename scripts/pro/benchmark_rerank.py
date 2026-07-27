@@ -22,7 +22,7 @@ def load_queries():
     queries, rel_map = [], {}
     with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for line in f:
-            queries.append(json.loads(line))  # noqa: PERF401
+            queries.append(json.loads(line))
     with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for line in f:
             d = json.loads(line)

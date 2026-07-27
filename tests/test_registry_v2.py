@@ -16,6 +16,8 @@ def _make_legacy_plugin(path: Path, name: str) -> Path:
         f'__plugin__ = {{"name": "{name}", "phase": "pre"}}\n'
         f"from motor.plugin.base import PluginBase\n"
         f"class _P(PluginBase):\n"
+        f"    def on_load(self) -> None: pass\n"
+        f"    def on_unload(self) -> None: pass\n"
         f"    def execute(self, context):\n"
         f'        return {{"name": "{name}"}}\n',
     )
@@ -39,6 +41,8 @@ def _make_v2_plugin(base: Path, name: str, version: str = "1.0.0", extra_hooks: 
     init_content = (
         "from motor.plugin.base import PluginBase\n"
         "class MyPlugin(PluginBase):\n"
+        f"    def on_load(self) -> None: pass\n"
+        f"    def on_unload(self) -> None: pass\n"
         f"    def execute(self, context):\n"
         f"        return {{'name': '{name}', 'version': '{version}'}}\n"
     )

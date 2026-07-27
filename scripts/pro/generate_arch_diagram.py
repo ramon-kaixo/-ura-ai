@@ -89,7 +89,7 @@ def generate() -> None:  # noqa: PLR0915
     # Git branches
     lines.append("    subgraph GIT[Git Repository]")
     for b in sorted(branches):
-        lines.append(f"      branch_{b.replace('/', '_').replace('-', '_')}[🌿 {b}]")  # noqa: PERF401
+        lines.append(f"      branch_{b.replace('/', '_').replace('-', '_')}[🌿 {b}]")
     lines.append("    end")
     lines.append("")
 

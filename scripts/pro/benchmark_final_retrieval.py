@@ -24,7 +24,7 @@ def load_queries():
     queries, rel = [], {}
     with open(CORPUS_DIR / "queries.jsonl") as f:  # noqa: PTH123
         for l in f:
-            queries.append(json.loads(l))  # noqa: PERF401
+            queries.append(json.loads(l))
     with open(CORPUS_DIR / "relevance.jsonl") as f:  # noqa: PTH123
         for l in f:
             d = json.loads(l)
@@ -98,9 +98,10 @@ def run(name, fn, queries, rel_map, reranker=None):
 
 
 def main() -> int:
+    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
+
     from motor.core.config import UraConfig
     from motor.core.qdrant_client import QdrantClient
-    from motor.intelligence.reranking.crossencoder import CrossEncoderReranker
     from motor.intelligence.retrieval.hybrid import HybridRetriever
     from motor.intelligence.retrieval.lexical import LexicalRetriever
     from motor.intelligence.retrieval.vector import VectorRetriever
