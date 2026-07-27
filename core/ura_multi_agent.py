@@ -32,16 +32,11 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+from core.agents.constants import NERVIOSO, SCRIPTS, URA_ROOT
 from motor.core.llm import generate as _generate
 from motor.core.llm import health as _health
 
 log = logging.getLogger("ura.multi_agent")
-
-# ── Configuración ──────────────────────────────────────────────────────────
-
-URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-SCRIPTS = URA_ROOT / "scripts/pro"
-NERVIOSO = URA_ROOT / ".nervioso"
 MAX_CICLO_S = 300  # Timeout global del ciclo de auto-mejora (5 minutos)
 
 MODELOS = {

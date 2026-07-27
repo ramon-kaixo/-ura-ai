@@ -1,13 +1,12 @@
-"""Constantes compartidas del sistema multi-agente."""
+"""Constantes compartidas del sistema multi-agente.
+
+URA_ROOT y rutas derivadas provienen de shared.paths (fuente canónica).
+"""
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
+from shared.paths import URA_ROOT
 
-URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-SCRIPTS = URA_ROOT / "scripts/pro"
-NERVIOSO = URA_ROOT / ".nervioso"
 MAX_CICLO_S = 300
 
 MODELOS: dict[str, str] = {
