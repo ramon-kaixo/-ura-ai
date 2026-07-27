@@ -40,6 +40,8 @@ def call_with_retry(
     provider_name: str,
     registry: Any,
     circuit_breakers: dict[str, Any],
+    prompt: str = "",
+    *,
     retry_enabled: bool = True,
     retry_max_attempts: int = 3,
     retry_backoff_base: float = 1.0,
@@ -48,7 +50,6 @@ def call_with_retry(
     detector: Any = None,
     baseline: Any = None,
     monitor: Any = None,
-    *args,
     **kwargs,
 ) -> Any:
     from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
@@ -65,12 +66,12 @@ def call_with_retry(
         try:
             if monitor:
                 monitor.start_operation(provider_name, task, model)
-                result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
+                result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
                 monitor.finish_operation(provider_name, task)
             else:
                 if profiler:
                     profiler.start(provider_name, task, model)
-                result = cb.call(lambda: getattr(prov_obj, method)(*args, **kwargs))
+                result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
                 if profiler:
                     profile = profiler.stop(provider_name, task)
                     if profile:
@@ -137,6 +138,10 @@ def call_with_retry(
     return _build_error(method, last_error or "unknown")
 
 
+_RETRY_KWARGS = {"retry_enabled", "retry_max_attempts", "retry_backoff_base",
+                 "retry_backoff_max", "profiler", "detector", "baseline", "monitor"}
+
+
 def call_with_fallback(
     prov_obj: Any,
     method: str,
@@ -149,6 +154,8 @@ def call_with_fallback(
     *args,
     **kwargs,
 ) -> tuple[Any, str | None]:
+    retry_kw = {k: kwargs.pop(k) for k in _RETRY_KWARGS if k in kwargs}
+    prompt_arg: str = args[0] if args else ""
     result = call_with_retry(
         prov_obj,
         method,
@@ -156,8 +163,8 @@ def call_with_fallback(
         primary,
         registry,
         circuit_breakers,
-        *args,
-        **kwargs,
+        prompt=prompt_arg,
+        **retry_kw,
     )
     if not _is_error_result(result) or not fallback_enabled:
         return result, primary
@@ -180,8 +187,8 @@ def call_with_fallback(
             fallback_name,
             registry,
             circuit_breakers,
-            *args,
-            **kwargs,
+            prompt=prompt_arg,
+            **retry_kw,
         )
         if not _is_error_result(fallback_result):
             return fallback_result, fallback_name
