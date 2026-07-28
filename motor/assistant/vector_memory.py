@@ -44,11 +44,14 @@ class VectorMemoryStore:
         if emb is None:
             return
         with self._lock:
-            self._conn.execute(
-                "INSERT INTO entries (conversation_id, role, content, embedding) VALUES (?, ?, ?, ?)",
-                (conversation_id, role, content[:500], emb.tobytes()),
-            )
-            self._conn.commit()
+            try:
+                self._conn.execute(
+                    "INSERT INTO entries (conversation_id, role, content, embedding) VALUES (?, ?, ?, ?)",
+                    (conversation_id, role, content[:500], emb.tobytes()),
+                )
+                self._conn.commit()
+            except sqlite3.ProgrammingError:
+                pass
 
     def search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         qemb = self._embed(query)
