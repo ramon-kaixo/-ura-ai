@@ -24,6 +24,8 @@ def _make_legacy_plugin(path: Path, name: str, phase: str = "always") -> Path:
         f'__plugin__ = {{"name": "{name}", "phase": "{phase}"}}\n'
         "from motor.plugin.base import PluginBase\n"
         "class _P(PluginBase):\n"
+        "    def on_load(self) -> None: pass\n"
+        "    def on_unload(self) -> None: pass\n"
         "    def execute(self, context):\n"
         f"        return {{'name': '{name}'}}\n",
     )
@@ -57,6 +59,8 @@ def _make_v2_plugin(
     (d / "__init__.py").write_text(
         "from motor.plugin.base import PluginBase\n"
         f"class {entry_point}(PluginBase):\n"
+        "    def on_load(self) -> None: pass\n"
+        "    def on_unload(self) -> None: pass\n"
         "    def execute(self, context):\n"
         f"        return {{'name': '{name}', 'version': '{version}'}}\n",
     )
@@ -73,6 +77,8 @@ class TestPluginBase:
 
     def test_concrete_plugin_has_default_meta(self) -> None:
         class _Concrete(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -85,6 +91,8 @@ class TestPluginBase:
 
     def test_repr_includes_name(self) -> None:
         class _Named(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -92,6 +100,8 @@ class TestPluginBase:
 
     def test_rollback_default_is_noop(self) -> None:
         class _NoRollback(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -99,6 +109,8 @@ class TestPluginBase:
 
     def test_rollback_can_be_overridden(self) -> None:
         class _WithRollback(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def __init__(self) -> None:
                 super().__init__()
                 self.rolled_back = False
@@ -115,6 +127,8 @@ class TestPluginBase:
 
     def test_execute_returns_dict(self) -> None:
         class _Returning(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"result": 42, "items": [1, 2, 3]}
 
@@ -122,6 +136,8 @@ class TestPluginBase:
 
     def test_execute_receives_context(self) -> None:
         class _CtxAware(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"received": context.get("key") if context else None}
 
@@ -130,6 +146,8 @@ class TestPluginBase:
 
     def test_execute_with_none_context(self) -> None:
         class _NoneCtx(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"got_none": context is None}
 
@@ -137,6 +155,8 @@ class TestPluginBase:
 
     def test_meta_from_init(self) -> None:
         class _CustomMeta(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
             def __init__(self) -> None:
                 super().__init__()
                 self.meta = PluginMeta(name="custom", phase="pre", timeout=10)
@@ -171,6 +191,7 @@ class TestPluginBaseLifecycleHooks:
             "    load_called = False\n"
             "    def on_load(self):\n"
             "        LifecyclePlugin.load_called = True\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {}\n",
         )
@@ -189,10 +210,11 @@ class TestPluginBaseLifecycleHooks:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class FailingLoadPlugin(PluginBase):\n"
-            "    def execute(self, context):\n"
-            "        return {}\n"
             "    def on_load(self):\n"
-            "        raise RuntimeError('intentional on_load failure')\n",
+            "        raise RuntimeError('intentional on_load failure')\n"
+            "    def on_unload(self) -> None: pass\n"
+            "    def execute(self, context):\n"
+            "        return {}\n",
         )
         registry = PluginRegistryV2()
         registry.discover([str(tmp_path)])
@@ -209,10 +231,11 @@ class TestPluginBaseLifecycleHooks:
             "from motor.plugin.base import PluginBase\n"
             "class UnloadPlugin(PluginBase):\n"
             "    unload_called = False\n"
-            "    def execute(self, context):\n"
-            "        return {}\n"
+            "    def on_load(self) -> None: pass\n"
             "    def on_unload(self):\n"
-            "        UnloadPlugin.unload_called = True\n",
+            "        UnloadPlugin.unload_called = True\n"
+            "    def execute(self, context):\n"
+            "        return {}\n",
         )
         registry = PluginRegistryV2()
         registry.discover([str(tmp_path)])
@@ -231,6 +254,7 @@ class TestPluginBaseLifecycleHooks:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class FailingUnloadPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {}\n"
             "    def on_unload(self):\n"
@@ -253,12 +277,10 @@ class TestPluginBaseLifecycleHooks:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class NoLifecyclePlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
-            "        return {}\n"
-            "    def on_load(self):\n"
-            "        raise RuntimeError('should not be called')\n"
-            "    def on_unload(self):\n"
-            "        raise RuntimeError('should not be called')\n",
+            "        return {}\n",
         )
         registry = PluginRegistryV2()
         registry.discover([str(tmp_path)])
@@ -276,6 +298,8 @@ class TestPluginBaseLifecycleHooks:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class ManifestAttrPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {}\n",
         )
@@ -294,8 +318,8 @@ class TestPluginBaseLifecycleHooks:
         registry.discover([str(tmp_path)])
         plugin = registry.get("no_hooks_legacy")
         assert plugin is not None
-        assert not hasattr(plugin, "on_load")
-        assert not hasattr(plugin, "on_unload")
+        assert hasattr(plugin, "on_load")
+        assert hasattr(plugin, "on_unload")
 
 
 # ── PluginManifest ─────────────────────────────────────────────────────────
@@ -679,6 +703,8 @@ class TestPluginRegistryRun:
             '__plugin__ = {"name": "ctx_plugin", "phase": "pre"}\n'
             "from motor.plugin.base import PluginBase\n"
             "class _P(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {'received': context.get('key') if context else None}\n",
         )
@@ -728,6 +754,8 @@ class TestPluginRegistryError:
             '__plugin__ = {"name": "fail_exec", "phase": "pre"}\n'
             "from motor.plugin.base import PluginBase\n"
             "class _P(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        raise RuntimeError('execution error')\n",
         )
@@ -754,6 +782,8 @@ class TestPluginRegistryError:
             '__plugin__ = {"name": "good", "phase": "pre"}\n'
             "from motor.plugin.base import PluginBase\n"
             "class _P(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {'ok': True}\n",
         )
@@ -1018,6 +1048,8 @@ class TestRegistryV2Duplicate:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class BadManifestPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {}\n",
         )
@@ -1155,6 +1187,8 @@ class TestRegistryV2ErrorHandling:
         (d / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class FailRunPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        raise RuntimeError('intentional run failure')\n",
         )
@@ -1174,6 +1208,8 @@ class TestRegistryV2ErrorHandling:
         (d_fail / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class IsolatedFailPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        raise RuntimeError('fail')\n",
         )
@@ -1185,6 +1221,8 @@ class TestRegistryV2ErrorHandling:
         (d_good / "__init__.py").write_text(
             "from motor.plugin.base import PluginBase\n"
             "class IsolatedGoodPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {'ok': True}\n",
         )
