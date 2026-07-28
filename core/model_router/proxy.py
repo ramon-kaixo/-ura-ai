@@ -205,7 +205,7 @@ def proxy_request(
 
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=300) as resp:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=600) as resp:  # noqa: S310
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:
