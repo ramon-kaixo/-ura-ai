@@ -39,6 +39,9 @@ class TestDegradedModePluginRegistryIntegration:
 __plugin__ = {{"name": "{name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def execute(self, context):
         return {{"ok": True}}
 """

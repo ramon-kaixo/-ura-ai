@@ -34,6 +34,8 @@ def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Pat
     init_content = (
         "from motor.plugin.base import PluginBase\n"
         "class MyPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
         f"    def __init__(self):\n"
         f"        super().__init__()\n"
         f"        self.pre_ingest_calls = 0\n"
@@ -94,6 +96,8 @@ class TestIntegrationEventBusDegradedMode:
         init_content = (
             "from motor.plugin.base import PluginBase\n"
             "class MyPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        return {}\n"
             "    def on_pre_ingest(self, event):\n"
@@ -120,6 +124,8 @@ class TestIntegrationRegistryWithExecutor:
             "from motor.plugin.base import PluginBase\n"
             "from motor.core.executor import SubprocessExecutor\n"
             "class MyPlugin(PluginBase):\n"
+            "    def on_load(self) -> None: pass\n"
+            "    def on_unload(self) -> None: pass\n"
             "    def execute(self, context):\n"
             "        exe = SubprocessExecutor()\n"
             "        r = exe.run(['echo', 'hello_from_plugin'])\n"
