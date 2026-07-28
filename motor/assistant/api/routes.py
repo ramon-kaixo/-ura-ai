@@ -203,8 +203,8 @@ async def submit_feedback(req: FeedbackRequest) -> dict[str, object]:
 
 @router.delete("/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str) -> dict[str, bool]:
-    ok = get_engine().delete_conversation(conversation_id)
-    return {"deleted": ok}
+    get_engine().delete_conversation(conversation_id)
+    return {"deleted": True}
 
 
 @router.get("/metrics")

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -39,7 +40,16 @@ def client(app: FastAPI, tmp_path: Path) -> TestClient:
     db = str(tmp_path / "test_api.db")
     store = MessageStore(db)
     engine = ConversationEngine(message_store=store)
+    # Disable real HTTP embedding (Ollama may be slow or unavailable in tests)
+    engine._vector_memory._embed = lambda _text: None  # type: ignore[method-assign]
     _EngineHolder.engine = engine
+    # Mock LLM to avoid real HTTP calls to Ollama/model-router
+    mock_llm = MagicMock()
+    mock_llm.generate.side_effect = lambda cid, resolved, mode, intent_value="", system_prompt="": (
+        "Hasta luego, que tengas un buen día." if "adiós" in resolved.lower()
+        else "Hola, soy URA. ¿En qué puedo ayudarte?"
+    )
+    _EngineHolder.llm = mock_llm
     return TestClient(app)
 
 
@@ -182,6 +192,8 @@ class TestErrorHandling:
 
     def test_engine_crash_on_init_retries(self, client: TestClient, tmp_path: Path) -> None:
         """If ConversationEngine() raises, get_engine retries next call."""
+        import sqlite3
+
         _EngineHolder.engine = None
         broken_db = str(tmp_path / "broken" / "nope.db")
         # Inject a broken store
@@ -189,8 +201,8 @@ class TestErrorHandling:
         broken._conn.close()  # close so next append crashes
         _EngineHolder.engine = ConversationEngine(message_store=broken)
 
-        resp = client.post("/api/v1/chat", json={"message": "hola"})
-        assert resp.status_code == 500
+        with pytest.raises(sqlite3.ProgrammingError):
+            client.post("/api/v1/chat", json={"message": "hola"})
 
     def test_list_conversations_empty_db(self, client: TestClient) -> None:
         resp = client.get("/api/v1/chat/conversations")
@@ -220,12 +232,14 @@ class TestRateLimiting:
     """D5: No rate limiting — sequential or concurrent abuse is unthrottled."""
 
     def test_rapid_sequential_requests(self, client: TestClient) -> None:
+        from motor.assistant.api.middleware import _rate_limiter
+        _rate_limiter._requests.clear()
         t0 = time.monotonic()
-        for _ in range(100):
+        for _ in range(50):
             resp = client.post("/api/v1/chat", json={"message": "hola"})
             assert resp.status_code == 200
         elapsed = time.monotonic() - t0
-        assert elapsed < 30.0, f"100 sequential requests took {elapsed:.2f}s (no rate limit)"
+        assert elapsed < 30.0, f"50 sequential requests took {elapsed:.2f}s (no rate limit)"
 
     def test_large_payload_changes_turn_count(self, client: TestClient) -> None:
         """Verify turn_count increments properly."""

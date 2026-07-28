@@ -1,9 +1,10 @@
 """Fixtures globales para toda la suite de tests.
 
 Aísla el estado entre tests para evitar dependencias de orden de ejecucion.
-Dos fixtures autouse:
+Tres fixtures autouse:
 1. isolate_test_environment: restaura variables de entorno
 2. reset_provider_singletons: limpia cachés de proveedores LLM
+3. reset_engine_holder: resetea _EngineHolder global entre tests
 """
 
 from __future__ import annotations
@@ -45,3 +46,24 @@ def isolate_test_environment() -> Generator[None, None, None]:
 def reset_provider_singletons() -> Generator[None, None, None]:
     """Resetea los estados globales compartidos en los clientes de LLM."""
     yield
+
+
+@pytest.fixture(autouse=True)
+def reset_engine_holder() -> Generator[None, None, None]:
+    """Resetea _EngineHolder global entre tests.
+
+    _EngineHolder.engine y .llm son singletons compartidos por todos los
+    tests de test_audit_api.py. Si un test deja el engine en estado
+    corrupto (conexion cerrada, threads sueltos), el siguiente test se
+    cuelga en SQLite. Este fixture garantiza estado limpio cada test.
+    """
+    from motor.assistant.api.handlers import _EngineHolder
+    from motor.assistant.api.middleware import _rate_limiter
+
+    _EngineHolder.engine = None
+    _EngineHolder.llm = None
+    _rate_limiter._requests.clear()
+    yield
+    _EngineHolder.engine = None
+    _EngineHolder.llm = None
+    _rate_limiter._requests.clear()
