@@ -19,8 +19,6 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
-<<<<<<< Updated upstream
-
 from motor.core.secrets import get_secret
 
 try:
@@ -55,14 +53,6 @@ except ImportError:
             return f
 
         return decorator
-=======
->>>>>>> Stashed changes
-import sys
-sys.path.insert(0, '/usr/local/bin')
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from router_rate_limiter import rate_limiter
-from core.auth_layer import validate as auth_validate, require_auth
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
