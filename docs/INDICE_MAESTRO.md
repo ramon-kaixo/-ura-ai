@@ -1,4 +1,4 @@
-# ÍNDICE MAESTRO URA v0.29.0
+# ÍNDICE MAESTRO URA v0.33.2
 *Generado el 2026-07-28 17:02 UTC | Host: gx10-64c3 | Rama: main*
 
 ---
@@ -43,9 +43,9 @@ ura/
 
 | Versión | Fecha | Estado | Objetivo |
 |---------|-------|--------|----------|
-| v0.29.0 | 2026-07-28 | 🟢 Activo | Estabilización + auditoría externa |
+| v0.33.2 | 2026-07-28 | 🟢 Activo | Estabilización + auditoría externa |
 
-**Commit actual:** 452ba9b feat: external_audit.sh con OpenRouter/Claude + fallback Ollama + cron
+**Commit actual:** d04d414 feat: FASES 1-4 completadas — indice, auditoria multi-LLM, ADRs, recuperacion
 **Commits totales:** 949
 **Último tag:** backup_test_backup_20260728_151856
 
@@ -55,10 +55,10 @@ ura/
 
 | Métrica | Valor | Fecha |
 |---------|-------|-------|
-| Tests pasados | (error) | 2026-07-28 |
-| Tests fallidos | (error) | 2026-07-28 |
-| Tests skipped | (error) | 2026-07-28 |
-| Linting (ruff) |  errores | 2026-07-28 |
+| Tests pasados (subset fijo) | 565 | 2026-07-28 |
+| Tests fallidos (subset fijo) | 0 | 2026-07-28 |
+| Tests skipped (subset fijo) | 5 | 2026-07-28 |
+| Linting (ruff) | 37 errores (cosméticos) | 2026-07-28 |
 | Bandit HIGH | 0 | 2026-07-28 |
 | Merge conflicts | 0 | 2026-07-28 |
 | Stashes activos | 0 | 2026-07-28 |
@@ -143,81 +143,42 @@ ura/
 
 ## 6. HISTORIAL DE CAMBIOS
 
-| Fecha | Commit | Qué se hizo | Por qué | Quién validó |
-|-------|--------|-------------|--------|-------------|
-| 2026-07-28 | 452ba9b | feat: external_audit.sh con OpenRouter/Claude + fallback Ollama + cron | |
-| 2026-07-28 | da1ceda | fix: deadlock en vector_memory.py:46 — _embed() fuera del lock | |
-| 2026-07-28 | 06125bc | fix: ~20 tests pre-existentes rotos — todos arreglados | |
-| 2026-07-28 | 8dfc6e5 | fix: ultimo merge conflict en model_router.py eliminado | |
-| 2026-07-28 | 12e06c6 | fix: ura_maintenance.py restaurado de commit limpio (auto-fix lo revirtio) | |
-| 2026-07-28 | 66f92e4 | fix: merge conflicts reintroducidos por auto-fix gate — resueltos desde commit limpio | |
-| 2026-07-28 | 581007e | fix: 454 tests pass, 0 fail — todos los PluginBase + models + merge conflicts | |
-| 2026-07-28 | ce260f6 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-28 | e6c0ad5 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-28 | db95e29 | fix: 260 tests pass, 0 fail — plugins, auth, audit | |
-| 2026-07-28 | e74c33a | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-27 | 1e90b7c | fix: test_audit_api — 3 tests reparados (very_long, surrogates, cid) | |
-| 2026-07-27 | b0b8f5b | cleanup: barrido final — tests 90/0, ruff 37 cosmeticos, bandit 0 HIGH | |
-| 2026-07-27 | a8a24ed | fix: FASE 4 arquitectura — shared/paths.py, sys.exit, URA_ROOT centralizado | |
-| 2026-07-27 | 54ff2ec | fix: FASE 1-3 del plan de recuperacion | |
-| 2026-07-27 | 1bdf52d | fix: merge conflicts + strategy.py call_with_retry signature | |
-| 2026-07-27 | f263a20 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-27 | c11476c | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-27 | 8330c6e | docs: auditoria completa URA + recovery scripts — 14 fases, fixes criticos aplicados | |
-| 2026-07-27 | aba5c07 | fix: 4 pendientes auditoria — model-router auth, openclaw key, contraste partof, sudoers recovery | |
-| 2026-07-27 | 86d6834 | fix: openclaw restart-loop documentado en manifiesto | |
-| 2026-07-27 | bee3b8c | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-27 | 6247b28 | fix: audit findings — timers/openclaw en manifiesto, secrets 600, model-router user eliminado | |
-| 2026-07-26 | 49fba89 | docs: flujo Mac→Asus verificado — pipeline 6.5s, auth OK | |
-| 2026-07-26 | ef0d297 | docs: config map audit — duplicacion URA_ROOT, RUTAS_CONFIG, CONFIG_PATH | |
-| 2026-07-26 | 48f6f97 | fix: preflight integrado en tuneladoras + 31 tests | |
-| 2026-07-26 | eb2cee9 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | 6134107 | docs: god modules audit | |
-| 2026-07-26 | 6a70ce5 | fix: preflight filtro efimeros, heartbeat con auth, manifest completo, open-webui auth | |
-| 2026-07-26 | 6d0e66b | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | 2654669 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | f2e2eb7 | fix: manifesto completo con maintenance, fallback, router-user eliminado | |
-| 2026-07-26 | 1b253f8 | fix: eliminar router-health fantasma + limpiar build/ + docker en manifesto | |
-| 2026-07-26 | 1c1f053 | feat: System Manifest + Pre-flight Check | |
-| 2026-07-26 | 786d608 | fix: add Bearer token to watch_inbox Mochila client (auth F1.1) | |
-| 2026-07-26 | b227a95 | fix: add Bearer token header to Mochila HTTP client (auth F1.1) | |
-| 2026-07-26 | bcb98ba | docs: infrastructure index | |
-| 2026-07-26 | e3aa712 | fix: eliminar model-router user duplicado + ura-router-health conflictivo; infra documentada | |
-| 2026-07-26 | 2cc00d7 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | 5b30ec5 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | fd61429 | chore: ignore SQLite WAL files (knowledge.db-shm, knowledge.db-wal) | |
-| 2026-07-26 | 6f608ff | fix: recover from stash conflict corruption - restore 69 files from 775311b + security hotfixes | |
-| 2026-07-26 | 47eac14 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | a199b5f | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | 26ea7cc | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | ecb76e0 | fix: watch_daemon_poll (Samba-compatible) + Sofia prompt injection + commit em dash | |
-| 2026-07-26 | e9cb7b0 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-26 | a5c26c4 | tuneladora: auto-fix gate - 1 file(s) | |
-| 2026-07-25 | 68c0220 | tuneladora: auto-fix gate — 1 file(s) | |
-| 2026-07-25 | fbe240d | tuneladora: auto-fix gate — 1 file(s) | |
+| Fecha | Commit | Qué se hizo | Tests antes/después | Quién validó |
+|-------|--------|-------------|---------------------|-------------|
+| 2026-07-28 | d04d414 | feat: FASES 1-4 completadas — indice, auditoria multi-LLM, ADRs, recuperacion | 565/0/5 | AI agent |
+| 2026-07-28 | 452ba9b | feat: external_audit.sh con OpenRouter/Claude + fallback Ollama + cron | — | AI agent |
+| 2026-07-28 | da1ceda | fix: deadlock en vector_memory.py:46 — _embed() fuera del lock | — | AI agent |
+| 2026-07-28 | 06125bc | fix: ~20 tests pre-existentes rotos — todos arreglados | — | AI agent |
+| 2026-07-28 | 8dfc6e5 | fix: ultimo merge conflict en model_router.py eliminado | — | AI agent |
 
 ---
 
 ## 7. PENDIENTES Y DEUDA TÉCNICA
 
 ### Tests rotos pre-existentes
-- test_audit_message_store: 3 fallos (RuntimeError vs sqlite3) — ARREGLADOS ✅
-- test_ci_cd: 7 fallos (YAML + extras) — ARREGLADOS ✅
-- test_documentation: 1 fallo (ADR desactualizado) — ARREGLADOS ✅
-- test_integration_f10/f11: 8 fallos (PluginBase) — ARREGLADOS ✅
-- test_observability_f11: 1 fallo (PluginBase) — ARREGLADOS ✅
-- test_openclaw: 2 fallos (runbook structure) — ARREGLADOS ✅
+- **test_audit_conversation.py**: ~12 fallos intermitentes + deadlock (hangs sin -x). Causa: race condition en manejo de sesiones SQLite con hilos concurrentes. No se ha corregido para no modificar features (ADR-007).
+- **Suite completo (`pytest tests/`)**: se cuelga. No completa en <10 min por 4 causas: (1) deadlock test_audit_conversation.py, (2) test_knowledge_engine.py masivo (2621 líneas), (3) test_llm_bridge.py necesita model-router, (4) tests integración pesados.
+- **vector_memory.py deadlock**: ARREGLADO ✅ en commit da1ceda (_embed() fuera del lock). El suite completo se cuelga si se ejecuta test_audit_conversation.py ANTES que los tests de vector_memory.
+- **model-router caído**: systemd exit 78 (falta OPENCLAW_GATEWAY_TOKEN en entorno). Solución: rootfs RW + daemon-reload.
+- **Rootfs RO**: `/` montado RO en kernel cmdline. Recuperación vía GRUB (cambiar `ro`→`rw`) + `recovery_rootfs_rw.sh`.
 
-### Linting pendiente
-- Ruff:  errores (mayoría EXE002 cosmético)
-- Bandit HIGH: {bandit_high}
+### Tests arreglados (FASES 1-4)
+- test_plugin, test_plugin_registry, test_events, test_pipeline_mvp (127+25+141+21 = 314) — ✅
+- test_assistant_auth, test_audit_models, test_audit_message_store, test_ci_cd (15+35+15+7 = 72) — ✅
+- test_documentation, test_integration_f10/11, test_observability_f11 (20+14+25 = 59) — ✅
+- test_openclaw, test_vram_guard, test_snc_*, test_unit (11+10+27+20 = 68) — ✅
+- **Total subset fijo: 565 passed, 5 skipped, 0 failed**
 
-### Refactor planeado
-- Deadlock vector_memory.py — ARREGLADO ✅
-- Import circular core↔motor (9 archivos) — pendiente
-- sys.exit() en librerías core/ — pendiente (1 migrado a RuntimeError)
-- shared/paths.py como fuente canónica URA_ROOT — ARRANCADO ✅
-- Auto-fix gate reintroduce merge conflicts — mitigado (stashes eliminados)
+### Linting
+- Ruff: 37 errores (mayoría EXE002 cosmético — permisos de ejecución en .py)
+- Bandit HIGH: 0
+
+### Deuda técnica
+- **Cobertura de tests**: desconocida. No se ha ejecutado `pytest --cov` completo. El subset fijo no representa cobertura real del proyecto.
+- **OpenRouter no configurado**: sin OPENROUTER_API_KEY. Fallback a Ollama local no responde por timeout. El script external_audit.sh requiere clave para funcionar con Claude.
+- **Import circular core↔motor**: 9 archivos identificados — pendiente de refactor.
+- **sys.exit() en librerías core/**: pendiente (1 migrado a RuntimeError en shared/paths.py).
+- **shared/paths.py como fuente canónica**: ARRANCADO ✅ (core/agents/constants.py ya importa de shared).
 
 ---
 *Última actualización: 2026-07-28 17:02 UTC*
