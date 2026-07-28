@@ -90,8 +90,8 @@ class TestArchitecture:
 
     def test_has_adr_references(self):
         content = (ROOT / "docs/ARCHITECTURE.md").read_text()
-        assert "ADR-012" in content
-        assert "ADR-013" in content
+        assert "ADR-001" in content
+        assert "ADR-002" in content
 
 
 class TestCrossReferences:

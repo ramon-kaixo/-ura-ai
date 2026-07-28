@@ -62,6 +62,8 @@ class _P(PluginBase):
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         return {{"ok": True}}
 """
@@ -97,6 +99,8 @@ from motor.plugin.base import PluginBase
 from motor.core.executor import SubprocessExecutor
 
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         executor = SubprocessExecutor()
         result = executor.run(["echo", "from_plugin"])
@@ -128,6 +132,8 @@ from motor.plugin.base import PluginBase
 from motor.core.executor import SubprocessExecutor
 
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         executor = SubprocessExecutor()
         result = executor.run(["echo", "hello_triple"])
