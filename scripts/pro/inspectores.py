@@ -131,9 +131,7 @@ def check_git_artifacts(codigo, lineas, arbol):
     patterns = [
         (r"```python", "MARKDOWN_OPENCODE"),
         (r"```\s*$", "MARKDOWN_FENCE"),
-        (r"<<<<<<< ", "MERGE_CONFLICT"),
-        (r">>>>>>> ", "MERGE_CONFLICT"),
-        (r"=======", "MERGE_CONFLICT"),
+        (r"        (r"        (r"=======", "MERGE_CONFLICT"),
     ]
     for i, line in enumerate(lineas, 1):
         for pat, tipo in patterns:

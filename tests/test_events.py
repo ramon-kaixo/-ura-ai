@@ -802,6 +802,9 @@ class TestHookSets:
 
 
 class _HookablePlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self) -> None:
         super().__init__()
         self.manifest = PluginManifest(name="hookable", hooks=["pre_ingest", "post_search"])
@@ -821,6 +824,9 @@ class _HookablePlugin(PluginBase):
 
 
 class _FailingHookPlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self) -> None:
         super().__init__()
         self.manifest = PluginManifest(name="failing", hooks=["pre_ingest"])
@@ -836,6 +842,9 @@ class _FailingHookPlugin(PluginBase):
 
 
 class _CancelingPlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self) -> None:
         super().__init__()
         self.manifest = PluginManifest(name="canceler", hooks=["pre_ingest"])
@@ -848,6 +857,9 @@ class _CancelingPlugin(PluginBase):
 
 
 class _UnknownHookPlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self) -> None:
         super().__init__()
         self.manifest = PluginManifest(name="unknown", hooks=["nonexistent_hook"])
@@ -857,6 +869,9 @@ class _UnknownHookPlugin(PluginBase):
 
 
 class _MissingMethodPlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self) -> None:
         super().__init__()
         self.manifest = PluginManifest(name="missing", hooks=["pre_ingest"])
@@ -911,6 +926,9 @@ class TestHookManagerRegistration:
 
     def test_register_all_hook_categories(self, bus: EventBus, degraded: DegradedMode) -> None:
         class _AllHooksPlugin(PluginBase):
+            def on_load(self) -> None: pass
+            def on_unload(self) -> None: pass
+
             def __init__(self) -> None:
                 super().__init__()
                 self.manifest = PluginManifest(name="all", hooks=list(ALL_HOOKS))

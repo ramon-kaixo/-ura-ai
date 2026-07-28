@@ -23,82 +23,38 @@ def time_operation(name: str, func) -> float:
         return time.perf_counter() - start
 
 
-<<<<<<< Updated upstream
 def main() -> int:
-=======
-def main():
-    print("=" * 60)
-    print("PROFILE STARTUP — Diagnóstico de rendimiento")
-    print("=" * 60)
-    print()
-    
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     total_start = time.perf_counter()
     times = {}
     
     # 1. Carga de configuración
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     times["config"] = time_operation(
-=======
     print("[1/5] Cargando configuración...")
     times['config'] = time_operation(
->>>>>>> Stashed changes
-=======
-    print("[1/5] Cargando configuración...")
-    times['config'] = time_operation(
->>>>>>> Stashed changes
         "core.config_manager",
         lambda: __import__('core.config_manager')
     )
     
     # 2. Carga de Model Router
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     times["model_router"] = time_operation(
-=======
     print("\n[2/5] Cargando Model Router...")
     times['model_router'] = time_operation(
->>>>>>> Stashed changes
-=======
-    print("\n[2/5] Cargando Model Router...")
-    times['model_router'] = time_operation(
->>>>>>> Stashed changes
         "core.model_router",
         lambda: __import__('core.model_router')
     )
     
     # 3. Carga de Memory Engine
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     times["memory_engine"] = time_operation(
-=======
     print("\n[3/5] Cargando Memory Engine...")
     times['memory_engine'] = time_operation(
->>>>>>> Stashed changes
-=======
-    print("\n[3/5] Cargando Memory Engine...")
-    times['memory_engine'] = time_operation(
->>>>>>> Stashed changes
         "core.memory_engine",
         lambda: __import__('core.memory_engine')
     )
     
     # 4. Carga de agentes
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     times["agents"] = time_operation(
-=======
     print("\n[4/5] Cargando agentes...")
     times['agents'] = time_operation(
->>>>>>> Stashed changes
-=======
-    print("\n[4/5] Cargando agentes...")
-    times['agents'] = time_operation(
->>>>>>> Stashed changes
         "agents.agente_sandbox_codigo",
         lambda: __import__('agents.agente_sandbox_codigo')
     )
@@ -118,17 +74,12 @@ def main():
         "Ollama health check",
         check_ollama
     )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
     time.perf_counter() - total_start
 
     for _name, _elapsed in times.items():
         pass
 
-=======
-=======
->>>>>>> Stashed changes
     
     total_elapsed = time.perf_counter() - total_start
     
@@ -141,10 +92,6 @@ def main():
     print(f"  {'TOTAL':20s}: {total_elapsed:.3f}s")
     print()
     
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     # Identificar cuellos de botella
     threshold = 1.0  # 1 segundo
     bottlenecks = [(name, elapsed) for name, elapsed in times.items() if elapsed > threshold]
@@ -152,18 +99,10 @@ def main():
         for _name, _elapsed in bottlenecks:
             pass
     else:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         pass
 
-=======
         print("✓ No se detectaron cuellos de botella significativos")
     
->>>>>>> Stashed changes
-=======
-        print("✓ No se detectaron cuellos de botella significativos")
-    
->>>>>>> Stashed changes
     return 0
 
 

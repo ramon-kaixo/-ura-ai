@@ -254,6 +254,9 @@ class TestInstrumentationHealth:
 
 
 class _SimplePlugin(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
+
     def __init__(self, name: str = "simple") -> None:
         super().__init__()
         self.executed = False

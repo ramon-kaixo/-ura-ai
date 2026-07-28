@@ -27,32 +27,30 @@ class TestMessageAudit:
         MessageRole = Literal["user","assistant","system","tool"] is
         a static-only hint.  Any arbitrary string passes at runtime.
         """
-        msg = Message(role="invented_role", content="boom")  # type: ignore[arg-type]
-        # This should have raised but doesn't — runtime type gap.
-        assert msg.role == "invented_role", "Runtime should have rejected 'invented_role', but it didn't"
+        with pytest.raises(ValueError, match="Invalid role"):
+            Message(role="invented_role", content="boom")
 
     def test_empty_role_string(self):
-        """Edge case: empty string role accepted with no validation."""
-        msg = Message(role="", content="empty")
-        assert msg.role == ""
+        """Edge case: empty string role raises ValueError."""
+        with pytest.raises(ValueError, match="Invalid role"):
+            Message(role="", content="empty")
 
     def test_token_estimate_zero_divisor(self):
-        """BUG: chars_per_token=0 raises ZeroDivisionError."""
+        """chars_per_token=0 defaults to 4.0 (no ZeroDivisionError)."""
         msg = Message(role="user", content="hello")
-        with pytest.raises(ZeroDivisionError):
-            msg.token_estimate(chars_per_token=0.0)
+        result = msg.token_estimate(chars_per_token=0.0)
+        assert result == 1  # len(5)/4 = 1.25 -> int=1 -> max(1,1)=1
 
     def test_token_estimate_negative_divisor(self):
-        """BUG: negative chars_per_token produces negative / nonsensical result."""
+        """Negative chars_per_token defaults to 4.0."""
         msg = Message(role="user", content="hello")
         result = msg.token_estimate(chars_per_token=-4.0)
-        # len("hello") = 5 → int(5 / -4) = int(-1.25) = -1 → -1 + 1 = 0
-        assert result == 0, f"Expected 0 for negative divisor, got {result}"
+        assert result == 1, f"Expected 1 for negative divisor (fallback 4.0), got {result}"
 
     def test_token_estimate_empty_content(self):
-        """Semantic edge case: empty content still counts as 1 token.
+        """Semantic edge case: empty content reports 1 token.
 
-        int(0/4) + 1 = 1.  A message with no content should arguably
+        max(1, int(0/4)) = 1.  A message with no content should arguably
         consume 0 tokens, not 1.
         """
         msg = Message(role="user", content="")
@@ -63,7 +61,7 @@ class TestMessageAudit:
         msg = Message(role="user", content="x" * 10_000_000)
         # Should not blow up and should compute quickly.
         tokens = msg.token_estimate()
-        assert tokens == 2_500_001  # 10M / 4 + 1
+        assert tokens == 2_500_000  # max(1, int(10M/4)) = 2_500_000
 
     def test_token_estimate_cjk_content(self):
         """Accuracy edge case: CJK text has ~1-2 chars/token, not 4.
@@ -71,16 +69,13 @@ class TestMessageAudit:
         The fixed 4.0 default overestimates token count for CJK.
         """
         msg = Message(role="user", content="你好世界")
-        # 4 chars / 4 + 1 = 2, but a CJK tokeniser would give ~4 tokens.
         tokens = msg.token_estimate()
-        # The test documents the inaccuracy: it returns 2 instead of ~4.
-        assert tokens == 2, "CJK text severely underestimated at 4.0 chars/token default"
+        assert tokens == 1, f"CJK: 4 chars / 4 = 1 (no +1), got {tokens}"
 
     def test_tool_message_no_tool_call_id(self):
-        """Missing validation: tool messages should require tool_call_id."""
-        msg = Message(role="tool", content="result", tool_call_id="")
-        # Should arguably raise or at least warn, but does not.
-        assert msg.tool_call_id == ""
+        """Validation: tool messages require tool_call_id."""
+        with pytest.raises(ValueError, match="tool_call_id"):
+            Message(role="tool", content="result", tool_call_id="")
 
     def test_metadata_independence(self):
         """Design check: default_factory protects against shared mutable dict."""
@@ -90,10 +85,9 @@ class TestMessageAudit:
         assert "key" not in m2.metadata  # Shared reference would leak here
 
     def test_timestamp_whitespace_not_overwritten(self):
-        """Edge case: a whitespace-only timestamp is treated as truthy."""
+        """Edge case: whitespace-only timestamp is overwritten (design decision)."""
         msg = Message(role="user", content="hi", timestamp="   ")
-        # "   " is not empty → falsy, so __post_init__ skips overwrite.
-        assert msg.timestamp == "   ", "Whitespace-only timestamp should probably be treated as empty"
+        assert msg.timestamp != "   ", "Whitespace timestamp gets overwritten by __post_init__"
 
     def test_message_with_extra_unknown_kwarg(self):
         """BUG: unknown kwarg in Message() raises TypeError."""
@@ -199,7 +193,7 @@ class TestConversationAudit:
         """Edge case: no 'user' role messages returns None."""
         conv = Conversation(conversation_id="test")
         conv.add_message("assistant", "hello")
-        conv.add_message("tool", "result")
+        conv.add_message("tool", "result", tool_call_id="t1")
         assert conv.last_user_message is None
 
     def test_last_assistant_message_with_only_user_messages(self):
@@ -297,7 +291,7 @@ class TestCombinedAudit:
         conv.add_message("user", "hola")
         conv.add_message("assistant", "mundo")
         assert len(conv.messages) == 2
-        assert conv.token_count == 4  # "hola" → 2, "mundo" → 2
+        assert conv.token_count == 2  # max(1, int(4/4)) + max(1, int(5/4)) = 1 + 1 = 2
         assert conv.last_user_message is not None
         assert conv.last_user_message.content == "hola"
 

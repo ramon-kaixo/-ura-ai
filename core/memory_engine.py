@@ -66,10 +66,8 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
     return chunks
 
 
-# ============================================================
-# Indexación (determinista: mismo input → mismo índice)
-# ============================================================
-
+# =====================================================# Indexación (determinista: mismo input → mismo índice)
+# =====================================================
 
 def load_manifest() -> dict:
     if MANIFEST_PATH.exists():
@@ -82,14 +80,8 @@ def load_manifest() -> dict:
 
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
     
     # Verificar espacio en disco antes de escribir
->>>>>>> Stashed changes
     try:
         import shutil
 
@@ -102,14 +94,7 @@ def save_manifest(manifest: dict) -> None:
     except Exception as e:
         log.exception(f"Error verificando espacio en disco: {e}")
         raise
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
     
->>>>>>> Stashed changes
-=======
-    
->>>>>>> Stashed changes
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
@@ -211,10 +196,8 @@ def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
     return stats
 
 
-# ============================================================
-# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
-# ============================================================
-
+# =====================================================# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
+# =====================================================
 
 def query(question: str, top_k: int = TOP_K) -> list[dict]:
     """Busca los chunks más relevantes para una pregunta en Qdrant.
