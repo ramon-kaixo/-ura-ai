@@ -149,10 +149,13 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
     """
     try:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         has_pipe = "|" in cmd
         if has_pipe:
             result = _run_pipeline(cmd, timeout)
 =======
+=======
+>>>>>>> Stashed changes
         needs_shell = any(op in cmd for op in ['|', '&&', '||', ';', '$('])
         if needs_shell:
             result = subprocess.run(

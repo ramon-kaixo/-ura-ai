@@ -83,7 +83,10 @@ def load_manifest() -> dict:
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
     
     # Verificar espacio en disco antes de escribir
 >>>>>>> Stashed changes
@@ -100,6 +103,10 @@ def save_manifest(manifest: dict) -> None:
         log.exception(f"Error verificando espacio en disco: {e}")
         raise
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+    
+>>>>>>> Stashed changes
 =======
     
 >>>>>>> Stashed changes

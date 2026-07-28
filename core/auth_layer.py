@@ -6,6 +6,9 @@ from __future__ import annotations
 =======
 import os
 from typing import Optional
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 import os
@@ -18,6 +21,7 @@ DEFAULT_API_KEY: str | None = None
 AUTH_ENABLED = os.environ.get("URA_AUTH_ENABLED", "true").lower() == "true"
 
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 def _get_api_key(store: ISecretStore | None = None) -> str:
     if store is not None:
@@ -44,6 +48,8 @@ def validate(api_key: str | None, store: ISecretStore | None = None) -> bool:
 
 def require_auth() -> bool:
 =======
+=======
+>>>>>>> Stashed changes
 def validate(api_key: Optional[str]) -> bool:
     """Valida una API key.
     

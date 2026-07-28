@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 """URA Maintenance System - Sistema de mantenimiento automatizado (SEGURE)
 Escanea y limpia sistemas del enjambre URA de forma segura.
 =======
+=======
+>>>>>>> Stashed changes
 """
 URA Maintenance System - Sistema de mantenimiento automatizado (SEGURE)
 Escanea y limpia sistemas del enjambre URA de forma segura
@@ -12,9 +15,12 @@ Escanea y limpia sistemas del enjambre URA de forma segura
 import os
 import sys
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 from datetime import UTC, datetime
 from fnmatch import fnmatch
 =======
+=======
+>>>>>>> Stashed changes
 import subprocess
 import json
 import shutil
@@ -23,6 +29,9 @@ import re
 import pwd
 import grp
 from datetime import datetime
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
@@ -31,6 +40,7 @@ from fnmatch import fnmatch
 
 # Configuración por defecto (puede sobrescribirse con archivo de config)
 DEFAULT_CONFIG = {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     "log_dir": "/opt/ura/logs/maintenance",
     "exclude_patterns": [
@@ -51,6 +61,8 @@ DEFAULT_CONFIG = {
         "/etc/",  # Configuración del sistema
         "/var/lib/",  # Datos del sistema
 =======
+=======
+>>>>>>> Stashed changes
     'log_dir': '/opt/ura/logs/maintenance',
     'exclude_patterns': [
         '*.db', '*.sqlite', '*.sqlite-wal',  # Bases de datos
@@ -64,6 +76,9 @@ DEFAULT_CONFIG = {
         '/opt/ura/',  # Directorio URA
         '/etc/',  # Configuración del sistema
         '/var/lib/',  # Datos del sistema
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     ],
     'thresholds': {
@@ -82,6 +97,7 @@ DEFAULT_CONFIG = {
 }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 def load_config(config_path: str | None = None) -> dict:
     """Cargar configuración desde archivo."""
@@ -94,10 +110,18 @@ def load_config(config_path: str | None = None) -> dict:
 def load_config(config_path: Optional[str] = None) -> dict:
     """Cargar configuración desde archivo"""
     config = DEFAULT_CONFIG.copy()
+=======
+def load_config(config_path: Optional[str] = None) -> dict:
+    """Cargar configuración desde archivo"""
+    config = DEFAULT_CONFIG.copy()
+>>>>>>> Stashed changes
     
     if config_path and os.path.exists(config_path):
         try:
             with open(config_path, 'r') as f:
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 user_config = json.load(f)
                 config.update(user_config)
@@ -117,9 +141,14 @@ try:
     # Verificar permisos de escritura
     if not os.access(LOG_DIR, os.W_OK):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         msg = f"No write access to {LOG_DIR}"
         raise PermissionError(msg)
 except (PermissionError, OSError):
+=======
+        raise PermissionError(f"No write access to {LOG_DIR}")
+except (PermissionError, OSError) as e:
+>>>>>>> Stashed changes
 =======
         raise PermissionError(f"No write access to {LOG_DIR}")
 except (PermissionError, OSError) as e:
@@ -133,6 +162,7 @@ LOG_FILE = LOG_DIR / f"maintenance_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}
 
 logging.basicConfig(
     level=logging.INFO,
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)],
@@ -150,6 +180,26 @@ class SecurityValidator:
 
     def is_safe_to_delete(self, file_path: str) -> tuple[bool, str]:
         """Verificar si es seguro borrar un archivo."""
+=======
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class SecurityValidator:
+    """Validador de seguridad para operaciones de archivo"""
+    
+    def __init__(self, config: dict):
+        self.config = config
+        self.current_uid = os.getuid()
+        self.current_gid = os.getgid()
+    
+    def is_safe_to_delete(self, file_path: str) -> Tuple[bool, str]:
+        """Verificar si es seguro borrar un archivo"""
+>>>>>>> Stashed changes
 =======
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
@@ -197,10 +247,13 @@ class SecurityValidator:
     
     def _matches_exclude_pattern(self, path: str) -> bool:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         """Verificar si path coincide con patrones de exclusión."""
         for pattern in self.config["exclude_patterns"]:
             if fnmatch(path, pattern) or fnmatch(Path(path).name, pattern):
 =======
+=======
+>>>>>>> Stashed changes
         """Verificar si path coincide con patrones de exclusión"""
         for pattern in self.config['exclude_patterns']:
             if fnmatch(path, pattern) or fnmatch(os.path.basename(path), pattern):
@@ -209,6 +262,7 @@ class SecurityValidator:
         return False
     
     def _is_in_allowed_dir(self, path: str) -> bool:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         """Verificar si path está dentro de directorios permitidos."""
         allowed_dirs = self.config.get("allowed_temp_dirs", []) + self.config.get("allowed_log_dirs", [])
@@ -232,6 +286,8 @@ class SystemCleaner:
 
     def __init__(self, config: MaintenanceConfig, validator: SecurityValidator) -> None:
 =======
+=======
+>>>>>>> Stashed changes
         """Verificar si path está dentro de directorios permitidos"""
         allowed_dirs = self.config.get('allowed_temp_dirs', []) + \
                        self.config.get('allowed_log_dirs', [])
@@ -261,10 +317,13 @@ class SystemCleaner:
         self.space_freed = 0
         self.operations = []
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     def get_disk_usage(self, path: str = "/") -> dict:
         """Obtener uso de disco."""
 =======
+=======
+>>>>>>> Stashed changes
     
     def get_disk_usage(self, path: str = "/") -> Dict:
         """Obtener uso de disco"""
@@ -286,6 +345,7 @@ class SystemCleaner:
         threshold_gb = self.config.thresholds.get(threshold, 0)
         return size_gb > threshold_gb
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     def record_operation(self, operation: str, size_freed: float) -> None:
         """Registrar operación de limpieza."""
@@ -297,6 +357,8 @@ class SystemCleaner:
             },
         )
 =======
+=======
+>>>>>>> Stashed changes
     
     def record_operation(self, operation: str, size_freed: float):
         """Registrar operación de limpieza"""
@@ -360,8 +422,11 @@ class LinuxCleaner(SystemCleaner):
             # Verificar si docker está instalado
             try:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 subprocess.run(["docker", "--version"], capture_output=True, check=True)
 =======
+=======
+>>>>>>> Stashed changes
                 subprocess.run(["docker", "--version"], 
                              capture_output=True, check=True)
 >>>>>>> Stashed changes
@@ -374,8 +439,12 @@ class LinuxCleaner(SystemCleaner):
                 capture_output=True,
                 text=True,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 timeout=300,
                 check=False,  # 5 minutos timeout
+=======
+                timeout=300  # 5 minutos timeout
+>>>>>>> Stashed changes
 =======
                 timeout=300  # 5 minutos timeout
 >>>>>>> Stashed changes
@@ -410,12 +479,15 @@ class LinuxCleaner(SystemCleaner):
             
             before = self.get_disk_usage()
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             # Usar -y para evitar prompts (ya incluye non-interactive)
             subprocess.run(["sudo", "apt-get", "autoremove", "-y"], check=True, timeout=300)
             subprocess.run(["sudo", "apt-get", "clean"], check=True, timeout=300)
 
 =======
+=======
+>>>>>>> Stashed changes
             
  # Usar -y para evitar prompts (ya incluye non-interactive)
             subprocess.run(
@@ -429,6 +501,9 @@ class LinuxCleaner(SystemCleaner):
                 timeout=300
             )
             
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             after = self.get_disk_usage()
             freed = before.get('used', 0) - after.get('used', 0)
@@ -466,8 +541,12 @@ class LinuxCleaner(SystemCleaner):
                 capture_output=True,
                 text=True,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 timeout=300,
                 check=False,
+=======
+                timeout=300
+>>>>>>> Stashed changes
 =======
                 timeout=300
 >>>>>>> Stashed changes
@@ -506,8 +585,14 @@ class LinuxCleaner(SystemCleaner):
                             file_path = os.path.join(root, file)  # noqa: PTH118
                             try:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                                 file_age = (datetime.now(UTC).timestamp() - os.path.getmtime(file_path)) / 86400  # noqa: PTH204
                                 if file_age > retention_days and file.endswith(".log"):  # noqa: SIM102
+=======
+                                file_age = (datetime.now().timestamp() - 
+                                           os.path.getmtime(file_path)) / 86400
+                                if file_age > retention_days and file.endswith('.log'):
+>>>>>>> Stashed changes
 =======
                                 file_age = (datetime.now().timestamp() - 
                                            os.path.getmtime(file_path)) / 86400
@@ -542,8 +627,13 @@ class LinuxCleaner(SystemCleaner):
                                 total_freed += size
                         except OSError:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             pass
 
+=======
+                                pass
+            
+>>>>>>> Stashed changes
 =======
                                 pass
             
@@ -585,8 +675,12 @@ class MacCleaner(SystemCleaner):
                 capture_output=True,
                 text=True,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 timeout=300,
                 check=False,
+=======
+                timeout=300
+>>>>>>> Stashed changes
 =======
                 timeout=300
 >>>>>>> Stashed changes
@@ -622,8 +716,12 @@ class MacCleaner(SystemCleaner):
                 capture_output=True,
                 text=True,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 timeout=300,
                 check=False,
+=======
+                timeout=300
+>>>>>>> Stashed changes
 =======
                 timeout=300
 >>>>>>> Stashed changes
@@ -664,8 +762,12 @@ class MacCleaner(SystemCleaner):
                 capture_output=True,
                 text=True,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 timeout=300,
                 check=False,
+=======
+                timeout=300
+>>>>>>> Stashed changes
 =======
                 timeout=300
 >>>>>>> Stashed changes
@@ -709,8 +811,13 @@ class MacCleaner(SystemCleaner):
                                     total_freed += size
                         except OSError:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             pass
 
+=======
+                                pass
+            
+>>>>>>> Stashed changes
 =======
                                 pass
             
@@ -740,9 +847,12 @@ class MacCleaner(SystemCleaner):
                     for log_file in log_dir.rglob("*.log"):
                         try:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             file_age = (datetime.now(UTC).timestamp() - log_file.stat().st_mtime) / 86400
                             if file_age > retention_days:  # noqa: SIM102
 =======
+=======
+>>>>>>> Stashed changes
                             file_age = (datetime.now().timestamp() - 
                                        log_file.stat().st_mtime) / 86400
                             if file_age > retention_days:
@@ -752,8 +862,13 @@ class MacCleaner(SystemCleaner):
                                     total_freed += size
                         except OSError:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             pass
 
+=======
+                                pass
+            
+>>>>>>> Stashed changes
 =======
                                 pass
             
@@ -790,12 +905,15 @@ class MaintenanceOrchestrator:
         elif system == "darwin":
             return MacCleaner(self.config, self.validator)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         msg = f"Sistema no soportado: {system}"
         raise ValueError(msg)
 
     def run_maintenance(self) -> dict:
         """Ejecutar mantenimiento completo."""
 =======
+=======
+>>>>>>> Stashed changes
         else:
             raise ValueError(f"Sistema no soportado: {system}")
     
@@ -807,10 +925,15 @@ class MaintenanceOrchestrator:
         # Estado inicial
         initial_usage = self.cleaner.get_disk_usage()
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         logger.info(
             f"Espacio inicial: {initial_usage.get('used', 0):.2f}GB / {initial_usage.get('total', 0):.2f}GB ({initial_usage.get('percent', 0):.1f}%)",
         )
 
+=======
+        logger.info(f"Espacio inicial: {initial_usage.get('used', 0):.2f}GB / {initial_usage.get('total', 0):.2f}GB ({initial_usage.get('percent', 0):.1f}%)")
+        
+>>>>>>> Stashed changes
 =======
         logger.info(f"Espacio inicial: {initial_usage.get('used', 0):.2f}GB / {initial_usage.get('total', 0):.2f}GB ({initial_usage.get('percent', 0):.1f}%)")
         
@@ -832,6 +955,7 @@ class MaintenanceOrchestrator:
         # Estado final
         final_usage = self.cleaner.get_disk_usage()
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         logger.info(
             f"Espacio final: {final_usage.get('used', 0):.2f}GB / {final_usage.get('total', 0):.2f}GB ({final_usage.get('percent', 0):.1f}%)",
         )
@@ -850,6 +974,12 @@ class MaintenanceOrchestrator:
         
         # Resultados
         self.results = {
+=======
+        logger.info(f"Espacio final: {final_usage.get('used', 0):.2f}GB / {final_usage.get('total', 0):.2f}GB ({final_usage.get('percent', 0):.1f}%)")
+        
+        # Resultados
+        self.results = {
+>>>>>>> Stashed changes
             'system': platform.system(),
             'hostname': platform.node(),
             'initial_usage': initial_usage,
@@ -857,6 +987,9 @@ class MaintenanceOrchestrator:
             'space_freed_gb': self.cleaner.space_freed,
             'operations': self.cleaner.operations,
             'timestamp': datetime.now().isoformat()
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         }
         
@@ -864,6 +997,7 @@ class MaintenanceOrchestrator:
         self._save_results()
         
         return self.results
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 
     def _save_results(self) -> None:
@@ -876,6 +1010,8 @@ class MaintenanceOrchestrator:
         except OSError as e:
             logger.exception(f"Error guardando resultados: {e}")
 =======
+=======
+>>>>>>> Stashed changes
     
     def _save_results(self):
         """Guardar resultados en archivo JSON"""
