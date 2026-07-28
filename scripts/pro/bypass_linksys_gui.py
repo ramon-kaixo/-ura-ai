@@ -143,8 +143,6 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
             if password_field:
                 password_field.fill(RECOVERY_KEY)
 
-                print(f"  Password introducida: {RECOVERY_KEY}")
-                
                 # Esperar a que JS cifre el password (RSA) y submit el formulario
                 time.sleep(1)
                 password_field.press("Enter")
@@ -167,8 +165,6 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
 
             # ── PASO 4: Navegar a Port Forwarding ──
 
-            print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
-            
             # Menu items in order of navigation (Linksys Velop UI)
             menu_items = [
                 ("Security", ["Security", "Seguridad"]),

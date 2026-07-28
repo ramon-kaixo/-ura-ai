@@ -439,6 +439,9 @@
 {"ts": "2026-06-08T20:47:55Z", "source": "coingecko_btc", "data": {"btc_usd": 63372, "eth_usd": 1686.37}, "latency_ms": 98.5}
 {"ts": "2026-06-08T20:47:55Z", "source": "httpbin_ip", "data": {"origin": "62.99.13.109"}, "latency_ms": 469.2}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

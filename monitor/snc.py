@@ -92,10 +92,12 @@ openclaw_active = False
 openclaw_stable_since = None
 repair_attempts: dict[str, int] = {}
 
-# =====================================================# MODO SOBERANÍA: GX10 opera independientemente
+# ============================================================
+# MODO SOBERANÍA: GX10 opera independientemente
 # Si Mac cae, GX10 continúa sin interrupciones ni avisos.
 # El estado mac_connection_ok se actualiza automáticamente.
-# =====================================================
+# ============================================================
+
 
 def load_runbook() -> dict:
     try:
@@ -149,12 +151,6 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
         has_pipe = "|" in cmd
         if has_pipe:
             result = _run_pipeline(cmd, timeout)
-        needs_shell = any(op in cmd for op in ['|', '&&', '||', ';', '$('])
-        if needs_shell:
-            result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=timeout,
-                executable='/bin/bash',
-            )
         else:
             args = shlex.split(cmd)
             result = subprocess.run(
