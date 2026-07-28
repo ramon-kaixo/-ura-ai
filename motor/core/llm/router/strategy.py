@@ -138,8 +138,16 @@ def call_with_retry(
     return _build_error(method, last_error or "unknown")
 
 
-_RETRY_KWARGS = {"retry_enabled", "retry_max_attempts", "retry_backoff_base",
-                 "retry_backoff_max", "profiler", "detector", "baseline", "monitor"}
+_RETRY_KWARGS = {
+    "retry_enabled",
+    "retry_max_attempts",
+    "retry_backoff_base",
+    "retry_backoff_max",
+    "profiler",
+    "detector",
+    "baseline",
+    "monitor",
+}
 
 
 def call_with_fallback(
