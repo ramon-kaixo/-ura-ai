@@ -13,6 +13,8 @@ PLUGIN_BOILERPLATE = """
 from motor.plugin.base import PluginBase
 
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         return {{"plugin": "{name}"}}
 """
@@ -207,6 +209,8 @@ class TestPluginRegistryDegradedModeIntegration:
 __plugin__ = {{"name": "{plugin_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         raise RuntimeError("intentional exec failure f10")
 """
@@ -226,6 +230,8 @@ class _P(PluginBase):
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         return {{"ok": True}}
 """
@@ -246,6 +252,8 @@ class _P(PluginBase):
 __plugin__ = {{"name": "{good_name}", "phase": "pre"}}
 from motor.plugin.base import PluginBase
 class _P(PluginBase):
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         return {{"ok": True}}
 """
@@ -286,6 +294,8 @@ from motor.plugin.base import PluginBase
 class _P(PluginBase):
     def __init__(self):
         raise ValueError("intentional init fail f10")
+    def on_load(self) -> None: pass
+    def on_unload(self) -> None: pass
     def execute(self, context):
         return {{}}
 """
