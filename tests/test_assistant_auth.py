@@ -22,7 +22,8 @@ class TestConfig:
         cfg = AssistantConfig()
         assert cfg.port == 8000
 
-    def test_auth_disabled_by_default(self):
+    def test_auth_disabled_by_default(self, monkeypatch):
+        monkeypatch.delenv("URA_AUTH_ENABLED", raising=False)
         cfg = AssistantConfig()
         assert cfg.auth_enabled is False
 

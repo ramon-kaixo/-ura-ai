@@ -36,19 +36,19 @@ DEFAULT_CONFIG = {
         "/etc/",  # Configuración del sistema
         "/var/lib/",  # Datos del sistema
     ],
-    'thresholds': {
-        'docker_images': 10,  # Limpiar si > 10GB de imágenes
-        'docker_volumes': 5,  # Limpiar si > 5GB de volúmenes
-        'cache_size': 2,  # Limpiar si > 2GB de cache
-        'log_size': 1,  # Limpiar si > 1GB de logs
+    "thresholds": {
+        "docker_images": 10,  # Limpiar si > 10GB de imágenes
+        "docker_volumes": 5,  # Limpiar si > 5GB de volúmenes
+        "cache_size": 2,  # Limpiar si > 2GB de cache
+        "log_size": 1,  # Limpiar si > 1GB de logs
     },
-    'retention_days': {
-        'logs': 7,  # Mantener logs 7 días
-        'cache': 30,  # Mantener cache 30 días
-        'docker_build': 7,  # Mantener build cache 7 días
+    "retention_days": {
+        "logs": 7,  # Mantener logs 7 días
+        "cache": 30,  # Mantener cache 30 días
+        "docker_build": 7,  # Mantener build cache 7 días
     },
-    'allowed_temp_dirs': ['/tmp', '/var/tmp'],
-    'allowed_log_dirs': ['/var/log', '/opt/ura/logs'],
+    "allowed_temp_dirs": ["/tmp", "/var/tmp"],
+    "allowed_log_dirs": ["/var/log", "/opt/ura/logs"],
 }
 
 
@@ -68,10 +68,10 @@ def load_config(config_path: str | None = None) -> dict:
 
 
 # Cargar configuración
-CONFIG = load_config(os.environ.get('URA_MAINTENANCE_CONFIG'))
+CONFIG = load_config(os.environ.get("URA_MAINTENANCE_CONFIG"))
 
 # Configuración de logging
-LOG_DIR = Path(CONFIG['log_dir'])
+LOG_DIR = Path(CONFIG["log_dir"])
 try:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     # Verificar permisos de escritura
@@ -80,7 +80,7 @@ try:
         raise PermissionError(msg)
 except (PermissionError, OSError):
     # Fallback a directorio temporal
-    LOG_DIR = Path('/tmp/ura_maintenance_logs')
+    LOG_DIR = Path("/tmp/ura_maintenance_logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.warning(f"Using fallback log directory: {LOG_DIR}")
 
@@ -88,11 +88,8 @@ LOG_FILE = LOG_DIR / f"maintenance_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
@@ -171,10 +168,10 @@ class SystemCleaner:
         try:
             usage = shutil.disk_usage(path)
             return {
-                'total': usage.total / (1024**3),
-                'used': usage.used / (1024**3),
-                'free': usage.free / (1024**3),
-                'percent': (usage.used / usage.total) * 100
+                "total": usage.total / (1024**3),
+                "used": usage.used / (1024**3),
+                "free": usage.free / (1024**3),
+                "percent": (usage.used / usage.total) * 100,
             }
         except OSError as e:
             logger.exception(f"Error obteniendo uso de disco: {e}")
@@ -255,10 +252,10 @@ class LinuxCleaner(SystemCleaner):
 
             if result.returncode == 0:
                 # Extraer espacio liberado del output con regex
-                match = re.search(r'Total reclaimed space:\s+([\d.]+)\s*(GB|MB)', result.stdout)
+                match = re.search(r"Total reclaimed space:\s+([\d.]+)\s*(GB|MB)", result.stdout)
                 if match:
                     size = float(match.group(1))
-                    if match.group(2) == 'MB':
+                    if match.group(2) == "MB":
                         size /= 1024
                     self.record_operation("docker_prune", size)
                     return size
@@ -276,26 +273,18 @@ class LinuxCleaner(SystemCleaner):
             logger.info("Limpiando cache de apt...")
 
             # Verificar si apt está disponible
-            if not shutil.which('apt-get'):
+            if not shutil.which("apt-get"):
                 logger.info("apt-get no disponible, saltando")
                 return 0
 
             before = self.get_disk_usage()
 
             # Usar -y para evitar prompts (ya incluye non-interactive)
-            subprocess.run(
-                ["sudo", "apt-get", "autoremove", "-y"],
-                check=True,
-                timeout=300
-            )
-            subprocess.run(
-                ["sudo", "apt-get", "clean"],
-                check=True,
-                timeout=300
-            )
+            subprocess.run(["sudo", "apt-get", "autoremove", "-y"], check=True, timeout=300)
+            subprocess.run(["sudo", "apt-get", "clean"], check=True, timeout=300)
 
             after = self.get_disk_usage()
-            freed = before.get('used', 0) - after.get('used', 0)
+            freed = before.get("used", 0) - after.get("used", 0)
             if freed > 0:
                 self.record_operation("apt_cache", freed)
             return freed
@@ -315,7 +304,7 @@ class LinuxCleaner(SystemCleaner):
             logger.info("Limpiando cache de pip...")
 
             # Verificar si pip está disponible
-            if not shutil.which('pip3'):
+            if not shutil.which("pip3"):
                 logger.info("pip3 no disponible, saltando")
                 return 0
 
@@ -323,7 +312,7 @@ class LinuxCleaner(SystemCleaner):
             pip_cache_dir = Path.home() / ".cache" / "pip"
             before_size = 0
             if pip_cache_dir.exists():
-                before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob('*') if f.is_file()) / (1024**3)
+                before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
             result = subprocess.run(
                 ["pip3", "cache", "purge"],
@@ -337,7 +326,7 @@ class LinuxCleaner(SystemCleaner):
                 # Medir espacio después
                 after_size = 0
                 if pip_cache_dir.exists():
-                    after_size = sum(f.stat().st_size for f in pip_cache_dir.rglob('*') if f.is_file()) / (1024**3)
+                    after_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
                 freed = before_size - after_size
                 if freed > 0:
@@ -357,7 +346,7 @@ class LinuxCleaner(SystemCleaner):
             logger.info("Limpiando logs antiguos...")
 
             total_freed = 0
-            retention_days = self.config.retention_days['logs']
+            retention_days = self.config.retention_days["logs"]
 
             for log_dir in self.config.allowed_log_dirs:
                 if Path(log_dir).exists():
@@ -418,7 +407,7 @@ class MacCleaner(SystemCleaner):
         try:
             logger.info("Limpiando Docker en Mac...")
 
-            if not shutil.which('docker'):
+            if not shutil.which("docker"):
                 logger.info("Docker no instalado, saltando")
                 return 0
 
@@ -431,10 +420,10 @@ class MacCleaner(SystemCleaner):
             )
 
             if result.returncode == 0:
-                match = re.search(r'Total reclaimed space:\s+([\d.]+)\s*(GB|MB)', result.stdout)
+                match = re.search(r"Total reclaimed space:\s+([\d.]+)\s*(GB|MB)", result.stdout)
                 if match:
                     size = float(match.group(1))
-                    if match.group(2) == 'MB':
+                    if match.group(2) == "MB":
                         size /= 1024
                     self.record_operation("docker_prune", size)
                     return size
@@ -451,7 +440,7 @@ class MacCleaner(SystemCleaner):
         try:
             logger.info("Limpiando cache de Homebrew...")
 
-            if not shutil.which('brew'):
+            if not shutil.which("brew"):
                 logger.info("Homebrew no instalado, saltando")
                 return 0
 
@@ -464,10 +453,10 @@ class MacCleaner(SystemCleaner):
             )
 
             if result.returncode == 0:
-                match = re.search(r'freed approximately\s+([\d.]+)\s*(GB|MB)', result.stdout)
+                match = re.search(r"freed approximately\s+([\d.]+)\s*(GB|MB)", result.stdout)
                 if match:
                     size = float(match.group(1))
-                    if match.group(2) == 'MB':
+                    if match.group(2) == "MB":
                         size /= 1024
                     self.record_operation("brew_cache", size)
                     return size
@@ -484,14 +473,14 @@ class MacCleaner(SystemCleaner):
         try:
             logger.info("Limpiando cache de pip...")
 
-            if not shutil.which('pip3'):
+            if not shutil.which("pip3"):
                 logger.info("pip3 no disponible, saltando")
                 return 0
 
             pip_cache_dir = self.user_home / ".cache" / "pip"
             before_size = 0
             if pip_cache_dir.exists():
-                before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob('*') if f.is_file()) / (1024**3)
+                before_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
             result = subprocess.run(
                 ["pip3", "cache", "purge"],
@@ -504,7 +493,7 @@ class MacCleaner(SystemCleaner):
             if result.returncode == 0:
                 after_size = 0
                 if pip_cache_dir.exists():
-                    after_size = sum(f.stat().st_size for f in pip_cache_dir.rglob('*') if f.is_file()) / (1024**3)
+                    after_size = sum(f.stat().st_size for f in pip_cache_dir.rglob("*") if f.is_file()) / (1024**3)
 
                 freed = before_size - after_size
                 if freed > 0:
@@ -534,7 +523,7 @@ class MacCleaner(SystemCleaner):
                     for item in cache_dir.iterdir():
                         try:
                             if item.is_dir():
-                                size = sum(f.stat().st_size for f in item.rglob('*') if f.is_file()) / (1024**3)
+                                size = sum(f.stat().st_size for f in item.rglob("*") if f.is_file()) / (1024**3)
                                 if self.safe_rmtree(str(item)):
                                     total_freed += size
                         except OSError:
@@ -558,7 +547,7 @@ class MacCleaner(SystemCleaner):
             ]
 
             total_freed = 0
-            retention_days = self.config.retention_days['logs']
+            retention_days = self.config.retention_days["logs"]
 
             for log_dir in log_dirs:
                 if log_dir.exists():
