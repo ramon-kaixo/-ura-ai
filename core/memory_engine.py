@@ -82,6 +82,11 @@ def load_manifest() -> dict:
 
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+<<<<<<< Updated upstream
+=======
+    
+    # Verificar espacio en disco antes de escribir
+>>>>>>> Stashed changes
     try:
         import shutil
 
@@ -94,6 +99,10 @@ def save_manifest(manifest: dict) -> None:
     except Exception as e:
         log.exception(f"Error verificando espacio en disco: {e}")
         raise
+<<<<<<< Updated upstream
+=======
+    
+>>>>>>> Stashed changes
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 

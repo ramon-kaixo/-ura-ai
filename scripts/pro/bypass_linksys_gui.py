@@ -84,6 +84,7 @@ def find_and_click(page, selectors, timeout=5000) -> bool:
 def bypass_linksys() -> bool:  # noqa: PLR0915
 
     with sync_playwright() as p:
+<<<<<<< Updated upstream
         browser = p.chromium.launch(
             headless=True,
             args=[
@@ -93,6 +94,14 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 "--disable-setuid-sandbox",
             ],
         )
+=======
+        browser = p.chromium.launch(headless=True, args=[
+            '--ignore-certificate-errors',
+            '--ignore-ssl-errors',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+        ])
+>>>>>>> Stashed changes
         context = browser.new_context(ignore_https_errors=True)
         page = context.new_page()
 
@@ -142,7 +151,12 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
 
             if password_field:
                 password_field.fill(RECOVERY_KEY)
+<<<<<<< Updated upstream
 
+=======
+                print(f"  Password introducida: {RECOVERY_KEY}")
+                
+>>>>>>> Stashed changes
                 # Esperar a que JS cifre el password (RSA) y submit el formulario
                 time.sleep(1)
                 password_field.press("Enter")
@@ -164,7 +178,12 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 pass
 
             # ── PASO 4: Navegar a Port Forwarding ──
+<<<<<<< Updated upstream
 
+=======
+            print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
+            
+>>>>>>> Stashed changes
             # Menu items in order of navigation (Linksys Velop UI)
             menu_items = [
                 ("Security", ["Security", "Seguridad"]),
