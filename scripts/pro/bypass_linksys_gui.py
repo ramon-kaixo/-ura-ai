@@ -152,7 +152,12 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
             if password_field:
                 password_field.fill(RECOVERY_KEY)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+                print(f"  Password introducida: {RECOVERY_KEY}")
+                
+>>>>>>> Stashed changes
 =======
                 print(f"  Password introducida: {RECOVERY_KEY}")
                 
@@ -179,7 +184,12 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
 
             # ── PASO 4: Navegar a Port Forwarding ──
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+            print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
+            
+>>>>>>> Stashed changes
 =======
             print("\n⚙️  PASO 4: Navegando a Port Forwarding...")
             

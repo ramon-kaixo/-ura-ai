@@ -9,9 +9,12 @@ from typing import Dict
 class RateLimiter:
     """Rate limiter simple basado en sliding window."""
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
     def __init__(self, max_requests: int = 100, window_seconds: int = 60) -> None:
 =======
+=======
+>>>>>>> Stashed changes
     
     def __init__(self, max_requests: int = 100, window_seconds: int = 60):
 >>>>>>> Stashed changes
@@ -34,6 +37,9 @@ class RateLimiter:
             if req_time > cutoff
         ]
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         # Verificar límite
         if len(self.requests[client_ip]) >= self.max_requests:
@@ -48,16 +54,22 @@ class RateLimiter:
         now = time.time()
         cutoff = now - self.window_seconds
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         self.requests[client_ip] = [req_time for req_time in self.requests[client_ip] if req_time > cutoff]
 
 =======
+=======
+>>>>>>> Stashed changes
         
         self.requests[client_ip] = [
             req_time for req_time in self.requests[client_ip]
             if req_time > cutoff
         ]
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         return max(0, self.max_requests - len(self.requests[client_ip]))
 
