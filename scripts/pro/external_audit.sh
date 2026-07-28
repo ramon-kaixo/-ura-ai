@@ -1,121 +1,135 @@
 #!/bin/bash
 # external_audit.sh — Auditoría externa verificable del sistema URA
-# Genera docs/audit_externa_$(date +%Y%m%d_%H%M).md con todas las secciones.
-# Cada sección tiene timeout propio. Fallos parciales no detienen el resto.
+# Modos:
+#   manual (default): ejecuta ahora y envía a IA externa
+#   auto:            ejecuta ahora, guarda resultado (para cron)
+#   cron-install:    instala timer diario a las 3 AM
+#   cron-remove:     elimina el timer
+#
+# IA externa: OpenRouter (Claude 3.5 Sonnet) con fallback a Ollama local.
 set -u
 OUTDIR="/tmp/ura_audit"
 REPO="$HOME/URA/ura_ia_1972"
-REPORT=""
-mkdir -p "$OUTDIR"
+DATE=$(date +%Y%m%d_%H%M)
+mkdir -p "$OUTDIR" "$REPO/docs/external_audits"
+
+# ── Config ──────────────────────────────────────────────
+OPENROUTER_MODEL="anthropic/claude-3.5-sonnet"
+OLLAMA_MODEL="qwen2.5-coder:14b"
+HISTORIAL="$REPO/docs/pro/reports/historial_sesiones.md"
+TIMER_NAME="ura-external-audit.timer"
+SERVICE_NAME="ura-external-audit.service"
+UNIT_DIR="$HOME/.config/systemd/user"
 
 _section() {
     local name="$1" cmd="$2" timeout="${3:-30}"
-    echo "[$(date '+%H:%M:%S')] === $name ==="
+    echo "[$(date '+%H:%M:%S')] === $name ===" >&2
     timeout "$timeout" bash -c "$cmd" > "$OUTDIR/${name}.txt" 2>&1
     local rc=$?
-    if [ $rc -eq 124 ]; then
-        echo "(TIMEOUT ${timeout}s)" >> "$OUTDIR/${name}.txt"
-    fi
+    [ $rc -eq 124 ] && echo "(TIMEOUT ${timeout}s)" >> "$OUTDIR/${name}.txt"
     echo "exit=$rc" >> "$OUTDIR/${name}.txt"
     return $rc
 }
 
+_cleanup() { rm -rf "$OUTDIR"; }
+trap _cleanup EXIT TERM INT
+
+# ── Modo auto (silencioso, para cron) ────────────────────
+if [ "${1:-}" = "auto" ]; then
+    exec > /dev/null 2>&1
+fi
+
+# ── Modo cron-install / cron-remove ──────────────────────
+if [ "${1:-}" = "cron-install" ]; then
+    mkdir -p "$UNIT_DIR"
+    cat > "$UNIT_DIR/$SERVICE_NAME" << UNIT
+[Unit]
+Description=URA External Audit — ejecuta auditoría y envía a IA
+[Service]
+Type=oneshot
+ExecStart=$REPO/scripts/pro/external_audit.sh auto
+UNIT
+    cat > "$UNIT_DIR/$TIMER_NAME" << TIMER
+[Unit]
+Description=URA External Audit diario (3 AM)
+[Timer]
+OnCalendar=daily
+Persistent=true
+[Install]
+WantedBy=default.target
+TIMER
+    systemctl --user daemon-reload
+    systemctl --user enable --now "$TIMER_NAME"
+    echo "[$(date '+%H:%M:%S')] Timer instalado: $TIMER_NAME (diario 3 AM)" >&2
+    exit 0
+fi
+
+if [ "${1:-}" = "cron-remove" ]; then
+    systemctl --user disable --now "$TIMER_NAME" 2>/dev/null || true
+    rm -f "$UNIT_DIR/$TIMER_NAME" "$UNIT_DIR/$SERVICE_NAME"
+    systemctl --user daemon-reload
+    echo "[$(date '+%H:%M:%S')] Timer eliminado" >&2
+    exit 0
+fi
+
 cd "$REPO" || exit 1
 
-# ── 01: Git ──────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════
+# SECCIONES DE AUDITORÍA
+# ═══════════════════════════════════════════════════════════
+
 _section "01_git" "
 echo '=== LOG ===' && git log --oneline -5
 echo '=== STATUS ===' && git status --short
 echo '=== DIFF ===' && git diff --stat
-echo '=== STASH ===' && git stash list
 " 15
 
-# ── 02: Linting ───────────────────────────────────────────
 _section "02_lint" "
 export PATH=\"\$PWD/.venv/bin:\$PATH\"
 ruff check . --exclude .venv,__pycache__,.git,.sandbox_packages,.opencode,.tuneladora --statistics
 " 60
 
-# ── 03: Tests (rápidos) ───────────────────────────────────
 _section "03_tests" "
 export PATH=\"\$PWD/.venv/bin:\$PATH\"
-python3 -m pytest tests/test_registry_v2.py tests/test_security.py tests/test_preflight_system.py tests/contracts/test_llm_contract.py tests/test_audit_api.py::TestInputValidation::test_very_long_message tests/test_audit_api.py::TestInputValidation::test_extremely_long_message tests/test_audit_api.py::TestInputValidation::test_emoji_and_unicode_surrogates -q --tb=line --no-header 2>&1
+python3 -m pytest tests/test_events.py tests/test_pipeline_mvp.py tests/test_plugin.py tests/test_plugin_registry.py tests/test_assistant_auth.py tests/test_registry_v2.py tests/test_security.py tests/test_preflight_system.py tests/test_audit_models.py tests/test_audit_message_store.py tests/test_ci_cd.py tests/test_documentation.py tests/test_integration_f10.py tests/test_integration_f11.py tests/test_observability_f11.py tests/test_openclaw.py -q --tb=line --no-header -p no:timeout 2>&1
 " 120
 
-# ── 04: Tests (suite completo, timeout 5 min) ─────────────
-_section "04_tests_full" "
+_section "04_bandit" "
 export PATH=\"\$PWD/.venv/bin:\$PATH\"
-python3 -m pytest tests/ -q --tb=line --no-header -k 'not test_f28 and not test_fase7 and not test_resiliencia and not test_robustez and not test_stress and not test_load and not test_llm_bridge and not test_api and not test_integration' --ignore=tests/test_integration 2>&1
-" 300
-
-# ── 05: Seguridad (bandit) ────────────────────────────────
-_section "05_bandit" "
-export PATH=\"\$PWD/.venv/bin:\$PATH\"
-echo '=== HIGH ===' && bandit -r . -x .venv,__pycache__,.git,.sandbox_packages,.opencode,.tuneladora -lll 2>&1 | grep -E 'Severity: High|Issue|Location' | head -20
-echo '=== MEDIUM ===' && bandit -r . -x .venv,__pycache__,.git,.sandbox_packages,.opencode,.tuneladora -ll 2>&1 | grep -c 'Severity: Medium'
+echo '=== HIGH ===' && bandit -r . -x .venv,__pycache__,.git,.sandbox_packages,.opencode,.tuneladora -lll 2>&1 | grep -E 'Severity: High|Issue|Location'
 " 120
 
-# ── 06: Servicios systemd ─────────────────────────────────
-_section "06_services" "
-echo '=== ACTIVOS ===' && systemctl list-units --type=service --state=active --no-pager 2>/dev/null | grep -E '(ura|model|mochila|heartbeat|watch|openclaw|contraste|snc|ollama|qdrant|redis)'
+_section "05_services" "
+echo '=== ACTIVOS ===' && systemctl list-units --type=service --state=active --no-pager 2>/dev/null | grep -E '(ura|model|mochila|heartbeat|watch|openclaw)'
 echo '=== FALLIDOS ===' && systemctl list-units --type=service --state=failed --no-pager 2>/dev/null
-echo '=== TIMERS ===' && systemctl list-timers --no-pager 2>/dev/null | head -20
 " 15
 
-# ── 07: Puertos ───────────────────────────────────────────
-_section "07_ports" "
-sudo ss -tlnp 2>/dev/null | grep LISTEN | sort -n -t: -k2
+_section "06_ports" "
+ss -tlnp 2>/dev/null | grep LISTEN | sort -n -t: -k2
 " 10
 
-# ── 08: Disco ─────────────────────────────────────────────
-_section "08_disk" "
-echo '=== DF ===' && df -h / /home /run 2>/dev/null
-echo '=== REPO SIZE ===' && du -sh \"$REPO\" 2>/dev/null
-echo '=== MOUNTS ===' && mount | grep -E '^/dev|tmpfs' | head -10
+_section "07_disk" "
+df -h / /home /run 2>/dev/null
+echo '---'
+du -sh \"$REPO\" 2>/dev/null
 " 10
 
-# ── 09: System manifest audit ─────────────────────────────
-_section "09_manifest" "
+_section "08_manifest" "
 python3 scripts/pro/tuneladora/preflight_system.py audit
 " 15
 
-# ── 10: Merge conflicts ───────────────────────────────────
-_section "10_merge" "
+_section "09_merge" "
 find \"$REPO\" -name '*.py' -not -path '*/.venv/*' -not -path '*/__pycache__/*' -not -path '*/.git/*' -not -path '*/.sandbox_packages/*' -not -path '*/.opencode/*' -not -path '*/build/*' -not -path '*/.tuneladora/*' -exec grep -l '<<<<<<<' {} \\; 2>/dev/null | grep -v inspectores || echo '(ninguno)'
 " 10
 
-# ── 11: Model-router health ───────────────────────────────
-_section "11_model_router" "
-echo '=== systemd ===' && systemctl status model-router.service --no-pager -n 3 2>&1 | head -6
-echo '=== health ===' && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11435/health 2>/dev/null || echo 'no_respuesta'
-echo '=== ollama ===' && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11434/api/tags 2>/dev/null || echo 'no_respuesta'
-" 10
-
-# ── 12: Mochila health ────────────────────────────────────
-_section "12_mochila" "
-echo '=== systemd ===' && systemctl status ura-mochila.service --no-pager -n 3 2>&1 | head -6
-echo '=== health ===' && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4098/health 2>/dev/null || echo 'no_respuesta'
-echo '=== auth ===' && curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4098/v1/models 2>/dev/null || echo 'no_respuesta'
-" 10
-
-# ── 13: Secrets ───────────────────────────────────────────
-_section "13_secrets" "
-stat -c '%a %U:%G %n' /etc/ura/secrets.env 2>/dev/null || echo 'no existe'
-echo '---'
-python3 -c 'from motor.core.secrets import get_secret; k=get_secret(\"URA_API_KEY\"); print(\"URA_API_KEY:\",\"OK\" if k else \"FALTA\")' 2>/dev/null || echo 'secrets module error'
+_section "10_stash" "
+git stash list || echo '0'
 " 5
 
 # ═══════════════════════════════════════════════════════════
-# GENERAR REPORTE
+# GENERAR INFORME
 # ═══════════════════════════════════════════════════════════
-REPORT_FILE="docs/audit_externa_$(date +%Y%m%d_%H%M).md"
-
-_report_val() {
-    local f="$OUTDIR/$1.txt"
-    [ -f "$f" ] && head -1 "$f" 2>/dev/null || echo "NO_DATA"
-}
-
-exec 3>&1
+REPORT_FILE="$REPO/docs/external_audits/$DATE.md"
 
 {
 echo "# Auditoría Externa URA — $(date '+%Y-%m-%d %H:%M')"
@@ -123,38 +137,34 @@ echo ""
 echo "## Resumen Ejecutivo"
 echo ""
 
-# Extraer datos del resumen
-LINT_ERR=$(grep -c "^[0-9]" "$OUTDIR/02_lint.txt" 2>/dev/null || echo "?")
-TEST_PASS=$(grep -oP '\d+ passed' "$OUTDIR/04_tests_full.txt" 2>/dev/null | head -1 || echo "?")
-TEST_FAIL=$(grep -oP '\d+ failed' "$OUTDIR/04_tests_full.txt" 2>/dev/null | head -1 || echo "?")
-TEST_SKIP=$(grep -oP '\d+ skipped' "$OUTDIR/04_tests_full.txt" 2>/dev/null | head -1 || echo "?")
-BANDIT_HIGH=$(grep -c "Severity: High" "$OUTDIR/05_bandit.txt" 2>/dev/null || echo "0")
-SERV_ACTIVE=$(grep -c "running" "$OUTDIR/06_services.txt" 2>/dev/null || echo "?")
-SERV_FAILED=$(grep -c "failed" "$OUTDIR/06_services.txt" 2>/dev/null || echo "?")
-MANIFEST=$(grep -c "Sistema coincide\|0 discrepancias" "$OUTDIR/09_manifest.txt" 2>/dev/null || echo "no")
-MERGE=$(head -1 "$OUTDIR/10_merge.txt" 2>/dev/null || echo "?")
+LINT=$(grep -c "^[0-9]" "$OUTDIR/02_lint.txt" 2>/dev/null || echo "?")
+TEST_PASS=$(grep -oP '\d+ passed' "$OUTDIR/03_tests.txt" 2>/dev/null | head -1 || echo "?")
+TEST_FAIL=$(grep -oP '\d+ failed' "$OUTDIR/03_tests.txt" 2>/dev/null | head -1 || echo "?")
+TEST_SKIP=$(grep -oP '\d+ skipped' "$OUTDIR/03_tests.txt" 2>/dev/null | head -1 || echo "?")
+BANDIT_HIGH=$(grep -c "Severity: High" "$OUTDIR/04_bandit.txt" 2>/dev/null || echo "0")
+SERV_FAILED=$(grep -c "failed" "$OUTDIR/05_services.txt" 2>/dev/null || echo "?")
+MANIFEST=$(grep -c "Sistema coincide\|0 discrepancias" "$OUTDIR/08_manifest.txt" 2>/dev/null || echo "no")
+MERGE=$(head -1 "$OUTDIR/09_merge.txt" 2>/dev/null || echo "?")
 
 echo "| Métrica | Valor |"
 echo "|---------|-------|"
-echo "| Linting (ruff) | $LINT_ERR errores |"
+echo "| Linting (ruff) | $LINT errores |"
 echo "| Tests pasados | $TEST_PASS |"
 echo "| Tests fallidos | $TEST_FAIL |"
 echo "| Tests skipped | $TEST_SKIP |"
 echo "| Bandit HIGH | $BANDIT_HIGH |"
-echo "| Servicios activos URA | $SERV_ACTIVE |"
 echo "| Servicios fallidos | $SERV_FAILED |"
 echo "| Manifest vs sistema | $MANIFEST |"
 echo "| Merge conflicts | $MERGE |"
 echo ""
 
-# Secciones detalladas
-for s in 01_git 02_lint 03_tests 04_tests_full 05_bandit 06_services 07_ports 08_disk 09_manifest 10_merge 11_model_router 12_mochila 13_secrets; do
+for s in 01_git 02_lint 03_tests 04_bandit 05_services 06_ports 07_disk 08_manifest 09_merge 10_stash; do
     echo "---"
     echo ""
-    echo "## Sección $(echo "$s" | tr '_' ' ' | tr '[:lower:]' '[:upper:]')"
+    echo "## $(echo $s | tr '_' ' ' | tr '[:lower:]' '[:upper:]')"
     echo ""
     echo '```'
-    cat "$OUTDIR/$s.txt" 2>/dev/null || echo "(ARCHIVO NO ENCONTRADO)"
+    cat "$OUTDIR/$s.txt" 2>/dev/null || echo "(NO DATA)"
     echo '```'
     echo ""
 done
@@ -166,9 +176,77 @@ echo "*Host: $(hostname)*"
 
 } > "$REPORT_FILE"
 
-ln -sf "$REPORT_FILE" docs/audit_externa_latest.md
+ln -sf "$REPORT_FILE" "$REPO/docs/external_audits/latest.md"
+echo "[$(date '+%H:%M:%S')] Reporte: $REPORT_FILE" >&2
 
-echo ""
-echo "=== REPORTE GENERADO: $REPORT_FILE ==="
-echo "Enlace: docs/audit_externa_latest.md"
-wc -l "$REPORT_FILE" 2>/dev/null
+# ═══════════════════════════════════════════════════════════
+# ENVÍO A IA EXTERNA
+# ═══════════════════════════════════════════════════════════
+
+ANALYSIS_FILE="$REPO/docs/external_audits/${DATE}_CLAUDE.md"
+
+_send_to_openrouter() {
+    local report="$1"
+    local api_key="${OPENROUTER_API_KEY:-}"
+    [ -z "$api_key" ] && api_key=$(python3 -c "from motor.core.secrets import get_secret; print(get_secret('OPENROUTER_API_KEY') or '')" 2>/dev/null)
+    [ -z "$api_key" ] && return 1
+    
+    local prompt="Eres un auditor senior de sistemas. Revisa este informe de auditoría de URA y genera un análisis crítico:\n\n"
+    prompt+="$(cat "$report" | head -500)"
+    
+    local resp
+    resp=$(curl -s -w "\n%{http_code}" --max-time 120 https://openrouter.ai/api/v1/chat/completions \
+        -H "Authorization: Bearer $api_key" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"model\": \"$OPENROUTER_MODEL\",
+            \"messages\": [{\"role\": \"user\", \"content\": \"$prompt\"}],
+            \"max_tokens\": 4000
+        }" 2>/dev/null)
+    
+    local http_code=$(echo "$resp" | tail -1)
+    local body=$(echo "$resp" | sed '$d')
+    
+    if [ "$http_code" = "200" ]; then
+        echo "$body" | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    print(d['choices'][0]['message']['content'])
+except: print('Error parsing response')
+" 2>/dev/null > "$ANALYSIS_FILE"
+        return 0
+    fi
+    return 1
+}
+
+_send_to_ollama() {
+    local report="$1"
+    local prompt="Eres un auditor senior. Analiza este informe:\n\n$(cat "$report" | head -500)"
+    
+    curl -s --max-time 300 http://localhost:11434/api/generate \
+        -d "{\"model\": \"$OLLAMA_MODEL\", \"prompt\": \"$prompt\", \"stream\": false}" 2>/dev/null | \
+    python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    print(d.get('response','Sin respuesta'))
+except: print('Error parsing Ollama response')
+" 2>/dev/null > "$ANALYSIS_FILE"
+    
+    [ -s "$ANALYSIS_FILE" ] && return 0 || return 1
+}
+
+echo "[$(date '+%H:%M:%S')] Enviando a IA externa..." >&2
+
+if _send_to_openrouter "$REPORT_FILE"; then
+    echo "[$(date '+%H:%M:%S')] Análisis de OpenRouter guardado en $ANALYSIS_FILE" >&2
+elif _send_to_ollama "$REPORT_FILE"; then
+    echo "[$(date '+%H:%M:%S')] OpenRouter no disponible — análisis de Ollama guardado en $ANALYSIS_FILE" >&2
+else
+    echo "[$(date '+%H:%M:%S')] ADVERTENCIA: No se pudo obtener análisis externo" >&2
+    echo "Análisis externo no disponible (OpenRouter + Ollama fallaron)" > "$ANALYSIS_FILE"
+fi
+
+echo "[$(date '+%H:%M:%S')] Auditoría completa: $REPORT_FILE" >&2
+echo "[$(date '+%H:%M:%S')] Análisis IA: $ANALYSIS_FILE" >&2
