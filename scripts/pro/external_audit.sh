@@ -180,29 +180,39 @@ ln -sf "$REPORT_FILE" "$REPO/docs/external_audits/latest.md"
 echo "[$(date '+%H:%M:%S')] Reporte: $REPORT_FILE" >&2
 
 # ═══════════════════════════════════════════════════════════
-# ENVÍO A IA EXTERNA
+# ENVÍO A IA EXTERNA (multi-LLM)
 # ═══════════════════════════════════════════════════════════
 
-ANALYSIS_FILE="$REPO/docs/external_audits/${DATE}_CLAUDE.md"
-
-_send_to_openrouter() {
+_llm_prompt() {
     local report="$1"
+    cat << 'PROMPT'
+Eres un auditor senior de sistemas. Revisa este informe de auditoría de URA y genera:
+1. VEREDICTO: ESTABLE / NO ESTABLE / INESTABLE CON RIESGOS
+2. RIESGOS: lista priorizada (CRITICAL, HIGH, MEDIUM, LOW)
+3. RECOMENDACIONES: qué arreglar primero
+4. MÉTRICAS CLAVE: tests, linting, seguridad, servicios
+
+Informe:
+PROMPT
+    head -300 "$report"
+}
+
+_call_openrouter() {
+    local model="$1" prompt="$2" outfile="$3"
     local api_key="${OPENROUTER_API_KEY:-}"
     [ -z "$api_key" ] && api_key=$(python3 -c "from motor.core.secrets import get_secret; print(get_secret('OPENROUTER_API_KEY') or '')" 2>/dev/null)
     [ -z "$api_key" ] && return 1
     
-    local prompt="Eres un auditor senior de sistemas. Revisa este informe de auditoría de URA y genera un análisis crítico:\n\n"
-    prompt+="$(cat "$report" | head -500)"
+    # Escape the prompt for JSON
+    local escaped
+    escaped=$(echo "$prompt" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read()))" 2>/dev/null)
+    [ -z "$escaped" ] && return 1
     
     local resp
-    resp=$(curl -s -w "\n%{http_code}" --max-time 120 https://openrouter.ai/api/v1/chat/completions \
+    resp=$(curl -s -w "\n%{http_code}" --max-time 180 "https://openrouter.ai/api/v1/chat/completions" \
         -H "Authorization: Bearer $api_key" \
         -H "Content-Type: application/json" \
-        -d "{
-            \"model\": \"$OPENROUTER_MODEL\",
-            \"messages\": [{\"role\": \"user\", \"content\": \"$prompt\"}],
-            \"max_tokens\": 4000
-        }" 2>/dev/null)
+        -d "{\"model\": \"$model\", \"messages\": [{\"role\": \"user\", \"content\": $escaped}], \"max_tokens\": 4000}" 2>/dev/null)
     
     local http_code=$(echo "$resp" | tail -1)
     local body=$(echo "$resp" | sed '$d')
@@ -213,40 +223,84 @@ import json,sys
 try:
     d=json.load(sys.stdin)
     print(d['choices'][0]['message']['content'])
-except: print('Error parsing response')
-" 2>/dev/null > "$ANALYSIS_FILE"
-        return 0
+except Exception as e:
+    print(f'Error: {e}')
+" 2>/dev/null > "$outfile"
+        [ -s "$outfile" ] && return 0
     fi
     return 1
 }
 
-_send_to_ollama() {
-    local report="$1"
-    local prompt="Eres un auditor senior. Analiza este informe:\n\n$(cat "$report" | head -500)"
-    
-    curl -s --max-time 300 http://localhost:11434/api/generate \
-        -d "{\"model\": \"$OLLAMA_MODEL\", \"prompt\": \"$prompt\", \"stream\": false}" 2>/dev/null | \
+_call_ollama() {
+    local model="$1" prompt="$2" outfile="$3"
+    curl -s --max-time 300 "http://localhost:11434/api/generate" \
+        -d "{\"model\": \"$model\", \"prompt\": \"$prompt\", \"stream\": false}" 2>/dev/null | \
     python3 -c "
 import json,sys
 try:
     d=json.load(sys.stdin)
-    print(d.get('response','Sin respuesta'))
-except: print('Error parsing Ollama response')
-" 2>/dev/null > "$ANALYSIS_FILE"
-    
-    [ -s "$ANALYSIS_FILE" ] && return 0 || return 1
+    print(d.get('response',''))
+except: pass
+" 2>/dev/null > "$outfile"
+    [ -s "$outfile" ] && return 0 || return 1
 }
 
-echo "[$(date '+%H:%M:%S')] Enviando a IA externa..." >&2
+_alert_if_critical() {
+    local report="$1"
+    local alert=""
+    
+    # Check test failures
+    local fails
+    fails=$(grep -oP '\d+ failed' "$report" | head -1 | grep -oP '\d+')
+    [ -n "$fails" ] && [ "$fails" -gt 5 ] && alert+="CRITICAL: $fails tests fallan\n"
+    
+    # Check disk
+    local disk_usage
+    disk_usage=$(df / | tail -1 | awk '{print $5}' | tr -d '%')
+    [ -n "$disk_usage" ] && [ "$disk_usage" -gt 90 ] && alert+="CRITICAL: Disco al ${disk_usage}%\n"
+    
+    # Check services
+    local failed_services
+    failed_services=$(grep -c "failed" "$OUTDIR/05_services.txt" 2>/dev/null)
+    [ -n "$failed_services" ] && [ "$failed_services" -gt 0 ] && alert+="WARNING: $failed_services servicios fallidos\n"
+    
+    if [ -n "$alert" ]; then
+        local alert_file="$REPO/docs/external_audits/${DATE}_ALERTA.txt"
+        echo -e "$alert" > "$alert_file"
+        echo "[$(date '+%H:%M:%S')] ⚠️ ALERTA: $(echo "$alert" | tr '\n' ' ')" >&2
+    fi
+}
 
-if _send_to_openrouter "$REPORT_FILE"; then
-    echo "[$(date '+%H:%M:%S')] Análisis de OpenRouter guardado en $ANALYSIS_FILE" >&2
-elif _send_to_ollama "$REPORT_FILE"; then
-    echo "[$(date '+%H:%M:%S')] OpenRouter no disponible — análisis de Ollama guardado en $ANALYSIS_FILE" >&2
+PROMPT=$(_llm_prompt "$REPORT_FILE")
+
+echo "[$(date '+%H:%M:%S')] Enviando a IA externa (multi-LLM)..." >&2
+
+# Intento 1: Claude 3.5 Sonnet
+CLAUDE_FILE="$REPO/docs/external_audits/${DATE}_CLAUDE.md"
+if _call_openrouter "anthropic/claude-3.5-sonnet" "$PROMPT" "$CLAUDE_FILE"; then
+    echo "[$(date '+%H:%M:%S')] ✅ Claude 3.5: $CLAUDE_FILE" >&2
 else
-    echo "[$(date '+%H:%M:%S')] ADVERTENCIA: No se pudo obtener análisis externo" >&2
-    echo "Análisis externo no disponible (OpenRouter + Ollama fallaron)" > "$ANALYSIS_FILE"
+    echo "[$(date '+%H:%M:%S')] ⚠️ Claude no disponible" >&2
+    echo "Análisis no disponible (Claude 3.5 Sonnet no respondió)" > "$CLAUDE_FILE"
 fi
 
+# Intento 2: GPT-4o (fallback)
+GPT_FILE="$REPO/docs/external_audits/${DATE}_GPT4.md"
+if _call_openrouter "openai/gpt-4o" "$PROMPT" "$GPT_FILE"; then
+    echo "[$(date '+%H:%M:%S')] ✅ GPT-4o: $GPT_FILE" >&2
+else
+    echo "[$(date '+%H:%M:%S')] ⚠️ GPT-4o no disponible" >&2
+    echo "Análisis no disponible (GPT-4o no respondió)" > "$GPT_FILE"
+fi
+
+# Intento 3: Ollama local
+OLLAMA_FILE="$REPO/docs/external_audits/${DATE}_OLLAMA.md"
+if _call_ollama "$OLLAMA_MODEL" "$PROMPT" "$OLLAMA_FILE"; then
+    echo "[$(date '+%H:%M:%S')] ✅ Ollama local: $OLLAMA_FILE" >&2
+fi
+
+# Alertas
+_alert_if_critical "$REPORT_FILE"
+
 echo "[$(date '+%H:%M:%S')] Auditoría completa: $REPORT_FILE" >&2
-echo "[$(date '+%H:%M:%S')] Análisis IA: $ANALYSIS_FILE" >&2
+echo "[$(date '+%H:%M:%S')] Análisis: $CLAUDE_FILE, $GPT_FILE, $OLLAMA_FILE" >&2
