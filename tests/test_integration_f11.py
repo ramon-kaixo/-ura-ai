@@ -34,8 +34,8 @@ def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Pat
     init_content = (
         "from motor.plugin.base import PluginBase\n"
         "class MyPlugin(PluginBase):\n"
-            "    def on_load(self) -> None: pass\n"
-            "    def on_unload(self) -> None: pass\n"
+        "    def on_load(self) -> None: pass\n"
+        "    def on_unload(self) -> None: pass\n"
         f"    def __init__(self):\n"
         f"        super().__init__()\n"
         f"        self.pre_ingest_calls = 0\n"

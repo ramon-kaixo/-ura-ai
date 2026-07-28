@@ -141,14 +141,14 @@ class TestConnectionHandling:
         store = MessageStore(str(tmp_path / "gone.db"))
         store.append("c1", _make_msg("ok"))
         store.close()
-        with pytest.raises(sqlite3.ProgrammingError, match="Cannot operate on a closed database"):
+        with pytest.raises(RuntimeError, match="MessageStore is closed"):
             store.append("c2", _make_msg("boom"))
 
     def test_no_context_manager(self, tmp_path: Path) -> None:
-        """No __enter__/__exit__ means easy to leak the connection."""
+        """Context manager is now implemented."""
         store = MessageStore(str(tmp_path / "leak.db"))
-        assert not hasattr(store, "__enter__")
-        assert not hasattr(store, "__exit__")
+        assert hasattr(store, "__enter__")
+        assert hasattr(store, "__exit__")
         store.close()
 
     def test_ensure_connection_exception_leaves_partial_state(self, tmp_path: Path) -> None:
@@ -205,9 +205,9 @@ class TestSQLInjection:
         store = MessageStore(str(tmp_path / "negl.db"))
         for i in range(10):
             store.append("c1", _make_msg(f"msg-{i}"))
-        # LIMIT with negative value is clamped by sqlite3 — should not crash
-        with pytest.raises(sqlite3.ProgrammingError):
-            store.get_conversation("c1", limit=-5)
+        # LIMIT negative is clamped — should not raise
+        result = store.get_conversation("c1", limit=-5)
+        assert len(result) == 0
         store.close()
 
 
