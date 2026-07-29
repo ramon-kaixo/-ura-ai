@@ -197,26 +197,27 @@ PROMPT
     head -300 "$report"
 }
 
-_call_openrouter() {
+_call_deepseek() {
     local model="$1" prompt="$2" outfile="$3"
-    local api_key="${OPENROUTER_API_KEY:-}"
-    [ -z "$api_key" ] && api_key=$(python3 -c "from motor.core.secrets import get_secret; print(get_secret('OPENROUTER_API_KEY') or '')" 2>/dev/null)
+    # Leer key directamente del .env del proyecto
+    local api_key
+    api_key=$(grep DEEPSEEK_API_KEY "$REPO/.env" 2>/dev/null | cut -d= -f2 | tr -d '"' | xargs)
+    [ -z "$api_key" ] && api_key="${DEEPSEEK_API_KEY:-}"
     [ -z "$api_key" ] && return 1
-    
-    # Escape the prompt for JSON
+
     local escaped
     escaped=$(echo "$prompt" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read()))" 2>/dev/null)
     [ -z "$escaped" ] && return 1
-    
+
     local resp
-    resp=$(curl -s -w "\n%{http_code}" --max-time 180 "https://openrouter.ai/api/v1/chat/completions" \
+    resp=$(curl -s -w "\n%{http_code}" --max-time 180 "https://api.deepseek.com/chat/completions" \
         -H "Authorization: Bearer $api_key" \
         -H "Content-Type: application/json" \
         -d "{\"model\": \"$model\", \"messages\": [{\"role\": \"user\", \"content\": $escaped}], \"max_tokens\": 4000}" 2>/dev/null)
-    
+
     local http_code=$(echo "$resp" | tail -1)
     local body=$(echo "$resp" | sed '$d')
-    
+
     if [ "$http_code" = "200" ]; then
         echo "$body" | python3 -c "
 import json,sys
@@ -278,19 +279,36 @@ _alert_if_critical() {
 
 PROMPT=$(_llm_prompt "$REPORT_FILE")
 
-echo "[$(date '+%H:%M:%S')] Enviando a Ollama local..." >&2
+echo "[$(date '+%H:%M:%S')] Enviando a DeepSeek..." >&2
 
-OLLAMA_FILE="$REPO/docs/external_audits/${DATE}_OLLAMA.md"
-if _call_ollama "$OLLAMA_MODEL" "$PROMPT" "$OLLAMA_FILE"; then
-    if [ ! -s "$OLLAMA_FILE" ] || [ "$(wc -c < "$OLLAMA_FILE")" -lt 500 ]; then
-        echo "[$(date '+%H:%M:%S')] [ERROR] Ollama no generó auditoría válida (vacío o <500 bytes)" >&2
+DEEPSEEK_FILE="$REPO/docs/external_audits/${DATE}_DEEPSEEK.md"
+if _call_deepseek "deepseek-coder" "$PROMPT" "$DEEPSEEK_FILE"; then
+    if [ ! -s "$DEEPSEEK_FILE" ] || [ "$(wc -c < "$DEEPSEEK_FILE")" -lt 500 ]; then
+        echo "[$(date '+%H:%M:%S')] ⚠️ DeepSeek devolvió contenido vacío o muy corto, fallback a Ollama" >&2
+    else
+        echo "[$(date '+%H:%M:%S')] ✅ DeepSeek: $DEEPSEEK_FILE" >&2
+    fi
+else
+    echo "[$(date '+%H:%M:%S')] ⚠️ DeepSeek no disponible, fallback a Ollama" >&2
+fi
+
+# Fallback: Ollama local si DeepSeek no generó output válido
+if [ ! -s "$DEEPSEEK_FILE" ] || [ "$(wc -c < "$DEEPSEEK_FILE")" -lt 500 ]; then
+    echo "[$(date '+%H:%M:%S')] Ejecutando fallback Ollama..." >&2
+    OLLAMA_FILE="$REPO/docs/external_audits/${DATE}_OLLAMA.md"
+    if _call_ollama "$OLLAMA_MODEL" "$PROMPT" "$OLLAMA_FILE"; then
+        if [ ! -s "$OLLAMA_FILE" ] || [ "$(wc -c < "$OLLAMA_FILE")" -lt 500 ]; then
+            echo "[$(date '+%H:%M:%S')] [ERROR] Ollama tampoco generó auditoría válida" >&2
+            exit 1
+        fi
+        echo "[$(date '+%H:%M:%S')] ✅ Ollama fallback: $OLLAMA_FILE" >&2
+    else
+        echo "[$(date '+%H:%M:%S')] [ERROR] Ollama fallback falló" >&2
         exit 1
     fi
-    echo "[$(date '+%H:%M:%S')] ✅ Ollama local: $OLLAMA_FILE" >&2
 fi
 
 # Alertas
 _alert_if_critical "$REPORT_FILE"
 
 echo "[$(date '+%H:%M:%S')] Auditoría completa: $REPORT_FILE" >&2
-echo "[$(date '+%H:%M:%S')] Análisis Ollama: $OLLAMA_FILE" >&2
