@@ -1,32 +1,39 @@
-# Tarea B — Investigar puerto 5053 (ura-contraste)
+# Tarea B — Investigar puerto 5053
 
 **Fecha:** 2026-07-29
 **Estado:** ✅ Completado
 
 ## Hallazgos
 
-### ¿Qué escucha en 5053?
-**No es ura-contraste.** Es `run_audit_api.py` — un microservicio FastAPI independiente en `/home/ramon/bin/run_audit_api.py`, lanzado manualmente (PID 2675, no es systemd).
+### Puertos
 
-### Endpoints disponibles
-| Método | Path | Resultado |
-|--------|------|-----------|
-| GET | `/` | 404 |
-| GET | `/health` | 404 |
-| POST | `/run-audit` (sin key) | 401 |
-| POST | `/run-audit` (con key) | 200 + ejecuta script |
+| Puerto | Proceso | PID | Servicio systemd |
+|--------|---------|-----|------------------|
+| **5053** | `python3` → `run_audit_api.py` | 2675 | No (proceso manual) |
+| **8002** | `uvicorn` → `proxy_contraste` | 3598 | `ura-contraste.service` ✅ |
 
-### Único endpoint funcional: `POST /run-audit`
-- Autenticación: `X-API-Key` header, key almacenada en `~/.ura/api_key_microservice.txt`
-- Ejecuta: `bash /Users/ramonesnaola/bin/run_ura_audit.sh` — **ruta Mac que no existe en GX10**
-- Timeout: 3600s
+### Port 5053 — `run_audit_api.py`
 
-### ¿Por qué responde "Not Found" a `/v1/chat/completions`?
-Porque la app solo define el endpoint `/run-audit`. No hay ruta `/v1/chat/completions` ni ningún proxy. FastAPI devuelve 404 por defecto para rutas no definidas.
+Ubicación: `/home/ramon/bin/run_audit_api.py`
+Tipo: FastAPI microservicio manual
+Único endpoint: `POST /run-audit` (requiere `X-API-Key`)
+Ejecuta: `bash /Users/ramonesnaola/bin/run_ura_audit.sh` — **ruta Mac inexistente en GX10**
 
-### ¿Es ura-contraste?
-No. `ura-contraste` (servicio systemd) está en **puerto 8002** según AGENTS.md. 5053 nunca fue ura-contraste.
+```
+GET  /                        → 404
+GET  /health                  → 404
+POST /v1/chat/completions     → 404
+POST /run-audit (sin key)     → 401
+POST /run-audit (con key)     → 200 + error bash (ruta Mac)
+```
 
-### Recomendación
-- Este microservicio no necesita `/v1/chat/completions` — comportamiento esperado.
-- El script referencia una ruta Mac (`/Users/ramonesnaola/bin/run_ura_audit.sh`). Si el servicio se necesita funcional, habría que crear ese script en GX10 (out of scope).
+### Port 8002 — ura-contraste (real)
+
+```
+GET /                        → 404
+GET /health                  → 200 {"status":"healthy",...}
+```
+
+### Conclusión
+
+5053 **nunca fue ura-contraste**. Es un microservicio de auditoría independiente que no tiene endpoint `/v1/chat/completions`. El 404 es comportamiento esperado.
