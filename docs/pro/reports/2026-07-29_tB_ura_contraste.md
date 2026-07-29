@@ -1,39 +1,23 @@
-# Tarea B — Investigar puerto 5053
+# Tarea B — Investigar ura-contraste (puerto 5053 vs 8002)
 
 **Fecha:** 2026-07-29
 **Estado:** ✅ Completado
 
 ## Hallazgos
 
-### Puertos
+### Puerto 5053 — `run_audit_api.py`
+- **Proceso**: `python3` PID 2675, `/home/ramon/bin/run_audit_api.py`
+- **Tipo**: FastAPI microservicio manual (no systemd)
+- **Único endpoint**: `POST /run-audit` (autenticado con `X-API-Key`)
+- **Roto**: Ejecuta `bash /Users/ramonesnaola/bin/run_ura_audit.sh` — ruta Mac inexistente
+- **NO es ura-contraste**
 
-| Puerto | Proceso | PID | Servicio systemd |
-|--------|---------|-----|------------------|
-| **5053** | `python3` → `run_audit_api.py` | 2675 | No (proceso manual) |
-| **8002** | `uvicorn` → `proxy_contraste` | 3598 | `ura-contraste.service` ✅ |
+### Puerto 8002 — ura-contraste (real)
+- **Servicio**: `ura-contraste.service` ✅ active (running)
+- **Proceso**: `uvicorn` PID 3598
+- **Endpoint `/health`**: ✅ responde 200
+- **Endpoint `/metrics`**: ✅ scrapeado por Prometheus Docker (172.17.0.4)
+- **Endpoint `/v1/chat/completions`**: 404 (comportamiento esperado — no es su función)
 
-### Port 5053 — `run_audit_api.py`
-
-Ubicación: `/home/ramon/bin/run_audit_api.py`
-Tipo: FastAPI microservicio manual
-Único endpoint: `POST /run-audit` (requiere `X-API-Key`)
-Ejecuta: `bash /Users/ramonesnaola/bin/run_ura_audit.sh` — **ruta Mac inexistente en GX10**
-
-```
-GET  /                        → 404
-GET  /health                  → 404
-POST /v1/chat/completions     → 404
-POST /run-audit (sin key)     → 401
-POST /run-audit (con key)     → 200 + error bash (ruta Mac)
-```
-
-### Port 8002 — ura-contraste (real)
-
-```
-GET /                        → 404
-GET /health                  → 200 {"status":"healthy",...}
-```
-
-### Conclusión
-
-5053 **nunca fue ura-contraste**. Es un microservicio de auditoría independiente que no tiene endpoint `/v1/chat/completions`. El 404 es comportamiento esperado.
+## Conclusión
+ura-contraste funciona correctamente en puerto 8002. El 404 en `/v1/chat/completions` es esperado. Puerto 5053 es un microservicio independiente de auditoría.
