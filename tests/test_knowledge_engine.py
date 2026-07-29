@@ -2049,7 +2049,7 @@ class TestStructuredLogging:
         """Si correlation_id está presente, aparece en el JSON."""
         import logging
 
-        from motor.observability.logging import JSONFormatter
+        from motor.observability.logging import ContextFilter, JSONFormatter
         from knowledge.engine.logging_config import set_correlation_id
 
         set_correlation_id("abc-123-def")
@@ -2063,7 +2063,7 @@ class TestStructuredLogging:
             args=(),
             exc_info=None,
         )
-        record.correlation_id = "abc-123-def"  # lo añade CorrelationFilter en runtime
+        ContextFilter().filter(record)  # añade extra_keys desde _context.correlation_id
         output = fmt.format(record)
         parsed = json.loads(output)
         assert parsed["correlation_id"] == "abc-123-def"
