@@ -233,7 +233,12 @@ except Exception as e:
 
 _call_ollama() {
     local model="$1" prompt="$2" outfile="$3"
-    curl -s --max-time 300 "http://localhost:11434/api/generate" \
+    local prompt_tokens=$(echo "$prompt" | wc -c)
+    if [ "$prompt_tokens" -gt 2000 ] && [ "$model" != "qwen2.5-coder:14b" ]; then
+        model="qwen2.5-coder:14b"
+        echo "[$(date '+%H:%M:%S')] Prompt grande (${prompt_tokens} chars), usando qwen2.5-coder:14b" >&2
+    fi
+    curl -s --max-time 600 "http://localhost:11434/api/generate" \
         -d "{\"model\": \"$model\", \"prompt\": \"$prompt\", \"stream\": false}" 2>/dev/null | \
     python3 -c "
 import json,sys
