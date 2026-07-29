@@ -255,12 +255,9 @@ def audit_delta(target="pre-mantenimiento"):
 
 
 def git_commit_if_stable() -> None:
-    log("  Git commit (si F821 estable)...")
-    run(["git", "add", "-u"], timeout=30)
-    run(
-        ["git", "commit", "-m", f"mantenimiento: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')} — F821 estable"],
-        timeout=30,
-    )
+    # DESACTIVADO: auto-commit viola regla de aprobación humana.
+    log("  Git commit DESACTIVADO (requiere aprobación humana)")
+    return
 
 
 def git_rollback() -> None:
