@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # audit_diff.sh — Criba automática de diffs vía Ollama multi-modelo
-# Uso: bash audit_diff.sh <commit-hash>
+# Uso: bash audit_diff.sh [--deep] <commit-hash>
 set -euo pipefail
 
-HASH="${1:-}"
-[ -z "$HASH" ] && echo "Uso: $0 <commit-hash>" >&2 && exit 1
+DEEP_MODE=false
+case "${1:-}" in
+    --deep) DEEP_MODE=true; HASH="${2:-}";;
+    *)      HASH="${1:-}";;
+esac
+[ -z "$HASH" ] && echo "Uso: $0 [--deep] <commit-hash>" >&2 && exit 1
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUTDIR="$REPO/docs/audits_internal"
 mkdir -p "$OUTDIR"
@@ -36,25 +40,52 @@ except: pass
     [ -s "$outfile" ] && return 0 || return 1
 }
 
-echo "[$(date '+%H:%M:%S')] Criba con qwen2.5-coder:14b..." >&2
-SCREENING_FILE="$OUTDIR/${HASH}_14b.txt"
-if _call_ollama "qwen2.5-coder:14b" "$SCREENING_PROMPT" "$SCREENING_FILE" 120; then
-    echo "[$(date '+%H:%M:%S')] ✅ Criba 14B: $SCREENING_FILE" >&2
-else
-    echo "[$(date '+%H:%M:%S')] [ERROR] 14B falló" >&2
-    exit 1
-fi
+_handle_32b_failure() {
+    local hash="$1" deep="$2"
+    if [ "$deep" = true ]; then
+        echo "[$(date '+%H:%M:%S')] [WARNING] 32B falló (timeout). Creando pendiente..." >&2
+    else
+        echo "[$(date '+%H:%M:%S')] [WARNING] 32B falló. Creando pendiente para reanálisis manual..." >&2
+    fi
+    local pending="$OUTDIR/${hash}_32b_PENDING.txt"
+    {
+        echo "# Reanálisis manual requerido: 32B no completó en modo automático"
+        echo "# Ejecutar: bash $0 --deep $hash"
+        echo "# Hash: $hash"
+        echo "# Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
+    } > "$pending"
+    echo "[$(date '+%H:%M:%S')] ▶  Comando: bash $0 --deep $hash" >&2
+    exit 2
+}
 
-RESPONSE=$(cat "$SCREENING_FILE")
-if echo "$RESPONSE" | grep -qiE "CRITICO|BUG|SEGURIDAD|MOCK"; then
-    echo "[$(date '+%H:%M:%S')] ⚠️  Criba detectó señal de alerta, enviando a 32B..." >&2
+if [ "$DEEP_MODE" = true ]; then
+    echo "[$(date '+%H:%M:%S')] ⚡ Modo --deep: análisis directo a 32B (sin criba 14B)" >&2
     DEEP_FILE="$OUTDIR/${HASH}_32b.txt"
-    if _call_ollama "qwen2.5-coder:32b" "$DEEP_PROMPT" "$DEEP_FILE" 300; then
+    if _call_ollama "qwen2.5-coder:32b" "$DEEP_PROMPT" "$DEEP_FILE" 600; then
         echo "[$(date '+%H:%M:%S')] ✅ Análisis profundo 32B: $DEEP_FILE" >&2
     else
-        echo "[$(date '+%H:%M:%S')] [ERROR] 32B también falló" >&2
-        exit 1
+        _handle_32b_failure "$HASH" true
     fi
 else
-    echo "[$(date '+%H:%M:%S')] ✅ Criba: sin alertas graves" >&2
+    echo "[$(date '+%H:%M:%S')] Criba con qwen2.5-coder:14b..." >&2
+    SCREENING_FILE="$OUTDIR/${HASH}_14b.txt"
+    if _call_ollama "qwen2.5-coder:14b" "$SCREENING_PROMPT" "$SCREENING_FILE" 120; then
+        echo "[$(date '+%H:%M:%S')] ✅ Criba 14B: $SCREENING_FILE" >&2
+    else
+        echo "[$(date '+%H:%M:%S')] [ERROR] 14B falló" >&2
+        exit 1
+    fi
+
+    RESPONSE=$(cat "$SCREENING_FILE")
+    if echo "$RESPONSE" | grep -qiE "CRITICO|BUG|SEGURIDAD|MOCK"; then
+        echo "[$(date '+%H:%M:%S')] ⚠️  Criba detectó señal de alerta, enviando a 32B..." >&2
+        DEEP_FILE="$OUTDIR/${HASH}_32b.txt"
+        if _call_ollama "qwen2.5-coder:32b" "$DEEP_PROMPT" "$DEEP_FILE" 300; then
+            echo "[$(date '+%H:%M:%S')] ✅ Análisis profundo 32B: $DEEP_FILE" >&2
+        else
+            _handle_32b_failure "$HASH" false
+        fi
+    else
+        echo "[$(date '+%H:%M:%S')] ✅ Criba: sin alertas graves" >&2
+    fi
 fi
