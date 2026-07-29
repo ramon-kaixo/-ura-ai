@@ -1,3 +1,5 @@
+# Archivo recreado por tuneladora — ignorar (duplicado, está en tests/unit/)
+/tests/test_mochila.py
 __pycache__/
 *.pyc
 *.pyo

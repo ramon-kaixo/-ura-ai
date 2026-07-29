@@ -533,6 +533,9 @@ class PipelineRunner:
     # ── Fase 7: Commit (solo gate) ───────────────────────────
 
     def phase_commit(self) -> list[PhaseResult]:
+        # DESACTIVADO: auto-commit viola regla de aprobación humana.
+        # Ver ADR pendiente: tuneladora no commiteará sin diff revisado.
+        return [PhaseResult("commit", Status.SKIP)]
         if self.mode != "gate":
             return [PhaseResult("commit", Status.SKIP)]
         if not self.cfg.auto_commit:
