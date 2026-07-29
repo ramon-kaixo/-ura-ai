@@ -106,5 +106,6 @@ class TestGitCommitTool:
     def tool(self):
         return GitCommitTool()
 
-    def test_rejects_empty_message(self):
-        pass
+    def test_rejects_empty_message(self, tool):
+        result = tool.execute(message="")
+        assert not result.success
