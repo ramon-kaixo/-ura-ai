@@ -1665,7 +1665,7 @@ class TestDeterminism:
 
     def _compile_and_get_hash(self, source_dir: Path, db_path: Path) -> str | None:
         from knowledge.engine.compiler import compile_source
-        from knowledge.engine.orchestrator import get_determinism_hash
+        from knowledge.engine.determinism import get_determinism_hash
 
         compile_source(source_dir=source_dir, db_path=db_path)
         return get_determinism_hash(db_path)
@@ -1814,7 +1814,8 @@ class TestArchiveIntegration:
         import knowledge.engine.archiver as archiver_module
 
         src, db = self._setup_source_and_db(tmp_path)
-        from knowledge.engine.orchestrator import get_determinism_hash, request_compile
+        from knowledge.engine.determinism import get_determinism_hash
+        from knowledge.engine.orchestrator import request_compile
 
         # Archive falla
         with patch.object(
@@ -2023,7 +2024,8 @@ class TestStructuredLogging:
         """El JSONFormatter produce JSON válido con campos esperados."""
         import logging
 
-        from knowledge.engine.logging_config import JSONFormatter, set_correlation_id
+        from motor.observability.logging import JSONFormatter
+        from knowledge.engine.logging_config import set_correlation_id
 
         set_correlation_id("")
         fmt = JSONFormatter()
@@ -2047,7 +2049,8 @@ class TestStructuredLogging:
         """Si correlation_id está presente, aparece en el JSON."""
         import logging
 
-        from knowledge.engine.logging_config import JSONFormatter, set_correlation_id
+        from motor.observability.logging import JSONFormatter
+        from knowledge.engine.logging_config import set_correlation_id
 
         set_correlation_id("abc-123-def")
         fmt = JSONFormatter()
