@@ -278,29 +278,14 @@ _alert_if_critical() {
 
 PROMPT=$(_llm_prompt "$REPORT_FILE")
 
-echo "[$(date '+%H:%M:%S')] Enviando a IA externa (multi-LLM)..." >&2
+echo "[$(date '+%H:%M:%S')] Enviando a Ollama local..." >&2
 
-# Intento 1: Claude 3.5 Sonnet
-CLAUDE_FILE="$REPO/docs/external_audits/${DATE}_CLAUDE.md"
-if _call_openrouter "anthropic/claude-3.5-sonnet" "$PROMPT" "$CLAUDE_FILE"; then
-    echo "[$(date '+%H:%M:%S')] ✅ Claude 3.5: $CLAUDE_FILE" >&2
-else
-    echo "[$(date '+%H:%M:%S')] ⚠️ Claude no disponible" >&2
-    echo "Análisis no disponible (Claude 3.5 Sonnet no respondió)" > "$CLAUDE_FILE"
-fi
-
-# Intento 2: GPT-4o (fallback)
-GPT_FILE="$REPO/docs/external_audits/${DATE}_GPT4.md"
-if _call_openrouter "openai/gpt-4o" "$PROMPT" "$GPT_FILE"; then
-    echo "[$(date '+%H:%M:%S')] ✅ GPT-4o: $GPT_FILE" >&2
-else
-    echo "[$(date '+%H:%M:%S')] ⚠️ GPT-4o no disponible" >&2
-    echo "Análisis no disponible (GPT-4o no respondió)" > "$GPT_FILE"
-fi
-
-# Intento 3: Ollama local
 OLLAMA_FILE="$REPO/docs/external_audits/${DATE}_OLLAMA.md"
 if _call_ollama "$OLLAMA_MODEL" "$PROMPT" "$OLLAMA_FILE"; then
+    if [ ! -s "$OLLAMA_FILE" ] || [ "$(wc -c < "$OLLAMA_FILE")" -lt 500 ]; then
+        echo "[$(date '+%H:%M:%S')] [ERROR] Ollama no generó auditoría válida (vacío o <500 bytes)" >&2
+        exit 1
+    fi
     echo "[$(date '+%H:%M:%S')] ✅ Ollama local: $OLLAMA_FILE" >&2
 fi
 
@@ -308,4 +293,4 @@ fi
 _alert_if_critical "$REPORT_FILE"
 
 echo "[$(date '+%H:%M:%S')] Auditoría completa: $REPORT_FILE" >&2
-echo "[$(date '+%H:%M:%S')] Análisis: $CLAUDE_FILE, $GPT_FILE, $OLLAMA_FILE" >&2
+echo "[$(date '+%H:%M:%S')] Análisis Ollama: $OLLAMA_FILE" >&2
