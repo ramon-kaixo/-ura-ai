@@ -7,9 +7,10 @@ unbounded message size, binary data, empty conversation_id.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -21,6 +22,17 @@ from motor.assistant.message_store import MessageStore
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+class _FakeEmbeddingResponse:
+    """Simula httpx.Response para _embed — mock de red, no de lógica interna."""
+
+    def __init__(self, status_code: int = 200, embedding: list[float] | None = None) -> None:
+        self.status_code = status_code
+        self._embedding = embedding or [0.1] * 768
+
+    def json(self) -> dict[str, Any]:
+        return {"embedding": self._embedding}
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -35,13 +47,18 @@ def app(tmp_path: Path) -> FastAPI:
 
 
 @pytest.fixture
-def client(app: FastAPI, tmp_path: Path) -> TestClient:
+def client(app: FastAPI, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     # Point the engine at a temp database
     db = str(tmp_path / "test_api.db")
     store = MessageStore(db)
     engine = ConversationEngine(message_store=store)
-    # Disable real HTTP embedding (Ollama may be slow or unavailable in tests)
-    engine._vector_memory._embed = lambda _text: None  # type: ignore[method-assign]
+    # Mock httpx.post (red) en lugar de _embed (lógica interna).
+    # _embed llama a httpx.post -> /api/embeddings en Ollama.
+    monkeypatch.setattr(
+        httpx,
+        "post",
+        lambda *args, **kwargs: _FakeEmbeddingResponse(),
+    )
     _EngineHolder.engine = engine
     # Mock LLM to avoid real HTTP calls to Ollama/model-router
     mock_llm = MagicMock()
@@ -210,11 +227,15 @@ class TestErrorHandling:
         assert resp.json() == []
 
     def test_delete_non_existent_conversation(self, client: TestClient) -> None:
+        # BUG: routes.py:207 siempre retorna {"deleted": True},
+        # incluso si el conversation_id no existe.
+        # Comportamiento ideal: 404. Se documenta sin arreglar (out of scope).
         resp = client.delete("/api/v1/chat/conversations/i-dont-exist")
         assert resp.status_code == 200
         assert resp.json() == {"deleted": True}
 
     def test_delete_same_conversation_twice(self, client: TestClient) -> None:
+        # Mismo bug: segunda llamada tambien retorna 200 en vez de 404.
         resp = client.post("/api/v1/chat", json={"message": "test"})
         cid = resp.json()["conversation_id"]
         resp1 = client.delete(f"/api/v1/chat/conversations/{cid}")
