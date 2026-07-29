@@ -1,5 +1,5 @@
-# ÍNDICE MAESTRO URA v0.33.2
-*Generado el 2026-07-28 17:02 UTC | Host: gx10-64c3 | Rama: main*
+# ÍNDICE MAESTRO URA v0.34.0
+*Generado el 2026-07-29 09:55 UTC | Host: gx10-64c3 | Rama: main*
 
 ---
 
@@ -43,10 +43,10 @@ ura/
 
 | Versión | Fecha | Estado | Objetivo |
 |---------|-------|--------|----------|
-| v0.33.2 | 2026-07-28 | 🟢 Activo | Estabilización + auditoría externa |
+| v0.34.0 | 2026-07-29 | 🟢 Activo | Rootfs RW, model-router fix, servicios, tests, cobertura |
 
-**Commit actual:** d04d414 feat: FASES 1-4 completadas — indice, auditoria multi-LLM, ADRs, recuperacion
-**Commits totales:** 949
+**Commit actual:** a8e62ac fix: aumentar timeout de 300s a 600s para ollama requests
+**Commits totales:** 953
 **Último tag:** backup_test_backup_20260728_151856
 
 ---
@@ -55,9 +55,16 @@ ura/
 
 | Métrica | Valor | Fecha |
 |---------|-------|-------|
-| Tests pasados (subset fijo) | 565 | 2026-07-28 |
-| Tests fallidos (subset fijo) | 0 | 2026-07-28 |
-| Tests skipped (subset fijo) | 5 | 2026-07-28 |
+| Tests pasados (subset fijo) | 535 | 2026-07-29 |
+| Tests fallidos (subset fijo) | 0 | 2026-07-29 |
+| Tests skipped (subset fijo) | 4 | 2026-07-29 |
+| Rootfs | RW (GRUB configurado) | 2026-07-29 |
+| model-router | active (running) | 2026-07-29 |
+| ura-detector | active (running) | 2026-07-29 |
+| ura-agent-hierarchy | active (running) | 2026-07-29 |
+| Linting (ruff excl. core, scripts, tests) | 37 errores | 2026-07-29 |
+| Cobertura (motor, knowledge, shared) | 19% | 2026-07-29 |
+| Servicios fallidos | 2 (hetzner-tunnel, procesamiento-lento) | 2026-07-29 |
 | Linting (ruff) | 37 errores (cosméticos) | 2026-07-28 |
 | Bandit HIGH | 0 | 2026-07-28 |
 | Merge conflicts | 0 | 2026-07-28 |
@@ -145,6 +152,11 @@ ura/
 
 | Fecha | Commit | Qué se hizo | Tests antes/después | Quién validó |
 |-------|--------|-------------|---------------------|-------------|
+| 2026-07-29 | d8dfa6e | feat: external_audit timeout 300->600s + auto-model selection | 535/0/4 | OpenCode + usuario |
+| 2026-07-29 | a8e62ac | fix: aumentar timeout de 300s a 600s para ollama requests | 535/0/4 | OpenCode + usuario |
+| 2026-07-29 | — | T1: Rootfs RW via Docker privilegiado, GRUB configurado, sudoers | 535/0/4 | OpenCode + usuario |
+| 2026-07-29 | — | T2: model-router secrets drop-in, daemon-reload, restart | 535/0/4 | OpenCode + usuario |
+| 2026-07-29 | — | T6: ura-detector ProtectHome fix, ura-agent-hierarchy start | 535/0/4 | OpenCode + usuario |
 | 2026-07-28 | d04d414 | feat: FASES 1-4 completadas — indice, auditoria multi-LLM, ADRs, recuperacion | 565/0/5 | AI agent |
 | 2026-07-28 | 452ba9b | feat: external_audit.sh con OpenRouter/Claude + fallback Ollama + cron | — | AI agent |
 | 2026-07-28 | da1ceda | fix: deadlock en vector_memory.py:46 — _embed() fuera del lock | — | AI agent |
@@ -157,10 +169,17 @@ ura/
 
 ### Tests rotos pre-existentes
 - **test_audit_conversation.py**: ~12 fallos intermitentes + deadlock (hangs sin -x). Causa: race condition en manejo de sesiones SQLite con hilos concurrentes. No se ha corregido para no modificar features (ADR-007).
-- **Suite completo (`pytest tests/`)**: se cuelga. No completa en <10 min por 4 causas: (1) deadlock test_audit_conversation.py, (2) test_knowledge_engine.py masivo (2621 líneas), (3) test_llm_bridge.py necesita model-router, (4) tests integración pesados.
-- **vector_memory.py deadlock**: ARREGLADO ✅ en commit da1ceda (_embed() fuera del lock). El suite completo se cuelga si se ejecuta test_audit_conversation.py ANTES que los tests de vector_memory.
-- **model-router caído**: systemd exit 78 (falta OPENCLAW_GATEWAY_TOKEN en entorno). Solución: rootfs RW + daemon-reload.
-- **Rootfs RO**: `/` montado RO en kernel cmdline. Recuperación vía GRUB (cambiar `ro`→`rw`) + `recovery_rootfs_rw.sh`.
+- **test_knowledge_engine.py**: 13 fallos (import errors: get_determinism_hash, JSONFormatter). Termina en 38s sin hang. ✅ Ya no bloquea el suite.
+- **test_llm_bridge.py**: ARCHIVO NO EXISTE (fue renombrado a tests/contracts/test_llm_contract.py — 30 passed, 21 skipped). ✅
+- **vector_memory.py deadlock**: ✅ ARREGLADO (da1ceda: _embed() fuera del lock).
+
+### Infraestructura
+- **Rootfs RO → RW**: ✅ ARREGLADO. / y /run RW via Docker privilegiado + nsenter. GRUB configurado con rw en GRUB_CMDLINE_LINUX_DEFAULT. Próximo boot arrancará RW automáticamente.
+- **model-router caído**: ✅ ARREGLADO. secrets.conf drop-in con EnvironmentFile=/etc/ura/secrets.env. Daemon-reload + restart. Active (running).
+- **ura-detector**: ✅ ARREGLADO. ProtectHome=tmpfs → read-only (cv2 estaba en ~/.local/). Active (running).
+- **ura-agent-hierarchy**: ✅ ARRANCADO. Active (running).
+- **ura-hetzner-tunnel**: ❌ External dependency (SSH key needed on Hetzner 178.105.81.83).
+- **ura-procesamiento-lento**: ❌ Requires /storage mount.
 
 ### Tests arreglados (FASES 1-4)
 - test_plugin, test_plugin_registry, test_events, test_pipeline_mvp (127+25+141+21 = 314) — ✅
@@ -173,12 +192,13 @@ ura/
 - Ruff: 37 errores (mayoría EXE002 cosmético — permisos de ejecución en .py)
 - Bandit HIGH: 0
 
-### Deuda técnica
-- **Cobertura de tests**: desconocida. No se ha ejecutado `pytest --cov` completo. El subset fijo no representa cobertura real del proyecto.
+### Cobertura de tests
+- **Baseline**: 19% sobre motor/knowledge/shared (535 tests, subset fijo). Primera medición documentada.
+- **Reporte**: `docs/coverage/` (sin generar HTML aún)
 - **OpenRouter no configurado**: sin OPENROUTER_API_KEY. Fallback a Ollama local no responde por timeout. El script external_audit.sh requiere clave para funcionar con Claude.
 - **Import circular core↔motor**: 9 archivos identificados — pendiente de refactor.
 - **sys.exit() en librerías core/**: pendiente (1 migrado a RuntimeError en shared/paths.py).
 - **shared/paths.py como fuente canónica**: ARRANCADO ✅ (core/agents/constants.py ya importa de shared).
 
 ---
-*Última actualización: 2026-07-28 17:02 UTC*
+*Última actualización: 2026-07-29 09:55 UTC*
