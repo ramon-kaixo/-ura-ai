@@ -616,7 +616,7 @@ class RuleEvaluator:
 
     def __init__(self, rules: list[Rule] | None = None) -> None:
         self._rules = sorted(
-            rules or _BUILTIN_RULES,
+            rules if rules is not None else _BUILTIN_RULES,
             key=lambda r: r.metadata.id,
         )
 
