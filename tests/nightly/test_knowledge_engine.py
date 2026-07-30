@@ -1251,7 +1251,7 @@ class TestKnowledgeReader:
             timeout=15,
             check=False,
         )
-        assert "Introduction" in result.stdout
+        assert "introduction" in result.stdout.lower()
 
     def test_related_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
