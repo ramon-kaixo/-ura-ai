@@ -1,0 +1,22 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "\u00a1Hola! \u00bfC\u00f3mo puedo ayudarte hoy? Puedo responder preguntas, proporcionar informaci\u00f3n o asistir con una amplia variedad de temas. Por favor, dime lo que necesitas ayuda.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1785371092,
+  "id": "chatcmpl-74",
+  "model": "qwen2.5-coder:14b",
+  "object": "chat.completion",
+  "system_fingerprint": "fp_ollama",
+  "usage": {
+    "completion_tokens": 44,
+    "prompt_tokens": 31,
+    "total_tokens": 75
+  }
+}

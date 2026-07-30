@@ -1,0 +1,9 @@
+{
+  "cache_size": 1,
+  "metrics_enabled": true,
+  "models_available": 14,
+  "ollama": "reachable",
+  "ollama_url": "http://127.0.0.1:11434",
+  "power_mode": "AUTO",
+  "status": "ok"
+}
