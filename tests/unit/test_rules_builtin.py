@@ -6,7 +6,6 @@ BUGS DOCUMENTADOS EN PRODUCCIÓN:
    WORKAROUND: usar doc['title'] o doc.get('title','') en su lugar.
 2. GeneratorExp no está en _ALLOWED_AST_NODES. R004-R005 usan any() con
    generator → NUNCA se disparan (se suman al bug 1).
-3. RuleEvaluator(rules=[]) no vacía las reglas: [] or _BUILTIN_RULES → fallback.
 """
 from __future__ import annotations
 
@@ -174,11 +173,9 @@ class TestRuleEvaluatorInit:
         r.clear()
         assert len(ev.rules) == 5
 
-    def test_empty_rules_list_fallback(self) -> None:
-        """BUG 3: [] or _BUILTIN_RULES → _BUILTIN_RULES. No permite
-        RuleEvaluator vacío."""
+    def test_empty_rules_list(self) -> None:
         ev = RuleEvaluator(rules=[])
-        assert len(ev.rules) == 5
+        assert ev.rules == []
 
 
 class TestRuleEvaluatorEvaluate:
