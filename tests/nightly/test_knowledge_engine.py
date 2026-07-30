@@ -1064,7 +1064,7 @@ class TestIntegration:
             timeout=15,
             check=False,
         )
-        assert "Documents: 0" in result.stdout
+        assert "Nodes: 0" in result.stdout
 
     def test_compile_returns_ok_when_no_changes(self, tmp_path):
         db = tmp_path / "test_compile.db"
