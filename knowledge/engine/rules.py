@@ -57,6 +57,7 @@ _ALLOWED_AST_NODES = frozenset(
         # Names / Attribute (sin dunder)
         ast.Name,
         ast.Load,
+        ast.Store,
         ast.Attribute,
         # Operadores unarios
         ast.UnaryOp,

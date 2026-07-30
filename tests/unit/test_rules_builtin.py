@@ -1,11 +1,9 @@
 """Tests para BuiltinRule + RuleEvaluator + list_rules — sin DB, sin red.
 
-BUG RESUELTO:
-- Bug 3 (RuleEvaluator(rules=[])): arreglado vía `rules if rules is not None`.
-
-BUG PENDIENTE:
-- Bug 2: GeneratorExp no está en _ALLOWED_AST_NODES. R004 usa any(...)
-  con generator → nunca se dispara.
+Todos los bugs de rules.py resueltos:
+- Bug 3: RuleEvaluator(rules=[]) ahora vacía correctamente
+- Bug 1: Method calls (doc.get(...)) whitelisted
+- Bug 2: GeneratorExp soportado — R004 funciona
 """
 from __future__ import annotations
 
@@ -131,10 +129,9 @@ class TestBuiltinRulesR001toR005:
         r = _BUILTIN_RULES[2]
         assert len(r.evaluate({"id": "x1"}, {})) == 1
 
-    def test_R004_still_broken(self) -> None:
-        """BUG 2 (GeneratorExp no permitido): R004 nunca se dispara."""
+    def test_R004_detects_broken_relation(self) -> None:
         r = _BUILTIN_RULES[3]
-        assert r.evaluate({"id": "x1", "relations": ["nonexistent"]}, {"all_node_ids": {"other"}}) == []
+        assert len(r.evaluate({"id": "x1", "relations": ["nonexistent"]}, {"all_node_ids": {"other"}})) == 1
 
     def test_R005_detects_orphan_document(self) -> None:
         """R005 NO usa GeneratorExp, solo method calls. Funciona."""
@@ -239,12 +236,17 @@ class TestRuleEvaluatorEvaluate:
         ev = RuleEvaluator(rules=[custom])
         assert ev.evaluate_one({"id": "d1"}) == []
 
-    def test_builtin_rules_produce_findings_except_R004(self) -> None:
-        """R001/R002/R003/R005 disparan. R004 no (BUG 2: GeneratorExp)."""
+    def test_all_builtin_rules_trigger(self) -> None:
+        """R004 necesita relations no vacío, R005 necesita relations vacío.
+        Se necesitan 2 docs para cubrir ambas."""
         ev = RuleEvaluator()
-        findings = ev.evaluate([{"id": "d1"}])
+        docs = [
+            {"id": "d1", "relations": ["missing"]},
+            {"id": "orphan", "relations": []},
+        ]
+        findings = ev.evaluate(docs, {"all_node_ids": {"other"}, "all_relation_targets": {"other"}})
         triggered = {f.rule_id for f in findings}
-        assert triggered == {"R001", "R002", "R003", "R005"}
+        assert triggered == {"R001", "R002", "R003", "R004", "R005"}
 
     def test_multiple_custom_rules_multiple_docs(self) -> None:
         rules = [
