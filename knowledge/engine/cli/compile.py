@@ -26,16 +26,17 @@ def cmd_verify(args) -> int:
         return 1
     errors = 0
     warnings = 0
-    for severity, _check, _msg in results:
-        {"ERROR": "\u274c", "WARN": "\u26a0\ufe0f", "INFO": "[i]"}.get(severity, "?")
+    emoji = {"ERROR": "\u274c", "WARN": "\u26a0\ufe0f", "INFO": "[i]"}
+    for severity, check, msg in results:
+        print(f"  {emoji.get(severity, '?')} [{severity}] {check}: {msg}")
         if severity == "ERROR":
             errors += 1
         elif severity == "WARN":
             warnings += 1
     if errors == 0 and warnings == 0:
-        pass
+        print("All checks passed")
     else:
-        pass
+        print(f"{errors} errors, {warnings} warnings")
     return 1 if errors > 0 else 0
 
 
