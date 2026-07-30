@@ -293,7 +293,7 @@ def _eval_compare(node, env, _op):
         ast.GtE: _op.ge,
         ast.Is: _op.is_,
         ast.IsNot: _op.is_not,
-        ast.In: _op.contains,
+        ast.In: lambda a, b: _op.contains(b, a),
         ast.NotIn: lambda a, b: not _op.contains(b, a),
     }
     for op, comparator in zip(node.ops, node.comparators, strict=False):
