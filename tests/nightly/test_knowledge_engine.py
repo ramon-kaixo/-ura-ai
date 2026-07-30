@@ -59,8 +59,8 @@ from knowledge.engine.validator import validate_batch, validate_knowledge_object
 from knowledge.engine.verifier import verify_graph
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
 
-ENGINE_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "pro" / "knowledge_engine.py"
-SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+ENGINE_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "pro" / "knowledge_engine.py"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
 
 
 def _content_so(path: str, text: str = "") -> SourceObject:
@@ -261,7 +261,7 @@ class TestKnowledgeEngine:
         self.source_dir = tmp_path / "source"
         self.source_dir.mkdir()
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(self.db_path, schema_path)
 
     def _conn(self):
@@ -483,7 +483,7 @@ class TestCorruption:
         self.db_path = tmp_path / "corrupt.db"
         self.source_dir = tmp_path / "source"
         self.source_dir.mkdir()
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         conn = sqlite3.connect(str(self.db_path))
         conn.executescript(schema_path.read_text())
         sha = hashlib.sha256(b"content").hexdigest()
@@ -1281,7 +1281,7 @@ class TestMigration:
 
     def test_fresh_init_sets_version(self, tmp_path):
         db = tmp_path / "fresh.db"
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema_path)
         conn = sqlite3.connect(str(db))
         from knowledge.engine.migrations import SCHEMA_VERSION, get_schema_version
@@ -1291,7 +1291,7 @@ class TestMigration:
 
     def test_migrate_v6_to_v7_adds_body_column(self, tmp_path):
         db = tmp_path / "v6.db"
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         # Create v6 DB
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
@@ -1392,7 +1392,7 @@ class TestMigration:
 
     def test_migration_v5_to_v7_chain(self, tmp_path):
         db = tmp_path / "v5.db"
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
         conn.executescript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;")
@@ -1466,7 +1466,7 @@ class TestMigration:
 
     def test_compile_manifest_has_details(self, tmp_path):
         db = tmp_path / "manifest.db"
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema_path)
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
@@ -1676,11 +1676,11 @@ class TestDeterminism:
         db1.parent.mkdir()
         from knowledge.engine.sqlite_writer import init_db
 
-        init_db(db1, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db1, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         db2 = tmp_path / "run2" / "knowledge.db"
         db2.parent.mkdir()
-        init_db(db2, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db2, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         src = self._build_test_source(tmp_path)
 
@@ -1700,7 +1700,7 @@ class TestDeterminism:
         from knowledge.engine.sqlite_writer import init_db
 
         db = tmp_path / "knowledge.db"
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         src_a = tmp_path / "source_a"
         src_a.mkdir()
@@ -1721,7 +1721,7 @@ class TestDeterminism:
         from knowledge.engine.sqlite_writer import init_db
 
         db = tmp_path / "knowledge.db"
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         src = self._build_test_source(tmp_path)
         self._compile_and_get_hash(src, db)
@@ -1762,7 +1762,7 @@ class TestArchiveIntegration:
         db = tmp_path / "knowledge.db"
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema_path)
 
         # Git init en tmp_path (parent de source/), así .git/ no contamina el scan
@@ -1887,7 +1887,7 @@ class TestMetricsExport:
         from knowledge.engine.metrics import export_metrics
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = tmp_path / "data.db"
         init_db(db, schema_path)
 
@@ -1943,7 +1943,7 @@ class TestMetricsExport:
         from knowledge.engine.metrics import export_metrics
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = self.tmp_path / "readonly.db"
         init_db(db, schema_path)
 
@@ -1971,7 +1971,7 @@ class TestCorrelationId:
         db = tmp_path / "knowledge.db"
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema_path)
 
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True, check=False)
@@ -2088,7 +2088,7 @@ class TestStructuredLogging:
         """URA_STRUCTURED_LOGS solo cambia el *formato*, no el contenido
         semántico. El mismo LogRecord debe producir idéntico level, logger,
         y message en ambos formatos."""
-        from knowledge.engine.logging_config import JSONFormatter
+        from motor.observability.logging import JSONFormatter
 
         cases: list[tuple[str, tuple, int, str]] = [
             ("hello world", (), logging.INFO, "mymod"),
@@ -2312,7 +2312,7 @@ class TestAuditBackend:
         db = tmp_path / "ingest.db"
         from knowledge.engine.sqlite_writer import init_db
 
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         n = backend.ingest_into_sqlite(db)
         assert n == 5, f"Expected 5 ingested, got {n}"
@@ -2335,7 +2335,7 @@ class TestAuditBackend:
         set_audit(svc)
 
         db = tmp_path / "reader.db"
-        schema = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         init_db(db, schema)
 
         # Simular backend fallando siempre
@@ -2374,7 +2374,7 @@ class TestGoldenMaster:
         (src / "a.md").write_text("---\ntitle: A\ntype: doc\n---\n\nContent A\n")
 
         db = tmp_path / "golden.db"
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
 
         from knowledge.engine.sqlite_writer import init_db
 
@@ -2421,7 +2421,7 @@ class TestGoldenMaster:
         db = tmp_path / "algo.db"
         from knowledge.engine.sqlite_writer import init_db
 
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
 
         algo = get_determinism_algorithm(db)
         assert algo in ("sha256-v1", "sha256-v2"), f"Algorithm: {algo}"
@@ -2445,7 +2445,7 @@ class TestGoldenMaster:
         from knowledge.engine.determinism import get_determinism_hash
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = tmp_path / "order.db"
         init_db(db, schema_path)
 
@@ -2474,7 +2474,7 @@ class TestGoldenMaster:
         from knowledge.engine.determinism import get_determinism_hash
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = tmp_path / "unicode.db"
         init_db(db, schema_path)
 
@@ -2502,7 +2502,7 @@ class TestGoldenMaster:
         from knowledge.engine.determinism import get_determinism_hash
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = tmp_path / "cross.db"
         init_db(db, schema_path)
 
@@ -2538,7 +2538,7 @@ class TestGoldenMaster:
         from knowledge.engine.determinism import get_determinism_hash
         from knowledge.engine.sqlite_writer import init_db
 
-        schema_path = Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql"
+        schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         db = tmp_path / "extra.db"
         init_db(db, schema_path)
 
@@ -2586,7 +2586,7 @@ class TestJobsCoverage:
         from knowledge.engine.sqlite_writer import init_db
 
         db = tmp_path / "e.db"
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
         process_archive_jobs(db)
         process_archive_jobs(tmp_path / "nope.db")
 
@@ -2598,7 +2598,7 @@ class TestJobsCoverage:
         from knowledge.engine.sqlite_writer import init_db
 
         db = tmp_path / "s.db"
-        init_db(db, Path(__file__).resolve().parent.parent / "schemas" / "knowledge_graph.sql")
+        init_db(db, Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql")
         # Create valid source dir with git repo
         src = tmp_path / "src"
         src.mkdir()
