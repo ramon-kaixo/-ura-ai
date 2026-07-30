@@ -12,7 +12,7 @@ def cmd_read(args) -> int:
     doc = reader.get_document(args.doc_id)
     if doc is None:
         return 1
-    doc.body[:500]
+    print(doc.body[:500])
     return 0
 
 
