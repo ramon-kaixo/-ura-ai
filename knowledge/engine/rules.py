@@ -95,8 +95,9 @@ _ALLOWED_AST_NODES = frozenset(
         ast.Slice,
         # Call (solo funciones whitelisted)
         ast.Call,
-        # List/Dict/Set comprehension (NO GeneratorExp)
+        # List/Dict/Set comprehension
         ast.ListComp,
+        ast.GeneratorExp,
         ast.comprehension,
     },
 )
@@ -140,7 +141,6 @@ _BLOCKED_AST_NODES = (
     "YieldFrom",
     "Await",
     "AsyncFor",
-    "GeneratorExp",
     "SetComp",
     "DictComp",
     "NamedExpr",  # walrus :=
@@ -219,6 +219,8 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
         return handler(node, env, _operator)
     if isinstance(node, ast.ListComp):
         return list(_eval_comprehension(node, env))
+    if isinstance(node, ast.GeneratorExp):
+        return _eval_comprehension(node, env)
     raise UnsafeExpressionError(f"Nodo no soportado: {type(node).__name__}")
 
 
@@ -361,8 +363,10 @@ _NODE_HANDLERS = {
 }
 
 
-def _eval_comprehension(node: ast.ListComp, env: dict[str, Any]) -> list[Any]:
-    """Evalúa una list comprehension."""
+def _eval_comprehension(
+    node: ast.ListComp | ast.GeneratorExp, env: dict[str, Any]
+) -> list[Any]:
+    """Evalúa una list comprehension o generator expression."""
 
     def _process(generators, idx, current_env):
         if idx >= len(generators):
