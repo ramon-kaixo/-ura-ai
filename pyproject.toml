@@ -60,7 +60,7 @@ ignore = [
 "tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
 
 [tool.pytest.ini_options]
-markers = ["slow: marks tests as slow"]
+markers = ["slow: marks tests as slow", "integration: approval tests against live endpoints"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_reports", ".nervioso", ".sandbox_packages"]

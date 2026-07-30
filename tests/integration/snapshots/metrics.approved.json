@@ -1,0 +1,4 @@
+{
+  "body_start": "model_unavailable{modelo=\"test\"}_count 16\nprompt_cache_miss{tipo=\"respuesta_rapida\"}_count 4\nmodel_selection{mode=\"routed\",modelo=\"qwen2.5:3b\",tipo=\"respuesta_rapida\"}_count 4\nollama_request_latency_a",
+  "status": 200
+}
