@@ -101,6 +101,38 @@ _ALLOWED_AST_NODES = frozenset(
     },
 )
 
+# Métodos permitidos por tipo para _eval_method_call
+_ALLOWED_METHODS: dict[str, set[str]] = {
+    "dict": {"get", "keys", "values", "items"},
+    "str": {"upper", "lower", "strip", "replace", "startswith", "endswith", "split"},
+}
+
+
+def _eval_method_call(
+    node: ast.Call, env: dict[str, Any], _op: int | None
+) -> Any:
+    """Evalúa obj.metodo() solo si está en whitelist."""
+    if not isinstance(node.func, ast.Attribute):
+        raise UnsafeExpressionError("Solo method calls permitidos")
+    obj = _eval_ast(node.func.value, env)
+    method_name = node.func.attr
+    type_name = type(obj).__name__
+    if type_name not in _ALLOWED_METHODS:
+        raise UnsafeExpressionError(
+            f"Tipo no permite method calls: {type_name}"
+        )
+    if method_name not in _ALLOWED_METHODS[type_name]:
+        raise UnsafeExpressionError(
+            f"Método no permitido: {type_name}.{method_name}"
+        )
+    if method_name.startswith("__") and method_name.endswith("__"):
+        raise UnsafeExpressionError("Dunder methods prohibidos")
+    args = [_eval_ast(a, env) for a in node.args]
+    kwargs = {kw.arg: _eval_ast(kw.value, env) for kw in node.keywords}
+    method = getattr(obj, method_name)
+    return method(*args, **kwargs)
+
+
 # Nodos EXPLÍCITAMENTE PROHIBIDOS (por claridad, aunque no están en _ALLOWED)
 _BLOCKED_AST_NODES = (
     "Lambda",
@@ -300,6 +332,8 @@ def _eval_subscript(node, env, _op):
 
 
 def _eval_call(node, env, _op):
+    if isinstance(node.func, ast.Attribute):
+        return _eval_method_call(node, env, _op)
     if not isinstance(node.func, ast.Name):
         raise UnsafeExpressionError("Solo llamadas a funciones directas")
     func_name = node.func.id
