@@ -46,7 +46,8 @@ def cmd_related(args) -> int:
     except Exception:
         return 1
     if not related:
+        print("No related documents found")
         return 0
-    for _r in related:
-        pass
+    for r in related:
+        print(f"  {r.src} → {r.dst} ({r.relation})")
     return 0
