@@ -1,0 +1,3 @@
+[BUG]
+
+El diff contiene un problema crítico en la lógica de manejo de errores. Los métodos `test_delete_non_existent_conversation` y `test_delete_same_conversation_twice` están probando el comportamiento incorrecto de la API. Ambos test esperan que se retorne un código de estado 404 cuando se intenta eliminar una conversación inexistente o se intenta eliminar la misma conversación dos veces, pero en realidad, la implementación siempre retorna un código de estado 200 con `{"deleted": True}`. Este comportamiento incorrecto puede llevar a errores en la aplicación ya que los clientes podrían esperar una respuesta diferente cuando una operación falla.
