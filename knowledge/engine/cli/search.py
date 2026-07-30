@@ -30,7 +30,7 @@ def cmd_search(args) -> int:
     if not results:
         return 0
     for r in results:
-        r.snippet[:120].replace("\n", " ")
+        print(f"  [{r.doc_id}] {r.snippet[:120].replace(chr(10), ' ')}")
     return 0
 
 
