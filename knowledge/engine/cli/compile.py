@@ -12,6 +12,7 @@ def cmd_init(args) -> int:
     if not SCHEMA_FILE.exists():
         return 1
     init_db(db_path, SCHEMA_FILE)
+    print(f"✓ Database initialized at {db_path}")
     return 0
 
 
