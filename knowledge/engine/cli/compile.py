@@ -43,21 +43,30 @@ def cmd_verify(args) -> int:
 def cmd_status(args) -> int:
     db_path = _resolve_db_path(args)
     if not db_path.exists():
+        print(f"Database not found at {db_path}")
         return 1
     conn = _get_conn(db_path)
     try:
         version = conn.execute(
             "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",
         ).fetchone()
-        conn.execute("SELECT COUNT(*) as c FROM kg_nodes").fetchone()["c"]
-        conn.execute("SELECT COUNT(*) as c FROM kg_edges").fetchone()["c"]
-        conn.execute("SELECT COUNT(*) as c FROM op_compile_errors WHERE severity='ERROR'").fetchone()["c"]
+        nodes = conn.execute("SELECT COUNT(*) as c FROM kg_nodes").fetchone()["c"]
+        edges = conn.execute("SELECT COUNT(*) as c FROM kg_edges").fetchone()["c"]
+        errors = conn.execute(
+            "SELECT COUNT(*) as c FROM op_compile_errors WHERE severity='ERROR'",
+        ).fetchone()["c"]
     finally:
         conn.close()
     if version:
-        pass
+        print(f"Graph version: {version['graph_version']}")
+        print(f"Source commit: {version['source_commit']}")
+        print(f"Compiler version: {version['compiler_version']}")
+        print(f"Swapped at:    {version['swapped_at']}")
     else:
-        pass
+        print("No active version (empty database)")
+    print(f"Nodes: {nodes}")
+    print(f"Edges: {edges}")
+    print(f"Errors: {errors}")
     return 0
 
 
