@@ -1,11 +1,11 @@
 """Tests para BuiltinRule + RuleEvaluator + list_rules — sin DB, sin red.
 
-BUGS DOCUMENTADOS EN PRODUCCIÓN:
-1. _eval_call rechaza method calls (doc.get(...)) con "Solo llamadas a
-   funciones directas". R001-R003 usan doc.get(...) → NUNCA se disparan.
-   WORKAROUND: usar doc['title'] o doc.get('title','') en su lugar.
-2. GeneratorExp no está en _ALLOWED_AST_NODES. R004-R005 usan any() con
-   generator → NUNCA se disparan (se suman al bug 1).
+BUG RESUELTO:
+- Bug 3 (RuleEvaluator(rules=[])): arreglado vía `rules if rules is not None`.
+
+BUG PENDIENTE:
+- Bug 2: GeneratorExp no está en _ALLOWED_AST_NODES. R004 usa any(...)
+  con generator → nunca se dispara.
 """
 from __future__ import annotations
 
@@ -97,54 +97,49 @@ class TestBuiltinRuleEvaluate:
         findings = rule.evaluate({"id": "x1", "title": ""}, {})
         assert len(findings) == 1
 
-    def test_context_get_method_call_rejected(self) -> None:
-        """.get() es method call → _eval_call lo rechaza → []"""
+    def test_context_get_method_call(self) -> None:
+        """.get() funciona ahora (method calls whitelisted)."""
         rule = BuiltinRule(
             metadata=RuleMetadata(id="T1", version="1", severity="INFO", description="test"),
             expression="ctx.get('threshold', 0) > 10",
         )
-        assert rule.evaluate({"id": "x1"}, {"threshold": 20}) == []
+        assert len(rule.evaluate({"id": "x1"}, {"threshold": 20})) == 1
 
-    def test_method_call_returns_empty(self) -> None:
-        """BUG 1: doc.get() es method call, rechazado por _eval_call.
-        La regla nunca se dispara."""
+    def test_doc_get_method_call(self) -> None:
+        """doc.get() funciona ahora (method calls whitelisted)."""
         rule = BuiltinRule(
             metadata=RuleMetadata(id="T1", version="1", severity="INFO", description="test"),
-            expression="bool(doc.get('title', ''))",
+            expression="not bool(doc.get('title', ''))",
         )
-        assert rule.evaluate({"id": "x1"}, {}) == []
+        assert len(rule.evaluate({"id": "x1"}, {})) == 1
 
 
 # ===================================================================
-# Grupo B — Reglas built-in R001-R005 (documentan bugs)
+# Grupo B — Reglas built-in R001-R005
 # ===================================================================
 
-class TestBuiltinRulesAllBroken:
-    def test_R001_never_triggers(self) -> None:
-        """BUG 1: doc.get('title', '') es method call, safe_eval lo rechaza."""
+class TestBuiltinRulesR001toR005:
+    def test_R001_detects_missing_title(self) -> None:
         r = _BUILTIN_RULES[0]
-        assert r.evaluate({"id": "x1"}, {}) == []
+        assert len(r.evaluate({"id": "x1"}, {})) == 1
 
-    def test_R002_never_triggers(self) -> None:
-        """BUG 1: doc.get('tags', []) es method call."""
+    def test_R002_detects_missing_tags(self) -> None:
         r = _BUILTIN_RULES[1]
-        assert r.evaluate({"id": "x1"}, {}) == []
+        assert len(r.evaluate({"id": "x1"}, {})) == 1
 
-    def test_R003_never_triggers(self) -> None:
-        """BUG 1: doc.get('body', '') es method call."""
+    def test_R003_detects_empty_body(self) -> None:
         r = _BUILTIN_RULES[2]
-        assert r.evaluate({"id": "x1"}, {}) == []
+        assert len(r.evaluate({"id": "x1"}, {})) == 1
 
-    def test_R004_never_triggers(self) -> None:
-        """BUG 1 + 2: GeneratorExp en any() + doc.get method calls.
-        safe_eval rechaza la expresión, BuiltinRule la traga con except."""
+    def test_R004_still_broken(self) -> None:
+        """BUG 2 (GeneratorExp no permitido): R004 nunca se dispara."""
         r = _BUILTIN_RULES[3]
         assert r.evaluate({"id": "x1", "relations": ["nonexistent"]}, {"all_node_ids": {"other"}}) == []
 
-    def test_R005_never_triggers(self) -> None:
-        """BUG 1 + 2: GeneratorExp en any() + doc.get method calls."""
+    def test_R005_detects_orphan_document(self) -> None:
+        """R005 NO usa GeneratorExp, solo method calls. Funciona."""
         r = _BUILTIN_RULES[4]
-        assert r.evaluate({"id": "orphan", "relations": []}, {"all_relation_targets": {"other"}}) == []
+        assert len(r.evaluate({"id": "orphan", "relations": []}, {"all_relation_targets": {"other"}})) == 1
 
 
 # ===================================================================
@@ -244,11 +239,12 @@ class TestRuleEvaluatorEvaluate:
         ev = RuleEvaluator(rules=[custom])
         assert ev.evaluate_one({"id": "d1"}) == []
 
-    def test_builtin_rules_produce_no_findings(self) -> None:
-        """Todas las reglas built-in están rotas (BUG 1 + 2).
-        Verifica que al menos no crashean."""
+    def test_builtin_rules_produce_findings_except_R004(self) -> None:
+        """R001/R002/R003/R005 disparan. R004 no (BUG 2: GeneratorExp)."""
         ev = RuleEvaluator()
-        assert ev.evaluate([{"id": "d1"}]) == []
+        findings = ev.evaluate([{"id": "d1"}])
+        triggered = {f.rule_id for f in findings}
+        assert triggered == {"R001", "R002", "R003", "R005"}
 
     def test_multiple_custom_rules_multiple_docs(self) -> None:
         rules = [
