@@ -1,0 +1,6 @@
+#!/bin/sh
+# commit-msg hook — valida conventional commits.
+# Instalado desde scripts/hooks/commit-msg a .git/hooks/commit-msg
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(dirname "$(dirname "$SCRIPT_DIR")")
+python3 "$PROJECT_ROOT/scripts/pro/commit_msg_validator.py" --read-file "$1"
