@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -105,6 +106,19 @@ class Journal:
             if self._file is not None:
                 self._file.close()
                 self._file = None
+
+    def wait_idle(self, timeout: float = 30) -> bool:
+        """Espera a que no haya appends en curso (lock libre).
+
+        Retorna True si el journal quedó idle antes del timeout.
+        """
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if self._lock.acquire(blocking=False):
+                self._lock.release()
+                return True
+            time.sleep(0.05)
+        return False
 
     @property
     def count(self) -> int:

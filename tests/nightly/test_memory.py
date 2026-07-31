@@ -867,6 +867,16 @@ class TestMemoryShutdown:
         m.shutdown(timeout=1)
         assert m.timeline.size == 5
 
+    def test_shutdown_fast_with_entries(self, tmp_path: str) -> None:
+        """Regresión: shutdown no debe spin-wait en journal.count (nunca baja)."""
+        journal = str(Path(tmp_path) / "journal.jsonl")
+        m = Memory(journal_path=journal)
+        _populate(m, 10)
+        start = time.monotonic()
+        m.shutdown(timeout=5)
+        elapsed = time.monotonic() - start
+        assert elapsed < 2.0, f"shutdown tardó {elapsed:.2f}s (spin-wait en count)"
+
     def test_shutdown_twice(self) -> None:
         m = Memory()
         m.shutdown()
