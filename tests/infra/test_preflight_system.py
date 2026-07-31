@@ -19,7 +19,7 @@ from scripts.pro.tuneladora.preflight_system import (
     preflight,
 )
 
-MANIFEST_PATH = Path(__file__).resolve().parent.parent / "deploy" / "system_manifest.json"
+MANIFEST_PATH = Path(__file__).resolve().parent.parent.parent / "deploy" / "system_manifest.json"
 
 
 # ── Fixtures ──
