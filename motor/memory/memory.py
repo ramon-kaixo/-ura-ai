@@ -7,7 +7,6 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import logging
-import time
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger("ura.memory")
@@ -174,13 +173,11 @@ class Memory:
         """Graceful shutdown. Cierra journal, espera operaciones en curso."""
         self._shutdown_flag = True
 
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            # Esperar a que no haya operaciones en curso
-            if self._journal.count > 0:
-                time.sleep(0.1)
-            else:
-                break
+        # Esperar a que no haya operaciones en curso: el journal es
+        # append-only con lock, así que la condición correcta es lock libre,
+        # no count == 0 (count nunca decrece salvo rotación).
+        if self._journal.path:
+            self._journal.wait_idle(timeout)
         self._journal.close()
 
     # ── Suscripción de eventos ─────────────────────────
