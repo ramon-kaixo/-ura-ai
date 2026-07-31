@@ -44,8 +44,11 @@ class FactHistory:
             initial_version.version_id: initial_version,
         }
         self._tombstones: dict[str, FactTombstone] = {}
+        self._tombstone_ids: set[str] = set()
         self._created: float = initial_version.created_at
         self._updated: float = initial_version.created_at
+        self._timeline_cache: list[FactVersion] | None = None
+        self._timeline_pos: dict[str, int] = {}
 
     # ── API pública ──────────────────────────────────
 
@@ -79,13 +82,41 @@ class FactHistory:
 
     @property
     def has_tombstone(self) -> bool:
-        return any(v.state == VersionState.TOMBSTONE for v in self._versions.values())
+        return bool(self._tombstone_ids)
 
     def get_version(self, version_id: str) -> FactVersion | None:
         return self._versions.get(version_id)
 
     def timeline(self) -> list[FactVersion]:
-        return sorted(self._versions.values(), key=lambda v: v.created_at)
+        """Versiones ordenadas por created_at ascendente.
+
+        Cache interna mantenida incrementalmente (O(1) por operación,
+        O(n log n) solo en el primer acceso). El resultado es la cache
+        ordenada — no debe mutarse.
+        """
+        if self._timeline_cache is None:
+            self._timeline_cache = sorted(self._versions.values(), key=lambda v: v.created_at)
+            self._timeline_pos = {v.version_id: i for i, v in enumerate(self._timeline_cache)}
+        return self._timeline_cache
+
+    def _replace_in_cache(self, version_id: str, new: FactVersion) -> None:
+        """Reemplaza una versión en la cache O(1) (created_at no cambia)."""
+        if self._timeline_cache is None:
+            return
+        pos = self._timeline_pos.get(version_id)
+        if pos is not None:
+            self._timeline_cache[pos] = new
+
+    def _append_to_cache(self, version: FactVersion) -> None:
+        """Append O(1) si created_at es monotónico; si no, invalidar."""
+        if self._timeline_cache is None:
+            return
+        if version.created_at >= self._timeline_cache[-1].created_at:
+            self._timeline_cache.append(version)
+            self._timeline_pos[version.version_id] = len(self._timeline_cache) - 1
+        else:
+            self._timeline_cache = None
+            self._timeline_pos = {}
 
     def version_at(self, timestamp: float) -> FactVersion | None:
         """Retorna la versión vigente en el instante dado.
@@ -137,6 +168,8 @@ class FactHistory:
                 state=VersionState.SUPERSEDED,
             )
             self._versions[old_current.version_id] = old_superseded
+            self._replace_in_cache(old_current.version_id, old_superseded)
+            self._tombstone_ids.discard(old_current.version_id)
 
         # Vincular la nueva versión a la que reemplaza
         new_version = FactVersion(
@@ -151,6 +184,9 @@ class FactHistory:
         )
 
         self._versions[new_version.version_id] = new_version
+        self._append_to_cache(new_version)
+        if new_version.state == VersionState.TOMBSTONE:
+            self._tombstone_ids.add(new_version.version_id)
         self._current = new_version.version_id
         self._updated = new_version.created_at
 
@@ -180,6 +216,8 @@ class FactHistory:
             state=VersionState.ROLLED_BACK,
         )
         self._versions[old_current.version_id] = old_rolled
+        self._replace_in_cache(old_current.version_id, old_rolled)
+        self._tombstone_ids.discard(old_current.version_id)
 
         restored = FactVersion(
             version_id=target.version_id,
@@ -192,6 +230,7 @@ class FactHistory:
             state=VersionState.CURRENT,
         )
         self._versions[target.version_id] = restored
+        self._replace_in_cache(target.version_id, restored)
         self._current = target.version_id
         self._updated = target.created_at
         return restored
@@ -218,8 +257,11 @@ class FactHistory:
                 state=VersionState.SUPERSEDED,
             )
             self._versions[old_current.version_id] = old_superseded
+            self._replace_in_cache(old_current.version_id, old_superseded)
 
         self._versions[version.version_id] = version
+        self._append_to_cache(version)
+        self._tombstone_ids.add(version.version_id)
         self._current = version.version_id
         self._updated = version.created_at
 
@@ -242,7 +284,11 @@ class FactHistory:
         el mismo historial → mismo dict → mismo checksum,
         independientemente del orden de inserción en memoria.
         """
-        sorted_versions = sorted(self._versions.values(), key=lambda v: v.created_at)
+        sorted_versions = (
+            self._timeline_cache
+            if self._timeline_cache is not None
+            else sorted(self._versions.values(), key=lambda v: v.created_at)
+        )
         sorted_tombstones = sorted(self._tombstones.values(), key=lambda t: t.removed_at)
 
         return {
@@ -321,6 +367,8 @@ class FactHistory:
         history._tombstones = {}
         history._created = data.get("created", first_v.created_at)
         history._updated = data.get("updated", first_v.created_at)
+        history._timeline_cache = None
+        history._timeline_pos = {}
 
         # Añadir versiones preservando estados originales
         # current es: 1) la única CURRENT, o 2) la TOMBSTONE, o 3) la más reciente
@@ -342,4 +390,7 @@ class FactHistory:
             }
         else:
             history._tombstones = {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
+        history._tombstone_ids = {
+            vid for vid, v in history._versions.items() if v.state == VersionState.TOMBSTONE
+        }
         return history
