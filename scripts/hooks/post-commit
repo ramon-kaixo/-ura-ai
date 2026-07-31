@@ -1,0 +1,12 @@
+#!/bin/sh
+# post-commit hook — ADR auto-generation + unified change log
+PROJECT_ROOT=$(dirname "$(dirname "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)")")
+
+# 1. ADR auto-generation on significant commits
+python3 "$PROJECT_ROOT/scripts/pro/adr_generator.py" 2>/dev/null || true
+
+# 2. Unified change log (SQLite data/changes.db)
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+if [ -n "$COMMIT_HASH" ]; then
+    python3 "$PROJECT_ROOT/scripts/pro/change_log.py" record "$COMMIT_HASH" 2>/dev/null || true
+fi
