@@ -97,16 +97,19 @@ class TestReDoS:
         assert "search_query" in result.entities
 
     @pytest.mark.parametrize(
-        "pattern_src",
+        "pattern_src,trigger",
         [
-            r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)",
-            r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
+            (r"^(corrige|no\s*es\s*correcto|en\s*realidad|mejor\s*d[ií]|rectifica)", "corrige"),
+            (
+                r"^(aclara|explica|qu[eé]\s*es|c[oó]mo\s*funciona|por\s*qu[eé]|cu[aá]ndo|d[oó]nde|qui[eé]n)",
+                "explica",
+            ),
         ],
     )
-    def test_dangling_start_anchor_patterns(self, pattern_src: str) -> None:
+    def test_dangling_start_anchor_patterns(self, pattern_src: str, trigger: str) -> None:
         """Patterns anchored only at start can match unexpectedly long strings."""
         pat = re.compile(pattern_src)
-        long_text = "corrige" + "x" * 10_000
+        long_text = trigger + "x" * 10_000
         t0 = time.monotonic()
         m = pat.search(long_text)
         elapsed = time.monotonic() - t0

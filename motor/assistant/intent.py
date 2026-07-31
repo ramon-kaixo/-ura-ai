@@ -110,7 +110,7 @@ _ENTITY_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("search_query", re.compile(r"(?:busca|search)\s*(?:sobre|de|acerca de)?\s*['\"]?(.+?)['\"]?(?:\s|$|\.)")),
     ("filename", re.compile(r"(?:archivo?|file|documento)\s*['\"]?(.+?)['\"]?(?:\s|$|\.)")),
     ("url", re.compile(r"(https?://[^\s]+)")),
-    ("email", re.compile(r"([\w.+-]+@[\w-]+\.[\w.-]+)")),
+    ("email", re.compile(r"\b([\w.+-]+@[\w-]+\.[\w.-]+)\b")),
     ("number", re.compile(r"\b(\d+)\b")),
     ("language", re.compile(r"(?:en|ingl[eé]s|spanish|espa[nñ]ol|catal[aá]n|euskera|franc[eé]s)")),
     ("date", re.compile(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b")),
