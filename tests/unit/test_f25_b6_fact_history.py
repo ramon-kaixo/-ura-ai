@@ -577,3 +577,43 @@ def test_benchmark_peak_memory() -> None:
     # Tamaño del historial
     sys.getsizeof(h) + sum(sys.getsizeof(v) for v in h._versions.values())
     assert h.version_count == 10001
+
+
+def test_timeline_cache_reflects_mutations() -> None:
+    """Regresión: timeline() cacheada debe reflejar add/rollback/tombstone.
+
+    Sin invalidación de cache, tras rollback la cache devolvería
+    estados stale (CURRENT donde debería ser ROLLED_BACK).
+    """
+    fact = _make_fact()
+    h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=0))
+    h.add_version(_make_version(fact.fact_id, "v2", created_at=1))
+    h.add_version(_make_version(fact.fact_id, "v3", created_at=2))
+
+    # Poblar cache
+    _ = h.timeline()
+
+    # rollback tras cache poblada
+    h.rollback("v1")
+    states = {v.version_id: v.state for v in h.timeline()}
+    assert states["v1"] == VersionState.CURRENT
+    assert states["v2"] == VersionState.SUPERSEDED
+    assert states["v3"] == VersionState.ROLLED_BACK
+
+    # tombstone tras cache poblada
+    ts = FactVersion(
+        version_id="v4",
+        fact_id=fact.fact_id,
+        confidence=0.0,
+        created_at=3,
+        state=VersionState.TOMBSTONE,
+    )
+    h.tombstone(ts)
+    states = {v.version_id: v.state for v in h.timeline()}
+    assert states["v4"] == VersionState.TOMBSTONE
+    assert h.has_tombstone
+
+    # from_dict reconstruye has_tombstone
+    restored = FactHistory.from_dict(h.to_dict())
+    assert restored.has_tombstone
+    assert restored.timeline()[-1].version_id == "v4"

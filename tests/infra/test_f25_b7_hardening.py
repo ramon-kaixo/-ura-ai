@@ -370,6 +370,7 @@ def test_soak_million_operations() -> None:
     rng = _rng(12345)
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_init"))
+    all_ids = ["v_init"]
     version_counter = 1
     start = time.perf_counter()
     for i in range(1_000_000):
@@ -379,10 +380,10 @@ def test_soak_million_operations() -> None:
                 version_counter += 1
                 v = _make_version(fact.fact_id, f"v{version_counter}", created_at=_ts() + 1000)
                 h.add_version(v)
+                all_ids.append(v.version_id)
             elif op == "rollback":
-                keys = list(h._versions.keys())
-                if keys and h.current.state != VersionState.TOMBSTONE:
-                    target = keys[rng.randint(0, len(keys) - 1)]
+                if all_ids and h.current.state != VersionState.TOMBSTONE:
+                    target = all_ids[rng.randint(0, len(all_ids) - 1)]
                     h.rollback(target)
             elif op == "tombstone":
                 if not h.has_tombstone:
@@ -395,6 +396,7 @@ def test_soak_million_operations() -> None:
                         state=VersionState.TOMBSTONE,
                     )
                     h.tombstone(v)
+                    all_ids.append(v.version_id)
             elif op == "read":
                 _ = h.current
                 _ = h.version_count
