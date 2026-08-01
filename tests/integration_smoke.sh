@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 export PYTHONPATH="$PWD"
 
 ROUTER_URL="http://localhost:11435"
-ROUTER_SCRIPT="core/model_router_main.py"
+ROUTER_SCRIPT="-m core.model_router"
 OLLAMA_URL="http://localhost:11434"
 PASS=0
 FAIL=0
@@ -49,7 +49,7 @@ check "Ollama responde" curl -sf "$OLLAMA_URL/api/tags"
 # 2. Arrancar router
 echo ""
 echo "[2] Arrancando router..."
-python3 "$ROUTER_SCRIPT" &
+python3 $ROUTER_SCRIPT &
 ROUTER_PID=$!
 sleep 2
 check "Router PID existe" kill -0 "$ROUTER_PID" 2>/dev/null
@@ -89,12 +89,12 @@ check "Modelo directo responde 200" curl -sf -o /dev/null -w "%{http_code}" -X P
 # 8. Modelos disponibles
 echo ""
 echo "[8] Router --models..."
-check "Flag --models lista modelos" python3 "$ROUTER_SCRIPT" --models 2>/dev/null | grep -q "qwen"
+check "Flag --models lista modelos" python3 $ROUTER_SCRIPT --models 2>/dev/null | grep -q "qwen"
 
 # 9. Clasificación
 echo ""
 echo "[9] Router --test..."
-check "Flag --test clasifica" python3 "$ROUTER_SCRIPT" --test "analizar un error" 2>/dev/null | grep -q "Tipo:"
+check "Flag --test clasifica" python3 $ROUTER_SCRIPT --test "analizar un error" 2>/dev/null | grep -q "Tipo:"
 
 # 10. Mantenimiento dry-run
 echo ""
