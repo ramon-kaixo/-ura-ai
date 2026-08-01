@@ -100,71 +100,79 @@ def validate_span_tree(spans: list[SpanEvent]) -> None:
 
     for trace_id, trace_spans in by_trace.items():
         span_map = {s.span_id: s for s in trace_spans}
-        visited: set[str] = set()
-        in_degree: dict[str, int] = {}
+        _check_no_cycles(trace_spans, trace_id)
+        _check_missing_parents(trace_spans, span_map, trace_id)
+        root = _check_single_root(trace_spans, trace_id)
+        _check_all_reachable(trace_spans, span_map, root, trace_id)
+
+
+def _check_no_cycles(trace_spans: list[SpanEvent], trace_id: str) -> None:
+    """Detecta ciclos vía DFS con coloreado (OBS-02)."""
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color: dict[str, int] = {s.span_id: WHITE for s in trace_spans}
+
+    def has_cycle(sid: str) -> bool:
+        color[sid] = GRAY
         for s in trace_spans:
-            p = s.parent_span_id
-            if p not in ("ROOT", "") and p in span_map:
-                in_degree[p] = in_degree.get(p, 0) + 1
+            if s.parent_span_id == sid:
+                if color[s.span_id] == GRAY:
+                    return True  # back edge = cycle
+                if color[s.span_id] == WHITE and has_cycle(s.span_id):
+                    return True
+        color[sid] = BLACK
+        return False
 
-        # First: detect cycles via DFS with coloring
-        WHITE, GRAY, BLACK = 0, 1, 2
-        color: dict[str, int] = {s.span_id: WHITE for s in trace_spans}
-
-        def has_cycle(sid: str) -> bool:
-            color[sid] = GRAY  # noqa: B023
-            for s in trace_spans:  # noqa: B023
-                if s.parent_span_id == sid:
-                    if color[s.span_id] == GRAY:  # noqa: B023
-                        return True  # back edge = cycle
-                    if color[s.span_id] == WHITE and has_cycle(s.span_id):  # noqa: B023
-                        return True
-            color[sid] = BLACK  # noqa: B023
-            return False
-
-        for s in trace_spans:
-            if color[s.span_id] == WHITE and has_cycle(s.span_id):
-                msg = f"Trace {trace_id}: cycle detected"
-                raise SpanTreeError(msg)
-
-        # Check for spans with non-existent parent (orphans) BEFORE root counting
-        missing_parent = [
-            s for s in trace_spans if s.parent_span_id not in ("ROOT", "") and s.parent_span_id not in span_map
-        ]
-        if missing_parent:
-            orphan_ids = [s.span_id for s in missing_parent]
-            msg = f"Trace {trace_id}: {len(missing_parent)} orphan spans with missing parent: {orphan_ids}"
-            raise SpanTreeError(
-                msg,
-            )
-
-        # Now find roots (spans whose parent is ROOT or "")
-        roots: list[SpanEvent] = []
-        for s in trace_spans:
-            p = s.parent_span_id
-            if p in {"ROOT", ""}:
-                roots.append(s)
-
-        if len(roots) != 1:
-            msg = f"Trace {trace_id}: expected 1 root, got {len(roots)}"
+    for s in trace_spans:
+        if color[s.span_id] == WHITE and has_cycle(s.span_id):
+            msg = f"Trace {trace_id}: cycle detected"
             raise SpanTreeError(msg)
 
-        # Full DFS from root to find all reachable nodes
-        def dfs(sid: str) -> None:
-            if sid in visited:  # noqa: B023
-                return
-            visited.add(sid)  # noqa: B023
-            for s in trace_spans:  # noqa: B023
-                if s.parent_span_id == sid:
-                    dfs(s.span_id)
 
-        dfs(roots[0].span_id)
+def _check_missing_parents(trace_spans: list[SpanEvent], span_map: dict[str, SpanEvent], trace_id: str) -> None:
+    """Verifica spans cuyo padre no existe (OBS-04) antes de contar raíces."""
+    missing_parent = [
+        s for s in trace_spans if s.parent_span_id not in ("ROOT", "") and s.parent_span_id not in span_map
+    ]
+    if missing_parent:
+        orphan_ids = [s.span_id for s in missing_parent]
+        msg = f"Trace {trace_id}: {len(missing_parent)} orphan spans with missing parent: {orphan_ids}"
+        raise SpanTreeError(
+            msg,
+        )
 
-        # Check for unreachable spans (orphans)
-        if len(visited) != len(trace_spans):
-            unreachable = set(span_map.keys()) - visited
-            msg = f"Trace {trace_id}: {len(unreachable)} orphan spans: {unreachable}"
-            raise SpanTreeError(msg)
+
+def _check_single_root(trace_spans: list[SpanEvent], trace_id: str) -> SpanEvent:
+    """Devuelve la raíz única (padre ROOT/"") o lanza error (OBS-02)."""
+    roots: list[SpanEvent] = [s for s in trace_spans if s.parent_span_id in {"ROOT", ""}]
+    if len(roots) != 1:
+        msg = f"Trace {trace_id}: expected 1 root, got {len(roots)}"
+        raise SpanTreeError(msg)
+    return roots[0]
+
+
+def _check_all_reachable(
+    trace_spans: list[SpanEvent],
+    span_map: dict[str, SpanEvent],
+    root: SpanEvent,
+    trace_id: str,
+) -> None:
+    """DFS desde la raíz; lanza error si hay spans inalcanzables (OBS-04)."""
+    visited: set[str] = set()
+
+    def dfs(sid: str) -> None:
+        if sid in visited:
+            return
+        visited.add(sid)
+        for s in trace_spans:
+            if s.parent_span_id == sid:
+                dfs(s.span_id)
+
+    dfs(root.span_id)
+
+    if len(visited) != len(trace_spans):
+        unreachable = set(span_map.keys()) - visited
+        msg = f"Trace {trace_id}: {len(unreachable)} orphan spans: {unreachable}"
+        raise SpanTreeError(msg)
 
 
 # ── SpanEvent ──────────────────────────────
