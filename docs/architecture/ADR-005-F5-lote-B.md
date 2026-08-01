@@ -25,7 +25,8 @@ comportamiento observable; firmas públicas intactas (semantic freezing).
 | 4c0f701 | `knowledge/engine/compiler.py:49 compile_source` | Orquestador por etapas DAG + `_compilar_defaults`, `_ctx_stage` (elimina 4 construcciones duplicadas), `_warnings_deletados`, `_etapa_parsing`, `_etapa_validacion`, `_sync_semantica`, `_auditar` | LOC 178 → 100 (orquestador) / máx. helper 41; CC 25 → 6 | 172/172 nightly verdes, ruff 0 (RUF100 limpiado) |
 | c670d1f | `knowledge/engine/parser.py:81 parse_source` | `_decodificar`, `_error_codigo` (unifica 5 errores duplicados), `_relaciones_extra` | LOC 81 → 48 / máx. helper 24; CC 18 → 5 | 172/172 nightly verdes, ruff 0 |
 | bfe342c | `knowledge/engine/validator.py:212 validate_batch` | `_construir_lookups`, `_validar_relaciones` (KE004), `_check_duplicados` (KE101/KE007) | LOC 84 → 45 / máx. helper 35 | 172/172 nightly verdes, ruff 0 |
-| *pendiente* | `knowledge/engine/migrations.py:111 migrate_db` | `_migrar_fresh`, `_validar_rango` (3 ValueErrors), `_aplicar_migracion` | LOC 81 → 42 / máx. helper 30 | 172/172 nightly verdes, ruff 0 |
+| 193e67a | `knowledge/engine/migrations.py:111 migrate_db` | `_migrar_fresh`, `_validar_rango` (3 ValueErrors), `_aplicar_migracion` | LOC 81 → 42 / máx. helper 30 | 172/172 nightly verdes, ruff 0 |
+| *pendiente* | `motor/intelligence/agents/reflection.py:139 _reflect` | `_resultado_reflexion` unifica 6 retornos duplicados (STOP/ACCEPT/REJECT/revise_failed/max_iterations) | LOC 118 → 55 / helper 34; CC 19 → 6 | 31/31 test_reflection verdes, ruff 0 |
 
 ## Registro
 

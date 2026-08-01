@@ -163,95 +163,64 @@ class ReflectionAgent(Agent):
             history.append(decision)
 
             if decision.action == ReflectionAction.STOP:
-                return AgentResult(
-                    task_id=task.id,
-                    agent_id=self.id,
-                    success=current.success,
-                    output={
-                        "final": current.output,
-                        "reflections": [self._decision_to_dict(d) for d in history],
-                        "final_decision": self._decision_to_dict(decision),
-                        "reason": decision.reason,
-                        "iterations": iteration,
-                        "stopped_by": "stop",
-                    },
-                )
+                return self._resultado_reflexion(task, current, history, decision, iteration, "stop")
 
             if decision.action == ReflectionAction.ACCEPT and self._stop_on_accept:
-                return AgentResult(
-                    task_id=task.id,
-                    agent_id=self.id,
-                    success=current.success,
-                    output={
-                        "final": current.output,
-                        "reflections": [self._decision_to_dict(d) for d in history],
-                        "final_decision": self._decision_to_dict(decision),
-                        "reason": decision.reason,
-                        "iterations": iteration,
-                        "stopped_by": "accept",
-                    },
-                )
+                return self._resultado_reflexion(task, current, history, decision, iteration, "accept")
 
             if decision.action == ReflectionAction.ACCEPT and decision.confidence >= self._min_confidence:
-                return AgentResult(
-                    task_id=task.id,
-                    agent_id=self.id,
-                    success=current.success,
-                    output={
-                        "final": current.output,
-                        "reflections": [self._decision_to_dict(d) for d in history],
-                        "final_decision": self._decision_to_dict(decision),
-                        "reason": decision.reason,
-                        "iterations": iteration,
-                        "stopped_by": "confidence",
-                    },
-                )
+                return self._resultado_reflexion(task, current, history, decision, iteration, "confidence")
 
             if decision.action == ReflectionAction.REJECT:
-                return AgentResult(
-                    task_id=task.id,
-                    agent_id=self.id,
-                    success=False,
-                    output={
-                        "final": current.output,
-                        "reflections": [self._decision_to_dict(d) for d in history],
-                        "final_decision": self._decision_to_dict(decision),
-                        "reason": decision.reason,
-                        "iterations": iteration,
-                        "stopped_by": "reject",
-                    },
-                )
+                return self._resultado_reflexion(task, current, history, decision, iteration, "reject", success=False)
 
             if decision.action == ReflectionAction.REVISE:
                 revised = self._revise(current, decision)
                 if revised is None:
-                    return AgentResult(
-                        task_id=task.id,
-                        agent_id=self.id,
-                        success=current.success,
-                        output={
-                            "final": current.output,
-                            "reflections": [self._decision_to_dict(d) for d in history],
-                            "final_decision": self._decision_to_dict(decision),
-                            "reason": "revise_failed_no_new_result",
-                            "iterations": iteration,
-                            "stopped_by": "revise_failed",
-                        },
+                    return self._resultado_reflexion(
+                        task,
+                        current,
+                        history,
+                        decision,
+                        iteration,
+                        "revise_failed",
+                        reason="revise_failed_no_new_result",
                     )
                 current = revised
 
         final_decision = history[-1] if history else ReflectionDecision(reason="max_iterations_reached")
+        return self._resultado_reflexion(
+            task,
+            current,
+            history,
+            final_decision,
+            self._max_iterations,
+            "max_iterations",
+            reason="max_iterations",
+        )
+
+    def _resultado_reflexion(
+        self,
+        task: AgentTask,
+        current: AgentResult,
+        history: list[ReflectionDecision],
+        decision: ReflectionDecision,
+        iteration: int,
+        stopped_by: str,
+        success: bool | None = None,
+        reason: str | None = None,
+    ) -> AgentResult:
         return AgentResult(
             task_id=task.id,
             agent_id=self.id,
-            success=current.success,
+            success=current.success if success is None else success,
             output={
                 "final": current.output,
                 "reflections": [self._decision_to_dict(d) for d in history],
-                "final_decision": self._decision_to_dict(final_decision),
-                "reason": "max_iterations",
-                "iterations": self._max_iterations,
-                "stopped_by": "max_iterations",
+                "final_decision": self._decision_to_dict(decision),
+                "reason": reason if reason is not None else decision.reason,
+                "iterations": iteration,
+                "stopped_by": stopped_by,
             },
         )
 
