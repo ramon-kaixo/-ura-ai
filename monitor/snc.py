@@ -167,10 +167,16 @@ def run_command(cmd: str, timeout: int = 10) -> tuple[bool, str]:
         return False, str(e)
 
 
-def check_service(check_cmd: str) -> bool:
-    """Verifica un servicio ejecutando su comando de check."""
+def check_service(check_cmd: str, forbidden: list | None = None) -> bool:
+    """Verifica un servicio ejecutando su comando de check.
+
+    Aplica la lista de comandos prohibidos del runbook (misma política que
+    repair_service): un check prohibido se trata como fallo, nunca se ejecuta.
+    """
     if not check_cmd:
         return True
+    if forbidden and is_command_forbidden(check_cmd, forbidden):
+        return False
     ok, _ = run_command(check_cmd, timeout=5)
     return ok
 
@@ -307,7 +313,7 @@ def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
                 continue
 
         check_cmd = svc_config.get("check", "")
-        ok = check_service(check_cmd)
+        ok = check_service(check_cmd, runbook.get("forbidden_commands", []))
 
         svc_state = {"ok": ok, "check": check_cmd[:50]}
 
