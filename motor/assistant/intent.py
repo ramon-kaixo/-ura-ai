@@ -23,7 +23,7 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
         [
             re.compile(p)
             for p in [
-                r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)(\s+.*)?$",
+                r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)\??(\s+.*)?$",
             ]
         ],
         0.95,
