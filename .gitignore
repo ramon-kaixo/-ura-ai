@@ -68,3 +68,5 @@ knowledge_deps.txt
 archivos_python.txt
 imports.txt
 build/
+.attic/
+.tuneladora/
