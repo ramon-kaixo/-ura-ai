@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from knowledge.engine.models import (
     CompileError,
+    Document,
     KnowledgeObject,
     ValidationResult,
 )
@@ -63,6 +64,24 @@ def validate_knowledge_object(
     errors: list[CompileError] = []
     warnings: list[CompileError] = []
     doc = obj.document
+
+    _validar_doc_type(doc, types, errors)
+    _validar_warnings_core(doc, warnings)
+    _validar_tags_aliases(doc, warnings)
+    _validar_campos_obsoletos(doc, warnings)
+
+    return ValidationResult(
+        valid=len(errors) == 0,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
+def _validar_doc_type(
+    doc: Document,
+    types: frozenset[str],
+    errors: list[CompileError],
+) -> None:
     path = doc.path
 
     # KE003: doc_type inválido (incluye string vacío o no-string)
@@ -75,6 +94,13 @@ def validate_knowledge_object(
                 message=f"Tipo de documento inválido: '{doc.doc_type}'. Válidos: {sorted(types)}",
             ),
         )
+
+
+def _validar_warnings_core(
+    doc: Document,
+    warnings: list[CompileError],
+) -> None:
+    path = doc.path
 
     # KE009: doc_id debe ser string no vacío
     if not isinstance(doc.doc_id, str) or not doc.doc_id.strip():
@@ -132,10 +158,17 @@ def validate_knowledge_object(
             ),
         )
 
+
+def _validar_tags_aliases(
+    doc: Document,
+    warnings: list[CompileError],
+) -> None:
+    path = doc.path
+
     # KE009: tags inválidos
     for tag in doc.frontmatter.tags:
         if not isinstance(tag, str) or not tag.strip():
-            warnings.append(  # noqa: PERF401
+            warnings.append(
                 CompileError(
                     code="KE009",
                     document=path,
@@ -147,7 +180,7 @@ def validate_knowledge_object(
     # KE009: aliases inválidos
     for alias in doc.frontmatter.aliases:
         if not isinstance(alias, str) or not alias.strip():
-            warnings.append(  # noqa: PERF401
+            warnings.append(
                 CompileError(
                     code="KE009",
                     document=path,
@@ -156,10 +189,17 @@ def validate_knowledge_object(
                 ),
             )
 
+
+def _validar_campos_obsoletos(
+    doc: Document,
+    warnings: list[CompileError],
+) -> None:
+    path = doc.path
+
     # KE204: campos obsoletos
     for field in DEPRECATED_FIELDS:
         if field in doc.frontmatter.extra:
-            warnings.append(  # noqa: PERF401
+            warnings.append(
                 CompileError(
                     code="KE204",
                     document=path,
@@ -167,12 +207,6 @@ def validate_knowledge_object(
                     message=f"Campo obsoleto en frontmatter: '{field}'",
                 ),
             )
-
-    return ValidationResult(
-        valid=len(errors) == 0,
-        errors=tuple(errors),
-        warnings=tuple(warnings),
-    )
 
 
 def validate_batch(
