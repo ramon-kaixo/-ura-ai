@@ -1,18 +1,24 @@
 rules:
-  - id: no-sqlite3-connect-outside-connection
-    pattern: sqlite3.connect(...)
-    paths:
-      exclude:
-        - knowledge/engine/connection.py
-    message: "sqlite3.connect() solo permitido en connection.py"
-    severity: ERROR
-
-  - id: no-direct-import-from-core
-    pattern: "from core import ..."
-    message: "knowledge.engine no debe importar de core"
-    severity: WARNING
-
-  - id: no-shell-true
-    pattern: "shell=True"
-    message: "shell=True prohibido por seguridad"
-    severity: ERROR
+- id: no-sqlite3-connect-outside-connection
+  languages:
+  - python
+  message: sqlite3.connect() solo permitido en connection.py dentro de knowledge/engine
+  paths:
+    exclude:
+    - knowledge/engine/connection.py
+    include:
+    - knowledge/engine/**
+  pattern: sqlite3.connect(...)
+  severity: ERROR
+- id: no-direct-import-from-core
+  languages:
+  - python
+  message: knowledge.engine no debe importar de core
+  pattern-regex: ^from core import
+  severity: WARNING
+- id: no-shell-true
+  languages:
+  - python
+  message: shell=True prohibido por seguridad
+  pattern: shell=True
+  severity: ERROR
