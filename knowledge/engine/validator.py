@@ -228,18 +228,7 @@ def validate_batch(
     warnings: list[CompileError] = []
     valid: list[KnowledgeObject] = []
 
-    # Build lookup structures
-    doc_id_count: dict[str, int] = {}
-    path_count: dict[str, int] = {}
-    known_ids: set[str] = set()
-    for obj in objects:
-        did = obj.document.doc_id
-        doc_id_count[did] = doc_id_count.get(did, 0) + 1
-        path_count[obj.document.path] = path_count.get(obj.document.path, 0) + 1
-        known_ids.add(did)
-        for alias in obj.document.frontmatter.aliases:
-            if isinstance(alias, str) and alias.strip():
-                known_ids.add(alias)
+    doc_id_count, path_count, known_ids = _construir_lookups(objects)
 
     # Track relations already reported per (doc, dst) to dedup KE004
     reported_ke004: set[tuple[str, str]] = set()
@@ -252,24 +241,60 @@ def validate_batch(
         if vr.errors:
             continue
 
-        doc_id = obj.document.doc_id
-        path = obj.document.path
-        for rel in obj.relations:
-            dst = rel.dst
-            if dst not in known_ids and (path, dst) not in reported_ke004:
-                reported_ke004.add((path, dst))
-                errors.append(
-                    CompileError(
-                        code="KE004",
-                        document=path,
-                        stage="validator",
-                        message=f"Relación '{rel.relation}' apunta a documento inexistente: '{dst}' (desde {doc_id})",
-                    ),
-                )
-
+        _validar_relaciones(obj, known_ids, reported_ke004, errors)
         valid.append(obj)
 
     # Cross-document checks
+    _check_duplicados(doc_id_count, path_count, errors, warnings)
+
+    return valid, errors, warnings
+
+
+def _construir_lookups(
+    objects: list[KnowledgeObject],
+) -> tuple[dict[str, int], dict[str, int], set[str]]:
+    doc_id_count: dict[str, int] = {}
+    path_count: dict[str, int] = {}
+    known_ids: set[str] = set()
+    for obj in objects:
+        did = obj.document.doc_id
+        doc_id_count[did] = doc_id_count.get(did, 0) + 1
+        path_count[obj.document.path] = path_count.get(obj.document.path, 0) + 1
+        known_ids.add(did)
+        for alias in obj.document.frontmatter.aliases:
+            if isinstance(alias, str) and alias.strip():
+                known_ids.add(alias)
+    return doc_id_count, path_count, known_ids
+
+
+def _validar_relaciones(
+    obj: KnowledgeObject,
+    known_ids: set[str],
+    reported_ke004: set[tuple[str, str]],
+    errors: list[CompileError],
+) -> None:
+    doc_id = obj.document.doc_id
+    path = obj.document.path
+    for rel in obj.relations:
+        dst = rel.dst
+        if dst not in known_ids and (path, dst) not in reported_ke004:
+            reported_ke004.add((path, dst))
+            errors.append(
+                CompileError(
+                    code="KE004",
+                    document=path,
+                    stage="validator",
+                    message=f"Relación '{rel.relation}' apunta a documento inexistente: '{dst}' (desde {doc_id})",
+                ),
+            )
+
+
+def _check_duplicados(
+    doc_id_count: dict[str, int],
+    path_count: dict[str, int],
+    errors: list[CompileError],
+    warnings: list[CompileError],
+) -> None:
     for did, count in doc_id_count.items():
         if count > 1 and isinstance(did, str) and did.strip():
             errors.append(
@@ -291,5 +316,3 @@ def validate_batch(
                     message=f"Path duplicado: '{path_str}' aparece {count} veces",
                 ),
             )
-
-    return valid, errors, warnings
