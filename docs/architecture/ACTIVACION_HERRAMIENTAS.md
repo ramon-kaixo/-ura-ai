@@ -16,7 +16,7 @@
 ## Próximas activaciones
 | Script | Acción |
 |--------|--------|
-| change_log.py | Integrar en post-commit hook |
+| change_log.py | ✅ Activado en post-commit hook (venv) |
 | commit_msg_validator.py | Integrar en commit-msg hook |
 | inspectores.py | Merge conflict arreglado, pendiente tests |
 | auto_reindex.py | Escribir tests primero (118 líneas críticas) |
