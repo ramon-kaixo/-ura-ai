@@ -191,7 +191,7 @@ def repair_service(service_name: str, config: dict, runbook: dict) -> str:
     """Intenta reparar un servicio. Retorna 'ok', 'failed', 'escalated'."""
     global repair_attempts, openclaw_active  # noqa: PLW0602
 
-    max_attempts = config.get("max_repair_attempts", runbook["retry_policy"]["max_attempts"])
+    max_attempts = config.get("max_repair_attempts", runbook.get("retry_policy", {}).get("max_attempts", 3))
     repair_cmds = config.get("repair", [])
     forbidden = runbook.get("forbidden_commands", [])
 
@@ -255,12 +255,39 @@ def check_mac_unauthorized_writes() -> bool:
     return False
 
 
-def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
+def poll_services(runbook: dict) -> dict:
     """Polling de todos los servicios. Retorna dict de estado.
     Modo Soberanía: GX10 opera independientemente.
     """
     global openclaw_active, openclaw_stable_since, repair_attempts  # noqa: PLW0602, PLW0603
 
+    state = _state_inicial()
+    all_ok = True
+
+    for svc_name, svc_config in runbook.get("commands", {}).items():
+        # Servicio especial: mac_reachability (multi-path Ethernet→Tailscale)
+        if svc_name == "mac_reachability":
+            all_ok = _poll_mac_reachability(state, runbook) and all_ok
+            continue
+
+        # Saltar servicios con dependencia only_if si el padre está ok
+        skipped = _check_only_if(svc_name, svc_config, state)
+        if skipped is not None:
+            state["services"][svc_name] = skipped
+            continue
+
+        all_ok = _poll_servicio(state, svc_name, svc_config, runbook, all_ok)
+
+    # Detectar escrituras no autorizadas en Mac
+    check_mac_unauthorized_writes()
+
+    # Gestión de OpenClaw
+    _gestionar_openclaw(all_ok)
+
+    return _state_final(state, all_ok)
+
+
+def _state_inicial() -> dict:
     state = {
         "timestamp": datetime.now(UTC).isoformat(),
         "status": "OK",
@@ -271,89 +298,99 @@ def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
         "sovereignty_mode": True,
         "repair_attempts": dict(repair_attempts),
     }
+    return state
 
-    all_ok = True
 
-    for svc_name, svc_config in runbook.get("commands", {}).items():
-        # Servicio especial: mac_reachability (multi-path Ethernet→Tailscale)
-        if svc_name == "mac_reachability":
-            mac_ok = mac_heartbeat.check_mac()
-            if not mac_ok:
-                # Fallback: intentar vía Tailscale (desde config)
-                _mac_ts = _profile.get("terminal", {}).get("tailscale_ip", "100.123.81.101")
-                ts_ok, _ = run_command(f"ping -c 1 -W 2 {_mac_ts}", timeout=3)
-                if ts_ok:
-                    mac_ok = True
-            state["services"][svc_name] = {
-                "ok": mac_ok,
-                "consecutive_failures": mac_heartbeat.get_consecutive_failures(),
-                "check": "ping Mac (Ethernet→Tailscale)",
-            }
-            if not mac_ok:
-                all_ok = False
-                if mac_heartbeat.should_escalate():
-                    error_logger.log_error(
-                        context="ASUS",
-                        gateway_status="DISCONNECTED",
-                        severity="WARN",
-                        message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
-                    )
-            continue
-
-        # Saltar servicios con dependencia only_if si el padre está ok
-        only_if = svc_config.get("only_if", "")
-        if only_if:
-            parent_ok = state["services"].get(only_if, {}).get("ok", True)
-            if parent_ok:
-                state["services"][svc_name] = {
-                    "ok": True,
-                    "check": f"skipped (parent {only_if} ok)",
-                    "repair_result": "no_repair_needed",
-                }
-                continue
-
-        check_cmd = svc_config.get("check", "")
-        ok = check_service(check_cmd, runbook.get("forbidden_commands", []))
-
-        svc_state = {"ok": ok, "check": check_cmd[:50]}
-
-        if not ok:
-            all_ok = False
-            result = repair_service(svc_name, svc_config, runbook)
-            svc_state["repair_result"] = result
-
-            # Loggear error
+def _poll_mac_reachability(state: dict, runbook: dict) -> bool:
+    mac_ok = mac_heartbeat.check_mac()
+    if not mac_ok:
+        # Fallback: intentar vía Tailscale (desde config)
+        _mac_ts = _profile.get("terminal", {}).get("tailscale_ip", "100.123.81.101")
+        ts_ok, _ = run_command(f"ping -c 1 -W 2 {_mac_ts}", timeout=3)
+        if ts_ok:
+            mac_ok = True
+    state["services"]["mac_reachability"] = {
+        "ok": mac_ok,
+        "consecutive_failures": mac_heartbeat.get_consecutive_failures(),
+        "check": "ping Mac (Ethernet→Tailscale)",
+    }
+    if not mac_ok:
+        if mac_heartbeat.should_escalate():
             error_logger.log_error(
                 context="ASUS",
-                gateway_status="FAIL" if result == "failed" else "REPAIRING",
-                severity="CRIT" if result == "escalated" else "WARN",
-                message=f"Servicio {svc_name}: {result}",
+                gateway_status="DISCONNECTED",
+                severity="WARN",
+                message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
             )
+    return mac_ok
 
-            if result == "escalated" and svc_config.get("activate_on_emergency") and not openclaw_active:
-                openclaw_active = True
-                # Lanzar openclaw.py como proceso independiente
-                openclaw_script = Path(__file__).parent / "openclaw.py"
-                if openclaw_script.exists():
-                    proc = subprocess.Popen(
-                        [sys.executable, str(openclaw_script)],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    # No esperamos a que termine, pero registramos el PID para tracking
-                    error_logger.log_error(
-                        context="SNC",
-                        gateway_status="OPENCLAW_LAUNCHED",
-                        severity="INFO",
-                        message=f"OpenClaw lanzado con PID {proc.pid}",
-                    )
 
-        state["services"][svc_name] = svc_state
+def _check_only_if(svc_name: str, svc_config: dict, state: dict) -> dict | None:
+    only_if = svc_config.get("only_if", "")
+    if not only_if:
+        return None
+    parent_ok = state["services"].get(only_if, {}).get("ok", True)
+    if not parent_ok:
+        return None
+    return {
+        "ok": True,
+        "check": f"skipped (parent {only_if} ok)",
+        "repair_result": "no_repair_needed",
+    }
 
-    # Detectar escrituras no autorizadas en Mac
-    check_mac_unauthorized_writes()
 
-    # Gestión de OpenClaw
+def _poll_servicio(
+    state: dict,
+    svc_name: str,
+    svc_config: dict,
+    runbook: dict,
+    all_ok: bool,
+) -> bool:
+    global openclaw_active  # noqa: PLW0603
+
+    check_cmd = svc_config.get("check", "")
+    ok = check_service(check_cmd, runbook.get("forbidden_commands", []))
+
+    svc_state = {"ok": ok, "check": check_cmd[:50]}
+
+    if not ok:
+        all_ok = False
+        result = repair_service(svc_name, svc_config, runbook)
+        svc_state["repair_result"] = result
+
+        # Loggear error
+        error_logger.log_error(
+            context="ASUS",
+            gateway_status="FAIL" if result == "failed" else "REPAIRING",
+            severity="CRIT" if result == "escalated" else "WARN",
+            message=f"Servicio {svc_name}: {result}",
+        )
+
+        if result == "escalated" and svc_config.get("activate_on_emergency") and not openclaw_active:
+            openclaw_active = True
+            # Lanzar openclaw.py como proceso independiente
+            openclaw_script = Path(__file__).parent / "openclaw.py"
+            if openclaw_script.exists():
+                proc = subprocess.Popen(
+                    [sys.executable, str(openclaw_script)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                # No esperamos a que termine, pero registramos el PID para tracking
+                error_logger.log_error(
+                    context="SNC",
+                    gateway_status="OPENCLAW_LAUNCHED",
+                    severity="INFO",
+                    message=f"OpenClaw lanzado con PID {proc.pid}",
+                )
+
+    state["services"][svc_name] = svc_state
+    return all_ok
+
+
+def _gestionar_openclaw(all_ok: bool) -> None:
+    global openclaw_active, openclaw_stable_since  # noqa: PLW0602, PLW0603
+
     if openclaw_active:
         if all_ok and not openclaw_stable_since:
             openclaw_stable_since = time.time()
@@ -371,12 +408,13 @@ def poll_services(runbook: dict) -> dict:  # noqa: PLR0915
             openclaw_active = False
             openclaw_stable_since = None
 
+
+def _state_final(state: dict, all_ok: bool) -> dict:
     state["status"] = "OK" if all_ok else "CRITICAL"
     state["openclaw_active"] = openclaw_active
     state["mac_connected"] = mac_heartbeat.is_mac_connected()
     state["mac_connection_ok"] = mac_heartbeat.is_mac_connected()
     state["repair_attempts"] = dict(repair_attempts)
-
     return state
 
 
