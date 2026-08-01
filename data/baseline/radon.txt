@@ -1,1 +1,14 @@
-funciones con complejidad >= 20: 0
+funciones con complejidad >= 20: 13
+  core/guardians/ast_sentinel.py:69 analizar CC=33
+  knowledge/engine/knowledge_base.py:110 generate_knowledge_base CC=28
+  motor/observability/tracing_platform.py:81 validate_span_tree CC=25
+  core/model_router/handler.py:296 do_POST CC=24
+  core/mochila/routes/proxy.py:22 create_proxy_router CC=23
+  core/mochila/routes/proxy.py:26 proxy_gateway CC=23
+  core/mochila/mochila_server.py:564 proxy_gateway CC=23
+  motor/assistant/executor.py:164 _eval CC=22
+  knowledge/engine/extraction_service.py:257 _worker_loop CC=21
+  knowledge/engine/validator.py:53 validate_knowledge_object CC=21
+  monitor/snc.py:252 poll_services CC=21
+  motor/intelligence/agents/parallel.py:75 execute CC=21
+  motor/core/llm/base.py:79 validate_provider CC=20
