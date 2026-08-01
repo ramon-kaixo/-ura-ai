@@ -285,6 +285,9 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             tipo=tipo,
             client_ip=self.client_address[0],
         )
+        self._emitir_respuesta(status, headers, resp_body)
+
+    def _emitir_respuesta(self, status: int, headers: dict, resp_body: bytes) -> None:
         self.send_response(status)
         self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
         for k in ["Transfer-Encoding"]:
@@ -293,14 +296,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(resp_body)
 
-    def do_POST(self) -> None:  # noqa: PLR0915
-        from core.model_router.cache import prompt_cache
-        from core.model_router.metrics import metrics
-        from core.model_router.model_selection import (
-            clasificar_peticion,
-            seleccionar_modelo,
-        )
-        from core.model_router.proxy import _check_context_size, _proxy_con_vram
+    def do_POST(self) -> None:
         from core.model_router.router import rate_limiter
 
         if not rate_limiter.is_allowed(self.client_address[0]):
@@ -310,28 +306,45 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             self._handle_power_mode()
             return
 
+        data = self._leer_body_json()
+        self._registrar_contexto(data)
+        tipo = self._clasificar_peticion(data)
+        if tipo is None:
+            return
+        if self._servir_cache(data, tipo):
+            return
+        self._rutear_proxy(data, tipo)
+
+    def _leer_body_json(self) -> dict:
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         try:
-            data = json.loads(body) if body else {}
+            return json.loads(body) if body else {}
         except json.JSONDecodeError:
-            data = {}
+            return {}
 
-        original_model = data.get("model", "")
+    def _registrar_contexto(self, data: dict) -> None:
+        from core.model_router.metrics import metrics
+        from core.model_router.proxy import _check_context_size
+
         messages = data.get("messages", [])
         prompt = data.get("prompt", "")
-
         ctx = _check_context_size(messages or prompt)
         if ctx["level"] == "critical":
             log.warning("Contexto CRITICO: %s tokens — %s", ctx["tokens"], ctx["message"])
             metrics.increment("context_critical", {"tokens": str(ctx["tokens"])})
 
-        is_chat = "/api/chat" in self.path or "/v1/chat" in self.path
-        is_embed = "/api/embed" in self.path or "/v1/embed" in self.path
+    def _clasificar_peticion(self, data: dict) -> str | None:
+        from core.model_router.metrics import metrics
+        from core.model_router.model_selection import clasificar_peticion
 
+        original_model = data.get("model", "")
+        messages = data.get("messages", [])
+        prompt = data.get("prompt", "")
+        is_embed = "/api/embed" in self.path or "/v1/embed" in self.path
         if is_embed:
-            tipo = "embeddings"
-        elif original_model and original_model not in {"auto", "router"}:
+            return "embeddings"
+        if original_model and original_model not in {"auto", "router"}:
             tipo = clasificar_peticion(messages or [{"role": "user", "content": prompt}])
             disponibles = self._get_modelos()
             if original_model in disponibles:
@@ -340,21 +353,38 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 metrics.increment("model_selection", {"tipo": tipo, "mode": "direct"})
                 data["model"] = selected
                 self._do_proxy_inference(data, selected, tipo)
-                return
+                return None
             log.warning("[DIRECT] modelo %s no disponible, redirigiendo a router", original_model)
             metrics.increment("model_unavailable", {"modelo": original_model})
-        else:
-            content_for_classify = messages or [{"role": "user", "content": prompt}]
-            tipo = clasificar_peticion(content_for_classify)
+            return tipo
+        return clasificar_peticion(messages or [{"role": "user", "content": prompt}])
 
+    def _servir_cache(self, data: dict, tipo: str) -> bool:
+        from core.model_router.cache import prompt_cache
+        from core.model_router.metrics import metrics
+
+        messages = data.get("messages", [])
+        prompt = data.get("prompt", "")
+        is_chat = "/api/chat" in self.path or "/v1/chat" in self.path
         prompt_text = prompt or (json.dumps(messages[-1]) if messages else "")
         cached = prompt_cache.get(prompt_text, tipo) if prompt_text else None
         if cached and is_chat:
             log.info("[CACHE HIT] tipo=%s", tipo)
             metrics.increment("cache_hit", {"tipo": tipo})
             self._send_json(cached)
-            return
+            return True
+        return False
 
+    def _rutear_proxy(self, data: dict, tipo: str) -> None:
+        from core.model_router.cache import prompt_cache
+        from core.model_router.metrics import metrics
+        from core.model_router.model_selection import seleccionar_modelo
+        from core.model_router.proxy import _proxy_con_vram
+
+        messages = data.get("messages", [])
+        prompt = data.get("prompt", "")
+        is_chat = "/api/chat" in self.path or "/v1/chat" in self.path
+        prompt_text = prompt or (json.dumps(messages[-1]) if messages else "")
         disponibles = self._get_modelos()
         selected = seleccionar_modelo(tipo, disponibles)
         log.info("[ROUTE] tipo=%s → modelo=%s (de %s disponibles)", tipo, selected, len(disponibles))
@@ -374,13 +404,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 prompt_cache.set(prompt_text, tipo, response_data)
             except Exception:
                 log.debug("No se pudo cachear respuesta")
-        self.send_response(status)
-        self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
-        for k in ["Transfer-Encoding"]:
-            if k in headers:
-                self.send_header(k, headers[k])
-        self.end_headers()
-        self.wfile.write(resp_body)
+        self._emitir_respuesta(status, headers, resp_body)
 
     def log_message(self, fmt, *args) -> None:
         log.debug("%s - %s", self.client_address[0], fmt % args)
