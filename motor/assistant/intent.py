@@ -23,7 +23,7 @@ _INTENT_PATTERNS: list[tuple[UserIntent, list[re.Pattern[str]], float]] = [
         [
             re.compile(p)
             for p in [
-                r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)$",
+                r"^(hola|buen[oa]s?\s*(d[ií]as|tardes)|hey|hello|hi|buenas|qu[eé] hay)(\s+.*)?$",
             ]
         ],
         0.95,
@@ -123,7 +123,7 @@ class IntentEngine:
         self._entity_patterns = _ENTITY_PATTERNS
 
     def classify(self, text: str) -> IntentResult:
-        text = text.strip()
+        text = text.replace("\x00", " ").strip()
         if not text:
             return IntentResult(intent=UserIntent.UNKNOWN, confidence=0.0, original_text=text)
 
