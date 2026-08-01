@@ -37,9 +37,7 @@ from pathlib import Path
 WATERMARKS_PATH = Path(os.environ.get("WATERMARKS_PATH", ".nervioso/watermarks.json"))
 F821_BASELINE = Path(os.environ.get("F821_BASELINE", ".nervioso/f821_baseline.json"))
 
-
 # ── Utilidades ──
-
 
 def leer_codigo(ruta: Path) -> tuple[str, list[str], ast.AST]:
     codigo = ruta.read_text(encoding="utf-8")
@@ -47,14 +45,11 @@ def leer_codigo(ruta: Path) -> tuple[str, list[str], ast.AST]:
     arbol = ast.parse(codigo)
     return codigo, lineas, arbol
 
-
 def generar_id_watermark(tipo: str) -> str:
     ts = str(int(time.time()))[-6:]
     return f"WTR-{tipo[:4]}-{ts}"
 
-
 # ── Estructura de Check ──
-
 
 class CheckResult:
     def __init__(
@@ -85,9 +80,7 @@ class CheckResult:
             "watermark_id": self.watermark_id,
         }
 
-
 # ── Inspectores ──
-
 
 class Inspector:
     """Base class para inspectores."""
@@ -106,10 +99,8 @@ class Inspector:
                 resultados.append(CheckResult(i + 1, nombre, False, 0, "EXCEPTION", str(e)))
         return resultados
 
-
 # ── Checks individuales ──
 # Cada check: fn(codigo, lineas, arbol) -> (passed: bool, linea: int, tipo: str, msg: str)
-
 
 def check_compile(codigo, lineas, arbol):
     """Check 1: El código compila sin errores."""
@@ -119,26 +110,23 @@ def check_compile(codigo, lineas, arbol):
     except SyntaxError as e:
         return False, e.lineno or 0, "SYNTAX", str(e)
 
-
 def check_triple_quotes(codigo, lineas, arbol):
     """Check 2: No hay triples comillas mal cerradas (solo si compile() falló)."""
     # Si compile() pasa, no puede haber triples comillas rotas
     return True, 0, "", ""
-
 
 def check_git_artifacts(codigo, lineas, arbol):
     """Check 3: No hay residuos de git/LLM."""
     patterns = [
         (r"```python", "MARKDOWN_OPENCODE"),
         (r"```\s*$", "MARKDOWN_FENCE"),
-        (r"        (r"        (r"=======", "MERGE_CONFLICT"),
+        (r"=======", "MERGE_CONFLICT"),
     ]
     for i, line in enumerate(lineas, 1):
         for pat, tipo in patterns:
             if re.search(pat, line):
                 return False, i, tipo, f"Artifacto: {line.strip()[:60]}"
     return True, 0, "", ""
-
 
 def _buscar_ruff() -> str | None:
     """Busca el binario de ruff en ubicaciones conocidas."""
@@ -150,9 +138,8 @@ def _buscar_ruff() -> str | None:
     ]
     for c in candidates:
         if c and Path(c).is_file():
-            return c
+            return str(c)
     return None
-
 
 def check_f821(codigo, lineas, arbol):
     """Check 4: Fuga de referencias (F821)."""
@@ -209,7 +196,6 @@ def check_f821(codigo, lineas, arbol):
     except Exception:
         return True, 0, "", ""
 
-
 def check_dangling_blocks(codigo, lineas, arbol):
     """Check 5: Bloques huérfanos (try/except/with/if sin cuerpo)."""
     for node in ast.walk(arbol):
@@ -218,7 +204,6 @@ def check_dangling_blocks(codigo, lineas, arbol):
             if len(body) == 1 and isinstance(body[0], ast.Pass):
                 return False, node.lineno, "DANGLING", f"{type(node).__name__} sin contenido"
     return True, 0, "", ""
-
 
 def check_empty_body(codigo, lineas, arbol):
     """Check 6: Densidad lógica nula (solo pass/return None)."""
@@ -236,7 +221,6 @@ def check_empty_body(codigo, lineas, arbol):
                     return False, node.lineno, "EMPTY_BODY", f"'{node.name}' sin implementación"
     return True, 0, "", ""
 
-
 def check_tipado(codigo, lineas, arbol):
     """Check 7: Inconsistencias de tipado."""
     for node in ast.walk(arbol):
@@ -252,7 +236,6 @@ def check_tipado(codigo, lineas, arbol):
                     return False, node.lineno, "TYPE_MISMATCH", f"Anotado {tipo_anotado}, valor es {tipo_valor}"
     return True, 0, "", ""
 
-
 def check_large_functions(codigo, lineas, arbol):
     """Check 8: Funciones demasiado grandes."""
     for node in ast.walk(arbol):
@@ -261,7 +244,6 @@ def check_large_functions(codigo, lineas, arbol):
             if nlines > 80:
                 return False, node.lineno, "LARGE_FUNC", f"{node.name}: {nlines} líneas (>80)"
     return True, 0, "", ""
-
 
 def check_nesting_depth(codigo, lineas, arbol):
     """Check 9: Anidamiento excesivo."""
@@ -272,14 +254,12 @@ def check_nesting_depth(codigo, lineas, arbol):
                 return False, node.lineno, "NESTING", f"{node.name}: profundidad {depth} (>4)"
     return True, 0, "", ""
 
-
 def _max_nesting(node, depth=0):
     max_d = depth
     for child in ast.iter_child_nodes(node):
         if isinstance(child, (ast.If, ast.For, ast.While, ast.Try, ast.With)):
             max_d = max(max_d, _max_nesting(child, depth + 1))
     return max_d
-
 
 def check_debug_code(codigo, lineas, arbol):
     """Check 10: Código de debug/residual."""
@@ -289,7 +269,6 @@ def check_debug_code(codigo, lineas, arbol):
             if re.search(pat, line, re.IGNORECASE):
                 return False, i, "DEBUG_CODE", f"Código debug: {line.strip()[:60]}"
     return True, 0, "", ""
-
 
 def check_security(codigo, lineas, arbol):
     """Check 11: Prácticas inseguras."""
@@ -307,7 +286,6 @@ def check_security(codigo, lineas, arbol):
                 return False, i, tipo, f"Práctica insegura: {line.strip()[:60]}"
     return True, 0, "", ""
 
-
 def check_circular_imports(codigo, lineas, arbol):
     """Check 12: Potenciales imports circulares."""
     imports = set()
@@ -319,9 +297,7 @@ def check_circular_imports(codigo, lineas, arbol):
             imports.add(node.module.split(".")[0])
     return True, 0, "", ""
 
-
 # ── Configurar los 10 Inspectores ──
-
 
 def crear_inspectores() -> list[Inspector]:
     return [
@@ -497,9 +473,7 @@ def crear_inspectores() -> list[Inspector]:
         ),
     ]
 
-
 # ── Agregador Central ──
-
 
 class AgregadorInspecciones:
     """Consolida resultados de 10 inspectores y gestiona watermarks."""
@@ -523,7 +497,7 @@ class AgregadorInspecciones:
         return sum(1 for r in self.resultados if r.passed)
 
     def fallos_por_tipo(self) -> dict:
-        tipos = {}
+        tipos: dict[str, int] = {}
         for r in self.resultados:
             if not r.passed:
                 tipos[r.tipo] = tipos.get(r.tipo, 0) + 1
@@ -603,7 +577,6 @@ class AgregadorInspecciones:
             "watermarks_nuevos": sum(1 for r in self.resultados if not r.passed),
         }
 
-
 def inspeccionar(ruta: Path) -> dict:
     """Ejecuta los 10 inspectores en paralelo sobre un archivo."""
     codigo, lineas, arbol = leer_codigo(ruta)
@@ -627,7 +600,6 @@ def inspeccionar(ruta: Path) -> dict:
     reporte["patrones_sistemicos"] = patrones
     return reporte
 
-
 def scan_project() -> None:
     """Escanear todo el proyecto."""
     from pathlib import Path
@@ -644,7 +616,6 @@ def scan_project() -> None:
             results[p] = {"lines": len(content.splitlines())}
         except Exception:  # noqa: S110
             pass
-
 
 def main() -> None:
     import argparse
@@ -679,7 +650,6 @@ def main() -> None:
         sys.exit(2)
     elif reporte["accion"] == "REPAIR":
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
