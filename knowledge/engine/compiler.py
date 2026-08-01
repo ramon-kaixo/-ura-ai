@@ -64,10 +64,7 @@ def compile_source(
 
     Si previous_snapshot se proporciona, solo procesa los archivos cambiados.
     """
-    if source_dir is None:
-        source_dir = Path(__file__).resolve().parent.parent.parent / "source"
-    if db_path is None:
-        db_path = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
+    source_dir, db_path = _compilar_defaults(source_dir, db_path)
 
     opts = CompileOptions(
         source_dir=str(source_dir),
@@ -84,11 +81,7 @@ def compile_source(
     )
 
     # ── Stage 1: DISCOVERING ─────────────────────────────────────────────
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        stage=CompileStage.DISCOVERING,
-    )
+    ctx = _ctx_stage(meta, opts, CompileStage.DISCOVERING)
     t0 = time.monotonic()
 
     changed, snapshot, scanner_skipped, deleted = scan_incremental(previous_snapshot, source_dir)
@@ -105,53 +98,25 @@ def compile_source(
         )
 
     all_errors: list[CompileError] = list(scanner_skipped)
-    all_warnings: list[CompileError] = []
+    all_warnings = _warnings_deletados(deleted)
 
-    # Register deletions as INFO
-    for d in deleted:
-        all_warnings.append(  # noqa: PERF401
-            CompileError(
-                code="KE207",
-                document=d.path,
-                stage="compiler",
-                message=f"Documento eliminado: {d.path}",
-                category="permanent",
-            ),
-        )
-
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        snapshot=snapshot,
-        stage=CompileStage.PARSING,
-    )
+    ctx = _ctx_stage(meta, opts, snapshot, CompileStage.PARSING)
 
     # ── Stage 2: PARSING ────────────────────────────────────────────────
-    objects: list[KnowledgeObject] = []
-    for so in changed:
-        result = parse_source(so)
-        if isinstance(result, CompileError):
-            all_errors.append(result)
-        else:
-            objects.append(result)
+    objects = _etapa_parsing(changed, all_errors)
 
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        snapshot=snapshot,
-        stage=CompileStage.VALIDATING,
-    )
+    ctx = _ctx_stage(meta, opts, snapshot, CompileStage.VALIDATING)
 
     # ── Stage 3: VALIDATING ─────────────────────────────────────────────
-    valid_objects, validate_errors, validate_warnings = validate_batch(objects)
+    valid_objects, validate_errors, validate_warnings = _etapa_validacion(objects)
     all_errors.extend(validate_errors)
     all_warnings.extend(validate_warnings)
 
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        snapshot=snapshot,
-        stage=CompileStage.WRITING,
+    ctx = _ctx_stage(
+        meta,
+        opts,
+        snapshot,
+        CompileStage.WRITING,
         errors=tuple(all_errors),
         warnings=tuple(all_warnings),
     )
@@ -172,45 +137,10 @@ def compile_source(
 
     # Stage 5: SEMANTIC SYNC (post-commit, graceful degradation)
     if result.success:
-        docs = [ko.document for ko in valid_objects] if valid_objects else []
-        synced = sync_documents(db_path=db_path, docs=docs, deleted_ids=deleted_ids, run_id=result.run_id)
-        if synced > 0:
-            log.info("Sincronización semántica: %d operaciones (run %d)", synced, result.run_id)
-
-        # Persistir snapshot para compilación incremental
-        try:
-            from knowledge.engine.snapshot_store import save_snapshot
-
-            commit = (
-                subprocess.run(
-                    ["git", "rev-parse", "HEAD"],
-                    capture_output=True,
-                    text=True,
-                    cwd=source_dir,
-                    check=False,
-                ).stdout.strip()
-                or "HEAD"
-            )
-            save_snapshot(snapshot, commit)
-        except Exception as exc:
-            log.warning("No se pudo persistir snapshot: %s", exc)
-
-        # Determinism hash (post-commit, graba en kg_active_version)
-        _record_determinism_hash(db_path, result.run_id)
+        _sync_semantica(db_path, valid_objects, deleted_ids, result, snapshot, source_dir)
 
     # Auditoría (best effort, tanto success como failure)
-    try:
-        from knowledge.engine.audit import get_audit
-
-        get_audit().log_compile(
-            result="success" if result.success else "failure",
-            correlation_id=correlation_id,
-            docs_changed=getattr(result, "documents_changed", 0),
-            errors=len(result.errors) if hasattr(result, "errors") else 0,
-            duration_ms=round(duration * 1000),
-        )
-    except Exception:  # noqa: S110
-        pass
+    _auditar(result, correlation_id, duration)
 
     return CompileResult(
         success=result.success,
@@ -224,6 +154,117 @@ def compile_source(
         duration_ms=duration * 1000,
         stage=final_stage.value,
     )
+
+
+def _compilar_defaults(
+    source_dir: Path | None,
+    db_path: Path | None,
+) -> tuple[Path, Path]:
+    if source_dir is None:
+        source_dir = Path(__file__).resolve().parent.parent.parent / "source"
+    if db_path is None:
+        db_path = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
+    return source_dir, db_path
+
+
+def _ctx_stage(
+    meta: CompileMetadata,
+    opts: CompileOptions,
+    stage: CompileStage,
+    snapshot: Snapshot | None = None,
+    errors: tuple | None = None,
+    warnings: tuple | None = None,
+) -> CompileContext:
+    return CompileContext(
+        metadata=meta,
+        options=opts,
+        snapshot=snapshot,
+        stage=stage,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def _warnings_deletados(deleted: list) -> list[CompileError]:
+    warnings: list[CompileError] = []
+    for d in deleted:
+        warnings.append(
+            CompileError(
+                code="KE207",
+                document=d.path,
+                stage="compiler",
+                message=f"Documento eliminado: {d.path}",
+                category="permanent",
+            ),
+        )
+    return warnings
+
+
+def _etapa_parsing(changed: list, all_errors: list[CompileError]) -> list[KnowledgeObject]:
+    objects: list[KnowledgeObject] = []
+    for so in changed:
+        result = parse_source(so)
+        if isinstance(result, CompileError):
+            all_errors.append(result)
+        else:
+            objects.append(result)
+    return objects
+
+
+def _etapa_validacion(
+    objects: list[KnowledgeObject],
+) -> tuple[list[KnowledgeObject], list[CompileError], list[CompileError]]:
+    return validate_batch(objects)
+
+
+def _sync_semantica(
+    db_path: Path,
+    valid_objects: list[KnowledgeObject],
+    deleted_ids: list,
+    result: CompileResult,
+    snapshot: Snapshot,
+    source_dir: Path,
+) -> None:
+    docs = [ko.document for ko in valid_objects] if valid_objects else []
+    synced = sync_documents(db_path=db_path, docs=docs, deleted_ids=deleted_ids, run_id=result.run_id)
+    if synced > 0:
+        log.info("Sincronización semántica: %d operaciones (run %d)", synced, result.run_id)
+
+    # Persistir snapshot para compilación incremental
+    try:
+        from knowledge.engine.snapshot_store import save_snapshot
+
+        commit = (
+            subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=source_dir,
+                check=False,
+            ).stdout.strip()
+            or "HEAD"
+        )
+        save_snapshot(snapshot, commit)
+    except Exception as exc:
+        log.warning("No se pudo persistir snapshot: %s", exc)
+
+    # Determinism hash (post-commit, graba en kg_active_version)
+    _record_determinism_hash(db_path, result.run_id)
+
+
+def _auditar(result: CompileResult, correlation_id: str, duration: float) -> None:
+    try:
+        from knowledge.engine.audit import get_audit
+
+        get_audit().log_compile(
+            result="success" if result.success else "failure",
+            correlation_id=correlation_id,
+            docs_changed=getattr(result, "documents_changed", 0),
+            errors=len(result.errors) if hasattr(result, "errors") else 0,
+            duration_ms=round(duration * 1000),
+        )
+    except Exception:  # noqa: S110
+        pass
 
 
 def compile_source_streaming(
