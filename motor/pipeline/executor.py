@@ -54,28 +54,12 @@ class PipelineExecutor:
         )
 
         try:
-            for stage in pipeline.stages:
-                stage_start = time.monotonic()
-                stage_result = self._execute_stage(stage, context)
-                stage_result.duration_ms = (time.monotonic() - stage_start) * 1000
-                completed.append(stage_result)
+            ok, error = self._ejecutar_stages(pipeline, context, completed)
 
-                if not stage_result.ok and not stage.optional:
-                    self._rollback(pipeline, completed, context)
-                    elapsed = (time.monotonic() - start) * 1000
-                    result = PipelineResult(
-                        ok=False,
-                        name=pipeline.name,
-                        stages=completed,
-                        error=stage_result.error,
-                        duration_ms=elapsed,
-                    )
-                    self._bus.publish(
-                        PIPELINE_FAILED,
-                        PipelineFailed(name=pipeline.name, error=stage_result.error),
-                        source="pipeline_executor",
-                    )
-                    return result
+            if not ok:
+                result = self._resultado_fin(pipeline.name, completed, error, start, ok=False)
+                self._anunciar_fallo(pipeline.name, error)
+                return result
 
             self._bus.emit_sync(
                 PIPELINE_AFTER_PIPELINE,
@@ -83,13 +67,7 @@ class PipelineExecutor:
                 source="pipeline_executor",
             )
 
-            elapsed = (time.monotonic() - start) * 1000
-            result = PipelineResult(
-                ok=True,
-                name=pipeline.name,
-                stages=completed,
-                duration_ms=elapsed,
-            )
+            result = self._resultado_fin(pipeline.name, completed, None, start, ok=True)
             self._bus.publish(
                 PIPELINE_COMPLETED,
                 PipelineCompleted(name=pipeline.name, result={"stages": len(completed)}),
@@ -98,22 +76,52 @@ class PipelineExecutor:
             return result
 
         except Exception as exc:
-            elapsed = (time.monotonic() - start) * 1000
             log.exception("Pipeline %s failed with exception", pipeline.name)
             self._rollback(pipeline, completed, context)
-            result = PipelineResult(
-                ok=False,
-                name=pipeline.name,
-                stages=completed,
-                error=str(exc),
-                duration_ms=elapsed,
-            )
-            self._bus.publish(
-                PIPELINE_FAILED,
-                PipelineFailed(name=pipeline.name, error=str(exc)),
-                source="pipeline_executor",
-            )
+            result = self._resultado_fin(pipeline.name, completed, str(exc), start, ok=False)
+            self._anunciar_fallo(pipeline.name, str(exc))
             return result
+
+    def _ejecutar_stages(
+        self,
+        pipeline: PipelineDefinition,
+        context: dict[str, Any],
+        completed: list[StageResult],
+    ) -> tuple[bool, str | None]:
+        for stage in pipeline.stages:
+            stage_start = time.monotonic()
+            stage_result = self._execute_stage(stage, context)
+            stage_result.duration_ms = (time.monotonic() - stage_start) * 1000
+            completed.append(stage_result)
+
+            if not stage_result.ok and not stage.optional:
+                self._rollback(pipeline, completed, context)
+                return False, stage_result.error
+
+        return True, None
+
+    def _resultado_fin(
+        self,
+        name: str,
+        completed: list[StageResult],
+        error: str | None,
+        start: float,
+        ok: bool,
+    ) -> PipelineResult:
+        return PipelineResult(
+            ok=ok,
+            name=name,
+            stages=completed,
+            error=error,
+            duration_ms=(time.monotonic() - start) * 1000,
+        )
+
+    def _anunciar_fallo(self, name: str, error: str | None) -> None:
+        self._bus.publish(
+            PIPELINE_FAILED,
+            PipelineFailed(name=name, error=error),
+            source="pipeline_executor",
+        )
 
     def _execute_stage(
         self,
