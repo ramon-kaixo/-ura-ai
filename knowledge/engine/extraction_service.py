@@ -254,7 +254,7 @@ def _guess_mime(location: str) -> str:
     return mime_map.get(ext, "application/octet-stream")
 
 
-def _worker_loop(  # noqa: PLR0915
+def _worker_loop(
     db_path: Path,
     registry: ExtractorRegistry,
     store: AssetStore,
@@ -271,126 +271,32 @@ def _worker_loop(  # noqa: PLR0915
             begin_immediate(conn, timeout=1.0)
 
             try:
-                row = conn.execute(
-                    """
-                    UPDATE op_jobs
-                    SET status = 'running', started_at = datetime('now')
-                    WHERE id IN (
-                        SELECT id FROM op_jobs
-                        WHERE job_type = 'extraction'
-                          AND (status = 'pending'
-                               OR (status = 'running' AND started_at IS NOT NULL
-                                   AND started_at < datetime('now', ?)))
-                        ORDER BY priority DESC, created_at ASC
-                        LIMIT 1
-                    )
-                    RETURNING id, payload
-                """,
-                    (_MAX_RUNNING_INTERVAL,),
-                ).fetchone()
+                row = _claim_next_job(conn)
             except sqlite3.OperationalError:
                 conn.rollback()
                 conn.close()
                 conn = open_db(db_path)
                 begin_immediate(conn, timeout=1.0)
-                c = conn.execute(
-                    """
-                    SELECT id, payload FROM op_jobs
-                    WHERE job_type = 'extraction'
-                      AND (status = 'pending'
-                           OR (status = 'running' AND started_at IS NOT NULL
-                               AND started_at < datetime('now', ?)))
-                    ORDER BY priority DESC, created_at ASC
-                    LIMIT 1
-                """,
-                    (_MAX_RUNNING_INTERVAL,),
-                )
-                sel = c.fetchone()
-                if not sel:
+                row = _claim_next_job_fallback(conn)
+                if row is None:
                     conn.rollback()
                     conn.close()
                     conn = None
                     stop.wait(_POLL_INTERVAL)
                     continue
-                conn.execute(
-                    "UPDATE op_jobs SET status = 'running', started_at = datetime('now') WHERE id = ?",
-                    (sel["id"],),
-                )
-                row = sel
 
-            if not row:
+            if row is None:
                 conn.rollback()
                 conn.close()
                 conn = None
                 stop.wait(_POLL_INTERVAL)
                 continue
 
-            job_id = row["id"]
-            payload = json.loads(row["payload"] or "{}")
-            source = AssetSource(payload.get("kind", "unknown"), payload.get("location", ""))
-
             conn.commit()
             conn.close()
             conn = None
 
-            mime = _guess_mime(source.location)
-            extractors = registry.get_for_mime(mime)
-            if not extractors:
-                _mark_job_failed(db_path, job_id, f"No extractor for {mime}")
-                continue
-
-            extractor_id = extractors[0].id
-            sem = _get_semaphore(extractor_id)
-
-            if not sem.acquire(blocking=True, timeout=30):
-                _mark_job_failed(db_path, job_id, f"Semaphore timeout for {extractor_id}")
-                continue
-
-            try:
-                proc = multiprocessing.Process(
-                    target=_extract_in_worker,
-                    args=(db_path, job_id, source.location, source.kind, extractor_id),
-                )
-                with jobs_lock:
-                    running_jobs[job_id] = proc
-                    proc.start()
-                proc.join(timeout=_MAX_EXTRACTION_TIME)
-
-                if proc.is_alive():
-                    proc.terminate()
-                    proc.join(timeout=5)
-                    if proc.is_alive():
-                        proc.kill()
-                    _mark_job_failed(db_path, job_id, "timeout after 300s")
-                    with jobs_lock:
-                        running_jobs.pop(job_id, None)
-                    continue
-
-                result = _read_job_result(db_path, job_id)
-                if not result or result.get("status") == "failed":
-                    with jobs_lock:
-                        running_jobs.pop(job_id, None)
-                    continue
-
-                try:
-                    get_bus().publish(
-                        MetadataExtracted(
-                            asset_id=result["asset_id"],
-                            asset_type=AssetType(result["asset_type"]),
-                            extractor=extractor_id,
-                            success=True,
-                            duration_ms=result["duration_ms"],
-                        ),
-                    )
-                except Exception as exc:
-                    log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
-
-                with jobs_lock:
-                    running_jobs.pop(job_id, None)
-            finally:
-                sem.release()
-                proc.join(timeout=0.1)
-                proc.close()
+            _process_item(db_path, registry, running_jobs, jobs_lock, row)
 
         except Exception as exc:
             log.exception("Worker loop error: %s", exc)
@@ -398,6 +304,122 @@ def _worker_loop(  # noqa: PLR0915
             if conn is not None:
                 with contextlib.suppress(Exception):
                     conn.close()
+
+
+def _claim_next_job(conn) -> sqlite3.Row | None:
+    return conn.execute(
+        """
+        UPDATE op_jobs
+        SET status = 'running', started_at = datetime('now')
+        WHERE id IN (
+            SELECT id FROM op_jobs
+            WHERE job_type = 'extraction'
+              AND (status = 'pending'
+                   OR (status = 'running' AND started_at IS NOT NULL
+                       AND started_at < datetime('now', ?)))
+            ORDER BY priority DESC, created_at ASC
+            LIMIT 1
+        )
+        RETURNING id, payload
+    """,
+        (_MAX_RUNNING_INTERVAL,),
+    ).fetchone()
+
+
+def _claim_next_job_fallback(conn) -> sqlite3.Row | None:
+    c = conn.execute(
+        """
+        SELECT id, payload FROM op_jobs
+        WHERE job_type = 'extraction'
+          AND (status = 'pending'
+               OR (status = 'running' AND started_at IS NOT NULL
+                   AND started_at < datetime('now', ?)))
+        ORDER BY priority DESC, created_at ASC
+        LIMIT 1
+    """,
+        (_MAX_RUNNING_INTERVAL,),
+    )
+    sel = c.fetchone()
+    if not sel:
+        return None
+    conn.execute(
+        "UPDATE op_jobs SET status = 'running', started_at = datetime('now') WHERE id = ?",
+        (sel["id"],),
+    )
+    return sel
+
+
+def _process_item(
+    db_path: Path,
+    registry: ExtractorRegistry,
+    running_jobs: dict,
+    jobs_lock: threading.Lock,
+    row: sqlite3.Row,
+) -> None:
+    job_id = row["id"]
+    payload = json.loads(row["payload"] or "{}")
+    source = AssetSource(payload.get("kind", "unknown"), payload.get("location", ""))
+
+    mime = _guess_mime(source.location)
+    extractors = registry.get_for_mime(mime)
+    if not extractors:
+        _mark_job_failed(db_path, job_id, f"No extractor for {mime}")
+        return
+
+    extractor_id = extractors[0].id
+    sem = _get_semaphore(extractor_id)
+
+    if not sem.acquire(blocking=True, timeout=30):
+        _mark_job_failed(db_path, job_id, f"Semaphore timeout for {extractor_id}")
+        return
+
+    proc: multiprocessing.Process | None = None
+    try:
+        proc = multiprocessing.Process(
+            target=_extract_in_worker,
+            args=(db_path, job_id, source.location, source.kind, extractor_id),
+        )
+        with jobs_lock:
+            running_jobs[job_id] = proc
+            proc.start()
+        proc.join(timeout=_MAX_EXTRACTION_TIME)
+
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(timeout=5)
+            if proc.is_alive():
+                proc.kill()
+            _mark_job_failed(db_path, job_id, "timeout after 300s")
+            with jobs_lock:
+                running_jobs.pop(job_id, None)
+            return
+
+        result = _read_job_result(db_path, job_id)
+        if not result or result.get("status") == "failed":
+            with jobs_lock:
+                running_jobs.pop(job_id, None)
+            return
+
+        try:
+            get_bus().publish(
+                MetadataExtracted(
+                    asset_id=result["asset_id"],
+                    asset_type=AssetType(result["asset_type"]),
+                    extractor=extractor_id,
+                    success=True,
+                    duration_ms=result["duration_ms"],
+                ),
+            )
+        except Exception as exc:
+            log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
+
+        with jobs_lock:
+            running_jobs.pop(job_id, None)
+    finally:
+        sem.release()
+        if proc is not None:
+            proc.join(timeout=0.1)
+            proc.close()
 
 
 def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, extractor_id: str) -> None:
