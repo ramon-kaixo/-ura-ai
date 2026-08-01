@@ -25,7 +25,8 @@ extracción no cambia semántica ni firmas públicas (semantic freezing, ADR-007
 |--------|---------|---------|----------------------|------------|
 | 6143895 | `handler.py:296 do_POST` | Orquestador + `_leer_body_json`, `_registrar_contexto`, `_clasificar_peticion`, `_servir_cache`, `_rutear_proxy`, `_emitir_respuesta` (compartido con `_do_proxy_inference`) | CC 24, LOC 88 → CC 3, LOC 15 (máx. helper 39) | 26/26 tests verdes, ruff 0, sin cambios de firma |
 | ff63b14 | `motor/core/llm/base.py:79 validate_provider` | Orquestador + `_validar_heredero`, `_validar_instanciable`, `_validar_provider_name`, `_validar_metodos`, `_validar_firmas`, `_validar_capacidades`, `_validar_comportamiento` (orden de errores idéntico) | CC 20, LOC 92 → CC 3, LOC 26 (máx. helper 29) | 20/20 tests verdes, ruff 0, mypy 41=41 (baseline) |
-| *pendiente* | `knowledge/engine/validator.py:53 validate_knowledge_object` | Orquestador + `_validar_doc_type`, `_validar_warnings_core`, `_validar_tags_aliases`, `_validar_campos_obsoletos` (orden KE003→KE009→KE204 idéntico) | CC 21, LOC 123 → CC 2, LOC 30 (máx. helper 41) | 172/172 nightly verdes, ruff 0 (RUF100 limpiado) |
+| ed6cbc2 | `knowledge/engine/validator.py:53 validate_knowledge_object` | Orquestador + `_validar_doc_type`, `_validar_warnings_core`, `_validar_tags_aliases`, `_validar_campos_obsoletos` (orden KE003→KE009→KE204 idéntico) | CC 21, LOC 123 → CC 2, LOC 30 (máx. helper 41) | 172/172 nightly verdes, ruff 0 (RUF100 limpiado) |
+| *pendiente* | `monitor/snc.py:252 poll_services` (post-fix 05ad0dc) | Orquestador + `_state_inicial`, `_poll_mac_reachability`, `_check_only_if`, `_poll_servicio`, `_gestionar_openclaw`, `_state_final` | CC 21, LOC 123 → CC 3, LOC 31 (máx. helper 49) | 3/3 tests C1 verdes (oráculo), ruff 0 (EXE001 preexistente), 2 RUF100/SIM102 corregidos |
 
 ## Registro
 
