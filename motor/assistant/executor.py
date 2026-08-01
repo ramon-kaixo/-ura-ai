@@ -165,52 +165,64 @@ class _SafeCalculator:
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.UnaryOp):
-            val = self._eval(node.operand)
-            if isinstance(node.op, ast.UAdd):
-                return +val
-            if isinstance(node.op, ast.USub):
-                return -val
-            raise ValueError("Operador no soportado")
+            return self._eval_unary(node)
         if isinstance(node, ast.BinOp):
-            lhs = self._eval(node.left)
-            rhs = self._eval(node.right)
-            if isinstance(node.op, ast.Add):
-                return lhs + rhs
-            if isinstance(node.op, ast.Sub):
-                return lhs - rhs
-            if isinstance(node.op, ast.Mult):
-                return lhs * rhs
-            if isinstance(node.op, ast.Div):
-                if rhs == 0:
-                    raise ZeroDivisionError("Division por cero")
-                return lhs / rhs
-            if isinstance(node.op, ast.FloorDiv):
-                return lhs // rhs
-            if isinstance(node.op, ast.Mod):
-                return lhs % rhs
-            if isinstance(node.op, ast.Pow):
-                return lhs**rhs
-            raise ValueError("Operador no soportado")
+            return self._eval_binary(node)
         if isinstance(node, ast.Name):
-            name = node.id
-            if name in self._env:
-                val = self._env[name]
-                if isinstance(val, (int, float)):
-                    return val
-                raise ValueError(f"Funcion no permitida: {name}")
-            raise ValueError(f"Nombre no definido: {name}")
+            return self._eval_name(node)
         if isinstance(node, ast.Call):
-            func_name = node.func.id if isinstance(node.func, ast.Name) else ""
-            if func_name in self._env:
-                args = [self._eval(a) for a in node.args]
-                val = self._env[func_name]
-                if callable(val):
-                    result = val(*args)
-                    if isinstance(result, (int, float)):
-                        return result
-                    raise ValueError("Resultado no numerico")
-            raise ValueError(f"Llamada no permitida: {func_name}")
+            return self._eval_call(node)
         raise ValueError(f"Expresion no soportada: {type(node).__name__}")
+
+    def _eval_unary(self, node: ast.UnaryOp) -> float | int:
+        val = self._eval(node.operand)
+        if isinstance(node.op, ast.UAdd):
+            return +val
+        if isinstance(node.op, ast.USub):
+            return -val
+        raise ValueError("Operador no soportado")
+
+    def _eval_binary(self, node: ast.BinOp) -> float | int:
+        lhs = self._eval(node.left)
+        rhs = self._eval(node.right)
+        if isinstance(node.op, ast.Add):
+            return lhs + rhs
+        if isinstance(node.op, ast.Sub):
+            return lhs - rhs
+        if isinstance(node.op, ast.Mult):
+            return lhs * rhs
+        if isinstance(node.op, ast.Div):
+            if rhs == 0:
+                raise ZeroDivisionError("Division por cero")
+            return lhs / rhs
+        if isinstance(node.op, ast.FloorDiv):
+            return lhs // rhs
+        if isinstance(node.op, ast.Mod):
+            return lhs % rhs
+        if isinstance(node.op, ast.Pow):
+            return lhs**rhs
+        raise ValueError("Operador no soportado")
+
+    def _eval_name(self, node: ast.Name) -> float | int:
+        name = node.id
+        if name in self._env:
+            val = self._env[name]
+            if isinstance(val, (int, float)):
+                return val
+            raise ValueError(f"Funcion no permitida: {name}")
+        raise ValueError(f"Nombre no definido: {name}")
+
+    def _eval_call(self, node: ast.Call) -> float | int:
+        func_name = node.func.id if isinstance(node.func, ast.Name) else ""
+        if func_name in self._env:
+            args = [self._eval(a) for a in node.args]
+            val = self._env[func_name]
+            if callable(val):
+                result = val(*args)
+                if isinstance(result, (int, float)):
+                    return result
+                raise ValueError("Resultado no numerico")
+        raise ValueError(f"Llamada no permitida: {func_name}")
 
     def evaluate(self, expression: str) -> str:
         tree = ast.parse(expression.strip(), mode="eval")
