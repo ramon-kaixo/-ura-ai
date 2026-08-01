@@ -390,7 +390,5 @@ class FactHistory:
             }
         else:
             history._tombstones = {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
-        history._tombstone_ids = {
-            vid for vid, v in history._versions.items() if v.state == VersionState.TOMBSTONE
-        }
+        history._tombstone_ids = {vid for vid, v in history._versions.items() if v.state == VersionState.TOMBSTONE}
         return history

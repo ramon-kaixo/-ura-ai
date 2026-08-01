@@ -1,0 +1,12 @@
+  74382 total
+   1292 core/model_router.py
+   1162 motor/tests/test_fusion.py
+   1015 motor/tests/test_resiliencia.py
+    764 motor/core/fusion/stages/entity_resolver.py
+    752 core/mochila/mochila_server.py
+    712 knowledge/engine/rules.py
+    631 core/ura_multi_agent.py
+    608 knowledge/engine/api.py
+    597 motor/core/qdrant_client.py
+    555 motor/cli/cmd_ura.py
+    507 knowledge/engine/extraction_service.py

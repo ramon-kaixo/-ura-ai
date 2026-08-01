@@ -1,0 +1,6 @@
+dependencias entre paquetes top-level:
+  core -> ['core', 'motor']
+  knowledge -> ['knowledge', 'motor']
+  motor -> ['core', 'knowledge', 'motor']
+
+ciclos encontrados: 0

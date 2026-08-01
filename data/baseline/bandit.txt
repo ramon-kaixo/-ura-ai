@@ -1,0 +1,24 @@
+total results: 1627
+1431 ('LOW', 'assert_used')
+65 ('LOW', 'subprocess_without_shell_equals_true')
+37 ('LOW', 'blacklist')
+30 ('LOW', 'start_process_with_partial_path')
+21 ('LOW', 'try_except_pass')
+17 ('MEDIUM', 'hardcoded_tmp_directory')
+16 ('MEDIUM', 'blacklist')
+4 ('MEDIUM', 'huggingface_unsafe_download')
+3 ('MEDIUM', 'hardcoded_sql_expressions')
+2 ('MEDIUM', 'hardcoded_bind_all_interfaces')
+1 ('LOW', 'hardcoded_password_string')
+
+MEDIUM+HIGH: 42
+7 cleanup.py
+4 model_router.py
+4 reranker.py
+3 proxy.py
+2 plan_validator.py
+2 heartbeat.py
+2 secretario_cache.py
+2 notify.py
+2 sqlite_writer.py
+1 reparador.py

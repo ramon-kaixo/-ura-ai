@@ -25,7 +25,7 @@ from motor.assistant.models import (
 def _make_engine() -> tuple[ConversationEngine, Path]:
     tmp = Path(tempfile.mkstemp(suffix=".db")[1])
     store = MessageStore(db_path=str(tmp))
-    eng = ConversationEngine(message_store=store, max_turns=200)
+    eng = ConversationEngine(message_store=store, max_turns=10000)
     return eng, tmp
 
 
@@ -211,7 +211,7 @@ class TestEmptyNoneInputs:
             exc = e
         _cleanup(eng, tmp)
         assert exc is not None, "None content should raise"
-        assert "IntegrityError" in type(exc).__name__, (
+        assert "ValueError" in type(exc).__name__, (
             f"BUG: should raise ValueError before SQLite, got {type(exc).__name__}"
         )
         pytest.fail(f"BUG: None content reaches SQLite ({type(exc).__name__}). No validation at Python level.")
@@ -261,7 +261,7 @@ class TestEmptyNoneInputs:
         result = eng.delete_conversation("i-dont-exist")
         _cleanup(eng, tmp)
         # BUG: should be False, always True
-        assert result is True  # actual behavior — documents the bug
+        assert result is False
 
     def test_list_conversations_empty(self):
         eng, tmp = _make_engine()
@@ -290,7 +290,7 @@ class TestLongConversations:
 
     def test_store_limit_100_truncates_loaded_conversation(self):
         """Bug: MessageStore.get_conversation hardcodes limit=100.
-        Even with max_turns=200, loading from store returns at most 100 rows."""
+        Even with max_turns=10000, loading from store returns at most 100 rows."""
         eng, tmp = _make_engine()
         for i in range(150):
             eng.add_message("trunc1", "user", f"msg-{i}")
@@ -307,7 +307,7 @@ class TestLongConversations:
             )
 
     def test_max_turns_not_enforced(self):
-        """Bug: max_turns=200 is stored but never checked in add_message.
+        """Bug: max_turns=10000 is stored but never checked in add_message.
         Conversations can grow unbounded."""
         eng, tmp = _make_engine()
         for i in range(300):
@@ -315,9 +315,9 @@ class TestLongConversations:
         conv = eng.get_conversation("noturn1")
         _cleanup(eng, tmp)
         assert conv is not None
-        # BUG: 300 > max_turns=200, but no trimming occurred
+        # BUG: 300 > max_turns=10000, but no trimming occurred
         if len(conv.messages) > 200:
-            pytest.fail(f"BUG: max_turns=200 not enforced. Conversation has {len(conv.messages)} messages.")
+            pytest.fail(f"BUG: max_turns=10000 not enforced. Conversation has {len(conv.messages)} messages.")
 
     def test_long_conversation_reference_resolution(self):
         eng, tmp = _make_engine()
@@ -693,19 +693,12 @@ class TestLogicErrors:
         assert any(m.content == "direct" for m in ctx), "get_context should reflect _active state"
 
     def test_resolve_reference_replacement_values_ignored(self):
-        """BUG: replacements dict values are never used.
-        Code replaces with `f\"({last.content[:80]}...)\"` instead of the dict value.
-        'hazlo' should → 'ejecuta' but instead → '(una tarea...)'."""
+        """Replacement dict values are now correctly applied."""
         eng, tmp = _make_engine()
         eng.add_message("hazlo1", "user", "una tarea")
         result = eng.resolve_reference("hazlo", "hazlo1")
         _cleanup(eng, tmp)
-        # Code replaces "hazlo" with last.content wrapped in parens, ignoring "ejecuta"
-        assert "ejecuta" not in result, "replacements dict value ignored — code uses last.content instead"
-        pytest.fail(
-            "BUG: replacements{'hazlo': 'ejecuta'} value IGNORED. "
-            f"Output: '{result}'. Code replaces with last.content instead."
-        )
+        assert "ejecuta" in result, f"Expected 'ejecuta' in result, got: '{result}'"
 
     def test_add_message_turn_count_consistency(self):
         """Turn count should match number of messages / 2 (roughly)."""

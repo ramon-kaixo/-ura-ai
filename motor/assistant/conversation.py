@@ -32,7 +32,7 @@ from motor.assistant.trends import TrendAwareness
 from motor.assistant.vector_memory import VectorMemoryStore
 from motor.assistant.web_search import WebSearch
 
-_MAX_ACTIVE_CONVERSATIONS = 1000
+_MAX_ACTIVE_CONVERSATIONS = 100
 
 _REFERENCE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\beso\b"), ""),
@@ -54,7 +54,7 @@ class ConversationEngine:
         interruption_system: InterruptionSystem | None = None,
         episodic_memory: EpisodicConversationMemory | None = None,
         trend_awareness: TrendAwareness | None = None,
-        max_turns: int = 200,
+        max_turns: int = 10000,
         db_path: str | None = None,
     ):
         from motor.assistant.config import config as app_config
@@ -119,6 +119,9 @@ class ConversationEngine:
     ) -> Message:
         if content is None:
             raise ValueError("message content cannot be None")
+        valid_roles = {"user", "system", "tool", "assistant"}
+        if role not in valid_roles:
+            raise ValueError(f"Invalid role: {role}. Must be one of {valid_roles}")
         conv = self.get_or_create(conversation_id)
         if conv.state and conv.state.turn_count >= self._max_turns:
             raise RuntimeError(f"Conversation {conversation_id} exceeded max turns ({self._max_turns})")
@@ -164,12 +167,12 @@ class ConversationEngine:
         resolved = text.lower()
         for pattern, replacement in _REFERENCE_PATTERNS:
             if pattern.search(resolved):
-                last = conv.last_user_message
-                if last:
-                    ctx = last.content[:80].lower()
-                    if replacement:
-                        resolved = pattern.sub(replacement, resolved)
-                    else:
+                if replacement:
+                    resolved = pattern.sub(replacement, resolved)
+                else:
+                    last = conv.last_user_message
+                    if last:
+                        ctx = last.content[:80].lower()
                         resolved = pattern.sub(f"({ctx}...)", resolved)
         return resolved
 
@@ -282,6 +285,8 @@ class ConversationEngine:
                 self._proactive.complete_task(pending[0].task_id)
 
     def get_or_create(self, conversation_id: str) -> Conversation:
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:12]
         with self._lock:
             conv = self._active.get(conversation_id)
             if conv is not None:

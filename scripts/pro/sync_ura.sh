@@ -23,7 +23,7 @@ for dir in "${dirs[@]}"; do
 done
 
 # Archivos sueltos
-for f in "path_setup.py" "agent_hierarchy.py" ".env.secrets.template"; do
+for f in "path_setup.py" ".env.secrets.template"; do
     if [ -f "$REPO/$f" ]; then
         if [ "$DRY_RUN" = "--dry-run" ]; then
             echo "  [DRY-RUN] cp $REPO/$f $PROD/$f"
