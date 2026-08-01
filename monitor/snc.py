@@ -259,8 +259,6 @@ def poll_services(runbook: dict) -> dict:
     """Polling de todos los servicios. Retorna dict de estado.
     Modo Soberanía: GX10 opera independientemente.
     """
-    global openclaw_active, openclaw_stable_since, repair_attempts  # noqa: PLW0602, PLW0603
-
     state = _state_inicial()
     all_ok = True
 
@@ -314,14 +312,13 @@ def _poll_mac_reachability(state: dict, runbook: dict) -> bool:
         "consecutive_failures": mac_heartbeat.get_consecutive_failures(),
         "check": "ping Mac (Ethernet→Tailscale)",
     }
-    if not mac_ok:
-        if mac_heartbeat.should_escalate():
-            error_logger.log_error(
-                context="ASUS",
-                gateway_status="DISCONNECTED",
-                severity="WARN",
-                message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
-            )
+    if not mac_ok and mac_heartbeat.should_escalate():
+        error_logger.log_error(
+            context="ASUS",
+            gateway_status="DISCONNECTED",
+            severity="WARN",
+            message=f"Mac no alcanzable por Ethernet ni Tailscale. Fallos: {mac_heartbeat.get_consecutive_failures()}.",
+        )
     return mac_ok
 
 
@@ -389,7 +386,7 @@ def _poll_servicio(
 
 
 def _gestionar_openclaw(all_ok: bool) -> None:
-    global openclaw_active, openclaw_stable_since  # noqa: PLW0602, PLW0603
+    global openclaw_active, openclaw_stable_since  # noqa: PLW0603
 
     if openclaw_active:
         if all_ok and not openclaw_stable_since:
