@@ -5,7 +5,7 @@ import secrets
 import time
 import uuid
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager, suppress
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +34,14 @@ from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider, ProviderError
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
+from core.mochila.routes.proxy import (
+    _build_headers,
+    _es_opencode,
+    _get_upstream,
+    _leer_body,
+    _post_upstream,
+    _proxy_stream,
+)
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
@@ -562,88 +570,43 @@ async def admin_acquire_boot_vram(mb: int):
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
 async def proxy_gateway(path: str, request: Request):
-    body = None
-    with suppress(Exception):
-        body = await request.json() if request.method in ("POST", "PUT") else None
-    mb = scheduler.estimar_vram(body or {})
-    req_id = await scheduler.acquire(
-        mb=mb,
-        deadline_flex=15.0,
-        data={"model": body.get("model", "") if body else path.split("/", maxsplit=1)[0] if "/" in path else path},
-    )
-    if not req_id:
+    body = await _leer_body(request)
+    req_id = await _adquirir_vram(body, path)
+    if req_id is None:
         return JSONResponse(
             status_code=503,
             content={"error": "VRAM admission denied", "detail": "No hay suficiente VRAM disponible"},
         )
     try:
-        headers = {"Content-Type": "application/json"}
-        auth = request.headers.get("Authorization")
-        if auth:
-            headers["Authorization"] = auth
+        headers = _build_headers(request)
         if request.method == "GET":
-            async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
-                resp = await client.get(request.url.path, params=dict(request.query_params), headers=headers)
-            return JSONResponse(content=resp.json(), status_code=resp.status_code)
+            return await _get_upstream(request, headers)
 
-        is_opencode = (body or {}).get("_force_guardian", False) or "opencode" in (body or {}).get("model", "").lower()
+        is_opencode = _es_opencode(body)
         guardian = OpenCodeGuardian() if is_opencode else None
         is_gen = path.endswith(("chat", "generate"))
         is_stream = (body or {}).get("stream", True)
 
         if is_gen and is_stream:
+            return StreamingResponse(
+                _proxy_stream(request, body, headers, is_opencode, guardian, path),
+                media_type="application/x-ndjson",
+            )
 
-            async def _proxy_stream():
-                acc = ""
-                async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:  # noqa: SIM117
-                    async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
-                        async for line in resp.aiter_lines():
-                            if not line.strip():
-                                yield line + "\n"
-                                continue
-                            if is_opencode and guardian:
-                                try:
-                                    data = json.loads(line)
-                                    tok = (
-                                        data.get("response", "")
-                                        or data.get("message", {}).get("content", "")
-                                        or data.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                                    )
-                                    if tok:
-                                        acc += tok
-                                        if not guardian.evaluar_texto_stream(acc):
-                                            penalty = guardian.generar_penalizacion()
-                                            err = {
-                                                "error": {
-                                                    "message": "STREAM_ABORTED_BY_GUARDIAN",
-                                                    "type": "vagancy_error",
-                                                },
-                                            }
-                                            if penalty:
-                                                err["error"]["penalty_context"] = penalty
-                                            log_event(
-                                                "stream_aborted",
-                                                model=body.get("model", ""),
-                                                file=path,
-                                                reason="vagancy",
-                                                attempts=0,
-                                                penalty=penalty,
-                                            )
-                                            yield json.dumps(err) + "\n"
-                                            return
-                                except json.JSONDecodeError:
-                                    pass
-                            yield line + "\n"
-
-            return StreamingResponse(_proxy_stream(), media_type="application/x-ndjson")
-
-        async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
-            resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
-        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        return await _post_upstream(request, body, headers)
     except httpx.ConnectError as e:
         return JSONResponse(status_code=502, content={"error": f"Ollama connect error: {e}"})
     finally:
         await scheduler.release(req_id)
+
+
+async def _adquirir_vram(body: dict | None, path: str) -> str | None:
+    mb = scheduler.estimar_vram(body or {})
+    return await scheduler.acquire(
+        mb=mb,
+        deadline_flex=15.0,
+        data={"model": body.get("model", "") if body else path.split("/", maxsplit=1)[0] if "/" in path else path},
+    )
 
 
 class VideoIngestRequest(BaseModel):
