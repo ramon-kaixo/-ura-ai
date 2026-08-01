@@ -93,28 +93,44 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:
 
     """
     errors: list[str] = []
-    provider_name = ""
 
-    # 1. Debe heredar de BaseLLMProvider
+    if not _validar_heredero(provider_cls, errors):
+        return ProviderValidationResult(valid=False, errors=errors)
+    instance = _validar_instanciable(provider_cls, errors)
+    if instance is None:
+        return ProviderValidationResult(valid=False, errors=errors)
+    provider_name = _validar_provider_name(instance, errors)
+    _validar_metodos(instance, errors)
+    _validar_firmas(instance, errors)
+    _validar_capacidades(instance, errors)
+    _validar_comportamiento(instance, errors)
+    return ProviderValidationResult(len(errors) == 0, errors, provider_name)
+
+
+def _validar_heredero(provider_cls: type, errors: list[str]) -> bool:
     if not issubclass(provider_cls, BaseLLMProvider):
         errors.append("No hereda de BaseLLMProvider")
-        return ProviderValidationResult(valid=False, errors=errors)
+        return False
+    return True
 
-    # 2. Debe ser instanciable
+
+def _validar_instanciable(provider_cls: type, errors: list[str]) -> BaseLLMProvider | None:
     try:
-        instance = provider_cls()
+        return provider_cls()
     except Exception as e:
         errors.append(f"No se puede instanciar: {e}")
-        return ProviderValidationResult(valid=False, errors=errors)
+        return None
 
-    # 3. Debe tener _provider_name
+
+def _validar_provider_name(instance: BaseLLMProvider, errors: list[str]) -> str:
     pn = getattr(instance, "_provider_name", None)
     if not pn:
         errors.append("Falta _provider_name o está vacío")
-    else:
-        provider_name = pn
+        return ""
+    return pn
 
-    # 4. Debe implementar los 4 métodos
+
+def _validar_metodos(instance: BaseLLMProvider, errors: list[str]) -> None:
     required_methods = ["generate", "embed", "embed_async", "health"]
     for method_name in required_methods:
         if not hasattr(instance, method_name):
@@ -123,9 +139,9 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:
         method = getattr(instance, method_name)
         if not callable(method):
             errors.append(f"{method_name} no es invocable")
-            continue
 
-    # 5. Firmas
+
+def _validar_firmas(instance: BaseLLMProvider, errors: list[str]) -> None:
     if hasattr(instance, "generate") and callable(instance.generate):
         sig = _check_signature(
             instance.generate,
@@ -144,14 +160,16 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:
         if sig:
             errors.append(f"embed: {sig}")
 
-    # 6. Capacidades
+
+def _validar_capacidades(instance: BaseLLMProvider, errors: list[str]) -> None:
     caps = instance.capabilities
     if not isinstance(caps, dict):
         errors.append("capabilities debe ser un dict")
     if "chat" not in caps:
         errors.append("Falta capacidad 'chat'")
 
-    # 7. Comportamiento: generate retorna str
+
+def _validar_comportamiento(instance: BaseLLMProvider, errors: list[str]) -> None:
     try:
         result = instance.generate("test")
         if not isinstance(result, str):
@@ -159,15 +177,12 @@ def validate_provider(provider_cls: type) -> ProviderValidationResult:
     except Exception as e:
         errors.append(f"generate('test') lanzó excepción: {e}")
 
-    # 8. Comportamiento: embed retorna list
     try:
         result = instance.embed(["test"])
         if not isinstance(result, list):
             errors.append("embed() no retorna list")
     except Exception as e:
         errors.append(f"embed(['test']) lanzó excepción: {e}")
-
-    return ProviderValidationResult(len(errors) == 0, errors, provider_name)
 
 
 def _check_signature(method: Any, expected_params: list[str], optional: list[str]) -> str | None:

@@ -23,7 +23,8 @@ extracción no cambia semántica ni firmas públicas (semantic freezing, ADR-007
 
 | Commit | Función | Técnica | CC/LOC antes→después | Validación |
 |--------|---------|---------|----------------------|------------|
-| 2a0c8b1 | `handler.py:296 do_POST` | Orquestador + `_leer_body_json`, `_registrar_contexto`, `_clasificar_peticion`, `_servir_cache`, `_rutear_proxy`, `_emitir_respuesta` (compartido con `_do_proxy_inference`) | CC 24, LOC 88 → CC 3, LOC 15 (máx. helper 39) | 26/26 tests verdes, ruff 0, sin cambios de firma |
+| 6143895 | `handler.py:296 do_POST` | Orquestador + `_leer_body_json`, `_registrar_contexto`, `_clasificar_peticion`, `_servir_cache`, `_rutear_proxy`, `_emitir_respuesta` (compartido con `_do_proxy_inference`) | CC 24, LOC 88 → CC 3, LOC 15 (máx. helper 39) | 26/26 tests verdes, ruff 0, sin cambios de firma |
+| *pendiente* | `motor/core/llm/base.py:79 validate_provider` | Orquestador + `_validar_heredero`, `_validar_instanciable`, `_validar_provider_name`, `_validar_metodos`, `_validar_firmas`, `_validar_capacidades`, `_validar_comportamiento` (orden de errores idéntico) | CC 20, LOC 92 → CC 3, LOC 26 (máx. helper 29) | 20/20 tests verdes, ruff 0, mypy 41=41 (baseline) |
 
 ## Registro
 
