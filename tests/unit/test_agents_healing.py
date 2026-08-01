@@ -1,0 +1,91 @@
+"""Tests for core/agents/healing.py."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from core.agents.healing import SelfHealingLoop
+
+
+class TestSelfHealingLoop:
+    @pytest.fixture
+    def loop(self):
+        with patch("core.agents.healing.AgenteOrquestador") as mock_orq, \
+             patch("core.agents.healing.AgenteEjecutor") as mock_ej, \
+             patch("core.agents.healing.AgenteReparador") as mock_rep, \
+             patch("core.agents.healing.Telemetria") as mock_tel:
+            mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "tests fallando")
+            mock_ej.return_value.ejecutar.return_value = {"ok": True}
+            mock_rep.return_value.reparar.return_value = (True, "info", "arreglado")
+            mock_tel.return_value.reporte_completo.return_value = {"ram_libre_mb": 1000}
+            mock_tel.return_value.f821_count.return_value = 0
+            mock_tel.return_value.hardware.return_value = {"ram_libre_mb": 1000}
+            yield SelfHealingLoop(), mock_orq, mock_ej, mock_rep, mock_tel
+
+    def test_init(self, loop):
+        sl, _, _, _, _ = loop
+        assert sl._fallos_consecutivos == 0
+
+    @patch("core.agents.healing.Conciencia")
+    @patch("core.agents.healing.subprocess.run")
+    def test_ejecutar_refactorizar(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, mock_ej, _, mock_tel = loop
+        mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "tests fallando")
+
+        reporte = sl.ejecutar()
+
+        assert reporte["accion"] == "REFACTORIZAR"
+        assert reporte["refactor"] == {"ok": True}
+        mock_ej.return_value.ejecutar.assert_called_once_with(workers=4)
+        mock_conciencia.actualizar_proceso.assert_any_call("ejecutor", "activo")
+        mock_conciencia.actualizar_proceso.assert_any_call("ejecutor", "idle")
+
+    @patch("core.agents.healing.Conciencia")
+    @patch("core.agents.healing.subprocess.run")
+    def test_ejecutar_reparar(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, _, mock_rep, _ = loop
+        mock_orq.return_value.decidir.return_value = ("REPARAR", "f821 detectado")
+        mock_subprocess.return_value.stdout = '[{"filename": "test.py"}]'
+        mock_subprocess.return_value.returncode = 0
+
+        reporte = sl.ejecutar()
+
+        assert reporte["accion"] == "REPARAR"
+        pasos = [p for p in reporte["pasos"] if p.get("paso") == "reparar"]
+        assert len(pasos) > 0
+        mock_rep.return_value.reparar.assert_called()
+
+    @patch("core.agents.healing.Conciencia")
+    @patch("core.agents.healing.time.sleep", return_value=None)
+    @patch("core.agents.healing.subprocess.run")
+    def test_ejecutar_pausar(self, mock_subprocess, mock_sleep, mock_conciencia, loop):
+        sl, mock_orq, _, _, _ = loop
+        mock_orq.return_value.decidir.return_value = ("PAUSAR", "RAM saturada")
+
+        reporte = sl.ejecutar()
+
+        assert reporte["accion"] == "PAUSAR"
+        mock_sleep.assert_called_once_with(30)
+
+    @patch("core.agents.healing.Conciencia")
+    @patch("core.agents.healing.subprocess.run")
+    def test_timeout(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, _, _, _ = loop
+        mock_orq.return_value.decidir.return_value = ("PAUSAR", "RAM saturada")
+
+        with patch("core.agents.healing.time.monotonic", side_effect=[0, 9999]):
+            reporte = sl.ejecutar()
+
+        assert reporte["resultado"] == "TIMEOUT"
+        assert sl._fallos_consecutivos == 1
+
+    @patch("core.agents.healing.Conciencia")
+    @patch("core.agents.healing.subprocess.run")
+    def test_fallos_consecutivos_reset(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, _, _, _ = loop
+        mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")
+
+        sl._fallos_consecutivos = 5
+        sl.ejecutar()
+
+        assert sl._fallos_consecutivos == 0
