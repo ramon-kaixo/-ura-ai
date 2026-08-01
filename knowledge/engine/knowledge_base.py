@@ -107,7 +107,7 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:  # noqa: PLR0915
+def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> int:
     """Genera la documentación MkDocs desde el grafo de conocimiento.
 
     Escritura atómica: primero escribe en un directorio temporal,
@@ -134,73 +134,143 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
         conn.close()
         return 0
 
-    # Leer en lotes de 1000 para no cargar todo en memoria
-    batch_size = 1000
-    all_doc_ids: set[str] = set()
-
     output = output_dir or _KB_DIR
+    return _generar_knowledge_base(conn, total_docs, output)
 
-    # 2. Escribir en directorio temporal, luego renombrar atómicamente
+
+def _generar_knowledge_base(conn: Any, total_docs: int, output: Path) -> int:
+    """Genera en temp dir y renombra atómicamente a `output`. Retorna nº de docs."""
     tmp_dir = Path(tempfile.mkdtemp(prefix="kb_"))
     try:
         dest = tmp_dir / "docs"
         dest.mkdir(parents=True, exist_ok=True)
 
-        # Leer edges (cargarlos todos — normalmente 2x nodos)
-        edges = conn.execute("SELECT src, dst, relation FROM kg_edges").fetchall()
-        edge_map: dict[str, list[dict[str, Any]]] = {}
-        for e in edges:
-            edge_map.setdefault(e["src"], []).append({"dst": e["dst"], "relation": e["relation"]})
+        all_ids_set, by_type = _cargar_datos_grafo(conn, total_docs)
+        conn.close()
 
-        # Leer feedback
-        fb_map: dict[str, dict[str, Any]] = {}
-        fb_rows = conn.execute("SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg").fetchall()
-        for r in fb_rows:
-            fb_map[r["doc_id"]] = dict(r)
+        # Cargar manifest anterior para detección incremental
+        prev_manifest = _load_manifest(output)
+        new_manifest: dict[str, str] = {}
 
-        # Procesar documentos por lotes
-        offset = 0
-        by_type: dict[str, list[dict[str, Any]]] = {}
-        all_ids_set: set[str] = set()
-        broken_links_total: int = 0
+        nav, count, changed_count = _escribir_docs(dest, by_type, prev_manifest, new_manifest)
 
-        while offset < total_docs:
-            batch = conn.execute(
-                "SELECT id, type, path, frontmatter, body FROM kg_nodes ORDER BY type, id LIMIT ? OFFSET ?",
-                (batch_size, offset),
-            ).fetchall()
-            if not batch:
-                break
+        # Verificar enlaces internos
+        broken_links_total = _verificar_enlaces(by_type, all_ids_set)
 
-            for r in batch:
-                doc_id = r["id"]
-                all_ids_set.add(doc_id)
-                all_doc_ids.add(doc_id)
-                doc_type = r["type"] or "doc"
-                if doc_type not in by_type:
-                    by_type[doc_type] = []
-                fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
-                body = r["body"] or ""
-                title = fm.get("title", doc_id)
+        # Generar mkdocs.yml (determinista: sorted nav keys)
+        _escribir_config_mkdocs(dest, nav, new_manifest)
 
-                # Relaciones
-                rels = edge_map.get(doc_id, [])
-                rel_lines = []
-                for e in rels:
-                    rel_lines.append(f"- [{_safe_markdown(e['relation'])}]({e['dst']}.md)")  # noqa: PERF401
-                rel_section = "\n\n## Relaciones\n" + "\n".join(rel_lines) if rel_lines else ""
+        # Generar index.md
+        _escribir_index(dest, by_type, count)
 
-                # Feedback
-                fb = fb_map.get(doc_id)
-                rating_section = ""
-                if fb and fb["n_ratings"] > 0:
-                    stars = "\u2b50" * round(fb["avg_rating"])
-                    rating_section = f"\n\n**Rating:** {stars} ({fb['avg_rating']:.1f}/5, {fb['n_ratings']} votes)"
+        # Renombrar atómicamente
+        _swap_atomico(output, dest)
 
-                # Sanitizar body para Markdown/HTML
-                safe_body = _safe_markdown(body)
+        _log_resultado(count, changed_count, output, broken_links_total)
+        return count
 
-                content = f"""# {_safe_markdown(title)}
+    except Exception:
+        log.exception("Knowledge base generation failed")
+        _shutil.rmtree(tmp_dir, ignore_errors=True)
+        return 0
+
+
+def _log_resultado(count: int, changed_count: int, output: Path, broken_links_total: int) -> None:
+    log.info(
+        "Knowledge base generated: %d docs (%d changed) in %s%s",
+        count,
+        changed_count,
+        output,
+        f" ({broken_links_total} broken links)" if broken_links_total else "",
+    )
+
+
+def _cargar_datos_grafo(conn: Any, total_docs: int) -> tuple[set[str], dict[str, list[dict[str, Any]]]]:
+    """Lee edges, feedback y nodos paginados del grafo → (all_ids_set, by_type)."""
+    edge_map: dict[str, list[dict[str, Any]]] = {}
+    for e in conn.execute("SELECT src, dst, relation FROM kg_edges").fetchall():
+        edge_map.setdefault(e["src"], []).append({"dst": e["dst"], "relation": e["relation"]})
+
+    fb_map: dict[str, dict[str, Any]] = {}
+    for r in conn.execute("SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg").fetchall():
+        fb_map[r["doc_id"]] = dict(r)
+
+    by_type: dict[str, list[dict[str, Any]]] = {}
+    all_ids_set: set[str] = set()
+    batch_size = 1000
+    offset = 0
+    while offset < total_docs:
+        batch = conn.execute(
+            "SELECT id, type, path, frontmatter, body FROM kg_nodes ORDER BY type, id LIMIT ? OFFSET ?",
+            (batch_size, offset),
+        ).fetchall()
+        if not batch:
+            break
+        for r in batch:
+            doc_id = r["id"]
+            all_ids_set.add(doc_id)
+            doc_type = r["type"] or "doc"
+            by_type.setdefault(doc_type, []).append(_construir_doc_entry(r, edge_map, fb_map))
+        offset += len(batch)
+    return all_ids_set, by_type
+
+
+def _construir_doc_entry(r: Any, edge_map: dict[str, Any], fb_map: dict[str, Any]) -> dict[str, Any]:
+    """Construye la entrada de documento (frontmatter, relaciones, feedback, body)."""
+    doc_id = r["id"]
+    doc_type = r["type"] or "doc"
+    fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
+    body = r["body"] or ""
+    title = fm.get("title", doc_id)
+
+    rels = edge_map.get(doc_id, [])
+    content = _construir_content(
+        doc_id,
+        doc_type,
+        title,
+        fm,
+        r,
+        body,
+        _construir_relaciones(rels),
+        _construir_rating(fb_map.get(doc_id)),
+    )
+    return {
+        "id": doc_id,
+        "title": title,
+        "content": content,
+        "path": r["path"],
+        "rels": [e["dst"] for e in rels],
+    }
+
+
+def _construir_relaciones(rels: list[dict[str, Any]]) -> str:
+    """Sección de relaciones del documento (Markdown)."""
+    rel_lines = [f"- [{_safe_markdown(e['relation'])}]({e['dst']}.md)" for e in rels]
+    return "\n\n## Relaciones\n" + "\n".join(rel_lines) if rel_lines else ""
+
+
+def _construir_rating(fb: dict[str, Any] | None) -> str:
+    """Sección de rating del documento (Markdown), vacía si no hay feedback."""
+    if not fb or fb["n_ratings"] <= 0:
+        return ""
+    stars = "\u2b50" * round(fb["avg_rating"])
+    return f"\n\n**Rating:** {stars} ({fb['avg_rating']:.1f}/5, {fb['n_ratings']} votes)"
+
+
+def _construir_content(
+    doc_id: str,
+    doc_type: str,
+    title: str,
+    fm: dict[str, Any],
+    r: Any,
+    body: str,
+    rel_section: str,
+    rating_section: str,
+) -> str:
+    """Contenido Markdown completo del documento."""
+    safe_body = _safe_markdown(body)
+
+    return f"""# {_safe_markdown(title)}
 
 **Type:** {_safe_markdown(doc_type)}
 **ID:** `{doc_id}`
@@ -216,122 +286,97 @@ def generate_knowledge_base(db_path: Path, output_dir: Path | None = None) -> in
 *Generated by Knowledge Engine v0.2.0*
 """
 
-                by_type[doc_type].append(
-                    {
-                        "id": doc_id,
-                        "title": title,
-                        "content": content,
-                        "path": r["path"],
-                        "rels": [e["dst"] for e in rels],
-                    },
-                )
 
-            offset += len(batch)
+def _escribir_docs(
+    dest: Path,
+    by_type: dict[str, list[dict[str, Any]]],
+    prev_manifest: dict[str, str],
+    new_manifest: dict[str, str],
+) -> tuple[list[dict[str, Any]], int, int]:
+    """Escribe archivos .md (determinista) → (nav, count, changed_count)."""
+    nav: list[dict[str, Any]] = []
+    count = 0
+    changed_count = 0
 
-        conn.close()
+    for doc_type in sorted(by_type.keys()):
+        docs = sorted(by_type[doc_type], key=lambda d: (d["title"].lower(), d["id"]))
+        type_dir = dest / _sanitize_filename(doc_type)
+        type_dir.mkdir(exist_ok=True)
+        nav_entry: dict[str, Any] = {doc_type: []}
 
-        # 3. Cargar manifest anterior para detección incremental
-        prev_manifest = _load_manifest(output)
-        new_manifest: dict[str, str] = {}
-        changed_count = 0
+        for doc in docs:
+            doc_id = doc["id"]
+            new_hash = _content_hash(doc["content"])
+            new_manifest[doc_id] = new_hash
+            count += 1
+            nav_link = f"{_sanitize_filename(doc_type)}/{_sanitize_filename(doc_id)}.md"
+            if prev_manifest.get(doc_id) == new_hash:
+                nav_entry[doc_type].append({doc["title"]: nav_link})
+                continue
+            (type_dir / f"{_sanitize_filename(doc_id)}.md").write_text(doc["content"], encoding="utf-8")
+            changed_count += 1
+            nav_entry[doc_type].append({doc["title"]: nav_link})
 
-        # 3b. Escribir archivos (determinista: ordenado por type, luego por title)
-        nav: list[dict[str, Any]] = []
-        count = 0
+        nav.append(nav_entry)
+    return nav, count, changed_count
 
-        for doc_type in sorted(by_type.keys()):
-            docs = sorted(by_type[doc_type], key=lambda d: (d["title"].lower(), d["id"]))
-            type_dir = dest / _sanitize_filename(doc_type)
-            type_dir.mkdir(exist_ok=True)
-            nav_entry: dict[str, Any] = {doc_type: []}
 
-            for doc in docs:
-                doc_id = doc["id"]
-                content = doc["content"]
-                new_hash = _content_hash(content)
-                new_manifest[doc_id] = new_hash
+def _verificar_enlaces(by_type: dict[str, list[dict[str, Any]]], all_ids_set: set[str]) -> int:
+    """Verifica enlaces internos de todo el contenido → total de enlaces rotos."""
+    broken_total = 0
+    for doc_type in by_type:  # noqa: PLC0206
+        for doc in by_type[doc_type]:
+            broken = _verify_links(doc["content"], all_ids_set)
+            if broken:
+                broken_total += len(broken)
+                log.warning("Broken links in doc %s: %s", doc["id"], broken)
+    return broken_total
 
-                # Solo escribir si el contenido cambió
-                if prev_manifest.get(doc_id) == new_hash:
-                    # No cambió — podemos saltar
-                    nav_entry[doc_type].append(
-                        {doc["title"]: f"{_sanitize_filename(doc_type)}/{_sanitize_filename(doc_id)}.md"},
-                    )
-                    count += 1
-                    continue
 
-                safe_name = _sanitize_filename(doc_id)
-                file_path = type_dir / f"{safe_name}.md"
-                file_path.write_text(content, encoding="utf-8")
-                changed_count += 1
-                nav_entry[doc_type].append({doc["title"]: f"{_sanitize_filename(doc_type)}/{safe_name}.md"})
-                count += 1
+def _escribir_config_mkdocs(dest: Path, nav: list[dict[str, Any]], new_manifest: dict[str, str]) -> None:
+    """Genera mkdocs.yml y guarda el manifest de la próxima generación incremental."""
+    mkdocs_config: dict[str, Any] = {
+        "site_name": "Knowledge Base",
+        "site_description": "URA Knowledge Engine — Generated Documentation",
+        "theme": "material",
+        "nav": [{"Home": "index.md"}, *nav],
+        "plugins": ["search"],
+        "markdown_extensions": ["admonition", "pymdownx.superfences"],
+    }
+    _save_manifest(dest, new_manifest)
+    (dest / "mkdocs.yml").write_text(
+        yaml.dump(mkdocs_config, default_flow_style=False, sort_keys=True),
+        encoding="utf-8",
+    )
 
-            nav.append(nav_entry)
 
-        # 4. Verificar enlaces internos
-        for doc_type in by_type:  # noqa: PLC0206
-            for doc in by_type[doc_type]:
-                broken = _verify_links(doc["content"], all_ids_set)
-                if broken:
-                    broken_links_total += len(broken)
-                    log.warning("Broken links in doc %s: %s", doc["id"], broken)
+def _escribir_index(dest: Path, by_type: dict[str, list[dict[str, Any]]], count: int) -> None:
+    """Genera index.md con índice por categorías."""
+    index_lines = [
+        "# Knowledge Base\n",
+        "Generated from Knowledge Engine v0.2.0\n",
+        f"**{count} documents**\n",
+        "\n## Categories\n",
+    ]
+    for doc_type in sorted(by_type.keys()):
+        docs = by_type[doc_type]
+        index_lines.append(f"\n### {doc_type.capitalize()} ({len(docs)})\n")
+        for doc in sorted(docs, key=lambda d: (d["title"].lower(), d["id"])):
+            safe_type = _sanitize_filename(doc_type)
+            safe_name = _sanitize_filename(doc["id"])
+            index_lines.append(f"- [{doc['title']}]({safe_type}/{safe_name}.md)")
+    (dest / "index.md").write_text("\n".join(index_lines), encoding="utf-8")
 
-        # 5. Generar mkdocs.yml (determinista: sorted nav keys)
-        mkdocs_config: dict[str, Any] = {
-            "site_name": "Knowledge Base",
-            "site_description": "URA Knowledge Engine — Generated Documentation",
-            "theme": "material",
-            "nav": [{"Home": "index.md"}, *nav],
-            "plugins": ["search"],
-            "markdown_extensions": ["admonition", "pymdownx.superfences"],
-        }
-        # Guardar manifest para próxima generación incremental
-        _save_manifest(dest, new_manifest)
-        (dest / "mkdocs.yml").write_text(
-            yaml.dump(mkdocs_config, default_flow_style=False, sort_keys=True),
-            encoding="utf-8",
-        )
 
-        # 6. Generar index.md
-        index_lines = [
-            "# Knowledge Base\n",
-            "Generated from Knowledge Engine v0.2.0\n",
-            f"**{count} documents**\n",
-            "\n## Categories\n",
-        ]
-        for doc_type in sorted(by_type.keys()):
-            docs = by_type[doc_type]
-            index_lines.append(f"\n### {doc_type.capitalize()} ({len(docs)})\n")
-            for doc in sorted(docs, key=lambda d: (d["title"].lower(), d["id"])):
-                safe_type = _sanitize_filename(doc_type)
-                safe_name = _sanitize_filename(doc["id"])
-                index_lines.append(f"- [{doc['title']}]({safe_type}/{safe_name}.md)")
-        (dest / "index.md").write_text("\n".join(index_lines), encoding="utf-8")
-
-        # 7. Renombrar atómicamente
-        if output.exists():
-            backup = output.parent / f"{output.name}.bak"
-            if backup.exists():
-                _shutil.rmtree(backup)
-            output.rename(backup)
-        dest.rename(output)
-
-        # Limpiar backup
+def _swap_atomico(output: Path, dest: Path) -> None:
+    """Renombra dest a output con backup transitorio."""
+    if output.exists():
         backup = output.parent / f"{output.name}.bak"
         if backup.exists():
             _shutil.rmtree(backup)
+        output.rename(backup)
+    dest.rename(output)
 
-        log.info(
-            "Knowledge base generated: %d docs (%d changed) in %s%s",
-            count,
-            changed_count,
-            output,
-            f" ({broken_links_total} broken links)" if broken_links_total else "",
-        )
-        return count
-
-    except Exception:
-        log.exception("Knowledge base generation failed")
-        _shutil.rmtree(tmp_dir, ignore_errors=True)
-        return 0
+    backup = output.parent / f"{output.name}.bak"
+    if backup.exists():
+        _shutil.rmtree(backup)
