@@ -72,7 +72,7 @@ class ParallelExecutor:
         with self._lock:
             return workflow_id in self._cancelled
 
-    def execute(  # noqa: PLR0915
+    def execute(
         self,
         tasks: list[tuple[str, AgentTask]],
         workflow_id: str | None = None,
@@ -92,65 +92,105 @@ class ParallelExecutor:
             return result
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
-            future_map = {}
-            for agent_id, task in tasks:
-                if self.is_cancelled(wf_id):
-                    remaining = len(tasks) - len(future_map)
-                    result.cancelled += remaining
-                    result.cancelled_by_user = True
-                    break
-
-                future = pool.submit(self._run_single, agent_id, task, wf_id)
-                future_map[future] = (agent_id, task)
+            future_map = self._submit_all(pool, tasks, wf_id, result)
 
             deadline = None
             if self._global_timeout is not None:
                 deadline = time.monotonic() + self._global_timeout
 
-            try:
-                for future in as_completed(future_map, timeout=self._global_timeout):
-                    if self.is_cancelled(wf_id):
-                        result.cancelled += 1
-                        continue
-
-                    agent_id, task = future_map[future]
-                    try:
-                        if deadline is not None and time.monotonic() > deadline:
-                            result.timed_out += 1
-                            result.errors.append(f"Task {task.id} ({agent_id}): global timeout")
-                            continue
-
-                        task_result = future.result(timeout=0)
-                        result.results.append(task_result)
-                        if task_result.success:
-                            result.completed += 1
-                        else:
-                            result.failed += 1
-                            result.errors.append(f"Task {task.id} ({agent_id}): {task_result.error}")
-
-                            if self._fail_fast:
-                                with self._lock:
-                                    self._cancelled.add(wf_id)
-                                remaining = len(tasks) - len(result.results) - result.cancelled
-                                result.cancelled += remaining
-                                break
-
-                            if self._cancel_on_error:
-                                with self._lock:
-                                    self._cancelled.add(wf_id)
-
-                    except Exception as exc:
-                        result.timed_out += 1
-                        result.errors.append(f"Task {task.id} ({agent_id}): {exc}")
-            except TimeoutError:
-                remaining = len(tasks) - len(result.results) - result.cancelled
-                result.timed_out += remaining
-                items = list(future_map.values())
-                for _, remaining_task in items[len(result.results) :]:
-                    result.errors.append(f"Task {remaining_task.id}: timed_out")
+            self._drenar_futures(future_map, result, tasks, deadline, wf_id)
 
         result.elapsed_ms = (time.monotonic() - start) * 1000
         return result
+
+    def _submit_all(
+        self,
+        pool: ThreadPoolExecutor,
+        tasks: list[tuple[str, AgentTask]],
+        wf_id: str,
+        result: ExecutionResult,
+    ) -> dict:
+        """Envía todas las tareas al pool; corta si el workflow se cancela."""
+        future_map = {}
+        for agent_id, task in tasks:
+            if self.is_cancelled(wf_id):
+                remaining = len(tasks) - len(future_map)
+                result.cancelled += remaining
+                result.cancelled_by_user = True
+                break
+
+            future = pool.submit(self._run_single, agent_id, task, wf_id)
+            future_map[future] = (agent_id, task)
+        return future_map
+
+    def _drenar_futures(
+        self,
+        future_map: dict,
+        result: ExecutionResult,
+        tasks: list[tuple[str, AgentTask]],
+        deadline: float | None,
+        wf_id: str,
+    ) -> None:
+        """Recolecta resultados; gestiona timeouts globales y cancelación."""
+        try:
+            for future in as_completed(future_map, timeout=self._global_timeout):
+                if self.is_cancelled(wf_id):
+                    result.cancelled += 1
+                    continue
+
+                if self._procesar_future(future, future_map, result, tasks, deadline, wf_id):
+                    break
+        except TimeoutError:
+            remaining = len(tasks) - len(result.results) - result.cancelled
+            result.timed_out += remaining
+            items = list(future_map.values())
+            for _, remaining_task in items[len(result.results) :]:
+                result.errors.append(f"Task {remaining_task.id}: timed_out")
+
+    def _procesar_future(
+        self,
+        future,
+        future_map: dict,
+        result: ExecutionResult,
+        tasks: list[tuple[str, AgentTask]],
+        deadline: float | None,
+        wf_id: str,
+    ) -> bool:
+        """Contabiliza un future completado → True si hay que cortar (fail_fast)."""
+        agent_id, task = future_map[future]
+        try:
+            if deadline is not None and time.monotonic() > deadline:
+                result.timed_out += 1
+                result.errors.append(f"Task {task.id} ({agent_id}): global timeout")
+                return False
+
+            task_result = future.result(timeout=0)
+            result.results.append(task_result)
+            if task_result.success:
+                result.completed += 1
+                return False
+
+            result.failed += 1
+            result.errors.append(f"Task {task.id} ({agent_id}): {task_result.error}")
+
+            if self._fail_fast:
+                self._marcar_cancelado(wf_id)
+                remaining = len(tasks) - len(result.results) - result.cancelled
+                result.cancelled += remaining
+                return True
+
+            if self._cancel_on_error:
+                self._marcar_cancelado(wf_id)
+            return False
+
+        except Exception as exc:
+            result.timed_out += 1
+            result.errors.append(f"Task {task.id} ({agent_id}): {exc}")
+            return False
+
+    def _marcar_cancelado(self, wf_id: str) -> None:
+        with self._lock:
+            self._cancelled.add(wf_id)
 
     def _run_single(self, agent_id: str, task: AgentTask, wf_id: str) -> AgentResult:
         if self.is_cancelled(wf_id):
