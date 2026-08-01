@@ -1,19 +1,19 @@
-# ADR-054: feat: tests para ConversationEngine (30 tests, deps inyectadas, 0 mocks internos
+# ADR-119: test(scripts): lock_manager.py (4) + reglas_loader.py (4) — 8 tests, stdlib-only
 
-**Fecha:** 2026-07-30
-**Categoría:** Calidad: Tests y cobertura
+**Fecha:** 2026-08-01
+**Categoría:** Arquitectura: Concurrencia y locks
 **Autor:** ramon-kaixo
-**Commit:** dc3f444
+**Commit:** 0203a15
 
 ## Contexto
 Cambio significativo detectado automáticamente.
 
 ## Decisión
-Calidad: Tests y cobertura
+Arquitectura: Concurrencia y locks
 
 ## Archivos afectados
-- `tests/unit/test_conversation.py`
-- `tests/unit/test_message_store.py`
+- `tests/unit/test_lock_manager.py`
+- `tests/unit/test_reglas_loader.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica

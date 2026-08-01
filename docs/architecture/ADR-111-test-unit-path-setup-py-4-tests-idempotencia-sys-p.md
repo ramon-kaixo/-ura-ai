@@ -1,9 +1,9 @@
-# ADR-089: test(infra): mover evaluation_corpus a pending y benchmark a nightly por datos f
+# ADR-111: test(unit): path_setup.py — 4 tests (idempotencia, sys.path, tipo Path)
 
-**Fecha:** 2026-07-31
+**Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 7532c5c
+**Commit:** d22f63d
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,8 +12,7 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/nightly/test_f26_b3_hardening.py`
-- `tests/pending/test_evaluation_corpus.py`
+- `tests/unit/test_path_setup.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica

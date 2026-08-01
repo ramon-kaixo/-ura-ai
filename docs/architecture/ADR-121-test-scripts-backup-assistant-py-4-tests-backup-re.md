@@ -1,9 +1,9 @@
-# ADR-086: test(infra): mover evaluation_corpus a pending y benchmark a nightly por datos f
+# ADR-121: test(scripts): backup_assistant.py — 4 tests (backup, restore, empty, invalid)
 
-**Fecha:** 2026-07-31
+**Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 7532c5c
+**Commit:** c5828ce
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,8 +12,7 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/nightly/test_f26_b3_hardening.py`
-- `tests/pending/test_evaluation_corpus.py`
+- `tests/unit/test_backup_assistant.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica

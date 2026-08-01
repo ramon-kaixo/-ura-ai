@@ -1,9 +1,9 @@
-# ADR-087: test(infra): mover evaluation_corpus a pending y benchmark a nightly por datos f
+# ADR-110: chore(tests): eliminar test_mochila.py duplicado de raíz, type hints en tests/un
 
-**Fecha:** 2026-07-31
+**Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 7532c5c
+**Commit:** cb55200
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,8 +12,8 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/nightly/test_f26_b3_hardening.py`
-- `tests/pending/test_evaluation_corpus.py`
+- `test_mochila.py`
+- `tests/unit/test_mochila.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica
