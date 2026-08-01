@@ -158,25 +158,51 @@ class PluginRegistryV2:
         return plugin
 
     def _load_v2(self, entry: PluginEntryV2) -> PluginBase | None:
-        manifest = entry.manifest
+        manifest = self._verificar_manifest(entry)
         if manifest is None:
-            log.warning("[registry_v2] %s: manifest nulo", entry.path)
             return None
         name = manifest.name
-        api_version = manifest.api_version
-
-        from motor.events.compat import check_api_compatibility
-
-        if not check_api_compatibility(api_version, MOTOR_API_VERSION):
-            log.warning(
-                "[registry_v2] %s: API incompatible (plugin=%s, motor=%s)",
-                name,
-                api_version,
-                MOTOR_API_VERSION,
-            )
+        if not self._verificar_compatibilidad(name, manifest.api_version):
+            return None
+        self._cargar_dependencias(name)
+        module = self._cargar_modulo(entry, name)
+        if module is None:
+            return None
+        try:
+            instance = self._find_plugin_class(module, manifest)
+            if instance is None:
+                log.warning("[registry_v2] %s: sin subclase de PluginBase", name)
+                self._dm.mark_degraded(f"plugin:{name}")
+                return None
+            instance.manifest = manifest
+            self._registrar_plugin(name, instance, manifest)
+            return instance
+        except Exception as exc:
+            log.warning("[registry_v2] Error cargando %s: %s", name, exc)
             self._dm.mark_degraded(f"plugin:{name}")
             return None
 
+    def _verificar_manifest(self, entry: PluginEntryV2) -> PluginManifest | None:
+        manifest = entry.manifest
+        if manifest is None:
+            log.warning("[registry_v2] %s: manifest nulo", entry.path)
+        return manifest
+
+    def _verificar_compatibilidad(self, name: str, api_version: str) -> bool:
+        from motor.events.compat import check_api_compatibility
+
+        if check_api_compatibility(api_version, MOTOR_API_VERSION):
+            return True
+        log.warning(
+            "[registry_v2] %s: API incompatible (plugin=%s, motor=%s)",
+            name,
+            api_version,
+            MOTOR_API_VERSION,
+        )
+        self._dm.mark_degraded(f"plugin:{name}")
+        return False
+
+    def _cargar_dependencias(self, name: str) -> None:
         dep_order = self._resolve_dependencies(name)
         for dep_name in dep_order:
             if dep_name != name and dep_name not in self._instances:
@@ -185,60 +211,45 @@ class PluginRegistryV2:
                     log.debug("[registry_v2] Cargando dependencia %s para %s", dep_name, name)
                     self._load(dep_name)
 
+    def _cargar_modulo(self, entry: PluginEntryV2, name: str) -> object | None:
         init_py = entry.path / "__init__.py"
         if not init_py.exists():
             log.warning("[registry_v2] %s: falta __init__.py en %s", name, entry.path)
             self._dm.mark_degraded(f"plugin:{name}")
             return None
-
-        try:
-            module_name = f"_ura_v2_plugin_{name}"
-            spec = importlib.util.spec_from_file_location(module_name, str(init_py))
-            if spec is None or spec.loader is None:
-                log.warning("[registry_v2] %s: spec inválido para %s", name, init_py)
-                self._dm.mark_degraded(f"plugin:{name}")
-                return None
-
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-            instance = self._find_plugin_class(module, manifest)
-            if instance is None:
-                log.warning("[registry_v2] %s: sin subclase de PluginBase", name)
-                self._dm.mark_degraded(f"plugin:{name}")
-                return None
-
-            instance.manifest = manifest
-
-            if manifest.lifecycle.get("on_load", True):
-                try:
-                    instance.on_load()
-                except Exception as exc:
-                    log.warning("[registry_v2] %s on_load falló: %s", name, exc)
-
-            self._instances[name] = instance
-            self._dm.mark_healthy(f"plugin:{name}")
-            log.info("[registry_v2] Cargado: %s v%s", name, manifest.version)
-
-            if self._hooks is not None:
-                self._hooks.register_plugin_hooks(name, instance)
-
-            if self._bus is not None:
-                from motor.events.event import PluginLoaded
-                from motor.events.topics import PLUGIN_LOADED
-
-                self._bus.publish(
-                    PLUGIN_LOADED,
-                    PluginLoaded(name=name, version=manifest.version),
-                    source="registry_v2",
-                )
-
-            return instance
-
-        except Exception as exc:
-            log.warning("[registry_v2] Error cargando %s: %s", name, exc)
+        module_name = f"_ura_v2_plugin_{name}"
+        spec = importlib.util.spec_from_file_location(module_name, str(init_py))
+        if spec is None or spec.loader is None:
+            log.warning("[registry_v2] %s: spec inválido para %s", name, init_py)
             self._dm.mark_degraded(f"plugin:{name}")
             return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def _registrar_plugin(self, name: str, instance: PluginBase, manifest: PluginManifest) -> None:
+        if manifest.lifecycle.get("on_load", True):
+            try:
+                instance.on_load()
+            except Exception as exc:
+                log.warning("[registry_v2] %s on_load falló: %s", name, exc)
+
+        self._instances[name] = instance
+        self._dm.mark_healthy(f"plugin:{name}")
+        log.info("[registry_v2] Cargado: %s v%s", name, manifest.version)
+
+        if self._hooks is not None:
+            self._hooks.register_plugin_hooks(name, instance)
+
+        if self._bus is not None:
+            from motor.events.event import PluginLoaded
+            from motor.events.topics import PLUGIN_LOADED
+
+            self._bus.publish(
+                PLUGIN_LOADED,
+                PluginLoaded(name=name, version=manifest.version),
+                source="registry_v2",
+            )
 
     def _find_plugin_class(self, module: object, manifest: PluginManifest) -> PluginBase | None:
         if manifest.entry_point:
