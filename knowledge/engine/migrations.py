@@ -126,13 +126,36 @@ def migrate_db(
         return
 
     if current == 0:
-        schema = schema_path.read_text()
-        conn.executescript(schema)
-        _set_schema_version(conn, target_version)
-        conn.commit()
-        log.info("Fresh DB initialized to schema v%s", target_version)
+        _migrar_fresh(conn, schema_path, target_version)
         return
 
+    _validar_rango(current, target_version)
+
+    if migrations_dir is None:
+        migrations_dir = schema_path.parent / "migrations"
+
+    for version in range(current + 1, target_version + 1):
+        if version not in MIGRATIONS:
+            msg = (
+                f"No migration defined for v{version}. "
+                f"Current DB: v{current}, target: v{target_version}. "
+                "Run 'ke init' to rebuild."
+            )
+            raise ValueError(
+                msg,
+            )
+        _aplicar_migracion(conn, version, migrations_dir)
+
+
+def _migrar_fresh(conn: sqlite3.Connection, schema_path: Path, target_version: int) -> None:
+    schema = schema_path.read_text()
+    conn.executescript(schema)
+    _set_schema_version(conn, target_version)
+    conn.commit()
+    log.info("Fresh DB initialized to schema v%s", target_version)
+
+
+def _validar_rango(current: int, target_version: int) -> None:
     if current < MINIMUM_SUPPORTED_SCHEMA:
         msg = (
             f"DB schema version {current} is too old. "
@@ -161,33 +184,26 @@ def migrate_db(
             msg,
         )
 
-    if migrations_dir is None:
-        migrations_dir = schema_path.parent / "migrations"
 
-    for version in range(current + 1, target_version + 1):
-        if version not in MIGRATIONS:
-            msg = (
-                f"No migration defined for v{version}. "
-                f"Current DB: v{current}, target: v{target_version}. "
-                "Run 'ke init' to rebuild."
-            )
-            raise ValueError(
-                msg,
-            )
-        mig = MIGRATIONS[version]
-        if mig.sql_file:
-            migration_path = migrations_dir / mig.sql_file
-            if not migration_path.exists():
-                msg = f"Migration file not found: {migration_path} (required for {mig.description})"
-                raise FileNotFoundError(msg)
-            log.info("Applying migration v%s: %s", version, mig.description)
-            sql = migration_path.read_text()
-            conn.executescript(f"BEGIN;\n{sql}\nCOMMIT;")
-        else:
-            log.info("Skipping migration v%s: %s (no SQL, version bump)", version, mig.description)
-        _set_schema_version(conn, version)
-        conn.commit()
-        log.info("Migration v%s applied successfully", version)
+def _aplicar_migracion(
+    conn: sqlite3.Connection,
+    version: int,
+    migrations_dir: Path,
+) -> None:
+    mig = MIGRATIONS[version]
+    if mig.sql_file:
+        migration_path = migrations_dir / mig.sql_file
+        if not migration_path.exists():
+            msg = f"Migration file not found: {migration_path} (required for {mig.description})"
+            raise FileNotFoundError(msg)
+        log.info("Applying migration v%s: %s", version, mig.description)
+        sql = migration_path.read_text()
+        conn.executescript(f"BEGIN;\n{sql}\nCOMMIT;")
+    else:
+        log.info("Skipping migration v%s: %s (no SQL, version bump)", version, mig.description)
+    _set_schema_version(conn, version)
+    conn.commit()
+    log.info("Migration v%s applied successfully", version)
 
 
 # ── Verification ───────────────────────────────────────────────────────────────
