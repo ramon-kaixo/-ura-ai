@@ -36,3 +36,4 @@
 | mypy | Bug interno TypeGuardedType |
 | semgrep | Arreglado: instalar semgrep en venv, corregir patrones |
 2026-08-01 22:30 — change_log activado en venv
+2026-08-01 23:50 — commit_msg_validator activado en venv
