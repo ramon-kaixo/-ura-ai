@@ -76,6 +76,17 @@ class ASTSentinel:
             return V(False, None, [f"Syntax: {ex}"], [], {})
         fs = [n for n in ast.walk(t) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
         m["nf"] = len(fs)
+        m["cc_max"] = self._analizar_funciones(fs, prod, e, w)
+        self._analizar_estructuras(t, e)
+        self._analizar_lineas(codigo, w)
+        self._detectar_magic_numbers(t, w)
+        m["lines"] = len(codigo.splitlines())
+        d = None
+        if w:
+            d = f"0x{hashlib.sha256((codigo + ''.join(w)).encode()).hexdigest()[:8]}"
+        return V(len(e) == 0, d, e, w, m)
+
+    def _analizar_funciones(self, fs, prod, e, w) -> int:
         mx = 0
         for f in fs:
             c = _cc(f)
@@ -89,7 +100,9 @@ class ASTSentinel:
             for a in f.args.args:
                 if a.annotation is None and a.arg != "self":
                     e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
-        m["cc_max"] = mx
+        return mx
+
+    def _analizar_estructuras(self, t, e) -> None:
         for n in ast.walk(t):
             if isinstance(n, ast.Try):
                 for h in n.handlers:
@@ -107,10 +120,14 @@ class ASTSentinel:
                 for a in n.names:
                     if f"{n.module or ''}.{a.name}" in PROH:
                         e.append(f"import: '{n.module}.{a.name}'")
+
+    def _analizar_lineas(self, codigo, w) -> None:
         for i, l in enumerate(codigo.splitlines(), 1):
             for p, ti in DP:
                 if p.search(l):
                     w.append(f"L{i}: {ti}")
+
+    def _detectar_magic_numbers(self, t, w) -> None:
         for n in ast.walk(t):
             if (
                 isinstance(n, ast.Constant)
@@ -118,8 +135,3 @@ class ASTSentinel:
                 and n.value not in (0, 1, -1, 2, True, False)
             ):
                 w.append(f"L{n.lineno}: magic {n.value}")
-        m["lines"] = len(codigo.splitlines())
-        d = None
-        if w:
-            d = f"0x{hashlib.sha256((codigo + ''.join(w)).encode()).hexdigest()[:8]}"
-        return V(len(e) == 0, d, e, w, m)
