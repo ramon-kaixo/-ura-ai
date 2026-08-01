@@ -1,0 +1,6 @@
+core: 139 archivos, 16549 LOC
+motor: 305 archivos, 41905 LOC
+knowledge: 90 archivos, 15928 LOC
+agents: 7 archivos, 450 LOC
+scripts: 231 archivos, 38528 LOC
+tests: 146 archivos, 36973 LOC

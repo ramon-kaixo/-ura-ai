@@ -1,0 +1,480 @@
+HUERFANO	core.__init__	
+HUERFANO	core.agents.__init__	
+HUERFANO	core.agents.__main__	
+VIVO	core.agents.cli	core.agents.__init__,core.agents.__main__
+VIVO	core.agents.conciencia	core.agents.__init__,core.agents.cli,core.agents.healing
+VIVO	core.agents.constants	core.agents.conciencia,core.agents.ejecutor,core.agents.healing,core.agents.orquestador
+VIVO	core.agents.ejecutor	core.agents.__init__,core.agents.healing
+VIVO	core.agents.healing	core.agents.__init__,core.agents.cli
+VIVO	core.agents.orquestador	core.agents.__init__,core.agents.cli,core.agents.healing
+VIVO	core.agents.reparador	core.agents.__init__,core.agents.cli,core.agents.healing
+VIVO	core.agents.telemetry	core.agents.__init__,core.agents.cli,core.agents.healing
+VIVO	core.auth_layer	core.model_router,core.model_router.router
+MAIN	core.auto_reindex	
+HUERFANO	core.bin_paths	
+HUERFANO	core.change_guardian	
+VIVO	core.chunking	core.auto_reindex
+HUERFANO	core.cleaner.__init__	
+VIVO	core.cleaner.cold_refactor	core.cleaner.__init__
+MAIN	core.cleanup	
+VIVO	core.config_manager	core.agents.ejecutor,core.memory_engine,core.model_router,core.model_router.router
+HUERFANO	core.debate.__init__	
+VIVO	core.debate.debate_engine	core.debate.plan_validator
+VIVO	core.debate.lockfile	core.debate.debate_engine,core.debate.plan_validator
+MAIN	core.debate.plan_validator	
+VIVO	core.document_quality	core.auto_reindex
+MAIN	core.error_sandbox	
+VIVO	core.event_bus	core.infra.heartbeat,core.logs.guardian_logger,core.watchdog_funciones
+MAIN	core.guardian_disco	
+VIVO	core.guardian_openclaw	core.mochila.guardian_middleware
+HUERFANO	core.guardians.__init__	
+VIVO	core.guardians.ast_sentinel	core.cleaner.cold_refactor,core.guardians.__init__
+HUERFANO	core.inferencia.__init__	
+HUERFANO	core.inferencia.engine	
+HUERFANO	core.infra.__init__	
+MAIN	core.infra.heartbeat	
+VIVO	core.infra.state_manager	core.wrapper_opencode
+MAIN	core.ingestador_red	
+HUERFANO	core.interfaces.__init__	
+VIVO	core.interfaces.config	core.interfaces.__init__
+VIVO	core.interfaces.executor	core.interfaces.__init__
+VIVO	core.interfaces.llm	core.interfaces.__init__
+VIVO	core.interfaces.repository	core.interfaces.__init__
+VIVO	core.interfaces.secrets	core.interfaces.__init__
+HUERFANO	core.json_logger	
+HUERFANO	core.logs.__init__	
+VIVO	core.logs.guardian_logger	core.debate.debate_engine,core.infra.heartbeat,core.mochila.mochila_server,core.mochila.routes.proxy
+HUERFANO	core.memoria.__init__	
+VIVO	core.memoria.analizador	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memoria.bridge	core.memoria.consulta
+VIVO	core.memoria.compresor	core.memoria.consulta,core.memoria.vigilante
+VIVO	core.memoria.consulta	core.mochila.mochila_server,core.mochila.routes.memoria
+HUERFANO	core.memoria.detectores	
+HUERFANO	core.memoria.ensamblador	
+HUERFANO	core.memoria.extractores.__init__	
+HUERFANO	core.memoria.extractores.imagen_extractor	
+VIVO	core.memoria.ficha	core.memoria.compresor,core.memoria.qdrant_store
+VIVO	core.memoria.ingesto	core.memoria.bridge,core.mochila.mochila_server,core.mochila.routes.memoria
+HUERFANO	core.memoria.limpieza	
+VIVO	core.memoria.qdrant_store	core.memoria.analizador,core.memoria.consulta,core.memoria.limpieza,core.memoria.sintetizador
+HUERFANO	core.memoria.rastreadores.__init__	
+VIVO	core.memoria.rastreadores.comprar	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memoria.rastreadores.hacer	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memoria.rastreadores.saber	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memoria.sintetizador	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memoria.vigilante	core.mochila.mochila_server,core.mochila.routes.memoria
+VIVO	core.memory_engine	core.search_engine
+HUERFANO	core.mochila.__init__	
+VIVO	core.mochila._state	core.mochila.app
+VIVO	core.mochila.adapter	core.mochila._state
+HUERFANO	core.mochila.app	
+VIVO	core.mochila.circuit_breaker	core.mochila._state,core.mochila.mochila_server
+VIVO	core.mochila.cost_tracker	core.mochila._state,core.mochila.mochila_server
+VIVO	core.mochila.guardian_middleware	core.mochila.app,core.mochila.mochila_server
+VIVO	core.mochila.guardian_opencode	core.mochila.mochila_server,core.mochila.routes.chat,core.mochila.routes.proxy
+VIVO	core.mochila.helpers	core.mochila.routes.chat,core.mochila.streaming
+HUERFANO	core.mochila.mochila_server	
+VIVO	core.mochila.models	core.mochila.routes.chat,core.mochila.routes.memoria
+HUERFANO	core.mochila.providers.__init__	
+HUERFANO	core.mochila.providers.base	
+HUERFANO	core.mochila.providers.deepseek	
+HUERFANO	core.mochila.providers.gemini	
+HUERFANO	core.mochila.providers.groq	
+HUERFANO	core.mochila.providers.ollama	
+HUERFANO	core.mochila.providers.openrouter	
+VIVO	core.mochila.rate_limiter	core.mochila._state,core.mochila.mochila_server
+VIVO	core.mochila.router	core.mochila._state,core.mochila.mochila_server,core.mochila.routes.chat
+HUERFANO	core.mochila.routes.__init__	
+VIVO	core.mochila.routes.breaker	core.mochila.routes.__init__
+VIVO	core.mochila.routes.chat	core.mochila.routes.__init__
+VIVO	core.mochila.routes.health	core.mochila.routes.__init__
+VIVO	core.mochila.routes.memoria	core.mochila.routes.__init__
+VIVO	core.mochila.routes.metrics	core.mochila.routes.__init__
+VIVO	core.mochila.routes.models	core.mochila.routes.__init__
+VIVO	core.mochila.routes.proxy	core.mochila.routes.__init__
+VIVO	core.mochila.routes.status	core.mochila.routes.__init__
+VIVO	core.mochila.status_endpoint	core.mochila.mochila_server,core.mochila.routes.status
+VIVO	core.mochila.streaming	core.mochila.routes.chat
+VIVO	core.mochila.tools	core.memoria.bridge,core.memoria.vigilante,core.mochila.mochila_server,core.mochila.routes.chat
+VIVO	core.mochila.vram_scheduler	core.mochila._state,core.mochila.routes.proxy
+VIVO	core.model_router	core.model_router.dashboard,core.model_router.handler
+HUERFANO	core.model_router.__init__	
+HUERFANO	core.model_router.__main__	
+VIVO	core.model_router.cache	core.model_router.__init__,core.model_router.handler
+VIVO	core.model_router.cli	core.model_router.__init__,core.model_router.__main__
+VIVO	core.model_router.dashboard	core.model_router.__init__,core.model_router.handler
+VIVO	core.model_router.handler	core.model_router.__init__,core.model_router.cli
+VIVO	core.model_router.metrics	core.model_router.__init__,core.model_router.cache,core.model_router.handler,core.model_router.model_selection
+VIVO	core.model_router.model_selection	core.model_router.__init__,core.model_router.cli,core.model_router.dashboard,core.model_router.handler
+VIVO	core.model_router.proxy	core.model_router.__init__,core.model_router.dashboard,core.model_router.handler
+VIVO	core.model_router.router	core.model_router.__init__,core.model_router.cli,core.model_router.dashboard,core.model_router.handler
+VIVO	core.model_router.vram_guard	core.model_router.__init__,core.model_router.handler,core.model_router.proxy
+VIVO	core.notifier	motor.health_monitor
+HUERFANO	core.path_setup	
+MAIN	core.qdrant_retention	
+HUERFANO	core.query_cache	
+HUERFANO	core.query_expander	
+HUERFANO	core.reranker	
+MAIN	core.resolver_red	
+MAIN	core.sandbox	
+HUERFANO	core.sandbox.__init__	
+VIVO	core.sandbox.docker_orchestrator	core.cleaner.cold_refactor,core.sandbox.__init__
+HUERFANO	core.sandbox_orchestrator	
+HUERFANO	core.scraper_pool	
+VIVO	core.search_engine	core.model_router,core.model_router.handler
+HUERFANO	core.search_logger	
+MAIN	core.secretario_cache	
+HUERFANO	core.seguridad.__init__	
+VIVO	core.seguridad.rollback_manager	core.wrapper_opencode
+VIVO	core.stealth_fetcher	core.auto_reindex,core.ura_sandbox_bridge
+MAIN	core.ura_multi_agent	
+HUERFANO	core.ura_sandbox_bridge	
+HUERFANO	core.utils.__init__	
+VIVO	core.utils.anonymizer	core.utils.__init__,core.voice.anker_mac_pipeline
+HUERFANO	core.voice.__init__	
+HUERFANO	core.voice.anker_mac_pipeline	
+MAIN	core.voice.anker_pipeline	
+HUERFANO	core.voice.tts_piper	
+VIVO	core.watchdog_funciones	core.event_bus
+HUERFANO	core.wrapper_opencode	
+HUERFANO	knowledge.__init__	
+HUERFANO	knowledge.engine.__init__	
+VIVO	knowledge.engine._compat	knowledge.engine.errors,knowledge.engine.models,knowledge.engine.ontology.internal,knowledge.engine.pipeline
+VIVO	knowledge.engine.agent	knowledge.engine.__init__,knowledge.engine.cli.agent
+HUERFANO	knowledge.engine.api	
+VIVO	knowledge.engine.archiver	knowledge.engine.__init__,knowledge.engine.api,knowledge.engine.cli.archive,knowledge.engine.jobs
+VIVO	knowledge.engine.asset_store	knowledge.engine.extraction_service,knowledge.engine.graphrag,knowledge.engine.memory_store,knowledge.engine.subscribers
+HUERFANO	knowledge.engine.audit.__init__	
+VIVO	knowledge.engine.audit.backend	knowledge.engine.audit.__init__,knowledge.engine.audit.ndjson_backend,knowledge.engine.audit.service,knowledge.engine.audit.sqlite_backend
+VIVO	knowledge.engine.audit.ndjson_backend	knowledge.engine.audit.__init__,knowledge.engine.audit.service
+VIVO	knowledge.engine.audit.service	knowledge.engine.audit.__init__
+VIVO	knowledge.engine.audit.sqlite_backend	knowledge.engine.audit.__init__
+VIVO	knowledge.engine.chunker	knowledge.engine.qdrant_sync
+HUERFANO	knowledge.engine.cli.__init__	
+HUERFANO	knowledge.engine.cli.__main__	
+VIVO	knowledge.engine.cli.agent	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.api	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.archive	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.audit	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.compile	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.docs	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.doctor	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.feedback	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.jobs	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.main	knowledge.engine.cli.__init__,knowledge.engine.cli.__main__,knowledge.engine.cli.agent,knowledge.engine.cli.archive
+VIVO	knowledge.engine.cli.metadata	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.notify	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.pipeline	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.rules	knowledge.engine.cli.main
+VIVO	knowledge.engine.cli.search	knowledge.engine.cli.main
+HUERFANO	knowledge.engine.collector	
+VIVO	knowledge.engine.compiler	knowledge.engine.__init__,knowledge.engine.api,knowledge.engine.cli.compile,knowledge.engine.jobs
+VIVO	knowledge.engine.connection	knowledge.engine.agent,knowledge.engine.api,knowledge.engine.archiver,knowledge.engine.asset_store
+VIVO	knowledge.engine.connection_pool	knowledge.engine.reader
+VIVO	knowledge.engine.deduction	knowledge.engine.__init__,knowledge.engine.agent,knowledge.engine.cli.rules
+VIVO	knowledge.engine.determinism	knowledge.engine.__init__,knowledge.engine.compiler
+VIVO	knowledge.engine.errors	knowledge.engine.__init__
+VIVO	knowledge.engine.eventbus	knowledge.engine.api,knowledge.engine.cli.main,knowledge.engine.collector,knowledge.engine.extraction_service
+HUERFANO	knowledge.engine.extraction_service	
+HUERFANO	knowledge.engine.extractors.__init__	
+VIVO	knowledge.engine.extractors.audio	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.base	knowledge.engine.extraction_service,knowledge.engine.extractors.__init__,knowledge.engine.extractors.audio,knowledge.engine.extractors.git
+VIVO	knowledge.engine.extractors.git	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.image	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.markdown	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.office	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.pdf	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.video	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.extractors.web	knowledge.engine.extractors.__init__
+VIVO	knowledge.engine.feedback	knowledge.engine.api,knowledge.engine.cli.feedback
+VIVO	knowledge.engine.governance_store	knowledge.engine.cli.metadata,knowledge.engine.graphrag,knowledge.engine.subscribers
+VIVO	knowledge.engine.graphrag	knowledge.engine.api,knowledge.engine.cli.metadata,knowledge.engine.vector_retriever
+VIVO	knowledge.engine.jobs	knowledge.engine.orchestrator,knowledge.engine.subscribers
+VIVO	knowledge.engine.knowledge_base	knowledge.engine.cli.docs
+VIVO	knowledge.engine.knowledge_verifier	knowledge.engine.verifier
+VIVO	knowledge.engine.lineage_store	knowledge.engine.api,knowledge.engine.cli.metadata,knowledge.engine.graphrag,knowledge.engine.subscribers
+VIVO	knowledge.engine.lock	knowledge.engine.jobs,knowledge.engine.orchestrator
+VIVO	knowledge.engine.logging_config	knowledge.engine.__init__,knowledge.engine.orchestrator
+VIVO	knowledge.engine.memory_store	knowledge.engine.api,knowledge.engine.cli.metadata,knowledge.engine.graphrag,motor.assistant.rag
+VIVO	knowledge.engine.metrics	knowledge.engine.__init__,knowledge.engine.api,knowledge.engine.archiver,knowledge.engine.audit.backend
+VIVO	knowledge.engine.migrations	knowledge.engine.api,knowledge.engine.cli.doctor,knowledge.engine.models,knowledge.engine.sqlite_writer
+VIVO	knowledge.engine.models	knowledge.engine.__init__,knowledge.engine.archiver,knowledge.engine.audit.backend,knowledge.engine.audit.ndjson_backend
+VIVO	knowledge.engine.notify	knowledge.engine.cli.notify
+HUERFANO	knowledge.engine.ontology.__init__	
+VIVO	knowledge.engine.ontology.internal	knowledge.engine.asset_store,knowledge.engine.eventbus,knowledge.engine.extraction_service,knowledge.engine.extractors.audio
+VIVO	knowledge.engine.ontology.mapping	knowledge.engine.ontology.__init__
+VIVO	knowledge.engine.ontology.registry	knowledge.engine.ontology.__init__,knowledge.engine.ontology.schema_org
+VIVO	knowledge.engine.ontology.schema_org	knowledge.engine.ontology.__init__,knowledge.engine.ontology.internal,knowledge.engine.ontology.mapping
+VIVO	knowledge.engine.orchestrator	knowledge.engine.__init__,knowledge.engine.api,knowledge.engine.cli.compile,knowledge.engine.cli.jobs
+VIVO	knowledge.engine.parser	knowledge.engine.__init__,knowledge.engine.compiler
+VIVO	knowledge.engine.pipeline	knowledge.engine.__init__,knowledge.engine.cli.pipeline
+VIVO	knowledge.engine.qdrant_sync	knowledge.engine.cli.doctor,knowledge.engine.compiler,knowledge.engine.pipeline,knowledge.engine.reader
+VIVO	knowledge.engine.reader	knowledge.engine.__init__,knowledge.engine.agent,knowledge.engine.cli.doctor,knowledge.engine.cli.search
+VIVO	knowledge.engine.recommendation	knowledge.engine.__init__
+VIVO	knowledge.engine.repository	knowledge.engine.api
+HUERFANO	knowledge.engine.rollback	
+VIVO	knowledge.engine.rules	knowledge.engine.__init__,knowledge.engine.api,knowledge.engine.cli.rules,knowledge.engine.pipeline
+VIVO	knowledge.engine.scanner	knowledge.engine.__init__,knowledge.engine.compiler,knowledge.engine.pipeline
+VIVO	knowledge.engine.snapshot_store	knowledge.engine.compiler
+VIVO	knowledge.engine.sqlite_writer	knowledge.engine.cli.compile,knowledge.engine.compiler
+VIVO	knowledge.engine.storage_verifier	knowledge.engine.cli.doctor,knowledge.engine.verifier
+VIVO	knowledge.engine.subscribers	knowledge.engine.api,knowledge.engine.cli.main,knowledge.engine.collector
+VIVO	knowledge.engine.validator	knowledge.engine.__init__,knowledge.engine.compiler
+VIVO	knowledge.engine.vector_base	knowledge.engine.__init__,knowledge.engine.subscribers,knowledge.engine.vector_qdrant,knowledge.engine.vector_retriever
+VIVO	knowledge.engine.vector_ollama	knowledge.engine.__init__
+VIVO	knowledge.engine.vector_qdrant	knowledge.engine.__init__
+VIVO	knowledge.engine.vector_retriever	knowledge.engine.__init__
+VIVO	knowledge.engine.verifier	knowledge.engine.__init__,knowledge.engine.cli.compile,knowledge.engine.cli.doctor,knowledge.engine.pipeline
+HUERFANO	knowledge.evaluation.__init__	
+HUERFANO	knowledge.evaluation.corpus.__init__	
+HUERFANO	motor.__init__	
+HUERFANO	motor.agents.__init__	
+VIVO	motor.agents.agent	motor.agents.__init__
+VIVO	motor.agents.base	motor.agents.__init__,motor.agents.agent,motor.agents.gate,motor.agents.planner
+VIVO	motor.agents.gate	motor.agents.__init__
+VIVO	motor.agents.models	motor.agents.__init__,motor.agents.agent,motor.agents.base,motor.agents.gate
+VIVO	motor.agents.planner	motor.agents.__init__
+VIVO	motor.agents.runner	motor.agents.__init__
+VIVO	motor.agents.scheduler	motor.agents.__init__
+VIVO	motor.agents.state	motor.agents.__init__,motor.agents.agent
+HUERFANO	motor.assistant..nervioso.conversation_search	
+HUERFANO	motor.assistant..nervioso.tool_confirmation	
+HUERFANO	motor.assistant.__init__	
+HUERFANO	motor.assistant.api.__init__	
+VIVO	motor.assistant.api.handlers	motor.assistant.api.__init__,motor.assistant.api.routes
+VIVO	motor.assistant.api.middleware	motor.assistant.api.routes
+VIVO	motor.assistant.api.routes	motor.assistant.api.__init__
+VIVO	motor.assistant.auth	motor.assistant.main
+VIVO	motor.assistant.auto_mode	motor.assistant.conversation
+VIVO	motor.assistant.config	motor.assistant..nervioso.conversation_search,motor.assistant.auth,motor.assistant.conversation,motor.assistant.corrective_learning
+HUERFANO	motor.assistant.context	
+VIVO	motor.assistant.context_window	motor.assistant.context,motor.assistant.conversation
+VIVO	motor.assistant.conversation	motor.assistant.api.handlers,motor.assistant.llm_bridge
+VIVO	motor.assistant.corrective_learning	motor.assistant.conversation
+VIVO	motor.assistant.episodic_memory	motor.assistant.conversation
+VIVO	motor.assistant.evaluation	motor.assistant.api.routes
+VIVO	motor.assistant.executor	motor.assistant.api.handlers,motor.assistant.tool_plugin,motor.assistant.tool_plugins.weather
+VIVO	motor.assistant.health	motor.assistant.api.handlers,motor.assistant.api.routes,motor.assistant.main
+VIVO	motor.assistant.implicit_feedback	motor.assistant.conversation
+VIVO	motor.assistant.intent	motor.assistant.conversation
+VIVO	motor.assistant.interruption	motor.assistant.conversation
+VIVO	motor.assistant.language	motor.assistant.conversation
+VIVO	motor.assistant.llm_bridge	motor.assistant.api.handlers
+MAIN	motor.assistant.main	
+VIVO	motor.assistant.message_store	motor.assistant.context,motor.assistant.conversation,motor.assistant.episodic_memory
+VIVO	motor.assistant.metrics	motor.assistant.api.routes,motor.observability.prometheus_exporter
+VIVO	motor.assistant.models	motor.assistant.api.handlers,motor.assistant.api.routes,motor.assistant.auto_mode,motor.assistant.context
+VIVO	motor.assistant.moderation	motor.assistant.api.handlers
+VIVO	motor.assistant.preferences	motor.assistant.api.handlers
+VIVO	motor.assistant.proactive_memory	motor.assistant.conversation
+VIVO	motor.assistant.prompt_sanitizer	motor.assistant.conversation
+VIVO	motor.assistant.rag	motor.assistant.conversation
+VIVO	motor.assistant.sentiment	motor.assistant.conversation
+VIVO	motor.assistant.streaming	motor.assistant.api.routes
+VIVO	motor.assistant.style	motor.assistant.api.handlers
+VIVO	motor.assistant.tool_plugin	motor.assistant.executor,motor.assistant.tool_plugins.weather
+HUERFANO	motor.assistant.tool_plugins.__init__	
+HUERFANO	motor.assistant.tool_plugins.weather	
+VIVO	motor.assistant.trends	motor.assistant.conversation
+VIVO	motor.assistant.vector_memory	motor.assistant.conversation
+VIVO	motor.assistant.web_search	motor.assistant.conversation
+HUERFANO	motor.brain.__init__	
+HUERFANO	motor.brain.advisor	
+HUERFANO	motor.brain.alerts	
+VIVO	motor.brain.analyzer	motor.brain.advisor
+HUERFANO	motor.brain.auto_maintain	
+HUERFANO	motor.brain.executor	
+VIVO	motor.brain.observer	motor.brain.alerts
+HUERFANO	motor.brain.web_adapter	
+HUERFANO	motor.cli.__init__	
+VIVO	motor.cli.cmd_diag	motor.cli.main
+VIVO	motor.cli.cmd_pipeline	motor.cli.main
+VIVO	motor.cli.cmd_status	motor.cli.main
+VIVO	motor.cli.cmd_ura	motor.cli.main
+VIVO	motor.cli.cmd_utils	motor.cli.main
+MAIN	motor.cli.main	
+HUERFANO	motor.cli.public_api	
+HUERFANO	motor.core.__init__	
+VIVO	motor.core.config	core.auto_reindex,core.infra.heartbeat,core.logs.guardian_logger,core.memory_engine
+HUERFANO	motor.core.evaluation.__init__	
+VIVO	motor.core.evaluation.continuous	motor.core.evaluation.__init__
+VIVO	motor.core.evaluation.corpus	motor.core.evaluation.__init__,motor.core.evaluation.continuous,motor.core.evaluation.evaluator,motor.core.evaluation.experiment
+VIVO	motor.core.evaluation.evaluator	motor.core.evaluation.__init__,motor.core.evaluation.continuous,motor.core.evaluation.experiment
+VIVO	motor.core.evaluation.experiment	motor.core.evaluation.__init__,motor.core.evaluation.continuous
+VIVO	motor.core.evaluation.metrics	motor.core.evaluation.__init__,motor.core.evaluation.evaluator
+VIVO	motor.core.evaluation.regression	motor.core.evaluation.__init__,motor.core.evaluation.continuous
+VIVO	motor.core.executor	motor.cli.cmd_diag,motor.cli.cmd_status,motor.cli.cmd_ura,motor.cli.cmd_utils
+HUERFANO	motor.core.fusion.__init__	
+VIVO	motor.core.fusion.base	motor.core.fusion.__init__,motor.core.fusion.engine,motor.core.fusion.registry,motor.core.fusion.stages.conflict_detection
+VIVO	motor.core.fusion.bridge	motor.core.fusion.__init__
+VIVO	motor.core.fusion.config	motor.core.fusion.__init__
+VIVO	motor.core.fusion.context_builder	motor.core.fusion.__init__
+VIVO	motor.core.fusion.engine	motor.core.fusion.__init__,motor.core.fusion.base,motor.core.fusion.stages.conflict_detection,motor.core.fusion.stages.delta
+HUERFANO	motor.core.fusion.fact_history	
+VIVO	motor.core.fusion.fact_index	motor.core.fusion.__init__,motor.core.fusion.context_builder,motor.core.fusion.engine
+VIVO	motor.core.fusion.models	knowledge.engine.orchestrator,motor.core.fusion.__init__,motor.core.fusion.base,motor.core.fusion.bridge
+VIVO	motor.core.fusion.registry	motor.core.fusion.__init__
+HUERFANO	motor.core.fusion.stages.__init__	
+VIVO	motor.core.fusion.stages.conflict_detection	motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.delta	motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.entity_resolver	motor.core.fusion.__init__,motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.extraction	motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.merger	motor.core.fusion.__init__,motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.normalization	motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.selector	motor.core.fusion.stages.__init__
+VIVO	motor.core.fusion.stages.source_scorer	motor.core.fusion.stages.__init__
+HUERFANO	motor.core.llm.__init__	
+VIVO	motor.core.llm._logging	motor.core.llm.anthropic,motor.core.llm.baseline,motor.core.llm.gemini,motor.core.llm.lmstudio
+VIVO	motor.core.llm._state	motor.core.llm.__init__
+VIVO	motor.core.llm.anthropic	motor.core.llm._state
+VIVO	motor.core.llm.base	motor.core.llm.anthropic,motor.core.llm.gemini,motor.core.llm.lmstudio,motor.core.llm.ollama
+VIVO	motor.core.llm.baseline	motor.core.llm.monitor,motor.core.llm.router.__init__
+VIVO	motor.core.llm.circuit_breaker	motor.core.llm.router.strategy
+VIVO	motor.core.llm.detector	motor.core.llm.monitor,motor.core.llm.router.__init__
+VIVO	motor.core.llm.gemini	core.mochila._state,motor.core.llm._state
+VIVO	motor.core.llm.lmstudio	motor.core.llm._state
+VIVO	motor.core.llm.monitor	motor.core.llm.router.__init__
+VIVO	motor.core.llm.observability	motor.core.llm.router.__init__,motor.core.llm.router.strategy
+VIVO	motor.core.llm.ollama	core.mochila._state,motor.core.llm._state
+VIVO	motor.core.llm.openai	motor.core.llm._state
+VIVO	motor.core.llm.openrouter	core.mochila._state,motor.core.llm._state
+VIVO	motor.core.llm.profiler	motor.core.llm.monitor,motor.core.llm.router.__init__
+VIVO	motor.core.llm.registry	motor.core.llm._state,motor.core.llm.router.__init__,motor.core.llm.router.capability,motor.core.llm.router.providers
+HUERFANO	motor.core.llm.router.__init__	
+VIVO	motor.core.llm.router.capability	motor.core.llm.router.__init__
+VIVO	motor.core.llm.router.health	motor.core.llm.router.__init__
+VIVO	motor.core.llm.router.providers	motor.core.llm.router.__init__
+VIVO	motor.core.llm.router.strategy	motor.core.llm.router.__init__
+VIVO	motor.core.llm.router.utils	motor.core.llm.router.__init__,motor.core.llm.router.strategy
+VIVO	motor.core.llm.vllm	motor.core.llm._state
+VIVO	motor.core.qdrant_client	core.auto_reindex,core.infra.heartbeat,core.logs.guardian_logger,core.memoria.qdrant_store
+HUERFANO	motor.core.qdrant_rest	
+VIVO	motor.core.secrets	core.auth_layer,core.infra.heartbeat,core.mochila.mochila_server,core.model_router
+VIVO	motor.core.state	knowledge.engine.qdrant_sync,motor.cli.cmd_pipeline,motor.cli.public_api,motor.core.qdrant_client
+HUERFANO	motor.core.web.__init__	
+VIVO	motor.core.web.base	motor.core.web.__init__,motor.core.web.crawler.providers.httpx_crawler,motor.core.web.extractor.providers.html_extractor,motor.core.web.registry
+HUERFANO	motor.core.web.citation.__init__	
+VIVO	motor.core.web.citation.citation	motor.core.fusion.base,motor.core.fusion.engine,motor.core.fusion.models,motor.core.web.__init__
+HUERFANO	motor.core.web.cleaner.__init__	
+VIVO	motor.core.web.cleaner.cleaner	motor.core.web.__init__,motor.core.web.cleaner.deduplication,motor.core.web.pipeline
+VIVO	motor.core.web.cleaner.deduplication	motor.core.web.__init__,motor.core.web.pipeline
+VIVO	motor.core.web.cleaner.url_utils	motor.core.web.__init__,motor.core.web.citation.citation,motor.core.web.cleaner.cleaner,motor.core.web.cleaner.deduplication
+VIVO	motor.core.web.config	motor.core.web.__init__
+HUERFANO	motor.core.web.crawler.__init__	
+HUERFANO	motor.core.web.crawler.providers.__init__	
+VIVO	motor.core.web.crawler.providers.httpx_crawler	motor.brain.web_adapter,motor.core.web.__init__
+HUERFANO	motor.core.web.extractor.__init__	
+HUERFANO	motor.core.web.extractor.providers.__init__	
+VIVO	motor.core.web.extractor.providers.html_extractor	motor.core.web.__init__
+VIVO	motor.core.web.models	motor.core.fusion.base,motor.core.fusion.engine,motor.core.fusion.models,motor.core.web.__init__
+VIVO	motor.core.web.pipeline	motor.core.web.__init__
+HUERFANO	motor.core.web.ranker.__init__	
+VIVO	motor.core.web.ranker.ranker	motor.core.web.__init__,motor.core.web.pipeline
+VIVO	motor.core.web.registry	motor.core.web.__init__
+HUERFANO	motor.core.web.searcher.__init__	
+HUERFANO	motor.core.web.searcher.providers.__init__	
+VIVO	motor.core.web.searcher.providers.duckduckgo	motor.brain.web_adapter,motor.core.web.__init__
+VIVO	motor.core.web.searcher.providers.searxng	motor.core.web.__init__
+HUERFANO	motor.core.web.summarizer.__init__	
+VIVO	motor.core.web.summarizer.summarizer	motor.brain.web_adapter,motor.core.web.__init__,motor.core.web.citation.citation,motor.core.web.pipeline
+HUERFANO	motor.diagnostico.__init__	
+HUERFANO	motor.diagnostico._state	
+VIVO	motor.diagnostico.backup_knowledge	motor.diagnostico.__init__,motor.diagnostico.diagnostico
+VIVO	motor.diagnostico.circuit_breaker	motor.diagnostico.__init__,motor.diagnostico.diagnostico
+VIVO	motor.diagnostico.correlacion	motor.diagnostico.__init__,motor.diagnostico.diagnostico
+HUERFANO	motor.diagnostico.diagnostico	
+VIVO	motor.diagnostico.pattern_matcher	motor.diagnostico.__init__,motor.diagnostico.diagnostico
+HUERFANO	motor.events.__init__	
+VIVO	motor.events.bus	motor.events.__init__,motor.events.hooks,motor.observability.instrumentation,motor.pipeline.executor
+VIVO	motor.events.compat	motor.plugin.registry_v2
+VIVO	motor.events.event	motor.events.__init__,motor.events.bus,motor.events.hooks,motor.pipeline.executor
+VIVO	motor.events.hooks	motor.events.__init__,motor.observability.instrumentation,motor.plugin.registry_v2
+VIVO	motor.events.topics	motor.cli.public_api,motor.events.__init__,motor.events.hooks,motor.pipeline.executor
+HUERFANO	motor.guard.__init__	
+VIVO	motor.guard.preflight	motor.cli.cmd_diag,motor.pipeline.orchestrator
+VIVO	motor.guard.verifier	motor.cli.cmd_diag,motor.pipeline.orchestrator
+MAIN	motor.health_monitor	
+HUERFANO	motor.intelligence.agents.__init__	
+VIVO	motor.intelligence.agents.base	motor.intelligence.agents.__init__,motor.intelligence.agents.executor,motor.intelligence.agents.parallel,motor.intelligence.agents.planner
+VIVO	motor.intelligence.agents.consensus	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.executor	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.message	motor.intelligence.agents.__init__,motor.intelligence.agents.base,motor.intelligence.agents.consensus,motor.intelligence.agents.executor
+VIVO	motor.intelligence.agents.parallel	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.planner	motor.intelligence.agents.__init__,motor.intelligence.agents.runtime
+VIVO	motor.intelligence.agents.reflection	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.researcher	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.runtime	motor.intelligence.agents.__init__
+VIVO	motor.intelligence.agents.supervisor	motor.intelligence.agents.__init__,motor.intelligence.agents.runtime
+VIVO	motor.intelligence.agents.validator	motor.intelligence.agents.__init__
+HUERFANO	motor.intelligence.chunking	
+HUERFANO	motor.intelligence.memory.__init__	
+VIVO	motor.intelligence.memory.base	motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.compression	motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.episodic	motor.intelligence.agents.researcher,motor.intelligence.memory.__init__,motor.intelligence.memory.compression,motor.intelligence.memory.extractor
+VIVO	motor.intelligence.memory.extractor	motor.intelligence.memory.__init__,motor.intelligence.memory.extractor_llm,motor.intelligence.memory.semantic
+VIVO	motor.intelligence.memory.extractor_llm	motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.forgetting	motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.hybrid	motor.cli.cmd_ura
+VIVO	motor.intelligence.memory.orchestrator	motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.record	motor.intelligence.memory.__init__,motor.intelligence.memory.base,motor.intelligence.memory.episodic,motor.intelligence.memory.hybrid
+VIVO	motor.intelligence.memory.retrieval	motor.intelligence.agents.researcher,motor.intelligence.memory.__init__
+VIVO	motor.intelligence.memory.semantic	motor.assistant.conversation,motor.core.fusion.__init__,motor.intelligence.agents.researcher,motor.intelligence.memory.__init__
+HUERFANO	motor.intelligence.pipeline	
+HUERFANO	motor.intelligence.reranking.__init__	
+VIVO	motor.intelligence.reranking.base	motor.intelligence.reranking.__init__,motor.intelligence.reranking.ce,motor.intelligence.reranking.llm,motor.intelligence.reranking.noop
+VIVO	motor.intelligence.reranking.ce	motor.intelligence.reranking.__init__
+VIVO	motor.intelligence.reranking.llm	motor.intelligence.reranking.__init__
+VIVO	motor.intelligence.reranking.noop	motor.intelligence.reranking.__init__
+HUERFANO	motor.intelligence.reranking.reranker	
+HUERFANO	motor.intelligence.retrieval.__init__	
+VIVO	motor.intelligence.retrieval.hybrid	motor.cli.public_api,motor.intelligence.pipeline,motor.intelligence.retrieval.__init__
+VIVO	motor.intelligence.retrieval.lexical	motor.cli.public_api,motor.intelligence.pipeline,motor.intelligence.retrieval.__init__
+VIVO	motor.intelligence.retrieval.vector	motor.cli.public_api,motor.intelligence.pipeline,motor.intelligence.retrieval.__init__
+HUERFANO	motor.memory.__init__	
+VIVO	motor.memory.crypto	motor.memory.journal,motor.memory.snapshot
+VIVO	motor.memory.journal	motor.memory.__init__,motor.memory.memory
+VIVO	motor.memory.memory	motor.memory.__init__
+VIVO	motor.memory.models	motor.assistant.context,motor.memory.__init__,motor.memory.journal,motor.memory.memory
+VIVO	motor.memory.snapshot	motor.memory.__init__,motor.memory.memory
+VIVO	motor.memory.timeline	motor.memory.__init__,motor.memory.memory
+HUERFANO	motor.meta.__init__	
+HUERFANO	motor.meta.schema	
+HUERFANO	motor.observability.__init__	
+VIVO	motor.observability.exporter	motor.observability.__init__
+VIVO	motor.observability.health	motor.assistant.health,motor.cli.cmd_ura,motor.cli.public_api,motor.observability.__init__
+HUERFANO	motor.observability.http	
+VIVO	motor.observability.instrumentation	motor.observability.__init__
+VIVO	motor.observability.logging	core.debate.debate_engine,core.json_logger,core.model_router.cli,knowledge.engine.logging_config
+VIVO	motor.observability.metrics	motor.observability.__init__,motor.observability.exporter,motor.observability.http,motor.observability.instrumentation
+VIVO	motor.observability.metrics_labeled	motor.assistant.metrics
+VIVO	motor.observability.prometheus_exporter	motor.assistant.api.routes,motor.assistant.main
+VIVO	motor.observability.readiness	motor.observability.__init__,motor.observability.http,motor.observability.instrumentation
+VIVO	motor.observability.tracing_exporter	motor.observability.tracing_platform
+VIVO	motor.observability.tracing_platform	motor.assistant.api.routes,motor.observability.tracing_exporter
+VIVO	motor.observability.tracing_sampler	motor.observability.tracing_platform
+HUERFANO	motor.pipeline.__init__	
+VIVO	motor.pipeline.definition	motor.pipeline.__init__,motor.pipeline.executor,motor.pipeline.loader
+VIVO	motor.pipeline.executor	motor.observability.instrumentation,motor.pipeline.__init__
+VIVO	motor.pipeline.loader	motor.pipeline.__init__
+VIVO	motor.pipeline.orchestrator	motor.cli.cmd_pipeline
+HUERFANO	motor.platform.__init__	
+HUERFANO	motor.platform.metrics	
+VIVO	motor.platform.models	motor.agents.models,motor.observability.tracing_platform,motor.platform.__init__,motor.platform.serializer
+VIVO	motor.platform.resilience	motor.core.llm.circuit_breaker,motor.platform.__init__
+VIVO	motor.platform.serializer	motor.agents.models,motor.platform.__init__
+HUERFANO	motor.platform.validator	
+HUERFANO	motor.plugin.__init__	
+VIVO	motor.plugin.base	motor.events.hooks,motor.plugin.__init__,motor.plugin.registry,motor.plugin.registry_v2
+VIVO	motor.plugin.manifest	motor.plugin.__init__,motor.plugin.base,motor.plugin.registry_v2
+VIVO	motor.plugin.registry	motor.plugin.__init__,motor.plugin.registry_v2
+VIVO	motor.plugin.registry_v2	motor.observability.instrumentation,motor.pipeline.executor,motor.pipeline.loader,motor.plugin.__init__
+HUERFANO	motor.scanner.__init__	
+HUERFANO	motor.scanner._state	
+VIVO	motor.scanner.calibration	motor.cli.cmd_diag,motor.cli.cmd_pipeline,motor.scanner.__init__,motor.scanner.scanner
+VIVO	motor.scanner.collector_asus	motor.scanner.__init__,motor.scanner.scanner
+VIVO	motor.scanner.collector_hw_asus	motor.scanner.__init__,motor.scanner.scanner
+VIVO	motor.scanner.collector_hw_vm	motor.scanner.__init__,motor.scanner.scanner
+VIVO	motor.scanner.collector_red	motor.scanner.__init__,motor.scanner.scanner
+VIVO	motor.scanner.diff_detector	motor.scanner.__init__,motor.scanner.scanner
+HUERFANO	motor.scanner.scanner	
+VIVO	motor.scanner.sliding_window	motor.scanner.__init__,motor.scanner.scanner

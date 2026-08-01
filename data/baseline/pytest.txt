@@ -1,0 +1,6 @@
+FAILED tests/unit/test_auth_middleware.py::TestAuthMiddleware::test_auth_enabled_wrong_key
+FAILED tests/unit/test_auth_middleware.py::TestAuthMiddleware::test_auth_enabled_valid_key
+FAILED tests/unit/test_auth_middleware.py::TestAuthMiddleware::test_non_chat_path_skips_auth
+FAILED tests/unit/test_auth_middleware.py::TestAuthMiddleware::test_auth_no_bearer_prefix
+FAILED tests/unit/test_message_store.py::TestConcurrency::test_concurrent_appends
+54 failed, 2946 passed, 57 skipped, 6 warnings in 467.41s (0:07:47)

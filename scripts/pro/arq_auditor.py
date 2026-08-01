@@ -188,7 +188,6 @@ def _top_level_calls(tree: ast.AST) -> list[tuple[int, str]]:
 
 
 A_SCRIPT_EXCEPTIONS = {
-    "agent_hierarchy.py",
     "agents/",
     "mantenimiento/",
     "scripts/pro/benchmark_",

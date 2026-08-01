@@ -1,0 +1,2 @@
+Would reformat: motor/core/fusion/fact_history.py
+1 file would be reformatted, 246 files already formatted
