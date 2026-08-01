@@ -296,6 +296,12 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - **GX10**: `/home/ramon/URA/ura_ia_1972/` (repositorio principal)
 - **Mac**: `/Users/ramonesnaola/URA/` (sincronización, desarrollo ligero)
 - **Mac**: `/Users/ramonesnaola/URA/backups_gx10/` (backups desde GX10)
+- **Mapa completo**: `docs/architecture/ESTRUCTURA_REPOSITORIO.md` (Fase 3 — v1)
+- **Criterios de tests**: `tests/README.md`
+- **`.attic/`** (gitignored): código retirado en Fase 3 (app/, cli/, sandbox/). Recuperable vía `git log` de las rutas originales
+- **`ura.service`**: movido a `deploy/ura.service` (Fase 3)
+- **`ura-audit`, `ura-contexto`**: movidos a `scripts/` (Fase 3)
+- **`configs/`**: congelado por `chattr +i` — consolidación pendiente en `config/`
 
 ### Tuneladora Unificada
 - **Ubicación**: `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_mantenimiento.py`
