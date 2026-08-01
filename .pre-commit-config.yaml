@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: semgrep
         name: Semgrep (reglas personalizadas)
-        entry: 'echo "semgrep disabled: opentelemetry dependency conflict" && exit 0'
+        entry: 'semgrep --config=.semgrep.yml --quiet'
         language: system
         pass_filenames: false
         always_run: true
