@@ -34,4 +34,4 @@
 | Herramienta | Bloqueo |
 |-------------|---------|
 | mypy | Bug interno TypeGuardedType |
-| semgrep | Conflicto opentelemetry.sdk._logs.LogData |
+| semgrep | Arreglado: instalar semgrep en venv, corregir patrones |
