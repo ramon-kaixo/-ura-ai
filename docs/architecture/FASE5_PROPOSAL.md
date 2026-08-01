@@ -76,7 +76,7 @@ El roadmap ya prevé F4 (Cobertura) -> F5 (Refactorización). Correcto: F4 da la
 
 ## 3. Mejoras detectadas en el análisis (M1-M7)
 
-- **M1 - Dead code audit (mayor ganancia):** `core/mochila/mochila_server.py` (486 stmts, 0%, única referencia = string en `status_endpoint.py:41` y `build/` obsoleto) -> borrar o archivar a `.attic/`. `core/ura_multi_agent.py` y `core/sandbox_orchestrator.py` solo referenciados por `scripts/pro/patch_timestamps.py` (scanner) -> auditar. `core/auto_reindex.py` solo por scripts de auditoría -> auditar. Borrar 4 módulos (~1.200 stmts de golpe elimina una parte enorme del gap de core).
+- **M1 - Dead code audit (COMPLETADO en S5a, c837da2):** `core/mochila/mochila_server.py` era **FALSE_POSITIVE** — VIVO via `ura-mochila.service` (`uvicorn core.mochila.mochila_server:app`, puerto 4098). ELIMINADOS: `core/ura_multi_agent.py` (330 stmts, import roto), `core/sandbox_orchestrator.py` (205), `core/model_router.py` top-level (752, inalcanzable: el paquete gana). CUARENTENA: `core/auto_reindex.py` (118, unit systemd dead) -> `.attic/`. Total -1.405 stmts. Detalle: `docs/architecture/DEAD_CODE_AUDIT_S5a.md`.
 - **M2 - build/ regenerado:** el grep encontró `build/lib/core/mochila/status_endpoint.py` — el dir que rompió mypy en F29 volvió a existir. Verificar y eliminar + confirmar .gitignore.
 - **M3 - Baselines desactualizados:** `data/baseline/radon.txt` decía "0 funciones cc>=20" (real: 8) y `data/baseline/loc_heavy.txt` es de F0. Regenerar ambos con script reproducible y commit.
 - **M4 - tests-ci-exclude.txt obsoleto:** referencia `tests/test_sda.py` y `tests/test_unit.py` (movidos a `tests/legacy/`) y `tests/test_integration.py`, `test_openclaw.py`, `test_mochila.py` (ya no existen en raíz). Actualizar la lista.
