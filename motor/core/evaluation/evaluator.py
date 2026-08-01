@@ -116,57 +116,27 @@ class EvaluationEngine:
             EvaluationRun con métricas agregadas.
 
         """
-        corpus = self._corpora.get(corpus_name)
-        if corpus is None:
-            msg = f"Corpus not found: {corpus_name}"
-            raise ValueError(msg)
-        retrieve_fn = self._retrievers.get(config_name)
-        if retrieve_fn is None:
-            msg = f"Retriever not found: {config_name}"
-            raise ValueError(msg)
+        corpus, retrieve_fn = self._validar_inputs(corpus_name, config_name)
 
         per_query: list[dict[str, Any]] = []
         latencies: list[float] = []
         query_pairs: list[tuple[set[str], list[str]]] = []
 
         for qid, query in corpus.queries.items():
-            t0 = time.monotonic()
-            retrieved = retrieve_fn(query.query_text)
-            elapsed = (time.monotonic() - t0) * 1000
-
-            latencies.append(elapsed)
-            query_pairs.append((query.relevant_docs, retrieved))
-
-            q_result: dict[str, Any] = {
-                "query_id": qid,
-                "query_text": query.query_text[:100],
-                "recall": recall_at_k(query.relevant_docs, retrieved, k),
-                "precision": precision_at_k(query.relevant_docs, retrieved, k),
-                "mrr": mrr(query.relevant_docs, retrieved),
-                "ndcg": ndcg_at_k(
-                    query.relevant_docs,
-                    retrieved,
-                    k,
-                    relevance_scores=query.relevance_scores if relevance_scores else None,
-                ),
-                "latency_ms": round(elapsed, 1),
-            }
+            q_result = _evaluar_query(
+                retrieve_fn,
+                qid,
+                query,
+                k,
+                relevance_scores,
+                latencies,
+                query_pairs,
+            )
             per_query.append(q_result)
 
         nq = len(per_query) if per_query else 1
-        aggregated: dict[str, float] = {
-            f"recall@{k}": sum(q["recall"] for q in per_query) / nq,
-            f"precision@{k}": sum(q["precision"] for q in per_query) / nq,
-            "mrr": sum(q["mrr"] for q in per_query) / nq,
-            f"ndcg@{k}": sum(q["ndcg"] for q in per_query) / nq,
-            "map": map_at_k(query_pairs, k) if query_pairs else 0.0,
-        }
-
-        latency_stats = {
-            "mean_ms": round(sum(latencies) / max(1, len(latencies)), 1),
-            "min_ms": round(min(latencies), 1) if latencies else 0.0,
-            "max_ms": round(max(latencies), 1) if latencies else 0.0,
-        }
+        aggregated = _agregar(per_query, query_pairs, k, nq)
+        latency_stats = _latencia_stats(latencies)
 
         run = EvaluationRun(
             corpus_name=corpus_name,
@@ -182,6 +152,17 @@ class EvaluationEngine:
             self._results.pop(0)
 
         return run
+
+    def _validar_inputs(self, corpus_name: str, config_name: str) -> tuple[EvaluationCorpus, object]:
+        corpus = self._corpora.get(corpus_name)
+        if corpus is None:
+            msg = f"Corpus not found: {corpus_name}"
+            raise ValueError(msg)
+        retrieve_fn = self._retrievers.get(config_name)
+        if retrieve_fn is None:
+            msg = f"Retriever not found: {config_name}"
+            raise ValueError(msg)
+        return corpus, retrieve_fn
 
     def compare(
         self,
@@ -236,3 +217,58 @@ class EvaluationEngine:
 
     def reset(self) -> None:
         self._results.clear()
+
+
+def _evaluar_query(
+    retrieve_fn: object,
+    qid: str,
+    query: object,
+    k: int,
+    relevance_scores: bool,
+    latencies: list[float],
+    query_pairs: list[tuple[set[str], list[str]]],
+) -> dict[str, Any]:
+    t0 = time.monotonic()
+    retrieved = retrieve_fn(query.query_text)
+    elapsed = (time.monotonic() - t0) * 1000
+
+    latencies.append(elapsed)
+    query_pairs.append((query.relevant_docs, retrieved))
+
+    return {
+        "query_id": qid,
+        "query_text": query.query_text[:100],
+        "recall": recall_at_k(query.relevant_docs, retrieved, k),
+        "precision": precision_at_k(query.relevant_docs, retrieved, k),
+        "mrr": mrr(query.relevant_docs, retrieved),
+        "ndcg": ndcg_at_k(
+            query.relevant_docs,
+            retrieved,
+            k,
+            relevance_scores=query.relevance_scores if relevance_scores else None,
+        ),
+        "latency_ms": round(elapsed, 1),
+    }
+
+
+def _agregar(
+    per_query: list[dict[str, Any]],
+    query_pairs: list[tuple[set[str], list[str]]],
+    k: int,
+    nq: int,
+) -> dict[str, float]:
+    return {
+        f"recall@{k}": sum(q["recall"] for q in per_query) / nq,
+        f"precision@{k}": sum(q["precision"] for q in per_query) / nq,
+        "mrr": sum(q["mrr"] for q in per_query) / nq,
+        f"ndcg@{k}": sum(q["ndcg"] for q in per_query) / nq,
+        "map": map_at_k(query_pairs, k) if query_pairs else 0.0,
+    }
+
+
+def _latencia_stats(latencies: list[float]) -> dict[str, float]:
+    return {
+        "mean_ms": round(sum(latencies) / max(1, len(latencies)), 1),
+        "min_ms": round(min(latencies), 1) if latencies else 0.0,
+        "max_ms": round(max(latencies), 1) if latencies else 0.0,
+    }
