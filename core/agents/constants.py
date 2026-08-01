@@ -17,4 +17,6 @@ MODELOS: dict[str, str] = {
     "revisor": "qwen2.5-coder:14b-instruct-q8_0",
 }
 
+NERVIOSO = URA_ROOT / ".nervioso"
+SCRIPTS = URA_ROOT / "scripts/pro"
 RUFF = str(URA_ROOT / ".venv/bin/ruff")
