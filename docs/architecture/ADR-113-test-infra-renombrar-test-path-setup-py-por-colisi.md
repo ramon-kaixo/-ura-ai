@@ -1,9 +1,9 @@
-# ADR-060: fix(test): test_full_pipeline esperaba 'Documents: 0' — CLI ahora dice 'Nodes: 0
+# ADR-113: test(infra): renombrar test_path_setup.py por colision de coleccion con tests/un
 
-**Fecha:** 2026-07-30
+**Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 441db80
+**Commit:** a2e615c
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,7 +12,7 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/nightly/test_knowledge_engine.py`
+- `tests/infra/test_notifier_json_logger.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica

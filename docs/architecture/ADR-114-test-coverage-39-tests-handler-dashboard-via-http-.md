@@ -1,9 +1,9 @@
-# ADR-075: test(qdrant): Día 2 — URAQdrantClient + métodos httpx raw (33 tests)
+# ADR-114: test(coverage): 39 tests handler+dashboard via HTTP real y renders (F4-B2)
 
-**Fecha:** 2026-07-30
+**Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 2233917
+**Commit:** c5ed67e
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,7 +12,8 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/integration/test_ura_qdrant.py`
+- `tests/unit/test_router_dashboard.py`
+- `tests/unit/test_router_handler.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica

@@ -1,9 +1,9 @@
-# ADR-099: test(hypothesis): property tests moderation + sanitizer (6 tests, 600 ejemplos)
+# ADR-123: test(scripts): orchestrator.py — 2 tests (suite pass/fail)
 
 **Fecha:** 2026-08-01
 **Categoría:** Calidad: Tests y cobertura
 **Autor:** ramon-kaixo
-**Commit:** 2f59dfb
+**Commit:** 119018d
 
 ## Contexto
 Cambio significativo detectado automáticamente.
@@ -12,7 +12,7 @@ Cambio significativo detectado automáticamente.
 Calidad: Tests y cobertura
 
 ## Archivos afectados
-- `tests/unit/test_moderation_sanitizer_hypothesis.py`
+- `tests/unit/test_orchestrator.py`
 
 ## Consecuencias
 - [ ] Documentar en AGENTS.md si aplica
