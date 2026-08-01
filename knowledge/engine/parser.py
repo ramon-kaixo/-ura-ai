@@ -87,56 +87,25 @@ def parse_source(so: SourceObject) -> KnowledgeObject | CompileError:
     Retorna KnowledgeObject si el parseo es exitoso.
     Retorna CompileError si hay un error (frontmatter inválido, etc.).
     """
-    try:
-        raw = so.content.decode("utf-8")
-    except UnicodeDecodeError:
-        return CompileError(
-            code="KE202",
-            document=so.path,
-            stage="parser",
-            message=f"No se pudo decodificar UTF-8: {so.path}",
-            category="permanent",
-        )
+    raw = _decodificar(so)
+    if isinstance(raw, CompileError):
+        return raw
 
     if not raw.strip():
-        return CompileError(
-            code="KE005",
-            document=so.path,
-            stage="parser",
-            message=f"Documento vacío: {so.path}",
-            category="permanent",
-        )
+        return _error_codigo(so, "KE005", f"Documento vacío: {so.path}")
 
     fm_dict, body, err_code = _extract_frontmatter(raw)
 
     if err_code == "KE006":
-        return CompileError(
-            code="KE006",
-            document=so.path,
-            stage="parser",
-            message=f"Frontmatter inválido en {so.path}",
-            category="permanent",
-        )
+        return _error_codigo(so, "KE006", f"Frontmatter inválido en {so.path}")
 
     frontmatter = Frontmatter.from_dict(fm_dict) if fm_dict else Frontmatter()
 
     if not frontmatter.title:
-        return CompileError(
-            code="KE001",
-            document=so.path,
-            stage="parser",
-            message=f"Documento sin title: {so.path}",
-            category="permanent",
-        )
+        return _error_codigo(so, "KE001", f"Documento sin title: {so.path}")
 
     if not frontmatter.doc_type:
-        return CompileError(
-            code="KE002",
-            document=so.path,
-            stage="parser",
-            message=f"Documento sin type: {so.path}",
-            category="permanent",
-        )
+        return _error_codigo(so, "KE002", f"Documento sin type: {so.path}")
 
     doc_id = fm_dict.get("id", doc_id_from_path(so.path)) if fm_dict else doc_id_from_path(so.path)
 
@@ -150,12 +119,33 @@ def parse_source(so: SourceObject) -> KnowledgeObject | CompileError:
     )
 
     relations = _discover_relations(body, so.path)
+    _relaciones_extra(frontmatter, relations, so.path)
+
+    return KnowledgeObject(document=doc, relations=tuple(relations))
+
+
+def _decodificar(so: SourceObject) -> str | CompileError:
+    try:
+        return so.content.decode("utf-8")
+    except UnicodeDecodeError:
+        return _error_codigo(so, "KE202", f"No se pudo decodificar UTF-8: {so.path}")
+
+
+def _error_codigo(so: SourceObject, code: str, message: str) -> CompileError:
+    return CompileError(
+        code=code,
+        document=so.path,
+        stage="parser",
+        message=message,
+        category="permanent",
+    )
+
+
+def _relaciones_extra(frontmatter: Frontmatter, relations: list[Relation], source_path: str) -> None:
     extra_rels = frontmatter.extra.get("related", [])
     if isinstance(extra_rels, list):
         seen_rels = {(r.src, r.dst) for r in relations}
         for rel in extra_rels:
-            if isinstance(rel, str) and (so.path, rel) not in seen_rels:
-                seen_rels.add((so.path, rel))
-                relations.append(Relation(src=so.path, dst=rel, relation="references"))
-
-    return KnowledgeObject(document=doc, relations=tuple(relations))
+            if isinstance(rel, str) and (source_path, rel) not in seen_rels:
+                seen_rels.add((source_path, rel))
+                relations.append(Relation(src=source_path, dst=rel, relation="references"))

@@ -22,7 +22,8 @@ comportamiento observable; firmas públicas intactas (semantic freezing).
 
 | Commit | Función | Técnica | CC/LOC antes→después | Validación |
 |--------|---------|---------|----------------------|------------|
-| *pendiente* | `knowledge/engine/compiler.py:49 compile_source` | Orquestador por etapas DAG + `_compilar_defaults`, `_ctx_stage` (elimina 4 construcciones duplicadas), `_warnings_deletados`, `_etapa_parsing`, `_etapa_validacion`, `_sync_semantica`, `_auditar` | LOC 178 → 100 (orquestador) / máx. helper 41; CC 25 → 6 | 172/172 nightly verdes, ruff 0 (RUF100 limpiado) |
+| 4c0f701 | `knowledge/engine/compiler.py:49 compile_source` | Orquestador por etapas DAG + `_compilar_defaults`, `_ctx_stage` (elimina 4 construcciones duplicadas), `_warnings_deletados`, `_etapa_parsing`, `_etapa_validacion`, `_sync_semantica`, `_auditar` | LOC 178 → 100 (orquestador) / máx. helper 41; CC 25 → 6 | 172/172 nightly verdes, ruff 0 (RUF100 limpiado) |
+| *pendiente* | `knowledge/engine/parser.py:81 parse_source` | `_decodificar`, `_error_codigo` (unifica 5 errores duplicados), `_relaciones_extra` | LOC 81 → 48 / máx. helper 24; CC 18 → 5 | 172/172 nightly verdes, ruff 0 |
 
 ## Registro
 
