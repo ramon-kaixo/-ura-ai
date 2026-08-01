@@ -1,5 +1,13 @@
 # Plan Fase 6 — Post-Merge (cuando OpenCode termine Fase 5)
 
+## Estado actual (2026-08-01)
+
+- **Fase 5 Sprint 5a cerrado**: dead code audit (commit `c837da2`, informe `DEAD_CODE_AUDIT_S5a.md`, ADR-135). 3 módulos eliminados + cuarentena `auto_reindex`.
+- **Baseline refinado**: 32.015 stmts, 46.7% global (objetivo 45% del plan YA cumplido).
+- **Semgrep reactivado** en `.venv` (commits `a7ccf23`, `1646f66`). Hook del sistema roto (semgrep 1.157.0 en `~/.local` a medio instalar); workaround: wrapper `/tmp/bin/semgrep` + `.venv/bin` primero en PATH + `HOME=/tmp/semgrep-home`. Pendiente de sanear `~/.local` cuando el rootfs sea RW.
+- **Rootfs `/` en RO** (cmdline `ro` + hardening del GB10). `/home/ramon/URA` montado como bind RW (repo y `.venv` operativos). Bloquea: pip --user, systemctl disable, edición `/etc`.
+- **Merge pendiente**: `origin/refactor/model-router-package` sigue sin merge (branch existe en remoto).
+
 ## Estado bloqueante (resuelto tras merge de `refactor/model-router-package`)
 
 | Archivo | Bloqueo | Tests pendientes |
@@ -34,6 +42,12 @@
 3. Arreglar flaky tests: refactorizar _patch_metrics para no usar sys.modules
 4. Testear scripts/ restantes (9 archivos, ~25 tests)
 5. Verificacion final: suite completa verde + cobertura >= 45%
+
+## Pendientes incorporados al scope (2026-08-01)
+
+- **mochila_server** (486 stmts, VIVO via `ura-mochila.service`): tests F4-4b pendientes — `core/mochila/mochila_server.py`.
+- **Servicios zombie**: `ura-agent-hierarchy.service` (apunta a `agent_hierarchy.py` eliminado en F3), `ura-capturador.service` (apunta a `app/capturador.py` archivado), `ura-auto-reindex.service` (ExecStart en cuarentena `.attic/auto_reindex/`). Requiere rootfs RW (`systemctl disable` escribe en `/etc`).
+- **Saneamiento entorno** (cuando rootfs sea RW): semgrep 1.157.0 roto en `~/.local`, `opentelemetry-sdk` sin `LogData`, `dataclasses.py` viejo (may-31) en site-packages.
 
 ## Estimacion
 - Merge + conflictos: 10 min
