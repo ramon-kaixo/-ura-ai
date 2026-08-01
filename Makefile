@@ -6,7 +6,7 @@
 ASUS_HOST ?= ramon@10.164.1.99
 
 .PHONY: test lint integration doctor snapshot deploy-snc deploy-all clean help \
-        mypy semgrep shellcheck full-audit
+        mypy semgrep shellcheck full-audit coverage
 
 # --- Tests ---
 
@@ -30,6 +30,14 @@ test-unit:
 test-ci:
 	@echo "[make] CI pipeline (unit + motor/tests/)..."
 	@$(MAKE) test-unit && $(MAKE) test
+	@echo ""
+
+coverage:
+	@echo "[make] Cobertura (suite completa, .coveragerc)..."
+	@OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest -q \
+		--cov-report=json:data/baseline/coverage_f4.json \
+		--cov-report=term \
+		--cov-fail-under=85 --cov=. 2>&1 | tail -40
 	@echo ""
 
 integration:

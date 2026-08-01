@@ -1,0 +1,38 @@
+[run]
+source = .
+branch = False
+omit =
+    .attic/*
+    .tuneladora/*
+    .venv/*
+    apple-ncm/*
+    backup_versiones/*
+    backups/*
+    build/*
+    data/*
+    deploy/*
+    dist/*
+    docs/*
+    htmlcov/*
+    knowledge/code-wiki/*
+    logs/*
+    models/*
+    motor/data/*
+    motor/tests/*
+    requirements/*
+    scripts/*
+    tests/*
+    ura.egg-info/*
+    ura_search/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    if __name__ == "__main__":
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    raise AssertionError
+    @overload
+show_missing = True
+precision = 1
