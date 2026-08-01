@@ -159,6 +159,7 @@ def test_repeated_snapshots_under_load(tmp_path: str) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_soak_continuous_operation(tmp_path: str) -> None:
     """100K operaciones continuas midiendo estabilidad."""
     snap = Path(tmp_path) / "snap_soak.json"

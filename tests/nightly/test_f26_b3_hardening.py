@@ -291,6 +291,7 @@ def test_benchmark_recovery_10k(tmp_path: str) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 def test_benchmark_recovery_100k(tmp_path: str) -> None:
     snap = Path(tmp_path) / "snap_100k.json"
     journal = Path(tmp_path) / "journal_100k.jsonl"
