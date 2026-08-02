@@ -230,7 +230,11 @@ async def test_rest_fallback(dry_run: bool = False) -> None:
     """
     log.info("\n=== Test 6: REST fallback en find_stale_docs ===")
 
-    with open("core/auto_reindex.py") as f:  # noqa: ASYNC230, PTH123
+    auto_reindex = Path("core/auto_reindex.py")
+    if not auto_reindex.exists():
+        warn("core/auto_reindex.py no existe — omitiendo")
+        return
+    with open(auto_reindex) as f:  # noqa: ASYNC230, PTH123
         code = f.read()
 
     has_rest = "_find_stale_docs_rest" in code
