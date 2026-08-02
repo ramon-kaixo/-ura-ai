@@ -14,7 +14,7 @@ class TestVerificarPoliticas:
         bypass = tmp_path / "bypass_config.json"
         bypass.write_text("{}")
         monkeypatch.setattr(cli, "BYPASS_FILE", bypass)
-        monkeypatch.setattr("motor.core.secrets.get_secret", mock.Mock(return_value=None))
+        monkeypatch.setattr(cli, "get_secret", mock.Mock(return_value=None))
         monkeypatch.setattr(cli.sys, "exit", mock.Mock(side_effect=SystemExit(78)))
         with pytest.raises(SystemExit) as e:
             cli.verificar_politicas_seguridad_preflight()
@@ -24,7 +24,7 @@ class TestVerificarPoliticas:
 
     def test_con_token_no_exit(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(cli, "BYPASS_FILE", tmp_path / "nope.json")
-        monkeypatch.setattr("motor.core.secrets.get_secret", mock.Mock(return_value="tok"))
+        monkeypatch.setattr(cli, "get_secret", mock.Mock(return_value="tok"))
         monkeypatch.setattr(cli.sys, "exit", mock.Mock(side_effect=SystemExit(99)))
         cli.verificar_politicas_seguridad_preflight()  # no debe hacer exit
 
@@ -54,6 +54,10 @@ class TestMain:
         log = mock.Mock()
         monkeypatch.setattr(cli, "log", log)
         monkeypatch.setattr("core.model_router.model_selection.obtener_modelos_disponibles", mock.Mock(return_value=[]))
+        monkeypatch.setattr("core.model_router.model_selection.MODELO_ROUTES", {})
+        server = mock.Mock()
+        monkeypatch.setattr("http.server.ThreadingHTTPServer", mock.Mock(return_value=server))
         cli.main()
         preflight.assert_called_once()
         log.info.assert_called()
+        server.serve_forever.assert_called_once()
