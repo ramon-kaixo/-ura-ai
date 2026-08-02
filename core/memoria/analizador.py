@@ -39,7 +39,7 @@ JSON:"""
 
 
 async def analizar(peticion: str) -> dict:
-    ideas = buscar_ideas(peticion, limit=10)
+    ideas = await buscar_ideas(peticion, limit=10)
     n_ideas = len(ideas)
     temas = list({i.get("tema", "") for i in ideas if i.get("tema")})
 

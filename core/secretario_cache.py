@@ -47,8 +47,7 @@ class SecretarioCache:
 
     def interact(self, raw: str, structure: dict | None = None) -> dict:
         """Envía interacción a ASUS /v2/interact y cachea el resultado."""
-        cache_key = hash(raw) ^ hash(json.dumps(structure or {}, sort_keys=True))
-        cache_key = str(cache_key)
+        cache_key = str(hash(raw) ^ hash(json.dumps(structure or {}, sort_keys=True)))
         if cache_key in self._cache:
             self._cache.move_to_end(cache_key)
             return self._cache[cache_key]

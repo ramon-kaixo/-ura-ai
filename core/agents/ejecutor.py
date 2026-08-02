@@ -1,5 +1,6 @@
 """Refactoriza funciones grandes. Modelo: DeepSeek 6.7B."""
 
+from typing import Any
 import contextlib
 import logging
 import os
@@ -18,7 +19,7 @@ class AgenteEjecutor:
     MODELO = MODELOS["ejecutor"]
 
     def ejecutar(self, workers: int = 4, timeout: int = 3600) -> dict:
-        resultados = {"ok": 0, "err": 0, "workers": []}
+        resultados: dict[str, Any] = {"ok": 0, "err": 0, "workers": []}
         workers_list = []
 
         for i in range(workers):
