@@ -140,6 +140,7 @@ def _get_model_params(model_name: str) -> dict:
     for name, params in MODEL_CONFIG.items():
         if model_name == name:
             return params
+    for name, params in MODEL_CONFIG.items():
         if name.startswith(base):
             return params
     return dict(DEFAULT_MODEL_PARAMS)
