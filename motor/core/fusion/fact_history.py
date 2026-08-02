@@ -403,7 +403,5 @@ def _parsear_tombstones(raw_tombstones: dict | list) -> dict:
     from motor.core.fusion.models import FactTombstone
 
     if isinstance(raw_tombstones, list):
-        return {
-            t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)
-        }
+        return {t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)}
     return {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}

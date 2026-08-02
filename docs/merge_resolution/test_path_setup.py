@@ -1,4 +1,5 @@
 """Tests de path_setup, notifier, json_logger — RESOLUCION DE MERGE (Fase 5)."""
+
 import sys
 from pathlib import Path
 

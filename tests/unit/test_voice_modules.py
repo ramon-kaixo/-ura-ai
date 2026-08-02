@@ -1,3 +1,9 @@
+"""Tests de voz — requieren torch, sounddevice, etc."""
+
+import pytest
+pytestmark = pytest.mark.slow
+pytest.importorskip("torch")
+
 """Tests para core/voice/ — tts_piper, anker_pipeline, anker_mac_pipeline.
 
 Las dependencias de hardware (sounddevice, soundfile, torch, whisper, numpy)
