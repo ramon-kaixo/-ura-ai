@@ -166,8 +166,10 @@ class TestChaosCleanCommit:
         runner.sofia.review.return_value = mock.Mock(
             hallazgos=[], n_criticos=0, n_advertencias=0,
         )
-        with mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry") as mock_plugin:
+        with mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry") as mock_plugin, \
+             mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua") as mock_audit:
             mock_plugin.run_phase.return_value = {"status": "ok"}
+            mock_audit.run_all.return_value = {"score": 100.0, "results": {}}
             with mock.patch.multiple(
                 runner, preflight=mock.DEFAULT, phase_snapshot=mock.DEFAULT,
                 phase_static=mock.DEFAULT, phase_dynamic=mock.DEFAULT,

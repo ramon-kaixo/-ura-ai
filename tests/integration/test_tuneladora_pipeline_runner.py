@@ -53,6 +53,7 @@ class TestPipelineRunnerPhases:
 
 
 class TestPipelineRunnerRun:
+    @pytest.mark.slow
     def test_run_returns_status(self, runner: PipelineRunner):
         with mock.patch.multiple(
             runner,

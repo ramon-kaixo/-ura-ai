@@ -1,24 +1,29 @@
 # URA IA — Makefile de validación
 # Uso: make validate (rápido, desarrollo local) | make validate-full (CI, con cobertura)
 
-.PHONY: validate validate-full test test-slow lint lint-strict mypy-info radon audit clean
+.PHONY: validate validate-full test test-fast test-slow lint lint-strict mypy-info radon audit clean
 
 PYTHON := python3
 PYTEST := $(PYTHON) -m pytest
 PYTEST_ARGS := -q --tb=line
 PYTEST_SLOW := -m "not slow"
 
-# === VALIDACIÓN RÁPIDA (desarrollo local, < 3 min) ===
-validate: test lint mypy-info radon
+# === VALIDACIÓN RÁPIDA (desarrollo local, < 30s con xdist) ===
+validate: test-fast lint mypy-info radon
 	@echo "✅ validate OK"
 
-# === VALIDACIÓN COMPLETA (CI, < 5 min) ===
-validate-full: test-full lint mypy-info radon
+# === VALIDACIÓN COMPLETA (CI, < 3 min) ===
+validate-full: test lint mypy-info radon
 	@echo "✅ validate-full OK"
 
-# === TESTS ===
+# === TESTS RÁPIDOS (paralelo, sin cobertura) ===
+test-fast:
+	@echo "▶ pytest rápido (paralelo, sin cov)..."
+	$(PYTEST) tests/unit/ tests/integration/ $(PYTEST_SLOW) $(PYTEST_ARGS) -n auto --no-cov
+
+# === TESTS (secuencial, con cobertura) ===
 test:
-	@echo "▶ pytest (sin slow)..."
+	@echo "▶ pytest (sin slow, con cobertura)..."
 	$(PYTEST) tests/unit/ tests/integration/ $(PYTEST_SLOW) $(PYTEST_ARGS)
 
 test-full:
@@ -29,29 +34,29 @@ test-slow:
 	@echo "▶ pytest (solo slow)..."
 	$(PYTEST) tests/unit/ tests/integration/ -m "slow" -v --tb=short
 
-# === LINT (informativo, no bloquea — desarrollo local) ===
+# === LINT (informativo, no bloquea) ===
 lint:
 	@echo "▶ ruff check (informativo)..."
-	@-ruff check core/ motor/ knowledge/ agents/ --quiet --ignore=EXE002 2>/dev/null || echo "  ruff: errores pre-existentes (no bloquean)"
+	@-ruff check core/ motor/ knowledge/ agents/ --quiet --ignore=EXE002 2>/dev/null || echo "  ruff: errores pre-existentes"
 	@echo "▶ ruff format --check..."
 	@-ruff format --check core/ motor/ knowledge/ agents/ tests/ --quiet 2>/dev/null || echo "  ruff format: ajustes pendientes"
 
-# === LINT ESTRICTO (CI — bloquea) ===
+# === LINT ESTRICTO (CI) ===
 lint-strict:
 	@echo "▶ ruff check (estricto)..."
 	ruff check core/ motor/ knowledge/ agents/ --ignore=EXE002
 	@echo "▶ ruff format --check..."
 	ruff format --check core/ motor/ knowledge/ agents/ tests/
 
-# === MYPY INFORMATIVO (no bloqueante) ===
+# === MYPY ===
 mypy-info:
 	@echo "▶ mypy (informativo)..."
 	@-$(PYTHON) -m mypy core/ motor/ knowledge/ agents/ --ignore-missing-imports --show-error-codes 2>/dev/null | tail -5 || echo "  mypy: verificar pyproject.toml"
 
-# === COMPLEJIDAD CICLOMÁTICA ===
+# === RADON ===
 radon:
 	@echo "▶ radon cc (núcleo)..."
-	@$(PYTHON) -m radon cc core/ --min=C --total-average -s 2>/dev/null || echo "  radon: no instalado (pip install radon)"
+	@radon cc core/ --min=C --total-average -s 2>/dev/null || echo "  radon: no instalado"
 
 # === AUDIT ===
 audit:
