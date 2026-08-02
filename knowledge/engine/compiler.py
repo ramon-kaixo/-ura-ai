@@ -334,10 +334,7 @@ def compile_source_streaming(
     Los content bytes se liberan tras cada parseo.
     Adecuado para >1000 documentos donde la RAM es crítica.
     """
-    if source_dir is None:
-        source_dir = Path(__file__).resolve().parent.parent.parent / "source"
-    if db_path is None:
-        db_path = Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"
+    source_dir, db_path = _compilar_defaults(source_dir, db_path)
 
     opts = CompileOptions(
         source_dir=str(source_dir),
@@ -345,56 +342,27 @@ def compile_source_streaming(
         compiler_version=compiler_version,
         max_parse_size=max_parse_size,
     )
-    features = CompileFeatures(parser_version=compiler_version)
     meta = CompileMetadata(
         source_commit="HEAD",
-        features=features,
+        features=CompileFeatures(parser_version=compiler_version),
         correlation_id=correlation_id,
     )
 
     all_errors: list[CompileError] = []
     all_warnings: list[CompileError] = []
-    objects: list[KnowledgeObject] = []
-    changed_count = 0
-
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        stage=CompileStage.DISCOVERING,
-    )
-
-    t0 = time.monotonic()
-
-    # Stream: yield → parse → free → collect
-    for item in scan_source_stream(source_dir):
-        if isinstance(item, CompileError):
-            all_errors.append(item)
-            continue
-        changed_count += 1
-        result = parse_source(item)
-        if isinstance(result, CompileError):
-            all_errors.append(result)
-        else:
-            objects.append(result)
-        # item (SourceObject con content bytes) sale de scope → GC libera
-
+    objects, changed_count = _stream_parsear(source_dir, all_errors)
     snapshot = take_snapshot_fn(source_dir)
 
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        snapshot=snapshot,
-        stage=CompileStage.VALIDATING,
-    )
-    valid_objects, validate_errors, validate_warnings = validate_batch(objects)
+    ctx = _ctx_stage(meta, opts, snapshot, CompileStage.VALIDATING)
+    valid_objects, validate_errors, validate_warnings = _etapa_validacion(objects)
     all_errors.extend(validate_errors)
     all_warnings.extend(validate_warnings)
 
-    ctx = CompileContext(
-        metadata=meta,
-        options=opts,
-        snapshot=snapshot,
-        stage=CompileStage.WRITING,
+    ctx = _ctx_stage(
+        meta,
+        opts,
+        snapshot,
+        CompileStage.WRITING,
         errors=tuple(all_errors),
         warnings=tuple(all_warnings),
     )
@@ -409,14 +377,45 @@ def compile_source_streaming(
     )
 
     duration = time.monotonic() - t0
-    final_stage = CompileStage.DONE if result.success else CompileStage.FAILED
+    return _resultado_compile(result, meta, compiler_version, changed_count, duration)
 
+
+def _stream_parsear(
+    source_dir: Path,
+    all_errors: list[CompileError],
+) -> tuple[list[KnowledgeObject], int]:
+    objects: list[KnowledgeObject] = []
+    changed_count = 0
+
+    # Stream: yield → parse → free → collect
+    for item in scan_source_stream(source_dir):
+        if isinstance(item, CompileError):
+            all_errors.append(item)
+            continue
+        changed_count += 1
+        result = parse_source(item)
+        if isinstance(result, CompileError):
+            all_errors.append(result)
+        else:
+            objects.append(result)
+        # item (SourceObject con content bytes) sale de scope → GC libera
+    return objects, changed_count
+
+
+def _resultado_compile(
+    result: CompileResult,
+    meta: CompileMetadata,
+    compiler_version: str,
+    documents_total: int,
+    duration: float,
+) -> CompileResult:
+    final_stage = CompileStage.DONE if result.success else CompileStage.FAILED
     return CompileResult(
         success=result.success,
         graph_version=result.graph_version,
         source_commit=meta.source_commit,
         compiler_version=compiler_version,
-        documents_total=changed_count,
+        documents_total=documents_total,
         documents_changed=result.documents_changed,
         errors=result.errors,
         warnings=result.warnings,
