@@ -338,6 +338,37 @@ class SQLiteGraphRetriever:
         assets = self.retrieve_assets(query, limit=max_assets)
         memories = self.retrieve_memory(query, limit=max_memories)
 
+        lineage, governance, neighbors = self._contexto_grafo(
+            assets,
+            include_lineage,
+            include_governance,
+            neighbor_depth,
+        )
+
+        duration = (time.monotonic() - t0) * 1000
+
+        return ContextBundle(
+            query=query,
+            assets=_serializar_assets(assets),
+            memories=_serializar_memorias(memories),
+            lineage=lineage,
+            governance=governance,
+            neighbors=neighbors,
+            total_duration_ms=duration,
+            asset_count=len(assets),
+            memory_count=len(memories),
+            lineage_count=len(lineage),
+            governance_count=len(governance),
+            neighbor_count=len(neighbors),
+        )
+
+    def _contexto_grafo(
+        self,
+        assets: list[Any],
+        include_lineage: bool,
+        include_governance: bool,
+        neighbor_depth: int,
+    ) -> tuple[list, list, list]:
         lineage = []
         governance = []
         neighbors = []
@@ -355,33 +386,25 @@ class SQLiteGraphRetriever:
                     if entry["asset_id"] not in seen:
                         seen.add(entry["asset_id"])
                         neighbors.append(entry)
+        return lineage, governance, neighbors
 
-        duration = (time.monotonic() - t0) * 1000
 
-        return ContextBundle(
-            query=query,
-            assets=[
-                {"asset_id": a.asset_id, "score": a.score, "title": a.title, "kind": a.kind, "snippet": a.snippet}
-                for a in assets
-            ],
-            memories=[
-                {
-                    "memory_id": m.asset_id,
-                    "score": m.score,
-                    "title": m.title,
-                    "kind": m.kind,
-                    "snippet": m.snippet,
-                    "metadata": m.metadata,
-                }
-                for m in memories
-            ],
-            lineage=lineage,
-            governance=governance,
-            neighbors=neighbors,
-            total_duration_ms=duration,
-            asset_count=len(assets),
-            memory_count=len(memories),
-            lineage_count=len(lineage),
-            governance_count=len(governance),
-            neighbor_count=len(neighbors),
-        )
+def _serializar_assets(assets: list[Any]) -> list[dict]:
+    return [
+        {"asset_id": a.asset_id, "score": a.score, "title": a.title, "kind": a.kind, "snippet": a.snippet}
+        for a in assets
+    ]
+
+
+def _serializar_memorias(memories: list[Any]) -> list[dict]:
+    return [
+        {
+            "memory_id": m.asset_id,
+            "score": m.score,
+            "title": m.title,
+            "kind": m.kind,
+            "snippet": m.snippet,
+            "metadata": m.metadata,
+        }
+        for m in memories
+    ]
