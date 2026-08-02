@@ -1,0 +1,12 @@
+[Unit]
+Description=URA Telemetry - Recolección de sensores
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/bin/bash -c '/home/ramon/URA/ura_ia_1972/.venv/bin/python3 -c "from core.agents.telemetry import Telemetria; import json; print(json.dumps(Telemetria().reporte_completo(), indent=2))" >> /home/ramon/URA/ura_ia_1972/logs/telemetry.log'
+StandardOutput=journal
+StandardError=journal
+CPUQuota=10%
+MemoryMax=256M
