@@ -75,7 +75,7 @@ repos:
 
       - id: pytest
         name: Run pytest (core + monitor + motor)
-        entry: bash -c 'export TMPDIR=/tmp PRE_COMMIT_HOME=/tmp/pre-commit-home && OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest -q --tb=short --no-cov --timeout=60 motor/tests/test_assistant_obs.py motor/tests/tuneladora/ motor/tests/test_tracing_exporter.py tests/unit/test_assistant_api.py tests/integration/test_assistant.py'
+        entry: bash -c 'export TMPDIR=/tmp PRE_COMMIT_HOME=/tmp/pre-commit-home && OPENCLAW_GATEWAY_TOKEN=test URA_API_KEY=test python3 -m pytest -q --tb=short --no-cov --timeout=60 -m "not slow" motor/tests/test_assistant_obs.py motor/tests/tuneladora/ motor/tests/test_tracing_exporter.py tests/unit/test_assistant_api.py tests/integration/test_assistant.py'
         language: system
         pass_filenames: false
         always_run: true

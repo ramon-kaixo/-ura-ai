@@ -2,8 +2,6 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 from core.json_logger import StructuredLogger
 from core.notifier import notify
 from path_setup import get_project_root, setup_path
