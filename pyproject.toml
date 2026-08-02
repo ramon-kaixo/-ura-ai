@@ -58,7 +58,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
+"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105"]
 
 [tool.pytest.ini_options]
 markers = ["slow: marks tests as slow", "integration: approval tests against live endpoints"]
