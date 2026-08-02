@@ -131,11 +131,17 @@ class PerformanceMonitor:
         if profile is None:
             return None
 
+        snapshot = self._evaluar_perfil(provider, operation, profile)
+        self._registrar_snapshot(snapshot)
+        self._log_issues(snapshot)
+
+        return snapshot
+
+    def _evaluar_perfil(self, provider: str, operation: str, profile: Any) -> PerformanceSnapshot:
         wall_ms = profile.wall_time_ms
         cpu_ms = profile.cpu_time_ms
         mem_kb = profile.peak_memory_bytes / 1024
 
-        # Evaluar hotspot
         hotspot_rec = self._detector.evaluate(
             provider,
             operation,
@@ -145,7 +151,6 @@ class PerformanceMonitor:
             allocations_count=profile.allocations_count,
         )
 
-        # Comparar contra baseline
         regressions = self._baseline.compare(
             provider,
             operation,
@@ -163,7 +168,7 @@ class PerformanceMonitor:
             peak_memory_bytes=profile.peak_memory_bytes,
         )
 
-        snapshot = PerformanceSnapshot(
+        return PerformanceSnapshot(
             provider=provider,
             operation=operation,
             wall_time_ms=wall_ms,
@@ -174,6 +179,7 @@ class PerformanceMonitor:
             hotspot_record=hotspot_rec,
         )
 
+    def _registrar_snapshot(self, snapshot: PerformanceSnapshot) -> None:
         with self._lock:
             self._total_operations += 1
             if snapshot.is_hotspot:
@@ -184,24 +190,24 @@ class PerformanceMonitor:
             if len(self._history) > self._max_history:
                 self._history.pop(0)
 
-        if snapshot.has_issues():
-            if snapshot.is_hotspot:
-                log.warning(
-                    "perf_hotspot  provider=%s op=%s wall=%.0fms",
-                    provider,
-                    operation,
-                    wall_ms,
-                )
-            for r in regressions:
-                log.warning(
-                    "perf_regression  provider=%s op=%s metric=%s ratio=%.1fx",
-                    provider,
-                    operation,
-                    r.metric,
-                    r.ratio,
-                )
-
-        return snapshot
+    def _log_issues(self, snapshot: PerformanceSnapshot) -> None:
+        if not snapshot.has_issues():
+            return
+        if snapshot.is_hotspot:
+            log.warning(
+                "perf_hotspot  provider=%s op=%s wall=%.0fms",
+                snapshot.provider,
+                snapshot.operation,
+                snapshot.wall_time_ms,
+            )
+        for r in snapshot.regressions:
+            log.warning(
+                "perf_regression  provider=%s op=%s metric=%s ratio=%.1fx",
+                snapshot.provider,
+                snapshot.operation,
+                r.metric,
+                r.ratio,
+            )
 
     def get_history(
         self,
