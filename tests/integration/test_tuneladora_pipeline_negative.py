@@ -63,6 +63,7 @@ class TestNegativeUnusedImport:
         if result.detail:
             assert "F401" in result.detail or "unused" in result.detail.lower()
 
+    @pytest.mark.slow
     def test_pipeline_detects_unused_import(self, cfg):
         bad = Path("/tmp/test_neg_pipeline_unused.py")
         bad.write_text("import os\n\nx = 1\n")
