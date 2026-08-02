@@ -31,6 +31,7 @@ from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 from scripts.pro import conciencia as _conciencia  # noqa: E402
 from scripts.pro import plugin_registry as _plugin_registry  # noqa: E402
 from scripts.pro import change_log as _change_log  # noqa: E402
+from scripts.pro import auditoria_continua as _auditoria_continua  # noqa: E402
 
 log = logging.getLogger("tuneladora.runner")
 LOCK_TIMEOUT = 1800
@@ -759,5 +760,12 @@ class PipelineRunner:
                 _change_log.record(head, actor="ia")
         except Exception as e:
             log.warning("change_log falló: %s", e)
+
+        # Auditoría continua
+        try:
+            audit = _auditoria_continua.run_all(verbose=False)
+            log.info("[AUDIT] Score: %.1f%%", audit["score"])
+        except Exception as e:
+            log.warning("[AUDIT] falló: %s", e)
 
         return verdict
