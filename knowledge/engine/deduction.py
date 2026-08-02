@@ -58,7 +58,7 @@ class StateDeductor:
         node_map = {n["id"]: n for n in nodes}
         type_counts, src_counts, dst_counts = self._contar(nodes, edges)
 
-        self._deducir_huérfanos(nodes, src_counts, dst_counts, results)
+        self._deducir_huerfanos(nodes, src_counts, dst_counts, results)
         self._deducir_cobertura(nodes, type_counts, results)
         self._deducir_hubs(node_map, dst_counts, results)
 
@@ -82,7 +82,7 @@ class StateDeductor:
 
         return type_counts, src_counts, dst_counts
 
-    def _deducir_huérfanos(
+    def _deducir_huerfanos(
         self,
         nodes: list[dict[str, Any]],
         src_counts: Counter[str],
