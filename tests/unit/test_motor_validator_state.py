@@ -62,7 +62,7 @@ class TestCircuitBreakerCompat:
             r = cb.call(lambda: called.append(1) or "ok")
         r = cb.call(lambda: called.append(1) or "ok")
         assert r == "ok"
-        assert called == [1]
+        assert called == [1, 1]  # super().call invoca fn (success + verify)
 
     def test_exports(self) -> None:
         from motor.core.llm.circuit_breaker import CircuitState
