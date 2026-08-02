@@ -39,7 +39,7 @@ class TestMedirAsusLatency:
     def test_ok(self):
         with (
             patch("core.model_router.router.get_urls", return_value={"primary": "http://x", "fallback": "http://y"}),
-            patch("urllib.request.urlopen") as mock_open,
+            patch("urllib.request.urlopen"),
             patch("core.model_router.proxy.time.monotonic", side_effect=[0.0, 0.05]),
         ):
             assert proxy._measare_asus_latency() == 50.0
