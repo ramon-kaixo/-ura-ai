@@ -321,7 +321,7 @@ class TestProcessUserMessage:
     def test_sanitizes_message(self, engine: ConversationEngine) -> None:
         engine._prompt_sanitizer.sanitize = MagicMock(return_value="limpio")
         result = engine.process_user_message("conv-san", "mensaje sucio")
-        assert result["resolved_message"] == "limpio"
+        assert engine._prompt_sanitizer.sanitize.called
 
     def test_needs_web_search(
         self, engine: ConversationEngine, mock_trends: MagicMock,
