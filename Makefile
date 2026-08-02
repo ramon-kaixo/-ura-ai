@@ -63,6 +63,13 @@ audit:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === INVENTARIO ===
+inventario:
+	@echo "▶ Generando inventario de herramientas..."
+	@$(PYTHON) scripts/pro/audit_inventario.py
+	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
+
+
 # === LIMPIEZA ===
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
