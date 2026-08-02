@@ -475,42 +475,22 @@ async def v1_models():
 
 @app.post("/v1/chat/completions")
 async def v1_chat_completions(body: ChatRequest):
-    try:
-        ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
-        provider_name, modelo, route_reason = ruta.provider, ruta.modelo, ruta.route_reason
-    except NoProviderAvailable as e:
-        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
+    provider_name, modelo, route_reason = _resolver_ruta(body)
     _rechazar_si_bloqueado(provider_name)
 
-    if body.tools is True:
-        herramientas = TOOL_SCHEMAS
-    elif isinstance(body.tools, list):
-        herramientas = body.tools
-    else:
-        herramientas = None
+    herramientas = _resolver_herramientas(body)
 
     is_opencode = body.force_guardian or "opencode" in body.model.lower()
     guardian = OpenCodeGuardian() if is_opencode else None
     if body.stream:
-        return StreamingResponse(
-            _stream_from_provider(
-                provider_name,
-                modelo,
-                body.messages,
-                herramientas,
-                body.max_tokens,
-                body.temperature,
-                is_opencode=is_opencode,
-                guardian=guardian,
-            ),
-            media_type="text/event-stream",
-            headers={
-                "X-Mochila-Provider": provider_name,
-                "X-Mochila-Modelo": modelo,
-                "X-Mochila-Route-Reason": route_reason,
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-            },
+        return _respuesta_streaming(
+            provider_name,
+            modelo,
+            route_reason,
+            body,
+            herramientas,
+            is_opencode,
+            guardian,
         )
 
     provider = PROVIDERS[provider_name]
@@ -521,34 +501,10 @@ async def v1_chat_completions(body: ChatRequest):
     rate_limiter.registrar(provider_name)
     _procesar_usage(respuesta, provider_name, modelo)
 
-    msg = respuesta.get("choices", [{}])[0].get("message", {})
-    tool_calls = msg.get("tool_calls")
-    if tool_calls:
-        mensajes_con_tool = list(body.messages)
-        mensajes_con_tool.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tool_calls})
-        for tc in tool_calls:
-            fid = tc.get("id", tc.get("index", "call_0"))
-            fname = tc.get("function", {}).get("name", "")
-            fargs_raw = tc.get("function", {}).get("arguments", "{}")
-            try:
-                fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
-            except json.JSONDecodeError:
-                fargs = {}
-            resultado = await ejecutar_tool(fname, fargs)
-            mensajes_con_tool.append(
-                {"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)},
-            )
-        respuesta_final = await _chat_no_stream(
-            provider,
-            modelo,
-            mensajes_con_tool,
-            herramientas,
-            body.max_tokens,
-            body.temperature,
-        )
-        if respuesta_final:
-            respuesta = respuesta_final
-            _procesar_usage(respuesta_final, provider_name, modelo)
+    respuesta_final = await _procesar_tool_calls(provider, modelo, body, herramientas, respuesta)
+    if respuesta_final:
+        respuesta = respuesta_final
+        _procesar_usage(respuesta_final, provider_name, modelo)
 
     return JSONResponse(
         content=respuesta,
@@ -557,6 +513,89 @@ async def v1_chat_completions(body: ChatRequest):
             "X-Mochila-Modelo": modelo,
             "X-Mochila-Route-Reason": route_reason,
         },
+    )
+
+
+def _resolver_ruta(body: ChatRequest) -> tuple[str, str, str]:
+    try:
+        ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
+        return ruta.provider, ruta.modelo, ruta.route_reason
+    except NoProviderAvailable as e:
+        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
+
+
+def _resolver_herramientas(body: ChatRequest) -> list | None:
+    if body.tools is True:
+        return TOOL_SCHEMAS
+    if isinstance(body.tools, list):
+        return body.tools
+    return None
+
+
+def _respuesta_streaming(
+    provider_name: str,
+    modelo: str,
+    route_reason: str,
+    body: ChatRequest,
+    herramientas: list | None,
+    is_opencode: bool,
+    guardian: OpenCodeGuardian | None,
+) -> StreamingResponse:
+    return StreamingResponse(
+        _stream_from_provider(
+            provider_name,
+            modelo,
+            body.messages,
+            herramientas,
+            body.max_tokens,
+            body.temperature,
+            is_opencode=is_opencode,
+            guardian=guardian,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "X-Mochila-Provider": provider_name,
+            "X-Mochila-Modelo": modelo,
+            "X-Mochila-Route-Reason": route_reason,
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+async def _procesar_tool_calls(
+    provider: Any,
+    modelo: str,
+    body: ChatRequest,
+    herramientas: list | None,
+    respuesta: dict,
+) -> dict | None:
+    msg = respuesta.get("choices", [{}])[0].get("message", {})
+    tool_calls = msg.get("tool_calls")
+    if not tool_calls:
+        return None
+
+    mensajes_con_tool = list(body.messages)
+    mensajes_con_tool.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tool_calls})
+    for tc in tool_calls:
+        fid = tc.get("id", tc.get("index", "call_0"))
+        fname = tc.get("function", {}).get("name", "")
+        fargs_raw = tc.get("function", {}).get("arguments", "{}")
+        try:
+            fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
+        except json.JSONDecodeError:
+            fargs = {}
+        resultado = await ejecutar_tool(fname, fargs)
+        mensajes_con_tool.append(
+            {"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)},
+        )
+    return await _chat_no_stream(
+        provider,
+        modelo,
+        mensajes_con_tool,
+        herramientas,
+        body.max_tokens,
+        body.temperature,
     )
 
 
