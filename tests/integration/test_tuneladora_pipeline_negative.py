@@ -18,10 +18,13 @@ from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 
 @pytest.fixture(autouse=True)
 def mock_plugin_registry(monkeypatch):
-    """Mock plugin_registry para evitar timeouts en tests de pipeline."""
+    """Mock plugin_registry y auditoria_continua para evitar timeouts en tests de pipeline."""
     mock_plugin = mock.Mock()
     mock_plugin.run_phase.return_value = {"status": "ok"}
     monkeypatch.setattr("scripts.pro.tuneladora.pipeline.runner._plugin_registry", mock_plugin)
+    mock_audit = mock.Mock()
+    mock_audit.run_all.return_value = {"score": 100.0, "results": {}}
+    monkeypatch.setattr("scripts.pro.tuneladora.pipeline.runner._auditoria_continua", mock_audit)
 
 
 @pytest.fixture

@@ -1,25 +1,23 @@
 from __future__ import annotations
 
-import pytest
-
-"""Tests para core/voice/__init__.py, core/model_router/__main__.py y core/inferencia/engine.py."""
-
 from unittest import mock
 
 import pytest
 
 import core.inferencia.engine as ie
-import core.voice as voice
-from core.voice import PiperUraTTS, PiperTTSMotor
 
 
 class TestVoiceInit:
     def test_exports_presentes(self) -> None:
+        pytest.importorskip("torch")
+        import core.voice as voice
         assert "AnkerDeterministicPipeline" in voice.__all__
         assert "AnkerMacPipeline" in voice.__all__
         assert "PiperTTSMotor" in voice.__all__
 
     def test_piper_ura_tts_alias(self) -> None:
+        pytest.importorskip("torch")
+        from core.voice import PiperUraTTS, PiperTTSMotor
         assert PiperUraTTS is PiperTTSMotor
 
 
@@ -27,7 +25,6 @@ class TestMainModelRouter:
     def test_main_estructura(self) -> None:
         """__main__ solo importa setup_path + main — cobertura por ejecucion."""
         import runpy
-
         with mock.patch("core.model_router.cli.main") as main_mock:
             runpy.run_module("core.model_router.__main__", run_name="__main__")
         main_mock.assert_called_once()
@@ -58,13 +55,11 @@ class TestInferenciaStreamEngine:
         router = mock.Mock()
         router.adquirir_slot_vram = mock.AsyncMock(return_value=True)
         router.liberar_slot_vram = mock.AsyncMock()
-
         async def _chat(**kwargs):
             async def _inner():
                 for chunk in [{"message": {"content": "hola"}}, {"message": {"content": " mundo"}}]:
                     yield chunk
             return _inner()
-
         client = mock.Mock()
         client.chat = _chat
         engine = ie.InferenciaStreamEngine(router, client)
@@ -77,13 +72,11 @@ class TestInferenciaStreamEngine:
         router = mock.Mock()
         router.adquirir_slot_vram = mock.AsyncMock(return_value=True)
         router.liberar_slot_vram = mock.AsyncMock()
-
         async def _chat(**kwargs):
             async def _inner():
                 yield {"message": {"content": "a"}}
                 raise asyncio_CancelledError()
             return _inner()
-
         client = mock.Mock()
         client.chat = _chat
         engine = ie.InferenciaStreamEngine(router, client)
@@ -97,13 +90,11 @@ class TestInferenciaStreamEngine:
         router = mock.Mock()
         router.adquirir_slot_vram = mock.AsyncMock(return_value=True)
         router.liberar_slot_vram = mock.AsyncMock()
-
         async def _chat(**kwargs):
             async def _inner():
                 raise RuntimeError("modelo caido")
                 yield  # pragma: no cover
             return _inner()
-
         client = mock.Mock()
         client.chat = _chat
         engine = ie.InferenciaStreamEngine(router, client)
@@ -115,5 +106,4 @@ class TestInferenciaStreamEngine:
 
 def asyncio_CancelledError():
     import asyncio
-
     return asyncio.CancelledError

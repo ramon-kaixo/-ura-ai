@@ -96,6 +96,7 @@ class TestVerificarSintaxis:
         monkeypatch.setattr("core.mochila.guardian_opencode.subprocess.run", mock.Mock(side_effect=__import__("subprocess").TimeoutExpired("py", 5)))
         assert guardian.verificar_sintaxis_final(str(f), f.read_text()) is False
 
+    @pytest.mark.slow
     def test_shell_ok(self, guardian: OpenCodeGuardian, tmp_path) -> None:
         f = tmp_path / "x.sh"
         f.write_text("#!/bin/bash\nset -e\necho hola\n")
@@ -122,6 +123,7 @@ class TestVerificarSintaxis:
         monkeypatch.setitem(__import__("sys").modules, "yaml", fake_yaml)
         assert guardian.verificar_sintaxis_final("c.yaml", "a: 1\nb: 2\nc: 3\n") is True
 
+    @pytest.mark.slow
     def test_yaml_sin_yaml_fallback(self, guardian: OpenCodeGuardian, monkeypatch) -> None:
         """Fallback ':' en contenido solo cuando yaml no importa (ImportError)."""
         import builtins
