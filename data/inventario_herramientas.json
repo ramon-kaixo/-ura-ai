@@ -1,0 +1,1645 @@
+{
+  "generado": "2026-08-02T17:19:40.279524+00:00",
+  "zonas": {
+    "scripts/pro": {
+      "total": 294,
+      "archivos": [
+        {
+          "archivo": "learning.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/learning.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "management.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/management.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "personality.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/personality.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "planner.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/planner.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "test_assistant_b7_b9.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/tests/test_assistant_b7_b9.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "test_assistant_planner.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/tests/test_assistant_planner.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "test_assistant_tools.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/tests/test_assistant_tools.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "tools.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/tools.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "web_search.py",
+          "ruta": "scripts/pro/.nervioso/descarte/assistant/web_search.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "gen_f14_e2e_report.py",
+          "ruta": "scripts/pro/.nervioso/descarte/gen_f14_e2e_report.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gen_f14_profiling_report.py",
+          "ruta": "scripts/pro/.nervioso/descarte/gen_f14_profiling_report.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gen_f14_report.py",
+          "ruta": "scripts/pro/.nervioso/descarte/gen_f14_report.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gen_f14_resilience_report.py",
+          "ruta": "scripts/pro/.nervioso/descarte/gen_f14_resilience_report.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gen_rc_readiness.py",
+          "ruta": "scripts/pro/.nervioso/descarte/gen_rc_readiness.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "generate_evaluation_corpus.py",
+          "ruta": "scripts/pro/.nervioso/descarte/generate_evaluation_corpus.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "watermarks.json",
+          "ruta": "scripts/pro/.nervioso/watermarks.json",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "PLUGIN_TEMPLATE.py",
+          "ruta": "scripts/pro/PLUGIN_TEMPLATE.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "adr_generator.py",
+          "ruta": "scripts/pro/adr_generator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ajustar_contexto.py",
+          "ruta": "scripts/pro/ajustar_contexto.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "alineador.py",
+          "ruta": "scripts/pro/alineador.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "analisis_completo.py",
+          "ruta": "scripts/pro/analisis_completo.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "analizar_fallo_conciencia.py",
+          "ruta": "scripts/pro/analizar_fallo_conciencia.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "apply-fixes.sh",
+          "ruta": "scripts/pro/apply-fixes.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "arq_auditor.py",
+          "ruta": "scripts/pro/arq_auditor.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "arq_checker.py",
+          "ruta": "scripts/pro/arq_checker.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "asus_connect_hetzner.sh",
+          "ruta": "scripts/pro/asus_connect_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "audit_config.py",
+          "ruta": "scripts/pro/audit_config.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "audit_diff.sh",
+          "ruta": "scripts/pro/audit_diff.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "audit_inventario.py",
+          "ruta": "scripts/pro/audit_inventario.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "audit_secrets.py",
+          "ruta": "scripts/pro/audit_secrets.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditor_router.py",
+          "ruta": "scripts/pro/auditor_router.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditoria.sh",
+          "ruta": "scripts/pro/auditoria.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditoria_comite.sh",
+          "ruta": "scripts/pro/auditoria_comite.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditoria_continua.py",
+          "ruta": "scripts/pro/auditoria_continua.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditoria_pesada.sh",
+          "ruta": "scripts/pro/auditoria_pesada.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditoria_qwen.sh",
+          "ruta": "scripts/pro/auditoria_qwen.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auto_conciencia.py",
+          "ruta": "scripts/pro/auto_conciencia.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auto_export_context.sh",
+          "ruta": "scripts/pro/auto_export_context.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auto_reglas.py",
+          "ruta": "scripts/pro/auto_reglas.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "autonomy.py",
+          "ruta": "scripts/pro/autonomy/autonomy.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "evaluator.py",
+          "ruta": "scripts/pro/autonomy/evaluator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "goal_manager.py",
+          "ruta": "scripts/pro/autonomy/goal_manager.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/learning/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "aprendizaje.py",
+          "ruta": "scripts/pro/autonomy/learning/aprendizaje.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "knowledge_base.py",
+          "ruta": "scripts/pro/autonomy/learning/knowledge_base.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ledger_utils.py",
+          "ruta": "scripts/pro/autonomy/learning/ledger_utils.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "pattern_analyzer.py",
+          "ruta": "scripts/pro/autonomy/learning/pattern_analyzer.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "policy_engine.py",
+          "ruta": "scripts/pro/autonomy/learning/policy_engine.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "recommendation_engine.py",
+          "ruta": "scripts/pro/autonomy/learning/recommendation_engine.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "trend_monitor.py",
+          "ruta": "scripts/pro/autonomy/learning/trend_monitor.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "learning.py",
+          "ruta": "scripts/pro/autonomy/learning.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/memory/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "ingester.py",
+          "ruta": "scripts/pro/autonomy/memory/ingester.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "memoria.py",
+          "ruta": "scripts/pro/autonomy/memory/memoria.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "queries.py",
+          "ruta": "scripts/pro/autonomy/memory/queries.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "schema.py",
+          "ruta": "scripts/pro/autonomy/memory/schema.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "semantic_memory.py",
+          "ruta": "scripts/pro/autonomy/memory/semantic_memory.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "planner.py",
+          "ruta": "scripts/pro/autonomy/planner.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/research/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "evidence.py",
+          "ruta": "scripts/pro/autonomy/research/evidence.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "hypothesis.py",
+          "ruta": "scripts/pro/autonomy/research/hypothesis.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "investigacion.py",
+          "ruta": "scripts/pro/autonomy/research/investigacion.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "researcher.py",
+          "ruta": "scripts/pro/autonomy/research/researcher.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "synthesis.py",
+          "ruta": "scripts/pro/autonomy/research/synthesis.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/swarm/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "agent_base.py",
+          "ruta": "scripts/pro/autonomy/swarm/agent_base.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "architecture_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/architecture_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "documentation_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/documentation_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "performance_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/performance_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "research_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/research_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "security_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/security_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "testing_agent.py",
+          "ruta": "scripts/pro/autonomy/swarm/agents/testing_agent.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "coordinator.py",
+          "ruta": "scripts/pro/autonomy/swarm/coordinator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "swarm.py",
+          "ruta": "scripts/pro/autonomy/swarm/swarm.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "backup_assistant.py",
+          "ruta": "scripts/pro/backup_assistant.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "backup_f26_memory.py",
+          "ruta": "scripts/pro/backup_f26_memory.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "backup_gx10_configs.sh",
+          "ruta": "scripts/pro/backup_gx10_configs.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "backup_hetzner_to_asus.sh",
+          "ruta": "scripts/pro/backup_hetzner_to_asus.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "backup_unified.sh",
+          "ruta": "scripts/pro/backup_unified.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "bypass_linksys_gui.py",
+          "ruta": "scripts/pro/bypass_linksys_gui.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "captura_virtual.py",
+          "ruta": "scripts/pro/captura_virtual.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "change_log.py",
+          "ruta": "scripts/pro/change_log.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "chaos_f29_b5.py",
+          "ruta": "scripts/pro/chaos_f29_b5.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "chaos_test.py",
+          "ruta": "scripts/pro/chaos_test.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "check_licenses.sh",
+          "ruta": "scripts/pro/check_licenses.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "check_secrets.py",
+          "ruta": "scripts/pro/check_secrets.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "chunk_optimizer.py",
+          "ruta": "scripts/pro/chunk_optimizer.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ciclo_rapido.sh",
+          "ruta": "scripts/pro/ciclo_rapido.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "cleanup_assistant.py",
+          "ruta": "scripts/pro/cleanup_assistant.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "commit_msg_validator.py",
+          "ruta": "scripts/pro/commit_msg_validator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "compactador_espacios.py",
+          "ruta": "scripts/pro/compactador_espacios.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "compactadora.py",
+          "ruta": "scripts/pro/compactadora.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "compilador_opiniones.py",
+          "ruta": "scripts/pro/compilador_opiniones.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "conceder_permisos_accesibilidad.sh",
+          "ruta": "scripts/pro/conceder_permisos_accesibilidad.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "conciencia.py",
+          "ruta": "scripts/pro/conciencia.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "conectar_servidor_externo.sh",
+          "ruta": "scripts/pro/conectar_servidor_externo.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "conflict_detector.sh",
+          "ruta": "scripts/pro/conflict_detector.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "consolidacion.py",
+          "ruta": "scripts/pro/consolidacion.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "cross_trace.sh",
+          "ruta": "scripts/pro/cross_trace.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "daemon_procesamiento_lento.sh",
+          "ruta": "scripts/pro/daemon_procesamiento_lento.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "dashboard.py",
+          "ruta": "scripts/pro/dashboard.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "demo_pipeline_mac.py",
+          "ruta": "scripts/pro/demo_pipeline_mac.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "demo_pipeline_voz.py",
+          "ruta": "scripts/pro/demo_pipeline_voz.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "deploy_camaras.sh",
+          "ruta": "scripts/pro/deploy_camaras.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "deploy_copilotos.sh",
+          "ruta": "scripts/pro/deploy_copilotos.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "deploy_sandbox_gx10.sh",
+          "ruta": "scripts/pro/deploy_sandbox_gx10.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "deploy_to_hetzner.sh",
+          "ruta": "scripts/pro/deploy_to_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "descubrir_puertos.sh",
+          "ruta": "scripts/pro/descubrir_puertos.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "desplegar_dahua_supervisor.sh",
+          "ruta": "scripts/pro/desplegar_dahua_supervisor.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "detect_environment.sh",
+          "ruta": "scripts/pro/detect_environment.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "docker-compose.gx10-sandbox.yml",
+          "ruta": "scripts/pro/docker-compose.gx10-sandbox.yml",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "dr_test.sh",
+          "ruta": "scripts/pro/dr_test.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "ejecutor_api.py",
+          "ruta": "scripts/pro/ejecutor_api.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "evolve.sh",
+          "ruta": "scripts/pro/evolve.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "external_audit.sh",
+          "ruta": "scripts/pro/external_audit.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "f14_e2e.py",
+          "ruta": "scripts/pro/f14_e2e.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "f14_load_test.py",
+          "ruta": "scripts/pro/f14_load_test.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "f14_profiling.py",
+          "ruta": "scripts/pro/f14_profiling.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "f14_resilience.py",
+          "ruta": "scripts/pro/f14_resilience.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "f821_watch.py",
+          "ruta": "scripts/pro/f821_watch.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "false_positive_baseline.sh",
+          "ruta": "scripts/pro/false_positive_baseline.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "filtro_cascada.sh",
+          "ruta": "scripts/pro/filtro_cascada.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "fix_masivo.py",
+          "ruta": "scripts/pro/fix_masivo.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "fix_sudo_run.sh",
+          "ruta": "scripts/pro/fix_sudo_run.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "fn_scanner.sh",
+          "ruta": "scripts/pro/fn_scanner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "fp_scanner.sh",
+          "ruta": "scripts/pro/fp_scanner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "fpfn_report.sh",
+          "ruta": "scripts/pro/fpfn_report.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "generate_arch_diagram.py",
+          "ruta": "scripts/pro/generate_arch_diagram.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gpu_health.py",
+          "ruta": "scripts/pro/gpu_health.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "gpu_recovery.sh",
+          "ruta": "scripts/pro/gpu_recovery.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "guardian_tmpfs.sh",
+          "ruta": "scripts/pro/guardian_tmpfs.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gx10-api.service",
+          "ruta": "scripts/pro/gx10-api.service",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "gx10_sync.sh",
+          "ruta": "scripts/pro/gx10_sync.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "gx10_sync_final.sh",
+          "ruta": "scripts/pro/gx10_sync_final.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "hardening_audit.py",
+          "ruta": "scripts/pro/hardening_audit.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "health_check.sh",
+          "ruta": "scripts/pro/health_check.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "health_check_router.sh",
+          "ruta": "scripts/pro/health_check_router.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "heartbeat_hetzner.sh",
+          "ruta": "scripts/pro/heartbeat_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "hetzner_watchdog.sh",
+          "ruta": "scripts/pro/hetzner_watchdog.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "index_golden_docs.py",
+          "ruta": "scripts/pro/index_golden_docs.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "index_semantic_chunks.py",
+          "ruta": "scripts/pro/index_semantic_chunks.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "inspectores.py",
+          "ruta": "scripts/pro/inspectores.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "instalar_gx10_circuit.sh",
+          "ruta": "scripts/pro/instalar_gx10_circuit.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "instalar_servidor_camaras.sh",
+          "ruta": "scripts/pro/instalar_servidor_camaras.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "install_tailscale_hetzner.sh",
+          "ruta": "scripts/pro/install_tailscale_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "integracion_opencode.sh",
+          "ruta": "scripts/pro/integracion_opencode.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "inventario_f5.py",
+          "ruta": "scripts/pro/inventario_f5.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "jaulas_recursos.sh",
+          "ruta": "scripts/pro/jaulas_recursos.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "knowledge_engine.py",
+          "ruta": "scripts/pro/knowledge_engine.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "lock_manager.py",
+          "ruta": "scripts/pro/lock_manager.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "maquinas.sh",
+          "ruta": "scripts/pro/maquinas.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "master_conciencia.py",
+          "ruta": "scripts/pro/master_conciencia.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "mcp_config.sh",
+          "ruta": "scripts/pro/mcp_config.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "mcp_mochila.py",
+          "ruta": "scripts/pro/mcp_mochila.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "meta_mejora.py",
+          "ruta": "scripts/pro/meta_mejora.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "metrics_server.py",
+          "ruta": "scripts/pro/metrics_server.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "monitoreo_urgente.sh",
+          "ruta": "scripts/pro/monitoreo_urgente.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "notify_on_change.sh",
+          "ruta": "scripts/pro/notify_on_change.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "openclaw_firmador.py",
+          "ruta": "scripts/pro/openclaw_firmador.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "openclaw_netlock.sh",
+          "ruta": "scripts/pro/openclaw_netlock.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "openclaw_reviewer.py",
+          "ruta": "scripts/pro/openclaw_reviewer.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "orchestrator.py",
+          "ruta": "scripts/pro/orchestrator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "orquestar_auditoria_hetzner.sh",
+          "ruta": "scripts/pro/orquestar_auditoria_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "pareto_router.py",
+          "ruta": "scripts/pro/pareto_router.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "patch_systemd_limits.sh",
+          "ruta": "scripts/pro/patch_systemd_limits.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "patch_timestamps.py",
+          "ruta": "scripts/pro/patch_timestamps.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "phase1_diagnosis.sh",
+          "ruta": "scripts/pro/phase1_diagnosis.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "phase2_filter.sh",
+          "ruta": "scripts/pro/phase2_filter.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "phase3_architecture.sh",
+          "ruta": "scripts/pro/phase3_architecture.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "phase4_rollback.sh",
+          "ruta": "scripts/pro/phase4_rollback.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "pipeline_refactor.py",
+          "ruta": "scripts/pro/pipeline_refactor.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "pipeline_supremo.py",
+          "ruta": "scripts/pro/pipeline_supremo.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "plugin_registry.py",
+          "ruta": "scripts/pro/plugin_registry.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "poda_mecanica.py",
+          "ruta": "scripts/pro/poda_mecanica.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "pull-from-hetzner.sh",
+          "ruta": "scripts/pro/pull-from-hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "qdrant_health.sh",
+          "ruta": "scripts/pro/qdrant_health.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "quality_metrics.sh",
+          "ruta": "scripts/pro/quality_metrics.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "recovery_rootfs_rw.sh",
+          "ruta": "scripts/pro/recovery_rootfs_rw.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "redirect_mejora_gx10.sh",
+          "ruta": "scripts/pro/redirect_mejora_gx10.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "refactor_large_functions_v2.py",
+          "ruta": "scripts/pro/refactor_large_functions_v2.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "refactor_preflight.sh",
+          "ruta": "scripts/pro/refactor_preflight.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "refactor_v2.py",
+          "ruta": "scripts/pro/refactor_v2.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reglas_applier.py",
+          "ruta": "scripts/pro/reglas_applier.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reglas_generator.py",
+          "ruta": "scripts/pro/reglas_generator.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reglas_loader.py",
+          "ruta": "scripts/pro/reglas_loader.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reindex_vectors.py",
+          "ruta": "scripts/pro/reindex_vectors.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "rescue_hetzner.sh",
+          "ruta": "scripts/pro/rescue_hetzner.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/reuse/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "ast_index.py",
+          "ruta": "scripts/pro/reuse/ast_index.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "quality_gates.py",
+          "ruta": "scripts/pro/reuse/quality_gates.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reuse.py",
+          "ruta": "scripts/pro/reuse/reuse.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reuse_detector.py",
+          "ruta": "scripts/pro/reuse/reuse_detector.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "similarity.py",
+          "ruta": "scripts/pro/reuse/similarity.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "test_regression.py",
+          "ruta": "scripts/pro/reuse/test_regression.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "reuse_detector_plugin.py",
+          "ruta": "scripts/pro/reuse_detector_plugin.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "revisor.py",
+          "ruta": "scripts/pro/revisor.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "rotate_secrets.sh",
+          "ruta": "scripts/pro/rotate_secrets.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "router_rate_limiter.py",
+          "ruta": "scripts/pro/router_rate_limiter.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "rpa_linksys.py",
+          "ruta": "scripts/pro/rpa_linksys.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "rpa_linksys_v2.py",
+          "ruta": "scripts/pro/rpa_linksys_v2.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "rpa_zte_f6640.py",
+          "ruta": "scripts/pro/rpa_zte_f6640.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "safe_rollback.sh",
+          "ruta": "scripts/pro/safe_rollback.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sandbox_industrial.py",
+          "ruta": "scripts/pro/sandbox_industrial.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sanear_codigo.py",
+          "ruta": "scripts/pro/sanear_codigo.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "scanner_autoajuste.py",
+          "ruta": "scripts/pro/scanner_autoajuste.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "seed_correcciones_voz.py",
+          "ruta": "scripts/pro/seed_correcciones_voz.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "setup_logrotate_newsyslog.sh",
+          "ruta": "scripts/pro/setup_logrotate_newsyslog.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "shadow_git_rollback.sh",
+          "ruta": "scripts/pro/shadow_git_rollback.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sincronizar_vocabulario.py",
+          "ruta": "scripts/pro/sincronizar_vocabulario.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "stage_hardening.sh",
+          "ruta": "scripts/pro/stage_hardening.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "supervisor_ciclo.sh",
+          "ruta": "scripts/pro/supervisor_ciclo.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sync_knowledge.sh",
+          "ruta": "scripts/pro/sync_knowledge.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sync_ura.sh",
+          "ruta": "scripts/pro/sync_ura.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "systemd_orphan_scanner.py",
+          "ruta": "scripts/pro/systemd_orphan_scanner.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "tailscale-acls.json",
+          "ruta": "scripts/pro/tailscale-acls.json",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "test_latencia_mac.py",
+          "ruta": "scripts/pro/test_latencia_mac.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tests/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "test_logger_regression.py",
+          "ruta": "scripts/pro/tests/test_logger_regression.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "token_screen.py",
+          "ruta": "scripts/pro/token_screen.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "trampa_rm.sh",
+          "ruta": "scripts/pro/trampa_rm.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "auto_trigger.py",
+          "ruta": "scripts/pro/tuneladora/auto_trigger.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "checkpoint.py",
+          "ruta": "scripts/pro/tuneladora/checkpoint.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "config.py",
+          "ruta": "scripts/pro/tuneladora/config.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "detector.py",
+          "ruta": "scripts/pro/tuneladora/detector.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "engine.py",
+          "ruta": "scripts/pro/tuneladora/engine.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "generate_index.py",
+          "ruta": "scripts/pro/tuneladora/generate_index.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "install_service.py",
+          "ruta": "scripts/pro/tuneladora/install_service.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ledger.py",
+          "ruta": "scripts/pro/tuneladora/ledger.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "logger.py",
+          "ruta": "scripts/pro/tuneladora/logger.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/memory/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "episodic.py",
+          "ruta": "scripts/pro/tuneladora/memory/episodic.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "long_term.py",
+          "ruta": "scripts/pro/tuneladora/memory/long_term.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "semantic.py",
+          "ruta": "scripts/pro/tuneladora/memory/semantic.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "short_term.py",
+          "ruta": "scripts/pro/tuneladora/memory/short_term.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "block_reviewer.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/block_reviewer.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "llm_fallback.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/llm_fallback.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "pending_queue.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/pending_queue.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "runner.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/runner.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sandbox.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/sandbox.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "snapshot_manager.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/snapshot_manager.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "sofia.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/sofia.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "bandit_tool.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/bandit_tool.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "base.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/base.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "mypy_tool.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/mypy_tool.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "pytest_tool.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/pytest_tool.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ruff_tool.py",
+          "ruta": "scripts/pro/tuneladora/pipeline/tools/ruff_tool.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/plugins/__init__.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "arq_check.py",
+          "ruta": "scripts/pro/tuneladora/plugins/arq_check.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "backup.py",
+          "ruta": "scripts/pro/tuneladora/plugins/backup.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "cleanup.py",
+          "ruta": "scripts/pro/tuneladora/plugins/cleanup.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "code_quality.py",
+          "ruta": "scripts/pro/tuneladora/plugins/code_quality.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "dashboard.py",
+          "ruta": "scripts/pro/tuneladora/plugins/dashboard.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "health.py",
+          "ruta": "scripts/pro/tuneladora/plugins/health.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "installer.py",
+          "ruta": "scripts/pro/tuneladora/plugins/installer.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "notifier.py",
+          "ruta": "scripts/pro/tuneladora/plugins/notifier.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "reporting.py",
+          "ruta": "scripts/pro/tuneladora/plugins/reporting.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "preflight_system.py",
+          "ruta": "scripts/pro/tuneladora/preflight_system.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "resilience.py",
+          "ruta": "scripts/pro/tuneladora/resilience.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "scheduler.py",
+          "ruta": "scripts/pro/tuneladora/scheduler.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "scheduler_daemon.py",
+          "ruta": "scripts/pro/tuneladora/scheduler_daemon.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/shadow/__init__.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "layer0_env.py",
+          "ruta": "scripts/pro/tuneladora/shadow/layer0_env.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "layer3_shadow.py",
+          "ruta": "scripts/pro/tuneladora/shadow/layer3_shadow.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "shadow_health.py",
+          "ruta": "scripts/pro/tuneladora/shadow/shadow_health.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "snapshot.py",
+          "ruta": "scripts/pro/tuneladora/snapshot.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "tuneladora_pipeline.py",
+          "ruta": "scripts/pro/tuneladora/tuneladora_pipeline.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "unified_scheduler.py",
+          "ruta": "scripts/pro/tuneladora/unified_scheduler.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "watch_daemon.sh",
+          "ruta": "scripts/pro/tuneladora/watch_daemon.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "watch_daemon_loop.sh",
+          "ruta": "scripts/pro/tuneladora/watch_daemon_loop.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "watch_daemon_poll.sh",
+          "ruta": "scripts/pro/tuneladora/watch_daemon_poll.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "tuneladora_mantenimiento.py",
+          "ruta": "scripts/pro/tuneladora_mantenimiento.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "tuneladora_mejora.py",
+          "ruta": "scripts/pro/tuneladora_mejora.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "ufw_apply.sh",
+          "ruta": "scripts/pro/ufw_apply.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "uitars_gx10.py",
+          "ruta": "scripts/pro/uitars_gx10.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "uitars_hetzner.py",
+          "ruta": "scripts/pro/uitars_hetzner.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "upgrade_pipeline.sh",
+          "ruta": "scripts/pro/upgrade_pipeline.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura-exit-node.sh",
+          "ruta": "scripts/pro/ura-exit-node.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura-mkdocs.service",
+          "ruta": "scripts/pro/ura-mkdocs.service",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura-system-health.sh",
+          "ruta": "scripts/pro/ura-system-health.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura_ojos.sh",
+          "ruta": "scripts/pro/ura_ojos.sh",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura_query.py",
+          "ruta": "scripts/pro/ura_query.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "ura_self_modify.py",
+          "ruta": "scripts/pro/ura_self_modify.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "ura_watch_asus.py",
+          "ruta": "scripts/pro/ura_watch_asus.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "utils.py",
+          "ruta": "scripts/pro/utils.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "watch_inbox.py",
+          "ruta": "scripts/pro/watch_inbox.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "watchdog_buffer.sh",
+          "ruta": "scripts/pro/watchdog_buffer.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "watcher_auditoria.sh",
+          "ruta": "scripts/pro/watcher_auditoria.sh",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "watermark_aggregator.py",
+          "ruta": "scripts/pro/watermark_aggregator.py",
+          "clasificacion": "integrado"
+        },
+        {
+          "archivo": "worker_manager.py",
+          "ruta": "scripts/pro/worker_manager.py",
+          "clasificacion": "dormido_valor"
+        }
+      ]
+    },
+    "tools/benchmarks": {
+      "total": 15,
+      "archivos": [
+        {
+          "archivo": "benchmark_baseline.py",
+          "ruta": "tools/benchmarks/benchmark_baseline.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_compare_chunking.py",
+          "ruta": "tools/benchmarks/benchmark_compare_chunking.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_f10_perf.py",
+          "ruta": "tools/benchmarks/benchmark_f10_perf.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_f24.py",
+          "ruta": "tools/benchmarks/benchmark_f24.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_f29_b2.py",
+          "ruta": "tools/benchmarks/benchmark_f29_b2.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_final_reranking.py",
+          "ruta": "tools/benchmarks/benchmark_final_reranking.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_final_retrieval.py",
+          "ruta": "tools/benchmarks/benchmark_final_retrieval.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_hybrid.py",
+          "ruta": "tools/benchmarks/benchmark_hybrid.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_hybrid_refined.py",
+          "ruta": "tools/benchmarks/benchmark_hybrid_refined.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_ke.py",
+          "ruta": "tools/benchmarks/benchmark_ke.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_llm.py",
+          "ruta": "tools/benchmarks/benchmark_llm.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_qdrant.py",
+          "ruta": "tools/benchmarks/benchmark_qdrant.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_rag.py",
+          "ruta": "tools/benchmarks/benchmark_rag.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_rerank.py",
+          "ruta": "tools/benchmarks/benchmark_rerank.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "benchmark_reranking.py",
+          "ruta": "tools/benchmarks/benchmark_reranking.py",
+          "clasificacion": "dormido_valor"
+        }
+      ]
+    },
+    "motor/plugin": {
+      "total": 5,
+      "archivos": [
+        {
+          "archivo": "__init__.py",
+          "ruta": "motor/plugin/__init__.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "base.py",
+          "ruta": "motor/plugin/base.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "manifest.py",
+          "ruta": "motor/plugin/manifest.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "registry.py",
+          "ruta": "motor/plugin/registry.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "registry_v2.py",
+          "ruta": "motor/plugin/registry_v2.py",
+          "clasificacion": "framework"
+        }
+      ]
+    },
+    "tuneladora/plugins": {
+      "total": 10,
+      "archivos": [
+        {
+          "archivo": "__init__.py",
+          "ruta": "scripts/pro/tuneladora/plugins/__init__.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "arq_check.py",
+          "ruta": "scripts/pro/tuneladora/plugins/arq_check.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "backup.py",
+          "ruta": "scripts/pro/tuneladora/plugins/backup.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "cleanup.py",
+          "ruta": "scripts/pro/tuneladora/plugins/cleanup.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "code_quality.py",
+          "ruta": "scripts/pro/tuneladora/plugins/code_quality.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "dashboard.py",
+          "ruta": "scripts/pro/tuneladora/plugins/dashboard.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "health.py",
+          "ruta": "scripts/pro/tuneladora/plugins/health.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "installer.py",
+          "ruta": "scripts/pro/tuneladora/plugins/installer.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "notifier.py",
+          "ruta": "scripts/pro/tuneladora/plugins/notifier.py",
+          "clasificacion": "framework"
+        },
+        {
+          "archivo": "reporting.py",
+          "ruta": "scripts/pro/tuneladora/plugins/reporting.py",
+          "clasificacion": "framework"
+        }
+      ]
+    }
+  }
+}
