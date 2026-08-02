@@ -56,6 +56,19 @@ class StateDeductor:
         """
         results: list[Deduction] = []
         node_map = {n["id"]: n for n in nodes}
+        type_counts, src_counts, dst_counts = self._contar(nodes, edges)
+
+        self._deducir_huérfanos(nodes, src_counts, dst_counts, results)
+        self._deducir_cobertura(nodes, type_counts, results)
+        self._deducir_hubs(node_map, dst_counts, results)
+
+        return results
+
+    def _contar(
+        self,
+        nodes: list[dict[str, Any]],
+        edges: list[dict[str, Any]],
+    ) -> tuple[Counter[str], Counter[str], Counter[str]]:
         type_counts: Counter[str] = Counter()
         src_counts: Counter[str] = Counter()
         dst_counts: Counter[str] = Counter()
@@ -67,6 +80,15 @@ class StateDeductor:
             src_counts[e["src"]] += 1
             dst_counts[e["dst"]] += 1
 
+        return type_counts, src_counts, dst_counts
+
+    def _deducir_huérfanos(
+        self,
+        nodes: list[dict[str, Any]],
+        src_counts: Counter[str],
+        dst_counts: Counter[str],
+        results: list[Deduction],
+    ) -> None:
         # 1. Documentos huérfanos (sin relaciones entrantes ni salientes)
         for n in nodes:
             nid = n["id"]
@@ -81,39 +103,51 @@ class StateDeductor:
                     ),
                 )
 
+    def _deducir_cobertura(
+        self,
+        nodes: list[dict[str, Any]],
+        type_counts: Counter[str],
+        results: list[Deduction],
+    ) -> None:
         # 2. Cobertura por tipo
-        if nodes:
-            total = len(nodes)
-            for dtype, count in sorted(type_counts.items()):
-                coverage = count / total
+        if not nodes:
+            return
+        total = len(nodes)
+        for dtype, count in sorted(type_counts.items()):
+            coverage = count / total
+            results.append(
+                Deduction(
+                    kind="coverage",
+                    subject_id=dtype,
+                    description=f"Cobertura {dtype}: {count}/{total} ({coverage:.0%})",
+                    confidence=1.0,
+                    metadata={"count": count, "total": total, "ratio": coverage},
+                ),
+            )
+
+    def _deducir_hubs(
+        self,
+        node_map: dict[str, dict[str, Any]],
+        dst_counts: Counter[str],
+        results: list[Deduction],
+    ) -> None:
+        # 3. Documentos más referenciados (hub nodes)
+        if not dst_counts:
+            return
+        max_refs = max(dst_counts.values())
+        threshold = max(max_refs * 0.5, 1)
+        for nid, refs in dst_counts.items():
+            if refs >= threshold and refs > 1:
+                node = node_map.get(nid, {})
                 results.append(
                     Deduction(
-                        kind="coverage",
-                        subject_id=dtype,
-                        description=f"Cobertura {dtype}: {count}/{total} ({coverage:.0%})",
-                        confidence=1.0,
-                        metadata={"count": count, "total": total, "ratio": coverage},
+                        kind="dependency",
+                        subject_id=nid,
+                        description=f"Nodo central: {refs} referencias entrantes",
+                        confidence=min(refs / max_refs, 1.0),
+                        metadata={
+                            "inbound_refs": refs,
+                            "path": node.get("path", ""),
+                        },
                     ),
                 )
-
-        # 3. Documentos más referenciados (hub nodes)
-        if dst_counts:
-            max_refs = max(dst_counts.values())
-            threshold = max(max_refs * 0.5, 1)
-            for nid, refs in dst_counts.items():
-                if refs >= threshold and refs > 1:
-                    node = node_map.get(nid, {})
-                    results.append(
-                        Deduction(
-                            kind="dependency",
-                            subject_id=nid,
-                            description=f"Nodo central: {refs} referencias entrantes",
-                            confidence=min(refs / max_refs, 1.0),
-                            metadata={
-                                "inbound_refs": refs,
-                                "path": node.get("path", ""),
-                            },
-                        ),
-                    )
-
-        return results
