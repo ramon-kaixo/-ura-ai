@@ -1,5 +1,11 @@
-"""Tests para core/voice/__init__.py, core/model_router/__main__.py y core/inferencia/engine.py."""
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.slow
+pytest.importorskip("torch")  # Skip si torch no está instalado
+
+"""Tests para core/voice/__init__.py, core/model_router/__main__.py y core/inferencia/engine.py."""
 
 from unittest import mock
 
