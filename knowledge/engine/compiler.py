@@ -111,8 +111,6 @@ def _etapa_scan(
     compiler_version: str,
 ) -> tuple[list[str], Snapshot, list[CompileError], list[CompileError], list[Path], CompileResult | None]:
     # ── Stage 1: DISCOVERING ─────────────────────────────────────────────
-    ctx = _ctx_stage(meta, opts, CompileStage.DISCOVERING)
-
     changed, snapshot, scanner_skipped, deleted = scan_incremental(previous_snapshot, source_dir)
 
     if previous_snapshot and not changed and not deleted:
