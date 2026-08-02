@@ -55,14 +55,45 @@ class FeedbackRequest(BaseModel):
 
 
 @router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:  # noqa: PLR0915
+async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | StreamingResponse:
     correlation_id = str(uuid.uuid4())[:8]
     client_ip = http_request.client.host if http_request.client else "unknown"
     _rate_limiter.check(client_ip)
-    _start_time = time.monotonic()
+    start_time = time.monotonic()
+    trace = _registrar_request(request, correlation_id)
 
+    engine = get_engine()
+    llm = get_llm()
+    get_assistant_health().set_healthy("conversation", f"active: {correlation_id}")
+    cid = _scoped_cid(request.user_id, request.conversation_id or uuid.uuid4().hex[:16])
+
+    blocked = _moderar_input(request, engine, cid, correlation_id)
+    if blocked is not None:
+        return blocked
+
+    plan = _preparar_respuesta(engine, llm, cid, request)
+
+    if request.stream:
+        return _responder_streaming(llm, engine, request, plan)
+
+    reply = _generar_respuesta_sync(llm, plan, trace, correlation_id)
+    output_mod = _moderator.moderate_output(reply)
+    if output_mod.flagged:
+        reply = output_mod.sanitized_text
+    engine.add_message(cid, "assistant", reply)
+
+    _registrar_exito(start_time, plan, correlation_id, reply)
+
+    return ChatResponse(
+        conversation_id=plan.display_cid,
+        reply=reply,
+        intent=plan.intent.value,
+        turn_count=plan.conv.state.turn_count if plan.conv.state else 0,
+    )
+
+
+def _registrar_request(request: ChatRequest, correlation_id: str) -> TraceContext:
     trace = TraceContext(source="assistant_api", destination="llm", correlation_id=correlation_id)
-
     _log.info(
         "chat request",
         extra={
@@ -72,33 +103,32 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             "message_len": len(request.message),
         },
     )
-
     requests_total.inc(mode=request.mode, status="received")
+    return trace
 
-    engine = get_engine()
-    llm = get_llm()
-    get_assistant_health().set_healthy("conversation", f"active: {correlation_id}")
-    cid = request.conversation_id or uuid.uuid4().hex[:16]
 
-    cid = _scoped_cid(request.user_id, cid)
-
+def _moderar_input(request: ChatRequest, engine: Any, cid: str, correlation_id: str) -> ChatResponse | None:
     input_mod = _moderator.moderate_input(request.message)
-    if input_mod.flagged:
-        engine.add_message(cid, "user", request.message)
-        engine.add_message(cid, "assistant", "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.")
-        _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": input_mod.reason})
-        return ChatResponse(
-            conversation_id=request.conversation_id or cid,
-            reply="No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada.",
-            intent="unknown",
-            turn_count=2,
-        )
+    if not input_mod.flagged:
+        return None
+    reply = "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada."
+    engine.add_message(cid, "user", request.message)
+    engine.add_message(cid, "assistant", reply)
+    _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": input_mod.reason})
+    return ChatResponse(
+        conversation_id=request.conversation_id or cid,
+        reply=reply,
+        intent="unknown",
+        turn_count=2,
+    )
 
+
+def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequest) -> Any:
     result = _process(engine, llm, cid, request.message, request.mode, request.user_id)
     intent, mode, resolved, system_prompt, conv, lang_code, analysis = result
     display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
 
-    enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
+    enriched_prompt = _enrich_prompt_sync(system_prompt, analysis, engine, resolved)
 
     if intent == UserIntent.COMMAND:
         tool_name = _detect_tool_name(resolved)
@@ -106,81 +136,99 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
             enriched_prompt += (
                 "\n\n⚠️ Este comando requiere confirmación. Pregunta al usuario si está seguro antes de ejecutarlo."
             )
-        tool_result = await _execute_command(resolved, analysis)
+        tool_result = _execute_command_sync(resolved, analysis)
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
             enriched_prompt += "\n\nEl resultado arriba es de un comando REAL. Responde basándote en ese resultado."
 
-    if request.stream:
+    return SimpleNamespace(
+        intent=intent,
+        mode=mode,
+        resolved=resolved,
+        system_prompt=system_prompt,
+        conv=conv,
+        lang_code=lang_code,
+        display_cid=display_cid,
+        enriched_prompt=enriched_prompt,
+    )
 
-        async def event_stream():
-            full_reply = ""
-            try:
-                async for token in llm.generate_stream(
-                    cid, resolved, mode, intent_value=intent.value, system_prompt=enriched_prompt
-                ):
-                    yield StreamEvent("token", {"text": token}).to_sse()
-                    full_reply = token
-            except Exception as exc:
-                yield StreamEvent("error", {"type": type(exc).__name__}).to_sse()
-                full_reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
 
-            output_mod = _moderator.moderate_output(full_reply)
-            if output_mod.flagged:
-                full_reply = output_mod.sanitized_text
-            engine.add_message(cid, "assistant", full_reply)
-            yield StreamEvent(
-                "complete",
-                {
-                    "reply": full_reply,
-                    "conversation_id": display_cid,
-                    "intent": intent.value,
-                    "mode": mode.value,
-                },
-            ).to_sse()
+def _enrich_prompt_sync(system_prompt: str, analysis: Any, engine: Any, resolved: str) -> str:
+    import asyncio
 
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
+    return asyncio.run(_enrich_prompt(system_prompt, analysis, engine, resolved))
 
+
+def _execute_command_sync(resolved: str, analysis: Any) -> str | None:
+    import asyncio
+
+    return asyncio.run(_execute_command(resolved, analysis))
+
+
+def _responder_streaming(llm: Any, engine: Any, request: ChatRequest, plan: Any) -> StreamingResponse:
+    async def event_stream():
+        full_reply = ""
+        try:
+            async for token in llm.generate_stream(
+                plan.cid if hasattr(plan, "cid") else "",
+                plan.resolved,
+                plan.mode,
+                intent_value=plan.intent.value,
+                system_prompt=plan.enriched_prompt,
+            ):
+                yield StreamEvent("token", {"text": token}).to_sse()
+                full_reply = token
+        except Exception as exc:
+            yield StreamEvent("error", {"type": type(exc).__name__}).to_sse()
+            full_reply = _FALLBACK_REPLIES.get(plan.lang_code, _FALLBACK_REPLIES["es"])
+
+        output_mod = _moderator.moderate_output(full_reply)
+        if output_mod.flagged:
+            full_reply = output_mod.sanitized_text
+        engine.add_message(plan.cid, "assistant", full_reply)
+        yield StreamEvent(
+            "complete",
+            {
+                "reply": full_reply,
+                "conversation_id": plan.display_cid,
+                "intent": plan.intent.value,
+                "mode": plan.mode.value,
+            },
+        ).to_sse()
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+def _generar_respuesta_sync(llm: Any, plan: Any, trace: TraceContext, correlation_id: str) -> str:
     try:
-        with trace.span(message_type="llm.generate", tags={"correlation_id": correlation_id, "mode": mode.value}):
+        with trace.span(message_type="llm.generate", tags={"correlation_id": correlation_id, "mode": plan.mode.value}):
             reply = llm.generate(
-                cid,
-                resolved,
-                mode,
-                intent_value=intent.value,
-                system_prompt=enriched_prompt,
+                plan.cid,
+                plan.resolved,
+                plan.mode,
+                intent_value=plan.intent.value,
+                system_prompt=plan.enriched_prompt,
             )
         tokens_total.inc(provider="llm", amount=len(reply.split()))
+        return reply
     except Exception:
         errors_total.inc(type="llm_error", component="generation")
-        reply = _FALLBACK_REPLIES.get(lang_code, _FALLBACK_REPLIES["es"])
+        return _FALLBACK_REPLIES.get(plan.lang_code, _FALLBACK_REPLIES["es"])
 
-    output_mod = _moderator.moderate_output(reply)
-    if output_mod.flagged:
-        reply = output_mod.sanitized_text
 
-    engine.add_message(cid, "assistant", reply)
-
-    duration = time.monotonic() - _start_time
-    request_latency.observe(duration, mode=mode.value)
-    requests_total.inc(mode=mode.value, status="success")
-
+def _registrar_exito(start_time: float, plan: Any, correlation_id: str, reply: str) -> None:
+    duration = time.monotonic() - start_time
+    request_latency.observe(duration, mode=plan.mode.value)
+    requests_total.inc(mode=plan.mode.value, status="success")
     _log.info(
         "chat response",
         extra={
             "correlation_id": correlation_id,
-            "intent": intent.value,
-            "mode": mode.value,
+            "intent": plan.intent.value,
+            "mode": plan.mode.value,
             "reply_len": len(reply),
             "duration_s": round(duration, 3),
         },
-    )
-
-    return ChatResponse(
-        conversation_id=display_cid,
-        reply=reply,
-        intent=intent.value,
-        turn_count=conv.state.turn_count if conv.state else 0,
     )
 
 

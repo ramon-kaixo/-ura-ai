@@ -1,5 +1,6 @@
 """Bucle completo: DETECTAR → AISLAR → REPARAR → VALIDAR → ACTUALIZAR."""
 
+from typing import Any
 import json
 import subprocess
 import sys
@@ -26,7 +27,7 @@ class SelfHealingLoop:
 
     def ejecutar(self, archivo: str | None = None) -> dict:
         inicio = time.monotonic()
-        reporte = {"timestamp": datetime.now(UTC).isoformat(), "pasos": []}
+        reporte: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat(), "pasos": []}
 
         tele = self.telemetria.reporte_completo()
         conciencia = Conciencia.leer()

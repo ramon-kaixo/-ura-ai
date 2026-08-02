@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any, Dict
 import logging
 import os
 import subprocess
@@ -36,7 +37,7 @@ class Telemetria:
 
     @staticmethod
     def hardware() -> dict:
-        metrics = {"timestamp": datetime.now(UTC).isoformat()}
+        metrics: Dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat()}
         try:
             import psutil
 
