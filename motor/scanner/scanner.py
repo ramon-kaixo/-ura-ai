@@ -229,55 +229,11 @@ class Scanner:
         return h.hexdigest()[:16]
 
     def _detectar_orphans(self) -> list:
-        orphans = []
-        try:
-            for p in Path("/var/run").glob("*.pid"):
-                try:
-                    pid = int(p.read_text().strip())
-                    if not Path(f"/proc/{pid}").exists():
-                        orphans.append({"pid_file": str(p), "pid": pid, "tipo": "stale_pid"})
-                except (ValueError, OSError) as e:
-                    log.debug("fallo procesar pid file %s: %s", p, e)
-        except Exception as e:
-            log.debug("fallo glob /var/run/*.pid: %s", e)
-
-        try:
-            import psutil
-
-            current_pids = {p.info["pid"] for p in psutil.process_iter(["pid", "ppid", "name"])}
-            for proc in psutil.process_iter(["pid", "ppid", "name"]):
-                ppid = proc.info["ppid"]
-                if ppid != 1 and ppid not in current_pids:
-                    name = proc.info["name"] or "?"
-                    orphans.append(
-                        {
-                            "tipo": "hijo_huertano",
-                            "pid": proc.info["pid"],
-                            "ppid": ppid,
-                            "name": name,
-                        },
-                    )
-        except (ImportError, Exception) as e:
-            log.debug("deteccion hijos huerfanos fallo: %s", e)
-
-        try:
-            r = self.executor.run(["docker", "images", "-f", "dangling=true", "-q"], timeout=10)
-            dangling = [i for i in r.stdout.strip().split("\n") if i]
-            if dangling:
-                orphans.append({"tipo": "docker_dangling", "cantidad": len(dangling)})
-        except Exception as e:
-            log.debug("deteccion docker dangling falló: %s", e)
-
-        try:
-            r = self.executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
-            failed = [
-                l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()
-            ]
-            if failed:
-                orphans.append({"tipo": "systemd_failed", "unidades": failed[:10]})
-        except Exception as e:
-            log.debug("deteccion systemd failed falló: %s", e)
-
+        orphans: list[dict] = []
+        _detectar_pid_files(orphans)
+        _detectar_hijos_huerfanos(orphans)
+        _detectar_docker_dangling(orphans, self.executor)
+        _detectar_systemd_failed(orphans, self.executor)
         return orphans
 
     def _detectar_systemd_failed(self) -> list:
@@ -379,3 +335,57 @@ def _contar_zombies_proc() -> int:
     except Exception as e:
         log.debug("fallo iteracion /proc: %s", e)
     return zombies
+
+
+def _detectar_pid_files(orphans: list[dict]) -> None:
+    try:
+        for p in Path("/var/run").glob("*.pid"):
+            try:
+                pid = int(p.read_text().strip())
+                if not Path(f"/proc/{pid}").exists():
+                    orphans.append({"pid_file": str(p), "pid": pid, "tipo": "stale_pid"})
+            except (ValueError, OSError) as e:
+                log.debug("fallo procesar pid file %s: %s", p, e)
+    except Exception as e:
+        log.debug("fallo glob /var/run/*.pid: %s", e)
+
+
+def _detectar_hijos_huerfanos(orphans: list[dict]) -> None:
+    try:
+        import psutil
+
+        current_pids = {p.info["pid"] for p in psutil.process_iter(["pid", "ppid", "name"])}
+        for proc in psutil.process_iter(["pid", "ppid", "name"]):
+            ppid = proc.info["ppid"]
+            if ppid != 1 and ppid not in current_pids:
+                name = proc.info["name"] or "?"
+                orphans.append(
+                    {
+                        "tipo": "hijo_huertano",
+                        "pid": proc.info["pid"],
+                        "ppid": ppid,
+                        "name": name,
+                    },
+                )
+    except (ImportError, Exception) as e:
+        log.debug("deteccion hijos huerfanos fallo: %s", e)
+
+
+def _detectar_docker_dangling(orphans: list[dict], executor: SubprocessExecutor) -> None:
+    try:
+        r = executor.run(["docker", "images", "-f", "dangling=true", "-q"], timeout=10)
+        dangling = [i for i in r.stdout.strip().split("\n") if i]
+        if dangling:
+            orphans.append({"tipo": "docker_dangling", "cantidad": len(dangling)})
+    except Exception as e:
+        log.debug("deteccion docker dangling falló: %s", e)
+
+
+def _detectar_systemd_failed(orphans: list[dict], executor: SubprocessExecutor) -> None:
+    try:
+        r = executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
+        failed = [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
+        if failed:
+            orphans.append({"tipo": "systemd_failed", "unidades": failed[:10]})
+    except Exception as e:
+        log.debug("deteccion systemd failed falló: %s", e)
