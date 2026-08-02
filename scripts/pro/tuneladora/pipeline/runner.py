@@ -663,18 +663,18 @@ class PipelineRunner:
                 self.snapshot_manager.restore(self._last_snapshot)
                 msg = "Pipeline FAILED — rollback executed"
 
-            # Auto-generate ADR for gate commits (recovery documentation)
-            if self.mode == "gate" and verdict == Status.OK:
-                try:
-                    r = subprocess.run(
-                        [sys.executable, str(self.cfg.ura_root / "scripts/pro/adr_generator.py")],
-                        capture_output=True, text=True, timeout=15,
-                        check=False, cwd=str(self.cfg.ura_root),
-                    )
-                    if r.returncode == 0 and r.stdout.strip():
-                        log.info("ADR: %s", r.stdout.strip()[:100])
-                except Exception:
-                    pass
+            # ADR auto-generation DESACTIVADO — ver ADR-223 (loop infinito)
+            # if self.mode == "gate" and verdict == Status.OK:
+            #     try:
+            #         r = subprocess.run(
+            #             [sys.executable, str(self.cfg.ura_root / "scripts/pro/adr_generator.py")],
+            #             capture_output=True, text=True, timeout=15,
+            #             check=False, cwd=str(self.cfg.ura_root),
+            #         )
+            #         if r.returncode == 0 and r.stdout.strip():
+            #             log.info("ADR: %s", r.stdout.strip()[:100])
+            #     except Exception:
+            #         pass
 
             head = ""
             with contextlib.suppress(Exception):
