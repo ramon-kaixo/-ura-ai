@@ -251,8 +251,7 @@ def save_execution(entry, nervioso):
                     entry.get("pipeline", "unknown"),
                     entry.get("result", "unknown"),
                     entry.get("duration_ms", 0),
-"
-".join(entry.get("errors", []))[:500],
+                    "\n".join(entry.get("errors", []))[:500],
                 ),
             )
             conn.commit()

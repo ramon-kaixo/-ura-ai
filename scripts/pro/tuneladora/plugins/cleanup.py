@@ -192,5 +192,5 @@ class CleanupPlugin:
         except Exception:
             reporte = {}
         if reporte.get("bloqueante"):
-            self.engine.log.warning("Score bloqueante: {reporte.get("score", 0)}")
+            self.engine.log.warning(f"Score bloqueante: {reporte.get('score', 0)}")
         return {"score": reporte.get("score", 0), "bloqueante": reporte.get("bloqueante", False), "raw": reporte}

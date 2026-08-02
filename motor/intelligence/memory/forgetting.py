@@ -1,4 +1,3 @@
-
 """Olvido dirigido — políticas de retención, protección, trazabilidad."""
 
 from __future__ import annotations
@@ -14,6 +13,7 @@ from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
 
 log = logging.getLogger("ura.memory.forgetting")
 ONE_DAY = 86400
+
 
 @dataclass
 class ForgettingEvent:
@@ -36,6 +36,7 @@ class ForgettingEvent:
             "age_days": round(self.age_days, 1),
         }
 
+
 @dataclass
 class ForgettingResult:
     episodes_removed: int = 0
@@ -53,6 +54,7 @@ class ForgettingResult:
     def total_removed(self) -> int:
         return self.episodes_removed + self.facts_removed + self.summaries_removed
 
+
 @dataclass
 class ForgettingContext:
     episode_store: EpisodeStore
@@ -60,6 +62,7 @@ class ForgettingContext:
     summaries: list  # list[SummaryRecord]
     protected_ids: set[str]
     pinned_ids: set[str]
+
 
 class ProtectionRules:
     def __init__(self) -> None:
@@ -96,6 +99,7 @@ class ProtectionRules:
     def count_pinned(self) -> int:
         return len(self._pinned)
 
+
 class ForgettingPolicy(ABC):
     @abstractmethod
     def name(self) -> str: ...
@@ -103,12 +107,14 @@ class ForgettingPolicy(ABC):
     @abstractmethod
     def should_forget(self, record: Any, context: ForgettingContext) -> tuple[bool, str]: ...
 
+
 class NeverForgetPolicy(ForgettingPolicy):
     def name(self) -> str:
         return "never_forget"
 
     def should_forget(self, record: Any, context: ForgettingContext) -> tuple[bool, str]:
         return False, "policy_never_forget"
+
 
 class TTLForgetPolicy(ForgettingPolicy):
     def name(self) -> str:
@@ -122,6 +128,7 @@ class TTLForgetPolicy(ForgettingPolicy):
         if isinstance(record, SemanticFact):
             return False, "semantic_no_ttl"
         return False, "unknown"
+
 
 class ImportanceForgetPolicy(ForgettingPolicy):
     def __init__(self, min_importance: float = 0.2, min_age_days: int = 30) -> None:
@@ -145,6 +152,7 @@ class ImportanceForgetPolicy(ForgettingPolicy):
             return True, f"importance_{record.importance}_below_{self._min_imp}"
         return False, "unknown"
 
+
 class ConfidenceForgetPolicy(ForgettingPolicy):
     def __init__(self, min_confidence: float = 0.3) -> None:
         self._min_conf = min_confidence
@@ -162,6 +170,7 @@ class ConfidenceForgetPolicy(ForgettingPolicy):
                 return False, f"confidence_{record.confidence}_above_{self._min_conf}"
             return True, f"confidence_{record.confidence}_below_{self._min_conf}"
         return False, "unknown"
+
 
 class HybridForgetPolicy(ForgettingPolicy):
     def __init__(
