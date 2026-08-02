@@ -151,5 +151,9 @@ class TestSeleccionarModelo:
         assert result in {"qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b"}
 
     def test_fallback_sin_metrics_desde_inicio(self):
-        ms._get_success_rate = lambda m, t: 0.5  # type: ignore[method-assign]
-        ms.seleccionar_modelo("respuesta_rapida", {"llama3.2:3b"})
+        original = ms._get_success_rate
+        try:
+            ms._get_success_rate = lambda m, t: 0.5  # type: ignore[method-assign]
+            ms.seleccionar_modelo("respuesta_rapida", {"llama3.2:3b"})
+        finally:
+            ms._get_success_rate = original

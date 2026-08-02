@@ -1,6 +1,13 @@
-"""Tests de integracion para CleanupPlugin v3.0."""
+"""Tests de integracion para CleanupPlugin v3.0.
+
+WARNING: Los tests de BackupPlugin usan un repo temporal (tmp_path + git init).
+NUNCA deben apuntar plugin.repo_root al repo real: backup_code() ejecuta
+`git stash push` y rollback() ejecuta `git checkout .`, que destruyen el
+working tree del desarrollador.
+"""
 from __future__ import annotations
 
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -29,8 +36,20 @@ def installer(engine: PipelineEngine) -> InstallerPlugin:
 
 
 @pytest.fixture
-def backup(engine: PipelineEngine) -> BackupPlugin:
-    return BackupPlugin(engine)
+def backup(tmp_path: Path, engine: PipelineEngine) -> BackupPlugin:
+    """BackupPlugin apuntando a repo git temporal (NUNCA el repo real)."""
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "dummy.txt").write_text("x")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "init", "--no-gpg-sign"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    plugin = BackupPlugin(engine)
+    plugin.repo_root = tmp_path
+    return plugin
 
 
 class TestCleanup:
