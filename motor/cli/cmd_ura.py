@@ -348,7 +348,9 @@ def cmd_index(config: UraConfig, args) -> int:
 
     flag = "True" if force else "False"
     inner = (
-        f"from core.memory_engine import index_documents; s=index_documents(force={flag}); print(s, file=sys.stderr)"
+f"from core.memory_engine import index_documents
+s=index_documents(force={flag})
+print(s, file=sys.stderr)"
     )
     cmd = f'cd ~/URA/ura_ia_1972 && python3 -c "{inner}"'
     result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=60)
@@ -371,7 +373,8 @@ def cmd_ask(config: UraConfig, args):
         return 1
 
     safe_q = shlex.quote(question)
-    inner_py = "from core.memory_engine import ask; print(ask(" + safe_q + "))"
+inner_py = "from core.memory_engine import ask
+print(ask(" + safe_q + "))"
     cmd = f'cd ~/URA/ura_ia_1972/ && python3 -c "{inner_py}"'
     result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=120)
     if result.ok and result.stdout:

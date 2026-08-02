@@ -63,6 +63,13 @@ audit:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === FIX ===
+fix:
+	@echo "▶ Sanear código (ruff + fixes personalizados)..."
+	@$(PYTHON) scripts/pro/sanear_codigo.py
+	@echo "✅ Código saneado"
+
+
 # === INVENTARIO ===
 inventario:
 	@echo "▶ Generando inventario de herramientas..."

@@ -71,7 +71,7 @@ class InstallerPlugin:
             if ok:
                 self.engine.log.info("Dependencias instaladas correctamente")
             else:
-                self.engine.log.warning(f"Instalacion de dependencias fallo: {r.stderr[-200:]}")
+                self.engine.log.warning("Instalacion de dependencias fallo: {r.stderr[-200:]}")
             return {"ok": ok, "stdout": (r.stdout or "")[-200:], "stderr": (r.stderr or "")[-200:]}  # nosec
         except Exception as e:
             return {"ok": False, "error": str(e)}

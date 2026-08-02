@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from motor.assistant.moderation import ContentModerator, ModerationResult
+from motor.assistant.moderation import ContentModerator
 
 
 class TestContentModerator:

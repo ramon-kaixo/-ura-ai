@@ -3,7 +3,8 @@ from __future__ import annotations
 """Tests para core/voice/ — tts_piper, anker_pipeline, anker_mac_pipeline.
 
 Las dependencias de hardware (sounddevice, soundfile, torch, whisper, numpy)
-estan instaladas; los sinks de audio se mockean para no tocar hardware real.
+estan instaladas
+los sinks de audio se mockean para no tocar hardware real.
 """
 
 import pytest
@@ -14,7 +15,6 @@ pytest.importorskip("torch")
 
 import sqlite3
 from pathlib import Path
-from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
@@ -178,7 +178,7 @@ class TestAnkerPipeline:
         monkeypatch.setattr("core.voice.anker_pipeline.sd.InputStream", mock.Mock(return_value=stream))
         def _get(timeout=None):
             if _get.called:
-                raise __import__("queue").Empty()
+                raise __import__("queue").Empty
             _get.called = True
             return chunk
 
@@ -271,7 +271,7 @@ class TestAnkerMacPipeline:
         # queue.get devuelve el chunk una vez, luego Empty (iteraciones cortas)
         def _get(timeout=None):
             if _get.called:
-                raise __import__("queue").Empty()
+                raise __import__("queue").Empty
             _get.called = True
             return chunk
 
@@ -281,6 +281,6 @@ class TestAnkerMacPipeline:
         stt.transcribe.return_value = {"text": "hola mundo"}
         mac.stt_model = stt
         monkeypatch.setattr("core.voice.anker_mac_pipeline.sanitize_text", mock.Mock(return_value="hola mundo"))
-        raw, corr, san = mac.listen_and_transcribe(1)
+        raw, _corr, san = mac.listen_and_transcribe(1)
         assert raw == "hola mundo"
         assert san == "hola mundo"

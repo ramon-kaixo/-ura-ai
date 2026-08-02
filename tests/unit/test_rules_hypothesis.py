@@ -12,7 +12,6 @@ from hypothesis import strategies as st
 
 from knowledge.engine.rules import UnsafeExpressionError, safe_eval
 
-
 # ── Estrategias base ─────────────────────────────────────────────────────────
 
 literals = st.integers() | st.floats(allow_nan=False, allow_infinity=False) | st.booleans() | st.none()

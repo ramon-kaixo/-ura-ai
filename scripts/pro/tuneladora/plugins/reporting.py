@@ -26,7 +26,7 @@ class ReportingPlugin:
         state_file = self.engine.config.nervioso / "estado_mantenimiento.json"
         state_file.parent.mkdir(parents=True, exist_ok=True)
         state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False))
-        self.engine.log.info(f"Estado guardado en {state_file}")
+        self.engine.log.info("Estado guardado en {state_file}")
 
     def generate_report(self, results: dict[str, Any]) -> str:
         """Genera un bloque de texto con el informe."""

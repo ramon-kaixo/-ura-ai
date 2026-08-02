@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -12,7 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from core.cleaner.cold_refactor import E, ColdRefactor  # noqa: E402
+from core.cleaner.cold_refactor import ColdRefactor, E
 
 
 @pytest.fixture

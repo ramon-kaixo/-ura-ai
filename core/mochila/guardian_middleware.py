@@ -22,7 +22,7 @@ class GuardianMiddleware(BaseHTTPMiddleware):
             accion = f"{method} {path}"
             resultado = guardian.ejecutar(accion, path=path, method=method)
             if not resultado.get("permitido", True):
-                log.warning(f"Guardian bloqueo {accion}: {resultado.get('razon', '')}")
+                log.warning("Guardian bloqueo {accion}: {resultado.get('razon', '')}")
                 return JSONResponse(
                     status_code=403,
                     content={"error": "Guardian bloqueo la operacion", "detalle": resultado},
@@ -32,5 +32,5 @@ class GuardianMiddleware(BaseHTTPMiddleware):
 
 def init_guardian():
     estado = guardian.estado()
-    log.info(f"GuardianOpenClaw: {len(estado.get('reglas', []))} reglas activas")
+    log.info("GuardianOpenClaw: {len(estado.get('reglas', []))} reglas activas")
     return {"guardian": estado}

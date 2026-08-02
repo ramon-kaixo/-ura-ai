@@ -1,7 +1,8 @@
 """Distributed Tracing (OBS) — TraceContext, TraceExporter, MetricsCollector.
 
 OBS-01: Single trace_id per operation.
-OBS-02: No subsystem creates a new trace_id; only propagates.
+OBS-02: No subsystem creates a new trace_id
+only propagates.
 OBS-03: Every hop generates a unique span_id.
 OBS-04: parent_span_id is mandatory for tree reconstruction.
 OBS-05: correlation_id and causation_id never change.
@@ -156,7 +157,8 @@ def _check_all_reachable(
     root: SpanEvent,
     trace_id: str,
 ) -> None:
-    """DFS desde la raíz; lanza error si hay spans inalcanzables (OBS-04)."""
+"""DFS desde la raíz
+lanza error si hay spans inalcanzables (OBS-04)."""
     visited: set[str] = set()
 
     def dfs(sid: str) -> None:

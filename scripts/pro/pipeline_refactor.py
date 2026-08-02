@@ -34,9 +34,9 @@ def main() -> int:
     log.info("=" * 55)
     log.info("  PIPELINE DE REFACTORIZACIÓN")
     log.info("=" * 55)
-    log.info(f"  Workers: {args.workers}")
-    log.info(f"  Modelo: {args.model}")
-    log.info(f"  Timeout: {args.timeout}s")
+    log.info("  Workers: {args.workers}")
+    log.info("  Modelo: {args.model}")
+    log.info("  Timeout: {args.timeout}s")
 
     # ── Handshake ──
     metrics = manager.handshake()
@@ -60,24 +60,24 @@ def main() -> int:
     )
 
     elapsed = time.time() - t0
-    ok = sum(1 for r in results if r["ok"])
+    sum(1 for r in results if r["ok"])
     err = sum(1 for r in results if not r["ok"])
 
     # ── Snapshot ──
     snapshot.save("ultimo_ciclo")
 
     # ── Reporte ──
-    H = int(elapsed // 3600)
-    M = int((elapsed % 3600) // 60)
-    S = int(elapsed % 60)
+    int(elapsed // 3600)
+    int((elapsed % 3600) // 60)
+    int(elapsed % 60)
 
     log.info("═" * 55)
     log.info("  INFORME DE REFACTORIZACIÓN")
     log.info("═" * 55)
-    log.info(f"  Workers OK:    {ok}")
-    log.info(f"  Workers ERROR: {err}")
-    log.info(f"  Duración:      {H}h {M}m {S}s")
-    log.info(f"  Modelo:        {args.model}")
+    log.info("  Workers OK:    {ok}")
+    log.info("  Workers ERROR: {err}")
+    log.info("  Duración:      {H}h {M}m {S}s")
+    log.info("  Modelo:        {args.model}")
     log.info("═" * 55)
 
     return 0 if err == 0 else 1

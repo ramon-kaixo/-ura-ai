@@ -1,7 +1,6 @@
 """Tests para core/auth_layer.py y core/mochila/streaming.py."""
 from __future__ import annotations
 
-import json
 from types import SimpleNamespace
 from unittest import mock
 
@@ -173,7 +172,6 @@ class TestStreamFromProvider:
 
         async def fake_chat(**kwargs):
             yield {"choices": [{"delta": {"content": "x"}, "index": 0}]}
-            return
 
         state.providers["ollama"].chat = fake_chat
         out = b"".join([c async for c in _stream_from_provider("ollama", "m1", [], None, 100, 0.0, state)])

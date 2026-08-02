@@ -7,8 +7,9 @@ y abre el emergency_runbook.json correctamente.
 import json
 import unittest
 from pathlib import Path
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 # Setup path
 ROOT = Path(__file__).parent.parent

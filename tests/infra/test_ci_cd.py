@@ -171,7 +171,8 @@ class TestInstallation:
 
     def test_import_ura(self):
         result = subprocess.run(  # noqa: PLW1510
-            [sys.executable, "-c", "import ura; print('OK')"],
+[sys.executable, "-c", "import ura
+print('OK')"],
             capture_output=True,
             text=True,
             timeout=30,

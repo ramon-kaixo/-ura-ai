@@ -79,7 +79,7 @@ class ErrorLogger:
             errors = []
             for line in lines[-count:]:
                 if line.strip():
-                    errors.append(json.loads(line))  # noqa: PERF401
+                    errors.append(json.loads(line))
             return errors
         except Exception:
             return []

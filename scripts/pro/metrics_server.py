@@ -110,8 +110,13 @@ async def handle_metrics(request: web.Request) -> web.Response:
         html = (
             "<html><head><title>URA Search Metrics</title>"
             '<meta http-equiv="refresh" content="30">'
-            "<style>body{font-family:monospace; background:#111; color:#0f0; padding:2rem}"
-            "pre{background:#222; padding:1rem; border-radius:4px}"
+"<style>body{font-family:monospace
+background:#111
+color:#0f0
+padding:2rem}"
+"pre{background:#222
+padding:1rem
+border-radius:4px}"
             "a{color:#0ff}</style></head><body>"
             "<h1>URA Search Metrics</h1>"
             "<pre>" + json.dumps(metrics, indent=2) + "</pre>"
@@ -140,26 +145,54 @@ _DASHBOARD_HTML = """<!DOCTYPE html>
 <title>URA Dashboard</title>
 <meta http-equiv="refresh" content="15">
 <style>
-  *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem}}
-  h1{{color:#58a6ff;margin-bottom:1rem}}
-  h2{{color:#8b949e;margin:1.5rem 0 0.5rem;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em}}
-  .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}}
-  .card{{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem}}
-  .card h3{{color:#58a6ff;font-size:0.9rem;margin-bottom:0.5rem}}
+*{{margin:0
+padding:0
+box-sizing:border-box}}
+body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif
+background:#0d1117
+color:#c9d1d9
+padding:2rem}}
+h1{{color:#58a6ff
+margin-bottom:1rem}}
+h2{{color:#8b949e
+margin:1.5rem 0 0.5rem
+font-size:1.1rem
+text-transform:uppercase
+letter-spacing:0.05em}}
+.grid{{display:grid
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr))
+gap:1rem}}
+.card{{background:#161b22
+border:1px solid #30363d
+border-radius:8px
+padding:1rem}}
+.card h3{{color:#58a6ff
+font-size:0.9rem
+margin-bottom:0.5rem}}
   .ok{{color:#3fb950}} .warn{{color:#d29922}} .err{{color:#f85149}}
-  .stat{{display:flex;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid #21262d}}
+.stat{{display:flex
+justify-content:space-between
+padding:0.25rem 0
+border-bottom:1px solid #21262d}}
   .stat:last-child{{border:none}}
   .label{{color:#8b949e}} .value{{font-weight:600}}
-  .footer{{margin-top:2rem;color:#484f58;font-size:0.8rem;text-align:center}}
-  pre{{background:#0d1117;padding:0.5rem;border-radius:4px;font-size:0.8rem;overflow-x:auto}}
+.footer{{margin-top:2rem
+color:#484f58
+font-size:0.8rem
+text-align:center}}
+pre{{background:#0d1117
+padding:0.5rem
+border-radius:4px
+font-size:0.8rem
+overflow-x:auto}}
 </style>
 </head>
 <body>
 <h1>URA System Dashboard</h1>
 <div class="grid" id="root">{content}</div>
 <pre id="raw" style="display:none"></pre>
-<div class="footer">URA v4.5.1 &mdash; auto-refresh 15s</div>
+<div class="footer">URA v4.5.1 &mdash
+auto-refresh 15s</div>
 <script>
 async function refresh(){{
   try{{

@@ -5,8 +5,6 @@ import time
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from core.mochila._state import MochilaState
 
 

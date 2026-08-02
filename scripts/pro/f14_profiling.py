@@ -216,7 +216,8 @@ def scenario_p01(snap: Snapshotter, duration_s: int = 300) -> dict:
         "id": "P01",
         "description": "Sistema en reposo (sin carga)",
         "duration_s": duration_s,
-        "observed": "; ".join(observed + anomalies),
+"observed": "
+".join(observed + anomalies),
         "summary": summary,
         "anomalies": anomalies,
         "veredict": verdict,
@@ -258,7 +259,8 @@ def scenario_p02(snap: Snapshotter, duration_s: int = 600) -> dict:
         "id": "P02",
         "description": "Carga constante media",
         "duration_s": duration_s,
-        "observed": "; ".join(observed + anomalies),
+"observed": "
+".join(observed + anomalies),
         "summary": summary,
         "anomalies": anomalies,
         "veredict": verdict,
@@ -294,7 +296,8 @@ def scenario_p03(snap: Snapshotter, duration_s: int = 180) -> dict:
         "id": "P03",
         "description": "Carga máxima sostenida",
         "duration_s": duration_s,
-        "observed": "; ".join(observed + anomalies),
+"observed": "
+".join(observed + anomalies),
         "summary": summary,
         "anomalies": anomalies,
         "veredict": verdict,
@@ -328,7 +331,8 @@ def scenario_p04(snap: Snapshotter, duration_s: int = 300) -> dict:
         "id": "P04",
         "description": "Post-carga (vuelta a reposo con GC)",
         "duration_s": duration_s,
-        "observed": "; ".join(observed + anomalies),
+"observed": "
+".join(observed + anomalies),
         "summary": summary,
         "anomalies": anomalies,
         "veredict": verdict,
@@ -375,7 +379,8 @@ def scenario_p05(snap: Snapshotter, cycles: int = 3, cycle_duration_s: int = 180
         "id": "P05",
         "description": f"Ciclos carga-reposo ×{cycles}",  # noqa: RUF001
         "duration_s": total_s,
-        "observed": "; ".join(observed + anomalies),
+"observed": "
+".join(observed + anomalies),
         "summary": summary,
         "anomalies": anomalies,
         "veredict": verdict,

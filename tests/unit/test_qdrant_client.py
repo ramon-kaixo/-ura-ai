@@ -5,22 +5,14 @@ Mock NO permitido: funciones internas de qdrant_client.py.
 """
 from __future__ import annotations
 
-import asyncio
-import hashlib
-import threading
-from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from motor.core.qdrant_client import (
-    COLECCION_INCIDENTES,
     VECTOR_SIZE,
     QdrantClient,
     UraConfig,
     generar_sparse_vector,
 )
-
 
 # ===================================================================
 # Grupo A — generar_sparse_vector (pura, 0 mock)

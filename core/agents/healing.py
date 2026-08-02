@@ -1,11 +1,11 @@
 """Bucle completo: DETECTAR → AISLAR → REPARAR → VALIDAR → ACTUALIZAR."""
 
-from typing import Any
 import json
 import subprocess
 import sys
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 from core.agents.conciencia import Conciencia
 from core.agents.constants import MAX_CICLO_S, RUFF, SCRIPTS, URA_ROOT

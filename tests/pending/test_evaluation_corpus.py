@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from scripts.pro.benchmark_ke import (
     BenchmarkResults,
     KERetrieval,

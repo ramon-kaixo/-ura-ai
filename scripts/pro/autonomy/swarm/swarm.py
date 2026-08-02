@@ -28,8 +28,8 @@ def main() -> int:
         from scripts.pro.autonomy.swarm import DOMAIN_MAP
 
         engine.log.info("Dominios disponibles:")
-        for keyword, domain in sorted(DOMAIN_MAP.items()):
-            engine.log.info(f"  {keyword:20} → {domain}")
+        for _keyword, domain in sorted(DOMAIN_MAP.items()):
+            engine.log.info("  {keyword:20} → {domain}")
         return 0
 
     # Sincronizar memoria si se pide
@@ -39,8 +39,8 @@ def main() -> int:
 
         mem = SemanticMemory(db_path, engine.config.nervioso)
         engine.log.info("Sincronizando memoria semántica...")
-        stats = mem.sync()
-        engine.log.info(f"  {stats.get('procesados', 0)} ejecuciones nuevas")
+        mem.sync()
+        engine.log.info("  {stats.get('procesados', 0)} ejecuciones nuevas")
         mem.close()
 
     # Crear agentes
@@ -67,20 +67,20 @@ def main() -> int:
 
     engine.log.info("=" * 55)
     engine.log.info("  SWARM URA — Multiagente")
-    engine.log.info(f"  Agentes: {len(agents)} ({', '.join(a.name for a in agents)})")
+    engine.log.info("  Agentes: {len(agents)} ({', '.join(a.name for a in agents)})")
     engine.log.info("=" * 55)
 
     # Crear objetivos y asignar
     t0 = time.time()
     for title in args.goals:
         goal = gm.create(title=title)
-        engine.log.info(f"  Objetivo: {goal['goal_id'][:8]} — {title}")
+        engine.log.info("  Objetivo: {goal['goal_id'][:8]} — {title}")
         domain = coordinator.resolve_agent(goal)
         if domain:
             result = coordinator.assign(goal)
             gm.set_status(goal["goal_id"], result.get("result", "unknown"))
         else:
-            engine.log.warning(f"  Sin agente para: {title}")
+            engine.log.warning("  Sin agente para: {title}")
 
     # Reporte final con métricas
     assignments = coordinator.summary()
@@ -97,9 +97,9 @@ def main() -> int:
         ],
     )
     for a in assignments:
-        engine.log.info(f"  [{a.get('result', '?')}] {a.get('agent', '?')} → {a.get('title', '')}")
+        engine.log.info("  [{a.get('result', '?')}] {a.get('agent', '?')} → {a.get('title', '')}")
         if a.get("conflicts_with"):
-            engine.log.warning(f"    ⚠️  Conflicto con: {a['conflicts_with']}")
+            engine.log.warning("    ⚠️  Conflicto con: {a['conflicts_with']}")
 
     return 0
 

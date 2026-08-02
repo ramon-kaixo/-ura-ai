@@ -21,7 +21,7 @@ async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagin
 
     search_result = await web_search(query, max_resultados)
     if "error" in search_result:
-        log.warning(f"Search error: {search_result['error']}")
+        log.warning("Search error: {search_result['error']}")
         return resultados
 
     for item in search_result.get("results", []):
@@ -32,12 +32,12 @@ async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagin
 
         try:
             page = await page_read(url, max_chars_pagina)
-        except Exception as e:
-            log.warning(f"page_read error {url}: {e}")
+        except Exception:
+            log.warning("page_read error {url}: {e}")
             continue
 
         if "error" in page:
-            log.warning(f"Page error {url}: {page['error']}")
+            log.warning("Page error {url}: {page['error']}")
             continue
 
         guardar = _guardar_en_inbox(url, title, page.get("content", ""))

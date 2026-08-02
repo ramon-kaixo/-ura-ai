@@ -35,8 +35,8 @@ class CleanupPlugin:
                     f.unlink()
                     removed += 1
                 except Exception as e:
-                    self.engine.log.warning(f"Error eliminando {f.name}: {e}")
-        self.engine.log.info(f"Logs eliminados: {removed} (>{days} dias)")
+                    self.engine.log.warning("Error eliminando {f.name}: {e}")
+        self.engine.log.info("Logs eliminados: {removed} (>{days} dias)")
         return {"removed": removed, "days": days}
 
     def cleanup_embeddings(self) -> dict[str, Any]:
@@ -53,8 +53,8 @@ class CleanupPlugin:
                     emb.unlink()
                     removed += 1
                 except Exception as e:
-                    self.engine.log.warning(f"Error eliminando {emb.name}: {e}")
-        self.engine.log.info(f"Embeddings huerfanos: {removed} eliminados")
+                    self.engine.log.warning("Error eliminando {emb.name}: {e}")
+        self.engine.log.info("Embeddings huerfanos: {removed} eliminados")
         return {"removed": removed}
 
     def vacuum_sqlite(self) -> dict[str, Any]:
@@ -71,9 +71,9 @@ class CleanupPlugin:
                 conn.execute("VACUUM")
                 conn.close()
                 results.append({"path": db_path, "status": "ok"})
-                self.engine.log.info(f"VACUUM OK: {db_path}")
+                self.engine.log.info("VACUUM OK: {db_path}")
             except Exception as e:
-                self.engine.log.warning(f"VACUUM FAIL {db_path}: {e}")
+                self.engine.log.warning("VACUUM FAIL {db_path}: {e}")
                 results.append({"path": db_path, "status": "error", "error": str(e)})
         return {"results": results}
 
@@ -85,12 +85,12 @@ class CleanupPlugin:
             libre_gb = round((usage.free / (1024**3)), 1)
             status = "ok" if percent < threshold else "warning"
             if status == "warning":
-                self.engine.log.warning(f"DISCO: {percent}% usado (>{threshold}%)")
+                self.engine.log.warning("DISCO: {percent}% usado (>{threshold}%)")
             else:
-                self.engine.log.info(f"DISCO: {percent}% usado (libre: {libre_gb}GB)")
+                self.engine.log.info("DISCO: {percent}% usado (libre: {libre_gb}GB)")
             return {"percent": percent, "libre_gb": libre_gb, "status": status, "threshold": threshold}
         except Exception as e:
-            self.engine.log.warning(f"Disk check fallo: {e}")
+            self.engine.log.warning("Disk check fallo: {e}")
             return {"percent": -1, "status": "error", "error": str(e)}
 
     def detect_duplicates(self) -> dict[str, Any]:
@@ -112,7 +112,7 @@ class CleanupPlugin:
             except SyntaxError:
                 continue
         groups = sum(1 for items in duplicates.values() if len(items) > 1)
-        self.engine.log.info(f"Duplicados detectados: {groups} grupos")
+        self.engine.log.info("Duplicados detectados: {groups} grupos")
         return {"groups": groups, "total_funcs": len(duplicates)}
 
     def tech_debt_report(self) -> dict[str, Any]:
@@ -128,7 +128,7 @@ class CleanupPlugin:
                 fixme_count += text.count("FIXME")
             except Exception:
                 continue
-        self.engine.log.info(f"Tech debt: {todo_count} TODO, {fixme_count} FIXME")
+        self.engine.log.info("Tech debt: {todo_count} TODO, {fixme_count} FIXME")
         return {"todos": todo_count, "fixmes": fixme_count}
 
     # ── Metodos existentes ─────────────────────────────────
@@ -148,11 +148,11 @@ class CleanupPlugin:
             if not Path(f"/proc/{pid_dir.name}").exists() or ahora - pid_dir.stat().st_mtime > 604800:
                 shutil.rmtree(pid_dir, ignore_errors=True)
                 limpiados += 1
-                self.engine.log.info(f"Aislamiento {pid_dir.name} ({nombre}) limpiado")
+                self.engine.log.info("Aislamiento {pid_dir.name} ({nombre}) limpiado")
             else:
                 activos += 1
         if activos:
-            self.engine.log.warning(f"{activos} procesos aislados activos")
+            self.engine.log.warning("{activos} procesos aislados activos")
         return {"total": activos + limpiados, "limpiados": limpiados, "activos": activos}
 
     def watermark(self) -> dict[str, Any]:
@@ -177,7 +177,7 @@ class CleanupPlugin:
         self.engine.run_git(["add", "-u"])
         result = self.engine.run_git(["commit", "-m", message])
         if result.returncode == 0:
-            self.engine.log.info(f"Git commit: {message}")
+            self.engine.log.info("Git commit: {message}")
         return {"ok": result.returncode == 0}
 
     def git_rollback(self) -> None:
@@ -192,5 +192,5 @@ class CleanupPlugin:
         except Exception:
             reporte = {}
         if reporte.get("bloqueante"):
-            self.engine.log.warning(f"Score bloqueante: {reporte.get("score", 0)}")
+            self.engine.log.warning("Score bloqueante: {reporte.get("score", 0)}")
         return {"score": reporte.get("score", 0), "bloqueante": reporte.get("bloqueante", False), "raw": reporte}

@@ -1,7 +1,8 @@
 """Tests para RouterHandler (core/model_router/handler.py) via HTTP real.
 
 Usa socketpair: el handler se construye sobre un socket y se le envían
-peticiones HTTP crudas; la respuesta se lee del extremo opuesto.
+peticiones HTTP crudas
+la respuesta se lee del extremo opuesto.
 """
 
 import socket

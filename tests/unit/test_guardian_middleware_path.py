@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-import pytest
-
 
 class TestGuardianMiddleware:
     def _app(self, guardian_result: dict | None = None):

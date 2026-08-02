@@ -1,8 +1,6 @@
 """Tests for scripts/pro/router_rate_limiter.py."""
 import time
 
-import pytest
-
 from scripts.pro.router_rate_limiter import RateLimiter
 
 

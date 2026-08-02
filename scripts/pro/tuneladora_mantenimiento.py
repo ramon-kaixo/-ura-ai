@@ -257,7 +257,6 @@ def audit_delta(target="pre-mantenimiento"):
 def git_commit_if_stable() -> None:
     # DESACTIVADO: auto-commit viola regla de aprobación humana.
     log("  Git commit DESACTIVADO (requiere aprobación humana)")
-    return
 
 
 def git_rollback() -> None:

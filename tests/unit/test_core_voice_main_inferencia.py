@@ -10,14 +10,14 @@ import core.inferencia.engine as ie
 class TestVoiceInit:
     def test_exports_presentes(self) -> None:
         pytest.importorskip("torch")
-        import core.voice as voice
+        from core import voice
         assert "AnkerDeterministicPipeline" in voice.__all__
         assert "AnkerMacPipeline" in voice.__all__
         assert "PiperTTSMotor" in voice.__all__
 
     def test_piper_ura_tts_alias(self) -> None:
         pytest.importorskip("torch")
-        from core.voice import PiperUraTTS, PiperTTSMotor
+        from core.voice import PiperTTSMotor, PiperUraTTS
         assert PiperUraTTS is PiperTTSMotor
 
 

@@ -14,6 +14,10 @@ import time
 from pathlib import Path
 from typing import Any
 
+from scripts.pro import auditoria_continua as _auditoria_continua
+from scripts.pro import change_log as _change_log
+from scripts.pro import conciencia as _conciencia
+from scripts.pro import plugin_registry as _plugin_registry
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.memory.episodic import Episode, EpisodicMemory
 from scripts.pro.tuneladora.memory.long_term import LongTermMemory, LTMEntry
@@ -28,10 +32,6 @@ from scripts.pro.tuneladora.pipeline.tools.base import Status, ToolBase
 from scripts.pro.tuneladora.pipeline.tools.mypy_tool import MypyTool
 from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
-from scripts.pro import conciencia as _conciencia  # noqa: E402
-from scripts.pro import plugin_registry as _plugin_registry  # noqa: E402
-from scripts.pro import change_log as _change_log  # noqa: E402
-from scripts.pro import auditoria_continua as _auditoria_continua  # noqa: E402
 
 log = logging.getLogger("tuneladora.runner")
 LOCK_TIMEOUT = 1800

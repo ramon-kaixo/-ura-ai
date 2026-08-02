@@ -15,14 +15,16 @@ SIMPLE_HTML = """<!DOCTYPE html>
 <link rel="canonical" href="https://example.com/canonical">
 </head><body>
 <p>Hello world. This is a test paragraph.</p>
-<script>alert('should be removed');</script>
+<script>alert('should be removed')
+</script>
 <style>.css{display:none}</style>
 <noscript>no JS fallback</noscript>
 </body></html>"""
 
 SCRIPT_HTML = """<html><head><title>Script test</title></head><body>
 <p>Visible text</p>
-<script>var x = 1;</script>
+<script>var x = 1
+</script>
 <p>After script</p>
 </body></html>"""
 

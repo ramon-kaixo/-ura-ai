@@ -24,7 +24,7 @@ class TestAssistantHealth:
     def test_init_sets_all_healthy(self) -> None:
         self._mod.init_assistant_health()
         snapshot = self._mod.get_assistant_health().snapshot()
-        for name, info in snapshot.get("components", {}).items():
+        for info in snapshot.get("components", {}).values():
             assert info.get("status") == "healthy"
 
     def test_set_healthy(self) -> None:

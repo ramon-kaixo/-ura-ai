@@ -10,9 +10,15 @@ if TYPE_CHECKING:
 
 HTML_PAGE = """<!DOCTYPE html><html><head>
 <title>URA Tuneladora</title>
-<style>body{font-family:sans-serif;margin:40px;background:#1a1a2e;color:#eee}
+<style>body{font-family:sans-serif
+margin:40px
+background:#1a1a2e
+color:#eee}
 h1{color:#e94560}.ok{color:#4ecca3}.warn{color:#ffc107}.crit{color:#e94560}
-.card{background:#16213e;padding:20px;margin:10px 0;border-radius:8px}
+.card{background:#16213e
+padding:20px
+margin:10px 0
+border-radius:8px}
 </style></head><body>
 <h1>URA Tuneladora</h1>
 <div class="card">
@@ -44,7 +50,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def _send_html(self) -> None:
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+self.send_header("Content-Type", "text/html
+charset=utf-8")
         self.end_headers()
         self.wfile.write(HTML_PAGE.encode())
 

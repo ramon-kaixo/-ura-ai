@@ -145,7 +145,7 @@ class Planner:
         fallbacks = list(plan.get("fallbacks", []))
 
         for phase in phases_to_run:
-            self._engine.log.info(f"Ejecutando fase '{phase}' del plan ({plan['strategy']})")
+            self._engine.log.info("Ejecutando fase '{phase}' del plan ({plan['strategy']})")
             t0 = time.time()
             phase_result = run_phase(phase, file_path=file_path, capability="infrastructure")
             elapsed = round(time.time() - t0, 1)
@@ -169,7 +169,7 @@ class Planner:
                 # ── Replanificar: buscar fallback ──
                 if fallbacks:
                     fb = fallbacks.pop(0)
-                    self._engine.log.warning(f"Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'")
+                    self._engine.log.warning("Fase '{phase}' falló. Replanificando con estrategia '{fb['name']}'")
                     self._engine.ledger.add_decision(
                         "replan",
                         {
@@ -181,7 +181,7 @@ class Planner:
                     # Ejecutar fases restantes del fallback
                     for fb_phase in fb["phases"]:
                         if fb_phase not in phases_to_run:
-                            self._engine.log.info(f"  Fallback: fase '{fb_phase}'")
+                            self._engine.log.info("  Fallback: fase '{fb_phase}'")
                             fb_result = run_phase(fb_phase, file_path=file_path, capability="infrastructure")
                             results[f"fb_{fb_phase}"] = {
                                 "ok": fb_result.get("ok", 0),

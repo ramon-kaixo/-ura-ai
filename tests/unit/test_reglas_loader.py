@@ -1,11 +1,7 @@
 """Tests for scripts/pro/reglas_loader.py."""
 import json
-import os
-from pathlib import Path
 
-import pytest
-
-from scripts.pro.reglas_loader import cargar_reglas, guardar_reglas, _reglas_fallback
+from scripts.pro.reglas_loader import _reglas_fallback, cargar_reglas, guardar_reglas
 
 
 class TestReglasLoader:

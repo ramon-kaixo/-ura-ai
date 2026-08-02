@@ -1,15 +1,10 @@
 """Tests para infraestructura core: debate/lockfile, infra/state_manager."""
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
 from unittest import mock
 
-import pytest
-
 from core.debate.lockfile import DebateLock
-from core.infra.state_manager import STATE_FILE, clear_checkpoint, load_checkpoint, save_checkpoint
+from core.infra.state_manager import clear_checkpoint, load_checkpoint, save_checkpoint
 
 
 class TestDebateLock:

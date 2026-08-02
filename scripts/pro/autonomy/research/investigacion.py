@@ -27,8 +27,8 @@ def main() -> int:
 
         mem = SemanticMemory(db_path, engine.config.nervioso)
         engine.log.info("Sincronizando memoria semántica...")
-        stats = mem.sync()
-        engine.log.info(f"  {stats.get('procesados', 0)} ejecuciones nuevas")
+        mem.sync()
+        engine.log.info("  {stats.get('procesados', 0)} ejecuciones nuevas")
         mem.close()
 
     if args.research:
@@ -42,14 +42,14 @@ def main() -> int:
         result = researcher.research()
         researcher.close()
 
-        engine.log.info(f"Hipótesis generadas: {result['total_hipotesis']}")
+        engine.log.info("Hipótesis generadas: {result['total_hipotesis']}")
         for c in result.get("conclusiones", []):
             icon = {"confirmada": "✅", "no_concluyente": "❓", "refutada": "❌", "sin_datos": "⚠️"}
             engine.log.info(
                 f"  {icon.get(c.get('veredicto', ''), '?')} [{c.get('veredicto', '')}] {c.get('title', '')}"
             )
-            engine.log.info(f"    Confianza: {c.get('confianza', 0)} | Evidencias: {c.get('total_evidencias', 0)}")
-            engine.log.info(f"    {c.get('conclusion', '')[:120]}")
+            engine.log.info("    Confianza: {c.get('confianza', 0)} | Evidencias: {c.get('total_evidencias', 0)}")
+            engine.log.info("    {c.get('conclusion', '')[:120]}")
 
         engine.log.report(
             "INVESTIGACIÓN FINALIZADA",

@@ -1,12 +1,12 @@
 """Refactoriza funciones grandes. Modelo: DeepSeek 6.7B."""
 
-from typing import Any
 import contextlib
 import logging
 import os
 import subprocess
 import sys
 import threading
+from typing import Any
 
 from core.agents.constants import MODELOS, SCRIPTS, URA_ROOT
 

@@ -24,7 +24,8 @@ class FactHistory:
     - Es el agregado raíz: nunca permitir acceso de escritura directo a FactVersion.
     - Toda mutación preserva los invariantes de ADR-025-02/03/04.
     - Toda operación de modificación es transaccional (no hay estados intermedios).
-    - FactIndex indexa solo la versión vigente; el histórico se accede vía FactHistory.
+- FactIndex indexa solo la versión vigente
+el histórico se accede vía FactHistory.
     - No hay referencias circulares: FactHistory → FactVersion (no al revés).
     - version_id y fact_id nunca se reutilizan.
     - Rollback: operación de navegación, no altera el pasado.
@@ -108,7 +109,8 @@ class FactHistory:
             self._timeline_cache[pos] = new
 
     def _append_to_cache(self, version: FactVersion) -> None:
-        """Append O(1) si created_at es monotónico; si no, invalidar."""
+"""Append O(1) si created_at es monotónico
+si no, invalidar."""
         if self._timeline_cache is None:
             return
         if version.created_at >= self._timeline_cache[-1].created_at:

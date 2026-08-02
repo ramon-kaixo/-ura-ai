@@ -3,8 +3,10 @@
 Cobertura:
   1. Models: MemoryEntry, FactRef, MemoryMetadata, SnapshotHeader, make_entry_id
   2. MemoryTimeline: append, state_at, by_entity, by_time, by_event, diff, get
-  3. Journal: open, append, read_all, rotate, close, count; plano y cifrado
-  4. Snapshot: save, load, checksum, atomicidad, corrupción; plano y cifrado
+3. Journal: open, append, read_all, rotate, close, count
+plano y cifrado
+4. Snapshot: save, load, checksum, atomicidad, corrupción
+plano y cifrado
   5. Memory: append, state_at, snapshot, save, load, recover, shutdown,
             subscribe/notify, health, readiness, liveness, close
   6. Crypto: encrypt, decrypt, is_encryption_available

@@ -1,8 +1,11 @@
 """Tests for core/agents/cli.py."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from core.agents.cli import main
+
 
 class TestMain:
     @patch("core.agents.cli.SelfHealingLoop")

@@ -1,6 +1,7 @@
 """Tests for core/mochila/vram_scheduler.py."""
 
 import asyncio
+import contextlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -192,10 +193,8 @@ class TestLoopControl:
         await scheduler.start_loop()
         assert scheduler._task is not None
         await scheduler.stop_loop()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await scheduler._task
-        except asyncio.CancelledError:
-            pass
         assert scheduler._task.cancelled()
 
     @pytest.mark.asyncio

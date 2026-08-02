@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-
-import pytest
 
 from shared.paths import (
     CONFIG,
@@ -28,9 +25,10 @@ class TestPaths:
     def test_ura_root_from_env(self, monkeypatch):
         monkeypatch.setenv("URA_ROOT", "/tmp/test_ura")
         import importlib
+
         import shared.paths
         importlib.reload(shared.paths)
-        assert shared.paths.URA_ROOT == Path("/tmp/test_ura")
+        assert Path("/tmp/test_ura") == shared.paths.URA_ROOT
         importlib.reload(shared.paths)
 
     def test_all_paths_are_path_objects(self):
@@ -54,7 +52,8 @@ class TestPaths:
     def test_ura_root_env_fallback(self, monkeypatch):
         monkeypatch.delenv("URA_ROOT", raising=False)
         import importlib
+
         import shared.paths
         importlib.reload(shared.paths)
-        assert shared.paths.URA_ROOT == Path("/home/ramon/URA/ura_ia_1972")
+        assert Path("/home/ramon/URA/ura_ia_1972") == shared.paths.URA_ROOT
         importlib.reload(shared.paths)

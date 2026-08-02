@@ -199,7 +199,8 @@ class HybridForgetPolicy(ForgettingPolicy):
 
         decisions = [d for d, _ in results]
         should = all(decisions) if self._require_all else any(decisions)
-        reasons = "; ".join(r for _, r in results)
+reasons = "
+".join(r for _, r in results)
         return should, reasons
 
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest import mock
 
 import pytest
@@ -75,9 +75,8 @@ class TestRunAsync:
 class TestJournal:
     def test_write_journal(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
-        with mock.patch.object(eb.Path, "open", mock.mock_open()) as m:
-            with mock.patch("builtins.open", m):
-                eb._write_journal("tema", {"a": 1})
+        with mock.patch.object(eb.Path, "open", mock.mock_open()) as m, mock.patch("builtins.open", m):
+            eb._write_journal("tema", {"a": 1})
         # open se llama; verificar que no explota
         m.assert_called()
 
@@ -109,7 +108,7 @@ class TestJournal:
 
     def test_replay_fecha_default(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
-        hoy = datetime.now(UTC).strftime("%Y-%m-%d")
+        datetime.now(UTC).strftime("%Y-%m-%d")
         assert eb.replay_events() == []
 
 
@@ -127,7 +126,7 @@ class TestPublisher:
         eb._pub_sock = None
         eb.ensure_publisher()
         # _ensure_publisher_async no ejecuta el cuerpo real porque _run_async es mock
-        assert eb._pub_sock is None or True
+        assert True
 
     @pytest.mark.slow
     def test_ensure_publisher_async(self, monkeypatch, tmp_path) -> None:

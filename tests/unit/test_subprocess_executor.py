@@ -20,7 +20,8 @@ class TestSubprocessExecutorSync:
 
     def test_stderr_captured(self):
         executor = SubprocessExecutor()
-        result = executor.run(["bash", "-c", "echo stderr_f10 >&2; echo stdout_f10"])
+result = executor.run(["bash", "-c", "echo stderr_f10 >&2
+echo stdout_f10"])
         assert result.ok is True
         assert "stdout_f10" in result.stdout
         assert "stderr_f10" in result.stderr
@@ -63,7 +64,8 @@ class TestSubprocessExecutorSync:
 
     def test_error_on_failure(self):
         executor = SubprocessExecutor()
-        result = executor.run(["bash", "-c", "echo err_msg >&2; exit 1"])
+result = executor.run(["bash", "-c", "echo err_msg >&2
+exit 1"])
         assert result.ok is False
         assert "err_msg" in result.error
 
@@ -102,7 +104,8 @@ class TestSubprocessExecutorAsync:
     @pytest.mark.asyncio
     async def test_async_stdout_stderr(self):
         executor = SubprocessExecutor()
-        result = await executor.arun(["bash", "-c", "echo out_async; echo err_async >&2"])
+result = await executor.arun(["bash", "-c", "echo out_async
+echo err_async >&2"])
         assert result.ok is True
         assert "out_async" in result.stdout
         assert "err_async" in result.stderr or "err_async" in result.error

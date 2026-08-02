@@ -6,7 +6,7 @@ Todo el I/O externo (ssh, urllib, disco) se simula con monkeypatch.
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     import pytest
@@ -59,7 +59,7 @@ class _FakeUrlOpen:
             raise self.exc
         return self
 
-    def __enter__(self) -> _FakeUrlOpen:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_a: object) -> None:
@@ -84,14 +84,7 @@ class TestCheckDisk:
         assert stats == {}
 
     def test_parses_and_alerts_thresholds(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        output = "\n".join(
-            [
-                "Filesystem Size Used Avail Use% Mounted on",
-                "/dev/sda1 100G 95G 5G 95% /",
-                "/dev/sdb1 200G 100G 100G 50% /home",
-                "basura",
-            ]
-        )
+        output = "Filesystem Size Used Avail Use% Mounted on\n/dev/sda1 100G 95G 5G 95% /\n/dev/sdb1 200G 100G 100G 50% /home\nbasura"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
         alerts, stats = hc.check_disk()
         assert stats["/"]["pct"] == 95
@@ -110,7 +103,7 @@ class TestCheckDisk:
     def test_bad_pct_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Filesystem Size Used Avail Use% Mounted on\n/dev/x 10G 5G 1G abc /"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
-        alerts, stats = hc.check_disk()
+        _alerts, stats = hc.check_disk()
         assert stats == {}
 
 

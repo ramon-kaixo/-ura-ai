@@ -49,7 +49,8 @@ class QdrantClient:
         self._conectar()
 
     def _conectar(self) -> None:
-        """Intenta conectar vía cliente nativo; fallback a REST."""
+"""Intenta conectar vía cliente nativo
+fallback a REST."""
         try:
             from qdrant_client import QdrantClient as QC
 

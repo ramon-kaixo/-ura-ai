@@ -2,8 +2,11 @@
 
 import json
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 import scripts.pro.master_conciencia as mc
+
 
 class TestConfig:
     def test_gx10_default(self):

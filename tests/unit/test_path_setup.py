@@ -3,8 +3,6 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 import core.path_setup as ps
 
 

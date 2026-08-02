@@ -1,8 +1,6 @@
 """Tests para core/mochila/guardian_opencode.py — OpenCodeGuardian."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 

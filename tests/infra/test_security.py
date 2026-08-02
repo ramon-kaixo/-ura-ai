@@ -72,8 +72,6 @@ def test_tool_runner_rate_limit() -> None:
 
 
 def test_sanitize_rejects_script_tags() -> None:
-    from motor.platform.validator import ProtocolValidator
-
     from motor.platform.models import (
         CausationId,
         CorrelationId,
@@ -86,6 +84,7 @@ def test_sanitize_rejects_script_tags() -> None:
         VersionHeader,
     )
     from motor.platform.serializer import make_envelope_with_checksum, make_message_id
+    from motor.platform.validator import ProtocolValidator
 
     v = VersionHeader()
     mid = make_message_id("1.0", "1.0", "a", "b", "T", b"<script>alert(1)</script>")

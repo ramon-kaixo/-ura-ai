@@ -1,7 +1,5 @@
 """Tests for core/agents/conciencia.py."""
 
-import json
-from pathlib import Path
 
 import pytest
 

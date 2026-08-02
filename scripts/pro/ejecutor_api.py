@@ -253,7 +253,8 @@ class ExecutorHandler(BaseHTTPRequestHandler):
                 f'python_info{{version="{sys.version.split()[0]}"}} 1\n'
             )
             self.send_response(200)
-            self.send_header("Content-Type", "text/plain; charset=utf-8")
+self.send_header("Content-Type", "text/plain
+charset=utf-8")
             self.end_headers()
             self.wfile.write(metrics.encode())
             return

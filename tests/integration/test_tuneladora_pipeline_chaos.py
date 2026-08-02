@@ -52,7 +52,6 @@ class TestChaosRollbackCreated:
 
         snap_path = sm.take("chaos_test", [existing])
         # Now simulate that a new file was created by the IA
-        snapshot_meta_dir = snap_path
         # The snapshot didn't capture the new file (it didn't exist at take time)
         # Simulate rollback: new file was added to meta as "created_file"
         import json

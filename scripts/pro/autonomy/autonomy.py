@@ -19,11 +19,11 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 
 def _run_goal(engine, gm, planner, goal) -> dict:
     """Ejecuta un objetivo completo: planificar → ejecutar → evaluar."""
-    engine.log.info(f"  ▶ Ejecutando objetivo: {goal['title']}")
+    engine.log.info("  ▶ Ejecutando objetivo: {goal['title']}")
     gm.set_status(goal["goal_id"], "in_progress")
 
     plan = planner.create_plan(goal)
-    engine.log.info(f"    Estrategia: {plan['strategy']} → fases {plan['phases']} (estimado: {plan['estimated_s']}s)")
+    engine.log.info("    Estrategia: {plan['strategy']} → fases {plan['phases']} (estimado: {plan['estimated_s']}s)")
 
     results = planner.execute_plan(plan)
 
@@ -36,7 +36,7 @@ def _run_goal(engine, gm, planner, goal) -> dict:
 
     evaluator = Evaluator(engine)
     evaluation = evaluator.evaluate(goal, results)
-    engine.log.info(f"    Decisión: {evaluation['action']} (score: {evaluation['score']})")
+    engine.log.info("    Decisión: {evaluation['action']} (score: {evaluation['score']})")
 
     status = "completed" if evaluation["action"] == "finalizar" else "failed"
     gm.set_status(goal["goal_id"], status, evaluation["action"])
@@ -85,22 +85,22 @@ def main() -> int:  # noqa: PLR0915
 
     if args.suspend:
         gm.suspend(args.suspend)
-        engine.log.info(f"Objetivo suspendido: {args.suspend}")
+        engine.log.info("Objetivo suspendido: {args.suspend}")
         return 0
 
     if args.resume:
         gm.resume(args.resume)
-        engine.log.info(f"Objetivo reanudado: {args.resume}")
+        engine.log.info("Objetivo reanudado: {args.resume}")
         return 0
 
     if args.cancel:
         gm.cancel(args.cancel)
-        engine.log.info(f"Objetivo cancelado: {args.cancel}")
+        engine.log.info("Objetivo cancelado: {args.cancel}")
         return 0
 
     if args.reprioritize:
         gm.reprioritize(args.reprioritize[0], args.reprioritize[1])
-        engine.log.info(f"Objetivo {args.reprioritize[0]} → prioridad {args.reprioritize[1]}")
+        engine.log.info("Objetivo {args.reprioritize[0]} → prioridad {args.reprioritize[1]}")
         return 0
 
     # ── Crear objetivos ──
@@ -116,7 +116,7 @@ def main() -> int:  # noqa: PLR0915
             budget={"time_max_s": args.budget_time, "changes_max": args.budget_changes},
         )
         created.append(goal)
-        engine.log.info(f"  Objetivo creado: {goal['goal_id']} — {title}")
+        engine.log.info("  Objetivo creado: {goal['goal_id']} — {title}")
 
     if not created:
         engine.log.info("  Sin objetivos nuevos — usando cola existente")
@@ -126,14 +126,14 @@ def main() -> int:  # noqa: PLR0915
     planner = Planner(engine)
     ordered = planner.plan_dependency_order(created, gm)
 
-    engine.log.info(f"  Cola de ejecución: {len(ordered)} objetivos")
+    engine.log.info("  Cola de ejecución: {len(ordered)} objetivos")
     for g in ordered:
-        engine.log.info(f"    [{g['priority']}] {g['title']} (dep: {g.get('dependencies', [])})")
+        engine.log.info("    [{g['priority']}] {g['title']} (dep: {g.get('dependencies', [])})")
 
     t0 = time.time()
     results_summary = []
     for goal in ordered:
-        engine.log.info(f"── Objetivo: {goal['title']} ──")
+        engine.log.info("── Objetivo: {goal['title']} ──")
         evaluation = _run_goal(engine, gm, planner, goal)
         results_summary.append(
             {
@@ -147,20 +147,20 @@ def main() -> int:  # noqa: PLR0915
     engine.log.info("── Learning: Analizar historial ──")
     learning = LearningPlugin(engine)
     metrics = learning.analyze()
-    engine.log.info(f"  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
+    engine.log.info("  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
 
     # Mostrar aprendizaje con efecto observable
-    for adj in metrics.get("ajustes_destacados", []):
-        engine.log.info(f"  ⏱️  Ajuste timeout: {adj}")
+    for _adj in metrics.get("ajustes_destacados", []):
+        engine.log.info("  ⏱️  Ajuste timeout: {adj}")
 
-    for strat, rec in metrics.get("estrategias", {}).items():
-        engine.log.info(f"  📊 Estrategia '{strat}': {rec}")
+    for _strat, _rec in metrics.get("estrategias", {}).items():
+        engine.log.info("  📊 Estrategia '{strat}': {rec}")
 
-    for reg in metrics.get("regresiones", []):
-        engine.log.info(f"  ⚠️  Regresión: {reg['plugin']} ({reg['ratio']}x más lento)")
+    for _reg in metrics.get("regresiones", []):
+        engine.log.info("  ⚠️  Regresión: {reg['plugin']} ({reg['ratio']}x más lento)")
 
-    for plugin in metrics.get("plugins_a_omitir", []):
-        engine.log.info(f"  ⏭️  Omitir: {plugin} (fallos recurrentes)")
+    for _plugin in metrics.get("plugins_a_omitir", []):
+        engine.log.info("  ⏭️  Omitir: {plugin} (fallos recurrentes)")
 
     # ── Cierre ──
     engine.ledger.resource_sample()

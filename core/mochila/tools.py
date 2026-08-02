@@ -119,7 +119,8 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
                 DUCKDUCKGO_URL,
                 data={"q": query},
                 headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; URA/1.0)",
+"User-Agent": "Mozilla/5.0 (compatible
+URA/1.0)",
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
                 follow_redirects=True,
@@ -136,15 +137,19 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
                     break
                 url = m.group(1)
                 title = re.sub(r"<[^>]*>", "", m.group(2)).strip()
-                title = re.sub(r"&#x27;", "'", title)
-                title = re.sub(r"&[a-z]+;", " ", title)
+title = re.sub(r"&#x27
+", "'", title)
+title = re.sub(r"&[a-z]+
+", " ", title)
                 results.append({"title": title[:150], "url": url, "snippet": ""})
             for m2 in re.finditer(r"<td class='result-snippet'>(.*?)</td>", text):
                 filled = sum(1 for r in results if r["snippet"])
                 if filled < len(results):
                     snippet = re.sub(r"<[^>]*>", "", m2.group(1)).strip()
-                    snippet = re.sub(r"&#x27;", "'", snippet)
-                    snippet = re.sub(r"&[a-z]+;", " ", snippet)
+snippet = re.sub(r"&#x27
+", "'", snippet)
+snippet = re.sub(r"&[a-z]+
+", " ", snippet)
                     snippet = re.sub(r"\s+", " ", snippet)
                     results[filled]["snippet"] = snippet[:500]
             return {"query": query, "total_results": len(results), "results": results}
@@ -202,7 +207,9 @@ async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
 
 async def page_read(url: str, max_chars: int = 50000) -> dict:
     max_chars = min(max_chars, PAGEREAD_MAX_SIZE)
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; URA/1.0)", "Accept": "text/html,*/*;q=0.8"}
+headers = {"User-Agent": "Mozilla/5.0 (compatible
+URA/1.0)", "Accept": "text/html,*/*
+q=0.8"}
     try:
         async with httpx.AsyncClient(timeout=PAGEREAD_TIMEOUT, follow_redirects=True) as client:
             resp = await client.get(url, headers=headers)

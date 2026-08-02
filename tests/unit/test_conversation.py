@@ -1,8 +1,9 @@
 """Tests para ConversationEngine (deps inyectadas, MessageStore real SQLite)."""
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,11 +12,9 @@ from motor.assistant.message_store import MessageStore
 from motor.assistant.models import (
     ConversationMode,
     Message,
-    MessageRole,
     UserIntent,
 )
 from motor.assistant.sentiment import Sentiment
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -30,10 +29,8 @@ def db_path(tmp_path: Path) -> str:
 def store(db_path: str) -> MessageStore:
     s = MessageStore(db_path=db_path)
     yield s
-    try:
+    with contextlib.suppress(Exception):
         s.close()
-    except Exception:
-        pass
 
 
 @pytest.fixture
@@ -320,7 +317,7 @@ class TestProcessUserMessage:
 
     def test_sanitizes_message(self, engine: ConversationEngine) -> None:
         engine._prompt_sanitizer.sanitize = MagicMock(return_value="limpio")
-        result = engine.process_user_message("conv-san", "mensaje sucio")
+        engine.process_user_message("conv-san", "mensaje sucio")
         assert engine._prompt_sanitizer.sanitize.called
 
     def test_needs_web_search(

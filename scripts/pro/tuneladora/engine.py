@@ -143,12 +143,12 @@ class PipelineEngine:
                 start_http_server(9091)
                 self.log.info("Prometheus metrics server started on :9091")
             except Exception as e:
-                self.log.warning(f"Prometheus server fallo: {e}")
+                self.log.warning("Prometheus server fallo: {e}")
 
     def set_dry_run(self, enabled: bool = True) -> None:
         """Activa/desactiva modo dry_run (simula sin modificar)."""
         self._dry_run = enabled
-        self.log.info(f"Dry run: {"ACTIVADO" if enabled else "DESACTIVADO"}")
+        self.log.info("Dry run: {"ACTIVADO" if enabled else "DESACTIVADO"}")
 
     # ── Ejecución de scripts ────────────────────────────────────
 
@@ -166,10 +166,10 @@ class PipelineEngine:
         if args:
             cmd.extend(args)
         t = timeout or self.config.timeout_script
-        self.log.info(f"Ejecutando: {' '.join(cmd[-3:])} (timeout={t}s, dry_run={dry_run})")
+        self.log.info("Ejecutando: {' '.join(cmd[-3:])} (timeout={t}s, dry_run={dry_run})")
 
         if dry_run:
-            self.log.info(f"[DRY RUN] Simulado: {" ".join(cmd)}")
+            self.log.info("[DRY RUN] Simulado: {" ".join(cmd)}")
             self.ledger.add_warning(f"dry_run: {script}")
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="[dry run]", stderr="")
 
@@ -188,7 +188,7 @@ class PipelineEngine:
             _exec_total.labels(plugin=_plugin, status="success" if result.returncode == 0 else "failure").inc()
             _exec_duration.labels(plugin=_plugin).observe(duration)
         if result.returncode != 0:
-            self.log.warning(f"Script exit={result.returncode}: {(result.stderr or '')[-200:]}")
+            self.log.warning("Script exit={result.returncode}: {(result.stderr or '')[-200:]}")
             self.notify("warning", f"Script falló: {script}", result.stderr or "")
         return result
 
@@ -200,7 +200,7 @@ class PipelineEngine:
         """Ejecuta ruff con argumentos."""
         cmd = [self.config.ruff, *args]
         t = timeout or self.config.timeout_ruff
-        self.log.info(f"Ruff: {" ".join(args)}")
+        self.log.info("Ruff: {" ".join(args)}")
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -210,7 +210,7 @@ class PipelineEngine:
             cwd=str(self.config.ura_root),
         )
         if result.returncode != 0 and result.stderr:
-            self.log.warning(f"Ruff stderr: {result.stderr[:200]}")
+            self.log.warning("Ruff stderr: {result.stderr[:200]}")
         return result
 
     def run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
@@ -252,7 +252,7 @@ class PipelineEngine:
                     thread_results[name] = fn()
                 except Exception as e:
                     thread_results[name] = {"error": str(e)}
-                    self.log.warning(f"Plugin {name} falló en thread: {e}")
+                    self.log.warning("Plugin {name} falló en thread: {e}")
 
             for name, fn in plugins:
                 t = threading.Thread(target=_run, args=(name, fn), daemon=True)
@@ -267,7 +267,7 @@ class PipelineEngine:
                     results[name] = fn()
                 except Exception as e:
                     results[name] = {"error": str(e)}
-                    self.log.warning(f"Plugin {name} falló: {e}")
+                    self.log.warning("Plugin {name} falló: {e}")
 
         if _HAS_METRICS:
             _plugins_active.set(0)
@@ -288,9 +288,9 @@ class PipelineEngine:
                 )
                 self._alert_engine._alert_history.append(alert)
             except Exception as e:
-                self.log.debug(f"Notificacion falló: {e}")
+                self.log.debug("Notificacion falló: {e}")
         else:
-            self.log.warning(f"[NOTIFY] {severity.upper()}: {title} — {description}")
+            self.log.warning("[NOTIFY] {severity.upper()}: {title} — {description}")
 
     # ── Health checks ──────────────────────────────────────────
 
