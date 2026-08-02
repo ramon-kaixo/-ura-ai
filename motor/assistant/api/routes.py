@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -71,10 +72,10 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
     if blocked is not None:
         return blocked
 
-    plan = _preparar_respuesta(engine, llm, cid, request)
+    plan = await _preparar_respuesta(engine, llm, cid, request)
 
     if request.stream:
-        return _responder_streaming(llm, engine, request, plan)
+        return _responder_streaming(llm, engine, plan)
 
     reply = _generar_respuesta_sync(llm, plan, trace, correlation_id)
     output_mod = _moderator.moderate_output(reply)
@@ -123,12 +124,12 @@ def _moderar_input(request: ChatRequest, engine: Any, cid: str, correlation_id: 
     )
 
 
-def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequest) -> Any:
+async def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequest) -> Any:
     result = _process(engine, llm, cid, request.message, request.mode, request.user_id)
     intent, mode, resolved, system_prompt, conv, lang_code, analysis = result
-    display_cid = request.conversation_id or cid.split("__")[-1] if "__" in cid else cid
+    display_cid = request.conversation_id or cid.rsplit("__", 1)[-1] if "__" in cid else cid
 
-    enriched_prompt = _enrich_prompt_sync(system_prompt, analysis, engine, resolved)
+    enriched_prompt = await _enrich_prompt(system_prompt, analysis, engine, resolved)
 
     if intent == UserIntent.COMMAND:
         tool_name = _detect_tool_name(resolved)
@@ -136,12 +137,13 @@ def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequest) -
             enriched_prompt += (
                 "\n\n⚠️ Este comando requiere confirmación. Pregunta al usuario si está seguro antes de ejecutarlo."
             )
-        tool_result = _execute_command_sync(resolved, analysis)
+        tool_result = await _execute_command(resolved, analysis)
         if tool_result:
             engine.add_message(cid, "user", f"COMANDO REAL EJECUTADO. RESULTADO:\n{tool_result[:800]}")
             enriched_prompt += "\n\nEl resultado arriba es de un comando REAL. Responde basándote en ese resultado."
 
     return SimpleNamespace(
+        cid=cid,
         intent=intent,
         mode=mode,
         resolved=resolved,
@@ -153,19 +155,7 @@ def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequest) -
     )
 
 
-def _enrich_prompt_sync(system_prompt: str, analysis: Any, engine: Any, resolved: str) -> str:
-    import asyncio
-
-    return asyncio.run(_enrich_prompt(system_prompt, analysis, engine, resolved))
-
-
-def _execute_command_sync(resolved: str, analysis: Any) -> str | None:
-    import asyncio
-
-    return asyncio.run(_execute_command(resolved, analysis))
-
-
-def _responder_streaming(llm: Any, engine: Any, request: ChatRequest, plan: Any) -> StreamingResponse:
+def _responder_streaming(llm: Any, engine: Any, plan: Any) -> StreamingResponse:
     async def event_stream():
         full_reply = ""
         try:
