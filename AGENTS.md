@@ -644,6 +644,7 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | **F2** | ✅ Cerrada | Colección 0 errores (2593 tests), CI 20.8%→65.9%, clasificación por categorías |
 | **F3** | ✅ Cerrada | Telemetría fiable: falsos positivos eliminados, tuneladora+LLM+KE integrados |
 | **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
+| **PM v3.1** | ✅ Cerrada | Plan Maestro validación: `make validate`/`validate-full`, inventario 324 herramientas, shadowing M1 fix, cobertura core/ 38.8%→**51.1%**, mypy hook informativo. Ver `docs/audit/PLAN_MAESTRO_CLOSEOUT.md` |
 
 ### Policy: Exclusiones de CI
 En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
