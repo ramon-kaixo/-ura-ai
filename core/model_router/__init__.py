@@ -4,7 +4,8 @@ from core.model_router.cache import PromptCache, prompt_cache  # noqa: F401
 from core.model_router.cli import main, verificar_politicas_seguridad_preflight  # noqa: F401
 from core.model_router.dashboard import _dashboard_json, _render_dashboard  # noqa: F401
 from core.model_router.handler import RouterHandler  # noqa: F401
-from core.model_router.metrics import MetricsCollector, metrics  # noqa: F401
+from core.model_router.metrics import MetricsCollector  # noqa: F401
+from core.model_router.metrics import metrics as metrics_singleton  # noqa: F401
 from core.model_router.model_selection import (  # noqa: F401
     DEFAULT_MODEL_PARAMS,
     MODELO_ROUTES,
@@ -51,4 +52,5 @@ from core.model_router.router import (  # noqa: F401
     rate_limiter,
     require_auth,
 )
-from core.model_router.vram_guard import ConcurrentVRAMGuard, vram_guard  # noqa: F401
+from core.model_router.vram_guard import ConcurrentVRAMGuard  # noqa: F401
+from core.model_router.vram_guard import vram_guard as vram_guard_singleton  # noqa: F401
