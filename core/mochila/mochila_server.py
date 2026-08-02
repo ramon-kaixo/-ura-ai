@@ -455,7 +455,7 @@ async def health():
 async def v1_models():
     global CACHE_MODELS, CACHE_MODELS_TS  # noqa: PLW0603
     if CACHE_MODELS and time.time() - CACHE_MODELS_TS < 60:
-        return CACHE_MODELS
+        return {"object": "list", "data": CACHE_MODELS}
     models = []
     for name, provider in PROVIDERS.items():
         h = await provider.health()
