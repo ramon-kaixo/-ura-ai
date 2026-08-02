@@ -228,16 +228,27 @@ class WeightedConsensus(VotingStrategy):
 
     def aggregate(self, results: list[AgentResult]) -> ConsensusResult:
         if not results:
-            return ConsensusResult(
-                success=False,
-                outcome={},
-                votes=[],
-                vote_counts={},
-                total_votes=0,
-                strategy=self.name(),
-                weighted=True,
-            )
+            return self._vacio()
 
+        tally, weight_details = self._calcular_tally(results)
+        winners = _mayoria(tally)
+
+        vote_counts = {k: round(v, 4) for k, v in tally.items()}
+        total = len(results)
+
+        if len(winners) == 1:
+            outcome = _outcome_para(winners[0], results, self)
+            return self._consenso(outcome, results, vote_counts, total, weight_details)
+
+        if len(winners) > 1:
+            outcome = _outcome_para(winners[0], results, self)
+            outcome["_tie"] = True
+            outcome["_tied_keys"] = winners
+            return self._sin_consenso(outcome, results, vote_counts, total, weight_details)
+
+        return self._sin_consenso({}, results, vote_counts, total, weight_details)
+
+    def _calcular_tally(self, results: list[AgentResult]) -> tuple[dict[str, float], dict[str, float]]:
         tally: dict[str, float] = {}
         weight_details: dict[str, float] = {}
 
@@ -248,55 +259,49 @@ class WeightedConsensus(VotingStrategy):
             effective = weight * conf
             tally[key] = tally.get(key, 0.0) + effective
             weight_details[r.agent_id] = effective
+        return tally, weight_details
 
-        max_weight = max(tally.values())
-        winners = [k for k, v in tally.items() if v == max_weight]
-
-        vote_counts = {k: round(v, 4) for k, v in tally.items()}
-        total = len(results)
-
-        if len(winners) == 1:
-            winner_key = winners[0]
-            for r in results:
-                if self._result_key(r) == winner_key:
-                    outcome = dict(r.output)
-                    break
-            else:
-                outcome = {}
-            return ConsensusResult(
-                success=True,
-                outcome=outcome,
-                votes=results,
-                vote_counts=vote_counts,
-                total_votes=total,
-                strategy=self.name(),
-                weighted=True,
-                weight_details=weight_details,
-            )
-
-        if len(winners) > 1:
-            for r in results:
-                if self._result_key(r) == winners[0]:
-                    outcome = dict(r.output)
-                    break
-            else:
-                outcome = {}
-            outcome["_tie"] = True
-            outcome["_tied_keys"] = winners
-            return ConsensusResult(
-                success=False,
-                outcome=outcome,
-                votes=results,
-                vote_counts=vote_counts,
-                total_votes=total,
-                strategy=self.name(),
-                weighted=True,
-                weight_details=weight_details,
-            )
-
+    def _vacio(self) -> ConsensusResult:
         return ConsensusResult(
             success=False,
             outcome={},
+            votes=[],
+            vote_counts={},
+            total_votes=0,
+            strategy=self.name(),
+            weighted=True,
+        )
+
+    def _consenso(
+        self,
+        outcome: dict[str, Any],
+        results: list[AgentResult],
+        vote_counts: dict[str, float],
+        total: int,
+        weight_details: dict[str, float],
+    ) -> ConsensusResult:
+        return ConsensusResult(
+            success=True,
+            outcome=outcome,
+            votes=results,
+            vote_counts=vote_counts,
+            total_votes=total,
+            strategy=self.name(),
+            weighted=True,
+            weight_details=weight_details,
+        )
+
+    def _sin_consenso(
+        self,
+        outcome: dict[str, Any],
+        results: list[AgentResult],
+        vote_counts: dict[str, float],
+        total: int,
+        weight_details: dict[str, float],
+    ) -> ConsensusResult:
+        return ConsensusResult(
+            success=False,
+            outcome=outcome,
             votes=results,
             vote_counts=vote_counts,
             total_votes=total,
@@ -307,3 +312,15 @@ class WeightedConsensus(VotingStrategy):
 
     def _result_key(self, r: AgentResult) -> str:
         return str(sorted(r.output.items())) if r.output else f"error:{r.error}"
+
+
+def _mayoria(tally: dict[str, float]) -> list[str]:
+    max_weight = max(tally.values())
+    return [k for k, v in tally.items() if v == max_weight]
+
+
+def _outcome_para(winner_key: str, results: list[AgentResult], agente: Any) -> dict[str, Any]:
+    for r in results:
+        if agente._result_key(r) == winner_key:
+            return dict(r.output)
+    return {}
