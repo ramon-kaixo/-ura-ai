@@ -73,21 +73,50 @@ def compile_source(
         incremental=previous_snapshot is not None,
         max_parse_size=max_parse_size,
     )
-    features = CompileFeatures(parser_version=compiler_version)
     meta = CompileMetadata(
         source_commit="HEAD",
-        features=features,
+        features=CompileFeatures(parser_version=compiler_version),
         correlation_id=correlation_id,
     )
 
+    changed, snapshot, all_errors, all_warnings, deleted, early = _etapa_scan(
+        meta, opts, previous_snapshot, source_dir, compiler_version
+    )
+    if early is not None:
+        return early
+
+    t0 = time.monotonic()
+    write_result, valid_objects, deleted_ids = _etapa_compilacion(
+        meta, opts, changed, all_errors, all_warnings, deleted, snapshot, db_path, previous_snapshot
+    )
+    return _compilar_final(
+        write_result,
+        meta,
+        valid_objects=valid_objects,
+        deleted_ids=deleted_ids,
+        documents_total=len(changed),
+        source_dir=source_dir,
+        snapshot=snapshot,
+        db_path=db_path,
+        correlation_id=correlation_id,
+        duration=time.monotonic() - t0,
+    )
+
+
+def _etapa_scan(
+    meta: CompileMetadata,
+    opts: CompileOptions,
+    previous_snapshot: Snapshot | None,
+    source_dir: Path,
+    compiler_version: str,
+) -> tuple[list[str], Snapshot, list[CompileError], list[CompileError], list[Path], CompileResult | None]:
     # ── Stage 1: DISCOVERING ─────────────────────────────────────────────
     ctx = _ctx_stage(meta, opts, CompileStage.DISCOVERING)
-    t0 = time.monotonic()
 
     changed, snapshot, scanner_skipped, deleted = scan_incremental(previous_snapshot, source_dir)
 
     if previous_snapshot and not changed and not deleted:
-        return CompileResult(
+        return [], snapshot, [], [], [], CompileResult(
             success=True,
             graph_version=0,
             source_commit=meta.source_commit,
@@ -99,7 +128,20 @@ def compile_source(
 
     all_errors: list[CompileError] = list(scanner_skipped)
     all_warnings = _warnings_deletados(deleted)
+    return changed, snapshot, all_errors, all_warnings, deleted, None
 
+
+def _etapa_compilacion(
+    meta: CompileMetadata,
+    opts: CompileOptions,
+    changed: list[str],
+    all_errors: list[CompileError],
+    all_warnings: list[CompileError],
+    deleted: list[Path],
+    snapshot: Snapshot,
+    db_path: Path,
+    previous_snapshot: Snapshot | None,
+) -> tuple[CompileResult, list[KnowledgeObject], list[str]]:
     ctx = _ctx_stage(meta, opts, snapshot, CompileStage.PARSING)
 
     # ── Stage 2: PARSING ────────────────────────────────────────────────
@@ -131,26 +173,40 @@ def compile_source(
         warnings=all_warnings,
         deleted_ids=deleted_ids,
     )
+    return result, valid_objects, deleted_ids
 
-    duration = time.monotonic() - t0
-    final_stage = CompileStage.DONE if result.success else CompileStage.FAILED
+
+def _compilar_final(
+    write_result: CompileResult,
+    meta: CompileMetadata,
+    *,
+    valid_objects: list[KnowledgeObject],
+    deleted_ids: list[str],
+    documents_total: int,
+    source_dir: Path,
+    snapshot: Snapshot,
+    db_path: Path,
+    correlation_id: str,
+    duration: float,
+) -> CompileResult:
+    final_stage = CompileStage.DONE if write_result.success else CompileStage.FAILED
 
     # Stage 5: SEMANTIC SYNC (post-commit, graceful degradation)
-    if result.success:
-        _sync_semantica(db_path, valid_objects, deleted_ids, result, snapshot, source_dir)
+    if write_result.success:
+        _sync_semantica(db_path, valid_objects, deleted_ids, write_result, snapshot, source_dir)
 
     # Auditoría (best effort, tanto success como failure)
-    _auditar(result, correlation_id, duration)
+    _auditar(write_result, correlation_id, duration)
 
     return CompileResult(
-        success=result.success,
-        graph_version=result.graph_version,
+        success=write_result.success,
+        graph_version=write_result.graph_version,
         source_commit=meta.source_commit,
-        compiler_version=compiler_version,
-        documents_total=len(changed),
-        documents_changed=result.documents_changed,
-        errors=result.errors,
-        warnings=result.warnings,
+        compiler_version=meta.features.parser_version,
+        documents_total=documents_total,
+        documents_changed=write_result.documents_changed,
+        errors=write_result.errors,
+        warnings=write_result.warnings,
         duration_ms=duration * 1000,
         stage=final_stage.value,
     )
