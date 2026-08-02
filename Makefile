@@ -63,6 +63,13 @@ audit:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === SECRETS ===
+secrets:
+	@echo "▶ Auditando secrets hardcodeados..."
+	@$(PYTHON) scripts/pro/audit_secrets.py || echo "  ⚠️ Secrets detectados (ver output arriba)"
+	@echo "✅ Auditoría de secrets completada"
+
+
 # === FIX ===
 fix:
 	@echo "▶ Sanear código (ruff + fixes personalizados)..."
