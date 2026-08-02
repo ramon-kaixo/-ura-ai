@@ -16,6 +16,14 @@ from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 
 
+@pytest.fixture(autouse=True)
+def mock_plugin_registry(monkeypatch):
+    """Mock plugin_registry para evitar timeouts en tests de pipeline."""
+    mock_plugin = mock.Mock()
+    mock_plugin.run_phase.return_value = {"status": "ok"}
+    monkeypatch.setattr("scripts.pro.tuneladora.pipeline.runner._plugin_registry", mock_plugin)
+
+
 @pytest.fixture
 def cfg() -> Configuration:
     return Configuration()

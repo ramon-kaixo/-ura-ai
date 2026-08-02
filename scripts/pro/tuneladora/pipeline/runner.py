@@ -623,12 +623,13 @@ class PipelineRunner:
             if any(pr.status == Status.FAIL for pr in pre):
                 return self._finish(episode_id, Status.FAIL, "Pre-flight failed", t_start)
 
-            # Plugin registry: fase "pre"
-            try:
-                pre_result = _plugin_registry.run_phase("pre", {"mode": self.mode, "files": self.files})
-                log.info("[PLUGIN] pre: %s", pre_result.get("status"))
-            except Exception as e:
-                log.warning("[PLUGIN] pre falló: %s", e)
+            # Plugin registry: fase "pre" (solo gate/fix)
+            if self.mode in ("gate", "fix"):
+                try:
+                    pre_result = _plugin_registry.run_phase("pre", {"mode": self.mode, "files": self.files})
+                    log.info("[PLUGIN] pre: %s", pre_result.get("status"))
+                except Exception as e:
+                    log.warning("[PLUGIN] pre falló: %s", e)
 
             p0 = self.phase_snapshot()
             all_phase_results.append(p0)
@@ -636,12 +637,13 @@ class PipelineRunner:
             p1 = self.phase_static()
             all_phase_results.append(p1)
 
-            # Plugin registry: fase "refactor"
-            try:
-                ref_result = _plugin_registry.run_phase("refactor", {"mode": self.mode, "files": self.files})
-                log.info("[PLUGIN] refactor: %s", ref_result.get("status"))
-            except Exception as e:
-                log.warning("[PLUGIN] refactor falló: %s", e)
+            # Plugin registry: fase "refactor" (solo gate/fix)
+            if self.mode in ("gate", "fix"):
+                try:
+                    ref_result = _plugin_registry.run_phase("refactor", {"mode": self.mode, "files": self.files})
+                    log.info("[PLUGIN] refactor: %s", ref_result.get("status"))
+                except Exception as e:
+                    log.warning("[PLUGIN] refactor falló: %s", e)
 
             # Sofía review (between static and dynamic)
             if self.mode in ("gate", "fix"):
@@ -673,12 +675,13 @@ class PipelineRunner:
             p_commit = self.phase_commit()
             all_phase_results.append(p_commit)
 
-            # Plugin registry: fase "post"
-            try:
-                post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})
-                log.info("[PLUGIN] post: %s", post_result.get("status"))
-            except Exception as e:
-                log.warning("[PLUGIN] post falló: %s", e)
+            # Plugin registry: fase "post" (solo gate/fix)
+            if self.mode in ("gate", "fix"):
+                try:
+                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})
+                    log.info("[PLUGIN] post: %s", post_result.get("status"))
+                except Exception as e:
+                    log.warning("[PLUGIN] post falló: %s", e)
 
             verdict, msg = self.phase_verdict(all_phase_results)
 

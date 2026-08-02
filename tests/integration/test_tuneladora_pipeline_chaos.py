@@ -166,23 +166,25 @@ class TestChaosCleanCommit:
         runner.sofia.review.return_value = mock.Mock(
             hallazgos=[], n_criticos=0, n_advertencias=0,
         )
-        with mock.patch.multiple(
-            runner, preflight=mock.DEFAULT, phase_snapshot=mock.DEFAULT,
-            phase_static=mock.DEFAULT, phase_dynamic=mock.DEFAULT,
-            phase_api_diff=mock.DEFAULT, phase_index=mock.DEFAULT,
-            phase_integrity=mock.DEFAULT, phase_verdict=mock.DEFAULT,
-            _acquire_lock=mock.DEFAULT, _release_lock=mock.DEFAULT,
-        ):
-            runner.preflight.return_value = [mock.Mock(name="pre", status=Status.OK)]
-            runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
-            runner.phase_static.return_value = [mock.Mock(name="static", status=Status.OK)]
-            runner.phase_dynamic.return_value = [mock.Mock(name="dynamic", status=Status.OK)]
-            runner.phase_api_diff.return_value = [mock.Mock(name="api", status=Status.OK)]
-            runner.phase_index.return_value = [mock.Mock(name="idx", status=Status.OK)]
-            runner.phase_integrity.return_value = [mock.Mock(name="integrity", status=Status.OK)]
-            runner.phase_verdict.return_value = (Status.OK, "all good")
-            runner._acquire_lock.return_value = True
-            result = runner.run()
+        with mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry") as mock_plugin:
+            mock_plugin.run_phase.return_value = {"status": "ok"}
+            with mock.patch.multiple(
+                runner, preflight=mock.DEFAULT, phase_snapshot=mock.DEFAULT,
+                phase_static=mock.DEFAULT, phase_dynamic=mock.DEFAULT,
+                phase_api_diff=mock.DEFAULT, phase_index=mock.DEFAULT,
+                phase_integrity=mock.DEFAULT, phase_verdict=mock.DEFAULT,
+                _acquire_lock=mock.DEFAULT, _release_lock=mock.DEFAULT,
+            ):
+                runner.preflight.return_value = [mock.Mock(name="pre", status=Status.OK)]
+                runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
+                runner.phase_static.return_value = [mock.Mock(name="static", status=Status.OK)]
+                runner.phase_dynamic.return_value = [mock.Mock(name="dynamic", status=Status.OK)]
+                runner.phase_api_diff.return_value = [mock.Mock(name="api", status=Status.OK)]
+                runner.phase_index.return_value = [mock.Mock(name="idx", status=Status.OK)]
+                runner.phase_integrity.return_value = [mock.Mock(name="integrity", status=Status.OK)]
+                runner.phase_verdict.return_value = (Status.OK, "all good")
+                runner._acquire_lock.return_value = True
+                result = runner.run()
         assert result == Status.OK
 
 
