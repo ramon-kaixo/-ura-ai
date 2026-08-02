@@ -32,12 +32,36 @@ revirtiendo cualquier cambio sin commitear (destruyó Makefile editado y
 
 | Métrica | Antes | Después |
 |---------|-------|---------|
-| Cobertura core/ | 38.8% | **51.1%** |
-| make validate | no existía | ✅ pasa (2689 tests, CC>=20: 0) |
+| Cobertura core/ | 38.8% | **72.0%** (sesión 2026-08-02) |
+| make validate | no existía | ✅ pasa (1796 tests, CC>=20: 0) |
 | CC>=20 núcleo productivo | 0 (S5c) | 0 (verificado en validate) |
 | Módulos mochila 0% | ~15 | 0 (todos >25%, 11 a 100%) |
 | mypy hook pre-commit | falso (`exit 0` con echo) | real + informativo + baseline doc |
-| Tests suite (not slow) | ~2670 | 2700+ |
+| Tests suite (not slow) | ~2670 | 1796 unit + integración |
+
+## Sesión de Cobertura (2026-08-02, post-closeout)
+
+Extensión de la Fase 3 tras el cierre del plan: core 51.1% → **72.0%**.
+
+| Zona | Módulos cubiertos | Cobertura lograda |
+|------|-------------------|-------------------|
+| memoria/ | compresor, consulta, sintetizador, analizador, vigilante, bridge, qdrant_store, imagen_extractor, ingesto | 97.4% global |
+| debate/ | plan_validator 100%, debate_engine 97%, lockfile 100% | — |
+| infra/ | heartbeat 91%, state_manager 100% | — |
+| seguridad/ | rollback_manager 100% | — |
+| cleaner/, sandbox/ | cold_refactor 100%, docker_orchestrator 97%, sandbox.py 96% | — |
+| mochila/ | app 85%, streaming 100%, routes models/status 100%, auth_layer 100% | — |
+| network/ | resolver_red 98%, ingestador_red 98% | — |
+| model_router/ | cli 90%, cache 97%, vram_guard 94%, __main__ 100% | — |
+| inferencia/ | engine 100% | — |
+
+**Hallazgos documentados en tests:**
+1. `_exif_pillow`: branch GPSInfo inalcanzable (else convierte dict a str)
+2. `event_bus.publish()`: `ensure_publisher()` fuera del try/except
+3. `docker_orchestrator`: typo `dt.get('fallos')` vs `fallidos`
+4. `heartbeat._save_restart_to_qdrant()`: `instancia` no existe en motor.core.qdrant_client — incidente nunca se guarda
+5. `core/sandbox.py`: módulo muerto (colisiona con paquete core/sandbox/)
+6. `publish()` en heartbeat: loop non-daemon hace 1 solo ciclo (documentado)
 
 ## Baseline de Referencia
 
