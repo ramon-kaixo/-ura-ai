@@ -1,0 +1,12 @@
+[Unit]
+Description=URA Healing Loop - Auto-reparación continua
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python3 -m core.agents.cli --modo ciclo
+StandardOutput=journal
+StandardError=journal
+CPUQuota=30%
+MemoryMax=1G
