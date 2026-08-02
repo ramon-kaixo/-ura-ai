@@ -337,63 +337,86 @@ async def _stream_from_provider(
         async for chunk in gen:
             if not chunk:
                 continue
-            if (
-                chunk.get("choices")
-                and chunk["choices"][0].get("delta", {}) == {}
-                and chunk["choices"][0].get("finish_reason")
-            ):
+            if _chunk_es_fin(chunk):
                 yield b"data: [DONE]\n\n"
                 circuit_breaker.registrar_exito(provider_name)
                 rate_limiter.registrar(provider_name)
                 _procesar_usage(chunk, provider_name, modelo)
                 return
             if is_opencode and guardian:
-                delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                if delta:
-                    accumulated_text += delta
-                    if not guardian.evaluar_texto_stream(accumulated_text):
-                        penalty = guardian.generar_penalizacion()
-                        payload = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
-                        if penalty:
-                            payload["error"]["penalty_context"] = penalty
-                        log_event(
-                            "stream_aborted",
-                            model=modelo,
-                            file="",
-                            reason="vagancy",
-                            attempts=0,
-                            penalty=penalty,
-                        )
-                        yield b"data: " + json.dumps(payload).encode() + b"\n\n"
-                        yield b"data: [DONE]\n\n"
-                        return
-            yield b"data: " + json.dumps(chunk).encode() + b"\n\n"
+                abortar, accumulated_text, penalty = _evaluar_guardian(guardian, chunk, accumulated_text, modelo)
+                if abortar:
+                    yield _error_sse(
+                        "STREAM_ABORTED_BY_GUARDIAN",
+                        "vagancy_error",
+                        penalty=penalty,
+                    )
+                    yield b"data: [DONE]\n\n"
+                    return
+            yield _sse_bytes(chunk)
         yield b"data: [DONE]\n\n"
     except TimeoutError:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name, es_timeout=True)
-        yield (
-            b"data: "
-            + json.dumps({"error": {"message": f"Timeout ({timeout_val}s)", "type": "timeout_error"}}).encode()
-            + b"\n\n"
-        )
+        yield _error_sse(f"Timeout ({timeout_val}s)", "timeout_error")
         yield b"data: [DONE]\n\n"
     except ProviderError as e:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name)
-        yield b"data: " + json.dumps({"error": {"message": str(e), "type": "provider_error"}}).encode() + b"\n\n"
+        yield _error_sse(str(e), "provider_error")
         yield b"data: [DONE]\n\n"
     except Exception as e:
         hubo_error = True
         circuit_breaker.registrar_fallo(provider_name)
-        yield (
-            b"data: " + json.dumps({"error": {"message": f"Error: {e!s}", "type": "internal_error"}}).encode() + b"\n\n"
-        )
+        yield _error_sse(f"Error: {e!s}", "internal_error")
         yield b"data: [DONE]\n\n"
     finally:
         if not hubo_error:
             circuit_breaker.registrar_exito(provider_name)
             rate_limiter.registrar(provider_name)
+
+
+def _chunk_es_fin(chunk: dict) -> bool:
+    return bool(
+        chunk.get("choices")
+        and chunk["choices"][0].get("delta", {}) == {}
+        and chunk["choices"][0].get("finish_reason")
+    )
+
+
+def _sse_bytes(data: dict) -> bytes:
+    return b"data: " + json.dumps(data).encode() + b"\n\n"
+
+
+def _error_sse(message: str, error_type: str, penalty: dict | None = None) -> bytes:
+    payload = {"error": {"message": message, "type": error_type}}
+    if penalty:
+        payload["error"]["penalty_context"] = penalty
+    return _sse_bytes(payload)
+
+
+def _evaluar_guardian(
+    guardian: Any,
+    chunk: dict,
+    accumulated_text: str,
+    modelo: str,
+) -> tuple[bool, str, dict | None]:
+    delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+    if not delta:
+        return False, accumulated_text, None
+    accumulated_text += delta
+    if guardian.evaluar_texto_stream(accumulated_text):
+        return False, accumulated_text, None
+    penalty = guardian.generar_penalizacion()
+    log_event(
+        "stream_aborted",
+        model=modelo,
+        file="",
+        reason="vagancy",
+        attempts=0,
+        penalty=penalty,
+    )
+    return True, accumulated_text, penalty
 
 
 @asynccontextmanager
