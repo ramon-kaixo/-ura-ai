@@ -1,10 +1,8 @@
-from __future__ import annotations
-import pytest
-
-pytestmark = pytest.mark.slow
-
 """Tests para core/model_router/cli.py."""
 
+from __future__ import annotations
+
+import pytest
 from pathlib import Path
 from unittest import mock
 
