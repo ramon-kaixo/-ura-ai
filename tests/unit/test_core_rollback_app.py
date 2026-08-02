@@ -1,11 +1,8 @@
 """Tests para core/seguridad/rollback_manager.py y core/mochila/app.py."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest import mock
-
-import pytest
 
 from core.mochila.app import create_app
 from core.seguridad.rollback_manager import RollbackManager

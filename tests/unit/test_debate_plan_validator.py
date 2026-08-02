@@ -1,12 +1,9 @@
 """Tests para core/debate/plan_validator.py."""
 from __future__ import annotations
 
-import json
 import subprocess
 from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 import core.debate.plan_validator as pv
 

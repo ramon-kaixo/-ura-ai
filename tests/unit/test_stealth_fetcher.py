@@ -6,7 +6,6 @@ from unittest import mock
 import pytest
 
 from core.stealth_fetcher import (
-    DEFAULT_TIMEOUT,
     USER_AGENTS,
     _default_headers,
     _random_ua,
@@ -88,7 +87,6 @@ class TestFetchStealth:
     @pytest.mark.asyncio
     async def test_playwright_no_instalado(self, monkeypatch) -> None:
         import sys
-
         from types import SimpleNamespace
 
         def raiz(*a, **k):

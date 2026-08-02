@@ -1,8 +1,6 @@
 """Tests for scripts/pro/orchestrator.py."""
 import subprocess
 
-import pytest
-
 from scripts.pro.orchestrator import main
 
 

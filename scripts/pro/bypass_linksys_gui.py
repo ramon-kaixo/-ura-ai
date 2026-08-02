@@ -11,13 +11,19 @@
   Firma: Ramon Esnaola (K0513893926)
 """
 
-import contextlib, json, os, subprocess, sys, time
+import contextlib
+import json
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 from motor.core.secrets import get_secret
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import TimeoutError as PlaywrightTimeout
+    from playwright.sync_api import sync_playwright
 except ImportError:
     sys.exit(1)
 
@@ -114,7 +120,7 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 ".bypass-link",
                 ".continue-link",
             ]
-            
+
             # Try to find the bypass link
             found = find_and_click(page, bypass_selectors, timeout=3000)
             if not found:
@@ -147,7 +153,7 @@ def bypass_linksys() -> bool:  # noqa: PLR0915
                 time.sleep(1)
                 password_field.press("Enter")
                 time.sleep(5)  # Esperar a que cargue el dashboard
-                
+
                 # Verificar si el login fue exitoso
                 page.wait_for_load_state("networkidle", timeout=10000)
                 content = page.content()

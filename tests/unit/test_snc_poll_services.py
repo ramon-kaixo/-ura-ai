@@ -74,7 +74,6 @@ def test_poll_services_servicio_sano_no_repara(monkeypatch, fake_subprocess):
 
 def test_poll_services_servicio_caido_intenta_reparar(monkeypatch, fake_subprocess):
     """Servicio cuyo check falla: registra repair_result y estado CRITICAL."""
-    real_run = snc.subprocess.run
 
     def fake_run(cmd, *args, **kwargs):
         ejecutado = cmd if isinstance(cmd, str) else " ".join(cmd)

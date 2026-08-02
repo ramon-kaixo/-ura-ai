@@ -35,7 +35,9 @@ _PRIVATE_NETWORKS: list[str] = [
     "::1/128",
 ]
 
-DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; URA/1.0; +https://github.com/anomalyco/ura) Web Crawler"
+DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible
+URA/1.0
++https://github.com/anomalyco/ura) Web Crawler"
 
 _MAX_REDIRECTS = 10
 _DEFAULT_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -178,7 +180,8 @@ class HttpCrawler(Crawler):
                 head = client.head(url)
                 doc.status_code = head.status_code
                 doc.headers = dict(head.headers)
-                doc.content_type = head.headers.get("content-type", "").split(";")[0].strip()
+doc.content_type = head.headers.get("content-type", "").split("
+")[0].strip()
                 doc.charset = _extract_charset(head.headers.get("content-type", ""))
 
                 # Validar Content-Type
@@ -204,7 +207,8 @@ class HttpCrawler(Crawler):
                 doc.final_url = str(r.url)
                 doc.status_code = r.status_code
                 doc.headers = dict(r.headers)
-                doc.content_type = r.headers.get("content-type", "").split(";")[0].strip()
+doc.content_type = r.headers.get("content-type", "").split("
+")[0].strip()
                 doc.charset = _extract_charset(r.headers.get("content-type", ""))
                 doc.content = r.content
                 doc.content_length = len(r.content)

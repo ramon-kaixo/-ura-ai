@@ -7,7 +7,7 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
-from knowledge.engine.rules import RuleEvaluator, _BUILTIN_RULES
+from knowledge.engine.rules import RuleEvaluator
 
 
 def _create_db(

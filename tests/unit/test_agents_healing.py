@@ -1,6 +1,6 @@
 """Tests for core/agents/healing.py."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -29,7 +29,7 @@ class TestSelfHealingLoop:
     @patch("core.agents.healing.Conciencia")
     @patch("core.agents.healing.subprocess.run")
     def test_ejecutar_refactorizar(self, mock_subprocess, mock_conciencia, loop):
-        sl, mock_orq, mock_ej, _, mock_tel = loop
+        sl, mock_orq, mock_ej, _, _mock_tel = loop
         mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "tests fallando")
 
         reporte = sl.ejecutar()

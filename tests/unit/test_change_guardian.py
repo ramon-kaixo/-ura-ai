@@ -1,10 +1,7 @@
 """Tests for core/change_guardian.py."""
 
 import json
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from core.change_guardian import (
     _get_modified_tracked_files,

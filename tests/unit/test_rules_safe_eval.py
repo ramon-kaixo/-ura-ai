@@ -8,16 +8,15 @@ import ast
 import pytest
 
 from knowledge.engine.rules import (
-    UnsafeExpressionError,
-    _SafeEvalChecker,
-    _eval_ast,
     _MAX_AST_DEPTH,
     _MAX_AST_NODES,
     _MAX_EXPRESSION_LENGTH,
     _MAX_FUNCTION_CALLS,
+    UnsafeExpressionError,
+    _eval_ast,
+    _SafeEvalChecker,
     safe_eval,
 )
-
 
 # ===================================================================
 # Grupo A — Expresiones literales válidas

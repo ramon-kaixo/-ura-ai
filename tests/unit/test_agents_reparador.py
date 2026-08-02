@@ -1,9 +1,6 @@
 """Tests for core/agents/reparador.py."""
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from core.agents.reparador import AgenteReparador
 

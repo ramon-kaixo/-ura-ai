@@ -39,7 +39,7 @@ class BackupPlugin:
                 capture_output=True, text=True, timeout=10, cwd=str(self.repo_root), check=False,
             )
             tagged = tag_result.returncode == 0
-            self.engine.log.info(f"Backup code: tag={tag} stashed={stashed}")
+            self.engine.log.info("Backup code: tag={tag} stashed={stashed}")
             return {"tag": tag, "stashed": stashed, "ok": tagged}
         except Exception as e:
             return {"error": str(e), "ok": False}
@@ -62,9 +62,9 @@ class BackupPlugin:
                 dest = self.backup_dir / f"{db.stem}_{ts}.db"
                 shutil.copy2(str(db), str(dest))
                 copied += 1
-                self.engine.log.info(f"Backup DB: {db.name} -> {dest.name}")
-            except Exception as e:
-                self.engine.log.warning(f"Backup DB fallo {db.name}: {e}")
+                self.engine.log.info("Backup DB: {db.name} -> {dest.name}")
+            except Exception:
+                self.engine.log.warning("Backup DB fallo {db.name}: {e}")
         return {"copied": copied, "backup_dir": str(self.backup_dir)}
   # nosec
     def rollback(self) -> dict[str, Any]:

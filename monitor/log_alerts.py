@@ -69,14 +69,14 @@ def fetch_critical_logs() -> list:
     cmd_parts = []
     for d in REMOTE_LOG_DIRS:
         for p in PATTERNS:
-            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")  # noqa: PERF401
+            cmd_parts.append(f"grep -r '{p}' {d}/*.log 2>/dev/null")
     cmd = "(" + "\n".join(cmd_parts) + ") 2>/dev/null | sort -u | tail -200"
 
     output = ssh_run(cmd)
     if output:
         for line in output.strip().split("\n"):
             if line.strip():
-                critical.append(line.strip())  # noqa: PERF401
+                critical.append(line.strip())
     return critical
 
 

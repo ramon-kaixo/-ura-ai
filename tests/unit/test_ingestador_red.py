@@ -53,7 +53,7 @@ class TestTailscaleSSH:
 
     def test_excepcion(self, monkeypatch) -> None:
         monkeypatch.setattr(ir.subprocess, "run", mock.Mock(side_effect=OSError("no ssh")))
-        code, out, err = ir.tailscale_ssh("host", "cmd")
+        code, _out, err = ir.tailscale_ssh("host", "cmd")
         assert code == -1
         assert "no ssh" in err
 

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
-from pathlib import Path
 from unittest import mock
 
 import pytest
 
-import core.model_router.cli as cli
+from core.model_router import cli
 
 
 class TestVerificarPoliticas:

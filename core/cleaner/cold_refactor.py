@@ -125,8 +125,8 @@ class ColdRefactor:
                 if resp.status_code != 200:
                     return None
                 return resp.json().get("codigo_limpio")
-        except Exception as ex:
-            logger.warning(f"Refactor: {ex}")
+        except Exception:
+            logger.warning("Refactor: {ex}")
             return None
 
     def _n(self):

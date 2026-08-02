@@ -4,13 +4,13 @@ Cada test documenta qué bug detectaría al cambiar message_store.py.
 from __future__ import annotations
 
 import concurrent.futures
+import contextlib
 from pathlib import Path
 
 import pytest
 
 from motor.assistant.message_store import MessageStore
 from motor.assistant.models import Message
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -25,10 +25,8 @@ def db_path(tmp_path: Path) -> str:
 def store(db_path: str) -> MessageStore:
     s = MessageStore(db_path=db_path)
     yield s
-    try:
+    with contextlib.suppress(Exception):
         s.close()
-    except Exception:
-        pass
 
 
 # ---------------------------------------------------------------------------
@@ -157,7 +155,7 @@ class TestListConversations:
     def test_includes_message_count(self, store: MessageStore) -> None:
         store.append("cnt", Message(role="user", content="m1"))
         store.append("cnt", Message(role="user", content="m2"))
-        entry = [c for c in store.list_conversations() if c["id"] == "cnt"][0]
+        entry = next(c for c in store.list_conversations() if c["id"] == "cnt")
         assert entry["message_count"] >= 2
 
 
@@ -283,7 +281,7 @@ class TestConcurrency:
             concurrent.futures.wait([f1, f2])
 
         msgs = store.get_conversation("conc")
-        contents = {m.content for m in msgs}
+        {m.content for m in msgs}
         assert len(msgs) == 2 * N, (
             f"Esperados {2*N} mensajes, obtenidos {len(msgs)}. "
             "Posible race condition en append."

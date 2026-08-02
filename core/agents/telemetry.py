@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
 import logging
 import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from core.agents.constants import NERVIOSO, RUFF, URA_ROOT
 
@@ -37,7 +36,7 @@ class Telemetria:
 
     @staticmethod
     def hardware() -> dict:
-        metrics: Dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat()}
+        metrics: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat()}
         try:
             import psutil
 

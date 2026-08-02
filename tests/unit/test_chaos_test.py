@@ -1,25 +1,25 @@
 """Tests for scripts/pro/chaos_test.py."""
 
 import asyncio
-from unittest.mock import patch
-import pytest
+
 import scripts.pro.chaos_test as chaos
+
 
 class TestCheckWarn:
     def test_check_pass(self):
         initial = chaos.PASS
         chaos.check("test", True, "detail")
-        assert chaos.PASS == initial + 1
+        assert initial + 1 == chaos.PASS
 
     def test_check_fail(self):
         initial = chaos.FAIL
         chaos.check("test", False, "detail")
-        assert chaos.FAIL == initial + 1
+        assert initial + 1 == chaos.FAIL
 
     def test_warn(self):
         initial = chaos.WARN
         chaos.warn("test", "detail")
-        assert chaos.WARN == initial + 1
+        assert initial + 1 == chaos.WARN
 
 class TestMain:
     def test_list(self, monkeypatch):

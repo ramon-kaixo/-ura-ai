@@ -1295,7 +1295,9 @@ class TestMigration:
         # Create v6 DB
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
-        conn.executescript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;")
+conn.executescript("PRAGMA foreign_keys=ON
+PRAGMA journal_mode=WAL
+")
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS kg_nodes (
                 id TEXT PRIMARY KEY, type TEXT NOT NULL, path TEXT NOT NULL,
@@ -1395,7 +1397,9 @@ class TestMigration:
         schema_path = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
         conn = sqlite3.connect(str(db))
         conn.row_factory = sqlite3.Row
-        conn.executescript("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;")
+conn.executescript("PRAGMA foreign_keys=ON
+PRAGMA journal_mode=WAL
+")
         # v5 tenía el mismo schema que v6 pero sin columna body
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS kg_nodes (

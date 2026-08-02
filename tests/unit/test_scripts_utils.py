@@ -1,5 +1,7 @@
 """Tests for scripts/pro/utils.py."""
 from scripts.pro.utils import log, scan_project
+
+
 class TestUtils:
     def test_log(self):
         log("msg")

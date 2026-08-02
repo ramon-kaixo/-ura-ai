@@ -3,7 +3,8 @@
 All immutable. All deterministic. Thread-safe by design.
 
 OBS-01: trace_id is the single root. Created once per operation.
-OBS-02: No subsystem creates a new trace_id; only propagates.
+OBS-02: No subsystem creates a new trace_id
+only propagates.
 OBS-03: Every hop generates a unique span_id.
 OBS-04: parent_span_id is mandatory for tree reconstruction.
 OBS-05: correlation_id and causation_id never change during operation.
@@ -53,7 +54,8 @@ class TraceId:
     """Trace identifier — the single root for an entire operation.
 
     OBS-01: Exactly one trace_id per operation.
-    OBS-02: No subsystem creates a new one; only propagates.
+OBS-02: No subsystem creates a new one
+only propagates.
     16 hex chars from os.urandom (8 bytes).
     """
 

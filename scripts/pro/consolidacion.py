@@ -35,16 +35,16 @@ def main() -> int:  # noqa: PLR0915
         lines_threshold=args.lines_threshold,
     )
 
-    engine.log.info(f"Commits desde último tag: {result['commits']}")
-    engine.log.info(f"Líneas modificadas: {result['lines_changed']}")
+    engine.log.info("Commits desde último tag: {result['commits']}")
+    engine.log.info("Líneas modificadas: {result['lines_changed']}")
 
     if not args.force and not result["should_run"]:
         engine.log.info("Sin actividad suficiente. Omitiendo ciclo.")
         return 0
 
     if args.check:
-        for r in result["reasons"]:
-            engine.log.info(f"  Motivo: {r}")
+        for _r in result["reasons"]:
+            engine.log.info("  Motivo: {r}")
         return 0
 
     t0 = time.time()
@@ -82,7 +82,7 @@ def main() -> int:  # noqa: PLR0915
 
     detector = ReuseDetector(engine.config.ura_root)
     indexed = detector.build_index()
-    engine.log.info(f"  Indexadas {indexed} funciones")
+    engine.log.info("  Indexadas {indexed} funciones")
     for pyfile in engine.config.ura_root.rglob("*.py"):
         if ".venv" in str(pyfile) or ".sandbox" in str(pyfile):
             continue
@@ -102,9 +102,9 @@ def main() -> int:  # noqa: PLR0915
 
     kb = KnowledgeBase(engine.config.nervioso)
     archived = kb.forget(max_age_days=90, min_confidence=0.3)
-    engine.log.info(f"  Conocimiento archivado: {len(archived)} entradas")
-    stats = kb.stats()
-    engine.log.info(f"  Activo: {stats['active']}, Archivado: {stats['archived']}, Deprecado: {stats['deprecated']}")
+    engine.log.info("  Conocimiento archivado: {len(archived)} entradas")
+    kb.stats()
+    engine.log.info("  Activo: {stats['active']}, Archivado: {stats['archived']}, Deprecado: {stats['deprecated']}")
 
     # ── 6. Learning: analizar ──
     engine.log.info("── 6. Aprendizaje ──")
@@ -112,7 +112,7 @@ def main() -> int:  # noqa: PLR0915
 
     learning = LearningPlugin(engine)
     metrics = learning.analyze()
-    engine.log.info(f"  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
+    engine.log.info("  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
 
     # ── 7. Verificación ──
     engine.log.info("── 7. Verificación ──")
@@ -120,19 +120,19 @@ def main() -> int:  # noqa: PLR0915
 
     kb2 = KB(engine.config.nervioso)
     vstats = kb2.stats()
-    engine.log.info(f"  Conocimiento activo: {vstats['active']}")
-    engine.log.info(f"  Conocimiento verificado: {vstats['verified']}")
+    engine.log.info("  Conocimiento activo: {vstats['active']}")
+    engine.log.info("  Conocimiento verificado: {vstats['verified']}")
 
     # Regla: si hay más deprecated que activo, algo va mal
     if vstats["deprecated"] > vstats["active"] and vstats["active"] > 0:
-        engine.log.warning(f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
+        engine.log.warning("  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
 
     # Verificar que las políticas aprendidas sigan siendo válidas
     from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer
 
     pa = PatternAnalyzer(engine.config.nervioso)
     new_patterns = pa.analyze()
-    engine.log.info(f"  Patrones activos: {len(new_patterns)}")
+    engine.log.info("  Patrones activos: {len(new_patterns)}")
     engine.ledger.add_decision(
         "consolidation_verified",
         {

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from motor.assistant.prompt_sanitizer import PromptSanitizer
 
 

@@ -31,14 +31,14 @@ class RollbackManager:
             return True
 
         rel_path = os.path.relpath(abs_path, self.repo_path)
-        logger.info(f"[SECURITY] Asegurando estado antes de escritura: {rel_path}")
+        logger.info("[SECURITY] Asegurando estado antes de escritura: {rel_path}")
 
         success, _ = self._ejecutar_git(["stash", "push", "-m", f"Pre-write URA: {rel_path}", rel_path])
         return success
 
     def safe_write(self, target_file: str, content: str) -> str:
         tmp_path = target_file + self.temp_suffix
-        logger.info(f"[SECURITY] Escritura segura en temp: {tmp_path}")
+        logger.info("[SECURITY] Escritura segura en temp: {tmp_path}")
         with open(tmp_path, "w") as f:  # noqa: PTH123
             f.write(content)
         return tmp_path
@@ -46,7 +46,7 @@ class RollbackManager:
     def rollback(self, target_file: str) -> None:
         tmp_path = target_file + self.temp_suffix
         rel_path = os.path.relpath(target_file, self.repo_path)
-        logger.warning(f"[SECURITY] Ejecutando ROLLBACK en: {rel_path}")
+        logger.warning("[SECURITY] Ejecutando ROLLBACK en: {rel_path}")
 
         if Path(tmp_path).exists():
             os.remove(tmp_path)  # noqa: PTH107
@@ -59,10 +59,10 @@ class RollbackManager:
         rel_path = os.path.relpath(target_file, self.repo_path)
 
         if not Path(tmp_path).exists():
-            logger.error(f"[SECURITY] Fallo al consolidar: No existe archivo temporal para {rel_path}")
+            logger.error("[SECURITY] Fallo al consolidar: No existe archivo temporal para {rel_path}")
             return False
 
-        logger.info(f"[SECURITY] Consolidando archivo validado: {rel_path}")
+        logger.info("[SECURITY] Consolidando archivo validado: {rel_path}")
 
         os.replace(tmp_path, target_file)  # noqa: PTH105
 

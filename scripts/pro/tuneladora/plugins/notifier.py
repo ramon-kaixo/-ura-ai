@@ -35,7 +35,7 @@ class NotifierPlugin:
     def notify(self, severity: str, title: str, message: str) -> dict[str, Any]:
         if severity == "critical":
             self._send_webhook(title, message)
-        self.engine.log.info(f"[{severity.upper()}] {title}: {message}")
+        self.engine.log.info("[{severity.upper()}] {title}: {message}")
         return {"sent": True, "severity": severity, "title": title}
 
     def _send_webhook(self, title: str, message: str) -> None:

@@ -219,9 +219,7 @@ def _is_a_exempted(rel: Path) -> bool:
     filename = rel.name
     if filename.startswith("benchmark_") or filename.startswith("index_") or filename.startswith("reindex_"):
         return True
-    if str(rel.parent) == "scripts/pro" and filename.startswith("benchmark_"):
-        return True
-    return False
+    return bool(str(rel.parent) == "scripts/pro" and filename.startswith("benchmark_"))
 
 
 def block_a(files: list[Path]) -> list[dict]:
@@ -377,26 +375,25 @@ def block_e(files: list[Path]) -> list[dict]:
             continue
         rel = f.relative_to(URA_ROOT)
         for node in ast.iter_child_nodes(tree):
-            if isinstance(node, ast.FunctionDef):
-                if node.name.startswith("build_"):
-                    has_cache = any(
-                        isinstance(n, ast.Assign)
-                        and any(
-                            isinstance(t, ast.Name) and t.id == node.name.split("_", 1)[1] + "_cache" for t in n.targets
-                        )
-                        for n in ast.walk(node)
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("build_"):
+                has_cache = any(
+                    isinstance(n, ast.Assign)
+                    and any(
+                        isinstance(t, ast.Name) and t.id == node.name.split("_", 1)[1] + "_cache" for t in n.targets
                     )
-                    if has_cache:
-                        findings.append(
-                            {
-                                "block": "E",
-                                "type": "factory_caching",
-                                "file": str(rel),
-                                "line": node.lineno,
-                                "detail": f"build_{node.name} cachea resultado",
-                                "level": "WARNING",
-                            }
-                        )
+                    for n in ast.walk(node)
+                )
+                if has_cache:
+                    findings.append(
+                        {
+                            "block": "E",
+                            "type": "factory_caching",
+                            "file": str(rel),
+                            "line": node.lineno,
+                            "detail": f"build_{node.name} cachea resultado",
+                            "level": "WARNING",
+                        }
+                    )
     return findings
 
 
@@ -567,7 +564,6 @@ def block_i(files: list[Path]) -> list[dict]:
 
 
 def block_j(all_findings: dict[str, list]) -> dict[str, Any]:
-    total_lazy = 0
     workaround_count = 0
     singleton_forbidden = sum(1 for f in all_findings.get("C", []) if f.get("type") == "singleton_forbidden")
     large_files = sum(1 for f in all_findings.get("I", []) if f.get("lines", 0) > 500)
@@ -749,7 +745,7 @@ def run_all() -> dict[str, Any]:
         "K": ("ADR Enforcement", lambda: block_k()),
     }
 
-    for block_id, (name, fn) in blocks.items():
+    for block_id, (_name, fn) in blocks.items():
         try:
             result = fn()
             findings[block_id] = result

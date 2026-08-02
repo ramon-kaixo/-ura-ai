@@ -4,7 +4,8 @@ import asyncio
 
 import pytest
 
-from core.model_router import ConcurrentVRAMGuard, vram_guard_singleton as vram_guard
+from core.model_router import ConcurrentVRAMGuard
+from core.model_router import vram_guard_singleton as vram_guard
 
 
 class TestVRAMGuard:

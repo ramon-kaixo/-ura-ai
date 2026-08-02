@@ -28,7 +28,7 @@ class AgentBase:
         raise NotImplementedError
 
     def log(self, msg: str) -> None:
-        self._engine.log.info(f"[{self.name}] {msg}")
+        self._engine.log.info("[{self.name}] {msg}")
 
     def report(self, title: str, data: dict) -> None:
         self._engine.report(f"{self.name}: {title}", data)

@@ -6,8 +6,10 @@ pytestmark = pytest.mark.slow
 
 import tempfile
 from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
+
 from knowledge.engine.api import app, state
 from knowledge.engine.connection import open_db
 from knowledge.engine.migrations import migrate_db

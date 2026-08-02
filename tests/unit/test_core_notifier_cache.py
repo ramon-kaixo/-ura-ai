@@ -68,8 +68,8 @@ class TestNotifierEnvio:
         assert notifier._send_telegram("msg") is False
 
     def test_telegram_ok(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = "tok"  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = "123"  # noqa: S105
+        notifier._TELEGRAM_TOKEN = "tok"
+        notifier._TELEGRAM_CHAT_ID = "123"
         resp = FakeResp(status_code=200)
         post = mock.Mock(return_value=resp)
         monkeypatch.setattr(notifier.httpx, "post", post)
@@ -80,14 +80,14 @@ class TestNotifierEnvio:
         assert args.kwargs["json"]["text"] == "hola"
 
     def test_telegram_http_error(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = "tok"  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = "123"  # noqa: S105
+        notifier._TELEGRAM_TOKEN = "tok"
+        notifier._TELEGRAM_CHAT_ID = "123"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(return_value=FakeResp(status_code=500)))
         assert notifier._send_telegram("m") is False
 
     def test_telegram_excepcion(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = "tok"  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = "123"  # noqa: S105
+        notifier._TELEGRAM_TOKEN = "tok"
+        notifier._TELEGRAM_CHAT_ID = "123"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(side_effect=OSError("net")))
         assert notifier._send_telegram("m") is False
 
@@ -95,27 +95,27 @@ class TestNotifierEnvio:
         assert notifier._send_pushover("m") is False
 
     def test_pushover_ok(self, monkeypatch) -> None:
-        notifier._PUSHOVER_USER = "u"  # noqa: S105
-        notifier._PUSHOVER_TOKEN = "t"  # noqa: S105
+        notifier._PUSHOVER_USER = "u"
+        notifier._PUSHOVER_TOKEN = "t"
         post = mock.Mock(return_value=FakeResp(status_code=200))
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier._send_pushover("hola") is True
         assert post.call_args.kwargs["json"]["user"] == "u"
 
     def test_pushover_error(self, monkeypatch) -> None:
-        notifier._PUSHOVER_USER = "u"  # noqa: S105
-        notifier._PUSHOVER_TOKEN = "t"  # noqa: S105
+        notifier._PUSHOVER_USER = "u"
+        notifier._PUSHOVER_TOKEN = "t"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(side_effect=OSError("net")))
         assert notifier._send_pushover("m") is False
 
     def test_notify_channels_default_sin_credenciales(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = ""  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = ""  # noqa: S105
+        notifier._TELEGRAM_TOKEN = ""
+        notifier._TELEGRAM_CHAT_ID = ""
         assert notifier.notify("m") is False
 
     def test_notify_levels(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = "t"  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = "c"  # noqa: S105
+        notifier._TELEGRAM_TOKEN = "t"
+        notifier._TELEGRAM_CHAT_ID = "c"
         post = mock.Mock(return_value=FakeResp(status_code=200))
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier.notify("m", level="critical") is True
@@ -123,8 +123,8 @@ class TestNotifierEnvio:
         assert "CRITICAL" in post.call_args.kwargs["json"]["text"]
 
     def test_notify_channel_especifico(self, monkeypatch) -> None:
-        notifier._TELEGRAM_TOKEN = "t"  # noqa: S105
-        notifier._TELEGRAM_CHAT_ID = "c"  # noqa: S105
+        notifier._TELEGRAM_TOKEN = "t"
+        notifier._TELEGRAM_CHAT_ID = "c"
         post = mock.Mock(return_value=FakeResp(status_code=200))
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier.notify("m", channels=["telegram"]) is True

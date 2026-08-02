@@ -72,7 +72,7 @@ async def comprimir_a_ideas(
         )
 
     if resp.is_error:
-        log.error(f"Ollama error comprimiendo: {resp.status_code}")
+        log.error("Ollama error comprimiendo: {resp.status_code}")
         return ideas
 
     data = resp.json()
@@ -87,10 +87,10 @@ async def comprimir_a_ideas(
             try:
                 raw = json.loads(content[start : end + 1])
             except json.JSONDecodeError:
-                log.warning(f"No se pudo parsear JSON del compresor: {content[:200]}")
+                log.warning("No se pudo parsear JSON del compresor: {content[:200]}")
                 return ideas
         else:
-            log.warning(f"Respuesta sin JSON: {content[:200]}")
+            log.warning("Respuesta sin JSON: {content[:200]}")
             return ideas
 
     if not isinstance(raw, list):
@@ -116,5 +116,5 @@ async def comprimir_a_ideas(
         if idea.idea.strip():
             ideas.append(idea)
 
-    log.info(f"Compresor: {len(raw)} items -> {len(ideas)} ideas validas ({modelo})")
+    log.info("Compresor: {len(raw)} items -> {len(ideas)} ideas validas ({modelo})")
     return ideas

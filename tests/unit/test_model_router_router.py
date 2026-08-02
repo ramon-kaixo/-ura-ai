@@ -1,10 +1,7 @@
 """Tests para core/model_router/router.py — URLs, auth, rate_limiter."""
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 import core.model_router.router as r
 

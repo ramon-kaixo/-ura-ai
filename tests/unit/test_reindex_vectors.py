@@ -1,9 +1,6 @@
 """Tests for scripts/pro/reindex_vectors.py — lógica pura con mocks."""
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from scripts.pro.reindex_vectors import main
 

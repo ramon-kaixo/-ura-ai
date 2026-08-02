@@ -4,7 +4,7 @@ Mock de red (httpx) SÍ permitido. Mock de lógica interna NO.
 """
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -14,8 +14,8 @@ from motor.core.qdrant_client import (
     COLECCION_INCIDENTES,
     VECTOR_SIZE,
     QdrantClient,
-    URAQdrantClient,
     UraConfig,
+    URAQdrantClient,
 )
 
 

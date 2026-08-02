@@ -41,7 +41,7 @@ def _check_budget(engine: PipelineEngine) -> int:
         changed = diff.stdout.count("+") + diff.stdout.count("-")
         engine.ledger.set_changes(files, changed)
         engine.promotion.check_budget(files, changed)
-        engine.log.info(f"Cambios: {files} archivos, {changed} líneas")
+        engine.log.info("Cambios: {files} archivos, {changed} líneas")
         return files
     except Exception:
         return 0
@@ -50,11 +50,11 @@ def _check_budget(engine: PipelineEngine) -> int:
 def _run_phase_with_checkpoint(engine: PipelineEngine, phase: str, file_path: str | None) -> dict:
     """Ejecuta una fase si no está en checkpoint. La registra en ledger."""
     if engine.checkpoint.is_done(phase):
-        engine.log.info(f"── Fase '{phase}' ya completada (checkpoint) — omitiendo")
+        engine.log.info("── Fase '{phase}' ya completada (checkpoint) — omitiendo")
         engine.ledger.phase_skip(phase)
         return {"status": "skipped", "phase": phase}
 
-    engine.log.info(f"── Fase: {phase} ──")
+    engine.log.info("── Fase: {phase} ──")
     engine.ledger.phase_start(phase)
     t0 = time.time()
 
@@ -88,7 +88,7 @@ def _setup_engine(args):
         return engine, True
 
     if not args.force and engine.checkpoint.resume():
-        engine.log.info(f"Checkpoint encontrado: reanudando desde fase '{engine.checkpoint.last_completed}'")
+        engine.log.info("Checkpoint encontrado: reanudando desde fase '{engine.checkpoint.last_completed}'")
     elif not args.force:
         engine.checkpoint.clear()
     return engine, False
@@ -122,7 +122,7 @@ def _handle_refactor(engine, hay_trabajo):
     PipelineEngine._refactor_ejecutado = True
     engine.checkpoint.mark_done("pipeline_refactor")
     if result.returncode != 0:
-        engine.log.warning(f"Pipeline refactor exit={result.returncode}")
+        engine.log.warning("Pipeline refactor exit={result.returncode}")
     else:
         engine.log.info("Pipeline refactor completado OK")
     return True
@@ -135,11 +135,11 @@ def _run_arq_and_promotion(engine, result_post, refactor_ejecutado):
 
         arq = ARQCheckPlugin(engine)
         arq_result = arq.check()
-        engine.log.info(f"ARQ: {arq_result['detail']}")
+        engine.log.info("ARQ: {arq_result['detail']}")
         if not arq_result["ok"]:
             engine.log.warning("ARQ: violaciones arquitectónicas detectadas — la promoción se bloqueará")
-    except Exception as exc:
-        engine.log.warning(f"ARQ check no disponible: {exc}")
+    except Exception:
+        engine.log.warning("ARQ check no disponible: {exc}")
 
     ruff_ok = result_post.get("results", {}).get("post", {}).get("exit_code", 0) == 0
     engine.promotion.record("ruff", ruff_ok, "0 errores" if ruff_ok else "con errores")
@@ -215,8 +215,8 @@ def main() -> int:
         except Exception as exc:
             engine.log.warning("  System manifest check fallo: %s", exc)
 
-    plugins = discover_all()
-    engine.log.info(f"Plugins descubiertos: {len(plugins)}")
+    discover_all()
+    engine.log.info("Plugins descubiertos: {len(plugins)}")
     if args.list:
         return 0
 
@@ -226,7 +226,7 @@ def main() -> int:
     # ── Fase pre ──
     result_pre = _run_phase_with_checkpoint(engine, "pre", args.file)
     if result_pre.get("_aborted_by"):
-        engine.log.warning(f"Abortado en pre ({result_pre['_aborted_by']})")
+        engine.log.warning("Abortado en pre ({result_pre['_aborted_by']})")
         engine.ledger.set_result("aborted_pre")
         engine.ledger.save()
         return 1
@@ -234,7 +234,7 @@ def main() -> int:
     # ── Fase refactor_plugins ──
     result_refactor = _run_phase_with_checkpoint(engine, "refactor_plugins", args.file)
     if result_refactor.get("_aborted_by"):
-        engine.log.warning(f"Abortado en refactor ({result_refactor['_aborted_by']})")
+        engine.log.warning("Abortado en refactor ({result_refactor['_aborted_by']})")
         engine.ledger.set_result("aborted_refactor")
         engine.ledger.save()
         return 1
@@ -249,7 +249,7 @@ def main() -> int:
     # ── Fase post ──
     result_post = _run_phase_with_checkpoint(engine, "post", args.file)
     if result_post.get("_aborted_by"):
-        engine.log.warning(f"Abortado en post ({result_post['_aborted_by']})")
+        engine.log.warning("Abortado en post ({result_post['_aborted_by']})")
 
     # ── ARQ + Promoción ──
     _run_arq_and_promotion(engine, result_post, refactor_ejecutado)

@@ -74,8 +74,8 @@ def load_manifest() -> dict:
     if MANIFEST_PATH.exists():
         try:
             return json.loads(MANIFEST_PATH.read_text())
-        except Exception as e:
-            log.warning(f"Error cargando manifest: {e}")
+        except Exception:
+            log.warning("Error cargando manifest: {e}")
     return {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
 
 
@@ -89,7 +89,7 @@ def save_manifest(manifest: dict) -> None:
         required_space = len(json.dumps(manifest, indent=2, sort_keys=True)) * 2
         free_space = shutil.disk_usage(DATA_DIR).free
         if free_space < required_space:
-            log.error(f"Espacio en disco insuficiente: {free_space} bytes libres, {required_space} bytes requeridos")
+            log.error("Espacio en disco insuficiente: {free_space} bytes libres, {required_space} bytes requeridos")
             msg = "Espacio en disco insuficiente"
             raise OSError(msg)
     except Exception as e:
@@ -152,8 +152,8 @@ def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats
                 qdrant.eliminar_por_filtro({"source": rel_path})
                 del manifest["files"][rel_path]
                 stats["deleted"] += 1
-            except Exception as e:
-                log.warning(f"Error eliminando {rel_path}: {e}")
+            except Exception:
+                log.warning("Error eliminando {rel_path}: {e}")
 
 
 def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:

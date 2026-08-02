@@ -44,7 +44,8 @@ def fix_e702_semicolons() -> int:
             changed = False
             for line in content.split("\n"):
                 if ";" in line and not line.strip().startswith(("#", "import ", "from ")):
-                    parts = line.split(";")
+parts = line.split("
+")
                     parts = [p.strip() for p in parts]
                     if len(parts) > 1 and all(
                         not p.startswith(

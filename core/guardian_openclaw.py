@@ -94,7 +94,7 @@ class GuardianOpenCLaw:
         try:
             ruta_path = Path(ruta)
             if not ruta_path.exists():
-                logger.warning(f"Ruta no existe, no se puede hacer backup: {ruta}")
+                logger.warning("Ruta no existe, no se puede hacer backup: {ruta}")
                 return False
 
             # Crear timestamp
@@ -110,11 +110,11 @@ class GuardianOpenCLaw:
                 backup_path = self.backup_dir / backup_name
                 shutil.copytree(ruta_path, backup_path)
             else:
-                logger.warning(f"Ruta no es archivo ni directorio: {ruta}")
+                logger.warning("Ruta no es archivo ni directorio: {ruta}")
                 return False
 
             self.stats["backups_creados"] += 1
-            logger.info(f"Backup creado: {backup_path}")
+            logger.info("Backup creado: {backup_path}")
             return True
 
         except Exception as e:
@@ -131,14 +131,14 @@ class GuardianOpenCLaw:
         try:
             # Ejecutar acción 3 veces en sandbox
             exitosos = 0
-            for i in range(3):
+            for _i in range(3):
                 try:
                     # Simular ejecución en sandbox
                     resultado = self._simular_accion_sandbox(accion, **kwargs)
                     if resultado:
                         exitosos += 1
-                except Exception as e:
-                    logger.warning(f"Intento {i + 1} falló en sandbox: {e}")
+                except Exception:
+                    logger.warning("Intento {i + 1} falló en sandbox: {e}")
 
             if exitosos == 3:
                 self.stats["sandbox_exitosos"] += 1
@@ -235,7 +235,7 @@ class GuardianOpenCLaw:
 
         if campos_password:
             self.stats["passwords_bloqueados"] += 1
-            logger.warning(f"Campos de password detectados: {campos_password}")
+            logger.warning("Campos de password detectados: {campos_password}")
             return True
 
         return False
@@ -252,9 +252,9 @@ class GuardianOpenCLaw:
 
         """
         self.stats["total_acciones"] += 1
-        timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+        datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
-        logger.info(f"[{timestamp}] Ejecutando acción: {accion}")
+        logger.info("[{timestamp}] Ejecutando acción: {accion}")
 
         # REGLA 4 - CONTROL DE INSTALACIÓN
         accion_lower = accion.lower()

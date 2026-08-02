@@ -1,5 +1,4 @@
 """Tests for scripts/pro/backup_assistant.py."""
-import os
 from pathlib import Path
 
 import pytest

@@ -94,7 +94,7 @@ async def almacenar_ideas(ideas: list[Idea]) -> int:
             log.exception(f"Qdrant upsert error: {e}")
 
     if insertados:
-        log.info(f"Qdrant: {insertados}/{len(ideas)} ideas nuevas insertadas")
+        log.info("Qdrant: {insertados}/{len(ideas)} ideas nuevas insertadas")
     return insertados
 
 
@@ -123,8 +123,8 @@ async def marcar_antiguas(fuente_url: str) -> int:
             resp.raise_for_status()
             data = resp.json()
             items = data.get("result", {}).get("points", [])
-        except Exception as e:
-            log.warning(f"Scroll falló: {e}")
+        except Exception:
+            log.warning("Scroll falló: {e}")
             break
 
         for point in items:
@@ -137,15 +137,15 @@ async def marcar_antiguas(fuente_url: str) -> int:
                     json={"points": [{"id": point["id"], "payload": payload}]},
                 )
                 marcadas += 1
-            except Exception as e:
-                log.warning(f"set_payload falló: {e}")
+            except Exception:
+                log.warning("set_payload falló: {e}")
 
         if len(items) < 50:
             break
         offset = items[-1].get("id")
 
     if marcadas:
-        log.info(f"Qdrant: {marcadas} ideas marcadas vigente=false para {fuente_url[:60]}")
+        log.info("Qdrant: {marcadas} ideas marcadas vigente=false para {fuente_url[:60]}")
     return marcadas
 
 

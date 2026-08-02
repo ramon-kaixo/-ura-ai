@@ -161,19 +161,19 @@ def _probar_compilacion(pruebas_path: Path) -> tuple[bool, str]:
 
 def _rechazar_cambio(pruebas_path: Path, archivo: Path, rel: str, err: str) -> None:
     shutil.move(str(pruebas_path), str(SANDBOX_RECHAZADOS / archivo.name))
-    log.warning(f"REJECTED {rel}: compilation failed - {err[:100]}")
+    log.warning("REJECTED {rel}: compilation failed - {err[:100]}")
     pushover(f"Change REJECTED in {rel}: {err[:100]}", "URA Sandbox")
 
 
 def _esperar_aprobacion(pruebas_path: Path, archivo: Path, rel: str) -> None:
     shutil.move(str(pruebas_path), str(SANDBOX_ESPERA_APROBACION / archivo.name))
-    log.warning(f"{rel} is CRITICAL — requires Ramon's approval")
+    log.warning("{rel} is CRITICAL — requires Ramon's approval")
     pushover(f"Pending approval: {rel} (critical file)", "URA Sandbox", 1)
 
 
 def _aprobar_cambio(pruebas_path: Path, archivo: Path, rel: str) -> None:
     shutil.move(str(pruebas_path), str(SANDBOX_APROBADOS / archivo.name))
-    log.info(f"Approved automatically: {rel}")
+    log.info("Approved automatically: {rel}")
 
 
 def _procesar_aprobados() -> None:
@@ -184,7 +184,7 @@ def _procesar_aprobados() -> None:
         if prod_path.exists():
             backup_path = BACKUP / f"{rel}.{datetime.now(UTC).strftime('%Y%m%d_%H%M')}"
             shutil.copy2(str(prod_path), str(backup_path))
-            log.info(f"Backup: {rel} → backup_versiones")
+            log.info("Backup: {rel} → backup_versiones")
 
         nuevo_hash = md5(archivo)
         shutil.move(str(archivo), str(prod_path))
@@ -198,7 +198,7 @@ def _procesar_aprobados() -> None:
             "agente_sandbox",
             "Automatic non-critical change",
         )
-        log.info(f"Production updated: {rel}")
+        log.info("Production updated: {rel}")
         pushover(f"Change applied in production: {rel}")
 
 
@@ -223,7 +223,7 @@ def main() -> None:
 
             pruebas_path = SANDBOX_EN_PRUEBAS / archivo.name
             shutil.move(str(archivo), str(pruebas_path))
-            log.info(f"New change: {rel_path} → en_pruebas")
+            log.info("New change: {rel_path} → en_pruebas")
 
             ok, err = _probar_compilacion(pruebas_path)
             if not ok:

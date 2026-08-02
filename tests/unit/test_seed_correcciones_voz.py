@@ -1,8 +1,6 @@
 """Tests for scripts/pro/seed_correcciones_voz.py."""
 import sqlite3
 
-import pytest
-
 from scripts.pro.seed_correcciones_voz import CORRECCIONES, seed
 
 

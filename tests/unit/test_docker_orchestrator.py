@@ -11,7 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from core.sandbox.docker_orchestrator import DockerOrchestrator, ResultadoSandbox  # noqa: E402
+from core.sandbox.docker_orchestrator import DockerOrchestrator, ResultadoSandbox
 
 
 class TestResultadoSandbox:
@@ -106,7 +106,6 @@ class TestDockerOrchestrator:
         run.communicate = mock.AsyncMock(side_effect=TimeoutError())
         run.kill = mock.Mock()
 
-        calls = {"n": 0}
 
         def fake_exec(*args, **kwargs):
             if args[0] == "docker" and args[1] == "build":

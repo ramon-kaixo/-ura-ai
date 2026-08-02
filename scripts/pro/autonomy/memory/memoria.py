@@ -34,36 +34,36 @@ def main() -> int:
 
     if args.sync:
         engine.log.info("Sincronizando ledger → SQLite...")
-        stats = mem.sync()
-        engine.log.info(f"  Procesados: {stats.get('procesados', 0)}")
-        engine.log.info(f"  Omitidos (ya existentes): {stats.get('omitidos', 0)}")
-        engine.log.info(f"  Errores: {stats.get('errores', 0)}")
+        mem.sync()
+        engine.log.info("  Procesados: {stats.get('procesados', 0)}")
+        engine.log.info("  Omitidos (ya existentes): {stats.get('omitidos', 0)}")
+        engine.log.info("  Errores: {stats.get('errores', 0)}")
 
     if args.rebuild:
         engine.log.info("Reconstruyendo base desde cero...")
-        stats = mem.rebuild()
-        engine.log.info(f"  Procesados: {stats.get('procesados', 0)}")
+        mem.rebuild()
+        engine.log.info("  Procesados: {stats.get('procesados', 0)}")
 
     if args.summary:
-        s = mem.summary()
-        engine.log.info(f"Base de datos: {s.get('basedatos', '')}")
-        engine.log.info(f"Ejecuciones: {s.get('execuciones', 0)}")
-        engine.log.info(f"Plugins registrados: {s.get('plugins', 0)}")
-        engine.log.info(f"Decisiones: {s.get('decisiones', 0)}")
-        engine.log.info(f"Objetivos: {s.get('objetivos', 0)}")
-        engine.log.info(f"Tasa de promoción: {s.get('tasa_promocion', 0)}%")
+        mem.summary()
+        engine.log.info("Base de datos: {s.get('basedatos', '')}")
+        engine.log.info("Ejecuciones: {s.get('execuciones', 0)}")
+        engine.log.info("Plugins registrados: {s.get('plugins', 0)}")
+        engine.log.info("Decisiones: {s.get('decisiones', 0)}")
+        engine.log.info("Objetivos: {s.get('objetivos', 0)}")
+        engine.log.info("Tasa de promoción: {s.get('tasa_promocion', 0)}%")
 
     if args.goals:
-        for g in mem.queries.goals_by_status(args.goals):
-            engine.log.info(f"  [{g['status']}] {g['title']} ({g['goal_id']})")
+        for _g in mem.queries.goals_by_status(args.goals):
+            engine.log.info("  [{g['status']}] {g['title']} ({g['goal_id']})")
 
     if args.slow_plugins:
-        for p in mem.queries.slowest_plugins(limit=10):
-            engine.log.info(f"  {p['plugin_name']:30} media={p['avg_dur']:>6.1f}s  fallos={p['errors']}")
+        for _p in mem.queries.slowest_plugins(limit=10):
+            engine.log.info("  {p['plugin_name']:30} media={p['avg_dur']:>6.1f}s  fallos={p['errors']}")
 
     if args.executions:
         for e in mem.queries.executions_by_pipeline(args.executions, limit=10):
-            engine.log.info(f"  {e['execution_id'][:12]} {e['result']:12} {e.get('duration_ms', 0)}ms")
+            engine.log.info("  {e['execution_id'][:12]} {e['result']:12} {e.get('duration_ms', 0)}ms")
 
     if args.recent:
         for e in mem.queries.executions_by_date(days=args.recent):

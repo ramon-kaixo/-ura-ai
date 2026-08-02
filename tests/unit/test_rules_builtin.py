@@ -7,17 +7,13 @@ Todos los bugs de rules.py resueltos:
 """
 from __future__ import annotations
 
-import pytest
-
 from knowledge.engine.rules import (
+    _BUILTIN_RULES,
     BuiltinRule,
-    Finding,
     RuleEvaluator,
     RuleMetadata,
-    _BUILTIN_RULES,
     list_rules,
 )
-
 
 # ===================================================================
 # Grupo A — BuiltinRule (casos que SÍ funcionan)

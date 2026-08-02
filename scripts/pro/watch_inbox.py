@@ -46,7 +46,6 @@ async def process_file(path: Path) -> bool:
             log.error("Mochila sigue sin responder — saltando ciclo")
             return False
 
-    last_error = ""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             async with httpx.AsyncClient(timeout=120, headers=_MOCHILA_HEADERS) as client:
@@ -54,39 +53,37 @@ async def process_file(path: Path) -> bool:
 
             if resp.status_code == 200:
                 data = resp.json()
-                ideas = data.get("ideas_insertadas", 0)
-                archivos = data.get("archivos", 0)
+                data.get("ideas_insertadas", 0)
+                data.get("archivos", 0)
                 errores = data.get("errores", 0)
                 if errores:
-                    log.info(f"{path.name} → {ideas} ideas, {errores} errores")
+                    log.info("{path.name} → {ideas} ideas, {errores} errores")
                 else:
-                    log.info(f"{path.name} → {ideas} ideas [{archivos} archivos]")
+                    log.info("{path.name} → {ideas} ideas [{archivos} archivos]")
                 return True
 
             if resp.status_code == 503:
-                log.warning(f"{path.name} → breaker OPEN (intento {attempt}/{MAX_RETRIES})")
+                log.warning("{path.name} → breaker OPEN (intento {attempt}/{MAX_RETRIES})")
                 await asyncio.sleep(BACKOFF_BASE**attempt)
                 continue
 
             if resp.status_code == 429:
-                log.warning(f"{path.name} → rate limit (intento {attempt}/{MAX_RETRIES})")
+                log.warning("{path.name} → rate limit (intento {attempt}/{MAX_RETRIES})")
                 await asyncio.sleep(BACKOFF_BASE**attempt * 2)
                 continue
 
-            last_error = f"HTTP {resp.status_code}"
-            log.warning(f"{path.name} → {last_error} (intento {attempt}/{MAX_RETRIES})")
+            log.warning("{path.name} → {last_error} (intento {attempt}/{MAX_RETRIES})")
 
         except httpx.TimeoutException:
-            last_error = "timeout"
-            log.warning(f"{path.name} → timeout (intento {attempt}/{MAX_RETRIES})")
+            log.warning("{path.name} → timeout (intento {attempt}/{MAX_RETRIES})")
         except Exception as e:
-            last_error = str(e)[:80]
-            log.warning(f"{path.name} → {last_error} (intento {attempt}/{MAX_RETRIES})")
+            str(e)[:80]
+            log.warning("{path.name} → {last_error} (intento {attempt}/{MAX_RETRIES})")
 
         if attempt < MAX_RETRIES:
             await asyncio.sleep(BACKOFF_BASE**attempt)
 
-    log.error(f"{path.name} → AGOTADOS {MAX_RETRIES} intentos: {last_error}")
+    log.error("{path.name} → AGOTADOS {MAX_RETRIES} intentos: {last_error}")
     return False
 
 
@@ -94,8 +91,8 @@ async def watch_loop(interval: float = 10.0) -> None:
     INBOX.mkdir(parents=True, exist_ok=True)
     seen: dict[str, str] = {}
 
-    mochila_ok = await _check_mochila_alive()
-    log.info(f"Watchdog iniciado — inbox={INBOX}, mochila={'OK' if mochila_ok else 'DOWN'}")
+    await _check_mochila_alive()
+    log.info("Watchdog iniciado — inbox={INBOX}, mochila={'OK' if mochila_ok else 'DOWN'}")
 
     while True:
         for f in sorted(INBOX.iterdir()):
@@ -106,7 +103,7 @@ async def watch_loop(interval: float = 10.0) -> None:
             if h != prev or prev == "":
                 seen[f.name] = h
                 if prev == "":
-                    log.info(f"Nuevo: {f.name} ({f.stat().st_size}B)")
+                    log.info("Nuevo: {f.name} ({f.stat().st_size}B)")
                     await process_file(f)
 
         await asyncio.sleep(interval)

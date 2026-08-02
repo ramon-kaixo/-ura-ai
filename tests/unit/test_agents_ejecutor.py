@@ -1,10 +1,7 @@
 """Tests para core/agents/ejecutor.py — AgenteEjecutor."""
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 from core.agents.ejecutor import AgenteEjecutor
 

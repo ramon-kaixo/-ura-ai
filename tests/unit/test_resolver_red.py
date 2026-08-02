@@ -99,12 +99,12 @@ class TestPingLatencia:
     def test_sin_time_en_output(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="sin time aqui\n")
         monkeypatch.setattr(rr.subprocess, "run", mock.Mock(return_value=res))
-        ok, lat = rr.ping_latencia("10.0.0.1")
+        ok, _lat = rr.ping_latencia("10.0.0.1")
         assert ok is False
 
     def test_excepcion(self, monkeypatch) -> None:
         monkeypatch.setattr(rr.subprocess, "run", mock.Mock(side_effect=OSError("no ping")))
-        ok, lat = rr.ping_latencia("10.0.0.1")
+        ok, _lat = rr.ping_latencia("10.0.0.1")
         assert ok is False
 
 

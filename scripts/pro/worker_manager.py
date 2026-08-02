@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.pro.refactor_worker import RefactorWorker
+
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.logger import Logger
 
@@ -45,9 +46,9 @@ class WorkerManager:
                     result["duplicados"] += 1
                 elif "ZOMBIE" not in state:
                     result["activos"] += 1
-        except Exception as e:
-            self.log.warning(f"Handshake falló: {e}")
-        self.log.info(f"Handshake: {result['activos']} activos, {result['duplicados']} duplicados")
+        except Exception:
+            self.log.warning("Handshake falló: {e}")
+        self.log.info("Handshake: {result['activos']} activos, {result['duplicados']} duplicados")
         return result
 
     def run_workers(
@@ -57,7 +58,7 @@ class WorkerManager:
         timeout: int = 3600,
     ) -> list[dict[str, Any]]:
         """Lanza count workers en paralelo. Retorna resultados de cada uno."""
-        self.log.info(f"Lanzando {count} workers (modelo={model}, timeout={timeout}s)")
+        self.log.info("Lanzando {count} workers (modelo={model}, timeout={timeout}s)")
         results: list[dict[str, Any]] = []
         t0 = time.time()
 
@@ -87,16 +88,16 @@ class WorkerManager:
                         }
                     )
                 except TimeoutError:
-                    self.log.error(f"Worker {wid} TIMEOUT ({timeout}s)")
+                    self.log.error("Worker {wid} TIMEOUT ({timeout}s)")
                     results.append({"worker_id": wid, "returncode": -1, "error": "timeout", "ok": False})
                 except Exception as e:
-                    self.log.error(f"Worker {wid} error: {e}")
+                    self.log.error("Worker {wid} error: {e}")
                     results.append({"worker_id": wid, "returncode": -1, "error": str(e), "ok": False})
 
-        elapsed = time.time() - t0
-        ok = sum(1 for r in results if r["ok"])
-        err = sum(1 for r in results if not r["ok"])
-        self.log.info(f"Workers completados: {ok} OK, {err} ERROR en {elapsed:.1f}s")
+        time.time() - t0
+        sum(1 for r in results if r["ok"])
+        sum(1 for r in results if not r["ok"])
+        self.log.info("Workers completados: {ok} OK, {err} ERROR en {elapsed:.1f}s")
         return results
 
     def clean_temp_files(self) -> None:

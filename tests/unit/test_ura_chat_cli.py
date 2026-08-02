@@ -24,10 +24,9 @@ class TestUraChatCli:
     def test_chat_empty_input_skipped(self):
         from ura_chat import chat_loop
 
-        with patch.object(builtins, "input", side_effect=["", ":q"]):
-            with patch("ura_chat.httpx.post") as mock_post:
-                chat_loop()
-                mock_post.assert_not_called()
+        with patch.object(builtins, "input", side_effect=["", ":q"]), patch("ura_chat.httpx.post") as mock_post:
+            chat_loop()
+            mock_post.assert_not_called()
 
     def test_chat_mode_change(self, capsys):
         from ura_chat import chat_loop

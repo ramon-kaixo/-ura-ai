@@ -1,6 +1,5 @@
 """Tests para core/utils/anonymizer.py."""
 
-import pytest
 
 from core.utils.anonymizer import sanitize_text
 

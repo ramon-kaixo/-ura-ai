@@ -175,12 +175,17 @@ class TestSQLInjection:
         store = MessageStore(str(tmp_path / "sqli.db"))
         payloads = [
             "' OR '1'='1",
-            "'; DROP TABLE messages; --",
-            "c1\\'; DELETE FROM messages; --",
+"'
+DROP TABLE messages
+--",
+"c1\\'
+DELETE FROM messages
+--",
             "<script>alert('xss')</script>",
             "../../etc/passwd",
             '" OR "1"="1',
-            "1; SELECT * FROM messages",
+"1
+SELECT * FROM messages",
         ]
         for cid in payloads:
             msg = _make_msg("safe")

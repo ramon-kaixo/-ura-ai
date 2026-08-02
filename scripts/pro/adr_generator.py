@@ -7,11 +7,10 @@ Uso:
   adr_generator.py --list                        # Lista ADRs existentes
 """
 
-import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ADR_DIR = Path(__file__).resolve().parent.parent.parent / "docs" / "architecture"
@@ -67,18 +66,18 @@ def generate_adr(commit: dict, files: list[str], reason: str, category: str) -> 
     subject = commit["subject"][:80]
     if adr_exists(subject):
         return None
-    
+
     # Find next ADR number
     existing = [int(f.name.split("-")[1].split(".")[0]) for f in ADR_DIR.glob("ADR-*.md")]
     next_num = max(existing or [0]) + 1
-    
+
     slug = re.sub(r"[^a-z0-9]+", "-", subject.lower()).strip("-")[:50]
     filename = f"ADR-{next_num:03d}-{slug}.md"
     filepath = ADR_DIR / filename
-    
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    now = datetime.now(UTC).strftime("%Y-%m-%d")
     files_str = "\n".join(f"- `{f}`" for f in files[:10])
-    
+
     content = f"""# ADR-{next_num:03d}: {subject}
 
 **Fecha:** {now}
@@ -112,16 +111,16 @@ def main() -> int:
             title = f.read_text().split("\n")[0] if f.exists() else ""
             print(f"  {f.name}: {title.replace('# ', '')}")
         return 0
-    
+
     commit = get_last_commit()
     files = get_changed_files()
-    
+
     if not commit["hash"]:
         print("No hay commits para analizar")
         return 1
-    
+
     subject = commit["subject"]
-    
+
     # Check if any significant pattern matches
     for pattern, category in SIGNIFICANT_PATTERNS:
         if re.search(pattern, subject + "\n" + commit["body"] + "\n" + " ".join(files), re.IGNORECASE):
@@ -131,7 +130,7 @@ def main() -> int:
             else:
                 print(f"ADR ya existe para: {subject[:50]}")
             return 0
-    
+
     if "--force" in sys.argv:
         reason = sys.argv[sys.argv.index("--force") + 1] if len(sys.argv) > sys.argv.index("--force") + 1 else "Cambio significativo"
         category = "General"
@@ -139,7 +138,7 @@ def main() -> int:
         if adr_path:
             print(f"ADR generado (forzado): {adr_path}")
         return 0
-    
+
     print(f"Commit {commit['short']}: {subject[:60]}")
     print("  No se detectaron patrones significativos. Usa --force para generar manualmente.")
     return 0

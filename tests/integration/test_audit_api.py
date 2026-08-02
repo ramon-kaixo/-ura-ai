@@ -105,7 +105,8 @@ class TestMissingAuth:
 
 
 class TestInputValidation:
-    """D2: No max_length on message field; binary data accepted."""
+"""D2: No max_length on message field
+binary data accepted."""
 
     def test_very_long_message(self, client: TestClient) -> None:
         huge = "A" * 1_000_000  # 1 MB

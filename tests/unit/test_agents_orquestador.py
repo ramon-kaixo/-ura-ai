@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from core.agents.orquestador import AgenteOrquestador
 
 
@@ -47,7 +45,7 @@ class TestDecidir:
         tele = {"hardware": {"ram_pct": 85}}
         conc = {}
         with patch.object(orq, "_contar_pendientes", return_value=0):
-            accion, razon = orq.decidir(tele, conc)
+            accion, _razon = orq.decidir(tele, conc)
         # 85% no es > 85, así que no pausa
         assert accion != "PAUSAR"
 

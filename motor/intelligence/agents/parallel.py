@@ -110,7 +110,8 @@ class ParallelExecutor:
         wf_id: str,
         result: ExecutionResult,
     ) -> dict:
-        """Envía todas las tareas al pool; corta si el workflow se cancela."""
+"""Envía todas las tareas al pool
+corta si el workflow se cancela."""
         future_map = {}
         for agent_id, task in tasks:
             if self.is_cancelled(wf_id):
@@ -131,7 +132,8 @@ class ParallelExecutor:
         deadline: float | None,
         wf_id: str,
     ) -> None:
-        """Recolecta resultados; gestiona timeouts globales y cancelación."""
+"""Recolecta resultados
+gestiona timeouts globales y cancelación."""
         try:
             for future in as_completed(future_map, timeout=self._global_timeout):
                 if self.is_cancelled(wf_id):

@@ -19,7 +19,7 @@ class CodeQualityPlugin:
         result = self.engine.run_ruff(["check", "--select", select, "--output-format", "concise", "."])
         f821 = result.stdout.count("F821")
         f841 = result.stdout.count("F841")
-        self.engine.log.info(f"Ruff: {f821} F821, {f841} F841")
+        self.engine.log.info("Ruff: {f821} F821, {f841} F841")
         return {"f821": f821, "f841": f841, "returncode": result.returncode}
 
     def ruff_fix(self, select: str = "", unsafe: bool = False) -> dict[str, Any]:
