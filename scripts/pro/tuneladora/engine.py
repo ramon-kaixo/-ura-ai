@@ -148,7 +148,7 @@ class PipelineEngine:
     def set_dry_run(self, enabled: bool = True) -> None:
         """Activa/desactiva modo dry_run (simula sin modificar)."""
         self._dry_run = enabled
-        self.log.info("Dry run: {"ACTIVADO" if enabled else "DESACTIVADO"}")
+        self.log.info(f"Dry run: {'ACTIVADO' if enabled else 'DESACTIVADO'}")
 
     # ── Ejecución de scripts ────────────────────────────────────
 

@@ -59,9 +59,16 @@ radon:
 	@radon cc core/ --min=C --total-average -s 2>/dev/null || echo "  radon: no instalado"
 
 # === AUDIT ===
-audit:
+audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
+
+# === AUDITORIA ===
+audit:
+	@echo "▶ Ejecutando auditoría continua..."
+	@-$(PYTHON) scripts/pro/auditoria_continua.py; true
+	@echo "✅ Auditoría completada"
+
 
 # === SECRETS ===
 secrets:
