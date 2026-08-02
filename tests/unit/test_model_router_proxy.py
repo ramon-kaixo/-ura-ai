@@ -175,7 +175,7 @@ class TestProxyRequest:
             patch("core.model_router.router.get_urls", return_value={"primary": "http://asus", "fallback": "http://mac"}),
             self._mock_urlopen(200, b'{"ok": true}'),
         ):
-            status, headers, body = proxy.proxy_request("/api/tags", b"{}", "GET")
+            status, _headers, body = proxy.proxy_request("/api/tags", b"{}", "GET")
         assert status == 200
         assert body == b'{"ok": true}'
 
