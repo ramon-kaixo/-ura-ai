@@ -41,6 +41,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 |------|--------|---------|
 | 0–6 | ✅ Cerradas | FTS5, edges, background queue, autorecuperación, reconcile |
 | **S5b** | ✅ **Cerrada** | Refactor deuda de complejidad: 13 funciones + 1 bugfix seguridad, longas 94→85, CC≥20 13→8. `docs/architecture/REFACTOR_S5b.md` |
+| **S5c** | ✅ **Cerrada** | Cierre total deuda de complejidad del núcleo: 18 refactors + 2 fixes, núcleo 0 longas >60, 0 CC≥20. `docs/architecture/REFACTOR_S5c.md` |
 | **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
 | **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
 | **Auditoría Post-Fase 8** | ✅ **Cerrada** | Saneamiento arquitectónico: unificación config, eliminación código muerto, actualización docs. Tag `v0.7.1-audit-fase8`. `docs/architecture/AUDIT_FASE8_CLOSEOUT.md` |
