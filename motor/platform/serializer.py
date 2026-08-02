@@ -82,48 +82,70 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
     v, r, t, d, s = envelope.version, envelope.routing, envelope.trace, envelope.delivery, envelope.security
 
     result: dict[str, Any] = {
-        "version": {
-            "protocol_version": v.protocol_version,
-            "schema_version": v.schema_version,
-            "payload_type": v.payload_type,
-            "capabilities": list(v.capabilities),
-            "reserved": list(v.reserved),
-        },
-        "routing": {
-            "message_id": str(r.message_id),
-            "message_type": r.message_type,
-            "message_kind": r.message_kind.value,
-            "source": r.source,
-            "destination": r.destination,
-        },
-        "trace": {
-            "trace_id": str(t.trace_id),
-            "span_id": str(t.span_id),
-            "parent_span_id": str(t.parent_span_id) if t.parent_span_id else "",
-            "correlation_id": str(t.correlation_id) if t.correlation_id else "",
-            "causation_id": str(t.causation_id) if t.causation_id else "",
-            "timestamp": t.timestamp,
-            "monotonic_ts": t.monotonic_ts,
-        },
-        "delivery": {
-            "semantics": d.semantics.value,
-            "timeout_ms": d.timeout_ms,
-            "cancelable": d.cancelable,
-            "max_response_bytes": d.max_response_bytes,
-        },
+        "version": _version_to_dict(v),
+        "routing": _routing_to_dict(r),
+        "trace": _trace_to_dict(t),
+        "delivery": _delivery_to_dict(d),
         "payload_hex": envelope.payload.hex(),
         "checksum": envelope.checksum,
     }
 
+    if s is not None:
+        sec = _security_to_dict(s)
+        if sec:
+            result["security"] = sec
+
+    return result
+
+
+def _version_to_dict(v: VersionHeader) -> dict[str, Any]:
+    return {
+        "protocol_version": v.protocol_version,
+        "schema_version": v.schema_version,
+        "payload_type": v.payload_type,
+        "capabilities": list(v.capabilities),
+        "reserved": list(v.reserved),
+    }
+
+
+def _routing_to_dict(r: RoutingHeader) -> dict[str, Any]:
+    return {
+        "message_id": str(r.message_id),
+        "message_type": r.message_type,
+        "message_kind": r.message_kind.value,
+        "source": r.source,
+        "destination": r.destination,
+    }
+
+
+def _trace_to_dict(t: TraceHeader) -> dict[str, Any]:
+    return {
+        "trace_id": str(t.trace_id),
+        "span_id": str(t.span_id),
+        "parent_span_id": str(t.parent_span_id) if t.parent_span_id else "",
+        "correlation_id": str(t.correlation_id) if t.correlation_id else "",
+        "causation_id": str(t.causation_id) if t.causation_id else "",
+        "timestamp": t.timestamp,
+        "monotonic_ts": t.monotonic_ts,
+    }
+
+
+def _delivery_to_dict(d: DeliveryHeader) -> dict[str, Any]:
+    delivery: dict[str, Any] = {
+        "semantics": d.semantics.value,
+        "timeout_ms": d.timeout_ms,
+        "cancelable": d.cancelable,
+        "max_response_bytes": d.max_response_bytes,
+    }
     if d.idempotency_key is not None:
-        result["delivery"]["idempotency_key"] = str(d.idempotency_key)
+        delivery["idempotency_key"] = str(d.idempotency_key)
 
     if d.metadata:
-        result["delivery"]["metadata"] = [list(pair) for pair in d.metadata]
+        delivery["metadata"] = [list(pair) for pair in d.metadata]
 
     if d.retry_policy is not None:
         rp = d.retry_policy
-        result["delivery"]["retry_policy"] = {
+        delivery["retry_policy"] = {
             "max_attempts": rp.max_attempts,
             "backoff_base_ms": rp.backoff_base_ms,
             "backoff_multiplier": rp.backoff_multiplier,
@@ -131,15 +153,15 @@ def _to_dict(envelope: ProtocolEnvelope) -> dict[str, Any]:
             "retryable_errors": list(rp.retryable_errors),
         }
 
-    if s is not None:
-        sec: dict[str, Any] = {}
-        if s.auth_token is not None:
-            sec["auth_token"] = s.auth_token
-            sec["auth_token_type"] = s.auth_token_type or "bearer"
-        if sec:
-            result["security"] = sec
+    return delivery
 
-    return result
+
+def _security_to_dict(s: SecurityHeader) -> dict[str, Any]:
+    sec: dict[str, Any] = {}
+    if s.auth_token is not None:
+        sec["auth_token"] = s.auth_token
+        sec["auth_token_type"] = s.auth_token_type or "bearer"
+    return sec
 
 
 def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
@@ -148,61 +170,15 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
     td = data["trace"]
     dd = data["delivery"]
 
-    payload_hex = data.get("payload_hex", "")
-    raw_payload = bytes.fromhex(payload_hex) if payload_hex else b""
-    checksum = data.get("checksum", "")
-    if checksum and not verify_checksum(raw_payload, checksum):
-        msg = f"Checksum mismatch: expected {checksum}, got {compute_checksum(raw_payload)}"
-        raise ProtocolException(msg)
+    payload, checksum = _parse_payload(data)
+    metadata = _parse_metadata(dd)
+    idempotency_key = _parse_idempotency_key(dd)
+    retry_policy = _parse_retry_policy(dd.get("retry_policy"))
 
-    # Payload stays as-is (compressed if wire format was compressed).
-    # ADR-028-04 SR05: envelope payload is compressed, checksum covers compressed bytes.
-    # Application consumers check payload_type and decompress if needed.
-    payload = raw_payload
-
-    metadata_raw = dd.get("metadata", []) or []
-    metadata = tuple(tuple(pair) for pair in metadata_raw) if metadata_raw else ()
-
-    ik_str = dd.get("idempotency_key")
-    idempotency_key = IdempotencyKey(ik_str) if ik_str else None
-
-    rp_raw = dd.get("retry_policy")
-    if rp_raw:
-        retry_policy = RetryPolicy(
-            max_attempts=rp_raw.get("max_attempts", 3),
-            backoff_base_ms=rp_raw.get("backoff_base_ms", 100),
-            backoff_multiplier=rp_raw.get("backoff_multiplier", 2.0),
-            max_backoff_ms=rp_raw.get("max_backoff_ms", 30000),
-            retryable_errors=tuple(rp_raw.get("retryable_errors", [])),
-        )
-    else:
-        retry_policy = None
-
-    # CausationId — use from_string to preserve root sentinel
-    causation = CausationId.from_string(td.get("causation_id", ""))
-
-    # Trace fields
-    trace_id = TraceId(td.get("trace_id", TraceId.generate().value))
-    span_id = SpanId(td.get("span_id", SpanId.generate().value))
-    parent_raw = td.get("parent_span_id", "")
-    parent_span_id = SpanId(parent_raw) if parent_raw else None
-    corr_id_raw = td.get("correlation_id", "")
-    correlation_id = CorrelationId(corr_id_raw) if corr_id_raw else None
-
-    # MessageKind — catch unknown values for forwarding to dead-letter
-    try:
-        message_kind = MessageKind(rd["message_kind"])
-    except ValueError:
-        msg = f"Unknown message_kind: {rd.get('message_kind', '')}"
-        raise ProtocolException(msg)  # noqa: B904
-
-    security_data = data.get("security")
-    security = None
-    if security_data:
-        security = SecurityHeader(
-            auth_token=security_data.get("auth_token"),
-            auth_token_type=security_data.get("auth_token_type"),
-        )
+    causation = _parse_causation(td)
+    trace_id, span_id, parent_span_id, correlation_id = _parse_trace_ids(td)
+    message_kind = _parse_message_kind(rd)
+    security = _parse_security(data)
 
     return ProtocolEnvelope(
         version=VersionHeader(
@@ -240,6 +216,76 @@ def _from_dict(data: dict[str, Any]) -> ProtocolEnvelope:
         payload=payload,
         checksum=checksum,
         security=security,
+    )
+
+
+def _parse_payload(data: dict[str, Any]) -> tuple[bytes, str]:
+    payload_hex = data.get("payload_hex", "")
+    raw_payload = bytes.fromhex(payload_hex) if payload_hex else b""
+    checksum = data.get("checksum", "")
+    if checksum and not verify_checksum(raw_payload, checksum):
+        msg = f"Checksum mismatch: expected {checksum}, got {compute_checksum(raw_payload)}"
+        raise ProtocolException(msg)
+
+    # Payload stays as-is (compressed if wire format was compressed).
+    # ADR-028-04 SR05: envelope payload is compressed, checksum covers compressed bytes.
+    # Application consumers check payload_type and decompress if needed.
+    return raw_payload, checksum
+
+
+def _parse_metadata(dd: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    metadata_raw = dd.get("metadata", []) or []
+    return tuple(tuple(pair) for pair in metadata_raw) if metadata_raw else ()
+
+
+def _parse_idempotency_key(dd: dict[str, Any]) -> IdempotencyKey | None:
+    ik_str = dd.get("idempotency_key")
+    return IdempotencyKey(ik_str) if ik_str else None
+
+
+def _parse_retry_policy(rp_raw: dict[str, Any] | None) -> RetryPolicy | None:
+    if not rp_raw:
+        return None
+    return RetryPolicy(
+        max_attempts=rp_raw.get("max_attempts", 3),
+        backoff_base_ms=rp_raw.get("backoff_base_ms", 100),
+        backoff_multiplier=rp_raw.get("backoff_multiplier", 2.0),
+        max_backoff_ms=rp_raw.get("max_backoff_ms", 30000),
+        retryable_errors=tuple(rp_raw.get("retryable_errors", [])),
+    )
+
+
+def _parse_causation(td: dict[str, Any]) -> CausationId:
+    # CausationId — use from_string to preserve root sentinel
+    return CausationId.from_string(td.get("causation_id", ""))
+
+
+def _parse_trace_ids(td: dict[str, Any]) -> tuple[TraceId, SpanId, SpanId | None, CorrelationId | None]:
+    trace_id = TraceId(td.get("trace_id", TraceId.generate().value))
+    span_id = SpanId(td.get("span_id", SpanId.generate().value))
+    parent_raw = td.get("parent_span_id", "")
+    parent_span_id = SpanId(parent_raw) if parent_raw else None
+    corr_id_raw = td.get("correlation_id", "")
+    correlation_id = CorrelationId(corr_id_raw) if corr_id_raw else None
+    return trace_id, span_id, parent_span_id, correlation_id
+
+
+def _parse_message_kind(rd: dict[str, Any]) -> MessageKind:
+    # MessageKind — catch unknown values for forwarding to dead-letter
+    try:
+        return MessageKind(rd["message_kind"])
+    except ValueError:
+        msg = f"Unknown message_kind: {rd.get('message_kind', '')}"
+        raise ProtocolException(msg)  # noqa: B904
+
+
+def _parse_security(data: dict[str, Any]) -> SecurityHeader | None:
+    security_data = data.get("security")
+    if not security_data:
+        return None
+    return SecurityHeader(
+        auth_token=security_data.get("auth_token"),
+        auth_token_type=security_data.get("auth_token_type"),
     )
 
 
