@@ -136,6 +136,25 @@ class VectorAugmentedRetriever:
         if self._embedder is None or self._vector_store is None:
             return stats
 
+        all_asset_ids = self._colectar_assets(batch_size)
+        ids_in_store = self._get_vector_ids()
+        ids_in_assets = set(all_asset_ids)
+
+        upsert_candidates = ids_in_assets - ids_in_store
+        delete_candidates = ids_in_store - ids_in_assets
+
+        stats["to_upsert"] = len(upsert_candidates)
+        stats["to_delete"] = len(delete_candidates)
+
+        if dry_run:
+            return stats
+
+        self._upsert_faltantes(all_asset_ids, upsert_candidates, batch_size, stats)
+        self._eliminar_huerfanos(delete_candidates, batch_size, stats)
+
+        return stats
+
+    def _colectar_assets(self, batch_size: int) -> dict[str, KnowledgeAsset]:
         # Colectar assets
         offset = 0
         all_asset_ids: dict[str, KnowledgeAsset] = {}
@@ -150,19 +169,15 @@ class VectorAugmentedRetriever:
             for a in batch:
                 all_asset_ids[a.asset_id] = a
             offset += len(batch)
+        return all_asset_ids
 
-        ids_in_store = self._get_vector_ids()
-        ids_in_assets = set(all_asset_ids)
-
-        upsert_candidates = ids_in_assets - ids_in_store
-        delete_candidates = ids_in_store - ids_in_assets
-
-        stats["to_upsert"] = len(upsert_candidates)
-        stats["to_delete"] = len(delete_candidates)
-
-        if dry_run:
-            return stats
-
+    def _upsert_faltantes(
+        self,
+        all_asset_ids: dict[str, KnowledgeAsset],
+        upsert_candidates: set[str],
+        batch_size: int,
+        stats: dict[str, int],
+    ) -> None:
         # Upsert assets faltantes
         text_previews: list[str] = []
         assets_to_embed: list[KnowledgeAsset] = []
@@ -179,14 +194,13 @@ class VectorAugmentedRetriever:
         if assets_to_embed:
             self._upsert_batch(assets_to_embed, text_previews, stats)
 
+    def _eliminar_huerfanos(self, delete_candidates: set[str], batch_size: int, stats: dict[str, int]) -> None:
         # Eliminar vectores huérfanos
         orphan_ids = sorted(delete_candidates)
         for i in range(0, len(orphan_ids), batch_size):
             batch = orphan_ids[i : i + batch_size]
             deleted = self._vector_store.delete(batch)
             stats["deleted"] += deleted
-
-        return stats
 
     def _get_vector_ids(self) -> set[str]:
         """Obtiene IDs de todos los vectores en el store mediante list_ids()."""
