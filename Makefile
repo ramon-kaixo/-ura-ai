@@ -91,6 +91,13 @@ inventario:
 	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
 
 
+# === CLEANUP ===
+cleanup:
+	@echo "▶ Limpiando mensajes antiguos del asistente..."
+	@$(PYTHON) scripts/pro/cleanup_assistant.py
+	@echo "✅ Cleanup completado"
+
+
 # === LIMPIEZA ===
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
