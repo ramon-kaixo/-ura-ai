@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 """Tests para core/voice/ — tts_piper, anker_pipeline, anker_mac_pipeline.
 
 Las dependencias de hardware (sounddevice, soundfile, torch, whisper, numpy)
 estan instaladas; los sinks de audio se mockean para no tocar hardware real.
 """
 
-from __future__ import annotations
-
 import pytest
 
 pytestmark = pytest.mark.slow
+pytest.importorskip("torch")
+
 
 import sqlite3
 from pathlib import Path
