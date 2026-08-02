@@ -127,3 +127,28 @@ class TestCreateApp:
                         app2 = create_app()
         asyncio.run(app2.router.lifespan_context(app2).__aenter__())
         state.scheduler.start_loop.assert_awaited_once()
+
+    def test_create_app_lifespan_exit_cierra_providers(self) -> None:
+        from fastapi import APIRouter
+        from fastapi.testclient import TestClient
+
+        from core.mochila.app import create_app
+
+        provider = mock.Mock()
+        provider.__aenter__ = mock.AsyncMock(return_value=provider)
+        provider.__aexit__ = mock.AsyncMock(return_value=False)
+        state = mock.Mock()
+        state.scheduler = mock.Mock()
+        state.scheduler.start_loop = mock.AsyncMock()
+        state.scheduler.stop_loop = mock.AsyncMock()
+        state.providers = {"ollama": provider}
+
+        with mock.patch("core.mochila.app.build_state", return_value=state):
+            with mock.patch("core.mochila.app.create_api_router", return_value=APIRouter()):
+                with mock.patch("core.mochila.app.load_dotenv"):
+                    with mock.patch("core.mochila.app.init_guardian"):
+                        app2 = create_app()
+        with TestClient(app2) as client:
+            assert client.get("/").status_code in (200, 404)
+        provider.__aexit__.assert_awaited_once_with(None, None, None)
+        state.scheduler.stop_loop.assert_awaited_once()
