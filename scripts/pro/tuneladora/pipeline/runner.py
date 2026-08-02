@@ -30,6 +30,7 @@ from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 from scripts.pro import conciencia as _conciencia  # noqa: E402
 from scripts.pro import plugin_registry as _plugin_registry  # noqa: E402
+from scripts.pro import change_log as _change_log  # noqa: E402
 
 log = logging.getLogger("tuneladora.runner")
 LOCK_TIMEOUT = 1800
@@ -750,4 +751,13 @@ class PipelineRunner:
                 value={"mode": self.mode, "files": self.files, "duration_ms": duration_ms, "msg": msg},
                 source="runner.run", tags=("pipeline", "ok"),
             ))
+
+        # Registrar en change_log (unified change log)
+        try:
+            head = self._telemetry.get("head", "")
+            if head:
+                _change_log.record(head, actor="ia")
+        except Exception as e:
+            log.warning("change_log falló: %s", e)
+
         return verdict
