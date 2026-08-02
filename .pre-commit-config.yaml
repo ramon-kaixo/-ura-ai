@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: mypy
         args: [--python-version=3.12, --ignore-missing-imports, --explicit-package-bases]
-        entry: bash -c "echo mypy - 40 errors in motor/ - disabled until fixed && exit 0"
+        entry: "bash -c 'mypy \"$@\" 2>&1 | tail -4; echo \"mypy: informativo no bloqueante (baseline: ver docs/audit/MYPY_BASELINE.md)\"; exit 0' --"
         additional_dependencies: [types-requests]
         files: ^(core/agents)/.*\.py$
 
