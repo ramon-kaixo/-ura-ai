@@ -108,7 +108,7 @@ def _archive_path(archive_dir: Path, kind: str, timestamp: str) -> Path:
 # ── API pública ────────────────────────────────────────────────────────────────
 
 
-def archive_source(  # noqa: PLR0915
+def archive_source(
     source_dir: Path | None = None,
     archive_dir: Path | None = None,
     db_path: Path | None = None,
@@ -127,19 +127,47 @@ def archive_source(  # noqa: PLR0915
     timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S_%f")
     archive_dir = _ensure_dir(archive_dir or _DEFAULT_ARCHIVE_DIR)
 
-    # 1. Verificar que es un repo git y obtener el commit actual
+    commit = _verificar_git_commit(source_dir)
+    file_count = _contar_tracked(source_dir)
+
+    bundle_path = _archive_path(archive_dir, "source", timestamp)
+    compressed_size = _crear_bundle(source_dir, bundle_path)
+    content_sha256 = _calcular_sha256(bundle_path)
+
+    manifest = _construir_manifest(
+        commit,
+        timestamp,
+        bundle_path,
+        compressed_size,
+        content_sha256,
+        file_count,
+        retention_days,
+    )
+
+    manifest_path = _escribir_manifest(manifest)
+
+    if db_path:
+        _registrar_en_db(db_path, manifest, manifest_path, bundle_path, compressed_size)
+
+    _registrar_audit_y_metricas(commit, file_count, compressed_size, _t0)
+    return manifest
+
+
+def _verificar_git_commit(source_dir: Path) -> str:
+    """Verifica que es repo git y devuelve el commit actual."""
     result = _git_cmd("rev-parse", "HEAD", cwd=source_dir)
     if result.returncode != 0:
         msg = f"source_dir no es un repositorio git: {source_dir}\nstderr: {result.stderr.strip()}"
         raise ValueError(msg)
-    commit = result.stdout.strip()
+    return result.stdout.strip()
 
-    # 2. Contar archivos tracked
+
+def _contar_tracked(source_dir: Path) -> int:
     result = _git_cmd("ls-files", cwd=source_dir)
-    file_count = len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+    return len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
 
-    # 3. Crear bundle
-    bundle_path = _archive_path(archive_dir, "source", timestamp)
+
+def _crear_bundle(source_dir: Path, bundle_path: Path) -> int:
     result = _git_cmd(
         "bundle",
         "create",
@@ -151,21 +179,30 @@ def archive_source(  # noqa: PLR0915
     if result.returncode != 0:
         msg = f"Error creando git bundle: {result.stderr.strip()}"
         raise RuntimeError(msg)
+    return bundle_path.stat().st_size
 
-    compressed_size = bundle_path.stat().st_size
 
-    # 4. Calcular SHA-256 del bundle
+def _calcular_sha256(path: Path) -> str:
     sha256 = hashlib.sha256()
-    with bundle_path.open("rb") as f:
+    with path.open("rb") as f:
         while True:
             chunk = f.read(65536)
             if not chunk:
                 break
             sha256.update(chunk)
-    content_sha256 = sha256.hexdigest()
+    return sha256.hexdigest()
 
-    # 5. Construir manifest
-    manifest = ArchiveManifest(
+
+def _construir_manifest(
+    commit: str,
+    timestamp: str,
+    bundle_path: Path,
+    compressed_size: int,
+    content_sha256: str,
+    file_count: int,
+    retention_days: int | None,
+) -> ArchiveManifest:
+    return ArchiveManifest(
         kind="source",
         source_commit=commit,
         created_at=timestamp,
@@ -176,46 +213,56 @@ def archive_source(  # noqa: PLR0915
         retention_days=retention_days or ARCHIVE_RETENTION_DAYS.get("source", 90),
     )
 
-    # 6. Escribir manifest
-    manifest_path = _manifest_path(archive_dir, "source", timestamp)
+
+def _escribir_manifest(manifest: ArchiveManifest) -> Path:
+    manifest_path = _manifest_path(Path(manifest.archive_path).parent, "source", manifest.created_at)
     with manifest_path.open("w") as f:
         json.dump(manifest.to_dict(), f, indent=2, ensure_ascii=False)
     log.info(
         "Source archived: commit=%s bundle=%s size=%d files=%d sha256=%s",
-        commit[:12],
-        bundle_path.name,
-        compressed_size,
-        file_count,
-        content_sha256[:16],
+        manifest.source_commit[:12],
+        Path(manifest.archive_path).name,
+        manifest.compressed_size,
+        manifest.file_count,
+        manifest.content_sha256[:16],
     )
+    return manifest_path
 
-    # 7. Registrar en op_archives
-    if db_path:
-        try:
-            from knowledge.engine.connection import begin_immediate, open_db
 
-            conn = open_db(db_path)
-            begin_immediate(conn)
-            conn.execute(
-                "INSERT INTO op_archives "
-                "(kind, source_commit, manifest_path, archive_path, "
-                " compressed_size, content_sha256, retention_days) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (
-                    "source",
-                    commit,
-                    str(manifest_path),
-                    str(bundle_path),
-                    compressed_size,
-                    content_sha256,
-                    manifest.retention_days,
-                ),
-            )
-            conn.commit()
-            conn.close()
-        except Exception as exc:
-            log.warning("No se pudo registrar en op_archives: %s", exc)
+def _registrar_en_db(
+    db_path: Path,
+    manifest: ArchiveManifest,
+    manifest_path: Path,
+    bundle_path: Path,
+    compressed_size: int,
+) -> None:
+    try:
+        from knowledge.engine.connection import begin_immediate, open_db
 
+        conn = open_db(db_path)
+        begin_immediate(conn)
+        conn.execute(
+            "INSERT INTO op_archives "
+            "(kind, source_commit, manifest_path, archive_path, "
+            " compressed_size, content_sha256, retention_days) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                "source",
+                manifest.source_commit,
+                str(manifest_path),
+                str(bundle_path),
+                compressed_size,
+                manifest.content_sha256,
+                manifest.retention_days,
+            ),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as exc:
+        log.warning("No se pudo registrar en op_archives: %s", exc)
+
+
+def _registrar_audit_y_metricas(commit: str, file_count: int, compressed_size: int, _t0: float) -> None:
     try:
         from knowledge.engine.audit import get_audit
 
@@ -235,7 +282,6 @@ def archive_source(  # noqa: PLR0915
         archive_duration_seconds.observe(_time.monotonic() - _t0)
     except Exception:  # noqa: S110
         pass
-    return manifest
 
 
 def verify_archive(
@@ -258,44 +304,21 @@ def verify_archive(
 
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
-    try:
-        manifest_path = _resolve_within(Path(manifest_path), allowed, "manifest_path")
-    except PathTraversalError as exc:
-        log.exception("Path traversal denegado: %s", exc)
-        return False
-
-    if not manifest_path.exists():
+    manifest_path = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
+    if manifest_path is None or not manifest_path.exists():
         log.error("Manifest no encontrado: %s", manifest_path)
         return False
 
-    try:
-        raw = manifest_path.read_text()
-        data = json.loads(raw)
-        manifest = ArchiveManifest.from_dict(data)
-    except (json.JSONDecodeError, TypeError) as exc:
-        log.exception("Manifest inválido: %s", exc)
+    manifest = _cargar_manifest_archivo(manifest_path)
+    if manifest is None:
         return False
 
-    try:
-        archive = _resolve_within(Path(manifest.archive_path), allowed, "archive_path")
-    except PathTraversalError as exc:
-        log.exception("Path traversal denegado en archive_path del manifest: %s", exc)
-        return False
-
-    if not archive.exists():
+    archive = _resolver_dentro(allowed, Path(manifest.archive_path), "archive_path")
+    if archive is None or not archive.exists():
         log.error("Archive no encontrado: %s", archive)
         return False
 
-    # Verificar SHA-256 del archivo
-    sha256 = hashlib.sha256()
-    with archive.open("rb") as f:
-        while True:
-            chunk = f.read(65536)
-            if not chunk:
-                break
-            sha256.update(chunk)
-    actual_hash = sha256.hexdigest()
-
+    actual_hash = _calcular_sha256(archive)
     if actual_hash != manifest.content_sha256:
         log.error(
             "SHA-256 mismatch: esperado=%s real=%s",
@@ -306,6 +329,23 @@ def verify_archive(
 
     log.info("Archive verified: %s sha256=%s", archive.name, actual_hash[:16])
     return True
+
+
+def _resolver_dentro(allowed: Path, path: Path, nombre: str) -> Path | None:
+    try:
+        return _resolve_within(path, allowed, nombre)
+    except PathTraversalError as exc:
+        log.exception("Path traversal denegado: %s", exc)
+        return None
+
+
+def _cargar_manifest_archivo(manifest_path: Path) -> ArchiveManifest | None:
+    try:
+        raw = manifest_path.read_text()
+        return ArchiveManifest.from_dict(json.loads(raw))
+    except (json.JSONDecodeError, TypeError) as exc:
+        log.exception("Manifest inválido: %s", exc)
+        return None
 
 
 def restore_source(
@@ -320,35 +360,46 @@ def restore_source(
     Requiere que verify_archive() pase primero.
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
-    try:
-        manifest_path = _resolve_within(Path(manifest_path), allowed, "manifest_path")
-    except PathTraversalError as exc:
-        msg = f"Path traversal denegado en manifest: {exc}"
-        raise ValueError(msg) from exc
+    manifest_path = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
+    if manifest_path is None:
+        msg = f"Path traversal denegado en manifest: {manifest_path}"
+        raise ValueError(msg)
 
     if not verify_archive(manifest_path, archive_dir=allowed):
         msg = f"Archive no pasó verificación: {manifest_path}"
         raise ValueError(msg)
 
-    raw = manifest_path.read_text()
-    data = json.loads(raw)
-    manifest = ArchiveManifest.from_dict(data)
+    manifest = _cargar_manifest_archivo(manifest_path)
+    if manifest is None:
+        msg = f"Manifest inválido: {manifest_path}"
+        raise ValueError(msg)
 
     if dest_dir is None:
         dest_dir = _PROJECT_ROOT / "source"
     dest_dir = _validate_source_dir(dest_dir)
 
-    try:
-        bundle_path = _resolve_within(Path(manifest.archive_path), allowed, "archive_path")
-    except PathTraversalError as exc:
-        msg = f"Path traversal denegado en archive_path del manifest: {exc}"
-        raise ValueError(msg) from exc
+    bundle_path = _resolver_dentro(allowed, Path(manifest.archive_path), "archive_path")
+    if bundle_path is None:
+        msg = f"Path traversal denegado en archive_path del manifest: {bundle_path}"
+        raise ValueError(msg)
 
     if not bundle_path.exists():
         msg = f"Bundle no encontrado: {bundle_path}"
         raise FileNotFoundError(msg)
 
-    # Clonar desde bundle
+    _clonar_bundle(bundle_path, dest_dir, manifest.source_commit)
+
+    log.info(
+        "Source restored: commit=%s bundle=%s dest=%s",
+        manifest.source_commit[:12] if manifest.source_commit else "none",
+        bundle_path.name,
+        dest_dir,
+    )
+    return manifest.source_commit
+
+
+def _clonar_bundle(bundle_path: Path, dest_dir: Path, source_commit: str | None) -> None:
+    """Clona desde bundle y hace checkout del commit archivado."""
     dest_dir.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(
         ["git", "clone", str(bundle_path), str(dest_dir)],
@@ -360,20 +411,11 @@ def restore_source(
         msg = f"Error restaurando desde bundle: {result.stderr.strip()}"
         raise RuntimeError(msg)
 
-    # Hacer checkout exacto del commit archivado
-    if manifest.source_commit:
-        result = _git_cmd("checkout", manifest.source_commit, cwd=dest_dir)
+    if source_commit:
+        result = _git_cmd("checkout", source_commit, cwd=dest_dir)
         if result.returncode != 0:
-            msg = f"Error haciendo checkout de {manifest.source_commit}: {result.stderr.strip()}"
+            msg = f"Error haciendo checkout de {source_commit}: {result.stderr.strip()}"
             raise RuntimeError(msg)
-
-    log.info(
-        "Source restored: commit=%s bundle=%s dest=%s",
-        manifest.source_commit[:12] if manifest.source_commit else "none",
-        bundle_path.name,
-        dest_dir,
-    )
-    return manifest.source_commit
 
 
 def list_archives(archive_dir: Path | None = None) -> list[ArchiveManifest]:
