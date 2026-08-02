@@ -350,6 +350,7 @@ def compile_source_streaming(
 
     all_errors: list[CompileError] = []
     all_warnings: list[CompileError] = []
+    t0 = time.monotonic()
     objects, changed_count = _stream_parsear(source_dir, all_errors)
     snapshot = take_snapshot_fn(source_dir)
 
