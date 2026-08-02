@@ -181,6 +181,38 @@ class ConversationEngine:
         conversation_id: str,
         user_message: str,
     ) -> dict[str, object]:
+        base = self._contexto_basico(user_message, conversation_id)
+        memoria = self._contexto_memoria(user_message, conversation_id, base["mode_result"], base["is_interruption"])
+        senales = self._contexto_senales(user_message, conversation_id, base["intent"])
+        auxiliares = self._contexto_auxiliar(user_message, conversation_id)
+        adjustments = self._build_adjustments(senales["sentiment"], senales["feedback"])
+
+        return {
+            "intent": base["intent"],
+            "mode": base["mode_result"].mode,
+            "mode_reason": base["mode_result"].reason,
+            "resolved_message": memoria["resolved"],
+            "is_interruption": base["is_interruption"],
+            "interruption_context": memoria["interruption_context"],
+            "episodic_context": memoria["episodic_context"],
+            "language": base["lang"].code,
+            "language_confidence": base["lang"].confidence,
+            "needs_web_search": senales["trend"].needs_update,
+            "trend_reason": senales["trend"].reason,
+            "web_results": "",
+            "rag_context": auxiliares["rag_text"],
+            "semantic_context": auxiliares["semantic_facts"],
+            "sentiment": senales["sentiment"].sentiment.value,
+            "sentiment_score": senales["sentiment"].score,
+            "sentiment_action": senales["sentiment"].suggested_action,
+            "correction_recorded": senales["correction_recorded"],
+            "relevant_corrections": senales["relevant_corrections"],
+            "feedback_signals": senales["feedback"],
+            "proactive_suggestion": auxiliares["proactive_suggestion"],
+            "response_adjustments": adjustments,
+        }
+
+    def _contexto_basico(self, user_message: str, conversation_id: str) -> dict[str, object]:
         user_message = self._prompt_sanitizer.sanitize(user_message)
         intent = self.detect_intent(user_message)
         conv = self.get_or_create(conversation_id)
@@ -201,6 +233,20 @@ class ConversationEngine:
             conv.state.mode = mode_result.mode
             self._auto_mode.set_mode(conversation_id, mode_result.mode)
 
+        return {
+            "intent": intent,
+            "lang": lang,
+            "is_interruption": is_interruption,
+            "mode_result": mode_result,
+        }
+
+    def _contexto_memoria(
+        self,
+        user_message: str,
+        conversation_id: str,
+        mode_result: Any,
+        is_interruption: bool,
+    ) -> dict[str, object]:
         resolved = self.resolve_reference(user_message, conversation_id)
 
         interruption_context = ""
@@ -218,49 +264,39 @@ class ConversationEngine:
             extra_str = "\n".join(extra)
             episodic_context = (episodic_context + "\n" + extra_str) if episodic_context else extra_str
 
-        trend = self._trends.analyze_query(user_message, intent.value)
+        return {
+            "resolved": resolved,
+            "interruption_context": interruption_context,
+            "episodic_context": episodic_context,
+        }
 
+    def _contexto_senales(self, user_message: str, conversation_id: str, intent: Any) -> dict[str, object]:
+        trend = self._trends.analyze_query(user_message, intent.value)
         sentiment = self._sentiment.detect(user_message, conversation_id)
 
         correction = None
         if intent == UserIntent.CORRECT:
             correction = self._corrections.record_correction(user_message)
         relevant_corrections = self._corrections.get_relevant_corrections(user_message)
-
         feedback = self._feedback.analyze(conversation_id, user_message)
 
-        self._handle_task_triggers(user_message, conversation_id)
-        rag_text = self._rag.retrieve_sync(user_message) if self._rag.is_available() else ""
-
-        semantic_facts = self._query_semantic_facts(user_message)
-
-        proactive_suggestion = self._proactive.suggest_proactive(conversation_id)
-
-        response_adjustments = self._build_adjustments(sentiment, feedback)
-
         return {
-            "intent": intent,
-            "mode": mode_result.mode,
-            "mode_reason": mode_result.reason,
-            "resolved_message": resolved,
-            "is_interruption": is_interruption,
-            "interruption_context": interruption_context,
-            "episodic_context": episodic_context,
-            "language": lang.code,
-            "language_confidence": lang.confidence,
-            "needs_web_search": trend.needs_update,
-            "trend_reason": trend.reason,
-            "web_results": "",
-            "rag_context": rag_text,
-            "semantic_context": semantic_facts,
-            "sentiment": sentiment.sentiment.value,
-            "sentiment_score": sentiment.score,
-            "sentiment_action": sentiment.suggested_action,
+            "trend": trend,
+            "sentiment": sentiment,
             "correction_recorded": correction is not None,
             "relevant_corrections": len(relevant_corrections),
-            "feedback_signals": feedback,
+            "feedback": feedback,
+        }
+
+    def _contexto_auxiliar(self, user_message: str, conversation_id: str) -> dict[str, object]:
+        self._handle_task_triggers(user_message, conversation_id)
+        rag_text = self._rag.retrieve_sync(user_message) if self._rag.is_available() else ""
+        semantic_facts = self._query_semantic_facts(user_message)
+        proactive_suggestion = self._proactive.suggest_proactive(conversation_id)
+        return {
+            "rag_text": rag_text,
+            "semantic_facts": semantic_facts,
             "proactive_suggestion": proactive_suggestion,
-            "response_adjustments": response_adjustments,
         }
 
     def _build_adjustments(self, sentiment: Any, feedback: dict[str, Any]) -> dict[str, bool]:
