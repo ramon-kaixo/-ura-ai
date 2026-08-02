@@ -29,6 +29,7 @@ from scripts.pro.tuneladora.pipeline.tools.mypy_tool import MypyTool
 from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
 from scripts.pro import conciencia as _conciencia  # noqa: E402
+from scripts.pro import plugin_registry as _plugin_registry  # noqa: E402
 
 log = logging.getLogger("tuneladora.runner")
 LOCK_TIMEOUT = 1800
@@ -622,11 +623,25 @@ class PipelineRunner:
             if any(pr.status == Status.FAIL for pr in pre):
                 return self._finish(episode_id, Status.FAIL, "Pre-flight failed", t_start)
 
+            # Plugin registry: fase "pre"
+            try:
+                pre_result = _plugin_registry.run_phase("pre", {"mode": self.mode, "files": self.files})
+                log.info("[PLUGIN] pre: %s", pre_result.get("status"))
+            except Exception as e:
+                log.warning("[PLUGIN] pre falló: %s", e)
+
             p0 = self.phase_snapshot()
             all_phase_results.append(p0)
 
             p1 = self.phase_static()
             all_phase_results.append(p1)
+
+            # Plugin registry: fase "refactor"
+            try:
+                ref_result = _plugin_registry.run_phase("refactor", {"mode": self.mode, "files": self.files})
+                log.info("[PLUGIN] refactor: %s", ref_result.get("status"))
+            except Exception as e:
+                log.warning("[PLUGIN] refactor falló: %s", e)
 
             # Sofía review (between static and dynamic)
             if self.mode in ("gate", "fix"):
@@ -657,6 +672,13 @@ class PipelineRunner:
 
             p_commit = self.phase_commit()
             all_phase_results.append(p_commit)
+
+            # Plugin registry: fase "post"
+            try:
+                post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})
+                log.info("[PLUGIN] post: %s", post_result.get("status"))
+            except Exception as e:
+                log.warning("[PLUGIN] post falló: %s", e)
 
             verdict, msg = self.phase_verdict(all_phase_results)
 
