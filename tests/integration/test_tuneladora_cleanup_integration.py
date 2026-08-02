@@ -125,6 +125,11 @@ class TestBackup:
         result = backup.backup_code("test_backup")
         assert isinstance(result, dict)
 
+    def test_backup_code_dirty_tree_raises(self, backup, tmp_path):
+        (tmp_path / "uncommitted.txt").write_text("x")
+        with pytest.raises(RuntimeError, match="Working tree dirty"):
+            backup.backup_code("test_backup")
+
     def test_backup_database_no_db(self, backup):
         with mock.patch("pathlib.Path.rglob") as m:
             m.return_value = []

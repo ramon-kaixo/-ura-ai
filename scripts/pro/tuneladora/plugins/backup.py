@@ -21,6 +21,8 @@ class BackupPlugin:
 
     def backup_code(self, label: str = "auto") -> dict[str, Any]:
         """Crea un tag de git antes de cambios. Retorna hash del commit."""
+        if self._is_working_tree_dirty():
+            raise RuntimeError("Working tree dirty — commit or stash manually before backup")
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         tag = f"backup_{label}_{ts}"
@@ -41,6 +43,14 @@ class BackupPlugin:
             return {"tag": tag, "stashed": stashed, "ok": tagged}
         except Exception as e:
             return {"error": str(e), "ok": False}
+
+    def _is_working_tree_dirty(self) -> bool:
+        """True si el repo tiene cambios sin commitear (porcelain no vacio)."""
+        r = subprocess.run(  # nosec
+            ["git", "status", "--porcelain"],
+            capture_output=True, text=True, timeout=15, cwd=str(self.repo_root), check=False,
+        )
+        return r.returncode == 0 and bool(r.stdout.strip())
 
     def backup_database(self) -> dict[str, Any]:
         """Copia knowledge/db/*.db a backups/."""
