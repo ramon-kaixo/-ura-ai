@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """Orquestador de health checks — ejecuta antes de push."""
-import subprocess, sys
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def main() -> int:
-    # Suite rápida: unit + integration
+    # Usa make validate (filtra @slow, ejecuta pre-commit, etc.)
     r = subprocess.run(
-        ["python3", "-m", "pytest", "tests/unit/", "tests/integration/", "-q", "--timeout=60"],
-        capture_output=True, text=True,
+        ["make", "validate"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
     )
     print(r.stdout)
+    if r.stderr:
+        print(r.stderr, file=sys.stderr)
     if r.returncode != 0:
-        print("❌ Suite falla. NO hagas push.", file=sys.stderr)
+        print("❌ make validate falló. NO hagas push.", file=sys.stderr)
         return 1
-    print("✅ Suite pasa. Puedes push.")
+    print("✅ make validate pasa. Puedes push.")
     return 0
 
 
