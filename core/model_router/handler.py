@@ -42,8 +42,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _send_text(self, text: str, status: int = 200) -> None:
         self.send_response(status)
-self.send_header("Content-Type", "text/plain
-charset=utf-8")
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
         self.end_headers()
         self.wfile.write(text.encode())
 
@@ -137,7 +136,7 @@ charset=utf-8")
             sock.send(b"status")
             supervisor_data = sock.recv().decode()
         except Exception as e:
-            log.warning("Error conectando a supervisor IPC: {e}")
+            log.warning(f"Error conectando a supervisor IPC: {e}")
             supervisor_data = json.dumps({"error": "supervisor no accesible"})
         finally:
             if sock:
@@ -150,22 +149,11 @@ charset=utf-8")
 
     def _handle_status(self) -> None:
         html = "<html><head><title>URA System Status</title><meta charset='utf-8'><style>"
-html += "body{font-family:monospace
-background:#0d1117
-color:#c9d1d9
-padding:20px}"
+        html += "body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px}"
         html += "h1{color:#58a6ff}.ok{color:#3fb950}.err{color:#f85149}"
-html += ".grid{display:grid
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr))
-gap:12px}"
-html += ".card{background:#161b22
-border:1px solid #30363d
-border-radius:8px
-padding:16px}"
-html += ".card h3{color:#8b949e
-margin:0 0 8px 0
-font-size:14px
-text-transform:uppercase}"
+        html += ".grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}"
+        html += ".card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px}"
+        html += ".card h3{color:#8b949e;margin:0 0 8px 0;font-size:14px;text-transform:uppercase}"
         html += "</style></head><body>"
         html += "<h1>URA System Status</h1><div class='grid'>"
         tasks_data = []
@@ -191,9 +179,7 @@ text-transform:uppercase}"
                     ctx.term()
         healthy = sum(1 for t in tasks_data if not t["done"] and t.get("last_error") is None)
         html += "<div class='card'><h3>Corrutinas</h3>"
-html += f"<div style='font-size:24px
-font-weight:bold
-color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
+        html += f"<div style='font-size:24px;font-weight:bold;color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
         html += "<div style='margin-top:8px'>"
         for t in sorted(tasks_data, key=lambda x: x["name"]):
             ok = not t["done"] and t.get("last_error") is None
@@ -201,8 +187,7 @@ color:#58a6ff'>{healthy}/{len(tasks_data)}</div>"
             color = "#3fb950" if ok else "#f85149"
             html += f"<div style='color:{color}'>{icon} {t['name']}</div>"
         html += "</div></div></div>"
-html += f"<div style='margin-top:16px
-color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
+        html += f"<div style='margin-top:16px;color:#484f58'>Golden Baseline v3.0 — {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC</div>"
         html += "</body></html>"
         self._send_html(html)
 

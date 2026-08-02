@@ -91,6 +91,13 @@ inventario:
 	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
 
 
+# === CHAOS ===
+chaos:
+	@echo "▶ Ejecutando chaos tests (dry-run)..."
+	@$(PYTHON) scripts/pro/chaos_test.py --dry-run
+	@echo "✅ Chaos tests completados"
+
+
 # === HARDENING ===
 hardening:
 	@echo "▶ Auditando hardening de servicios systemd..."
