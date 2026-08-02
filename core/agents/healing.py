@@ -37,43 +37,63 @@ class SelfHealingLoop:
         reporte["pasos"].append({"paso": "orquestar", "accion": accion, "razon": razon})
 
         if accion == "REFACTORIZAR":
-            Conciencia.actualizar_proceso("ejecutor", "activo")
-            result = self.ejecutor.ejecutar(workers=4)
-            reporte["refactor"] = result
-            Conciencia.actualizar_proceso("ejecutor", "idle")
+            self._accion_refactorizar(reporte)
 
         elif accion == "REPARAR":
-            Conciencia.actualizar_proceso("reparador", "activo")
-            try:
-                r = subprocess.run(
-                    [RUFF, "check", "--select", "F821", "--output-format", "json", "."],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    cwd=str(URA_ROOT),
-                    check=False,
-                )
-                data = json.loads(r.stdout)
-                files = {x["filename"] for x in data if "/.venv/" not in x.get("filename", "")}
-                for f in list(files)[:5]:
-                    reparado, nivel, msg = self.reparador.reparar(f, [])
-                    reporte["pasos"].append(
-                        {
-                            "paso": "reparar",
-                            "archivo": f,
-                            "reparado": reparado,
-                            "nivel": nivel,
-                            "mensaje": msg,
-                        },
-                    )
-            except Exception as e:
-                reporte["pasos"].append({"paso": "reparar", "error": str(e)})
-            Conciencia.actualizar_proceso("reparador", "idle")
+            self._accion_reparar(reporte)
 
         elif accion == "PAUSAR":
-            reporte["pasos"].append({"paso": "pausar", "mensaje": "RAM saturada"})
-            time.sleep(30)
+            self._accion_pausar(reporte)
 
+        self._aplicar_reglas_auto()
+
+        f821_final = self.telemetria.f821_count()
+        Conciencia.actualizar_proceso("orquestador", "idle")
+
+        return self._cerrar_reporte(reporte, inicio, f821_final)
+
+    def _accion_refactorizar(self, reporte: dict) -> None:
+        Conciencia.actualizar_proceso("ejecutor", "activo")
+        result = self.ejecutor.ejecutar(workers=4)
+        reporte["refactor"] = result
+        Conciencia.actualizar_proceso("ejecutor", "idle")
+
+    def _accion_reparar(self, reporte: dict) -> None:
+        Conciencia.actualizar_proceso("reparador", "activo")
+        try:
+            files = self._escanear_f821()
+            for f in list(files)[:5]:
+                reparado, nivel, msg = self.reparador.reparar(f, [])
+                reporte["pasos"].append(
+                    {
+                        "paso": "reparar",
+                        "archivo": f,
+                        "reparado": reparado,
+                        "nivel": nivel,
+                        "mensaje": msg,
+                    },
+                )
+        except Exception as e:
+            reporte["pasos"].append({"paso": "reparar", "error": str(e)})
+        Conciencia.actualizar_proceso("reparador", "idle")
+
+    def _escanear_f821(self) -> set[str]:
+        r = subprocess.run(
+            [RUFF, "check", "--select", "F821", "--output-format", "json", "."],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(URA_ROOT),
+            check=False,
+        )
+        data = json.loads(r.stdout)
+        return {x["filename"] for x in data if "/.venv/" not in x.get("filename", "")}
+
+    def _accion_pausar(self, reporte: dict) -> None:
+        reporte["pasos"].append({"paso": "pausar", "mensaje": "RAM saturada"})
+        time.sleep(30)
+
+    def _aplicar_reglas_auto(self) -> None:
         subprocess.run(
             [RUFF, "check", "--fix", "."],
             capture_output=True,
@@ -89,9 +109,7 @@ class SelfHealingLoop:
             check=False,
         )
 
-        f821_final = self.telemetria.f821_count()
-        Conciencia.actualizar_proceso("orquestador", "idle")
-
+    def _cerrar_reporte(self, reporte: dict, inicio: float, f821_final: int) -> dict:
         if time.monotonic() - inicio > MAX_CICLO_S:
             reporte["resultado"] = "TIMEOUT"
             reporte["razon"] = f"Sobrepasado {MAX_CICLO_S}s limite"
