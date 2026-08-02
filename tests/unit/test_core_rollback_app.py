@@ -99,8 +99,9 @@ class TestRollbackManager:
 
 class TestCreateApp:
     def test_create_app_estructura(self) -> None:
+        from fastapi import APIRouter
         with mock.patch("core.mochila.app.build_state"):
-            with mock.patch("core.mochila.app.create_api_router") as router:
+            with mock.patch("core.mochila.app.create_api_router", side_effect=lambda state: APIRouter()) as router:
                 with mock.patch("core.mochila.app.load_dotenv"):
                     app = create_app()
         assert app.title == "Mochila Middleware"
