@@ -28,6 +28,7 @@ from scripts.pro.tuneladora.pipeline.tools.base import Status, ToolBase
 from scripts.pro.tuneladora.pipeline.tools.mypy_tool import MypyTool
 from scripts.pro.tuneladora.pipeline.tools.pytest_tool import PytestTool
 from scripts.pro.tuneladora.pipeline.tools.ruff_tool import RuffTool
+from scripts.pro import conciencia as _conciencia  # noqa: E402
 
 log = logging.getLogger("tuneladora.runner")
 LOCK_TIMEOUT = 1800
@@ -614,6 +615,7 @@ class PipelineRunner:
 
         try:
             self._telemetry["start"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+            _conciencia.escribir_proceso("tuneladora", "iniciado", {"mode": self.mode, "n_files": len(self.files)})
 
             pre = self.preflight()
             all_phase_results.append(pre)
@@ -685,6 +687,7 @@ class PipelineRunner:
 
             self._telemetry["duration_s"] = time.monotonic() - t_start
             self._telemetry["verdict"] = verdict.name
+            _conciencia.escribir_proceso("tuneladora", verdict.name, {"duration_s": self._telemetry["duration_s"], "msg": msg})
             self._telemetry["n_files"] = len(self.files)
             self._telemetry["head"] = head
 
