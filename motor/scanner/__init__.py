@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -13,6 +12,7 @@ from motor.scanner.collector_hw_asus import escanear_hw_asus
 from motor.scanner.collector_hw_vm import escanear_hw_vm
 from motor.scanner.collector_red import escanear_red
 from motor.scanner.diff_detector import compute_diff
+from motor.scanner.scanner import _recursos_proc, _recursos_psutil
 from motor.scanner.sliding_window import SlidingWindow
 
 log = logging.getLogger("ura.scanner")
@@ -139,77 +139,10 @@ class Scanner:
 
     def _check_recursos(self) -> dict:
         """Recolecta métricas de RAM, disco, CPU y zombies."""
-        try:
-            import psutil
-
-            mem = psutil.virtual_memory()
-            disk = psutil.disk_usage("/")
-            return {
-                "ram_pct": round(mem.percent, 1),
-                "ram_gb": round(mem.total / 1e9, 1),
-                "ram_available_gb": round(mem.available / 1e9, 1),
-                "disk_pct": round(disk.percent, 1),
-                "disk_gb": round(disk.total / 1e9, 1),
-                "disk_free_gb": round(disk.free / 1e9, 1),
-                "load_1m": round(psutil.getloadavg()[0], 2),
-                "ncpu": psutil.cpu_count(),
-                "zombies": sum(1 for p in psutil.process_iter() if p.status() == "zombie"),
-            }
-        except ImportError:
-            log.debug("psutil no disponible, fallback a /proc")
-        except Exception as e:
-            log.warning("psutil falló: %s", e)
-
-        meminfo = {}
-        try:
-            with open("/proc/meminfo") as f:  # noqa: PTH123
-                meminfo = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in f if ":" in l)}
-        except Exception as e:
-            log.warning("fallo lectura /proc/meminfo: %s", e)
-        mem_total = meminfo.get("MemTotal", 1) * 1024
-        mem_avail = meminfo.get("MemAvailable", 0) * 1024
-
-        load = 0.0
-        try:
-            with open("/proc/loadavg") as f:  # noqa: PTH123
-                load = float(f.read().split()[0])
-        except Exception as e:
-            log.debug("fallo lectura /proc/loadavg: %s", e)
-        ncpu = os.cpu_count() or 1
-
-        try:
-            s = os.statvfs("/")
-            disk_total = s.f_frsize * s.f_blocks
-            disk_free = s.f_frsize * s.f_bfree
-            disk_pct = round((1 - disk_free / disk_total) * 100, 1) if disk_total else 0
-        except Exception as e:
-            log.warning("fallo statvfs: %s", e)
-            disk_total = disk_free = disk_pct = 0
-
-        zombies = 0
-        try:
-            for p in Path("/proc").iterdir():
-                if p.name.isdigit():
-                    try:
-                        texto = (p / "status").read_text()
-                        if any(line.startswith("State:") and "Z" in line for line in texto.split("\n")):
-                            zombies += 1
-                    except Exception as e:
-                        log.debug("fallo lectura proc status: %s", e)
-        except Exception as e:
-            log.debug("fallo iteracion /proc: %s", e)
-
-        return {
-            "ram_pct": round((1 - mem_avail / mem_total) * 100, 1),
-            "ram_gb": round(mem_total / 1e9, 1),
-            "ram_available_gb": round(mem_avail / 1e9, 1),
-            "disk_pct": disk_pct,
-            "disk_gb": round(disk_total / 1e9, 1),
-            "disk_free_gb": round(disk_free / 1e9, 1),
-            "load_1m": load,
-            "ncpu": ncpu,
-            "zombies": zombies,
-        }
+        recursos = _recursos_psutil()
+        if recursos is not None:
+            return recursos
+        return _recursos_proc()
 
     def _check_contenedores(self) -> dict:
         """Cuenta contenedores docker por estado."""
