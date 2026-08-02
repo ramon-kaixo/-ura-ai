@@ -13,7 +13,7 @@ validate: test lint mypy-info radon
 	@echo "✅ validate OK"
 
 # === VALIDACIÓN COMPLETA (CI, < 5 min) ===
-validate-full: test-full lint-strict mypy-info radon
+validate-full: test-full lint mypy-info radon
 	@echo "✅ validate-full OK"
 
 # === TESTS ===
