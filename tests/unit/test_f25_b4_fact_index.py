@@ -347,6 +347,7 @@ def test_lookup_order_deterministic() -> None:
 # ── B4.12: benchmarks ──────────────────────────────────
 
 
+@pytest.mark.slow
 def test_benchmark_build_1000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(1000)]
     start = time.perf_counter()
@@ -356,6 +357,7 @@ def test_benchmark_build_1000() -> None:
     assert t < 0.1, f"Build 1K facts took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
 def test_benchmark_build_10000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(10000)]
     start = time.perf_counter()
@@ -365,6 +367,7 @@ def test_benchmark_build_10000() -> None:
     assert t < 0.5, f"Build 10K facts took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
 def test_benchmark_lookup_10000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(10000)]
     idx = FactIndex.build(facts)
@@ -376,6 +379,7 @@ def test_benchmark_lookup_10000() -> None:
     assert t < 0.05, f"10K lookups took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
 def test_benchmark_incremental_add() -> None:
     """Incremental update cost O(Δ): adding 100 facts to existing 10K."""
     core = [_make_fact(f"f{i}") for i in range(10000)]
@@ -391,6 +395,7 @@ def test_benchmark_incremental_add() -> None:
     assert t < 0.05, f"Incremental add 100 took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
 def test_benchmark_memory_estimate() -> None:
     """Estimar footprint de 10K facts en el índice."""
     facts = [_make_fact(f"f{i}", evidence_ids=("ev1", "ev2")) for i in range(10000)]
@@ -513,6 +518,7 @@ def test_consistency_copy_preserves_integrity() -> None:
 # ── B4.14: skewed distribution benchmark ────────────────
 
 
+@pytest.mark.slow
 def test_benchmark_skewed_distribution() -> None:
     """100 facts para una entidad + 9900 para otras."""
     facts = [_make_fact(f"f{i}", subject="HotEntity") for i in range(100)]
