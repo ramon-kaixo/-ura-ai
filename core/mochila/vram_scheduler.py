@@ -177,18 +177,21 @@ class VRAMAwareScheduler:
 
     async def _scheduler_loop(self) -> None:
         while True:
-            try:
-                await self.sync_vram()
-                async with self._lock:
-                    now = time.time()
-                    self._queue = [(f, mb, dl, d) for f, mb, dl, d in self._queue if dl > now]
-                    if len(self._active) == 0 and self._queue:
-                        fut, mb, _deadline, data = self._queue[0]
-                        if not fut.done() and mb <= self.available_mb():
-                            self._queue.pop(0)
-                            req_id = str(uuid.uuid4())
-                            self._active[req_id] = {"mb": mb, "ts": now, "model": data.get("model", "")}
-                            fut.set_result(req_id)
-            except Exception as e:
-                self._scheduler_log.error("scheduler_loop error: %s", e)
+            await self._scheduler_loop_once()
             await asyncio.sleep(0.5)
+
+    async def _scheduler_loop_once(self) -> None:
+        try:
+            await self.sync_vram()
+            async with self._lock:
+                now = time.time()
+                self._queue = [(f, mb, dl, d) for f, mb, dl, d in self._queue if dl > now]
+                if len(self._active) == 0 and self._queue:
+                    fut, mb, _deadline, data = self._queue[0]
+                    if not fut.done() and mb <= self.available_mb():
+                        self._queue.pop(0)
+                        req_id = str(uuid.uuid4())
+                        self._active[req_id] = {"mb": mb, "ts": now, "model": data.get("model", "")}
+                        fut.set_result(req_id)
+        except Exception as e:
+            self._scheduler_log.error("scheduler_loop error: %s", e)
