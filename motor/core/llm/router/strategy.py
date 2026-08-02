@@ -53,7 +53,6 @@ def call_with_retry(
     **kwargs,
 ) -> Any:
     from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
-    from motor.core.llm.observability import metrics
 
     cb = _get_cb(provider_name, circuit_breakers)
     last_error: str | None = None
@@ -64,71 +63,31 @@ def call_with_retry(
     for attempt in range(max_attempts):
         t0 = time.monotonic()
         try:
-            if monitor:
-                monitor.start_operation(provider_name, task, model)
-                result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
-                monitor.finish_operation(provider_name, task)
-            else:
-                if profiler:
-                    profiler.start(provider_name, task, model)
-                result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
-                if profiler:
-                    profile = profiler.stop(provider_name, task)
-                    if profile:
-                        if detector:
-                            detector.evaluate_from_profile(profile)
-                        if baseline:
-                            baseline.record(
-                                provider_name,
-                                task,
-                                wall_time_ms=profile.wall_time_ms,
-                                cpu_time_ms=profile.cpu_time_ms,
-                                peak_memory_bytes=profile.peak_memory_bytes,
-                            )
-            latency_ms = (time.monotonic() - t0) * 1000
-
-            tokens = None
-            if method == "generate" and isinstance(result, str):
-                tokens = max(1, len(result) // 4)
-
-            metrics.record(provider_name, task, latency_ms, success=True, tokens=tokens)
-            log.info(
-                "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d cb=%s",
+            result = _call_provider(
+                prov_obj,
+                method,
+                prompt,
+                kwargs,
+                monitor,
+                profiler,
+                detector,
+                baseline,
                 provider_name,
                 task,
-                latency_ms,
-                attempt + 1,
-                cb.state.value,
+                model,
+                cb,
             )
-            return result
+            return _record_success(result, method, provider_name, task, t0, attempt, cb)
 
         except CircuitBreakerOpenError as e:
-            latency_ms = (time.monotonic() - t0) * 1000
-            metrics.record(provider_name, task, latency_ms, success=False, error="circuit_open")
-            log.warning(
-                "llm_call  provider=%s op=%s latency_ms=%.0f error=circuit_open retry_after=%.0fs",
-                provider_name,
-                task,
-                latency_ms,
-                e.retry_after,
-            )
-            return _build_error(method, "circuit_breaker_open")
+            return _record_circuit_open(method, provider_name, task, t0, e)
 
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error_str = _classify_error(e)
             last_error = error_str
             is_transient = _is_transient_error(e)
-            metrics.record(provider_name, task, latency_ms, success=False, error=error_str)
-            log.warning(
-                "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d error=%s transient=%s",
-                provider_name,
-                task,
-                latency_ms,
-                attempt + 1,
-                error_str,
-                is_transient,
-            )
+            _record_failure(provider_name, task, latency_ms, attempt, error_str, is_transient)
             if not is_transient or attempt >= max_attempts - 1:
                 return _build_error(method, error_str)
             backoff = min(retry_backoff_base * (2**attempt), retry_backoff_max)
@@ -136,6 +95,114 @@ def call_with_retry(
             attempts += 1
 
     return _build_error(method, last_error or "unknown")
+
+
+def _call_provider(
+    prov_obj: Any,
+    method: str,
+    prompt: str,
+    kwargs: dict[str, Any],
+    monitor: Any,
+    profiler: Any,
+    detector: Any,
+    baseline: Any,
+    provider_name: str,
+    task: str,
+    model: Any,
+    cb: Any,
+) -> Any:
+    if monitor:
+        monitor.start_operation(provider_name, task, model)
+        result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
+        monitor.finish_operation(provider_name, task)
+        return result
+    if profiler:
+        profiler.start(provider_name, task, model)
+    result = cb.call(lambda: getattr(prov_obj, method)(prompt, **kwargs))
+    if profiler:
+        profile = profiler.stop(provider_name, task)
+        if profile:
+            if detector:
+                detector.evaluate_from_profile(profile)
+            if baseline:
+                baseline.record(
+                    provider_name,
+                    task,
+                    wall_time_ms=profile.wall_time_ms,
+                    cpu_time_ms=profile.cpu_time_ms,
+                    peak_memory_bytes=profile.peak_memory_bytes,
+                )
+    return result
+
+
+def _record_success(
+    result: Any,
+    method: str,
+    provider_name: str,
+    task: str,
+    t0: float,
+    attempt: int,
+    cb: Any,
+) -> Any:
+    from motor.core.llm.observability import metrics
+
+    latency_ms = (time.monotonic() - t0) * 1000
+    tokens = None
+    if method == "generate" and isinstance(result, str):
+        tokens = max(1, len(result) // 4)
+    metrics.record(provider_name, task, latency_ms, success=True, tokens=tokens)
+    log.info(
+        "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d cb=%s",
+        provider_name,
+        task,
+        latency_ms,
+        attempt + 1,
+        cb.state.value,
+    )
+    return result
+
+
+def _record_circuit_open(
+    method: str,
+    provider_name: str,
+    task: str,
+    t0: float,
+    e: Exception,
+) -> Any:
+    from motor.core.llm.observability import metrics
+
+    latency_ms = (time.monotonic() - t0) * 1000
+    metrics.record(provider_name, task, latency_ms, success=False, error="circuit_open")
+    log.warning(
+        "llm_call  provider=%s op=%s latency_ms=%.0f error=circuit_open retry_after=%.0fs",
+        provider_name,
+        task,
+        latency_ms,
+        getattr(e, "retry_after", 0.0),
+    )
+    return _build_error(method, "circuit_breaker_open")
+
+
+def _record_failure(
+    provider_name: str,
+    task: str,
+    latency_ms: float,
+    attempt: int,
+    error_str: str,
+    is_transient: bool,
+) -> None:
+    from motor.core.llm.observability import metrics
+
+    metrics.record(provider_name, task, latency_ms, success=False, error=error_str)
+    log.warning(
+        "llm_call  provider=%s op=%s latency_ms=%.0f attempt=%d error=%s transient=%s",
+        provider_name,
+        task,
+        latency_ms,
+        attempt + 1,
+        error_str,
+        is_transient,
+    )
 
 
 _RETRY_KWARGS = {
