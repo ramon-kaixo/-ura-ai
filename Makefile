@@ -91,6 +91,13 @@ inventario:
 	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
 
 
+# === BACKUP ===
+backup:
+	@echo "▶ Backup del asistente..."
+	@$(PYTHON) scripts/pro/backup_assistant.py
+	@echo "✅ Backup completado"
+
+
 # === CLEANUP ===
 cleanup:
 	@echo "▶ Limpiando mensajes antiguos del asistente..."
