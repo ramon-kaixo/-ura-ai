@@ -15,7 +15,6 @@ from motor.core.llm.router.strategy import call_with_fallback, call_with_retry
 def _mock_metrics(monkeypatch):
     metrics = mock.Mock()
     monkeypatch.setattr("motor.core.llm.observability.metrics", metrics)
-    monkeypatch.setattr("motor.core.llm.router.strategy.metrics", metrics)
     yield metrics
 
 
@@ -23,7 +22,7 @@ class TestGetCb:
     def test_crea_si_no_existe(self, monkeypatch) -> None:
         cbs: dict = {}
         cb_cls = mock.Mock()
-        monkeypatch.setattr("motor.core.llm.router.strategy.CircuitBreaker", cb_cls)
+        monkeypatch.setattr("motor.core.llm.circuit_breaker.CircuitBreaker", cb_cls)
         out = strat._get_cb("p", cbs)
         assert out is cb_cls.return_value
         assert "p" in cbs
@@ -96,7 +95,7 @@ class TestCallWithRetry:
         else:
             prov.generate.return_value = prov_result
         metrics = FakeMetrics()
-        monkeypatch.setattr(strat, "metrics", metrics)
+        monkeypatch.setattr("motor.core.llm.observability.metrics", metrics)
         return cb, cbs, prov, metrics
 
     def test_exito(self, monkeypatch) -> None:
@@ -141,7 +140,7 @@ class TestCallWithRetry:
         cbs = {"p": CbOpen()}
         prov = mock.Mock()
         metrics = FakeMetrics()
-        monkeypatch.setattr(s, "metrics", metrics)
+        monkeypatch.setattr("motor.core.llm.observability.metrics", metrics)
         r = call_with_retry(prov, "generate", "task", "p", None, cbs)
         assert r == "Error: circuit_breaker_open"
 
@@ -199,7 +198,7 @@ class TestCallWithFallback:
         prim.generate.side_effect = ValueError("bad")
         cbs = {"p": FakeCB()}
         reg = self._reg({"p": prim})
-        r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola", fallback_enabled=False)
+        r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, fallback_enabled=False, retry_enabled=False)
         assert name == "p"
         assert r.startswith("Error:")
 
