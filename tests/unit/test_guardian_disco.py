@@ -1,7 +1,6 @@
 """Tests for core/guardian_disco.py."""
 
 import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest

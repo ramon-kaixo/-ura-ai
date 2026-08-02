@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from core.guardian_openclaw import BACKUP_DIR, GuardianOpenCLaw, get_guardian
+from core.guardian_openclaw import GuardianOpenCLaw, get_guardian
 
 
 @pytest.fixture
