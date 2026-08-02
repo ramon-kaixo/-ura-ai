@@ -44,3 +44,11 @@
 | 40 | test_approval_chat_completions | test_api_approvals.py | requiere servidor API levantado | Skip en CI sin servidor |
 
 **Total: 40 skipped. Todas justificadas.**
+
+## Tests Flaky (no skipped, pero fallan intermitentemente)
+
+| # | Test | Archivo | Razón | Acción | Estado |
+|---|------|---------|-------|--------|--------|
+| 41 | test_100_exitos | test_model_router_selection.py | Estado compartido entre tests (SuccessRates contaminado por otro test) | OpenCode: investigar test contaminador y aislar estado | Pendiente |
+
+**Nota:** Este test pasa cuando se ejecuta solo (`pytest test_model_router_selection.py::TestSuccessRates::test_100_exitos`) pero falla cuando se ejecuta la suite completa. Indica contaminación de estado global entre archivos de test.
