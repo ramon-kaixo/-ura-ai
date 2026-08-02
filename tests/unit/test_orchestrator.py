@@ -12,7 +12,10 @@ class TestOrchestrator:
             class R:
                 returncode = 0
                 stdout = "5 passed\n"
+                stderr = ""
+
             return R()
+
         monkeypatch.setattr(subprocess, "run", fake_run)
         assert main() == 0
 
@@ -21,6 +24,9 @@ class TestOrchestrator:
             class R:
                 returncode = 1
                 stdout = "1 failed\n"
+                stderr = "error de make"
+
             return R()
+
         monkeypatch.setattr(subprocess, "run", fake_run)
         assert main() == 1
