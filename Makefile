@@ -91,6 +91,13 @@ inventario:
 	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
 
 
+# === HARDENING ===
+hardening:
+	@echo "▶ Auditando hardening de servicios systemd..."
+	@-$(PYTHON) scripts/pro/hardening_audit.py || echo "  ⚠️ Requiere permisos de root"
+	@echo "✅ Auditoría de hardening completada"
+
+
 # === BACKUP ===
 backup:
 	@echo "▶ Backup del asistente..."

@@ -36,8 +36,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
 
     def _send_html(self, html: str, status: int = 200) -> None:
         self.send_response(status)
-self.send_header("Content-Type", "text/html
-charset=utf-8")
+        self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(html.encode("utf-8"))
 

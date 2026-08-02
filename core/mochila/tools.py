@@ -119,8 +119,7 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
                 DUCKDUCKGO_URL,
                 data={"q": query},
                 headers={
-"User-Agent": "Mozilla/5.0 (compatible
-URA/1.0)",
+                    "User-Agent": "Mozilla/5.0 (compatible; URA/1.0)",
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
                 follow_redirects=True,
