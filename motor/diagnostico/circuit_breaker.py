@@ -1,7 +1,7 @@
+
 import logging
 
 log = logging.getLogger("ura.diagnostico.circuit")
-
 
 class CircuitBreaker:
     """Circuit breaker para Qdrant: abre tras N fallos consecutivos."""
@@ -15,8 +15,8 @@ class CircuitBreaker:
         self._abierto = False
 
     def operacional(self) -> bool:
-"""Devuelve True si Qdrant responde
-abre el circuito tras FALLOS_MAX fallos."""
+        """Devuelve True si Qdrant responde
+        abre el circuito tras FALLOS_MAX fallos."""
         if self._abierto:
             return False
         ok = self._qdrant.health()
