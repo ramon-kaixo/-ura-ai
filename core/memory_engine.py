@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from core.config_manager import CONFIG
 from motor.core.config import UraConfig
@@ -80,7 +81,7 @@ def load_manifest() -> dict:
 
 def save_manifest(manifest: dict) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Verificar espacio en disco antes de escribir
     try:
         import shutil
@@ -94,11 +95,11 @@ def save_manifest(manifest: dict) -> None:
     except Exception as e:
         log.exception(f"Error verificando espacio en disco: {e}")
         raise
-    
+
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
-def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
+def index_documents(force: bool = False) -> dict:
     """Indexa todos los documentos en data/documentos/ en Qdrant.
     - Archivos nuevos → chunk + embed (vía Ollama)
     - Archivos modificados (SHA-256 ≠) → re-indexa
@@ -112,19 +113,39 @@ def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
-    manifest = (
-        load_manifest() if not force else {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
-    )
+    manifest = _cargar_manifest(force)
+    current_files = _escanear_archivos()
+    stats = {"new": 0, "modified": 0, "unchanged": 0, "deleted": 0, "chunks_added": 0}
 
+    _procesar_eliminados(manifest, current_files, qdrant, stats)
+
+    for rel_path, file_hash in current_files.items():
+        _indexar_archivo(rel_path, file_hash, manifest, qdrant, stats, force)
+
+    manifest["indexed_at"] = datetime.now(UTC).isoformat()
+    manifest["total_documents"] = len(manifest["files"])
+    manifest["total_chunks"] = stats["chunks_added"]
+    save_manifest(manifest)
+
+    return stats
+
+
+def _cargar_manifest(force: bool) -> dict:
+    if force:
+        return {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
+    return load_manifest()
+
+
+def _escanear_archivos() -> dict[str, str]:
     current_files = {}
     for f in DOCS_DIR.rglob("*"):
         if f.is_file() and not f.name.startswith("."):
             rel = str(f.relative_to(DOCS_DIR))
             current_files[rel] = _sha256(f)
+    return current_files
 
-    stats = {"new": 0, "modified": 0, "unchanged": 0, "deleted": 0, "chunks_added": 0}
 
-    # Detectar eliminados
+def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats: dict) -> None:
     for rel_path in list(manifest.get("files", {}).keys()):
         if rel_path not in current_files:
             try:
@@ -134,66 +155,62 @@ def index_documents(force: bool = False) -> dict:  # noqa: PLR0915
             except Exception as e:
                 log.warning(f"Error eliminando {rel_path}: {e}")
 
-    # Detectar nuevos/modificados
-    for rel_path, file_hash in current_files.items():
-        existing = manifest.get("files", {}).get(rel_path, {})
-        if existing.get("sha256") == file_hash and not force:
-            stats["unchanged"] += 1
-            continue
 
-        is_modified = rel_path in manifest.get("files", {})
-        if is_modified:
-            stats["modified"] += 1
-            with contextlib.suppress(Exception):
-                qdrant.eliminar_por_filtro({"source": rel_path})
-        else:
-            stats["new"] += 1
+def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:
+    existing = manifest.get("files", {}).get(rel_path, {})
+    if existing.get("sha256") == file_hash and not force:
+        stats["unchanged"] += 1
+        return
 
-        # Leer y chunkear
-        try:
-            filepath = DOCS_DIR / rel_path
-            text = filepath.read_text(encoding="utf-8")
-        except Exception as e:
-            log.exception(f"Error crítico leyendo {rel_path}: {e}")
-            continue
+    is_modified = rel_path in manifest.get("files", {})
+    if is_modified:
+        stats["modified"] += 1
+        with contextlib.suppress(Exception):
+            qdrant.eliminar_por_filtro({"source": rel_path})
+    else:
+        stats["new"] += 1
 
-        chunks = _chunk_text(text)
-        if not chunks:
-            continue
+    try:
+        filepath = DOCS_DIR / rel_path
+        text = filepath.read_text(encoding="utf-8")
+    except Exception as e:
+        log.exception(f"Error crítico leyendo {rel_path}: {e}")
+        return
 
-        # Preparar batch para Qdrant
-        now = datetime.now(UTC).isoformat()
-        docs_batch = []
-        for i, chunk_text in enumerate(chunks):
-            doc_id = f"{rel_path}_{i}"
-            metadata = {
-                "source": rel_path,
-                "chunk_index": i,
-                "total_chunks": len(chunks),
-                "sha256": file_hash,
-                "indexed_at": now,
-            }
-            docs_batch.append((doc_id, chunk_text, metadata))
+    chunks = _chunk_text(text)
+    if not chunks:
+        return
 
-        try:
-            guardados = qdrant.guardar_documentos_batch(docs_batch)
-            stats["chunks_added"] += guardados
-        except Exception as e:
-            log.exception(f"Error crítico indexando {rel_path}: {e}")
-            continue
+    now = datetime.now(UTC).isoformat()
+    docs_batch = _construir_batch(rel_path, file_hash, chunks, now)
 
-        manifest["files"][rel_path] = {
+    try:
+        guardados = qdrant.guardar_documentos_batch(docs_batch)
+        stats["chunks_added"] += guardados
+    except Exception as e:
+        log.exception(f"Error crítico indexando {rel_path}: {e}")
+        return
+
+    manifest["files"][rel_path] = {
+        "sha256": file_hash,
+        "chunks": len(chunks),
+        "indexed_at": now,
+    }
+
+
+def _construir_batch(rel_path: str, file_hash: str, chunks: list[str], now: str) -> list:
+    docs_batch = []
+    for i, chunk_text in enumerate(chunks):
+        doc_id = f"{rel_path}_{i}"
+        metadata = {
+            "source": rel_path,
+            "chunk_index": i,
+            "total_chunks": len(chunks),
             "sha256": file_hash,
-            "chunks": len(chunks),
             "indexed_at": now,
         }
-
-    manifest["indexed_at"] = datetime.now(UTC).isoformat()
-    manifest["total_documents"] = len(manifest["files"])
-    manifest["total_chunks"] = stats["chunks_added"]
-    save_manifest(manifest)
-
-    return stats
+        docs_batch.append((doc_id, chunk_text, metadata))
+    return docs_batch
 
 
 # =====================================================# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
