@@ -129,6 +129,7 @@ class TestPublisher:
         # _ensure_publisher_async no ejecuta el cuerpo real porque _run_async es mock
         assert eb._pub_sock is None or True
 
+    @pytest.mark.slow
     def test_ensure_publisher_async(self, monkeypatch, tmp_path) -> None:
         import asyncio as _asyncio
 
