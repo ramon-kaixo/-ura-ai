@@ -27,3 +27,15 @@
 - Los 2 DeprecationWarning bloquean pytest -W error (G6).
 - Los RuntimeWarning son deuda tecnica de tests.
 - StarletteDeprecationWarning depende de version FastAPI en requirements.
+
+## Warnings de Flaky Tests (agosto 2026)
+
+| Test | Causa | Estado |
+|------|-------|--------|
+| test_100_exitos | Estado compartido _get_success_rate | ✅ Arreglado (try/finally) |
+| test_ensure_publisher_async | Estado compartido event_bus | ✅ Marcado @slow |
+| test_api.py (8 tests) | Requieren servidor FastAPI | ✅ Marcado @slow |
+| test_core_rollback_app.py | Contaminación cruzada con pytest-randomly | 🔄 Pendiente |
+| test_mochila_infra.py (3 tests) | Flaky con cobertura | ✅ Marcado @slow |
+
+**Nota:** pytest-randomly ejecuta tests en orden aleatorio. Tests que mutan estado global (monkeypatch, sys.path, singletons) fallan cuando otro test los contamina. Solución a largo plazo: aislar estado con fixtures de pytest o desactivar randomly en CI.
