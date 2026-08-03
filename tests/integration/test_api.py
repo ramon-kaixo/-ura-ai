@@ -1,4 +1,5 @@
 """Tests for api.py."""
+import os
 
 import pytest
 
@@ -14,7 +15,7 @@ from knowledge.engine.api import app, state
 from knowledge.engine.connection import open_db
 from knowledge.engine.migrations import migrate_db
 
-KEY = "${URA_API_KEY}"
+KEY = os.environ.get("URA_API_KEY", "test-key")
 
 @pytest.fixture
 def client():

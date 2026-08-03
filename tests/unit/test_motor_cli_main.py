@@ -26,6 +26,8 @@ def test_setup_logging_default(monkeypatch: pytest.MonkeyPatch) -> None:
         main._setup_logging("info")
         root = get_logger.return_value
         root.addHandler.assert_called_once_with(handler)
+        # setLevel se llama 3 veces: httpx(WARNING), httpcore(WARNING), root(INFO)
+        assert root.setLevel.call_count >= 1
         assert call(logging.INFO) in root.setLevel.call_args_list
 
 
@@ -34,7 +36,9 @@ def test_setup_logging_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
             mock.patch("motor.cli.main.logging.Formatter"), \
             mock.patch("motor.cli.main.logging.getLogger") as get_logger:
         main._setup_logging("NOEXISTE")
-        assert call(logging.INFO) in get_logger.return_value.setLevel.call_args_list
+        root = get_logger.return_value
+        assert root.setLevel.call_count >= 1
+        assert call(logging.INFO) in root.setLevel.call_args_list
 
 
 def test_main_command_ura_commands(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -84,12 +88,12 @@ def test_main_sin_comando(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_main_flag_config(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_cfg = mock.Mock()
     fake_cfg.log_level = "INFO"
-    fake_cls = mock.Mock(return_value=fake_cfg)
-    fake_cls.load.return_value = fake_cfg
-    with mock.patch("motor.cli.main.UraConfig", fake_cls), \
-            mock.patch("motor.cli.main.sys.argv", ["ura", "--config", "/tmp/c.json", "status"]):
+    with mock.patch("motor.cli.main.UraConfig") as mock_cls, \
+            mock.patch("motor.cli.main.sys.argv", ["ura", "--config", "/tmp/c.json", "status"]), \
+            mock.patch("motor.cli.main.sys.exit"):
+        mock_cls.load.return_value = fake_cfg
         main.main()
-    fake_cls.load.assert_called_once_with("/tmp/c.json")
+    mock_cls.load.assert_called_once_with("/tmp/c.json")
     assert fake_cfg.log_level == "INFO"
 
 
