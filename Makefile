@@ -63,6 +63,13 @@ audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === DASHBOARD ===
+dashboard:
+	@echo "▶ Generando dashboard de salud..."
+	@$(PYTHON) scripts/pro/dashboard.py
+	@echo "✅ Dashboard generado"
+
+
 # === AUDITORIA ===
 audit:
 	@echo "▶ Ejecutando auditoría continua..."

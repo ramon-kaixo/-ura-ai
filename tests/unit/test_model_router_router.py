@@ -103,3 +103,25 @@ class TestConstantes:
         assert r.DEFAULT_TIPO == "respuesta_rapida"
         assert r.FALLBACK_MODEL == "qwen2.5:3b"
         assert r.CACHE_TTL == 7200
+
+
+class TestAuthFallbackReal:
+    def test_fallback_por_import_error(self, monkeypatch) -> None:
+        """El branch except ImportError del auth fallback en router.py."""
+        import builtins
+        import importlib
+
+        import core.model_router.router as r
+
+        real_import = builtins.__import__
+
+        def fake_import(name, *a, **k):
+            if name == "core.auth_layer":
+                raise ImportError("simulado")
+            return real_import(name, *a, **k)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+        importlib.reload(r)
+        assert r.auth_validate("x") is True
+        assert r.require_auth()(lambda: 1) is not None
+        importlib.reload(r)  # restaurar
