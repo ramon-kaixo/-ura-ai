@@ -163,17 +163,16 @@ class ContinuousEvaluator:
             loaded_baseline = baseline
         elif baseline_path and Path(baseline_path).exists():
             loaded_baseline = RegressionBaseline.load(baseline_path)
-            # Actualizar con resultados actuales
-            loaded_baseline.set_results(experiment_results)
 
-        # Detectar regresiones
+        # Detectar regresiones (comparar contra baseline ANTES de actualizarlo)
         regression_report = None
         if loaded_baseline:
             thresholds = self._critical_thresholds
             detector = RegressionDetector(loaded_baseline, thresholds=thresholds)
             regression_report = detector.check(experiment_results)
 
-            # Guardar baseline actualizada
+            # Actualizar baseline con resultados actuales y guardar
+            loaded_baseline.set_results(experiment_results)
             if baseline_path:
                 loaded_baseline.save(baseline_path)
         else:
