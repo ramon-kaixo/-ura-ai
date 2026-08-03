@@ -1,6 +1,7 @@
 """Tests para proveedores LLM OpenAI-compatibles: lmstudio, vllm, openrouter.
 
-Los tres módulos comparten estructura (generate/embed/health); se parametrizan
+Los tres módulos comparten estructura (generate/embed/health)
+se parametrizan
 sobre la clase, prefijo de secretos y defaults de cada proveedor.
 """
 from __future__ import annotations

@@ -142,13 +142,13 @@ class PipelineEngine:
             try:
                 start_http_server(9091)
                 self.log.info("Prometheus metrics server started on :9091")
-            except Exception as e:
+            except Exception:
                 self.log.warning("Prometheus server fallo: {e}")
 
     def set_dry_run(self, enabled: bool = True) -> None:
         """Activa/desactiva modo dry_run (simula sin modificar)."""
         self._dry_run = enabled
-        self.log.info(f"Dry run: {'ACTIVADO' if enabled else 'DESACTIVADO'}")
+        self.log.info("Dry run: {'ACTIVADO' if enabled else 'DESACTIVADO'}")
 
     # ── Ejecución de scripts ────────────────────────────────────
 
@@ -169,7 +169,7 @@ class PipelineEngine:
         self.log.info("Ejecutando: {' '.join(cmd[-3:])} (timeout={t}s, dry_run={dry_run})")
 
         if dry_run:
-            self.log.info("[DRY RUN] Simulado: {" ".join(cmd)}")
+            self.log.info("[DRY RUN] Simulado: {.join(cmd)}")
             self.ledger.add_warning(f"dry_run: {script}")
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="[dry run]", stderr="")
 
@@ -200,7 +200,7 @@ class PipelineEngine:
         """Ejecuta ruff con argumentos."""
         cmd = [self.config.ruff, *args]
         t = timeout or self.config.timeout_ruff
-        self.log.info("Ruff: {" ".join(args)}")
+        self.log.info("Ruff: {.join(args)}")
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -287,7 +287,7 @@ class PipelineEngine:
                     timestamp=time.time(),
                 )
                 self._alert_engine._alert_history.append(alert)
-            except Exception as e:
+            except Exception:
                 self.log.debug("Notificacion falló: {e}")
         else:
             self.log.warning("[NOTIFY] {severity.upper()}: {title} — {description}")

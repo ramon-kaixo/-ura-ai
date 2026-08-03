@@ -1,11 +1,8 @@
 """Tests para knowledge/engine/cli/ — archive y search."""
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 from knowledge.engine.cli.archive import (
     cmd_archive_list,

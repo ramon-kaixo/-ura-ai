@@ -186,7 +186,9 @@ check("validate_ip('') → False", lambda: validate_ip("") is False)
 check("validate_ssh_user('ramon') → True", lambda: validate_ssh_user("ramon") is True)
 check("validate_ssh_user('root') → True", lambda: validate_ssh_user("root") is True)
 check("validate_ssh_user('') → False", lambda: validate_ssh_user("") is False)
-check("validate_ssh_user('user;rm -rf') → False", lambda: validate_ssh_user("user;rm -rf") is False)
+check("validate_ssh_user('user
+rm -rf') → False", lambda: validate_ssh_user("user
+rm -rf") is False)
 
 # Verificar que SecurityValidator existe y se puede instanciar
 from mantenimiento.ura_maintenance import MaintenanceConfig, SecurityValidator

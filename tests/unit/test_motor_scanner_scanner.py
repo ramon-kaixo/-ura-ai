@@ -1,6 +1,5 @@
 """Tests para motor/scanner/scanner.py — escáner principal del sistema."""
 
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest import mock
 
@@ -23,7 +22,7 @@ class FakeExecutor:
         self.outputs: dict[str, str] = {}
         self.calls: list[list[str]] = []
 
-    def run(self, cmd, timeout: int = 30, cwd=None, env=None) -> ProcessResult:  # noqa: ANN001
+    def run(self, cmd, timeout: int = 30, cwd=None, env=None) -> ProcessResult:
         self.calls.append(list(cmd))
         for key, out in self.outputs.items():
             if any(key in c for c in cmd):
@@ -444,7 +443,6 @@ class TestHelpers:
     def test_hijos_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         monkeypatch.delitem(sys.modules, "psutil", raising=False)
-        import importlib
         fake = mock.Mock()
         fake.process_iter.side_effect = ImportError("no psutil")
         monkeypatch.setitem(sys.modules, "psutil", fake)

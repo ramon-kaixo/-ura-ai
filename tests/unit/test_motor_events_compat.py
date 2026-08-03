@@ -1,8 +1,6 @@
 """Tests para motor/events/compat.py — compatibilidad de API de plugins."""
 from __future__ import annotations
 
-import pytest
-
 from motor.events.compat import check_api_compatibility, check_plugin_dependency
 
 

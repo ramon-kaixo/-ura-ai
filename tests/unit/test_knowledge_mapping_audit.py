@@ -1,10 +1,7 @@
 """Tests para knowledge/engine/ontology/mapping.py y audit/backend.py."""
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 from knowledge.engine.audit.backend import AuditBackend, AuditHealth, record_metric
 from knowledge.engine.ontology.mapping import to_dcat, to_openlineage, to_prov, to_schema_jsonld

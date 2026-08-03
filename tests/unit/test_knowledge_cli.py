@@ -1,11 +1,8 @@
 """Tests para knowledge/engine/cli/ — jobs, pipeline, docs, notify."""
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 from knowledge.engine.cli.docs import cmd_docs_generate
 from knowledge.engine.cli.jobs import cmd_job_process

@@ -1,7 +1,6 @@
 """Tests para motor/core/llm/router/strategy.py — retry, circuit breaker, fallback."""
 from __future__ import annotations
 
-import time
 from types import SimpleNamespace
 from unittest import mock
 
@@ -99,20 +98,20 @@ class TestCallWithRetry:
         return cb, cbs, prov, metrics
 
     def test_exito(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="respuesta")
+        _cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="respuesta")
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, prompt="hola")
         assert r == "respuesta"
         assert metrics.records  # success record
 
     def test_retry_deshabilitado(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_error=TimeoutError())
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=TimeoutError())
         monkeypatch.setattr(strat.time, "sleep", mock.Mock())
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, retry_enabled=False)
         assert r.startswith("Error:")
         prov.generate.assert_called_once()
 
     def test_retry_transient(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_error=TimeoutError())
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=TimeoutError())
         sleep = mock.Mock()
         monkeypatch.setattr(strat.time, "sleep", sleep)
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, retry_max_attempts=3)
@@ -121,14 +120,13 @@ class TestCallWithRetry:
         assert sleep.call_count == 2  # backoff entre intentos
 
     def test_error_no_transiente_sin_retry(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_error=ValueError("bad"))
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=ValueError("bad"))
         monkeypatch.setattr(strat.time, "sleep", mock.Mock())
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, retry_max_attempts=3)
         assert r.startswith("Error:")
         prov.generate.assert_called_once()
 
     def test_circuit_open(self, monkeypatch) -> None:
-        import motor.core.llm.router.strategy as s
 
         class CbOpen:
             state = SimpleNamespace(value="OPEN")
@@ -145,7 +143,7 @@ class TestCallWithRetry:
         assert r == "Error: circuit_breaker_open"
 
     def test_con_monitor(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="ok")
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         monitor = mock.Mock()
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, monitor=monitor)
         assert r == "ok"
@@ -153,7 +151,7 @@ class TestCallWithRetry:
         monitor.finish_operation.assert_called_once()
 
     def test_con_profiler_detector_baseline(self, monkeypatch) -> None:
-        cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="ok")
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         profiler = mock.Mock()
         profiler.stop.return_value = SimpleNamespace(wall_time_ms=10.0, cpu_time_ms=5.0, peak_memory_bytes=100)
         detector = mock.Mock()
@@ -207,7 +205,7 @@ class TestCallWithFallback:
         prim.generate.side_effect = ValueError("bad")
         cbs = {"p": FakeCB()}
         reg = self._reg({"p": prim})
-        r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
+        _r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
         assert name == "p"
 
     def test_fallback_open_skip(self, monkeypatch) -> None:
@@ -216,7 +214,7 @@ class TestCallWithFallback:
         fall = mock.Mock()
         cbs = {"p": FakeCB(), "f": FakeCB(state="OPEN", available=False)}
         reg = self._reg({"p": prim, "f": fall})
-        r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
+        _r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
         assert name == "p"  # fallback no disponible, sin intento
 
     def test_fallback_tambien_falla(self, monkeypatch) -> None:

@@ -152,7 +152,7 @@ class TestHealthCheck:
             assert cmd_diag.cmd_health_check(config) is None
 
     def test_excepcion_docker(self, config: mock.Mock, tmp_path: Path) -> None:
-        def side_effect(cmd, **kwargs):  # noqa: ANN001, ANN202
+        def side_effect(cmd, **kwargs):
             if "docker" in cmd:
                 raise RuntimeError("no docker")
             return _res(stdout="inactive")

@@ -147,7 +147,7 @@ class TestCmdInit:
         from knowledge.engine.cli.compile import cmd_init
 
         schema = tmp_path / "schema.sql"
-        schema.write_text("CREATE TABLE x (id INTEGER);")
+schema.write_text("CREATE TABLE x (id INTEGER)\n")
         monkeypatch.setattr("knowledge.engine.cli.compile.SCHEMA_FILE", schema)
         init = mock.Mock()
         monkeypatch.setattr("knowledge.engine.cli.compile.init_db", init)

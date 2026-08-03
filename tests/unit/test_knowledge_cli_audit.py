@@ -6,8 +6,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from knowledge.engine.cli.audit import cmd_audit_db, cmd_vacuum
 
 
@@ -56,7 +54,7 @@ class TestCmdAuditDb:
         health.events_written = 42
         health.error = ""
         audit.backend.health_check.return_value = health
-        monkeypatch = mock.Mock()
+        mock.Mock()
         args = SimpleNamespace(db_path=str(db))
         with mock.patch("knowledge.engine.audit.get_audit", return_value=audit):
             assert cmd_audit_db(args) == 0

@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-import pytest
-
 from motor.intelligence.agents.message import AgentRole, AgentTask
 from motor.intelligence.agents.planner import PlannerAgent
 from motor.observability.readiness import ReadinessEntry, ReadinessRegistry

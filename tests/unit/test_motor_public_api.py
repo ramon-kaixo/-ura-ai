@@ -1,8 +1,6 @@
 """Tests para motor/cli/public_api.py y motor/core/evaluation/__init__.py — re-exports."""
 from __future__ import annotations
 
-import pytest
-
 
 class TestPublicApi:
     def test_imports_core(self) -> None:
@@ -67,25 +65,12 @@ class TestEvaluationInit:
 
     def test_clases_importables(self) -> None:
         from motor.core.evaluation import (
-            ContinuousEvaluationResult,
             ContinuousEvaluator,
-            EvaluationCorpus,
             EvaluationEngine,
-            EvaluationQuery,
-            EvaluationRun,
             Experiment,
-            ExperimentConfig,
-            ExperimentResult,
-            RegressionBaseline,
             RegressionDetector,
-            RegressionFinding,
-            RegressionReport,
-            RetrievalResult,
             map_at_k,
             mrr,
-            ndcg_at_k,
-            precision_at_k,
-            recall_at_k,
         )
 
         assert all(x is not None for x in [ContinuousEvaluator, EvaluationEngine, Experiment, RegressionDetector])

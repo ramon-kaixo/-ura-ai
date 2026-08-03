@@ -1,7 +1,6 @@
 """Tests para knowledge/engine/api.py — endpoints REST."""
 from __future__ import annotations
 
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
@@ -10,7 +9,7 @@ import pytest
 
 @pytest.fixture
 def app(tmp_path, monkeypatch):
-    import knowledge.engine.api as api
+    from knowledge.engine import api
 
     monkeypatch.setattr(api, "_API_KEY", None)
     monkeypatch.delenv("URA_API_KEY", raising=False)
@@ -57,7 +56,6 @@ class TestHealthStatus:
 
 class TestCompile:
     def test_compile(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         result = SimpleNamespace(success=True, documents_changed=3, documents_total=10)
         monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", mock.Mock(return_value=result))
@@ -66,7 +64,6 @@ class TestCompile:
         assert r.json()["message"] == "compile started"
 
     def test_compile_sync(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         request = mock.Mock()
         request.return_value = SimpleNamespace(success=False, documents_changed=0)
@@ -77,7 +74,7 @@ class TestCompile:
 
 class TestSearch:
     def test_search_ok(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
+        from knowledge.engine import api
 
         repo = mock.Mock(spec=["search"])
         result = SimpleNamespace(doc_id="d1", snippet="snippet", score=0.9, title="T", doc_type="doc")
@@ -88,7 +85,7 @@ class TestSearch:
         assert len(r.json()["results"]) == 1
 
     def test_search_sin_resultados(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
+        from knowledge.engine import api
 
         repo = mock.Mock(spec=["search"])
         repo.search.return_value = []
@@ -100,7 +97,7 @@ class TestSearch:
 
 class TestDocuments:
     def test_get_document(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
+        from knowledge.engine import api
 
         repo = mock.Mock(spec=["get_document"])
         doc = SimpleNamespace(
@@ -117,7 +114,7 @@ class TestDocuments:
         assert r.json()["doc_id"] == "abcd1234ef01"
 
     def test_get_document_no_existe(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
+        from knowledge.engine import api
 
         repo = mock.Mock(spec=["get_document"])
         repo.get_document.return_value = None
@@ -128,14 +125,13 @@ class TestDocuments:
 
 class TestRules:
     def test_list_rules(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.rules.list_rules", return_value=[]):
             r = app.get("/rules")
         assert r.status_code == 200
 
     def test_evaluate_rules(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
+        from knowledge.engine import api
 
         repo = mock.Mock(spec=["get_documents_for_rules"])
         repo.get_documents_for_rules.return_value = ([], set(), set())
@@ -150,14 +146,12 @@ class TestRules:
 
 class TestFeedback:
     def test_record_feedback(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.feedback.record_feedback", return_value=True):
             r = app.post("/feedback/abcd1234ef01", params={"rating": 4})
         assert r.status_code == 200
 
     def test_top_rated(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.feedback.top_rated", return_value=[]):
             r = app.get("/feedback/top")
@@ -166,7 +160,6 @@ class TestFeedback:
 
 class TestMetadata:
     def test_get_lineage(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.lineage_store.SQLiteLineageStore") as Store:
             store = mock.Mock()
@@ -182,7 +175,6 @@ class TestMetadata:
 
 class TestMemory:
     def test_list_memories(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.memory_store.SQLiteMemoryStore") as Store:
             store = mock.Mock(spec=["list"])
@@ -192,7 +184,6 @@ class TestMemory:
         assert r.status_code == 200
 
     def test_get_memory(self, app, monkeypatch) -> None:
-        import knowledge.engine.api as api
 
         with mock.patch("knowledge.engine.memory_store.SQLiteMemoryStore") as Store:
             store = mock.Mock(spec=["get"])

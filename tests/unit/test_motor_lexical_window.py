@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-import pytest
-
 from motor.assistant.context_window import ContextWindow
 from motor.core.llm._logging import log_call, percentile
 from motor.intelligence.retrieval.lexical import LexicalRetriever

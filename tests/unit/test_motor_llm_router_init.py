@@ -1,7 +1,6 @@
 """Tests para motor/core/llm/router/__init__.py — LLMRouter."""
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest import mock
 
 import pytest
@@ -158,7 +157,7 @@ class TestHealth:
         assert router._health_cache == {}
 
     def test_health_error(self) -> None:
-        prov = FakeProvider(health_result=None)
+        FakeProvider(health_result=None)
 
         class FailingProvider(FakeProvider):
             def health(self):
