@@ -62,7 +62,7 @@ class TestEsFisico:
 
     def test_excepcion_cpuinfo(self, sc: Scanner, executor: FakeExecutor, monkeypatch: pytest.MonkeyPatch) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("boom"))
-        monkeypatch.setattr("builtins.open", mock.mock_open(read_data="no hypervisor"))
+        monkeypatch.setattr("builtins.open", mock.mock_open(read_data="bare metal cpu"))
         assert sc._es_fisico() is True
 
     def test_excepcion_total(self, sc: Scanner, executor: FakeExecutor, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -326,9 +326,29 @@ class TestRecursosProc:
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("ro")))
         assert scanner._leer_meminfo() == (1024, 0)
 
+    def test_loadavg_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("builtins.open", mock.mock_open(read_data="0.75 0.50 0.25 1/2 3"))
+        assert scanner._leer_loadavg() == 0.75
+
     def test_loadavg_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("ro")))
-        assert scanner._leer_loadavg() == 0.0
+        with mock.patch.object(scanner.log, "debug"):
+            assert scanner._leer_loadavg() == 0.0
+
+    def test_meminfo_valores(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        content = "MemTotal: 1000 kB\nMemAvailable: 400 kB\nOther: 5 kB\n"
+        monkeypatch.setattr("builtins.open", mock.mock_open(read_data=content))
+        total, avail = scanner._leer_meminfo()
+        assert total == 1000 * 1024
+        assert avail == 400 * 1024
+
+    def test_statvfs_disk_total_cero(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        s = mock.Mock()
+        s.f_frsize = 4096
+        s.f_blocks = 0
+        s.f_bfree = 0
+        monkeypatch.setattr(scanner.os, "statvfs", mock.Mock(return_value=s))
+        assert scanner._leer_statvfs() == (0, 0, 0)
 
     def test_statvfs_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(scanner.os, "statvfs", mock.Mock(side_effect=OSError("x")))
@@ -345,31 +365,69 @@ class TestRecursosProc:
         monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
         assert scanner._contar_zombies_proc() == 1
 
+    def test_zombies_proc_no_zombie(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_proc = mock.Mock()
+        p1 = mock.Mock()
+        p1.name = "123"
+        p1.__truediv__ = mock.Mock(return_value=mock.Mock(read_text=mock.Mock(return_value="State:\tR\n")))
+        fake_proc.iterdir.return_value = [p1]
+        monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
+        assert scanner._contar_zombies_proc() == 0
+
+    def test_zombies_proc_read_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_proc = mock.Mock()
+        p1 = mock.Mock()
+        p1.name = "123"
+        p1.__truediv__ = mock.Mock(return_value=mock.Mock(read_text=mock.Mock(side_effect=OSError("x"))))
+        fake_proc.iterdir.return_value = [p1]
+        monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
+        with mock.patch.object(scanner.log, "debug"):
+            assert scanner._contar_zombies_proc() == 0
+
+    def test_zombies_proc_iter_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_proc = mock.Mock()
+        fake_proc.iterdir.side_effect = OSError("x")
+        monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
+        with mock.patch.object(scanner.log, "debug"):
+            assert scanner._contar_zombies_proc() == 0
+
 
 class TestHelpers:
     def test_pid_files_stale(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
-        fake_dir = mock.Mock()
         stale = mock.Mock()
         stale.name = "x.pid"
         stale.read_text.return_value = "99999"
+        fake_dir = mock.Mock()
         fake_dir.glob.return_value = [stale]
-        monkeypatch.setattr(Path, "glob", fake_dir.glob)
-        monkeypatch.setattr(scanner, "Path", mock.Mock(side_effect=lambda p: mock.Mock(exists=lambda: False)))
+        proc = mock.Mock()
+        proc.exists.return_value = False
+        fake_path = mock.Mock(side_effect=lambda p: fake_dir if p == "/var/run" else proc)
+        monkeypatch.setattr(scanner, "Path", fake_path)
         scanner._detectar_pid_files(orphans)
         assert len(orphans) == 1
         assert orphans[0]["tipo"] == "stale_pid"
 
     def test_pid_files_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
-        fake_dir = mock.Mock()
         bad = mock.Mock()
         bad.name = "bad.pid"
         bad.read_text.side_effect = ValueError("no int")
+        fake_dir = mock.Mock()
         fake_dir.glob.return_value = [bad]
-        monkeypatch.setattr(Path, "glob", fake_dir.glob)
-        scanner._detectar_pid_files(orphans)
+        fake_path = mock.Mock(side_effect=lambda p: fake_dir if p == "/var/run" else mock.Mock())
+        monkeypatch.setattr(scanner, "Path", fake_path)
+        with mock.patch.object(scanner.log, "debug"):
+            scanner._detectar_pid_files(orphans)
         assert orphans == []
+
+    def test_pid_files_glob_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_dir = mock.Mock()
+        fake_dir.glob.side_effect = OSError("x")
+        fake_path = mock.Mock(side_effect=lambda p: fake_dir)
+        monkeypatch.setattr(scanner, "Path", fake_path)
+        with mock.patch.object(scanner.log, "debug"):
+            scanner._detectar_pid_files([])
 
     def test_hijos_huerfanos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
@@ -438,4 +496,13 @@ class TestRecursosPsutil:
         fake_psutil = mock.Mock()
         fake_psutil.virtual_memory.side_effect = RuntimeError("x")
         monkeypatch.setitem(sys.modules, "psutil", fake_psutil)
-        assert scanner._recursos_psutil() is None
+        with mock.patch.object(scanner.log, "warning"):
+            assert scanner._recursos_psutil() is None
+
+    def test_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import sys
+        fake_psutil = mock.Mock()
+        fake_psutil.virtual_memory.side_effect = ImportError("no")
+        monkeypatch.setitem(sys.modules, "psutil", fake_psutil)
+        with mock.patch.object(scanner.log, "debug"):
+            assert scanner._recursos_psutil() is None
