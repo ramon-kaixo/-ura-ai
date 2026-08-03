@@ -51,10 +51,11 @@ def test_run_ok() -> None:
     assert out == ""
 
 
-def test_run_fail() -> None:
+def test_run_fail(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cmd_ura, "_executor", FakeExecutor([_res(ok=False, stderr="boom")]))
     ok, err = cmd_ura._run(["x"], "desc")
     assert ok is False
-    assert err == ""
+    assert err == "boom"
 
 
 class TestFinalize:
@@ -62,7 +63,8 @@ class TestFinalize:
         fake_exec.results = [_res(stdout="git diff"),
                              _res(stdout="staged_file.py"),
                              _res(stdout="pushed")]
-        assert cmd_ura.cmd_finalize(None, ["-m", "msg"]) == 0
+        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+            assert cmd_ura.cmd_finalize(None, ["-m", "msg"]) == 0
         msgs = [c[0] for c in fake_exec.calls]
         assert msgs[0] == "python3"
 
@@ -80,29 +82,36 @@ class TestFinalize:
             assert cmd_ura.cmd_finalize(None, []) == 1
 
     def test_router_fail(self, fake_exec: FakeExecutor) -> None:
-        fake_exec.results = [_res(), _res(), _res(), _res(), _res(ok=False, stderr="e")]
+        fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
+                             _res(ok=False, stderr="e")]
         with mock.patch("core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
     def test_sin_staged_sin_mensaje(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
-                             _res(stdout="a.py\nb.py\nc.py\nd.py")]
+                             _res(),
+                             _res(stdout="a.py\nb.py\nc.py\nd.py"),
+                             _res(stdout="ok"),
+                             _res(stdout="pushed")]
         with mock.patch("core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 0
         commit = [c for c in fake_exec.calls if c[:2] == ["git", "commit"]]
         assert len(commit) == 1
-        assert "(+3 más)" in commit[0][-1]
+        assert commit[0][-1] == "Pipeline: a.py b.py c.py"
 
     def test_commit_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
-                             _res(stdout="a.py"), _res(ok=False, stderr="x")]
+                             _res(),
+                             _res(stdout="a.py"), _res(), _res(ok=False, stderr="x")]
         with mock.patch("core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
 
 class TestTest:
     def test_ok(self) -> None:
-        assert cmd_ura.cmd_test(None, []) == 0
+        with mock.patch("core.config_manager.validate_schema", return_value=[]), \
+                mock.patch("core.config_manager.validate_config", return_value=[]):
+            assert cmd_ura.cmd_test(None, []) == 0
 
     def test_errores(self) -> None:
         with mock.patch("core.config_manager.validate_schema", return_value=["e"]), \
@@ -111,19 +120,19 @@ class TestTest:
 
 
 class TestSnapshot:
-    def test_escribe_json(self, fake_exec: FakeExecutor, tmp_path: Path) -> None:
+    def test_escribe_json(self, fake_exec: FakeExecutor, tmp_path: Path,
+                          monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(cmd_ura, "ROOT", tmp_path)
         fake_exec.results = [_res(stdout="abc123"), _res(stdout="TODOS LOS TESTS PASARON"),
                              _res(stdout="main")]
         assert cmd_ura.cmd_snapshot(None, []) == 0
-        files = list((tmp_path / "data" / "snapshots").glob("*.json")) if False else []
-        snap_dir = cmd_ura.ROOT / "data" / "snapshots"
+        snap_dir = tmp_path / "data" / "snapshots"
         snaps = list(snap_dir.glob("*.json"))
         assert snaps
         data = json.loads(snaps[-1].read_text())
         assert data["commit"] == "abc123"
         assert data["tests"] == "PASS"
         assert data["branch"] == "main"
-        snaps[-1].unlink()
 
 
 class TestMaintenance:
@@ -261,7 +270,7 @@ class TestIndex:
     def test_force(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0, stdout="{}")]
         assert cmd_ura.cmd_index(None, ["--force"]) == 0
-        assert "force=True" in fake_exec.calls[0][1]
+        assert "force=True" in fake_exec.calls[0][2]
 
     def test_ssh_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=1, stderr="e")]
@@ -283,8 +292,8 @@ class TestAsk:
     def test_ok(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(stdout="respuesta")]
         assert cmd_ura.cmd_ask(None, ["que", "es"]) == 0
-        assert "shlex" not in fake_exec.calls[0][1]  # cmd es ssh
-        assert "que es" in fake_exec.calls[0][1]
+        assert fake_exec.calls[0][0] == "ssh"
+        assert "que es" in fake_exec.calls[0][2]
 
     def test_fallback_error(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(ok=False, returncode=0, stderr="x")]
@@ -361,7 +370,7 @@ class TestMemory:
 class TestSystemctl:
     def test_user_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 0, stdout="x"))
-        monkeypatch.setattr(cmd_ura, "subprocess", mock.Mock(run=fake_sp))
+        monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura._systemctl(["status", "x"]).returncode == 0
 
     def test_fallback_system(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -369,13 +378,13 @@ class TestSystemctl:
             if "--user" in cmd:
                 return subprocess.CompletedProcess(cmd, 1, stderr="Could not connect")
             return subprocess.CompletedProcess(cmd, 0, stdout="y")
-        monkeypatch.setattr(cmd_ura, "subprocess", mock.Mock(run=side_effect))
+        monkeypatch.setattr(subprocess, "run", side_effect)
         assert cmd_ura._systemctl(["status"]).returncode == 0
 
 
 class TestService:
     def test_no_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        r = subprocess.CompletedProcess([], 1, stderr="Could not connect")
+        r = subprocess.CompletedProcess([], 1, stdout="", stderr="")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         assert cmd_ura.cmd_service(None, None) == 1
 
@@ -398,7 +407,7 @@ class TestService:
         assert cmd_ura.cmd_service(None, args) == 0
 
     def test_accion_sin_servicio(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        r = subprocess.CompletedProcess([], 0, stdout="")
+        r = subprocess.CompletedProcess([], 0, stdout="x", stderr="")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         args = mock.Mock(raw=["start"])
         assert cmd_ura.cmd_service(None, args) == 0
@@ -414,17 +423,17 @@ class TestAudit:
         data = {"version": "1", "files_scanned": 5,
                 "blocks": {"A": []}, "block_headers": {}}
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(data)))
-        monkeypatch.setattr(cmd_ura, "subprocess", mock.Mock(run=fake_sp))
+        monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura.cmd_audit(None, []) == 0
 
     def test_con_fallos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         data = {"version": "1", "files_scanned": 5,
                 "blocks": {"A": [{"level": "FAIL", "type": "t", "file": "f", "line": 1}]}}
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(data)))
-        monkeypatch.setattr(cmd_ura, "subprocess", mock.Mock(run=fake_sp))
+        monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura.cmd_audit(None, []) == 1
 
     def test_fallo_script(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 1, stdout="", stderr="boom"))
-        monkeypatch.setattr(cmd_ura, "subprocess", mock.Mock(run=fake_sp))
+        monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura.cmd_audit(None, []) == 1
