@@ -53,10 +53,10 @@ class SpanId:
 class TraceId:
     """Trace identifier — the single root for an entire operation.
 
-    OBS-01: Exactly one trace_id per operation.
-OBS-02: No subsystem creates a new one
-only propagates.
-    16 hex chars from os.urandom (8 bytes).
+        OBS-01: Exactly one trace_id per operation.
+    OBS-02: No subsystem creates a new one
+    only propagates.
+        16 hex chars from os.urandom (8 bytes).
     """
 
     value: str
