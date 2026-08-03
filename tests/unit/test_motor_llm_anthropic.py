@@ -92,8 +92,9 @@ class TestGenerate:
     def _response(self, blocks: list[dict] | None = None, usage: dict | None = None) -> mock.Mock:
         r = mock.Mock()
         r.status_code = 200
+        default_blocks = [{"type": "text", "text": "hola"}]
         r.json.return_value = {
-            "content": blocks or [{"type": "text", "text": "hola"}],
+            "content": default_blocks if blocks is None else blocks,
             "usage": usage or {"input_tokens": 10, "output_tokens": 5},
         }
         return r
