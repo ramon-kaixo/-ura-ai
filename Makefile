@@ -63,6 +63,13 @@ audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === REINDEX ===
+reindex:
+	@echo "▶ Reconciliando AssetStore ↔ VectorStore (dry-run)..."
+	@$(PYTHON) scripts/pro/reindex_vectors.py
+	@echo "✅ Reindex completado (dry-run)"
+
+
 # === DASHBOARD ===
 dashboard:
 	@echo "▶ Generando dashboard de salud..."
