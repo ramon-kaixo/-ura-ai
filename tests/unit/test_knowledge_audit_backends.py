@@ -132,3 +132,103 @@ class TestSQLiteAuditBackend:
         h = b.health_check()
         assert h.healthy is True
         assert h.events_written == 5
+
+
+class TestNDJSONRotacion:
+    def test_no_rota_si_pequeno(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b._bytes_written = 100
+        b.MAX_BYTES = 1000
+        b._maybe_rotate()
+        assert b._bytes_written == 100
+        b.close()
+
+    def test_rota_al_superar(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.MAX_BYTES = 10
+        b._bytes_written = 50
+        b._handle.write("x" * 50)  # archivo real grande
+        b._handle.flush()
+        b._maybe_rotate()
+        # archivo original recreado + segmento .1
+        assert b._file.exists()
+        assert b._file.with_suffix(".ndjson.1").exists()
+        assert b._bytes_written == 0
+        b.close()
+
+    def test_rota_con_segmentos(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.MAX_BYTES = 10
+        b._bytes_written = 50
+        b._handle.write("x" * 50)
+        b._handle.flush()
+        # crear segmentos previos
+        b._file.with_suffix(".ndjson.1").write_text("x")
+        b._file.with_suffix(".ndjson.2").write_text("y")
+        b._maybe_rotate()
+        assert b._file.with_suffix(".ndjson.1").exists()  # rotado
+        b.close()
+
+    def test_rotacion_error(self, tmp_path, monkeypatch) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.MAX_BYTES = 10
+        b._bytes_written = 50
+        with mock.patch.object(Path, "rename", side_effect=OSError("ro")):
+            b._maybe_rotate()
+        assert b._bytes_written == 0  # reabierto
+        b.close()
+
+
+class TestNDJSONIngest:
+    def test_ingest_vacio(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        assert b.ingest_into_sqlite(tmp_path / "db.sqlite") == 0
+        b.close()
+
+    def test_ingest_ok(self, tmp_path, monkeypatch) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.write(FakeEvent(action="read"))
+        b.write(FakeEvent(action="write"))
+        b.close()
+
+        conn = mock.Mock()
+        conn.execute.return_value = None
+        conn.commit.return_value = None
+        monkeypatch.setattr("knowledge.engine.connection.open_db", mock.Mock(return_value=conn))
+        monkeypatch.setattr("knowledge.engine.connection.begin_immediate", mock.Mock())
+        b2 = NDJSONAuditBackend(tmp_path / "audit")
+        n = b2.ingest_into_sqlite(tmp_path / "db.sqlite")
+        assert n == 2
+        assert conn.commit.call_count >= 1
+        b2.close()
+
+    def test_ingest_linea_corrupta(self, tmp_path, monkeypatch) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.write(FakeEvent(action="a"))
+        b.close()
+        # corromper una linea
+        with (tmp_path / "audit" / "audit.ndjson").open("a") as f:
+            f.write("no es json\n")
+        conn = mock.Mock()
+        conn.execute.return_value = None
+        conn.commit.return_value = None
+        monkeypatch.setattr("knowledge.engine.connection.open_db", mock.Mock(return_value=conn))
+        monkeypatch.setattr("knowledge.engine.connection.begin_immediate", mock.Mock())
+        b2 = NDJSONAuditBackend(tmp_path / "audit")
+        n = b2.ingest_into_sqlite(tmp_path / "db.sqlite")
+        assert n == 1  # solo la valida
+        b2.close()
+
+    def test_read_segment(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.write(FakeEvent(action="a"))
+        b.close()
+        # segmento .1 con otro evento
+        seg = tmp_path / "audit" / "audit.ndjson.1"
+        seg.write_text(json.dumps({"action": "old", "actor": "u", "entity_type": "d", "entity_id": "x", "result": "ok", "correlation_id": "c", "timestamp": "t", "metadata": {}}) + "\n")
+        b2 = NDJSONAuditBackend(tmp_path / "audit")
+        seg_events = b2.read_lines(segment=1)
+        assert len(seg_events) == 1
+        assert seg_events[0].action == "old"
+        assert b2.read_lines(segment=5) == []  # segmento inexistente
+        b2.close()
