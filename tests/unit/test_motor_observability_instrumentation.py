@@ -46,7 +46,9 @@ class _FakePipeline:
 
 class _FakePipelineResult:
     ok = True
-    stages = [mock.MagicMock(ok=True), mock.MagicMock(ok=True)]
+
+    def __init__(self) -> None:
+        self.stages: list[mock.MagicMock] = [mock.MagicMock(ok=True), mock.MagicMock(ok=True)]
 
 
 class _FakeExecutor:
