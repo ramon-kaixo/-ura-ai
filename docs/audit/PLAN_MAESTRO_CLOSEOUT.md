@@ -62,6 +62,20 @@ Extensión de la Fase 3 tras el cierre del plan: core 51.1% → **72.0%**.
 4. `heartbeat._save_restart_to_qdrant()`: `instancia` no existe en motor.core.qdrant_client — incidente nunca se guarda
 5. `core/sandbox.py`: módulo muerto (colisiona con paquete core/sandbox/)
 6. `publish()` en heartbeat: loop non-daemon hace 1 solo ciclo (documentado)
+7. `continuous.py`: baseline se sobrescribía con resultados actuales ANTES del check — 0 regresiones nunca (fixed)
+8. `diagnostico.py`: `cb.is_available`/`cb.call` inexistentes en su CircuitBreaker (fixed)
+9. `backup_knowledge.py`: `json.JSONEncodeError` inexistente (fixed)
+10. `tracing_platform.py`/`qdrant_client.py`/otros: 7 módulos corrompidos por sanear_codigo.py — restaurados de git
+
+## Sesión de Cobertura motor/ + knowledge/ (2026-08-03)
+
+| Zona | Antes | Después |
+|------|-------|---------|
+| motor/ (llm router, evaluation, diagnostico, observability, assistant, retrieval, scanner) | 42.2% | **54.1%** |
+| knowledge/engine/cli/ (12 módulos: archive, search, doctor, rules, compile, metadata, audit, agent, feedback, jobs, pipeline, docs, notify, __main__) | 0% | **85-100%** |
+| knowledge/engine/snapshot_store | 0% | **100%** |
+
+**~250 tests nuevos** en 15+ commits. Suite total: **3879 passed, 0 fallos**.
 
 ## Baseline de Referencia
 
