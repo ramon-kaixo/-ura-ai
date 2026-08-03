@@ -39,7 +39,7 @@ class Diagnostico:
         if not scan.ok:
             r.ok = False
             log.warning("scan no ok, diagnostico limitado")
-        if not self.cb.is_available:
+        if not self.cb.operacional():
             r.modo_offline = True
             log.warning("modo offline (circuit breaker abierto)")
         incidentes, costes = buscar_patrones(scan, self.qdrant, self.config)
@@ -109,4 +109,8 @@ class Diagnostico:
             "hw_ok": scan.hw_health.get("ok", True),
             "hw_issues": scan.hw_health.get("issues", []),
         }
-        self.cb.call(self.qdrant.guardar_incidente, incidente)
+        if self.cb.operacional():
+            try:
+                self.qdrant.guardar_incidente(incidente)
+            except Exception as e:
+                log.exception("error guardando incidente en Qdrant: %s", e)
