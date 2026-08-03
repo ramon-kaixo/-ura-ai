@@ -263,8 +263,7 @@ def _max_nesting(node, depth=0):
 
 def check_debug_code(codigo, lineas, arbol):
     """Check 10: Código de debug/residual."""
-patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME", r"import pdb
-", r"breakpoint\(\)"]
+    patterns = [r'print\(.*["\'].*debug', r"# DEBUG", r"# TODO", r"# FIXME", r"import pdb", r"breakpoint\(\)"]
     for i, line in enumerate(lineas, 1):
         for pat in patterns:
             if re.search(pat, line, re.IGNORECASE):
