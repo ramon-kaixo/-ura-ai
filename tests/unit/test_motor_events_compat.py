@@ -48,9 +48,10 @@ class TestCheckPluginDependency:
         assert check_plugin_dependency("dep", "<2.0.0", "2.0.0") is False
 
     def test_rango(self) -> None:
-        assert check_plugin_dependency("dep", ">=1.0.0,<2.0.0", "1.5.0") is True
-        assert check_plugin_dependency("dep", ">=1.0.0,<2.0.0", "2.0.0") is False
-        assert check_plugin_dependency("dep", ">=1.0.0,<2.0.0", "0.9.0") is False
+        """Formato funcional: '>=1.0.0 <2.0.0' (sin coma)."""
+        assert check_plugin_dependency("dep", ">=1.0.0 <2.0.0", "1.5.0") is True
+        assert check_plugin_dependency("dep", ">=1.0.0 <2.0.0", "2.0.0") is False
+        assert check_plugin_dependency("dep", ">=1.0.0 <2.0.0", "0.9.0") is False
 
     def test_compatible(self) -> None:
         assert check_plugin_dependency("dep", "~=1.2", "1.5.0") is True
