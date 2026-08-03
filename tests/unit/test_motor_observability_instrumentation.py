@@ -39,7 +39,7 @@ class _FakeRegistry:
 
 class _FakePipeline:
     name = "p1"
-    stages = [object(), object()]
+    stages: list[object] = []
 
 
 class _FakePipelineResult:
