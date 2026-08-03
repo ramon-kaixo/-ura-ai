@@ -63,6 +63,20 @@ audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === SERVER ===
+server-start:
+	@echo "▶ Iniciando metrics server..."
+	@bash scripts/pro/server_ctl.sh start
+
+server-stop:
+	@echo "▶ Deteniendo metrics server..."
+	@bash scripts/pro/server_ctl.sh stop
+
+server-status:
+	@echo "▶ Estado del metrics server..."
+	@bash scripts/pro/server_ctl.sh status
+
+
 # === ROUTER ===
 router-audit:
 	@echo "▶ Auditando router y conectividad..."
