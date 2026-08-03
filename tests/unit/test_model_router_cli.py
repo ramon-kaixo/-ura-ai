@@ -61,3 +61,22 @@ class TestMain:
         preflight.assert_called_once()
         log.info.assert_called()
         server.serve_forever.assert_called_once()
+
+
+class TestMainServerInterrupt:
+    def test_serve_forever_keyboard_interrupt(self, monkeypatch) -> None:
+        monkeypatch.setattr("sys.argv", ["cli.py"])
+        monkeypatch.setattr(cli, "setup_logging", mock.Mock())
+        preflight = mock.Mock()
+        monkeypatch.setattr(cli, "verificar_politicas_seguridad_preflight", preflight)
+        monkeypatch.setattr("core.model_router.router.get_ollama_url", mock.Mock(return_value="http://x"))
+        monkeypatch.setattr("core.model_router.router.ROUTER_PORT", 9999)
+        monkeypatch.setattr(cli, "log", mock.Mock())
+        monkeypatch.setattr("core.model_router.model_selection.obtener_modelos_disponibles", mock.Mock(return_value=["m1"]))
+        monkeypatch.setattr("core.model_router.model_selection.MODELO_ROUTES", {"tipo": {"modelos": ["m1"], "fallback": "f"}})
+        server = mock.Mock()
+        server.serve_forever.side_effect = KeyboardInterrupt()
+        server.server_close = mock.Mock()
+        monkeypatch.setattr("http.server.ThreadingHTTPServer", mock.Mock(return_value=server))
+        cli.main()  # no debe lanzar
+        server.server_close.assert_called_once()

@@ -83,3 +83,15 @@ class TestContarPendientes:
         with patch("core.agents.orquestador.URA_ROOT", tmp_path):
             result = AgenteOrquestador._contar_pendientes()
             assert result == 0
+
+
+class TestContarPendientes:
+    def test_ast_error_ignorado(self, tmp_path, monkeypatch) -> None:
+        """Branches except del parseo AST."""
+        import core.agents.orquestador as mod
+
+        (tmp_path / "malo.py").write_text("def roto(:")
+        (tmp_path / "normal.py").write_text("def ok():\n    return 1\n")
+        monkeypatch.setattr(mod, "URA_ROOT", tmp_path)
+        total = mod.AgenteOrquestador._contar_pendientes()
+        assert total == 0  # malo.py ignorado, normal.py no excede 80 lineas
