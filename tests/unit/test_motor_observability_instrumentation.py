@@ -39,7 +39,9 @@ class _FakeRegistry:
 
 class _FakePipeline:
     name = "p1"
-    stages: list[object] = []
+
+    def __init__(self) -> None:
+        self.stages: list[object] = [object(), object()]
 
 
 class _FakePipelineResult:
