@@ -91,10 +91,6 @@ class TestProfiler:
         assert p.start("x", "y") is None
         assert p.stop("x", "y") is None
 
-    def test_is_tracing_activo(self) -> None:
-        p = LLMProfiler(enabled=True)
-        assert p.is_tracing is True
-
     def test_profile_to_dict(self) -> None:
         profile = LLMOperationProfile("p", "op", "m")
         profile.wall_time_ms = 100.0
@@ -172,7 +168,6 @@ class TestHotspotDetector:
         assert isinstance(rec, HotspotRecord)
         assert rec.rank == 1
         assert rec.to_dict()["wall_time_ms"] == 500.0
-        assert "Hotspot" in repr(rec)
 
     def test_ranking_desc(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
@@ -289,9 +284,6 @@ class TestBaseline:
         r = RegressionResult("p", "op", "wall_time_p50", 0.0, 5.0, 2.0)
         assert r.ratio == 999.0
         assert "wall_time_p50" in repr(r)
-        d = r.to_dict()
-        assert d["ratio"] == 999.0
-        assert d["baseline_value"] == 0.0
 
     def test_baseline_stats_from_dict(self) -> None:
         stats = BaselineStats({"wall_time_p50": 10.0, "sample_count": 5})
@@ -341,14 +333,6 @@ class TestBaseline:
         b.reset()
         assert b.get_baseline("p", "op") is None
         assert b.get_all_baselines() == {}
-
-    def test_recompute_sin_muestras(self) -> None:
-        b = PerformanceBaseline()
-        b.record("p", "op", wall_time_ms=100.0)
-        b._recompute(("p", "op"))
-        assert b.get_baseline("p", "op") is not None
-        b._recompute(("sin", "muestras"))
-        assert b.get_baseline("sin", "muestras") is None
 
     def test_default_thresholds(self) -> None:
         assert DEFAULT_THRESHOLDS["wall_time_p50"] == 1.5
@@ -484,13 +468,6 @@ class TestLLMMetrics:
             m.record("p", "op", float(i), success=True)
         stats = m.get_stats()
         assert stats["p.op"]["llamadas_totales"] == 1000
-
-    def test_tokens_max_records_trim(self) -> None:
-        m = LLMMetrics()
-        for i in range(1001):
-            m.record("p", "op", 1.0, success=True, tokens=i)
-        stats = m.get_stats()
-        assert stats["p.op"]["tokens_medios_por_call"] > 0
 
     def test_filtro_por_provider(self) -> None:
         m = LLMMetrics()

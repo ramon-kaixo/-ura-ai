@@ -4,8 +4,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from knowledge.engine.cli.agent import cmd_agent_list, cmd_agent_run
 from knowledge.engine.cli.feedback import cmd_feedback_rate, cmd_feedback_top
 

@@ -1,9 +1,6 @@
 """Tests para motor/observability/prometheus_exporter.py y motor/health_monitor.py."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from types import SimpleNamespace
 from unittest import mock
 
 import pytest

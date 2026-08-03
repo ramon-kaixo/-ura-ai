@@ -6,9 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
-from knowledge.engine.cli.main import _resolve_db_path, add_parser_init, add_parser_status, add_parser_verify, main
+from knowledge.engine.cli.main import _resolve_db_path
 from knowledge.engine.verifier import _safe_check, verify_graph
 
 

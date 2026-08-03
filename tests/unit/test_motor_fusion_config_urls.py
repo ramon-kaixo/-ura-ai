@@ -2,9 +2,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
-
-import pytest
 
 from motor.core.fusion.config import FusionConfig, make_config_hash
 from motor.core.web.cleaner.url_utils import content_hash, get_document_id, normalize_url

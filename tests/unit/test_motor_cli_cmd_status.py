@@ -1,7 +1,6 @@
 """Tests para motor/cli/cmd_status.py — estado, cross, trend, graph, perf, summarise."""
 
 import json
-import socket
 from pathlib import Path
 from unittest import mock
 

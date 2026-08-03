@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-import pytest
-
 from motor.diagnostico.circuit_breaker import CircuitBreaker
 from motor.scanner.diff_detector import _es_critico, compute_diff
 
@@ -34,31 +32,31 @@ class TestComputeDiff:
     def test_ram_alta_critica(self) -> None:
         prev = {"recursos": {"ram_pct": 50}}
         actual = {"recursos": {"ram_pct": 95}}
-        count, anomalias = compute_diff(actual, prev)
+        _count, anomalias = compute_diff(actual, prev)
         assert len(anomalias) == 1
 
     def test_zombies_critico(self) -> None:
         prev = {"recursos": {"zombies": 0}}
         actual = {"recursos": {"zombies": 2}}
-        count, anomalias = compute_diff(actual, prev)
+        _count, anomalias = compute_diff(actual, prev)
         assert len(anomalias) == 1
 
     def test_hw_fail_critico(self) -> None:
         prev = {"hw_health": {"ok": True}}
         actual = {"hw_health": {"ok": False}}
-        count, anomalias = compute_diff(actual, prev)
+        _count, anomalias = compute_diff(actual, prev)
         assert len(anomalias) == 1
 
     def test_key_no_en_actual(self) -> None:
         prev = {"solo_prev": {"a": 1}}
         actual = {"otra": {}}
-        count, anomalias = compute_diff(actual, prev)
+        count, _anomalias = compute_diff(actual, prev)
         assert count == 0
 
     def test_valores_anidados_iguales(self) -> None:
         prev = {"servicios": {"a": "active", "x": {"deep": 1}}}
         actual = {"servicios": {"a": "active", "x": {"deep": 1}}}
-        count, anomalias = compute_diff(actual, prev)
+        count, _anomalias = compute_diff(actual, prev)
         assert count == 0
 
 

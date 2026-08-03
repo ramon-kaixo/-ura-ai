@@ -4,8 +4,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from knowledge.engine.cli.metadata import (
     cmd_memory_create,
     cmd_memory_link,

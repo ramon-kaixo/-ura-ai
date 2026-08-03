@@ -34,7 +34,7 @@ class CleanupPlugin:
                 try:
                     f.unlink()
                     removed += 1
-                except Exception as e:
+                except Exception:
                     self.engine.log.warning("Error eliminando {f.name}: {e}")
         self.engine.log.info("Logs eliminados: {removed} (>{days} dias)")
         return {"removed": removed, "days": days}
@@ -52,7 +52,7 @@ class CleanupPlugin:
                 try:
                     emb.unlink()
                     removed += 1
-                except Exception as e:
+                except Exception:
                     self.engine.log.warning("Error eliminando {emb.name}: {e}")
         self.engine.log.info("Embeddings huerfanos: {removed} eliminados")
         return {"removed": removed}
@@ -144,7 +144,7 @@ class CleanupPlugin:
         for pid_dir in aislados_dir.iterdir():
             if not pid_dir.is_dir():
                 continue
-            nombre = (pid_dir / "nombre.txt").read_text().strip() if (pid_dir / "nombre.txt").exists() else pid_dir.name
+            (pid_dir / "nombre.txt").read_text().strip() if (pid_dir / "nombre.txt").exists() else pid_dir.name
             if not Path(f"/proc/{pid_dir.name}").exists() or ahora - pid_dir.stat().st_mtime > 604800:
                 shutil.rmtree(pid_dir, ignore_errors=True)
                 limpiados += 1
@@ -192,5 +192,5 @@ class CleanupPlugin:
         except Exception:
             reporte = {}
         if reporte.get("bloqueante"):
-            self.engine.log.warning(f"Score bloqueante: {reporte.get('score', 0)}")
+            self.engine.log.warning("Score bloqueante: {reporte.get('score', 0)}")
         return {"score": reporte.get("score", 0), "bloqueante": reporte.get("bloqueante", False), "raw": reporte}

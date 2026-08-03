@@ -80,9 +80,8 @@ def test_main_command_normal(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_main_sin_comando(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sin comando → SystemExit (argparse required)."""
-    with mock.patch("motor.cli.main.sys.argv", ["ura"]):
-        with pytest.raises(SystemExit):
-            main.main()
+    with mock.patch("motor.cli.main.sys.argv", ["ura"]), pytest.raises(SystemExit):
+        main.main()
 
 
 def test_main_flag_config(monkeypatch: pytest.MonkeyPatch) -> None:

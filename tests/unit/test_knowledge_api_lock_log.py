@@ -1,7 +1,6 @@
 """Tests para knowledge/engine/ — cli/api, logging_config y lock."""
 from __future__ import annotations
 
-from pathlib import Path
 from unittest import mock
 
 import pytest

@@ -45,7 +45,7 @@ class TestReadConnectionPool:
     def test_max_conexiones(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         c1 = pool.acquire()
-        c2 = pool.acquire()
+        pool.acquire()
         assert pool.active_count == 2
         assert pool._active == 2
         # tercera acquire bloquea hasta release

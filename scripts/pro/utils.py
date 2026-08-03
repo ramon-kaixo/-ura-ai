@@ -2,7 +2,7 @@
 
 Uso:
     from scripts.pro.utils import log, scan_project
-"""  # noqa: EXE002, INP001
+"""  # noqa: INP001
 
 import os
 from pathlib import Path

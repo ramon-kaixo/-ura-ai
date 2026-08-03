@@ -1,8 +1,8 @@
 {
-  "generado": "2026-08-02T22:57:41.441795+00:00",
+  "generado": "2026-08-03T22:53:56.038751+00:00",
   "zonas": {
     "scripts/pro": {
-      "total": 294,
+      "total": 295,
       "archivos": [
         {
           "archivo": "learning.py",
@@ -1042,6 +1042,11 @@
         {
           "archivo": "seed_correcciones_voz.py",
           "ruta": "scripts/pro/seed_correcciones_voz.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "server_ctl.sh",
+          "ruta": "scripts/pro/server_ctl.sh",
           "clasificacion": "dormido_valor"
         },
         {

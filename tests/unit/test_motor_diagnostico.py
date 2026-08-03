@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 import hashlib
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 
 from motor.core.state import DiagnoseResult, ScanResult
-from motor.diagnostico.diagnostico import Diagnostico, RUTAS_CONFIG_OPENCODE
+from motor.diagnostico.diagnostico import Diagnostico
 
 
 @pytest.fixture
@@ -67,7 +66,7 @@ class TestRun:
     def test_run_guarda_qdrant(self, diag: Diagnostico, scan: ScanResult, monkeypatch) -> None:
         incidente = {"tipo": "GPU", "subtipo": "power_cap"}
         monkeypatch.setattr("motor.diagnostico.diagnostico.buscar_patrones", mock.Mock(return_value=([incidente], 0)))
-        r = diag.run(scan)
+        diag.run(scan)
         diag.qdrant.guardar_incidente.assert_called_once()
 
     def test_run_sin_incidentes_no_guarda(self, diag: Diagnostico, scan: ScanResult) -> None:

@@ -41,15 +41,15 @@ DESERIALIZER = JsonProtocolDeserializer()
 
 
 def _trace_header(**overrides) -> TraceHeader:
-    defaults = dict(
-        trace_id=TraceId("trace-1"),
-        span_id=SpanId("span-1"),
-        parent_span_id=SpanId("parent-1"),
-        correlation_id=CorrelationId("corr-1"),
-        causation_id=CausationId("caus-1"),
-        timestamp=123.5,
-        monotonic_ts=456,
-    )
+    defaults = {
+        "trace_id": TraceId("trace-1"),
+        "span_id": SpanId("span-1"),
+        "parent_span_id": SpanId("parent-1"),
+        "correlation_id": CorrelationId("corr-1"),
+        "causation_id": CausationId("caus-1"),
+        "timestamp": 123.5,
+        "monotonic_ts": 456,
+    }
     defaults.update(overrides)
     return TraceHeader(**defaults)
 
@@ -65,17 +65,17 @@ def _routing() -> RoutingHeader:
 
 
 def _envelope(**overrides) -> ProtocolEnvelope:
-    defaults: dict = dict(
-        version=VersionHeader(
+    defaults: dict = {
+        "version": VersionHeader(
             protocol_version="1.0",
             schema_version="2.0",
             payload_type="json",
             capabilities=("a", "b"),
             reserved=("r",),
         ),
-        routing=_routing(),
-        trace=_trace_header(),
-        delivery=DeliveryHeader(
+        "routing": _routing(),
+        "trace": _trace_header(),
+        "delivery": DeliveryHeader(
             semantics=DeliverySemantics.EXACTLY_ONCE,
             idempotency_key=IdempotencyKey("ik-1"),
             timeout_ms=5000,
@@ -90,10 +90,10 @@ def _envelope(**overrides) -> ProtocolEnvelope:
                 retryable_errors=("timeout",),
             ),
         ),
-        payload=b"hola mundo",
-        checksum=compute_checksum(b"hola mundo"),
-        security=SecurityHeader(auth_token="tok", auth_token_type="bearer"),
-    )
+        "payload": b"hola mundo",
+        "checksum": compute_checksum(b"hola mundo"),
+        "security": SecurityHeader(auth_token="tok", auth_token_type="bearer"),
+    }
     defaults.update(overrides)
     return ProtocolEnvelope(**defaults)
 

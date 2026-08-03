@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 TARGET = "10.164.1.99"
 OLLAMA_PORT = 11434
 MAINTENANCE_SCRIPT = ROOT / "scripts" / "pro" / "tuneladora_mantenimiento.py"
-TESTS_OK_MARKER = "TODOS LOS TESTS PASARON"
 _executor = SubprocessExecutor()
 
 
@@ -120,7 +119,7 @@ def cmd_snapshot(config: UraConfig, args) -> int:
         ["python3", str(ROOT / "tests" / "test_unit.py")],
         cwd=str(ROOT),
     )
-    test_pass = "PASS" if TESTS_OK_MARKER in test_r.stdout else "FAIL"
+    test_pass = "PASS" if "TODOS LOS TESTS PASARON" in test_r.stdout else "FAIL"
 
     snap = {
         "date": datetime.now(UTC).isoformat(),
@@ -256,7 +255,7 @@ def cmd_doctor(config: UraConfig, args) -> int:
         ["python3", str(ROOT / "tests" / "test_unit.py")],
         cwd=str(ROOT),
     )
-    if TESTS_OK_MARKER in r.stdout:
+    if "TODOS LOS TESTS PASARON" in r.stdout:
         pass
     else:
         r.stdout.count("✗")

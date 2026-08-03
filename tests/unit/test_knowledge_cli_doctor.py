@@ -6,8 +6,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from knowledge.engine.cli.doctor import cmd_doctor
 
 

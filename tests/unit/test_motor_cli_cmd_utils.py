@@ -1,8 +1,6 @@
 """Tests para motor/cli/cmd_utils.py — notify, qdrant backup, bench."""
 
 import json
-import sys
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest import mock
 

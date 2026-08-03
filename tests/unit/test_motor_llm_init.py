@@ -8,7 +8,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def reset_state(monkeypatch):
-    import motor.core.llm as llm
+    from motor.core import llm
 
     monkeypatch.setattr(llm, "_LLM_STATE", None)
     yield
@@ -25,12 +25,12 @@ class FakeState:
 
 class TestLLMInit:
     def test_all(self) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         assert set(llm.__all__) == {"embed", "embed_async", "generate", "health"}
 
     def test_generate_delega(self, monkeypatch) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         state = FakeState()
         monkeypatch.setattr(llm, "_get_state", mock.Mock(return_value=state))
@@ -39,7 +39,7 @@ class TestLLMInit:
         state.generate.assert_called_once_with("prompt", "m", {"t": 0.1})
 
     def test_embed_delega(self, monkeypatch) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         state = FakeState()
         monkeypatch.setattr(llm, "_get_state", mock.Mock(return_value=state))
@@ -49,7 +49,7 @@ class TestLLMInit:
 
     @pytest.mark.asyncio
     async def test_embed_async_delega(self, monkeypatch) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         state = FakeState()
         monkeypatch.setattr(llm, "_get_state", mock.Mock(return_value=state))
@@ -58,14 +58,14 @@ class TestLLMInit:
         state.embed_async.assert_awaited_once_with(["texto"], "m2")
 
     def test_health_delega(self, monkeypatch) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         state = FakeState()
         monkeypatch.setattr(llm, "_get_state", mock.Mock(return_value=state))
         assert llm.health() == {"status": "ok"}
 
     def test_get_state_lazy(self, monkeypatch) -> None:
-        import motor.core.llm as llm
+        from motor.core import llm
 
         state = FakeState()
         builder = mock.Mock(return_value=state)

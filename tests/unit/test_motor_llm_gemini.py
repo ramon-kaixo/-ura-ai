@@ -1,6 +1,7 @@
 """Tests para motor.core.llm.gemini (GeminiProvider).
 
-La conftest autouse expulsa el módulo de sys.modules; se importa fresco
+La conftest autouse expulsa el módulo de sys.modules
+se importa fresco
 en el fixture para poder parchear get_secret y httpx.
 """
 from __future__ import annotations

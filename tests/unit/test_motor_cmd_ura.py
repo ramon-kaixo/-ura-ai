@@ -1,7 +1,7 @@
 """Tests para motor/cli/cmd_ura.py — comandos migrados de ura.py."""
 
 import json
-import subprocess  # noqa: S404
+import subprocess
 import urllib.error
 from pathlib import Path
 from unittest import mock
@@ -21,7 +21,7 @@ class FakeExecutor:
         self.results: list[ProcessResult] = list(script or [])
         self.calls: list[list[str]] = []
 
-    def run(self, cmd, timeout: int = 30, cwd: str | None = None, env=None) -> ProcessResult:  # noqa: ANN001
+    def run(self, cmd, timeout: int = 30, cwd: str | None = None, env=None) -> ProcessResult:
         self.calls.append(list(cmd))
         if self.results:
             return self.results.pop(0)
@@ -374,7 +374,7 @@ class TestSystemctl:
         assert cmd_ura._systemctl(["status", "x"]).returncode == 0
 
     def test_fallback_system(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def side_effect(cmd, **kwargs):  # noqa: ANN001, ANN202
+        def side_effect(cmd, **kwargs):
             if "--user" in cmd:
                 return subprocess.CompletedProcess(cmd, 1, stderr="Could not connect")
             return subprocess.CompletedProcess(cmd, 0, stdout="y")

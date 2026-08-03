@@ -5,9 +5,9 @@ from unittest import mock
 
 import pytest
 
+from motor.core.llm._state import LLMState, _get_optional_providers
 from motor.core.llm.detector import HotspotDetector, HotspotRecord
 from motor.core.llm.observability import LLMMetrics, metrics
-from motor.core.llm._state import LLMState, _get_optional_providers
 
 
 class TestLLMMetrics:
@@ -142,7 +142,7 @@ class TestLLMState:
 
     def test_optional_providers_disponibles(self) -> None:
         provs = _get_optional_providers()
-        nombres = [n for _, n in provs]
+        [n for _, n in provs]
         # ollama no esta en opcionales; los demas segun instalados
         assert isinstance(provs, list)
 

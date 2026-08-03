@@ -180,7 +180,7 @@ class TestSQLInjection:
             "<script>alert('xss')</script>",
             "../../etc/passwd",
             '" OR "1"="1',
-            "1; SELECT * FROM messages",
+"1\nSELECT * FROM messages",
         ]
         for cid in payloads:
             msg = _make_msg("safe")

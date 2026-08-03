@@ -356,7 +356,7 @@ class TestProcess:
         return eng
 
     def test_ok(self, engine: mock.MagicMock) -> None:
-        intent, mode, resolved, prompt, conv, lang, analysis = _process(engine, None, "c1", "hola", "")
+        intent, mode, resolved, _prompt, conv, lang, analysis = _process(engine, None, "c1", "hola", "")
         assert intent == UserIntent.CHAT
         assert mode == ConversationMode.CONVERSATION
         assert resolved == "mensaje resuelto"
@@ -366,7 +366,7 @@ class TestProcess:
 
     def test_con_user_id(self, engine: mock.MagicMock) -> None:
         _process(engine, None, "c1", "hola", "", user_id="u7")
-        assert engine.process_user_message.call_args.kwargs == {} or True
+        assert True
         analysis = engine.process_user_message.return_value
         assert analysis["user_id"] == "u7"
 
