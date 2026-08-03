@@ -73,7 +73,7 @@ class TestMainServerInterrupt:
         monkeypatch.setattr("core.model_router.router.ROUTER_PORT", 9999)
         monkeypatch.setattr(cli, "log", mock.Mock())
         monkeypatch.setattr("core.model_router.model_selection.obtener_modelos_disponibles", mock.Mock(return_value=["m1"]))
-        monkeypatch.setattr("core.model_router.model_selection.MODELO_ROUTES", {"tipo": {"modelos": ["m1"], "fallback": "f"}})
+        monkeypatch.setattr("core.model_router.model_selection.MODELO_ROUTES", {"respuesta_rapida": {"modelos": ["m1"], "fallback": "f"}})
         server = mock.Mock()
         server.serve_forever.side_effect = KeyboardInterrupt()
         server.server_close = mock.Mock()
