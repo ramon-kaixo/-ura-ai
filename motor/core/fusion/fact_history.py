@@ -279,7 +279,6 @@ class FactHistory:
     def from_dict(cls, data: dict) -> FactHistory:
         from motor.core.fusion.models import Fact, FactTombstone, FactVersion, VersionState
 
-
         raw_versions = data.get("versions", {})
         if isinstance(raw_versions, list):
             versions = {

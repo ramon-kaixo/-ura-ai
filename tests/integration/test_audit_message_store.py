@@ -176,7 +176,7 @@ class TestSQLInjection:
         payloads = [
             "' OR '1'='1",
             "' DROP TABLE messages --",
-            "c1\\' DELETE FROM messages --",
+            "c1\\\' DELETE FROM messages --",
             "<script>alert('xss')</script>",
             "../../etc/passwd",
             '" OR "1"="1',
