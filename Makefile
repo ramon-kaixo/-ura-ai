@@ -63,6 +63,13 @@ audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === ROUTER ===
+router-audit:
+	@echo "▶ Auditando router y conectividad..."
+	@$(PYTHON) scripts/pro/auditor_router.py
+	@echo "✅ Auditoría de router completada"
+
+
 # === REINDEX ===
 reindex:
 	@echo "▶ Reconciliando AssetStore ↔ VectorStore (dry-run)..."
