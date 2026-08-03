@@ -84,7 +84,11 @@ class TestSQLiteKnowledgeRepository:
         assert h["integrity"] == "ok"
 
     def test_health_check_error(self, tmp_path) -> None:
-        repo = SQLiteKnowledgeRepository(tmp_path / "no_existe.sqlite")
+        """open_db crea la DB si falta (healthy True en vacia).
+        El fallo real: DB corrupta (no sqlite)."""
+        db = tmp_path / "corrupta.sqlite"
+        db.write_bytes(b"no es sqlite")
+        repo = SQLiteKnowledgeRepository(db)
         h = repo.health_check()
         assert h["healthy"] is False
         assert "error" in h
