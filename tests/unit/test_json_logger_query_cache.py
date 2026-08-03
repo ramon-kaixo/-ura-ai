@@ -55,11 +55,13 @@ class TestAsyncQueryCache:
         assert await c.get("noexiste") is None
 
     @pytest.mark.asyncio
-    async def test_ttl_expirado(self, monkeypatch) -> None:
-        c = AsyncQueryCache(ttl=10)
+    async def test_ttl_expirado(self) -> None:
+        import asyncio
+
+        c = AsyncQueryCache(ttl=0.001)
         key = c.compute_key("hola")
         await c.set(key, [{"r": 1}])
-        monkeypatch.setattr("core.query_cache.time.monotonic", lambda: 99999)
+        await asyncio.sleep(0.01)
         assert await c.get(key) is None
 
     @pytest.mark.asyncio
