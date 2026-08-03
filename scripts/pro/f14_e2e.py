@@ -178,8 +178,7 @@ def case_e01() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -249,8 +248,7 @@ def case_e02() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -307,8 +305,7 @@ def case_e03() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -378,8 +375,7 @@ def case_e04() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -436,8 +432,7 @@ def case_e05() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -510,8 +505,7 @@ def case_e06() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -597,8 +591,7 @@ def case_e07() -> dict:
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,
@@ -686,8 +679,7 @@ def case_e08() -> dict:  # noqa: PLR0915
         "mock_components": mock,
         "mock_justification": justification,
         "real_pct": real_pct,
-"observed": "
-".join(observed),
+        "observed": "\n".join(observed),
         "duration_s": duration,
         "errors": errors,
         "resources": res,

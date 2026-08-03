@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
 
 log = logging.getLogger("ura.memory.forgetting")
+
 ONE_DAY = 86400
 
 
@@ -181,3 +184,188 @@ class HybridForgetPolicy(ForgettingPolicy):
         require_all: bool = False,
     ) -> None:
         self._ttl = ttl_policy or TTLForgetPolicy()
+        self._imp = importance_policy or ImportanceForgetPolicy()
+        self._conf = confidence_policy or ConfidenceForgetPolicy()
+        self._require_all = require_all
+
+    def name(self) -> str:
+        return "hybrid"
+
+    def should_forget(self, record: Any, context: ForgettingContext) -> tuple[bool, str]:
+        results: list[tuple[bool, str]] = []
+        for p in (self._ttl, self._imp, self._conf):
+            decision, reason = p.should_forget(record, context)
+            results.append((decision, f"{p.name()}:{reason}"))
+
+        decisions = [d for d, _ in results]
+        should = all(decisions) if self._require_all else any(decisions)
+        reasons = "; ".join(r for _, r in results)
+        return should, reasons
+
+
+def _age_seconds(timestamp: str) -> float:
+    try:
+        created = datetime.fromisoformat(timestamp)
+        return (datetime.now(UTC) - created).total_seconds()
+    except Exception:
+        return 0.0
+
+
+class ForgettingEngine:
+    def __init__(
+        self,
+        episode_store: EpisodeStore,
+        semantic_store: SemanticMemoryStore | None = None,
+        summaries: list | None = None,
+        policies: list[ForgettingPolicy] | None = None,
+        protection: ProtectionRules | None = None,
+        batch_size: int = 1000,
+    ) -> None:
+        self._episode_store = episode_store
+        self._semantic_store = semantic_store or SemanticMemoryStore()
+        self._summaries = summaries or []
+        self._policies = policies or [HybridForgetPolicy()]
+        self._protection = protection or ProtectionRules()
+        self._batch_size = batch_size
+        self._lock = threading.RLock()
+
+    def run(self, dry_run: bool = False) -> ForgettingResult:
+        start = time.monotonic()
+        result = ForgettingResult(dry_run=dry_run)
+
+        protected_ids = set(self._protection._protected)
+        pinned_ids = set(self._protection._pinned)
+
+        # Collect referenced episode IDs from summaries
+        referenced: set[str] = set()
+        for s in self._summaries:
+            for eid in s.source_episode_ids:
+                referenced.add(eid)
+
+        context = ForgettingContext(
+            episode_store=self._episode_store,
+            semantic_store=self._semantic_store,
+            summaries=self._summaries,
+            protected_ids=protected_ids,
+            pinned_ids=pinned_ids,
+        )
+
+        with self._lock:
+            result = self._evaluate_episodes(result, context, dry_run)
+            result = self._evaluate_facts(result, context, dry_run)
+            result.total_evaluated = (
+                result.episodes_removed
+                + result.facts_removed
+                + result.protected_skipped
+                + result.pinned_skipped
+                + result.referenced_skipped
+            )
+
+        result.elapsed_ms = (time.monotonic() - start) * 1000
+        return result
+
+    def simulate(self) -> ForgettingResult:
+        return self.run(dry_run=True)
+
+    def _evaluate_episodes(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:
+        episodes = list(ctx.episode_store._episodes.values())
+        batch: list[Episode] = []
+        for ep in episodes:
+            if ep.id in ctx.protected_ids:
+                result.protected_skipped += 1
+                continue
+            if ep.id in ctx.pinned_ids:
+                result.pinned_skipped += 1
+                continue
+            if ep.id in {eid for s in ctx.summaries for eid in s.source_episode_ids}:
+                result.referenced_skipped += 1
+                continue
+            should_forget, reason = False, ""
+            for policy in self._policies:
+                decision, r = policy.should_forget(ep, ctx)
+                if decision:
+                    should_forget = True
+                    reason = r
+                    break
+            if should_forget:
+                batch.append(ep)
+                if not dry_run:
+                    ctx.episode_store.delete(ep.id)
+                result.episodes_removed += 1
+                result.details.append(
+                    ForgettingEvent(
+                        record_id=ep.id,
+                        record_type="episode",
+                        reason=reason,
+                        policy=self._policies[0].name() if self._policies else "unknown",
+                        timestamp=datetime.now(UTC).isoformat(),
+                        importance=ep.importance,
+                        age_days=_age_seconds(ep.timestamp) / ONE_DAY,
+                    ),
+                )
+            if len(batch) >= self._batch_size:
+                break
+        return result
+
+    def _evaluate_facts(self, result: ForgettingResult, ctx: ForgettingContext, dry_run: bool) -> ForgettingResult:
+        if not self._semantic_store:
+            return result
+        facts = self._semantic_store.search(text="", k=10000)
+        for fact in facts:
+            if fact.id in ctx.protected_ids:
+                result.protected_skipped += 1
+                continue
+            if fact.id in ctx.pinned_ids:
+                result.pinned_skipped += 1
+                continue
+            should_forget, reason = False, ""
+            for policy in self._policies:
+                decision, r = policy.should_forget(fact, ctx)
+                if decision:
+                    should_forget = True
+                    reason = r
+                    break
+            if should_forget:
+                if not dry_run:
+                    self._semantic_store.delete(fact.id)
+                result.facts_removed += 1
+                result.details.append(
+                    ForgettingEvent(
+                        record_id=fact.id,
+                        record_type="semantic_fact",
+                        reason=reason,
+                        policy=self._policies[0].name() if self._policies else "unknown",
+                        timestamp=datetime.now(UTC).isoformat(),
+                        importance=fact.importance,
+                        age_days=0.0,
+                    ),
+                )
+        return result
+
+    def stats(self) -> dict[str, Any]:
+        return {
+            "episodes_total": self._episode_store.count(),
+            "facts_total": self._semantic_store.count() if self._semantic_store else 0,
+            "protected": self._protection.count_protected(),
+            "pinned": self._protection.count_pinned(),
+            "policies": [p.name() for p in self._policies],
+        }
+
+
+class ForgettingScheduler:
+    def __init__(self, engine: ForgettingEngine) -> None:
+        self._engine = engine
+        self._enabled = False
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    def enable(self) -> None:
+        self._enabled = True
+
+    def disable(self) -> None:
+        self._enabled = False
+
+    def run_once(self, dry_run: bool = False) -> ForgettingResult:
+        return self._engine.run(dry_run=dry_run)
