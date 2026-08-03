@@ -63,6 +63,13 @@ audit-docs:
 	@echo "▶ audit docs..."
 	@ls docs/audit/*.md 2>/dev/null | xargs -I {} sh -c 'echo "  {}"' || echo "  docs/audit/ vacío"
 
+# === CONSOLIDATE ===
+consolidate-check:
+	@echo "▶ Verificando si se debe ejecutar consolidación..."
+	@$(PYTHON) scripts/pro/consolidacion.py --check
+	@echo "✅ Verificación de consolidación completada"
+
+
 # === SERVER ===
 server-start:
 	@echo "▶ Iniciando metrics server..."
