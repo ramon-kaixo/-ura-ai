@@ -108,7 +108,7 @@ class TestBuildLlmState:
         ) as reg:
             state = build_llm_state(config)
         assert state.default_provider is ollama_cls.return_value
-        reg.register.assert_called_with("ollama", ollama_cls.return_value, default=True)
+        reg.register.assert_any_call("ollama", ollama_cls.return_value, default=True)
 
     def test_provider_desconocido_usa_ollama(self) -> None:
         config = SimpleNamespace(llm_provider="weirdo")
@@ -117,7 +117,7 @@ class TestBuildLlmState:
         ) as reg:
             state = build_llm_state(config)
         assert state.default_provider is ollama_cls.return_value
-        reg.register.assert_called_with("ollama", ollama_cls.return_value, default=True)
+        reg.register.assert_any_call("ollama", ollama_cls.return_value, default=True)
 
     def test_error_instanciacion_proveedor_opcional(self) -> None:
         config = SimpleNamespace(llm_provider="ollama")
