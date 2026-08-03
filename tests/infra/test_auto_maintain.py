@@ -312,3 +312,320 @@ class TestVerification:
 
         v = maintainer._verify_resolution(proposal)
         assert v["resolved"] is False
+
+    def test_verify_subsystem_not_found(self):
+        observer = mock.Mock()
+        observer.observe_all.return_value = [_make_observation(subsystem="ollama", status="ok")]
+        executor = mock.Mock()
+        maintainer = AutoMaintainer(observer, executor)
+        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+
+        v = maintainer._verify_resolution(proposal)
+        assert v == {"resolved": False, "error": "Subsystem not found"}
+
+    def test_verify_first_match_priority(self):
+        """Primera observacion con subsystem coincidente decide."""
+        observer = mock.Mock()
+        observer.observe_all.return_value = [
+            _make_observation(subsystem="disk", status="error", anomaly="low"),
+            _make_observation(subsystem="disk", status="ok"),
+        ]
+        executor = mock.Mock()
+        maintainer = AutoMaintainer(observer, executor)
+        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+
+        v = maintainer._verify_resolution(proposal)
+        assert v["resolved"] is False
+
+
+# ── A2: Conversion alerta → propuesta ─────────────────────
+
+
+class TestAlertToProposal:
+    def test_disk_alert(self):
+        alert = _make_alert(severity="emergency", title="DISCO CRITICO")
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "clean_disk"
+        assert prop.target == "disk"
+        assert prop.params == {"min_free_gb": 50, "aggressive": True}
+
+    def test_provider_caido_alert(self):
+        alert = _make_alert(severity="critical", title="Provider caido: ollama", affected_subsystems=["ollama"])
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "restart_provider"
+        assert prop.target == "ollama"
+        assert prop.params == {"provider": "ollama", "timeout": 30}
+
+    def test_provider_caido_accented(self):
+        alert = _make_alert(severity="critical", title="Proveedor caído", affected_subsystems=["gemini"])
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "restart_provider"
+        assert prop.target == "gemini"
+
+    def test_provider_caido_no_subsystems(self):
+        alert = _make_alert(severity="critical", title="Provider caido", affected_subsystems=[])
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.target == "unknown"
+
+    def test_degradacion_alert(self):
+        alert = _make_alert(severity="critical", title="DEGRADACION DEL SISTEMA")
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "scale_resources"
+        assert prop.params == {"scale_type": "vertical", "urgent": True}
+
+    def test_network_alert(self):
+        alert = _make_alert(severity="warning", title="problema de red detectado")
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "check_network"
+        assert prop.params == {"ping_targets": ["8.8.8.8", "1.1.1.1"]}
+
+    def test_network_alert_english(self):
+        alert = _make_alert(severity="warning", title="network is down")
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is not None
+        assert prop.action == "check_network"
+
+    def test_unknown_alert_returns_none(self):
+        alert = _make_alert(severity="warning", title="algo irrelevante")
+        prop = AutoMaintainer(mock.Mock(), mock.Mock())._alert_to_proposal(alert)
+        assert prop is None
+
+
+class TestClassifyRiskExtra:
+    def test_check_network_is_safe(self):
+        proposal = MaintenanceProposal(alert=_make_alert(title="red"), action="check_network", target="network", params={})
+        assert AutoMaintainer._classify_risk(proposal) == "safe"
+
+    def test_unknown_action_is_medium(self):
+        proposal = MaintenanceProposal(alert=_make_alert(title="x"), action="algo_nuevo", target="t", params={})
+        assert AutoMaintainer._classify_risk(proposal) == "medium"
+
+    def test_clean_disk_warning_is_safe(self):
+        proposal = MaintenanceProposal(
+            alert=_make_alert(severity="warning", title="disco"), action="clean_disk", target="disk", params={}
+        )
+        assert AutoMaintainer._classify_risk(proposal) == "safe"
+
+    def test_auto_fix_unused_imports_is_safe(self):
+        proposal = MaintenanceProposal(
+            alert=_make_alert(title="imports"), action="auto_fix_unused_imports", target="code", params={}
+        )
+        assert AutoMaintainer._classify_risk(proposal) == "safe"
+
+
+class TestActionToType:
+    def test_mapping(self):
+        m = AutoMaintainer._action_to_type
+        assert m("clean_disk") == "refactor"
+        assert m("restart_provider") == "refactor"
+        assert m("scale_resources") == "refactor"
+        assert m("check_network") == "test"
+        assert m("auto_fix_code") == "format"
+        assert m("auto_fix_ruff") == "format"
+        assert m("auto_fix_unused_imports") == "format"
+        assert m("desconocida") == "generic"
+
+
+class TestProposeAndExecute:
+    def test_safe_auto_executes(self):
+        observer = mock.Mock()
+        observer.observe_all.return_value = [_make_observation(subsystem="network", status="ok")]
+        executor = mock.Mock()
+        executor.execute.return_value = {"status": "success"}
+        maintainer = AutoMaintainer(observer, executor)
+        maintainer._alerts.evaluate = mock.Mock(
+            return_value=[_make_alert(severity="warning", title="red caida", affected_subsystems=["network"])]
+        )
+
+        with mock.patch("motor.brain.auto_maintain.time.sleep"):
+            results = maintainer.propose_and_maybe_execute()
+
+        assert len(results) == 1
+        assert results[0]["auto_executed"] is True
+        executor.execute.assert_called_once()
+
+    def test_unknown_alerts_produce_no_results(self):
+        maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+        maintainer._alerts.evaluate = mock.Mock(return_value=[_make_alert(title="algo irrelevante")])
+        assert maintainer.propose_and_maybe_execute() == []
+
+    def test_pending_not_executed(self):
+        maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+        maintainer._alerts.evaluate = mock.Mock(
+            return_value=[_make_alert(severity="emergency", title="DISCO CRITICO")]
+        )
+        results = maintainer.propose_and_maybe_execute()
+        assert results[0]["status"] == "pending"
+        assert results[0]["auto_executed"] is False
+
+
+# ── A3: Scheduler ─────────────────────────────────────────
+
+
+class TestScheduler:
+    def test_start_scheduler_success(self):
+        with mock.patch("scripts.pro.tuneladora.scheduler.TuneladoraScheduler") as cls:
+            scheduler = cls.return_value
+            scheduler.pipeline_count = 3
+            scheduler.is_running = True
+            scheduler.get_status.return_value = [{"name": "health"}]
+
+            maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+            maintainer.start_scheduler()
+
+            cls.assert_called_once_with()
+            assert scheduler.add_pipeline.call_count == 3
+            scheduler.start.assert_called_once()
+            status = maintainer.get_scheduler_status()
+            assert status == {"running": True, "pipelines": [{"name": "health"}], "pipeline_count": 3}
+
+    def test_start_scheduler_import_error(self):
+        with mock.patch.dict(
+            "sys.modules", {"scripts.pro.tuneladora.scheduler": None}
+        ):
+            maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+            maintainer.start_scheduler()
+            assert maintainer._scheduler is None
+            assert maintainer.get_scheduler_status() == {
+                "running": False,
+                "pipelines": [],
+                "reason": "Scheduler not started",
+            }
+
+    def test_stop_scheduler(self):
+        scheduler = mock.Mock()
+        maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+        maintainer._scheduler = scheduler
+        maintainer.stop_scheduler()
+        scheduler.stop.assert_called_once()
+
+    def test_stop_scheduler_none(self):
+        maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+        maintainer.stop_scheduler()
+        assert maintainer._scheduler is None
+
+
+# ── A3: Autofix de codigo ─────────────────────────────────
+
+
+class TestAutoFixCode:
+    def _maintainer(self) -> AutoMaintainer:
+        return AutoMaintainer(mock.Mock(), mock.Mock())
+
+    def test_no_changes(self):
+        runner = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0),  # ruff check --fix
+                mock.Mock(returncode=0),  # ruff format
+                mock.Mock(returncode=0),  # git diff --quiet (sin cambios)
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result == {"status": "no_changes", "fix_log": [mock.ANY, mock.ANY], "committed": False}
+
+    def test_committed(self):
+        runner = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0),  # ruff check --fix
+                mock.Mock(returncode=0),  # ruff format
+                mock.Mock(returncode=1),  # git diff --quiet (hay cambios)
+                mock.Mock(returncode=0),  # git add
+                mock.Mock(returncode=0),  # git commit
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result["status"] == "committed"
+        assert result["committed"] is True
+        cmd = runner.call_args_list[-1].args[0]
+        assert cmd[0] == "git" and cmd[1] == "commit"
+
+    def test_ruff_check_fails_but_continues(self):
+        runner = mock.Mock(
+            side_effect=[
+                Exception("ruff no existe"),
+                mock.Mock(returncode=0),  # ruff format
+                mock.Mock(returncode=0),  # git diff --quiet
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result["status"] == "no_changes"
+        assert "fallo" in result["fix_log"][0]
+
+    def test_ruff_format_fails_but_continues(self):
+        runner = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0),  # ruff check --fix
+                Exception("format fallo"),
+                mock.Mock(returncode=0),  # git diff --quiet
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result["status"] == "no_changes"
+        assert "fallo" in result["fix_log"][1]
+
+    def test_git_diff_exception_counts_as_no_changes(self):
+        runner = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0),
+                mock.Mock(returncode=0),
+                Exception("git diff fallo"),
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result["status"] == "no_changes"
+        assert result["committed"] is False
+
+    def test_commit_failed(self):
+        runner = mock.Mock(
+            side_effect=[
+                mock.Mock(returncode=0),
+                mock.Mock(returncode=0),
+                mock.Mock(returncode=1),  # git diff --quiet (cambios)
+                Exception("git add fallo"),
+            ]
+        )
+        with mock.patch("motor.brain.auto_maintain.subprocess.run", runner):
+            result = self._maintainer().auto_fix_code("motor/brain/")
+
+        assert result["status"] == "commit_failed"
+        assert result["committed"] is False
+
+
+class TestPendingResolved:
+    def test_get_pending(self):
+        maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
+        maintainer._alerts.evaluate = mock.Mock(return_value=[_make_alert(title="DISCO CRITICO")])
+        proposals = maintainer.scan()
+        assert maintainer.get_pending() == proposals
+
+    def test_get_resolved_limit(self):
+        observer = mock.Mock()
+        observer.observe_all.return_value = [_make_observation(subsystem="disk", status="ok")]
+        executor = mock.Mock()
+        executor.execute.return_value = {"status": "success"}
+        maintainer = AutoMaintainer(observer, executor)
+
+        for _ in range(3):
+            with mock.patch("motor.brain.auto_maintain.time.sleep"):
+                maintainer.approve_and_execute(
+                    MaintenanceProposal(alert=_make_alert(), action="clean_disk", target="disk", params={}),
+                    approved=True,
+                )
+
+        assert len(maintainer.get_resolved(limit=2)) == 2
