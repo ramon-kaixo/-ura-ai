@@ -49,6 +49,35 @@ def _free_disk_gb(path: Path) -> float | None:
     return None
 
 
+def _build_json_report(
+    episode_id: str,
+    verdict: Status,
+    msg: str,
+    duration_ms: float,
+    mode: str,
+    files: list[str],
+    telemetry: dict,
+    sofia_n_criticos: int,
+    sofia_n_advertencias: int,
+) -> dict:
+    """Reporte estructurado del pipeline (JSON serializable)."""
+    return {
+        "episode_id": episode_id,
+        "pipeline": "tuneladora",
+        "mode": mode,
+        "verdict": verdict.name,
+        "summary": msg,
+        "files": files,
+        "duration_ms": round(duration_ms, 1),
+        "telemetry": telemetry,
+        "sofia": {
+            "criticos": sofia_n_criticos,
+            "advertencias": sofia_n_advertencias,
+        },
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+
+
 class PhaseResult:
     def __init__(self, name: str, status: Status, results: list[Any] | None = None) -> None:
         self.name = name
@@ -769,3 +798,23 @@ class PipelineRunner:
             log.warning("[AUDIT] falló: %s", e)
 
         return verdict
+
+    def _write_json_report(self, episode_id: str, verdict: Status, msg: str, duration_ms: float) -> None:
+        """Persiste el reporte estructurado del pipeline en data/tuneladora_reports/."""
+        report = _build_json_report(
+            episode_id=episode_id,
+            verdict=verdict,
+            msg=msg,
+            duration_ms=duration_ms,
+            mode=self.mode,
+            files=self.files,
+            telemetry=self._telemetry,
+            sofia_n_criticos=self._sofia_report.n_criticos,
+            sofia_n_advertencias=self._sofia_report.n_advertencias,
+        )
+        try:
+            out_dir = self.cfg.ura_root / "data" / "tuneladora_reports"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / f"{episode_id}.json").write_text(json.dumps(report, indent=2))
+        except OSError as e:
+            log.warning("no se pudo escribir reporte JSON: %s", e)

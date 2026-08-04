@@ -133,6 +133,11 @@ inventario:
 	@$(PYTHON) scripts/pro/audit_inventario.py
 	@echo "✅ Inventario actualizado en data/inventario_herramientas.json"
 
+# === TUNELADORA (pipeline de validación) ===
+tuneladora:
+	@echo "▶ Tuneladora (modo check)..."
+	@$(PYTHON) scripts/pro/tuneladora/tuneladora_pipeline.py --mode check
+
 
 # === CHAOS ===
 chaos:
