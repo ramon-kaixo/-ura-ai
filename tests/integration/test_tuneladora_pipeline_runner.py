@@ -7,7 +7,16 @@ from unittest import mock
 import pytest
 
 from scripts.pro.tuneladora.config import Configuration
-from scripts.pro.tuneladora.pipeline.runner import PipelineRunner, _build_json_report, _free_disk_gb
+from scripts.pro.tuneladora.pipeline.tools.base import Status
+from scripts.pro.tuneladora.pipeline.runner import (
+    PhaseResult,
+    PipelineRunner,
+    _api_diff,
+    _build_json_report,
+    _discover_focused_tests,
+    _extract_api,
+    _free_disk_gb,
+)
 from scripts.pro.tuneladora.pipeline.tools.base import Status
 
 
@@ -128,3 +137,73 @@ class TestJsonReport:
         runner.cfg.ura_root = tmp_path / "no" / "existe"
         (tmp_path / "no").write_text("soy un archivo")
         runner._write_json_report("ep-4", Status.OK, "ok", 1.0)  # no debe lanzar
+
+
+class TestFuncionesPuras:
+    def test_discover_focused_tests(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "test_modulo.py").write_text("")
+        (tmp_path / "tests" / "test_modulo_extra.py").write_text("")
+        focused = _discover_focused_tests(["motor/x/modulo.py", "notas.txt", "motor/y/modulo.py"])
+        assert "tests/test_modulo.py" in focused
+        assert focused.count("tests/test_modulo.py") == 1
+
+    def test_extract_api(self) -> None:
+        import ast
+
+        tree = ast.parse("def foo(a, b):\n    return 1\n\nclass Bar:\n    pass\n\nasync def baz():\n    pass\n")
+        api = _extract_api(tree)
+        assert "def foo" in api
+        assert api["def foo"]["args"] == "a, b"
+        assert "class Bar" in api
+        assert "async def baz" in api
+
+    def test_api_diff(self) -> None:
+        old = {"def a": {"args": "x", "returns": "None"}, "def b": {"args": "", "returns": "None"}}
+        new = {"def a": {"args": "x, y", "returns": "None"}, "def c": {"args": "", "returns": "None"}}
+        changes = _api_diff(old, new)
+        text = "\n".join(changes)
+        assert "ELIMINADO" in text and "def b" in text
+        assert "NUEVO" in text and "def c" in text
+        assert "def a" in text
+
+
+class TestPhaseVerdict:
+    def _pr(self, name: str, status: Status) -> PhaseResult:
+        return PhaseResult(name, status)
+
+    def test_fail_prioridad(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check")
+        results = [
+            [self._pr("static", Status.OK), self._pr("static", Status.WARN)],
+            [self._pr("dynamic", Status.FAIL)],
+        ]
+        verdict, msg = runner.phase_verdict(results)
+        assert verdict == Status.FAIL
+        assert "FAILED" in msg
+
+    def test_warn(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check")
+        results = [[self._pr("static", Status.WARN)], [self._pr("d", Status.OK)]]
+        verdict, msg = runner.phase_verdict(results)
+        assert verdict == Status.WARN
+        assert "1 warnings" in msg
+
+    def test_ok(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check")
+        results = [[self._pr("static", Status.OK)], [self._pr("d", Status.OK)]]
+        verdict, msg = runner.phase_verdict(results)
+        assert verdict == Status.OK
+        assert "passed all" in msg
+
+
+class TestBuildJsonReportExtra:
+    def test_fail_verdict(self) -> None:
+        report = _build_json_report(
+            episode_id="e", verdict=Status.FAIL, msg="boom",
+            duration_ms=1.0, mode="gate", files=["a.py"],
+            telemetry={}, sofia_n_criticos=2, sofia_n_advertencias=0,
+        )
+        assert report["verdict"] == "FAIL"
+        assert report["sofia"]["criticos"] == 2
