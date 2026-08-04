@@ -78,6 +78,21 @@ def _build_json_report(
     }
 
 
+def _pid_alive(pid: int) -> bool:
+    """True si el proceso con el PID dado sigue vivo (portable)."""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # existe pero sin permisos para señalarlo
+    except OSError:
+        return False
+
+
 class PhaseResult:
     def __init__(self, name: str, status: Status, results: list[Any] | None = None) -> None:
         self.name = name
@@ -168,10 +183,22 @@ class PipelineRunner:
             if lock_path.exists():
                 age = time.time() - lock_path.stat().st_mtime
                 if age < LOCK_TIMEOUT:
-                    log.warning("Pipeline lock activo (%ds restantes) — abortando", int(LOCK_TIMEOUT - age))
-                    return False
-                log.warning("Lock stale (%ds) — sobrescribiendo", int(age))
-                lock_path.unlink(missing_ok=True)
+                    # Verificar si el proceso que creó el lock sigue vivo:
+                    # un proceso muerto no debe bloquear el pipeline.
+                    try:
+                        lock_data = json.loads(lock_path.read_text())
+                        lock_pid = int(lock_data.get("pid", -1))
+                    except (json.JSONDecodeError, OSError, ValueError, TypeError):
+                        lock_pid = -1
+                    if lock_pid > 0 and not _pid_alive(lock_pid):
+                        log.warning("Lock de proceso muerto (pid=%d) — sobrescribiendo", lock_pid)
+                        lock_path.unlink(missing_ok=True)
+                    else:
+                        log.warning("Pipeline lock activo (%ds restantes) — abortando", int(LOCK_TIMEOUT - age))
+                        return False
+                else:
+                    log.warning("Lock stale (%ds) — sobrescribiendo", int(age))
+                    lock_path.unlink(missing_ok=True)
             lock_path.write_text(json.dumps({"pid": os.getpid(), "start": time.time(), "mode": self.mode}))
             self._lock_acquired = True
             return True
