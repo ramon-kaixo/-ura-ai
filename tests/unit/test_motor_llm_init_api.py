@@ -16,7 +16,7 @@ class TestApiPublica:
         state = mock.Mock()
         state.generate.return_value = "gen"
         state.embed.return_value = [[0.1]]
-        state.embed_async.return_value = [[0.2]]
+        state.embed_async = mock.AsyncMock(return_value=[[0.2]])
         state.health.return_value = {"status": "ok"}
         return state
 
