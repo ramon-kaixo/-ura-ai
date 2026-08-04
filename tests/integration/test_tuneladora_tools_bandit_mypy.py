@@ -45,7 +45,7 @@ class TestBanditTool:
             "subprocess.run",
             lambda *a, **k: SimpleNamespace(
                 returncode=1,
-                stdout="Severity: High\nSeverity: Medium\nSeverity: Low",
+                stdout="Severity: High\nSeverity: High\nSeverity: Medium\nSeverity: Low",
                 stderr="",
             ),
         )
