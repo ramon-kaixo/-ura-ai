@@ -17,18 +17,18 @@ if TYPE_CHECKING:
 class FactHistory:
     """Agregado raíz del versionado de un Fact.
 
-    Responsabilidad única: gestionar el ciclo de vida completo de las
-    versiones de un Fact: crear, actualizar, rollback, tombstone, delete.
+        Responsabilidad única: gestionar el ciclo de vida completo de las
+        versiones de un Fact: crear, actualizar, rollback, tombstone, delete.
 
-    Reglas (IMP-01 a IMP-10):
-    - Es el agregado raíz: nunca permitir acceso de escritura directo a FactVersion.
-    - Toda mutación preserva los invariantes de ADR-025-02/03/04.
-    - Toda operación de modificación es transaccional (no hay estados intermedios).
-- FactIndex indexa solo la versión vigente
-el histórico se accede vía FactHistory.
-    - No hay referencias circulares: FactHistory → FactVersion (no al revés).
-    - version_id y fact_id nunca se reutilizan.
-    - Rollback: operación de navegación, no altera el pasado.
+        Reglas (IMP-01 a IMP-10):
+        - Es el agregado raíz: nunca permitir acceso de escritura directo a FactVersion.
+        - Toda mutación preserva los invariantes de ADR-025-02/03/04.
+        - Toda operación de modificación es transaccional (no hay estados intermedios).
+    - FactIndex indexa solo la versión vigente
+    el histórico se accede vía FactHistory.
+        - No hay referencias circulares: FactHistory → FactVersion (no al revés).
+        - version_id y fact_id nunca se reutilizan.
+        - Rollback: operación de navegación, no altera el pasado.
     """
 
     def __init__(self, fact: Fact, initial_version: FactVersion) -> None:
