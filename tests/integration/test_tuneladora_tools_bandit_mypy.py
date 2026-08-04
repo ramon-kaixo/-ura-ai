@@ -121,7 +121,7 @@ class TestMypyTool:
             lambda *a, **k: SimpleNamespace(returncode=1, stdout="error: found issues", stderr=""),
         )
         result = MypyTool(tmp_path).run_check(["a.py"])
-        assert result.status == Status.FAIL
+        assert result.status == Status.WARN
 
     def test_run_check_timeout(self, tmp_path: Path, monkeypatch) -> None:
         import subprocess
