@@ -90,7 +90,10 @@ class TestSchedulerDaemon:
         thread = mock.Mock()
         monkeypatch.setattr(daemon.threading, "Thread", mock.Mock(return_value=thread))
         monkeypatch.setattr(daemon, "_shutdown", mock.Mock())
-        monkeypatch.setattr(daemon.asyncio, "sleep", mock.AsyncMock(side_effect=asyncio.CancelledError))
+        fake_asyncio = mock.Mock()
+        fake_asyncio.CancelledError = asyncio.CancelledError
+        fake_asyncio.sleep = mock.AsyncMock(side_effect=asyncio.CancelledError)
+        monkeypatch.setattr(daemon, "asyncio", fake_asyncio)
 
         await daemon.main()
         scheduler.start.assert_called_once()
@@ -104,6 +107,9 @@ class TestSchedulerDaemon:
         monkeypatch.setattr(daemon, "signal", mock.Mock())
         monkeypatch.setattr(daemon, "DashboardPlugin", mock.Mock(side_effect=RuntimeError("port busy")))
         monkeypatch.setattr(daemon, "_shutdown", mock.Mock())
-        monkeypatch.setattr(daemon.asyncio, "sleep", mock.AsyncMock(side_effect=asyncio.CancelledError))
+        fake_asyncio = mock.Mock()
+        fake_asyncio.CancelledError = asyncio.CancelledError
+        fake_asyncio.sleep = mock.AsyncMock(side_effect=asyncio.CancelledError)
+        monkeypatch.setattr(daemon, "asyncio", fake_asyncio)
 
         await daemon.main()  # no debe lanzar
