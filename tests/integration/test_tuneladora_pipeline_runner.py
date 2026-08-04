@@ -7,7 +7,6 @@ from unittest import mock
 import pytest
 
 from scripts.pro.tuneladora.config import Configuration
-from scripts.pro.tuneladora.pipeline.tools.base import Status
 from scripts.pro.tuneladora.pipeline.runner import (
     PhaseResult,
     PipelineRunner,
