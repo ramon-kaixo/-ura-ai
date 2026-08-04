@@ -1,6 +1,7 @@
 """Tests for PipelineRunner (scripts/pro/tuneladora/pipeline/runner.py)."""
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from unittest import mock
 
@@ -321,3 +322,42 @@ class TestPhasesConMocks:
         results = runner.phase_static()
         assert any(r.name == "ruff" and r.status == Status.SKIP for r in results)
         assert any(r.name == "bandit" and r.status == Status.SKIP for r in results)
+
+
+class TestLockPidMuerto:
+    def test_lock_pid_muerto_se_sobrescribe(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
+        from scripts.pro.tuneladora.pipeline.runner import _pid_alive
+
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner.cfg.tuneladora_dir = tmp_path
+        runner.cfg.tuneladora_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = tmp_path / "pipeline.lock"
+        import json as _json
+
+        lock_path.write_text(_json.dumps({"pid": 999999999, "start": time.time(), "mode": "check"}))
+        with mock.patch("scripts.pro.tuneladora.pipeline.runner._pid_alive", return_value=False):
+            ok = runner._acquire_lock()
+        assert ok is True
+        assert runner._lock_acquired is True
+
+    def test_lock_pid_vivo_bloquea(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner.cfg.tuneladora_dir = tmp_path
+        runner.cfg.tuneladora_dir.mkdir(parents=True, exist_ok=True)
+        lock_path = tmp_path / "pipeline.lock"
+        import json as _json
+
+        lock_path.write_text(_json.dumps({"pid": 999999999, "start": time.time(), "mode": "check"}))
+        with mock.patch("scripts.pro.tuneladora.pipeline.runner._pid_alive", return_value=True):
+            ok = runner._acquire_lock()
+        assert ok is False
+
+    def test_pid_alive_helpers(self) -> None:
+        from scripts.pro.tuneladora.pipeline.runner import _pid_alive
+
+        assert _pid_alive(0) is False
+        assert _pid_alive(-5) is False
+        assert _pid_alive(999999999) is False
+        import os
+
+        assert _pid_alive(os.getpid()) is True
