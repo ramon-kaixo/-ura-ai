@@ -595,22 +595,28 @@ def detectar_regresiones(reporte_actual: dict | None, reporte_anterior: dict | N
 
 
 def guardar_alerta_en_memoria(alertas: list[str], store=None) -> int:
-    """Guarda alertas del supervisor en memoria episódica."""
+    """Guarda alertas del supervisor en memoria episódica.
+
+    Usa la API real de EpisodeStore: store(Episode(...)).
+    """
     if not alertas:
         return 0
     guardadas = 0
     try:
+        from motor.intelligence.memory.episodic import Episode
+
         if store is None:
             from motor.intelligence.memory.episodic import EpisodeStore
 
             store = EpisodeStore()
         for alerta in alertas:
-            store.record({
-                "tipo": "alerta_supervisor",
-                "mensaje": alerta,
-                "timestamp": _datetime.now(UTC).isoformat(),
-                "componente": "auditoria_continua",
-            })
+            store.store(Episode(
+                session_id="auditoria_continua",
+                source="supervisor",
+                payload=alerta,
+                tags=["alerta_supervisor", "auditoria_continua"],
+                metadata={"componente": "auditoria_continua"},
+            ))
             guardadas += 1
     except Exception as exc:
         log.debug("guardar_alerta_en_memoria falló: %s", exc)

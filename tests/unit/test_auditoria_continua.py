@@ -81,15 +81,28 @@ class TestGuardarAlerta:
         store = mock.Mock()
         n = guardar_alerta_en_memoria(["alerta1", "alerta2"], store=store)
         assert n == 2
-        assert store.record.call_count == 2
-        payload = store.record.call_args[0][0]
-        assert payload["tipo"] == "alerta_supervisor"
-        assert payload["componente"] == "auditoria_continua"
+        assert store.store.call_count == 2
+        episodes = [c.args[0] for c in store.store.call_args_list]
+        assert all(e.tags == ["alerta_supervisor", "auditoria_continua"] for e in episodes)
+        assert episodes[0].payload == "alerta1"
+        assert episodes[1].payload == "alerta2"
 
     def test_store_falla_silencioso(self) -> None:
         store = mock.Mock()
-        store.record.side_effect = RuntimeError("boom")
+        store.store.side_effect = RuntimeError("boom")
         assert guardar_alerta_en_memoria(["a"], store=store) == 0
+
+    def test_store_real_guarda(self, tmp_path: Path) -> None:
+        from motor.intelligence.memory.episodic import EpisodeStore, EpisodeStoreConfig
+
+        store = EpisodeStore(EpisodeStoreConfig(persist_path=str(tmp_path / "ep.db")))
+        n = guardar_alerta_en_memoria(["alerta real"], store=store)
+        assert n == 1
+        store2 = EpisodeStore(EpisodeStoreConfig(persist_path=str(tmp_path / "ep.db")))
+        episodes = store2.get_by_time_range(
+            start="2020-01-01T00:00:00", end="2100-01-01T00:00:00"
+        )
+        assert any("alerta real" in getattr(e, "payload", "") for e in episodes)
 
 
 class TestLeerUltimoReporteN:
