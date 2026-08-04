@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 
 from scripts.pro.tuneladora.config import Configuration
-from scripts.pro.tuneladora.pipeline.runner import PipelineRunner, _free_disk_gb
+from scripts.pro.tuneladora.pipeline.runner import PipelineRunner, _build_json_report, _free_disk_gb
 from scripts.pro.tuneladora.pipeline.tools.base import Status
 
 
@@ -86,3 +86,45 @@ class TestFreeDiskGB:
     def test_none_on_bad_path(self):
         gb = _free_disk_gb(Path("/nonexistent_path_xyz"))
         assert gb is None
+
+
+class TestJsonReport:
+    def test_build_report_dict(self):
+        report = _build_json_report(
+            episode_id="ep-1", verdict=Status.OK, msg="todo bien",
+            duration_ms=1234.5, mode="check", files=["a.py", "b.py"],
+            telemetry={"n_files": 2}, sofia_n_criticos=0, sofia_n_advertencias=1,
+        )
+        assert report["episode_id"] == "ep-1"
+        assert report["verdict"] == "OK"
+        assert report["pipeline"] == "tuneladora"
+        assert report["mode"] == "check"
+        assert report["files"] == ["a.py", "b.py"]
+        assert report["sofia"] == {"criticos": 0, "advertencias": 1}
+        assert report["duration_ms"] == 1234.5
+        assert report["telemetry"]["n_files"] == 2
+
+    def test_build_report_fail_verdict(self):
+        report = _build_json_report(
+            episode_id="ep-2", verdict=Status.FAIL, msg="fallo",
+            duration_ms=10.0, mode="gate", files=[], telemetry={},
+            sofia_n_criticos=2, sofia_n_advertencias=0,
+        )
+        assert report["verdict"] == "FAIL"
+        assert report["summary"] == "fallo"
+
+    def test_write_json_report(self, runner: PipelineRunner, tmp_path):
+        runner.cfg.ura_root = tmp_path
+        runner._write_json_report("ep-3", Status.OK, "ok", 99.0)
+        out = tmp_path / "data" / "tuneladora_reports" / "ep-3.json"
+        assert out.exists()
+        import json as _json
+
+        data = _json.loads(out.read_text())
+        assert data["episode_id"] == "ep-3"
+        assert data["verdict"] == "OK"
+
+    def test_write_json_report_error_silencioso(self, runner: PipelineRunner, tmp_path):
+        runner.cfg.ura_root = tmp_path / "no" / "existe"
+        (tmp_path / "no").write_text("soy un archivo")
+        runner._write_json_report("ep-4", Status.OK, "ok", 1.0)  # no debe lanzar
