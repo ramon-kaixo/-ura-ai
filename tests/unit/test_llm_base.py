@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -114,7 +114,7 @@ class TestValidadoresInternos:
     def test_firma_embed_mal(self) -> None:
         prov = GoodProvider()
 
-        def bad_embed(self, texts: list[str]) -> list[list[float]]:  # noqa: ARG001
+        def bad_embed(self, texts: list[str]) -> list[list[float]]:
             return [[]]
 
         prov.embed = bad_embed
@@ -124,7 +124,7 @@ class TestValidadoresInternos:
 
     def test_capacidades_no_dict(self) -> None:
         class NoDictCap(GoodProvider):
-            capabilities = ["chat"]
+            capabilities: ClassVar = ["chat"]
 
         prov = NoDictCap()
         errors: list[str] = []
