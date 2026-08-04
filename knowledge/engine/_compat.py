@@ -6,4 +6,5 @@ Este módulo proporciona polyfills para features que no existen en versiones ant
 
 from __future__ import annotations
 
-from enum import StrEnum as StrEnum
+
+from enum import StrEnum as StrEnum  # noqa: PLC0414  # re-export polyfill Python 3.10

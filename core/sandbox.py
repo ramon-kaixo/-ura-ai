@@ -91,7 +91,7 @@ class Sandbox:
             finally:
                 # Limpiar archivo temporal
                 with contextlib.suppress(OSError):
-                    Path(test_file).unlink()
+                    Path(test_file).unlink()# noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
 
         except Exception as e:
             result = {"success": False, "output": "", "error": str(e)}
@@ -241,14 +241,14 @@ log.info(f'1 + 1 = {x}')
 
         # Test 3: backup
         test_file = Path("/tmp/test_sandbox.txt")
-        test_file.write_text("contenido original")
+        test_file.write_text("contenido original")# noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
         backup = sandbox.create_backup(str(test_file))
 
         # Test 4: rollback
-        test_file.write_text("contenido modificado")
+        test_file.write_text("contenido modificado")# noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
         sandbox.rollback(str(test_file), backup)
 
         # Limpiar
-        test_file.unlink()
+        test_file.unlink()# noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
 
     asyncio.run(test())
