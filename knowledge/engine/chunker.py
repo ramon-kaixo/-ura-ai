@@ -43,6 +43,7 @@ def chunk_document(
 
     start = 0
     index = 0
+    step = max(1, max_words - overlap)
     while start < len(words):
         end = min(start + max_words, len(words))
         chunk_text = " ".join(words[start:end])
@@ -59,7 +60,7 @@ def chunk_document(
         index += 1
         if end >= len(words):
             break
-        start += max_words - overlap
+        start += step
 
     return chunks
 
@@ -84,6 +85,7 @@ def chunk_text(
     chunks: list[Chunk] = []
     start = 0
     index = 0
+    step = max(1, max_words - overlap)
     while start < len(words):
         end = min(start + max_words, len(words))
         chunks.append(
@@ -99,5 +101,5 @@ def chunk_text(
         index += 1
         if end >= len(words):
             break
-        start += max_words - overlap
+        start += step
     return chunks
