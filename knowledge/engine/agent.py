@@ -128,7 +128,7 @@ class KnowledgeGraphAgent(Agent):
             return findings
 
         for row in rows:
-            findings.append(  # noqa: PERF401
+            findings.append(
                 AgentFinding(
                     agent_id=self._id,
                     kind="audit",
@@ -191,7 +191,7 @@ class KnowledgeGraphAgent(Agent):
 
         findings: list[AgentFinding] = []
         for d in deductions:
-            findings.append(  # noqa: PERF401
+            findings.append(
                 AgentFinding(
                     agent_id=self._id,
                     kind=d.kind,
