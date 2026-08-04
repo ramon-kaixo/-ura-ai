@@ -207,3 +207,118 @@ class TestBuildJsonReportExtra:
         )
         assert report["verdict"] == "FAIL"
         assert report["sofia"]["criticos"] == 2
+
+
+class TestPhasesConMocks:
+    def _runner(self, cfg: Configuration) -> PipelineRunner:
+        return PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
+
+    def test_phase_dynamic_skip_sin_pytest(self, cfg: Configuration) -> None:
+        runner = self._runner(cfg)
+        runner.tools["pytest"] = mock.Mock()
+        runner.tools["pytest"].is_available.return_value = False
+        results = runner.phase_dynamic()
+        assert results[0].status == Status.SKIP
+
+    def test_phase_dynamic_focused_ok(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "test_modulo.py").write_text("")
+        runner = self._runner(cfg)
+        tool = mock.Mock()
+        tool.is_available.return_value = True
+        tool.run_check.return_value = mock.Mock(status=Status.OK, detail="")
+        runner.tools["pytest"] = tool
+        runner.cache = mock.Mock()
+        runner.cache.get.return_value = None
+        results = runner.phase_dynamic()
+        assert results[0].name == "pytest_focused"
+        assert results[0].status == Status.OK
+        runner.cache.set.assert_called_once()
+
+    def test_phase_dynamic_focused_fail_encola(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "test_modulo.py").write_text("")
+        runner = self._runner(cfg)
+        tool = mock.Mock()
+        tool.is_available.return_value = True
+        tool.run_check.return_value = mock.Mock(status=Status.FAIL, detail="boom")
+        runner.tools["pytest"] = tool
+        runner.cache = mock.Mock()
+        runner.cache.get.return_value = None
+        runner.llm_fallback = mock.Mock()
+        runner.llm_fallback.analyze.return_value = "sug"
+        runner.pending_queue = mock.Mock()
+        results = runner.phase_dynamic()
+        assert results[0].status == Status.FAIL
+        runner.pending_queue.add.assert_called_once()
+        assert runner.llm_fallback.analyze.call_count == 1
+
+    def test_phase_dynamic_cache_hit(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "test_modulo.py").write_text("")
+        runner = self._runner(cfg)
+        tool = mock.Mock()
+        tool.is_available.return_value = True
+        runner.tools["pytest"] = tool
+        runner.cache = mock.Mock()
+        runner.cache.get.return_value = mock.Mock(status=Status.OK)
+        results = runner.phase_dynamic()
+        assert results[0].name == "pytest_focused"
+        assert results[0].status == Status.OK
+        tool.run_check.assert_not_called()
+
+    def test_phase_dynamic_full_fail(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        tool = mock.Mock()
+        tool.is_available.return_value = True
+        tool.run_check.return_value = mock.Mock(status=Status.FAIL, detail="err")
+        runner.tools["pytest"] = tool
+        runner.llm_fallback = mock.Mock()
+        runner.llm_fallback.analyze.return_value = None
+        runner.pending_queue = mock.Mock()
+        results = runner.phase_dynamic()
+        assert results[0].name == "pytest_full"
+        assert results[0].status == Status.FAIL
+        runner.pending_queue.add.assert_called_once()
+
+    def test_phase_dynamic_full_ok(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        tool = mock.Mock()
+        tool.is_available.return_value = True
+        tool.run_check.return_value = mock.Mock(status=Status.OK, detail="")
+        runner.tools["pytest"] = tool
+        runner.llm_fallback = mock.Mock()
+        runner.pending_queue = mock.Mock()
+        results = runner.phase_dynamic()
+        assert results[0].name == "pytest_full"
+        assert results[0].status == Status.OK
+        runner.pending_queue.add.assert_not_called()
+
+    def test_phase_static_tools(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
+        runner._run_py_compile = mock.Mock()
+        runner._run_py_compile.return_value = mock.Mock(status=Status.OK)
+        runner._run_tool_with_retry = mock.Mock()
+        runner._run_tool_with_retry.return_value = mock.Mock(status=Status.OK, detail="")
+        for name in ("ruff", "mypy", "bandit"):
+            tool = mock.Mock()
+            tool.is_available.return_value = True
+            runner.tools[name] = tool
+        results = runner.phase_static()
+        names = {r.name for r in results}
+        assert {"ruff", "mypy", "bandit"} <= names
+
+    def test_phase_static_skip(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
+        runner._run_py_compile = mock.Mock()
+        runner._run_py_compile.return_value = mock.Mock(status=Status.OK)
+        for name in ("ruff", "mypy", "bandit"):
+            tool = mock.Mock()
+            tool.is_available.return_value = False
+            runner.tools[name] = tool
+        results = runner.phase_static()
+        assert any(r.name == "ruff" and r.status == Status.SKIP for r in results)
+        assert any(r.name == "bandit" and r.status == Status.SKIP for r in results)
