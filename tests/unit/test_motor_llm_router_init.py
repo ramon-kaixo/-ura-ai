@@ -168,6 +168,22 @@ class TestHealth:
         assert h["status"] == "error"
         assert "caido" in h["detail"]
 
+    def test_health_con_monitor(self) -> None:
+        r = LLMRouter(registry=FakeRegistry({"ollama": FakeProvider()}), monitor_enabled=True)
+        h = r.health()
+        assert h["status"] == "ok"
+        assert "latency_ms" in h
+
+    def test_health_con_profiler_detector(self) -> None:
+        r = LLMRouter(
+            registry=FakeRegistry({"ollama": FakeProvider()}),
+            profiling_enabled=True,
+            hotspot_threshold_ms=1.0,
+        )
+        h = r.health()
+        assert h["status"] == "ok"
+        assert "latency_ms" in h
+
 
 class TestCapability:
     def test_find(self, router: LLMRouter) -> None:

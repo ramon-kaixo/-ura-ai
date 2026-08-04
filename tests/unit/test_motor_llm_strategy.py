@@ -126,6 +126,13 @@ class TestCallWithRetry:
         assert r.startswith("Error:")
         prov.generate.assert_called_once()
 
+    def test_sin_intentos_retorna_unknown(self, monkeypatch) -> None:
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
+        monkeypatch.setattr(strat.time, "sleep", mock.Mock())
+        r = call_with_retry(prov, "generate", "task", "p", None, cbs, retry_max_attempts=0)
+        assert r == "Error: unknown"
+        prov.generate.assert_not_called()
+
     def test_circuit_open(self, monkeypatch) -> None:
 
         class CbOpen:
