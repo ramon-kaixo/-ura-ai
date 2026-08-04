@@ -542,8 +542,8 @@ if __name__ == "__main__":
 
 # ── Integración con tuneladora (reporte JSON) ──────────────
 
-def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None) -> dict | None:
-    """Lee el reporte JSON más reciente generado por la tuneladora.
+def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None, n: int = 0) -> dict | None:
+    """Lee el reporte JSON de la tuneladora (n=0 el más reciente, n=1 el anterior).
 
     Los reportes se escriben en data/tuneladora_reports/<episode_id>.json
     por runner._write_json_report().
@@ -559,22 +559,29 @@ def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None) -> dict | Non
         key=_os.path.getmtime,
         reverse=True,
     )
-    if not files:
+    if n >= len(files):
         return None
     try:
-        with open(files[0], encoding="utf-8") as f:
+        with open(files[n], encoding="utf-8") as f:
             return _json.load(f)
     except (_json.JSONDecodeError, OSError):
         return None
 
 
 def detectar_regresiones(reporte_actual: dict | None, reporte_anterior: dict | None) -> list[str]:
-    """Compara reportes de la tuneladora y detecta regresiones."""
+    """Compara reportes de la tuneladora y detecta regresiones.
+
+    Campos reales del reporte del runner: verdict, mode, duration_ms, files.
+    Los campos coverage/tests son opcionales (futuro enriquecimiento).
+    """
     alertas: list[str] = []
     if reporte_actual is None:
         return ["No hay reporte de tuneladora para analizar"]
     if reporte_anterior is None:
-        return ["No hay reporte anterior para comparar"]
+        return ["No hay reporte anterior para comparar (primera ejecución)"]
+
+    if reporte_actual.get("verdict") == "FAIL":
+        alertas.append("ALERTA: pipeline tuneladora terminó en FAIL")
 
     cov_actual = reporte_actual.get("coverage", {}).get("global", 0)
     cov_anterior = reporte_anterior.get("coverage", {}).get("global", 0)
@@ -584,9 +591,6 @@ def detectar_regresiones(reporte_actual: dict | None, reporte_anterior: dict | N
     failed = reporte_actual.get("tests", {}).get("failed", 0)
     if failed:
         alertas.append(f"ALERTA: {failed} tests fallaron")
-
-    if reporte_actual.get("verdict") == "FAIL":
-        alertas.append("ALERTA: pipeline tuneladora terminó en FAIL")
     return alertas
 
 
@@ -611,3 +615,20 @@ def guardar_alerta_en_memoria(alertas: list[str], store=None) -> int:
     except Exception as exc:
         log.debug("guardar_alerta_en_memoria falló: %s", exc)
     return guardadas
+
+
+@check("Regresiones tuneladora", 5)
+def _chequear_regresiones_tuneladora():
+    """Compara el último reporte de la tuneladora con el anterior y alerta."""
+    try:
+        actual = leer_ultimo_reporte_tuneladora()
+        anterior = leer_ultimo_reporte_tuneladora(n=1)
+        alertas = detectar_regresiones(actual, anterior)
+        guardar_alerta_en_memoria(alertas)
+        if not alertas:
+            return True, "Sin regresiones detectadas"
+        if alertas and "No hay reporte" in alertas[0]:
+            return True, alertas[0]
+        return False, "; ".join(alertas)[:120]
+    except Exception as exc:
+        return False, f"check regresiones falló: {exc}"

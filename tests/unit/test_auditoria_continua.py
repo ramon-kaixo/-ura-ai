@@ -90,3 +90,87 @@ class TestGuardarAlerta:
         store = mock.Mock()
         store.record.side_effect = RuntimeError("boom")
         assert guardar_alerta_en_memoria(["a"], store=store) == 0
+
+
+class TestLeerUltimoReporteN:
+    def test_n_mas_reciente(self, tmp_path: Path) -> None:
+        d = tmp_path / "r"
+        d.mkdir()
+        (d / "a.json").write_text(json.dumps({"episode_id": "a"}))
+        (d / "b.json").write_text(json.dumps({"episode_id": "b"}))
+        assert leer_ultimo_reporte_tuneladora(d, n=0)["episode_id"] == "b"
+        assert leer_ultimo_reporte_tuneladora(d, n=1)["episode_id"] == "a"
+
+    def test_n_fuera_de_rango(self, tmp_path: Path) -> None:
+        d = tmp_path / "r"
+        d.mkdir()
+        (d / "a.json").write_text(json.dumps({"episode_id": "a"}))
+        assert leer_ultimo_reporte_tuneladora(d, n=5) is None
+
+
+class TestCheckRegresiones:
+    def test_registrado_en_checks(self) -> None:
+        from scripts.pro.auditoria_continua import CHECKS
+
+        assert any(c["name"] == "Regresiones tuneladora" for c in CHECKS)
+
+    def test_sin_reportes_ok(self, monkeypatch) -> None:
+        from scripts.pro.auditoria_continua import _chequear_regresiones_tuneladora
+
+        monkeypatch.setattr(
+            "scripts.pro.auditoria_continua.leer_ultimo_reporte_tuneladora",
+            lambda n=0: None,
+        )
+        ok, msg = _chequear_regresiones_tuneladora()
+        assert ok is True
+        assert "No hay reporte" in msg
+
+    def test_con_regresion_fail(self, monkeypatch) -> None:
+        from scripts.pro.auditoria_continua import _chequear_regresiones_tuneladora
+
+        reportes = [{"verdict": "FAIL", "episode_id": "a"}, {"verdict": "OK", "episode_id": "b"}]
+
+        def fake(n=0):
+            return reportes[n] if n < len(reportes) else None
+
+        monkeypatch.setattr(
+            "scripts.pro.auditoria_continua.leer_ultimo_reporte_tuneladora",
+            fake,
+        )
+        with mock.patch(
+            "scripts.pro.auditoria_continua.guardar_alerta_en_memoria"
+        ) as m_guardar:
+            ok, msg = _chequear_regresiones_tuneladora()
+        assert ok is False
+        assert "FAIL" in msg
+        m_guardar.assert_called_once()
+
+    def test_con_regresion_cobertura(self, monkeypatch) -> None:
+        from scripts.pro.auditoria_continua import _chequear_regresiones_tuneladora
+
+        reportes = [
+            {"verdict": "OK", "coverage": {"global": 60.0}},
+            {"verdict": "OK", "coverage": {"global": 80.0}},
+        ]
+
+        def fake(n=0):
+            return reportes[n] if n < len(reportes) else None
+
+        monkeypatch.setattr(
+            "scripts.pro.auditoria_continua.leer_ultimo_reporte_tuneladora",
+            fake,
+        )
+        ok, msg = _chequear_regresiones_tuneladora()
+        assert ok is False
+        assert "REGRESION" in msg
+
+    def test_excepcion_en_check(self, monkeypatch) -> None:
+        from scripts.pro.auditoria_continua import _chequear_regresiones_tuneladora
+
+        monkeypatch.setattr(
+            "scripts.pro.auditoria_continua.leer_ultimo_reporte_tuneladora",
+            mock.Mock(side_effect=RuntimeError("boom")),
+        )
+        ok, msg = _chequear_regresiones_tuneladora()
+        assert ok is False
+        assert "falló" in msg
