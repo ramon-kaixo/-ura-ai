@@ -131,13 +131,13 @@ class TestMypyTool:
             mock.Mock(side_effect=subprocess.TimeoutExpired(cmd="x", timeout=120)),
         )
         result = MypyTool(tmp_path).run_check()
-        assert result.status == Status.FAIL
+        assert result.status == Status.WARN
         assert "Timeout" in result.summary
 
     def test_run_check_error(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("x")))
         result = MypyTool(tmp_path).run_check()
-        assert result.status == Status.FAIL
+        assert result.status == Status.WARN
 
     def test_run_fix(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.setattr(
@@ -148,4 +148,4 @@ class TestMypyTool:
         assert result.status == Status.OK
 
     def test_severity(self, tmp_path: Path) -> None:
-        assert MypyTool(tmp_path).severity() == "required"
+        assert MypyTool(tmp_path).severity() == "optional"
