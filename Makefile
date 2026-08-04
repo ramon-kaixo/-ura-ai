@@ -17,7 +17,7 @@ validate: test-fast lint mypy-info radon
 validate-full: test lint mypy-info radon
 	@echo "✅ validate-full OK"
 
-# === TESTS RÁPIDOS (secuencial; paralelo requiere pytest-xdist) ===
+# === TESTS RÁPIDOS (secuencial: xdist satura el host con -n auto, OpenBLAS falla) ===
 test-fast:
 	@echo "▶ pytest rápido (sin slow, sin cov)..."
 	$(PYTEST) tests/unit/ tests/integration/ $(PYTEST_SLOW) $(PYTEST_ARGS) --no-cov

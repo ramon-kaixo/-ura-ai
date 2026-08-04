@@ -58,7 +58,18 @@ Commit `fac8e03b`.
 | Errores lint strict | 252 | **25 → 0** |
 | Errores mypy | 1 | **284** |
 | Tests | 4,886 | **4,956 passed / 38 skipped** |
-| Cobertura global | 71.7% | **73.2%** (motor 84.1%, knowledge 63.7%, core 59.8%) |
+| Cobertura global | 71.7% | **78.5%** (motor 86.0%, knowledge 64.5%, core 78.7%) |
+
+## Mejoras post-revisión crítica (2026-08-04)
+
+1. **auditor_real.py v2**: categoría  separada (361 archivos),  como
+   librería (no esbozo), detección de referencias systemd/cron/Makefile (reusa el criterio
+   de audit_inventario). dormido: 462 → **162** reales.
+2. **test-fast**: se probó restaurar  con pytest-xdist — **satura el host**
+   (OpenBLAS thread creation fail con 20 workers). Se mantiene secuencial con causa
+   documentada en el Makefile; xdist quitado de requirements.
+3. **Cobertura real re-medida**: 78.5% (el 73.2% anterior era de un run con archivos rotos).
+4. **Suite completa verde**: 4,955 passed / 38 skipped / 0 failed (5:06 min).
 
 ## Siguiente paso
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import subprocess
 import sys
 import time
@@ -26,6 +27,8 @@ EXCLUDE_DIRS = {
     "apple-ncm", "dist", "ura.egg-info", "htmlcov", "requirements",
 }
 TESTS_DIRS = [REPO_ROOT / "tests" / "unit", REPO_ROOT / "tests" / "integration"]
+
+MAKEFILE = REPO_ROOT / "Makefile"
 
 DEFAULT_JSON = OUT_DIR / "auditoria_real.json"
 DEFAULT_MD = OUT_DIR / "auditoria_real.md"
@@ -65,7 +68,7 @@ def _has_tests(stem: str) -> bool:
     return any((d / f"test_{stem}.py").exists() for d in TESTS_DIRS)
 
 
-def _classify(name: str, lines: int, has_main: bool, has_class: bool, is_imported: bool, has_tests: bool, corrupto: bool) -> str:
+def _classify(rel: str, name: str, lines: int, has_main: bool, has_class: bool, is_imported: bool, has_tests: bool, corrupto: bool) -> str:
     if corrupto:
         return "corrupto"
     if "demo_" in name:
@@ -74,6 +77,10 @@ def _classify(name: str, lines: int, has_main: bool, has_class: bool, is_importe
         return "rpa"
     if "patch_" in name or "seed_" in name:
         return "obsoleto"
+    if name == "__init__.py" or name == "__main__.py":
+        return "libreria"
+    if rel.startswith("tests/") or rel.startswith("motor/tests/"):
+        return "test"
     if lines < 20 and not has_class:
         return "esbozo"
     if not has_main and not has_class:
@@ -81,6 +88,29 @@ def _classify(name: str, lines: int, has_main: bool, has_class: bool, is_importe
     if has_tests or is_imported:
         return "activo"
     return "dormido"
+
+
+def _referenciado_por_sistema() -> set[str]:
+    """Rutas de scripts referenciados por systemd, cron o el Makefile."""
+    refs: set[str] = set()
+    import subprocess as sp
+
+    try:
+        units = sp.run(["systemctl", "list-unit-files"], capture_output=True, text=True, timeout=30).stdout
+        for stem in re.findall(r"(\S+)\.(?:service|timer|path)", units):
+            refs.add(stem)
+    except (OSError, sp.TimeoutExpired):
+        pass
+    try:
+        cron = sp.run(["crontab", "-l"], capture_output=True, text=True, timeout=30).stdout
+        for stem in re.findall(r"(\S+)\.(?:py|sh)", cron):
+            refs.add(Path(stem).stem)
+    except (OSError, sp.TimeoutExpired):
+        pass
+    if MAKEFILE.exists():
+        for stem in re.findall(r"(?:scripts/pro/|scripts/)?(\w+\.(?:py|sh))", MAKEFILE.read_text()):
+            refs.add(Path(stem).stem)
+    return refs
 
 
 def main() -> int:
@@ -107,6 +137,7 @@ def main() -> int:
 
     referenced = set(re.findall(r"(?:import|from)\s+([a-zA-Z0-9_]+)", corpus))
     referenced_py = set(re.findall(r"([a-zA-Z0-9_]+)\.py", corpus))
+    sistema_refs = _referenciado_por_sistema()
 
     entries: list[dict] = []
     for rel, src in fuentes.items():
@@ -120,9 +151,9 @@ def main() -> int:
             corrupto = False
         except (SyntaxError, UnicodeDecodeError, ValueError):
             corrupto = True
-        is_imported = stem in referenced or stem in referenced_py
+        is_imported = stem in referenced or stem in referenced_py or stem in sistema_refs
         has_tests = _has_tests(stem)
-        estado = _classify(stem, lines, has_main, has_class, is_imported, has_tests, corrupto)
+        estado = _classify(rel, stem, lines, has_main, has_class, is_imported, has_tests, corrupto)
         entries.append(
             {
                 "ruta": rel,

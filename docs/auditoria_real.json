@@ -1,6 +1,6 @@
 {
-  "generado": "2026-08-04T08:24:20.586189+00:00",
-  "total": 1066,
+  "generado": "2026-08-04T10:57:37.188239+00:00",
+  "total": 1056,
   "archivos": [
     {
       "ruta": "agents/agente_sandbox_codigo.py",
@@ -351,7 +351,7 @@
       "plugin": false,
       "tests": true,
       "importado": true,
-      "ultima_mod": "2026-07-23 18:45:26 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "activo"
     },
     {
@@ -449,7 +449,7 @@
       "class": false,
       "plugin": false,
       "tests": false,
-      "importado": true,
+      "importado": false,
       "ultima_mod": "2026-07-25 15:19:11 +0200",
       "estado": "libreria"
     },
@@ -615,7 +615,7 @@
       "plugin": false,
       "tests": true,
       "importado": true,
-      "ultima_mod": "2026-07-25 15:19:11 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "libreria"
     },
     {
@@ -857,7 +857,7 @@
       "plugin": false,
       "tests": false,
       "importado": true,
-      "ultima_mod": "2026-07-25 15:20:32 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "esbozo"
     },
     {
@@ -884,13 +884,13 @@
     },
     {
       "ruta": "core/mochila/providers/gemini.py",
-      "lineas": 131,
+      "lineas": 132,
       "main": false,
       "class": true,
       "plugin": false,
       "tests": false,
       "importado": false,
-      "ultima_mod": "2026-07-25 15:20:32 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "dormido"
     },
     {
@@ -1000,7 +1000,7 @@
       "plugin": false,
       "tests": false,
       "importado": true,
-      "ultima_mod": "2026-07-22 19:16:17 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "libreria"
     },
     {
@@ -1297,7 +1297,7 @@
       "plugin": false,
       "tests": true,
       "importado": true,
-      "ultima_mod": "2026-07-23 18:45:26 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "activo"
     },
     {
@@ -1500,13 +1500,13 @@
     },
     {
       "ruta": "knowledge/engine/_compat.py",
-      "lineas": 10,
+      "lineas": 11,
       "main": false,
       "class": false,
       "plugin": false,
       "tests": false,
       "importado": false,
-      "ultima_mod": "2026-07-23 01:07:40 +0200",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "esbozo"
     },
     {
@@ -1670,7 +1670,7 @@
       "class": false,
       "plugin": false,
       "tests": false,
-      "importado": false,
+      "importado": true,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
       "estado": "libreria"
     },
@@ -1742,13 +1742,13 @@
     },
     {
       "ruta": "knowledge/engine/cli/main.py",
-      "lineas": 66,
+      "lineas": 289,
       "main": true,
       "class": false,
       "plugin": false,
       "tests": false,
       "importado": true,
-      "ultima_mod": "2026-08-02 05:26:29 +0200",
+      "ultima_mod": "2026-08-04 12:41:04 +0200",
       "estado": "activo"
     },
     {
@@ -5291,7 +5291,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/conftest.py",
@@ -5302,7 +5302,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-25 15:20:32 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/e2e/__init__.py",
@@ -5313,7 +5313,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-23 14:54:06 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/e2e/test_chat_flow.py",
@@ -5324,7 +5324,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 18:45:26 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/e2e/test_health_metrics.py",
@@ -5335,7 +5335,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:54:06 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_anthropic.py",
@@ -5346,7 +5346,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-16 21:07:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_api_audit.py",
@@ -5357,7 +5357,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_assistant_obs.py",
@@ -5368,7 +5368,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_baseline.py",
@@ -5379,7 +5379,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 21:59:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_benchmark_continuo.py",
@@ -5390,7 +5390,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_benchmark_providers.py",
@@ -5401,7 +5401,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_benchmark_rag.py",
@@ -5412,7 +5412,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 21:59:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_capabilities.py",
@@ -5423,7 +5423,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_citation.py",
@@ -5434,7 +5434,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-20 13:35:48 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_cleaner.py",
@@ -5445,7 +5445,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_cli.py",
@@ -5456,7 +5456,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-26 19:15:38 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_continuous.py",
@@ -5467,7 +5467,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_crawler.py",
@@ -5478,7 +5478,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_debt_cleanup.py",
@@ -5489,7 +5489,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-22 19:16:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_detector.py",
@@ -5500,7 +5500,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_e2e.py",
@@ -5511,7 +5511,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 06:04:56 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_evaluation.py",
@@ -5522,7 +5522,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 21:59:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_experiment.py",
@@ -5533,7 +5533,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_extractor.py",
@@ -5544,7 +5544,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_fusion.py",
@@ -5555,7 +5555,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 06:04:56 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_gemini.py",
@@ -5566,7 +5566,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_hybrid_memory.py",
@@ -5577,7 +5577,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-22 19:16:58 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_llm_providers.py",
@@ -5588,7 +5588,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 06:04:56 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_lmstudio.py",
@@ -5599,7 +5599,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_mcp_server.py",
@@ -5610,7 +5610,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_metrics_server.py",
@@ -5621,7 +5621,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_monitor.py",
@@ -5632,7 +5632,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_openrouter.py",
@@ -5643,7 +5643,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_pipeline.py",
@@ -5654,7 +5654,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_pipeline_e2e.py",
@@ -5665,7 +5665,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_preflight.py",
@@ -5676,7 +5676,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-26 19:15:38 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_profiler.py",
@@ -5687,7 +5687,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_prometheus_exporter.py",
@@ -5698,7 +5698,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 18:45:26 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_provider_contract.py",
@@ -5709,7 +5709,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-20 13:16:03 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_qdrant_rest.py",
@@ -5720,7 +5720,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-22 19:18:06 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_ranker.py",
@@ -5731,7 +5731,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_regression.py",
@@ -5742,7 +5742,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-19 18:45:12 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_resiliencia.py",
@@ -5753,7 +5753,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-22 19:18:06 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_scanner.py",
@@ -5764,7 +5764,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_searcher.py",
@@ -5775,7 +5775,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_summarizer.py",
@@ -5786,7 +5786,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-19 19:10:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_tracing_exporter.py",
@@ -5797,7 +5797,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 15:14:19 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/test_vllm.py",
@@ -5808,7 +5808,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 04:05:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/__init__.py",
@@ -5819,7 +5819,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-23 07:01:36 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/test_engine_init.py",
@@ -5830,7 +5830,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:52:13 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/test_plugin_cleanup.py",
@@ -5841,7 +5841,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:52:13 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/test_plugin_code_quality.py",
@@ -5852,7 +5852,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:52:13 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/test_plugin_health.py",
@@ -5863,7 +5863,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:52:13 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "motor/tests/tuneladora/test_plugin_reporting.py",
@@ -5874,7 +5874,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-23 14:52:13 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "path_setup.py",
@@ -5908,17 +5908,6 @@
       "importado": true,
       "ultima_mod": "2026-07-25 15:19:11 +0200",
       "estado": "activo"
-    },
-    {
-      "ruta": "scripts/demo_full_pipeline.py",
-      "lineas": 201,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": false,
-      "ultima_mod": "2026-07-22 19:16:17 +0200",
-      "estado": "demo"
     },
     {
       "ruta": "scripts/generate_synthetic_data.py",
@@ -6064,14 +6053,25 @@
       "estado": "activo"
     },
     {
+      "ruta": "scripts/pro/auditor_makefile.py",
+      "lineas": 78,
+      "main": true,
+      "class": false,
+      "plugin": false,
+      "tests": false,
+      "importado": true,
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
+      "estado": "activo"
+    },
+    {
       "ruta": "scripts/pro/auditor_real.py",
-      "lineas": 179,
+      "lineas": 210,
       "main": true,
       "class": true,
       "plugin": true,
       "tests": false,
       "importado": true,
-      "ultima_mod": "",
+      "ultima_mod": "2026-08-04 11:21:20 +0200",
       "estado": "activo"
     },
     {
@@ -6548,17 +6548,6 @@
       "estado": "activo"
     },
     {
-      "ruta": "scripts/pro/bypass_linksys_gui.py",
-      "lineas": 244,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "rpa"
-    },
-    {
       "ruta": "scripts/pro/captura_virtual.py",
       "lineas": 62,
       "main": true,
@@ -6711,28 +6700,6 @@
       "importado": true,
       "ultima_mod": "2026-07-22 19:16:31 +0200",
       "estado": "activo"
-    },
-    {
-      "ruta": "scripts/pro/demo_pipeline_mac.py",
-      "lineas": 93,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "demo"
-    },
-    {
-      "ruta": "scripts/pro/demo_pipeline_voz.py",
-      "lineas": 116,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": false,
-      "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "demo"
     },
     {
       "ruta": "scripts/pro/ejecutor_api.py",
@@ -6999,17 +6966,6 @@
       "estado": "activo"
     },
     {
-      "ruta": "scripts/pro/patch_timestamps.py",
-      "lineas": 56,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-16 16:52:37 +0200",
-      "estado": "obsoleto"
-    },
-    {
       "ruta": "scripts/pro/pipeline_refactor.py",
       "lineas": 88,
       "main": true,
@@ -7230,39 +7186,6 @@
       "estado": "activo"
     },
     {
-      "ruta": "scripts/pro/rpa_linksys.py",
-      "lineas": 166,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-20 13:35:48 +0200",
-      "estado": "rpa"
-    },
-    {
-      "ruta": "scripts/pro/rpa_linksys_v2.py",
-      "lineas": 145,
-      "main": false,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-26 19:15:38 +0200",
-      "estado": "rpa"
-    },
-    {
-      "ruta": "scripts/pro/rpa_zte_f6640.py",
-      "lineas": 157,
-      "main": false,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-20 13:35:48 +0200",
-      "estado": "rpa"
-    },
-    {
       "ruta": "scripts/pro/sandbox_industrial.py",
       "lineas": 671,
       "main": true,
@@ -7294,17 +7217,6 @@
       "importado": true,
       "ultima_mod": "2026-07-22 19:16:17 +0200",
       "estado": "activo"
-    },
-    {
-      "ruta": "scripts/pro/seed_correcciones_voz.py",
-      "lineas": 84,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": true,
-      "importado": true,
-      "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "obsoleto"
     },
     {
       "ruta": "scripts/pro/sincronizar_vocabulario.py",
@@ -7754,7 +7666,7 @@
       "plugin": false,
       "tests": false,
       "importado": true,
-      "ultima_mod": "2026-08-04 01:46:59 +0200",
+      "ultima_mod": "2026-08-04 11:23:57 +0200",
       "estado": "activo"
     },
     {
@@ -8055,17 +7967,6 @@
       "estado": "dormido"
     },
     {
-      "ruta": "scripts/seed_transacciones.py",
-      "lineas": 105,
-      "main": true,
-      "class": false,
-      "plugin": false,
-      "tests": false,
-      "importado": true,
-      "ultima_mod": "2026-07-25 15:19:11 +0200",
-      "estado": "obsoleto"
-    },
-    {
       "ruta": "scripts/soak_test.py",
       "lineas": 271,
       "main": true,
@@ -8162,7 +8063,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-04 01:30:36 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "tests/conftest.py",
@@ -8173,7 +8074,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-28 20:56:09 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/contracts/__init__.py",
@@ -8184,7 +8085,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-16 15:48:10 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "tests/contracts/test_llm_contract.py",
@@ -8195,7 +8096,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-27 14:41:56 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_auto_maintain.py",
@@ -8206,7 +8107,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:37:56 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_ci_cd.py",
@@ -8217,7 +8118,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 02:13:03 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_document_quality.py",
@@ -8228,7 +8129,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_documentation.py",
@@ -8239,7 +8140,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 10:43:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_f25_b7_hardening.py",
@@ -8250,7 +8151,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 11:22:31 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_f27_b3_gate.py",
@@ -8261,7 +8162,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_infrastructure.py",
@@ -8272,7 +8173,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 10:43:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_notifier_json_logger.py",
@@ -8283,7 +8184,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:28:18 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_observability.py",
@@ -8294,7 +8195,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_preflight_system.py",
@@ -8305,7 +8206,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 10:44:20 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/infra/test_security.py",
@@ -8316,7 +8217,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_agents.py",
@@ -8327,7 +8228,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_api.py",
@@ -8338,7 +8239,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:11:40 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_api_approvals.py",
@@ -8349,7 +8250,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 02:32:25 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_assistant.py",
@@ -8360,7 +8261,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_assistant_auth.py",
@@ -8371,7 +8272,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_audit_api.py",
@@ -8382,7 +8283,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-03 02:13:03 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_audit_intent.py",
@@ -8393,7 +8294,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 11:43:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_audit_message_store.py",
@@ -8404,7 +8305,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_audit_models.py",
@@ -8415,7 +8316,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_contextual_retrieval.py",
@@ -8426,7 +8327,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:05:47 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_degraded_mode.py",
@@ -8437,7 +8338,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_episodic_memory.py",
@@ -8448,7 +8349,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_event_bus.py",
@@ -8459,7 +8360,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_event_bus_f11.py",
@@ -8470,7 +8371,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_extractors.py",
@@ -8481,7 +8382,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f25_a3_vertical_integration.py",
@@ -8492,7 +8393,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f25_b2_stages.py",
@@ -8503,7 +8404,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f26_b2_memory.py",
@@ -8514,7 +8415,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_a2_integration.py",
@@ -8525,7 +8426,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_b4_runner.py",
@@ -8536,7 +8437,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_b5_scheduler.py",
@@ -8547,7 +8448,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_b5a_scheduler_audit.py",
@@ -8558,7 +8459,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_b7_agent.py",
@@ -8569,7 +8470,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_b8_hardening.py",
@@ -8580,7 +8481,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f27_rr1_release.py",
@@ -8591,7 +8492,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_f28_b3_operational.py",
@@ -8602,7 +8503,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_inference_engine.py",
@@ -8613,7 +8514,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_integration_assistant.py",
@@ -8624,7 +8525,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_integration_f10.py",
@@ -8635,7 +8536,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_integration_f11.py",
@@ -8646,7 +8547,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_integration_f13.py",
@@ -8657,7 +8558,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_integration_scheduler.py",
@@ -8668,7 +8569,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_memory_compression.py",
@@ -8679,7 +8580,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_observability_f11.py",
@@ -8690,7 +8591,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_openclaw.py",
@@ -8701,7 +8602,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_pipeline_mvp.py",
@@ -8712,7 +8613,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_plugin.py",
@@ -8723,7 +8624,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_plugin_registry.py",
@@ -8734,7 +8635,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_reflection.py",
@@ -8745,7 +8646,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_registry_v2.py",
@@ -8756,7 +8657,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_rules_integration.py",
@@ -8767,7 +8668,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_semantic_memory.py",
@@ -8778,7 +8679,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_snc_anomalias.py",
@@ -8789,7 +8690,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_snc_subprocess_fix.py",
@@ -8800,7 +8701,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_auto_trigger.py",
@@ -8811,7 +8712,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_checkpoint.py",
@@ -8822,7 +8723,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_cleanup_integration.py",
@@ -8833,7 +8734,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 18:46:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_detector.py",
@@ -8844,7 +8745,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_engine.py",
@@ -8855,7 +8756,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_memory_episodic.py",
@@ -8866,7 +8767,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_memory_long_term.py",
@@ -8877,7 +8778,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_memory_semantic.py",
@@ -8888,7 +8789,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_memory_short_term.py",
@@ -8899,7 +8800,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_notifier.py",
@@ -8910,7 +8811,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_chaos.py",
@@ -8921,7 +8822,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_cli.py",
@@ -8932,7 +8833,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_negative.py",
@@ -8943,7 +8844,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 23:56:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_queue.py",
@@ -8954,7 +8855,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_runner.py",
@@ -8965,7 +8866,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:11:40 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_pipeline_snapshot.py",
@@ -8976,7 +8877,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_plugins.py",
@@ -8987,7 +8888,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_scheduler.py",
@@ -8998,7 +8899,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_tuneladora_unified_scheduler.py",
@@ -9009,7 +8910,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_ura_qdrant.py",
@@ -9020,7 +8921,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vector_base.py",
@@ -9031,7 +8932,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vector_ollama.py",
@@ -9042,7 +8943,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vector_qdrant.py",
@@ -9053,7 +8954,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vector_retriever.py",
@@ -9064,7 +8965,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vector_subscriber.py",
@@ -9075,7 +8976,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_voting.py",
@@ -9086,7 +8987,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/integration/test_vram_guard_integration.py",
@@ -9097,7 +8998,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/legacy/test_sda.py",
@@ -9108,7 +9009,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-07-29 23:48:24 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/legacy/test_unit.py",
@@ -9119,7 +9020,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_agents_comprehensive.py",
@@ -9130,7 +9031,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_events.py",
@@ -9141,7 +9042,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_f26_b3_hardening.py",
@@ -9152,7 +9053,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 14:26:25 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_f26_rr1_operational.py",
@@ -9163,7 +9064,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 14:26:25 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_knowledge_engine.py",
@@ -9174,7 +9075,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_memory.py",
@@ -9185,7 +9086,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/nightly/test_platform_resilience.py",
@@ -9196,7 +9097,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/pending/test_audit_conversation.py",
@@ -9207,7 +9108,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 13:48:19 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/pending/test_evaluation_corpus.py",
@@ -9218,7 +9119,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_cli.py",
@@ -9229,7 +9130,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 14:06:03 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_conciencia.py",
@@ -9240,7 +9141,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_constants.py",
@@ -9251,7 +9152,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 00:59:34 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_ejecutor.py",
@@ -9262,7 +9163,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_healing.py",
@@ -9273,7 +9174,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_orquestador.py",
@@ -9284,7 +9185,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 13:59:41 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_reparador.py",
@@ -9295,7 +9196,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_agents_telemetry.py",
@@ -9306,7 +9207,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_api.py",
@@ -9317,7 +9218,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_context.py",
@@ -9328,7 +9229,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_evaluation.py",
@@ -9339,7 +9240,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_intent.py",
@@ -9350,7 +9251,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_metrics.py",
@@ -9361,7 +9262,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:24:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_security.py",
@@ -9372,7 +9273,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_assistant_style.py",
@@ -9383,7 +9284,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ast_sentinel.py",
@@ -9394,7 +9295,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_auth_middleware.py",
@@ -9405,7 +9306,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_auth_streaming.py",
@@ -9416,7 +9317,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_backup_assistant.py",
@@ -9427,7 +9328,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_backup_f26_memory.py",
@@ -9438,7 +9339,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 00:39:43 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_advisor.py",
@@ -9449,7 +9350,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_alerts.py",
@@ -9460,7 +9361,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_analyzer.py",
@@ -9471,7 +9372,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_executor.py",
@@ -9482,7 +9383,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_observer.py",
@@ -9493,7 +9394,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_brain_web_adapter.py",
@@ -9504,7 +9405,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_change_guardian.py",
@@ -9515,7 +9416,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_change_log.py",
@@ -9526,7 +9427,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 11:54:38 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_chaos_test.py",
@@ -9537,7 +9438,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_chunking.py",
@@ -9548,7 +9449,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_cleanup_assistant.py",
@@ -9559,7 +9460,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 22:20:11 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_cold_refactor.py",
@@ -9570,7 +9471,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_commit_msg_validator.py",
@@ -9581,7 +9482,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 12:00:05 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_config.py",
@@ -9592,7 +9493,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_conversation.py",
@@ -9603,7 +9504,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_event_bus_retention.py",
@@ -9614,7 +9515,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_lockfile_state.py",
@@ -9625,7 +9526,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_notifier_cache.py",
@@ -9636,7 +9537,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_rollback_app.py",
@@ -9647,7 +9548,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_secrets.py",
@@ -9658,7 +9559,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_core_voice_main_inferencia.py",
@@ -9669,7 +9570,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_debate_engine.py",
@@ -9680,7 +9581,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_debate_plan_validator.py",
@@ -9691,7 +9592,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_deduplication.py",
@@ -9702,7 +9603,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:24:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_determinism.py",
@@ -9713,7 +9614,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 03:25:49 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_docker_orchestrator.py",
@@ -9724,7 +9625,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_exporter.py",
@@ -9735,7 +9636,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:24:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f14_bugs.py",
@@ -9746,7 +9647,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f25_b3_entity_resolution.py",
@@ -9757,7 +9658,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f25_b4_fact_index.py",
@@ -9768,7 +9669,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 19:09:00 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f25_b6_fact_history.py",
@@ -9779,7 +9680,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-31 11:22:31 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f27_b2_agents.py",
@@ -9790,7 +9691,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_f27_b6_planner.py",
@@ -9801,7 +9702,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_fase7.py",
@@ -9812,7 +9713,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_forgetting.py",
@@ -9823,7 +9724,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_guardian_disco.py",
@@ -9834,7 +9735,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:39:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_guardian_middleware_path.py",
@@ -9845,7 +9746,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_guardian_openclaw.py",
@@ -9856,7 +9757,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:39:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_guardian_opencode.py",
@@ -9867,7 +9768,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_health.py",
@@ -9878,7 +9779,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_health_check.py",
@@ -9889,7 +9790,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_heartbeat.py",
@@ -9900,7 +9801,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_hook_manager.py",
@@ -9911,7 +9812,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_hypothesis.py",
@@ -9922,7 +9823,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_imagen_extractor.py",
@@ -9933,7 +9834,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 21:23:25 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ingestador_red.py",
@@ -9944,7 +9845,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_json_logger.py",
@@ -9955,7 +9856,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_json_logger_query_cache.py",
@@ -9966,7 +9867,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 03:31:54 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_api.py",
@@ -9977,7 +9878,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_api_lock_log.py",
@@ -9988,7 +9889,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_audit_backends.py",
@@ -9999,7 +9900,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli.py",
@@ -10010,7 +9911,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_agent_feedback.py",
@@ -10021,7 +9922,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_archive_search.py",
@@ -10032,7 +9933,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_audit.py",
@@ -10043,7 +9944,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_doctor.py",
@@ -10054,7 +9955,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_metadata.py",
@@ -10065,7 +9966,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_cli_rules_compile.py",
@@ -10076,7 +9977,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:18:45 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_connection_pool.py",
@@ -10087,7 +9988,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_engine_chunker.py",
@@ -10098,7 +9999,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:29:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_engine_jobs.py",
@@ -10109,7 +10010,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:48:10 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_engine_parser.py",
@@ -10120,7 +10021,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:29:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_engine_scanner.py",
@@ -10131,7 +10032,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:48:10 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_mapping_audit.py",
@@ -10142,7 +10043,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_repository.py",
@@ -10153,7 +10054,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 11:44:38 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_snapshot_store.py",
@@ -10164,7 +10065,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_subscribers.py",
@@ -10175,18 +10076,18 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 11:50:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_verifier_cli.py",
-      "lineas": 144,
+      "lineas": 145,
       "main": false,
       "class": true,
       "plugin": false,
       "tests": false,
       "importado": false,
-      "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "ultima_mod": "2026-08-04 12:41:04 +0200",
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_knowledge_verifiers.py",
@@ -10197,7 +10098,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 14:36:54 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_llm_base.py",
@@ -10208,7 +10109,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:06:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_lock_manager.py",
@@ -10219,7 +10120,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 17:51:01 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_master_conciencia.py",
@@ -10230,7 +10131,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_bridge_vigilante.py",
@@ -10241,7 +10142,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:28:21 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_compresor.py",
@@ -10252,7 +10153,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:21:01 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_consulta.py",
@@ -10263,7 +10164,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:21:01 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_fallos.py",
@@ -10274,7 +10175,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_imagen_extractor.py",
@@ -10285,7 +10186,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:39:49 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_movimiento.py",
@@ -10296,7 +10197,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_qdrant_store.py",
@@ -10307,7 +10208,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:31:02 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_rastreadores.py",
@@ -10318,7 +10219,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 00:20:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_memoria_sintesis_analisis.py",
@@ -10329,7 +10230,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 20:21:01 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_message_store.py",
@@ -10340,7 +10241,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila.py",
@@ -10351,7 +10252,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-01 23:27:29 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_chat_route.py",
@@ -10362,7 +10263,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 23:37:25 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_circuit_breaker.py",
@@ -10373,7 +10274,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:47:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_cost_tracker.py",
@@ -10384,7 +10285,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:47:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_infra.py",
@@ -10395,7 +10296,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 19:50:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_provider_ollama.py",
@@ -10406,7 +10307,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 13:45:47 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_providers_clonados.py",
@@ -10417,7 +10318,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 13:44:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_providers_openrouter_gemini.py",
@@ -10428,7 +10329,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 13:48:10 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_rate_limiter.py",
@@ -10439,7 +10340,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:47:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_router.py",
@@ -10450,7 +10351,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 05:54:15 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_routes_memoria.py",
@@ -10461,7 +10362,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_routes_models_status.py",
@@ -10472,7 +10373,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_server.py",
@@ -10483,7 +10384,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 06:13:13 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_mochila_vram_scheduler.py",
@@ -10494,7 +10395,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_cache.py",
@@ -10505,7 +10406,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 22:46:21 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_cli.py",
@@ -10516,7 +10417,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 14:06:03 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_metrics.py",
@@ -10527,7 +10428,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 06:23:43 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_proxy.py",
@@ -10538,7 +10439,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 06:25:20 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_router.py",
@@ -10549,7 +10450,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 13:56:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_model_router_selection.py",
@@ -10560,7 +10461,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 18:43:36 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_moderation.py",
@@ -10571,7 +10472,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_moderation_sanitizer_hypothesis.py",
@@ -10582,7 +10483,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 14:03:39 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_agents_consensus.py",
@@ -10593,7 +10494,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:58:22 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_agents_scheduler.py",
@@ -10604,7 +10505,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 23:35:53 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_assistant_executor.py",
@@ -10615,7 +10516,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:44:25 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_assistant_handlers.py",
@@ -10626,7 +10527,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_cmd_diag.py",
@@ -10637,7 +10538,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_cmd_pipeline.py",
@@ -10648,7 +10549,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:06:40 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_cmd_status.py",
@@ -10659,7 +10560,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_cmd_utils.py",
@@ -10670,7 +10571,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_main.py",
@@ -10681,7 +10582,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cli_public_api.py",
@@ -10692,7 +10593,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:00:19 +0200",
-      "estado": "esbozo"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_cmd_ura.py",
@@ -10703,7 +10604,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_diagnostico.py",
@@ -10714,7 +10615,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_diff_cb.py",
@@ -10725,7 +10626,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_evaluation_corpus.py",
@@ -10736,7 +10637,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_evaluation_engine.py",
@@ -10747,7 +10648,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_evaluation_regression.py",
@@ -10758,7 +10659,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_events_compat.py",
@@ -10769,7 +10670,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_extraction_middleware.py",
@@ -10780,7 +10681,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_fusion_config_urls.py",
@@ -10791,7 +10692,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_health_monitor.py",
@@ -10802,7 +10703,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_lexical_window.py",
@@ -10813,7 +10714,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_anthropic.py",
@@ -10824,7 +10725,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:55:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_gemini.py",
@@ -10835,7 +10736,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_init.py",
@@ -10846,7 +10747,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_init_api.py",
@@ -10857,7 +10758,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:15:42 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_obs_state.py",
@@ -10868,7 +10769,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_observability.py",
@@ -10879,7 +10780,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:10:09 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_ollama.py",
@@ -10890,7 +10791,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 23:10:53 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_openai.py",
@@ -10901,7 +10802,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 23:26:41 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_openai_compat.py",
@@ -10912,7 +10813,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_router.py",
@@ -10923,7 +10824,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:05:52 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_router_init.py",
@@ -10934,7 +10835,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:05:52 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_state.py",
@@ -10945,7 +10846,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:55:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_llm_strategy.py",
@@ -10956,7 +10857,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 02:05:52 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_memory_compression.py",
@@ -10967,7 +10868,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:42:05 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_observability_instrumentation.py",
@@ -10978,7 +10879,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 23:21:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_planner_readiness.py",
@@ -10989,7 +10890,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_platform_serializer.py",
@@ -11000,7 +10901,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_plugin_registry.py",
@@ -11011,7 +10912,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:55:22 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_plugin_registry_v2.py",
@@ -11022,7 +10923,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 21:32:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_public_api.py",
@@ -11033,7 +10934,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_qdrant_client.py",
@@ -11044,7 +10945,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 23:49:01 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_qdrant_rest.py",
@@ -11055,7 +10956,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 02:25:44 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_scanner_init.py",
@@ -11066,7 +10967,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:24:28 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_scanner_scanner.py",
@@ -11077,7 +10978,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_sliding_weather_vector.py",
@@ -11088,7 +10989,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 07:18:09 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_tracing_exporter.py",
@@ -11099,7 +11000,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:18:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_tracing_platform.py",
@@ -11110,7 +11011,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 22:49:32 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_validator_state.py",
@@ -11121,7 +11022,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 00:59:29 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_web_config_assistant.py",
@@ -11132,7 +11033,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 01:46:59 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_motor_websearch_pipeline.py",
@@ -11143,7 +11044,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 07:58:27 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_orchestrator.py",
@@ -11154,7 +11055,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_path_setup.py",
@@ -11165,7 +11066,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_plugin_manifest.py",
@@ -11176,7 +11077,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_prompt_injector.py",
@@ -11187,7 +11088,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_prompt_sanitizer.py",
@@ -11198,7 +11099,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_properties.py",
@@ -11209,7 +11110,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_qdrant_client.py",
@@ -11220,7 +11121,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_query_cache.py",
@@ -11231,7 +11132,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_reglas_loader.py",
@@ -11242,7 +11143,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_reindex_vectors.py",
@@ -11253,7 +11154,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_resolver_red.py",
@@ -11264,7 +11165,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_router_dashboard.py",
@@ -11275,7 +11176,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:58:07 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_router_handler.py",
@@ -11286,7 +11187,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_router_rate_limiter.py",
@@ -11297,7 +11198,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_rules_builtin.py",
@@ -11308,7 +11209,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_rules_hypothesis.py",
@@ -11319,7 +11220,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_rules_safe_eval.py",
@@ -11330,7 +11231,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_sandbox.py",
@@ -11341,7 +11242,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-02 22:02:25 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_schema_org.py",
@@ -11352,7 +11253,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:24:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_scraper_pool.py",
@@ -11363,7 +11264,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_scripts_check_secrets.py",
@@ -11374,7 +11275,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 17:37:38 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_scripts_utils.py",
@@ -11385,7 +11286,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_search_engine.py",
@@ -11396,7 +11297,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_search_logger.py",
@@ -11407,18 +11308,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-07-30 01:50:14 +0200",
-      "estado": "esbozo"
-    },
-    {
-      "ruta": "tests/unit/test_seed_correcciones_voz.py",
-      "lineas": 61,
-      "main": false,
-      "class": true,
-      "plugin": false,
-      "tests": false,
-      "importado": false,
-      "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "obsoleto"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_shared_paths.py",
@@ -11429,7 +11319,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_snc_poll_services.py",
@@ -11440,7 +11330,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "libreria"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_stealth_fetcher.py",
@@ -11451,7 +11341,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_subprocess_executor.py",
@@ -11462,7 +11352,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-04 09:19:53 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ura_chat_cli.py",
@@ -11473,7 +11363,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ura_cli.py",
@@ -11484,7 +11374,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ura_maintenance.py",
@@ -11495,7 +11385,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 16:24:17 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_ura_query.py",
@@ -11506,7 +11396,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-01 23:37:10 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_utils_anonymizer.py",
@@ -11517,7 +11407,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_voice_modules.py",
@@ -11528,7 +11418,7 @@
       "tests": false,
       "importado": false,
       "ultima_mod": "2026-08-03 01:02:24 +0200",
-      "estado": "dormido"
+      "estado": "test"
     },
     {
       "ruta": "tests/unit/test_vram_guard.py",
@@ -11539,7 +11429,7 @@
       "tests": false,
       "importado": true,
       "ultima_mod": "2026-08-02 23:18:46 +0200",
-      "estado": "activo"
+      "estado": "test"
     },
     {
       "ruta": "tools/benchmarks/benchmark_baseline.py",
