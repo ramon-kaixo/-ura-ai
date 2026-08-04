@@ -1,8 +1,8 @@
 {
-  "generado": "2026-08-03T22:53:56.038751+00:00",
+  "generado": "2026-08-04T08:47:54.590093+00:00",
   "zonas": {
     "scripts/pro": {
-      "total": 295,
+      "total": 297,
       "archivos": [
         {
           "archivo": "learning.py",
@@ -152,6 +152,16 @@
         {
           "archivo": "audit_secrets.py",
           "ruta": "scripts/pro/audit_secrets.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditor_makefile.py",
+          "ruta": "scripts/pro/auditor_makefile.py",
+          "clasificacion": "dormido_valor"
+        },
+        {
+          "archivo": "auditor_real.py",
+          "ruta": "scripts/pro/auditor_real.py",
           "clasificacion": "dormido_valor"
         },
         {

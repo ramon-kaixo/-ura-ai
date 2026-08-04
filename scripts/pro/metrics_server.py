@@ -110,13 +110,8 @@ async def handle_metrics(request: web.Request) -> web.Response:
         html = (
             "<html><head><title>URA Search Metrics</title>"
             '<meta http-equiv="refresh" content="30">'
-"<style>body{font-family:monospace
-background:#111
-color:#0f0
-padding:2rem}"
-"pre{background:#222
-padding:1rem
-border-radius:4px}"
+            "<style>body{font-family:monospace;background:#111;color:#0f0;padding:2rem}"
+            "pre{background:#222;padding:1rem;border-radius:4px}"
             "a{color:#0ff}</style></head><body>"
             "<h1>URA Search Metrics</h1>"
             "<pre>" + json.dumps(metrics, indent=2) + "</pre>"

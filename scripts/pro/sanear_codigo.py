@@ -45,8 +45,7 @@ def fix_multiline_statements(path: Path) -> int:
     for line in lines:
         if ";" in line and not line.strip().startswith("#"):
             # Check if it's actually multiple statements
-parts = line.split("
-")
+            parts = line.split(";")
             if len(parts) > 1:
                 # Only fix if all parts look like simple statements
                 stripped = [p.strip() for p in parts]

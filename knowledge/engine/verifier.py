@@ -110,7 +110,7 @@ def verify_graph(
         ).fetchall()
         if errors_from_log:
             for e in errors_from_log:
-                results.append((e["severity"], e["error_code"], e["message"]))  # noqa: PERF401
+                results.append((e["severity"], e["error_code"], e["message"]))
     except sqlite3.OperationalError:
         pass
 
