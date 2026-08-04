@@ -62,14 +62,14 @@ class TestConfigPyproject:
         cfg = Configuration()
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
-            '[tool.tuneladora]\nllm_fallback_model = "test-model"\nretry_enabled = false\n'
+            '[tool.tuneladora]\nllm-fallback-model = "test-model"\nunsafe-fixes = false\n'
         )
         monkeypatch.setattr(cfg, "ura_root", tmp_path)
         monkeypatch.setattr(cfg, "llm_fallback_model", "original")
-        monkeypatch.setattr(cfg, "retry_enabled", True)
+        monkeypatch.setattr(cfg, "unsafe_fixes", True)
         cfg._load_from_pyproject()
         assert cfg.llm_fallback_model == "test-model"
-        assert cfg.retry_enabled is False
+        assert cfg.unsafe_fixes is False
 
     def test_sin_pyproject(self, tmp_path: Path, monkeypatch) -> None:
         cfg = Configuration()
