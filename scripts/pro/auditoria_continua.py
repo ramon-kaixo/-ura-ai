@@ -538,3 +538,76 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ── Integración con tuneladora (reporte JSON) ──────────────
+
+def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None) -> dict | None:
+    """Lee el reporte JSON más reciente generado por la tuneladora.
+
+    Los reportes se escriben en data/tuneladora_reports/<episode_id>.json
+    por runner._write_json_report().
+    """
+    import glob as _glob
+    import os as _os
+
+    report_dir = report_dir or (ROOT / "data" / "tuneladora_reports")
+    if not report_dir.exists():
+        return None
+    files = sorted(
+        _glob.glob(str(report_dir / "*.json")),
+        key=_os.path.getmtime,
+        reverse=True,
+    )
+    if not files:
+        return None
+    try:
+        with open(files[0], encoding="utf-8") as f:
+            return _json.load(f)
+    except (_json.JSONDecodeError, OSError):
+        return None
+
+
+def detectar_regresiones(reporte_actual: dict | None, reporte_anterior: dict | None) -> list[str]:
+    """Compara reportes de la tuneladora y detecta regresiones."""
+    alertas: list[str] = []
+    if reporte_actual is None:
+        return ["No hay reporte de tuneladora para analizar"]
+    if reporte_anterior is None:
+        return ["No hay reporte anterior para comparar"]
+
+    cov_actual = reporte_actual.get("coverage", {}).get("global", 0)
+    cov_anterior = reporte_anterior.get("coverage", {}).get("global", 0)
+    if cov_actual and cov_anterior and cov_actual < cov_anterior:
+        alertas.append(f"REGRESION: Cobertura bajo de {cov_anterior}% a {cov_actual}%")
+
+    failed = reporte_actual.get("tests", {}).get("failed", 0)
+    if failed:
+        alertas.append(f"ALERTA: {failed} tests fallaron")
+
+    if reporte_actual.get("verdict") == "FAIL":
+        alertas.append("ALERTA: pipeline tuneladora terminó en FAIL")
+    return alertas
+
+
+def guardar_alerta_en_memoria(alertas: list[str], store=None) -> int:
+    """Guarda alertas del supervisor en memoria episódica."""
+    if not alertas:
+        return 0
+    guardadas = 0
+    try:
+        if store is None:
+            from motor.intelligence.memory.episodic import EpisodeStore
+
+            store = EpisodeStore()
+        for alerta in alertas:
+            store.record({
+                "tipo": "alerta_supervisor",
+                "mensaje": alerta,
+                "timestamp": _datetime.now(UTC).isoformat(),
+                "componente": "auditoria_continua",
+            })
+            guardadas += 1
+    except Exception as exc:
+        log.debug("guardar_alerta_en_memoria falló: %s", exc)
+    return guardadas
