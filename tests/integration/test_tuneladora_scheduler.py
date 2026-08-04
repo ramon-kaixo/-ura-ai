@@ -5,7 +5,10 @@ import asyncio
 
 import pytest
 
-from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+from datetime import UTC, datetime, timedelta
+from unittest import mock
+
+from scripts.pro.tuneladora.scheduler import ScheduledPipeline, TuneladoraScheduler
 
 
 @pytest.fixture
@@ -93,3 +96,106 @@ class TestStatus:
         # Justo después de añadirlo, debería tener next_run futuro
         status = scheduler.get_status()
         assert status[0]["overdue"] is False or status[0]["next_run"] is not None
+
+
+class TestRunPipelineSync:
+    def _pipeline(self, name: str, auto: bool = True) -> ScheduledPipeline:
+        return ScheduledPipeline(
+            name=name,
+            interval=timedelta(minutes=5),
+            auto_execute_safe=auto,
+            next_run=datetime.now(UTC) + timedelta(seconds=5),
+        )
+
+    def test_health_disco_critico(self, scheduler):
+        engine = mock.Mock()
+        engine.health_disk.return_value = {"libre_gb": 5}
+        scheduler._run_pipeline_sync(engine, self._pipeline("health"))
+        engine.notify.assert_called_once()
+
+    def test_health_disco_medio_limpia(self, scheduler):
+        engine = mock.Mock()
+        engine.health_disk.return_value = {"libre_gb": 30}
+        scheduler._run_pipeline_sync(engine, self._pipeline("health"))
+        engine.run_script.assert_called_once_with("scripts/pro/cleanup_logs.py")
+
+    def test_health_disco_ok_sin_accion(self, scheduler):
+        engine = mock.Mock()
+        engine.health_disk.return_value = {"libre_gb": 100}
+        scheduler._run_pipeline_sync(engine, self._pipeline("health"))
+        engine.notify.assert_not_called()
+        engine.run_script.assert_not_called()
+
+    def test_cleanup_auto(self, scheduler):
+        engine = mock.Mock()
+        scheduler._run_pipeline_sync(engine, self._pipeline("cleanup"))
+        assert engine.run_script.call_count == 2
+
+    def test_cleanup_no_auto(self, scheduler):
+        engine = mock.Mock()
+        scheduler._run_pipeline_sync(engine, self._pipeline("cleanup", auto=False))
+        engine.run_script.assert_not_called()
+
+    def test_full_audit(self, scheduler):
+        engine = mock.Mock()
+        scheduler._run_pipeline_sync(engine, self._pipeline("full_audit"))
+        engine.run_ruff.assert_called_once()
+
+    def test_desconocido(self, scheduler):
+        engine = mock.Mock()
+        scheduler._run_pipeline_sync(engine, self._pipeline("raro"))
+        engine.health_disk.assert_not_called()
+
+
+class TestExecutePipeline:
+    @pytest.mark.asyncio
+    async def test_exito(self, scheduler):
+        pipeline = ScheduledPipeline(
+            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            next_run=datetime.now(UTC) + timedelta(seconds=5),
+        )
+        engine = mock.Mock()
+        engine.ledger = mock.Mock()
+        engine.config = mock.Mock()
+        engine.config.nervioso = mock.Mock()
+        engine.health_disk.return_value = {"libre_gb": 100}
+        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
+             mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save:
+            await scheduler._execute_pipeline(pipeline)
+        engine.ledger.set_result.assert_called_with("completed")
+        m_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_error(self, scheduler):
+        pipeline = ScheduledPipeline(
+            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            next_run=datetime.now(UTC) + timedelta(seconds=5),
+        )
+        engine = mock.Mock()
+        engine.ledger = mock.Mock()
+        engine.config = mock.Mock()
+        engine.config.nervioso = mock.Mock()
+        scheduler._circuit = mock.Mock()
+        scheduler._circuit.call.side_effect = RuntimeError("boom")
+        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
+             mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save:
+            await scheduler._execute_pipeline(pipeline)
+        engine.ledger.set_result.assert_called_with("failed")
+        m_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_circuit_open(self, scheduler):
+        pipeline = ScheduledPipeline(
+            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            next_run=datetime.now(UTC) + timedelta(seconds=5),
+        )
+        engine = mock.Mock()
+        engine.ledger = mock.Mock()
+        engine.config = mock.Mock()
+        engine.config.nervioso = mock.Mock()
+        scheduler._circuit = mock.Mock()
+        scheduler._circuit.call.side_effect = RuntimeError("Circuit OPEN")
+        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
+             mock.patch("scripts.pro.tuneladora.ledger.save_execution"):
+            await scheduler._execute_pipeline(pipeline)
+        engine.notify.assert_called_once()
