@@ -78,13 +78,15 @@ def evaluar(reporte):
 
     # Verificar telemetria si existe
     telem = reporte.get("telemetry", {})
-    
-    cov = telem.get("coverage", 0)
+
+    # Nota: el reporte del runner NO incluye coverage/tests_failed por defecto.
+    # Solo se evaluan si el reporte los trae explicitamente (evita rechazos falsos).
+    cov = telem.get("coverage")
     if isinstance(cov, (int, float)) and cov < THRESHOLDS["coverage_global"]:
         alertas.append(f"COBERTURA: {cov}% < {THRESHOLDS['coverage_global']}%")
         verdict = "REJECTED"
 
-    failed = telem.get("tests_failed", 0)
+    failed = telem.get("tests_failed")
     if isinstance(failed, int) and failed > THRESHOLDS["tests_failed_max"]:
         alertas.append(f"TESTS FALLADOS: {failed}")
         verdict = "REJECTED"
