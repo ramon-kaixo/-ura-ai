@@ -122,14 +122,15 @@ class TestCliMainHelpers:
         assert "knowledge.db" in str(out)
 
     def test_parsers_requieren_cmd_funciones(self) -> None:
-        """BUG REAL del otro agente: cli/main.py referencia cmd_init,
-        cmd_verify, cmd_status y build_parser que NO estan definidos en
-        el modulo. El CLI de knowledge no es invocable tal cual."""
-        import sys as _sys
+        """El CLI debe ser invocable: build_parser construye el árbol completo."""
+        import importlib
 
-        m = _sys.modules["knowledge.engine.cli.main"]
-        for attr in ("cmd_init", "cmd_verify", "cmd_status", "build_parser"):
-            assert not hasattr(m, attr), f"{attr} deberia faltar (bug documentado)"
+        m = importlib.import_module("knowledge.engine.cli.main")
+        assert hasattr(m, "build_parser")
+        parser = m.build_parser()
+        subs = set(parser._subparsers._group_actions[0].choices)
+        for esperado in ("init", "verify", "status", "compile", "doctor", "archive"):
+            assert esperado in subs, f"falta subcomando {esperado}"
 
     def test_main_init_bus(self, monkeypatch) -> None:
         bus = mock.Mock()
