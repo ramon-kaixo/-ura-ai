@@ -114,6 +114,16 @@ class TestSelectProviderByCapability:
         reg = FakeRegistry({"pref": SimpleNamespace(supports=lambda c: False), "b": SimpleNamespace(supports=lambda c: True)})
         assert select_provider_by_capability("c", "pref", reg) == "b"
 
+    def test_preferred_supports_raise_fallback(self) -> None:
+        reg = FakeRegistry(
+            {"pref": SimpleNamespace(supports=lambda c: (_ for _ in ()).throw(RuntimeError("x"))), "b": SimpleNamespace(supports=lambda c: True)}
+        )
+        assert select_provider_by_capability("c", "pref", reg) == "b"
+
+    def test_preferred_keyerror_fallback(self) -> None:
+        reg = FakeRegistry({"b": SimpleNamespace(supports=lambda c: True)})
+        assert select_provider_by_capability("c", "fantasma", reg) == "b"
+
     def test_sin_capaz_raise(self) -> None:
         reg = FakeRegistry({"a": SimpleNamespace(supports=lambda c: False)})
         with pytest.raises(RuntimeError, match="No provider supports"):
@@ -197,6 +207,12 @@ class TestResolve:
         prov = object()
         reg = FakeRegistry({"ollama": prov})
         assert resolve("tarea", None, reg, {"tarea": "noexiste"}) is prov
+
+    def test_ruta_no_registrada_sin_default_raise(self) -> None:
+        reg = FakeRegistry({})
+        reg._default = None
+        with pytest.raises(RuntimeError, match="unregistered"):
+            resolve("tarea", None, reg, {"tarea": "fantasma"})
 
 
 class TestResolveName:

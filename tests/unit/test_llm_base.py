@@ -12,6 +12,10 @@ from motor.core.llm.base import (
     BaseLLMProvider,
     ProviderValidationResult,
     _check_signature,
+    _validar_capacidades,
+    _validar_comportamiento,
+    _validar_firmas,
+    _validar_metodos,
     validate_provider,
 )
 
@@ -75,9 +79,86 @@ class TestBaseLLMProvider:
 
         assert ZeroCap().supports("max_context") is False
 
+    def test_supports_string_valor(self) -> None:
+        class StrCap(GoodProvider):
+            @property
+            def capabilities(self) -> dict[str, Any]:
+                return {"extra": "yes", "vacio": ""}
+
+        p = StrCap()
+        assert p.supports("extra") is True
+        assert p.supports("vacio") is False
+
     def test_abstract_methods(self) -> None:
         with pytest.raises(TypeError):
             BaseLLMProvider()  # type: ignore[abstract]
+
+
+class TestValidadoresInternos:
+    def test_metodo_eliminado(self) -> None:
+        class SinMetodos:
+            pass
+
+        errors: list[str] = []
+        _validar_metodos(SinMetodos(), errors)
+        assert any("Falta método: generate" in e for e in errors)
+        assert any("Falta método: health" in e for e in errors)
+
+    def test_metodo_no_invocable(self) -> None:
+        prov = GoodProvider()
+        prov.generate = 42
+        errors: list[str] = []
+        _validar_metodos(prov, errors)
+        assert any("generate no es invocable" in e for e in errors)
+
+    def test_firma_embed_mal(self) -> None:
+        prov = GoodProvider()
+
+        def bad_embed(self, texts: list[str]) -> list[list[float]]:  # noqa: ARG001
+            return [[]]
+
+        prov.embed = bad_embed
+        errors: list[str] = []
+        _validar_firmas(prov, errors)
+        assert any("embed:" in e and "falta parámetro" in e for e in errors)
+
+    def test_capacidades_no_dict(self) -> None:
+        class NoDictCap(GoodProvider):
+            capabilities = ["chat"]
+
+        prov = NoDictCap()
+        errors: list[str] = []
+        _validar_capacidades(prov, errors)
+        assert any("capabilities debe ser un dict" in e for e in errors)
+
+    def test_comportamiento_generate_raise(self) -> None:
+        prov = GoodProvider()
+
+        def raising(self: object, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
+            raise RuntimeError("boom")
+
+        prov.generate = raising
+        errors: list[str] = []
+        _validar_comportamiento(prov, errors)
+        assert any("lanzó excepción" in e for e in errors)
+
+    def test_comportamiento_embed_no_list(self) -> None:
+        prov = GoodProvider()
+        prov.embed = lambda texts, model=None: "no-soy-lista"  # type: ignore[assignment]
+        errors: list[str] = []
+        _validar_comportamiento(prov, errors)
+        assert any("embed() no retorna list" in e for e in errors)
+
+    def test_comportamiento_embed_raise(self) -> None:
+        prov = GoodProvider()
+
+        def raising_embed(texts: list[str], model: str | None = None) -> list[list[float]]:
+            raise RuntimeError("boom")
+
+        prov.embed = raising_embed
+        errors: list[str] = []
+        _validar_comportamiento(prov, errors)
+        assert any("embed(['test']) lanzó excepción" in e for e in errors)
 
 
 class TestValidateProvider:
