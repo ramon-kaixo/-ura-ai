@@ -7,7 +7,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from manage_timers import (  # noqa: E402
+from scripts.pro.manage_timers import (  # noqa: E402
     TIMERS,
     _frecuencia_on_calendar,
     generar_unidades,
@@ -26,7 +26,7 @@ class TestTimers:
         assert _frecuencia_on_calendar("desconocida") == "*-*-* 04:00:00"
 
     def test_generar_unidades(self, tmp_path: Path) -> None:
-        from manage_timers import UNITS_DIR
+        from scripts.pro.manage_timers import UNITS_DIR
 
         with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
             generados = generar_unidades(verbose=False)
@@ -46,13 +46,13 @@ class TestTimers:
 
 class TestFuncionesComando:
     def test_status(self) -> None:
-        from manage_timers import status
+        from scripts.pro.manage_timers import status
 
         with mock.patch("subprocess.run", return_value=mock.Mock(stdout="active", stderr="")):
             assert status() == 0
 
     def test_install_sin_sudo(self) -> None:
-        from manage_timers import install
+        from scripts.pro.manage_timers import install
 
         with mock.patch("manage_timers._run", return_value=1) as m_run:
             rc = install()
@@ -60,7 +60,7 @@ class TestFuncionesComando:
         m_run.assert_called()
 
     def test_install_con_sudo(self, tmp_path: Path) -> None:
-        from manage_timers import UNITS_DIR, install
+        from scripts.pro.manage_timers import UNITS_DIR, install
 
         with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
             tmp_path.joinpath("timers").mkdir()
@@ -69,20 +69,20 @@ class TestFuncionesComando:
         assert rc == 0
 
     def test_start_stop(self) -> None:
-        from manage_timers import start, stop
+        from scripts.pro.manage_timers import start, stop
 
         with mock.patch("manage_timers._run", return_value=0):
             assert start() == 0
             assert stop() == 0
 
     def test_main_sin_args(self) -> None:
-        from manage_timers import main
+        from scripts.pro.manage_timers import main
 
         with mock.patch("sys.argv", ["manage_timers.py"]):
             assert main() == 1
 
     def test_main_generate(self) -> None:
-        from manage_timers import main
+        from scripts.pro.manage_timers import main
 
         with mock.patch("sys.argv", ["manage_timers.py", "generate"]), mock.patch(
             "manage_timers.generar_unidades"

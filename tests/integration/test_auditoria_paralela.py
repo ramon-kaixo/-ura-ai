@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from auditoria_paralela import (  # noqa: E402
+from scripts.pro.auditoria_paralela import (  # noqa: E402
     check_duplicados,
     check_imports_circulares,
     check_lock_stale,
@@ -68,7 +68,7 @@ class TestChecks:
         assert 0 <= report["ok"] <= 10
 
     def test_check_devuelve_dict(self) -> None:
-        from auditoria_paralela import _check
+        from scripts.pro.auditoria_paralela import _check
 
         r = _check("x", True, "detalle")
         assert r == {"check": "x", "ok": True, "detail": "detalle"}

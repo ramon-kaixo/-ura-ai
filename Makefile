@@ -130,6 +130,23 @@ fix:
 
 
 
+# === TESTING AVANZADO (Plan de Testing v2.0) ===
+test-random:
+	@echo "▶ pytest con orden aleatorio (randomly)..."
+	$(PYTEST) tests/unit/ $(PYTEST_SLOW) $(PYTEST_ARGS) -p no:cacheprovider
+
+test-deadfixtures:
+	@echo "▶ Fixtures muertas..."
+	@-$(PYTEST) tests/unit/ --dead-fixtures -q -p no:cacheprovider 2>/dev/null || echo "  deadfixtures: no hay o error"
+
+complexity:
+	@echo "▶ Complejidad ciclomática (radon + xenon)..."
+	@.venv/bin/python -m radon cc core/ motor/ knowledge/ --average | tail -3
+	@echo "▶ xenon (umbral B absoluto / A módulos)..."
+	@-.venv/bin/python -m xenon --max-absolute B --max-modules A --max-average A core/ motor/ knowledge/ || echo "  xenon: supera umbral — refactorizar funciones complejas"
+
+test-suite: test-random test-deadfixtures complexity
+	@echo "✅ test-suite completado"
 # === HOOKS ===
 install-hooks:
 	@echo "▶ Instalando hooks..."
