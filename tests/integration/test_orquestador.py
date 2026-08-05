@@ -56,9 +56,15 @@ class TestFases:
 
 class TestEjecutar:
     def test_para_en_fallo(self) -> None:
+        import orquestador as orq
+
         tarea = _tarea()
-        report = ejecutar_tarea(tarea, fases=["contexto", "implementacion", "commit"])
-        # implementacion falla (sin cambios) -> para
+        with mock.patch.object(
+            orq, "fase_implementacion",
+            return_value={"fase": "implementacion", "ok": False, "detail": "sin cambios"},
+        ):
+            report = orq.ejecutar_tarea(tarea, fases=["contexto", "implementacion", "commit"])
+        # implementacion falla -> para
         assert report["estado"] == "fallida"
         assert "commit" not in report["resultados"]
 
