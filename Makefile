@@ -3,7 +3,7 @@
 
 .PHONY: validate validate-full test test-fast test-slow lint lint-strict mypy-info radon audit clean
 
-PYTHON := python3
+PYTHON := .venv/bin/python
 PYTEST := $(PYTHON) -m pytest
 PYTEST_ARGS := -q --tb=line
 PYTEST_SLOW := -m "not slow"
@@ -34,6 +34,17 @@ test-full:
 test-slow:
 	@echo "▶ pytest (solo slow)..."
 	$(PYTEST) tests/unit/ tests/integration/ -m "slow" -v --tb=short
+
+# === SNAPSHOT (Fase 3 Plan de Testing) ===
+test-snapshot:
+	@echo "▶ pytest (snapshots estables)..."
+	$(PYTEST) tests/snapshot/ $(PYTEST_ARGS)
+
+# === LOAD TESTING (Fase 4 Plan de Testing, locust) ===
+test-load:
+	@echo "▶ locust (100 usuarios, 60s)..."
+	@echo "  Requiere ura-api activo (puerto 8000)"
+	/home/ramon/URA/ura_ia_1972/.venv/bin/locust -f tests/load/locustfile.py --host=http://localhost:8000 -u 100 -r 10 -t 60s --headless
 
 # === LINT (informativo, no bloquea) ===
 lint:
