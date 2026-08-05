@@ -110,11 +110,6 @@ def client(ms):
     return TestClient(ms.app)
 
 
-@pytest.fixture
-def auth_headers():
-    return {"Authorization": "Bearer test-key"}
-
-
 class TestAuthMiddleware:
     def test_sin_token_401(self, client):
         resp = client.post("/v1/chat/completions", json={})
