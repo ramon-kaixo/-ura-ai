@@ -811,7 +811,7 @@ class PipelineRunner:
             root = tree.getroot()
             rate = float(root.attrib.get("line-rate", 0))
             self._telemetry["coverage_global"] = round(rate * 100, 1)
-        except (OSError, ValueError, TypeError, ET.ParseError):
+        except (OSError, ValueError, TypeError):
             self._telemetry["coverage_global"] = 0
 
     def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
@@ -839,6 +839,13 @@ class PipelineRunner:
                 notificar_fallo(report)
             except Exception as e:
                 log.warning("notificar_fallo falló: %s", e)
+            try:
+                from scripts.pro.quality_gate import evaluar
+
+                qg_verdict, qg_alertas = evaluar(report)
+                log.warning("Quality gate: %s %s", qg_verdict, qg_alertas[:2])
+            except Exception as e:
+                log.warning("quality_gate no pudo ejecutarse: %s", e)
         if verdict == Status.OK:
             self.ltm.store(LTMEntry(
                 key=f"ok_{episode_id}",

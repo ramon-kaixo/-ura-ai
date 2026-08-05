@@ -76,17 +76,18 @@ def evaluar(reporte):
         alertas.append("PIPELINE FALLADO")
         verdict = "REJECTED"
 
-    # Verificar telemetria si existe
-    telem = reporte.get("telemetry", {})
-
-    # Nota: el reporte del runner NO incluye coverage/tests_failed por defecto.
-    # Solo se evaluan si el reporte los trae explicitamente (evita rechazos falsos).
-    cov = telem.get("coverage")
+    # Cobertura: el reporte del runner la incluye a nivel raiz (coverage.global)
+    # y tambien puede venir en telemetry (formato antiguo).
+    cov = reporte.get("coverage", {}).get("global")
+    if not isinstance(cov, (int, float)):
+        cov = reporte.get("telemetry", {}).get("coverage")
     if isinstance(cov, (int, float)) and cov < THRESHOLDS["coverage_global"]:
         alertas.append(f"COBERTURA: {cov}% < {THRESHOLDS['coverage_global']}%")
         verdict = "REJECTED"
 
-    failed = telem.get("tests_failed")
+    failed = reporte.get("coverage", {}).get("tests_failed")
+    if not isinstance(failed, int):
+        failed = reporte.get("telemetry", {}).get("tests_failed")
     if isinstance(failed, int) and failed > THRESHOLDS["tests_failed_max"]:
         alertas.append(f"TESTS FALLADOS: {failed}")
         verdict = "REJECTED"
@@ -95,7 +96,14 @@ def evaluar(reporte):
 
 
 def main():
-    reporte = leer_ultimo_reporte()
+    # Si recibe JSON por stdin, usarlo (el pipeline se lo pasa directamente)
+    if not sys.stdin.isatty():
+        try:
+            reporte = json.load(sys.stdin)
+        except json.JSONDecodeError:
+            reporte = None
+    else:
+        reporte = leer_ultimo_reporte()
     if reporte is None:
         print("QUALITY GATE: NO REPORTE ENCONTRADO")
         print("Razon: no hay reportes JSON en data/tuneladora_reports/ ni .tuneladora/snapshots/")
