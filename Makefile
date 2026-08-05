@@ -110,7 +110,9 @@ dashboard:
 audit:
 	@echo "▶ Ejecutando auditoría continua..."
 	@-$(PYTHON) scripts/pro/auditoria_continua.py; true
-	@echo "✅ Auditoría completada"
+	@echo "▶ Ejecutando auditoría paralela..."
+	@-$(PYTHON) scripts/pro/auditoria_paralela.py || echo "  auditoría paralela: ${'$'}? checks fallaron"
+	@echo "✅ Auditorías completadas"
 
 
 # === SECRETS ===
