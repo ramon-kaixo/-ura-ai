@@ -65,3 +65,19 @@ engine.set_dry_run(True)
 # Simula ejecucion sin modificar nada
 engine.run_script("scripts/pro/cleanup_logs.py")
 ```
+
+## Hook post-commit (opcional)
+
+La tuneladora puede ejecutarse automáticamente en background tras cada commit:
+
+```bash
+export URA_TUNELADORA_POST_COMMIT=1
+```
+
+El hook `.git/hooks/post-commit` (ya existente con change_log) añade la
+ejecución de `make tuneladora` en background cuando la variable está seteada.
+Los resultados quedan en `data/tuneladora_reports/` (y FAILURES.log si falla).
+
+**NO está activo por defecto** — la tuneladora tarda ~2 min y bloquear cada
+commit sería inviable. Actívalo solo si quieres validación automática
+post-commit (revisar manualmente los reportes o configurar notificaciones).
