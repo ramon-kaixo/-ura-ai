@@ -50,7 +50,7 @@ class TestPostCommitHook:
         )
         os.chmod(hook, 0o755)
         env = dict(os.environ, URA_TUNELADORA_POST_COMMIT="1")
-        r = subprocess.run([str(hook)], capture_output=True, text=True, timeout=10, env=env)
+        r = subprocess.run([str(hook)], capture_output=True, text=True, timeout=10, env=env, cwd=str(repo))
         assert r.returncode == 0
         assert (repo / "triggered").exists()
 
