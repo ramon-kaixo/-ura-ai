@@ -802,6 +802,14 @@ class PipelineRunner:
             summary=msg, details=details,
             duration_ms=duration_ms, error=msg if verdict == Status.FAIL else None,
         ))
+        report = self._write_json_report(episode_id, verdict, msg, duration_ms)
+        if verdict == Status.FAIL:
+            try:
+                from scripts.pro.tuneladora.notifier import notificar_fallo
+
+                notificar_fallo(report)
+            except Exception as e:
+                log.warning("notificar_fallo falló: %s", e)
         if verdict == Status.OK:
             self.ltm.store(LTMEntry(
                 key=f"ok_{episode_id}",
@@ -826,8 +834,11 @@ class PipelineRunner:
 
         return verdict
 
-    def _write_json_report(self, episode_id: str, verdict: Status, msg: str, duration_ms: float) -> None:
-        """Persiste el reporte estructurado del pipeline en data/tuneladora_reports/."""
+    def _write_json_report(self, episode_id: str, verdict: Status, msg: str, duration_ms: float) -> dict:
+        """Persiste el reporte estructurado del pipeline en data/tuneladora_reports/.
+
+        Retorna el reporte (dict) para que el llamador pueda notificar.
+        """
         report = _build_json_report(
             episode_id=episode_id,
             verdict=verdict,
@@ -845,3 +856,4 @@ class PipelineRunner:
             (out_dir / f"{episode_id}.json").write_text(json.dumps(report, indent=2))
         except OSError as e:
             log.warning("no se pudo escribir reporte JSON: %s", e)
+        return report
