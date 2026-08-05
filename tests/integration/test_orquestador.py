@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from orquestador import (  # noqa: E402
+from scripts.pro.orquestador import (  # noqa: E402
     FASES,
     cargar_tarea,
     ejecutar_tarea,
@@ -95,35 +95,35 @@ class TestEjecutar:
 
 class TestFasesSubprocess:
     def test_revision_ok(self) -> None:
-        from orquestador import fase_revision
+        from scripts.pro.orquestador import fase_revision
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=0, stdout="")):
             r = fase_revision(_tarea())
         assert r["ok"] is True
 
     def test_revision_falla(self) -> None:
-        from orquestador import fase_revision
+        from scripts.pro.orquestador import fase_revision
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=1, stdout="errores")):
             r = fase_revision(_tarea())
         assert r["ok"] is False
 
     def test_tests_ok(self) -> None:
-        from orquestador import fase_tests
+        from scripts.pro.orquestador import fase_tests
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=0, stdout="100 passed")):
             r = fase_tests(_tarea())
         assert r["ok"] is True
 
     def test_tests_fallan(self) -> None:
-        from orquestador import fase_tests
+        from scripts.pro.orquestador import fase_tests
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=1, stdout="2 failed")):
             r = fase_tests(_tarea())
         assert r["ok"] is False
 
     def test_auditoria_ok(self) -> None:
-        from orquestador import fase_auditoria
+        from scripts.pro.orquestador import fase_auditoria
 
         import json as _json
 
@@ -136,21 +136,21 @@ class TestFasesSubprocess:
         assert "10/10" in r["detail"]
 
     def test_auditoria_no_json(self) -> None:
-        from orquestador import fase_auditoria
+        from scripts.pro.orquestador import fase_auditoria
 
         with mock.patch("orquestador._run", return_value=mock.Mock(stdout="no json")):
             r = fase_auditoria(_tarea())
         assert r["ok"] is False
 
     def test_quality_gate_acepta(self) -> None:
-        from orquestador import fase_quality_gate
+        from scripts.pro.orquestador import fase_quality_gate
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=0, stdout="ACCEPTED")):
             r = fase_quality_gate(_tarea())
         assert r["ok"] is True
 
     def test_quality_gate_rechaza(self) -> None:
-        from orquestador import fase_quality_gate
+        from scripts.pro.orquestador import fase_quality_gate
 
         with mock.patch("orquestador._run", return_value=mock.Mock(returncode=1, stdout="REJECTED")):
             r = fase_quality_gate(_tarea())
