@@ -69,6 +69,7 @@ class TestSelfHealingLoop:
 
     @patch("core.agents.healing.Conciencia")
     @patch("core.agents.healing.subprocess.run")
+    @pytest.mark.slow
     def test_timeout(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, _, _ = loop
         mock_orq.return_value.decidir.return_value = ("PAUSAR", "RAM saturada")

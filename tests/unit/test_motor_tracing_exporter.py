@@ -139,6 +139,7 @@ class TestFileExporter:
         ex.close()
         assert ex._file is None
 
+    @pytest.mark.slow
     def test_doble_start_thread(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -148,6 +149,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_flush_loop_error(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -170,6 +172,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_write_error(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -181,6 +184,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_flush_queue_empty_race(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -225,6 +229,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_rotacion(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60, max_file_size=10)
         try:
@@ -239,6 +244,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_rotacion_oserror(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60, max_file_size=1)
         try:
@@ -259,6 +265,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_write_error(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         ex.emit(_event("a"))
@@ -279,6 +286,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_doble_start_thread(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
@@ -288,6 +296,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_flush_loop_error(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
@@ -300,6 +309,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.slow
     def test_flush_queue_empty_race(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
