@@ -42,3 +42,49 @@ class TestTimers:
         service = (tmp_path / "timers" / "ura-fix.service").read_text()
         assert "sanear_codigo.py" in service
         assert "Type=oneshot" in service
+
+
+class TestFuncionesComando:
+    def test_status(self) -> None:
+        from manage_timers import status
+
+        with mock.patch("subprocess.run", return_value=mock.Mock(stdout="active", stderr="")):
+            assert status() == 0
+
+    def test_install_sin_sudo(self) -> None:
+        from manage_timers import install
+
+        with mock.patch("manage_timers._run", return_value=1) as m_run:
+            rc = install()
+        assert rc == 1
+        m_run.assert_called()
+
+    def test_install_con_sudo(self, tmp_path: Path) -> None:
+        from manage_timers import UNITS_DIR, install
+
+        with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
+            tmp_path.joinpath("timers").mkdir()
+            with mock.patch("manage_timers._run", return_value=0):
+                rc = install()
+        assert rc == 0
+
+    def test_start_stop(self) -> None:
+        from manage_timers import start, stop
+
+        with mock.patch("manage_timers._run", return_value=0):
+            assert start() == 0
+            assert stop() == 0
+
+    def test_main_sin_args(self) -> None:
+        from manage_timers import main
+
+        with mock.patch("sys.argv", ["manage_timers.py"]):
+            assert main() == 1
+
+    def test_main_generate(self) -> None:
+        from manage_timers import main
+
+        with mock.patch("sys.argv", ["manage_timers.py", "generate"]), mock.patch(
+            "manage_timers.generar_unidades"
+        ):
+            assert main() == 0
