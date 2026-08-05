@@ -1,0 +1,28 @@
+#!/bin/sh
+# post-commit — valida el commit con la tuneladora en background (opcional).
+# Solo se activa con URA_TUNELADORA_POST_COMMIT=1.
+# Detecta si el commit incluye código fuente; los commits de docs se saltan.
+PROJECT_ROOT=$(dirname "$(dirname "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)")")
+
+PYTHON="$PROJECT_ROOT/.venv/bin/python3"
+[ -x "$PYTHON" ] || PYTHON="python3"
+
+# 1. ADR auto-generation (desactivado — ver ADR-223)
+# 2. Unified change log
+COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
+if [ -n "$COMMIT_HASH" ]; then
+    "$PYTHON" "$PROJECT_ROOT/scripts/pro/change_log.py" record "$COMMIT_HASH" || \
+        echo "[change_log] Error al registrar commit $COMMIT_HASH" >&2
+fi
+
+# 3. Tuneladora en background (solo si URA_TUNELADORA_POST_COMMIT=1 y hay código)
+if [ -n "$URA_TUNELADORA_POST_COMMIT" ]; then
+    HAS_CODE=$(git show --name-only --pretty=format: HEAD 2>/dev/null | grep -cE '\.(py|js|ts|go|rs)$')
+    if [ "$HAS_CODE" -gt 0 ]; then
+        mkdir -p "$PROJECT_ROOT/.tuneladora"
+        nohup make -C "$PROJECT_ROOT" tuneladora > "$PROJECT_ROOT/.tuneladora/post-commit.log" 2>&1 &
+        echo "[post-commit] Tuneladora disparada en background (PID $!)"
+    else
+        echo "[post-commit] Commit sin código fuente — tuneladora omitida"
+    fi
+fi
