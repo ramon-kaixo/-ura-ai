@@ -70,3 +70,22 @@ class TestLeerUltimo:
         monkeypatch.chdir(tmp_path)
         reporte = leer_ultimo_reporte()
         assert reporte["verdict"] == "OK"
+
+
+class TestEvaluarNuevoFormato:
+    def test_coverage_a_nivel_raiz(self) -> None:
+        # El reporte del runner ahora incluye coverage a nivel raiz
+        reporte = {"verdict": "OK", "coverage": {"global": 40.0}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "REJECTED"
+        assert any("COBERTURA" in a for a in alertas)
+
+    def test_tests_failed_a_nivel_raiz(self) -> None:
+        reporte = {"verdict": "OK", "coverage": {"tests_failed": 3}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "REJECTED"
+
+    def test_formato_antiguo_telemetry(self) -> None:
+        reporte = {"verdict": "OK", "telemetry": {"coverage": 50.0, "tests_failed": 1}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "REJECTED"

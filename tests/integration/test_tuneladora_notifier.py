@@ -180,3 +180,45 @@ class TestIntegracionRunner:
         ) as m_notificar:
             runner._finish("ep-2", Status.OK, "ok", time.monotonic() - 0.5)
         m_notificar.assert_not_called()
+
+
+class TestQualityGateIntegracion:
+    def test_finish_fail_ejecuta_quality_gate(self, tmp_path: Path) -> None:
+        cfg = Configuration()
+        cfg.ura_root = tmp_path
+        runner = PipelineRunner(cfg, mode="check", files=["a.py"])
+        runner._sofia_report = mock.Mock()
+        runner._sofia_report.n_criticos = 0
+        runner._sofia_report.n_advertencias = 0
+        runner._telemetry = {"head": "abc"}
+        with mock.patch.object(runner, "episodic"), mock.patch.object(
+            runner, "ltm"
+        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
+            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
+        ), mock.patch(
+            "scripts.pro.tuneladora.notifier.notificar_fallo"
+        ), mock.patch(
+            "scripts.pro.quality_gate.evaluar",
+            return_value=("REJECTED", ["PIPELINE FALLADO"]),
+        ) as m_qg:
+            runner._finish("ep-qg", Status.FAIL, "boom", time.monotonic() - 0.5)
+        m_qg.assert_called_once()
+        assert m_qg.call_args[0][0]["verdict"] == "FAIL"
+
+    def test_finish_ok_no_ejecuta_quality_gate(self, tmp_path: Path) -> None:
+        cfg = Configuration()
+        cfg.ura_root = tmp_path
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner._sofia_report = mock.Mock()
+        runner._sofia_report.n_criticos = 0
+        runner._sofia_report.n_advertencias = 0
+        runner._telemetry = {"head": "abc"}
+        with mock.patch.object(runner, "episodic"), mock.patch.object(
+            runner, "ltm"
+        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
+            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
+        ), mock.patch(
+            "scripts.pro.quality_gate.evaluar"
+        ) as m_qg:
+            runner._finish("ep-ok", Status.OK, "ok", time.monotonic() - 0.5)
+        m_qg.assert_not_called()
