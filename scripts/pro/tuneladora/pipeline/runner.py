@@ -602,9 +602,16 @@ class PipelineRunner:
     # ── Fase 7: Commit (solo gate) ───────────────────────────
 
     def phase_commit(self) -> list[PhaseResult]:
-        # DESACTIVADO: auto-commit viola regla de aprobación humana.
-        # Ver ADR pendiente: tuneladora no commiteará sin diff revisado.
+        # DESACTIVADO por defecto: auto-commit viola regla de aprobación humana.
+        # Ver ADR-221 (docs/architecture/ADR-221-auto-commit-desactivado.md).
+        # Reactivable explicitamente con URA_TUNELADORA_AUTO_COMMIT=1.
+        if os.environ.get("URA_TUNELADORA_AUTO_COMMIT") == "1":
+            log.warning("Auto-commit ACTIVADO vía URA_TUNELADORA_AUTO_COMMIT=1")
+            return self._phase_commit_impl()
         return [PhaseResult("commit", Status.SKIP)]
+
+    def _phase_commit_impl(self) -> list[PhaseResult]:
+        """Auto-commit real (código original, desactivado por defecto — ADR-221)."""
         if self.mode != "gate":
             return [PhaseResult("commit", Status.SKIP)]
         if not self.cfg.auto_commit:

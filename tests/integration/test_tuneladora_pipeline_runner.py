@@ -404,3 +404,47 @@ class TestCoverageReporte:
         (tmp_path / "coverage.xml").write_text("no es xml")
         runner._recolectar_coverage()
         assert runner._telemetry["coverage_global"] == 0
+
+
+class TestPhaseCommitADR221:
+    def test_desactivado_por_defecto(self, cfg: Configuration, monkeypatch) -> None:
+        monkeypatch.delenv("URA_TUNELADORA_AUTO_COMMIT", raising=False)
+        runner = PipelineRunner(cfg, mode="gate", files=[])
+        results = runner.phase_commit()
+        assert results[0].status == Status.SKIP
+
+    def test_activado_con_env(self, cfg: Configuration, monkeypatch) -> None:
+        monkeypatch.setenv("URA_TUNELADORA_AUTO_COMMIT", "1")
+        runner = PipelineRunner(cfg, mode="gate", files=[])
+        runner.cfg.auto_commit = True
+        with mock.patch("subprocess.run") as m_run:
+            m_run.return_value = mock.Mock(returncode=0, stdout="committed", stderr="")
+            results = runner.phase_commit()
+        assert results[0].status == Status.OK
+        assert m_run.call_count == 2  # git add + git commit
+
+    def test_impl_no_gate_skip(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        results = runner._phase_commit_impl()
+        assert results[0].status == Status.SKIP
+
+    def test_impl_auto_commit_false(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="gate", files=[])
+        runner.cfg.auto_commit = False
+        results = runner._phase_commit_impl()
+        assert results[0].status == Status.SKIP
+
+    def test_impl_nada_que_commitear_ok(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="gate", files=[])
+        runner.cfg.auto_commit = True
+        with mock.patch("subprocess.run") as m_run:
+            m_run.return_value = mock.Mock(returncode=1, stdout="nothing to commit", stderr="")
+            results = runner._phase_commit_impl()
+        assert results[0].status == Status.OK
+
+    def test_impl_error_warn(self, cfg: Configuration) -> None:
+        runner = PipelineRunner(cfg, mode="gate", files=[])
+        runner.cfg.auto_commit = True
+        with mock.patch("subprocess.run", side_effect=OSError("boom")):
+            results = runner._phase_commit_impl()
+        assert results[0].status == Status.WARN
