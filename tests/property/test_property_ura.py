@@ -67,7 +67,8 @@ class TestChunkText:
     @given(st.text(min_size=1, max_size=1000), st.integers(min_value=1, max_value=20))
     def test_concatena_sin_perder_palabras(self, texto: str, max_words: int) -> None:
         chunks = chunk_text(texto, max_words=max_words, overlap=0)
-        # Normalizar: los chunks pueden conservar whitespace original (ej: )
+        # Normalizar: los chunks pueden conservar whitespace original (ej: 
+        # Normalizar: los chunks pueden conservar whitespace original
         unido = " ".join(" ".join(c.text.split()) for c in chunks)
         original = " ".join(texto.split())
         assert unido == original
