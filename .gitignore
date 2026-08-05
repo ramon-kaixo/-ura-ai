@@ -71,3 +71,4 @@ build/
 .attic/
 .tuneladora/
 data/tuneladora_reports/
+data/orquestador_logs/
