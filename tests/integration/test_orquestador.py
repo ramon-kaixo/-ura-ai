@@ -59,9 +59,9 @@ class TestEjecutar:
         import orquestador as orq
 
         tarea = _tarea()
-        with mock.patch.object(
-            orq, "fase_implementacion",
-            return_value={"fase": "implementacion", "ok": False, "detail": "sin cambios"},
+        with mock.patch.dict(
+            orq.FASE_FUNCS,
+            {"implementacion": lambda t: {"fase": "implementacion", "ok": False, "detail": "sin cambios"}},
         ):
             report = orq.ejecutar_tarea(tarea, fases=["contexto", "implementacion", "commit"])
         # implementacion falla -> para
