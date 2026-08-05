@@ -1,0 +1,18 @@
+{
+  "id": "TAREA-000",
+  "created": "2026-08-05",
+  "source": "manual",
+  "tipo": "feature",
+  "modulo": "motor",
+  "submodulo": "",
+  "objetivo": "describir el objetivo",
+  "descripcion": "",
+  "criterios_aceptacion": [],
+  "no_hacer": [],
+  "dependencias": [],
+  "prioridad": "media",
+  "estimacion_horas": 2,
+  "estado": "pendiente",
+  "asignado_a": "opencode",
+  "commits_esperados": 1
+}
