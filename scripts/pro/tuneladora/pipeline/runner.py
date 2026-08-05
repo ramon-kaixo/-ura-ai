@@ -61,6 +61,14 @@ def _build_json_report(
     sofia_n_advertencias: int,
 ) -> dict:
     """Reporte estructurado del pipeline (JSON serializable)."""
+    coverage = {
+        "global": telemetry.get("coverage_global", 0),
+        "modulo": telemetry.get("coverage_modulo", {}),
+        "tests_total": telemetry.get("tests_total", 0),
+        "tests_passed": telemetry.get("tests_passed", 0),
+        "tests_failed": telemetry.get("tests_failed", 0),
+        "tests_skipped": telemetry.get("tests_skipped", 0),
+    }
     return {
         "episode_id": episode_id,
         "pipeline": "tuneladora",
@@ -70,6 +78,7 @@ def _build_json_report(
         "files": files,
         "duration_ms": round(duration_ms, 1),
         "telemetry": telemetry,
+        "coverage": coverage,
         "sofia": {
             "criticos": sofia_n_criticos,
             "advertencias": sofia_n_advertencias,
@@ -786,6 +795,25 @@ class PipelineRunner:
         finally:
             self._release_lock()
 
+    def _recolectar_coverage(self) -> None:
+        """Recolecta cobertura desde coverage.xml si existe (pytest con --cov).
+
+        Si el pipeline no ejecutó pytest con --cov, coverage_global queda 0
+        y el reporte lo documenta (Gap #5 del Plan Maestro).
+        """
+        try:
+            cov_xml = self.cfg.ura_root / "coverage.xml"
+            if not cov_xml.exists():
+                return
+            import xml.etree.ElementTree as ET
+
+            tree = ET.parse(str(cov_xml))
+            root = tree.getroot()
+            rate = float(root.attrib.get("line-rate", 0))
+            self._telemetry["coverage_global"] = round(rate * 100, 1)
+        except (OSError, ValueError, TypeError, ET.ParseError):
+            self._telemetry["coverage_global"] = 0
+
     def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
         duration_ms = (time.monotonic() - t_start) * 1000
         details = {
@@ -802,6 +830,7 @@ class PipelineRunner:
             summary=msg, details=details,
             duration_ms=duration_ms, error=msg if verdict == Status.FAIL else None,
         ))
+        self._recolectar_coverage()
         report = self._write_json_report(episode_id, verdict, msg, duration_ms)
         if verdict == Status.FAIL:
             try:

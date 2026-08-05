@@ -18,8 +18,7 @@ def _reporte(verdict="OK", cov=80.0, failed=0) -> dict:
     return {
         "episode_id": "ep-1",
         "verdict": verdict,
-        "coverage": {"global": cov},
-        "tests": {"failed": failed},
+        "coverage": {"global": cov, "tests_failed": failed},
     }
 
 

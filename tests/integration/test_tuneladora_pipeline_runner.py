@@ -361,3 +361,46 @@ class TestLockPidMuerto:
         import os
 
         assert _pid_alive(os.getpid()) is True
+
+
+class TestCoverageReporte:
+    def test_reporte_incluye_coverage(self) -> None:
+        report = _build_json_report(
+            episode_id="e", verdict=Status.OK, msg="ok", duration_ms=1.0,
+            mode="check", files=["a.py"],
+            telemetry={"coverage_global": 78.5, "tests_failed": 2},
+            sofia_n_criticos=0, sofia_n_advertencias=0,
+        )
+        assert report["coverage"]["global"] == 78.5
+        assert report["coverage"]["tests_failed"] == 2
+        assert report["coverage"]["tests_total"] == 0  # default
+
+    def test_reporte_coverage_default_cero(self) -> None:
+        report = _build_json_report(
+            episode_id="e", verdict=Status.OK, msg="ok", duration_ms=1.0,
+            mode="check", files=[], telemetry={},
+            sofia_n_criticos=0, sofia_n_advertencias=0,
+        )
+        assert report["coverage"]["global"] == 0
+
+    def test_recolectar_coverage_xml(self, cfg: Configuration, tmp_path: Path) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner.cfg.ura_root = tmp_path
+        (tmp_path / "coverage.xml").write_text(
+            '<?xml version="1.0"?><coverage line-rate="0.785"><packages/></coverage>'
+        )
+        runner._recolectar_coverage()
+        assert runner._telemetry["coverage_global"] == 78.5
+
+    def test_recolectar_sin_xml(self, cfg: Configuration, tmp_path: Path) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner.cfg.ura_root = tmp_path
+        runner._recolectar_coverage()
+        assert "coverage_global" not in runner._telemetry
+
+    def test_recolectar_xml_invalido(self, cfg: Configuration, tmp_path: Path) -> None:
+        runner = PipelineRunner(cfg, mode="check", files=[])
+        runner.cfg.ura_root = tmp_path
+        (tmp_path / "coverage.xml").write_text("no es xml")
+        runner._recolectar_coverage()
+        assert runner._telemetry["coverage_global"] == 0

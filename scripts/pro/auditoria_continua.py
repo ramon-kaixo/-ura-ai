@@ -588,7 +588,7 @@ def detectar_regresiones(reporte_actual: dict | None, reporte_anterior: dict | N
     if cov_actual and cov_anterior and cov_actual < cov_anterior:
         alertas.append(f"REGRESION: Cobertura bajo de {cov_anterior}% a {cov_actual}%")
 
-    failed = reporte_actual.get("tests", {}).get("failed", 0)
+    failed = reporte_actual.get("coverage", {}).get("tests_failed", 0)
     if failed:
         alertas.append(f"ALERTA: {failed} tests fallaron")
     return alertas
