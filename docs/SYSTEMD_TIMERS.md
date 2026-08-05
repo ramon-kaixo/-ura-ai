@@ -39,3 +39,26 @@ python3 scripts/pro/manage_timers.py status
 - Los scripts ya conectados a systemd/cron/hooks existentes NO tienen timer nuevo
   (metrics_server, tuneladora_mantenimiento, gpu_health, watchers — ya automáticos)
 - Los timers complementan los targets del Makefile (make fix, make backup, etc.)
+
+## Timers de testing (B-12-F3/F4)
+
+| Timer | Unidad | Schedule | Estado |
+|---|---|---|---|
+| `ura-mutmut.timer` | `ura-mutmut.service` (mutmut run) | Domingos 02:00 (Persistent) | ✅ en deploy/timers/, requiere sudo para instalar |
+| `ura-cleanup-auto.timer` | limpieza asistente | `*:0/6` (cada 6 horas) | ✅ formato validado con systemd-analyze |
+
+**Instalación** (requiere sudo, rootfs RO):
+
+```bash
+sudo cp deploy/timers/ura-mutmut.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now ura-mutmut.timer
+```
+
+**Verificación:**
+```bash
+systemctl list-timers ura-mutmut.timer
+```
+
+Nota: el formato `OnCalendar=*:0/6` se validó con `systemd-analyze calendar`
+(el formato antiguo `*-*-* *:00/6:00:00` es rechazado por systemd — B-11).

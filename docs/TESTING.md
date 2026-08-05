@@ -24,16 +24,18 @@
 | **xenon** | ✅ instalado | `make complexity` — falla si supera umbral (B absoluto) |
 | hypothesis | ✅ instalado | property-based (Fase 2: tests/property/) |
 | mutmut | ✅ instalado | mutation testing (Fase 4: nocturno) |
-| pytest-snapshot | ⏳ Fase 3 | snapshot testing |
-| locust | ⏳ Fase 3 | load testing |
+| pytest-snapshot | ✅ instalado | snapshot testing (Fase 3: tests/snapshot/) |
+| locust | ✅ instalado | load testing (Fase 3: tests/load/) |
 
 ## Targets Makefile
 
-- `make validate` — Fast (~9 min): pytest + lint + hooks
+- `make validate` — Fast (~4 min): pytest + lint + hooks
 - `make test-random` — pytest unit con orden aleatorio
 - `make test-deadfixtures` — detecta fixtures muertas
 - `make complexity` — radon promedio + xenon umbrales
 - `make test-suite` — random + deadfixtures + complexity (~25 min)
+- `make test-snapshot` — snapshots estables (tests/snapshot/, 4 snapshots)
+- `make test-load` — locust 100 usuarios 60s (requiere ura-api en :8000)
 - `make test-deep` — (Fase futura) + tuneladora + auditoria
 - `make nightly` — (Fase futura) + mutmut + locust + chaos
 
@@ -58,6 +60,6 @@
 
 ## Fases pendientes
 
-- **Fase 2** (Semana 1): tests/property/ con 10+ tests hypothesis
-- **Fase 3** (Semana 2): tests/snapshot/ (5+) + tests/load/ (locustfile) + docs/API.md
-- **Fase 4** (Semana 3): mutmut nocturno + chaos_test integrado
+- **Fase 2** (Semana 1): tests/property/ con 10+ tests hypothesis — ✅ 14 tests
+- **Fase 3** (Semana 2): tests/snapshot/ (5+) + tests/load/ (locustfile) + docs/API.md — ✅ hecho (4 snapshots + locustfile + API.md)
+- **Fase 4** (Semana 3): mutmut nocturno + chaos_test integrado — unidades en deploy/timers/ura-mutmut.{service,timer}
