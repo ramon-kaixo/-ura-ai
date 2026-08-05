@@ -437,10 +437,12 @@ class TestPhaseCommitADR221:
     def test_impl_nada_que_commitear_ok(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="gate", files=[])
         runner.cfg.auto_commit = True
-        with mock.patch("subprocess.run") as m_run:
-            m_run.return_value = mock.Mock(returncode=1, stdout="nothing to commit", stderr="")
+        add_ok = mock.Mock(returncode=0, stdout="", stderr="")
+        commit_nada = mock.Mock(returncode=1, stdout="nothing to commit", stderr="")
+        with mock.patch("subprocess.run", side_effect=[add_ok, commit_nada]) as m_run:
             results = runner._phase_commit_impl()
         assert results[0].status == Status.OK
+        assert m_run.call_count == 2
 
     def test_impl_error_warn(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="gate", files=[])

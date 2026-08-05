@@ -818,7 +818,7 @@ class PipelineRunner:
             root = tree.getroot()
             rate = float(root.attrib.get("line-rate", 0))
             self._telemetry["coverage_global"] = round(rate * 100, 1)
-        except (OSError, ValueError, TypeError):
+        except (OSError, ValueError, TypeError, ET.ParseError):
             self._telemetry["coverage_global"] = 0
 
     def _finish(self, episode_id: str, verdict: Status, msg: str, t_start: float) -> Status:
