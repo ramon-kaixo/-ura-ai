@@ -88,6 +88,7 @@ class TestCleanup:
         assert "percent" in result
         assert result["libre_gb"] > 0
 
+    @pytest.mark.slow
     def test_detect_duplicates_no_crash(self, cleanup):
         result = cleanup.detect_duplicates()
         assert isinstance(result, dict)
