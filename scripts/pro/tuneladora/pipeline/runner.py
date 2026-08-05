@@ -810,6 +810,10 @@ class PipelineRunner:
 
             verdict, msg = self.phase_verdict(all_phase_results)
 
+            # Quality Gate: si REJECTED, el verdict baja a FAIL (antes del rollback)
+            if verdict != Status.FAIL:
+                verdict, msg = self._aplicar_quality_gate(verdict, msg, t_start)
+
             if verdict == Status.FAIL and self._last_snapshot is not None:
                 log.warning("Pipeline FAILED — restoring snapshot %s", self._last_snapshot.name)
                 self.snapshot_manager.restore(self._last_snapshot)
@@ -852,6 +856,27 @@ class PipelineRunner:
             return self._finish(episode_id, verdict, msg, t_start)
         finally:
             self._release_lock()
+
+    def _aplicar_quality_gate(self, verdict: Status, msg: str, t_start: float) -> tuple[Status, str]:
+        """Aplica el quality gate: si REJECTED, baja el verdict a FAIL (fail-safe)."""
+        try:
+            from scripts.pro.quality_gate import evaluar as _qg_evaluar
+
+            qg_reporte = _build_json_report(
+                episode_id=f"tuneladora_{int(t_start)}_{self.mode}",
+                verdict=verdict, msg=msg, duration_ms=0.0,
+                mode=self.mode, files=self.files,
+                telemetry=self._telemetry,
+                sofia_n_criticos=self._sofia_report.n_criticos,
+                sofia_n_advertencias=self._sofia_report.n_advertencias,
+            )
+            qg_verdict, qg_alertas = _qg_evaluar(qg_reporte)
+            if qg_verdict == "REJECTED":
+                log.warning("Quality gate REJECTED: %s", qg_alertas[:3])
+                return Status.FAIL, "Quality gate REJECTED: " + "; ".join(qg_alertas[:3])
+        except Exception as e:
+            log.warning("quality_gate no pudo ejecutarse: %s", e)
+        return verdict, msg
 
     def _recolectar_coverage(self) -> None:
         """Recolecta cobertura desde coverage.xml si existe (pytest con --cov).
