@@ -1,0 +1,28 @@
+{
+  "episode_id": "snap-ep",
+  "pipeline": "tuneladora",
+  "mode": "check",
+  "verdict": "OK",
+  "summary": "ok",
+  "files": [
+    "a.py"
+  ],
+  "duration_ms": 123.4,
+  "telemetry": {
+    "coverage_global": 78.5
+  },
+  "coverage": {
+    "global": 78.5,
+    "modulo": {},
+    "threshold": 70.0,
+    "regression": false,
+    "tests_total": 0,
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "tests_skipped": 0
+  },
+  "sofia": {
+    "criticos": 0,
+    "advertencias": 1
+  }
+}
