@@ -1,0 +1,8 @@
+[Unit]
+Description=URA Mutation Testing (mutmut) semanal
+
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/mutmut run
