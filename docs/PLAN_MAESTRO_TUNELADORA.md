@@ -195,3 +195,20 @@ Endpoint `http://localhost:11434/api/generate`, modelo `qwen2.5-coder:14b`, Sofi
 ## Resumen ejecutivo
 
 La tuneladora es un **pipeline de validación completo** (16 fases) que: valida código con herramientas locales (ruff/pytest/bandit/mypy), usa el LLM local para revisar diffs y generar parches, guarda TODO en 4 capas de memoria, genera reportes JSON, y se ejecuta por scheduler (5/60/360 min) o manualmente. **El único paso deliberadamente manual es el commit** — por diseño. El siguiente paso natural es conectar la tuneladora a un hook de commit (gate automático) y notificar fallos.
+
+---
+
+## Actualización 2026-08-05 — Gaps cerrados
+
+| # | Gap | Estado | Cómo |
+|---|---|---|---|
+| 1 | Auto-commit desactivado | ✅ CERRADO (documentado) | ADR-221 + `_phase_commit_impl` + env `URA_TUNELADORA_AUTO_COMMIT` |
+| 2 | Hook post-commit | ✅ CERRADO | `.git/hooks/post-commit` extendido con guard `URA_TUNELADORA_POST_COMMIT` |
+| 3 | Nadie notifica FAIL | ✅ CERRADO | `scripts/pro/tuneladora/notifier.py` (log + memoria + terminal + systemd) |
+| 4 | quality_gate sin conectar | ✅ CERRADO | `_finish` llama `evaluar(report)` directo; stdin soportado |
+| 5 | Coverage ausente del reporte | ✅ CERRADO | `coverage` en `_build_json_report` + `_recolectar_coverage()` (coverage.xml) |
+| 6 | Código muerto en phase_commit | ✅ CERRADO | Refactor a `_phase_commit_impl` (sin eliminar, ADR-221) |
+
+**Bug paralelo encontrado y arreglado**: `_write_json_report` estaba definido pero
+NUNCA se llamaba (el otro agente lo eliminó al reescribir el runner) — el reporte
+JSON no se generaba en producción. Ahora `_finish` lo genera y notifica.
