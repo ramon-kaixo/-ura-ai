@@ -142,6 +142,7 @@ def router_ctx(monkeypatch):
 
 @pytest.mark.timeout(60)
 class TestRouterHandlerVersion:
+    @pytest.mark.slow
     def test_api_version_json(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "ECO")
         monkeypatch.setattr("core.model_router.router.ROUTER_PORT", 11435)
@@ -173,6 +174,7 @@ class TestRouterHandlerVersion:
 
 
 class TestRouterHandlerHealth:
+    @pytest.mark.slow
     def test_health_ok(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.require_auth", lambda: False)
         monkeypatch.setattr("core.model_router.router.auth_validate", lambda k: True)
@@ -187,6 +189,7 @@ class TestRouterHandlerHealth:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_health_degraded_when_no_models(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.require_auth", lambda: False)
         monkeypatch.setattr(
@@ -204,6 +207,7 @@ class TestRouterHandlerHealth:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_health_forbidden_without_key(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.require_auth", lambda: True)
         monkeypatch.setattr("core.model_router.router.auth_validate", lambda k: False)
@@ -216,6 +220,7 @@ class TestRouterHandlerHealth:
 
 
 class TestRouterHandlerMetrics:
+    @pytest.mark.slow
     def test_metrics_prometheus_text(self, router_ctx, monkeypatch) -> None:
         _patch_metrics(monkeypatch)
         h = _Harness()
@@ -228,6 +233,7 @@ class TestRouterHandlerMetrics:
 
 
 class TestRouterHandlerRateLimit:
+    @pytest.mark.slow
     def test_rate_limit_429(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.rate_limiter", _FakeRateLimiter(False))
         h = _Harness()
@@ -239,6 +245,7 @@ class TestRouterHandlerRateLimit:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_post_rate_limit_429(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.rate_limiter", _FakeRateLimiter(False))
         h = _Harness()
@@ -250,6 +257,7 @@ class TestRouterHandlerRateLimit:
 
 
 class TestRouterHandlerProxy:
+    @pytest.mark.slow
     def test_api_tags_proxied(self, router_ctx, monkeypatch) -> None:
         def fake_proxy(path, body, method, client_ip=None):
             return 200, {"Content-Type": "application/json"}, b'{"models": []}'
@@ -263,6 +271,7 @@ class TestRouterHandlerProxy:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_v1_unknown_path_proxied(self, router_ctx, monkeypatch) -> None:
         def fake_proxy(path, body, method, client_ip=None):
             assert path == "/v1/models"
@@ -278,6 +287,7 @@ class TestRouterHandlerProxy:
 
 
 class TestRouterHandlerVRam:
+    @pytest.mark.slow
     def test_vram_status(self, router_ctx) -> None:
         h = _Harness()
         try:
@@ -288,6 +298,7 @@ class TestRouterHandlerVRam:
 
 
 class TestRouterHandlerSupervisor:
+    @pytest.mark.slow
     def test_supervisor_error_path_when_zmq_fails(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.require_auth", lambda: False)
         monkeypatch.setattr("core.model_router.router.auth_validate", lambda k: True)
@@ -308,6 +319,7 @@ class TestRouterHandlerSupervisor:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_status_html_renders_empty_tasks(self, router_ctx, monkeypatch) -> None:
         class _FailingZMQ:
             class Context:
@@ -328,6 +340,7 @@ class TestRouterHandlerSupervisor:
 
 
 class TestRouterHandlerSearch:
+    @pytest.mark.slow
     def test_search_ok(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.search_engine.search", lambda q: [{"id": 1}])
         h = _Harness()
@@ -338,6 +351,7 @@ class TestRouterHandlerSearch:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_search_missing_q_400(self, router_ctx) -> None:
         h = _Harness()
         try:
@@ -348,6 +362,7 @@ class TestRouterHandlerSearch:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_search_engine_failure_degrades(self, router_ctx, monkeypatch) -> None:
         def boom(q):
             raise RuntimeError("fts caido")
@@ -362,6 +377,7 @@ class TestRouterHandlerSearch:
 
 
 class TestRouterHandlerDashboard:
+    @pytest.mark.slow
     def test_dashboard_html(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.dashboard._render_dashboard", lambda: "<html>dashboard</html>")
         h = _Harness()
@@ -371,6 +387,7 @@ class TestRouterHandlerDashboard:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_dashboard_json(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr(
             "core.model_router.dashboard._dashboard_json",
@@ -395,6 +412,7 @@ class TestRouterHandlerPowerMode:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_set_power_mode_body(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "AUTO")
         h = _Harness()
@@ -404,6 +422,7 @@ class TestRouterHandlerPowerMode:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_set_power_mode_invalid_400(self, router_ctx, monkeypatch) -> None:
         h = _Harness()
         try:
@@ -414,6 +433,7 @@ class TestRouterHandlerPowerMode:
 
 
 class TestRouterHandlerPost:
+    @pytest.mark.slow
     def test_post_cache_hit(self, router_ctx, monkeypatch) -> None:
         fake_cache = _FakeCache()
         fake_cache.set_hit({"choices": [{"message": {"content": "cached"}}]})
@@ -427,6 +447,7 @@ class TestRouterHandlerPost:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_post_direct_model_selection(self, router_ctx, monkeypatch) -> None:
         _patch_metrics(monkeypatch)
         monkeypatch.setattr("core.model_router.model_selection.clasificar_peticion", lambda m: "chat")
@@ -483,6 +504,7 @@ class TestRouterHandlerPost:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_post_context_critical_logged(self, router_ctx, monkeypatch) -> None:
         fake_metrics = _patch_metrics(monkeypatch)
         monkeypatch.setattr("core.model_router.model_selection.clasificar_peticion", lambda m: "chat")
