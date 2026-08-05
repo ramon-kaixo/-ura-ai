@@ -1,0 +1,8 @@
+[Unit]
+Description=reindexado vectorial
+
+[Service]
+Type=oneshot
+User=ramon
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/reindex_vectors.py
+Nice=10
