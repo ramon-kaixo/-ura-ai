@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.retrieval import (
     ContextQuery,
@@ -271,6 +273,7 @@ class TestContextRetrieverEdgeCases:
 
 
 class TestContextRetrieverBenchmark:
+    @pytest.mark.slow
     def test_latency_under_50ms(self):
         store = EpisodeStore()
         for i in range(1000):
