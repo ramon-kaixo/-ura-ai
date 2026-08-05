@@ -505,8 +505,8 @@ def cmd_service(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_audit(config: UraConfig, args) -> int:
-    """Auditoría arquitectónica completa (ARQ)."""
+def _audit_ejecutar_arq() -> tuple[dict | None, str]:
+    """Ejecuta arq_auditor y parsea su JSON. (None, error) si falla."""
     import json
     import subprocess  # nosec
     import sys
@@ -520,20 +520,26 @@ def cmd_audit(config: UraConfig, args) -> int:
         check=False,
     )
     if r.returncode != 0 or not r.stdout:
-        print(f"ARQ Auditor falló: {r.stderr[:200]}")
-        return 1
+        return None, r.stderr[:200]
+    return json.loads(r.stdout), ""
 
-    data = json.loads(r.stdout)
-    blocks = data.get("blocks", {})
+
+def _audit_contar(blocks: dict) -> tuple[int, int]:
+    """Cuenta FAIL/P0 y WARNING/MEDIUM entre todos los bloques."""
     total_fail = sum(1 for b in blocks.values() for f in b if f.get("level") in ("FAIL", "P0"))
     total_warn = sum(1 for b in blocks.values() for f in b if f.get("level") in ("WARNING", "MEDIUM"))
-    files_scanned = data.get("files_scanned", 0)
+    return total_fail, total_warn
 
+
+def _audit_imprimir_cabecera(data: dict, total_fail: int, total_warn: int) -> None:
+    files_scanned = data.get("files_scanned", 0)
     print(f"\n📊 Auditoría Arquitectónica — {data.get('version', '?')}")
     print(f"{'=' * 60}")
     print(f"  Archivos: {files_scanned}  |  FAIL: {total_fail}  |  WARN: {total_warn}")
     print()
 
+
+def _audit_imprimir_bloques(blocks: dict) -> None:
     for bid in sorted(blocks.keys()):
         items = blocks[bid]
         if not items:
@@ -547,7 +553,29 @@ def cmd_audit(config: UraConfig, args) -> int:
             if f.get("level") in ("FAIL", "P0", "WARNING", "MEDIUM"):
                 print(f"         {f.get('type', '').ljust(25)} {f.get('file', '')}:{f.get('line', '')}")
 
-    veredicto = "❌ NO SUPERADO" if total_fail > 0 else "⚠️ CON ADVERTENCIAS" if total_warn > 0 else "✅ SUPERADO"
+
+def _audit_veredicto(total_fail: int, total_warn: int) -> str:
+    if total_fail > 0:
+        return "❌ NO SUPERADO"
+    if total_warn > 0:
+        return "⚠️ CON ADVERTENCIAS"
+    return "✅ SUPERADO"
+
+
+def cmd_audit(config: UraConfig, args) -> int:
+    """Auditoría arquitectónica completa (ARQ)."""
+    data, error = _audit_ejecutar_arq()
+    if data is None:
+        print(f"ARQ Auditor falló: {error}")
+        return 1
+
+    blocks = data.get("blocks", {})
+    total_fail, total_warn = _audit_contar(blocks)
+
+    _audit_imprimir_cabecera(data, total_fail, total_warn)
+    _audit_imprimir_bloques(blocks)
+
+    veredicto = _audit_veredicto(total_fail, total_warn)
     print(f"\n{'=' * 60}")
     print(f"  Veredicto: {veredicto}")
     print(f"{'=' * 60}\n")
