@@ -10,7 +10,7 @@ PYTEST_SLOW := -m "not slow"
 RUFF := $(PYTHON) -m ruff
 
 # === VALIDACIÓN RÁPIDA (desarrollo local, < 30s con xdist) ===
-validate: test-fast lint mypy-info radon
+validate: test-fast lint mypy-info radon verify-hooks
 	@echo "✅ validate OK"
 
 # === VALIDACIÓN COMPLETA (CI, < 3 min) ===
@@ -127,7 +127,18 @@ fix:
 	@echo "✅ Código saneado"
 
 
+
+# === HOOKS ===
+install-hooks:
+	@echo "▶ Instalando hooks..."
+	@bash scripts/pro/hooks/install-hooks.sh
+
+verify-hooks:
+	@echo "▶ Verificando hooks..."
+	@test -x .git/hooks/post-commit && echo "✅ post-commit instalado" || (echo "❌ post-commit NO instalado — ejecuta make install-hooks"; exit 1)
+
 # === INVENTARIO ===
+
 inventario:
 	@echo "▶ Generando inventario de herramientas..."
 	@$(PYTHON) scripts/pro/audit_inventario.py
