@@ -450,3 +450,60 @@ class TestPhaseCommitADR221:
         with mock.patch("subprocess.run", side_effect=OSError("boom")):
             results = runner._phase_commit_impl()
         assert results[0].status == Status.WARN
+
+
+class TestQualityGateCambiaVerdict:
+    def test_qg_rechaza_baja_a_fail(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check", files=["a.py"])
+        runner._sofia_report = mock.Mock()
+        runner._sofia_report.n_criticos = 0
+        runner._sofia_report.n_advertencias = 0
+        runner._telemetry = {"coverage_global": 40.0}
+        runner._last_snapshot = None
+        with mock.patch(
+            "scripts.pro.quality_gate.evaluar",
+            return_value=("REJECTED", ["COBERTURA: 40% < 70%"]),
+        ), mock.patch.object(runner, "_acquire_lock", return_value=True), mock.patch(
+            "scripts.pro.tuneladora.pipeline.runner._conciencia"
+        ), mock.patch.object(runner, "_finish", return_value=Status.FAIL), mock.patch.object(
+            runner, "preflight", return_value=[]
+        ), mock.patch.object(runner, "phase_verdict", return_value=(Status.OK, "ok")), mock.patch(
+            "scripts.pro.tuneladora.pipeline.runner._plugin_registry"
+        ), mock.patch.object(runner, "phase_snapshot", return_value=[]), mock.patch.object(
+            runner, "phase_static", return_value=[]
+        ), mock.patch.object(runner, "phase_dynamic", return_value=[]), mock.patch.object(
+            runner, "phase_api_diff", return_value=[]
+        ), mock.patch.object(runner, "phase_index", return_value=[]), mock.patch.object(
+            runner, "phase_integrity", return_value=[]
+        ), mock.patch.object(runner, "phase_commit", return_value=[]), mock.patch.object(
+            runner, "pending_queue"
+        ):
+            result = runner.run()
+        assert result == Status.FAIL
+
+    def test_qg_acepta_mantiene(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check", files=[])
+        runner._sofia_report = mock.Mock()
+        runner._sofia_report.n_criticos = 0
+        runner._sofia_report.n_advertencias = 0
+        runner._telemetry = {}
+        with mock.patch(
+            "scripts.pro.quality_gate.evaluar",
+            return_value=("ACCEPTED", []),
+        ):
+            verdict, _ = runner._aplicar_quality_gate(Status.OK, "ok", time.time())
+        assert verdict == Status.OK
+
+    def test_qg_error_no_cambia(self) -> None:
+        runner = PipelineRunner(Configuration(), mode="check", files=[])
+        runner._sofia_report = mock.Mock()
+        runner._sofia_report.n_criticos = 0
+        runner._sofia_report.n_advertencias = 0
+        runner._telemetry = {}
+        with mock.patch(
+            "scripts.pro.quality_gate.evaluar",
+            side_effect=RuntimeError("boom"),
+        ):
+            verdict, msg = runner._aplicar_quality_gate(Status.WARN, "w", time.time())
+        assert verdict == Status.WARN
+        assert msg == "w"
