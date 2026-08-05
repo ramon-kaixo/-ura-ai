@@ -108,3 +108,22 @@ class TestFailSafe:
         reporte = {"verdict": "OK", "coverage": {"global": 50.0}}
         verdict, alertas = evaluar(reporte)
         assert verdict == "REJECTED"
+
+
+class TestModoCheck:
+    def test_qg_omite_coverage_en_modo_check(self) -> None:
+        # Reproduce B-21: coverage 0.6% en modo check NO debe rechazar
+        reporte = {"verdict": "OK", "mode": "check", "coverage": {"global": 0.6}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "ACCEPTED"
+
+    def test_qg_aplica_coverage_en_modo_full(self) -> None:
+        reporte = {"verdict": "OK", "mode": "full", "coverage": {"global": 0.6}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "REJECTED"
+
+    def test_qg_sin_mode_aplica_coverage(self) -> None:
+        # Sin campo mode, se aplica el threshold (comportamiento previo)
+        reporte = {"verdict": "OK", "coverage": {"global": 50.0}}
+        verdict, _ = evaluar(reporte)
+        assert verdict == "REJECTED"
