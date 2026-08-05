@@ -365,6 +365,8 @@ def test_benchmark_ram_1m() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.slow
+@pytest.mark.timeout(600)
 def test_soak_million_operations() -> None:
     """Millón de operaciones continuadas."""
     rng = _rng(12345)

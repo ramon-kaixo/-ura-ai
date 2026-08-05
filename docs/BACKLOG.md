@@ -7,6 +7,10 @@
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
+| B-40 | Soak 1M ops (test_f25_b7_hardening) NO completa en 600s — problema de rendimiento real en fact_history | Test inviable + señal de lentitud | Marcado slow (fuera de validate); investigar fact_history con 1M versiones (rollback/timeline) | 🟡 documentado |
+
+| ID | Ítem | Impacto | Solución | Estado |
+|---|---|---|---|---|
 | B-01 | 5 tests flaky en suite completa (degraded_mode, f27_b8_hardening, daemon dashboard, cleanup_integration, contextual_retrieval, f25_b6_fact_history) | Falsos rojos en validate | Aislar estado compartido (threads/asyncio); algunos son del otro agente — coordinar | 🟡 documentado, pasan aislados |
 | B-02 | make validate ~7-9 min (>5 min objetivo) | Iteración lenta | Sin xdist (satura host): reducir suite, marcar más slow, o dividir validate | 🟡 |
 | B-03 | 4 servicios systemd en crash-loop (model-router, ura-capturador, ura-voice, ura-openclaw) | CPU quemada | Ramón: `sudo systemctl stop` (sin sudo desde aquí — rootfs RO) | 🔴 pendiente Ramón |
