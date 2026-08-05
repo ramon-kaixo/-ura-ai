@@ -34,7 +34,7 @@ async def main() -> None:
     scheduler.add_pipeline("cleanup", interval_minutes=60, auto_execute_safe=True)
     scheduler.add_pipeline("audit", interval_minutes=360, auto_execute_safe=False)
     scheduler.start()
-    log.info("Tuneladora daemon iniciado con %d pipelines", scheduler.pipeline_count)
+    log.info("Tuneladora daemon iniciado con %s pipelines", scheduler.pipeline_count)
 
     # Dashboard en segundo plano
     try:
