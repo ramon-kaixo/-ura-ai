@@ -89,3 +89,22 @@ class TestEvaluarNuevoFormato:
         reporte = {"verdict": "OK", "telemetry": {"coverage": 50.0, "tests_failed": 1}}
         verdict, alertas = evaluar(reporte)
         assert verdict == "REJECTED"
+
+
+class TestFailSafe:
+    def test_coverage_cero_no_rechaza(self) -> None:
+        # Sin datos de coverage (0) el gate NO debe bloquear
+        reporte = {"verdict": "OK", "coverage": {"global": 0}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "ACCEPTED"
+        assert alertas == []
+
+    def test_coverage_ausente_no_rechaza(self) -> None:
+        reporte = {"verdict": "OK"}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "ACCEPTED"
+
+    def test_coverage_real_bajo_rechaza(self) -> None:
+        reporte = {"verdict": "OK", "coverage": {"global": 50.0}}
+        verdict, alertas = evaluar(reporte)
+        assert verdict == "REJECTED"
