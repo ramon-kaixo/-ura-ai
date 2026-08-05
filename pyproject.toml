@@ -37,6 +37,7 @@ test = [
     "pytest-timeout>=2.0",
     "pytest-randomly>=4.0",
     "pytest-deadfixtures>=2.0",
+    "pytest-snapshot>=0.9",
     "radon>=6.0",
     "xenon>=0.9",
     "hypothesis>=6.0",
