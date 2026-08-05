@@ -64,6 +64,11 @@ def _build_json_report(
     coverage = {
         "global": telemetry.get("coverage_global", 0),
         "modulo": telemetry.get("coverage_modulo", {}),
+        "threshold": 70.0,
+        "regression": _detect_coverage_regression(
+            Path("data/tuneladora_reports"),
+            telemetry.get("coverage_global", 0),
+        ),
         "tests_total": telemetry.get("tests_total", 0),
         "tests_passed": telemetry.get("tests_passed", 0),
         "tests_failed": telemetry.get("tests_failed", 0),
@@ -85,6 +90,52 @@ def _build_json_report(
         },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
     }
+
+
+def _parse_coverage_output(output: str) -> dict:
+    """Parsea el output de `coverage report` (term-missing).
+
+    Busca la línea TOTAL (global) y líneas por módulo (motor/, core/, ...).
+    Retorna {"global": 78.5, "motor": 86.0, ...} — vacío si no hay datos.
+    """
+    result: dict = {}
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        pct_raw = parts[-1]
+        if not pct_raw.endswith("%"):
+            continue
+        try:
+            pct = float(pct_raw.rstrip("%"))
+        except ValueError:
+            continue
+        name = parts[0]
+        if name == "TOTAL":
+            result["global"] = pct
+        elif name.rstrip("/") in ("motor", "core", "knowledge", "scripts/pro/tuneladora", "agents", "monitor"):
+            result[name.rstrip("/")] = pct
+        elif name.startswith(("motor/", "core/", "knowledge/")):
+            result.setdefault(name.split("/")[0], pct)
+    return result
+
+
+def _detect_coverage_regression(report_dir: Path, current_global: float, threshold_pct: float = 5.0) -> bool:
+    """True si la cobertura global bajó más de threshold_pct vs el último reporte."""
+    if not report_dir.exists():
+        return False
+    try:
+        files = sorted(report_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        for f in files:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            prev = data.get("coverage", {}).get("global", 0)
+            if prev and prev - current_global > threshold_pct:
+                return True
+            if prev:
+                return False
+    except (OSError, json.JSONDecodeError):
+        pass
+    return False
 
 
 def _pid_alive(pid: int) -> bool:
@@ -818,6 +869,7 @@ class PipelineRunner:
             root = tree.getroot()
             rate = float(root.attrib.get("line-rate", 0))
             self._telemetry["coverage_global"] = round(rate * 100, 1)
+            self._telemetry["coverage_modulo"] = {}
         except (OSError, ValueError, TypeError, ET.ParseError):
             self._telemetry["coverage_global"] = 0
 
