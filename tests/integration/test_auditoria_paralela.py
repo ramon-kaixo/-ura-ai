@@ -23,6 +23,7 @@ from auditoria_paralela import (  # noqa: E402
 )
 
 
+@pytest.mark.slow
 class TestChecks:
     def test_memorias(self) -> None:
         r = check_memorias()
