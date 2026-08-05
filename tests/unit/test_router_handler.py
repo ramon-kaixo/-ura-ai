@@ -161,6 +161,7 @@ class TestRouterHandlerVersion:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_root_redirects_to_version(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "AUTO")
         h = _Harness()
@@ -384,6 +385,7 @@ class TestRouterHandlerDashboard:
 
 
 class TestRouterHandlerPowerMode:
+    @pytest.mark.slow
     def test_set_power_mode_query(self, router_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "AUTO")
         h = _Harness()
@@ -442,6 +444,7 @@ class TestRouterHandlerPost:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_post_routed_when_model_unavailable(self, router_ctx, monkeypatch) -> None:
         _patch_metrics(monkeypatch)
         monkeypatch.setattr("core.model_router.model_selection.clasificar_peticion", lambda m: "chat")
@@ -461,6 +464,7 @@ class TestRouterHandlerPost:
         finally:
             h.close()
 
+    @pytest.mark.slow
     def test_post_malformed_json_defaults(self, router_ctx, monkeypatch) -> None:
         _patch_metrics(monkeypatch)
         monkeypatch.setattr("core.model_router.model_selection.clasificar_peticion", lambda m: "chat")
