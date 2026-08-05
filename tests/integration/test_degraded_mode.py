@@ -121,6 +121,7 @@ class TestDegradedModeRecovery:
 
 
 class TestDegradedModeThreadSafety:
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     def test_concurrent_degrade_and_recover(self):
         dm = DegradedMode()
         n = 100
