@@ -38,6 +38,7 @@ test = [
     "pytest-randomly>=4.0",
     "pytest-deadfixtures>=2.0",
     "pytest-snapshot>=0.9",
+    "pytest-rerunfailures>=14.0",
     "radon>=6.0",
     "xenon>=0.9",
     "hypothesis>=6.0",
