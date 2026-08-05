@@ -15,25 +15,25 @@
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
-| B-10 | 158 violaciones xenon (complejidad > B) | Mantenibilidad | Refactor progresivo: primero módulos rank D, luego B grandes; target complexity reporta sin bloquear hasta <50 | 🔴 158 |
+| B-10 | Violaciones xenon (complejidad) | Mantenibilidad | **2 rank D eliminados** (cmd_doctor, cmd_audit); quedan 6 C en cmd_ura.py; refactor progresivo | 🟡 98 C / 0 D |
 | B-11 | Timers systemd generados (deploy/timers/) NO instalados | Automatización incompleta | `sudo cp deploy/timers/* /etc/systemd/system/` + daemon-reload | 🔴 requiere sudo |
-| B-12 | Fases 2-4 Plan de Testing: property (10+), snapshot (5+), locust, mutmut nocturno, chaos integrado | Validación incompleta | tests/property/, tests/snapshot/, tests/load/, mutmut config, make chaos | 🔮 |
+| B-12 | Fases 3-4 Plan de Testing: snapshot (5+), locust, mutmut nocturno, chaos integrado | Validación incompleta | tests/snapshot/, tests/load/, mutmut config, make chaos | 🔮 (Fase 2 ✅ 14 tests property) |
 | B-13 | quality_gate sin validar contra reporte real (th thresholds) | Thresholds no probados | Cuando el lock se libere: make tuneladora → quality_gate con reporte real | 🟡 |
 
 ## P2 — Media
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
-| B-20 | 8 scripts huérfanos en scripts/pro (fix_masivo, compactador_espacios, refactor_v2, sincronizar_vocabulario, ura_watch_asus, watch_inbox, knowledge_engine, PLUGIN_TEMPLATE) | Ruido | Segunda purga: archivar los confirmados | 🟡 |
+| B-20 | 8 scripts huérfanos | Ruido | **✅ Archivados** (verificados 0 conexiones) | ✅ |
 | B-21 | Coverage por módulo en reporte JSON depende de coverage.xml (no siempre presente) | Regresión por módulo invisible | Ejecutar pytest con --cov en phase_dynamic cuando sea viable | 🟡 |
-| B-22 | docs/API.md no existe (endpoints sin documentar) | Bloquea load testing (locust) | Documentar endpoints reales (ura-api, audit-api, contraste, mochila) | 🔮 |
+| B-22 | docs/API.md | Bloquea load testing | **✅ Creado con 36 endpoints verificados** | ✅ |
 
 ## P3 — Baja / Mejoras
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
 | B-30 | Catálogo de decisiones pequeñas (docs/DECISIONES.md) | Pérdida de contexto | Crear y mantener | 🔮 |
-| B-31 | Registro de evidencias (benchmarks/coverage/mutation) | Sin prueba objetiva de mejora | data/evidencias/ + script de captura | 🔮 |
+| B-31 | Registro de evidencias | Sin prueba objetiva | **✅ capturar_evidencias.py** (tests/complejidad/git/auditoría) | ✅ |
 | B-32 | LLM Gateway para OpenCode+OpenClaw (exponer motor/core/llm como HTTP) | Configuración duplicada | Servicio sobre motor/core/llm/router + docs | 🔮 |
 | B-33 | make test-suite en CI/pre-push | Validación previa a push | Añadir al hook pre-push (lento — evaluar) | 🔮 |
 
