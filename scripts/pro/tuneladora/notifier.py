@@ -9,6 +9,11 @@ Multi-canal (fire-and-forget, nunca bloquea el pipeline):
 Uso:
     from scripts.pro.tuneladora.notifier import notificar_fallo
     notificar_fallo(reporte_dict)
+
+NOTA (decisión anti-duplicado): este módulo NO se registra en plugin_registry
+a pesar de tener entry point CLI. El runner lo invoca directamente en _finish;
+registrarlo como plugin haría que la fase "post" del registry lo ejecutara
+una segunda vez (notificación duplicada).
 """
 from __future__ import annotations
 
