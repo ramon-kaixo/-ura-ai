@@ -1,60 +1,41 @@
-# Sistema de Memoria de URA
+# MEMORIA — Arquitectura Real de Memoria (Fase 3 v4.0)
 
-**Fecha:** 2026-08-04
-**Estado:** Verificado — 162 tests de memoria pasan (episódica, semántica, largo plazo, corto plazo)
+**Fecha:** 2026-08-06
+**Fase:** 3 del Plan v4.0 (`docs/ARQUITECTURA_v4.0_PLAN.md`)
+**Estado:** Documento de arquitectura VERIFICADA — 3 vías coexisten
 
-## Arquitectura (4 capas + 1)
+## Veredicto F3
 
-### 1. `scripts/pro/tuneladora/memory/` — Memoria del Pipeline
-- **Responsabilidad:** Persistencia de ejecuciones del pipeline de validación
-- **Submódulos:**
-  - `episodic.py` — Episodios de cada ejecución ("hoy el pipeline pasó en 12s") — **95.2% cobertura**
-  - `semantic.py` — Conceptos y relaciones aprendidas del código (`Concept`, `Relation`) — 100%
-  - `long_term.py` — Archivado de resultados clave (`LTMEntry`) — 100%
-  - `short_term.py` — Caché con TTL (snapshots de health checks) — 100%
-- **Conectado a:** `runner._finish` → `episodic.record` + `ltm.store`; `phase_index` → `semantic.learn_concept`; `cache` → `ShortTermMemory`
+El plan original asumía que la memoria canónica vivía en `motor/core/memoria/` y que
+`core/memoria/` era código muerto. **Ambas suposiciones eran FALSAS** (auditoría read-only
+2026-08-06): `motor/core/memoria/` **NO EXISTE**, y `core/memoria/` es **VIVO en
+producción** (el servidor mochila :4098 lo importa).
 
-### 2. `core/memoria/` — Memoria de Alto Nivel (dominio URA)
-- **Responsabilidad:** Interfaz que usa el resto del sistema (bridge, consulta, compresor, vigilante)
-- **Entrada:** Texto, eventos, resultados de búsqueda
-- **Salida:** Contexto relevante para el agente
-- **Nota:** Contiene `ficha.py` (dataclass `Idea` — captura de ideas, NO duplicado de episódica; ver ADR-220)
+## Las 3 vías de memoria (coexistiendo)
 
-### 3. `motor/intelligence/memory/` — Stores Técnicos del Motor
-- **Responsabilidad:** Implementación concreta de cada tipo de memoria del agente
-- **Submódulos:** `episodic.py` (`Episode`/`EpisodeStore`), `semantic.py` (`SemanticFact`/`SemanticMemoryStore`), `hybrid.py`, `compression.py` (políticas de resumen), `forgetting.py`, `orchestrator.py`
-- **Dependencias:** SQLite, Qdrant
+| Vía | Ubicación | Estado | Consumidores |
+|---|---|---|---|
+| **v1 (Mochila, español)** | `core/memoria/` (9 módulos: analizador, bridge, compresor, consulta, ficha, ingesto, qdrant_store, sintetizador, vigilante) | 🟢 **VIVO EN PRODUCCIÓN** — importado por `mochila_server.py` (:4098) | `core/mochila/*` + 9 tests: `test_memoria_bridge_vigilante`, `_compresor`, `_consulta`, `_imagen_extractor`, `_qdrant_store`, `_rastreadores`, `_sintesis_analisis` |
+| **v2 (Motor, inglés)** | `motor/memory/` (7 módulos: crypto, journal, memory, models, snapshot, timeline + `__init__`) | 🟢 **CANÓNICO v2** — Fase 26 (Historical Memory) | tests motor (`motor/tests/test_memory*`) |
+| **v12 (Motor Inteligencia)** | `motor/intelligence/memory/` (12 módulos: base, compression, episodic, extractor_llm, extractor, forgetting, hybrid, orchestrator, record, retrieval, semantic + `__init__`) | 🟢 **CANÓNICO v2** — Fase 12 (Context Memory) | tests motor + F25 registry |
 
-### 4. `knowledge/engine/` — Motor de Conocimiento
-- **Responsabilidad:** Indexación, búsqueda RAG, embeddings, FTS5
-- **Entrada:** Documentos, web, conversaciones
-- **Salida:** Fragmentos relevantes con score
+## Componentes sueltos de memoria en raíz (verificados)
 
-### 5. `motor/observability/` — Trazas y métricas (tracing, métricas por proveedor LLM)
+| Módulo | Estado | Evidencia |
+|---|---|---|
+| `memoria_fallos.py` (raíz) | ✅ **VIVO** (conservado) | Test propio `tests/unit/test_memoria_fallos.py` + referencia en `scripts/restaurar.sh` — 9 tests pasan |
+| `memoria_movimiento.py` (raíz) | ✅ **VIVO** (conservado) | Test propio `tests/unit/test_memoria_movimiento.py` + `scripts/restaurar.sh` — tests pasan |
+| `scripts/pro/memoria.py` | ❌ **NO EXISTE** | Plan lo mencionaba; verificado ausente |
+| `scripts/pro/conciencia.py` | 🟡 **VIVO indirecto** | `pipeline_supremo.py` lo ejecuta vía subprocess (no archivar) |
 
-## Flujo de datos
+## Decisión F3
 
-```
-Tuneladora -> runner._finish -> episodic.record -> SQLite (episódica del pipeline)
-Tuneladora -> runner._finish -> ltm.store      -> SQLite (largo plazo)
-Tuneladora -> phase_index     -> semantic.learn_concept -> SQLite (semántica)
-Agente     -> core/memoria/bridge.py -> motor/intelligence/memory/episodic.py -> SQLite/Qdrant
-Agente     -> core/memoria/consulta.py -> motor/intelligence/memory/semantic.py -> Qdrant
-```
+- **NO se archiva nada**: los sueltos tienen tests en suite (`pytest` los recoge) y los
+  paquetes de memoria v1/v2/v12 están en producción/canónicos.
+- La **unificación real** (v1 → v2) es de apertura de motor → requiere tocar `motor/core`
+  → **PENDIENTE v4.0e** (Ramón), documentada en el plan.
 
-## NO son duplicados
+## Pendientes F3
 
-Ver `docs/architecture/ADR-220-no-consolidar-duplicados.md`. Cada capa tiene
-responsabilidad diferente (pipeline vs dominio vs motor vs conocimiento). La
-duplicación de tecnología (Qdrant/SQLite) se resuelve en la capa de cliente,
-no consolidando dominios.
-
-## Verificación
-
-```bash
-# Tests de memoria (162 passed)
-python3 -m pytest tests/integration/test_tuneladora_memory_*.py tests/unit/test_memoria_*.py -q
-
-# La tuneladora guarda en las 4 memorias
-grep -n "episodic.record\|ltm.store\|learn_concept\|ShortTermMemory" scripts/pro/tuneladora/pipeline/runner.py
-```
+- [ ] v4.0e: migración core/memoria (v1) → motor/memory (v2) con puente — **Ramón**.
+- [ ] AGENTS.md: corregir tabla de memoria si cita `motor/core/memoria/` (no existe).
