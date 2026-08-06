@@ -74,3 +74,9 @@ data/tuneladora_reports/
 data/orquestador_logs/
 mutants/
 data/evidencias/
+data/
+mutants/
+*.bak
+*.bak_repair
+__pycache__/
+*.pyc
