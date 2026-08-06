@@ -1,12 +1,4 @@
-from .anker_mac_pipeline import AnkerMacPipeline
-from .anker_pipeline import AnkerDeterministicPipeline
-from .tts_piper import PiperTTSMotor
-
-PiperUraTTS = PiperTTSMotor
-
-__all__ = [
-    "AnkerDeterministicPipeline",
-    "AnkerMacPipeline",
-    "PiperTTSMotor",
-    "PiperUraTTS",
-]
+"""Shim temporal — voice se ha movido a motor.core.voice."""
+import sys
+import motor.core.voice
+sys.modules[__name__] = motor.core.voice
