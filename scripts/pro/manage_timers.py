@@ -42,7 +42,7 @@ def _frecuencia_on_calendar(frecuencia: str) -> str:
     return {
         "daily": "*-*-* 04:00:00",
         "weekly": "*-*-* 05:00:00",
-        "6h": "*-*-* *:00/6:00:00",
+        "6h": "*:0/6",
         "monthly": "*-*-01 06:00:00",
     }.get(frecuencia, "*-*-* 04:00:00")
 
