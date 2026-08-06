@@ -1,5 +1,7 @@
 """Memoria Histórica (F26).
 
+Etiqueta v4.0: CANÓNICO 🟢 — memoria v2 (motor), junto a motor/intelligence/memory (F12).
+
 Preserva, consulta y gestiona la evolución temporal del
 conocimiento fusionado.
 

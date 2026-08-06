@@ -1,5 +1,7 @@
 """LLM — Cliente de inferencia unificado.
 
+Etiqueta v4.0: CANÓNICO 🟢 — providers v2 (motor). Unificación de providers = Fase 2 (Ramón).
+
 Exporta solo comportamiento:
     generate(prompt, model, options) -> str
     embed(texts, model) -> list[list[float]]

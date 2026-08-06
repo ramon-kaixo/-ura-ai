@@ -1,0 +1,2454 @@
+{
+    "PIL": {
+        "bacon": 2,
+        "imported_by": [
+            "PIL",
+            "PIL.Image",
+            "core.memoria.extractores.imagen_extractor"
+        ],
+        "imports": [
+            "PIL"
+        ],
+        "name": "PIL",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/PIL/__init__.py"
+    },
+    "PIL.ExifTags": {
+        "bacon": 2,
+        "imported_by": [
+            "PIL.Image",
+            "core.memoria.extractores.imagen_extractor"
+        ],
+        "name": "PIL.ExifTags",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/PIL/ExifTags.py"
+    },
+    "PIL.Image": {
+        "bacon": 2,
+        "imported_by": [
+            "core.memoria.extractores.imagen_extractor"
+        ],
+        "imports": [
+            "PIL",
+            "PIL.ExifTags"
+        ],
+        "name": "PIL.Image",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/PIL/Image.py"
+    },
+    "__main__": {
+        "bacon": 0,
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.conciencia",
+            "core.agents.constants",
+            "core.agents.ejecutor",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.auth_layer",
+            "core.bin_paths",
+            "core.change_guardian",
+            "core.chunking",
+            "core.cleaner",
+            "core.cleaner.cold_refactor",
+            "core.config_manager",
+            "core.debate",
+            "core.debate.debate_engine",
+            "core.debate.lockfile",
+            "core.debate.plan_validator",
+            "core.document_quality",
+            "core.event_bus",
+            "core.guardian_disco",
+            "core.guardian_openclaw",
+            "core.guardians",
+            "core.guardians.ast_sentinel",
+            "core.inferencia",
+            "core.inferencia.engine",
+            "core.infra",
+            "core.infra.heartbeat",
+            "core.infra.state_manager",
+            "core.ingestador_red",
+            "core.interfaces",
+            "core.interfaces.config",
+            "core.interfaces.executor",
+            "core.interfaces.llm",
+            "core.interfaces.repository",
+            "core.interfaces.secrets",
+            "core.json_logger",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "core.memoria",
+            "core.memoria.analizador",
+            "core.memoria.bridge",
+            "core.memoria.compresor",
+            "core.memoria.consulta",
+            "core.memoria.extractores",
+            "core.memoria.extractores.imagen_extractor",
+            "core.memoria.ficha",
+            "core.memoria.ingesto",
+            "core.memoria.qdrant_store",
+            "core.memoria.rastreadores",
+            "core.memoria.rastreadores.comprar",
+            "core.memoria.rastreadores.hacer",
+            "core.memoria.rastreadores.saber",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.memory_engine",
+            "core.mochila",
+            "core.mochila._state",
+            "core.mochila.adapter",
+            "core.mochila.app",
+            "core.mochila.circuit_breaker",
+            "core.mochila.cost_tracker",
+            "core.mochila.guardian_middleware",
+            "core.mochila.guardian_opencode",
+            "core.mochila.helpers",
+            "core.mochila.mochila_server",
+            "core.mochila.models",
+            "core.mochila.providers",
+            "core.mochila.providers.base",
+            "core.mochila.providers.deepseek",
+            "core.mochila.providers.gemini",
+            "core.mochila.providers.groq",
+            "core.mochila.providers.ollama",
+            "core.mochila.providers.openrouter",
+            "core.mochila.rate_limiter",
+            "core.mochila.router",
+            "core.mochila.routes",
+            "core.mochila.routes.breaker",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.health",
+            "core.mochila.routes.memoria",
+            "core.mochila.routes.metrics",
+            "core.mochila.routes.models",
+            "core.mochila.routes.proxy",
+            "core.mochila.routes.status",
+            "core.mochila.status_endpoint",
+            "core.mochila.streaming",
+            "core.mochila.tools",
+            "core.mochila.vram_scheduler",
+            "core.model_router",
+            "core.model_router.__main__",
+            "core.model_router.cache",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.metrics",
+            "core.model_router.model_selection",
+            "core.model_router.proxy",
+            "core.model_router.router",
+            "core.model_router.vram_guard",
+            "core.notifier",
+            "core.path_setup",
+            "core.qdrant_retention",
+            "core.query_cache",
+            "core.resolver_red",
+            "core.sandbox",
+            "core.sandbox.docker_orchestrator",
+            "core.scraper_pool",
+            "core.search_engine",
+            "core.search_logger",
+            "core.secretario_cache",
+            "core.seguridad",
+            "core.seguridad.rollback_manager",
+            "core.stealth_fetcher",
+            "core.utils",
+            "core.utils.anonymizer",
+            "core.voice",
+            "core.voice.anker_mac_pipeline",
+            "core.voice.anker_pipeline",
+            "core.voice.tts_piper",
+            "core.watchdog_funciones"
+        ],
+        "name": "__main__",
+        "path": null
+    },
+    "blake3": {
+        "bacon": 2,
+        "imported_by": [
+            "core.memoria.vigilante"
+        ],
+        "name": "blake3",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/blake3/__init__.py"
+    },
+    "core": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.conciencia",
+            "core.agents.ejecutor",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.auth_layer",
+            "core.cleaner",
+            "core.cleaner.cold_refactor",
+            "core.debate.debate_engine",
+            "core.debate.plan_validator",
+            "core.event_bus",
+            "core.guardians",
+            "core.infra.heartbeat",
+            "core.interfaces",
+            "core.logs.guardian_logger",
+            "core.memoria.analizador",
+            "core.memoria.bridge",
+            "core.memoria.compresor",
+            "core.memoria.consulta",
+            "core.memoria.qdrant_store",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.memory_engine",
+            "core.mochila._state",
+            "core.mochila.app",
+            "core.mochila.guardian_middleware",
+            "core.mochila.mochila_server",
+            "core.mochila.routes",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.memoria",
+            "core.mochila.routes.proxy",
+            "core.mochila.routes.status",
+            "core.mochila.streaming",
+            "core.model_router",
+            "core.model_router.__main__",
+            "core.model_router.cache",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.model_selection",
+            "core.model_router.proxy",
+            "core.model_router.router",
+            "core.notifier",
+            "core.sandbox",
+            "core.search_engine",
+            "core.utils",
+            "core.voice.anker_mac_pipeline",
+            "core.watchdog_funciones",
+            "motor.core.config"
+        ],
+        "name": "core",
+        "path": "/home/ramon/URA/ura_ia_1972/core/__init__.py"
+    },
+    "core.agents": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.conciencia",
+            "core.agents.ejecutor",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.conciencia",
+            "core.agents.ejecutor",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry"
+        ],
+        "name": "core.agents",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/__init__.py"
+    },
+    "core.agents.cli": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.conciencia",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry"
+        ],
+        "name": "core.agents.cli",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/cli.py"
+    },
+    "core.agents.conciencia": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.healing"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.constants"
+        ],
+        "name": "core.agents.conciencia",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/conciencia.py"
+    },
+    "core.agents.constants": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents.conciencia",
+            "core.agents.ejecutor",
+            "core.agents.healing",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry"
+        ],
+        "imports": [
+            "shared",
+            "shared.paths"
+        ],
+        "name": "core.agents.constants",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/constants.py"
+    },
+    "core.agents.ejecutor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.healing"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.constants",
+            "core.config_manager"
+        ],
+        "name": "core.agents.ejecutor",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/ejecutor.py"
+    },
+    "core.agents.healing": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.conciencia",
+            "core.agents.constants",
+            "core.agents.ejecutor",
+            "core.agents.orquestador",
+            "core.agents.reparador",
+            "core.agents.telemetry"
+        ],
+        "name": "core.agents.healing",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/healing.py"
+    },
+    "core.agents.orquestador": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.healing"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.constants"
+        ],
+        "name": "core.agents.orquestador",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/orquestador.py"
+    },
+    "core.agents.reparador": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.healing"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.constants",
+            "core.interfaces",
+            "motor",
+            "motor.core",
+            "motor.core.llm"
+        ],
+        "name": "core.agents.reparador",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/reparador.py"
+    },
+    "core.agents.telemetry": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents",
+            "core.agents.cli",
+            "core.agents.healing"
+        ],
+        "imports": [
+            "core",
+            "core.agents",
+            "core.agents.constants",
+            "core.interfaces",
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.llm",
+            "psutil"
+        ],
+        "name": "core.agents.telemetry",
+        "path": "/home/ramon/URA/ura_ia_1972/core/agents/telemetry.py"
+    },
+    "core.auth_layer": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router.router"
+        ],
+        "imports": [
+            "core",
+            "core.interfaces",
+            "motor",
+            "motor.core",
+            "motor.core.secrets"
+        ],
+        "name": "core.auth_layer",
+        "path": "/home/ramon/URA/ura_ia_1972/core/auth_layer.py"
+    },
+    "core.bin_paths": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.bin_paths",
+        "path": "/home/ramon/URA/ura_ia_1972/core/bin_paths.py"
+    },
+    "core.change_guardian": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.change_guardian",
+        "path": "/home/ramon/URA/ura_ia_1972/core/change_guardian.py"
+    },
+    "core.chunking": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.chunking",
+        "path": "/home/ramon/URA/ura_ia_1972/core/chunking.py"
+    },
+    "core.cleaner": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner"
+        ],
+        "imports": [
+            "core",
+            "core.cleaner",
+            "core.cleaner.cold_refactor"
+        ],
+        "name": "core.cleaner",
+        "path": "/home/ramon/URA/ura_ia_1972/core/cleaner/__init__.py"
+    },
+    "core.cleaner.cold_refactor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner"
+        ],
+        "imports": [
+            "core",
+            "core.guardians",
+            "core.guardians.ast_sentinel",
+            "core.sandbox",
+            "core.sandbox.docker_orchestrator",
+            "httpx",
+            "mochila_engine"
+        ],
+        "name": "core.cleaner.cold_refactor",
+        "path": "/home/ramon/URA/ura_ia_1972/core/cleaner/cold_refactor.py"
+    },
+    "core.config_manager": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents.ejecutor",
+            "core.memory_engine",
+            "core.model_router.router",
+            "motor.core.config"
+        ],
+        "imports": [
+            "jsonschema"
+        ],
+        "name": "core.config_manager",
+        "path": "/home/ramon/URA/ura_ia_1972/core/config_manager.py"
+    },
+    "core.debate": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.debate.debate_engine",
+            "core.debate.plan_validator"
+        ],
+        "name": "core.debate",
+        "path": "/home/ramon/URA/ura_ia_1972/core/debate/__init__.py"
+    },
+    "core.debate.debate_engine": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.debate.plan_validator"
+        ],
+        "imports": [
+            "core",
+            "core.debate",
+            "core.debate.lockfile",
+            "core.interfaces",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "motor",
+            "motor.core",
+            "motor.core.llm",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "core.debate.debate_engine",
+        "path": "/home/ramon/URA/ura_ia_1972/core/debate/debate_engine.py"
+    },
+    "core.debate.lockfile": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.debate.debate_engine",
+            "core.debate.plan_validator"
+        ],
+        "name": "core.debate.lockfile",
+        "path": "/home/ramon/URA/ura_ia_1972/core/debate/lockfile.py"
+    },
+    "core.debate.plan_validator": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.debate",
+            "core.debate.debate_engine",
+            "core.debate.lockfile"
+        ],
+        "name": "core.debate.plan_validator",
+        "path": "/home/ramon/URA/ura_ia_1972/core/debate/plan_validator.py"
+    },
+    "core.document_quality": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.document_quality",
+        "path": "/home/ramon/URA/ura_ia_1972/core/document_quality.py"
+    },
+    "core.event_bus": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.infra.heartbeat",
+            "core.logs.guardian_logger",
+            "core.watchdog_funciones"
+        ],
+        "imports": [
+            "core",
+            "core.watchdog_funciones",
+            "zmq"
+        ],
+        "name": "core.event_bus",
+        "path": "/home/ramon/URA/ura_ia_1972/core/event_bus.py"
+    },
+    "core.guardian_disco": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.guardian_disco",
+        "path": "/home/ramon/URA/ura_ia_1972/core/guardian_disco.py"
+    },
+    "core.guardian_openclaw": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.guardian_middleware"
+        ],
+        "name": "core.guardian_openclaw",
+        "path": "/home/ramon/URA/ura_ia_1972/core/guardian_openclaw.py"
+    },
+    "core.guardians": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner.cold_refactor",
+            "core.guardians"
+        ],
+        "imports": [
+            "core",
+            "core.guardians",
+            "core.guardians.ast_sentinel"
+        ],
+        "name": "core.guardians",
+        "path": "/home/ramon/URA/ura_ia_1972/core/guardians/__init__.py"
+    },
+    "core.guardians.ast_sentinel": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner.cold_refactor",
+            "core.guardians"
+        ],
+        "name": "core.guardians.ast_sentinel",
+        "path": "/home/ramon/URA/ura_ia_1972/core/guardians/ast_sentinel.py"
+    },
+    "core.inferencia": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.inferencia",
+        "path": "/home/ramon/URA/ura_ia_1972/core/inferencia/__init__.py"
+    },
+    "core.inferencia.engine": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.inferencia.engine",
+        "path": "/home/ramon/URA/ura_ia_1972/core/inferencia/engine.py"
+    },
+    "core.infra": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.infra",
+        "path": "/home/ramon/URA/ura_ia_1972/core/infra/__init__.py"
+    },
+    "core.infra.heartbeat": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.event_bus",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.qdrant_client",
+            "motor.core.secrets"
+        ],
+        "name": "core.infra.heartbeat",
+        "path": "/home/ramon/URA/ura_ia_1972/core/infra/heartbeat.py"
+    },
+    "core.infra.state_manager": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.infra.state_manager",
+        "path": "/home/ramon/URA/ura_ia_1972/core/infra/state_manager.py"
+    },
+    "core.ingestador_red": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.ingestador_red",
+        "path": "/home/ramon/URA/ura_ia_1972/core/ingestador_red.py"
+    },
+    "core.interfaces": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.auth_layer",
+            "core.debate.debate_engine",
+            "core.interfaces",
+            "core.logs.guardian_logger",
+            "core.notifier"
+        ],
+        "imports": [
+            "core",
+            "core.interfaces",
+            "core.interfaces.config",
+            "core.interfaces.executor",
+            "core.interfaces.llm",
+            "core.interfaces.repository",
+            "core.interfaces.secrets"
+        ],
+        "name": "core.interfaces",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/__init__.py"
+    },
+    "core.interfaces.config": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.interfaces"
+        ],
+        "name": "core.interfaces.config",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/config.py"
+    },
+    "core.interfaces.executor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.interfaces"
+        ],
+        "name": "core.interfaces.executor",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/executor.py"
+    },
+    "core.interfaces.llm": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.interfaces"
+        ],
+        "name": "core.interfaces.llm",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/llm.py"
+    },
+    "core.interfaces.repository": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.interfaces"
+        ],
+        "name": "core.interfaces.repository",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/repository.py"
+    },
+    "core.interfaces.secrets": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.interfaces"
+        ],
+        "name": "core.interfaces.secrets",
+        "path": "/home/ramon/URA/ura_ia_1972/core/interfaces/secrets.py"
+    },
+    "core.json_logger": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "motor",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "core.json_logger",
+        "path": "/home/ramon/URA/ura_ia_1972/core/json_logger.py"
+    },
+    "core.logs": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.debate.debate_engine",
+            "core.infra.heartbeat",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.proxy",
+            "core.mochila.streaming"
+        ],
+        "name": "core.logs",
+        "path": "/home/ramon/URA/ura_ia_1972/core/logs/__init__.py"
+    },
+    "core.logs.guardian_logger": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.debate.debate_engine",
+            "core.infra.heartbeat",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.proxy",
+            "core.mochila.streaming"
+        ],
+        "imports": [
+            "core",
+            "core.event_bus",
+            "core.interfaces",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.qdrant_client"
+        ],
+        "name": "core.logs.guardian_logger",
+        "path": "/home/ramon/URA/ura_ia_1972/core/logs/guardian_logger.py"
+    },
+    "core.memoria": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.analizador",
+            "core.memoria.bridge",
+            "core.memoria.compresor",
+            "core.memoria.consulta",
+            "core.memoria.qdrant_store",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/__init__.py"
+    },
+    "core.memoria.analizador": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.qdrant_store",
+            "httpx"
+        ],
+        "name": "core.memoria.analizador",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/analizador.py"
+    },
+    "core.memoria.bridge": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.consulta"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.ingesto",
+            "core.mochila",
+            "core.mochila.tools"
+        ],
+        "name": "core.memoria.bridge",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/bridge.py"
+    },
+    "core.memoria.compresor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.consulta",
+            "core.memoria.vigilante"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.ficha",
+            "httpx"
+        ],
+        "name": "core.memoria.compresor",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/compresor.py"
+    },
+    "core.memoria.consulta": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.bridge",
+            "core.memoria.compresor",
+            "core.memoria.qdrant_store"
+        ],
+        "name": "core.memoria.consulta",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/consulta.py"
+    },
+    "core.memoria.extractores": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.memoria.extractores",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/extractores/__init__.py"
+    },
+    "core.memoria.extractores.imagen_extractor": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "PIL",
+            "PIL.ExifTags",
+            "PIL.Image",
+            "httpx",
+            "numpy"
+        ],
+        "name": "core.memoria.extractores.imagen_extractor",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/extractores/imagen_extractor.py"
+    },
+    "core.memoria.ficha": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.compresor",
+            "core.memoria.qdrant_store"
+        ],
+        "name": "core.memoria.ficha",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/ficha.py"
+    },
+    "core.memoria.ingesto": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.bridge",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria.ingesto",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/ingesto.py"
+    },
+    "core.memoria.qdrant_store": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.analizador",
+            "core.memoria.consulta",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.ficha",
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.qdrant_client",
+            "qdrant_client"
+        ],
+        "name": "core.memoria.qdrant_store",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/qdrant_store.py"
+    },
+    "core.memoria.rastreadores": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria.rastreadores",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/rastreadores/__init__.py"
+    },
+    "core.memoria.rastreadores.comprar": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria.rastreadores.comprar",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/rastreadores/comprar.py"
+    },
+    "core.memoria.rastreadores.hacer": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria.rastreadores.hacer",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/rastreadores/hacer.py"
+    },
+    "core.memoria.rastreadores.saber": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "name": "core.memoria.rastreadores.saber",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/rastreadores/saber.py"
+    },
+    "core.memoria.sintetizador": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.qdrant_store",
+            "httpx"
+        ],
+        "name": "core.memoria.sintetizador",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/sintetizador.py"
+    },
+    "core.memoria.vigilante": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "blake3",
+            "core",
+            "core.memoria",
+            "core.memoria.compresor",
+            "core.memoria.qdrant_store",
+            "core.mochila",
+            "core.mochila.tools",
+            "qdrant_client",
+            "qdrant_client.models"
+        ],
+        "name": "core.memoria.vigilante",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memoria/vigilante.py"
+    },
+    "core.memory_engine": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.search_engine"
+        ],
+        "imports": [
+            "core",
+            "core.config_manager",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.llm",
+            "motor.core.qdrant_client"
+        ],
+        "name": "core.memory_engine",
+        "path": "/home/ramon/URA/ura_ia_1972/core/memory_engine.py"
+    },
+    "core.mochila": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.bridge",
+            "core.memoria.vigilante",
+            "core.mochila._state",
+            "core.mochila.app",
+            "core.mochila.mochila_server",
+            "core.mochila.routes",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.memoria",
+            "core.mochila.routes.proxy",
+            "core.mochila.routes.status",
+            "core.mochila.streaming"
+        ],
+        "name": "core.mochila",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/__init__.py"
+    },
+    "core.mochila._state": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.app"
+        ],
+        "imports": [
+            "core",
+            "core.mochila",
+            "core.mochila.adapter",
+            "core.mochila.circuit_breaker",
+            "core.mochila.cost_tracker",
+            "core.mochila.rate_limiter",
+            "core.mochila.router",
+            "core.mochila.vram_scheduler",
+            "motor",
+            "motor.core",
+            "motor.core.llm",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter"
+        ],
+        "name": "core.mochila._state",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/_state.py"
+    },
+    "core.mochila.adapter": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state"
+        ],
+        "name": "core.mochila.adapter",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/adapter.py"
+    },
+    "core.mochila.app": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.mochila",
+            "core.mochila._state",
+            "core.mochila.guardian_middleware",
+            "core.mochila.routes",
+            "dotenv",
+            "fastapi"
+        ],
+        "name": "core.mochila.app",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/app.py"
+    },
+    "core.mochila.circuit_breaker": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state",
+            "core.mochila.mochila_server"
+        ],
+        "name": "core.mochila.circuit_breaker",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/circuit_breaker.py"
+    },
+    "core.mochila.cost_tracker": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state",
+            "core.mochila.mochila_server"
+        ],
+        "name": "core.mochila.cost_tracker",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/cost_tracker.py"
+    },
+    "core.mochila.guardian_middleware": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.app",
+            "core.mochila.mochila_server"
+        ],
+        "imports": [
+            "core",
+            "core.guardian_openclaw",
+            "fastapi",
+            "fastapi.responses",
+            "starlette",
+            "starlette.middleware",
+            "starlette.middleware.base"
+        ],
+        "name": "core.mochila.guardian_middleware",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/guardian_middleware.py"
+    },
+    "core.mochila.guardian_opencode": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.proxy"
+        ],
+        "imports": [
+            "yaml"
+        ],
+        "name": "core.mochila.guardian_opencode",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/guardian_opencode.py"
+    },
+    "core.mochila.helpers": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes.chat",
+            "core.mochila.streaming"
+        ],
+        "name": "core.mochila.helpers",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/helpers.py"
+    },
+    "core.mochila.mochila_server": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "core.memoria",
+            "core.memoria.analizador",
+            "core.memoria.consulta",
+            "core.memoria.ingesto",
+            "core.memoria.qdrant_store",
+            "core.memoria.rastreadores",
+            "core.memoria.rastreadores.comprar",
+            "core.memoria.rastreadores.hacer",
+            "core.memoria.rastreadores.saber",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.mochila",
+            "core.mochila.circuit_breaker",
+            "core.mochila.cost_tracker",
+            "core.mochila.guardian_middleware",
+            "core.mochila.guardian_opencode",
+            "core.mochila.providers",
+            "core.mochila.rate_limiter",
+            "core.mochila.router",
+            "core.mochila.routes",
+            "core.mochila.routes.proxy",
+            "core.mochila.status_endpoint",
+            "core.mochila.tools",
+            "dotenv",
+            "fastapi",
+            "fastapi.responses",
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.secrets",
+            "pydantic"
+        ],
+        "name": "core.mochila.mochila_server",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/mochila_server.py"
+    },
+    "core.mochila.models": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.memoria"
+        ],
+        "imports": [
+            "pydantic"
+        ],
+        "name": "core.mochila.models",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/models.py"
+    },
+    "core.mochila.providers": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "core.mochila.providers.deepseek",
+            "core.mochila.providers.gemini",
+            "core.mochila.providers.groq",
+            "core.mochila.providers.ollama",
+            "core.mochila.providers.openrouter"
+        ],
+        "name": "core.mochila.providers",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/__init__.py"
+    },
+    "core.mochila.providers.base": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers",
+            "core.mochila.providers.deepseek",
+            "core.mochila.providers.gemini",
+            "core.mochila.providers.groq",
+            "core.mochila.providers.ollama",
+            "core.mochila.providers.openrouter"
+        ],
+        "name": "core.mochila.providers.base",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/base.py"
+    },
+    "core.mochila.providers.deepseek": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "httpx"
+        ],
+        "name": "core.mochila.providers.deepseek",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/deepseek.py"
+    },
+    "core.mochila.providers.gemini": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "httpx"
+        ],
+        "name": "core.mochila.providers.gemini",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/gemini.py"
+    },
+    "core.mochila.providers.groq": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "httpx"
+        ],
+        "name": "core.mochila.providers.groq",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/groq.py"
+    },
+    "core.mochila.providers.ollama": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "httpx"
+        ],
+        "name": "core.mochila.providers.ollama",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/ollama.py"
+    },
+    "core.mochila.providers.openrouter": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.providers"
+        ],
+        "imports": [
+            "core.mochila.providers.base",
+            "httpx"
+        ],
+        "name": "core.mochila.providers.openrouter",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/providers/openrouter.py"
+    },
+    "core.mochila.rate_limiter": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state",
+            "core.mochila.mochila_server"
+        ],
+        "name": "core.mochila.rate_limiter",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/rate_limiter.py"
+    },
+    "core.mochila.router": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.chat"
+        ],
+        "name": "core.mochila.router",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/router.py"
+    },
+    "core.mochila.routes": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.app",
+            "core.mochila.mochila_server",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "core",
+            "core.mochila",
+            "core.mochila.routes",
+            "core.mochila.routes.breaker",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.health",
+            "core.mochila.routes.memoria",
+            "core.mochila.routes.metrics",
+            "core.mochila.routes.models",
+            "core.mochila.routes.proxy",
+            "core.mochila.routes.status",
+            "fastapi"
+        ],
+        "name": "core.mochila.routes",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/__init__.py"
+    },
+    "core.mochila.routes.breaker": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.breaker",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/breaker.py"
+    },
+    "core.mochila.routes.chat": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "core",
+            "core.mochila",
+            "core.mochila.guardian_opencode",
+            "core.mochila.helpers",
+            "core.mochila.models",
+            "core.mochila.router",
+            "core.mochila.streaming",
+            "core.mochila.tools",
+            "fastapi",
+            "fastapi.responses"
+        ],
+        "name": "core.mochila.routes.chat",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/chat.py"
+    },
+    "core.mochila.routes.health": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.health",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/health.py"
+    },
+    "core.mochila.routes.memoria": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "core",
+            "core.memoria",
+            "core.memoria.analizador",
+            "core.memoria.consulta",
+            "core.memoria.ingesto",
+            "core.memoria.qdrant_store",
+            "core.memoria.rastreadores",
+            "core.memoria.rastreadores.comprar",
+            "core.memoria.rastreadores.hacer",
+            "core.memoria.rastreadores.saber",
+            "core.memoria.sintetizador",
+            "core.memoria.vigilante",
+            "core.mochila",
+            "core.mochila.models",
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.memoria",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/memoria.py"
+    },
+    "core.mochila.routes.metrics": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.metrics",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/metrics.py"
+    },
+    "core.mochila.routes.models": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.models",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/models.py"
+    },
+    "core.mochila.routes.proxy": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "core",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "core.mochila",
+            "core.mochila.guardian_opencode",
+            "core.mochila.vram_scheduler",
+            "fastapi",
+            "fastapi.responses",
+            "httpx"
+        ],
+        "name": "core.mochila.routes.proxy",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/proxy.py"
+    },
+    "core.mochila.routes.status": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes"
+        ],
+        "imports": [
+            "core",
+            "core.mochila",
+            "core.mochila.status_endpoint",
+            "core.mochila.tools",
+            "fastapi"
+        ],
+        "name": "core.mochila.routes.status",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/routes/status.py"
+    },
+    "core.mochila.status_endpoint": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.status"
+        ],
+        "imports": [
+            "httpx"
+        ],
+        "name": "core.mochila.status_endpoint",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/status_endpoint.py"
+    },
+    "core.mochila.streaming": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila.routes.chat"
+        ],
+        "imports": [
+            "core",
+            "core.logs",
+            "core.logs.guardian_logger",
+            "core.mochila",
+            "core.mochila.helpers"
+        ],
+        "name": "core.mochila.streaming",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/streaming.py"
+    },
+    "core.mochila.tools": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.memoria.bridge",
+            "core.memoria.vigilante",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.status"
+        ],
+        "imports": [
+            "httpx"
+        ],
+        "name": "core.mochila.tools",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/tools.py"
+    },
+    "core.mochila.vram_scheduler": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.mochila._state",
+            "core.mochila.routes.proxy"
+        ],
+        "imports": [
+            "httpx"
+        ],
+        "name": "core.mochila.vram_scheduler",
+        "path": "/home/ramon/URA/ura_ia_1972/core/mochila/vram_scheduler.py"
+    },
+    "core.model_router": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.__main__",
+            "core.model_router.cache",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.model_selection",
+            "core.model_router.proxy"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.cache",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.metrics",
+            "core.model_router.model_selection",
+            "core.model_router.proxy",
+            "core.model_router.router",
+            "core.model_router.vram_guard"
+        ],
+        "name": "core.model_router",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/__init__.py"
+    },
+    "core.model_router.__main__": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.cli",
+            "path_setup"
+        ],
+        "name": "core.model_router.__main__",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/__main__.py"
+    },
+    "core.model_router.cache": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.handler"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.metrics"
+        ],
+        "name": "core.model_router.cache",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/cache.py"
+    },
+    "core.model_router.cli": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.__main__"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.handler",
+            "core.model_router.model_selection",
+            "core.model_router.router",
+            "motor",
+            "motor.core",
+            "motor.core.secrets",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "core.model_router.cli",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/cli.py"
+    },
+    "core.model_router.dashboard": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.handler"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.model_selection",
+            "core.model_router.proxy",
+            "core.model_router.router"
+        ],
+        "name": "core.model_router.dashboard",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/dashboard.py"
+    },
+    "core.model_router.handler": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.cli"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.cache",
+            "core.model_router.dashboard",
+            "core.model_router.metrics",
+            "core.model_router.model_selection",
+            "core.model_router.proxy",
+            "core.model_router.router",
+            "core.model_router.vram_guard",
+            "core.search_engine",
+            "zmq"
+        ],
+        "name": "core.model_router.handler",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/handler.py"
+    },
+    "core.model_router.metrics": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.cache",
+            "core.model_router.handler",
+            "core.model_router.model_selection",
+            "core.model_router.proxy"
+        ],
+        "name": "core.model_router.metrics",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/metrics.py"
+    },
+    "core.model_router.model_selection": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.proxy"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.metrics",
+            "core.model_router.router"
+        ],
+        "name": "core.model_router.model_selection",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/model_selection.py"
+    },
+    "core.model_router.proxy": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.dashboard",
+            "core.model_router.handler"
+        ],
+        "imports": [
+            "core",
+            "core.model_router",
+            "core.model_router.metrics",
+            "core.model_router.model_selection",
+            "core.model_router.router",
+            "core.model_router.vram_guard"
+        ],
+        "name": "core.model_router.proxy",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/proxy.py"
+    },
+    "core.model_router.router": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.cli",
+            "core.model_router.dashboard",
+            "core.model_router.handler",
+            "core.model_router.model_selection",
+            "core.model_router.proxy"
+        ],
+        "imports": [
+            "core",
+            "core.auth_layer",
+            "core.config_manager"
+        ],
+        "name": "core.model_router.router",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/router.py"
+    },
+    "core.model_router.vram_guard": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router",
+            "core.model_router.handler",
+            "core.model_router.proxy"
+        ],
+        "name": "core.model_router.vram_guard",
+        "path": "/home/ramon/URA/ura_ia_1972/core/model_router/vram_guard.py"
+    },
+    "core.notifier": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core",
+            "core.interfaces",
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.secrets"
+        ],
+        "name": "core.notifier",
+        "path": "/home/ramon/URA/ura_ia_1972/core/notifier.py"
+    },
+    "core.path_setup": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.path_setup",
+        "path": "/home/ramon/URA/ura_ia_1972/core/path_setup.py"
+    },
+    "core.qdrant_retention": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "httpx"
+        ],
+        "name": "core.qdrant_retention",
+        "path": "/home/ramon/URA/ura_ia_1972/core/qdrant_retention.py"
+    },
+    "core.query_cache": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.query_cache",
+        "path": "/home/ramon/URA/ura_ia_1972/core/query_cache.py"
+    },
+    "core.resolver_red": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.resolver_red",
+        "path": "/home/ramon/URA/ura_ia_1972/core/resolver_red.py"
+    },
+    "core.sandbox": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner.cold_refactor",
+            "core.sandbox"
+        ],
+        "imports": [
+            "core",
+            "core.sandbox",
+            "core.sandbox.docker_orchestrator"
+        ],
+        "name": "core.sandbox",
+        "path": "/home/ramon/URA/ura_ia_1972/core/sandbox/__init__.py"
+    },
+    "core.sandbox.docker_orchestrator": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.cleaner.cold_refactor",
+            "core.sandbox"
+        ],
+        "imports": [
+            "mochila_engine"
+        ],
+        "name": "core.sandbox.docker_orchestrator",
+        "path": "/home/ramon/URA/ura_ia_1972/core/sandbox/docker_orchestrator.py"
+    },
+    "core.scraper_pool": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.scraper_pool",
+        "path": "/home/ramon/URA/ura_ia_1972/core/scraper_pool.py"
+    },
+    "core.search_engine": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.model_router.handler"
+        ],
+        "imports": [
+            "core",
+            "core.memory_engine"
+        ],
+        "name": "core.search_engine",
+        "path": "/home/ramon/URA/ura_ia_1972/core/search_engine.py"
+    },
+    "core.search_logger": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.search_logger",
+        "path": "/home/ramon/URA/ura_ia_1972/core/search_logger.py"
+    },
+    "core.secretario_cache": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.config"
+        ],
+        "name": "core.secretario_cache",
+        "path": "/home/ramon/URA/ura_ia_1972/core/secretario_cache.py"
+    },
+    "core.seguridad": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.seguridad",
+        "path": "/home/ramon/URA/ura_ia_1972/core/seguridad/__init__.py"
+    },
+    "core.seguridad.rollback_manager": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "name": "core.seguridad.rollback_manager",
+        "path": "/home/ramon/URA/ura_ia_1972/core/seguridad/rollback_manager.py"
+    },
+    "core.stealth_fetcher": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "httpx"
+        ],
+        "name": "core.stealth_fetcher",
+        "path": "/home/ramon/URA/ura_ia_1972/core/stealth_fetcher.py"
+    },
+    "core.utils": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.utils",
+            "core.voice.anker_mac_pipeline"
+        ],
+        "imports": [
+            "core",
+            "core.utils",
+            "core.utils.anonymizer"
+        ],
+        "name": "core.utils",
+        "path": "/home/ramon/URA/ura_ia_1972/core/utils/__init__.py"
+    },
+    "core.utils.anonymizer": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.utils",
+            "core.voice.anker_mac_pipeline"
+        ],
+        "name": "core.utils.anonymizer",
+        "path": "/home/ramon/URA/ura_ia_1972/core/utils/anonymizer.py"
+    },
+    "core.voice": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__"
+        ],
+        "imports": [
+            "core.voice.anker_mac_pipeline",
+            "core.voice.anker_pipeline",
+            "core.voice.tts_piper"
+        ],
+        "name": "core.voice",
+        "path": "/home/ramon/URA/ura_ia_1972/core/voice/__init__.py"
+    },
+    "core.voice.anker_mac_pipeline": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.voice"
+        ],
+        "imports": [
+            "core",
+            "core.utils",
+            "core.utils.anonymizer",
+            "numpy",
+            "sounddevice"
+        ],
+        "name": "core.voice.anker_mac_pipeline",
+        "path": "/home/ramon/URA/ura_ia_1972/core/voice/anker_mac_pipeline.py"
+    },
+    "core.voice.anker_pipeline": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.voice",
+            "core.voice.tts_piper"
+        ],
+        "imports": [
+            "numpy",
+            "sounddevice"
+        ],
+        "name": "core.voice.anker_pipeline",
+        "path": "/home/ramon/URA/ura_ia_1972/core/voice/anker_pipeline.py"
+    },
+    "core.voice.tts_piper": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.voice"
+        ],
+        "imports": [
+            "core.voice.anker_pipeline",
+            "sounddevice"
+        ],
+        "name": "core.voice.tts_piper",
+        "path": "/home/ramon/URA/ura_ia_1972/core/voice/tts_piper.py"
+    },
+    "core.watchdog_funciones": {
+        "bacon": 1,
+        "imported_by": [
+            "__main__",
+            "core.event_bus"
+        ],
+        "imports": [
+            "core",
+            "core.event_bus",
+            "psutil"
+        ],
+        "name": "core.watchdog_funciones",
+        "path": "/home/ramon/URA/ura_ia_1972/core/watchdog_funciones.py"
+    },
+    "dotenv": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.app",
+            "core.mochila.mochila_server"
+        ],
+        "name": "dotenv",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/dotenv/__init__.py"
+    },
+    "fastapi": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.app",
+            "core.mochila.guardian_middleware",
+            "core.mochila.mochila_server",
+            "core.mochila.routes",
+            "core.mochila.routes.breaker",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.health",
+            "core.mochila.routes.memoria",
+            "core.mochila.routes.metrics",
+            "core.mochila.routes.models",
+            "core.mochila.routes.proxy",
+            "core.mochila.routes.status",
+            "fastapi.responses"
+        ],
+        "imports": [
+            "fastapi.responses",
+            "starlette"
+        ],
+        "name": "fastapi",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/fastapi/__init__.py"
+    },
+    "fastapi.responses": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.guardian_middleware",
+            "core.mochila.mochila_server",
+            "core.mochila.routes.chat",
+            "core.mochila.routes.proxy",
+            "fastapi"
+        ],
+        "imports": [
+            "fastapi",
+            "starlette"
+        ],
+        "name": "fastapi.responses",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/fastapi/responses.py"
+    },
+    "httpx": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.telemetry",
+            "core.cleaner.cold_refactor",
+            "core.memoria.analizador",
+            "core.memoria.compresor",
+            "core.memoria.extractores.imagen_extractor",
+            "core.memoria.qdrant_store",
+            "core.memoria.sintetizador",
+            "core.mochila.mochila_server",
+            "core.mochila.providers.deepseek",
+            "core.mochila.providers.gemini",
+            "core.mochila.providers.groq",
+            "core.mochila.providers.ollama",
+            "core.mochila.providers.openrouter",
+            "core.mochila.routes.proxy",
+            "core.mochila.status_endpoint",
+            "core.mochila.tools",
+            "core.mochila.vram_scheduler",
+            "core.notifier",
+            "core.qdrant_retention",
+            "core.stealth_fetcher",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter",
+            "motor.core.qdrant_client"
+        ],
+        "name": "httpx",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/httpx/__init__.py"
+    },
+    "jsonschema": {
+        "bacon": 2,
+        "imported_by": [
+            "core.config_manager",
+            "jsonschema"
+        ],
+        "imports": [
+            "jsonschema"
+        ],
+        "name": "jsonschema",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/jsonschema/__init__.py"
+    },
+    "mochila_engine": {
+        "bacon": 2,
+        "imported_by": [
+            "core.cleaner.cold_refactor",
+            "core.sandbox.docker_orchestrator"
+        ],
+        "name": "mochila_engine",
+        "path": "/home/ramon/URA/ura_ia_1972/mochila_engine.py"
+    },
+    "motor": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.auth_layer",
+            "core.debate.debate_engine",
+            "core.infra.heartbeat",
+            "core.json_logger",
+            "core.logs.guardian_logger",
+            "core.memoria.qdrant_store",
+            "core.memory_engine",
+            "core.mochila._state",
+            "core.mochila.mochila_server",
+            "core.model_router.cli",
+            "core.notifier",
+            "core.secretario_cache",
+            "motor.core.llm",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter",
+            "motor.core.qdrant_client",
+            "motor.observability"
+        ],
+        "name": "motor",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/__init__.py"
+    },
+    "motor.core": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.auth_layer",
+            "core.debate.debate_engine",
+            "core.infra.heartbeat",
+            "core.logs.guardian_logger",
+            "core.memoria.qdrant_store",
+            "core.memory_engine",
+            "core.mochila._state",
+            "core.mochila.mochila_server",
+            "core.model_router.cli",
+            "core.notifier",
+            "core.secretario_cache",
+            "motor.core.llm",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter",
+            "motor.core.qdrant_client"
+        ],
+        "name": "motor.core",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/__init__.py"
+    },
+    "motor.core.config": {
+        "bacon": 2,
+        "imported_by": [
+            "core.infra.heartbeat",
+            "core.logs.guardian_logger",
+            "core.memory_engine",
+            "core.secretario_cache",
+            "motor.core.llm.ollama",
+            "motor.core.qdrant_client"
+        ],
+        "imports": [
+            "core",
+            "core.config_manager"
+        ],
+        "name": "motor.core.config",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/config.py"
+    },
+    "motor.core.llm": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.reparador",
+            "core.agents.telemetry",
+            "core.debate.debate_engine",
+            "core.memory_engine",
+            "core.mochila._state",
+            "motor.core.llm",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter",
+            "motor.core.qdrant_client"
+        ],
+        "imports": [
+            "motor",
+            "motor.core",
+            "motor.core.llm"
+        ],
+        "name": "motor.core.llm",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/llm/__init__.py"
+    },
+    "motor.core.llm.gemini": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila._state"
+        ],
+        "imports": [
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.llm",
+            "motor.core.secrets"
+        ],
+        "name": "motor.core.llm.gemini",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/llm/gemini.py"
+    },
+    "motor.core.llm.ollama": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila._state"
+        ],
+        "imports": [
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.llm",
+            "motor.core.secrets"
+        ],
+        "name": "motor.core.llm.ollama",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/llm/ollama.py"
+    },
+    "motor.core.llm.openrouter": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila._state"
+        ],
+        "imports": [
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.llm",
+            "motor.core.secrets"
+        ],
+        "name": "motor.core.llm.openrouter",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/llm/openrouter.py"
+    },
+    "motor.core.qdrant_client": {
+        "bacon": 2,
+        "imported_by": [
+            "core.infra.heartbeat",
+            "core.logs.guardian_logger",
+            "core.memoria.qdrant_store",
+            "core.memory_engine"
+        ],
+        "imports": [
+            "httpx",
+            "motor",
+            "motor.core",
+            "motor.core.config",
+            "motor.core.llm",
+            "qdrant_client"
+        ],
+        "name": "motor.core.qdrant_client",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/qdrant_client.py"
+    },
+    "motor.core.secrets": {
+        "bacon": 2,
+        "imported_by": [
+            "core.auth_layer",
+            "core.infra.heartbeat",
+            "core.mochila.mochila_server",
+            "core.model_router.cli",
+            "core.notifier",
+            "motor.core.llm.gemini",
+            "motor.core.llm.ollama",
+            "motor.core.llm.openrouter"
+        ],
+        "name": "motor.core.secrets",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/core/secrets.py"
+    },
+    "motor.observability": {
+        "bacon": 2,
+        "imported_by": [
+            "core.debate.debate_engine",
+            "core.json_logger",
+            "core.model_router.cli",
+            "motor.observability"
+        ],
+        "imports": [
+            "motor",
+            "motor.observability",
+            "motor.observability.logging"
+        ],
+        "name": "motor.observability",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/observability/__init__.py"
+    },
+    "motor.observability.logging": {
+        "bacon": 2,
+        "imported_by": [
+            "core.debate.debate_engine",
+            "core.json_logger",
+            "core.model_router.cli",
+            "motor.observability"
+        ],
+        "name": "motor.observability.logging",
+        "path": "/home/ramon/URA/ura_ia_1972/motor/observability/logging.py"
+    },
+    "numpy": {
+        "bacon": 2,
+        "imported_by": [
+            "core.memoria.extractores.imagen_extractor",
+            "core.voice.anker_mac_pipeline",
+            "core.voice.anker_pipeline",
+            "numpy",
+            "sounddevice"
+        ],
+        "imports": [
+            "numpy"
+        ],
+        "name": "numpy",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/numpy/__init__.py"
+    },
+    "path_setup": {
+        "bacon": 2,
+        "imported_by": [
+            "core.model_router.__main__"
+        ],
+        "name": "path_setup",
+        "path": null
+    },
+    "psutil": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.telemetry",
+            "core.watchdog_funciones",
+            "psutil"
+        ],
+        "imports": [
+            "psutil"
+        ],
+        "name": "psutil",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/psutil/__init__.py"
+    },
+    "pydantic": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.mochila_server",
+            "core.mochila.models",
+            "pydantic"
+        ],
+        "imports": [
+            "pydantic"
+        ],
+        "name": "pydantic",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/pydantic/__init__.py"
+    },
+    "qdrant_client": {
+        "bacon": 2,
+        "imported_by": [
+            "core.memoria.qdrant_store",
+            "core.memoria.vigilante",
+            "motor.core.qdrant_client",
+            "qdrant_client.models"
+        ],
+        "name": "qdrant_client",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/qdrant_client/__init__.py"
+    },
+    "qdrant_client.models": {
+        "bacon": 2,
+        "imported_by": [
+            "core.memoria.vigilante"
+        ],
+        "imports": [
+            "qdrant_client"
+        ],
+        "name": "qdrant_client.models",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/qdrant_client/models/__init__.py"
+    },
+    "shared": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.constants"
+        ],
+        "name": "shared",
+        "path": "/home/ramon/URA/ura_ia_1972/shared/__init__.py"
+    },
+    "shared.paths": {
+        "bacon": 2,
+        "imported_by": [
+            "core.agents.constants"
+        ],
+        "name": "shared.paths",
+        "path": "/home/ramon/URA/ura_ia_1972/shared/paths.py"
+    },
+    "sounddevice": {
+        "bacon": 2,
+        "imported_by": [
+            "core.voice.anker_mac_pipeline",
+            "core.voice.anker_pipeline",
+            "core.voice.tts_piper"
+        ],
+        "imports": [
+            "numpy"
+        ],
+        "name": "sounddevice",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/sounddevice.py"
+    },
+    "starlette": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.guardian_middleware",
+            "fastapi",
+            "fastapi.responses",
+            "starlette.middleware.base"
+        ],
+        "name": "starlette",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/starlette/__init__.py"
+    },
+    "starlette.middleware": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.guardian_middleware"
+        ],
+        "name": "starlette.middleware",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/starlette/middleware/__init__.py"
+    },
+    "starlette.middleware.base": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.guardian_middleware"
+        ],
+        "imports": [
+            "starlette"
+        ],
+        "name": "starlette.middleware.base",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/starlette/middleware/base.py"
+    },
+    "yaml": {
+        "bacon": 2,
+        "imported_by": [
+            "core.mochila.guardian_opencode"
+        ],
+        "name": "yaml",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/yaml/__init__.py"
+    },
+    "zmq": {
+        "bacon": 2,
+        "imported_by": [
+            "core.event_bus",
+            "core.model_router.handler",
+            "zmq"
+        ],
+        "imports": [
+            "zmq"
+        ],
+        "name": "zmq",
+        "path": "/home/ramon/URA/ura_ia_1972/.venv/lib/python3.12/site-packages/zmq/__init__.py"
+    }
+}
