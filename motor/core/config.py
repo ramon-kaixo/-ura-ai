@@ -92,7 +92,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
 def _load_config_dict() -> dict | None:
     """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
     try:
-        from core.config_manager import CONFIG
+        from motor.core.config_manager import CONFIG
 
         return CONFIG
     except Exception:
