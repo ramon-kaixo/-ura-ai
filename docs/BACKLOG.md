@@ -64,3 +64,14 @@
 | B-12-F3 locust | ✅ locustfile 3 endpoints documentados | make test-load |
 | B-40 (nuevo) | Soak 1M ops no completa en 600s — rendimiento fact_history | documentado |
 | Nota | Agente paralelo revierte timer (2x) — re-aplicado | — |
+
+## Cierre 2026-08-06 (Fase 1 residual v4.0 + conflicto timer)
+
+| Ítem | Resultado | Evidencia |
+|---|---|---|
+| F1.3 pycache | ✅ 108 dirs de código vivo eliminados | find: 0 restantes (gitignored) |
+| F1.3 benchmark_ke.py | ✅ Archivado → `.attic/tools/benchmarks/`; test pending con skipif (29 skip limpio) | commit `1958925d` |
+| F1.3 tools/ | ✅ Eliminado (vacío, 0 archivos trackeados) | rmdir + git rm |
+| F1.3 cli.py | ✅ RESTAURADO — era vivo (3 consumidores: `__init__.py`, 8 tests, 2 systemd). Renombrado por error en `b5088736` → 7 errores de colección | commit `8cad8280`, validate OK |
+| B-11 conflicto latente | ✅ **Causa raíz corregida**: `manage_timers.py:45` tenía sintaxis inválida + test la convalidaba → `generate` regeneraba el timer roto | commit `a3570018`; `generate` → diff vacío, `*:0/6` válido |
+| v4.0 diagnóstico | ✅ `docs/ARQUITECTURA_v4.0_DIAGNOSTICO.md` con clasificación real (canónico/muerto) verificada | documento creado |
