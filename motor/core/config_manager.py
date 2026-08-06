@@ -12,7 +12,7 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
-_URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
+_URA_ROOT = Path(__file__).resolve().parents[2]
 _CONFIG_PATH = _URA_ROOT / "config" / "system_config.json"
 
 
@@ -187,7 +187,7 @@ def validate_schema_json() -> list:
         return []
 
     schema_path = _URA_ROOT / "config" / "schema.json"
-    config_path = Path(__file__).parent.parent / "config" / "system_config.json"
+    config_path = _URA_ROOT / "config" / "system_config.json"
 
     if not schema_path.exists():
         return ["Schema file not found: config/schema.json"]
