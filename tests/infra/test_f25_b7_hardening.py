@@ -402,7 +402,10 @@ def test_soak_million_operations() -> None:
             elif op == "read":
                 _ = h.current
                 _ = h.version_count
-                _ = h.timeline()
+                # timeline() es O(n log n): amortizar (1 vez cada 1000 reads)
+                # en vez de llamarlo en cada read (B-40: O(n^2 log n)).
+                if i % 1000 == 0:
+                    _ = h.timeline()
         except (ValueError, KeyError, RuntimeError):
             pass
         if i % 100_000 == 0 and i > 0:
