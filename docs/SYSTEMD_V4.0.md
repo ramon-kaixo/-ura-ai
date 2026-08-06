@@ -100,3 +100,23 @@ sudo systemctl edit opencode.service   # mover a EnvironmentFile /etc/ura/openco
 - ✅ Diagnóstico documentado (5 failed con causas, secretos, timers no documentados).
 - 🎯 CERO comandos ejecutados por el agente (regla Ramón: agente solo diagnostica).
 - Ramón ejecuta el bloque de comandots de la sección 5.
+
+## 7. Estado verificado (F7)
+
+**Fecha:** 2026-08-06
+**Método:** `systemctl status --user <svc>` (fallback) → no encontrados en user units;
+re-verificado en unidades de sistema con `systemctl status <svc> --no-pager` (solo lectura, sin sudo).
+
+| Servicio | Estado verificado | Output exacto (resumen) |
+|---|---|---|
+| `ura-voice.service` | ❌ **FAILED** — sigue caído | `Active: failed (Result: exit-code) since Tue 2026-08-04 12:44:19 CEST; 2 days ago`, `Main PID: 2767833 (code=exited, status=2)`, Loaded: enabled, Drop-In: hardening.conf + restart-fix.conf. Warning systemd: `Unknown key name 'StartLimitIntervalSec' in section 'Service', ignoring.` (línea 8 del unit) |
+| `ura-cleanup-auto.service` | ✅ **OK** — no failed | `Active: inactive (dead) since Wed 2026-08-05 15:00:00 CEST; 1 day 8h ago`, TriggeredBy: `ura-cleanup-auto.timer`, último run `status=0/SUCCESS` ("Limpieza completada: 0 mensajes antiguos eliminados") |
+| `ura-mcp.service` | ⚠️ **NO existe** en systemd | `Unit ura-mcp.service could not be found.` — coincide con diagnóstico §2 (ejecutaba `mcp_mochila.py` archivado; unit del repo retirado en F6.2) |
+| `ura-mutmut.timer` | ⚠️ **NO existe** en systemd | `Unit ura-mutmut.timer could not be found.` — unit del repo (`deploy/timers/ura-mutmut.*`) nunca instalado |
+| `ura-mutmut.service` | ⚠️ **NO existe** en systemd | `Unit ura-mutmut.service could not be found.` — idem |
+
+**Conclusiones F7-Preparación:**
+1. De los 5 objetivo, solo 1 está realmente failed: `ura-voice.service` (exit 2, 2 días caído, warning `StartLimitIntervalSec` en unit).
+2. `ura-cleanup-auto.service` está sano (timer-disparado, último run SUCCESS).
+3. `ura-mcp.service`, `ura-mutmut.timer`, `ura-mutmut.service` NO están instalados en systemd — el archivo `ura-mutmut.*` del repo se retira o integra (decisión §5).
+4. Los 3 no-encontrados no requieren acción sudo; el diagnóstico §1 sigue válido para `ura-consolidate`, `ura-fix`, `ura-hetzner-tunnel`, `ura-openclaw`, `ura-voice` (estos sí requieren sudo para arrancar/editar).
