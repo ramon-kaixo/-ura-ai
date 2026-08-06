@@ -1,6 +1,6 @@
 # Backlog de URA — Pendiente priorizado
 
-**Última actualización:** 2026-08-05
+**Última actualización:** 2026-08-06
 **Regla:** todo trabajo pendiente vive aquí. Al completar un ítem, mover a "Completado" con fecha y commit.
 
 ## P0 — Crítico (bloquea o rompe)
@@ -75,3 +75,27 @@
 | F1.3 cli.py | ✅ RESTAURADO — era vivo (3 consumidores: `__init__.py`, 8 tests, 2 systemd). Renombrado por error en `b5088736` → 7 errores de colección | commit `8cad8280`, validate OK |
 | B-11 conflicto latente | ✅ **Causa raíz corregida**: `manage_timers.py:45` tenía sintaxis inválida + test la convalidaba → `generate` regeneraba el timer roto | commit `a3570018`; `generate` → diff vacío, `*:0/6` válido |
 | v4.0 diagnóstico | ✅ `docs/ARQUITECTURA_v4.0_DIAGNOSTICO.md` con clasificación real (canónico/muerto) verificada | documento creado |
+
+## Cierre v4.0 (2026-08-06) — Fases 0,1,3,4,5,6.1,7(docs),8
+
+| Fase | Resultado | Evidencia |
+|---|---|---|
+| F0 | ✅ tag `pre-arch-v4.0` + pydeps `arch_core_deps.json` (160/570) + `arch_motor_deps.json` (303/1297) + etiquetas docstring 4 paquetes | commit `e36f6a3f` |
+| F1 | ✅ verificada residual (0 .bak, .gitignore, pycache) | — |
+| F4 | ✅ `docs/PIPELINE.md` — canónico tuneladora/; `pipeline_supremo.py` DEGRADADO 7/10 pasos (refs archivadas) | commit `d5ad94f6` |
+| F5 | ✅ `docs/ROUTERS.md` — triplicación verificada; `core/model_router/` TRANSICIÓN (0 consumidores vivos, 6 tests) | commit `9fac9308` |
+| F3 | ✅ `docs/MEMORIA.md` fusionada (v1 prod + v2 + v12, sin archivar sueltos con tests) | commits `b3794a3b`,`a743947f` |
+| F6.1 | ✅ 26 cadenas muertas archivadas `.attic/.../purga-v4-cadenas/`; 27 de purga-v4 eran untracked → devueltos por decisión Ramón | commit `f2c4ce93` (paralelo) |
+| F7 | ✅ `docs/SYSTEMD_V4.0.md` diagnóstico 5 failed con causas + secretos opencode.service + plan comandos Ramón | commit `d56005cd` |
+| F8 | ✅ `docs/ARQUITECTURA.md`, `MODULOS_CANONICOS.md`, `DEPRECADO.md`, `SERVICIOS.md`, `TOOLS_INDEX.md` regenerado (178→107) | commits F8 |
+
+### Pendientes v4.0 (cierre)
+
+| Pendiente | Dueño |
+|---|---|
+| F6.2: reparar ~25 refs rotas (tuneladora_mantenimiento 11 pasos, pipeline_supremo 7, cmd_ura model_router_main, consolidacion quality_gates, dashboard goal_manager, deploy/ura-mcp) | **decisión Ramón** (restaurar vs degradar) |
+| F7:P: ejecutar plan SYSTEMD_V4.0 (5 failed + secrets rotación + integración ura-mutmut) | Ramón (sudo) |
+| F5: decidir archivo de `core/model_router/` (ADR-007 segunda revisión) | Ramón |
+| F3/v4.0e: unificar memoria v1→v2 | Ramón (toca motor/core) |
+| Fase 2 v4.0: providers LLM | Ramón + otro agente |
+| Tag final `v4.0.0-arch` + push (origin 492+ atrás) | Ramón |
