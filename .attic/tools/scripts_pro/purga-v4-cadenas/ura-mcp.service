@@ -1,0 +1,18 @@
+[Unit]
+Description=URA MCP Server — stdio JSON-RPC interface for OpenClaw
+After=network.target
+
+[Service]
+Type=simple
+User=ramon
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/mcp_mochila.py
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Restart=on-failure
+RestartSec=5
+Environment="URA_MEMORY_DB=/home/ramon/.ura/memory.db"
+Environment="PYTHONPATH=/home/ramon/URA/ura_ia_1972"
+CPUQuota=20%
+MemoryMax=500M
+
+[Install]
+WantedBy=multi-user.target
