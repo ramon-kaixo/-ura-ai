@@ -22,7 +22,7 @@ class TestTimers:
         assert _frecuencia_on_calendar("daily") == "*-*-* 04:00:00"
         assert _frecuencia_on_calendar("weekly") == "*-*-* 05:00:00"
         assert _frecuencia_on_calendar("monthly") == "*-*-01 06:00:00"
-        assert _frecuencia_on_calendar("6h") == "*-*-* *:00/6:00:00"
+        assert _frecuencia_on_calendar("6h") == "*:0/6"
         assert _frecuencia_on_calendar("desconocida") == "*-*-* 04:00:00"
 
     def test_generar_unidades(self, tmp_path: Path) -> None:
