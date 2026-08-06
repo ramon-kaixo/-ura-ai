@@ -99,3 +99,19 @@
 | F3/v4.0e: unificar memoria v1→v2 | Ramón (toca motor/core) |
 | Fase 2 v4.0: providers LLM | Ramón + otro agente |
 | Tag final `v4.0.0-arch` + push (origin 492+ atrás) | Ramón |
+
+### Origin/main — análisis (2026-08-06, Bloque 2)
+
+**Resultado del fetch (`git fetch origin`):**
+
+| Métrica | Valor |
+|---|---|
+| Commits `HEAD..origin/main` | **0** (Ninguno pendiente de origin) |
+| Divergencia `origin/main...HEAD` | `0 / 507` (todo el avance es local) |
+| Último commit origin/main | `452ba9bf` feat: external_audit.sh con OpenRouter/Claude + fallback Ollama + cron |
+| Remote | `git@github.com:ramon-kaixo/-ura-ai.git` |
+
+**Conclusiones:**
+- ❌ El plan asumía "3 commits pendientes en origin" — el fetch confirma **0**. No hay nada que traer, mergear ni conflictos con F6.2.
+- ⚠️ Origin/main está **507 commits por detrás** del local — el tag `v4.0.0-arch` NO debe pushearse hasta que Ramón decida el orden de sincronización (origin está respaldando un estado muy antiguo).
+- ⚠️ Durante la auditoría se detectó un cambio local sin commitear en `core/config_manager.py` (hardcodea `_URA_ROOT=/home/ramon/URA/ura_ia_1972`), NO originado en esta sesión. **Pendiente review de Ramón**, NO incluido en commits del plan.
