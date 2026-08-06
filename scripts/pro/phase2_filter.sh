@@ -16,7 +16,7 @@ case "$(basename $0 .sh)" in
     phase1_diagnosis)
         ruff check "$REPO" --statistics 2>/dev/null | tail -1
         radon cc "$REPO" -a -s 2>/dev/null | tail -1
-        pytest tests/ -q --ignore=tests/test_property_based.py 2>/dev/null | tail -3
+        pytest tests/ -q 2>/dev/null | tail -3
         ;;
     phase2_filter)
         ruff check --fix "$REPO" --quiet 2>/dev/null || true
@@ -26,7 +26,7 @@ case "$(basename $0 .sh)" in
     phase3_architecture)
         radon cc "$REPO" -a -s 2>/dev/null | tail -1
         vulture "$REPO" --min-confidence 70 2>/dev/null | tail -3 || true
-        pytest tests/test_core_basics.py tests/test_consensus_system.py -q 2>/dev/null | tail -3
+        echo "  (test_core_basics/consensus_system eliminados — no existen)"
         ;;
     phase4_rollback)
         echo "Rollback completado"
@@ -35,7 +35,7 @@ case "$(basename $0 .sh)" in
 esac
 
 # Verificar tests post-fase
-if pytest tests/test_core_basics.py tests/test_consensus_system.py -q 2>/dev/null | grep -q "FAILED"; then
+if false; then  # tests/test_core_basics.py y test_consensus_system.py no existen — REF MUERTA
     echo "🔴 Tests fallidos — ejecutando rollback"
     python3 -c "
 from core.ura_rollback import get_ura_rollback

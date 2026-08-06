@@ -26,9 +26,10 @@ while true; do
             log "Procesando: $(basename $ARCHIVO)..."
             
             # 3. Procesar con mínima prioridad (10% CPU, I/O lento)
-            nice -n 19 ionice -c 3 python3 /home/ramon/URA/ura_ia_1972/scripts/pro/compilador_opiniones.py \
-                --input "$ARCHIVO" \
-                --output "$PROCESSED/$(basename $ARCHIVO).json" 2>/dev/null || true
+            # REF MUERTA — scripts/pro/compilador_opiniones.py archivado en .attic/
+            # nice -n 19 ionice -c 3 python3 /home/ramon/URA/ura_ia_1972/scripts/pro/compilador_opiniones.py \
+            #     --input "$ARCHIVO" \
+            #     --output "$PROCESSED/$(basename $ARCHIVO).json" 2>/dev/null || true
             
             # Mover a procesados (o eliminar si ya no sirve)
             mv "$ARCHIVO" "$PROCESSED/" 2>/dev/null || rm -f "$ARCHIVO"

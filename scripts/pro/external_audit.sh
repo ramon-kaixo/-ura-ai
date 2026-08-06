@@ -91,7 +91,7 @@ ruff check . --exclude .venv,__pycache__,.git,.sandbox_packages,.opencode,.tunel
 
 _section "03_tests" "
 export PATH=\"\$PWD/.venv/bin:\$PATH\"
-python3 -m pytest tests/test_events.py tests/test_pipeline_mvp.py tests/test_plugin.py tests/test_plugin_registry.py tests/test_assistant_auth.py tests/test_registry_v2.py tests/test_security.py tests/test_preflight_system.py tests/test_audit_models.py tests/test_audit_message_store.py tests/test_ci_cd.py tests/test_documentation.py tests/test_integration_f10.py tests/test_integration_f11.py tests/test_observability_f11.py tests/test_openclaw.py -q --tb=line --no-header -p no:timeout 2>&1
+python3 -m pytest tests/nightly/test_events.py tests/integration/test_pipeline_mvp.py tests/integration/test_plugin.py tests/integration/test_plugin_registry.py tests/integration/test_assistant_auth.py tests/integration/test_registry_v2.py tests/infra/test_security.py tests/infra/test_preflight_system.py tests/integration/test_audit_models.py tests/integration/test_audit_message_store.py tests/infra/test_ci_cd.py tests/infra/test_documentation.py tests/integration/test_integration_f10.py tests/integration/test_integration_f11.py tests/integration/test_observability_f11.py tests/integration/test_openclaw.py -q --tb=line --no-header -p no:timeout 2>&1
 " 120
 
 _section "04_bandit" "
