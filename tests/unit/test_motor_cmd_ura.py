@@ -84,15 +84,14 @@ class TestFinalize:
         with mock.patch("core.config_manager.validate_schema", return_value=["err"]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
-    def test_router_fail(self, fake_exec: FakeExecutor) -> None:
-        fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
-                             _res(ok=False, stderr="e")]
+    def test_router_degradado(self, fake_exec: FakeExecutor) -> None:
+        fake_exec.results = [_res(), _res(), _res(), _res(),
+                             _res(stdout=""), _res(stdout="pushed")]
         with mock.patch("core.config_manager.validate_schema", return_value=[]):
-            assert cmd_ura.cmd_finalize(None, []) == 1
+            assert cmd_ura.cmd_finalize(None, []) == 0
 
     def test_sin_staged_sin_mensaje(self, fake_exec: FakeExecutor) -> None:
-        fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
-                             _res(),
+        fake_exec.results = [_res(), _res(), _res(), _res(),
                              _res(stdout="a.py\nb.py\nc.py\nd.py"),
                              _res(stdout="ok"),
                              _res(stdout="pushed")]
@@ -103,9 +102,9 @@ class TestFinalize:
         assert commit[0][-1] == "Pipeline: a.py b.py c.py"
 
     def test_commit_fail(self, fake_exec: FakeExecutor) -> None:
-        fake_exec.results = [_res(), _res(), _res(), _res(), _res(),
-                             _res(),
-                             _res(stdout="a.py"), _res(), _res(ok=False, stderr="x")]
+        fake_exec.results = [_res(), _res(), _res(), _res(),
+                             _res(stdout="a.py"), _res(),
+                             _res(ok=False, stderr="x")]
         with mock.patch("core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 

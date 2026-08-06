@@ -38,13 +38,12 @@ def cmd_finalize(config: UraConfig, args) -> int:
             message = args[i + 1]
             break
 
-    ok, _output = _run(["python3", "tests/test_unit.py"], "Unit tests")
+    ok, _output = _run(["python3", "tests/legacy/test_unit.py"], "Unit tests")
     if not ok:
         return 1
 
     for f in [
         "core/config_manager.py",
-        "core/model_router_main.py",
         "scripts/pro/tuneladora_mantenimiento.py",
         "scripts/pro/tuneladora_mejora.py",
     ]:
@@ -58,10 +57,6 @@ def cmd_finalize(config: UraConfig, args) -> int:
     if errors:
         for _e in errors:
             pass
-        return 1
-
-    ok, _ = _run(["python3", "core/model_router_main.py", "--test", "analizar bug en produccion"], "Router --test")
-    if not ok:
         return 1
 
     staged = _executor.run(["git", "diff", "--cached", "--name-only"], cwd=str(ROOT))
@@ -103,7 +98,6 @@ def cmd_test(config: UraConfig, args) -> int:
     else:
         pass
 
-    _executor.run(["python3", "core/model_router_main.py", "--models"], cwd=str(ROOT))
     _executor.run(["python3", "mantenimiento/ura_maintenance.py", "--dry-run"], cwd=str(ROOT))
     return 0
 
@@ -248,11 +242,11 @@ def cmd_doctor(config: UraConfig, args) -> int:
     else:
         pass
 
-    for f in ["core/config_manager.py", "core/model_router_main.py", "core/memory_engine.py", "ura.py"]:
+    for f in ["core/config_manager.py", "core/memory_engine.py", "ura.py"]:
         r = _executor.run(["python3", "-m", "py_compile", f], cwd=str(ROOT))
 
     r = _executor.run(
-        ["python3", str(ROOT / "tests" / "test_unit.py")],
+        ["python3", str(ROOT / "tests" / "legacy" / "test_unit.py")],
         cwd=str(ROOT),
     )
     if "TODOS LOS TESTS PASARON" in r.stdout:
