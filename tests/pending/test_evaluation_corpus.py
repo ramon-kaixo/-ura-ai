@@ -4,16 +4,27 @@ import json
 from pathlib import Path
 
 import pytest
-from tools.benchmarks.benchmark_ke import (
-    BenchmarkResults,
-    KERetrieval,
-    compute_ap,
-    compute_mrr,
-    compute_ndcg,
-    compute_precision,
-    compute_recall,
-    load_corpus,
-    validate_corpus,
+
+try:
+    from tools.benchmarks.benchmark_ke import (
+        BenchmarkResults,
+        KERetrieval,
+        compute_ap,
+        compute_mrr,
+        compute_ndcg,
+        compute_precision,
+        compute_recall,
+        load_corpus,
+        validate_corpus,
+    )
+
+    HAS_BENCHMARK = True
+except ImportError:
+    HAS_BENCHMARK = False
+
+pytestmark = pytest.mark.skipif(
+    not HAS_BENCHMARK,
+    reason="benchmark_ke archivado en .attic/tools/benchmarks (Fase 1 v4.0)",
 )
 
 CORPUS_DIR = Path(__file__).resolve().parent.parent / "knowledge" / "evaluation" / "corpus"
