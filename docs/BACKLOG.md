@@ -7,7 +7,7 @@
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
-| B-40 | Soak 1M ops (test_f25_b7_hardening) NO completa en 600s — problema de rendimiento real en fact_history | Test inviable + señal de lentitud | Marcado slow (fuera de validate); investigar fact_history con 1M versiones (rollback/timeline) | 🟡 documentado |
+| B-40 | Soak 1M ops no completaba en 600s | Test inviable | **✅ DIAGNOSTICADO + RESUELTO**: cuello de botella en el TEST (timeline() en cada read, O(n^2 log n)); motor sano; timeline amortizado -> 13s | ✅ docs/B-40-DIAGNOSTICO.md |
 
 | ID | Ítem | Impacto | Solución | Estado |
 |---|---|---|---|---|
