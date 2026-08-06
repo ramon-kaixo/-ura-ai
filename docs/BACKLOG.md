@@ -88,12 +88,12 @@
 | F6.1 | ✅ 26 cadenas muertas archivadas `.attic/.../purga-v4-cadenas/`; 27 de purga-v4 eran untracked → devueltos por decisión Ramón | commit `f2c4ce93` (paralelo) |
 | F7 | ✅ `docs/SYSTEMD_V4.0.md` diagnóstico 5 failed con causas + secretos opencode.service + plan comandos Ramón | commit `d56005cd` |
 | F8 | ✅ `docs/ARQUITECTURA.md`, `MODULOS_CANONICOS.md`, `DEPRECADO.md`, `SERVICIOS.md`, `TOOLS_INDEX.md` regenerado (178→107) | commits F8 |
+| F6.2 | ✅ restaurados módulos con consumidores vivos (reuse/, autonomy/learning/, goal_manager, reglas_* — idénticos a `38b7921c~1`); degradadas refs a código inexistente (LearningPlugin, plan_validator→core/debate, model_router_main×4); archivados ciclo_rapido.sh, ura-mcp.service, ia-flujo.service; `make validate` OK | commits `f25f68bd`,`ec8b6b39`,`feea20ff` |
 
 ### Pendientes v4.0 (cierre)
 
 | Pendiente | Dueño |
 |---|---|
-| F6.2: reparar ~25 refs rotas (tuneladora_mantenimiento 11 pasos, pipeline_supremo 7, cmd_ura model_router_main, consolidacion quality_gates, dashboard goal_manager, deploy/ura-mcp) | **decisión Ramón** (restaurar vs degradar) |
 | F7:P: ejecutar plan SYSTEMD_V4.0 (5 failed + secrets rotación + integración ura-mutmut) | Ramón (sudo) |
 | F5: decidir archivo de `core/model_router/` (ADR-007 segunda revisión) | Ramón |
 | F3/v4.0e: unificar memoria v1→v2 | Ramón (toca motor/core) |
