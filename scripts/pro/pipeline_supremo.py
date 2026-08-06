@@ -180,15 +180,14 @@ def verificar_consenso_SDA(propuesta_plan: str) -> bool:
         json.dump({"plan": propuesta_plan, "author": "pipeline"}, f, ensure_ascii=False)
     cmd = [
         sys.executable,
-        str(SCRIPTS / "plan_validator.py"),
+        str(URA_ROOT / "core" / "debate" / "plan_validator.py"),
         "--debate",
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300, check=False)
-    if proc.returncode == 0:
-        return True
-    if proc.returncode == 2:
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(URA_ROOT), timeout=300, check=False)
+        return proc.returncode == 0
+    except Exception:
         return False
-    return False
 
 
 # -- Pipeline completo --

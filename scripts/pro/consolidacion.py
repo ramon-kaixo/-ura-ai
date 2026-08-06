@@ -108,11 +108,15 @@ def main() -> int:  # noqa: PLR0915
 
     # ── 6. Learning: analizar ──
     engine.log.info("── 6. Aprendizaje ──")
-    from scripts.pro.autonomy.learning import LearningPlugin
+    metrics: dict = {}
+    try:
+        from scripts.pro.autonomy.learning import LearningPlugin
 
-    learning = LearningPlugin(engine)
-    metrics = learning.analyze()
-    engine.log.info("  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
+        learning = LearningPlugin(engine)
+        metrics = learning.analyze()
+        engine.log.info("  Ejecuciones históricas: {metrics.get('total_ejecuciones', 0)}")
+    except ImportError:
+        engine.log.warning("  LearningPlugin no disponible (degradado)")
 
     # ── 7. Verificación ──
     engine.log.info("── 7. Verificación ──")
