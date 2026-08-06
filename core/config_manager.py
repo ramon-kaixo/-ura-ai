@@ -12,7 +12,8 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
-_CONFIG_PATH = Path(__file__).parent.parent / "config" / "system_config.json"
+_URA_ROOT = Path("/home/ramon/URA/ura_ia_1972")
+_CONFIG_PATH = _URA_ROOT / "config" / "system_config.json"
 
 
 def _detect_profile_key() -> str:
@@ -185,7 +186,7 @@ def validate_schema_json() -> list:
     except ImportError:
         return []
 
-    schema_path = Path(__file__).parent.parent / "config" / "schema.json"
+    schema_path = _URA_ROOT / "config" / "schema.json"
     config_path = Path(__file__).parent.parent / "config" / "system_config.json"
 
     if not schema_path.exists():
