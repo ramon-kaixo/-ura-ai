@@ -34,7 +34,7 @@ case "$(basename $0 .sh)" in
 esac
 
 # Verificar tests post-fase
-if pytest tests/test_core_basics.py tests/test_consensus_system.py -q 2>/dev/null | grep -q "FAILED"; then
+if false; then  # tests/test_core_basics.py y test_consensus_system.py no existen — REF MUERTA
     echo "🔴 Tests fallidos — ejecutando rollback"
     python3 -c "
 from core.ura_rollback import get_ura_rollback
