@@ -46,7 +46,7 @@ def _fetch_health() -> dict[str, Any] | None:
 def _send_alert(message: str, level: str = "warning") -> bool:
     """Envía alerta via notifier. Fallback silencioso si no está disponible."""
     try:
-        from core.notifier import notify
+        from motor.core.notifier import notify
 
         return notify(message, level=level)  # type: ignore[arg-type]
     except Exception as e:
