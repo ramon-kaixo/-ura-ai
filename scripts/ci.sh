@@ -51,8 +51,8 @@ if command -v semgrep &>/dev/null; then
 else
     echo "  ⚠️  Semgrep not available (install: pip install semgrep)"
 fi
-run "Unit tests"       env PYTHONPATH=. python3 -m pytest tests/test_knowledge_engine.py -q --tb=short -x -k "not test_sync_documents_qdrant_unavailable"
-run "Golden master"    env PYTHONPATH=. python3 -m pytest tests/test_knowledge_engine.py::TestGoldenMaster -q --tb=short
+run "Unit tests"       env PYTHONPATH=. python3 -m pytest tests/nightly/test_knowledge_engine.py -q --tb=short -x -k "not test_sync_documents_qdrant_unavailable"
+run "Golden master"    env PYTHONPATH=. python3 -m pytest tests/nightly/test_knowledge_engine.py::TestGoldenMaster -q --tb=short
 run "Property tests"   env PYTHONPATH=. python3 -c "
 from knowledge.engine.parser import parse_source
 from knowledge.engine.models import SourceObject
