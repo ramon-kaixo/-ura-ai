@@ -80,3 +80,4 @@ mutants/
 *.bak_repair
 __pycache__/
 *.pyc
+.agent_lock
