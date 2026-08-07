@@ -166,8 +166,8 @@ Organizados por función en las siguientes categorías:
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
-| `opencode` | 8081 | ❌ fallido | systemd | OpenCode Web Server — restart loop (exit 1) por falta de vars OPENCODE_* en `/etc/ura/secrets.env`. Unit sanitizado en `deploy/opencode.service` |
-| `ura-openclaw` | 18789 | ❌ fallido | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G). Core-dump SIGQUIT 2026-08-05 — pendiente restart (Tramo B F7) |
+| `opencode` | 8081 | ⏸️ parado | systemd | OpenCode Web Server — unit corregida desplegada (`EnvironmentFile=/etc/ura/secrets.env`, vars ya presentes). Parado: el proceso paralelo mantiene su opencode manual en 8081 (PID en `pts/1`, se re-lanza solo). Arrancar con `systemctl start opencode.service` cuando el manual cierre |
+| `ura-openclaw` | 18789 | ✅ activo | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G). Core-dump SIGQUIT 2026-08-05 — restaurado 2026-08-07 (Tramo B F7) |
 | `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
 | `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
 | `ura-consolidate` | - | ✅ activo | systemd | Consolidación de código (último run SUCCESS 2026-08-07) |
@@ -179,7 +179,7 @@ Organizados por función en las siguientes categorías:
 | `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
 | `ura-mochila` | - | ✅ activo | systemd | Servicio Router Mochila - Servidor API FastAPI |
 | `ura-ssh-guard` | - | ✅ activo | systemd | URA SSH Guard |
-| `ura-voice` | - | ❌ fallido | systemd | URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS) — exit 2 desde 2026-08-04; unit corregido (`StartLimit*` en `[Unit]`) en `deploy/ura-voice.service`, pendiente deploy (Tramo B F7) |
+| `ura-voice` | - | ✅ activo | systemd | URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS) — restaurado 2026-08-07 (Tramo B F7): daemon `scripts/pro/pipeline_voz.py` (adaptado a `motor.core.voice`), modelo Piper `es_ES-davefx-medium.onnx` instalado, unit con `StartLimit*` en `[Unit]` |
 | `ura-watchdog-buffer` | - | ✅ activo | systemd | URA Watchdog de Buffer de 30GB |
 | `ura-watcher` | - | ✅ activo | systemd | URA Watcher — Indexación sectorizada en tiempo real |
 | `ura-watcher-auditoria` | - | ✅ activo | systemd | URA Watcher Auditoria — Dispara auditoria al recibir datos |
@@ -188,7 +188,7 @@ Organizados por función en las siguientes categorías:
 | `ura-aspirador` | - | ❌ fallido | systemd | URA Aspirador — vectorize downloaded files |
 | `ura-detector` | - | ❌ fallido | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis |
 | `ura-fix-x11-socket` | - | ❌ fallido | systemd | URA Fix X11 socket directory |
-| `ura-hetzner-tunnel` | - | ❌ fallido | systemd | URA SSH Tunnel to Hetzner |
+| `ura-hetzner-tunnel` | - | ⏸️ parado | systemd | URA SSH Tunnel to Hetzner — unit corregida (puerto 2222 + `id_rsa` según `~/.ssh/config`) y parada hasta que la infra 178.105.81.83:2222 vuelva (host pingea, sshd caído). Backup: `/etc/systemd/system/ura-hetzner-tunnel.service.bak-20260807` |
 | `ura-historiador` | - | ❌ fallido | systemd | URA Historiador — registra acciones en Qdrant |
 | `ura-procesamiento-lento` | - | ❌ fallido | systemd | URA Daemon de Procesamiento Lento (10% CPU) |
 | `ura-router-health` | - | ❌ fallido | systemd | URA Model Router Health Check |
