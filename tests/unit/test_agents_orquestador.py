@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from core.agents.orquestador import AgenteOrquestador
+from motor.core.agents.orquestador import AgenteOrquestador
 
 
 class TestDecidir:
@@ -63,7 +63,7 @@ class TestContarPendientes:
     def test_funcion_pequena_no_cuenta(self, tmp_path):
         f = tmp_path / "small.py"
         f.write_text("def foo():\n    pass\n")
-        with patch("core.agents.orquestador.URA_ROOT", tmp_path):
+        with patch("motor.core.agents.orquestador.URA_ROOT", tmp_path):
             result = AgenteOrquestador._contar_pendientes()
             assert result == 0
 
@@ -72,7 +72,7 @@ class TestContarPendientes:
         lines = ["def big():"] + ["    x = 1"] * 82
         f = tmp_path / "big.py"
         f.write_text("\n".join(lines))
-        with patch("core.agents.orquestador.URA_ROOT", tmp_path):
+        with patch("motor.core.agents.orquestador.URA_ROOT", tmp_path):
             result = AgenteOrquestador._contar_pendientes()
             assert result == 1
 
@@ -80,7 +80,7 @@ class TestContarPendientes:
         f = tmp_path / ".venv" / "test.py"
         f.parent.mkdir()
         f.write_text("def big():\n" + "    x = 1\n" * 82)
-        with patch("core.agents.orquestador.URA_ROOT", tmp_path):
+        with patch("motor.core.agents.orquestador.URA_ROOT", tmp_path):
             result = AgenteOrquestador._contar_pendientes()
             assert result == 0
 
@@ -88,7 +88,7 @@ class TestContarPendientes:
 class TestContarPendientes:
     def test_ast_error_ignorado(self, tmp_path, monkeypatch) -> None:
         """Branches except del parseo AST."""
-        import core.agents.orquestador as mod
+        import motor.core.agents.orquestador as mod
 
         (tmp_path / "malo.py").write_text("def roto(:")
         (tmp_path / "normal.py").write_text("def ok():\n    return 1\n")
