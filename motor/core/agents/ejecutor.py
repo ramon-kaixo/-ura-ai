@@ -29,7 +29,7 @@ class AgenteEjecutor:
             env["REFACTOR_MODEL"] = self.MODELO
             env["REFACTOR_MODEL_FALLBACK"] = "qwen2.5-coder:14b"
             env["MIN_LINES"] = "80"
-            from core.config_manager import get_ollama_url
+            from motor.core.config_manager import get_ollama_url
 
             env["OLLAMA_URL"] = get_ollama_url()
             env["URA_ROOT"] = str(URA_ROOT)
