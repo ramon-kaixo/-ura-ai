@@ -2,13 +2,11 @@
 from __future__ import annotations
 
 import sqlite3
-
-import requests
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
+import requests
 
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.pipeline.llm_fallback import LLMFallback

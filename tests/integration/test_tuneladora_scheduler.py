@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-
-import pytest
-
 from datetime import UTC, datetime, timedelta
 from unittest import mock
+
+import pytest
 
 from scripts.pro.tuneladora.scheduler import ScheduledPipeline, TuneladoraScheduler
 

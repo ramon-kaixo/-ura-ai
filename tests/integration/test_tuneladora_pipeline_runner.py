@@ -326,7 +326,6 @@ class TestPhasesConMocks:
 
 class TestLockPidMuerto:
     def test_lock_pid_muerto_se_sobrescribe(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
-        from scripts.pro.tuneladora.pipeline.runner import _pid_alive
 
         runner = PipelineRunner(cfg, mode="check", files=[])
         runner.cfg.tuneladora_dir = tmp_path

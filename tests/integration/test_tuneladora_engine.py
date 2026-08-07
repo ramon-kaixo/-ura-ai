@@ -237,7 +237,6 @@ class TestNotify:
 
 class TestHealthExtra:
     def test_health_ollama_ok(self, engine):
-        import httpx
 
         resp = mock.Mock()
         resp.status_code = 200

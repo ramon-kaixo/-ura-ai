@@ -2,15 +2,13 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from scripts.pro.tuneladora.config import Configuration
-from scripts.pro.tuneladora.generate_index import build_index, extract_calls, extract_functions, main as gi_main
+from scripts.pro.tuneladora.generate_index import build_index, extract_calls, extract_functions
+from scripts.pro.tuneladora.generate_index import main as gi_main
 from scripts.pro.tuneladora.pipeline.block_reviewer import _do_review, _get_diff, review_block
 
 

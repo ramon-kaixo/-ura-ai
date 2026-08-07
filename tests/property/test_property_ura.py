@@ -5,7 +5,8 @@ no casos concretos. Hypothesis genera cientos de casos incluyendo edge cases.
 """
 from __future__ import annotations
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from knowledge.engine.chunker import chunk_text
 from motor.core.llm._logging import percentile
@@ -67,7 +68,7 @@ class TestChunkText:
     @given(st.text(min_size=1, max_size=1000), st.integers(min_value=1, max_value=20))
     def test_concatena_sin_perder_palabras(self, texto: str, max_words: int) -> None:
         chunks = chunk_text(texto, max_words=max_words, overlap=0)
-        # Normalizar: los chunks pueden conservar whitespace original (ej: 
+        # Normalizar: los chunks pueden conservar whitespace original (ej:
         # Normalizar: los chunks pueden conservar whitespace original
         unido = " ".join(" ".join(c.text.split()) for c in chunks)
         original = " ".join(texto.split())

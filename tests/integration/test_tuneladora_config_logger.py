@@ -3,10 +3,7 @@ from __future__ import annotations
 
 import io
 from pathlib import Path
-from types import SimpleNamespace
 from unittest import mock
-
-import pytest
 
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.logger import Logger
@@ -26,7 +23,7 @@ class TestLogger:
         stream = io.StringIO()
         log = Logger(tmp_path / "t.log", stream=stream)
         log.warning("w")
-        log.warn("w2")
+        log.warning("w2")
         log.error("e")
         log.debug("d")
         out = stream.getvalue()

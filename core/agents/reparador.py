@@ -1,2 +1,2 @@
 """Shim temporal — agents.reparador se ha movido a motor.core.agents.reparador."""
-from motor.core.agents.reparador import *  # noqa: F401,F403
+from motor.core.agents.reparador import *  # noqa: F403

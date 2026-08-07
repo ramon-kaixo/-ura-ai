@@ -1,7 +1,6 @@
 """Tests para knowledge/engine/cli/ — __main__, rules y compile."""
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,7 +23,6 @@ def _crear_db(path: Path) -> None:
 class TestMainModule:
     def test_import_main(self, monkeypatch) -> None:
         import importlib
-        import sys as _sys
 
         # El modulo __main__ ejecuta main() + sys.exit al importarse
         main_mock = mock.Mock(return_value=0)
@@ -34,9 +32,8 @@ class TestMainModule:
         _il.import_module("knowledge.engine.cli.main")
         cli_main_mod = _sys_mod.modules["knowledge.engine.cli.main"]
         monkeypatch.setattr(cli_main_mod, "main", main_mock)
-        with mock.patch("sys.argv", ["__main__.py"]):
-            with pytest.raises(SystemExit) as e:
-                importlib.reload(importlib.import_module("knowledge.engine.cli.__main__"))
+        with mock.patch("sys.argv", ["__main__.py"]), pytest.raises(SystemExit) as e:
+            importlib.reload(importlib.import_module("knowledge.engine.cli.__main__"))
         assert e.value.code == 0
         main_mock.assert_called_once()
 

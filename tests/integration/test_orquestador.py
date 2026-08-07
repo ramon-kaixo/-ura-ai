@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from orquestador import (  # noqa: E402
+from orquestador import (
     FASES,
     cargar_tarea,
     ejecutar_tarea,
@@ -123,9 +123,9 @@ class TestFasesSubprocess:
         assert r["ok"] is False
 
     def test_auditoria_ok(self) -> None:
-        from orquestador import fase_auditoria
-
         import json as _json
+
+        from orquestador import fase_auditoria
 
         with mock.patch(
             "orquestador._run",

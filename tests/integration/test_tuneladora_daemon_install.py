@@ -2,12 +2,9 @@
 from __future__ import annotations
 
 import asyncio
-import sys
-from pathlib import Path
 import threading
+from pathlib import Path
 from unittest import mock
-
-import pytest
 
 import scripts.pro.tuneladora.install_service as isvc
 import scripts.pro.tuneladora.scheduler_daemon as daemon
@@ -25,7 +22,7 @@ def _run_main_en_thread() -> None:
     def _run() -> None:
         try:
             asyncio.run(daemon.main())
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             errores.append(exc)
 
     t = threading.Thread(target=_run)

@@ -3,9 +3,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest import mock
-
-import pytest
 
 from scripts.pro.quality_gate import _parse_reporte, evaluar, leer_ultimo_reporte
 
@@ -82,12 +79,12 @@ class TestEvaluarNuevoFormato:
 
     def test_tests_failed_a_nivel_raiz(self) -> None:
         reporte = {"verdict": "OK", "coverage": {"tests_failed": 3}}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
     def test_formato_antiguo_telemetry(self) -> None:
         reporte = {"verdict": "OK", "telemetry": {"coverage": 50.0, "tests_failed": 1}}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
 
@@ -101,12 +98,12 @@ class TestFailSafe:
 
     def test_coverage_ausente_no_rechaza(self) -> None:
         reporte = {"verdict": "OK"}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "ACCEPTED"
 
     def test_coverage_real_bajo_rechaza(self) -> None:
         reporte = {"verdict": "OK", "coverage": {"global": 50.0}}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
 
@@ -114,12 +111,12 @@ class TestModoCheck:
     def test_qg_omite_coverage_en_modo_check(self) -> None:
         # Reproduce B-21: coverage 0.6% en modo check NO debe rechazar
         reporte = {"verdict": "OK", "mode": "check", "coverage": {"global": 0.6}}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "ACCEPTED"
 
     def test_qg_aplica_coverage_en_modo_full(self) -> None:
         reporte = {"verdict": "OK", "mode": "full", "coverage": {"global": 0.6}}
-        verdict, alertas = evaluar(reporte)
+        verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
     def test_qg_sin_mode_aplica_coverage(self) -> None:

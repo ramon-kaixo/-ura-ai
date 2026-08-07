@@ -1,6 +1,7 @@
 """Tests para motor/cli/cmd_ura.py — comandos migrados de ura.py."""
 
 import json
+
 import pytest
 
 pytestmark = pytest.mark.slow
@@ -9,7 +10,6 @@ import subprocess
 import urllib.error
 from pathlib import Path
 from unittest import mock
-
 
 from motor.cli import cmd_ura
 from motor.core.executor import ProcessResult
