@@ -179,3 +179,15 @@ sudo systemctl disable --now ura-hetzner-tunnel.service
 
 ## Nota de seguridad (2026-08-07)
 El repo repositorio `deploy/opencode.service` contenía `OPENCODE_GATEWAY_TOKEN` y `OPENCODE_SERVER_PASSWORD` en claro. **La token/password deben rotarse igualmente** aunque el unit del sistema ya no las necesite en el repo (el secret seguía circulando en git history). El `EnvironmentFile` debe contener las vars nuevas.
+---
+## §10 Estado post-fix (2026-08-07)
+
+| Servicio | Estado | Fix aplicado |
+|----------|--------|-------------|
+| ura-openclaw | ✅ active | secrets.env creado |
+| ura-voice | ✅ active | Ruta corregida a motor/core/voice/anker_pipeline.py |
+| ura-fix | ✅ inactive (success) | Drop-in PATH al venv |
+| opencode | ❌ failed | Pendiente: valores reales en /etc/ura/secrets.env |
+| ura-hetzner-tunnel | ❌ failed | Infra externa caída (178.105.81.83:22 refused) |
+| snap-brave | ❌ failed | No es URA |
+
