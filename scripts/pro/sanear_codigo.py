@@ -36,30 +36,65 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 
 def fix_multiline_statements(path: Path) -> int:
-    """E702: split statements joined with."""
+    """E702: split statements joined with ; — SOLO fuera de strings."""
+    import tokenize
+    import io
+
     content = path.read_text()
     count = 0
-    # Simple case: x = 1; y = 2  -> split into two lines
     lines = content.split("\n")
     new_lines = []
+
     for line in lines:
-        if ";" in line and not line.strip().startswith("#"):
-            # Check if it's actually multiple statements
-            parts = line.split(";")
-            if len(parts) > 1:
-                # Only fix if all parts look like simple statements
-                stripped = [p.strip() for p in parts]
-                if all(
-                    s
-                    and not s.startswith(
-                        ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with "),
-                    )
-                    for s in stripped
-                ):
-                    new_lines.extend(stripped)
-                    count += 1
-                    continue
-        new_lines.append(line)
+        if ";" not in line or line.strip().startswith("#"):
+            new_lines.append(line)
+            continue
+
+        # Tokenizar para detectar ; fuera de strings
+        try:
+            tokens = list(tokenize.generate_tokens(io.StringIO(line).readline))
+        except tokenize.TokenError:
+            new_lines.append(line)
+            continue
+
+        # Buscar ; que esté fuera de STRING/COMMENT
+        semicolons = [i for i, tok in enumerate(tokens) if tok.type == tokenize.OP and tok.string == ";"]
+        if not semicolons:
+            new_lines.append(line)
+            continue
+
+        # Verificar que el ; no esté dentro de un string
+        safe_semicolons = []
+        for idx in semicolons:
+            # Un ; es seguro si no está entre STRING tokens
+            prev_types = [t.type for t in tokens[:idx]]
+            in_string = any(t in (tokenize.STRING,) for t in prev_types)
+            if not in_string:
+                safe_semicolons.append(idx)
+
+        if not safe_semicolons:
+            new_lines.append(line)
+            continue
+
+        # Solo procesar si TODOS los ; son seguros (fuera de strings)
+        if len(safe_semicolons) != len(semicolons):
+            new_lines.append(line)
+            continue
+
+        parts = line.split(";")
+        stripped = [p.strip() for p in parts]
+        if all(
+            s
+            and not s.startswith(
+                ("class ", "def ", "if ", "for ", "while ", "try:", "except", "finally", "with ", "elif ", "else:"),
+            )
+            for s in stripped
+        ):
+            new_lines.extend(stripped)
+            count += 1
+        else:
+            new_lines.append(line)
+
     if count:
         path.write_text("\n".join(new_lines))
     return count
