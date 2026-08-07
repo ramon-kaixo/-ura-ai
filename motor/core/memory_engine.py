@@ -66,6 +66,7 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
 # =====================================================# Indexación (determinista: mismo input → mismo índice)
 # =====================================================
 
+
 def load_manifest() -> dict:
     if MANIFEST_PATH.exists():
         try:
@@ -211,6 +212,7 @@ def _construir_batch(rel_path: str, file_hash: str, chunks: list[str], now: str)
 
 # =====================================================# Consulta (determinista: misma pregunta + mismo índice → misma respuesta)
 # =====================================================
+
 
 def query(question: str, top_k: int = TOP_K) -> list[dict]:
     """Busca los chunks más relevantes para una pregunta en Qdrant.
