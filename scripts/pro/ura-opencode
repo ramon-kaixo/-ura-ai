@@ -5,10 +5,16 @@
 URL="http://10.164.1.99:8081"
 USER="ramon"
 PASS="321000"
+MODEL="ollama/qwen2.5-coder:32b"
 
 if [ $# -eq 0 ]; then
     echo "Uso: ura-opencode \"tu mensaje aquí\""
     exit 1
 fi
 
-/home/ramon/.opencode/bin/opencode run --attach "$URL" --username "$USER" --password "$PASS" "$*" 2>&1
+/home/ramon/.opencode/bin/opencode run \
+    --attach "$URL" \
+    --username "$USER" \
+    --password "$PASS" \
+    -m "$MODEL" \
+    "$*" 2>&1
