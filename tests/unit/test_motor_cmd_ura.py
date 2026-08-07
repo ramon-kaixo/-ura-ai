@@ -66,7 +66,7 @@ class TestFinalize:
         fake_exec.results = [_res(stdout="git diff"),
                              _res(stdout="staged_file.py"),
                              _res(stdout="pushed")]
-        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, ["-m", "msg"]) == 0
         msgs = [c[0] for c in fake_exec.calls]
         assert msgs[0] == "python3"
@@ -81,13 +81,13 @@ class TestFinalize:
 
     def test_schema_errors(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res()]
-        with mock.patch("core.config_manager.validate_schema", return_value=["err"]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=["err"]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
     def test_router_degradado(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res(),
                              _res(stdout=""), _res(stdout="pushed")]
-        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 0
 
     def test_sin_staged_sin_mensaje(self, fake_exec: FakeExecutor) -> None:
@@ -95,7 +95,7 @@ class TestFinalize:
                              _res(stdout="a.py\nb.py\nc.py\nd.py"),
                              _res(stdout="ok"),
                              _res(stdout="pushed")]
-        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 0
         commit = [c for c in fake_exec.calls if c[:2] == ["git", "commit"]]
         assert len(commit) == 1
@@ -105,19 +105,19 @@ class TestFinalize:
         fake_exec.results = [_res(), _res(), _res(), _res(),
                              _res(stdout="a.py"), _res(),
                              _res(ok=False, stderr="x")]
-        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
 
 class TestTest:
     def test_ok(self) -> None:
-        with mock.patch("core.config_manager.validate_schema", return_value=[]), \
-                mock.patch("core.config_manager.validate_config", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]), \
+                mock.patch("motor.core.config_manager.validate_config", return_value=[]):
             assert cmd_ura.cmd_test(None, []) == 0
 
     def test_errores(self) -> None:
-        with mock.patch("core.config_manager.validate_schema", return_value=["e"]), \
-                mock.patch("core.config_manager.validate_config", return_value=["w"]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=["e"]), \
+                mock.patch("motor.core.config_manager.validate_config", return_value=["w"]):
             assert cmd_ura.cmd_test(None, []) == 0
 
 
@@ -203,7 +203,7 @@ class TestDoctor:
     def test_ok(self, fake_exec: FakeExecutor, tmp_path: Path,
                 monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cmd_ura.Path, "home", mock.Mock(return_value=tmp_path))
-        with mock.patch("core.config_manager.validate_schema", return_value=[]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_doctor(None, []) == 0
 
     def test_con_estado(self, fake_exec: FakeExecutor, tmp_path: Path,
@@ -215,7 +215,7 @@ class TestDoctor:
         fake_exec.results = [_res(stdout="TODOS LOS TESTS PASARON"),
                              _res(stdout="c1\nc2"),
                              _res(stdout="docker ps", returncode=0)]
-        with mock.patch("core.config_manager.validate_schema", return_value=["e"]):
+        with mock.patch("motor.core.config_manager.validate_schema", return_value=["e"]):
             assert cmd_ura.cmd_doctor(None, []) == 0
 
 

@@ -3,7 +3,7 @@
 
 import logging
 
-from core.memory_engine import query, rag_enabled
+from motor.core.memory_engine import query, rag_enabled
 
 log = logging.getLogger(__name__)
 

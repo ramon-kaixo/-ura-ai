@@ -51,7 +51,7 @@ def cmd_finalize(config: UraConfig, args) -> int:
         if not ok:
             return 1
 
-    from core.config_manager import validate_schema
+    from motor.core.config_manager import validate_schema
 
     errors = validate_schema()
     if errors:
@@ -83,7 +83,7 @@ def cmd_finalize(config: UraConfig, args) -> int:
 
 
 def cmd_test(config: UraConfig, args) -> int:
-    from core.config_manager import validate_config, validate_schema
+    from motor.core.config_manager import validate_config, validate_schema
 
     errors = validate_schema()
     if errors:
@@ -234,7 +234,7 @@ def cmd_snc(config: UraConfig, args) -> int:
 
 def cmd_doctor(config: UraConfig, args) -> int:
     """Diagnóstico completo del sistema."""
-    from core.config_manager import validate_schema
+    from motor.core.config_manager import validate_schema
 
     e = validate_schema()
     if e:
