@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/jobs.py — op_jobs queue.
 
-Usa sqlite real en tmp_path; mockea archiver/compiler/metrics/lock.
+Usa sqlite real en tmp_path
+mockea archiver/compiler/metrics/lock.
 """
 from __future__ import annotations
 

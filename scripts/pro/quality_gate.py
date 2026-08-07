@@ -16,12 +16,12 @@ THRESHOLDS = {
 def _buscar_reportes_json():
     """Busca reportes JSON en todas las ubicaciones conocidas."""
     reportes = []
-    
+
     # Ubicacion 1: data/tuneladora_reports/ (pipeline runner)
     d1 = Path("data/tuneladora_reports")
     if d1.exists():
         reportes.extend(sorted(d1.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True))
-    
+
     # Ubicacion 2: .tuneladora/snapshots/*/meta.json (watch daemon)
     d2 = Path(".tuneladora/snapshots")
     if d2.exists():
@@ -29,7 +29,7 @@ def _buscar_reportes_json():
             meta = snapshot_dir / "meta.json"
             if meta.exists():
                 reportes.append(meta)
-    
+
     return reportes
 
 
@@ -37,7 +37,7 @@ def _parse_reporte(path):
     """Parsea un reporte JSON, adaptandose a ambos formatos."""
     with open(path) as f:
         data = json.load(f)
-    
+
     # Formato pipeline runner (data/tuneladora_reports/*.json)
     if "verdict" in data:
         return {
@@ -48,7 +48,7 @@ def _parse_reporte(path):
             "telemetry": data.get("telemetry", {}),
             "sofia": data.get("sofia", {}),
         }
-    
+
     # Formato snapshot (meta.json)
     return {
         "verdict": "SNAPSHOT",

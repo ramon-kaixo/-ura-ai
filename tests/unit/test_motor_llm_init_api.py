@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/__init__.py — API pública unificada.
 
-La selección de proveedor se difiere a _get_state(); se verifica que
+La selección de proveedor se difiere a _get_state()
+se verifica que
 las 4 funciones delegan y que el estado se cachea.
 """
 from __future__ import annotations

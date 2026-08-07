@@ -36,7 +36,7 @@ class TestGetOptionalProviders:
     def test_importa_todos(self) -> None:
         providers = _get_optional_providers()
         names = [name for _cls, name in providers]
-        assert set(names) == {"openai", "anthropic", "gemini", "openrouter", "lmstudio", "vllm"}
+        assert set(names) == {"openai", "anthropic", "gemini", "openrouter", "lmstudio", "vllm", "groq"}
 
     @pytest.mark.parametrize(
         "modulo",
@@ -47,6 +47,7 @@ class TestGetOptionalProviders:
             "motor.core.llm.openrouter",
             "motor.core.llm.lmstudio",
             "motor.core.llm.vllm",
+            "motor.core.llm.groq",
         ],
     )
     def test_falla_import_silencioso(self, modulo: str) -> None:

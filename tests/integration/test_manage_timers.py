@@ -7,7 +7,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from manage_timers import (  # noqa: E402
+from manage_timers import (
     TIMERS,
     _frecuencia_on_calendar,
     generar_unidades,
@@ -26,7 +26,6 @@ class TestTimers:
         assert _frecuencia_on_calendar("desconocida") == "*-*-* 04:00:00"
 
     def test_generar_unidades(self, tmp_path: Path) -> None:
-        from manage_timers import UNITS_DIR
 
         with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
             generados = generar_unidades(verbose=False)
@@ -60,7 +59,7 @@ class TestFuncionesComando:
         m_run.assert_called()
 
     def test_install_con_sudo(self, tmp_path: Path) -> None:
-        from manage_timers import UNITS_DIR, install
+        from manage_timers import install
 
         with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
             tmp_path.joinpath("timers").mkdir()

@@ -1,2 +1,2 @@
 """Shim temporal — agents.constants se ha movido a motor.core.agents.constants."""
-from motor.core.agents.constants import *  # noqa: F401,F403
+from motor.core.agents.constants import *  # noqa: F403

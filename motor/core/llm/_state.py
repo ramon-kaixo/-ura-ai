@@ -54,6 +54,11 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         providers.append((VLLMProvider, "vllm"))
     except Exception:  # noqa: S110  # nosec
         pass
+    try:
+        from motor.core.llm.groq import GroqProvider
+        providers.append((GroqProvider, "groq"))
+    except Exception:  # noqa: S110  # nosec
+        pass
     return providers
 
 
@@ -119,6 +124,12 @@ def build_llm_state(config=None) -> LLMState:
         registry.register("vllm", _default, default=True)
         registry.register("ollama", OllamaProvider())
         log.info("LLM provider set to vllm (from config)")
+    elif provider_name == "groq":
+        from motor.core.llm.groq import GroqProvider
+        _default = GroqProvider()
+        registry.register("groq", _default, default=True)
+        registry.register("ollama", OllamaProvider())
+        log.info("LLM provider set to groq (from config)")
     else:
         _default = OllamaProvider()
         registry.register("ollama", _default, default=True)

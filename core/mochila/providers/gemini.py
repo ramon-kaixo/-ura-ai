@@ -1,7 +1,6 @@
 import json
 import os
 from collections.abc import AsyncGenerator
-from pathlib import Path
 
 import httpx
 

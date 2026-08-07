@@ -1,8 +1,6 @@
 """Tests para scripts/pro/tuneladora/shadow/shadow_health.py."""
 from __future__ import annotations
 
-import copy
-from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
@@ -10,8 +8,8 @@ import pytest
 
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.shadow.shadow_health import (
-    LayerResult,
     ROLLBACK_RULES,
+    LayerResult,
     ShadowHealth,
     main,
 )
@@ -95,7 +93,7 @@ class TestRunLayer:
         sh = ShadowHealth(_cfg())
         sh._layer0_env = mock.Mock(return_value=LayerResult(0, "env", "OK", checks=[{"a": 1}]))
         r1 = sh.run_layer(0)
-        r2 = sh.run_layer(0)
+        sh.run_layer(0)
         assert r1.status == "OK"
         assert sh._layer0_env.call_count == 1  # segundo viene de cache
 

@@ -5,8 +5,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from scripts.pro.tuneladora.pipeline.tools.bandit_tool import BanditTool
 from scripts.pro.tuneladora.pipeline.tools.base import Status
 from scripts.pro.tuneladora.pipeline.tools.mypy_tool import MypyTool

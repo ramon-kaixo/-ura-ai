@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts" / "pro"))
 
-from scripts.pro.auditoria_paralela import (  # noqa: E402
+from scripts.pro.auditoria_paralela import (
     check_duplicados,
     check_imports_circulares,
     check_lock_stale,
@@ -18,7 +18,6 @@ from scripts.pro.auditoria_paralela import (  # noqa: E402
     check_rendimiento,
     check_secretos,
     check_supervisor,
-    check_tests_consistencia,
     run_all,
 )
 

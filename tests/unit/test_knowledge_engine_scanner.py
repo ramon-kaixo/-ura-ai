@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/scanner.py — descubrimiento de SourceObjects.
 
-Usa filesystem real en tmp_path; parchea MAX_PARSE_SIZE para no crear
+Usa filesystem real en tmp_path
+parchea MAX_PARSE_SIZE para no crear
 archivos de 10MB.
 """
 from __future__ import annotations

@@ -5,8 +5,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import pytest
-
 from scripts.pro.tuneladora.shadow.layer0_env import (
     EnvCheck,
     _disk_io_ok,

@@ -5,8 +5,6 @@ import json
 from pathlib import Path
 from unittest import mock
 
-import pytest
-
 from scripts.pro.auditoria_continua import (
     detectar_regresiones,
     guardar_alerta_en_memoria,

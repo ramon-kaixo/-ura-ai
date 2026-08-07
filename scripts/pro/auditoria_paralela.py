@@ -61,7 +61,7 @@ def check_quality_gate() -> dict:
         sys.path.insert(0, str(ROOT / "scripts" / "pro"))
         import quality_gate as qg
 
-        verdict, alertas = qg.evaluar({"verdict": "OK", "coverage": {"global": 90.0}})
+        verdict, _alertas = qg.evaluar({"verdict": "OK", "coverage": {"global": 90.0}})
         return _check("quality_gate", verdict == "ACCEPTED", f"verdict={verdict}")
     except Exception as exc:
         return _check("quality_gate", False, str(exc))

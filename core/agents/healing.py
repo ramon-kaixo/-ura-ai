@@ -1,2 +1,2 @@
 """Shim temporal — agents.healing se ha movido a motor.core.agents.healing."""
-from motor.core.agents.healing import *  # noqa: F401,F403
+from motor.core.agents.healing import *  # noqa: F403
