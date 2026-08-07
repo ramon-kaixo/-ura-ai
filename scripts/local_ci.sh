@@ -18,7 +18,7 @@ python3 -m pytest tests/test_assistant*.py -q --no-cov --tb=short
 echo "OK"
 
 echo "=== test_unit.py ==="
-python3 tests/test_unit.py
+python3 tests/legacy/test_unit.py
 echo "OK"
 
 echo "=== Bandit (assistant) ==="

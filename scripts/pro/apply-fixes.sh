@@ -86,9 +86,9 @@ do_backup() {
     done
     # Backup de tests
     $SUDO mkdir -p "$dest/tests"
-    $SUDO cp "$REPO_DIR"/tests/test_vram_guard.py "$dest/tests/" 2>/dev/null || true
-    $SUDO cp "$REPO_DIR"/tests/test_inference_engine.py "$dest/tests/" 2>/dev/null || true
-    $SUDO cp "$REPO_DIR"/tests/test_snc_anomalias.py "$dest/tests/" 2>/dev/null || true
+    $SUDO cp "$REPO_DIR"/tests/unit/test_vram_guard.py "$dest/tests/" 2>/dev/null || true
+    $SUDO cp "$REPO_DIR"/tests/integration/test_inference_engine.py "$dest/tests/" 2>/dev/null || true
+    $SUDO cp "$REPO_DIR"/tests/integration/test_snc_anomalias.py "$dest/tests/" 2>/dev/null || true
     echo "$tag" | $SUDO tee "$dest/.tag" > /dev/null
     echo "$dest"
 }
