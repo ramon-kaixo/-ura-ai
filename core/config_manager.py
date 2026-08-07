@@ -1,2 +1,4 @@
 """Shim temporal — config_manager se ha movido a motor.core.config_manager."""
-from motor.core.config_manager import *  # noqa: F403
+import sys
+import motor.core.config_manager
+sys.modules[__name__] = motor.core.config_manager
