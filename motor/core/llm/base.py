@@ -7,6 +7,7 @@ delega en una instancia por defecto.
 
 import inspect
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from typing import Any
 
 FALLBACK_EMBEDDING_DIMENSION: int = 768
@@ -51,6 +52,39 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str: ...
+
+    def generate_stream(
+        self,
+        prompt: str,
+        model: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> Iterator[str]:
+        """Genera con streaming incremental (aditivo, no abstracto).
+
+        Degradación controlada: si el proveedor no implementa streaming real,
+        emite el resultado completo de generate() como un único fragmento.
+        Los proveedores que lo soporten deben sobrescribir este método.
+        """
+        yield self.generate(prompt, model, options)
+
+    def chat_generate(
+        self,
+        mensajes: list,
+        model: str | None = None,
+        tools: list | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Chat con mensajes y tools opcionales (aditivo, no abstracto).
+
+        Degradación controlada: si el proveedor no implementa tools/mensajes,
+        se convierte la conversación a prompt plano y se delega en generate().
+        El resultado tiene forma OpenAI: content, tool_calls, usage.
+        """
+        prompt = "\n".join(
+            f"<{m.get('role', 'user')}>{m.get('content', '')}</{m.get('role', 'user')}>" for m in mensajes
+        )
+        texto = self.generate(prompt, model, options)
+        return {"content": texto, "tool_calls": None, "usage": {}}
 
     @abstractmethod
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]: ...

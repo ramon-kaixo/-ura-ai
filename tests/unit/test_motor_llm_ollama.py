@@ -1,4 +1,5 @@
 """Tests para motor.core.llm.ollama (OllamaProvider)."""
+
 from __future__ import annotations
 
 from unittest import mock
@@ -50,17 +51,22 @@ class TestInit:
         assert provider._url == "http://localhost:11434"
 
     def test_model_fallback_to_secret(self, ollama_mod):
-        with mock.patch.object(ollama_mod.UraConfig, "load", return_value=_fake_cfg(ollama_model="")), mock.patch(
-            "motor.core.llm.ollama.get_secret", return_value="secret-model"
+        with (
+            mock.patch.object(ollama_mod.UraConfig, "load", return_value=_fake_cfg(ollama_model="")),
+            mock.patch("motor.core.llm.ollama.get_secret", return_value="secret-model"),
         ):
             p = ollama_mod.OllamaProvider()
         assert p._rag_model == "secret-model"
 
     def test_defaults_when_empty(self, ollama_mod):
-        with mock.patch.object(
-            ollama_mod.UraConfig, "load",
-            return_value=_fake_cfg(ollama_model="", ollama_embedding_model=""),
-        ), mock.patch.object(ollama_mod, "get_secret", return_value=""):
+        with (
+            mock.patch.object(
+                ollama_mod.UraConfig,
+                "load",
+                return_value=_fake_cfg(ollama_model="", ollama_embedding_model=""),
+            ),
+            mock.patch.object(ollama_mod, "get_secret", return_value=""),
+        ):
             p = ollama_mod.OllamaProvider()
         assert p._rag_model == "qwen2.5:3b"
         assert p._embedding_model == "nomic-embed-text"
@@ -95,9 +101,7 @@ class TestGenerate:
         assert result == "El modelo no generó ninguna respuesta."
 
     def test_timeout_error(self, provider):
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.post", side_effect=httpx.TimeoutException("t")
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.post", side_effect=httpx.TimeoutException("t")):
             result = provider.generate("p")
         assert result == "Error: La generación excedió el tiempo de espera."
 
@@ -110,9 +114,7 @@ class TestGenerate:
         assert "503" in result
 
     def test_request_error(self, provider):
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.post", side_effect=httpx.RequestError("conn")
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.post", side_effect=httpx.RequestError("conn")):
             result = provider.generate("p")
         assert "No se pudo conectar" in result
 
@@ -201,9 +203,7 @@ class TestEmbedAsync:
         batch_ctx.__aenter__.return_value = self._client(status=500, json_data={})
         ind_ctx = mock.MagicMock()
         ind_ctx.__aenter__.return_value = self._client(json_data={"embedding": [0.7]})
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]):
             result = await provider.embed_async(["a"])
         assert result == [[0.7]]
 
@@ -215,9 +215,7 @@ class TestEmbedAsync:
         client.post.side_effect = httpx.RequestError("conn")
         ind_ctx = mock.MagicMock()
         ind_ctx.__aenter__.return_value = client
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]):
             result = await provider.embed_async(["a"])
         assert result == [[0.0] * FALLBACK_EMBEDDING_DIMENSION]
 
@@ -229,9 +227,7 @@ class TestEmbedAsync:
         batch_ctx.__aenter__.return_value = client
         ind_ctx = mock.MagicMock()
         ind_ctx.__aenter__.return_value = self._client(json_data={"embedding": [0.7]})
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]):
             result = await provider.embed_async(["a"])
         assert result == [[0.7]]
 
@@ -243,9 +239,7 @@ class TestEmbedAsync:
         batch_ctx.__aenter__.return_value = client
         ind_ctx = mock.MagicMock()
         ind_ctx.__aenter__.return_value = self._client(json_data={"embedding": [0.7]})
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.AsyncClient", side_effect=[batch_ctx, ind_ctx]):
             result = await provider.embed_async(["a"])
         assert result == [[0.7]]
 
@@ -274,9 +268,102 @@ class TestHealth:
         assert result["detail"] == "server error"
 
     def test_exception(self, provider):
-        with mock.patch(
-            "motor.core.llm.ollama.httpx.get", side_effect=httpx.RequestError("conn")
-        ):
+        with mock.patch("motor.core.llm.ollama.httpx.get", side_effect=httpx.RequestError("conn")):
             result = provider.health()
         assert result["status"] == "error"
         assert "conn" in result["detail"]
+
+
+class TestGenerateStream:
+    def test_emite_fragmentos_reales(self, provider, ollama_mod):
+        lines = [
+            '{"response": "ho", "done": false}',
+            '{"response": "la", "done": false}',
+            '{"response": "", "done": true}',
+        ]
+        ctx = mock.MagicMock()
+        ctx.status_code = 200
+        ctx.iter_lines.return_value = iter(lines)
+        ctx.__enter__.return_value = ctx
+        with mock.patch.object(ollama_mod.httpx, "stream", return_value=ctx) as stream:
+            resultado = list(provider.generate_stream("p", model="m"))
+        assert resultado == ["ho", "la"]
+        payload = stream.call_args.kwargs["json"]
+        assert payload["stream"] is True
+        assert payload["model"] == "m"
+
+    def test_error_http_lanza_runtime_error(self, provider, ollama_mod):
+        ctx = mock.MagicMock()
+        ctx.status_code = 404
+        ctx.iter_lines.return_value = iter([])
+        ctx.__enter__.return_value = ctx
+        with mock.patch.object(ollama_mod.httpx, "stream", return_value=ctx):
+            with pytest.raises(RuntimeError, match="404"):
+                list(provider.generate_stream("p"))
+
+    def test_base_generate_stream_degrada_a_generate(self):
+        from motor.core.llm.base import BaseLLMProvider
+
+        class _ProviderSinStream(BaseLLMProvider):
+            def generate(self, prompt, model=None, options=None):
+                return "completo"
+
+            def embed(self, texts, model=None):
+                return [[0.0] * 768 for _ in texts]
+
+            async def embed_async(self, texts, model=None):
+                return self.embed(texts, model)
+
+            def health(self):
+                return {"status": "ok"}
+
+        assert list(_ProviderSinStream().generate_stream("p")) == ["completo"]
+
+
+class TestChatGenerate:
+    def test_tools_nativos(self, provider, ollama_mod):
+        r = mock.Mock()
+        r.status_code = 200
+        r.json.return_value = {
+            "message": {
+                "content": "",
+                "tool_calls": [{"function": {"name": "web_search", "arguments": {"q": "x"}}}],
+            },
+            "prompt_eval_count": 10,
+            "eval_count": 3,
+        }
+        with mock.patch.object(ollama_mod.httpx, "post", return_value=r) as post:
+            result = provider.chat_generate(
+                [{"role": "user", "content": "busca"}],
+                model="m",
+                tools=[{"type": "function"}],
+                options={"temperature": 0.1},
+            )
+        payload = post.call_args.kwargs["json"]
+        assert payload["stream"] is False
+        assert payload["tools"] == [{"type": "function"}]
+        assert payload["messages"] == [{"role": "user", "content": "busca"}]
+        tc = result["tool_calls"]
+        assert tc[0]["function"]["name"] == "web_search"
+        assert tc[0]["id"] == "call_0"
+        assert tc[0]["type"] == "function"
+        assert result["usage"]["prompt_tokens"] == 10
+        assert result["usage"]["completion_tokens"] == 3
+        assert result["usage"]["total_tokens"] == 13
+
+    def test_sin_tools_payload_no_lleva_clave(self, provider, ollama_mod):
+        r = mock.Mock()
+        r.status_code = 200
+        r.json.return_value = {"message": {"content": "ok"}}
+        with mock.patch.object(ollama_mod.httpx, "post", return_value=r) as post:
+            result = provider.chat_generate([{"role": "user", "content": "x"}])
+        assert "tools" not in post.call_args.kwargs["json"]
+        assert result["content"] == "ok"
+        assert result["tool_calls"] is None
+
+    def test_error_http_lanza_runtime_error(self, provider, ollama_mod):
+        r = mock.Mock()
+        r.status_code = 429
+        with mock.patch.object(ollama_mod.httpx, "post", return_value=r):
+            with pytest.raises(RuntimeError, match="429"):
+                provider.chat_generate([{"role": "user", "content": "x"}])
