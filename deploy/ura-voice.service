@@ -12,7 +12,7 @@ Type=simple
 User=ramon
 WorkingDirectory=/home/ramon/URA/ura_ia_1972
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 scripts/pro/demo_pipeline_voz.py
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/pipeline_voz.py
 Restart=always
 StandardOutput=journal
 StandardError=journal
