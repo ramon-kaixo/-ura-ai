@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from core.agents.telemetry import Telemetria
+from motor.core.agents.telemetry import Telemetria
 
 
 class TestCheckOllama:
@@ -29,28 +29,28 @@ class TestLlmStats:
     def test_con_config(self, tmp_path, monkeypatch):
         config = tmp_path / "chunk_config.json"
         config.write_text('{"chunk_actual": 4096, "modelo": "qwen", "historico": [1, 2]}')
-        monkeypatch.setattr("core.agents.telemetry.NERVIOSO", tmp_path)
+        monkeypatch.setattr("motor.core.agents.telemetry.NERVIOSO", tmp_path)
         result = Telemetria.llm_stats()
         assert result["chunk_actual"] == 4096
         assert result["modelo"] == "qwen"
         assert result["historico_ajustes"] == 2
 
     def test_sin_config(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("core.agents.telemetry.NERVIOSO", tmp_path)
+        monkeypatch.setattr("motor.core.agents.telemetry.NERVIOSO", tmp_path)
         result = Telemetria.llm_stats()
         assert result["chunk_actual"] == 8192
         assert result["modelo"] == "?"
 
 
 class TestF821Count:
-    @patch("core.agents.telemetry.subprocess.run")
+    @patch("motor.core.agents.telemetry.subprocess.run")
     def test_cuenta_errores(self, mock_run):
         mock_run.return_value.stdout = "F821\nF821\nF821\n"
         result = Telemetria.f821_count()
         assert result == 3
         mock_run.assert_called_once()
 
-    @patch("core.agents.telemetry.subprocess.run", side_effect=Exception("boom"))
+    @patch("motor.core.agents.telemetry.subprocess.run", side_effect=Exception("boom"))
     def test_error(self, mock_run):
         result = Telemetria.f821_count()
         assert result == -1
