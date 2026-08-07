@@ -29,7 +29,6 @@ def ejecutar_bucle_seguro() -> None:
 
     try:
         while True:
-
             if pipeline_stt.device_index is None:
                 time.sleep(10)
                 continue
