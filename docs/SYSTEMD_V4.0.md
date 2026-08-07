@@ -115,8 +115,67 @@ re-verificado en unidades de sistema con `systemctl status <svc> --no-pager` (so
 | `ura-mutmut.timer` | ⚠️ **NO existe** en systemd | `Unit ura-mutmut.timer could not be found.` — unit del repo (`deploy/timers/ura-mutmut.*`) nunca instalado |
 | `ura-mutmut.service` | ⚠️ **NO existe** en systemd | `Unit ura-mutmut.service could not be found.` — idem |
 
-**Conclusiones F7-Preparación:**
+**Conclusiones F7-Preparación (2026-08-06):**
 1. De los 5 objetivo, solo 1 está realmente failed: `ura-voice.service` (exit 2, 2 días caído, warning `StartLimitIntervalSec` en unit).
 2. `ura-cleanup-auto.service` está sano (timer-disparado, último run SUCCESS).
 3. `ura-mcp.service`, `ura-mutmut.timer`, `ura-mutmut.service` NO están instalados en systemd — el archivo `ura-mutmut.*` del repo se retira o integra (decisión §5).
 4. Los 3 no-encontrados no requieren acción sudo; el diagnóstico §1 sigue válido para `ura-consolidate`, `ura-fix`, `ura-hetzner-tunnel`, `ura-openclaw`, `ura-voice` (estos sí requieren sudo para arrancar/editar).
+
+## 8. Re-verificación del Tramo A (2026-08-07) — ejecutado por el agente
+
+**Método:** `systemctl --failed`, `journalctl -u <svc> -n 6` (solo lectura), sin sudo.
+
+| Servicio | Estado (2026-08-07) | Causa/info |
+|---|---|---|
+| `ura-consolidate` | ✅ **SUCCESS** | último run OK; `scripts/pro/reuse/quality_gates.py` existe — diagnóstico §1 desactualizado (causa de import era transitoria) |
+| `opencode` | ❌ **FAILED** (restart loop, exit 1) | `EnvironmentFile=/etc/ura/secrets.env` NO tiene las vars `OPENCODE_GATEWAY_*` ni `OPENCODE_SERVER_*` → ServeError. Unit sanitizado en repo (`deploy/opencode.service`) |
+| `ura-fix` | ❌ **FAILED** | `FileNotFoundError: 'ruff'` — PATH del unit sin venv. Confirmado §1 (4:00 UTC run) |
+| `ura-hezner-tunnel` | ❌ **FAILED** (exit 255) | "No entries" en journal (rotto desde 2026-08-01) |
+| `ura-openclaw` | ❌ **FAILED** (core-dump) | SIGQUIT, 4.2s CPU, 167M peak en última ejecución (2026-08-05 15:04) |
+| `ura-voice` | ❌ **FAILED** (exit 2) | Warning `StartLimitIntervalSec` en línea 8 [Service] — debe moverse a [Unit] (FIX en `deploy/ura-voice.service`) |
+| `ura-mcp.service` | ⚠️ no existe | idem §7 |
+| `ura-mutmut.*` | ⚠️ no existen | idem §7 |
+
+**Cambios del tramo A (committed al repo):**
+1. `deploy/opencode.service` → sanitizado: sin token/password hardcoded, `EnvironmentFile=/etc/ura/secrets.env` (igual al unit instalado en `/etc/systemd/system/`), con comment de vars requeridas. Cierra la deuda son secretos §4 del repo.
+2. `deploy/ura-voice.service` → **NUEVO** (unit corregido: `StartLimitIntervalSec/Burst` movidas a `[Unit]` como exige systemd).
+3. `AGENTS.md` → sección Servicios reales actualizada (estado real de `opencode`, `ura-voice`, `ura-consolidate`).
+
+## 9. Plan Tramo B (Ramón, sudo) — comandos listos
+
+```bash
+# 0. Diagnóstico certero
+systemctl --failed --no-pager
+
+# 1. opencode — añadir vars de gateway y rotar secretos
+sudo nano /etc/ura/secrets.env       # o usar el helper de rotate_secrets.sh
+#   Añadir: OPENCODE_GATEWAY_URL, OPENCODE_GATEWAY_TOKEN (NUEVO), OPENCODE_SERVER_USERNAME, OPENCODE_SERVER_PASSWORD (NUEVO)
+# La rotación debe hacerse primero en la consola de OpenClaw, luego actualizar secrets.env.
+sudo systemctl daemon-reload && sudo systemctl restart opencode.service
+
+# 2. ura-voice — deploy unit corregido y debug de audio
+sudo cp deploy/ura-voice.service /etc/systemd/system/ura-voice.service
+sudo systemctl daemon-reload
+sudo journalctl -u ura-voice -n 30 --no-pager     # causa exit 2 (Whisper/Piper)
+sudo systemctl restart ura-voice
+
+# 3. ura-fix — PATH sin ruff
+sudo systemctl edit ura-fix.service
+#   [Service]
+#   Environment="PATH=/home/ramon/.local/bin:/usr/local/bin:/usr/bin:/bin"
+cd ~/URA/ura_ia_1972 && sudo systemctl restart ura-fix 2>/dev/null
+
+# 4. ura-openclaw — reiniciar (si reaparece core-dump, revisar memoria/hardening)
+sudo systemctl restart ura-openclaw; systemctl status ura-openclaw --no-pager
+
+# 5. ura-hetzner-tunnel — si ya no se usa:
+sudo systemctl disable --now ura-hetzner-tunnel.service
+```
+
+**Impacto estimado (Tramo B):**
+- reinicios de `opencode`, `ura-openclaw`, `ura-voice`, `ura-fix` — corto (~s), servicios supervisados por systemd Restart.
+- Cambio de token gateway/password sin coordinación con consolas OpenClaw dejaría opencode/service con auth falsa → ROLLBACK guardado: guardar token anterior en secrets.env `_OLD`.
+- Disable hetzner-tunnel es reversible con `systemctl enable --now`.
+
+## Nota de seguridad (2026-08-07)
+El repo repositorio `deploy/opencode.service` contenía `OPENCODE_GATEWAY_TOKEN` y `OPENCODE_SERVER_PASSWORD` en claro. **La token/password deben rotarse igualmente** aunque el unit del sistema ya no las necesite en el repo (el secret seguía circulando en git history). El `EnvironmentFile` debe contener las vars nuevas.
