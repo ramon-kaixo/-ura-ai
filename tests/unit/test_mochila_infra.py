@@ -7,6 +7,7 @@ Cubre:
 - core/interfaces/*: protocols runtime_checkable
 - core/mochila/routes/: health, breaker, metrics
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -50,7 +51,15 @@ class TestMessagesToPrompt:
         assert _messages_to_prompt(msgs) == "<user>hola</user>\n<assistant>mundo</assistant>"
 
     def test_content_lista_texto(self) -> None:
-        msgs = [{"content": [{"type": "text", "text": "a"}, {"type": "image", "text": "ignorado"}, {"type": "text", "text": "b"}]}]
+        msgs = [
+            {
+                "content": [
+                    {"type": "text", "text": "a"},
+                    {"type": "image", "text": "ignorado"},
+                    {"type": "text", "text": "b"},
+                ]
+            }
+        ]
         assert _messages_to_prompt(msgs) == "<user>a\nb</user>"
 
     def test_content_lista_sin_text(self) -> None:
@@ -68,7 +77,7 @@ class TestMotorChatAdapter:
 
     @pytest.mark.slow
     @pytest.mark.asyncio
-    async def test_chat_ok(self) -> None:
+    async def test_chat_ok_no_stream_message_shape(self) -> None:
         provider = mock.Mock()
         provider.generate.return_value = "respuesta"
         adapter = _MotorChatAdapter("ollama", provider)
@@ -76,36 +85,80 @@ class TestMotorChatAdapter:
         assert len(out) == 1
         assert out[0]["model"] == "m1"
         choice = out[0]["choices"][0]
-        assert choice["delta"]["content"] == "respuesta"
+        assert choice["message"]["content"] == "respuesta"
         assert choice["finish_reason"] == "stop"
-        provider.generate.assert_called_once_with(
-            "<user>hi</user>", "m1", {"temperature": 0.0, "num_predict": 4096}
-        )
+        assert out[0]["usage"]["total_tokens"] == 0
+        provider.generate.assert_called_once_with("<user>hi</user>", "m1", {"temperature": 0.0, "num_predict": 4096})
 
     @pytest.mark.asyncio
-    async def test_chat_stream_flag_ignored_para_prompt(self) -> None:
+    async def test_chat_stream_usa_generate_stream(self) -> None:
         provider = mock.Mock()
+        provider.generate_stream.return_value = iter(["hola", "mundo"])
+        adapter = _MotorChatAdapter("ollama", provider)
+        out = [d async for d in adapter.chat("m1", [], stream=True, max_tokens=100, temperature=0.5)]
+        deltas = [c["choices"][0]["delta"]["content"] for c in out if c["choices"][0]["delta"].get("content")]
+        assert deltas == ["hola", "mundo"]
+        assert out[-1]["choices"][0]["delta"] == {}
+        assert out[-1]["choices"][0]["finish_reason"] == "stop"
+        provider.generate_stream.assert_called_once_with("", "m1", {"temperature": 0.5, "num_predict": 100})
+
+    @pytest.mark.asyncio
+    async def test_chat_stream_degradado_sin_generate_stream(self) -> None:
+        provider = mock.Mock()
+        del provider.generate_stream
         provider.generate.return_value = "x"
         adapter = _MotorChatAdapter("ollama", provider)
-        out = [d async for d in adapter.chat("m1", [], stream=True, tools=[{"t": 1}], max_tokens=100, temperature=0.5)]
+        out = [d async for d in adapter.chat("m1", [], stream=True)]
         assert out[0]["choices"][0]["delta"]["content"] == "x"
-        provider.generate.assert_called_once_with("", "m1", {"temperature": 0.5, "num_predict": 100})
+        assert out[-1]["choices"][0]["delta"] == {}
+
+    @pytest.mark.asyncio
+    async def test_chat_tools_usa_chat_generate(self) -> None:
+        provider = mock.Mock()
+        provider.chat_generate.return_value = {
+            "content": "",
+            "tool_calls": [{"id": "call_0", "type": "function", "function": {"name": "f", "arguments": "{}"}}],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 3, "total_tokens": 8},
+        }
+        adapter = _MotorChatAdapter("ollama", provider)
+        out = [d async for d in adapter.chat("m1", [{"role": "user", "content": "q"}], tools=[{"t": 1}])]
+        assert out[0]["choices"][0]["message"]["tool_calls"][0]["function"]["name"] == "f"
+        assert out[0]["choices"][0]["finish_reason"] == "tool_calls"
+        assert out[0]["usage"]["total_tokens"] == 8
+        provider.chat_generate.assert_called_once()
+        provider.generate.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_chat_error_string_motor_lanza_provider_error(self) -> None:
+        from core.mochila.providers.base import ProviderError
+
+        provider = mock.Mock()
+        provider.generate.return_value = "Error: El servicio respondió con código 401."
+        adapter = _MotorChatAdapter("ollama", provider)
+        with pytest.raises(ProviderError) as exc_info:
+            _ = [d async for d in adapter.chat("m1", [])]
+        assert exc_info.value.status_code == 502
+        assert exc_info.value.provider == "ollama"
 
     @pytest.mark.asyncio
     async def test_chat_provider_error(self) -> None:
+        from core.mochila.providers.base import ProviderError
+
         provider = mock.Mock()
         provider.generate.side_effect = RuntimeError("boom")
         adapter = _MotorChatAdapter("ollama", provider)
-        out = [d async for d in adapter.chat("m1", [])]
-        assert out[0] == {"error": "boom", "type": "provider_error"}
+        with pytest.raises(ProviderError):
+            _ = [d async for d in adapter.chat("m1", [])]
 
     @pytest.mark.asyncio
     async def test_chat_provider_error_no_mensaje(self) -> None:
+        from core.mochila.providers.base import ProviderError
+
         provider = mock.Mock()
         provider.generate.side_effect = ValueError()
         adapter = _MotorChatAdapter("ollama", provider)
-        out = [d async for d in adapter.chat("m1", [])]
-        assert out[0]["type"] == "provider_error"
+        with pytest.raises(ProviderError):
+            _ = [d async for d in adapter.chat("m1", [])]
 
     @pytest.mark.slow
     @pytest.mark.asyncio
@@ -167,7 +220,9 @@ class TestInterfaces:
             error = ""
 
         class Ejecutor:
-            def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None) -> Resultado:
+            def run(
+                self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None
+            ) -> Resultado:
                 return Resultado()
 
         assert isinstance(Ejecutor(), IExecutor)
@@ -177,11 +232,28 @@ class TestInterfaces:
         from core.interfaces.config import IConfigProvider
 
         campos = [
-            "qdrant_host", "qdrant_port", "deploy_dir", "data_dir", "log_level",
-            "ollama_host", "ollama_port", "ollama_model", "ollama_embedding_model",
-            "ollama_timeout", "ollama_temperature", "ollama_max_tokens", "llm_provider",
-            "is_vm", "asus_host", "asus_port", "tailscale_iface", "timer_interval_min",
-            "failure_knowledge_path", "baseline_path", "auto_verify", "schema_version",
+            "qdrant_host",
+            "qdrant_port",
+            "deploy_dir",
+            "data_dir",
+            "log_level",
+            "ollama_host",
+            "ollama_port",
+            "ollama_model",
+            "ollama_embedding_model",
+            "ollama_timeout",
+            "ollama_temperature",
+            "ollama_max_tokens",
+            "llm_provider",
+            "is_vm",
+            "asus_host",
+            "asus_port",
+            "tailscale_iface",
+            "timer_interval_min",
+            "failure_knowledge_path",
+            "baseline_path",
+            "auto_verify",
+            "schema_version",
         ]
         Config = type("Config", (), dict.fromkeys(campos))
         assert isinstance(Config(), IConfigProvider)

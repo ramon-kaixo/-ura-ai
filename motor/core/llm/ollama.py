@@ -11,8 +11,10 @@ Configuración vía UraConfig (CONFIG → env vars → defaults):
 
 from __future__ import annotations
 
+import json
 import logging
 import time
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -99,6 +101,104 @@ class OllamaProvider(BaseLLMProvider):
             log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("error inesperado en generate")
             return "Error: Error interno del proveedor."
+
+    def generate_stream(
+        self,
+        prompt: str,
+        model: str | None = None,
+        options: dict | None = None,
+    ) -> Iterator[str]:
+        opts = dict(options or {})
+        opts.setdefault("temperature", self._temperature)
+        opts.setdefault("num_predict", self._max_tokens)
+        model_name = model or self._rag_model
+        t0 = time.monotonic()
+        with httpx.stream(
+            "POST",
+            f"{self._url}/api/generate",
+            json={"model": model_name, "prompt": prompt, "stream": True, "options": opts},
+            timeout=self._timeout,
+        ) as r:
+            if r.status_code >= 400:
+                log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000, f"http_{r.status_code}")
+                raise RuntimeError(f"Error: El servicio de generación respondió con código {r.status_code}.")
+            for line in r.iter_lines():
+                if not line.strip():
+                    continue
+                chunk = json.loads(line)
+                trozo = chunk.get("response", "")
+                if trozo:
+                    yield trozo
+                if chunk.get("done"):
+                    break
+        log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000)
+
+    def chat_generate(
+        self,
+        mensajes: list,
+        model: str | None = None,
+        tools: list | None = None,
+        options: dict | None = None,
+    ) -> dict[str, Any]:
+        opts = dict(options or {})
+        opts.setdefault("temperature", self._temperature)
+        opts.setdefault("num_predict", self._max_tokens)
+        model_name = model or self._rag_model
+        payload: dict[str, Any] = {"model": model_name, "messages": mensajes, "stream": False, "options": opts}
+        if tools:
+            payload["tools"] = tools
+        t0 = time.monotonic()
+        r = httpx.post(
+            f"{self._url}/api/chat",
+            json=payload,
+            timeout=self._timeout,
+        )
+        if r.status_code >= 400:
+            log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000, f"http_{r.status_code}")
+            raise RuntimeError(f"Error: El servicio de generación respondió con código {r.status_code}.")
+        data = r.json()
+        msg = data.get("message", {})
+        log_call(
+            self._provider_name,
+            model_name,
+            (time.monotonic() - t0) * 1000,
+            eval_count=data.get("eval_count", 0),
+        )
+        return {
+            "content": msg.get("content", ""),
+            "tool_calls": self._normalizar_tool_calls(msg.get("tool_calls")) if msg.get("tool_calls") else None,
+            "usage": {
+                "prompt_tokens": data.get("prompt_eval_count", 0),
+                "completion_tokens": data.get("eval_count", 0),
+                "total_tokens": (data.get("prompt_eval_count", 0) + data.get("eval_count", 0)),
+            },
+        }
+
+    @staticmethod
+    def _normalizar_tool_calls(tool_calls: list) -> list:
+        """Normaliza tool_calls al formato OpenAI preservando arguments como dict.
+
+        Ollama nativo devuelve arguments como dict y lo exige dict en el round-trip
+        (messages con tool_calls de vuelta). El formato OpenAI espera string, pero
+        mochila_server re-serializa con json.dumps antes de ejecutar la tool.
+        """
+        normalizados = []
+        for i, tc in enumerate(tool_calls):
+            fn = tc.get("function", {})
+            args = fn.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {"raw": args}
+            normalizados.append(
+                {
+                    "id": tc.get("id", f"call_{i}"),
+                    "type": "function",
+                    "function": {"name": fn.get("name", ""), "arguments": args},
+                }
+            )
+        return normalizados
 
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         model_name = model or self._embedding_model

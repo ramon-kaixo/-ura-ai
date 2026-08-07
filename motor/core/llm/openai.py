@@ -18,8 +18,10 @@ Configuración:
 
 from __future__ import annotations
 
+import json
 import logging
 import time
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -112,6 +114,87 @@ class OpenAIProvider(BaseLLMProvider):
             log_call(self._provider_name, model_name, latency_ms, "unexpected")
             log.warning("error inesperado en generate")
             return "Error: Error interno del proveedor."
+
+    def generate_stream(
+        self,
+        prompt: str,
+        model: str | None = None,
+        options: dict | None = None,
+    ) -> Iterator[str]:
+        opts = dict(options or {})
+        opts.setdefault("temperature", self._temperature)
+        opts.setdefault("max_tokens", self._max_tokens)
+        model_name = model or self._model
+        t0 = time.monotonic()
+        with httpx.stream(
+            "POST",
+            f"{self._base_url}/chat/completions",
+            headers=self._headers(),
+            json={
+                "model": model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": True,
+                **opts,
+            },
+            timeout=self._timeout,
+        ) as r:
+            if r.status_code >= 400:
+                log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000, f"http_{r.status_code}")
+                raise RuntimeError(f"Error: El servicio respondió con código {r.status_code}.")
+            for line in r.iter_lines():
+                if not line.strip() or not line.startswith("data: "):
+                    continue
+                trozo = line[len("data: ") :].strip()
+                if trozo == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(trozo)
+                except json.JSONDecodeError:
+                    continue
+                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                content = delta.get("content")
+                if content:
+                    yield content
+        log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000)
+
+    def chat_generate(
+        self,
+        mensajes: list,
+        model: str | None = None,
+        tools: list | None = None,
+        options: dict | None = None,
+    ) -> dict[str, Any]:
+        opts = dict(options or {})
+        opts.setdefault("temperature", self._temperature)
+        opts.setdefault("max_tokens", self._max_tokens)
+        model_name = model or self._model
+        payload: dict[str, Any] = {"model": model_name, "messages": mensajes, **opts}
+        if tools:
+            payload["tools"] = tools
+        t0 = time.monotonic()
+        r = httpx.post(
+            f"{self._base_url}/chat/completions",
+            headers=self._headers(),
+            json=payload,
+            timeout=self._timeout,
+        )
+        if r.status_code >= 400:
+            log_call(self._provider_name, model_name, (time.monotonic() - t0) * 1000, f"http_{r.status_code}")
+            raise RuntimeError(f"Error: El servicio respondió con código {r.status_code}.")
+        data = r.json()
+        msg = data.get("choices", [{}])[0].get("message", {})
+        log_call(
+            self._provider_name,
+            model_name,
+            (time.monotonic() - t0) * 1000,
+            prompt_tokens=(data.get("usage") or {}).get("prompt_tokens"),
+            completion_tokens=(data.get("usage") or {}).get("completion_tokens"),
+        )
+        return {
+            "content": msg.get("content") or "",
+            "tool_calls": msg.get("tool_calls"),
+            "usage": data.get("usage") or {},
+        }
 
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         model_name = model or self._embedding_model
