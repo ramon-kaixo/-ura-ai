@@ -1,4 +1,4 @@
-# ESTADO REAL — Migración de Providers (NO COMPLETA)
+# ESTADO REAL — Migración de Providers (P0-P2 COMPLETAS, MODO DUAL v1+v2)
 
 **Fecha de corrección:** 2026-08-07  
 **Fecha del documento original (incorrecto):** 2026-07-20  
@@ -48,15 +48,25 @@
 2. Los clientes de producción (OpenCode gateway, scripts pro) consumen formato OpenAI v1.
 3. Eliminar v1 rompería `mochila_server.py:34` y los tests hasta re-puntar todo.
 
-## Pendiente — requiere decisión de Ramón
+## Decisión adoptada (Ramón, 2026-08-07): MODO DUAL — nada se elimina
 
-- [ ] Decidir: migrar v1→v2 con shim de paridad completa (streaming/tools/usage/errores)
-      o conservar v1 como fuente de verdad y retirar el huérfano v2.
-- [ ] Si se migra: reescribir los 3 archivos de test v1 al contrato nuevo y smoke real
-      (curl ≥2 chunks + `[DONE]`, tools, error 500) como red de seguridad — los tests
-      unitarios usan fakes y NO detectan degradación de streaming.
-- [ ] Rollback garantizado: tags `v4.0.0-arch` (= HEAD) y `pre-arch-v4.0` (50 commits
+- [x] ✅ **NO se elimina v1** (`core/mochila/providers/`) — sigue como fuente de verdad en
+      producción (`ura-mochila.service`, puerto 4098, flag default `URA_MOCHILA_MOTOR_V2=0`).
+- [x] ✅ **NO se elimina v2** (`motor/core/llm/`) — activable en caliente vía
+      `URA_MOCHILA_MOTOR_V2=1` (modo dual sin pérdida de código).
+- [x] P2 completado — shim de paridad: `_MotorChatAdapter` en `core/mochila/adapter.py`
+      con streaming real, tools round-trip, `usage`, `ProviderError`→502, degrading a v1.
+- [x] `URA_API_KEY` unificada: `~/.env` = `/etc/ura/secrets.env` = proceso vivo
+      (bloque de hash `daa1764f…`), ambas `600` — no hay claves divergentes.
+- [x] Red de seguridad: smoke E2E real (39 chunks + `[DONE]`, tools, 502) + suite
+      mochila 154 passed + motor LLM 361 passed (2 skipped) + `make validate` OK.
+- [x] Rollback garantizado: tags `v4.0.0-arch` (= HEAD) y `pre-arch-v4.0` (50 commits
       antes) con v1 íntegro; revertir = `git checkout pre-arch-v4.0 -- core/mochila/`.
+
+## Pendiente (post-decisión, no bloqueante)
+
+- [ ] Adopción en producción del modo v2: `URA_MOCHILA_MOTOR_V2=1` en
+      `ura-mochila.service` (EnvironmentFile) + smoke 4098 + revert fácil (P2.5 opcional).
 
 ## Estado de los providers (real, 2026-08-07)
 
@@ -70,5 +80,6 @@
 | base | `base.py` | `base.py` | 🟡 Duplicado — v1 en producción |
 | Anthropic / OpenAI / LMStudio / vLLM | ❌ No existe | `anthropic.py`, `openai.py`, `openai_compat.py`, `lmstudio.py` | ✅ Solo v2 |
 
-**Conclusión:** la migración NO está completa. La Fase 2 del plan queda
-**PENDIENTE — requiere decisión de Ramón** (plan aprobado P0+P1; P2/P3 pendientes).
+**Conclusión:** la migración está **P0+P2 COMPLETA** con **modo dual v1+v2** (decisión de
+Ramón: conservar todo el código construido). v1 sigue en producción; v2 disponible con
+shim de paridad verificada por smoke E2E. No se elimina código — sin pérdida.
