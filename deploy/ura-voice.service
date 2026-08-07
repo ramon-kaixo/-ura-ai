@@ -1,0 +1,20 @@
+[Unit]
+Description=URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS)
+Documentation=https://github.com/anomalyco/ura
+After=network.target ollama.service
+Requires=ollama.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+RestartSec=10
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 scripts/pro/demo_pipeline_voz.py
+Restart=always
+StandardOutput=journal
+StandardError=journal
+
+[Install]

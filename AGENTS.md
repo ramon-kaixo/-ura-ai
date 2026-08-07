@@ -166,17 +166,20 @@ Organizados por función en las siguientes categorías:
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
-| `ura-openclaw` | 18789 | ✅ activo | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G) |
+| `opencode` | 8081 | ❌ fallido | systemd | OpenCode Web Server — restart loop (exit 1) por falta de vars OPENCODE_* en `/etc/ura/secrets.env`. Unit sanitizado en `deploy/opencode.service` |
+| `ura-openclaw` | 18789 | ❌ fallido | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G). Core-dump SIGQUIT 2026-08-05 — pendiente restart (Tramo B F7) |
 | `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
 | `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
+| `ura-consolidate` | - | ✅ activo | systemd | Consolidación de código (último run SUCCESS 2026-08-07) |
 | `ura-contraste` | 8002 | ✅ activo | systemd | Proxy de Contraste + Telemetría POS (POST /api/v1/telemetry + GET /metrics) |
+| `ura-fix` | - | ❌ fallido | systemd | auto-fix de ruff — `FileNotFoundError: 'ruff'` (PATH sin venv) — pendiente drop-in PATH (Tramo B F7) |
 | `ura-go2rtc` | 1984 | ✅ activo | systemd | go2rtc Camera Stream Proxy |
 | `ura-heartbeat` | - | ✅ activo | systemd | URA Mochila Heartbeat — reinicio automático si /health falla |
 | `ura-metrics` | 8888 | ✅ activo | systemd | URA Metrics Server |
 | `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
 | `ura-mochila` | - | ✅ activo | systemd | Servicio Router Mochila - Servidor API FastAPI |
 | `ura-ssh-guard` | - | ✅ activo | systemd | URA SSH Guard |
-| `ura-voice` | - | ✅ activo | systemd | URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS) |
+| `ura-voice` | - | ❌ fallido | systemd | URA Voice Agent Pipeline (Anker S500 + Whisper GPU + Piper TTS) — exit 2 desde 2026-08-04; unit corregido (`StartLimit*` en `[Unit]`) en `deploy/ura-voice.service`, pendiente deploy (Tramo B F7) |
 | `ura-watchdog-buffer` | - | ✅ activo | systemd | URA Watchdog de Buffer de 30GB |
 | `ura-watcher` | - | ✅ activo | systemd | URA Watcher — Indexación sectorizada en tiempo real |
 | `ura-watcher-auditoria` | - | ✅ activo | systemd | URA Watcher Auditoria — Dispara auditoria al recibir datos |
@@ -312,6 +315,19 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - **Timer**: `ura-maintenance-v2.timer` - ejecuta cada 6 horas (00,06,12,18)
 - **Rutas corregidas**: Usa `/home/ramon/URA/` (no `/opt/ura/`)
 - **Sin teatro**: `|| true` eliminados de pasos críticos
+
+### Timers reales activos (verificado 2026-08-07)
+- `ura-maintenance-v2.timer` (6h — tuneladora)
+- `ura-pipeline.timer` → `ura-pipeline.service` (`/usr/local/bin/ura-motor pipeline`)
+- `ura-auditd-watchdog.timer` → `ura-auditd-watchdog.service`
+- `ura-memory-watchdog.timer` → `ura-memory-watchdog.service`
+- `ura-mochila-guard.timer` → `ura-mochila-guard.service`
+- `ura-watchdog.timer` → `ura-watchdog.service`
+- `ura-backup.timer`, `ura-audit-extra.timer`, `ura-harden.timer`, `ura-cleanup.timer`,
+  `ura-consolidate.timer`, `ura-fix.timer`
+- `ura-cleanup-auto.timer` → `ura-cleanup-auto.service` (diario, último SUCCESS)
+- ⚠️ `ura-consolidate.timer` + `ura-fix.timer` están enabled pero sus servicios están failed (falso servicio — Tramo B F7)
+- ⚠️ `deploy/timers/ura-mutmut.*` existe en repo pero NO está instalado (decisión: integrar o retirar)
 
 ### Sandbox Containers
 | Container | Propósito | Estado |

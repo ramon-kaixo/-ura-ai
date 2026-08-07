@@ -6,10 +6,13 @@ After=network.target openclaw-gateway.service
 Type=simple
 User=ramon
 WorkingDirectory=/home/ramon/URA/ura_ia_1972
-Environment="OPENCODE_GATEWAY_URL=ws://10.164.1.99:18789"
-Environment="OPENCODE_GATEWAY_TOKEN=gw_live_7f8d22e41a9c4bbda901e35a11c822ff9b106"
-Environment="OPENCODE_SERVER_USERNAME=ramon"
-Environment="OPENCODE_SERVER_PASSWORD=c_pass_d38c11e7a5bf029e0614ddf4b822d4c990a01"
+# Secretos NO hardcoded (ver docs/architecture/SECRETS.md). Variables requeridas en /etc/ura/secrets.env:
+#   OPENCODE_GATEWAY_URL   (ej. ws://10.164.1.99:18789)
+#   OPENCODE_GATEWAY_TOKEN
+#   OPENCODE_SERVER_USERNAME
+#   OPENCODE_SERVER_PASSWORD
+# La rotación de token/password es decisión y tarea de Ramón (hardening E.º sistema).
+EnvironmentFile=/etc/ura/secrets.env
 ExecStart=/home/ramon/.opencode/bin/opencode web --port 8081 --hostname 0.0.0.0
 Restart=always
 RestartSec=10
