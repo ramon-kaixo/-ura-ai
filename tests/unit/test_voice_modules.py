@@ -14,6 +14,7 @@ pytest.importorskip("torch")
 
 
 import sqlite3
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -24,8 +25,9 @@ import pytest
 class TestPiperTTSMotor:
     @pytest.fixture
     def tts(self, tmp_path, monkeypatch):
-        from core.voice import tts_piper as mod
+        from core.voice.tts_piper import PiperTTSMotor
 
+        mod = sys.modules[PiperTTSMotor.__module__]
         monkeypatch.setattr(mod, "VOICES_DIR", tmp_path / "voices")
         (tmp_path / "voices").mkdir()
         (tmp_path / "voices" / "es_ES-davefx-medium.onnx").write_bytes(b"modelo")
@@ -36,8 +38,6 @@ class TestPiperTTSMotor:
         piper.chmod(0o755)
         monkeypatch.setattr(mod, "PIPER_BIN", str(piper))
         with mock.patch.object(mod.sd, "query_devices", return_value=[]):
-            from core.voice.tts_piper import PiperTTSMotor
-
             return PiperTTSMotor(stt_pipeline=None)
 
     def test_init_find_devices(self, tts) -> None:
@@ -45,12 +45,11 @@ class TestPiperTTSMotor:
         assert tts.output_wav == "/tmp/ura_tts_output.wav"
 
     def test_init_voice_no_existe(self, tmp_path, monkeypatch) -> None:
-        from core.voice import tts_piper as mod
+        from core.voice.tts_piper import PiperTTSMotor
 
+        mod = sys.modules[PiperTTSMotor.__module__]
         monkeypatch.setattr(mod, "VOICES_DIR", tmp_path / "nope")
         with pytest.raises(FileNotFoundError):
-            from core.voice.tts_piper import PiperTTSMotor
-
             PiperTTSMotor()
 
     def test_repr(self, tts) -> None:
