@@ -188,7 +188,7 @@ El repo repositorio `deploy/opencode.service` contenía `OPENCODE_GATEWAY_TOKEN`
 | ura-voice | ❌ **failed** | unit corregido en repo (`deploy/ura-voice.service`); pendiente deploy + debug audio |
 | ura-fix | ✅ inactive (success) | Drop-in PATH al venv aplicado; timer desactivado (incidente sanear_codigo, ver §11) |
 | opencode | ❌ failed | Pendiente: valores reales de OPENCODE_* en /etc/ura/secrets.env |
-| ura-hetzner-tunnel | ❌ failed | Infra externa caída (178.105.81.83:22 refused) |
+| ura-hetzner-tunnel | ❌ disabled | Infra externa caída, desactivado hasta nuevo aviso |
 | snap-brave | ❌ failed | No es URA |
 
 ## §11 Incidente corrupción masiva — sanear_codigo.py (2026-08-07)
