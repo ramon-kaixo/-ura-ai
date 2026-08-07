@@ -180,14 +180,28 @@ sudo systemctl disable --now ura-hetzner-tunnel.service
 ## Nota de seguridad (2026-08-07)
 El repo repositorio `deploy/opencode.service` contenía `OPENCODE_GATEWAY_TOKEN` y `OPENCODE_SERVER_PASSWORD` en claro. **La token/password deben rotarse igualmente** aunque el unit del sistema ya no las necesite en el repo (el secret seguía circulando en git history). El `EnvironmentFile` debe contener las vars nuevas.
 ---
-## §10 Estado post-fix (2026-08-07)
+## §10 Estado post-fix (2026-08-07, re-verificado 12:15 CEST)
 
-| Servicio | Estado | Fix aplicado |
+| Servicio | Estado verificado | Fix aplicado / pendiente |
 |----------|--------|-------------|
-| ura-openclaw | ✅ active | secrets.env creado |
-| ura-voice | ✅ active | Ruta corregida a motor/core/voice/anker_pipeline.py |
-| ura-fix | ✅ inactive (success) | Drop-in PATH al venv |
-| opencode | ❌ failed | Pendiente: valores reales en /etc/ura/secrets.env |
+| ura-openclaw | ⚠️ **activating** (no active) | reiniciado tras core-dump; pendiente confirmar que quede stable |
+| ura-voice | ❌ **failed** | unit corregido en repo (`deploy/ura-voice.service`); pendiente deploy + debug audio |
+| ura-fix | ✅ inactive (success) | Drop-in PATH al venv aplicado; timer desactivado (incidente sanear_codigo, ver §11) |
+| opencode | ❌ failed | Pendiente: valores reales de OPENCODE_* en /etc/ura/secrets.env |
 | ura-hetzner-tunnel | ❌ failed | Infra externa caída (178.105.81.83:22 refused) |
 | snap-brave | ❌ failed | No es URA |
+
+## §11 Incidente corrupción masiva — sanear_codigo.py (2026-08-07)
+
+**Síntoma:** `make validate` con 51 errores de colección; 18 archivos con SyntaxError (strings rotas: `;` reemplazado por `\n`).
+
+**Causa raíz:** `scripts/pro/sanear_codigo.py::fix_multiline_statements` reemplazaba `;` por newline mecánicamente, rompiendo strings Python (docstrings, CSS, URLs, test data).
+
+**Neutralización (Ramón):**
+- `ura-fix.timer` desactivado (`systemctl disable ura-fix.timer`)
+- `sanear_codigo.py` corregido: ahora tokeniza para no tocar `;` dentro de strings (commit `e83dbd4f`)
+
+**Reparación del working tree (agente):** 18 archivos corruptos restaurados desde HEAD (`git checkout --`); suite verde 5241 passed / 0 failed.
+
+**Regla permanente:** no ejecutar scripts de sanear/reformateo/systemd sin preguntar. Reportar, no actuar.
 
