@@ -1,0 +1,52 @@
+#!/bin/bash
+# ura-task — Gestión de expedientes UDO
+# Uso: ura-task create "descripcion" | start ID | complete ID | list
+
+BASE=~/URA/ura_ia_1972/docs/orchestration/tasks
+INDEX=~/URA/ura_ia_1972/docs/orchestration/index/tasks_index.md
+
+case "$1" in
+  create)
+    ID="TASK-$(date +%Y%m%d)-$(ls $BASE/pending/ 2>/dev/null | wc -l | xargs printf '%03d')"
+    FILE="$BASE/pending/${ID}.md"
+    cat > "$FILE" <<EOF
+---
+id: $ID
+fecha: $(date +%Y-%m-%d)
+solicitante: ${URA_SOLICITANTE:-RAMON}
+descripcion: $2
+estado: PENDING
+commits: []
+archivos: []
+pendientes: []
+notas: 
+---
+EOF
+    echo "Creado: $FILE"
+    ;;
+  start)
+    ID="$2"
+    mv "$BASE/pending/${ID}.md" "$BASE/in_progress/${ID}.md" 2>/dev/null && echo "Iniciado: $ID" || echo "No encontrado: $ID"
+    ;;
+  complete)
+    ID="$2"
+    mv "$BASE/in_progress/${ID}.md" "$BASE/completed/${ID}.md" 2>/dev/null && echo "Completado: $ID" || echo "No encontrado: $ID"
+    ;;
+  list)
+    echo "=== PENDING ===" && ls $BASE/pending/ 2>/dev/null
+    echo "=== IN PROGRESS ===" && ls $BASE/in_progress/ 2>/dev/null
+    echo "=== COMPLETED ===" && ls $BASE/completed/ 2>/dev/null
+    ;;
+  *)
+    echo "Uso: ura-task create|start|complete|list"
+    ;;
+esac
+
+# Regenerar índice
+echo "# Índice de Tareas" > "$INDEX"
+echo "" >> "$INDEX"
+echo "## Pending" >> "$INDEX" && ls $BASE/pending/ >> "$INDEX" 2>/dev/null
+echo "" >> "$INDEX"
+echo "## In Progress" >> "$INDEX" && ls $BASE/in_progress/ >> "$INDEX" 2>/dev/null
+echo "" >> "$INDEX"
+echo "## Completed" >> "$INDEX" && ls $BASE/completed/ >> "$INDEX" 2>/dev/null

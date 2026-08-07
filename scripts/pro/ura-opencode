@@ -12,6 +12,9 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+export URA_SOLICITANTE=TERM
+$HOME/URA/ura_ia_1972/scripts/pro/ura-task create "$*" >/dev/null
+
 /home/ramon/.opencode/bin/opencode run \
     --attach "$URL" \
     --username "$USER" \

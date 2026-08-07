@@ -1,0 +1,5 @@
+#!/bin/bash
+# ura-status — Estado del proyecto UDO
+echo "=== TAREAS ===" && scripts/pro/ura-task list
+echo "=== ÚLTIMOS COMMITS ===" && git log --oneline -5
+echo "=== RAMA ===" && git branch --show-current
