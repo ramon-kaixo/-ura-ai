@@ -6,11 +6,17 @@
 **Regla:** cada puente se corta con shim temporal (ver precedente `core/config_manager.py`) y
 se elimina en v4.x. Ninguna migración se ejecuta sin decisión de Ramón (ADR-007).
 
-## 1. Puente CORTADO (precedente)
+## 1. Puentes CORTADOS
 
 | Módulo core/ | Equivalente motor/ | Commit | Estado |
 |---|---|---|---|
-| `config_manager` | `motor/core/config_manager.py` | `e7b7d331` (+ prep `5f493cd2`) | ✅ **CORTADO** — `core/config_manager.py` es shim `from motor.core.config_manager import *`; 209 líneas movidas, 2 rutas absolutas preparadas. Consumidores (12) siguen funcionando vía shim |
+| `config_manager` | `motor/core/config_manager.py` | `e7b7d331` (+ prep `5f493cd2`, fix rutas `c35ee77e`) | ✅ **CORTADO** — `core/config_manager.py` es shim `from motor.core.config_manager import *`; 209 líneas movidas, rutas relativas `_URA_ROOT = Path(__file__).resolve().parents[2]`. Consumidores (12) funcionando vía shim |
+| `notifier` | `motor/core/notifier.py` | `5c1cb133` | ✅ **CORTADO** — puente notifier ya commiteado |
+| `query_cache` | `motor/core/query_cache.py` | (paralelo) | ✅ **CORTADO** — shim transparente (dict TTL) |
+| `json_logger` | `motor/core/llm/_logging.py` | (paralelo) | ✅ **CORTADO** — shim + consumidores internos migrados |
+| `search_engine` | `motor/core/search_engine.py` | `9d971e8f` | ✅ **CORTADO** — shim transparente; import interno corregido a `motor.core.*` |
+| `agents` | `motor/core/agents/` | `b1225ca7` | ✅ **CORTADO** — shim transparente; imports internos → `motor.core.*` |
+| `memory_engine` | `motor/core/memory_engine.py` | (paralelo) | ✅ **CORTADO** — shim transparente |
 
 ## 2. Puentes PENDIENTES (mapa de migración)
 
@@ -18,29 +24,22 @@ Conteos de importadores verificados el 2026-08-07 (excluye build/, .attic/, .ven
 
 | Módulo core/ | Consumidores | Equivalente motor/ | API compatible | Acción propuesta |
 |---|---|---|---|---|
-| `query_cache` | 8 | **NO EXISTE** | — | Mover a `motor/core/query_cache.py` + shim. Es self-contained (dict TTL) — migración trivial |
-| `notifier` | 6 | **NO EXISTE** (parcial: `knowledge/engine/notify.py` Slack/Email) | Distinta | Mover a `motor/core/notifier.py` + shim. Evaluar unificar con notify.py (Telegram/Pushover + Slack/Email) |
-| `json_logger` | 8 | `motor/core/llm/_logging.py` | **Distinta** (`log_call`, `percentile` vs API json_logger) | Comparar APIs; mover json_logger a `motor/core/` y que `_logging.py` lo use, o mantener ambos documentando diferencia |
 | `chunking` | 6 | `motor/intelligence/chunking.py` (`Chunk`, `SemanticChunker`) | **Distinta** (`chunk_semantic` retorna `list[str]` vs `list[Chunk]`) | APIs distintas → NO fusionar aún. Documentar divergencia; decisión de unificación en fase futura |
 | `memory_engine` | 5 | `motor/memory/` (journal, snapshot, timeline, crypto, models) | Distinta (conceptos: WAL/snapshot vs engine) | Migrar: core/memory_engine es capa de consulta/escritura; motor/memory es persistencia durable. Requiere ADR (toca motor/core) — decisión Ramón |
 | `voice` | 4 | **NO EXISTE** | — | Decidir: mover a `motor/platform/` o mantener en core (depende de dirección de voz) |
 
 ## 3. Resumen
 
-- ✅ 1 de 7 cortado (`config_manager`, precedente shim validado).
-- ⏳ 6 pendientes: 2 sin equivalente (mover + shim), 1 parcial (evaluar unificación),
-  2 con API distinta (documentar, no fusionar), 1 requiere ADR (decisión Ramón).
+- ✅ 7 de 10 cortados (`config_manager`, `notifier`, `query_cache`, `json_logger`, `search_engine`, `agents`, `memory_engine`).
+- ⏳ 3 pendientes: `chunking` (API distinta, no fusionar), `memory_engine`→motor/memory (ADR, decisión Ramón), `voice` (decisión de dirección).
 - Los shims `# noqa: F401,F403` son capa de compatibilidad → política de deprecación v3.x:
   marcar `DeprecationWarning`, eliminar en v4.0.
 
-## 4. Orden sugerido de ejecución (cuando Ramón decida)
+## 4. Order sugerido de ejecución (cuando Ramón decida)
 
-1. `query_cache` (trivial, self-contained)
-2. `notifier` (mover + evaluar unificación notify.py)
-3. `json_logger` (mover a motor/core)
-4. `voice` (decisión de dirección)
-5. `chunking` (documentar divergencia; unificar más tarde)
-6. `memory_engine` → motor/memory (ADR, toca motor/core)
+1. `chunking` (documentar divergencia; unificar más tarde)
+2. `memory_engine` → motor/memory (ADR, toca motor/core, decisión Ramón)
+3. `voice` (decisión de dirección)
 
 Cada corte: mismo patrón que `e7b7d331` — mover archivo a motor/, shim re-export en core/,
 `make validate`, commit por puente.
