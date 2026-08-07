@@ -98,7 +98,13 @@
 | F5: decidir archivo de `core/model_router/` (ADR-007 segunda revisión) | Ramón |
 | F3/v4.0e: unificar memoria v1→v2 | Ramón (toca motor/core) |
 | Fase 2 v4.0: providers LLM | Ramón + otro agente |
-| Tag final `v4.0.0-arch` + push (origin 492+ atrás) | Ramón |
+| Tag final `v4.0.0-arch` + push (origin 507 atrás) | Ramón |
+
+### Resuelto (2026-08-07)
+
+- ✅ **Fix rutas** `motor/core/config_manager.py` — `_URA_ROOT = Path(__file__).resolve().parents[2]` y `:189-190` usan `_URA_ROOT` (commit `c35ee77e`).
+- ✅ **Tag retageado**: `v4.0.0-arch` ahora apunta a `df1fe98a` con mensaje "Tag arquitectura v4.0 — 5 puentes + fix rutas".
+- ✅ **Puente notifier** commiteado (`5c1cb133`).
 
 ### Origin/main — análisis (2026-08-06, Bloque 2)
 
