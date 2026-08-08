@@ -655,7 +655,7 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
 | **PM v3.1** | ✅ Cerrada | Plan Maestro validación: `make validate`/`validate-full`, inventario 324 herramientas, shadowing M1 fix, cobertura core/ 38.8%→**51.1%**, mypy hook informativo. Ver `docs/audit/PLAN_MAESTRO_CLOSEOUT.md` |
 
-### UDO — Orquestación de tareas (F1+F2, 2026-08-08)
+### UDO — Orquestación de tareas (F1+F2+F2.2 cerradas, F3 NO-GO — tag v0.30.0-f2, 2026-08-08)
 
 Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin panel, sin dispatcher.
 
@@ -671,7 +671,7 @@ Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin p
 - **Memoria**: enlaza `docs/pro/sesiones/` y `docs/architecture/` — NO duplica
 - **Reversible**: `rm -rf docs/udo/ && rm scripts/pro/ura-udo` deja URA intacta
 - **Credenciales OpenCode web**: `OPENCODE_WEB_PASS` vía env o `/etc/ura/secrets.env` (añadir con sudo: `echo 'OPENCODE_WEB_PASS=…' >> /etc/ura/secrets.env`)
-- Detalles: `docs/udo/README.md`, closeout F2: `docs/udo/CLOSEOUT-F2-2026-08-08.md`
+- Detalles: `docs/udo/README.md`, closeout F2: `docs/udo/CLOSEOUT-F2-2026-08-08.md` (§13 cierre formal F1-F3), auditoría F3: `docs/udo/AUDITORIA-F3-2026-08-08.md`, directiva permanente: `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`
 
 ### Policy: Exclusiones de CI
 En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
