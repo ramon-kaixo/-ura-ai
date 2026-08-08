@@ -25,7 +25,6 @@ CRITICAL_SERVICES=(
   "gdm.service"
   "opencode.service"
   "ollama.service"
-  "ura-openclaw.service"
   "model-router.service"
   "model-router"
   "ura-mochila.service"

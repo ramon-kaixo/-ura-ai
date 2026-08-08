@@ -6,7 +6,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from core.guardian_openclaw import get_guardian
+from core.guardian_acciones import get_guardian
 
 log = logging.getLogger("mochila.guardian")
 guardian = get_guardian()
@@ -32,5 +32,5 @@ class GuardianMiddleware(BaseHTTPMiddleware):
 
 def init_guardian():
     estado = guardian.estado()
-    log.info("GuardianOpenClaw: {len(estado.get('reglas', []))} reglas activas")
+    log.info("Guardian: {len(estado.get('reglas', []))} reglas activas")
     return {"guardian": estado}

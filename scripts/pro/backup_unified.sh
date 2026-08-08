@@ -48,7 +48,6 @@ backup_config() {
         /etc/systemd/journald.conf \
         /etc/systemd/journald.conf.d/ \
         /etc/ura/ \
-        /home/ramon/.openclaw/ \
         2>/dev/null || true
     local size=$(du -h "$dest" | cut -f1)
     update_summary "config" "ok" "${size}"

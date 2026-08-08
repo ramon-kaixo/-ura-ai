@@ -72,7 +72,7 @@ clean_asus() {
     ssh "$ASUS_HOST" "rm -rf '$ASUS_DIR/data/snapshots'/* 2>/dev/null" || true
     log "  ✓ snapshots limpiados en ASUS"
     
-    # NO tocar: config/, data/documentos, data/openclaw_stats.json
+    # NO tocar: config/, data/documentos
     
     log "=== ASUS LIMPIADO ==="
 }
@@ -106,7 +106,6 @@ case "$1" in
         echo "Archivos PRESERVADOS:"
         echo "  - config/ (configuración)"
         echo "  - data/documentos/ (documentos)"
-        echo "  - data/openclaw_stats.json (estadísticas)"
         echo "  - scripts/pro/.nervioso/watermarks.json (watermarks)"
         exit 1
         ;;

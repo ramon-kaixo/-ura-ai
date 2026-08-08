@@ -21,7 +21,7 @@ CRITICOS=(
   "ura-audit"
   "ura-contexto"
   ".analisis.sh"
-  "core/guardian_openclaw.py"
+  "core/guardian_acciones.py"
   "core/change_guardian.py"
   "core/guardians/ast_sentinel.py"
   "core/sandbox/docker_orchestrator.py"

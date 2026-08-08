@@ -1,14 +1,12 @@
 [Unit]
-Description=OpenCode Web Server with OpenClaw Gateway and Ollama
-After=network.target openclaw-gateway.service
+Description=OpenCode Web Server
+After=network.target
 
 [Service]
 Type=simple
 User=ramon
 WorkingDirectory=/home/ramon/URA/ura_ia_1972
 # Secretos NO hardcoded (ver docs/architecture/SECRETS.md). Variables requeridas en /etc/ura/secrets.env:
-#   OPENCODE_GATEWAY_URL   (ej. ws://10.164.1.99:18789)
-#   OPENCODE_GATEWAY_TOKEN
 #   OPENCODE_SERVER_USERNAME
 #   OPENCODE_SERVER_PASSWORD
 # La rotación de token/password es decisión y tarea de Ramón (hardening E.º sistema).

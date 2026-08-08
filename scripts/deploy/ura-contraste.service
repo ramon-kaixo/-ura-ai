@@ -1,7 +1,6 @@
 [Unit]
 Description=Servicio URA Proxy Contraste (Uvicorn)
 After=network.target tailscaled.service
-PartOf=ura-openclaw.service
 
 [Service]
 Type=simple

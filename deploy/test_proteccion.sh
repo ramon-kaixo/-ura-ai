@@ -137,13 +137,6 @@ else
     red "FALLO: tests unitarios fallaron"
 fi
 
-test_n "Verificar tests OpenClaw (12)"
-if python3 -m pytest "$URA_REPO/tests/test_openclaw.py" -q > /dev/null 2>&1; then
-    green "12/12 tests OpenClaw pasan"
-else
-    red "FALLO: tests OpenClaw fallaron"
-fi
-
 # ============================================================
 # TEST 12: Verificar SNC autonomía
 # ============================================================

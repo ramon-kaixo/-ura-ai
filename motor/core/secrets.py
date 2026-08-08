@@ -39,7 +39,6 @@ KNOWN_SECRETS = frozenset(
         "PUSHOVER_APP_TOKEN",
         "TELEGRAM_TOKEN",
         "TELEGRAM_CHAT_ID",
-        "OPENCLAW_GATEWAY_TOKEN",
         "URA_SMTP_PASS",
         "URA_SMTP_HOST",
         "URA_SMTP_PORT",

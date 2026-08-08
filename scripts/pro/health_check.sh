@@ -11,7 +11,6 @@ LOG="/tmp/ura_health_check.log"
 
 # Mapa de servicios → endpoint de salud
 declare -A HEALTH_ENDPOINTS=(
-    ["ura-openclaw"]="http://127.0.0.1:18789/health"
     ["ura-ejecutor"]="http://127.0.0.1:4096/health"
     ["model-router"]="http://127.0.0.1:11435/health"
     ["ura-mkdocs"]="http://127.0.0.1:8088/health"

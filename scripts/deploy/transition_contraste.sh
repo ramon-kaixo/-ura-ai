@@ -28,10 +28,9 @@ sudo pkill -f watchdog 2>/dev/null || true
 echo "[4/4] Recargando systemd y activando servicios..."
 sudo systemctl daemon-reload
 sudo systemctl enable --now ura-contraste.service 2>/dev/null || true
-sudo systemctl enable --now ura-openclaw.service 2>/dev/null || true
 
 echo "=== [AUTO-DEPLOY] Completado ==="
 echo "Servicios instalados:"
-ls /etc/systemd/system/ura-contraste.service /etc/systemd/system/ura-openclaw.service 2>/dev/null
+ls /etc/systemd/system/ura-contraste.service 2>/dev/null
 echo "Estado:"
-sudo systemctl is-active ura-contraste.service ura-openclaw.service 2>/dev/null
+sudo systemctl is-active ura-contraste.service 2>/dev/null

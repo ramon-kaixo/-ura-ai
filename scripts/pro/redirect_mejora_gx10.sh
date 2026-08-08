@@ -18,7 +18,7 @@ echo "Desviando carga pesada al ASUS GX10 (128GB unificada)..." | tee -a "$LOG"
 # ------------------------------------------------------------------------------
 # PASO A: PASAR ANALISIS ESTATICO REMOTO EN EL ASUS
 # ------------------------------------------------------------------------------
-echo "[1/3] Solicitando escaneo de calidad (Ruff) en el entorno del ASUS..." | tee -a "$LOG"
+echo "[1/2] Solicitando escaneo de calidad (Ruff) en el entorno del ASUS..." | tee -a "$LOG"
 
 REPO_REMOTO="/home/ramon/URA/ura_ia_1972"
 ssh -o ConnectTimeout=5 ${ASUS_SSH} "cd ${REPO_REMOTO} && ruff check . --format=json --quiet" > /tmp/ura_ruff_report.json 2>/dev/null
@@ -26,25 +26,9 @@ ERRORS=$(python3 -c "import json;d=json.load(open('/tmp/ura_ruff_report.json'));
 echo "  Reporte recibido: $ERRORS errores encontrados" | tee -a "$LOG"
 
 # ------------------------------------------------------------------------------
-# PASO B: INVOCAR A OPENCODE PARA ARREGLAR ERRORES (VIA API :4096)
+# PASO B: BUCLE DE ESPERA Y MONITOREO DE CONCIENCIA (:9093)
 # ------------------------------------------------------------------------------
-echo "[2/3] Despertando a OpenCode en el GX10 para Auto-Fix..." | tee -a "$LOG"
-
-TASK_MSG="Corrige los fallos detectados. Optimiza para Blackwell. Los archivos objetivo estan en el repositorio."
-
-RESPONSE=$(curl -s -X POST "${ASUS_EXEC}/api/openclaw/ejecutar" \
-     -H "Content-Type: application/json" \
-     -d "{
-       \"task_description\": \"${TASK_MSG}\",
-       \"target_files\": [\"${REPO_REMOTO}/agents/\", \"${REPO_REMOTO}/scripts/\"]
-     }" 2>/dev/null)
-
-echo "  Respuesta: $RESPONSE" | tee -a "$LOG"
-
-# ------------------------------------------------------------------------------
-# PASO C: BUCLE DE ESPERA Y MONITOREO DE CONCIENCIA (:9093)
-# ------------------------------------------------------------------------------
-echo "[3/3] Monitoreando progreso en GX10..." | tee -a "$LOG"
+echo "[2/2] Monitoreando progreso en GX10..." | tee -a "$LOG"
 
 for i in $(seq 1 12); do
     sleep 10

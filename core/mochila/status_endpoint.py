@@ -3,7 +3,6 @@
 import asyncio
 import json
 import logging
-import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -96,21 +95,8 @@ async def _tunnel_status() -> dict:
     return {"tunnel_active": active, "searxng_accessible": searxng_ok}
 
 
-async def _openclaw_status() -> dict:
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            openclaw_host = os.environ.get("OPENCLAW_HOST", "10.164.1.99")
-            resp = await client.get(f"http://{openclaw_host}:18789/health")
-            if resp.status_code == 200:
-                return {"ok": True, "detalle": resp.json()}
-            return {"ok": False, "detalle": resp.text[:100]}
-    except Exception as e:
-        return {"ok": False, "detalle": str(e)[:100]}
-
-
 async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_count: int, router) -> dict:
-    openclaw, ram, alem, tunnel, timers_list = await asyncio.gather(
-        _openclaw_status(),
+    ram, alem, tunnel, timers_list = await asyncio.gather(
         _ram_info(),
         _alemania_status(),
         _tunnel_status(),
@@ -136,7 +122,6 @@ async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_co
         },
         "circuit_breaker": {p: circuit_breaker.estado(p) for p in providers},
         "cost_hoy": cost_tracker.resumen_hoy(),
-        "openclaw": _to(openclaw),
         "ram": _to(ram),
         "fs_bug": _fs_bug_status(),
         "alemania": _to(alem),

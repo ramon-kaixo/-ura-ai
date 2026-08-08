@@ -34,7 +34,6 @@ PUERTOS_TAILSCALE = [
 PUERTOS_HETZNER = [
     {"puerto": 11434, "protocolo": "TCP", "descripcion": "Ollama API"},
     {"puerto": 8081, "protocolo": "TCP", "descripcion": "OpenCode Server"},
-    {"puerto": 18789, "protocolo": "TCP", "descripcion": "OpenClaw Gateway"},
     {"puerto": 22, "protocolo": "TCP", "descripcion": "SSH"},
 ]
 
