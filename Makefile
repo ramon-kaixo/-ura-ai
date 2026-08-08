@@ -10,12 +10,18 @@ PYTEST_SLOW := -m "not slow"
 RUFF := $(PYTHON) -m ruff
 
 # === VALIDACIÓN RÁPIDA (desarrollo local, < 30s con xdist) ===
-validate: test-fast lint mypy-info radon verify-hooks
+validate: test-fast lint mypy-info radon verify-hooks test-udo
 	@echo "✅ validate OK"
 
 # === VALIDACIÓN COMPLETA (CI, < 3 min) ===
-validate-full: test lint mypy-info radon
+validate-full: test lint mypy-info radon test-udo
 	@echo "✅ validate-full OK"
+
+# === TESTS UDO (F5 N2: integrados en validate — bash autónomo, sin pytest) ===
+test-udo:
+	@echo "▶ tests UDO (udo + engineering)..."
+	bash tests/udo/test_udo.sh
+	bash tests/engineering/test_engineering.sh
 
 # === TESTS RÁPIDOS (secuencial: xdist satura el host con -n auto, OpenBLAS falla) ===
 test-fast:

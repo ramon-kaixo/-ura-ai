@@ -49,7 +49,7 @@ UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$B" --estado IN_PROGRESS --
 # 5. Reserva BLOQUEADA: B intenta X ya reservado por A
 echo "-- 5. Reserva bloqueada (enforcement)"
 out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$B" --add "zona_a/foo.py" 2>&1); rc=$?
-[ "$rc" -ne 0 ] && echo "$out" | grep -q "está reservada por $A" && ok "B bloqueada por A" || bad "B bloqueada por A (rc=$rc: $out)"
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "BLOQUEADO: .*TASK=$A" && ok "B bloqueada por A" || bad "B bloqueada por A (rc=$rc: $out)"
 
 # 6. update --reserva también bloquea
 echo "-- 6. update --reserva bloquea"
