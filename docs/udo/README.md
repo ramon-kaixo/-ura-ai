@@ -60,3 +60,19 @@ ura-udo verify TASK-...   # pide: expediente OK, commit con [TASK-ID], git limpi
 - `ura-task`/`ura-status`/`docs/orchestration/` retirados en favor de `ura-udo` (esta estructura).
 - Credenciales de OpenCode web: `OPENCODE_WEB_PASS` desde entorno o `/etc/ura/secrets.env` (nunca en el repo).
 - La retirada de OpenClaw vive en su propio commit (ver `git log --grep OpenClaw`).
+
+## Retirada OpenClaw (`c6d60c8c`, 2026-08-08)
+
+Criterio: `grep -rli openclaw scripts/ core/ motor/ deploy/` → **0** (código vivo).
+
+| Excepción | Razón | Estado |
+|---|---|---|
+| `monitor/openclaw.py` + SNC (`monitor/snc.py`) | Brazo de emergencia del SNC — decisión Ramón | 🔒 Intacto |
+| `core/model_router/cli.py` | Auth de arranque con `OPENCLAW_GATEWAY_TOKEN` | 🔒 Intacto (ADR-007) |
+| `data/openclaw_stats.json` | Estadísticas runtime | 🔒 Intacto |
+| `tests/integration/test_openclaw.py` | Test muerto (módulo `monitor/` — zona protegida tests/) | ⚠️ No tocar (regla) |
+| `scripts/pro/tuneladora/snapshot.py` | Zona protegida (tuneladora) | ⚠️ Pendiente decisión |
+
+Pendientes Ramón (sudo): `systemctl stop+disable ura-openclaw.service`, añadir
+`OPENCODE_WEB_PASS` a `/etc/ura/secrets.env`, borrar `/home/ramon/.openclaw/`,
+re-apuntar `/usr/local/bin/opencode`.
