@@ -16,7 +16,7 @@
 | TASK-20260808-013 | F2.2 garantías de revisión (cierre AUTO-REVISIÓN) | 2026-08-08 | TERM | PENDIENTE | — | — | — |
 | TASK-20260808-015 | Auditoría Plan 0 (cierre AUTO-REVISIÓN) | 2026-08-08 | TERM | PENDIENTE | — | — | — |
 | TASK-20260808-016 | Implementación Plan 0 (cierre AUTO-REVISIÓN) | 2026-08-08 | TERM | PENDIENTE | — | — | — |
-| TASK-20260808-019 | Implementación PLAN 1 (se registrará al cierre) | 2026-08-08 | TERM | PENDIENTE | — | — | — |
+| | TASK-20260808-019 | Implementación PLAN 1 | 2026-08-08 | TERM | PENDIENTE | — | — | — |
 
 **Lote actual**: 6 tareas pendientes de revisión independiente (todas de TERM). La revisión de este lote forma parte del cierre del PLAN 1 (B1).
 
