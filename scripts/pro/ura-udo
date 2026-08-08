@@ -142,8 +142,9 @@ _gate_revision() {
         echo "ERROR: DONE sin trabajo revisable (diff commit_base..HEAD vacío y árbol limpio)" >&2
         return 1
     fi
-    for entry in $(echo "$commits" | tr ',' '\n' | sed 's/^ *//' | grep -v '^$'); do
-        sha=$(echo "$entry" | cut -d' ' -f1)
+    local IFS=','
+    for entry in $(echo "$commits"); do
+        sha="${entry# }"; sha="${sha%% *}"
         if ! git -C "$REPO" merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then
             echo "ERROR: DONE bloqueado — commit '$sha' no es ancestro de HEAD (historia reescrita tras verificación)" >&2
             return 1

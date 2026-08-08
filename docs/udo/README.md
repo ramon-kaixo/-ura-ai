@@ -1,4 +1,4 @@
-# UDO — URA Development Orchestrator (F1 + F2)
+# UDO — URA Development Orchestrator (F1 + F2 + F2.2)
 
 Capa mínima de coordinación entre agentes (Web/TERM/Ramón) y Git.
 **Fuente de verdad: Git (código) + `docs/udo/` (proceso).** Sin BD, sin panel, sin servidor.
@@ -20,6 +20,20 @@ válida previa la tarea no se cierra. Excepción: `--force` explícito con nota
 (autorización expresa, queda auditada en el historial). No se finge una revisión:
 si el revisor está idle, la tarea permanece `REVIEW`.
 
+**Gate de integridad de revisión (F2.2)**: al cerrar `DONE` sin `--force`,
+`ura-udo update` exige que la revisión signifique algo:
+
+1. `commits:` con al menos un commit registrado (ejecutar `verify` antes de cerrar);
+2. diff `commit_base..HEAD` no vacío (hay trabajo revisable);
+3. todos los SHAs de `commits:` son ancestros de `HEAD` en el momento del cierre
+   (**pinning** — una historia reescrita tras la verificación bloquea el DONE);
+4. árbol de trabajo limpio fuera del expediente (sin cambios sin commitear).
+
+**Marca honesta de auto-revisión (F2.2)**: si se cierra sin `--revisor` o el
+revisor coincide con el ejecutor, la herramienta añade `AUTO-REVISIÓN` al
+historial automáticamente (la dice la herramienta, no el texto libre). La
+revisión de un único agente queda así distinguida de una revisión cruzada.
+
 ## CLI
 
 ```bash
@@ -30,6 +44,7 @@ ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
 ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update ("" vacía)
 ura-udo update TASK-... --instrucciones "…" --restricciones "…"  # contexto propagable (F2)
 ura-udo update TASK-... --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"  # roles duales
+ura-udo update TASK-... --estado DONE --revisor "WEB" --nota "..."  # revisión (F2.2): sin --revisor o revisor==ejecutor → AUTO-REVISIÓN
 ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva (enforcement activo)
 ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
 ura-udo context TASK-...                # contexto compartido (F2): expediente + commits + reservas
@@ -119,7 +134,7 @@ Principios (Anexo A — modelo dual):
 ## Estructura canónica del expediente
 
 Orden de campos (estable, no crece arbitrariamente): `id, fecha, solicitante, descripcion,
-objetivo, estado, canal, agente_web, agente_terminal, reserva, commit_base, contexto,
+objetivo, estado, canal, agente_web, agente_terminal, revisor, reserva, commit_base, contexto,
 cambios, commits, revision, pendientes, resultado, historial`.
 
 - Los campos nuevos se insertan **antes de `historial:`** (nunca al final del archivo).
