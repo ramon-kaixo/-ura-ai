@@ -111,6 +111,7 @@ _conflicto_reserva() {
     [ -n "$rutas" ] || return 0
     while IFS='|' read -r id_res area; do
         [ -n "$area" ] || continue
+        area="${area%/}"
         for r in $rutas; do
             if [[ "$r" == "$area" || "$r" == "$area/"* ]]; then
                 echo "ERROR: '$r' está reservada por $id_res (reserva activa). Libera con reserve $id_res --clear o usa --force para autorización expresa." >&2
@@ -406,6 +407,9 @@ case "${1:-}" in
     fi
 
     # --- Discrepancias reserva vs modificado (F2) ---
+    # Match por cobertura (exacto o prefijo dir/) — misma lógica que el
+    # enforcement de _conflicto_reserva. docs/udo/tasks|.seq se ignoran
+    # (bookkeeping del expediente).
     reserva=$(_reserva "$id")
     tocados=""
     if [ -n "$base" ] && [ "$base" != "unknown" ]; then
@@ -419,18 +423,36 @@ case "${1:-}" in
     if [ -z "$tocados" ]; then
         echo "  INFO: sin archivos modificados en rango/working tree (¿commit pendiente?)"
     else
-        no_declarados=$(comm -23 <(grep -v '^docs/udo/\(tasks\|\.seq\)' <<< "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
-        if [ -n "$no_declarados" ]; then
-            echo "  MODIFICADOS SIN DECLARAR:"
-            echo "$no_declarados" | sed 's/^/    /'
-        else
-            echo "  OK: todos los archivos modificados están declarados en reserva"
-        fi
+        hay_no_declarados=""
+        for t in $tocados; do
+            case "$t" in
+                docs/udo/tasks/*|docs/udo/.seq) continue ;;
+            esac
+            cubierto=0
+            for r in $(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | grep -v '^$'); do
+                r="${r%/}"
+                if [[ "$t" == "$r" || "$t" == "$r/"* ]]; then cubierto=1; break; fi
+            done
+            if [ "$cubierto" = 0 ]; then
+                hay_no_declarados=1
+                echo "  MODIFICADOS SIN DECLARAR:"
+                echo "    $t"
+            fi
+        done
+        [ -z "$hay_no_declarados" ] && echo "  OK: todos los archivos modificados están declarados en reserva"
         if [ -n "$reserva" ]; then
-            no_tocados=$(comm -13 <(echo "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
+            no_tocados=""
+            for r in $(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | grep -v '^$'); do
+                r="${r%/}"
+                cubierto=0
+                for t in $tocados; do
+                    if [[ "$t" == "$r" || "$t" == "$r/"* ]]; then cubierto=1; break; fi
+                done
+                [ "$cubierto" = 0 ] && no_tocados="$no_tocados $r"
+            done
             if [ -n "$no_tocados" ]; then
                 echo "  RESERVADOS NO MODIFICADOS (liberación sugerida):"
-                echo "$no_tocados" | sed 's/^/    /'
+                echo "$no_tocados" | sed 's/^ /    /'
             fi
         fi
     fi
