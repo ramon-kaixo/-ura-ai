@@ -1,28 +1,28 @@
-"""Tests for core/guardian_openclaw.py."""
+"""Tests for core/guardian_acciones.py."""
 
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from core.guardian_openclaw import GuardianOpenCLaw, get_guardian
+from core.guardian_acciones import GuardianAcciones, get_guardian
 
 
 @pytest.fixture
 def guardian(tmp_path, monkeypatch):
-    monkeypatch.setattr("core.guardian_openclaw.BACKUP_DIR", tmp_path / "backups")
-    monkeypatch.setattr("core.guardian_openclaw.AUDIT_LOG", tmp_path / "audit.log")
-    monkeypatch.setattr("core.guardian_openclaw.SANDBOX_DIR", tmp_path / "sandbox")
-    g = GuardianOpenCLaw()
+    monkeypatch.setattr("core.guardian_acciones.BACKUP_DIR", tmp_path / "backups")
+    monkeypatch.setattr("core.guardian_acciones.AUDIT_LOG", tmp_path / "audit.log")
+    monkeypatch.setattr("core.guardian_acciones.SANDBOX_DIR", tmp_path / "sandbox")
+    g = GuardianAcciones()
     return g
 
 
 class TestInit:
     def test_crea_directorios(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("core.guardian_openclaw.BACKUP_DIR", tmp_path / "b")
-        monkeypatch.setattr("core.guardian_openclaw.AUDIT_LOG", tmp_path / "a.log")
-        monkeypatch.setattr("core.guardian_openclaw.SANDBOX_DIR", tmp_path / "s")
-        GuardianOpenCLaw()
+        monkeypatch.setattr("core.guardian_acciones.BACKUP_DIR", tmp_path / "b")
+        monkeypatch.setattr("core.guardian_acciones.AUDIT_LOG", tmp_path / "a.log")
+        monkeypatch.setattr("core.guardian_acciones.SANDBOX_DIR", tmp_path / "s")
+        GuardianAcciones()
         assert (tmp_path / "b").is_dir()
         assert (tmp_path / "s").is_dir()
 
@@ -212,7 +212,7 @@ class TestEjecutar:
 
 class TestSingleton:
     def test_get_guardian_mismo(self, monkeypatch):
-        monkeypatch.setattr("core.guardian_openclaw.BACKUP_DIR", Path("/tmp/x"))
+        monkeypatch.setattr("core.guardian_acciones.BACKUP_DIR", Path("/tmp/x"))
         g1 = get_guardian()
         g2 = get_guardian()
         assert g1 is g2

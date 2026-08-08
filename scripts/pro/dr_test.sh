@@ -34,7 +34,7 @@ fi
 
 # Test 3: Systemd services activos
 echo "--- Test 3: Servicios críticos ---" | tee -a "$LOG"
-for svc in ura-ejecutor model-router ura-openclaw ura-mochila; do
+for svc in ura-ejecutor model-router ura-mochila; do
     if systemctl is-active --quiet "$svc" 2>/dev/null; then
         ok "Servicio $svc activo"
     else

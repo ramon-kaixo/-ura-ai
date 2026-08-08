@@ -1,6 +1,6 @@
 #!/bin/bash
 # =====================================================================
-# auditoria_qwen.sh — Auditoría técnica via Qwen2.5:32b + OpenClaw
+# auditoria_qwen.sh — Auditoría técnica via Qwen2.5:32b
 # Se dispara automaticamente al detectar commits grandes
 # =====================================================================
 set -e

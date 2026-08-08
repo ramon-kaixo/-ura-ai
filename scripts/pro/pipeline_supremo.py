@@ -10,13 +10,13 @@ FLUJO CORRECTO:
   5. Compactadora (reensamblaje + validacion AST/tokens/chromatic)
   6. Auto-reglas (reglas deterministas F821)
   7. Scanner salida (diff + chunk_optimizer bucle cerrado)
-  8. Inspectores + OpenClaw (paralelo)
+  8. Inspectores
   9. Alineador (validacion de respuestas)
-  10. Decision consenso (ESCRIBIR/WATERMARK/REPARAR/ROLLBACK)
+  10. Decision consenso (ESCRIBIR/REPARAR/RECHAZADO/ROLLBACK)
   11. Guardian verify (post-escritura)
 
 FUSIONADO CON:
-  - alineador.py (validacion de calidad de respuestas URA/OpenClaw)
+  - alineador.py (validacion de calidad de respuestas)
 """
 
 import json
@@ -150,16 +150,6 @@ def step_inspectores(ruta):
     return result
 
 
-def step_openclaw(ruta):
-    update_conciencia("openclaw", "activo")
-    result = run_step(
-        [sys.executable, str(SCRIPTS / "openclaw_reviewer.py"), str(ruta), "--json"],
-        timeout=180,
-    )
-    update_conciencia("openclaw", "idle")
-    return result
-
-
 def step_alineador():
     update_conciencia("alineador", "activo")
     result = run_step([sys.executable, str(SCRIPTS / "alineador.py")], timeout=30)
@@ -225,30 +215,22 @@ def ejecutar(ruta):
         report["resultado"] = "ROLLBACK"
         return report
 
-    with ThreadPoolExecutor(max_workers=2) as ex:
+    with ThreadPoolExecutor(max_workers=1) as ex:
         fut_ins = ex.submit(step_inspectores, ruta)
-        fut_oc = ex.submit(step_openclaw, ruta)
         report["pasos"]["inspectores"] = fut_ins.result()
-        report["pasos"]["openclaw"] = fut_oc.result()
 
     report["pasos"]["alineador"] = step_alineador()
 
     ins_fallos = report["pasos"]["inspectores"].get("fallos", 5)
-    oc_veredicto = report["pasos"]["openclaw"].get("veredicto", "RECHAZAR")
     alineador_ok = report["pasos"]["alineador"].get("ok", False)
     ins_ok = ins_fallos < 5
-    oc_ok = oc_veredicto == "APROBAR"
 
     if not alineador_ok:
         report["resultado"] = "RECHAZADO (alineador)"
-    elif ins_ok and oc_ok:
+    elif ins_ok:
         report["resultado"] = "ESCRIBIR"
-    elif ins_ok and not oc_ok:
-        report["resultado"] = "WATERMARK"
-    elif not ins_ok and oc_ok:
-        report["resultado"] = "REPARAR"
     else:
-        report["resultado"] = "ROLLBACK"
+        report["resultado"] = "REPARAR"
 
     report["pasos"]["guardian_verify"] = step_guardian_verify(str(ruta))
     report["tiempo_total_s"] = round(time.time() - t0, 1)
@@ -270,7 +252,6 @@ def init_conciencia() -> None:
         "compactadora",
         "auto_reglas",
         "inspectores",
-        "openclaw",
         "alineador",
     ]:
         subprocess.run(

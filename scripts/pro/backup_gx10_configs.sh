@@ -23,7 +23,6 @@ log "=== Backup configs ${TIMESTAMP} ==="
 
 cp -r /etc/systemd/system/ura-*.service "$TMPDIR/etc/systemd/" 2>/dev/null || log "WARN: no ura-*.service"
 cp -r /etc/systemd/system/ura-*.timer "$TMPDIR/etc/systemd/" 2>/dev/null || true
-cp /etc/systemd/system/openclaw.service "$TMPDIR/etc/systemd/" 2>/dev/null || true
 cp /etc/systemd/system/opencode.service "$TMPDIR/etc/systemd/" 2>/dev/null || true
 
 sudo iptables-save > "$TMPDIR/etc/iptables/rules.v4" 2>/dev/null || log "WARN: iptables-save falló"

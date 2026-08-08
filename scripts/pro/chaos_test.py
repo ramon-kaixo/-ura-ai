@@ -139,7 +139,7 @@ def test_restart_limits(dry_run: bool = False) -> None:
     """
     log.info("\n=== Test 3: Límites de reinicio systemd ===")
 
-    servicios = ["ura-ejecutor", "model-router", "ura-openclaw", "ura-mochila", "ura-voice", "opencode"]
+    servicios = ["ura-ejecutor", "model-router", "ura-mochila", "ura-voice", "opencode"]
     for svc in servicios:
         r = subprocess.run(
             ["systemctl", "show", "-p", "StartLimitBurst", svc],

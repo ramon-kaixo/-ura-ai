@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Guardián de Seguridad para OpenClaw
-Envuelve cualquier acción de OpenClaw con reglas de seguridad.
+"""Guardián de Seguridad de Acciones
+Envuelve cualquier acción de un agente con reglas de seguridad.
 """
 
 import logging
@@ -34,8 +34,8 @@ FREE_LICENSES = [
 ]
 
 
-class GuardianOpenCLaw:
-    """Guardián de seguridad que envuelve acciones de OpenClaw."""
+class GuardianAcciones:
+    """Guardián de seguridad que envuelve acciones de agentes."""
 
     # Reglas de seguridad activas (atributo de clase)
     reglas: list[str] = [  # noqa: RUF012
@@ -69,7 +69,7 @@ class GuardianOpenCLaw:
             "passwords_bloqueados": 0,
         }
 
-        logger.info("Guardián de OpenClaw inicializado")
+        logger.info("Guardián de Acciones inicializado")
 
     def _log_audit(self, agente: str, accion: str, resultado: str, detalles: str = "") -> None:
         """Registrar acción en log de auditoría."""
@@ -347,14 +347,14 @@ class GuardianOpenCLaw:
 
 
 # Instancia global del guardián
-_guardian_instance: GuardianOpenCLaw | None = None
+_guardian_instance: GuardianAcciones | None = None
 
 
-def get_guardian() -> GuardianOpenCLaw:
+def get_guardian() -> GuardianAcciones:
     """Obtener instancia global del guardián (singleton)."""
     global _guardian_instance  # noqa: PLW0603
     if _guardian_instance is None:
-        _guardian_instance = GuardianOpenCLaw()
+        _guardian_instance = GuardianAcciones()
     return _guardian_instance
 
 

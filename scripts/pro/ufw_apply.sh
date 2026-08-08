@@ -23,9 +23,6 @@ ufw allow from 10.164.1.0/24 to any port 8888 proto tcp  # ura-metrics
 ufw allow from 10.164.1.0/24 to any port 11434 proto tcp  # ollama
 ufw allow from 10.164.1.0/24 to any port 11435 proto tcp  # model-router
 
-# OpenClaw (solo LAN)
-ufw allow from 10.164.1.0/24 to any port 18789 proto tcp
-
 # Cámaras (solo VLAN específica)
 ufw allow from 192.168.0.0/16 to any port 1984 proto tcp  # go2rtc
 ufw allow from 192.168.0.0/16 to any port 554 proto tcp    # RTSP

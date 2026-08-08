@@ -258,13 +258,6 @@ def cmd_doctor(config: UraConfig, args) -> int:
     for _line in r.stdout.strip().split("\n"):
         pass
 
-    sf = Path.home() / "URA" / "logs" / "snc_state.json"
-    if sf.exists():
-        s = json.loads(sf.read_text())
-        "🔴" if s.get("openclaw_active") else "⚫"
-    else:
-        pass
-
     r = _executor.run(
         [
             "ssh",
