@@ -22,7 +22,8 @@ ura-udo create "descripción"            # crea TASK-YYYYMMDD-NNN (solicitante: 
 ura-udo show TASK-20260808-001          # ver expediente completo
 ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada
 ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
-ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update
+ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update ("" vacía)
+ura-udo update TASK-... --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"  # roles duales
 ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva
 ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
 ura-udo list [ESTADO]                   # tareas por estado
@@ -59,17 +60,35 @@ ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos 
 
 ## Flujo de trabajo
 
-1. **Web o Terminal** crea tarea → `PLANNED`
-2. Declara **reserva** (`reserve --add`) y pasa a `IN_PROGRESS`
-3. **Commit** con formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
-4. Resultado → `REVIEW` (revisión del otro agente o Ramón)
-5. `DONE` solo al cerrar — `verify` reporta discrepancias reserva vs diff
+1. **Web o Terminal** crea tarea → `PLANNED` (campo `canal:` = solicitante)
+2. Se registran **roles duales** (`--agente_web` / `--agente_terminal`) → ejecutor + revisor independiente
+3. Declara **reserva** (`reserve --add`) y pasa a `IN_PROGRESS` (se auto-registra `commit_base`)
+4. **Commit** con formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
+5. Resultado → `REVIEW` — la reserva **sigue activa en REVIEW** (quien revisa no modifica la zona que revisa)
+6. `DONE` solo al cerrar — `verify` reporta discrepancias reserva vs diff y registra el commit en `commits:`
 
 ## Verificación
 
 ```bash
 ura-udo verify TASK-...   # pide: expediente OK, commit con [TASK-ID], git limpio, discrepancias reserva vs git
 ```
+
+## Modelo operativo dual (Web ejecuta / Terminal revisa)
+
+Principios (Anexo A — modelo dual):
+
+- **Web = ejecutor por defecto; Terminal = revisor por defecto.** Roles registrables por tarea con `--agente_web "WEB (ejecutor)"` y `--agente_terminal "TERM (revisor)"` (ver TASK-006).
+- **El revisor no modifica la zona que revisa**: la reserva protege en `IN_PROGRESS` y `REVIEW`.
+- **Una tarea independiente sí puede ser ejecutada por el otro agente** si `check` no detecta solapamiento de reservas (granularidad por archivo o prefijo `dir/`).
+- **Terminal puede**: leer, inspeccionar, ejecutar tests, analizar, verificar (`show`/`status`/`check`/`verify`). **No debe** modificar zonas reservadas por otra tarea activa.
+- **Terminal no se autodelega trabajo**: solo con TASK autorizada por Ramón o por la fase correspondiente.
+- **Una única memoria operativa**: Git (código) + UDO (estado) + `docs/architecture/` (decisiones) + `docs/pro/sesiones/` (histórico). Las conversaciones no son fuente de verdad.
+
+## Compatibilidad con tareas F1
+
+- Tareas creadas antes de F2 (sin `reserva:` ni `commit_base:`) siguen funcionando: `verify` tolera campos ausentes.
+- Al tocar una tarea F1 en `IN_PROGRESS` sin `commit_base`, este se auto-registra en el primer `update`.
+- `--reserva ""` vacía la reserva (reset).
 
 ## Enlaces (memoria existente — NO duplicar)
 

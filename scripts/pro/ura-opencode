@@ -30,7 +30,7 @@ fi
 export URA_SOLICITANTE=TERM
 TASK_ID=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo create "$*" | grep -o -m1 'TASK-[0-9-]*' | head -1)
 [ -n "$TASK_ID" ] || { echo "ERROR: no se pudo crear la tarea UDO" >&2; exit 1; }
-$HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS --nota "enviado por ura-opencode (TERM)" >/dev/null
+$HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)" --nota "enviado por ura-opencode (TERM)" >/dev/null
 
 /home/ramon/.opencode/bin/opencode run \
     --attach "$URL" \

@@ -96,7 +96,9 @@ case "${1:-}" in
         echo "descripcion: $2"
         echo "objetivo: "
         echo "estado: PLANNED"
-        echo "canal: "
+        echo "canal: ${URA_SOLICITANTE:-RAMON}"
+        echo "agente_web: "
+        echo "agente_terminal: "
         echo "reserva: []"
         echo "commit_base: "
         echo "contexto: "
@@ -121,13 +123,15 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
             --estado)  estado="${2:-}"; shift 2 ;;
             --nota)    nota="${2:-}"; shift 2 ;;
-            --reserva) reserva="${2:-}"; shift 2 ;;
+            --reserva) reserva_flag=1; reserva="${2:-}"; shift 2 ;;
+            --agente_web)      agente_web_val="${2:-}"; shift 2 ;;
+            --agente_terminal) agente_terminal_val="${2:-}"; shift 2 ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
     done
@@ -140,20 +144,32 @@ case "${1:-}" in
             exit 1
         fi
         _set_campo "$id" "estado" "$estado"
-        # Auto-registro del commit base al comenzar (delimita el git diff de la tarea)
-        if [ "$estado" = "IN_PROGRESS" ] && [ "$est_actual" != "IN_PROGRESS" ]; then
-            if [ -z "$(grep '^commit_base:' "$file" | cut -d' ' -f2-)" ]; then
-                base=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-                _set_campo "$id" "commit_base" "$base"
-            fi
-        fi
         hist="$est_actual -> $estado${nota:+ — $nota}"
     else
         hist="$nota"
     fi
+    # Auto-registro del commit base: al comenzar IN_PROGRESS, o si falta en
+    # una tarea ya en IN_PROGRESS (compatibilidad con tareas pre-F2)
+    if [ "$est_actual" = "IN_PROGRESS" ] || [ "$estado" = "IN_PROGRESS" ]; then
+        if [ -z "$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)" ]; then
+            base=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+            _set_campo "$id" "commit_base" "$base"
+        fi
+    fi
     if [ -n "$reserva" ]; then
         _set_campo "$id" "reserva" "[$reserva]"
         hist="${hist:+$hist — }reserva: [$reserva]"
+    elif [ -n "${reserva_flag:-}" ]; then
+        _set_campo "$id" "reserva" "[]"
+        hist="${hist:+$hist — }reserva: []"
+    fi
+    if [ -n "$agente_web_val" ]; then
+        _set_campo "$id" "agente_web" "$agente_web_val"
+        hist="${hist:+$hist — }agente_web: $agente_web_val"
+    fi
+    if [ -n "$agente_terminal_val" ]; then
+        _set_campo "$id" "agente_terminal" "$agente_terminal_val"
+        hist="${hist:+$hist — }agente_terminal: $agente_terminal_val"
     fi
     if [ -n "$hist" ]; then
         _apuntar "$id" "$hist" "${estado:-$est_actual}"
@@ -221,7 +237,7 @@ case "${1:-}" in
     for ruta in "$@"; do
         for k in "${keys[@]}"; do
             id_res="${k%%|*}"; area="${k#*|}"
-            if [[ "$ruta" == "$area"* ]]; then
+            if [[ "$ruta" == "$area" || "$ruta" == "$area/"* ]]; then
                 echo "CONFLICTO: '$ruta' está reservada por $id_res ($area)"
                 conflicto=1
             fi
@@ -266,9 +282,9 @@ case "${1:-}" in
     _ver_tarea "$id"
     file="$TASKS_DIR/$id.md"
     echo "TASK: $id"
-    echo "STATUS: $(grep '^estado:' "$file" | cut -d' ' -f2-)"
-    echo "RESERVA: [$(grep '^reserva:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//')]"
-    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2-)
+    echo "STATUS: $(grep '^estado:' "$file" | cut -d' ' -f2- || echo '—')"
+    echo "RESERVA: [$(grep '^reserva:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)]"
+    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
     echo "COMMIT_BASE: ${base:-—}"
     echo ""
 
@@ -277,6 +293,15 @@ case "${1:-}" in
     commit=$(git -C "$REPO" log --oneline --grep="$id" -1 2>/dev/null || true)
     if [ -n "$commit" ]; then
         echo "COMMIT: OK — $commit"
+        _lock
+        actual_commits=$(grep '^commits:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)
+        if ! grep -qF "$commit" <<< "$actual_commits"; then
+            if [ -n "$actual_commits" ]; then
+                _set_campo "$id" "commits" "[$actual_commits, $commit]"
+            else
+                _set_campo "$id" "commits" "[$commit]"
+            fi
+        fi
     else
         echo "COMMIT: WARNING — sin commit con [$id]"
     fi
@@ -286,16 +311,16 @@ case "${1:-}" in
     tocados=""
     if [ -n "$base" ] && [ "$base" != "unknown" ]; then
         tocados=$(git -C "$REPO" diff --name-only "$base..HEAD" 2>/dev/null || true)
-        tocados=$( { echo "$tocados"; git -C "$REPO" status --porcelain | sed 's/^...//'; } | sed 's/^ *//' | grep -v '^$' | sort -u )
+        tocados=$( { echo "$tocados"; git -C "$REPO" status --porcelain | sed 's/^...//'; } | sed 's/^ *//' | grep -v '^$' | sort -u || true )
     else
-        tocados=$(git -C "$REPO" status --porcelain | sed 's/^...//' | sed 's/^ *//' | grep -v '^$' | sort -u)
+        tocados=$(git -C "$REPO" status --porcelain | sed 's/^...//' | sed 's/^ *//' | grep -v '^$' | sort -u || true)
     fi
     echo ""
     echo "--- Discrepancias (reserva vs git) ---"
     if [ -z "$tocados" ]; then
         echo "  INFO: sin archivos modificados en rango/working tree (¿commit pendiente?)"
     else
-        no_declarados=$(comm -23 <(grep -v '^docs/udo/\(tasks\|\.seq\|templates/task_template.md\)' <<< "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
+        no_declarados=$(comm -23 <(grep -v '^docs/udo/\(tasks\|\.seq\)' <<< "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
         if [ -n "$no_declarados" ]; then
             echo "  MODIFICADOS SIN DECLARAR:"
             echo "$no_declarados" | sed 's/^/    /'
