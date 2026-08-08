@@ -167,7 +167,7 @@ Organizados por función en las siguientes categorías:
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
 | `opencode` | 8081 | ⏸️ parado | systemd | OpenCode Web Server — unit corregida desplegada (`EnvironmentFile=/etc/ura/secrets.env`, vars ya presentes). Parado: el proceso paralelo mantiene su opencode manual en 8081 (PID en `pts/1`, se re-lanza solo). Arrancar con `systemctl start opencode.service` cuando el manual cierre |
-| `ura-openclaw` | 18789 | 🔴 **RETIRADO del repo** (`c6d60c8c`) — pendiente `systemctl stop + disable` (sudo Ramón) | systemd | Gateway MCP — crash-loop. Código eliminado; unit vive en `/etc/systemd/system/` hasta la desactivación manual |
+| `ura-openclaw` | 18789 | ⏸️ **disabled + inactive** (2026-08-08) | systemd | RETIRADO del repo (`c6d60c8c`). Pendiente solo borrado físico (sudo Ramón): unit `/etc/systemd/system/ura-openclaw.service`, `/home/ramon/.openclaw/` (ya no existe), wrapper `/usr/local/bin/opencode` |
 | `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
 | `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
 | `ura-consolidate` | - | ✅ activo | systemd | Consolidación de código (último run SUCCESS 2026-08-07) |
@@ -233,8 +233,7 @@ Organizados por función en las siguientes categorías:
 - Código eliminado del repo (criterio: `grep openclaw` en scripts/core/motor/deploy → 0).
 - Excepciones intencionales: `monitor/` (SNC — brazo de emergencia, decisión Ramón) y `core/model_router/cli.py`
   (usa `OPENCLAW_GATEWAY_TOKEN` como auth de arranque — ADR-007 semantic freezing).
-- Pendiente Ramón (sudo): `systemctl stop + disable ura-openclaw.service`, borrar `/home/ramon/.openclaw/`,
-  re-apuntar o eliminar `/usr/local/bin/opencode` (wrapper OpenClaw).
+- Pendiente Ramón (sudo, 2026-08-08): `systemctl stop + disable ura-openclaw.service` **ya aplicado** (disabled+inactive) — falta solo borrado físico: `/etc/systemd/system/ura-openclaw.service`, `/home/ramon/.openclaw/` (ya no existe), re-apuntar o eliminar `/usr/local/bin/opencode` (wrapper OpenClaw).
 - Si OpenClaw se usara en el futuro: solo como agente externo vía API HTTP :18789, sin imports desde core/motor.
 
 ### URA Contrast Proxy + Telemetría POS (Port 8002)
