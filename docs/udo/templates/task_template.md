@@ -13,6 +13,8 @@ commit_base:
 contexto: 
 cambios: []
 commits: []
+analisis: 
+validacion: 
 revision: 
 pendientes: []
 resultado: 

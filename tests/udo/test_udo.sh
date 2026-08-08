@@ -87,7 +87,7 @@ echo "trabajo" > "$REPO_T/zona_c/trabajo.py"
 git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$C][TERM] trabajo de prueba"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$C" >/dev/null 2>&1
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado REVIEW --nota "revisado" >/dev/null
-UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado DONE --nota "cierre con gate" >/dev/null && ok "DONE con gate superado" || bad "DONE con gate superado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado DONE --analisis "Objetivo claro; contexto verificado; sin contradicciones" --validacion "suite 30/30" --nota "cierre con gate" >/dev/null && ok "DONE con gate superado" || bad "DONE con gate superado"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$C" | grep -q "AUTO-REVISIÓN" && ok "AUTO-REVISIÓN sin revisor" || bad "AUTO-REVISIÓN sin revisor"
 
 # 11b. Gate: DONE sin commits registrados rechazado (verify previo exigido)
@@ -115,9 +115,35 @@ UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado IN_PROGRESS 
 echo "x" > "$REPO_T/e.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$E][TERM] trabajo"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$E" >/dev/null 2>&1
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado REVIEW >/dev/null
-UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado DONE --revisor "WEB" --nota "cierre" >/dev/null && ok "DONE con revisor WEB" || bad "DONE con revisor WEB"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado DONE --analisis "a" --validacion "v" --revisor "WEB" --nota "cierre" >/dev/null && ok "DONE con revisor WEB" || bad "DONE con revisor WEB"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$E" | grep -q "revisión por WEB" && ok "revisión por WEB registrada" || bad "revisión por WEB registrada"
 ! UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$E" | grep -q "AUTO-REVISIÓN" && ok "sin marca AUTO-REVISIÓN" || bad "sin marca AUTO-REVISIÓN"
+
+# 11e. Gate PLAN 1 A1: DONE sin analisis: rechazado (tarea post-parche)
+echo "-- 11e. Gate: DONE sin analisis rechazado"
+F=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test analisis" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F" --estado IN_PROGRESS >/dev/null
+echo "t" > "$REPO_T/f.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$F][TERM] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$F" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F" --estado REVIEW >/dev/null 2>&1
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F" --estado DONE --validacion "x" --nota "sin analisis" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "requiere analisis" && ok "gate bloquea DONE sin analisis" || bad "gate bloquea DONE sin analisis (rc=$rc)"
+
+# 11f. Gate PLAN 1 A2: DONE sin validacion: rechazado (tarea limpia)
+echo "-- 11f. Gate: DONE sin validacion rechazado"
+F2=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test validacion" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F2" --estado IN_PROGRESS >/dev/null
+echo "t2" > "$REPO_T/f2.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$F2][TERM] trabajo2"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$F2" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F2" --estado REVIEW >/dev/null 2>&1
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F2" --estado DONE --analisis "analizado" --nota "sin validacion" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "requiere validacion" && ok "gate bloquea DONE sin validacion" || bad "gate bloquea DONE sin validacion (rc=$rc)"
+
+# 11g. DONE con analisis+validacion supera el gate; campos registrados
+echo "-- 11g. DONE con analisis+validacion"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$F2" --estado DONE --analisis "analizado" --validacion "suite OK" --nota "cierre" >/dev/null && ok "DONE con ambos campos" || bad "DONE con ambos campos"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$F2" | grep -q "^analisis: analizado" && ok "analisis registrado" || bad "analisis registrado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$F2" | grep -q "^validacion: suite OK" && ok "validacion registrada" || bad "validacion registrada"
 
 # 12. Liberación automática: C ya DONE no protege; B puede reservar zona_c
 echo "-- 12. Liberación al cierre"
