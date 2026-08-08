@@ -217,6 +217,9 @@ case "${1:-}" in
         fi
         _set_campo "$id" "estado" "$estado"
         hist="$est_actual -> $estado${nota:+ — $nota}"
+        if [ "$estado" = "DONE" ] && [ "$est_actual" != "REVIEW" ] && [ -n "$force" ]; then
+            hist="${hist} — AUTORIZACIÓN EXPRESA (--force)"
+        fi
     else
         hist="$nota"
     fi
