@@ -127,7 +127,7 @@ Organizados por función en las siguientes categorías:
 | **Refactor** | `refactor_large_functions.py`, `refactor_large_functions_v2.py`, `refactor_v2.py`, `refactor_4_motores.py`, `ajustar_contexto.py`, `sanear_codigo.py` | Refactorización con LLM + compactación |
 | **Consciencia/Memoria** | `conciencia.py`, `auto_conciencia.py`, `analisis_completo.py`, `ura_self_modify.py` | Sistema de memoria, auto-conciencia y meta-mejora |
 | **Model Router** | `auditor_router.py`, `router_rate_limiter.py`, `pareto_router.py`, `meta_mejora.py` | Gestión y auditoría del Model Router |
-| **OpenClaw** | `openclaw_reviewer.py`, `openclaw_firmador.py`, `alineador.py`, `openclaw_netlock.sh` | Integración con OpenClaw (revisor, firmador, alineador) |
+| **OpenClaw** | ~~`openclaw_reviewer.py`, `openclaw_firmador.py`, `openclaw_netlock.sh`~~ — **RETIRADO 2026-08-08** (`c6d60c8c`) | ✅ Impacto cero; excepción: `monitor/` (SNC, brazo de emergencia) y `core/model_router/cli.py` (auth arranque) |
 | **Ejecución/Servicios** | `ejecutor_api.py`, `pipeline_supremo.py`, `plugin_registry.py`, `PLUGIN_TEMPLATE.py`, `mcp_mochila.py`, `reglas_applier.py`, `reglas_generator.py` | APIs, pipeline y registro de plugins |
 | **Sandbox** | `sandbox_industrial.py`, `jaulas_recursos.sh`, `deploy_sandbox_gx10.sh` | Sandbox de pruebas y límites de recursos |
 | **Utilidades** | `utils.py`, `check_secrets.py`, `revisor.py`, `generate_arch_diagram.py`, `captura_virtual.py`, `compilador_opiniones.py`, `test_latencia_mac.py`, `ura_watch_asus.py`, `watch_inbox.py`, `knowledge_engine.py`, `chaos_test.py`, `metrics_server.py`, `reindex_vectors.py` | Utilidades varias y monitoreo |
@@ -167,7 +167,7 @@ Organizados por función en las siguientes categorías:
 |---|---|---|---|---|
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
 | `opencode` | 8081 | ⏸️ parado | systemd | OpenCode Web Server — unit corregida desplegada (`EnvironmentFile=/etc/ura/secrets.env`, vars ya presentes). Parado: el proceso paralelo mantiene su opencode manual en 8081 (PID en `pts/1`, se re-lanza solo). Arrancar con `systemctl start opencode.service` cuando el manual cierre |
-| `ura-openclaw` | 18789 | ✅ activo | systemd | Gateway MCP (hardening: CPUQuota=40%, MemoryMax=2G). Core-dump SIGQUIT 2026-08-05 — restaurado 2026-08-07 (Tramo B F7) |
+| `ura-openclaw` | 18789 | 🔴 **RETIRADO del repo** (`c6d60c8c`) — pendiente `systemctl stop + disable` (sudo Ramón) | systemd | Gateway MCP — crash-loop. Código eliminado; unit vive en `/etc/systemd/system/` hasta la desactivación manual |
 | `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
 | `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
 | `ura-consolidate` | - | ✅ activo | systemd | Consolidación de código (último run SUCCESS 2026-08-07) |
@@ -229,21 +229,13 @@ Organizados por función en las siguientes categorías:
   - `vision` → llama3.2-vision:11b, llava:34b, llava:13b
   - `embeddings` → nomic-embed-text:latest, mxbai-embed-large
 
-### OpenClaw Integration (Systemd — 2026-06-20)
-- Gateway: `http://10.164.1.99:18789`
-- Servicio: **`ura-openclaw.service`** (systemd nativo con hardening)
-  - `CPUQuota=40%`, `MemoryHigh=1.5G`, `MemoryMax=2G`
-  - `PrivateTmp=true`, `ProtectSystem=full`
-  - `Restart=on-failure` con `RestartSec=10`
-  - `ExecStartPre`: curl retry 30x a Ollama (espera cold-boot de LLM, 42GB)
-  - `TimeoutStartSec=180`: evita SIGKILL del systemd durante carga de pesos GPU
-- Binario: `/usr/bin/node /usr/lib/node_modules/openclaw/dist/index.js gateway --port 18789`
-- MCP: Configurado en OpenCode (Mac) como remote
-- Skills habilitados: github, coding-agent
-- CLI emergencia: `/usr/local/bin/openclaw-admin`
-- Sandbox coding-agent: `/usr/local/bin/coding-agent-sandbox`
-- **Orquestación visual**: n8n (Docker) consume API OpenClaw para tareas multi-agente
-- **Métricas**: Prometheus (Docker) lee latencia/tokens de Open WebUI + ura-audit-api
+### OpenClaw — RETIRADO (2026-08-08, commit `c6d60c8c`)
+- Código eliminado del repo (criterio: `grep openclaw` en scripts/core/motor/deploy → 0).
+- Excepciones intencionales: `monitor/` (SNC — brazo de emergencia, decisión Ramón) y `core/model_router/cli.py`
+  (usa `OPENCLAW_GATEWAY_TOKEN` como auth de arranque — ADR-007 semantic freezing).
+- Pendiente Ramón (sudo): `systemctl stop + disable ura-openclaw.service`, borrar `/home/ramon/.openclaw/`,
+  re-apuntar o eliminar `/usr/local/bin/opencode` (wrapper OpenClaw).
+- Si OpenClaw se usara en el futuro: solo como agente externo vía API HTTP :18789, sin imports desde core/motor.
 
 ### URA Contrast Proxy + Telemetría POS (Port 8002)
 - **Servicio**: `ura-contraste.service` (systemd, tipo simple, User=ramon)
@@ -423,7 +415,7 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - `scripts/deploy/fix-path.conf` — Environment file para ura-contraste.service
 - `scripts/deploy/ura-contraste.service` — Unidad systemd oficial del proxy de contraste
 - `scripts/deploy/transition_contraste.sh` — Script de transición watchdog→systemd (auto-deploy)
-- `deploy/ura-openclaw.service` — Unidad systemd oficial de OpenClaw (con hardening)
+- `deploy/ura-openclaw.service` — ~~Unidad systemd oficial de OpenClaw~~ **ELIMINADO** (`c6d60c8c`)
 - `deploy/ura-router-health.service` — Health check del Model Router
 - `deploy/rotate-logs.service` — Rotación de logs vía logrotate
 - `deploy/rotate_logs.timer` — Timer semanal para rotate-logs.service
