@@ -18,6 +18,16 @@
 ## Project Context
 URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
 
+## Metodología Universal de Ingeniería (Plan 0 — v1.0)
+**Aplicar la metodología universal de ingeniería y, además, estas restricciones específicas de URA.**
+
+- **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. El agente lo interpreta como propuesta pendiente de revisión técnica, no como orden ciega.
+- Metodología completa: `docs/engineering/ENGINEERING_PROCESS.md` (v1.0) — 10 obligaciones, clasificación de descubrimientos, mínimos, puntos críticos, NO HACER, veredicto GO/GO CON CAMBIOS/NO-GO, roles, trazabilidad.
+- Templates: `docs/engineering/PLAN_TEMPLATE.md` (11 preguntas del plan) y `docs/engineering/PLAN_REVIEW_TEMPLATE.md` (ANÁLISIS DEL PLAN + veredicto + 9 preguntas de OpenCode).
+- Fuente única: repo git (`docs/engineering/`); copia global instalada en `~/.config/opencode/AGENTS.md` (origen: `deploy/engineering/AGENTS.md.global`); verificar con `scripts/pro/ura-engineering-check`.
+- Referencias: Plan 0 maestro `docs/architecture/PLAN_0.md`, revisado `docs/architecture/PLAN_0_REVISADO.md`, auditoría `docs/architecture/PLAN_0_AUDITORIA.md`, directiva de clasificación `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`.
+- Lo específico de URA (mecanismo UDO, reglas de fase, arquitectura, seguridad) sigue en las secciones de este AGENTS.md.
+
 ## Build & Test Commands
 - Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
