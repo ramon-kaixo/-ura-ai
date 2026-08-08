@@ -1,4 +1,4 @@
-# UDO — URA Development Orchestrator (Fase 1)
+# UDO — URA Development Orchestrator (F1 + F2)
 
 Capa mínima de coordinación entre agentes (Web/TERM/Ramón) y Git.
 **Fuente de verdad: Git (código) + `docs/udo/` (proceso).** Sin BD, sin panel, sin servidor.
@@ -10,42 +10,38 @@ Capa mínima de coordinación entre agentes (Web/TERM/Ramón) y Git.
 - **No toca** `motor/`, `core/`, `tests/`, `scripts/pro/tuneladora/`.
 - **Un solo archivo por tarea** (`docs/udo/tasks/TASK-YYYYMMDD-NNN.md`) con estado y historial dentro.
 
-## Estados (transiciones auditadas)
+## Estados
 
 `PLANNED → IN_PROGRESS → REVIEW → DONE` (+ `BLOCKED`, `CONFLICT`, `CANCELLED`)
 Toda transición queda registrada en `historial:` del expediente.
+
+**Regla de integridad (CASO B)**: `DONE` solo desde `REVIEW` — sin revisión
+válida previa la tarea no se cierra. Excepción: `--force` explícito con nota
+(autorización expresa, queda auditada en el historial). No se finge una revisión:
+si el revisor está idle, la tarea permanece `REVIEW`.
 
 ## CLI
 
 ```bash
 ura-udo create "descripción"            # crea TASK-YYYYMMDD-NNN (solicitante: URA_SOLICITANTE o RAMON)
 ura-udo show TASK-20260808-001          # ver expediente completo
-ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada (máquina formal, --force para saltos)
+ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada (DONE solo desde REVIEW)
 ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
 ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update ("" vacía)
 ura-udo update TASK-... --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"  # roles duales
-ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva
+ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva (enforcement activo)
 ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
-ura-udo review TASK-... [--approve "nota" | --changes "razón"]  # revisión formal F3
+ura-udo context TASK-...                # contexto compartido (F2): expediente + commits + reservas
 ura-udo list [ESTADO]                   # tareas por estado
 ura-udo status                          # resumen del proyecto (incluye reservas activas)
 ura-udo verify TASK-...                 # request + commit + git + discrepancias reserva vs diff
+ura-ask TASK-...                        # consultor de contexto compartido (wrapper de ura-udo context)
+ura-ask status                          # resumen del proyecto
 ```
 
 - IDs únicos: contador monotónico por fecha en `docs/udo/.seq` (sin colisiones `ls|wc`).
 - Escrituras con `flock` (`docs/udo/.lock`, patrón ADR-002).
 - Concurrencia Web/TERM: solo se usa `flock` — sin dispatcher.
-
-## Revisión formal (F3)
-
-Ciclo: `IN_PROGRESS → REVIEW → CHANGES_REQUESTED → IN_PROGRESS → REVIEW → APPROVED → DONE`.
-La máquina de transiciones bloquea saltos ilegítimos (`--force` para excepciones).
-
-`ura-udo review TASK-ID` ejecuta el checklist de 8 comprobaciones (estado, commit,
-diff, archivos vs reserva, requisitos, tests, documentación, regresiones) y con
-`--approve`/`--changes` emite veredicto (registrado en `revision:` + historial,
-revisor vía `URA_REVISOR`). La reserva sigue activa en REVIEW y CHANGES_REQUESTED.
-Detalles: `docs/udo/F3_PROPOSAL.md`.
 
 ## Reserva de archivos (F2)
 
@@ -58,6 +54,7 @@ ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos 
 
 - La reserva vive en el campo `reserva: [ruta1, ...]` del expediente → **persistente y versionada en Git** (no depende de la memoria del LLM).
 - Solo las tareas con estado `IN_PROGRESS`/`REVIEW` protegen sus reservas.
+- **Enforcement (bloqueo real)**: `reserve --add` y `update --reserva` **rechazan** declarar una ruta ya reservada por otra tarea activa (`ERROR: está reservada por TASK-X`). Excepción: `--force` (autorización expresa, queda en historial). La tarea ajena debe liberar (`reserve --clear`) o autorizar.
 - **Liberación automática**: al pasar a `DONE`/`CANCELLED`, la reserva deja de estar activa; el historial queda en el expediente (quién reservó qué y cuándo).
 - **Al cerrar (verify)**: compara `git diff <commit_base>..HEAD` + working tree contra la reserva →
   1. archivos modificados sin declarar (`MODIFICADOS SIN DECLARAR`);
@@ -66,9 +63,24 @@ ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos 
 
 ### Límites del mecanismo (documentación honesta)
 
-- La reserva es **cortesía + auditoría, no exclusión de kernel**: Git sigue siendo la fuente de verdad y el conflicto REAL se detecta al commitear. Ningún proceso puede impedir físicamente que otro agent modifique un archivo reservado.
-- La reserva solo funciona si **ambos canales consultan** (`ura-udo check`) antes de actuar — es disciplina de procedimiento, no de bloqueo.
-- Mitigación integrada: `ura-udo verify` lista las invasiones (no las bloquea por defecto) y el flujo de commit con `[TASK-ID]` permite correlacionar quién tocó qué.
+- La reserva es **garantía dentro de UDO** (no se puede declarar conflicto) + **auditoría sobre Git**:
+  el conflicto REAL de ejecución se detecta al commitear. Ningún proceso impide físicamente que otro
+  agent modifique un archivo reservado sin declararlo — `ura-udo verify` lista esas invasiones.
+- Mitigación integrada: enforcement en declaración + `verify` lista invasiones + flujo de commit
+  con `[TASK-ID]` permite correlacionar quién tocó qué.
+
+## Contexto compartido (F2)
+
+El contexto de una tarea **no depende de la conversación**: vive en Git (expediente + commits).
+
+- `ura-udo context TASK-ID` emite: ID, estado, descripción/objetivo, canal, roles, reserva,
+  commit_base, commits recientes con `[TASK-ID]`, reservas activas y último historial.
+- `ura-ask TASK-ID` es el consultor de contexto (wrapper de `ura-udo context`).
+- **Propagación**: `ura-opencode` inyecta el bloque de contexto en el prompt enviado al Web
+  (tarea + objetivo + zona + roles), de modo que el Web arranca con el contexto completo.
+- **Recuperación con agente idle**: `ura-ask TASK-ID` / `ura-udo context` funcionan aunque el
+  otro agente esté ausente — la fuente es el expediente, no la memoria del LLM.
+- `ura-chat` es el chat LLM a Ollama (herramienta distinta, NO es contexto compartido).
 
 ## Flujo de trabajo
 
@@ -77,8 +89,8 @@ ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos 
 3. Declara **reserva** (`reserve --add`) y pasa a `IN_PROGRESS` (se auto-registra `commit_base`)
 4. **Commit** con formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
 5. Resultado → `REVIEW` — la reserva **sigue activa en REVIEW** (quien revisa no modifica la zona que revisa)
-6. **Revisión formal** (`review --approve`/`--changes`): APPROVED, o CHANGES_REQUESTED → el ejecutor corrige → nueva REVIEW
-7. `DONE` solo desde APPROVED — `verify` reporta discrepancias reserva vs diff y registra el commit en `commits:`
+6. **Revisión**: el revisor verifica (`verify` + lectura del diff); corrige en `IN_PROGRESS` si procede → nueva `REVIEW`
+7. `DONE` solo desde `REVIEW` (o `--force` explícito) — `verify` reporta discrepancias reserva vs diff y registra el commit en `commits:`
 
 ## Verificación
 
@@ -90,18 +102,28 @@ ura-udo verify TASK-...   # pide: expediente OK, commit con [TASK-ID], git limpi
 
 Principios (Anexo A — modelo dual):
 
-- **Web = ejecutor por defecto; Terminal = revisor por defecto.** Roles registrables por tarea con `--agente_web "WEB (ejecutor)"` y `--agente_terminal "TERM (revisor)"` (ver TASK-006).
+- **Web = ejecutor por defecto; Terminal = revisor por defecto.** Roles **por tarea** (no permanentes):
+  el mismo OpenCode puede ser ejecutor de una tarea y revisor de otra; se registran con
+  `--agente_web "WEB (ejecutor)"` y `--agente_terminal "TERM (revisor)"` (ver TASK-006).
 - **El revisor no modifica la zona que revisa**: la reserva protege en `IN_PROGRESS` y `REVIEW`.
 - **Una tarea independiente sí puede ser ejecutada por el otro agente** si `check` no detecta solapamiento de reservas (granularidad por archivo o prefijo `dir/`).
 - **Terminal puede**: leer, inspeccionar, ejecutar tests, analizar, verificar (`show`/`status`/`check`/`verify`). **No debe** modificar zonas reservadas por otra tarea activa.
+- **Comportamiento con agente idle**:
+  - CASO A — ejecutor + revisor disponibles: ejecutar → revisar → corregir → revisar → cerrar.
+  - CASO B — ejecutor disponible + revisor idle: ejecutar → `REVIEW`, **nunca** `DONE` sin revisión válida (el script lo impide salvo `--force` explícito y auditado).
+  - CASO C — revisor disponible + ejecutor idle: puede consultar/analizar o ejecutar una tarea independiente; **no** se apropia silenciosamente de la tarea asignada al ejecutor.
 - **Terminal no se autodelega trabajo**: solo con TASK autorizada por Ramón o por la fase correspondiente.
 - **Una única memoria operativa**: Git (código) + UDO (estado) + `docs/architecture/` (decisiones) + `docs/pro/sesiones/` (histórico). Las conversaciones no son fuente de verdad.
 
-## Compatibilidad con tareas F1
+## Estructura canónica del expediente
 
-- Tareas creadas antes de F2 (sin `reserva:` ni `commit_base:`) siguen funcionando: `verify` tolera campos ausentes.
-- Al tocar una tarea F1 en `IN_PROGRESS` sin `commit_base`, este se auto-registra en el primer `update`.
-- `--reserva ""` vacía la reserva (reset).
+Orden de campos (estable, no crece arbitrariamente): `id, fecha, solicitante, descripcion,
+objetivo, estado, canal, agente_web, agente_terminal, reserva, commit_base, contexto,
+cambios, commits, revision, pendientes, resultado, historial`.
+
+- Los campos nuevos se insertan **antes de `historial:`** (nunca al final del archivo).
+- Los expedientes antiguos con campos al final se leen igualmente por clave (`clave: valor`)
+  → compatibilidad hacia atrás, sin migración forzada.
 
 ## Enlaces (memoria existente — NO duplicar)
 

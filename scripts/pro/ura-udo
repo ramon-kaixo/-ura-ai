@@ -1,8 +1,8 @@
 #!/bin/bash
 # ura-udo — Capa mínima de coordinación UDO (F1 + F2)
-# Uso: ura-udo create "desc" | show TASK-ID | update TASK-ID [--estado X] [--nota "…"] [--reserva "r1,r2"]
+# Uso: ura-udo create "desc" | show TASK-ID | update TASK-ID [--estado X] [--nota "…"] [--reserva "r1,r2"] [--force]
 #      | reserve TASK-ID [--add "r1,r2"] [--clear] | check [ruta...]
-#      | list [--estado] | status | verify TASK-ID
+#      | list [--estado] | status | verify TASK-ID | context TASK-ID
 # Fuente de verdad: Git (código) + docs/udo/ (proceso). Sin BD, sin panel.
 
 set -euo pipefail
@@ -13,20 +13,9 @@ SEQ_FILE="$UDO_ROOT/.seq"
 LOCK_FILE="$UDO_ROOT/.lock"
 REPO="${UDO_REPO:-$HOME/URA/ura_ia_1972}"
 
-declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [CHANGES_REQUESTED]=1 [APPROVED]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
+declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
 # Estados "activos": su reserva protege archivos frente a otras tareas
-ESTADOS_ACTIVOS="IN_PROGRESS|REVIEW|CHANGES_REQUESTED"
-# Máquina de transiciones formales (F3). DONE se cierra desde APPROVED/REVIEW.
-declare -A TRANSICIONES=(
-    [PLANNED]="IN_PROGRESS BLOCKED CANCELLED"
-    [IN_PROGRESS]="REVIEW BLOCKED CONFLICT CANCELLED"
-    [REVIEW]="APPROVED CHANGES_REQUESTED BLOCKED CANCELLED"
-    [CHANGES_REQUESTED]="IN_PROGRESS CANCELLED"
-    [APPROVED]="DONE CANCELLED"
-    [BLOCKED]="IN_PROGRESS CANCELLED"
-    [CONFLICT]="IN_PROGRESS BLOCKED CANCELLED"
-    [DONE]="CANCELLED"
-)
+# (usado por check y por el enforcement de reservas en reserve/update)
 
 _fecha()      { date +%Y-%m-%d; }
 _fecha_hora() { date +%Y-%m-%dT%H:%M; }
@@ -48,15 +37,17 @@ _id_nuevo() {
 }
 
 _uso() {
-    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--agente_web …] [--agente_terminal …]"
-    echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...] | review TASK-ID [--approve \"nota\" | --changes \"razón\"]"
-    echo "     | list [--estado] | status | verify TASK-ID"
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force]"
+    echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...]"
+    echo "     | list [--estado] | status | verify TASK-ID | context TASK-ID"
 }
 
-# --- Escritura con flock (ADR-002) para concurrencia segura
+# --- Escritura con flock (ADR-002) para concurrencia segura.
+# Espera hasta 30s (bloqueante) en lugar de fallar: Web y TERM compiten por
+# escribir; con espera se serializan sin error espurio (carrera controlada).
 _lock() {
     exec 9>"$LOCK_FILE"
-    flock -n 9 || { echo "ERROR: lock en uso (otro proceso ura-udo activo)" >&2; exit 1; }
+    flock -w 30 9 || { echo "ERROR: lock no disponible en 30s (otro proceso ura-udo activo)" >&2; exit 1; }
 }
 
 _ver_tarea() {
@@ -68,11 +59,16 @@ _estado() {
     grep '^estado:' "$TASKS_DIR/$1.md" | cut -d' ' -f2-
 }
 
+# --- _set_campo: actualiza o añade un campo. Los campos nuevos se insertan
+# antes de la sección `historial:` (estructura canónica estable) y se escapan
+# los caracteres sensibles a sed (@, &, \). Nunca al final del expediente.
 _set_campo() {
     local id="$1" clave="$2" valor="$3" archivo="$TASKS_DIR/$id.md"
     valor=$(printf '%s' "$valor" | sed 's/\\/\\\\/g; s/@/\\@/g; s/&/\\&/g')
     if grep -q "^$clave:" "$archivo"; then
         sed -i "s@^$clave: .*@$clave: $valor@" "$archivo"
+    elif grep -q '^historial:' "$archivo"; then
+        sed -i "s@^historial:@$clave: $valor\nhistorial:@" "$archivo"
     else
         printf '%s: %s\n' "$clave" "$valor" >> "$archivo"
     fi
@@ -88,9 +84,41 @@ _apuntar() {
     echo "  - \"$(_fecha_hora) | ${est:-?} | $nota\"" >> "$TASKS_DIR/$id.md"
 }
 
-# --- Expande una lista CSV a tuplas "ruta" (línea por línea)
-_csv_a_lineas() {
-    echo "$1" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true
+# --- Reservas activas (otras tareas distintas de la indicada): "TASK|ruta"
+_reservas_activas_ajenas() {
+    local self="$1"
+    for f in "$TASKS_DIR"/*.md; do
+        [ -f "$f" ] || continue
+        est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
+        case "$est" in
+            IN_PROGRESS|REVIEW)
+                id_res=$(basename "$f" .md)
+                [ "$id_res" = "$self" ] && continue
+                res=$(grep '^reserva:' "$f" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)
+                if [ -n "$res" ]; then
+                    printf '%s|%s\n' "$id_res" "$res"
+                fi
+                ;;
+        esac
+    done
+}
+
+# --- Enforcement de reservas: rechaza declarar rutas reservadas por otra tarea
+# activa (match exacto o prefijo dir/). Devuelve 1 si hay conflicto.
+_conflicto_reserva() {
+    local self="$1" rutas="$2" r area id_res
+    rutas=$(printf '%s' "$rutas" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true)
+    [ -n "$rutas" ] || return 0
+    while IFS='|' read -r id_res area; do
+        [ -n "$area" ] || continue
+        for r in $rutas; do
+            if [[ "$r" == "$area" || "$r" == "$area/"* ]]; then
+                echo "ERROR: '$r' está reservada por $id_res (reserva activa). Libera con reserve $id_res --clear o usa --force para autorización expresa." >&2
+                return 1
+            fi
+        done
+    done < <(_reservas_activas_ajenas "$self")
+    return 0
 }
 
 case "${1:-}" in
@@ -132,6 +160,26 @@ case "${1:-}" in
     cat "$TASKS_DIR/$2.md"
     ;;
 
+  context)
+    # Contexto compartido (F2): expediente + últimos commits + reservas activas
+    # que puedan afectar a la zona. Recuperable aunque el otro agente esté idle
+    # (fuente de verdad: Git + expediente, no la conversación).
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    _ver_tarea "$2"
+    id="$2"
+    file="$TASKS_DIR/$id.md"
+    echo "=== CONTEXTO UDO — $id ==="
+    echo "ID: $id"
+    echo "Estado: $(_estado "$id")"
+    grep -E '^(descripcion|objetivo|canal|agente_web|agente_terminal|reserva|commit_base|contexto|resultado|pendientes):' "$file" | sed 's/^/  /'
+    echo "--- Últimos commits ---"
+    git -C "$REPO" log --oneline --grep="$id" -5 2>/dev/null || true
+    echo "--- Reservas activas que afectan ---"
+    "$0" check 2>/dev/null | head -10 || true
+    echo "--- Historial (últimas 5) ---"
+    grep -A 5 '^historial:' "$file" | head -6 | sed 's/^/  /'
+    ;;
+
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
@@ -156,14 +204,12 @@ case "${1:-}" in
             echo "ERROR: estado inválido '$estado' (válidos: ${!ESTADOS_VALIDOS[*]})" >&2
             exit 1
         fi
-        if [ "$estado" != "$est_actual" ]; then
-            permitidas="${TRANSICIONES[$est_actual]:-}"
-            if [ "$estado" != "$est_actual" ] && [[ " $permitidas " != *" $estado "* ]]; then
-                if [ -z "${force:-}" ]; then
-                    echo "ERROR: transición no permitida $est_actual -> $estado (permitidas: $permitidas). Usa --force para saltos excepcionales." >&2
-                    exit 1
-                fi
-            fi
+        # Regla de integridad (F2, CASO B): DONE solo desde REVIEW — sin
+        # revisión válida previa, la tarea no puede cerrarse. Excepción:
+        # --force explícito con nota (autorización expresa, queda auditada).
+        if [ "$estado" = "DONE" ] && [ "$est_actual" != "REVIEW" ] && [ -z "$force" ]; then
+            echo "ERROR: DONE solo desde REVIEW (revisión previa requerida — CASO B). Usa --force si es una excepción explícita." >&2
+            exit 1
         fi
         _set_campo "$id" "estado" "$estado"
         hist="$est_actual -> $estado${nota:+ — $nota}"
@@ -179,6 +225,11 @@ case "${1:-}" in
         fi
     fi
     if [ -n "$reserva" ]; then
+        # Enforcement (F2): no declarar rutas reservadas por otra tarea activa
+        # --force = autorización expresa (queda en historial como excepción)
+        if [ -z "$force" ]; then
+            _conflicto_reserva "$id" "$reserva" || exit 1
+        fi
         _set_campo "$id" "reserva" "[$reserva]"
         hist="${hist:+$hist — }reserva: [$reserva]"
     elif [ -n "${reserva_flag:-}" ]; then
@@ -202,12 +253,13 @@ case "${1:-}" in
   reserve)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; accion="" ruta=""
+    id="$2"; accion="" ruta="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
             --add)   accion="add";   ruta="${2:-}"; shift 2 ;;
             --clear) accion="clear"; shift ;;
+            --force) force=1; shift ;;
             *) echo "ERROR: argumento no válido: $1" >&2; exit 1 ;;
         esac
     done
@@ -216,6 +268,10 @@ case "${1:-}" in
     if [ "$accion" = "clear" ]; then
         nueva=""
     elif [ "$accion" = "add" ] && [ -n "$ruta" ]; then
+        # Enforcement (F2): no reservar rutas ya reservadas por otra tarea activa
+        if [ -z "$force" ]; then
+            _conflicto_reserva "$id" "$ruta" || exit 1
+        fi
         [ -n "$actual" ] && nueva="$actual, $ruta" || nueva="$ruta"
     else
         echo "Reserva actual de $id: [$actual]"
@@ -234,7 +290,7 @@ case "${1:-}" in
     while IFS= read -r f; do
         est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
         case "$est" in
-            IN_PROGRESS|REVIEW|CHANGES_REQUESTED)
+            IN_PROGRESS|REVIEW)
                 res=$(grep '^reserva:' "$f" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true)
                 if [ -n "$res" ]; then
                     while IFS= read -r r; do
@@ -290,76 +346,12 @@ case "${1:-}" in
     "$0" list IN_PROGRESS
     echo "--- En revisión ---"
     "$0" list REVIEW
-    echo "--- Cambios solicitados ---"
-    "$0" list CHANGES_REQUESTED
-    echo "--- Aprobadas ---"
-    "$0" list APPROVED
     echo "--- Bloqueadas ---"
     "$0" list BLOCKED
     echo "--- Reservas activas ---"
     "$0" check
     echo "--- Últimos commits ---"
     git -C "$REPO" log --oneline -5
-    ;;
-
-  review)
-    # Revisión formal (F3): checklist de comprobaciones + veredicto del revisor
-    [ -n "${2:-}" ] || { _uso; exit 1; }
-    id="$2"; veredicto="" motivo=""
-    shift 2
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --approve)
-                veredicto="APPROVED"
-                shift
-                if [ $# -gt 0 ] && [[ "$1" != --* ]]; then motivo="$1"; shift; fi
-                ;;
-            --changes) veredicto="CHANGES_REQUESTED"; motivo="${2:-}"; shift 2 ;;
-            *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
-        esac
-    done
-    _ver_tarea "$id"
-    file="$TASKS_DIR/$id.md"
-    est=$(_estado "$id")
-    [ "$est" = "REVIEW" ] || [ "$est" = "CHANGES_REQUESTED" ] || [ "$est" = "APPROVED" ] || {
-        echo "ERROR: la tarea debe estar en REVIEW/CHANGES_REQUESTED para revisión formal (estado: $est)" >&2
-        exit 1
-    }
-    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
-    reserva=$(_reserva "$id")
-    commit=$(git -C "$REPO" log --oneline --grep="$id" -1 2>/dev/null || true)
-    if [ -n "$base" ] && [ "$base" != "unknown" ]; then
-        tocados=$(git -C "$REPO" diff --name-only "$base..HEAD" 2>/dev/null || true)
-        tocados=$( { echo "$tocados"; git -C "$REPO" status --porcelain | sed 's/^...//'; } | sed 's/^ *//' | grep -v '^$' | sort -u || true )
-    else
-        tocados=$(git -C "$REPO" status --porcelain | sed 's/^...//' | sed 's/^ *//' | grep -v '^$' | sort -u || true)
-    fi
-    no_declarados=$(comm -23 <(grep -v '^docs/udo/\(tasks\|\.seq\)' <<< "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
-    dirty=$(git -C "$REPO" status --porcelain | grep -v '^?? docs/udo/tasks/' | head -3 || true)
-    objetivo=$(grep '^objetivo:' "$file" | cut -d' ' -f2- || true)
-    resultado=$(grep '^resultado:' "$file" | cut -d' ' -f2- || true)
-    tests_ev=$(grep -c -i 'validate\|pytest\|tests' "$file" || true)
-
-    echo "=== REVISIÓN FORMAL — $id (revisor: ${URA_REVISOR:-TERM}) ==="
-    echo "1. ESTADO          : $est"
-    echo "2. COMMIT          : ${commit:-NINGUNO con [$id]}"
-    echo "3. DIFF            : base ${base:-?} → HEAD, $(echo "$tocados" | grep -cv '^$' || echo 0) archivos"
-    echo "4. ARCHIVOS        : $([ -z "$no_declarados" ] && echo 'declarados en reserva — OK' || echo "SIN DECLARAR: $(echo "$no_declarados" | tr '\n' ' ')")"
-    echo "5. REQUISITOS      : objetivo=[${objetivo:-VACÍO}] resultado=[${resultado:-VACÍO}]"
-    echo "6. TESTS           : $([ "$tests_ev" -gt 1 ] && echo 'evidencia en expediente' || echo 'SIN evidencia en expediente (ejecutar make validate)')"
-    echo "7. DOCUMENTACIÓN   : $([ "$est" = "REVIEW" ] && echo 'pendiente de cerrar con veredicto' || echo 'veredicto previo en historial')"
-    echo "8. REGRESIONES     : $([ -z "$dirty" ] && echo 'git limpio — OK' || echo "cambios sin commit: $(echo "$dirty" | tr '\n' ' ')")"
-    echo ""
-    if [ -z "$veredicto" ]; then
-        echo "Veredicto: usa --approve \"nota\" o --changes \"razón\""
-        exit 0
-    fi
-    _lock
-    revisor="${URA_REVISOR:-TERM}"
-    _set_campo "$id" "revision" "$(_fecha_hora) | $revisor | $veredicto${motivo:+ — $motivo}"
-    _apuntar "$id" "revisión: $veredicto${motivo:+ — $motivo}" "$veredicto"
-    _set_campo "$id" "estado" "$veredicto"
-    echo "Veredicto registrado: $est -> $veredicto"
     ;;
 
   verify)

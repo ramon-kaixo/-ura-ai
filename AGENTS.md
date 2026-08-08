@@ -655,22 +655,22 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
 | **PM v3.1** | ✅ Cerrada | Plan Maestro validación: `make validate`/`validate-full`, inventario 324 herramientas, shadowing M1 fix, cobertura core/ 38.8%→**51.1%**, mypy hook informativo. Ver `docs/audit/PLAN_MAESTRO_CLOSEOUT.md` |
 
-### UDO — Orquestación de tareas (F1+F2+F3, 2026-08-08)
+### UDO — Orquestación de tareas (F1+F2, 2026-08-08)
 
 Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin panel, sin dispatcher.
 
 - **Expedientes**: `docs/udo/tasks/TASK-YYYYMMDD-NNN.md` (estado + historial en el mismo archivo)
-- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota/--reserva/--agente_web/--agente_terminal/--force) | reserve (--add/--clear) | check [rutas] | review (--approve/--changes) | list [ESTADO] | status | verify TASK-ID`
-- **Reserva de archivos (F2)**: `reserve TASK --add "ruta1,ruta2"` declara qué archivos tocará la tarea; `check ruta...` detecta CONFLICTO contra reservas activas (IN_PROGRESS/REVIEW/CHANGES_REQUESTED, match exacto o prefijo `dir/`). Persistente en el expediente (Git). Liberación automática al cierre. `commit_base` automático al IN_PROGRESS (también en tareas F1 ya IN_PROGRESS).
-- **Modelo dual (Anexo A)**: Web = ejecutor por defecto, Terminal = revisor por defecto; roles por tarea con `--agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"`. La reserva sigue activa en REVIEW (quien revisa no modifica la zona que revisa). Tarea independiente puede ejecutarla el otro agente si `check` no detecta solapamiento.
-- **Revisión formal (F3)**: ciclo `IN_PROGRESS → REVIEW → CHANGES_REQUESTED → IN_PROGRESS → REVIEW → APPROVED → DONE`, máquina de transiciones en `update` (`--force` para saltos excepcionales). `review TASK-ID` ejecuta checklist de 8 comprobaciones y emite veredicto con `--approve "nota"`/`--changes "razón"` (registrado en `revision:` con revisor `URA_REVISOR`).
-- **Estados**: `PLANNED → IN_PROGRESS → REVIEW → CHANGES_REQUESTED → APPROVED → DONE` (+BLOCKED/CONFLICT/CANCELLED), transiciones auditadas
+- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota/--reserva/--agente_web/--agente_terminal/--force) | reserve (--add/--clear/--force) | check [rutas] | context TASK-ID | list [ESTADO] | status | verify TASK-ID`
+- **Reserva de archivos (F2, con enforcement)**: `reserve TASK --add "ruta1,ruta2"` declara qué archivos tocará la tarea; `reserve --add`/`update --reserva` **rechazan** rutas ya reservadas por otra tarea activa (IN_PROGRESS/REVIEW, match exacto o prefijo `dir/`); `check ruta...` detecta CONFLICTO. Excepción `--force` (autorización expresa, auditada en historial). Persistente en el expediente (Git). Liberación automática al cierre. `commit_base` automático al IN_PROGRESS (también en tareas F1 ya IN_PROGRESS).
+- **Contexto compartido (F2)**: `ura-udo context TASK-ID` / `ura-ask TASK-ID` recuperan el contexto de la tarea desde Git (expediente + commits + reservas) aunque el otro agente esté idle — la conversación NO es fuente de verdad. `ura-opencode` propaga el contexto en el prompt al Web. `ura-chat` es el chat LLM a Ollama (herramienta distinta).
+- **Modelo dual (Anexo A)**: Web = ejecutor por defecto, Terminal = revisor por defecto; roles **por tarea** (no permanentes) con `--agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"`. La reserva sigue activa en REVIEW (quien revisa no modifica la zona que revisa). Tarea independiente puede ejecutarla el otro agente si `check` no detecta solapamiento. Agente idle: CASO A ejecutar→revisar→corregir→cerrar; CASO B **DONE solo desde REVIEW** (nunca se finge revisión; `--force` solo como excepción explícita auditada); CASO C el revisor puede analizar o ejecutar tarea independiente pero no apropiarse de la tarea del ejecutor.
+- **Estados**: `PLANNED → IN_PROGRESS → REVIEW → DONE` (+BLOCKED/CONFLICT/CANCELLED), transiciones auditadas
 - **Commits**: formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`; `verify` registra el commit en `commits:` del expediente
 - **IDs únicos**: contador monotónico por fecha en `docs/udo/.seq`; escrituras con `flock`
 - **Memoria**: enlaza `docs/pro/sesiones/` y `docs/architecture/` — NO duplica
 - **Reversible**: `rm -rf docs/udo/ && rm scripts/pro/ura-udo` deja URA intacta
 - **Credenciales OpenCode web**: `OPENCODE_WEB_PASS` vía env o `/etc/ura/secrets.env` (añadir con sudo: `echo 'OPENCODE_WEB_PASS=…' >> /etc/ura/secrets.env`)
-- Detalles: `docs/udo/README.md`, closeout F2: `docs/udo/CLOSEOUT-F2-2026-08-08.md`, F3: `docs/udo/F3_PROPOSAL.md`
+- Detalles: `docs/udo/README.md`, closeout F2: `docs/udo/CLOSEOUT-F2-2026-08-08.md`
 
 ### Policy: Exclusiones de CI
 En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
