@@ -120,6 +120,22 @@ base2=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$C" | grep '^commit_b
 echo "-- 18. verify degradado"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" verify "$C" >/dev/null 2>&1 && ok "verify sin commits" || bad "verify sin commits"
 
+# 19. --force queda auditado en historial (trazabilidad del override)
+echo "-- 19. --force auditado"
+D=$(new_task "Test force audit")
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$D" --estado IN_PROGRESS --reserva "zona_force/x.py" >/dev/null
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$D" --add "zona_a/foo.py" --force >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$D" | grep -q "AUTORIZACIÓN EXPRESA --force" && ok "--force marcado en historial" || bad "--force marcado en historial"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$D" --reserva "zona_force/y.py,zona_a/foo.py" --force >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$D" | grep -q "AUTORIZACIÓN EXPRESA (--force)" && ok "--force marcado en update" || bad "--force marcado en update"
+
+# 20. instrucciones/restricciones propagadas en update y context
+echo "-- 20. instrucciones/restricciones"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$D" --instrucciones "Refactor X" --restricciones "no tocar motor/" >/dev/null
+ctx_out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" context "$D" 2>/dev/null) || true
+echo "$ctx_out" | grep -q 'instrucciones: Refactor X' && ok "instrucciones en context" || bad "instrucciones en context"
+echo "$ctx_out" | grep -q 'restricciones: no tocar motor/' && ok "restricciones en context" || bad "restricciones en context"
+
 echo ""
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"

@@ -37,7 +37,7 @@ _id_nuevo() {
 }
 
 _uso() {
-    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force]"
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force] [--instrucciones …] [--restricciones …]"
     echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...]"
     echo "     | list [--estado] | status | verify TASK-ID | context TASK-ID"
 }
@@ -135,6 +135,8 @@ case "${1:-}" in
         echo "solicitante: ${URA_SOLICITANTE:-RAMON}"
         echo "descripcion: $2"
         echo "objetivo: "
+        echo "instrucciones: "
+        echo "restricciones: "
         echo "estado: PLANNED"
         echo "canal: ${URA_SOLICITANTE:-RAMON}"
         echo "agente_web: "
@@ -171,7 +173,7 @@ case "${1:-}" in
     echo "=== CONTEXTO UDO — $id ==="
     echo "ID: $id"
     echo "Estado: $(_estado "$id")"
-    grep -E '^(descripcion|objetivo|canal|agente_web|agente_terminal|reserva|commit_base|contexto|resultado|pendientes):' "$file" | sed 's/^/  /'
+    grep -E '^(descripcion|objetivo|instrucciones|restricciones|canal|agente_web|agente_terminal|reserva|commit_base|contexto|resultado|pendientes):' "$file" | sed 's/^/  /'
     echo "--- Últimos commits ---"
     git -C "$REPO" log --oneline --grep="$id" -5 2>/dev/null || true
     echo "--- Reservas activas que afectan ---"
@@ -183,7 +185,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -192,6 +194,8 @@ case "${1:-}" in
             --reserva) reserva_flag=1; reserva="${2:-}"; shift 2 ;;
             --agente_web)      agente_web_val="${2:-}"; shift 2 ;;
             --agente_terminal) agente_terminal_val="${2:-}"; shift 2 ;;
+            --instrucciones)   instrucciones_val="${2:-}"; shift 2 ;;
+            --restricciones)   restricciones_val="${2:-}"; shift 2 ;;
             --force)   force=1; shift ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
@@ -229,6 +233,8 @@ case "${1:-}" in
         # --force = autorización expresa (queda en historial como excepción)
         if [ -z "$force" ]; then
             _conflicto_reserva "$id" "$reserva" || exit 1
+        else
+            hist="${hist:+$hist — }AUTORIZACIÓN EXPRESA (--force) sobre: $reserva"
         fi
         _set_campo "$id" "reserva" "[$reserva]"
         hist="${hist:+$hist — }reserva: [$reserva]"
@@ -243,6 +249,14 @@ case "${1:-}" in
     if [ -n "$agente_terminal_val" ]; then
         _set_campo "$id" "agente_terminal" "$agente_terminal_val"
         hist="${hist:+$hist — }agente_terminal: $agente_terminal_val"
+    fi
+    if [ -n "$instrucciones_val" ]; then
+        _set_campo "$id" "instrucciones" "$instrucciones_val"
+        hist="${hist:+$hist — }instrucciones: $instrucciones_val"
+    fi
+    if [ -n "$restricciones_val" ]; then
+        _set_campo "$id" "restricciones" "$restricciones_val"
+        hist="${hist:+$hist — }restricciones: $restricciones_val"
     fi
     if [ -n "$hist" ]; then
         _apuntar "$id" "$hist" "${estado:-$est_actual}"
@@ -278,7 +292,11 @@ case "${1:-}" in
         exit 0
     fi
     _set_campo "$id" "reserva" "[$nueva]"
-    _apuntar "$id" "reserva: [$nueva]" "$(_estado "$id")"
+    if [ -n "$force" ] && [ "$accion" = "add" ]; then
+        _apuntar "$id" "reserva: [$nueva] (AUTORIZACIÓN EXPRESA --force)" "$(_estado "$id")"
+    else
+        _apuntar "$id" "reserva: [$nueva]" "$(_estado "$id")"
+    fi
     echo "Reserva de $id: [$nueva]"
     ;;
 
