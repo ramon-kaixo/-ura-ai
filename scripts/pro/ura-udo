@@ -37,7 +37,7 @@ _id_nuevo() {
 }
 
 _uso() {
-    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force] [--instrucciones …] [--restricciones …] [--revisor …]"
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force] [--instrucciones …] [--restricciones …] [--revisor …] [--analisis …] [--validacion …]"
     echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...]"
     echo "     | list [--estado] | status | verify TASK-ID | context TASK-ID"
 }
@@ -124,7 +124,7 @@ _conflicto_reserva() {
 
 # --- Gate de integridad de revisión (F2.2, al cerrar DONE): exige que la
 # revisión signifique algo. Ejecuta solo sin --force.
-_gate_revision() {
+    _gate_revision() {
     local id="$1" file="$TASKS_DIR/$1.md" base commits tocados sha r sucio
     base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
     if [ -z "$base" ] || [ "$base" = "unknown" ]; then
@@ -155,6 +155,22 @@ _gate_revision() {
         echo "ERROR: DONE bloqueado — cambios sin commitear fuera del expediente:" >&2
         echo "$sucio" | sed 's/^/  /' >&2
         return 1
+    fi
+    # Requisitos de análisis y validación (PLAN 1, A1/A2): la regla central
+    # del Plan 0 exige análisis previo; la trazabilidad exige validación.
+    # Al final del gate (prioridad a los mensajes F2.2). Solo para tareas
+    # post-parche (campo analisis: presente). Pre-parche: verify INFO (X2).
+    if grep -q '^analisis:' "$file"; then
+        an=$(grep '^analisis:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        va=$(grep '^validacion:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        if [ -z "$an" ] || [ "$an" = "—" ]; then
+            echo "ERROR: DONE requiere analisis — usa 'update $id --analisis \"...\"' (PLAN 1 A1)" >&2
+            return 1
+        fi
+        if [ -z "$va" ] || [ "$va" = "—" ]; then
+            echo "ERROR: DONE requiere validacion — usa 'update $id --validacion \"...\"' (PLAN 1 A2)" >&2
+            return 1
+        fi
     fi
     return 0
 }
@@ -200,6 +216,8 @@ case "${1:-}" in
         echo "contexto: "
         echo "cambios: []"
         echo "commits: []"
+        echo "analisis: "
+        echo "validacion: "
         echo "revision: "
         echo "pendientes: []"
         echo "resultado: "
@@ -239,7 +257,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -251,6 +269,8 @@ case "${1:-}" in
             --instrucciones)   instrucciones_val="${2:-}"; shift 2 ;;
             --restricciones)   restricciones_val="${2:-}"; shift 2 ;;
             --revisor)         revisor_val="${2:-}"; shift 2 ;;
+            --analisis)        analisis_val="${2:-}"; shift 2 ;;
+            --validacion)      validacion_val="${2:-}"; shift 2 ;;
             --force)   force=1; shift ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
@@ -274,6 +294,15 @@ case "${1:-}" in
         # la revisión debe significar algo (commits registrados, diff no vacío,
         # SHAs ancestrales, árbol limpio fuera del expediente).
         if [ "$estado" = "DONE" ] && [ -z "$force" ]; then
+            # PLAN 1 A1/A2: los campos analisis/validacion deben persistirse
+            # antes de que el gate los compruebe (el gate corre con el
+            # expediente ya actualizado).
+            if [ -n "$analisis_val" ]; then
+                _set_campo "$id" "analisis" "$analisis_val"
+            fi
+            if [ -n "$validacion_val" ]; then
+                _set_campo "$id" "validacion" "$validacion_val"
+            fi
             _gate_revision "$id" || exit 1
         fi
         _set_campo "$id" "estado" "$estado"
@@ -333,6 +362,14 @@ case "${1:-}" in
     if [ -n "$restricciones_val" ]; then
         _set_campo "$id" "restricciones" "$restricciones_val"
         hist="${hist:+$hist — }restricciones: $restricciones_val"
+    fi
+    if [ -n "$analisis_val" ]; then
+        _set_campo "$id" "analisis" "$analisis_val"
+        hist="${hist:+$hist — }analisis registrado"
+    fi
+    if [ -n "$validacion_val" ]; then
+        _set_campo "$id" "validacion" "$validacion_val"
+        hist="${hist:+$hist — }validacion registrada"
     fi
     if [ -n "$hist" ]; then
         _apuntar "$id" "$hist" "${estado:-$est_actual}"
@@ -458,6 +495,14 @@ case "${1:-}" in
     echo "RESERVA: [$(grep '^reserva:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)]"
     base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
     echo "COMMIT_BASE: ${base:-—}"
+    # Análisis/validación (PLAN 1 A1/A2): WARNING informativo si el expediente
+    # no los tiene (tareas pre-parche) — no bloquea, no es retroactivo (X2).
+    if grep -q '^analisis:' "$file"; then
+        an=$(grep '^analisis:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        [ -n "$an" ] && [ "$an" != "—" ] && echo "ANALISIS: OK" || echo "ANALISIS: WARNING — vacío (tarea pre-parche o sin análisis)"
+    else
+        echo "ANALISIS: INFO — campo ausente (tarea pre-parche, PLAN 1 A1 no retroactivo)"
+    fi
     echo ""
 
     echo "REQUEST: OK"
