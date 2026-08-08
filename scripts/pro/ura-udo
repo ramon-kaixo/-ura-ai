@@ -1,6 +1,7 @@
 #!/bin/bash
-# ura-udo — Capa mínima de coordinación UDO (Fase 1)
-# Uso: ura-udo create "desc" | show TASK-ID | update TASK-ID [--estado X] [--nota "…"]
+# ura-udo — Capa mínima de coordinación UDO (F1 + F2)
+# Uso: ura-udo create "desc" | show TASK-ID | update TASK-ID [--estado X] [--nota "…"] [--reserva "r1,r2"]
+#      | reserve TASK-ID [--add "r1,r2"] [--clear] | check [ruta...]
 #      | list [--estado] | status | verify TASK-ID
 # Fuente de verdad: Git (código) + docs/udo/ (proceso). Sin BD, sin panel.
 
@@ -8,19 +9,21 @@ set -euo pipefail
 
 UDO_ROOT="${UDO_ROOT:-$HOME/URA/ura_ia_1972/docs/udo}"
 TASKS_DIR="$UDO_ROOT/tasks"
-TEMPLATE="$UDO_ROOT/templates/task_template.md"
 SEQ_FILE="$UDO_ROOT/.seq"
 LOCK_FILE="$UDO_ROOT/.lock"
+REPO="${UDO_REPO:-$HOME/URA/ura_ia_1972}"
 
 declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
+# Estados "activos": su reserva protege archivos frente a otras tareas
+ESTADOS_ACTIVOS="IN_PROGRESS|REVIEW"
 
-_fecha()  { date +%Y-%m-%d; }
+_fecha()      { date +%Y-%m-%d; }
 _fecha_hora() { date +%Y-%m-%dT%H:%M; }
-_num()    { printf '%03d' "$1"; }
+_num()        { printf '%03d' "$1"; }
 
 # --- ID único sin colisiones: contador global monotónico por fecha
 _id_nuevo() {
-    local fecha hoy seq
+    local hoy seq
     hoy="$(_fecha | tr -d '-')"
     seq=1
     if [ -f "$SEQ_FILE" ]; then
@@ -34,7 +37,8 @@ _id_nuevo() {
 }
 
 _uso() {
-    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"]"
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"]"
+    echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...]"
     echo "     | list [--estado] | status | verify TASK-ID"
 }
 
@@ -49,12 +53,36 @@ _ver_tarea() {
     [ -f "$TASKS_DIR/$id.md" ] || { echo "ERROR: tarea no encontrada: $id" >&2; exit 1; }
 }
 
-_mostrar() {
-    local id="$1"
-    cat "$TASKS_DIR/$id.md"
+_estado() {
+    grep '^estado:' "$TASKS_DIR/$1.md" | cut -d' ' -f2-
+}
+
+_set_campo() {
+    local id="$1" clave="$2" valor="$3" archivo="$TASKS_DIR/$id.md"
+    if grep -q "^$clave:" "$archivo"; then
+        sed -i "s|^$clave: .*|$clave: $valor|" "$archivo"
+    else
+        echo "$clave: $valor" >> "$archivo"
+    fi
+}
+
+# --- Reserva de una tarea como lista JSON-like: [ruta1, ruta2]
+_reserva() {
+    grep '^reserva:' "$TASKS_DIR/$1.md" 2>/dev/null | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true
+}
+
+_apuntar() {
+    local id="$1" nota="$2" est="$3"
+    echo "  - \"$(_fecha_hora) | ${est:-?} | $nota\"" >> "$TASKS_DIR/$id.md"
+}
+
+# --- Expande una lista CSV a tuplas "ruta" (línea por línea)
+_csv_a_lineas() {
+    echo "$1" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true
 }
 
 case "${1:-}" in
+
   create)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _lock
@@ -68,8 +96,9 @@ case "${1:-}" in
         echo "descripcion: $2"
         echo "objetivo: "
         echo "estado: PLANNED"
-        echo "agente_web: "
-        echo "agente_terminal: "
+        echo "canal: "
+        echo "reserva: []"
+        echo "commit_base: "
         echo "contexto: "
         echo "cambios: []"
         echo "commits: []"
@@ -82,42 +111,131 @@ case "${1:-}" in
     } > "$file"
     echo "Creada: $id -> $file"
     ;;
+
   show)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    _mostrar "$2"
+    cat "$TASKS_DIR/$2.md"
     ;;
+
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2" estado="" nota=""
+    id="$2"; estado="" nota="" reserva=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
-            --estado) estado="${2:-}"; shift 2 ;;
-            --nota)   nota="${2:-}"; shift 2 ;;
+            --estado)  estado="${2:-}"; shift 2 ;;
+            --nota)    nota="${2:-}"; shift 2 ;;
+            --reserva) reserva="${2:-}"; shift 2 ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
     done
     _lock
     file="$TASKS_DIR/$id.md"
-    est_actual=$(grep '^estado:' "$file" | cut -d' ' -f2-)
+    est_actual=$(_estado "$id")
     if [ -n "$estado" ]; then
         if [ -z "${ESTADOS_VALIDOS[$estado]:-}" ]; then
-            echo "ERROR: estado inválido '$estado' (válidos: ${!ESTADOS_VALIDOS[*]})" >&2; exit 1
+            echo "ERROR: estado inválido '$estado' (válidos: ${!ESTADOS_VALIDOS[*]})" >&2
+            exit 1
         fi
-        sed -i "s/^estado: .*/estado: $estado/" "$file"
-        echo "  - \"$(_fecha_hora) | $estado | $est_actual -> $estado${nota:+ — $nota}\"" >> "$file"
-    elif [ -n "$nota" ]; then
-        echo "  - \"$(_fecha_hora) | $est_actual | $nota\"" >> "$file"
+        _set_campo "$id" "estado" "$estado"
+        # Auto-registro del commit base al comenzar (delimita el git diff de la tarea)
+        if [ "$estado" = "IN_PROGRESS" ] && [ "$est_actual" != "IN_PROGRESS" ]; then
+            if [ -z "$(grep '^commit_base:' "$file" | cut -d' ' -f2-)" ]; then
+                base=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+                _set_campo "$id" "commit_base" "$base"
+            fi
+        fi
+        hist="$est_actual -> $estado${nota:+ — $nota}"
     else
-        echo "ERROR: necesitas --estado o --nota" >&2; exit 1
+        hist="$nota"
+    fi
+    if [ -n "$reserva" ]; then
+        _set_campo "$id" "reserva" "[$reserva]"
+        hist="${hist:+$hist — }reserva: [$reserva]"
+    fi
+    if [ -n "$hist" ]; then
+        _apuntar "$id" "$hist" "${estado:-$est_actual}"
     fi
     echo "Actualizada: $id (estado: ${estado:-$est_actual})"
     ;;
+
+  reserve)
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    _ver_tarea "$2"
+    id="$2"; accion="" ruta=""
+    shift 2
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --add)   accion="add";   ruta="${2:-}"; shift 2 ;;
+            --clear) accion="clear"; shift ;;
+            *) echo "ERROR: argumento no válido: $1" >&2; exit 1 ;;
+        esac
+    done
+    _lock
+    actual=$(_reserva "$id")
+    if [ "$accion" = "clear" ]; then
+        nueva=""
+    elif [ "$accion" = "add" ] && [ -n "$ruta" ]; then
+        [ -n "$actual" ] && nueva="$actual, $ruta" || nueva="$ruta"
+    else
+        echo "Reserva actual de $id: [$actual]"
+        exit 0
+    fi
+    _set_campo "$id" "reserva" "[$nueva]"
+    _apuntar "$id" "reserva: [$nueva]" "$(_estado "$id")"
+    echo "Reserva de $id: [$nueva]"
+    ;;
+
+  check)
+    # check sin rutas: lista las reservas activas (IN_PROGRESS/REVIEW)
+    # check con rutas: detector de conflicto frente a las reservas activas
+    shift
+    keys=()
+    while IFS= read -r f; do
+        est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
+        case "$est" in
+            IN_PROGRESS|REVIEW)
+                res=$(grep '^reserva:' "$f" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true)
+                if [ -n "$res" ]; then
+                    while IFS= read -r r; do
+                        keys+=("$(basename "$f" .md)|$r")
+                    done <<< "$res"
+                fi
+                ;;
+        esac
+    done < <(ls "$TASKS_DIR"/*.md 2>/dev/null || true)
+
+    if [ $# -eq 0 ]; then
+        if [ ${#keys[@]} -eq 0 ]; then
+            echo "Sin reservas activas."
+        else
+            echo "Reservas activas:"
+            printf '  %s\n' "${keys[@]}"
+        fi
+        exit 0
+    fi
+    # conflicto contra rutas dadas (args restantes tras shift)
+    conflicto=0
+    for ruta in "$@"; do
+        for k in "${keys[@]}"; do
+            id_res="${k%%|*}"; area="${k#*|}"
+            if [[ "$ruta" == "$area"* ]]; then
+                echo "CONFLICTO: '$ruta' está reservada por $id_res ($area)"
+                conflicto=1
+            fi
+        done
+    done
+    if [ "$conflicto" -eq 0 ]; then
+        echo "OK: ninguna ruta colisiona con reservas activas. Tomando: $*"
+    fi
+    exit 0
+    ;;
+
   list)
     filtro="${2:-}"
-    echo "=== PENDING ==="
+    echo "=== TAREAS ==="
     for f in "$TASKS_DIR"/*.md; do
         [ -f "$f" ] || continue
         est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
@@ -127,17 +245,21 @@ case "${1:-}" in
         echo "  $(basename "$f" .md) [$est]"
     done | grep -v '^$'
     ;;
+
   status)
     echo "=== UDO — estado del proyecto ==="
-    echo "--- Tareas activas ---"
-    ura-udo list IN_PROGRESS 2>/dev/null || "$0" list IN_PROGRESS
-    echo "--- Bloqueadas ---"
-    "$0" list BLOCKED 2>/dev/null || true
+    echo "--- En curso ---"
+    "$0" list IN_PROGRESS
     echo "--- En revisión ---"
-    "$0" list REVIEW 2>/dev/null || true
+    "$0" list REVIEW
+    echo "--- Bloqueadas ---"
+    "$0" list BLOCKED
+    echo "--- Reservas activas ---"
+    "$0" check
     echo "--- Últimos commits ---"
-    git -C "$HOME/URA/ura_ia_1972" log --oneline -5
+    git -C "$REPO" log --oneline -5
     ;;
+
   verify)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     id="$2"
@@ -145,15 +267,51 @@ case "${1:-}" in
     file="$TASKS_DIR/$id.md"
     echo "TASK: $id"
     echo "STATUS: $(grep '^estado:' "$file" | cut -d' ' -f2-)"
+    echo "RESERVA: [$(grep '^reserva:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//')]"
+    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2-)
+    echo "COMMIT_BASE: ${base:-—}"
     echo ""
+
     echo "REQUEST: OK"
-    commit=$(git -C "$HOME/URA/ura_ia_1972" log --oneline --grep="$id" -1 2>/dev/null || true)
+
+    commit=$(git -C "$REPO" log --oneline --grep="$id" -1 2>/dev/null || true)
     if [ -n "$commit" ]; then
         echo "COMMIT: OK — $commit"
     else
         echo "COMMIT: WARNING — sin commit con [$id]"
     fi
-    dirty=$(git -C "$HOME/URA/ura_ia_1972" status --porcelain | head -3 || true)
+
+    # --- Discrepancias reserva vs modificado (F2) ---
+    reserva=$(_reserva "$id")
+    tocados=""
+    if [ -n "$base" ] && [ "$base" != "unknown" ]; then
+        tocados=$(git -C "$REPO" diff --name-only "$base..HEAD" 2>/dev/null || true)
+        tocados=$( { echo "$tocados"; git -C "$REPO" status --porcelain | sed 's/^...//'; } | sed 's/^ *//' | grep -v '^$' | sort -u )
+    else
+        tocados=$(git -C "$REPO" status --porcelain | sed 's/^...//' | sed 's/^ *//' | grep -v '^$' | sort -u)
+    fi
+    echo ""
+    echo "--- Discrepancias (reserva vs git) ---"
+    if [ -z "$tocados" ]; then
+        echo "  INFO: sin archivos modificados en rango/working tree (¿commit pendiente?)"
+    else
+        no_declarados=$(comm -23 <(grep -v '^docs/udo/\(tasks\|\.seq\|templates/task_template.md\)' <<< "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
+        if [ -n "$no_declarados" ]; then
+            echo "  MODIFICADOS SIN DECLARAR:"
+            echo "$no_declarados" | sed 's/^/    /'
+        else
+            echo "  OK: todos los archivos modificados están declarados en reserva"
+        fi
+        if [ -n "$reserva" ]; then
+            no_tocados=$(comm -13 <(echo "$tocados" | sort -u) <(echo "$reserva" | tr ',' '\n' | sed 's/^ *//' | sort -u) 2>/dev/null || true)
+            if [ -n "$no_tocados" ]; then
+                echo "  RESERVADOS NO MODIFICADOS (liberación sugerida):"
+                echo "$no_tocados" | sed 's/^/    /'
+            fi
+        fi
+    fi
+    dirty=$(git -C "$REPO" status --porcelain | head -3 || true)
+    echo ""
     if [ -n "$dirty" ]; then
         echo "GIT: WARNING — hay cambios sin commit"
         echo "$dirty" | sed 's/^/  /'
@@ -161,6 +319,7 @@ case "${1:-}" in
         echo "GIT: OK"
     fi
     ;;
+
   *)
     _uso
     ;;

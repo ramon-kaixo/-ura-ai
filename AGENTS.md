@@ -660,7 +660,8 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin panel, sin dispatcher.
 
 - **Expedientes**: `docs/udo/tasks/TASK-YYYYMMDD-NNN.md` (estado + historial en el mismo archivo)
-- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota) | list [ESTADO] | status | verify TASK-ID`
+- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota/--reserva) | reserve (--add/--clear) | check [rutas] | list [ESTADO] | status | verify TASK-ID`
+- **Reserva de archivos (F2)**: `reserve TASK --add "ruta1,ruta2"` declara qué archivos tocará la tarea; `check ruta...` detecta CONFLICTO contra reservas activas (IN_PROGRESS/REVIEW). Persistente en el expediente (Git). Liberación automática al cierre. `commit_base` automático al IN_PROGRESS.
 - **Estados**: `PLANNED → IN_PROGRESS → REVIEW → DONE` (+BLOCKED/CONFLICT/CANCELLED), transiciones auditadas
 - **Commits**: formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
 - **IDs únicos**: contador monotónico por fecha en `docs/udo/.seq`; escrituras con `flock`

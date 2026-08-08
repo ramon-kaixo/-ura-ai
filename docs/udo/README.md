@@ -22,27 +22,53 @@ ura-udo create "descripción"            # crea TASK-YYYYMMDD-NNN (solicitante: 
 ura-udo show TASK-20260808-001          # ver expediente completo
 ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada
 ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
+ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update
+ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva
+ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
 ura-udo list [ESTADO]                   # tareas por estado
-ura-udo status                          # resumen del proyecto
-ura-udo verify TASK-...                 # request + commit + git status
+ura-udo status                          # resumen del proyecto (incluye reservas activas)
+ura-udo verify TASK-...                 # request + commit + git + discrepancias reserva vs diff
 ```
 
 - IDs únicos: contador monotónico por fecha en `docs/udo/.seq` (sin colisiones `ls|wc`).
 - Escrituras con `flock` (`docs/udo/.lock`, patrón ADR-002).
 - Concurrencia Web/TERM: solo se usa `flock` — sin dispatcher.
 
+## Reserva de archivos (F2)
+
+**Regla**: antes de pasar a `IN_PROGRESS` (o justo al empezar), el canal declara qué archivos/áreas va a modificar:
+
+```bash
+ura-udo reserve TASK-20260808-005 --add "motor/core/llm/router.py,motor/core/llm/config.py"
+ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos archivos
+```
+
+- La reserva vive en el campo `reserva: [ruta1, ...]` del expediente → **persistente y versionada en Git** (no depende de la memoria del LLM).
+- Solo las tareas con estado `IN_PROGRESS`/`REVIEW` protegen sus reservas.
+- **Liberación automática**: al pasar a `DONE`/`CANCELLED`, la reserva deja de estar activa; el historial queda en el expediente (quién reservó qué y cuándo).
+- **Al cerrar (verify)**: compara `git diff <commit_base>..HEAD` + working tree contra la reserva →
+  1. archivos modificados sin declarar (`MODIFICADOS SIN DECLARAR`);
+  2. reservados que no se modificaron (`RESERVADOS NO MODIFICADOS — liberación sugerida`).
+- `commit_base` se registra automáticamente al pasar a `IN_PROGRESS` (delimita el diff de la tarea).
+
+### Límites del mecanismo (documentación honesta)
+
+- La reserva es **cortesía + auditoría, no exclusión de kernel**: Git sigue siendo la fuente de verdad y el conflicto REAL se detecta al commitear. Ningún proceso puede impedir físicamente que otro agent modifique un archivo reservado.
+- La reserva solo funciona si **ambos canales consultan** (`ura-udo check`) antes de actuar — es disciplina de procedimiento, no de bloqueo.
+- Mitigación integrada: `ura-udo verify` lista las invasiones (no las bloquea por defecto) y el flujo de commit con `[TASK-ID]` permite correlacionar quién tocó qué.
+
 ## Flujo de trabajo
 
 1. **Web o Terminal** crea tarea → `PLANNED`
-2. Ejecuta → `IN_PROGRESS`
+2. Declara **reserva** (`reserve --add`) y pasa a `IN_PROGRESS`
 3. **Commit** con formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
 4. Resultado → `REVIEW` (revisión del otro agente o Ramón)
-5. `DONE` solo al cerrar
+5. `DONE` solo al cerrar — `verify` reporta discrepancias reserva vs diff
 
 ## Verificación
 
 ```bash
-ura-udo verify TASK-...   # pide: expediente OK, commit con [TASK-ID], git limpio
+ura-udo verify TASK-...   # pide: expediente OK, commit con [TASK-ID], git limpio, discrepancias reserva vs git
 ```
 
 ## Enlaces (memoria existente — NO duplicar)
