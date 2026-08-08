@@ -107,12 +107,98 @@ report() {
     exit "$STATUS"
 }
 
+# --- Env check (PLAN 1 A3): entorno de trabajo antes de empezar ---
+# Comprueba: rootfs rw/ro, servicios críticos, secretos, disco, git.
+# Sin BD, sin deps: findmnt, systemctl, df, git. Salida OK/WARN/FAIL.
+env_check() {
+    local STATUS=0 WARN=0
+    echo "=== ura-engineering-check --env ==="
+    echo "Fecha:        $(_fecha)"
+
+    echo ""
+    echo "--- Rootfs (/ writable?) ---"
+    local ropts
+    ropts=$(findmnt -T / -o OPTIONS -n 2>/dev/null || echo "?")
+    if echo "$ropts" | grep -q "ro," || [ "$ropts" = "ro" ]; then
+        echo "  WARN rootfs RO ($ropts) — escrituras fuera del repo fallarán (F14-F01)"
+        WARN=1
+    else
+        echo "  OK   rootfs rw ($ropts)"
+    fi
+
+    echo ""
+    echo "--- Servicios críticos ---"
+    local svc
+    for svc in opencode model-router ollama ura-api; do
+        local st
+        st=$(systemctl is-active "$svc" 2>/dev/null || echo "unknown")
+        case "$st" in
+            active)   echo "  OK   $svc ($st)" ;;
+            inactive|failed|unknown)
+                echo "  FAIL $svc ($st)"
+                STATUS=1
+                ;;
+            *)
+                echo "  WARN $svc ($st)"
+                WARN=1
+                ;;
+        esac
+    done
+
+    echo ""
+    echo "--- Secretos ---"
+    if [ -r /etc/ura/secrets.env ] && grep -q '^OPENCODE_WEB_PASS=' /etc/ura/secrets.env; then
+        echo "  OK   secrets.env legible + OPENCODE_WEB_PASS"
+    else
+        echo "  WARN secrets.env no legible o sin OPENCODE_WEB_PASS"
+        WARN=1
+    fi
+
+    echo ""
+    echo "--- Disco (rootfs) ---"
+    local uso
+    uso=$(df / | awk 'NR==2 {gsub("%","",$5); print $5}')
+    if [ -n "$uso" ] && [ "$uso" -ge 90 ]; then
+        echo "  FAIL uso $uso% (>= 90)"
+        STATUS=1
+    elif [ -n "$uso" ]; then
+        echo "  OK   uso $uso%"
+    else
+        echo "  WARN no se pudo leer el uso de disco"
+        WARN=1
+    fi
+
+    echo ""
+    echo "--- Git (repo) ---"
+    if [ -d "$REPO/.git" ]; then
+        if git -C "$REPO" status --porcelain 2>/dev/null | grep -qv '^??'; then
+            echo "  WARN árbol sucio (cambios sin commitear)"
+            WARN=1
+        else
+            echo "  OK   árbol limpio"
+        fi
+    else
+        echo "  FAIL repo sin .git"
+        STATUS=1
+    fi
+
+    echo ""
+    if [ "$STATUS" -gt 0 ]; then
+        echo "RESULTADO: FAIL — entorno degradado (revisar arriba)"
+    elif [ "$WARN" -gt 0 ]; then
+        echo "RESULTADO: OK CON WARNINGS — operable, atender avisos"
+    else
+        echo "RESULTADO: OK — entorno listo"
+    fi
+    exit "$STATUS"
+}
+
 # --- CLI ---
 MODE=""
 for arg in "$@"; do
     case "$arg" in
-        --verbose|--install|--fix) MODE="$arg" ;;
-        *) echo "Uso: ura-engineering-check [--verbose|--install|--fix]" >&2; exit 2 ;;
+        --verbose|--install|--fix|--env) MODE="$arg" ;;
+        *) echo "Uso: ura-engineering-check [--verbose|--install|--fix|--env]" >&2; exit 2 ;;
     esac
 done
 
@@ -126,6 +212,9 @@ case "$MODE" in
         else
             echo "Ya sincronizada: $GLOBAL_DST"
         fi
+        ;;
+    --env)
+        env_check
         ;;
     *)
         ;;
