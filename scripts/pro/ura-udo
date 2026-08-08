@@ -37,7 +37,7 @@ _id_nuevo() {
 }
 
 _uso() {
-    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force] [--instrucciones …] [--restricciones …]"
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"] [--reserva \"r1,r2\"] [--force] [--instrucciones …] [--restricciones …] [--revisor …]"
     echo "     | reserve TASK-ID [--add \"r1,r2\"] [--clear] | check [ruta...]"
     echo "     | list [--estado] | status | verify TASK-ID | context TASK-ID"
 }
@@ -122,6 +122,57 @@ _conflicto_reserva() {
     return 0
 }
 
+# --- Gate de integridad de revisión (F2.2, al cerrar DONE): exige que la
+# revisión signifique algo. Ejecuta solo sin --force.
+_gate_revision() {
+    local id="$1" file="$TASKS_DIR/$1.md" base commits tocados sha r sucio
+    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
+    if [ -z "$base" ] || [ "$base" = "unknown" ]; then
+        echo "ERROR: DONE requiere commit_base (¿tarea nunca fue IN_PROGRESS?)" >&2
+        return 1
+    fi
+    commits=$(grep '^commits:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)
+    if [ -z "$commits" ]; then
+        echo "ERROR: DONE requiere commits registrados — ejecuta 'ura-udo verify TASK' antes de cerrar" >&2
+        return 1
+    fi
+    tocados=$(git -C "$REPO" diff --name-only "$base..HEAD" 2>/dev/null || true)
+    tocados=$( { echo "$tocados"; git -C "$REPO" status --porcelain | sed 's/^...//'; } | sed 's/^ *//' | grep -v '^$' | grep -v '^docs/udo/\(tasks\|\.seq\)' | sort -u || true )
+    if [ -z "$tocados" ]; then
+        echo "ERROR: DONE sin trabajo revisable (diff commit_base..HEAD vacío y árbol limpio)" >&2
+        return 1
+    fi
+    for entry in $(echo "$commits" | tr ',' '\n' | sed 's/^ *//' | grep -v '^$'); do
+        sha=$(echo "$entry" | cut -d' ' -f1)
+        if ! git -C "$REPO" merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then
+            echo "ERROR: DONE bloqueado — commit '$sha' no es ancestro de HEAD (historia reescrita tras verificación)" >&2
+            return 1
+        fi
+    done
+    sucio=$(git -C "$REPO" status --porcelain | grep -v '^??' | sed 's/^...//' | grep -v '^docs/udo/\(tasks\|\.seq\)' || true)
+    if [ -n "$sucio" ]; then
+        echo "ERROR: DONE bloqueado — cambios sin commitear fuera del expediente:" >&2
+        echo "$sucio" | sed 's/^/  /' >&2
+        return 1
+    fi
+    return 0
+}
+
+# --- Determina si el cierre es auto-revisión: revisor vacío o == ejecutor.
+_es_auto_revision() {
+    local id="$1" revisor="$2" ejecutor="" campo v
+    if [ -z "$revisor" ]; then
+        return 0
+    fi
+    for campo in agente_web agente_terminal; do
+        v=$(grep "^$campo: " "$TASKS_DIR/$id.md" | cut -d' ' -f2- || true)
+        case "$v" in
+            *"(ejecutor)"*) ejecutor="${v%% (ejecutor)*}"; break ;;
+        esac
+    done
+    [ -n "$ejecutor" ] && [ "$revisor" = "$ejecutor" ]
+}
+
 case "${1:-}" in
 
   create)
@@ -142,6 +193,7 @@ case "${1:-}" in
         echo "canal: ${URA_SOLICITANTE:-RAMON}"
         echo "agente_web: "
         echo "agente_terminal: "
+        echo "revisor: "
         echo "reserva: []"
         echo "commit_base: "
         echo "contexto: "
@@ -174,7 +226,7 @@ case "${1:-}" in
     echo "=== CONTEXTO UDO — $id ==="
     echo "ID: $id"
     echo "Estado: $(_estado "$id")"
-    grep -E '^(descripcion|objetivo|instrucciones|restricciones|canal|agente_web|agente_terminal|reserva|commit_base|contexto|resultado|pendientes):' "$file" | sed 's/^/  /'
+    grep -E '^(descripcion|objetivo|instrucciones|restricciones|canal|agente_web|agente_terminal|revisor|reserva|commit_base|contexto|resultado|pendientes):' "$file" | sed 's/^/  /'
     echo "--- Últimos commits ---"
     git -C "$REPO" log --oneline --grep="$id" -5 2>/dev/null || true
     echo "--- Reservas activas que afectan ---"
@@ -186,7 +238,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -197,6 +249,7 @@ case "${1:-}" in
             --agente_terminal) agente_terminal_val="${2:-}"; shift 2 ;;
             --instrucciones)   instrucciones_val="${2:-}"; shift 2 ;;
             --restricciones)   restricciones_val="${2:-}"; shift 2 ;;
+            --revisor)         revisor_val="${2:-}"; shift 2 ;;
             --force)   force=1; shift ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
@@ -216,10 +269,28 @@ case "${1:-}" in
             echo "ERROR: DONE solo desde REVIEW (revisión previa requerida — CASO B). Usa --force si es una excepción explícita." >&2
             exit 1
         fi
+        # Gate de integridad de revisión (F2.2): al cerrar DONE sin --force,
+        # la revisión debe significar algo (commits registrados, diff no vacío,
+        # SHAs ancestrales, árbol limpio fuera del expediente).
+        if [ "$estado" = "DONE" ] && [ -z "$force" ]; then
+            _gate_revision "$id" || exit 1
+        fi
         _set_campo "$id" "estado" "$estado"
         hist="$est_actual -> $estado${nota:+ — $nota}"
         if [ "$estado" = "DONE" ] && [ "$est_actual" != "REVIEW" ] && [ -n "$force" ]; then
             hist="${hist} — AUTORIZACIÓN EXPRESA (--force)"
+        fi
+        # Marca honesta de auto-revisión (F2.2): la dice la herramienta, no el
+        # texto libre. Revisor vacío o igual al ejecutor = AUTO-REVISIÓN.
+        if [ "$estado" = "DONE" ]; then
+            if _es_auto_revision "$id" "${revisor_val:-}"; then
+                hist="${hist} — AUTO-REVISIÓN${revisor_val:+ (revisor=$revisor_val)}"
+            elif [ -n "$revisor_val" ]; then
+                _set_campo "$id" "revisor" "$revisor_val"
+                hist="${hist} — revisión por $revisor_val"
+            fi
+        elif [ -n "$revisor_val" ]; then
+            _set_campo "$id" "revisor" "$revisor_val"
         fi
     else
         hist="$nota"

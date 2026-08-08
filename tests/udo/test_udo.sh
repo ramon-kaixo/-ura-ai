@@ -74,14 +74,55 @@ echo "-- 10. DONE solo desde REVIEW (CASO B)"
 out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$A" --estado DONE --nota "sin revisión" 2>&1); rc=$?
 [ "$rc" -ne 0 ] && echo "$out" | grep -q "DONE solo desde REVIEW" && ok "DONE sin REVIEW bloqueado" || bad "DONE sin REVIEW bloqueado (rc=$rc)"
 
-# 11. DONE tras REVIEW permitido
-echo "-- 11. DONE desde REVIEW"
-UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$A" --estado REVIEW --nota "revisado TERM" >/dev/null
-UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$A" --estado DONE --nota "cierre" >/dev/null && ok "DONE desde REVIEW" || bad "DONE desde REVIEW"
+# 11. DONE legítimo: gate de integridad F2.2 (repo git temporal)
+echo "-- 11. DONE con gate de integridad"
+REPO_T="$WORK/repo_t"
+mkdir -p "$REPO_T"
+git init -q "$REPO_T" && git -C "$REPO_T" config user.email test@udo && git -C "$REPO_T" config user.name test
+echo base > "$REPO_T/base.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "base"
+C=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test gate" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado IN_PROGRESS --reserva "zona_c/trabajo.py" >/dev/null
+mkdir -p "$REPO_T/zona_c"
+echo "trabajo" > "$REPO_T/zona_c/trabajo.py"
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$C][TERM] trabajo de prueba"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$C" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado REVIEW --nota "revisado" >/dev/null
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$C" --estado DONE --nota "cierre con gate" >/dev/null && ok "DONE con gate superado" || bad "DONE con gate superado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$C" | grep -q "AUTO-REVISIÓN" && ok "AUTO-REVISIÓN sin revisor" || bad "AUTO-REVISIÓN sin revisor"
 
-# 12. Liberación automática: A ya DONE no protege; B puede reservar zona_a
+# 11b. Gate: DONE sin commits registrados rechazado (verify previo exigido)
+echo "-- 11b. Gate: DONE sin verify rechazado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$A" --estado REVIEW --nota "a revisión sin trabajo" >/dev/null
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$A" --estado DONE --nota "sin verify" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "DONE requiere commits registrados" && ok "gate bloquea sin commits" || bad "gate bloquea sin commits (rc=$rc)"
+
+# 11c. Gate: SHA no ancestral (historia reescrita) rechazado
+echo "-- 11c. Gate: SHA reescrito rechazado"
+D2=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test rewrite" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$D2" --estado IN_PROGRESS >/dev/null
+echo "v1" > "$REPO_T/d2.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$D2][TERM] v1"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$D2" >/dev/null 2>&1
+git -C "$REPO_T" reset -q --hard HEAD~1
+echo "v2" > "$REPO_T/d2.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$D2][TERM] v2 reescrita"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$D2" --estado REVIEW >/dev/null 2>&1
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$D2" --estado DONE --nota "cierre" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "no es ancestro de HEAD" && ok "gate bloquea SHA reescrito" || bad "gate bloquea SHA reescrito (rc=$rc)"
+
+# 11d. Revisión cruzada: --revisor distinto del ejecutor (sin AUTO-REVISIÓN)
+echo "-- 11d. Revisión cruzada"
+E=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test revisor" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado IN_PROGRESS --agente_terminal "TERM (ejecutor)" >/dev/null
+echo "x" > "$REPO_T/e.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$E][TERM] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$E" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado REVIEW >/dev/null
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$E" --estado DONE --revisor "WEB" --nota "cierre" >/dev/null && ok "DONE con revisor WEB" || bad "DONE con revisor WEB"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$E" | grep -q "revisión por WEB" && ok "revisión por WEB registrada" || bad "revisión por WEB registrada"
+! UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$E" | grep -q "AUTO-REVISIÓN" && ok "sin marca AUTO-REVISIÓN" || bad "sin marca AUTO-REVISIÓN"
+
+# 12. Liberación automática: C ya DONE no protege; B puede reservar zona_c
 echo "-- 12. Liberación al cierre"
-UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$B" --add "zona_a/foo.py" >/dev/null 2>&1 && ok "zona_a liberada tras DONE" || bad "zona_a liberada tras DONE"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$B" --add "zona_c/trabajo.py" >/dev/null 2>&1 && ok "zona_c liberada tras DONE" || bad "zona_c liberada tras DONE"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$B" --clear >/dev/null
 
 # 13. Campos canónicos antes de historial
 echo "-- 13. Estructura canónica"
