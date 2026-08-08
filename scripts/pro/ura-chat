@@ -1,0 +1,16 @@
+#!/bin/bash
+# ura-ask — Consulta rápida a Ollama 32B desde terminal
+# Uso: ura-ask "tu pregunta"
+
+MODEL="qwen2.5-coder:32b"
+
+if [ $# -eq 0 ]; then
+    echo "Uso: ura-ask \"tu pregunta\""
+    exit 1
+fi
+
+PROMPT="$*"
+
+curl -s http://localhost:11434/api/generate \
+  -d "{\"model\":\"$MODEL\",\"prompt\":\"$PROMPT\",\"stream\":false}" 2>/dev/null | \
+  python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('response',''))"

@@ -32,12 +32,24 @@ TASK_ID=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo create "$*" | grep -o -m1 'T
 [ -n "$TASK_ID" ] || { echo "ERROR: no se pudo crear la tarea UDO" >&2; exit 1; }
 $HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)" --nota "enviado por ura-opencode (TERM)" >/dev/null
 
+# Contexto compartido (F2): inyectar expediente + estado al prompt del Web.
+# Fuente de verdad: Git + expediente (no la conversación). El Web arranca con
+# el contexto completo aunque TERM esté idle tras el envío.
+CONTEXTO=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo context "$TASK_ID" 2>/dev/null || true)
+MENSAJE="$*"
+if [ -n "$CONTEXTO" ]; then
+    MENSAJE="$MENSAJE
+
+===== CONTEXTO UDO (tarea $TASK_ID) — léelo antes de trabajar =====
+$CONTEXTO"
+fi
+
 /home/ramon/.opencode/bin/opencode run \
     --attach "$URL" \
     --username "$USER" \
     --password "$OPENCODE_WEB_PASS" \
     -m "$MODEL" \
-    "$*" 2>&1
+    "$MENSAJE" 2>&1
 
 if [ -n "${TASK_ID:-}" ]; then
     $HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado REVIEW --nota "instrucción enviada a OpenCode" >/dev/null
