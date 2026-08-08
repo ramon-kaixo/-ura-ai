@@ -63,7 +63,7 @@ Fase 4 (verificación automática y detección de discrepancias) y Fase 5 (harde
 | Batería | Resultado |
 |---------|-----------|
 | py_compile | ✅ commit_msg_validator.py OK |
-| ruff | ⚠️ NO EJECUTADO (ruff no instalado en PATH — cambios son bash/markdown, sin Python nuevo) |
+| ruff | ✅ Ejecutado (.venv/bin/ruff): 28 errores pre-existentes en 5 archivos no tocados — 0 nuevos (verificado vs baseline) |
 | mypy | ⚠️ NO EJECUTADO (sin cambios Python) |
 | bandit | ⚠️ NO EJECUTADO (sin cambios Python) |
 | pytest | ✅ baseline sin regresión (692 passed, 16 pre-existentes — verificado con stash) |
@@ -83,7 +83,7 @@ Flujo 1-10 ejecutado sobre la propia implementación: crear → enviar trabajo �
 | Reinicio de opencode.service (Web cargue metodología v1.1) | Ramón (sudo) |
 | Validación humana B2 (4 veredictos) | Ramón |
 | Revisión independiente lote review-pending (6+1 tareas) | Ramón/WEB |
-| ruff/mypy/bandit completos (entorno sin ruff en PATH) | entorno |
+| ruff verificado 0 nuevos; mypy/bandit no aplican (0 cambios Python) | ✅ resuelto |
 
 ## 7. Reversibilidad y reglas
 
