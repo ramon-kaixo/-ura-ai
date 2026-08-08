@@ -7,6 +7,9 @@ objetivo:
 estado: PLANNED
 agente_web: 
 agente_terminal: 
+canal: 
+reserva: []
+commit_base: 
 contexto: 
 cambios: []
 commits: []

@@ -14,19 +14,23 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-# --- Secretos: env > /etc/ura/secrets.env > fallback con aviso
-if [ -z "${OPENCODE_WEB_PASS:-}" ] && [ -f /etc/ura/secrets.env ]; then
+# --- Secretos: env > /etc/ura/secrets.env (si legible) > fallback con aviso
+if [ -z "${OPENCODE_WEB_PASS:-}" ] && [ -r /etc/ura/secrets.env ]; then
     # shellcheck disable=SC1091
+    set +e
+    # shellcheck source=/dev/null
     . /etc/ura/secrets.env
+    set -e
 fi
 if [ -z "${OPENCODE_WEB_PASS:-}" ]; then
-    echo "AVISO: OPENCODE_WEB_PASS no definido — usando password por defecto (inservible)" >&2
+    echo "AVISO: OPENCODE_WEB_PASS no definido (env o /etc/ura/secrets.env) — usando password por defecto (inservible)" >&2
     export OPENCODE_WEB_PASS="cambiar-me"
 fi
 
 export URA_SOLICITANTE=TERM
-TASK_ID=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo create "$*" | grep -o 'TASK-[0-9-]*')
-$HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS >/dev/null
+TASK_ID=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo create "$*" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+[ -n "$TASK_ID" ] || { echo "ERROR: no se pudo crear la tarea UDO" >&2; exit 1; }
+$HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS --nota "enviado por ura-opencode (TERM)" >/dev/null
 
 /home/ramon/.opencode/bin/opencode run \
     --attach "$URL" \
@@ -38,3 +42,5 @@ $HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS
 if [ -n "${TASK_ID:-}" ]; then
     $HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado REVIEW --nota "instrucción enviada a OpenCode" >/dev/null
 fi
+echo ""
+echo "TAREA UDO: $TASK_ID ($HOME/URA/ura_ia_1972/docs/udo/tasks/$TASK_ID.md)"
