@@ -128,6 +128,8 @@ UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" reserve "$D" --add "zona_a/foo.py" 
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$D" | grep -q "AUTORIZACIÓN EXPRESA --force" && ok "--force marcado en historial" || bad "--force marcado en historial"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$D" --reserva "zona_force/y.py,zona_a/foo.py" --force >/dev/null 2>&1
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$D" | grep -q "AUTORIZACIÓN EXPRESA (--force)" && ok "--force marcado en update" || bad "--force marcado en update"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" update "$D" --estado DONE --force >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO" "$UDO" show "$D" | grep -q "AUTORIZACIÓN EXPRESA (--force)" && ok "--force marcado en DONE forzado" || bad "--force marcado en DONE forzado"
 
 # 20. instrucciones/restricciones propagadas en update y context
 echo "-- 20. instrucciones/restricciones"
