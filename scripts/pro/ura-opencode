@@ -1,10 +1,12 @@
 #!/bin/bash
-# ura-opencode — Enviar instrucciones a OpenCode desde terminal
+# ura-opencode — Enviar instrucciones a OpenCode desde terminal (UDO F1)
 # Uso: ura-opencode "tu mensaje aquí"
+# Credenciales: OPENCODE_WEB_PASS desde entorno o /etc/ura/secrets.env (nunca en el repo)
+
+set -euo pipefail
 
 URL="http://10.164.1.99:8081"
 USER="ramon"
-PASS="321000"
 MODEL="ollama/qwen2.5-coder:32b"
 
 if [ $# -eq 0 ]; then
@@ -12,12 +14,27 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# --- Secretos: env > /etc/ura/secrets.env > fallback con aviso
+if [ -z "${OPENCODE_WEB_PASS:-}" ] && [ -f /etc/ura/secrets.env ]; then
+    # shellcheck disable=SC1091
+    . /etc/ura/secrets.env
+fi
+if [ -z "${OPENCODE_WEB_PASS:-}" ]; then
+    echo "AVISO: OPENCODE_WEB_PASS no definido — usando password por defecto (inservible)" >&2
+    export OPENCODE_WEB_PASS="cambiar-me"
+fi
+
 export URA_SOLICITANTE=TERM
-$HOME/URA/ura_ia_1972/scripts/pro/ura-task create "$*" >/dev/null
+TASK_ID=$($HOME/URA/ura_ia_1972/scripts/pro/ura-udo create "$*" | grep -o 'TASK-[0-9-]*')
+$HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado IN_PROGRESS >/dev/null
 
 /home/ramon/.opencode/bin/opencode run \
     --attach "$URL" \
     --username "$USER" \
-    --password "$PASS" \
+    --password "$OPENCODE_WEB_PASS" \
     -m "$MODEL" \
     "$*" 2>&1
+
+if [ -n "${TASK_ID:-}" ]; then
+    $HOME/URA/ura_ia_1972/scripts/pro/ura-udo update "$TASK_ID" --estado REVIEW --nota "instrucción enviada a OpenCode" >/dev/null
+fi
