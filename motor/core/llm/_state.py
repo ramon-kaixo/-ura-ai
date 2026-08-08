@@ -73,7 +73,7 @@ class LLMState:
     health: Callable
 
 
-def build_llm_state(config=None) -> LLMState:
+def build_llm_state(config=None) -> LLMState:  # noqa: PLR0915 — ADR-007: núcleo congelado, refactor requiere ADR
     from motor.core.config import UraConfig
     from motor.core.llm.ollama import OllamaProvider
     from motor.core.llm.registry import registry
