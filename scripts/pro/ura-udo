@@ -1,0 +1,167 @@
+#!/bin/bash
+# ura-udo — Capa mínima de coordinación UDO (Fase 1)
+# Uso: ura-udo create "desc" | show TASK-ID | update TASK-ID [--estado X] [--nota "…"]
+#      | list [--estado] | status | verify TASK-ID
+# Fuente de verdad: Git (código) + docs/udo/ (proceso). Sin BD, sin panel.
+
+set -euo pipefail
+
+UDO_ROOT="${UDO_ROOT:-$HOME/URA/ura_ia_1972/docs/udo}"
+TASKS_DIR="$UDO_ROOT/tasks"
+TEMPLATE="$UDO_ROOT/templates/task_template.md"
+SEQ_FILE="$UDO_ROOT/.seq"
+LOCK_FILE="$UDO_ROOT/.lock"
+
+declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
+
+_fecha()  { date +%Y-%m-%d; }
+_fecha_hora() { date +%Y-%m-%dT%H:%M; }
+_num()    { printf '%03d' "$1"; }
+
+# --- ID único sin colisiones: contador global monotónico por fecha
+_id_nuevo() {
+    local fecha hoy seq
+    hoy="$(_fecha | tr -d '-')"
+    seq=1
+    if [ -f "$SEQ_FILE" ]; then
+        seq=$(grep "^$hoy:" "$SEQ_FILE" 2>/dev/null | cut -d: -f2 || echo 0)
+        seq=$((seq + 1))
+    fi
+    local tmp="${SEQ_FILE}.tmp.$$"
+    (grep -v "^$hoy:" "$SEQ_FILE" 2>/dev/null || true; echo "$hoy:$seq") > "$tmp"
+    mv "$tmp" "$SEQ_FILE"
+    echo "TASK-$hoy-$(_num "$seq")"
+}
+
+_uso() {
+    echo "Uso: ura-udo create \"desc\" | show TASK-ID | update TASK-ID [--estado X] [--nota \"…\"]"
+    echo "     | list [--estado] | status | verify TASK-ID"
+}
+
+# --- Escritura con flock (ADR-002) para concurrencia segura
+_lock() {
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || { echo "ERROR: lock en uso (otro proceso ura-udo activo)" >&2; exit 1; }
+}
+
+_ver_tarea() {
+    local id="$1"
+    [ -f "$TASKS_DIR/$id.md" ] || { echo "ERROR: tarea no encontrada: $id" >&2; exit 1; }
+}
+
+_mostrar() {
+    local id="$1"
+    cat "$TASKS_DIR/$id.md"
+}
+
+case "${1:-}" in
+  create)
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    _lock
+    id="$(_id_nuevo)"
+    file="$TASKS_DIR/$id.md"
+    {
+        echo "---"
+        echo "id: $id"
+        echo "fecha: $(_fecha)"
+        echo "solicitante: ${URA_SOLICITANTE:-RAMON}"
+        echo "descripcion: $2"
+        echo "objetivo: "
+        echo "estado: PLANNED"
+        echo "agente_web: "
+        echo "agente_terminal: "
+        echo "contexto: "
+        echo "cambios: []"
+        echo "commits: []"
+        echo "revision: "
+        echo "pendientes: []"
+        echo "resultado: "
+        echo "historial:"
+        echo "  - \"$(_fecha_hora) | PLANNED | creada\""
+        echo "---"
+    } > "$file"
+    echo "Creada: $id -> $file"
+    ;;
+  show)
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    _ver_tarea "$2"
+    _mostrar "$2"
+    ;;
+  update)
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    _ver_tarea "$2"
+    id="$2" estado="" nota=""
+    shift 2
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --estado) estado="${2:-}"; shift 2 ;;
+            --nota)   nota="${2:-}"; shift 2 ;;
+            *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
+        esac
+    done
+    _lock
+    file="$TASKS_DIR/$id.md"
+    est_actual=$(grep '^estado:' "$file" | cut -d' ' -f2-)
+    if [ -n "$estado" ]; then
+        if [ -z "${ESTADOS_VALIDOS[$estado]:-}" ]; then
+            echo "ERROR: estado inválido '$estado' (válidos: ${!ESTADOS_VALIDOS[*]})" >&2; exit 1
+        fi
+        sed -i "s/^estado: .*/estado: $estado/" "$file"
+        echo "  - \"$(_fecha_hora) | $estado | $est_actual -> $estado${nota:+ — $nota}\"" >> "$file"
+    elif [ -n "$nota" ]; then
+        echo "  - \"$(_fecha_hora) | $est_actual | $nota\"" >> "$file"
+    else
+        echo "ERROR: necesitas --estado o --nota" >&2; exit 1
+    fi
+    echo "Actualizada: $id (estado: ${estado:-$est_actual})"
+    ;;
+  list)
+    filtro="${2:-}"
+    echo "=== PENDING ==="
+    for f in "$TASKS_DIR"/*.md; do
+        [ -f "$f" ] || continue
+        est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
+        if [ -n "$filtro" ]; then
+            [ "$est" = "$filtro" ] || continue
+        fi
+        echo "  $(basename "$f" .md) [$est]"
+    done | grep -v '^$'
+    ;;
+  status)
+    echo "=== UDO — estado del proyecto ==="
+    echo "--- Tareas activas ---"
+    ura-udo list IN_PROGRESS 2>/dev/null || "$0" list IN_PROGRESS
+    echo "--- Bloqueadas ---"
+    "$0" list BLOCKED 2>/dev/null || true
+    echo "--- En revisión ---"
+    "$0" list REVIEW 2>/dev/null || true
+    echo "--- Últimos commits ---"
+    git -C "$HOME/URA/ura_ia_1972" log --oneline -5
+    ;;
+  verify)
+    [ -n "${2:-}" ] || { _uso; exit 1; }
+    id="$2"
+    _ver_tarea "$id"
+    file="$TASKS_DIR/$id.md"
+    echo "TASK: $id"
+    echo "STATUS: $(grep '^estado:' "$file" | cut -d' ' -f2-)"
+    echo ""
+    echo "REQUEST: OK"
+    commit=$(git -C "$HOME/URA/ura_ia_1972" log --oneline --grep="$id" -1 2>/dev/null || true)
+    if [ -n "$commit" ]; then
+        echo "COMMIT: OK — $commit"
+    else
+        echo "COMMIT: WARNING — sin commit con [$id]"
+    fi
+    dirty=$(git -C "$HOME/URA/ura_ia_1972" status --porcelain | head -3 || true)
+    if [ -n "$dirty" ]; then
+        echo "GIT: WARNING — hay cambios sin commit"
+        echo "$dirty" | sed 's/^/  /'
+    else
+        echo "GIT: OK"
+    fi
+    ;;
+  *)
+    _uso
+    ;;
+esac

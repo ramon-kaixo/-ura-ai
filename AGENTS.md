@@ -663,6 +663,20 @@ Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F
 | **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
 | **PM v3.1** | ✅ Cerrada | Plan Maestro validación: `make validate`/`validate-full`, inventario 324 herramientas, shadowing M1 fix, cobertura core/ 38.8%→**51.1%**, mypy hook informativo. Ver `docs/audit/PLAN_MAESTRO_CLOSEOUT.md` |
 
+### UDO — Orquestación de tareas (F1, 2026-08-08)
+
+Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin panel, sin dispatcher.
+
+- **Expedientes**: `docs/udo/tasks/TASK-YYYYMMDD-NNN.md` (estado + historial en el mismo archivo)
+- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota) | list [ESTADO] | status | verify TASK-ID`
+- **Estados**: `PLANNED → IN_PROGRESS → REVIEW → DONE` (+BLOCKED/CONFLICT/CANCELLED), transiciones auditadas
+- **Commits**: formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
+- **IDs únicos**: contador monotónico por fecha en `docs/udo/.seq`; escrituras con `flock`
+- **Memoria**: enlaza `docs/pro/sesiones/` y `docs/architecture/` — NO duplica
+- **Reversible**: `rm -rf docs/udo/ && rm scripts/pro/ura-udo` deja URA intacta
+- **Credenciales OpenCode web**: `OPENCODE_WEB_PASS` vía env o `/etc/ura/secrets.env` (añadir con sudo: `echo 'OPENCODE_WEB_PASS=…' >> /etc/ura/secrets.env`)
+- Detalles: `docs/udo/README.md`
+
 ### Policy: Exclusiones de CI
 En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
 1. Verificar si la causa sigue existiendo
