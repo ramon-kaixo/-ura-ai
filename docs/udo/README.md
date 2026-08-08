@@ -28,6 +28,7 @@ ura-udo show TASK-20260808-001          # ver expediente completo
 ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada (DONE solo desde REVIEW)
 ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
 ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update ("" vacía)
+ura-udo update TASK-... --instrucciones "…" --restricciones "…"  # contexto propagable (F2)
 ura-udo update TASK-... --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"  # roles duales
 ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva (enforcement activo)
 ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
