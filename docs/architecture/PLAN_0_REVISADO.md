@@ -203,11 +203,11 @@ PLAN_0_REVISADO aprobado
 
 | Resto | Dónde | Acción |
 |-------|-------|--------|
-| `mcp.openclaw` | `~/.config/opencode/opencode.json` L:69 | Eliminar bloque (config no versionada; editar con cuidado + backup) |
-| `ReadWritePaths=.../.openclaw` | `/etc/systemd/system/opencode.service.d/hardening.conf` | Eliminar ruta muerta (requiere sudo Ramón) |
-| `.github/tests-ci-exclude.txt`, `.github/CI_POLICY.md` | AGENTS.md L:675/683 | Corregir referencias (o crear archivos; decisión de mantenimiento CI) |
-| `~/.opencode/opencode.json` + `package.json` (plugin 1.15.12) | `~/.opencode/` | Residuos de instalación previa → borrar si no se usan (verificar) |
-| `ura_opencode_watchdog.sh` | `deploy/` | Stub con `exit 0` → retirar o documentar como inactivo |
+| `mcp.openclaw` | `~/.config/opencode/opencode.json` L:69 | ⚠️ PENDIENTE — rootfs ro + requiere sudo. Eliminar bloque (config no versionada; editar con cuidado + backup) |
+| `ReadWritePaths=.../.openclaw` | `/etc/systemd/system/opencode.service.d/hardening.conf` | ⚠️ PENDIENTE — requiere sudo Ramón. Eliminar ruta muerta |
+| `.github/tests-ci-exclude.txt`, `.github/CI_POLICY.md` | AGENTS.md L:675/683 | ✅ RESUELTO — archivos creados (2026-08-08) |
+| `~/.opencode/opencode.json` + `package.json` (plugin 1.15.12) | `~/.opencode/` | ⚠️ PENDIENTE — residuos de instalación previa; verificar si el binario los usa antes de borrar |
+| `ura_opencode_watchdog.sh` | `deploy/` | ✅ Documentado — stub `exit 0` es desactivación deliberada; solo lo referencia plist macOS (launchd, no systemd) |
 
 ## 7. Pendientes documentados (fuera del alcance de implementación)
 

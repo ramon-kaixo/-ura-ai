@@ -1,0 +1,7 @@
+# Tests excluidos de CI — registro de exclusiones
+
+Este archivo es la fuente de la política "Policy: Exclusiones de CI" de AGENTS.md.
+Cada exclusión requiere: causa, evaluación de retorno, y revisión en cada release.
+
+**Estado actual (2026-08-08)**: sin exclusiones activas. CI ejecuta `pytest motor/tests/` (ci.yml).
+Cualquier exclusión futura debe registrarse aquí con: test, causa, fecha, responsable.
