@@ -62,7 +62,7 @@ def load_config(config_path: str | None = None) -> dict:
                 user_config = json.load(f)
                 config.update(user_config)
         except (OSError, json.JSONDecodeError) as e:
-            logging.warning(f"Error cargando config: {e}")
+            logger.warning(f"Error cargando config: {e}")
 
     return config
 
@@ -71,6 +71,7 @@ def load_config(config_path: str | None = None) -> dict:
 CONFIG = load_config(os.environ.get("URA_MAINTENANCE_CONFIG"))
 
 # Configuración de logging
+logger = logging.getLogger(__name__)
 LOG_DIR = Path(CONFIG["log_dir"])
 try:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -82,7 +83,7 @@ except (PermissionError, OSError):
     # Fallback a directorio temporal
     LOG_DIR = Path("/tmp/ura_maintenance_logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    logging.warning(f"Using fallback log directory: {LOG_DIR}")
+    logger.warning(f"Using fallback log directory: {LOG_DIR}")
 
 LOG_FILE = LOG_DIR / f"maintenance_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.log"
 
