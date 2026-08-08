@@ -2,7 +2,9 @@
 
 # PLAN_REVIEW_TEMPLATE — Cómo debe analizar el plan el agente
 
-Antes de ejecutar CUALQUIER plan, el agente produce este análisis. No es burocracia: es la obligación central de la metodología (un plan nunca se ejecuta sin análisis previo). Si el trabajo se coordina por UDO, este análisis se registra en el expediente (nota del estado o campo `revision`).
+Antes de ejecutar CUALQUIER plan, el agente produce este análisis. No es burocracia: es la obligación central de la metodología (un plan nunca se ejecuta sin análisis previo). Si el trabajo se coordina por UDO, este análisis se registra en el expediente (campo `analisis:` del expediente — PLAN 1 A1).
+
+**Proporcionalidad (PLAN 1 B4)**: el análisis debe ser proporcional al riesgo del plan. Plan trivial (cosmético, doc, refactor pequeño) → análisis breve de 5-10 líneas en el campo `analisis:`. Plan complejo (arquitectura, contratos, fases completas) → análisis completo con esta plantilla y veredicto.
 
 ## 1. ANÁLISIS DEL PLAN
 

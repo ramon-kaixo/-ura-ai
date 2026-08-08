@@ -1,8 +1,8 @@
-<!-- Engineering Process v1.0 -->
+<!-- Engineering Process v1.1 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.0 (2026-08-08) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.1 (2026-08-08) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
@@ -92,6 +92,7 @@ PLAN APROBADO → RESERVAS → EJECUCIÓN → COMMITS → VALIDACIÓN
 - Futuro (2×Terminal o sin Web): los roles se alternan (A programa / B revisa; B programa / A revisa). La infraestructura no cambia.
 - Mecanismo concreto: **UDO** (`scripts/pro/ura-udo`): estados PLANNED → IN_PROGRESS → REVIEW → DONE; gate de integridad F2.2 (commits registrados, pinning de SHAs, árbol limpio); `--revisor`; **AUTO-REVISIÓN** automática si revisor ausente o == ejecutor. No se finge una revisión que no ocurrió.
 - Degradación: si el revisor no está disponible, la tarea queda PENDIENTE DE REVISIÓN o usa AUTO-REVISIÓN marcada; nunca se inventa la revisión.
+- **Revisión diferida (B1, PLAN 1)**: cuando una tarea se cierra con AUTO-REVISIÓN (revisor idle o inexistente), se registra en `docs/udo/review-pending.md`. Al cerrar una fase, el lote de tareas pendientes se revisa en bloque (revisión cruzada por el otro agente o por el humano). **Una fase no se cierra con el lote sin revisar o sin aceptación explícita de Ramón** (decisión humana, nunca automática). Las tareas revisadas se marcan en el archivo con fecha + revisor + veredicto.
 - Preparar trabajo para otro agente implica transmitir: intención, plan, contexto, mínimos, puntos críticos, restricciones, NO HACER, archivos afectados, reservas, estado, commits relevantes, problemas encontrados, decisiones tomadas. Nunca "el otro ya sabe lo que estoy haciendo".
 
 ## 10. Trazabilidad y memoria
@@ -110,11 +111,26 @@ La metodología llega a todo agente OpenCode por:
 
 Fuente única: el repo (git). Web y Terminal comparten binario/home/config; el check garantiza que ambas copias coinciden.
 
+**Reinicio tras instalar/actualizar (A4)**: la config de opencode se carga al arrancar, NO es hot-reload. Tras instalar o actualizar `~/.config/opencode/AGENTS.md`, los servicios en ejecución (p.ej. `opencode.service`, puerto 8081) no tienen la metodología cargada hasta reiniciarse. Acción obligatoria tras cada instalación: `systemctl restart opencode.service` (puede requerir sudo — F14-F01) y verificar con `ura-engineering-check`. Si no se puede reiniciar, marcarlo explícitamente como PENDIENTE, nunca asumir que la Web "ya aplica" la metodología.
+
+**Instalación en Mac (A5)**: la metodología vive en el repo (git). En Mac (`/Users/ramonesnaola/URA/ura_ia_1972/`) la copia global se instala igual: `cp deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md`. `ura-engineering-check` en Mac avisa si falta (instalación equivalente, sin máquina-específica). La fuente única sigue siendo el repo (git); la sincronización Mac↔ASUS es el flujo habitual (scp/rsync).
+
+## 11bis. Comprobación previa del entorno (A3)
+
+Antes de empezar una sesión de trabajo: `ura-engineering-check --env`. Comprueba rootfs rw/ro, servicios críticos (opencode, model-router, ollama, ura-api), secretos, disco y git. Resultado OK / OK CON WARNINGS / FAIL. El entorno degradado se detecta ANTES de trabajar, no durante.
+
 ## 12. Versionado y mejora continua
 
 - Cabecera `<!-- Engineering Process vX.Y -->` + changelog en este archivo.
-- Tras cada problema importante: PROBLEMA → ANÁLISIS → ¿es fallo del proceso? → SI → mejorar metodología. No se modifica la metodología por incidentes aislados; se exige evidencia de valor.
+- Tras cada problema importante: PROBLEMA → ANÁLISIS → ¿es fallo del proceso? → SI → mejorar metodología. No se modifica la metodología por incidentes aislados; se exige evidencia de valor (ver `docs/engineering/POSTMORTEMS.md`).
 - Bump + reinstalar AGENTS.md global + verificar con `ura-engineering-check` + commit.
+
+## 12bis. Proporcionalidad del análisis (B4)
+
+El análisis previo debe ser proporcional al riesgo del plan:
+- **Plan trivial** (cosmético, doc, refactor pequeño): análisis breve (5-10 líneas).
+- **Plan complejo** (arquitectura, cambios en contratos, fases completas): análisis completo (ANÁLISIS DEL PLAN + veredicto).
+El objetivo es que el proceso no entorpezca el trabajo simple ni trate a la ligera el trabajo de riesgo. En el closeout se anota el tiempo de análisis vs ejecución como métrica de coste del proceso.
 
 ## 13. Compatibilidad y portabilidad
 
@@ -125,3 +141,4 @@ Esta metodología no depende de: modelo concreto, Qwen, OpenCode Web/Terminal, O
 | Versión | Fecha | Cambio |
 |---------|-------|--------|
 | 1.0 | 2026-08-08 | Versión inicial (Plan 0 v1.1 aprobado; TASK-20260808-016) |
+| 1.1 | 2026-08-08 | PLAN 1 (TASK-019): A4 reinicio Web, A5 instalación Mac, A3 env check, B1 revisión diferida (ver §9), B4 proporcionalidad |
