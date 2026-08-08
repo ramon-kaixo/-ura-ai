@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.0 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.1 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.0)
+# Metodología Universal de Ingeniería (Engineering Process v1.1)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -51,6 +51,12 @@ PLAN APROBADO → RESERVAS → EJECUCIÓN → COMMITS → VALIDACIÓN. Durante l
 
 PREPARADOR → EJECUTOR → REVISOR → CORRECCIÓN → VALIDACIÓN. El ejecutor no certifica solo su trabajo. Si no hay revisor independiente: marcarlo explícitamente (AUTO-REVISIÓN), nunca fingir una revisión que no ocurrió. El comportamiento degradado se diseña, no aparece por accidente.
 
+**Revisión diferida (v1.1)**: toda tarea cerrada con AUTO-REVISIÓN se registra en `docs/udo/review-pending.md`; al cerrar una fase, el lote se revisa en bloque (otro agente o el humano). Una fase NO cierra con el lote sin revisar o sin aceptación explícita del coordinador.
+
+## Entorno de trabajo (v1.1)
+
+Antes de empezar una sesión: `scripts/pro/ura-engineering-check --env` (rootfs rw/ro, servicios críticos, secretos, disco, git). El entorno degradado se detecta antes de trabajar, no durante. Tras instalar/actualizar la metodología global, **reiniciar los servicios opencode** (config no hot-reload) y verificar — nunca asumir que la Web "ya aplica" la metodología.
+
 ## Trazabilidad y memoria
 
 Cada trabajo debe reconstruirse: PLAN → TAREA → RESERVA → CAMBIOS → COMMIT → VALIDACIÓN → REVISIÓN → CIERRE. Responder: qué se pidió, qué se hizo, quién, qué commit, quién revisó, qué pruebas pasaron, qué quedó pendiente.
@@ -61,4 +67,4 @@ Memoria = Git + documentación + decisiones + planes + closeouts. NO dependas de
 
 Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. No ejecutes fases futuras sin autorización. Git y la documentación conservan la evidencia. Nada se declara terminado sin cumplir los mínimos y poder demostrarlo.
 
-<!-- v1.0 — 2026-08-08 — copia de docs/engineering/ENGINEERING_PROCESS.md (Plan 0 v1.1 aprobado) -->
+<!-- v1.1 — 2026-08-08 — copia de docs/engineering/ENGINEERING_PROCESS.md (Plan 1 v1.1, TASK-019: A3 env, A4 reinicio, B1 revisión diferida, B4 proporcionalidad) -->
