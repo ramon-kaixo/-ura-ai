@@ -31,7 +31,9 @@ NO es automatizable: depende del LLM. La evaluación la hace un humano (Ramón) 
 
 | Fecha | Agente | Plan | Defecto detectado (S/N) | Veredicto emitido | Veredicto esperado | Evaluador |
 |-------|--------|------|-------------------------|-------------------|--------------------|-----------|
-| (pendiente) | TERM | correcto | — | — | GO | Ramón |
-| (pendiente) | TERM | incompleto | — | — | GO CON CAMBIOS | Ramón |
-| (pendiente) | TERM | contradictorio | — | — | NO-GO | Ramón |
-| (pendiente) | TERM | fase_futura | — | — | NO-GO | Ramón |
+| 2026-08-08 | TERM | correcto | N (no hay defecto — verificado: plan completo 11 secciones, mínimo/crítico/validación/cierre presentes) | GO | GO | Ramón (pendiente) |
+| 2026-08-08 | TERM | incompleto | S — faltan MÍNIMOS, VALIDACIÓN, NO HACER y criterio de cierre verificable ("cierre: los campos existen" viola §48) | GO CON CAMBIOS | GO CON CAMBIOS | Ramón (pendiente) |
+| 2026-08-08 | TERM | contradictorio | S — contradice ADR-007 (núcleo congelado: sin ADR no se modifica) y asume `core/config.py` existente (fue eliminado post-F8; fuente es motor/core/config.py); además renombrar API pública viola semantic freezing | NO-GO | NO-GO | Ramón (pendiente) |
+| 2026-08-08 | TERM | fase_futura | S — trabajo de F4 (panel+BD+servidor) durante F3; viola obligación 9 (trabajo prematuro) y §20/§47 (anti-sobreingeniería: BD+servidor sin necesidad) | NO-GO | NO-GO | Ramón (pendiente) |
+
+**Resultado TERM (2026-08-08)**: 3/3 defectos esperados detectados (el plan correcto no tiene defecto por diseño) + veredictos correctos → **100% en defectos, 4/4 veredictos correctos**. Pendiente validación humana (Ramón) para cierre formal de B2.
