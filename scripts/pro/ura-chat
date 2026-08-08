@@ -1,6 +1,6 @@
 #!/bin/bash
-# ura-ask — Consulta rápida a Ollama 32B desde terminal
-# Uso: ura-ask "tu pregunta"
+# ura-chat — Consulta rápida a Ollama 32B desde terminal
+# Uso: ura-chat "tu pregunta"
 
 MODEL="qwen2.5-coder:32b"
 

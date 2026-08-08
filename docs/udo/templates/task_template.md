@@ -15,6 +15,10 @@ cambios: []
 commits: []
 analisis: 
 validacion: 
+pendientes: []
+resultado: 
+resultado_web: 
+resultado_terminal: 
 revision: 
 pendientes: []
 resultado: 

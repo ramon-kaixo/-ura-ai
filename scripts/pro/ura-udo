@@ -106,15 +106,18 @@ _reservas_activas_ajenas() {
 # --- Enforcement de reservas: rechaza declarar rutas reservadas por otra tarea
 # activa (match exacto o prefijo dir/). Devuelve 1 si hay conflicto.
 _conflicto_reserva() {
-    local self="$1" rutas="$2" r area id_res
+    local self="$1" rutas="$2" r area id_res owner
     rutas=$(printf '%s' "$rutas" | tr ',' '\n' | sed 's/^ *//; s/ *$//' | grep -v '^$' || true)
     [ -n "$rutas" ] || return 0
     while IFS='|' read -r id_res area; do
         [ -n "$area" ] || continue
         area="${area%/}"
+        # Owner del propietario de la reserva (F5 N7): agente con "(ejecutor)"
+        owner=$(grep -E '^agente_(web|terminal): .*\(ejecutor\)' "$TASKS_DIR/$id_res.md" 2>/dev/null | head -1 | sed 's/^agente_\([a-z]*\): *\([^ ]*\).*/\1:\2/')
+        [ -z "$owner" ] && owner="?"
         for r in $rutas; do
             if [[ "$r" == "$area" || "$r" == "$area/"* ]]; then
-                echo "ERROR: '$r' está reservada por $id_res (reserva activa). Libera con reserve $id_res --clear o usa --force para autorización expresa." >&2
+                echo "BLOQUEADO: '$r' — TASK=$id_res OWNER=$owner SCOPE=$area (reserva activa). Libera con reserve $id_res --clear o usa --force para autorización expresa." >&2
                 return 1
             fi
         done
@@ -218,6 +221,10 @@ case "${1:-}" in
         echo "commits: []"
         echo "analisis: "
         echo "validacion: "
+        echo "pendientes: []"
+        echo "resultado: "
+        echo "resultado_web: "
+        echo "resultado_terminal: "
         echo "revision: "
         echo "pendientes: []"
         echo "resultado: "
@@ -257,7 +264,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" pendientes_val="" resultado_val="" resultado_web_val="" resultado_terminal_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -271,6 +278,10 @@ case "${1:-}" in
             --revisor)         revisor_val="${2:-}"; shift 2 ;;
             --analisis)        analisis_val="${2:-}"; shift 2 ;;
             --validacion)      validacion_val="${2:-}"; shift 2 ;;
+            --pendientes)      pendientes_val="${2:-}"; shift 2 ;;
+            --resultado)       resultado_val="${2:-}"; shift 2 ;;
+            --resultado_web)   resultado_web_val="${2:-}"; shift 2 ;;
+            --resultado_terminal) resultado_terminal_val="${2:-}"; shift 2 ;;
             --force)   force=1; shift ;;
             *) echo "ERROR: argumento desconocido: $1" >&2; exit 1 ;;
         esac
@@ -370,6 +381,22 @@ case "${1:-}" in
     if [ -n "$validacion_val" ]; then
         _set_campo "$id" "validacion" "$validacion_val"
         hist="${hist:+$hist — }validacion registrada"
+    fi
+    if [ -n "$pendientes_val" ]; then
+        _set_campo "$id" "pendientes" "$pendientes_val"
+        hist="${hist:+$hist — }pendientes: $pendientes_val"
+    fi
+    if [ -n "$resultado_val" ]; then
+        _set_campo "$id" "resultado" "$resultado_val"
+        hist="${hist:+$hist — }resultado registrado"
+    fi
+    if [ -n "$resultado_web_val" ]; then
+        _set_campo "$id" "resultado_web" "$resultado_web_val"
+        hist="${hist:+$hist — }resultado_web registrado"
+    fi
+    if [ -n "$resultado_terminal_val" ]; then
+        _set_campo "$id" "resultado_terminal" "$resultado_terminal_val"
+        hist="${hist:+$hist — }resultado_terminal registrado"
     fi
     if [ -n "$hist" ]; then
         _apuntar "$id" "$hist" "${estado:-$est_actual}"
@@ -473,10 +500,31 @@ case "${1:-}" in
 
   status)
     echo "=== UDO — estado del proyecto ==="
+    # F5 N1: por cada tarea activa (IN_PROGRESS/REVIEW/BLOCKED/CONFLICT) muestra
+    # TASK, estado, owner, última actividad, commits, pendientes (§5.10).
     echo "--- En curso ---"
-    "$0" list IN_PROGRESS
-    echo "--- En revisión ---"
-    "$0" list REVIEW
+    for f in "$TASKS_DIR"/*.md; do
+        [ -f "$f" ] || continue
+        est=$(grep '^estado:' "$f" | cut -d' ' -f2-)
+        case "$est" in
+            IN_PROGRESS|REVIEW|BLOCKED|CONFLICT)
+                idt=$(basename "$f" .md)
+                # Owner: agente con "(ejecutor)" (Web o TERM)
+                owner=$(grep -E '^agente_(web|terminal): .*\(ejecutor\)' "$f" | head -1 | sed 's/^agente_\([a-z]*\): *\([^ ]*\).*/\1:\2/')
+                [ -z "$owner" ] && owner="?"
+                # Última actividad: última línea del historial
+                ultima=$(grep '^  - ' "$f" | tail -1 | sed 's/^  - "//; s/"$//' || echo "?")
+                # Commits: campo commits:
+                comm=$(grep '^commits:' "$f" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || echo "—")
+                # Pendientes: campo pendientes:
+                pend=$(grep '^pendientes:' "$f" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || echo "—")
+                echo "  TASK: $idt | estado: $est | owner: $owner"
+                echo "    última actividad: $ultima"
+                echo "    commits: ${comm:-—}"
+                echo "    pendientes: ${pend:-—}"
+                ;;
+        esac
+    done
     echo "--- Bloqueadas ---"
     "$0" list BLOCKED
     echo "--- Reservas activas ---"
@@ -580,6 +628,48 @@ case "${1:-}" in
         echo "$dirty" | sed 's/^/  /'
     else
         echo "GIT: OK"
+    fi
+
+    # --- F4 (N5): cruce cambios declarados vs archivos reales modificados ---
+    # El campo cambios: del expediente debe coincidir con lo que git muestra.
+    # WARNING si hay archivos modificados fuera de lo declarado, o si se
+    # declararon cambios que git no refleja.
+    echo ""
+    echo "--- Coherencia cambios declarados vs git (F4) ---"
+    decl=$(grep '^cambios:' "$file" | cut -d' ' -f2- | sed 's/^\[//; s/\]$//' || true)
+    if [ -n "$decl" ]; then
+        fuera=""
+        for t in $tocados; do
+            case "$t" in
+                docs/udo/tasks/*|docs/udo/.seq) continue ;;
+            esac
+            cubierto=0
+            for d in $(echo "$decl" | tr ',' '\n' | sed 's/^ *//' | grep -v '^$'); do
+                d="${d%/}"
+                if [[ "$t" == "$d" || "$t" == "$d/"* ]]; then cubierto=1; break; fi
+            done
+            [ "$cubierto" = 0 ] && fuera="$fuera $t"
+        done
+        if [ -n "$fuera" ]; then
+            echo "  WARNING: archivos modificados NO declarados en cambios:"
+            echo "$fuera" | sed 's/^/    /'
+        else
+            echo "  OK: cambios declarados cubren los archivos modificados"
+        fi
+    else
+        echo "  INFO: sin campo cambios: declarado (tarea pre-F4 o sin declaración)"
+    fi
+
+    # --- F4 (N4): validación declarada vs evidencia (heurístico, no ejecuta) ---
+    va2=$(grep '^validacion:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+    if [ -n "$va2" ] && [ "$va2" != "—" ]; then
+        case "$va2" in
+            *test*|*suite*|*pytest*|*OK*|*PASS*)
+                echo "  NOTA: validacion declarada: \"$va2\" — verificar manualmente ejecutando las pruebas citadas (§5.8-B)"
+                ;;
+        esac
+    else
+        echo "  INFO: sin validacion declarada (tarea pre-F4)"
     fi
     ;;
 
