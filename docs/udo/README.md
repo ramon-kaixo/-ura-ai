@@ -20,12 +20,13 @@ Toda transición queda registrada en `historial:` del expediente.
 ```bash
 ura-udo create "descripción"            # crea TASK-YYYYMMDD-NNN (solicitante: URA_SOLICITANTE o RAMON)
 ura-udo show TASK-20260808-001          # ver expediente completo
-ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada
+ura-udo update TASK-... --estado DONE --nota "razón"   # transición auditada (máquina formal, --force para saltos)
 ura-udo update TASK-... --nota "apunte" # nota sin cambio de estado
 ura-udo update TASK-... --reserva "r1,r2"              # declarar reserva al update ("" vacía)
 ura-udo update TASK-... --agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"  # roles duales
 ura-udo reserve TASK-... [--add "r1,r2"] [--clear]     # gestión acumulativa de reserva
 ura-udo check [ruta...]                 # reservas activas; con rutas: detector de conflicto
+ura-udo review TASK-... [--approve "nota" | --changes "razón"]  # revisión formal F3
 ura-udo list [ESTADO]                   # tareas por estado
 ura-udo status                          # resumen del proyecto (incluye reservas activas)
 ura-udo verify TASK-...                 # request + commit + git + discrepancias reserva vs diff
@@ -34,6 +35,17 @@ ura-udo verify TASK-...                 # request + commit + git + discrepancias
 - IDs únicos: contador monotónico por fecha en `docs/udo/.seq` (sin colisiones `ls|wc`).
 - Escrituras con `flock` (`docs/udo/.lock`, patrón ADR-002).
 - Concurrencia Web/TERM: solo se usa `flock` — sin dispatcher.
+
+## Revisión formal (F3)
+
+Ciclo: `IN_PROGRESS → REVIEW → CHANGES_REQUESTED → IN_PROGRESS → REVIEW → APPROVED → DONE`.
+La máquina de transiciones bloquea saltos ilegítimos (`--force` para excepciones).
+
+`ura-udo review TASK-ID` ejecuta el checklist de 8 comprobaciones (estado, commit,
+diff, archivos vs reserva, requisitos, tests, documentación, regresiones) y con
+`--approve`/`--changes` emite veredicto (registrado en `revision:` + historial,
+revisor vía `URA_REVISOR`). La reserva sigue activa en REVIEW y CHANGES_REQUESTED.
+Detalles: `docs/udo/F3_PROPOSAL.md`.
 
 ## Reserva de archivos (F2)
 
@@ -65,7 +77,8 @@ ura-udo check motor/core/llm/router.py   # si devuelve CONFLICTO, NO tocar esos 
 3. Declara **reserva** (`reserve --add`) y pasa a `IN_PROGRESS` (se auto-registra `commit_base`)
 4. **Commit** con formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`
 5. Resultado → `REVIEW` — la reserva **sigue activa en REVIEW** (quien revisa no modifica la zona que revisa)
-6. `DONE` solo al cerrar — `verify` reporta discrepancias reserva vs diff y registra el commit en `commits:`
+6. **Revisión formal** (`review --approve`/`--changes`): APPROVED, o CHANGES_REQUESTED → el ejecutor corrige → nueva REVIEW
+7. `DONE` solo desde APPROVED — `verify` reporta discrepancias reserva vs diff y registra el commit en `commits:`
 
 ## Verificación
 
