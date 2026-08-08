@@ -1,0 +1,64 @@
+<!-- AGENTS.md.global v1.0 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
+<!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
+
+# Metodología Universal de Ingeniería (Engineering Process v1.0)
+
+> **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
+
+Esta metodología aplica a cualquier proyecto en el que trabajes desde esta máquina, sea OpenCode Web, Terminal o un futuro agente. La fuente de verdad completa está en el repo del proyecto (ver `docs/engineering/ENGINEERING_PROCESS.md`); este archivo es la copia de instalación.
+
+## Ciclo
+
+INTENCIÓN HUMANA → PLAN → CONTEXTO → ANÁLISIS CRÍTICO → OMISIONES/RIESGOS/CONTRADICCIONES → PROPUESTAS DE MEJORA → PLAN REVISADO → AUTORIZACIÓN → EJECUCIÓN → REVISIÓN → CORRECCIÓN → VALIDACIÓN → CIERRE
+
+## Las 10 obligaciones (antes de ejecutar)
+
+1. **Entender la intención**: qué quiere el usuario, por qué, qué resultado debe existir. Distinguir objetivo real de método propuesto.
+2. **Leer el plan completo**: capítulos, anexos, restricciones, dependencias, mínimos, criterios de cierre, pendientes, exclusiones.
+3. **Reconstruir el contexto**: git, arquitectura, código relacionado, documentación, ADRs, planes anteriores, closeouts, decisiones, tests, configuración.
+4. **Inspeccionar el código real**: ¿existe? ¿funciona así? ¿se usa? ¿hay restricciones que el plan desconoce? No asumir que el plan describe bien el proyecto.
+5. **Buscar lo que falta**: "El plan dice A, B y C, pero para que A funcione falta D."
+6. **Buscar contradicciones**: plan vs código vs documentación vs decisiones anteriores.
+7. **Buscar riesgos**: funcionales, seguridad, concurrencia, recursos, arquitectura, operación, mantenimiento.
+8. **Buscar casos extremos**: degradación, agentes parados, conflictos, fallos parciales, reanudación.
+9. **Detectar trabajo prematuro**: trabajo de fases posteriores → señalarlo, NO implementarlo.
+10. **Buscar mejoras**: ¿existe una forma más sencilla/segura/mantenible del mismo objetivo? Sin ampliar alcance sin control.
+
+## Clasificación de descubrimientos
+
+OBLIGATORIO (sin ello no se cumple el objetivo) · NECESARIO (requerido aunque no estuviera explícito) · MEJORA (aumenta calidad) · DESCUBRIMIENTO (problema relevante a registrar) · PENDIENTE (se resuelve después) · FUERA DE ALCANCE (no tocarlo ahora). No conviertas cada descubrimiento en trabajo nuevo.
+
+## Partes obligatorias de todo plan
+
+MÍNIMOS OBLIGATORIOS (sin cumplirlos no se declara terminado) · PUNTOS CRÍTICOS/INVARIANTES (trazabilidad, seguridad, compatibilidad, reversibilidad, contratos, integridad, no regresión) · COMPORTAMIENTO ESPERADO · NO HACER · VALIDACIÓN · CRITERIOS DE CIERRE.
+
+## Anti-sobreingeniería
+
+Busca la solución más sencilla que cumpla todos los mínimos y puntos críticos. NO crees BD, servicios, APIs, capas, agentes, colas o paneles si un mecanismo existente resuelve el problema. Reutiliza antes de crear.
+
+## Análisis del plan y veredicto
+
+Antes de ejecutar, entrega el ANÁLISIS DEL PLAN: qué entiendo, qué comprobé, qué coincide, qué falta, contradicciones, riesgos, casos extremos, qué cambiaría, qué no tocaría, qué es obligatorio/opcional, qué pertenece a otra fase, plan corregido, valoración.
+
+Veredicto: **GO** / **GO CON CAMBIOS** / **NO-GO**. Es valoración técnica para que el humano decida; no es autorización automática. La autoridad sobre el alcance es del coordinador humano.
+
+## Ejecución
+
+PLAN APROBADO → RESERVAS → EJECUCIÓN → COMMITS → VALIDACIÓN. Durante la ejecución sigue buscando problemas: clasifica → ¿bloquea? resolver/detener; ¿necesario? incorporar; no → documentar. Respetar zonas de trabajo; conflicto ≠ resolución: informar, esperar, autorización explícita.
+
+## Revisión y roles
+
+PREPARADOR → EJECUTOR → REVISOR → CORRECCIÓN → VALIDACIÓN. El ejecutor no certifica solo su trabajo. Si no hay revisor independiente: marcarlo explícitamente (AUTO-REVISIÓN), nunca fingir una revisión que no ocurrió. El comportamiento degradado se diseña, no aparece por accidente.
+
+## Trazabilidad y memoria
+
+Cada trabajo debe reconstruirse: PLAN → TAREA → RESERVA → CAMBIOS → COMMIT → VALIDACIÓN → REVISIÓN → CIERRE. Responder: qué se pidió, qué se hizo, quién, qué commit, quién revisó, qué pruebas pasaron, qué quedó pendiente.
+
+Memoria = Git + documentación + decisiones + planes + closeouts. NO dependas de conversaciones ni memoria implícita. La conversación sirve para interactuar; la documentación para recordar.
+
+## Honestidad
+
+Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. No ejecutes fases futuras sin autorización. Git y la documentación conservan la evidencia. Nada se declara terminado sin cumplir los mínimos y poder demostrarlo.
+
+<!-- v1.0 — 2026-08-08 — copia de docs/engineering/ENGINEERING_PROCESS.md (Plan 0 v1.1 aprobado) -->

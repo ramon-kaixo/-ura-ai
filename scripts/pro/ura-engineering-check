@@ -1,0 +1,134 @@
+#!/bin/bash
+# ura-engineering-check — Comprobación de instalación de la Metodología Universal (Plan 0, §40)
+# Uso: ura-engineering-check [--verbose] [--install] [--fix]
+#      --install : copia deploy/engineering/AGENTS.md.global a ~/.config/opencode/AGENTS.md
+#      --fix     : reinstala la copia global si está desincronizada
+# Fuente de verdad: repo git (docs/engineering/). Sin BD, sin dependencias.
+
+set -euo pipefail
+
+REPO="${UDO_REPO:-$HOME/URA/ura_ia_1972}"
+DOCS="$REPO/docs/engineering"
+GLOBAL_SRC="$REPO/deploy/engineering/AGENTS.md.global"
+GLOBAL_DST="${OPENCODE_GLOBAL_AGENTS:-$HOME/.config/opencode/AGENTS.md}"
+CHECK_SCRIPT="$REPO/scripts/pro/ura-engineering-check"
+
+STATUS=0
+
+_fecha() { date +%Y-%m-%d; }
+
+_versiones() {
+    # Versión de la fuente (cabecera del ENGINEERING_PROCESS) y de la copia instalada
+    local src dst
+    src=$(grep -m1 -oE 'Engineering Process v[0-9]+\.[0-9]+' "$DOCS/ENGINEERING_PROCESS.md" 2>/dev/null | head -1 || echo "sin-version")
+    if [ -f "$GLOBAL_DST" ]; then
+        dst=$(grep -m1 -oE 'Engineering Process v[0-9]+\.[0-9]+' "$GLOBAL_DST" 2>/dev/null | head -1 || echo "sin-version")
+    else
+        dst="NO INSTALADA"
+    fi
+    printf '%s|%s' "$src" "$dst"
+}
+
+_checksum() {
+    # checksum canónico: sha256sum de la fuente global vs copia instalada
+    if [ -f "$GLOBAL_SRC" ] && [ -f "$GLOBAL_DST" ]; then
+        a=$(sha256sum "$GLOBAL_SRC" | cut -d' ' -f1)
+        b=$(sha256sum "$GLOBAL_DST" | cut -d' ' -f1)
+        [ "$a" = "$b" ] && echo "OK" || echo "DESINCRONIZADO"
+    else
+        echo "FALTAN_ARCHIVOS"
+    fi
+}
+
+_instalar() {
+    mkdir -p "$(dirname "$GLOBAL_DST")"
+    cp "$GLOBAL_SRC" "$GLOBAL_DST"
+    echo "Instalada: $GLOBAL_DST"
+}
+
+report() {
+    echo "=== ura-engineering-check ==="
+    echo "Fecha:        $(_fecha)"
+    echo "Repo:         $REPO"
+    echo ""
+    echo "--- Documentación universal (docs/engineering/) ---"
+    for f in README.md ENGINEERING_PROCESS.md PLAN_TEMPLATE.md PLAN_REVIEW_TEMPLATE.md; do
+        if [ -f "$DOCS/$f" ]; then
+            echo "  OK   $f"
+        else
+            echo "  FALTA $f"
+            STATUS=1
+        fi
+    done
+
+    local ver_src ver_dst
+    ver_src=$( _versiones | cut -d'|' -f1 )
+    ver_dst=$( _versiones | cut -d'|' -f2 )
+    echo ""
+    echo "--- Versiones ---"
+    echo "  Fuente (ENGINEERING_PROCESS): $ver_src"
+    echo "  Instalada (AGENTS.md global): $ver_dst"
+
+    echo ""
+    echo "--- Copia global ($GLOBAL_DST) ---"
+    if [ -f "$GLOBAL_DST" ]; then
+        echo "  Presencia: OK"
+        echo "  Sincronización: $(_checksum)"
+        [ "$(_checksum)" != "OK" ] && STATUS=1
+    else
+        echo "  Presencia: FALTA (instalar con --install)"
+        STATUS=1
+    fi
+
+    echo ""
+    echo "--- AGENTS.md del proyecto (puntero) ---"
+    if grep -q "Metodología Universal de Ingeniería" "$REPO/AGENTS.md" 2>/dev/null; then
+        echo "  OK   puntero presente"
+    else
+        echo "  FALTA puntero a la metodología en AGENTS.md"
+        STATUS=1
+    fi
+
+    echo ""
+    echo "--- Verificación propia ---"
+    if [ -x "$CHECK_SCRIPT" ]; then
+        echo "  OK   script ejecutable"
+    else
+        echo "  FALTA script no ejecutable (chmod +x)"
+        STATUS=1
+    fi
+
+    echo ""
+    if [ "$STATUS" = "0" ]; then
+        echo "RESULTADO: OK — reglas instaladas y sincronizadas"
+    else
+        echo "RESULTADO: INCOMPLETO — usar --install / --fix / corregir hallazgos"
+    fi
+    exit "$STATUS"
+}
+
+# --- CLI ---
+MODE=""
+for arg in "$@"; do
+    case "$arg" in
+        --verbose|--install|--fix) MODE="$arg" ;;
+        *) echo "Uso: ura-engineering-check [--verbose|--install|--fix]" >&2; exit 2 ;;
+    esac
+done
+
+case "$MODE" in
+    --install)
+        _instalar
+        ;;
+    --fix)
+        if [ "$(_checksum)" != "OK" ]; then
+            _instalar
+        else
+            echo "Ya sincronizada: $GLOBAL_DST"
+        fi
+        ;;
+    *)
+        ;;
+esac
+
+report
