@@ -77,12 +77,27 @@ _revisar() {
     echo "Consejo: ura-doble verify TASK-XXXX para ver qué cambió antes de revisar."
 }
 
+_quien() {
+    echo "========== VENTANA 1 — OpenCode Web (ASUS) =========="
+    echo "  Máquina:  $(ssh -o ConnectTimeout=5 gx10 hostname 2>/dev/null)"
+    echo "  Proyecto: $(curl -s -u "ramon:321000" http://10.164.1.99:8081/project/current 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('worktree','?'))" 2>/dev/null)"
+    echo "  Cerebro:  deepseek-v4-flash (esta conversación)"
+    echo ""
+    echo "========== VENTANA 2 — OpenCode Escritorio (Mac) =========="
+    echo "  Máquina:  $(hostname)"
+    echo "  Proyecto: $(curl -s http://127.0.0.1:8091/project/current 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('worktree','?'))" 2>/dev/null)"
+    echo "  Cerebro:  $(curl -s http://127.0.0.1:8091/config/providers 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('default',{}).get('ollama','?'))" 2>/dev/null) (Ollama local del Mac)"
+    echo ""
+    echo "Regla: la VENTANA 1 vive en ASUS (gx10) y usa DeepSeek; la VENTANA 2 vive en este Mac (Mini-de-RAMON) y usa Qwen 32B local."
+}
+
 case "${1:-}" in
     sync)    _sync ;;
     status)  _status ;;
     list)    shift; _list "$@" ;;
     verify)  shift; _verify "$@" ;;
     revisar) _revisar ;;
+    quien)   _quien ;;
     ayuda|--help|-h) _ayuda ;;
     *) _ayuda; exit 1 ;;
 esac
