@@ -67,3 +67,16 @@ def reset_engine_holder() -> Generator[None, None, None]:
     _EngineHolder.engine = None
     _EngineHolder.llm = None
     _rate_limiter._requests.clear()
+
+
+# Perfiles de hypothesis (PLAN mutmut v5, F1/F5):
+#   dev -> commit local (pocos ejemplos, <10s) — por defecto
+#   ci  -> timer diario 06:00 (muchos ejemplos) — vía HYPOTHESIS_PROFILE=ci
+try:
+    from hypothesis import settings, Verbosity
+
+    settings.register_profile("dev", max_examples=10, deadline=2000)
+    settings.register_profile("ci", max_examples=200, deadline=1000)
+    settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "dev"))
+except ImportError:  # hypothesis opcional
+    pass

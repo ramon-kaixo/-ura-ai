@@ -111,3 +111,6 @@ ollama-port = "11434"
 llm-retries = 2
 auto-trigger-mode = "gate"
 auto-trigger-strict = true
+
+[tool.mutmut]
+source_paths = ["motor/core/", "motor/intelligence/", "core/", "knowledge/"]
