@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer diario 06:00 — barrido progresivo mutmut URA
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Servicio de Barrido Diario Progresivo de Mutation Testing URA
+
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Environment="HYPOTHESIS_PROFILE=ci"
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python /home/ramon/URA/ura_ia_1972/scripts/pro/mutmut_daily.py
+TimeoutStartSec=8h
