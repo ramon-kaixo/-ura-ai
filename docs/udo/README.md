@@ -242,3 +242,11 @@ ura-udo update TASK --estado DONE    # bloquea si queda algún [ ]
 
 - Tareas sin `requisitos:` cierran igual (compatibilidad).
 - El gate muestra cuáles faltan: `ERROR: DONE bloqueado — N requisito(s) del plan sin completar`.
+
+## V3 — el OK del revisor COMPRUEBA (no solo declara)
+
+Antes: `revisar TASK --ok "todo bien"` registraba el veredicto sin comprobar nada.
+Ahora:
+1. Si la tarea tiene `verificar:` (comando real), el **--ok lo ejecuta** — si falla, el OK se RECHAZA ("OK RECHAZADO — la verificación falló al revisar").
+2. Si el revisor == ejecutor, el veredicto queda marcado **AUTO-REVISIÓN** (honesto, no se finge revisión independiente).
+3. El `--devolver` exige motivo (rechaza sin él).
