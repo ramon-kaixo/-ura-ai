@@ -101,7 +101,7 @@ def test_pattern_matcher_empty():
     scan.contenedores_ko = []
     scan.diff_total = 0
     cfg = UraConfig()
-    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, cfg)
     assert len(incidents) == 0
 
 
@@ -118,7 +118,7 @@ def test_pattern_matcher_failure():
     scan.contenedores_ko = ["agent-foo"]
     scan.diff_total = 5
     cfg = UraConfig()
-    incidents, _costs = buscar_patrones(scan, None, None, cfg)
+    incidents, _costs = buscar_patrones(scan, None, cfg)
     assert len(incidents) >= 5
     tipos = {i["tipo"] for i in incidents}
     assert "ServiceFailure" in tipos
