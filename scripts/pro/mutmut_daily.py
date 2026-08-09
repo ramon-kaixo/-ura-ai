@@ -20,6 +20,7 @@ import datetime
 import os
 import subprocess
 import sys
+from datetime import UTC
 from pathlib import Path
 
 REPO = Path("/home/ramon/URA/ura_ia_1972")
@@ -41,7 +42,7 @@ BATCHES: list[list[str]] = [
 
 def _lote_del_dia() -> tuple[int, list[str]]:
     """Índice por día de la semana (0=lunes..6=domingo) → lote rotativo."""
-    idx = datetime.date.today().weekday() % len(BATCHES)
+    idx = datetime.datetime.now(UTC).date().weekday() % len(BATCHES)
     return idx, BATCHES[idx]
 
 
@@ -53,12 +54,12 @@ def _ejecutar_mutmut(lote: list[str], dry: bool) -> int:
     env = dict(os.environ)
     env["HYPOTHESIS_PROFILE"] = "ci"
     print("Ejecutando:", " ".join(cmd))
-    return subprocess.run(cmd, cwd=str(REPO), env=env).returncode
+    return subprocess.run(cmd, cwd=str(REPO), env=env, check=False).returncode
 
 
 def _reporte_mutmut() -> str:
     res = subprocess.run(
-        [str(MUTMUT), "results"], capture_output=True, text=True, cwd=str(REPO)
+        [str(MUTMUT), "results"], capture_output=True, text=True, cwd=str(REPO), check=False
     )
     return res.stdout if res.returncode == 0 else f"(mutmut results falló: {res.stderr})"
 
@@ -71,7 +72,7 @@ def _crear_task_udo(reporte_path: Path, lote: list[str], exit_code: int, dry: bo
         print(f"[dry-run] ura-udo create: {desc} | estado={estado}")
         return "TASK-dry-run"
     cmd = [str(REPO / "scripts" / "pro" / "ura-udo"), "create", desc]
-    out = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO)).stdout
+    out = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO), check=False).stdout
     task_id = next(
         (tok for tok in out.split() if tok.startswith("TASK-")), "TASK-?"
     )
@@ -83,7 +84,7 @@ def _crear_task_udo(reporte_path: Path, lote: list[str], exit_code: int, dry: bo
             "--estado", estado,
             "--nota", f"Reporte mutmut: {reporte_path.name} (exit={exit_code})",
         ],
-        capture_output=True, text=True, cwd=str(REPO),
+        capture_output=True, text=True, cwd=str(REPO), check=False,
     )
     return task_id
 
@@ -94,7 +95,7 @@ def main() -> int:
     args = parser.parse_args()
 
     idx, lote = _lote_del_dia()
-    date_str = datetime.date.today().isoformat()
+    date_str = datetime.datetime.now(UTC).date().isoformat()
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     lote_name = "+".join(p.rstrip("/").replace("/", "_") for p in lote)
     reporte_path = REPORT_DIR / f"{date_str}_{lote_name}.md"
