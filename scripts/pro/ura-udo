@@ -534,6 +534,48 @@ case "${1:-}" in
     git -C "$REPO" log --oneline -5
     ;;
 
+  revisar)
+    # Veredicto estructurado del revisor (F2.3): un plan/fase NO se cierra
+    # hasta que el revisor da OK. El veredicto queda en el campo revision:
+    # con formato canónico (auditable), no solo en notas.
+    # Uso: revisar TASK --ok "nota" | revisar TASK --devolver "motivo del fallo"
+    id="$2"
+    [ -n "$id" ] || { echo "Uso: ura-udo revisar TASK --ok \"nota\" | --devolver \"motivo\"" >&2; exit 1; }
+    _ver_tarea "$id"
+    veredicto="${3:-}"
+    nota="${4:-}"
+    case "$veredicto" in
+      --ok)
+        [ -n "$nota" ] || { echo "Uso: revisar TASK --ok \"nota del revisor\"" >&2; exit 1; }
+        _lock
+        # El revisor aprueba: queda en REVIEW (listo para DONE con gate).
+        # Marca el campo revision: con OK estructurado + revisor.
+        rev="$(_fecha_hora) | OK | $nota${URA_REVISOR:+ | revisor=$URA_REVISOR}"
+        _set_campo "$id" "revision" "$rev"
+        _set_campo "$id" "estado" "REVIEW"
+        hist="REVISION OK — $nota${URA_REVISOR:+ (revisor=$URA_REVISOR)}"
+        _apuntar "$id" "$hist" "REVIEW"
+        echo "Revisión OK registrada: $id — queda en REVIEW (puede cerrarse con DONE + gate)"
+        ;;
+      --devolver)
+        [ -n "$nota" ] || { echo "Uso: revisar TASK --devolver \"motivo del fallo\"" >&2; exit 1; }
+        _lock
+        # El revisor encuentra fallo: devuelve al ejecutor (IN_PROGRESS).
+        # El ejecutor NO es quien arregla la revisión — el revisor solo juzga.
+        rev="$(_fecha_hora) | DEVUELTA | $nota${URA_REVISOR:+ | revisor=$URA_REVISOR}"
+        _set_campo "$id" "revision" "$rev"
+        _set_campo "$id" "estado" "IN_PROGRESS"
+        hist="REVISIÓN DEVUELTA — $nota${URA_REVISOR:+ (revisor=$URA_REVISOR)}"
+        _apuntar "$id" "$hist" "IN_PROGRESS"
+        echo "Revisión devuelta: $id — vuelve a IN_PROGRESS (el ejecutor corrige y reenvía a REVIEW)"
+        ;;
+      *)
+        echo "Uso: ura-udo revisar TASK --ok \"nota\" | --devolver \"motivo\"" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+
   pendientes)
     # Cola de pendientes de fase (TASK-20260809-011): un pendiente puede
     # posponerse (cola) sin bloquear el avance, pero la fase NO se cierra
