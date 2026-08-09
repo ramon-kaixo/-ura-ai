@@ -11,6 +11,7 @@ UDO_ROOT="${UDO_ROOT:-$HOME/URA/ura_ia_1972/docs/udo}"
 TASKS_DIR="$UDO_ROOT/tasks"
 SEQ_FILE="$UDO_ROOT/.seq"
 LOCK_FILE="$UDO_ROOT/.lock"
+PENDIENTES_FILE="$UDO_ROOT/pendientes-fase.md"
 REPO="${UDO_REPO:-$HOME/URA/ura_ia_1972}"
 
 declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
@@ -531,6 +532,82 @@ case "${1:-}" in
     "$0" check
     echo "--- Últimos commits ---"
     git -C "$REPO" log --oneline -5
+    ;;
+
+  pendientes)
+    # Cola de pendientes de fase (TASK-20260809-011): un pendiente puede
+    # posponerse (cola) sin bloquear el avance, pero la fase NO se cierra
+    # hasta que la cola esté resuelta o justificada por Ramón.
+    # Uso: pendientes add TASK-ID "texto" | pendientes list | pendientes resolver TASK-ID "nota" | pendientes check
+    accion="${2:-}"
+    case "$accion" in
+      add)
+        [ -n "${3:-}" ] && [ -n "${4:-}" ] || { echo "Uso: ura-udo pendientes add TASK-ID \"texto pendiente\"" >&2; exit 1; }
+        _lock
+        mkdir -p "$(dirname "$PENDIENTES_FILE")"
+        if [ ! -f "$PENDIENTES_FILE" ]; then
+            cat > "$PENDIENTES_FILE" <<'HEADER'
+# Cola de pendientes de fase
+
+Los pendientes de un plan pueden posponerse (cola) sin bloquear el avance a
+la siguiente fase, PERO la fase NO se cierra hasta que la cola esté resuelta
+o justificada por Ramón. Cada fila: TASK | pendiente | fecha | estado | resolución.
+
+| TASK | Pendiente | Fecha | Estado | Resolución |
+|------|-----------|-------|--------|------------|
+HEADER
+        fi
+        fecha=$(_fecha)
+        printf '| %s | %s | %s | ABIERTO | — |\n' "$3" "$4" "$fecha" >> "$PENDIENTES_FILE"
+        echo "Pendiente registrado: $3 — $4"
+        ;;
+      list)
+        [ -f "$PENDIENTES_FILE" ] || { echo "Cola vacía (sin pendientes registrados)."; exit 0; }
+        abiertos=$(grep -c "| ABIERTO |" "$PENDIENTES_FILE" || true)
+        echo "=== Cola de pendientes de fase ==="
+        cat "$PENDIENTES_FILE"
+        echo ""
+        echo "Abiertos: ${abiertos:-0}"
+        ;;
+      resolver)
+        [ -n "${3:-}" ] && [ -n "${4:-}" ] || { echo "Uso: ura-udo pendientes resolver TASK-ID \"nota de resolución\"" >&2; exit 1; }
+        _lock
+        [ -f "$PENDIENTES_FILE" ] || { echo "ERROR: no hay cola" >&2; exit 1; }
+        # Marca como resuelta la primera fila ABIERTO de esa TASK
+        if grep -q "| $3 | .*| ABIERTO |" "$PENDIENTES_FILE"; then
+            python3 - "$PENDIENTES_FILE" "$3" "$4" <<'PYEOF'
+import sys
+path, task, nota = sys.argv[1], sys.argv[2], sys.argv[3]
+lines = open(path).read().split("\n")
+for i, line in enumerate(lines):
+    if f"| {task} |" in line and "| ABIERTO |" in line:
+        lines[i] = line.replace("| ABIERTO | — |", f"| RESUELTO | {nota} |")
+        break
+open(path, "w").write("\n".join(lines))
+PYEOF
+            echo "Pendiente resuelto: $3 — $4"
+        else
+            echo "ERROR: no hay pendiente ABIERTO de $3 en la cola" >&2
+            exit 1
+        fi
+        ;;
+      check)
+        [ -f "$PENDIENTES_FILE" ] || { echo "OK — cola vacía, la fase puede cerrarse."; exit 0; }
+        abiertos=$(grep -c "| ABIERTO |" "$PENDIENTES_FILE" || true)
+        if [ "${abiertos:-0}" -gt 0 ]; then
+            echo "BLOQUEADO: hay ${abiertos} pendiente(s) ABIERTO(s) en la cola de fase."
+            echo "Resolver con: ura-udo pendientes resolver TASK-ID \"nota\""
+            echo "O justificar por Ramón (aprobación expresa) antes de cerrar la fase."
+            exit 1
+        else
+            echo "OK — cola de pendientes resuelta, la fase puede cerrarse."
+        fi
+        ;;
+      *)
+        echo "Uso: ura-udo pendientes {add TASK \"texto\" | list | resolver TASK \"nota\" | check}" >&2
+        exit 1
+        ;;
+    esac
     ;;
 
   verify)
