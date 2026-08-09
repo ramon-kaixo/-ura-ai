@@ -176,6 +176,22 @@ _conflicto_reserva() {
             return 1
         fi
     fi
+    # Verificación REAL (V1 — auditoría TASK-20260809-012): si el expediente
+    # tiene comando de verificación (verificar:), el gate lo EJECUTA antes de
+    # permitir DONE. Así "digo que pasa" se convierte en "la máquina lo
+    # comprueba". Si el comando falla, el cierre se bloquea.
+    vcmd=$(grep '^verificar:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+    if [ -n "$vcmd" ] && [ "$vcmd" != "—" ]; then
+        echo "Ejecutando verificación real: $vcmd"
+        if ! (cd "$REPO" && eval "$vcmd") > /tmp/udo_verificar_$$.log 2>&1; then
+            echo "ERROR: DONE bloqueado — la verificación FALLÓ:" >&2
+            cat /tmp/udo_verificar_$$.log | tail -10 | sed 's/^/  /' >&2
+            rm -f /tmp/udo_verificar_$$.log
+            return 1
+        fi
+        rm -f /tmp/udo_verificar_$$.log
+        echo "Verificación real: OK"
+    fi
     return 0
 }
 
@@ -222,6 +238,7 @@ case "${1:-}" in
         echo "commits: []"
         echo "analisis: "
         echo "validacion: "
+        echo "verificar: "
         echo "pendientes: []"
         echo "resultado: "
         echo "resultado_web: "
@@ -265,7 +282,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" pendientes_val="" resultado_val="" resultado_web_val="" resultado_terminal_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" verificar_val="" pendientes_val="" resultado_val="" resultado_web_val="" resultado_terminal_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -279,6 +296,7 @@ case "${1:-}" in
             --revisor)         revisor_val="${2:-}"; shift 2 ;;
             --analisis)        analisis_val="${2:-}"; shift 2 ;;
             --validacion)      validacion_val="${2:-}"; shift 2 ;;
+            --verificar)       verificar_val="${2:-}"; shift 2 ;;
             --pendientes)      pendientes_val="${2:-}"; shift 2 ;;
             --resultado)       resultado_val="${2:-}"; shift 2 ;;
             --resultado_web)   resultado_web_val="${2:-}"; shift 2 ;;
@@ -314,6 +332,9 @@ case "${1:-}" in
             fi
             if [ -n "$validacion_val" ]; then
                 _set_campo "$id" "validacion" "$validacion_val"
+            fi
+            if [ -n "$verificar_val" ]; then
+                _set_campo "$id" "verificar" "$verificar_val"
             fi
             _gate_revision "$id" || exit 1
         fi
@@ -382,6 +403,10 @@ case "${1:-}" in
     if [ -n "$validacion_val" ]; then
         _set_campo "$id" "validacion" "$validacion_val"
         hist="${hist:+$hist — }validacion registrada"
+    fi
+    if [ -n "$verificar_val" ]; then
+        _set_campo "$id" "verificar" "$verificar_val"
+        hist="${hist:+$hist — }verificación real registrada: $verificar_val"
     fi
     if [ -n "$pendientes_val" ]; then
         _set_campo "$id" "pendientes" "$pendientes_val"

@@ -15,6 +15,7 @@ cambios: []
 commits: []
 analisis: 
 validacion: 
+verificar: 
 pendientes: []
 resultado: 
 resultado_web: 
