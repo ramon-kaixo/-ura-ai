@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# ura-doble — Puente de doble ventana para el Mac (2026-08-09)
+# Conecta el OpenCode de escritorio (Mac) con el OpenCode Web (ASUS).
+#
+# Uso:
+#   ura-doble sync        → sincroniza el repo del Mac con ASUS (git fetch + merge)
+#   ura-doble status      → estado UDO real (vía SSH a ASUS — fuente de verdad)
+#   ura-doble list [EST]  → tareas UDO (vía SSH a ASUS)
+#   ura-doble verify TASK → verifica una tarea (vía SSH a ASUS)
+#   ura-doble revisar     → SYNC + lista tareas que la Web terminó + estado
+#   ura-doble ayuda       → este mensaje
+#
+# La fuente de verdad de los expedientes UDO está en ASUS; por eso ura-udo se
+# ejecuta vía SSH. El repo local se sincroniza con git (fetch + merge ff-only).
+
+set -euo pipefail
+
+ASUS_HOST="${ASUS_HOST:-gx10}"   # alias SSH del Mac → ramon@10.164.1.99 (clave id_ed25519)
+ASUS_USER="ramon"
+ASUS_REPO="/home/ramon/URA/ura_ia_1972"
+MAC_REPO="$HOME/URA/ura_ia_1972"
+ASUS_UDO="ssh -o ConnectTimeout=8 gx10"
+
+_ayuda() {
+    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+_sync() {
+    echo "=== Sincronizando Mac ← ASUS ==="
+    if [ ! -d "$MAC_REPO/.git" ]; then
+        echo "ERROR: no hay repo en $MAC_REPO" >&2
+        return 1
+    fi
+    cd "$MAC_REPO"
+    if ! git remote | grep -q '^asus$'; then
+        git remote add asus "$ASUS_USER@$ASUS_HOST:$ASUS_REPO"
+        echo "remote 'asus' añadido"
+    fi
+    git fetch asus main 2>&1 | tail -1
+    if git merge --ff-only asus/main 2>&1; then
+        echo "✅ Repo del Mac al día con ASUS"
+    else
+        echo "⚠️  Merge no-fast-forward: hay cambios locales. Resolver manualmente."
+    fi
+}
+
+_status() {
+    echo "=== Estado UDO (ASUS — fuente de verdad) ==="
+    $ASUS_UDO "$ASUS_REPO/scripts/pro/ura-udo" status
+}
+
+_list() {
+    echo "=== Tareas UDO ==="
+    $ASUS_UDO "$ASUS_REPO/scripts/pro/ura-udo" list "$@"
+}
+
+_verify() {
+    [ -n "${1:-}" ] || { echo "Uso: ura-doble verify TASK-ID" >&2; return 1; }
+    echo "=== Verify $1 (ASUS) ==="
+    $ASUS_UDO "$ASUS_REPO/scripts/pro/ura-udo" verify "$1"
+}
+
+_revisar() {
+    _sync
+    echo ""
+    echo "=== Tareas recientes (para revisar lo que hizo la Web) ==="
+    $ASUS_UDO "$ASUS_REPO/scripts/pro/ura-udo" list REVIEW
+    $ASUS_UDO "$ASUS_REPO/scripts/pro/ura-udo" list IN_PROGRESS
+    echo ""
+    echo "Consejo: ura-doble verify TASK-XXXX para ver qué cambió antes de revisar."
+}
+
+case "${1:-}" in
+    sync)    _sync ;;
+    status)  _status ;;
+    list)    shift; _list "$@" ;;
+    verify)  shift; _verify "$@" ;;
+    revisar) _revisar ;;
+    ayuda|--help|-h) _ayuda ;;
+    *) _ayuda; exit 1 ;;
+esac
