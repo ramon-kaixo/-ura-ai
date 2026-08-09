@@ -48,3 +48,10 @@ Ramón ──► TASK-ID ──► Web (programador) + Terminal (consultor/revis
 - `ura-udo status` — muestra tareas activas con owner, última actividad, commits, pendientes.
 - `ura-ask TASK` — contexto completo reconstruible sin la conversación.
 - Una tarea a medias queda `IN_PROGRESS`/`REVIEW`/`BLOCKED`, nunca DONE.
+
+## Cómo identificar con quién se habla (TERM vs WEB)
+
+- **TERM (OpenCode Terminal)**: TUI oscura en terminal; commits `[TERM]`; `ura-udo status` muestra `canal: TERM`.
+- **WEB (OpenCode Web)**: interfaz web en navegador (`http://10.164.1.99:8081`); commits `[WEB]`; `canal: WEB`.
+- Los colores del emulador NO son la fuente de verdad (los configura el usuario); Git y los expedientes UDO sí lo son.
+- Verificar siempre: `ura-udo status` (tareas activas por agente) o `git log --oneline --grep="\[WEB\]"`.
