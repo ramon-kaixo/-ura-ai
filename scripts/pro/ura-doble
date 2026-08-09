@@ -37,10 +37,17 @@ _sync() {
         echo "remote 'asus' añadido"
     fi
     git fetch asus main 2>&1 | tail -1
-    if git merge --ff-only asus/main 2>&1; then
-        echo "✅ Repo del Mac al día con ASUS"
+    # Fast-forward si es posible; si las ramas divergen (Mac con commits propios
+    # y ASUS con los suyos), se hace un merge real que combina ambos lados.
+    if git merge --ff-only asus/main 2>/dev/null; then
+        echo "✅ Repo del Mac al día con ASUS (fast-forward)"
     else
-        echo "⚠️  Merge no-fast-forward: hay cambios locales. Resolver manualmente."
+        echo "→ Ramas divergentes: fusionando cambios locales con ASUS..."
+        if git merge asus/main --no-ff -m "merge: sync Mac con ASUS" 2>&1; then
+            echo "✅ Merge completado — Mac y ASUS sincronizados"
+        else
+            echo "⚠️  Merge con conflictos. Resolver manualmente y commitear." >&2
+        fi
     fi
 }
 
