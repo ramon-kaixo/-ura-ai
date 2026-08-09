@@ -192,6 +192,17 @@ _conflicto_reserva() {
         rm -f /tmp/udo_verificar_$$.log
         echo "Verificación real: OK"
     fi
+    # Requisitos del plan (V2): si hay algún [ ] pendiente, el DONE se bloquea.
+    req=$(grep '^requisitos:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+    if [ -n "$req" ]; then
+        pend=$(echo "$req" | tr ';' '\n' | grep -c '\[ \]' || true)
+        if [ "${pend:-0}" -gt 0 ]; then
+            echo "ERROR: DONE bloqueado — ${pend} requisito(s) del plan sin completar:" >&2
+            echo "$req" | tr ';' '\n' | grep '\[ \]' | sed 's/^/  - /' >&2
+            echo "Marcar como hecho: ura-udo update $id --requisito-hecho \"texto del requisito\"" >&2
+            return 1
+        fi
+    fi
     return 0
 }
 
@@ -239,6 +250,7 @@ case "${1:-}" in
         echo "analisis: "
         echo "validacion: "
         echo "verificar: "
+        echo "requisitos: "
         echo "pendientes: []"
         echo "resultado: "
         echo "resultado_web: "
@@ -282,7 +294,7 @@ case "${1:-}" in
   update)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _ver_tarea "$2"
-    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" verificar_val="" pendientes_val="" resultado_val="" resultado_web_val="" resultado_terminal_val="" force=""
+    id="$2"; estado="" nota="" reserva="" reserva_flag="" agente_web_val="" agente_terminal_val="" instrucciones_val="" restricciones_val="" revisor_val="" analisis_val="" validacion_val="" verificar_val="" requisito_add="" requisito_hecho="" pendientes_val="" resultado_val="" resultado_web_val="" resultado_terminal_val="" force=""
     shift 2
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -297,6 +309,8 @@ case "${1:-}" in
             --analisis)        analisis_val="${2:-}"; shift 2 ;;
             --validacion)      validacion_val="${2:-}"; shift 2 ;;
             --verificar)       verificar_val="${2:-}"; shift 2 ;;
+            --requisito)       requisito_add="${requisito_add:+$requisito_add;}${2:-}"; shift 2 ;;
+            --requisito-hecho) requisito_hecho="${requisito_hecho:+$requisito_hecho;}${2:-}"; shift 2 ;;
             --pendientes)      pendientes_val="${2:-}"; shift 2 ;;
             --resultado)       resultado_val="${2:-}"; shift 2 ;;
             --resultado_web)   resultado_web_val="${2:-}"; shift 2 ;;
@@ -407,6 +421,50 @@ case "${1:-}" in
     if [ -n "$verificar_val" ]; then
         _set_campo "$id" "verificar" "$verificar_val"
         hist="${hist:+$hist — }verificación real registrada: $verificar_val"
+    fi
+    # Requisitos del plan (V2): lista con [x]/[ ] separada por ";"
+    if [ -n "$requisito_add" ]; then
+        actual=$(grep '^requisitos:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        nuevos=""
+        IFS=';' read -ra REQS <<< "$requisito_add"
+        for r in "${REQS[@]}"; do
+            [ -n "$r" ] || continue
+            nuevos="${nuevos:+$nuevos; }[ ] $r"
+        done
+        if [ -n "$actual" ]; then
+            _set_campo "$id" "requisitos" "$actual; $nuevos"
+        else
+            _set_campo "$id" "requisitos" "$nuevos"
+        fi
+        hist="${hist:+$hist — }requisito(s) añadido(s): $requisito_add"
+    fi
+    if [ -n "$requisito_hecho" ]; then
+        actual=$(grep '^requisitos:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        # Marca como [x] cada requisito que coincida (lista separada por ;)
+        python3 - "$file" "$requisito_hecho" <<'PYEOF'
+import sys
+path, textos = sys.argv[1], sys.argv[2]
+textos = [t.strip() for t in textos.split(";") if t.strip()]
+lines = open(path).read().split("\n")
+for i, line in enumerate(lines):
+    if line.startswith("requisitos:"):
+        val = line.split("requisitos:", 1)[1].strip()
+        items = [it.strip() for it in val.split(";")]
+        nuevos = []
+        for it in items:
+            marcado = False
+            for t in textos:
+                if it.startswith("[ ]") and t in it:
+                    nuevos.append("[x]" + it[3:])
+                    marcado = True
+                    break
+            if not marcado:
+                nuevos.append(it)
+        lines[i] = "requisitos: " + "; ".join(nuevos)
+        break
+open(path, "w").write("\n".join(lines))
+PYEOF
+        hist="${hist:+$hist — }requisito(s) marcado(s) hecho: $requisito_hecho"
     fi
     if [ -n "$pendientes_val" ]; then
         _set_campo "$id" "pendientes" "$pendientes_val"
