@@ -563,14 +563,8 @@ class TestFallback:
         assert resolve_name("generate", None, router._registry, router._routes) == "a"
 
     def test_fallback_no_chain(self) -> None:
-        """Comportamiento real (documentado, no ideal): el fallback prueba solo
-        UN proveedor alternativo; si este falla, no encadena a un tercero.
-
-        NOTA (2026-08-09): el bucle de call_with_fallback en strategy.py retorna
-        tras el primer fallback fallido (`return result, primary` dentro del for),
-        ignorando fallback_max_providers > 1. Comportamiento observado y cubierto
-        por este test; corregirlo requiere ADR-007 (núcleo congelado).
-        """
+        """Con fallback_max_providers=3, la cadena recorre los proveedores
+        disponibles hasta encontrar uno que responda (fix ADR-007 2026-08-09)."""
 
         class _MockAlsoFail(BaseLLMProvider):
             _calls: int = 0
@@ -611,11 +605,11 @@ class TestFallback:
         reg.register("c", _MockThird())
         router = LLMRouter(registry=reg, fallback_enabled=True, fallback_max_providers=3)
 
-        # API pública: a falla → se prueba b (único fallback probado); b falla →
-        # el bucle retorna el error del primario sin llegar a c (bug documentado).
+        # API pública: a falla → b falla → c responde (cadena completa con
+        # fallback_max_providers=3, fix ADR-007).
         result = router.generate("test")
-        assert result.startswith("Error:"), f"Expected error from primary, got {result!r}"
-        assert reg.get("c")._calls == 0, "c should NOT be reached (single-fallback behavior)"
+        assert result == "third_ok", f"Expected third_ok, got {result!r}"
+        assert reg.get("c")._calls == 1, "c should be reached (full chain)"
 
     def test_fallback_does_not_reset_cb(self) -> None:
         """El fallback no debe resetear el CB del proveedor alternativo."""
