@@ -230,6 +230,19 @@ UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^estado: REV
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "REVISIÓN DEVUELTA" && ok "devolución auditada en historial" || bad "devolución auditada en historial"
 
 
+
+# 23. ura-udo diff TASK: resumen de cambios por tarea
+echo "-- 23. ura-udo diff"
+DIF=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test diff" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$DIF" --estado IN_PROGRESS >/dev/null
+echo "contenido nuevo" > "$REPO_T/diff_archivo.txt"
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$DIF][WEB] cambio auditado"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" diff "$DIF" 2>&1)
+echo "$out" | grep -q "RANGO:" && ok "diff muestra rango base..HEAD" || bad "diff muestra rango"
+echo "$out" | grep -q "diff_archivo.txt" && ok "diff lista el archivo tocado" || bad "diff lista el archivo tocado"
+echo "$out" | grep -q "Archivos tocados" && ok "diff sección archivos tocados" || bad "diff sección archivos tocados"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then

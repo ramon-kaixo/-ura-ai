@@ -652,6 +652,25 @@ PYEOF
     esac
     ;;
 
+  diff)
+    # Resumen de cambios por tarea (auditoría): qué archivos tocó la TASK
+    # entre commit_base y HEAD, con estadísticas. Sin git show completo.
+    [ -n "${2:-}" ] || { echo "Uso: ura-udo diff TASK-ID" >&2; exit 1; }
+    _ver_tarea "$2"
+    id="$2"
+    file="$TASKS_DIR/$id.md"
+    base=$(grep '^commit_base:' "$file" | cut -d' ' -f2- || true)
+    [ -n "$base" ] && [ "$base" != "unknown" ] || { echo "ERROR: sin commit_base (¿tarea nunca fue IN_PROGRESS?)" >&2; exit 1; }
+    echo "TASK: $id"
+    echo "RANGO: $base..HEAD"
+    echo ""
+    # Resumen por archivo (--stat) + nombres, sin el contenido completo
+    git -C "$REPO" diff --stat "$base..HEAD" 2>/dev/null || { echo "ERROR: no se pudo calcular el diff" >&2; exit 1; }
+    echo ""
+    echo "--- Archivos tocados ---"
+    git -C "$REPO" diff --name-only "$base..HEAD" 2>/dev/null | sed 's/^/  /'
+    ;;
+
   verify)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     id="$2"

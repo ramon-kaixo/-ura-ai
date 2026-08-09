@@ -17,6 +17,7 @@ ura-udo context TASK-ID         # contexto compartido (expediente + commits + re
 ura-udo list [ESTADO]           # lista de tareas (filtro opcional)
 ura-udo status                  # estado del proyecto: tareas activas con owner/actividad/commits/pendientes
 ura-udo verify TASK-ID          # verificación: commits, discrepancias reserva↔git, coherencia cambios (F4)
+ura-udo diff TASK-ID           # resumen de cambios por tarea (--stat + archivos, sin contenido)
 ```
 
 ## Actualizar
