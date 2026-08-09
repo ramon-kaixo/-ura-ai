@@ -243,6 +243,25 @@ echo "$out" | grep -q "diff_archivo.txt" && ok "diff lista el archivo tocado" ||
 echo "$out" | grep -q "Archivos tocados" && ok "diff sección archivos tocados" || bad "diff sección archivos tocados"
 
 
+
+# 24. Verificación REAL en gate: comando que falla bloquea DONE
+echo "-- 24. verificación real (gate ejecuta el comando)"
+VF=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test verif real" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado IN_PROGRESS >/dev/null
+echo v > "$REPO_T/v.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$VF" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado REVIEW --analisis "a" --validacion "v" --verificar "false" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][TERM] campos"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado DONE --nota "intento" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "verificación FALLÓ" && ok "gate ejecuta verificación y bloquea si falla" || bad "gate ejecuta verificación y bloquea si falla"
+
+# 25. Verificación REAL que pasa → DONE se cierra
+echo "-- 25. verificación real OK → DONE"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --verificar "true" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][TERM] verificar true"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado DONE --nota "cierre ok" >/dev/null && ok "DONE con verificación real OK" || bad "DONE con verificación real OK"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then

@@ -214,3 +214,18 @@ ura-udo update TASK --estado DONE --analisis "..." --validacion "..."
 ```
 
 **Garantía**: el gate impide DONE sin pasar por REVIEW; cada devolución queda en el historial del expediente (trazabilidad completa). Así todo trabajo es visto por **2 ojos: OpenCode Web y OpenCode Escritorio**.
+
+## Verificación REAL (V1 — cierre del vacío de validación)
+
+Antes: se declaraba `--validacion "suite 35/35 OK"` y nadie comprobaba que fuera cierto (texto libre).
+Ahora: se puede añadir `--verificar "comando"` — y el gate **EJECUTA** ese comando antes de permitir DONE. Si falla, el cierre se bloquea con el error.
+
+```bash
+ura-udo update TASK --estado REVIEW --analisis "..." --validacion "suite" --verificar "bash tests/udo/test_udo.sh"
+# ... commit del expediente ...
+ura-udo update TASK --estado DONE   # el gate ejecuta "bash tests/udo/test_udo.sh" de verdad
+```
+
+- Si el comando pasa → "Verificación real: OK" → DONE.
+- Si el comando falla → "ERROR: DONE bloqueado — la verificación FALLÓ" con el motivo.
+- Tareas sin `verificar:` siguen cerrando como antes (compatibilidad).
