@@ -206,6 +206,30 @@ echo "$ctx_out" | grep -q 'instrucciones: Refactor X' && ok "instrucciones en co
 echo "$ctx_out" | grep -q 'restricciones: no tocar motor/' && ok "restricciones en context" || bad "restricciones en context"
 
 echo ""
+
+# 21. revisar --devolver: revisor devuelve al ejecutor (veredicto estructurado)
+echo "-- 21. revisar --devolver"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test revisar" >/dev/null
+R=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" list | grep -oE "TASK-[0-9-]+" | tail -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado IN_PROGRESS >/dev/null
+echo t > "$REPO_T/r.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$R][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$R" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado REVIEW >/dev/null
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$R" --devolver "fallo en X" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^estado: IN_PROGRESS" && ok "devolver → IN_PROGRESS" || bad "devolver → IN_PROGRESS"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^revision: .*DEVUELTA.*fallo en X.*revisor=TERM" && ok "veredicto DEVUELTA estructurado" || bad "veredicto DEVUELTA estructurado"
+
+# 22. revisar --ok: revisor aprueba, queda en REVIEW con veredicto OK
+echo "-- 22. revisar --ok"
+echo t2 > "$REPO_T/r.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$R][WEB] correccion"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$R" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado REVIEW >/dev/null
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$R" --ok "todo conforme" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^revision: .*OK.*todo conforme.*revisor=TERM" && ok "veredicto OK estructurado" || bad "veredicto OK estructurado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^estado: REVIEW" && ok "OK → queda REVIEW (listo para DONE)" || bad "OK → queda REVIEW"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "REVISIÓN DEVUELTA" && ok "devolución auditada en historial" || bad "devolución auditada en historial"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then
