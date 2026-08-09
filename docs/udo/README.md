@@ -185,3 +185,32 @@ ura-udo pendientes check                         # ¿puede cerrarse la fase? (ga
 ```
 
 Registro: `docs/udo/pendientes-fase.md` (Git). El `check` devuelve BLOQUEADO si hay pendientes ABIERTOs — el cierre de fase exige cola vacía o aprobación expresa de Ramón.
+
+## Circuito de revisión doble (Web + Escritorio) — F2.3
+
+**Una fase no se considera terminada si no ha pasado por revisión con OK.** Si el revisor encuentra un fallo, NO lo arregla él: **devuelve la tarea al ejecutor**, y esta vuelve a pasar por el revisor hasta el OK.
+
+```
+Ejecutor (Web) → REVIEW → Revisor (Escritorio)
+                              │
+                     ┌────────┴─────────┐
+                     ▼                  ▼
+                 ¿OK? ──NO──▶ IN_PROGRESS (devuelta al ejecutor con nota del fallo)
+                     │
+                     ▼
+                 DONE (solo desde REVIEW con OK)
+```
+
+**Comandos**:
+```bash
+# Revisor encuentra fallo → devuelve al ejecutor (queda auditado en historial)
+ura-udo update TASK --estado IN_PROGRESS --nota "REVISIÓN DEVUELTA: fallo en X — corregir y reenviar a revisión"
+
+# Ejecutor corrige y vuelve a enviar a revisión
+ura-udo update TASK --estado REVIEW --nota "corregido: X arreglado"
+
+# Revisor da OK → cierra (gate: DONE solo desde REVIEW)
+ura-udo update TASK --estado DONE --analisis "..." --validacion "..."
+```
+
+**Garantía**: el gate impide DONE sin pasar por REVIEW; cada devolución queda en el historial del expediente (trazabilidad completa). Así todo trabajo es visto por **2 ojos: OpenCode Web y OpenCode Escritorio**.
