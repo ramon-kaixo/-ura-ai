@@ -92,3 +92,15 @@
 | Hook pytest-delta | ✅ **MEJORADO** — añadido `-m "not slow"` (no fallaba por benchmark en commits) |
 
 **Conclusión honesta**: 32 → 3 fallos. Los 3 restantes son dependencia de orden entre archivos de test (estado global de providers/engine compartido) — requieren rediseño de fixtures, no un parche. Documentado como PENDIENTE.
+
+## 8. CIERRE DEFINITIVO (2026-08-09) — SUITE COMPLETA 0 FALLOS
+
+**Resultado final: 5942 passed, 0 failed, 38 skipped, 150 deselected** (EXIT=0)
+
+**La solución definitiva del problema de orden (G2)**:
+- El fixture `isolate_test_environment` hace `sys.modules.pop` de los 7 proveedores LLM **SIN re-import** (como el original).
+- El `re-import` inmediato que añadí **invalidaba las referencias guardadas** de los tests que hacen `importlib.reload` propio (lmstudio/vllm): el módulo viejo quedaba fuera de sys.modules pero la referencia del test apuntaba a él → `reload()` fallaba con "not in sys.modules".
+- Sin pop: los tests de providers fallaban (19) porque `_get_optional_providers` no re-importaba limpio.
+- **pop sin re-import + re-import bajo demanda en los tests** = 0 fallos en suite completa.
+
+**Estado final del plan**: todos los grupos G1-G5 resueltos. El problema de orden estructural quedó resuelto con el fixture correcto (no requería rediseño de arquitectura — era el patrón de re-import del fixture).
