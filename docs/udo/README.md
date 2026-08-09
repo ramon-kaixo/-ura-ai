@@ -229,3 +229,16 @@ ura-udo update TASK --estado DONE   # el gate ejecuta "bash tests/udo/test_udo.s
 - Si el comando pasa → "Verificación real: OK" → DONE.
 - Si el comando falla → "ERROR: DONE bloqueado — la verificación FALLÓ" con el motivo.
 - Tareas sin `verificar:` siguen cerrando como antes (compatibilidad).
+
+## Requisitos del plan (V2 — checklist por tarea)
+
+Cada requisito del plan se registra en el expediente con estado `[x]` (hecho) / `[ ]` (pendiente). **El gate DONE bloquea si queda algún requisito sin completar.**
+
+```bash
+ura-udo update TASK --requisito "A1 gate analisis" --requisito "B2 prueba conductual"
+ura-udo update TASK --requisito-hecho "A1 gate analisis"   # marca hecho
+ura-udo update TASK --estado DONE    # bloquea si queda algún [ ]
+```
+
+- Tareas sin `requisitos:` cierran igual (compatibilidad).
+- El gate muestra cuáles faltan: `ERROR: DONE bloqueado — N requisito(s) del plan sin completar`.

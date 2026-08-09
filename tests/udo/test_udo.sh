@@ -262,6 +262,24 @@ git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][TERM] verificar tru
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado DONE --nota "cierre ok" >/dev/null && ok "DONE con verificación real OK" || bad "DONE con verificación real OK"
 
 
+
+# 26. Requisitos del plan (V2): DONE bloqueado si queda [ ] pendiente
+echo "-- 26. requisitos del plan (V2)"
+RQ=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test requisitos" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado IN_PROGRESS >/dev/null
+echo r > "$REPO_T/rq.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$RQ" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --requisito "R1 algo" --requisito "R2 otra cosa" >/dev/null
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado REVIEW --analisis "a" --validacion "v" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][TERM] campos"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado DONE --nota "intento" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "requisito(s) del plan sin completar" && ok "gate bloquea DONE con requisito pendiente" || bad "gate bloquea DONE con requisito pendiente"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --requisito-hecho "R1 algo" --requisito-hecho "R2 otra cosa" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][TERM] requisitos hechos"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado DONE --nota "cierre ok" >/dev/null && ok "DONE tras completar requisitos" || bad "DONE tras completar requisitos"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R1 algo" && UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R2 otra cosa" && ok "requisitos marcados [x]" || bad "requisitos marcados [x]"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then
