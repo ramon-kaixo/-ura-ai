@@ -31,7 +31,7 @@
 
 ```bash
 # Barrido manual de un lote
-HYPOTHESIS_PROFILE=ci .venv/bin/mutmut run --paths-to-mutate core/
+HYPOTHESIS_PROFILE=ci .venv/bin/mutmut run core/
 
 # Ver resultados acumulados
 .venv/bin/mutmut results

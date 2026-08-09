@@ -47,7 +47,7 @@ def _lote_del_dia() -> tuple[int, list[str]]:
 
 
 def _ejecutar_mutmut(lote: list[str], dry: bool) -> int:
-    cmd = [str(MUTMUT), "run", "--paths-to-mutate", *lote]
+    cmd = [str(MUTMUT), "run", *lote]
     if dry:
         print("[dry-run] mutmut:", " ".join(cmd))
         return 0
