@@ -9,7 +9,6 @@ Tres fixtures autouse:
 
 from __future__ import annotations
 
-import importlib
 import os
 import sys
 from collections.abc import Generator
@@ -22,12 +21,13 @@ def isolate_test_environment() -> Generator[None, None, None]:
     """
     Garantiza independencia absoluta de cada test:
     1. Aisla y restaura variables de entorno.
-    2. Re-importa módulos de proveedores LLM con pop + import inmediato
-       (mantiene sys.modules consistente; un pop sin re-import deja módulos
-       a medias y rompe imports posteriores — fix G2 TASK-20260809-007).
+    2. Aísla módulos de proveedores LLM con pop SIN re-import (los tests
+       de providers y _get_optional_providers re-importan bajo demanda;
+       un re-import aquí invalidaba referencias guardadas de los tests
+       que hacen importlib.reload propio).
     """
     original_env = dict(os.environ)
-    modules_to_reload = [
+    modules_to_clear = [
         "motor.core.llm.gemini",
         "motor.core.llm.lmstudio",
         "motor.core.llm.openrouter",
@@ -36,13 +36,8 @@ def isolate_test_environment() -> Generator[None, None, None]:
         "motor.core.llm.openai",
         "motor.core.llm.anthropic",
     ]
-    for mod_name in modules_to_reload:
-        if mod_name in sys.modules:
-            sys.modules.pop(mod_name, None)
-            try:
-                importlib.import_module(mod_name)
-            except Exception:  # noqa: S110 — proveedor opcional sin deps
-                pass
+    for mod_name in modules_to_clear:
+        sys.modules.pop(mod_name, None)
 
     yield
 
