@@ -518,7 +518,7 @@ class TestFallback:
         reg.register("a", _MockFail(), default=True)
         reg.register("b", _MockOK())
         router = LLMRouter(registry=reg, fallback_enabled=True)
-        with patch("motor.core.llm.router.log") as mock_log:
+        with patch("motor.core.llm.router.strategy.log") as mock_log:
             router.generate("test")
             assert mock_log.info.called
 
@@ -557,10 +557,20 @@ class TestFallback:
         # Fallback debe saltar b_open e ir a c
         result = router.generate("test")
         assert result == "ok", f"Expected c to handle, got {result}"
-        assert router._resolve_name("generate", None) == "a"  # primary
+        # API pública: el primary sigue siendo "a" (default registrado)
+        from motor.core.llm.router.providers import resolve_name
+
+        assert resolve_name("generate", None, router._registry, router._routes) == "a"
 
     def test_fallback_no_chain(self) -> None:
-        """Si el fallback falla, no se encadena a un tercer proveedor."""
+        """Comportamiento real (documentado, no ideal): el fallback prueba solo
+        UN proveedor alternativo; si este falla, no encadena a un tercero.
+
+        NOTA (2026-08-09): el bucle de call_with_fallback en strategy.py retorna
+        tras el primer fallback fallido (`return result, primary` dentro del for),
+        ignorando fallback_max_providers > 1. Comportamiento observado y cubierto
+        por este test; corregirlo requiere ADR-007 (núcleo congelado).
+        """
 
         class _MockAlsoFail(BaseLLMProvider):
             _calls: int = 0
@@ -601,15 +611,11 @@ class TestFallback:
         reg.register("c", _MockThird())
         router = LLMRouter(registry=reg, fallback_enabled=True, fallback_max_providers=3)
 
-        _, provider_used = router._call_with_fallback(
-            reg.get("a"),
-            "generate",
-            "generate",
-            "a",
-            "test",
-        )
-        assert provider_used == "a", f"Expected primary error, got fallback {provider_used}"
-        assert reg.get("c")._calls == 0, "c should not be called (no chain)"
+        # API pública: a falla → se prueba b (único fallback probado); b falla →
+        # el bucle retorna el error del primario sin llegar a c (bug documentado).
+        result = router.generate("test")
+        assert result.startswith("Error:"), f"Expected error from primary, got {result!r}"
+        assert reg.get("c")._calls == 0, "c should NOT be reached (single-fallback behavior)"
 
     def test_fallback_does_not_reset_cb(self) -> None:
         """El fallback no debe resetear el CB del proveedor alternativo."""
@@ -899,7 +905,7 @@ class TestLogging:
         reg = ProviderRegistry()
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
-        with patch("motor.core.llm.router.log") as mock_log:
+        with patch("motor.core.llm.router.strategy.log") as mock_log:
             router.generate("test")
             assert mock_log.info.called
 
@@ -907,7 +913,7 @@ class TestLogging:
         reg = ProviderRegistry()
         reg.register("f", _MockFail(), default=True)
         router = LLMRouter(registry=reg)
-        with patch("motor.core.llm.router.log") as mock_log:
+        with patch("motor.core.llm.router.strategy.log") as mock_log:
             router.generate("test")
             assert mock_log.warning.called
 
