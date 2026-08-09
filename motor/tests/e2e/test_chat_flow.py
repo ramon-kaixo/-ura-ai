@@ -1,6 +1,7 @@
 """E2E tests for assistant chat flow. Requires Ollama for chat test."""
 
 from __future__ import annotations
+import os
 
 import httpx
 import pytest
@@ -35,7 +36,11 @@ def test_metrics_endpoint(client):
 @pytest.mark.skipif(not HAS_OLLAMA, reason="Ollama not running")
 @pytest.mark.timeout(15)
 def test_chat_basic(client):
-    r = client.post("/api/v1/chat", json={"message": "hola", "mode": "conversacion"})
+    # Auth requerida cuando URA_API_KEY está definida (AuthMiddleware)
+    headers = {}
+    if os.environ.get("URA_API_KEY"):
+        headers["Authorization"] = f"Bearer {os.environ['URA_API_KEY']}"
+    r = client.post("/api/v1/chat", json={"message": "hola", "mode": "conversacion"}, headers=headers)
     assert r.status_code == 200
     data = r.json()
     assert "reply" in data

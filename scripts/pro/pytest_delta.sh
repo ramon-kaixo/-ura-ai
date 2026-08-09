@@ -58,4 +58,4 @@ fi
 
 echo "pytest-delta: corriendo ${#TARGETS[@]} test(s) relacionados"
 cd "$REPO"
-HYPOTHESIS_PROFILE=dev $PYTEST "${TARGETS[@]}" -q --tb=short -p no:cacheprovider
+HYPOTHESIS_PROFILE=dev $PYTEST "${TARGETS[@]}" -q --tb=short -p no:cacheprovider -m "not slow"

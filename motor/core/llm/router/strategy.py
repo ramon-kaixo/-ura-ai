@@ -273,6 +273,9 @@ def call_with_fallback(
             fallback_name,
             task,
         )
-        return result, primary
+        # ADR-007 (2026-08-09, TASK-20260809-007): el return NO debe estar
+        # dentro del bucle — abortaba la cadena tras el primer fallback fallido
+        # ignorando fallback_max_providers>1. Ahora se sigue al siguiente
+        # proveedor disponible; si todos fallan, se devuelve el error primario.
 
     return result, primary

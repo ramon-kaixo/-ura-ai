@@ -9,6 +9,7 @@ Tres fixtures autouse:
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 from collections.abc import Generator
@@ -21,10 +22,12 @@ def isolate_test_environment() -> Generator[None, None, None]:
     """
     Garantiza independencia absoluta de cada test:
     1. Aisla y restaura variables de entorno.
-    2. Limpia sys.modules de modulos de proveedores.
+    2. Re-importa módulos de proveedores LLM con pop + import inmediato
+       (mantiene sys.modules consistente; un pop sin re-import deja módulos
+       a medias y rompe imports posteriores — fix G2 TASK-20260809-007).
     """
     original_env = dict(os.environ)
-    modules_to_clear = [
+    modules_to_reload = [
         "motor.core.llm.gemini",
         "motor.core.llm.lmstudio",
         "motor.core.llm.openrouter",
@@ -33,8 +36,13 @@ def isolate_test_environment() -> Generator[None, None, None]:
         "motor.core.llm.openai",
         "motor.core.llm.anthropic",
     ]
-    for mod_name in modules_to_clear:
-        sys.modules.pop(mod_name, None)
+    for mod_name in modules_to_reload:
+        if mod_name in sys.modules:
+            sys.modules.pop(mod_name, None)
+            try:
+                importlib.import_module(mod_name)
+            except Exception:  # noqa: S110 — proveedor opcional sin deps
+                pass
 
     yield
 
@@ -44,8 +52,22 @@ def isolate_test_environment() -> Generator[None, None, None]:
 
 @pytest.fixture(autouse=True)
 def reset_provider_singletons() -> Generator[None, None, None]:
-    """Resetea los estados globales compartidos en los clientes de LLM."""
+    """Resetea los estados globales compartidos en los clientes de LLM.
+
+    Causa raíz G2 (TASK-20260809-007): ProviderRegistry es un singleton de
+    módulo; los tests registran proveedores sin restaurar, y los siguientes
+    tests en la suite ven estado contaminado (fallan solo en suite, pasan en
+    aislamiento). Aquí se limpia el registro entre tests.
+    """
+    from motor.core.llm import registry as _llm_registry
+
+    _providers_prev = dict(_llm_registry.registry._providers)
+    _default_prev = _llm_registry.registry._default_name
+    _llm_registry.registry._providers = {}
+    _llm_registry.registry._default_name = None
     yield
+    _llm_registry.registry._providers = _providers_prev
+    _llm_registry.registry._default_name = _default_prev
 
 
 @pytest.fixture(autouse=True)

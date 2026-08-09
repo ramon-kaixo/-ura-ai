@@ -1,5 +1,9 @@
 """Tests del benchmark RAG (F21-B2).
 
+
+
+
+
 Verifica:
 1. Benchmark con un solo retriever
 2. Benchmark con múltiples retrievers
@@ -11,11 +15,18 @@ Verifica:
 
 from __future__ import annotations
 
+import pytest
+
+pytestmark = pytest.mark.slow  # G4: requieren scripts/servicios de benchmark pesados
+
 import json
 from pathlib import Path
 
 from motor.core.evaluation import EvaluationCorpus, EvaluationEngine, EvaluationQuery
 from motor.core.evaluation.corpus import EvaluationCorpus as EC
+
+
+
 
 
 def _crear_corpus_test() -> EvaluationCorpus:

@@ -1,6 +1,14 @@
 """Tests del benchmark multi-proveedor (F22-B8)."""
 
+
+
+
+
 from __future__ import annotations
+
+import pytest
+
+pytestmark = pytest.mark.slow  # G4: requieren scripts/servicios de benchmark pesados
 
 import json
 from pathlib import Path
@@ -8,6 +16,9 @@ from pathlib import Path
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.registry import ProviderRegistry
 from motor.core.llm.router import LLMRouter
+
+
+
 
 
 class _MockOK(BaseLLMProvider):
@@ -108,7 +119,6 @@ class TestBenchmarkAllProviders:
         reg = ProviderRegistry()
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
-        import pytest
 
         with pytest.raises(RuntimeError):
             router.generate("test", provider="nonexistent")

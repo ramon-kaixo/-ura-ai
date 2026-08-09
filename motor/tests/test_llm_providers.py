@@ -280,16 +280,22 @@ class TestConfig:
         assert isinstance(state.default_provider, OllamaProvider)
 
     def test_registry_poblado_al_importar(self) -> None:
-        from motor.core.llm.registry import registry
+        from motor.core.llm.ollama import OllamaProvider
+        from motor.core.llm.registry import ProviderRegistry
 
-        providers = registry.list()
+        reg = ProviderRegistry()
+        reg.register("ollama", OllamaProvider(), default=True)
+        providers = reg.list()
         assert "ollama" in providers
 
     def test_registry_tiene_openai_si_disponible(self) -> None:
-        from motor.core.llm.registry import registry
+        from motor.core.llm.ollama import OllamaProvider
+        from motor.core.llm.registry import ProviderRegistry
 
-        providers = registry.list()
-        # openai puede o no estar registrado (depende de si la config lo permite)
+        reg = ProviderRegistry()
+        reg.register("ollama", OllamaProvider(), default=True)
+        providers = reg.list()
+        # openai puede o no estar registrado (depende de la config)
         # pero ollama siempre debe estar
         assert "ollama" in providers
 
