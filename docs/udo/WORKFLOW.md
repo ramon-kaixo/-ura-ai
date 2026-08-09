@@ -55,3 +55,22 @@ Ramón ──► TASK-ID ──► Web (programador) + Terminal (consultor/revis
 - **WEB (OpenCode Web)**: interfaz web en navegador (`http://10.164.1.99:8081`); commits `[WEB]`; `canal: WEB`.
 - Los colores del emulador NO son la fuente de verdad (los configura el usuario); Git y los expedientes UDO sí lo son.
 - Verificar siempre: `ura-udo status` (tareas activas por agente) o `git log --oneline --grep="\[WEB\]"`.
+
+## Flujo doble ventana: Web termina → Escritorio revisa (ura-doble)
+
+**Comando único en el Mac** (instalado en `~/.opencode/bin/ura-doble`):
+
+```bash
+ura-doble revisar   # 1) sincroniza el repo del Mac con ASUS  2) lista tareas en REVIEW/IN_PROGRESS
+ura-doble verify TASK-XXXX   # ve qué cambió la Web antes de revisar (vía SSH a ASUS)
+ura-doble status    # estado UDO real (fuente de verdad: ASUS)
+ura-doble sync      # solo sincronizar el repo del Mac
+```
+
+**Cómo funciona**: la fuente de verdad de los expedientes UDO está en ASUS; `ura-doble` ejecuta `ura-udo` vía SSH (`ssh gx10`) y sincroniza el repo local del Mac con `git fetch asus + merge --ff-only`. Requisito: el alias SSH `gx10` en el Mac (`~/.ssh/config` → `ramon@10.164.1.99`, clave `id_ed25519`).
+
+**Flujo diario**:
+1. La Web (ASUS) programa y commitea `[TASK][WEB]`.
+2. Tú, en el Mac: `ura-doble revisar` → repo al día + lista de tareas.
+3. `ura-doble verify TASK-XXXX` → ves commits y discrepancias.
+4. Revisas/corriges en el OpenCode del Mac (Qwen 32) → commit `[TASK][TERM]` → `ura-doble status` → cerrar con gate.
