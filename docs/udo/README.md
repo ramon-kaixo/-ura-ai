@@ -172,3 +172,16 @@ Criterio: `grep -rli openclaw scripts/ core/ motor/ deploy/` → **0** (código 
 Pendientes Ramón (sudo): `systemctl stop+disable ura-openclaw.service`, añadir
 `OPENCODE_WEB_PASS` a `/etc/ura/secrets.env`, borrar `/home/ramon/.openclaw/`,
 re-apuntar `/usr/local/bin/opencode`.
+
+## Cola de pendientes de fase (F2.3)
+
+Los pendientes de un plan pueden posponerse (cola) **sin bloquear el avance** a la siguiente fase, PERO **la fase NO se cierra** hasta que la cola esté resuelta o justificada por Ramón.
+
+```bash
+ura-udo pendientes add TASK-ID "pendiente"      # registrar un pendiente pospuesto
+ura-udo pendientes list                          # ver la cola
+ura-udo pendientes resolver TASK-ID "nota"       # marcar resuelto
+ura-udo pendientes check                         # ¿puede cerrarse la fase? (gate)
+```
+
+Registro: `docs/udo/pendientes-fase.md` (Git). El `check` devuelve BLOQUEADO si hay pendientes ABIERTOs — el cierre de fase exige cola vacía o aprobación expresa de Ramón.
