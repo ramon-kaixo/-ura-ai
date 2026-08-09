@@ -93,3 +93,10 @@ repos:
         language: system
         files: \.py$
         pass_filenames: true
+
+      - id: pytest-delta
+        name: Pytest + Hypothesis delta (solo tests relacionados)
+        entry: bash scripts/pro/pytest_delta.sh
+        language: system
+        files: ^(motor/|core/|knowledge/|tests/).*\.py$
+        pass_filenames: true
