@@ -625,18 +625,39 @@ PYEOF
     id="$2"
     [ -n "$id" ] || { echo "Uso: ura-udo revisar TASK --ok \"nota\" | --devolver \"motivo\"" >&2; exit 1; }
     _ver_tarea "$id"
+    file="$TASKS_DIR/$id.md"
     veredicto="${3:-}"
     nota="${4:-}"
     case "$veredicto" in
       --ok)
         [ -n "$nota" ] || { echo "Uso: revisar TASK --ok \"nota del revisor\"" >&2; exit 1; }
         _lock
-        # El revisor aprueba: queda en REVIEW (listo para DONE con gate).
-        # Marca el campo revision: con OK estructurado + revisor.
-        rev="$(_fecha_hora) | OK | $nota${URA_REVISOR:+ | revisor=$URA_REVISOR}"
+        # V3: el OK del revisor debe COMPROBAR, no solo declarar. Si la tarea
+        # tiene verificación real (verificar:), se ejecuta aquí también —
+        # si falla, el OK se rechaza (el revisor no puede aprobar algo que
+        # no pasa la comprobación).
+        vcmd=$(grep '^verificar:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+        if [ -n "$vcmd" ] && [ "$vcmd" != "—" ]; then
+            echo "Revisor: ejecutando verificación real ($vcmd)..."
+            if ! (cd "$REPO" && eval "$vcmd") > /tmp/udo_revisar_$$.log 2>&1; then
+                echo "ERROR: OK RECHAZADO — la verificación falló al revisar:" >&2
+                cat /tmp/udo_revisar_$$.log | tail -10 | sed 's/^/  /' >&2
+                rm -f /tmp/udo_revisar_$$.log
+                exit 1
+            fi
+            rm -f /tmp/udo_revisar_$$.log
+            echo "Verificación real: OK (revisor)"
+        fi
+        # V3: detecta auto-revisión — si el revisor es el mismo que el
+        # ejecutor, el veredicto queda marcado como AUTO-REVISIÓN (honesto).
+        auto=""
+        if _es_auto_revision "$id" "${URA_REVISOR:-}"; then
+            auto=" | AUTO-REVISIÓN"
+        fi
+        rev="$(_fecha_hora) | OK | $nota${URA_REVISOR:+ | revisor=$URA_REVISOR}$auto"
         _set_campo "$id" "revision" "$rev"
         _set_campo "$id" "estado" "REVIEW"
-        hist="REVISION OK — $nota${URA_REVISOR:+ (revisor=$URA_REVISOR)}"
+        hist="REVISION OK — $nota${URA_REVISOR:+ (revisor=$URA_REVISOR)}${auto:+ (AUTO-REVISIÓN)}"
         _apuntar "$id" "$hist" "REVIEW"
         echo "Revisión OK registrada: $id — queda en REVIEW (puede cerrarse con DONE + gate)"
         ;;

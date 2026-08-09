@@ -280,6 +280,23 @@ UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado DONE --nota
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R1 algo" && UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R2 otra cosa" && ok "requisitos marcados [x]" || bad "requisitos marcados [x]"
 
 
+
+# 27. V3: revisar --ok ejecuta la verificación real; si falla, OK rechazado
+echo "-- 27. V3: OK rechazado si verificación falla"
+V3=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test v3" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --estado IN_PROGRESS --agente_terminal "TERM (ejecutor)" >/dev/null
+echo v > "$REPO_T/v3.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$V3" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --estado REVIEW --verificar "false" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][TERM] campos"
+out=$(URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$V3" --ok "ok" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "OK RECHAZADO" && ok "V3: OK rechazado si verificación falla" || bad "V3: OK rechazado si verificación falla"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --verificar "true" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][TERM] verificar true"
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$V3" --ok "ok real" >/dev/null 2>&1 && ok "V3: OK aceptado si verificación pasa" || bad "V3: OK aceptado si verificación pasa"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$V3" | grep -q "AUTO-REVISIÓN" && ok "V3: auto-revisión marcada (revisor==ejecutor)" || bad "V3: auto-revisión marcada"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then
