@@ -9,7 +9,6 @@ test veredicto 02:27:49
 #### A MEDIAS (IN_PROGRESS)
 | TASK-20260809-005 | IN_PROGRESS (a medias) | 2026-08-10 | PENDIENTE | |
 | TASK-20260810-002 | IN_PROGRESS (a medias) | 2026-08-10 | PENDIENTE | |
-| TASK-20260810-003 | IN_PROGRESS (a medias) | 2026-08-10 | PENDIENTE | |
 
 #### PENDIENTES DE REVISOR
 | TASK-20260809-002 | pendiente revisor | 2026-08-10 | PENDIENTE | |
@@ -23,6 +22,7 @@ test veredicto 02:27:49
 | TASK-20260810-001 | pendiente revisor | 2026-08-10 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
+| TASK-20260810-003 | lista para cerrar (OK revisor) | 2026-08-10 | LISTO | |
 | TASK-20260810-004 | lista para cerrar (OK revisor) | 2026-08-10 | LISTO | |
 
 #### PLANES/FASES SIN CERRAR
