@@ -1,0 +1,6 @@
+[Unit]
+Description=URA Detector de revisiones pendientes (REVIEW sin revisor)
+[Service]
+Type=oneshot
+ExecStart=/home/ramon/URA/ura_ia_1972/scripts/pro/detectar_revisiones.sh --notify
+User=ramon
