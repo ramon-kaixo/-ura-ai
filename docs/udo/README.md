@@ -172,3 +172,81 @@ Criterio: `grep -rli openclaw scripts/ core/ motor/ deploy/` → **0** (código 
 Pendientes Ramón (sudo): `systemctl stop+disable ura-openclaw.service`, añadir
 `OPENCODE_WEB_PASS` a `/etc/ura/secrets.env`, borrar `/home/ramon/.openclaw/`,
 re-apuntar `/usr/local/bin/opencode`.
+
+## Cola de pendientes de fase (F2.3)
+
+Los pendientes de un plan pueden posponerse (cola) **sin bloquear el avance** a la siguiente fase, PERO **la fase NO se cierra** hasta que la cola esté resuelta o justificada por Ramón.
+
+```bash
+ura-udo pendientes add TASK-ID "pendiente"      # registrar un pendiente pospuesto
+ura-udo pendientes list                          # ver la cola
+ura-udo pendientes resolver TASK-ID "nota"       # marcar resuelto
+ura-udo pendientes check                         # ¿puede cerrarse la fase? (gate)
+```
+
+Registro: `docs/udo/pendientes-fase.md` (Git). El `check` devuelve BLOQUEADO si hay pendientes ABIERTOs — el cierre de fase exige cola vacía o aprobación expresa de Ramón.
+
+## Circuito de revisión doble (Web + Escritorio) — F2.3
+
+**Una fase no se considera terminada si no ha pasado por revisión con OK.** Si el revisor encuentra un fallo, NO lo arregla él: **devuelve la tarea al ejecutor**, y esta vuelve a pasar por el revisor hasta el OK.
+
+```
+Ejecutor (Web) → REVIEW → Revisor (Escritorio)
+                              │
+                     ┌────────┴─────────┐
+                     ▼                  ▼
+                 ¿OK? ──NO──▶ IN_PROGRESS (devuelta al ejecutor con nota del fallo)
+                     │
+                     ▼
+                 DONE (solo desde REVIEW con OK)
+```
+
+**Comandos**:
+```bash
+# Revisor encuentra fallo → devuelve al ejecutor (queda auditado en historial)
+ura-udo update TASK --estado IN_PROGRESS --nota "REVISIÓN DEVUELTA: fallo en X — corregir y reenviar a revisión"
+
+# Ejecutor corrige y vuelve a enviar a revisión
+ura-udo update TASK --estado REVIEW --nota "corregido: X arreglado"
+
+# Revisor da OK → cierra (gate: DONE solo desde REVIEW)
+ura-udo update TASK --estado DONE --analisis "..." --validacion "..."
+```
+
+**Garantía**: el gate impide DONE sin pasar por REVIEW; cada devolución queda en el historial del expediente (trazabilidad completa). Así todo trabajo es visto por **2 ojos: OpenCode Web y OpenCode Escritorio**.
+
+## Verificación REAL (V1 — cierre del vacío de validación)
+
+Antes: se declaraba `--validacion "suite 35/35 OK"` y nadie comprobaba que fuera cierto (texto libre).
+Ahora: se puede añadir `--verificar "comando"` — y el gate **EJECUTA** ese comando antes de permitir DONE. Si falla, el cierre se bloquea con el error.
+
+```bash
+ura-udo update TASK --estado REVIEW --analisis "..." --validacion "suite" --verificar "bash tests/udo/test_udo.sh"
+# ... commit del expediente ...
+ura-udo update TASK --estado DONE   # el gate ejecuta "bash tests/udo/test_udo.sh" de verdad
+```
+
+- Si el comando pasa → "Verificación real: OK" → DONE.
+- Si el comando falla → "ERROR: DONE bloqueado — la verificación FALLÓ" con el motivo.
+- Tareas sin `verificar:` siguen cerrando como antes (compatibilidad).
+
+## Requisitos del plan (V2 — checklist por tarea)
+
+Cada requisito del plan se registra en el expediente con estado `[x]` (hecho) / `[ ]` (pendiente). **El gate DONE bloquea si queda algún requisito sin completar.**
+
+```bash
+ura-udo update TASK --requisito "A1 gate analisis" --requisito "B2 prueba conductual"
+ura-udo update TASK --requisito-hecho "A1 gate analisis"   # marca hecho
+ura-udo update TASK --estado DONE    # bloquea si queda algún [ ]
+```
+
+- Tareas sin `requisitos:` cierran igual (compatibilidad).
+- El gate muestra cuáles faltan: `ERROR: DONE bloqueado — N requisito(s) del plan sin completar`.
+
+## V3 — el OK del revisor COMPRUEBA (no solo declara)
+
+Antes: `revisar TASK --ok "todo bien"` registraba el veredicto sin comprobar nada.
+Ahora:
+1. Si la tarea tiene `verificar:` (comando real), el **--ok lo ejecuta** — si falla, el OK se RECHAZA ("OK RECHAZADO — la verificación falló al revisar").
+2. Si el revisor == ejecutor, el veredicto queda marcado **AUTO-REVISIÓN** (honesto, no se finge revisión independiente).
+3. El `--devolver` exige motivo (rechaza sin él).
