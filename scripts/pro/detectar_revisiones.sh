@@ -162,6 +162,14 @@ if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" 
         # por PATH sin venv; el mensaje debe cumplir el formato conventional.
         if git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
             echo "VEREDICTOS_MAC: rama ya integrada en main"
+        elif git merge-base --is-ancestor HEAD mac-veredictos 2>/dev/null; then
+            # Solo retraso: fast-forward directo sin commit de merge nuevo
+            # (evita alimentar el bucle de merges recíprocos Mac<->ASUS)
+            if HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --ff-only 2>/dev/null; then
+                echo "VEREDICTOS_MAC: integrados por fast-forward (sin commit extra)"
+            else
+                echo "AVISO: ff de mac-veredictos falló (revisar conflictos)"
+            fi
         elif HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --no-ff -m "chore(udo): integrar veredictos del Mac (auto-integracion detector)" 2>/dev/null; then
             echo "VEREDICTOS_MAC: integrados de mac-veredictos a main"
         else
