@@ -206,6 +206,97 @@ echo "$ctx_out" | grep -q 'instrucciones: Refactor X' && ok "instrucciones en co
 echo "$ctx_out" | grep -q 'restricciones: no tocar motor/' && ok "restricciones en context" || bad "restricciones en context"
 
 echo ""
+
+# 21. revisar --devolver: revisor devuelve al ejecutor (veredicto estructurado)
+echo "-- 21. revisar --devolver"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test revisar" >/dev/null
+R=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" list | grep -oE "TASK-[0-9-]+" | tail -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado IN_PROGRESS >/dev/null
+echo t > "$REPO_T/r.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$R][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$R" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado REVIEW >/dev/null
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$R" --devolver "fallo en X" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^estado: IN_PROGRESS" && ok "devolver → IN_PROGRESS" || bad "devolver → IN_PROGRESS"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^revision: .*DEVUELTA.*fallo en X.*revisor=TERM" && ok "veredicto DEVUELTA estructurado" || bad "veredicto DEVUELTA estructurado"
+
+# 22. revisar --ok: revisor aprueba, queda en REVIEW con veredicto OK
+echo "-- 22. revisar --ok"
+echo t2 > "$REPO_T/r.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$R][WEB] correccion"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$R" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$R" --estado REVIEW >/dev/null
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$R" --ok "todo conforme" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^revision: .*OK.*todo conforme.*revisor=TERM" && ok "veredicto OK estructurado" || bad "veredicto OK estructurado"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "^estado: REVIEW" && ok "OK → queda REVIEW (listo para DONE)" || bad "OK → queda REVIEW"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$R" | grep -q "REVISIÓN DEVUELTA" && ok "devolución auditada en historial" || bad "devolución auditada en historial"
+
+
+
+# 23. ura-udo diff TASK: resumen de cambios por tarea
+echo "-- 23. ura-udo diff"
+DIF=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test diff" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$DIF" --estado IN_PROGRESS >/dev/null
+echo "contenido nuevo" > "$REPO_T/diff_archivo.txt"
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$DIF][WEB] cambio auditado"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" diff "$DIF" 2>&1)
+echo "$out" | grep -q "RANGO:" && ok "diff muestra rango base..HEAD" || bad "diff muestra rango"
+echo "$out" | grep -q "diff_archivo.txt" && ok "diff lista el archivo tocado" || bad "diff lista el archivo tocado"
+echo "$out" | grep -q "Archivos tocados" && ok "diff sección archivos tocados" || bad "diff sección archivos tocados"
+
+
+
+# 24. Verificación REAL en gate: comando que falla bloquea DONE
+echo "-- 24. verificación real (gate ejecuta el comando)"
+VF=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test verif real" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado IN_PROGRESS >/dev/null
+echo v > "$REPO_T/v.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$VF" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado REVIEW --analisis "a" --validacion "v" --verificar "false" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][TERM] campos"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado DONE --nota "intento" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "verificación FALLÓ" && ok "gate ejecuta verificación y bloquea si falla" || bad "gate ejecuta verificación y bloquea si falla"
+
+# 25. Verificación REAL que pasa → DONE se cierra
+echo "-- 25. verificación real OK → DONE"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --verificar "true" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$VF][TERM] verificar true"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$VF" --estado DONE --nota "cierre ok" >/dev/null && ok "DONE con verificación real OK" || bad "DONE con verificación real OK"
+
+
+
+# 26. Requisitos del plan (V2): DONE bloqueado si queda [ ] pendiente
+echo "-- 26. requisitos del plan (V2)"
+RQ=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test requisitos" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado IN_PROGRESS >/dev/null
+echo r > "$REPO_T/rq.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$RQ" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --requisito "R1 algo" --requisito "R2 otra cosa" >/dev/null
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado REVIEW --analisis "a" --validacion "v" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][TERM] campos"
+out=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado DONE --nota "intento" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "requisito(s) del plan sin completar" && ok "gate bloquea DONE con requisito pendiente" || bad "gate bloquea DONE con requisito pendiente"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --requisito-hecho "R1 algo" --requisito-hecho "R2 otra cosa" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$RQ][TERM] requisitos hechos"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$RQ" --estado DONE --nota "cierre ok" >/dev/null && ok "DONE tras completar requisitos" || bad "DONE tras completar requisitos"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R1 algo" && UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$RQ" | grep -q "\[x\] R2 otra cosa" && ok "requisitos marcados [x]" || bad "requisitos marcados [x]"
+
+
+
+# 27. V3: revisar --ok ejecuta la verificación real; si falla, OK rechazado
+echo "-- 27. V3: OK rechazado si verificación falla"
+V3=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test v3" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --estado IN_PROGRESS --agente_terminal "TERM (ejecutor)" >/dev/null
+echo v > "$REPO_T/v3.txt" && git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][WEB] trabajo"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" verify "$V3" >/dev/null 2>&1
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --estado REVIEW --verificar "false" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][TERM] campos"
+out=$(URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$V3" --ok "ok" 2>&1); rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "OK RECHAZADO" && ok "V3: OK rechazado si verificación falla" || bad "V3: OK rechazado si verificación falla"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" update "$V3" --verificar "true" >/dev/null
+git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][TERM] verificar true"
+URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$V3" --ok "ok real" >/dev/null 2>&1 && ok "V3: OK aceptado si verificación pasa" || bad "V3: OK aceptado si verificación pasa"
+UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$V3" | grep -q "AUTO-REVISIÓN" && ok "V3: auto-revisión marcada (revisor==ejecutor)" || bad "V3: auto-revisión marcada"
+
+
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"
 if [ "$FAIL" -gt 0 ]; then
