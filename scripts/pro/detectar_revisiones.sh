@@ -157,7 +157,10 @@ if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" 
     if git show-ref --verify --quiet refs/heads/mac-veredictos; then
         # Stash los cambios propios del detector (pendientes-fase.md) para
         # poder mergear con el árbol limpio; luego se restauran.
-        git stash push -u -m "detector-pendientes" docs/udo/pendientes-fase.md 2>/dev/null
+        # NOTA: si no hubo cambios locales, stash push falla silenciosamente
+        # (2>/dev/null) y stash pop no tiene nada que restaurar -> exit 1.
+        # Ese exit 1 marcaba el servicio como FAILED aun con trabajo OK.
+        git stash push -u -m "detector-pendientes" docs/udo/pendientes-fase.md >/dev/null 2>&1 || true
         # Saltar hooks: el rootfs es RO (.cache no escribible) y pytest falla
         # por PATH sin venv; el mensaje debe cumplir el formato conventional.
         if git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
@@ -175,6 +178,7 @@ if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" 
         else
             echo "AVISO: merge de mac-veredictos falló (revisar conflictos)"
         fi
-        git stash pop 2>/dev/null
+        # pop sin stash previo no es error: no hay nada que restaurar.
+        git stash pop >/dev/null 2>&1 || true
     fi
 fi
