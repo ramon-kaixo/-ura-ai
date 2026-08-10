@@ -81,3 +81,7 @@ mutants/
 __pycache__/
 *.pyc
 .agent_lock
+# --- UDO ---
+# Artefactos runtime de ura-udo/detector (no versionar)
+docs/udo/.lock
+docs/udo/pendientes-fase.md.estado
