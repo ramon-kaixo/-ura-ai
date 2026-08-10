@@ -280,6 +280,10 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - Crops enviados cada 10s a Qwen2-VL para clasificar
 - Dashboard web en `http://GX10_IP:9092`
 
+### Ollama Native (actualizado 2026-08-10, v0.32.7)
+- **OLLAMA_CONTEXT_LENGTH=65536** aplicado el 2026-08-10 (Ramón, sudo). Verificado: qwen3-coder:30b procesó prompt de 22K tokens junto con contexto 64K; RAM OK (78G libres de 121G). Anterior: 32768
+- Backup `ollama-models-qwen3-only` eliminado (sudo rm -rf, Ramón, 2026-08-10) — liberó espacio
+
 ### Modelos en Ollama (REALES)
 - `nomic-embed-text:latest` (embeddings) - 274 MB
 - `llama3.3:70b` (tareas complejas) - 42 GB
