@@ -20,8 +20,18 @@
 | TASK-20260809-001 | Implementación F4+F5 (prueba real) | 2026-08-09 | TERM | ✅ REVISADA | Ramón | 2026-08-09 | APROBADA |
 | TASK-20260810-003 | Prueba de círculo UDO (veredicto Web->Mac->ASUS) | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
 | TASK-20260810-004 | Fix bucle auto-merge Mac<->ASUS + ura-udo portable bash3.2 | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-002 | Mutmut+hypothesis v5 (barrido diario + delta hook) | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-004 | Brecha evidencia (suite completa + test_cli) | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-006 | Fix tests resiliencia (API pública) | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-008 | Limpieza restos OpenCode antiguo | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-011 | Cola de pendientes con gate de cierre de fase | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-012 | Auditoría de vacíos de verificación | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-013 | V2 checklist de requisitos + gate | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-014 | V3 revisar --ok con comprobación real | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260810-001 | Contexto 32K nativo ollama | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260810-002 | Detector revisiones 3 niveles + integración mac-veredictos | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
 
-**Lote actual**: 2 tareas pendientes de revisión independiente (cierre AUTO-REVISIÓN 2026-08-10, TERM). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
+**Lote actual**: 11 tareas pendientes de revisión independiente (cierre AUTO-REVISIÓN 2026-08-10, TERM). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
 
 ---
 
