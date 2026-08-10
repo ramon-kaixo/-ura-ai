@@ -74,7 +74,23 @@ class ReuseDetector:
         results.sort(key=lambda r: -r["score"])
         return results[:10]
 
-    def analyze_new_code(self, code: str, min_score: float = 0.4) -> list[dict]:
+    def analyze_new_code(
+        self,
+        code: str,
+        min_score: float = 0.4,
+        exclude_file: str = "",
+        max_comparisons: int = 0,
+    ) -> list[dict]:
+        """Analiza código nuevo contra el índice.
+
+        Args:
+            code: código fuente a analizar.
+            min_score: umbral de similitud.
+            exclude_file: ruta del archivo a excluir del índice (evita que un
+                archivo se detecte como duplicado de sí mismo).
+            max_comparisons: límite de comparaciones (0 = sin límite). Protege
+                contra O(N²) en repos grandes.
+        """
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as tmpf:
             tmp = Path(tmpf.name)
             tmpf.write(code)
@@ -86,11 +102,28 @@ class ReuseDetector:
         if not new_entries:
             return []
 
+        # Normaliza exclude a la misma forma relativa que guarda ast_index
+        # (relative_to(parent.parent)); fallback: ruta literal.
+        exclude = ""
+        if exclude_file:
+            p = Path(exclude_file)
+            try:
+                exclude = str(p.relative_to(p.parent.parent))
+            except (ValueError, OSError):
+                exclude = str(p)
         results = []
+        comparisons = 0
         for new_entry in new_entries:
             for existing in self._index:
                 if new_entry["type"] != existing["type"]:
                     continue
+                # Un archivo nunca es duplicado de sí mismo (ruta relativa
+                # guardada por ast_index: relative_to(parent.parent))
+                if exclude and existing.get("file") == exclude:
+                    continue
+                comparisons += 1
+                if max_comparisons and comparisons > max_comparisons:
+                    return results
                 result = compare(new_entry, existing)
                 if result["score"] >= min_score:
                     result["categoria_desc"] = {
