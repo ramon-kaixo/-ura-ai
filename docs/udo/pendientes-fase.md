@@ -22,7 +22,6 @@ test veredicto 02:27:49
 | TASK-20260810-001 | pendiente revisor | 2026-08-10 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
-| TASK-20260810-003 | lista para cerrar (OK revisor) | 2026-08-10 | LISTO | |
 
 #### PLANES/FASES SIN CERRAR
 | — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-10 | PENDIENTE | |
