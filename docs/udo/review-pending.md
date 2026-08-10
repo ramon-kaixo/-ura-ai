@@ -30,8 +30,9 @@
 | TASK-20260809-014 | V3 revisar --ok con comprobación real | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
 | TASK-20260810-001 | Contexto 32K nativo ollama | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
 | TASK-20260810-002 | Detector revisiones 3 niveles + integración mac-veredictos | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
+| TASK-20260809-005 | Brecha evidencia Web: cobertura real 78.4% (excepción autorizada Ramón) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
 
-**Lote actual**: 11 tareas pendientes de revisión independiente (cierre AUTO-REVISIÓN 2026-08-10, TERM). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
+**Lote actual**: 12 tareas pendientes de revisión independiente (11 TERM + 1 WEB, excepción autorizada 2026-08-11). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
 
 ---
 
