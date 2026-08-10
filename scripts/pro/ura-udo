@@ -14,7 +14,9 @@ LOCK_FILE="$UDO_ROOT/.lock"
 PENDIENTES_FILE="$UDO_ROOT/pendientes-fase.md"
 REPO="${UDO_REPO:-$HOME/URA/ura_ia_1972}"
 
-declare -A ESTADOS_VALIDOS=( [PLANNED]=1 [IN_PROGRESS]=1 [REVIEW]=1 [DONE]=1 [BLOCKED]=1 [CONFLICT]=1 [CANCELLED]=1 )
+# bash 3.2 (Mac) no soporta arrays asociativos — lista separada por espacios.
+# Compatible con bash 3.2 y 5.x (ASUS).
+ESTADOS_VALIDOS="PLANNED IN_PROGRESS REVIEW DONE BLOCKED CONFLICT CANCELLED"
 # Estados "activos": su reserva protege archivos frente a otras tareas
 # (usado por check y por el enforcement de reservas en reserve/update)
 
@@ -43,12 +45,32 @@ _uso() {
     echo "     | list [--estado] | status | verify TASK-ID | context TASK-ID"
 }
 
-# --- Escritura con flock (ADR-002) para concurrencia segura.
+# --- Escritura con lock (ADR-002) para concurrencia segura.
 # Espera hasta 30s (bloqueante) en lugar de fallar: Web y TERM compiten por
 # escribir; con espera se serializan sin error espurio (carrera controlada).
+# flock en Linux (ASUS); macOS no trae flock → shlock nativo (PID-based).
+_udolock_cleanup() {
+    [ "${UDO_LOCK:-}" = "1" ] && rm -f "$LOCK_FILE" 2>/dev/null || true
+}
+trap '_udolock_cleanup' EXIT
+
 _lock() {
-    exec 9>"$LOCK_FILE"
-    flock -w 30 9 || { echo "ERROR: lock no disponible en 30s (otro proceso ura-udo activo)" >&2; exit 1; }
+    if command -v flock >/dev/null 2>&1; then
+        exec 9>"$LOCK_FILE"
+        flock -w 30 9 || { echo "ERROR: lock no disponible en 30s (otro proceso ura-udo activo)" >&2; exit 1; }
+        return
+    fi
+    # macOS: shlock (lockfile con PID; reemplaza lock de procesos muertos).
+    local i=0
+    while ! shlock -f "$LOCK_FILE" -p $$ 2>/dev/null; do
+        i=$((i+1))
+        if [ "$i" -ge 30 ]; then
+            echo "ERROR: lock no disponible en 30s (otro proceso ura-udo activo)" >&2
+            exit 1
+        fi
+        sleep 1
+    done
+    UDO_LOCK=1
 }
 
 _ver_tarea() {
@@ -61,18 +83,37 @@ _estado() {
 }
 
 # --- _set_campo: actualiza o añade un campo. Los campos nuevos se insertan
-# antes de la sección `historial:` (estructura canónica estable) y se escapan
-# los caracteres sensibles a sed (@, &, \). Nunca al final del expediente.
+# antes de la sección `historial:` (estructura canónica estable). Implementado
+# con Python para ser portable (sed -i GNU/BSD difieren en Mac vs Linux).
 _set_campo() {
     local id="$1" clave="$2" valor="$3" archivo="$TASKS_DIR/$id.md"
-    valor=$(printf '%s' "$valor" | sed 's/\\/\\\\/g; s/@/\\@/g; s/&/\\&/g')
-    if grep -q "^$clave:" "$archivo"; then
-        sed -i "s@^$clave: .*@$clave: $valor@" "$archivo"
-    elif grep -q '^historial:' "$archivo"; then
-        sed -i "s@^historial:@$clave: $valor\nhistorial:@" "$archivo"
-    else
-        printf '%s: %s\n' "$clave" "$valor" >> "$archivo"
-    fi
+    python3 - "$archivo" "$clave" "$valor" <<'PYEOF'
+import sys
+
+archivo, clave, valor = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(archivo) as f:
+    lineas = f.read().splitlines(True)
+
+def salvar(nuevas):
+    with open(archivo, "w") as f:
+        f.writelines(nuevas)
+
+prefijo = clave + ":"
+for i, linea in enumerate(lineas):
+    if linea.startswith(prefijo):
+        lineas[i] = f"{clave}: {valor}\n"
+        salvar(lineas)
+        sys.exit(0)
+
+for i, linea in enumerate(lineas):
+    if linea.startswith("historial:"):
+        lineas.insert(i, f"{clave}: {valor}\n")
+        salvar(lineas)
+        sys.exit(0)
+
+lineas.append(f"{clave}: {valor}\n")
+salvar(lineas)
+PYEOF
 }
 
 # --- Reserva de una tarea como lista JSON-like: [ruta1, ruta2]
@@ -323,8 +364,8 @@ case "${1:-}" in
     file="$TASKS_DIR/$id.md"
     est_actual=$(_estado "$id")
     if [ -n "$estado" ]; then
-        if [ -z "${ESTADOS_VALIDOS[$estado]:-}" ]; then
-            echo "ERROR: estado inválido '$estado' (válidos: ${!ESTADOS_VALIDOS[*]})" >&2
+        if ! [[ " $ESTADOS_VALIDOS " == *" $estado "* ]]; then
+            echo "ERROR: estado inválido '$estado' (válidos: $ESTADOS_VALIDOS)" >&2
             exit 1
         fi
         # Regla de integridad (F2, CASO B): DONE solo desde REVIEW — sin
