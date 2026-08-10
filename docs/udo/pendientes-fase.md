@@ -7,3 +7,4 @@ o justificada por Ramón. Cada fila: TASK | pendiente | fecha | estado | resoluc
 | TASK | Pendiente | Fecha | Estado | Resolución |
 |------|-----------|-------|--------|------------|
 | TASK-20260809-011 | documentar circuito revision doble en AGENTS.md (sección UDO) | 2026-08-09 | RESUELTO | documentado en docs/udo/README.md §Circuito |
+test veredicto 02:27:49

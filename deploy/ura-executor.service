@@ -1,0 +1,17 @@
+[Unit]
+Description=URA Executor API — Recibe tareas de URA
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/ejecutor_api.py
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+Environment=OLLAMA_URL=http://localhost:11434
+Environment=EXECUTOR_HOST=0.0.0.0
+ExecStartPre=/home/ramon/URA/ura_ia_1972/scripts/restaurar.sh
+Restart=always
+RestartSec=10
+User=ramon
+
+[Install]
+WantedBy=multi-user.target
