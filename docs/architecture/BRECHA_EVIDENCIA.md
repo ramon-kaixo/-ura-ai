@@ -33,15 +33,28 @@
 
 ## 2. Cobertura real
 
-**NO VERIFICADA con medición completa**: la suite con `--cov` de los 3 módulos no terminó en el tiempo de ejecución disponible (timeout). Datos documentados previos (AGENTS.md):
+**MEDIDA EL 2026-08-10 (Web, TASK-005)** — suite completa con `--cov=motor --cov=core --cov=knowledge`:
+
+**Comando**: `.venv/bin/python -m pytest tests/unit/ tests/integration/ motor/tests/ -q --tb=no -m "not slow" --cov=motor --cov=core --cov=knowledge --cov-report=term`
+
+**Resultado**: **5929 passed, 13 failed, 38 skipped, 150 deselected** en 1761s (29:21) · **TOTAL: 31139 statements, 6726 missing → 78.4%**
 
 | Fecha | Fuente | Cobertura |
 |-------|--------|-----------|
 | Post-F29 F2 | AGENTS.md | CI 20.8% → **65.9%** |
 | PM v3.1 | PLAN_MAESTRO_CLOSEOUT | core/ 38.8% → **51.1%** |
-| 2026-08-09 | **sin medición completa** | **NO VERIFICADO** |
+| 2026-08-10 | **Medición real Web (TASK-005)** | **78.4%** (motor+core+knowledge) |
 
-**El "90%" que mencionaste NO tiene evidencia en el repo.** La única forma de verificarlo: ejecutar la suite completa con `--cov` (timeout >30 min) o por módulos en paralelo. Pendiente real.
+**13 fallos restantes** (todos clasificados):
+
+| Grupo | Nº | Causa |
+|-------|----|-------|
+| openrouter (5) + gemini (1) + vllm (5) | 11 | Sin API key / proveedores externos — ensucian suite (MEJORA: skipif si falta key, B3) |
+| test_imagen_extractor | 1 | Pendiente de clasificar |
+| test_f25_b6_fact_history | 1 | Benchmark add_1000 — test pesado (MEJORA: marcar slow, B4) |
+| test_detector | 1 | Integración hotspot router |
+
+**Veredicto**: la cobertura real medida es **78.4%** — el "90%" sigue sin evidencia, pero la cifra documentada sube de 65.9% (julio) a **78.4% (medida)**.
 
 ## 3. Tests retirados (F0 de la tarea mutmut)
 
@@ -68,11 +81,12 @@
 - "Revisado 100×100" → **recolectado 100%, ejecutado ~93%**, con 32 fallos reales documentados y clasificados
 
 **Pendientes para cerrar del todo**:
-1. Arreglar los ~7 tests de resiliencia con API privada rota (tarea dedicada)
+1. ~~Arreglar los ~7 tests de resiliencia con API privada rota~~ **RESUELTO (TASK-006, 5/5)** 
 2. Investigar la dependencia de orden (fixtures de proveedores)
-3. Medir cobertura completa (timeout >30 min, o por módulos)
-4. Añadir skips condicionales a tests que requieren API keys
+3. ~~Medir cobertura completa~~ **HECHO (TASK-005 Web: 78.4%)**
+4. Añadir skips condicionales a tests que requieren API keys (11 fallos actuales)
+5. Clasificar test_imagen_extractor (1 fallo sin clasificar)
 
 ---
 
-*Informe por TERM (TASK-004). Datos: suite completa real (5:06), no estimaciones. Web: TASK-005 pendiente de sesión.*
+*Informe por TERM (TASK-004) + medición real cobertura por Web (TASK-005, 2026-08-10). Datos: suite completa real (29:21), no estimaciones.*
