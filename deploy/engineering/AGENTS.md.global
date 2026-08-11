@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.6 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.7 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.6)
+# Metodología Universal de Ingeniería (Engineering Process v1.7)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -121,6 +121,12 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 - **Progreso**: al final de cada turno de fondo, registra en `docs/udo/hallazgos-fondo.md` qué carpetas/módulos se han revisado (sección `## Progreso`), para no repetir recorridos en turnos sucesivos. Cuando el código cambie (commits nuevos), se puede re-revisar lo afectado.
 - Los hallazgos de fondo NO requieren la estructura de reporte de la v1.2 (son inspección, no trabajo completado), pero toda ruta:línea citada debe existir de verdad (verificable con `ls`/`grep`).
 
+**Propuesta de plan para mejoras (v1.7) — OBLIGATORIO para todo hallazgo que requiera acción**:
+1. **Investigar antes de proponer**: si un hallazgo sugiere una mejora o corrección, investiga primero (lee el código real, busca usos, comprueba el impacto). No propongas un plan sin haberlo verificado.
+2. **Todo hallazgo accionable se registra con estado `propuesto (con plan)`** y un plan mínimo que responda a: QUÉ se propone hacer · POR QUÉ (problema que resuelve) · IMPACTO (qué módulos/archivos se tocan y qué puede afectar) · CÓMO SE VERIFICARÁ (comando/test que lo demuestre) · RIESGO/REVERSIBILIDAD.
+3. **El plan se presenta al humano** (resumido en el mensaje, detalle en el registro). El humano aprueba/descarta/ajusta. Si se aprueba, se convierte en TASK UDO formal con su reserva; si no hay respuesta, queda `propuesto` pendiente de decisión (NO se ejecuta por cuenta propia).
+4. **Un hallazgo se marca `corregido` solo cuando la corrección está hecha y verificada** (con commit y evidencia), no antes.
+
 **Análisis de impacto ANTES de actuar (v1.4)**:
 1. **No romper nada**: cualquier acción que no sea read-only exige análisis previo (ver "Análisis del plan y veredicto").
 2. **Antes de tocar un archivo**, pregúntate: ¿qué otros módulos lo importan/usan? ¿qué efectos colaterales tiene cambiarlo? ¿qué consecuencias puede haber? ¿es reversible? Registra ese análisis en el plan/reporte.
@@ -132,6 +138,7 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 - No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
 - Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
 
+<!-- v1.7 — 2026-08-11 — v1.6 + propuesta de plan obligatoria para todo hallazgo accionable del modo fondo (investigar → QUÉ/POR QUÉ/IMPACTO/VERIFICACIÓN/RIESGO → presentar al humano → TASK UDO si se aprueba; estado 'propuesto' hasta decisión) (TASK-20260811-009: petición RAMON sobre comunicación de mejoras) -->
 <!-- v1.6 — 2026-08-11 — v1.5 + lecciones operativas de sesión (TASK-20260811-008: mount namespaces del bash tool pueden diferir del host; instalación config global en ASUS requiere sudo del humano; workaround de commits en rootfs RO) -->
 <!-- v1.5 — 2026-08-11 — v1.4 + registro persistente de hallazgos (docs/udo/hallazgos-fondo.md), progreso por carpetas, límite por turno, comando ura-udo list REVIEW, gravedad CRÍTICA con notificación (TASK-20260811-007: auto-revisión del prompt global) -->
 <!-- v1.4 — 2026-08-11 — v1.3 + MODO REVISIÓN AUTÓNOMA DE FONDO (TASK-20260811-006: TERM debe revisar todo el código URA en modo fondo read-only cuando no hay trabajo; prioridades usuario > tarea > revisión > fondo; análisis de impacto antes de tocar nada) -->
