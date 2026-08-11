@@ -54,26 +54,11 @@ class LLMRouter:
         self._fallback_enabled = fallback_enabled
         self._fallback_max_providers = fallback_max_providers
         self._health_cache_ttl = health_cache_ttl
-        self._profiling_enabled = profiling_enabled
-        if profiling_enabled:
-            from motor.core.llm.profiler import LLMProfiler
-
-            self._profiler = LLMProfiler(enabled=True)
-        else:
-            self._profiler = None
+        self._profile_enabled = profiling_enabled
+        self._init_profiler(profiling_enabled)
         self._hotspot_threshold_ms = hotspot_threshold_ms
-        if hotspot_threshold_ms > 0:
-            from motor.core.llm.detector import HotspotDetector
-
-            self._detector = HotspotDetector(threshold_ms=hotspot_threshold_ms)
-        else:
-            self._detector = None
-        if baseline_enabled:
-            from motor.core.llm.baseline import PerformanceBaseline
-
-            self._baseline = PerformanceBaseline()
-        else:
-            self._baseline = None
+        self._init_detector(hotspot_threshold_ms)
+        self._init_baseline(baseline_enabled)
         if monitor_enabled:
             from motor.core.llm.monitor import PerformanceMonitor
 
@@ -87,6 +72,30 @@ class LLMRouter:
         self._circuit_breakers: dict[str, Any] = {}
         self._health_cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
         self._health_lock = threading.Lock()
+
+    def _init_profiler(self, profiling_enabled: bool) -> None:
+        if profiling_enabled:
+            from motor.core.llm.profiler import LLMProfiler
+
+            self._profiler = LLMProfiler(enabled=True)
+        else:
+            self._profiler = None
+
+    def _init_detector(self, hotspot_threshold_ms: float) -> None:
+        if hotspot_threshold_ms > 0:
+            from motor.core.llm.detector import HotspotDetector
+
+            self._detector = HotspotDetector(threshold_ms=hotspot_threshold_ms)
+        else:
+            self._detector = None
+
+    def _init_baseline(self, baseline_enabled: bool) -> None:
+        if baseline_enabled:
+            from motor.core.llm.baseline import PerformanceBaseline
+
+            self._baseline = PerformanceBaseline()
+        else:
+            self._baseline = None
 
     @property
     def registry(self) -> ProviderRegistry:

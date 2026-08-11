@@ -140,46 +140,15 @@ class CitationEngine:
             citations_per_doc: dict[str, int] = {}
 
             for sent_idx, origin in enumerate(summary.sentence_origins):
-                url = origin["url"]
-                doc = doc_map.get(url)
-                if doc is None:
-                    continue
-
-                citations_per_doc[url] = citations_per_doc.get(url, 0) + 1
-                doc_index = _find_doc_index(documents, url)
-
-                canonical_url = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
-                doc_id = get_document_id(doc.url, canonical_url)
-                doc_hash = _content_hash(doc.text or "")
-                sent_pos = origin["position"]
-                frag = summary.sentences[sent_idx]
-
-                eid = make_evidence_id(doc_id, sent_pos, doc_hash)
-
-                if eid not in evidence_map:
-                    evidence_map[eid] = Evidence(
-                        evidence_id=eid,
-                        document_url=url,
-                        canonical_url=canonical_url,
-                        title=origin.get("title", ""),
-                        document_index=doc_index,
-                        sentence_position=sent_pos,
-                        fragment=frag,
-                        content_hash=doc_hash,
-                        document_id=doc_id,
-                        fetched_at=doc.extracted_at,
-                        quality_score=doc.quality_score,
-                    )
-
-                citations.append(
-                    CitationRecord(
-                        evidence_id=eid,
-                        document_url=url,
-                        title=origin.get("title", ""),
-                        fragment=frag,
-                        citation_index=sent_idx,
-                        document_index=doc_index,
-                    ),
+                self._register_sentence_origin(
+                    sent_idx,
+                    origin,
+                    summary,
+                    documents,
+                    doc_map,
+                    evidence_map,
+                    citations,
+                    citations_per_doc,
                 )
 
             report = {
@@ -195,6 +164,59 @@ class CitationEngine:
                 evidence=list(evidence_map.values()),
                 traceability_report=report,
             )
+
+    def _register_sentence_origin(
+        self,
+        sent_idx: int,
+        origin: dict,
+        summary: Summary,
+        documents: list[WebDocument],
+        doc_map: dict[str, WebDocument],
+        evidence_map: dict[str, Evidence],
+        citations: list[CitationRecord],
+        citations_per_doc: dict[str, int],
+    ) -> None:
+        url = origin["url"]
+        doc = doc_map.get(url)
+        if doc is None:
+            return
+
+        citations_per_doc[url] = citations_per_doc.get(url, 0) + 1
+        doc_index = _find_doc_index(documents, url)
+
+        canonical_url = doc.metadata.get("canonical_url") if isinstance(doc.metadata, dict) else None
+        doc_id = get_document_id(doc.url, canonical_url)
+        doc_hash = _content_hash(doc.text or "")
+        sent_pos = origin["position"]
+        frag = summary.sentences[sent_idx]
+
+        eid = make_evidence_id(doc_id, sent_pos, doc_hash)
+
+        if eid not in evidence_map:
+            evidence_map[eid] = Evidence(
+                evidence_id=eid,
+                document_url=url,
+                canonical_url=canonical_url,
+                title=origin.get("title", ""),
+                document_index=doc_index,
+                sentence_position=sent_pos,
+                fragment=frag,
+                content_hash=doc_hash,
+                document_id=doc_id,
+                fetched_at=doc.extracted_at,
+                quality_score=doc.quality_score,
+            )
+
+        citations.append(
+            CitationRecord(
+                evidence_id=eid,
+                document_url=url,
+                title=origin.get("title", ""),
+                fragment=frag,
+                citation_index=sent_idx,
+                document_index=doc_index,
+            ),
+        )
 
 
 def _find_doc_index(documents: list[WebDocument], url: str) -> int:

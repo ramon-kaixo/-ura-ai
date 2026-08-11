@@ -176,45 +176,15 @@ class HttpCrawler(Crawler):
                 headers={"User-Agent": self._user_agent},
             )
 
-            # HEAD request primero para validar
-            head = client.head(url)
-            doc.status_code = head.status_code
-            doc.headers = dict(head.headers)
-            doc.content_type = head.headers.get("content-type", "").split(";")[0].strip()
-            doc.charset = _extract_charset(head.headers.get("content-type", ""))
-
-            # Validar Content-Type
-            ct = doc.content_type
-            if self._allowed_content_types and ct not in self._allowed_content_types:
-                doc.error = f"Content-Type '{ct}' not in allowed list"
+            doc = self._request_head(client, url, doc)
+            if doc.error:
                 doc.elapsed_ms = (time.monotonic() - t0) * 1000
                 return doc
 
-            # Validar Content-Length
-            cl = head.headers.get("content-length")
-            if cl:
-                try:
-                    if int(cl) > self._max_size:
-                        doc.error = f"Content-Length {cl} exceeds max_size {self._max_size}"
-                        doc.elapsed_ms = (time.monotonic() - t0) * 1000
-                        return doc
-                except ValueError:
-                    pass
-
-            # GET request para contenido
-            r = client.get(url)
-            doc.final_url = str(r.url)
-            doc.status_code = r.status_code
-            doc.headers = dict(r.headers)
-            doc.content_type = r.headers.get("content-type", "").split(";")[0].strip()
-            doc.charset = _extract_charset(r.headers.get("content-type", ""))
-            doc.content = r.content
-            doc.content_length = len(r.content)
-
-            if len(r.content) > self._max_size:
-                doc.error = f"Response size {len(r.content)} exceeds max_size {self._max_size}"
-                doc.content = b""
-                doc.content_length = 0
+            self._request_get(client, url, doc)
+            if doc.error:
+                doc.elapsed_ms = (time.monotonic() - t0) * 1000
+                return doc
 
         except httpx.TimeoutException:
             doc.error = "timeout"
@@ -230,6 +200,47 @@ class HttpCrawler(Crawler):
 
         doc.elapsed_ms = (time.monotonic() - t0) * 1000
         return doc
+
+    def _request_head(self, client: httpx.Client, url: str, doc: CrawledDocument) -> CrawledDocument:
+        # HEAD request primero para validar
+        head = client.head(url)
+        doc.status_code = head.status_code
+        doc.headers = dict(head.headers)
+        doc.content_type = head.headers.get("content-type", "").split(";")[0].strip()
+        doc.charset = _extract_charset(head.headers.get("content-type", ""))
+
+        # Validar Content-Type
+        ct = doc.content_type
+        if self._allowed_content_types and ct not in self._allowed_content_types:
+            doc.error = f"Content-Type '{ct}' not in allowed list"
+            return doc
+
+        # Validar Content-Length
+        cl = head.headers.get("content-length")
+        if cl:
+            try:
+                if int(cl) > self._max_size:
+                    doc.error = f"Content-Length {cl} exceeds max_size {self._max_size}"
+                    return doc
+            except ValueError:
+                pass
+        return doc
+
+    def _request_get(self, client: httpx.Client, url: str, doc: CrawledDocument) -> None:
+        # GET request para contenido
+        r = client.get(url)
+        doc.final_url = str(r.url)
+        doc.status_code = r.status_code
+        doc.headers = dict(r.headers)
+        doc.content_type = r.headers.get("content-type", "").split(";")[0].strip()
+        doc.charset = _extract_charset(r.headers.get("content-type", ""))
+        doc.content = r.content
+        doc.content_length = len(r.content)
+
+        if len(r.content) > self._max_size:
+            doc.error = f"Response size {len(r.content)} exceeds max_size {self._max_size}"
+            doc.content = b""
+            doc.content_length = 0
 
 
 def _extract_charset(content_type: str) -> str:

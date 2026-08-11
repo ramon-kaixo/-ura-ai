@@ -88,52 +88,19 @@ class SubprocessExecutor(BaseExecutor):
             ok = p.returncode == 0
             if not ok:
                 log.warning("Comando falló (exit=%d): %s", p.returncode, " ".join(str(c) for c in cmd))
-            return ProcessResult(
-                ok=ok,
-                cmd=cmd,
-                returncode=p.returncode,
-                stdout=p.stdout,
-                stderr=p.stderr,
-                duration_ms=elapsed,
-                error=p.stderr[:500] if p.stderr else "",
-            )
+            return self._result_success(cmd, p.returncode, p.stdout, p.stderr, elapsed, ok)
         except subprocess.TimeoutExpired:
             elapsed = (time.monotonic() - start) * 1000
             log.warning("Timeout (%ds) ejecutando: %s", timeout, " ".join(str(c) for c in cmd))
-            return ProcessResult(
-                ok=False,
-                cmd=cmd,
-                returncode=-1,
-                stdout="",
-                stderr=f"Timeout after {timeout}s",
-                duration_ms=elapsed,
-                timed_out=True,
-                error=f"Timeout after {timeout}s",
-            )
+            return self._result_failure(cmd, elapsed, f"Timeout after {timeout}s", timed_out=True)
         except FileNotFoundError:
             elapsed = (time.monotonic() - start) * 1000
             log.exception("Comando no encontrado: %s", cmd[0] if cmd else "?")
-            return ProcessResult(
-                ok=False,
-                cmd=cmd,
-                returncode=-1,
-                stdout="",
-                stderr=f"Command not found: {cmd[0] if cmd else '?'}",
-                duration_ms=elapsed,
-                error=f"Command not found: {cmd[0] if cmd else '?'}",
-            )
+            return self._result_failure(cmd, elapsed, f"Command not found: {cmd[0] if cmd else '?'}")
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
             log.exception("Error ejecutando: %s", " ".join(str(c) for c in cmd))
-            return ProcessResult(
-                ok=False,
-                cmd=cmd,
-                returncode=-1,
-                stdout="",
-                stderr=str(e),
-                duration_ms=elapsed,
-                error=str(e),
-            )
+            return self._result_failure(cmd, elapsed, str(e))
 
     async def arun(
         self,
@@ -162,51 +129,56 @@ class SubprocessExecutor(BaseExecutor):
                 await proc.wait()
                 elapsed = (time.monotonic() - start) * 1000
                 log.warning("(async) Timeout (%ds) ejecutando: %s", timeout, " ".join(str(c) for c in cmd))
-                return ProcessResult(
-                    ok=False,
-                    cmd=cmd,
-                    returncode=-1,
-                    stdout="",
-                    stderr=f"Timeout after {timeout}s",
-                    duration_ms=elapsed,
-                    timed_out=True,
-                    error=f"Timeout after {timeout}s",
-                )
+                return self._result_failure(cmd, elapsed, f"Timeout after {timeout}s", timed_out=True)
             elapsed = (time.monotonic() - start) * 1000
             stdout = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
             stderr = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
             ok = proc.returncode == 0
             if not ok:
                 log.warning("(async) Comando falló (exit=%d): %s", proc.returncode, " ".join(str(c) for c in cmd))
-            return ProcessResult(
-                ok=ok,
-                cmd=cmd,
-                returncode=proc.returncode or -1,
-                stdout=stdout,
-                stderr=stderr,
-                duration_ms=elapsed,
-                error=stderr[:500] if stderr else "",
-            )
+            return self._result_success(cmd, proc.returncode or -1, stdout, stderr, elapsed, ok)
         except FileNotFoundError:
             elapsed = (time.monotonic() - start) * 1000
-            return ProcessResult(
-                ok=False,
-                cmd=cmd,
-                returncode=-1,
-                stdout="",
-                stderr=f"Command not found: {cmd[0] if cmd else '?'}",
-                duration_ms=elapsed,
-                error=f"Command not found: {cmd[0] if cmd else '?'}",
-            )
+            return self._result_failure(cmd, elapsed, f"Command not found: {cmd[0] if cmd else '?'}")
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
             log.exception("(async) Error ejecutando: %s", " ".join(str(c) for c in cmd))
-            return ProcessResult(
-                ok=False,
-                cmd=cmd,
-                returncode=-1,
-                stdout="",
-                stderr=str(e),
-                duration_ms=elapsed,
-                error=str(e),
-            )
+            return self._result_failure(cmd, elapsed, str(e))
+
+    def _result_success(
+        self,
+        cmd: Sequence[str],
+        returncode: int,
+        stdout: str,
+        stderr: str,
+        elapsed: float,
+        ok: bool,
+    ) -> ProcessResult:
+        return ProcessResult(
+            ok=ok,
+            cmd=cmd,
+            returncode=returncode,
+            stdout=stdout,
+            stderr=stderr,
+            duration_ms=elapsed,
+            error=stderr[:500] if stderr else "",
+        )
+
+    def _result_failure(
+        self,
+        cmd: Sequence[str],
+        elapsed: float,
+        error_msg: str,
+        *,
+        timed_out: bool = False,
+    ) -> ProcessResult:
+        return ProcessResult(
+            ok=False,
+            cmd=cmd,
+            returncode=-1,
+            stdout="",
+            stderr=error_msg,
+            duration_ms=elapsed,
+            timed_out=timed_out,
+            error=error_msg,
+        )
