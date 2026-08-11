@@ -273,10 +273,10 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - **Rootfs montado RO**: ✅ **RESUELTO (2026-07-19)**. Causa: falta `rw` en fstab. Fijado: `rw,errors=remount-ro`. `systemctl daemon-reload` aplicado. Próximo reinicio arrancará RW automáticamente.
 - **Zombies**: 0 (limpiados durante reparación)
 - **F14-F01**: Flag `no new privileges` impide usar sudo y restart systemd services sin polkit interactivo.
-- **F14-F02**: `MultiAgentRuntime.cancel()` requiere `workflow_id` obligatorio — API inconsistente.
-- **F14-F03**: `EpisodeStore` no recrea BD SQLite automáticamente tras corrupción (R06 data loss).
+- **F14-F02**: ✅ **RESUELTO** — el runtime actual (`motor/intelligence/agents/runtime.py`) no expone `cancel(workflow_id)` público; usa checks internos de cancelación (verificado 2026-08-12).
+- **F14-F03**: ✅ **RESUELTO** — `EpisodeStore._init_db()` (`motor/intelligence/memory/episodic.py:111-138`) captura `DatabaseError` y recrea la BD automáticamente (verificado 2026-08-12).
 - **F14-F04**: Qdrant recovery time ~30.2s excede umbral de 30s en R01/R09 — borderline.
-- **F14-F05**: `HybridRetriever` retorna éxito sin Qdrant disponible — posible fallback a memoria no documentado.
+- **F14-F05**: ⚠️ Fallback funciona y se loguea; docstring del degradado añadido (2026-08-12, `motor/intelligence/retrieval/hybrid.py:search`).
 
 ## Roadmap (Fases 10–29)
 

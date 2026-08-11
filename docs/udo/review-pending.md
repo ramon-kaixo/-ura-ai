@@ -60,3 +60,32 @@ Las tareas WEB (005, 001, 002, 003, 004) fueron ejecutadas y verificadas por WEB
 ---
 
 *Este archivo es un registro de proceso (Git), no una BD: cada fila enlaza al expediente UDO correspondiente en `docs/udo/tasks/`.*
+
+## Lote 2026-08-11/12 (sesión bucle TERM + modo fondo) — AUTO-REVISIÓN
+
+| TASK | Descripción | Fecha cierre | Ejecutor | Estado revisión | Revisor | Fecha revisión | Veredicto |
+|------|-------------|--------------|----------|-----------------|---------|----------------|-----------|
+| TASK-20260811-005 | AGENTS.md.global v1.3 ANTI-BUCLE | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-006 | AGENTS.md.global v1.4 MODO FONDO | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-007 | AGENTS.md.global v1.5 registro hallazgos | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-008 | AGENTS.md.global v1.6 lecciones operativas | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-009 | AGENTS.md.global v1.7 plan en hallazgos | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-010 | Despertador real modo fondo + v1.8 | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-011 | Carencias C2+C3+C5 (cierre --force auditado) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260812-001 | Refuerzo despertador PROHIBIDO ESCRITURA | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260812-002 | Protección técnica agente revisor-fondo | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260812-003 | 4 pasos: fondo avanza, ciclo hallazgos, AGENTS.md 543l, gate H1 | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260812-004 | Fallback router (hallazgo aprobado) | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
+
+**Evidencia de trazabilidad (verificación Git, 2026-08-12)**:
+- TASK-005: `50a9a784` + `6b67ec96` — AGENTS.md.global v1.3 con sección ANTI-BUCLE (6 reglas).
+- TASK-006: `5d576fbb` + `1d060d70` — v1.4 MODO REVISIÓN; opencode.json Mac contexto 64K (backup .bak-20260811-v64k).
+- TASK-007: `effcf106` + `65958ad6` — v1.5 registro persistente; `docs/udo/hallazgos-fondo.md` creado.
+- TASK-008: `8ed64c14` + `124ad42a` — v1.6 lecciones (namespaces, sudo humano, commits RO).
+- TASK-009: `4cdcaa50` + `be5d995e` — v1.7 plan obligatorio en hallazgos accionables.
+- TASK-010: `3d84cef0` — despertador-fondo.sh + com.ura.fondo-wake.plist; verificado TERM revisó core/mochila/ (2 hallazgos).
+- TASK-011: `b0cacc10` — ENGINEERING_PROCESS.md v1.8 (§15-17), com.ura.opencode-term.plist KeepAlive; cierre con `--force` auditado por falso positivo gate H1 (commit ajeno del detector cfdfa411 entre base y HEAD).
+- TASK-001 (20260812): `ede049b3` — mensaje MODO FONDO con PROHIBIDO ESCRITURA.
+- TASK-002: `7fac4cac` — agente revisor-fondo (write/edit/patch=False) + despertador --agent; 2 runs verificados con 0 escrituras.
+- TASK-003: `863bea31` (AGENTS.md 717→543), `4cfc95c9` (gate H1 fix), `c2a0a6ef` (mapa carpetas) — 4 pasos verificados.
+- TASK-004: `07257c7a` — fallback router + 3 tests (9/9 pasan, ruff limpio).
