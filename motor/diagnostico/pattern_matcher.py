@@ -5,7 +5,20 @@ log = logging.getLogger("ura.diagnostico.pattern")
 
 def buscar_patrones(scan, qdrant, config) -> tuple:
     """Busca patrones de incidente en el resultado del escaneo."""
-    incidentes = []
+    incidentes = (
+        _incidentes_servicios(scan)
+        + _incidentes_recursos(scan)
+        + _incidentes_red(scan)
+        + _incidentes_hardware(scan)
+        + _incidentes_varios(scan)
+    )
+    costes = _calcular_costes_historicos(incidentes)
+    return incidentes, costes
+
+
+def _incidentes_servicios(scan) -> list:
+    """Incidentes por servicios systemd inactivos o fallidos."""
+    incidentes: list = []
     for svc, estado in scan.servicios.items():
         if estado in ("inactive", "failed"):
             incidentes.append(
@@ -16,6 +29,12 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
                     "ts": scan.timestamp,
                 },
             )
+    return incidentes
+
+
+def _incidentes_recursos(scan) -> list:
+    """Incidentes por presión de recursos (RAM, disco, CPU)."""
+    incidentes: list = []
     if scan.recursos.get("ram_pct", 0) > 90:
         incidentes.append(
             {
@@ -45,6 +64,36 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
                 "ts": scan.timestamp,
             },
         )
+    return incidentes
+
+
+def _incidentes_red(scan) -> list:
+    """Incidentes por fallos de topología de red."""
+    incidentes: list = []
+    if not scan.red.get("internet", True):
+        incidentes.append(
+            {
+                "tipo": "NetworkTopologyFailure",
+                "subtipo": "sin_internet",
+                "resumen": "Sin salida a internet",
+                "ts": scan.timestamp,
+            },
+        )
+    if not scan.red.get("exit_node_online", True):
+        incidentes.append(
+            {
+                "tipo": "NetworkTopologyFailure",
+                "subtipo": "exit_node_offline",
+                "resumen": "Exit node caído",
+                "ts": scan.timestamp,
+            },
+        )
+    return incidentes
+
+
+def _incidentes_hardware(scan) -> list:
+    """Incidentes por fallos de hardware (dmesg, journal, health)."""
+    incidentes: list = []
     dmesg = scan.hw_health.get("dmesg_errors", [])
     if dmesg:
         incidentes.append(
@@ -65,24 +114,22 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
                 "ts": scan.timestamp,
             },
         )
-    if not scan.red.get("internet", True):
+    if not scan.hw_health.get("ok", True):
         incidentes.append(
             {
-                "tipo": "NetworkTopologyFailure",
-                "subtipo": "sin_internet",
-                "resumen": "Sin salida a internet",
+                "tipo": "HardwareFailure",
+                "subtipo": "vm" if scan.hw_health.get("tipo") == "vm" else "fisico",
+                "resumen": f"Issues HW: {scan.hw_health.get('issues', [])}",
                 "ts": scan.timestamp,
+                "hw_issues": scan.hw_health.get("issues", []),
             },
         )
-    if not scan.red.get("exit_node_online", True):
-        incidentes.append(
-            {
-                "tipo": "NetworkTopologyFailure",
-                "subtipo": "exit_node_offline",
-                "resumen": "Exit node caído",
-                "ts": scan.timestamp,
-            },
-        )
+    return incidentes
+
+
+def _incidentes_varios(scan) -> list:
+    """Incidentes variados: contenedores, duplicados, flapping, diffs."""
+    incidentes: list = []
     if scan.contenedores_ko:
         incidentes.append(
             {
@@ -99,16 +146,6 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
                 "subtipo": "procesos_duplicados",
                 "resumen": f"Procesos duplicados: {scan.duplicados}",
                 "ts": scan.timestamp,
-            },
-        )
-    if not scan.hw_health.get("ok", True):
-        incidentes.append(
-            {
-                "tipo": "HardwareFailure",
-                "subtipo": "vm" if scan.hw_health.get("tipo") == "vm" else "fisico",
-                "resumen": f"Issues HW: {scan.hw_health.get('issues', [])}",
-                "ts": scan.timestamp,
-                "hw_issues": scan.hw_health.get("issues", []),
             },
         )
     if scan.flapping:
@@ -130,8 +167,7 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
                 "anomalias": scan.anomalias,
             },
         )
-    costes = _calcular_costes_historicos(incidentes)
-    return incidentes, costes
+    return incidentes
 
 
 def _calcular_costes_historicos(incidentes: list) -> dict:
