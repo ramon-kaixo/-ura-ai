@@ -152,6 +152,37 @@ class CompilerRunRepository:
     """op_compiler_runs + op_compile_errors writes."""
 
     @staticmethod
+    def _insert_errors(
+        conn: sqlite3.Connection,
+        run_id: int,
+        errors: list[CompileError],
+        warnings: list[CompileError],
+    ) -> None:
+        for ce in errors + warnings:
+            conn.execute(
+                "INSERT INTO op_compile_errors (run_id, error_code, document, stage, severity, "
+                "message, line, column) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    run_id,
+                    ce.code,
+                    ce.document,
+                    ce.stage,
+                    "ERROR" if ce in errors else "WARN",
+                    ce.message,
+                    ce.line,
+                    ce.column,
+                ),
+            )
+
+        # Purge old errors beyond retention limit
+        if COMPILE_ERRORS_RETENTION_RUNS > 0:
+            conn.execute(
+                "DELETE FROM op_compile_errors WHERE run_id NOT IN "
+                "(SELECT run_id FROM op_compiler_runs ORDER BY completed_at DESC LIMIT ?)",
+                (COMPILE_ERRORS_RETENTION_RUNS,),
+            )
+
+    @staticmethod
     def create_run(
         conn: sqlite3.Connection,
         ctx: CompileContext,
@@ -190,30 +221,7 @@ class CompilerRunRepository:
             ),
         )
         run_id = conn.execute("SELECT last_insert_rowid() as rid").fetchone()["rid"]
-
-        for ce in errors + warnings:
-            conn.execute(
-                "INSERT INTO op_compile_errors (run_id, error_code, document, stage, severity, "
-                "message, line, column) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    run_id,
-                    ce.code,
-                    ce.document,
-                    ce.stage,
-                    "ERROR" if ce in errors else "WARN",
-                    ce.message,
-                    ce.line,
-                    ce.column,
-                ),
-            )
-
-        # Purge old errors beyond retention limit
-        if COMPILE_ERRORS_RETENTION_RUNS > 0:
-            conn.execute(
-                "DELETE FROM op_compile_errors WHERE run_id NOT IN "
-                "(SELECT run_id FROM op_compiler_runs ORDER BY completed_at DESC LIMIT ?)",
-                (COMPILE_ERRORS_RETENTION_RUNS,),
-            )
+        CompilerRunRepository._insert_errors(conn, run_id, errors, warnings)
         return run_id
 
 
@@ -290,6 +298,31 @@ def init_db(db_path: Path, schema_path: Path) -> None:
     conn.close()
 
 
+def _build_result(
+    started_at: float,
+    run_id: int,
+    changed: int,
+    total: int,
+    ctx: CompileContext,
+    errors: list[CompileError],
+    warnings: list[CompileError],
+) -> CompileResult:
+    duration_ms = (time.monotonic() - started_at) * 1000.0
+    return CompileResult(
+        success=len(errors) == 0,
+        graph_version=run_id,
+        source_commit=ctx.metadata.source_commit,
+        compiler_version=ctx.options.compiler_version,
+        documents_total=total,
+        documents_changed=changed,
+        run_id=run_id,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+        duration_ms=duration_ms,
+        stage="completed",
+    )
+
+
 def apply_compile(
     db_path: Path,
     objects: list[KnowledgeObject],
@@ -339,20 +372,7 @@ def apply_compile(
     finally:
         conn.close()
 
-    duration_ms = (time.monotonic() - started_at) * 1000.0
-    return CompileResult(
-        success=len(errors) == 0,
-        graph_version=run_id,
-        source_commit=ctx.metadata.source_commit,
-        compiler_version=ctx.options.compiler_version,
-        documents_total=len(objects),
-        documents_changed=changed,
-        run_id=run_id,
-        errors=tuple(errors),
-        warnings=tuple(warnings),
-        duration_ms=duration_ms,
-        stage="completed",
-    )
+    return _build_result(started_at, run_id, changed, len(objects), ctx, errors, warnings)
 
 
 def get_compile_errors(db_path: Path, limit: int = 100) -> list[dict[str, Any]]:
