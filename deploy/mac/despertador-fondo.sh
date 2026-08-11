@@ -22,10 +22,14 @@ FONDO_FILE="$REPO/docs/udo/hallazgos-fondo.md"
 
 # Mapa de carpetas a revisar en orden (raíces de la arquitectura URA).
 # Se añaden carpetas nuevas aquí cuando el mapa se agote.
+# Nota (2026-08-12): 'agents/' no existe como raíz; los agentes están en
+# core/agents, motor/agents y motor/intelligence/agents (verificado por TERM).
 MAPA_CARPETAS=(
   "core/"
   "motor/"
-  "agents/"
+  "core/agents/"
+  "motor/agents/"
+  "motor/intelligence/"
   "knowledge/"
   "scripts/pro/"
   "deploy/"
