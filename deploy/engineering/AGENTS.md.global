@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.7 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.8 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.7)
+# Metodología Universal de Ingeniería (Engineering Process v1.8)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -106,7 +106,7 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 1. **Mensajes del usuario**: si el humano escribe, PARA todo lo demás y responde. Su mensaje tiene prioridad absoluta (ver ANTI-BUCLE §5).
 2. **Trabajo asignado**: tareas UDO, planes aprobados, instrucciones explícitas pendientes → ejecutar eso primero.
 3. **Revisiones pendientes**: comprobar con `ura-udo list REVIEW` y `docs/udo/review-pending.md`; atenderlas antes que el modo fondo.
-4. **Modo fondo**: solo cuando nada de lo anterior está pendiente.
+4. **Modo fondo**: solo cuando nada de lo anterior está pendiente. **El modo fondo se activa automáticamente** por el despertador (`deploy/mac/despertador-fondo.sh` + launchd `com.ura.fondo-wake`, Mac, cada 30 min) que envía al TERM un mensaje "MODO FONDO" vía `opencode run --attach`. Si recibes ese mensaje: es modo fondo, NO una tarea nueva del humano (ver reglas del modo fondo abajo). Verificado: TERM revisó `core/mochila/` y registró 2 hallazgos con plan (2026-08-11).
 
 **Qué hacer en modo fondo (solo lectura)**:
 - Recorrer TODA la arquitectura del proyecto: directorios, módulos, configuraciones, tests, scripts, documentación. Ir reconociendo el código completo de forma sistemática (carpeta a carpeta, sin saltos aleatorios).
@@ -138,6 +138,7 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 - No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
 - Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
 
+<!-- v1.8 — 2026-08-11 — v1.7 + despertador real del modo fondo (TASK-20260811-010: carencia C1 detectada en auto-revisión — el modo fondo no se activaba solo porque nadie enviaba turnos; solucionado con deploy/mac/despertador-fondo.sh + launchd com.ura.fondo-wake cada 30min vía opencode run --attach; verificado TERM revisó core/mochila/ con 2 hallazgos) -->
 <!-- v1.7 — 2026-08-11 — v1.6 + propuesta de plan obligatoria para todo hallazgo accionable del modo fondo (investigar → QUÉ/POR QUÉ/IMPACTO/VERIFICACIÓN/RIESGO → presentar al humano → TASK UDO si se aprueba; estado 'propuesto' hasta decisión) (TASK-20260811-009: petición RAMON sobre comunicación de mejoras) -->
 <!-- v1.6 — 2026-08-11 — v1.5 + lecciones operativas de sesión (TASK-20260811-008: mount namespaces del bash tool pueden diferir del host; instalación config global en ASUS requiere sudo del humano; workaround de commits en rootfs RO) -->
 <!-- v1.5 — 2026-08-11 — v1.4 + registro persistente de hallazgos (docs/udo/hallazgos-fondo.md), progreso por carpetas, límite por turno, comando ura-udo list REVIEW, gravedad CRÍTICA con notificación (TASK-20260811-007: auto-revisión del prompt global) -->
