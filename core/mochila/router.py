@@ -119,6 +119,11 @@ class Router:
                 route_reason=f"explicit:{modelo_especifico}",
             )
 
+        # TASK-20260812-004: tipo inválido (clasificador personalizado fuera de contrato)
+        # → fallback a la ruta rápida en vez de romper con NoProviderAvailable.
+        if tipo not in self.rutas:
+            tipo = "rapido"
+
         for entrada in self.rutas.get(tipo, self.rutas["rapido"]):
             p = entrada["provider"]
             if p in self.providers:
