@@ -32,8 +32,10 @@
 | TASK-20260810-002 | Detector revisiones 3 niveles + integración mac-veredictos | 2026-08-10 | TERM | ⏳ PENDIENTE | — | — | — |
 | TASK-20260809-005 | Brecha evidencia Web: cobertura real 78.4% (excepción autorizada Ramón) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
 | TASK-20260811-001 | Parche consolidacion fase 4 (O(N²) 19h + auto-dup + f-strings) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-002 | Fix 6 servicios fallidos (snc, mutmut, detector, go2rtc, watcher-auditoria) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-003 | Hardening anti-alucinacion AGENTS.md.global v1.2 (ambas maquinas) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
 
-**Lote actual**: 13 tareas pendientes de revisión independiente (11 TERM + 2 WEB, excepciones autorizadas 2026-08-11). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
+**Lote actual**: 15 tareas pendientes de revisión independiente (11 TERM + 4 WEB, excepciones autorizadas 2026-08-11). La revisión de este lote forma parte del cierre del PLAN 1 (B1) y del F5.
 
 ---
 
