@@ -43,6 +43,56 @@ def _safe_check(severity: str, check_name: str, check_fn, *args) -> list[tuple[s
         return [(severity, check_name, f"{check_name} no accesible: {e}")]
 
 
+def _check_schema_version(
+    conn: sqlite3.Connection,
+    results: list[tuple[str, str, str]],
+) -> None:
+    try:
+        db_version = get_schema_version(conn)
+        if db_version != SCHEMA_VERSION:
+            results.append(
+                ("ERROR", "schema_version", f"Schema version mismatch: DB={db_version}, expected={SCHEMA_VERSION}"),
+            )
+        else:
+            results.append(("INFO", "schema_version", f"Schema v{db_version} OK"))
+    except Exception as e:
+        results.append(("ERROR", "schema_version", f"Could not read schema version: {e}"))
+
+
+def _check_version_info(
+    conn: sqlite3.Connection,
+    results: list[tuple[str, str, str]],
+) -> None:
+    try:
+        version = conn.execute(
+            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",
+        ).fetchone()
+    except sqlite3.OperationalError:
+        version = None
+    if version:
+        commit = version["source_commit"][:12]
+        msg = f"v{version['graph_version']}, commit={commit}"
+        msg += f", compiler={version['compiler_version']}, swapped={version['swapped_at']}"
+        results.append(("INFO", "version", msg))
+    else:
+        results.append(("INFO", "version", "Sin versión activa (DB vacía)"))
+
+
+def _check_log_errors(
+    conn: sqlite3.Connection,
+    results: list[tuple[str, str, str]],
+) -> None:
+    try:
+        errors_from_log = conn.execute(
+            "SELECT error_code, severity, message FROM op_compile_errors ORDER BY created_at DESC LIMIT 20",
+        ).fetchall()
+        if errors_from_log:
+            for e in errors_from_log:
+                results.append((e["severity"], e["error_code"], e["message"]))
+    except sqlite3.OperationalError:
+        pass
+
+
 def verify_graph(
     db_path: Path,
     source_dir: Path | None = None,
@@ -62,16 +112,7 @@ def verify_graph(
     conn = _get_conn(db_path)
 
     # Schema version check
-    try:
-        db_version = get_schema_version(conn)
-        if db_version != SCHEMA_VERSION:
-            results.append(
-                ("ERROR", "schema_version", f"Schema version mismatch: DB={db_version}, expected={SCHEMA_VERSION}"),
-            )
-        else:
-            results.append(("INFO", "schema_version", f"Schema v{db_version} OK"))
-    except Exception as e:
-        results.append(("ERROR", "schema_version", f"Could not read schema version: {e}"))
+    _check_schema_version(conn, results)
 
     # StorageVerifier
     results.extend(_safe_check("ERROR", "pragma", check_pragmas, conn))
@@ -89,30 +130,10 @@ def verify_graph(
     results.extend(_safe_check("ERROR", "hashes", verify_hashes, conn, source_dir))
 
     # Version info
-    try:
-        version = conn.execute(
-            "SELECT graph_version, source_commit, compiler_version, swapped_at FROM kg_active_version WHERE singleton=1",
-        ).fetchone()
-    except sqlite3.OperationalError:
-        version = None
-    if version:
-        commit = version["source_commit"][:12]
-        msg = f"v{version['graph_version']}, commit={commit}"
-        msg += f", compiler={version['compiler_version']}, swapped={version['swapped_at']}"
-        results.append(("INFO", "version", msg))
-    else:
-        results.append(("INFO", "version", "Sin versión activa (DB vacía)"))
+    _check_version_info(conn, results)
 
     # Last compile errors from log
-    try:
-        errors_from_log = conn.execute(
-            "SELECT error_code, severity, message FROM op_compile_errors ORDER BY created_at DESC LIMIT 20",
-        ).fetchall()
-        if errors_from_log:
-            for e in errors_from_log:
-                results.append((e["severity"], e["error_code"], e["message"]))
-    except sqlite3.OperationalError:
-        pass
+    _check_log_errors(conn, results)
 
     conn.close()
     return results

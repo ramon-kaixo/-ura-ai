@@ -63,6 +63,57 @@ def enqueue_archive_job(
         log.warning("No se pudo encolar archive job: %s", exc)
 
 
+def _ejecutar_archive_job(
+    conn,
+    job,
+    db_path: Path,
+    correlation_id: str,
+) -> None:
+    """Ejecutar un archive job: valida rutas, archiva y marca estado."""
+    from knowledge.engine.archiver import archive_source
+    from knowledge.engine.metrics import record_archive
+
+    job_id = job["id"]
+    payload = json.loads(job["payload"])
+    try:
+        src = Path(payload["source_dir"])
+        if not src.is_absolute():
+            msg = f"source_dir del payload no es absoluto: {src}"
+            raise ValueError(msg)
+        src = src.resolve()
+        p = Path(payload.get("db_path", str(db_path)))
+        if p != db_path:
+            if not p.is_absolute():
+                msg = f"db_path del payload no es absoluto: {p}"
+                raise ValueError(msg)
+            p = p.resolve()
+        archive_source(source_dir=src, db_path=p)
+        begin_immediate(conn)
+        conn.execute(
+            "UPDATE op_jobs SET status = 'completed', completed_at = datetime('now') WHERE id = ?",
+            (job_id,),
+        )
+        record_archive(kind="source", status="completed")
+        log.info(
+            "Archive job %d completed (cid=%s)",
+            job_id,
+            correlation_id[:8] if correlation_id else "-",
+        )
+    except Exception as exc:
+        log.warning(
+            "Archive job %d failed: %s (cid=%s)",
+            job_id,
+            exc,
+            correlation_id[:8] if correlation_id else "-",
+        )
+        record_archive(kind="source", status="failed")
+        begin_immediate(conn)
+        conn.execute(
+            "UPDATE op_jobs SET status = 'failed', error = ?, completed_at = datetime('now') WHERE id = ?",
+            (str(exc), job_id),
+        )
+
+
 def process_archive_jobs(
     db_path: Path,
     correlation_id: str = "",
@@ -72,9 +123,6 @@ def process_archive_jobs(
     Incluye recuperación de jobs 'running' atascados (stale recovery).
     Si un archive falla, el compile NO se revierte.
     """
-    from knowledge.engine.archiver import archive_source
-    from knowledge.engine.metrics import record_archive
-
     try:
         conn = open_db(db_path)
         begin_immediate(conn)
@@ -87,7 +135,6 @@ def process_archive_jobs(
 
         for job in jobs:
             job_id = job["id"]
-            payload = json.loads(job["payload"])
 
             conn.execute(
                 "UPDATE op_jobs SET status = 'running', started_at = datetime('now') WHERE id = ?",
@@ -95,43 +142,7 @@ def process_archive_jobs(
             )
             conn.commit()
 
-            try:
-                src = Path(payload["source_dir"])
-                if not src.is_absolute():
-                    msg = f"source_dir del payload no es absoluto: {src}"
-                    raise ValueError(msg)
-                src = src.resolve()
-                p = Path(payload.get("db_path", str(db_path)))
-                if p != db_path:
-                    if not p.is_absolute():
-                        msg = f"db_path del payload no es absoluto: {p}"
-                        raise ValueError(msg)
-                    p = p.resolve()
-                archive_source(source_dir=src, db_path=p)
-                begin_immediate(conn)
-                conn.execute(
-                    "UPDATE op_jobs SET status = 'completed', completed_at = datetime('now') WHERE id = ?",
-                    (job_id,),
-                )
-                record_archive(kind="source", status="completed")
-                log.info(
-                    "Archive job %d completed (cid=%s)",
-                    job_id,
-                    correlation_id[:8] if correlation_id else "-",
-                )
-            except Exception as exc:
-                log.warning(
-                    "Archive job %d failed: %s (cid=%s)",
-                    job_id,
-                    exc,
-                    correlation_id[:8] if correlation_id else "-",
-                )
-                record_archive(kind="source", status="failed")
-                begin_immediate(conn)
-                conn.execute(
-                    "UPDATE op_jobs SET status = 'failed', error = ?, completed_at = datetime('now') WHERE id = ?",
-                    (str(exc), job_id),
-                )
+            _ejecutar_archive_job(conn, job, db_path, correlation_id)
             conn.commit()
 
         conn.close()

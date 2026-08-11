@@ -62,6 +62,38 @@ def request_compile(
     return _execute_compile(reason, key, db_path=db_path, source_dir=source_dir)
 
 
+def _finalizar_compile(
+    result,
+    reason: str,
+    correlation_id: str,
+    source_dir: Path,
+    db_path: Path,
+) -> None:
+    """Registrar métricas, encolar archive y publicar evento de compile exitoso."""
+    if result.success:
+        record_compile(source=reason)
+        enqueue_archive_job(db_path, source_dir, correlation_id)
+        process_archive_jobs(db_path, correlation_id)
+        get_bus().publish(
+            CompileCompleted(
+                reason=reason,
+                documents_changed=result.documents_changed,
+                documents_total=result.documents_total,
+                errors=len(result.errors),
+                correlation_id=correlation_id,
+            ),
+        )
+
+    log.info(
+        "Compile completado cid=%s success=%s changed=%d total=%d errors=%d",
+        correlation_id[:8],
+        result.success,
+        result.documents_changed,
+        result.documents_total,
+        len(result.errors),
+    )
+
+
 def _execute_compile(
     reason: str,
     dedup_key: str,
@@ -93,29 +125,7 @@ def _execute_compile(
                     compiler_version="0.1.0",
                     correlation_id=correlation_id,
                 )
-
-                if result.success:
-                    record_compile(source=reason)
-                    enqueue_archive_job(db_path, source_dir, correlation_id)
-                    process_archive_jobs(db_path, correlation_id)
-                    get_bus().publish(
-                        CompileCompleted(
-                            reason=reason,
-                            documents_changed=result.documents_changed,
-                            documents_total=result.documents_total,
-                            errors=len(result.errors),
-                            correlation_id=correlation_id,
-                        ),
-                    )
-
-                log.info(
-                    "Compile completado cid=%s success=%s changed=%d total=%d errors=%d",
-                    correlation_id[:8],
-                    result.success,
-                    result.documents_changed,
-                    result.documents_total,
-                    len(result.errors),
-                )
+                _finalizar_compile(result, reason, correlation_id, source_dir, db_path)
                 return 1
             except Exception:
                 log.exception(

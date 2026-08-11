@@ -96,6 +96,26 @@ def _validar_doc_type(
         )
 
 
+def _warn_rango(
+    warnings: list[CompileError],
+    path: str,
+    nombre: str,
+    valor: float,
+    min_v: float,
+    max_v: float,
+) -> None:
+    """KE009: valor numérico fuera de rango."""
+    if valor < min_v or valor > max_v:
+        warnings.append(
+            CompileError(
+                code="KE009",
+                document=path,
+                stage="validator",
+                message=f"{nombre} fuera de rango [{min_v}, {max_v}]: {valor}",
+            ),
+        )
+
+
 def _validar_warnings_core(
     doc: Document,
     warnings: list[CompileError],
@@ -124,27 +144,9 @@ def _validar_warnings_core(
             ),
         )
 
-    # KE009: quality fuera de rango
-    if doc.quality < 0.0 or doc.quality > 1.0:
-        warnings.append(
-            CompileError(
-                code="KE009",
-                document=path,
-                stage="validator",
-                message=f"quality fuera de rango [0.0, 1.0]: {doc.quality}",
-            ),
-        )
-
-    # KE009: confidence fuera de rango
-    if doc.confidence < 0.0 or doc.confidence > 1.0:
-        warnings.append(
-            CompileError(
-                code="KE009",
-                document=path,
-                stage="validator",
-                message=f"confidence fuera de rango [0.0, 1.0]: {doc.confidence}",
-            ),
-        )
+    # KE009: quality/confidence fuera de rango
+    _warn_rango(warnings, path, "quality", doc.quality, 0.0, 1.0)
+    _warn_rango(warnings, path, "confidence", doc.confidence, 0.0, 1.0)
 
     # KE009: body muy corto
     body_stripped = doc.body.strip()
