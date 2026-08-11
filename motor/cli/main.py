@@ -80,7 +80,7 @@ def _setup_logging(level: str) -> None:
     logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
 
 
-def main() -> None:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
     parser.add_argument("--config", default="", help="Ruta a config JSON")
     parser.add_argument("--log-level", default="INFO", help="Nivel de log")
@@ -132,7 +132,11 @@ def main() -> None:
         s = sub.add_parser(name)
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
 
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> None:
+    args = _build_parser().parse_args()
     _setup_logging(args.log_level)
     config = UraConfig.load(args.config)
     config.log_level = args.log_level

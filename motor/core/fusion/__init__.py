@@ -74,8 +74,6 @@ def run_fusion_on_claims(claims: list, semantic_db: str = "", correlation_id: st
 
     Retorna el número de facts producidos.
     """
-    import time as _time
-
     from motor.core.fusion.models import FusionContext, FusionProvenance
     from motor.core.fusion.stages.entity_resolver import ContextualEntityResolver, EntityResolutionStage
     from motor.core.fusion.stages.merger import KnowledgeMergerStage, SimpleKnowledgeMerger
@@ -90,6 +88,13 @@ def run_fusion_on_claims(claims: list, semantic_db: str = "", correlation_id: st
     facts = context.facts or []
     if not facts:
         return 0
+
+    _persist_fusion_facts(facts, semantic_db, correlation_id)
+    return len(facts)
+
+
+def _persist_fusion_facts(facts: list, semantic_db: str, correlation_id: str) -> None:
+    import time as _time
 
     from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
     from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
@@ -122,8 +127,6 @@ def run_fusion_on_claims(claims: list, semantic_db: str = "", correlation_id: st
         ),
     )
     memory.append(entry)
-
-    return len(facts)
 
 
 __all__ = [
