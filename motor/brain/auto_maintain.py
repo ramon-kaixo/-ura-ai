@@ -130,35 +130,32 @@ class AutoMaintainer:
         """Ejecuta ruff fix + format en el codigo y commitea cambios."""
         repo_root = Path(__file__).resolve().parents[2]
         fix_log: list[str] = []
-
         ruff_cmd = str(repo_root / ".venv" / "bin" / "ruff")
+
+        fix_log.append(self._run_ruff([ruff_cmd, "check", "--fix", target_dir], repo_root, "ruff check --fix"))
+        fix_log.append(self._run_ruff([ruff_cmd, "format", target_dir], repo_root, "ruff format"))
+
+        if not self._git_has_changes(target_dir, repo_root):
+            log.info("auto_fix_code: sin cambios en %s", target_dir)
+            return {"status": "no_changes", "fix_log": fix_log, "committed": False}
+
+        return self._git_commit_changes(target_dir, repo_root, fix_log)
+
+    def _run_ruff(self, cmd: list[str], repo_root: Path, label: str) -> str:
         try:
             r = subprocess.run(  # nosec B603
-                [ruff_cmd, "check", "--fix", target_dir],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=60,
                 cwd=str(repo_root),
                 check=False,
             )
-            fix_log.append(f"ruff check --fix: exit={r.returncode}")
+            return f"{label}: exit={r.returncode}"
         except Exception as e:
-            fix_log.append(f"ruff check --fix fallo: {e}")
+            return f"{label} fallo: {e}"
 
-        try:
-            r = subprocess.run(  # nosec B603
-                [ruff_cmd, "format", target_dir],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                cwd=str(repo_root),
-                check=False,
-            )
-            fix_log.append(f"ruff format: exit={r.returncode}")
-        except Exception as e:
-            fix_log.append(f"ruff format fallo: {e}")
-
-        has_changes = False
+    def _git_has_changes(self, target_dir: str, repo_root: Path) -> bool:
         try:
             r = subprocess.run(  # nosec B603 B607
                 ["git", "diff", "--quiet", target_dir],
@@ -168,14 +165,12 @@ class AutoMaintainer:
                 cwd=str(repo_root),
                 check=False,
             )
-            has_changes = r.returncode != 0
+            return r.returncode != 0
         except Exception:
             log.debug("git diff fallo")
+            return False
 
-        if not has_changes:
-            log.info("auto_fix_code: sin cambios en %s", target_dir)
-            return {"status": "no_changes", "fix_log": fix_log, "committed": False}
-
+    def _git_commit_changes(self, target_dir: str, repo_root: Path, fix_log: list[str]) -> dict[str, Any]:
         try:
             subprocess.run(["git", "add", target_dir], capture_output=True, timeout=10, cwd=str(repo_root), check=False)  # nosec B603 B607
             subprocess.run(  # nosec B603 B607

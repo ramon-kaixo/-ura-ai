@@ -168,59 +168,43 @@ class AgentCapabilityGate(CapabilityGateABC):
 
         # Gate cerrado
         if self._closed:
-            return PermissionDecision(
-                granted=False,
-                capability=capability,
-                agent_id=agent_id,
-                denial_code=DenialCode.GATE_CLOSED,
-                denial_reason="CapabilityGate is closed",
-                timestamp=ts,
-            )
+            return self._denied(capability, DenialCode.GATE_CLOSED, "CapabilityGate is closed", agent_id, ts)
 
         # Capability no reconocida
         if not isinstance(capability, AgentCapability):
-            return PermissionDecision(
-                granted=False,
-                capability=capability,
-                agent_id=agent_id,
-                denial_code=DenialCode.CAPABILITY_NOT_RECOGNIZED,
-                denial_reason=f"Unknown capability: {capability}",
-                timestamp=ts,
+            return self._denied(
+                capability,
+                DenialCode.CAPABILITY_NOT_RECOGNIZED,
+                f"Unknown capability: {capability}",
+                agent_id,
+                ts,
             )
 
         # Agente cancelado
         if self._execution.cancelled:
-            return PermissionDecision(
-                granted=False,
-                capability=capability,
-                agent_id=agent_id,
-                denial_code=DenialCode.AGENT_CANCELLED,
-                denial_reason="Agent was cancelled",
-                timestamp=ts,
-            )
+            return self._denied(capability, DenialCode.AGENT_CANCELLED, "Agent was cancelled", agent_id, ts)
 
         # Presupuesto excedido
         if self._execution.cost_units >= self._execution.policy.max_cost_units:
-            return PermissionDecision(
-                granted=False,
-                capability=capability,
-                agent_id=agent_id,
-                denial_code=DenialCode.BUDGET_EXCEEDED,
-                denial_reason=(
-                    f"Budget exceeded: {self._execution.cost_units} >= {self._execution.policy.max_cost_units}"
+            return self._denied(
+                capability,
+                DenialCode.BUDGET_EXCEEDED,
+                (
+                    f"Budget exceeded: {self._execution.cost_units} >= "
+                    f"{self._execution.policy.max_cost_units}"
                 ),
-                timestamp=ts,
+                agent_id,
+                ts,
             )
 
         # Capability no concedida
         if capability not in self._capabilities:
-            return PermissionDecision(
-                granted=False,
-                capability=capability,
-                agent_id=agent_id,
-                denial_code=DenialCode.CAPABILITY_NOT_GRANTED,
-                denial_reason=f"Capability '{capability.value}' not in agent capabilities",
-                timestamp=ts,
+            return self._denied(
+                capability,
+                DenialCode.CAPABILITY_NOT_GRANTED,
+                f"Capability '{capability.value}' not in agent capabilities",
+                agent_id,
+                ts,
             )
 
         # Concedido
@@ -228,6 +212,23 @@ class AgentCapabilityGate(CapabilityGateABC):
             granted=True,
             capability=capability,
             agent_id=agent_id,
+            timestamp=ts,
+        )
+
+    def _denied(
+        self,
+        capability: AgentCapability,
+        code: DenialCode,
+        reason: str,
+        agent_id: str,
+        ts: float,
+    ) -> PermissionDecision:
+        return PermissionDecision(
+            granted=False,
+            capability=capability,
+            agent_id=agent_id,
+            denial_code=code,
+            denial_reason=reason,
             timestamp=ts,
         )
 
