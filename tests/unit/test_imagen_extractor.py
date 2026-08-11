@@ -1,11 +1,18 @@
 """Tests para core/memoria/extractores/imagen_extractor.py."""
 
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from PIL import Image
 
 from core.memoria.extractores import imagen_extractor as ie
+
+
+@pytest.fixture(autouse=True)
+def _sin_ollama(monkeypatch):
+    """Evita llamadas reales a Ollama (timeout 60s) en tests unitarios."""
+    monkeypatch.setattr(ie, "_describir_imagen", mock.Mock(return_value={"descripcion": ""}))
 
 
 @pytest.fixture(scope="module")
