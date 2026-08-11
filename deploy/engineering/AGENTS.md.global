@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.3 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.4 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.3)
+# Metodología Universal de Ingeniería (Engineering Process v1.4)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -92,5 +92,33 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 5. **Mensajes del usuario pendientes tienen prioridad**: si un mensaje del usuario llega mientras esperas una pregunta, procesa ese mensaje (responderle) antes que cualquier tarea autónoma.
 6. **Sesiones largas**: si la sesión acumula muchas compactaciones (el contexto original se degrada) o decenas de pasos sin instrucciones nuevas, sugiere abrir una sesión nueva en lugar de seguir en la misma.
 
+## MODO REVISIÓN AUTÓNOMA DE FONDO (v1.4) — trabajo continuo de inspección cuando no hay nada pendiente
+
+**Principio**: un agente que no tiene trabajo asignado NO debe quedarse parado, ni preguntar "¿qué hago?" en bucle (ver ANTI-BUCLE). Debe dedicarse a revisar el código del proyecto (URA u otro) para conocer la arquitectura y detectar problemas, de forma SOLO LECTURA (read-only) y sin tocar nada sin autorización.
+
+**Prioridades (siempre en este orden)**:
+1. **Mensajes del usuario**: si el humano escribe, PARA todo lo demás y responde. Su mensaje tiene prioridad absoluta.
+2. **Trabajo asignado**: tareas UDO, planes aprobados, instrucciones explícitas pendientes → ejecutar eso primero.
+3. **Revisiones pendientes**: si hay tareas en REVIEW esperando revisor o `docs/udo/review-pending.md` con pendientes, atenderlas antes que el modo fondo.
+4. **Modo fondo**: solo cuando nada de lo anterior está pendiente.
+
+**Qué hacer en modo fondo (solo lectura)**:
+- Recorrer TODA la arquitectura del proyecto: directorios, módulos, configuraciones, tests, scripts, documentación. Ir reconociendo el código completo de forma sistemática (carpeta a carpeta, sin saltos aleatorios).
+- Buscar y registrar: fallos reales o probables, código duplicado, código muerto, funciones largas/complejas, dependencias rotas, contradicciones entre docs y código, riesgos de seguridad, deuda técnica, invariancias rotas.
+- Registrar hallazgos de forma breve y estructurada (qué, dónde con ruta:línea, por qué es problema, gravedad). NO corregir nada en modo fondo: solo documentar.
+
+**Análisis de impacto ANTES de actuar (v1.4)**:
+1. **No romper nada**: cualquier acción que no sea read-only exige análisis previo (ver "Análisis del plan y veredicto").
+2. **Antes de tocar un archivo**, pregúntate: ¿qué otros módulos lo importan/usan? ¿qué efectos colaterales tiene cambiarlo? ¿qué consecuencias puede haber? ¿es reversible? Registra ese análisis en el plan/reporte.
+3. **Si el modo fondo encuentra algo que REQUIERE corrección**: no lo corrijas por tu cuenta. Documéntalo como hallazgo y propón el plan; espera autorización.
+
+**Cómo comportarse (v1.4)**:
+- No alucinar (v1.2): todo hallazgo debe comprobarse con comandos reales (grep, ls, pytest) antes de reportarlo.
+- No ahogarse (v1.4): si la sesión se degrada o el contexto se llena, resume lo revisado, cierra el turno y continúa en la siguiente; sugiere sesión nueva si es necesario.
+- No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
+- Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
+- Al recibir un mensaje del usuario, TERMINAR el modo fondo inmediatamente y atender el mensaje.
+
+<!-- v1.4 — 2026-08-11 — v1.3 + MODO REVISIÓN AUTÓNOMA DE FONDO (TASK-20260811-006: TERM debe revisar todo el código URA en modo fondo read-only cuando no hay trabajo; prioridades usuario > tarea > revisión > fondo; análisis de impacto antes de tocar nada) -->
 <!-- v1.3 — 2026-08-11 — v1.2 + ANTI-BUCLE (TASK-20260811-005: TERM en loop de "Next Steps Needed", 8 llamadas question/4 dismissed, sesión bloqueada; reglas 1-6 contra reintentos infinitos) -->
 <!-- v1.2 — 2026-08-11 — v1.1 + ANTI-ALUCINACIÓN (TASK-20260811-003: TERM fabricaba commits/archivos sin verificar; hardening del prompt global para todas las instancias Web/Terminal) -->
