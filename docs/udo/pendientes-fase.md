@@ -9,13 +9,12 @@ test veredicto 02:27:49
 #### A MEDIAS (IN_PROGRESS)
 
 #### PENDIENTES DE REVISOR
-| TASK-20260811-010 | pendiente revisor | 2026-08-11 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
 
 #### PLANES/FASES SIN CERRAR
-| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-11 | PENDIENTE | |
-| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-11 | PENDIENTE | |
-| — | plan/fase: Conflict Detection (pendiente) | 2026-08-11 | PENDIENTE | |
-| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-11 | PENDIENTE | |
-| — | plan/fase: Source Scoring (pendiente) | 2026-08-11 | PENDIENTE | |
+| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Conflict Detection (pendiente) | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Source Scoring (pendiente) | 2026-08-12 | PENDIENTE | |
