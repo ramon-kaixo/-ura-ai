@@ -184,13 +184,7 @@ class PluginRegistry:
                 elapsed = (time.monotonic() - start) * 1000
                 log.warning("[plugin] %s no pudo cargarse — omitido", name)
                 results.append(
-                    PluginResult(
-                        ok=False,
-                        plugin=name,
-                        phase=phase,
-                        error="Plugin load failed",
-                        duration_ms=elapsed,
-                    ),
+                    self._ejecutar_fallido(name, phase, "Plugin load failed", elapsed),
                 )
                 continue
 
@@ -212,16 +206,19 @@ class PluginRegistry:
                 log.warning("[plugin] %s falló (%.0fms): %s", name, elapsed, exc)
                 self._dm.mark_degraded(f"plugin:{name}")
                 results.append(
-                    PluginResult(
-                        ok=False,
-                        plugin=name,
-                        phase=phase,
-                        error=str(exc),
-                        duration_ms=elapsed,
-                    ),
+                    self._ejecutar_fallido(name, phase, str(exc), elapsed),
                 )
 
         return results
+
+    def _ejecutar_fallido(self, name: str, phase: str, error: str, elapsed: float) -> PluginResult:
+        return PluginResult(
+            ok=False,
+            plugin=name,
+            phase=phase,
+            error=error,
+            duration_ms=elapsed,
+        )
 
     def run_one(
         self,

@@ -267,40 +267,12 @@ class RegressionDetector:
                 lat = r.get("latency_stats", {})
             configs_seen.add(cfg)
 
-            for metric, current in metrics.items():
-                metrics_count += 1
-                baseline_val = self._baseline.get(cfg, metric)
-                if baseline_val is None:
-                    continue
-                # Determinar threshold
-                base_key = metric.split("@")[0]  # "recall" de "recall@10"
-                threshold = self._thresholds.get(base_key, -0.05)
-                finding = RegressionFinding(
-                    config=cfg,
-                    metric=metric,
-                    baseline_value=baseline_val,
-                    current_value=current,
-                    threshold=threshold,
-                )
-                findings.append(finding)
+            findings.extend(self._metric_findings(cfg, metrics))
+            metrics_count += len(metrics)
 
-            # Latencia
             if lat:
-                for lat_metric in ("latency_p50", "latency_p95"):
-                    metrics_count += 1
-                    bl = self._baseline.get(cfg, lat_metric)
-                    if bl is None:
-                        continue
-                    key = lat_metric
-                    threshold = self._thresholds.get(key, 0.10)
-                    finding = RegressionFinding(
-                        config=cfg,
-                        metric=key,
-                        baseline_value=bl,
-                        current_value=lat.get("mean_ms" if "p50" in key else "max_ms", 0),
-                        threshold=threshold,
-                    )
-                    findings.append(finding)
+                findings.extend(self._latency_findings(cfg, lat))
+                metrics_count += 2
 
         return RegressionReport(
             baseline_name=self._baseline.name,
@@ -309,3 +281,41 @@ class RegressionDetector:
             total_configs=len(configs_seen),
             total_metrics=metrics_count,
         )
+
+    def _metric_findings(self, cfg: str, metrics: dict) -> list[RegressionFinding]:
+        findings: list[RegressionFinding] = []
+        for metric, current in metrics.items():
+            baseline_val = self._baseline.get(cfg, metric)
+            if baseline_val is None:
+                continue
+            # Determinar threshold
+            base_key = metric.split("@")[0]  # "recall" de "recall@10"
+            threshold = self._thresholds.get(base_key, -0.05)
+            findings.append(
+                RegressionFinding(
+                    config=cfg,
+                    metric=metric,
+                    baseline_value=baseline_val,
+                    current_value=current,
+                    threshold=threshold,
+                ),
+            )
+        return findings
+
+    def _latency_findings(self, cfg: str, lat: dict) -> list[RegressionFinding]:
+        findings: list[RegressionFinding] = []
+        for lat_metric in ("latency_p50", "latency_p95"):
+            bl = self._baseline.get(cfg, lat_metric)
+            if bl is None:
+                continue
+            threshold = self._thresholds.get(lat_metric, 0.10)
+            findings.append(
+                RegressionFinding(
+                    config=cfg,
+                    metric=lat_metric,
+                    baseline_value=bl,
+                    current_value=lat.get("mean_ms" if "p50" in lat_metric else "max_ms", 0),
+                    threshold=threshold,
+                ),
+            )
+        return findings

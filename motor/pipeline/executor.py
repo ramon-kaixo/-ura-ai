@@ -134,17 +134,12 @@ class PipelineExecutor:
             source="pipeline_executor",
         )
         if any(r is None for r in responses):
-            return StageResult(name=stage.name, plugin=stage.plugin, ok=False, error="Cancelled by before_stage hook")
+            return self._stage_failed(stage, "Cancelled by before_stage hook")
 
         plugin = self._registry.get(stage.plugin)
         if plugin is None:
             log.warning("Stage '%s': plugin '%s' not found", stage.name, stage.plugin)
-            return StageResult(
-                name=stage.name,
-                plugin=stage.plugin,
-                ok=False,
-                error=f"Plugin '{stage.plugin}' not found",
-            )
+            return self._stage_failed(stage, f"Plugin '{stage.plugin}' not found")
 
         if hasattr(plugin, "on_before_stage"):
             try:
@@ -152,20 +147,10 @@ class PipelineExecutor:
                     {"stage": stage.name, "config": stage.config, "context": context},
                 )
                 if result is None:
-                    return StageResult(
-                        name=stage.name,
-                        plugin=stage.plugin,
-                        ok=False,
-                        error="Cancelled by plugin.on_before_stage",
-                    )
+                    return self._stage_failed(stage, "Cancelled by plugin.on_before_stage")
             except Exception as exc:
                 log.warning("Stage '%s': on_before_stage raised: %s", stage.name, exc)
-                return StageResult(
-                    name=stage.name,
-                    plugin=stage.plugin,
-                    ok=False,
-                    error=f"Plugin on_before_stage error: {exc}",
-                )
+                return self._stage_failed(stage, f"Plugin on_before_stage error: {exc}")
 
         try:
             stage_context: dict[str, Any] = {**context, "stage": stage.name, "config": stage.config}
@@ -196,7 +181,15 @@ class PipelineExecutor:
 
         except Exception as exc:
             log.warning("Stage '%s' failed: %s", stage.name, exc)
-            return StageResult(name=stage.name, plugin=stage.plugin, ok=False, error=str(exc))
+            return self._stage_failed(stage, str(exc))
+
+    def _stage_failed(self, stage: StageDefinition, error: str) -> StageResult:
+        return StageResult(
+            name=stage.name,
+            plugin=stage.plugin,
+            ok=False,
+            error=error,
+        )
 
     def _rollback(
         self,
