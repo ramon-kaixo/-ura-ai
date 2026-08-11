@@ -81,48 +81,59 @@ class SupervisorAgent(Agent):
                 timeout=sub.get("timeout", 30),
             )
 
-            for attempt in range(MAX_RETRIES + 1):
-                if is_cancelled and is_cancelled():
-                    steps.append(
-                        {
-                            "step": task.objective,
-                            "status": "cancelled",
-                            "attempt": attempt + 1,
-                            "reason": "workflow_cancelled",
-                        },
-                    )
-                    break
-                try:
-                    result = agent.run(task)
-                    if result.success:
-                        steps.append(
-                            {"step": task.objective, "status": "completed", "agent": agent.id, "attempt": attempt + 1},
-                        )
-                        break
-                    log.warning("Attempt %d failed for %s: %s", attempt + 1, agent.name, result.error)
-                    steps.append(
-                        {
-                            "step": task.objective,
-                            "status": "failed",
-                            "agent": agent.id,
-                            "attempt": attempt + 1,
-                            "error": result.error,
-                        },
-                    )
-                except Exception as exc:
-                    log.warning("Exception in %s attempt %d: %s", agent.name, attempt + 1, exc)
-                    steps.append(
-                        {
-                            "step": task.objective,
-                            "status": "error",
-                            "agent": agent.id,
-                            "attempt": attempt + 1,
-                            "error": str(exc),
-                        },
-                    )
+            execution_steps = self._run_subtask(agent, task, is_cancelled)
+            steps.extend(execution_steps)
 
         success = all(s.get("status") == "completed" for s in steps)
         return {"overall_success": success, "steps": steps, "total_steps": len(steps)}
+
+    def _run_subtask(
+        self,
+        agent: Any,
+        task: AgentTask,
+        is_cancelled: Callable[[], bool] | None,
+    ) -> list[dict[str, Any]]:
+        steps: list[dict[str, Any]] = []
+        for attempt in range(MAX_RETRIES + 1):
+            if is_cancelled and is_cancelled():
+                steps.append(
+                    {
+                        "step": task.objective,
+                        "status": "cancelled",
+                        "attempt": attempt + 1,
+                        "reason": "workflow_cancelled",
+                    },
+                )
+                break
+            try:
+                result = agent.run(task)
+                if result.success:
+                    steps.append(
+                        {"step": task.objective, "status": "completed", "agent": agent.id, "attempt": attempt + 1},
+                    )
+                    break
+                log.warning("Attempt %d failed for %s: %s", attempt + 1, agent.name, result.error)
+                steps.append(
+                    {
+                        "step": task.objective,
+                        "status": "failed",
+                        "agent": agent.id,
+                        "attempt": attempt + 1,
+                        "error": result.error,
+                    },
+                )
+            except Exception as exc:
+                log.warning("Exception in %s attempt %d: %s", agent.name, attempt + 1, exc)
+                steps.append(
+                    {
+                        "step": task.objective,
+                        "status": "error",
+                        "agent": agent.id,
+                        "attempt": attempt + 1,
+                        "error": str(exc),
+                    },
+                )
+        return steps
 
     def _find_agent(self, role: AgentRole | None) -> Any | None:
         if role is None:

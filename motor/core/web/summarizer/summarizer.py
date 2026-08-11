@@ -148,59 +148,78 @@ class ExtractiveSummarizer:
             seen_urls: set[str] = set()
 
             for doc in documents:
-                url = doc.url
-                title = doc.title or ""
-                text = doc.text or ""
-                seen_urls.add(url)
-
-                tfs = _tf_scores(text)
-                sentences = split_sentences(text)
-
-                for i, sent in enumerate(sentences):
-                    sent_stripped = sent.strip()
-                    if not sent_stripped:
-                        continue
-                    sent_lower = sent_stripped.lower()
-                    if sent_lower in seen:
-                        continue
-                    seen.add(sent_lower)
-                    score = score_sentence(sent, tfs, title, i, len(sentences))
-                    candidates.append(
-                        SentenceInfo(
-                            text=sent_stripped,
-                            score=round(score, 4),
-                            position=i,
-                            document_url=url,
-                            document_title=title,
-                        ),
-                    )
+                self._collect_sentences(doc, seen, seen_urls, candidates)
 
             # Seleccionar mejores frases
-            candidates.sort(key=lambda c: (-c.score, c.position))
-            selected = candidates[:max_length]
+            return self._build_summary(candidates, seen_urls, documents, max_length)
 
-            # Reordenar por posición original + documento
-            selected.sort(key=lambda c: (list(seen_urls).index(c.document_url), c.position))
+    def _collect_sentences(
+        self,
+        doc: WebDocument,
+        seen: set[str],
+        seen_urls: set[str],
+        candidates: list[SentenceInfo],
+    ) -> None:
+        url = doc.url
+        title = doc.title or ""
+        text = doc.text or ""
+        seen_urls.add(url)
 
-            final_sentences = [s.text for s in selected]
-            total_words_original = sum(len(re.findall(r"\w+", doc.text or "")) for doc in documents)
-            summary_words = sum(len(re.findall(r"\w+", s)) for s in final_sentences)
-            compression = (
-                round(1.0 - (summary_words / max(1, total_words_original)), 4) if total_words_original > 0 else 0.0
+        tfs = _tf_scores(text)
+        sentences = split_sentences(text)
+
+        for i, sent in enumerate(sentences):
+            sent_stripped = sent.strip()
+            if not sent_stripped:
+                continue
+            sent_lower = sent_stripped.lower()
+            if sent_lower in seen:
+                continue
+            seen.add(sent_lower)
+            score = score_sentence(sent, tfs, title, i, len(sentences))
+            candidates.append(
+                SentenceInfo(
+                    text=sent_stripped,
+                    score=round(score, 4),
+                    position=i,
+                    document_url=url,
+                    document_title=title,
+                ),
             )
 
-            return Summary(
-                text=" ".join(final_sentences),
-                sentences=final_sentences,
-                source_documents=list(seen_urls),
-                sentence_origins=[
-                    {
-                        "url": s.document_url,
-                        "title": s.document_title,
-                        "position": s.position,
-                        "score": s.score,
-                    }
-                    for s in selected
-                ],
-                compression_ratio=compression,
-            )
+    def _build_summary(
+        self,
+        candidates: list[SentenceInfo],
+        seen_urls: set[str],
+        documents: list[WebDocument],
+        max_length: int,
+    ) -> Summary:
+        # Seleccionar mejores frases
+        candidates.sort(key=lambda c: (-c.score, c.position))
+        selected = candidates[:max_length]
+
+        # Reordenar por posición original + documento
+        selected.sort(key=lambda c: (list(seen_urls).index(c.document_url), c.position))
+
+        final_sentences = [s.text for s in selected]
+        total_words_original = sum(len(re.findall(r"\w+", doc.text or "")) for doc in documents)
+        summary_words = sum(len(re.findall(r"\w+", s)) for s in final_sentences)
+        compression = (
+            round(1.0 - (summary_words / max(1, total_words_original)), 4) if total_words_original > 0 else 0.0
+        )
+
+        return Summary(
+            text=" ".join(final_sentences),
+            sentences=final_sentences,
+            source_documents=list(seen_urls),
+            sentence_origins=[
+                {
+                    "url": s.document_url,
+                    "title": s.document_title,
+                    "position": s.position,
+                    "score": s.score,
+                }
+                for s in selected
+            ],
+            compression_ratio=compression,
+        )

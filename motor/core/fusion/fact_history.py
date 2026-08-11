@@ -278,38 +278,10 @@ class FactHistory:
 
     @classmethod
     def from_dict(cls, data: dict) -> FactHistory:
-        from motor.core.fusion.models import Fact, FactTombstone, FactVersion, VersionState
+        from motor.core.fusion.models import Fact
 
-        raw_versions = data.get("versions", {})
-        if isinstance(raw_versions, list):
-            versions = {
-                v["version_id"]: FactVersion(
-                    version_id=v["version_id"],
-                    fact_id=v["fact_id"],
-                    confidence=v["confidence"],
-                    evidence_ids=tuple(v.get("evidence_ids", [])),
-                    provenance=tuple(v.get("provenance", [])),
-                    created_at=v["created_at"],
-                    supersedes=v.get("supersedes"),
-                    state=VersionState(v.get("state", "current")),
-                )
-                for v in raw_versions
-            }
-        else:
-            # formato legacy: dict de version_id -> version
-            versions = {
-                vid: FactVersion(
-                    version_id=v["version_id"],
-                    fact_id=v["fact_id"],
-                    confidence=v["confidence"],
-                    evidence_ids=tuple(v.get("evidence_ids", [])),
-                    provenance=tuple(v.get("provenance", [])),
-                    created_at=v["created_at"],
-                    supersedes=v.get("supersedes"),
-                    state=VersionState(v.get("state", "current")),
-                )
-                for vid, v in raw_versions.items()
-            }
+        versions = cls._parse_versions(data)
+
         first_vid = min(versions.keys(), key=lambda k: versions[k].created_at)
         first_v = versions[first_vid]
 
@@ -336,11 +308,50 @@ class FactHistory:
                     history._current = v.version_id
                     break
 
+        history._tombstones = cls._parse_tombstones(data)
+        return history
+
+    @classmethod
+    def _parse_versions(cls, data: dict) -> dict:
+        from motor.core.fusion.models import FactVersion, VersionState
+
+        raw_versions = data.get("versions", {})
+        if isinstance(raw_versions, list):
+            return {
+                v["version_id"]: FactVersion(
+                    version_id=v["version_id"],
+                    fact_id=v["fact_id"],
+                    confidence=v["confidence"],
+                    evidence_ids=tuple(v.get("evidence_ids", [])),
+                    provenance=tuple(v.get("provenance", [])),
+                    created_at=v["created_at"],
+                    supersedes=v.get("supersedes"),
+                    state=VersionState(v.get("state", "current")),
+                )
+                for v in raw_versions
+            }
+        # formato legacy: dict de version_id -> version
+        return {
+            vid: FactVersion(
+                version_id=v["version_id"],
+                fact_id=v["fact_id"],
+                confidence=v["confidence"],
+                evidence_ids=tuple(v.get("evidence_ids", [])),
+                provenance=tuple(v.get("provenance", [])),
+                created_at=v["created_at"],
+                supersedes=v.get("supersedes"),
+                state=VersionState(v.get("state", "current")),
+            )
+            for vid, v in raw_versions.items()
+        }
+
+    @classmethod
+    def _parse_tombstones(cls, data: dict) -> dict:
+        from motor.core.fusion.models import FactTombstone
+
         raw_tombstones = data.get("tombstones", {})
         if isinstance(raw_tombstones, list):
-            history._tombstones = {
+            return {
                 t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)
             }
-        else:
-            history._tombstones = {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
-        return history
+        return {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
