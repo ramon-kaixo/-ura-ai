@@ -48,6 +48,49 @@ class MarkdownExtractor:
     supported_mime_types: list[str] = _MD_MIMES
     cost: str = "O(1)"
 
+    def _build_md_asset(
+        self,
+        source: AssetSource,
+        path_str: str,
+        raw: str,
+        content_bytes: bytes,
+        content_sha256: str,
+        size: int,
+        now: str,
+    ) -> KnowledgeAsset:
+        fm, body = _parse_frontmatter(raw)
+        title = _extract_title(fm, body)
+        tags = _extract_tags(fm)
+        word_count = _count_words(body)
+        headings = _count_headings(body)
+        internal_links = _find_internal_links(body)
+        external_links = _find_external_links(body)
+
+        return KnowledgeAsset(
+            asset_id=content_sha256[:16],
+            asset_type=AssetType.MARKDOWN,
+            metadata={
+                "title": title,
+                "frontmatter": fm or {},
+                "tags": tags,
+                "word_count": word_count,
+                "headings": headings,
+                "internal_links": internal_links,
+                "external_links": external_links,
+                "size": size,
+                "content_sha256": content_sha256,
+                "extracted_at": now,
+                "_extractor": self.id,
+                "_extractor_version": self.version,
+                "wraps": f"source:{path_str}",
+            },
+            source=source,
+            quality=_compute_quality(tags, word_count, headings),
+            created_at=now,
+            updated_at=now,
+            relationships=tuple(AssetRelationship(target_id=link, relation="references") for link in internal_links),
+        )
+
     def extract(self, source: AssetSource) -> ExtractionResult:
         """Extrae metadatos de un archivo Markdown.
 
@@ -73,43 +116,8 @@ class MarkdownExtractor:
             content_sha256 = hashlib.sha256(content_bytes).hexdigest()
             size = len(content_bytes)
 
-            # Extraer frontmatter YAML
-            fm, body = _parse_frontmatter(raw)
-            title = _extract_title(fm, body)
-            tags = _extract_tags(fm)
-            word_count = _count_words(body)
-            headings = _count_headings(body)
-            internal_links = _find_internal_links(body)
-            external_links = _find_external_links(body)
-
             now = datetime.now(UTC).isoformat()
-
-            asset = KnowledgeAsset(
-                asset_id=content_sha256[:16],
-                asset_type=AssetType.MARKDOWN,
-                metadata={
-                    "title": title,
-                    "frontmatter": fm or {},
-                    "tags": tags,
-                    "word_count": word_count,
-                    "headings": headings,
-                    "internal_links": internal_links,
-                    "external_links": external_links,
-                    "size": size,
-                    "content_sha256": content_sha256,
-                    "extracted_at": now,
-                    "_extractor": self.id,
-                    "_extractor_version": self.version,
-                    "wraps": f"source:{path_str}",
-                },
-                source=source,
-                quality=_compute_quality(tags, word_count, headings),
-                created_at=now,
-                updated_at=now,
-                relationships=tuple(
-                    AssetRelationship(target_id=link, relation="references") for link in internal_links
-                ),
-            )
+            asset = self._build_md_asset(source, path_str, raw, content_bytes, content_sha256, size, now)
 
             return ExtractionResult(
                 asset=asset,
