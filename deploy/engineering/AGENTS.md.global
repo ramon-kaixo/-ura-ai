@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.2 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.3 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.2)
+# Metodología Universal de Ingeniería (Engineering Process v1.3)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -81,4 +81,16 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 8. **Ante la duda, verifica**: antes de responder a "¿hiciste X?" o "¿existe Y?", ejecuta el comando de verificación. Si no puedes ejecutarlo (sin shell, sin red), responde NO VERIFICADO.
 9. **No heredar afirmaciones de terceros**: lo que dice otro agente en conversación NO es evidencia. Solo Git, logs y salidas de comandos son evidencia.
 
+## ANTI-BUCLE (v1.3) — reglas obligatorias contra loops de pregunta sin respuesta
+
+**Principio**: el agente no debe repetir la herramienta `question` (o equivalentes) en bucle cuando el humano no responde, ni bloquear indefinidamente una sesión esperando input que no llega. Un loop de preguntas sin respuesta quema tokens, bloquea la sesión (los mensajes del usuario quedan sin procesar) y degrada la operación.
+
+1. **Máximo 1 pregunta por turno**: usa la herramienta `question` solo si es imprescindible para avanzar en trabajo solicitado. No la uses "por si acaso" ni al final de cada tarea completada sin necesidad real.
+2. **Si la pregunta se descarta o expira (dismissed/error/rejected)**: NO reintentar la misma pregunta ni una variante en el siguiente turno. Considera que el humano no está disponible; documenta el estado, finaliza el turno con un resumen de lo hecho y espera input nuevo del usuario.
+3. **Máximo 3 preguntas sin respuesta en la misma sesión**: si tras 3 preguntas (consecutivas o no) el usuario no ha respondido con instrucciones accionables, detente. No sigas preguntando, no sigas "analizando lo mismo", no generes trabajo especulativo.
+4. **Si el usuario señala el bucle**: si el humano dice "estás en bucle", "no entiendo lo que quieres decir" o similar, PARA inmediatamente de preguntar y de repetir patrones. Responde a su mensaje directamente; no repreguntes.
+5. **Mensajes del usuario pendientes tienen prioridad**: si un mensaje del usuario llega mientras esperas una pregunta, procesa ese mensaje (responderle) antes que cualquier tarea autónoma.
+6. **Sesiones largas**: si la sesión acumula muchas compactaciones (el contexto original se degrada) o decenas de pasos sin instrucciones nuevas, sugiere abrir una sesión nueva en lugar de seguir en la misma.
+
+<!-- v1.3 — 2026-08-11 — v1.2 + ANTI-BUCLE (TASK-20260811-005: TERM en loop de "Next Steps Needed", 8 llamadas question/4 dismissed, sesión bloqueada; reglas 1-6 contra reintentos infinitos) -->
 <!-- v1.2 — 2026-08-11 — v1.1 + ANTI-ALUCINACIÓN (TASK-20260811-003: TERM fabricaba commits/archivos sin verificar; hardening del prompt global para todas las instancias Web/Terminal) -->
