@@ -15,6 +15,7 @@
   - Escanea *.py, *.json, *.sh, *.yaml, *.yml, *.md, *.env
 """
 
+import argparse
 import hashlib
 import json
 import logging
@@ -139,75 +140,60 @@ def guardar_historial(cambios: list, total: int) -> None:
 # ── Main ──
 
 
-def main() -> None:
-    import argparse
-
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Guardián de Disco SHA-256 v2.0")
     parser.add_argument("--scan", action="store_true", help="Escanear y comparar con snapshot")
     parser.add_argument("--init", action="store_true", help="Crear snapshot inicial")
     parser.add_argument("--verify", nargs=2, metavar=("ARCHIVO", "HASH"), help="Verificar post-escritura")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def _cmd_verify(archivo: str, hash_esp: str, config: dict) -> None:
+    ok = verificar_escritura(archivo, hash_esp, config)
+    sys.exit(0 if ok else 1)
+
+
+def _cmd_init(config: dict) -> None:
+    actual = escanear(config)
+    snapshot = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"), "total": len(actual)}
+    guardar_snapshot(snapshot)
+
+
+def _cmd_scan(config: dict) -> None:
+    anterior_snap = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else {}
+    actual = escanear(config)
+
+    if anterior_snap:
+        # Solo comparar si hay snapshot previo
+        cambios = comparar(anterior_snap, actual)
+    else:
+        cambios = [{"file": f, "status": "INICIAL", "hash": h} for f, h in sorted(actual.items())]
+
+    snapshot = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "total_archivos": len(actual),
+        "archivos": {},
+        "cambios_detectados": cambios,
+    }
+    guardar_snapshot(snapshot)
+    guardar_historial(cambios, len(actual))
+
+
+def main() -> None:
+    args = _parse_args()
     config = cargar_config()
 
     if args.verify:
-        archivo, hash_esp = args.verify
-        ok = verificar_escritura(archivo, hash_esp, config)
-        {"archivo": archivo, "hash_esperado": hash_esp, "existe": Path(URA, archivo).exists(), "coincide": ok}
-        if args.json or ok:
-            pass
-        else:
-            ruta = URA / archivo
-            if not ruta.exists():
-                pass
-            else:
-                pass
-        sys.exit(0 if ok else 1)
+        _cmd_verify(*args.verify, config)
         return
 
     if args.init:
-        actual = escanear(config)
-        snapshot = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"), "total": len(actual)}
-        guardar_snapshot(snapshot)
+        _cmd_init(config)
         return
 
     if args.scan or not args.verify:
-        anterior_snap = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else {}
-        actual = escanear(config)
-
-        if anterior_snap:
-            # Solo comparar si hay snapshot previo
-            cambios = comparar(anterior_snap, actual)
-        else:
-            cambios = [{"file": f, "status": "INICIAL", "hash": h} for f, h in sorted(actual.items())]
-
-        snapshot = {
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "total_archivos": len(actual),
-            "archivos": {},
-            "cambios_detectados": cambios,
-        }
-        guardar_snapshot(snapshot)
-        guardar_historial(cambios, len(actual))
-
-        if args.json:
-            pass
-        else:
-            iconos = {"NUEVO": "📄", "MODIFICADO": "✏️", "FANTASMA": "👻", "INICIAL": "🆕"}
-            for c in cambios[:20]:
-                status = c["status"]
-                iconos.get(status, "❓")
-                c.get("hash", "—")[:12]
-            if len(cambios) > 20:
-                pass
-
-            # Check fantasmas
-            fantasmas = [c for c in cambios if c["status"] == "FANTASMA"]
-            if fantasmas:
-                pass
-            else:
-                pass
+        _cmd_scan(config)
 
 
 if __name__ == "__main__":
