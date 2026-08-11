@@ -25,6 +25,13 @@ class HybridRetriever:
         self._beta = beta
 
     def search(self, query: str, k: int = 10) -> list[dict[str, Any]]:
+        """Búsqueda híbrida (vectorial + léxica) con degradación controlada.
+
+        Si el retriever vectorial falla (p.ej. Qdrant no disponible), se usa
+        solo la búsqueda léxica; si la léxica falla, solo la vectorial; si
+        ambas fallan, se devuelve lista vacía. Cada fallo se registra con
+        `log.warning`. Documenta el comportamiento degradado (F14-F05).
+        """
         try:
             vector_results = self._vector.search(query, k=k)
         except Exception:
