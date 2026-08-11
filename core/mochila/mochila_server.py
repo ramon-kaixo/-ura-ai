@@ -328,6 +328,38 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     return None
 
 
+async def _emitir_error_sse(
+    provider_name: str,
+    message: str,
+    error_type: str,
+    es_timeout: bool = False,
+) -> AsyncGenerator[bytes, None]:
+    """Registrar fallo en circuit breaker y emitir error SSE + [DONE]."""
+    if es_timeout:
+        circuit_breaker.registrar_fallo(provider_name, es_timeout=True)
+    else:
+        circuit_breaker.registrar_fallo(provider_name)
+    yield _error_sse(message, error_type)
+    yield b"data: [DONE]\n\n"
+
+
+async def _abortaje_guardian_sse(
+    guardian,
+    chunk: dict,
+    accumulated_text: str,
+    modelo: str,
+) -> tuple[bool, str, bytes]:
+    """Evaluar chunk contra el guardián; devolver SSE de abortaje si procede."""
+    abortar, accumulated_text, penalty = _evaluar_guardian(guardian, chunk, accumulated_text, modelo)
+    if not abortar:
+        return False, accumulated_text, b""
+    return True, accumulated_text, _error_sse(
+        "STREAM_ABORTED_BY_GUARDIAN",
+        "vagancy_error",
+        penalty=penalty,
+    ) + b"data: [DONE]\n\n"
+
+
 async def _stream_from_provider(
     provider_name,
     modelo,
@@ -361,32 +393,28 @@ async def _stream_from_provider(
                 _procesar_usage(chunk, provider_name, modelo)
                 return
             if is_opencode and guardian:
-                abortar, accumulated_text, penalty = _evaluar_guardian(guardian, chunk, accumulated_text, modelo)
+                abortar, accumulated_text, sse = await _abortaje_guardian_sse(
+                    guardian, chunk, accumulated_text, modelo
+                )
                 if abortar:
-                    yield _error_sse(
-                        "STREAM_ABORTED_BY_GUARDIAN",
-                        "vagancy_error",
-                        penalty=penalty,
-                    )
-                    yield b"data: [DONE]\n\n"
+                    yield sse
                     return
             yield _sse_bytes(chunk)
         yield b"data: [DONE]\n\n"
     except TimeoutError:
         hubo_error = True
-        circuit_breaker.registrar_fallo(provider_name, es_timeout=True)
-        yield _error_sse(f"Timeout ({timeout_val}s)", "timeout_error")
-        yield b"data: [DONE]\n\n"
+        async for sse in _emitir_error_sse(
+            provider_name, f"Timeout ({timeout_val}s)", "timeout_error", es_timeout=True
+        ):
+            yield sse
     except ProviderError as e:
         hubo_error = True
-        circuit_breaker.registrar_fallo(provider_name)
-        yield _error_sse(str(e), "provider_error")
-        yield b"data: [DONE]\n\n"
+        async for sse in _emitir_error_sse(provider_name, str(e), "provider_error"):
+            yield sse
     except Exception as e:
         hubo_error = True
-        circuit_breaker.registrar_fallo(provider_name)
-        yield _error_sse(f"Error: {e!s}", "internal_error")
-        yield b"data: [DONE]\n\n"
+        async for sse in _emitir_error_sse(provider_name, f"Error: {e!s}", "internal_error"):
+            yield sse
     finally:
         if not hubo_error:
             circuit_breaker.registrar_exito(provider_name)

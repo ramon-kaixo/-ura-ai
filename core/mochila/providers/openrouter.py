@@ -22,6 +22,54 @@ class OpenRouterProvider(Provider):
     def timeout(self) -> int:
         return OPENROUTER_TIMEOUT
 
+    def _payload_base(
+        self,
+        modelo: str,
+        mensajes: list,
+        stream: bool,
+        max_tokens: int,
+        temperature: float,
+        tools: list | None,
+    ) -> dict:
+        payload = {
+            "model": modelo,
+            "messages": mensajes,
+            "stream": stream,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+        if tools:
+            payload["tools"] = tools
+        return payload
+
+    async def _stream_chunks(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        payload: dict,
+        headers: dict,
+    ) -> AsyncGenerator[dict, None]:
+        async with client.stream("POST", url, json=payload, headers=headers) as resp:
+            if resp.is_error:
+                text = await resp.aread()
+                msg = f"OpenRouter error: {resp.status_code} {text.decode(errors='replace')[:200]}"
+                raise ProviderError(
+                    msg,
+                    provider=self.nombre,
+                    status_code=resp.status_code,
+                )
+            async for line in resp.aiter_lines():
+                if line.startswith("data: "):
+                    data = line[6:].strip()
+                    if data == "[DONE]":
+                        yield {
+                            "choices": [{"delta": {}, "finish_reason": "stop"}],
+                            "usage": None,
+                        }
+                        return
+                    if data:
+                        yield json.loads(data)
+
     async def chat(
         self,
         modelo: str,
@@ -43,43 +91,17 @@ class OpenRouterProvider(Provider):
             "Content-Type": "application/json",
             "HTTP-Referer": os.environ.get("OPENROUTER_REFERER", "https://openrouter.ai/"),
         }
-        payload = {
-            "model": modelo,
-            "messages": mensajes,
-            "stream": stream,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-        }
-        if tools:
-            payload["tools"] = tools
+        payload = self._payload_base(modelo, mensajes, stream, max_tokens, temperature, tools)
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(self.timeout)) as client:
             if stream:
-                async with client.stream(
-                    "POST",
+                async for chunk in self._stream_chunks(
+                    client,
                     f"{OPENROUTER_BASE}/chat/completions",
-                    json=payload,
-                    headers=headers,
-                ) as resp:
-                    if resp.is_error:
-                        text = await resp.aread()
-                        msg = f"OpenRouter error: {resp.status_code} {text.decode(errors='replace')[:200]}"
-                        raise ProviderError(
-                            msg,
-                            provider=self.nombre,
-                            status_code=resp.status_code,
-                        )
-                    async for line in resp.aiter_lines():
-                        if line.startswith("data: "):
-                            data = line[6:].strip()
-                            if data == "[DONE]":
-                                yield {
-                                    "choices": [{"delta": {}, "finish_reason": "stop"}],
-                                    "usage": None,
-                                }
-                                return
-                            if data:
-                                yield json.loads(data)
+                    payload,
+                    headers,
+                ):
+                    yield chunk
             else:
                 resp = await client.post(
                     f"{OPENROUTER_BASE}/chat/completions",
