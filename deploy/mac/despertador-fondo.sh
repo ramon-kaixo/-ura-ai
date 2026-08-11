@@ -10,6 +10,7 @@
 #   4. Log a /tmp/fondo-wake.log.
 
 set -u
+# Lock anti-solapamiento (flock no existe en macOS por defecto; usar mkdir como lock)
 LOCK=/tmp/fondo-wake.lock
 LOG=/tmp/fondo-wake.log
 OC=/Users/ramonesnaola/.opencode/bin/opencode
@@ -17,8 +18,12 @@ URL=http://127.0.0.1:8091
 REPO=/Users/ramonesnaola/URA/ura_ia_1972
 MAX_MIN=20
 
-exec 9>"$LOCK"
-flock -n 9 || { echo "[$(date +%H:%M:%S)] ya hay un run de fondo en curso (flock), salto" >> "$LOG"; exit 0; }
+# Lock con mkdir (atómico en macOS/Linux)
+if ! mkdir "$LOCK" 2>/dev/null; then
+    echo "[$(date +%H:%M:%S)] ya hay un run de fondo en curso (lock), salto" >> "$LOG"
+    exit 0
+fi
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 echo "[$(date +%H:%M:%S)] despertador iniciado" >> "$LOG"
 
@@ -41,12 +46,16 @@ if [ -z "$SES" ]; then
     echo "[$(date +%H:%M:%S)] sin sesión disponible" >> "$LOG"
     exit 0
 fi
-echo "[$(date +%H:%M:%S)] sesión: $SES" >> "$LOG"
+echo "[$(date +%H:%M:%S)] sesión base: $SES" >> "$LOG"
 
-MSG='MODO FONDO (v1.8): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo: revisa 1 carpeta/modulo de URA segun el progreso registrado en docs/udo/hallazgos-fondo.md (no repitas lo ya revisado). Busca fallos, duplicados, codigo muerto, contradicciones. Registra hallazgos con estado "propuesto (con plan)" (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO). PROHIBIDO ESCRITURA: no ejecutes write, edit, patch, format, ni ningun comando que modifique archivos (ni siquiera formateo/ruff); usa solo herramientas de lectura (read, grep, glob, ls) y si acaso comandos read-only. Si algo requiere correccion, registra el hallazgo con plan y termina. Registra el progreso de la carpeta revisada. Luego termina el turno.'
+MSG='MODO FONDO (v1.9): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo: revisa 1 carpeta/modulo de URA segun el progreso registrado en docs/udo/hallazgos-fondo.md (no repitas lo ya revisado). Busca fallos, duplicados, codigo muerto, contradicciones. Registra hallazgos con estado "propuesto (con plan)" (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO). PROHIBIDO ESCRITURA: no ejecutes write, edit, patch, format, ni ningun comando que modifique archivos (ni siquiera formateo/ruff); usa solo herramientas de lectura (read, grep, glob, ls) y si acaso comandos read-only. Si algo requiere correccion, registra el hallazgo con plan y termina. Registra el progreso de la carpeta revisada. Luego termina el turno.'
 
 cd "$REPO" || exit 1
-"$OC" run --attach "$URL" -s "$SES" --format json "$MSG" >> "$LOG" 2>&1
+# --fork: sesión dedicada hija de la principal (contexto limpio de fondo,
+# sin el historial de trabajo donde el modelo se siente "en tarea" y toca código).
+# --agent revisor-fondo: agente con write/edit/patch DESHABILITADAS en config
+# (protección técnica real, no solo instrucción textual).
+"$OC" run --attach "$URL" -s "$SES" --fork --agent revisor-fondo --format json "$MSG" >> "$LOG" 2>&1
 
 echo "[$(date +%H:%M:%S)] run de fondo terminado (exit=$?)" >> "$LOG"
 exit 0
