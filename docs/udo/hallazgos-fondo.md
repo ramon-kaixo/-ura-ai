@@ -23,4 +23,4 @@
 
 | fecha | carpeta/módulo revisado | resultado |
 |-------|------------------------|-----------|
-| 2026-08-11 | core/mochila/ | 2 hallazgos nuevos encontrados: uno relativo al clasificador basado en palabras clave y otro sobre validación de salida del clasificador |
+| 2026-08-11 | core/mochila/ | 2 hallazgos nuevos encontrados: uno relativo al clasificador basado en palabras clave y otro sobre validación de salida del clasificador || 2026-08-11 | motor/core/fusion/fact_history.py:351-355 | El TERM (modo fondo) modificó código (formateo) sin autorización — viola la regla v1.7 (modo fondo read-only). Detectado y revertido por WEB. | ALTA | corregido | **QUÉ**: Añadir al mensaje MODO FONDO del despertador un refuerzo explícito: NO ejecutar write/edit/format. **POR QUÉ**: El TERM aplicó ruff-format en un archivo durante la revisión. **IMPACTO**: despertador-fondo.sh + prompt v1.8. **VERIFICACIÓN**: grep del refuerzo en el script. **RIESGO**: bajo, reversible. |
