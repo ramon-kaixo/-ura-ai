@@ -58,8 +58,8 @@ class DockerOrchestrator:
         with tempfile.TemporaryDirectory() as d:
             return await self._run(Path(d), codigo, nombre)
 
-    async def _run(self, d, cod, nom):
-        t0 = asyncio.get_event_loop().time()
+    def _stage(self, d: Path, cod: str, nom: str) -> str:
+        """Preparar directorio de trabajo: skills, tests, Dockerfile y runner."""
         (d / "skills").mkdir()
         (d / "skills" / f"{nom}.py").write_text(cod)
         td = d / "tests"
@@ -70,23 +70,33 @@ class DockerOrchestrator:
             (td / "ts.py").write_text("def t(): assert True")
         (d / "Dockerfile").write_text(self._df(cod, nom))
         (d / "rv.py").write_text(self._rv(nom))
-        tag = f"us-{hashlib.sha256(cod.encode()).hexdigest()[:8]}"
+        return f"us-{hashlib.sha256(cod.encode()).hexdigest()[:8]}"
+
+    async def _build(self, tag: str, d: Path) -> ResultadoSandbox | None:
+        """Construir imagen; None si la build fue exitosa."""
+        b = await asyncio.create_subprocess_exec("docker", "build", "-t", tag, str(d), stdout=-1, stderr=-1)
+        _, be = await asyncio.wait_for(b.communicate(), 120)
+        if b.returncode:
+            return ResultadoSandbox(
+                False,
+                False,
+                0,
+                0,
+                [],
+                "",
+                be.decode(errors="ignore")[:2000],
+                0,
+                0,
+                "build fail",
+            )
+        return None
+
+    async def _run(self, d, cod, nom):
+        t0 = asyncio.get_event_loop().time()
+        tag = self._stage(d, cod, nom)
         try:
-            b = await asyncio.create_subprocess_exec("docker", "build", "-t", tag, str(d), stdout=-1, stderr=-1)
-            _, be = await asyncio.wait_for(b.communicate(), 120)
-            if b.returncode:
-                return ResultadoSandbox(
-                    False,
-                    False,
-                    0,
-                    0,
-                    [],
-                    "",
-                    be.decode(errors="ignore")[:2000],
-                    0,
-                    0,
-                    "build fail",
-                )
+            if (fallo := await self._build(tag, d)) is not None:
+                return fallo
             rp = await asyncio.create_subprocess_exec(
                 "docker",
                 "run",

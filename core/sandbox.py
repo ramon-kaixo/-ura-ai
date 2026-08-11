@@ -34,6 +34,47 @@ class Sandbox:
         except Exception as e:
             logger.exception(f"Error registrando en sandbox.log: {e}")
 
+    async def _ejecutar_test(self, test_file: str, module_name: str) -> dict:
+        """Ejecutar archivo de prueba en subproceso aislado con timeout."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "python",
+                test_file,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30.0)
+
+                output = stdout.decode("utf-8", errors="ignore")
+                error = stderr.decode("utf-8", errors="ignore")
+
+                success = process.returncode == 0
+
+                result = {"success": success, "output": output, "error": error}
+
+                self._log("TEST_COMPLETE", f"Módulo: {module_name}, Success: {success}")
+                return result
+
+            except TimeoutError:
+                process.kill()
+                await process.wait()
+
+                result = {
+                    "success": False,
+                    "output": "",
+                    "error": "Timeout: prueba excedió 30 segundos",
+                }
+
+                self._log("TEST_TIMEOUT", f"Módulo: {module_name}")
+                return result
+        except Exception as e:
+            result = {"success": False, "output": "", "error": str(e)}
+
+            self._log("TEST_ERROR", f"Módulo: {module_name}, Error: {e!s}")
+            return result
+
     async def test_improvement(self, module_name: str, test_code: str) -> dict:
         """Ejecutar código de prueba en subproceso aislado con timeout.
 
@@ -47,57 +88,23 @@ class Sandbox:
         """
         self._log("TEST_START", f"Probando módulo: {module_name}")
 
+        # Crear archivo temporal con el código de prueba
         try:
-            # Crear archivo temporal con el código de prueba
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write(test_code)
                 test_file = f.name
-
-            try:
-                # Ejecutar en subproceso con timeout
-                process = await asyncio.create_subprocess_exec(
-                    "python",
-                    test_file,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-
-                try:
-                    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30.0)
-
-                    output = stdout.decode("utf-8", errors="ignore")
-                    error = stderr.decode("utf-8", errors="ignore")
-
-                    success = process.returncode == 0
-
-                    result = {"success": success, "output": output, "error": error}
-
-                    self._log("TEST_COMPLETE", f"Módulo: {module_name}, Success: {success}")
-                    return result
-
-                except TimeoutError:
-                    process.kill()
-                    await process.wait()
-
-                    result = {
-                        "success": False,
-                        "output": "",
-                        "error": "Timeout: prueba excedió 30 segundos",
-                    }
-
-                    self._log("TEST_TIMEOUT", f"Módulo: {module_name}")
-                    return result
-
-            finally:
-                # Limpiar archivo temporal
-                with contextlib.suppress(OSError):
-                    Path(test_file).unlink()# noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
-
         except Exception as e:
             result = {"success": False, "output": "", "error": str(e)}
 
             self._log("TEST_ERROR", f"Módulo: {module_name}, Error: {e!s}")
             return result
+
+        try:
+            return await self._ejecutar_test(test_file, module_name)
+        finally:
+            # Limpiar archivo temporal
+            with contextlib.suppress(OSError):
+                Path(test_file).unlink()  # noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
 
     def safe_import(self, module_name: str) -> bool:
         """Intentar importar un módulo de prueba sin afectar al sistema principal.

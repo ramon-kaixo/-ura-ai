@@ -118,6 +118,27 @@ def _timeout_handler(signum, frame) -> Never:
     raise _TimeoutError(msg)
 
 
+def _ejecutar_en_hilo(func, args, kwargs, timeout: float):
+    """Ejecutar función en hilo daemon con timeout: devuelve (result, exception)."""
+    result = [None]
+    exception = [None]
+    finished = [False]
+
+    def target() -> None:
+        try:
+            result[0] = func(*args, **kwargs)
+        except Exception as e:
+            exception[0] = e
+        finally:
+            finished[0] = True
+
+    t = threading.Thread(target=target)
+    t.daemon = True
+    t.start()
+    t.join(timeout)
+    return (t, result[0] if not t.is_alive() else None), (exception[0] if not t.is_alive() else None)
+
+
 def watchdog(
     timeout: float = 30.0,
     on_timeout: str = "log",
@@ -153,28 +174,13 @@ def watchdog(
                     signal.signal(signal.SIGALRM, old_handler)
             else:
                 # Hilo secundario: usar threading.Timer
-                result = [None]
-                exception = [None]
-                finished = [False]
-
-                def target() -> None:
-                    try:
-                        result[0] = func(*args, **kwargs)
-                    except Exception as e:
-                        exception[0] = e
-                    finally:
-                        finished[0] = True
-
-                t = threading.Thread(target=target)
-                t.daemon = True
-                t.start()
-                t.join(timeout)
+                (t, resultado), (excepcion,) = _ejecutar_en_hilo(func, args, kwargs, timeout)
                 if t.is_alive():
                     _on_timeout(func.__name__, timeout, extra_context)
                     return None
-                if exception[0]:
-                    raise exception[0]
-                return result[0]
+                if excepcion:
+                    raise excepcion
+                return resultado
 
         @functools.wraps(func)
         async def wrapper_async(*args, **kwargs):
