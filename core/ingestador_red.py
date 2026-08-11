@@ -78,6 +78,34 @@ def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, 
         return -1, "", str(e)
 
 
+def _seleccionar_candidato(tarea: str, dispositivos: dict) -> tuple[str, dict] | None:
+    """Elegir dispositivo destino según el perfil de la tarea."""
+    if tarea in TAREAS_PESADAS:
+        for d_id, d in dispositivos.items():
+            if d.get("rol") == "servidor_principal" and d.get("estado") == "online":
+                return d_id, d
+    elif tarea in TAREAS_MEDIAS:
+        for d_id, d in dispositivos.items():
+            if "cliente" in d.get("rol", "") and d.get("estado") == "online" and d.get("ram_gb", 0) >= 16:
+                return d_id, d
+    else:  # Ligera
+        for d_id, d in dispositivos.items():
+            if d.get("estado") == "online" and d.get("tipo") != "ios":
+                return d_id, d
+    return None
+
+
+def _construir_comando(tarea: str, archivo: str | None, hostname: str) -> str:
+    comandos = {
+        "refactorizar": f"cd /home/ramon/URA/ura_ia_1972 && python3 scripts/pro/pipeline_supremo.py {archivo or ''}",
+        "monitorear": "free -h && df -h /",
+        "ping": "echo 'pong'",
+        "sincronizar": f"rsync -avz /home/ramon/URA/ura_ia_1972/ {hostname}:/home/ramon/URA/ura_ia_1972/",
+        "dashboard": "curl -s http://localhost:11435/health",
+    }
+    return comandos.get(tarea, f"echo 'Tarea {tarea} recibida en {hostname}'")
+
+
 def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
     """Distribuye una tarea al dispositivo más adecuado según su perfil.
 
@@ -90,43 +118,16 @@ def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
     dispositivos = inv.get("dispositivos", {})
 
     # Seleccionar dispositivo según tipo de tarea
-    candidato = None
-    if tarea in TAREAS_PESADAS:
-        # Buscar dispositivo con rol servidor_principal
-        for d_id, d in dispositivos.items():
-            if d.get("rol") == "servidor_principal" and d.get("estado") == "online":
-                candidato = (d_id, d)
-                break
-
-    elif tarea in TAREAS_MEDIAS:
-        for d_id, d in dispositivos.items():
-            if "cliente" in d.get("rol", "") and d.get("estado") == "online" and d.get("ram_gb", 0) >= 16:
-                candidato = (d_id, d)
-                break
-
-    else:  # Ligera
-        for d_id, d in dispositivos.items():
-            if d.get("estado") == "online" and d.get("tipo") != "ios":
-                candidato = (d_id, d)
-                break
+    candidato = _seleccionar_candidato(tarea, dispositivos)
 
     if not candidato:
         # Fallback: usar localhost (self)
         return {"asignado_a": "localhost", "tarea": tarea, "ok": True, "metodo": "local_fallback"}
 
-    hostname = candidato[0]
-    dev = candidato[1]
+    hostname, dev = candidato
 
     # Construir comando según la tarea
-    comandos = {
-        "refactorizar": f"cd /home/ramon/URA/ura_ia_1972 && python3 scripts/pro/pipeline_supremo.py {archivo or ''}",
-        "monitorear": "free -h && df -h /",
-        "ping": "echo 'pong'",
-        "sincronizar": f"rsync -avz /home/ramon/URA/ura_ia_1972/ {hostname}:/home/ramon/URA/ura_ia_1972/",
-        "dashboard": "curl -s http://localhost:11435/health",
-    }
-
-    cmd = comandos.get(tarea, f"echo 'Tarea {tarea} recibida en {hostname}'")
+    cmd = _construir_comando(tarea, archivo, hostname)
     exit_code, stdout, stderr = tailscale_ssh(hostname, cmd)
 
     return {

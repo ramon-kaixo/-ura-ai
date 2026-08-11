@@ -167,6 +167,31 @@ async def call_ollama(
         return None
 
 
+def _resultado_seguro(result: object) -> dict | None:
+    """Normalizar el resultado de un modelo: excepciones y timeouts a None."""
+    if isinstance(result, BaseException):
+        return None
+    return result
+
+
+def _decidir_veredicto(
+    plan_text: str,
+    primary: dict | None,
+    auditor: dict | None,
+    consensus: float,
+    threshold: float,
+) -> tuple[str, str]:
+    """Determinar veredicto del debate (CONSENSUS/INCOMPLETE/HUMAN_ARBITRATION)."""
+    if primary is None or auditor is None:
+        return "INCOMPLETE", plan_text
+    if consensus >= threshold and not auditor.get("requires_human", False):
+        unified = plan_text
+        if primary.get("suggestions"):
+            unified += "\n\n# Mejoras sugeridas:\n" + "\n".join(f"- {s}" for s in primary["suggestions"][:3])
+        return "CONSENSUS", unified
+    return "HUMAN_ARBITRATION", plan_text
+
+
 async def run_debate(
     plan_text: str,
     context: dict | None = None,
@@ -179,7 +204,7 @@ async def run_debate(
     auditor_cfg = config["models"]["auditor"]
     threshold = config["consensus_threshold"]
 
-    tasks = [
+    results = await asyncio.gather(
         call_ollama(
             primary_cfg["name"],
             build_primary_prompt(plan_text, context),
@@ -192,31 +217,16 @@ async def run_debate(
             temperature=auditor_cfg["temperature"],
             max_tokens=auditor_cfg["max_tokens"],
         ),
-    ]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+        return_exceptions=True,
+    )
 
-    primary_result, auditor_result = results
-
-    primary_result = None if isinstance(primary_result, BaseException) else primary_result
-    auditor_result = None if isinstance(auditor_result, BaseException) else auditor_result
+    primary_result = _resultado_seguro(results[0])
+    auditor_result = _resultado_seguro(results[1])
 
     primary_score = primary_result.get("score", 0.0) if primary_result else 0.0
     auditor_score = auditor_result.get("score", 0.0) if auditor_result else 0.0
     consensus = min(primary_score, auditor_score)
-
-    if primary_result is None or auditor_result is None:
-        verdict = "INCOMPLETE"
-        plan_unified = plan_text
-    elif consensus >= threshold and not auditor_result.get("requires_human", False):
-        verdict = "CONSENSUS"
-        plan_unified = plan_text
-        if primary_result.get("suggestions"):
-            plan_unified += "\n\n# Mejoras sugeridas:\n" + "\n".join(
-                f"- {s}" for s in primary_result["suggestions"][:3]
-            )
-    else:
-        verdict = "HUMAN_ARBITRATION"
-        plan_unified = plan_text
+    verdict, plan_unified = _decidir_veredicto(plan_text, primary_result, auditor_result, consensus, threshold)
 
     return {
         "consensus": round(consensus, 2),

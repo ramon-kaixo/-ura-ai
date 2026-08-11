@@ -240,6 +240,59 @@ class GuardianAcciones:
 
         return False
 
+    def _regla_instalacion(self, accion: str) -> dict[str, Any] | None:
+        """REGLA 4 — control de instalación: bloquear no gratuitas o no autorizadas.
+
+        Returns:
+            Dict de bloqueo si procede, None si la acción sigue adelante.
+
+        """
+        accion_lower = accion.lower()
+        if not any(cmd in accion_lower for cmd in ["brew install", "pip install", "npm install", "apt install"]):
+            return None
+
+        partes = accion.split()
+        if len(partes) < 3:
+            return None
+        paquete = partes[2]
+        es_gratuito, mensaje = self._verificar_licencia(paquete)
+
+        if not es_gratuito:
+            self.stats["instalaciones_bloqueadas"] += 1
+            self._log_audit("guardian", accion, "BLOQUEADO", mensaje)
+            return {
+                "success": False,
+                "message": f"Instalación bloqueada: {mensaje}",
+                "autorizacion_requerida": True,
+            }
+
+        if not self._autorizar_instalacion(paquete):
+            self.stats["instalaciones_bloqueadas"] += 1
+            self._log_audit("guardian", accion, "BLOQUEADO", "Usuario denegó autorización")
+            return {"success": False, "message": "Instalación denegada por el usuario"}
+        return None
+
+    def _regla_copia_previa(self, accion: str, **kwargs) -> str | None:
+        """REGLA 2 — backup previo para operaciones de borrado.
+
+        Returns:
+            Mensaje de advertencia si el backup falló, None en caso contrario.
+
+        """
+        accion_lower = accion.lower()
+        if not any(cmd in accion_lower for cmd in ["rm ", "delete", "unlink", "rmdir"]):
+            return None
+
+        ruta = kwargs.get("ruta", "")
+        if not ruta:
+            partes = accion.split()
+            if len(partes) >= 2:
+                ruta = partes[-1]
+
+        if ruta and not self._crear_backup(ruta):
+            return "Backup falló, pero se procede con la acción"
+        return None
+
     def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:
         """Ejecutar una acción con todas las reglas de seguridad.
 
@@ -257,28 +310,8 @@ class GuardianAcciones:
         logger.info("[{timestamp}] Ejecutando acción: {accion}")
 
         # REGLA 4 - CONTROL DE INSTALACIÓN
-        accion_lower = accion.lower()
-        if any(cmd in accion_lower for cmd in ["brew install", "pip install", "npm install", "apt install"]):
-            # Extraer nombre del paquete
-            partes = accion.split()
-            if len(partes) >= 3:
-                paquete = partes[2]
-                es_gratuito, mensaje = self._verificar_licencia(paquete)
-
-                if not es_gratuito:
-                    self.stats["instalaciones_bloqueadas"] += 1
-                    self._log_audit("guardian", accion, "BLOQUEADO", mensaje)
-                    return {
-                        "success": False,
-                        "message": f"Instalación bloqueada: {mensaje}",
-                        "autorizacion_requerida": True,
-                    }
-
-                # Si es gratuito, autorizar
-                if not self._autorizar_instalacion(paquete):
-                    self.stats["instalaciones_bloqueadas"] += 1
-                    self._log_audit("guardian", accion, "BLOQUEADO", "Usuario denegó autorización")
-                    return {"success": False, "message": "Instalación denegada por el usuario"}
+        if (bloqueo := self._regla_instalacion(accion)) is not None:
+            return bloqueo
 
         # REGLA 1 - POLICÍA
         permitido, motivo = self._consultar_policia(accion, **kwargs)
@@ -288,19 +321,8 @@ class GuardianAcciones:
             return {"success": False, "message": f"Acción bloqueada por policía: {motivo}"}
 
         # REGLA 2 - COPIA PREVIA (solo para operaciones de borrado)
-        if any(cmd in accion_lower for cmd in ["rm ", "delete", "unlink", "rmdir"]):
-            # Intentar extraer ruta para backup
-            ruta = kwargs.get("ruta", "")
-            if not ruta:
-                # Intentar extraer de la acción
-                partes = accion.split()
-                if len(partes) >= 2:
-                    ruta = partes[-1]
-
-            if ruta:
-                backup_exitoso = self._crear_backup(ruta)
-                if not backup_exitoso:
-                    logger.warning("Backup falló, pero se procede con la acción")
+        if aviso := self._regla_copia_previa(accion, **kwargs):
+            logger.warning(aviso)
 
         # REGLA 3 - CAJA DE ARENA
         sandbox_exitoso, mensaje_sandbox = self._ejecutar_sandbox(accion, **kwargs)

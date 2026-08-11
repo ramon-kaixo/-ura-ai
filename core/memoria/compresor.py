@@ -44,6 +44,76 @@ Texto:
 JSON:"""
 
 
+async def _consultar_ollama(prompt: str, modelo: str) -> str | None:
+    """Enviar prompt al compresor y devolver el contenido de la respuesta."""
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            OLLAMA_URL,
+            json={
+                "model": modelo,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "options": {"temperature": 0.0, "num_predict": 2048},
+            },
+        )
+
+    if resp.is_error:
+        log.error("Ollama error comprimiendo: %s", resp.status_code)
+        return None
+    return resp.json().get("message", {}).get("content", "").strip()
+
+
+def _parsear_json_ideas(content: str) -> list | None:
+    """Parsear JSON de ideas con fallback a extracción del primer array."""
+    try:
+        raw = json.loads(content)
+    except json.JSONDecodeError:
+        start = content.find("[")
+        end = content.rfind("]")
+        if start >= 0 and end > start:
+            try:
+                raw = json.loads(content[start : end + 1])
+            except json.JSONDecodeError:
+                log.warning("No se pudo parsear JSON del compresor: %s", content[:200])
+                return None
+        else:
+            log.warning("Respuesta sin JSON: %s", content[:200])
+            return None
+
+    if not isinstance(raw, list):
+        return None
+    return raw
+
+
+def _construir_idea(
+    item: object,
+    idx: int,
+    fuente: str,
+    hash_origen: str,
+    fecha_fuente: str,
+) -> Idea | None:
+    """Convertir un item JSON en Idea válida, o None si no procede."""
+    if not isinstance(item, dict) or "idea" not in item:
+        return None
+    idea_hash = f"{hash_origen}:{idx}" if hash_origen else ""
+    idea = Idea(
+        idea=item.get("idea", ""),
+        tema=item.get("tema", ""),
+        etiquetas=item.get("etiquetas", []) if isinstance(item.get("etiquetas"), list) else [],
+        tipo=item.get("tipo", "dato"),
+        herramienta=item.get("herramienta", ""),
+        coste=item.get("coste", ""),
+        fuente=fuente,
+        hash_origen=idea_hash,
+        fecha_fuente=fecha_fuente,
+        version=1,
+        vigente=True,
+    )
+    if not idea.idea.strip():
+        return None
+    return idea
+
+
 async def comprimir_a_ideas(
     texto: str,
     fuente: str = "",
@@ -58,63 +128,18 @@ async def comprimir_a_ideas(
     fragmento = texto[:MAX_CHARS_TEXTO]
     prompt = PROMPT_COMPRESOR.format(texto=fragmento)
 
+    content = await _consultar_ollama(prompt, modelo)
+    if content is None:
+        return []
+
+    raw = _parsear_json_ideas(content)
+    if raw is None:
+        return []
+
     ideas: list[Idea] = []
-
-    async with httpx.AsyncClient(timeout=120) as client:
-        resp = await client.post(
-            OLLAMA_URL,
-            json={
-                "model": modelo,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": False,
-                "options": {"temperature": 0.0, "num_predict": 2048},
-            },
-        )
-
-    if resp.is_error:
-        log.error("Ollama error comprimiendo: {resp.status_code}")
-        return ideas
-
-    data = resp.json()
-    content = data.get("message", {}).get("content", "").strip()
-
-    try:
-        raw = json.loads(content)
-    except json.JSONDecodeError:
-        start = content.find("[")
-        end = content.rfind("]")
-        if start >= 0 and end > start:
-            try:
-                raw = json.loads(content[start : end + 1])
-            except json.JSONDecodeError:
-                log.warning("No se pudo parsear JSON del compresor: {content[:200]}")
-                return ideas
-        else:
-            log.warning("Respuesta sin JSON: {content[:200]}")
-            return ideas
-
-    if not isinstance(raw, list):
-        return ideas
-
     for idx, item in enumerate(raw):
-        if not isinstance(item, dict) or "idea" not in item:
-            continue
-        idea_hash = f"{hash_origen}:{idx}" if hash_origen else ""
-        idea = Idea(
-            idea=item.get("idea", ""),
-            tema=item.get("tema", ""),
-            etiquetas=item.get("etiquetas", []) if isinstance(item.get("etiquetas"), list) else [],
-            tipo=item.get("tipo", "dato"),
-            herramienta=item.get("herramienta", ""),
-            coste=item.get("coste", ""),
-            fuente=fuente,
-            hash_origen=idea_hash,
-            fecha_fuente=fecha_fuente,
-            version=1,
-            vigente=True,
-        )
-        if idea.idea.strip():
+        if (idea := _construir_idea(item, idx, fuente, hash_origen, fecha_fuente)) is not None:
             ideas.append(idea)
 
-    log.info("Compresor: {len(raw)} items -> {len(ideas)} ideas validas ({modelo})")
+    log.info("Compresor: %d items -> %d ideas validas (%s)", len(raw), len(ideas), modelo)
     return ideas

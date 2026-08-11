@@ -113,48 +113,55 @@ vram_critical_cycles = 0
 VRAM_PANIC_MB = 22000
 
 
-def check_vram_pressure() -> None:
-    global vram_critical_cycles  # noqa: PLW0603
+def _vram_used_mb() -> int:
+    """Consultar VRAM usada por los procesos compute (MiB)."""
     cmd = [
         "nvidia-smi",
         "--query-compute-apps=used_memory",
         "--format=csv,noheader,nounits",
     ]
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
+    total_used = 0
+    for line in res.stdout.strip().split("\n"):
+        line = line.strip()  # noqa: PLW2901
+        if line.isdigit():
+            total_used += int(line)
+    return total_used
+
+
+def _reportar_vram(
+    evento: str, result_type: str, reason: str = "", sandbox_errors: list[str] | None = None, attempts: int = 0
+) -> None:
+    """Registrar evento de monitorización VRAM en el log del guardián."""
+    log_event(
+        evento,
+        model="",
+        file="",
+        reason=reason,
+        attempts=attempts,
+        penalty="",
+        sandbox_errors=sandbox_errors or [],
+        complexity=0,
+        temperature=0.0,
+        result_type=result_type,
+    )
+
+
+def check_vram_pressure() -> None:
+    global vram_critical_cycles  # noqa: PLW0603
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
-        total_used = 0
-        for line in res.stdout.strip().split("\n"):
-            line = line.strip()  # noqa: PLW2901
-            if line.isdigit():
-                total_used += int(line)
+        total_used = _vram_used_mb()
 
         if total_used > VRAM_PANIC_MB:
             vram_critical_cycles += 1
-            log_event(
-                "vram_pressure_high",
-                model="",
-                file="",
-                reason="",
-                attempts=vram_critical_cycles,
-                penalty="",
-                sandbox_errors=[],
-                complexity=0,
-                temperature=0.0,
-                result_type="warning",
-            )
+            _reportar_vram("vram_pressure_high", "warning", attempts=vram_critical_cycles)
             logger.warning("VRAM pressure: %d MB used (%d/%d cycles)", total_used, vram_critical_cycles, 3)
             if vram_critical_cycles >= 3:
-                log_event(
+                _reportar_vram(
                     "vram_panic_restart",
-                    model="",
-                    file="",
-                    reason="",
-                    attempts=3,
-                    penalty="",
+                    "failure",
                     sandbox_errors=[f"VRAM saturation {total_used} MB > {VRAM_PANIC_MB} MB"],
-                    complexity=0,
-                    temperature=0.0,
-                    result_type="failure",
+                    attempts=3,
                 )
                 logger.critical("VRAM panic: restarting mochila")
                 restart_service()
@@ -162,18 +169,7 @@ def check_vram_pressure() -> None:
         else:
             vram_critical_cycles = 0
     except (subprocess.TimeoutExpired, FileNotFoundError, ValueError) as e:
-        log_event(
-            "vram_monitor_error",
-            model="",
-            file="",
-            reason=str(e),
-            attempts=0,
-            penalty="",
-            sandbox_errors=[],
-            complexity=0,
-            temperature=0.0,
-            result_type="failure",
-        )
+        _reportar_vram("vram_monitor_error", "failure", reason=str(e))
         logger.warning("VRAM monitor error: %s", e)
 
 
