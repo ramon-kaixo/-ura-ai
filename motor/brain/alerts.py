@@ -35,8 +35,17 @@ class AlertEngine:
     def evaluate(self) -> list[Alert]:
         observations = self._observer.observe_all()
         alerts: list[Alert] = []
+        alerts += self._alert_provider_caido(observations)
+        alerts += self._alert_disco_critico(observations)
+        alerts += self._alert_desgradacion(observations)
+        alerts += self._alert_red(observations)
 
-        # Patron 1: Provider caido
+        self._alert_history.extend(alerts)
+        self._alert_history = self._alert_history[-100:]
+        return alerts
+
+    def _alert_provider_caido(self, observations) -> list[Alert]:
+        alerts: list[Alert] = []
         for obs in observations:
             if obs.status == "error":
                 alerts.append(
@@ -49,8 +58,10 @@ class AlertEngine:
                         suggested_action="Verificar conectividad y credenciales",
                     )
                 )
+        return alerts
 
-        # Patron 2: Disco critico
+    def _alert_disco_critico(self, observations) -> list[Alert]:
+        alerts: list[Alert] = []
         for obs in observations:
             if obs.subsystem == "disk":
                 libre = obs.raw_data.get("libre_gb", 999)
@@ -76,8 +87,10 @@ class AlertEngine:
                             suggested_action="Ejecutar limpieza de logs",
                         )
                     )
+        return alerts
 
-        # Patron 3: Degradacion multiple (latencia + errores)
+    def _alert_desgradacion(self, observations) -> list[Alert]:
+        alerts: list[Alert] = []
         latency_high = [o for o in observations if o.raw_data.get("latency_ms", 0) > 500]
         errors = [o for o in observations if o.status == "error"]
         if len(latency_high) >= 2 and len(errors) >= 1:
@@ -92,8 +105,11 @@ class AlertEngine:
                     suggested_action="Escalar recursos o investigar cuello de botella",
                 )
             )
+        return alerts
 
-        # Patron 4: Latencia alta sin errores = posible red
+    def _alert_red(self, observations) -> list[Alert]:
+        alerts: list[Alert] = []
+        latency_high = [o for o in observations if o.raw_data.get("latency_ms", 0) > 500]
         for obs in latency_high:
             if obs.status != "error" and obs.subsystem != "disk":
                 alerts.append(
@@ -106,9 +122,6 @@ class AlertEngine:
                         suggested_action="Verificar conectividad de red",
                     )
                 )
-
-        self._alert_history.extend(alerts)
-        self._alert_history = self._alert_history[-100:]
         return alerts
 
     def get_history(self, limit: int = 20) -> list[Alert]:
