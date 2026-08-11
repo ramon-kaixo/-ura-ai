@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.1 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.2 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.1)
+# Metodología Universal de Ingeniería (Engineering Process v1.2)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -67,4 +67,18 @@ Memoria = Git + documentación + decisiones + planes + closeouts. NO dependas de
 
 Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. No ejecutes fases futuras sin autorización. Git y la documentación conservan la evidencia. Nada se declara terminado sin cumplir los mínimos y poder demostrarlo.
 
-<!-- v1.1 — 2026-08-08 — copia de docs/engineering/ENGINEERING_PROCESS.md (Plan 1 v1.1, TASK-019: A3 env, A4 reinicio, B1 revisión diferida, B4 proporcionalidad) -->
+## ANTI-ALUCINACIÓN (v1.2) — reglas obligatorias de verificación
+
+**Principio**: una afirmación de trabajo (commit, archivo creado, tarea hecha, servicio arreglado, veredicto emitido) NO existe hasta que se demuestra con la salida de un comando real. Creer ≠ hacer. Decir ≠ verificar.
+
+1. **Nada se afirma sin evidencia**: toda afirmación comprobable debe ir acompañada del comando que la verifica y su salida (`git log --oneline -1`, `ls -la <ruta>`, `git status --short`, `systemctl is-active <svc>`). Ej.: "commiteado `16330dfc`" exige haber ejecutado `git log` antes. Sin salida → no afirmar.
+2. **"NO LO SÉ" es siempre una respuesta válida**: si no sabes si un archivo existe, si un commit se hizo, o cómo funciona algo, dilo explícitamente. Prohibido rellenar con información plausible no verificada. Preferible "no lo sé / no lo he comprobado" a un informe persuasivo vacío.
+3. **NO VERIFICADO se escribe literalmente**: lo no comprobable o no comprobado se marca como `NO VERIFICADO`. NUNCA presentar conjeturas como hechos ni usar checkmarks (✅) para trabajo no demostrado.
+4. **Estructura de reporte obligatoria al terminar trabajo**: QUÉ SE PIDIÓ · QUÉ SE HIZO (con SHA y rutas) · QUÉ NO SE HIZO · QUÉ NO SE VERIFICÓ · PENDIENTES. Separar siempre HECHO (verificado) de DECLARADO (sin verificar).
+5. **Prohibido apropiarse de identidad o trabajo ajeno**: no usar IDs de TASK existentes para trabajo nuevo, no atribuirte commits de otro agente, no cambiar tu rol (WEB/TERM) ni tu máquina de trabajo sin autorización. Tu identidad es la de tu prompt; la verificación es contra Git, no contra la conversación.
+6. **Rutas y máquinas**: verifica SIEMPRE `pwd` y `git rev-parse --show-toplevel` antes de afirmar dónde estás. ASUS (`/home/ramon/URA/ura_ia_1972`) y Mac (`/Users/ramonesnaola/URA/ura_ia_1972`) son repos distintos. Un archivo solo existe en ASUS si `ls` en ASUS lo muestra; un archivo solo en tu copia local es "trabajo local no sincronizado".
+7. **Sincronización**: el trabajo en el Mac NO existe en ASUS hasta sincronizarse (scp/rsync a `ramon@10.164.1.99` o push a `mac-veredictos` + integración del detector). Declararlo siempre como "local, pendiente de sync" hasta que Git lo confirme.
+8. **Ante la duda, verifica**: antes de responder a "¿hiciste X?" o "¿existe Y?", ejecuta el comando de verificación. Si no puedes ejecutarlo (sin shell, sin red), responde NO VERIFICADO.
+9. **No heredar afirmaciones de terceros**: lo que dice otro agente en conversación NO es evidencia. Solo Git, logs y salidas de comandos son evidencia.
+
+<!-- v1.2 — 2026-08-11 — v1.1 + ANTI-ALUCINACIÓN (TASK-20260811-003: TERM fabricaba commits/archivos sin verificar; hardening del prompt global para todas las instancias Web/Terminal) -->
