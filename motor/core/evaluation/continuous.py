@@ -138,11 +138,7 @@ class ContinuousEvaluator:
         if len(corpus) == 0:
             self._errors.append("Corpus vacío — no se ejecutó evaluación")
 
-        # Registrar retrievers en engine
-        engine = EvaluationEngine()
-        engine.register_corpus("default", corpus)
-        for cfg in self._configs:
-            engine.register_retriever(cfg["name"], cfg["fn"])
+        self._prepare_engine(corpus)
 
         # Ejecutar experimento
         exp = Experiment(self._name, corpus)
@@ -157,30 +153,9 @@ class ContinuousEvaluator:
         experiment_results = exp.run(k=k)
         comparison = exp.compare()
 
-        # Cargar baseline
-        loaded_baseline = None
-        if baseline:
-            loaded_baseline = baseline
-        elif baseline_path and Path(baseline_path).exists():
-            loaded_baseline = RegressionBaseline.load(baseline_path)
-
-        # Detectar regresiones (comparar contra baseline ANTES de actualizarlo)
-        regression_report = None
-        if loaded_baseline:
-            thresholds = self._critical_thresholds
-            detector = RegressionDetector(loaded_baseline, thresholds=thresholds)
-            regression_report = detector.check(experiment_results)
-
-            # Actualizar baseline con resultados actuales y guardar
-            loaded_baseline.set_results(experiment_results)
-            if baseline_path:
-                loaded_baseline.save(baseline_path)
-        else:
-            # Crear nueva baseline desde resultados
-            new_baseline = RegressionBaseline(self._name)
-            new_baseline.set_results(experiment_results)
-            if baseline_path:
-                new_baseline.save(baseline_path)
+        # Cargar baseline y detectar regresiones ANTES de actualizarlo
+        loaded_baseline = self._load_baseline(baseline, baseline_path)
+        regression_report = self._update_baseline(loaded_baseline, experiment_results, baseline_path)
 
         # Determinar status
         status = "pass"
@@ -207,3 +182,43 @@ class ContinuousEvaluator:
             elapsed_seconds=elapsed,
             errors=self._errors,
         )
+
+    def _prepare_engine(self, corpus: EvaluationCorpus) -> EvaluationEngine:
+        engine = EvaluationEngine()
+        engine.register_corpus("default", corpus)
+        for cfg in self._configs:
+            engine.register_retriever(cfg["name"], cfg["fn"])
+        return engine
+
+    def _load_baseline(
+        self,
+        baseline: RegressionBaseline | None,
+        baseline_path: str | None,
+    ) -> RegressionBaseline | None:
+        if baseline:
+            return baseline
+        if baseline_path and Path(baseline_path).exists():
+            return RegressionBaseline.load(baseline_path)
+        return None
+
+    def _update_baseline(
+        self,
+        loaded_baseline: RegressionBaseline | None,
+        experiment_results: list[Any],
+        baseline_path: str | None,
+    ) -> Any:
+        if loaded_baseline:
+            thresholds = self._critical_thresholds
+            detector = RegressionDetector(loaded_baseline, thresholds=thresholds)
+            regression_report = detector.check(experiment_results)
+
+            loaded_baseline.set_results(experiment_results)
+            if baseline_path:
+                loaded_baseline.save(baseline_path)
+            return regression_report
+
+        new_baseline = RegressionBaseline(self._name)
+        new_baseline.set_results(experiment_results)
+        if baseline_path:
+            new_baseline.save(baseline_path)
+        return None
