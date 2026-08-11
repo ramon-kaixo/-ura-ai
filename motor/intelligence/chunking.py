@@ -125,27 +125,16 @@ class SemanticChunker:
         token_count = self._estimate_tokens(text)
 
         if token_count <= self.max_tokens:
-            return [
-                Chunk(
-                    document_id=doc_id,
-                    chunk_id="",
-                    offset=offset,
-                    length=len(text),
-                    section=section,
-                    texto=text,
-                ),
-            ]
+            return [self._make_chunk(doc_id, text, offset, section)]
 
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
         if not paragraphs:
             return [
-                Chunk(
-                    document_id=doc_id,
-                    chunk_id="",
-                    offset=offset,
-                    length=len(text),
-                    section=section,
-                    texto=text[: self._char_limit()],
+                self._make_chunk(
+                    doc_id,
+                    text[: self._char_limit()],
+                    offset,
+                    section,
                 ),
             ]
 
@@ -162,26 +151,11 @@ class SemanticChunker:
                 char_limit = self._char_limit()
                 chunk_text = chunk_text[:char_limit]
                 chunks.append(
-                    Chunk(
-                        document_id=doc_id,
-                        chunk_id="",
-                        offset=current_offset,
-                        length=len(chunk_text),
-                        section=section,
-                        texto=chunk_text,
-                    ),
+                    self._make_chunk(doc_id, chunk_text, current_offset, section),
                 )
 
                 # Overlap: keep last paragraph(s) for context
-                overlap_paras: list[str] = []
-                overlap_tokens = 0
-                for p in reversed(current_texts):
-                    pt = self._estimate_tokens(p)
-                    if overlap_tokens + pt <= self.overlap_tokens:
-                        overlap_paras.insert(0, p)
-                        overlap_tokens += pt
-                    else:
-                        break
+                overlap_paras, overlap_tokens = self._overlap_paragraphs(current_texts)
                 current_texts = overlap_paras
                 current_tokens = overlap_tokens
                 current_offset += len(chunk_text) - len("\n\n".join(overlap_paras))
@@ -193,17 +167,43 @@ class SemanticChunker:
             chunk_text = "\n\n".join(current_texts)
             char_limit = self._char_limit()
             chunks.append(
-                Chunk(
-                    document_id=doc_id,
-                    chunk_id="",
-                    offset=current_offset,
-                    length=len(chunk_text),
-                    section=section,
-                    texto=chunk_text[:char_limit],
+                self._make_chunk(
+                    doc_id,
+                    chunk_text[:char_limit],
+                    current_offset,
+                    section,
                 ),
             )
 
         return chunks
+
+    def _make_chunk(
+        self,
+        doc_id: str,
+        texto: str,
+        offset: int,
+        section: str,
+    ) -> Chunk:
+        return Chunk(
+            document_id=doc_id,
+            chunk_id="",
+            offset=offset,
+            length=len(texto),
+            section=section,
+            texto=texto,
+        )
+
+    def _overlap_paragraphs(self, current_texts: list[str]) -> tuple[list[str], int]:
+        overlap_paras: list[str] = []
+        overlap_tokens = 0
+        for p in reversed(current_texts):
+            pt = self._estimate_tokens(p)
+            if overlap_tokens + pt <= self.overlap_tokens:
+                overlap_paras.insert(0, p)
+                overlap_tokens += pt
+            else:
+                break
+        return overlap_paras, overlap_tokens
 
     def _estimate_tokens(self, text: str) -> int:
         return len(text) // 4

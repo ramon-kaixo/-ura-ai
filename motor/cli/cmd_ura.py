@@ -384,68 +384,107 @@ def cmd_memory(config: UraConfig, args) -> int:
     print(f"  Vector Store:  {'OK' if health.get('vector_store_ok') else 'OFF'}")
     print()
 
-    if args and hasattr(args, "raw") and args.raw:
-        cmd = args.raw[0] if args.raw else ""
-        if cmd == "search" and len(args.raw) > 1:
-            query = " ".join(args.raw[1:])
-            results = mem.search(query, k=5)
-            print(f"Búsqueda: '{query}' ({len(results)} resultados)")
-            for i, r in enumerate(results, 1):
-                print(f"  {i}. [{r.type.value}] {r.payload[:100]}...")
-        elif cmd == "store" and len(args.raw) > 1:
-            text = " ".join(args.raw[1:])
-            rid = mem.store(payload=text)
-            print(f"Almacenado: {rid}")
-        elif cmd == "web" and len(args.raw) > 1:
-            query = " ".join(args.raw[1:])
-            try:
-                import asyncio
+    if not (args and hasattr(args, "raw") and args.raw):
+        return 0
 
-                from core.mochila.tools import web_search as _web_search
-
-                result = asyncio.run(_web_search(query, max_results=5))
-                print(f"Web search: '{query}'")
-                for item in result.get("results", []):
-                    print(f"  - {item.get('title', '?')}")
-                    print(f"    {item.get('snippet', '')[:120]}")
-            except Exception as e:
-                print(f"Web search falló: {e}")
-        elif cmd == "backup":
-            import shutil
-            from datetime import UTC, datetime
-
-            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
-            backup_dir.mkdir(parents=True, exist_ok=True)
-            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-            dest = backup_dir / f"memory_{ts}.db"
-            shutil.copy2(str(_memory_path()), str(dest))
-            print(f"Backup: {dest} ({dest.stat().st_size} bytes)")
-        elif cmd == "restore" and len(args.raw) > 1:
-            src = Path(args.raw[1])
-            import shutil
-
-            if not src.exists():
-                print(f"Error: {src} no existe")
-                return 1
-            dest = _memory_path()
-            # Backup actual antes de restaurar
-            from datetime import UTC, datetime
-
-            backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
-            backup_dir.mkdir(parents=True, exist_ok=True)
-            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-            shutil.copy2(str(dest), str(backup_dir / f"pre_restore_{ts}.db"))
-            shutil.copy2(str(src), str(dest))
-            print(f"Restaurado: {src} → {dest}")
-            print(f"Backup pre-restore: {backup_dir / f'pre_restore_{ts}.db'}")
-        else:
-            print("Subcomandos:")
-            print("  ura memory search <query>     — buscar en memoria")
-            print("  ura memory store <text>       — almacenar texto")
-            print("  ura memory web <query>        — buscar en web")
-            print("  ura memory backup             — respaldar memoria")
-            print("  ura memory restore <archivo>  — restaurar desde backup")
+    cmd = args.raw[0]
+    raw = args.raw[1:]
+    if cmd == "search":
+        _memory_search(mem, raw)
+    elif cmd == "store":
+        _memory_store(mem, raw)
+    elif cmd == "web":
+        _memory_web(raw)
+    elif cmd == "backup":
+        _memory_backup()
+    elif cmd == "restore":
+        return _memory_restore(raw)
+    else:
+        _memory_usage()
     return 0
+
+
+def _memory_search(mem, raw: list[str]) -> None:
+    if len(raw) < 1:
+        _memory_usage()
+        return
+    query = " ".join(raw)
+    results = mem.search(query, k=5)
+    print(f"Búsqueda: '{query}' ({len(results)} resultados)")
+    for i, r in enumerate(results, 1):
+        print(f"  {i}. [{r.type.value}] {r.payload[:100]}...")
+
+
+def _memory_store(mem, raw: list[str]) -> None:
+    if len(raw) < 1:
+        _memory_usage()
+        return
+    text = " ".join(raw)
+    rid = mem.store(payload=text)
+    print(f"Almacenado: {rid}")
+
+
+def _memory_web(raw: list[str]) -> None:
+    if len(raw) < 1:
+        _memory_usage()
+        return
+    import asyncio
+
+    from core.mochila.tools import web_search as _web_search
+
+    query = " ".join(raw)
+    try:
+        result = asyncio.run(_web_search(query, max_results=5))
+        print(f"Web search: '{query}'")
+        for item in result.get("results", []):
+            print(f"  - {item.get('title', '?')}")
+            print(f"    {item.get('snippet', '')[:120]}")
+    except Exception as e:
+        print(f"Web search falló: {e}")
+
+
+def _memory_backup() -> None:
+    import shutil
+    from datetime import UTC, datetime
+
+    backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    dest = backup_dir / f"memory_{ts}.db"
+    shutil.copy2(str(_memory_path()), str(dest))
+    print(f"Backup: {dest} ({dest.stat().st_size} bytes)")
+
+
+def _memory_restore(raw: list[str]) -> int:
+    import shutil
+    from datetime import UTC, datetime
+
+    if len(raw) < 1:
+        _memory_usage()
+        return 1
+    src = Path(raw[0])
+    if not src.exists():
+        print(f"Error: {src} no existe")
+        return 1
+    dest = _memory_path()
+    # Backup actual antes de restaurar
+    backup_dir = Path(os.environ.get("URA_BACKUP_DIR", str(Path.home() / ".ura" / "backups")))
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    shutil.copy2(str(dest), str(backup_dir / f"pre_restore_{ts}.db"))
+    shutil.copy2(str(src), str(dest))
+    print(f"Restaurado: {src} → {dest}")
+    print(f"Backup pre-restore: {backup_dir / f'pre_restore_{ts}.db'}")
+    return 0
+
+
+def _memory_usage() -> None:
+    print("Subcomandos:")
+    print("  ura memory search <query>     — buscar en memoria")
+    print("  ura memory store <text>       — almacenar texto")
+    print("  ura memory web <query>        — buscar en web")
+    print("  ura memory backup             — respaldar memoria")
+    print("  ura memory restore <archivo>  — restaurar desde backup")
 
 
 def _systemctl(args: list[str]) -> "subprocess.CompletedProcess":
