@@ -196,18 +196,18 @@ Organizados por función en las siguientes categorías:
 | `ura-xvfb` | - | ✅ activo | systemd | URA Xvfb Virtual Display |
 | `ura-agent-hierarchy` | - | ❌ fallido → **disabled** | systemd | URA Agent Hierarchy System — unit presente pero disabled+inactive (2026-08-11) |
 | `ura-aspirador` | - | ❌ fallido → **disabled** | systemd | URA Aspirador — vectorize downloaded files — disabled+inactive (2026-08-11) |
-| `ura-capturador` | - | ❌ **bucle 24.993 reinicios** | systemd | URA Capturador Tiempo Real — ExecStart apunta a `app/capturador.py` (retirado en F3, solo `.attic/`). Unit huérfana (no en repo). **Cierre planificado 2026-08-11**: stop+disable+retirar unit vía `scripts/pro/cerrar_pendientes_sistema.sh` |
+| `ura-capturador` | - | ✅ **cerrado (2026-08-11)** | systemd | URA Capturador Tiempo Real — ExecStart apuntaba a `app/capturador.py` (retirado en F3, solo `.attic/`). Unit huérfana retirada vía `scripts/pro/cerrar_pendientes_sistema.sh` (stop+disable+rm, backup en `backups/pendientes_sistema_20260811_200730`) |
 | `ura-detector` | - | ✅ activo | systemd | URA YOLOv8 Detector + ByteTrack + Behavior Analysis (running 2026-08-11) |
 | `ura-fix-x11-socket` | - | ❌ fallido → **disabled** | systemd | URA Fix X11 socket directory — disabled+inactive (2026-08-11) |
 | `ura-hetzner-tunnel` | - | ⏸️ parado | systemd | URA SSH Tunnel to Hetzner — unit corregida (puerto 2222 + `id_rsa` según `~/.ssh/config`) y parada hasta que la infra 178.105.81.83:2222 vuelva (host pingea, sshd caído). Backup: `/etc/systemd/system/ura-hetzner-tunnel.service.bak-20260807` |
-| `ura-historiador` | - | ❌ **muerto (unit rota)** | systemd | URA Historiador — ExecStart `scripts/pro/historiador.py` **no existe**. Unit huérfana, static, sin bucle. **Cierre planificado 2026-08-11**: retirar unit vía `scripts/pro/cerrar_pendientes_sistema.sh` |
+| `ura-historiador` | - | ✅ **cerrado (2026-08-11)** | systemd | URA Historiador — ExecStart apuntaba a `scripts/pro/historiador.py` (**no existe**). Unit huérfana retirada vía `scripts/pro/cerrar_pendientes_sistema.sh` (stop+rm, backup en `backups/pendientes_sistema_20260811_200730`) |
 | `ura-procesamiento-lento` | - | ❌ fallido → **disabled** | systemd | URA Daemon de Procesamiento Lento (10% CPU) — disabled+inactive (2026-08-11) |
 | `ura-router-health` | - | ❌ fallido → **unit eliminada** | systemd | URA Model Router Health Check — unit not-found (2026-08-11) |
 
 ### Servicios systemd (REALES - Usuario)
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
-| `model-router` | 11435 | ❌ **CAÍDO — bucle 48.445 reinicios** | systemd system | URA Model Router Enhanced — ExecStart apunta a `core/model_router.py` (archivo plano eliminado en refactor a paquete). Drop-ins `execstart-fix.conf`+`workingdir*.conf` fuerzan la ruta muerta. El paquete real es `core/model_router/` (unit oficial correcta en `deploy/model-router.service`). Bloqueante: `cli.py:18-24` exige `OPENCLAW_GATEWAY_TOKEN` (retirado con OpenClaw 08-08) → exit 78. **Fix planificado 2026-08-11**: unit oficial + token nuevo + restart vía `scripts/pro/cerrar_pendientes_sistema.sh` |
+| `model-router` | 11435 | ✅ **activo (restaurado 2026-08-11)** | systemd system | URA Model Router Enhanced — estaba caído (48.445 reinicios): ExecStart apuntaba a `core/model_router.py` (archivo plano eliminado) + drop-ins rotos + token faltante. **Fix aplicado** vía `scripts/pro/cerrar_pendientes_sistema.sh`: unit oficial `deploy/model-router.service` (`-m core.model_router`), drop-ins rotos retirados, `OPENCLAW_GATEWAY_TOKEN` regenerado en `/etc/ura/secrets.env`. Verificado: /health `{"status":"ok","ollama":"reachable","models_available":13}` |
 | `backend@qwen2.5-coder-32b` | - | ⚠️ NO VERIFICADO | systemd user | Backend llama.cpp para modelo qwen2.5-coder-32b — bus user OK pero sin unidades cargadas en esta sesión |
 | `backend@qwen2.5-coder-q8_0` | - | ⚠️ NO VERIFICADO | systemd user | Backend llama.cpp para modelo qwen2.5-coder-q8_0 — idem |
 
