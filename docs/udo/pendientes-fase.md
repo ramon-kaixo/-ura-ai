@@ -13,8 +13,8 @@ test veredicto 02:27:49
 #### LISTAS PARA CERRAR (OK revisor)
 
 #### PLANES/FASES SIN CERRAR
-| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Conflict Detection (pendiente) | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-12 | IMPLEMENTADO (verificado 2026-08-12: motor/intelligence/memory/ — episodic, semantic, compression, forgetting, hybrid; 85 tests pasan) — pendiente: decidir roadmap de mejora | |
+| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-12 | IMPLEMENTADO (verificado 2026-08-12: motor/intelligence/agents/ — planner, researcher, executor, consensus, reflection, parallel, supervisor, validator; 85 tests pasan) — pendiente: decidir roadmap de mejora | |
+| — | plan/fase: Conflict Detection | 2026-08-12 | PENDIENTE REAL (F25-B4: sin implementar) — candidato a próximo bloque | |
+| — | plan/fase: Knowledge Merge | 2026-08-12 | PENDIENTE REAL (F25-B5: sin implementar) | |
 | — | plan/fase: Source Scoring (pendiente) | 2026-08-12 | PENDIENTE | |
