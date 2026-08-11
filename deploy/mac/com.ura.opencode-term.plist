@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ura.opencode-term</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/ramonesnaola/.opencode/bin/opencode</string>
+        <string>web</string>
+        <string>--port</string>
+        <string>8091</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/ramonesnaola/URA/ura_ia_1972</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    <key>StandardOutPath</key>
+    <string>/tmp/opencode-term.out</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/opencode-term.err</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/ramonesnaola/URA/ura_ia_1972/.venv/bin:/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+    </dict>
+</dict>
+</plist>
