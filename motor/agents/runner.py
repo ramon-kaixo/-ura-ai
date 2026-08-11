@@ -217,48 +217,60 @@ class AgentToolRunner(ToolRunnerABC):
         if thread.is_alive():
             adapter.cancel()
             thread.join(timeout=2)
-            return ToolResult(
-                execution_id=request.execution_id,
-                tool_name=request.tool_name,
+            return self._result(
+                request,
                 success=False,
                 error=f"Timeout after {request.timeout}s",
                 error_type="ToolTimeoutError",
                 duration_ms=(time.time() - start) * 1000,
-                attempt=request.attempt,
             )
 
         duration = (time.time() - start) * 1000
 
         if cancel_event.is_set():
-            return ToolResult(
-                execution_id=request.execution_id,
-                tool_name=request.tool_name,
+            return self._result(
+                request,
                 success=False,
                 error="Cancelled",
                 error_type="ToolCancelledError",
                 duration_ms=duration,
-                attempt=request.attempt,
             )
 
         if error_container:
             err = error_container[0]
-            error_type = type(err).__name__
-            return ToolResult(
-                execution_id=request.execution_id,
-                tool_name=request.tool_name,
+            return self._result(
+                request,
                 success=False,
                 error=str(err),
-                error_type=error_type,
+                error_type=type(err).__name__,
                 duration_ms=duration,
-                attempt=request.attempt,
             )
 
-        return ToolResult(
-            execution_id=request.execution_id,
-            tool_name=request.tool_name,
+        return self._result(
+            request,
             success=True,
             data=result_container[0],
             duration_ms=duration,
+        )
+
+    def _result(
+        self,
+        request: ToolRequest,
+        *,
+        success: bool,
+        duration_ms: float,
+        error: str = "",
+        error_type: str = "",
+        data: dict | None = None,
+    ) -> ToolResult:
+        return ToolResult(
+            execution_id=request.execution_id,
+            tool_name=request.tool_name,
+            success=success,
+            data=data if data is not None else {},
+            error=error,
+            error_type=error_type,
+            duration_ms=duration_ms,
             attempt=request.attempt,
         )
 

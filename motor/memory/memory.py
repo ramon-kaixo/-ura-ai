@@ -203,8 +203,6 @@ class Memory:
 
     def _recover(self) -> None:
         """Recupera estado desde snapshot + journal."""
-        from motor.memory.models import FactRef, MemoryEntry, MemoryEventType, MemoryMetadata
-
         entries_dict: dict = {}
         try:
             _, entries_dict = _load_snapshot(self._snapshot_path)
@@ -212,34 +210,8 @@ class Memory:
             entries_dict = {}  # snapshot no disponible, solo journal
 
         for _entry_id, entry_data in sorted(entries_dict.items(), key=lambda kv: kv[1].get("timestamp", 0)):
-            fact_refs = tuple(
-                FactRef(
-                    fact_id=r["fact_id"],
-                    version_id=r["version_id"],
-                    subject=r["subject"],
-                    predicate=r["predicate"],
-                    object=r["object"],
-                )
-                for r in entry_data.get("fact_refs", [])
-            )
-            meta = entry_data.get("metadata", {})
-            entry = MemoryEntry(
-                entry_id=entry_data["entry_id"],
-                timestamp=entry_data["timestamp"],
-                fact_refs=fact_refs,
-                source=entry_data.get("source", ""),
-                event_type=MemoryEventType(entry_data.get("event_type", "system_event")),
-                metadata=MemoryMetadata(
-                    pipeline_version=meta.get("pipeline_version", ""),
-                    fusion_config_hash=meta.get("fusion_config_hash", ""),
-                    fact_count=meta.get("fact_count", 0),
-                    confidence_avg=meta.get("confidence_avg", 0.0),
-                    created_by=meta.get("created_by", ""),
-                ),
-                snapshot=entry_data.get("snapshot", False),
-            )
             with contextlib.suppress(KeyError):
-                self._timeline.append(entry)
+                self._timeline.append(self._entry_from_data(entry_data))
 
         # Replay journal entries after snapshot (solo los que no están ya en snapshot)
         journal_entries = self._journal.read_all()
@@ -247,31 +219,35 @@ class Memory:
         for entry_data in journal_entries:
             if entry_data.get("entry_id", "") in existing_ids:
                 continue  # ya cargado desde snapshot
-            fact_refs = tuple(
-                FactRef(
-                    fact_id=r["fact_id"],
-                    version_id=r["version_id"],
-                    subject=r["subject"],
-                    predicate=r["predicate"],
-                    object=r["object"],
-                )
-                for r in entry_data.get("fact_refs", [])
-            )
-            meta = entry_data.get("metadata", {})
-            entry = MemoryEntry(
-                entry_id=entry_data["entry_id"],
-                timestamp=entry_data["timestamp"],
-                fact_refs=fact_refs,
-                source=entry_data.get("source", ""),
-                event_type=MemoryEventType(entry_data.get("event_type", "system_event")),
-                metadata=MemoryMetadata(
-                    pipeline_version=meta.get("pipeline_version", ""),
-                    fusion_config_hash=meta.get("fusion_config_hash", ""),
-                    fact_count=meta.get("fact_count", 0),
-                    confidence_avg=meta.get("confidence_avg", 0.0),
-                    created_by=meta.get("created_by", ""),
-                ),
-                snapshot=entry_data.get("snapshot", False),
-            )
             with contextlib.suppress(KeyError):
-                self._timeline.append(entry)
+                self._timeline.append(self._entry_from_data(entry_data))
+
+    def _entry_from_data(self, entry_data: dict) -> MemoryEntry:
+        from motor.memory.models import FactRef, MemoryEntry, MemoryEventType, MemoryMetadata
+
+        fact_refs = tuple(
+            FactRef(
+                fact_id=r["fact_id"],
+                version_id=r["version_id"],
+                subject=r["subject"],
+                predicate=r["predicate"],
+                object=r["object"],
+            )
+            for r in entry_data.get("fact_refs", [])
+        )
+        meta = entry_data.get("metadata", {})
+        return MemoryEntry(
+            entry_id=entry_data["entry_id"],
+            timestamp=entry_data["timestamp"],
+            fact_refs=fact_refs,
+            source=entry_data.get("source", ""),
+            event_type=MemoryEventType(entry_data.get("event_type", "system_event")),
+            metadata=MemoryMetadata(
+                pipeline_version=meta.get("pipeline_version", ""),
+                fusion_config_hash=meta.get("fusion_config_hash", ""),
+                fact_count=meta.get("fact_count", 0),
+                confidence_avg=meta.get("confidence_avg", 0.0),
+                created_by=meta.get("created_by", ""),
+            ),
+            snapshot=entry_data.get("snapshot", False),
+        )
