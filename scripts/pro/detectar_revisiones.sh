@@ -47,8 +47,16 @@ for f in "$TASKS_DIR"/*.md; do
     [ -f "$f" ] || continue
     est=$(grep '^estado:' "$f" | cut -d' ' -f2- | tr -d ' ')
     [ "$est" = "REVIEW" ] || continue
-    rev=$(grep '^revision:' "$f" | cut -d' ' -f2- | tr -d ' ')
-    [ -n "$rev" ] && continue  # ya revisada
+    # grep sin match retorna 1; con set -o pipefail la asignación muere con
+    # set -e cuando un expediente REVIEW aún no tiene línea revision: (el
+    # caso exacto que este detector debe vigilar). || true lo hace robusto.
+    rev=$(grep '^revision:' "$f" | cut -d' ' -f2- | tr -d ' ' || true)
+    # if-else en vez de "[ -n "$rev" ] && continue": con set -e, si rev está
+    # vacío el AND-list retorna 1 y mata el script (servicio FAILED) justo
+    # cuando hay tareas REVIEW sin revisor — el caso que debe vigilar.
+    if [ -n "$rev" ]; then
+        continue  # ya revisada
+    fi
     id=$(basename "$f" .md)
     total=$((total+1))
     pendientes="$pendientes
@@ -62,7 +70,7 @@ for f in "$TASKS_DIR"/*.md; do
     [ -f "$f" ] || continue
     est=$(grep '^estado:' "$f" | cut -d' ' -f2- | tr -d ' ')
     [ "$est" = "REVIEW" ] || continue
-    rev=$(grep '^revision:' "$f" | cut -d' ' -f2-)
+    rev=$(grep '^revision:' "$f" | cut -d' ' -f2- || true)
     echo "$rev" | grep -q "| OK |" || continue
     id=$(basename "$f" .md)
     n_cerrar=$((n_cerrar+1))
