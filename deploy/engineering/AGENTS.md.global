@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.4 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.5 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.4)
+# Metodología Universal de Ingeniería (Engineering Process v1.5)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -92,20 +92,28 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 5. **Mensajes del usuario pendientes tienen prioridad**: si un mensaje del usuario llega mientras esperas una pregunta, procesa ese mensaje (responderle) antes que cualquier tarea autónoma.
 6. **Sesiones largas**: si la sesión acumula muchas compactaciones (el contexto original se degrada) o decenas de pasos sin instrucciones nuevas, sugiere abrir una sesión nueva en lugar de seguir en la misma.
 
-## MODO REVISIÓN AUTÓNOMA DE FONDO (v1.4) — trabajo continuo de inspección cuando no hay nada pendiente
+## MODO REVISIÓN AUTÓNOMA DE FONDO (v1.5) — trabajo continuo de inspección cuando no hay nada pendiente
 
 **Principio**: un agente que no tiene trabajo asignado NO debe quedarse parado, ni preguntar "¿qué hago?" en bucle (ver ANTI-BUCLE). Debe dedicarse a revisar el código del proyecto (URA u otro) para conocer la arquitectura y detectar problemas, de forma SOLO LECTURA (read-only) y sin tocar nada sin autorización.
 
 **Prioridades (siempre en este orden)**:
-1. **Mensajes del usuario**: si el humano escribe, PARA todo lo demás y responde. Su mensaje tiene prioridad absoluta.
+1. **Mensajes del usuario**: si el humano escribe, PARA todo lo demás y responde. Su mensaje tiene prioridad absoluta (ver ANTI-BUCLE §5).
 2. **Trabajo asignado**: tareas UDO, planes aprobados, instrucciones explícitas pendientes → ejecutar eso primero.
-3. **Revisiones pendientes**: si hay tareas en REVIEW esperando revisor o `docs/udo/review-pending.md` con pendientes, atenderlas antes que el modo fondo.
+3. **Revisiones pendientes**: comprobar con `ura-udo list REVIEW` y `docs/udo/review-pending.md`; atenderlas antes que el modo fondo.
 4. **Modo fondo**: solo cuando nada de lo anterior está pendiente.
 
 **Qué hacer en modo fondo (solo lectura)**:
 - Recorrer TODA la arquitectura del proyecto: directorios, módulos, configuraciones, tests, scripts, documentación. Ir reconociendo el código completo de forma sistemática (carpeta a carpeta, sin saltos aleatorios).
 - Buscar y registrar: fallos reales o probables, código duplicado, código muerto, funciones largas/complejas, dependencias rotas, contradicciones entre docs y código, riesgos de seguridad, deuda técnica, invariancias rotas.
-- Registrar hallazgos de forma breve y estructurada (qué, dónde con ruta:línea, por qué es problema, gravedad). NO corregir nada en modo fondo: solo documentar.
+- **Límite por turno de fondo**: revisa 1 carpeta/módulo (o equivalente) por turno y registra el progreso; así no se ahoga la sesión (v1.4) ni se repite el mismo recorrido. Si una carpeta es enorme, limítate a una subcarpeta o un conjunto de archivos y continúa en el siguiente turno.
+- NO corregir nada en modo fondo: solo documentar hallazgos y proponer planes.
+
+**Registro de hallazgos y progreso (v1.5) — OBLIGATORIO**:
+- Los hallazgos del modo fondo se persisten en `docs/udo/hallazgos-fondo.md` (mismo repo, formato tabla: `| fecha | ruta:línea | hallazgo | gravedad | estado |`). La conversación NO es memoria; si no se registra en el archivo, no existe.
+- **Gravedad**: `CRÍTICA` (riesgo de seguridad, pérdida de datos, rotura funcional) · `ALTA` · `MEDIA` · `BAJA` · `INFO`.
+- **Hallazgo CRÍTICO**: además de registrarlo, notifícalo de inmediato si existe mecanismo (`core/notifier.py` Telegram/Pushover) o resáltalo al inicio del siguiente mensaje al humano.
+- **Progreso**: al final de cada turno de fondo, registra en `docs/udo/hallazgos-fondo.md` qué carpetas/módulos se han revisado (sección `## Progreso`), para no repetir recorridos en turnos sucesivos. Cuando el código cambie (commits nuevos), se puede re-revisar lo afectado.
+- Los hallazgos de fondo NO requieren la estructura de reporte de la v1.2 (son inspección, no trabajo completado), pero toda ruta:línea citada debe existir de verdad (verificable con `ls`/`grep`).
 
 **Análisis de impacto ANTES de actuar (v1.4)**:
 1. **No romper nada**: cualquier acción que no sea read-only exige análisis previo (ver "Análisis del plan y veredicto").
@@ -114,11 +122,11 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 
 **Cómo comportarse (v1.4)**:
 - No alucinar (v1.2): todo hallazgo debe comprobarse con comandos reales (grep, ls, pytest) antes de reportarlo.
-- No ahogarse (v1.4): si la sesión se degrada o el contexto se llena, resume lo revisado, cierra el turno y continúa en la siguiente; sugiere sesión nueva si es necesario.
+- No ahogarse (v1.4): si la sesión se degrada o el contexto se llena, registra el progreso en `docs/udo/hallazgos-fondo.md`, resume lo revisado, cierra el turno y continúa en la siguiente; sugiere sesión nueva si es necesario.
 - No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
 - Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
-- Al recibir un mensaje del usuario, TERMINAR el modo fondo inmediatamente y atender el mensaje.
 
+<!-- v1.5 — 2026-08-11 — v1.4 + registro persistente de hallazgos (docs/udo/hallazgos-fondo.md), progreso por carpetas, límite por turno, comando ura-udo list REVIEW, gravedad CRÍTICA con notificación (TASK-20260811-007: auto-revisión del prompt global) -->
 <!-- v1.4 — 2026-08-11 — v1.3 + MODO REVISIÓN AUTÓNOMA DE FONDO (TASK-20260811-006: TERM debe revisar todo el código URA en modo fondo read-only cuando no hay trabajo; prioridades usuario > tarea > revisión > fondo; análisis de impacto antes de tocar nada) -->
 <!-- v1.3 — 2026-08-11 — v1.2 + ANTI-BUCLE (TASK-20260811-005: TERM en loop de "Next Steps Needed", 8 llamadas question/4 dismissed, sesión bloqueada; reglas 1-6 contra reintentos infinitos) -->
 <!-- v1.2 — 2026-08-11 — v1.1 + ANTI-ALUCINACIÓN (TASK-20260811-003: TERM fabricaba commits/archivos sin verificar; hardening del prompt global para todas las instancias Web/Terminal) -->
