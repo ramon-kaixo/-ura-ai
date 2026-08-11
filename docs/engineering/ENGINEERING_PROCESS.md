@@ -1,8 +1,8 @@
-<!-- Engineering Process v1.2 -->
+<!-- Engineering Process v1.8 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.2 (2026-08-11) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.8 (2026-08-11) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
@@ -152,6 +152,37 @@ Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS
 8. **Ante la duda, verifica**: si no puedes ejecutar la verificación → responde NO VERIFICADO.
 9. **No heredar afirmaciones de terceros**: la conversación no es evidencia; solo Git, logs y salidas de comandos lo son.
 
+## 15. Anti-bucle: no loops de pregunta sin respuesta (v1.3)
+
+**Origen**: TASK-20260811-005 — TERM (qwen3-coder:30b, Mac :8091) terminó su trabajo y preguntó "Next Steps Needed" vía la herramienta `question`; al no recibir respuesta, el loop de opencode reintentó la pregunta una y otra vez (8 llamadas, 4 dismissed, 90 compactaciones, 8.7M tokens quemados) y **bloqueó la sesión**: los mensajes del usuario no se procesaban mientras la pregunta quedaba `running`.
+
+Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS.md.global` §ANTI-BUCLE):
+
+1. **Máximo 1 pregunta por turno** — solo si es imprescindible para avanzar en trabajo solicitado.
+2. **Pregunta descartada/expiró (dismissed/error/rejected)** → NO reintentar en el siguiente turno sin input nuevo del usuario; finalizar el turno con resumen y esperar.
+3. **Máximo 3 preguntas sin respuesta en la misma sesión** → detenerse; no seguir preguntando ni analizando lo mismo.
+4. **Si el usuario dice "estás en bucle"/"no entiendo"** → parar inmediatamente y responderle directamente.
+5. **Mensajes del usuario pendientes tienen prioridad** sobre cualquier trabajo autónomo.
+6. **Sesiones largas** (muchas compactaciones) → sugerir sesión nueva en vez de seguir en la misma.
+
+## 16. Modo de revisión autónoma de fondo (v1.4-v1.5-v1.7-v1.8)
+
+**Origen**: petición de Ramón — cuando un agente no tiene nada que hacer, debe revisar el código de URA (fallos, duplicados, arquitectura) en lugar de quedarse parado o preguntar en bucle.
+
+- **Activación automática (v1.8)**: el despertador `deploy/mac/despertador-fondo.sh` + launchd `com.ura.fondo-wake` (Mac, cada 30 min) envía al TERM el mensaje "MODO FONDO" vía `opencode run --attach`. Verificado: TERM revisó `core/mochila/` y registró 2 hallazgos con plan (2026-08-11).
+- **Prioridades**: 1) mensajes del usuario (para todo), 2) tareas UDO asignadas, 3) revisiones pendientes (`ura-udo list REVIEW`), 4) modo fondo.
+- **Solo lectura**: no corrige nada sin autorización; revisa 1 carpeta/módulo por turno y registra progreso.
+- **Registro persistente (v1.5)**: hallazgos en `docs/udo/hallazgos-fondo.md` (tabla: fecha | ruta:línea | hallazgo | gravedad | estado). La conversación NO es memoria.
+- **Gravedad**: CRÍTICA (seguridad/pérdida de datos/rotura) · ALTA · MEDIA · BAJA · INFO. CRÍTICA además se notifica (`core/notifier.py`) o se resalta al inicio del siguiente mensaje al humano.
+- **Plan propuesto (v1.7)**: todo hallazgo accionable se registra como `propuesto (con plan)` con QUÉ · POR QUÉ · IMPACTO · VERIFICACIÓN · RIESGO/REVERSIBILIDAD; se presenta al humano y, si se aprueba, se convierte en TASK UDO. Un hallazgo es `corregido` solo con corrección hecha y verificada.
+- **Límite por turno**: 1 carpeta/módulo; si la sesión se degrada, registrar progreso y cerrar el turno (no ahogarse).
+
+## 17. Entorno y despliegue: lecciones operativas (v1.6)
+
+1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un namespace distinto del host real (incidente 2026-08-11: el remount `rw` del usuario no se veía desde el namespace del agente, y viceversa). Ante discrepancia de estado del sistema, verificar `readlink /proc/self/ns/mnt` y pedir al usuario su salida antes de concluir.
+2. **Instalación global en ASUS requiere sudo del humano**: el rootfs de ASUS suele estar RO en el host; el agente no puede escribir en `~/.config/opencode/`. Procedimiento: preparar `sudo cp <repo>/deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md && head -1 ...`, pedir al humano que lo ejecute, verificar (head + grep + diff contra repo). En la Mac se usa `scp` directo.
+3. **Commits en entorno degradado**: si pre-commit falla por rootfs RO (`OSError: Read-only file system` en `~/.cache/pre-commit`), usar `SKIP=semgrep git -c core.hooksPath=/dev/null commit` (solo hooks rotos por el entorno, nunca para saltarse verificaciones del cambio). Ejecutar `ura-engineering-check --env` al inicio de sesión.
+
 ## Changelog
 
 | Versión | Fecha | Cambio |
@@ -159,3 +190,9 @@ Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS
 | 1.0 | 2026-08-08 | Versión inicial (Plan 0 v1.1 aprobado; TASK-20260808-016) |
 | 1.1 | 2026-08-08 | PLAN 1 (TASK-019): A4 reinicio Web, A5 instalación Mac, A3 env check, B1 revisión diferida (ver §9), B4 proporcionalidad |
 | 1.2 | 2026-08-11 | §14 Anti-alucinación: verificación obligatoria antes de afirmar (TASK-20260811-003, TERM fabricaba trabajo inexistente) |
+| 1.3 | 2026-08-11 | §15 Anti-bucle (TASK-20260811-005, TERM en loop de preguntas "Next Steps Needed") |
+| 1.4 | 2026-08-11 | §16 Modo de revisión autónoma de fondo (TASK-20260811-006) |
+| 1.5 | 2026-08-11 | §16 Registro persistente de hallazgos (TASK-20260811-007) |
+| 1.6 | 2026-08-11 | §17 Entorno y despliegue: lecciones operativas (TASK-20260811-008) |
+| 1.7 | 2026-08-11 | §16 Plan propuesto obligatorio en hallazgos accionables (TASK-20260811-009) |
+| 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
