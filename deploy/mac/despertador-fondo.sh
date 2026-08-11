@@ -43,7 +43,7 @@ if [ -z "$SES" ]; then
 fi
 echo "[$(date +%H:%M:%S)] sesión: $SES" >> "$LOG"
 
-MSG='MODO FONDO (v1.8): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo: revisa 1 carpeta/modulo de URA segun el progreso registrado en docs/udo/hallazgos-fondo.md (no repitas lo ya revisado). Busca fallos, duplicados, codigo muerto, contradicciones. Registra hallazgos con estado "propuesto (con plan)" (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO). NO modifiques codigo, solo documenta. Registra el progreso de la carpeta revisada. Luego termina el turno.'
+MSG='MODO FONDO (v1.8): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo: revisa 1 carpeta/modulo de URA segun el progreso registrado en docs/udo/hallazgos-fondo.md (no repitas lo ya revisado). Busca fallos, duplicados, codigo muerto, contradicciones. Registra hallazgos con estado "propuesto (con plan)" (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO). PROHIBIDO ESCRITURA: no ejecutes write, edit, patch, format, ni ningun comando que modifique archivos (ni siquiera formateo/ruff); usa solo herramientas de lectura (read, grep, glob, ls) y si acaso comandos read-only. Si algo requiere correccion, registra el hallazgo con plan y termina. Registra el progreso de la carpeta revisada. Luego termina el turno.'
 
 cd "$REPO" || exit 1
 "$OC" run --attach "$URL" -s "$SES" --format json "$MSG" >> "$LOG" 2>&1
