@@ -150,6 +150,47 @@ class MetadataExtractionService:
         if self._worker_thread:
             self._worker_thread.join(timeout=timeout)
 
+    def _run_extractor(self, extractor, source: AssetSource) -> dict | None:
+        """Ejecutar un extractor y guardar el asset; None si falló."""
+        result = extractor.extract(source)
+        if result.errors:
+            for err in result.errors:
+                log.warning("Extractor %s error for %s: %s", extractor.id, source.location, err)
+            return None
+        if not result.asset:
+            return None
+        saved = self._store.save_asset(result.asset)
+        log.info(
+            "Extracted %s with %s (v%s) in %.0fms",
+            source.location,
+            extractor.id,
+            extractor.version,
+            result.duration_ms,
+        )
+        if saved:
+            self._publish_extracted(result.asset, extractor.id, result.duration_ms)
+        return {
+            "extractor": extractor.id,
+            "version": extractor.version,
+            "asset_id": result.asset.asset_id,
+            "saved": saved,
+            "duration_ms": result.duration_ms,
+        }
+
+    def _publish_extracted(self, asset, extractor_id: str, duration_ms: float) -> None:
+        try:
+            get_bus().publish(
+                MetadataExtracted(
+                    asset_id=asset.asset_id,
+                    asset_type=asset.asset_type,
+                    extractor=extractor_id,
+                    success=True,
+                    duration_ms=duration_ms,
+                ),
+            )
+        except Exception as exc:
+            log.warning("Failed to publish MetadataExtracted: %s", exc)
+
     def extract(self, source: AssetSource) -> dict[str, Any]:
         """Extrae metadatos de un source y los almacena.
 
@@ -169,42 +210,8 @@ class MetadataExtractionService:
 
         results = []
         for extractor in extractors:
-            result = extractor.extract(source)
-            if result.errors:
-                for err in result.errors:
-                    log.warning("Extractor %s error for %s: %s", extractor.id, source.location, err)
-                continue
-            if result.asset:
-                saved = self._store.save_asset(result.asset)
-                results.append(
-                    {
-                        "extractor": extractor.id,
-                        "version": extractor.version,
-                        "asset_id": result.asset.asset_id,
-                        "saved": saved,
-                        "duration_ms": result.duration_ms,
-                    },
-                )
-                log.info(
-                    "Extracted %s with %s (v%s) in %.0fms",
-                    source.location,
-                    extractor.id,
-                    extractor.version,
-                    result.duration_ms,
-                )
-                if saved:
-                    try:
-                        get_bus().publish(
-                            MetadataExtracted(
-                                asset_id=result.asset.asset_id,
-                                asset_type=result.asset.asset_type,
-                                extractor=extractor.id,
-                                success=True,
-                                duration_ms=result.duration_ms,
-                            ),
-                        )
-                    except Exception as exc:
-                        log.warning("Failed to publish MetadataExtracted: %s", exc)
+            if (r := self._run_extractor(extractor, source)) is not None:
+                results.append(r)
 
         return {
             "success": len(results) > 0,
@@ -349,6 +356,51 @@ def _claim_next_job_fallback(conn) -> sqlite3.Row | None:
     return sel
 
 
+def _esperar_proceso(
+    db_path: Path,
+    job_id: int,
+    extractor_id: str,
+    proc: multiprocessing.Process,
+    running_jobs: dict,
+    jobs_lock: threading.Lock,
+) -> dict | None:
+    """Esperar a un worker: None si falló/terminó mal, dict con el resultado si OK."""
+    proc.join(timeout=_MAX_EXTRACTION_TIME)
+
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(timeout=5)
+        if proc.is_alive():
+            proc.kill()
+        _mark_job_failed(db_path, job_id, "timeout after 300s")
+        with jobs_lock:
+            running_jobs.pop(job_id, None)
+        return None
+
+    result = _read_job_result(db_path, job_id)
+    if not result or result.get("status") == "failed":
+        with jobs_lock:
+            running_jobs.pop(job_id, None)
+        return None
+
+    try:
+        get_bus().publish(
+            MetadataExtracted(
+                asset_id=result["asset_id"],
+                asset_type=AssetType(result["asset_type"]),
+                extractor=extractor_id,
+                success=True,
+                duration_ms=result["duration_ms"],
+            ),
+        )
+    except Exception as exc:
+        log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
+
+    with jobs_lock:
+        running_jobs.pop(job_id, None)
+    return result
+
+
 def _process_item(
     db_path: Path,
     registry: ExtractorRegistry,
@@ -382,39 +434,7 @@ def _process_item(
         with jobs_lock:
             running_jobs[job_id] = proc
             proc.start()
-        proc.join(timeout=_MAX_EXTRACTION_TIME)
-
-        if proc.is_alive():
-            proc.terminate()
-            proc.join(timeout=5)
-            if proc.is_alive():
-                proc.kill()
-            _mark_job_failed(db_path, job_id, "timeout after 300s")
-            with jobs_lock:
-                running_jobs.pop(job_id, None)
-            return
-
-        result = _read_job_result(db_path, job_id)
-        if not result or result.get("status") == "failed":
-            with jobs_lock:
-                running_jobs.pop(job_id, None)
-            return
-
-        try:
-            get_bus().publish(
-                MetadataExtracted(
-                    asset_id=result["asset_id"],
-                    asset_type=AssetType(result["asset_type"]),
-                    extractor=extractor_id,
-                    success=True,
-                    duration_ms=result["duration_ms"],
-                ),
-            )
-        except Exception as exc:
-            log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
-
-        with jobs_lock:
-            running_jobs.pop(job_id, None)
+        _esperar_proceso(db_path, job_id, extractor_id, proc, running_jobs, jobs_lock)
     finally:
         sem.release()
         if proc is not None:

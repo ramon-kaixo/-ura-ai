@@ -197,6 +197,39 @@ class NDJSONAuditBackend:
 
     # ── Ingesta atómica (rename → process → unlink) ──────────────────────
 
+    def _ingest_events(self, conn, processing) -> int:
+        """Ingestar líneas del archivo .processing en op_audit (transacción abierta)."""
+        ingested = 0
+        with processing.open() as f:
+            for line in f:
+                line = line.strip()  # noqa: PLW2901
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    ev = AuditEvent(**data)
+                    conn.execute(
+                        "INSERT INTO op_audit "
+                        "(action, actor, entity_type, entity_id, result, "
+                        " correlation_id, timestamp, metadata) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            ev.action,
+                            ev.actor,
+                            ev.entity_type,
+                            ev.entity_id,
+                            ev.result,
+                            ev.correlation_id,
+                            ev.timestamp,
+                            json.dumps(ev.metadata),
+                        ),
+                    )
+                    ingested += 1
+                except (json.JSONDecodeError, TypeError, Exception) as exc:
+                    log.warning("Saltando evento corrupto en ingest: %s", exc)
+                    continue
+        return ingested
+
     def ingest_into_sqlite(self, db_path: Path) -> int:
         """Ingesta batch atómica: rename → INSERT → unlink.
 
@@ -226,34 +259,7 @@ class NDJSONAuditBackend:
             conn.execute("PRAGMA synchronous=OFF")
             begin_immediate(conn)
             _t0 = _time.monotonic()
-            with processing.open() as f:
-                for line in f:
-                    line = line.strip()  # noqa: PLW2901
-                    if not line:
-                        continue
-                    try:
-                        data = json.loads(line)
-                        ev = AuditEvent(**data)
-                        conn.execute(
-                            "INSERT INTO op_audit "
-                            "(action, actor, entity_type, entity_id, result, "
-                            " correlation_id, timestamp, metadata) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (
-                                ev.action,
-                                ev.actor,
-                                ev.entity_type,
-                                ev.entity_id,
-                                ev.result,
-                                ev.correlation_id,
-                                ev.timestamp,
-                                json.dumps(ev.metadata),
-                            ),
-                        )
-                        ingested += 1
-                    except (json.JSONDecodeError, TypeError, Exception) as exc:
-                        log.warning("Saltando evento corrupto en ingest: %s", exc)
-                        continue
+            ingested = self._ingest_events(conn, processing)
             conn.commit()
             conn.close()
         except Exception as exc:

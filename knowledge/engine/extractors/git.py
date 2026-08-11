@@ -62,6 +62,61 @@ class GitExtractor:
     supported_mime_types: list[str] = _GIT_MIMES
     cost: str = "O(n²)"
 
+    def _resolve_work_dir(self, source: AssetSource, location: str) -> tuple[str, bool] | str:
+        """Resolver y preparar el directorio de trabajo: clona remotos o usa local.
+
+        Returns:
+            Tupla (work_dir, is_temp) si es válida, o el mensaje de error.
+
+        """
+        if source.kind in ("github", "git", "api") or location.startswith(("http://", "https://", "git@")):
+            tmp = tempfile.mkdtemp(prefix="ura_git_")
+            return (self._clone_repo(location, tmp), True)
+        if Path(location).exists():
+            git_dir = self._find_git_dir(location)
+            if not git_dir:
+                return f"Not a git repository: {location}"
+            return (str(Path(git_dir).parent), False)
+        return f"Location not found: {location}"
+
+    def _build_git_asset(
+        self,
+        source: AssetSource,
+        location: str,
+        work_dir: str,
+        is_temp: bool,
+        now: str,
+    ) -> KnowledgeAsset:
+        metadata = self._extract_git_metadata(work_dir)
+
+        repo_size = self._repo_size(work_dir)
+        if repo_size > MAX_CLONE_SIZE:
+            msg = f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})"
+            raise GitLimitError(msg)
+
+        metadata["size"] = repo_size
+        metadata["_extractor"] = self.id
+        metadata["_extractor_version"] = self.version
+        metadata["wraps"] = f"source:{location}"
+        metadata["extracted_at"] = now
+
+        if is_temp:
+            metadata["cloned_from"] = location
+            metadata["clone_size"] = repo_size
+
+        content_sha256 = self._hash_git_repo(metadata)
+        metadata["content_sha256"] = content_sha256
+
+        return KnowledgeAsset(
+            asset_id=content_sha256[:16],
+            asset_type=AssetType.GIT_REPO,
+            metadata=metadata,
+            source=source,
+            quality=_compute_git_quality(metadata),
+            created_at=now,
+            updated_at=now,
+        )
+
     def extract(self, source: AssetSource) -> ExtractionResult:
         t0 = time.monotonic()
         location = source.location
@@ -79,60 +134,17 @@ class GitExtractor:
             )
 
         try:
-            work_dir: str | None = None
-            is_temp = False
-
-            if source.kind in ("github", "git", "api") or location.startswith(("http://", "https://", "git@")):
-                # Clonar remoto
-                tmp = tempfile.mkdtemp(prefix="ura_git_")
-                work_dir = self._clone_repo(location, tmp)
-                is_temp = True
-            elif Path(location).exists():
-                # Usar repositorio local
-                git_dir = self._find_git_dir(location)
-                if not git_dir:
-                    return ExtractionResult(
-                        errors=[f"Not a git repository: {location}"],
-                        duration_ms=(time.monotonic() - t0) * 1000,
-                    )
-                work_dir = str(Path(git_dir).parent)
-            else:
+            resolved = self._resolve_work_dir(source, location)
+            if isinstance(resolved, str):
                 return ExtractionResult(
-                    errors=[f"Location not found: {location}"],
+                    errors=[resolved],
                     duration_ms=(time.monotonic() - t0) * 1000,
                 )
+            work_dir, is_temp = resolved
 
             try:
                 now = datetime.now(UTC).isoformat()
-                metadata = self._extract_git_metadata(work_dir)
-
-                repo_size = self._repo_size(work_dir)
-                if repo_size > MAX_CLONE_SIZE:
-                    msg = f"Repository too large: {repo_size} bytes (max {MAX_CLONE_SIZE})"
-                    raise GitLimitError(msg)
-
-                metadata["size"] = repo_size
-                metadata["_extractor"] = self.id
-                metadata["_extractor_version"] = self.version
-                metadata["wraps"] = f"source:{location}"
-                metadata["extracted_at"] = now
-
-                if is_temp:
-                    metadata["cloned_from"] = location
-                    metadata["clone_size"] = repo_size
-
-                content_sha256 = self._hash_git_repo(metadata)
-                metadata["content_sha256"] = content_sha256
-
-                asset = KnowledgeAsset(
-                    asset_id=content_sha256[:16],
-                    asset_type=AssetType.GIT_REPO,
-                    metadata=metadata,
-                    source=source,
-                    quality=_compute_git_quality(metadata),
-                    created_at=now,
-                    updated_at=now,
-                )
+                asset = self._build_git_asset(source, location, work_dir, is_temp, now)
 
                 return ExtractionResult(
                     asset=asset,

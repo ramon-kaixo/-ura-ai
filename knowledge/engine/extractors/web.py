@@ -147,9 +147,52 @@ class WebExtractor:
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
 
+    def _parse_html(
+        self,
+        content: bytes,
+        final_url: str,
+        url_original: str,
+        now: str,
+        status_code: int,
+        content_type: str,
+    ) -> dict[str, Any]:
+        from bs4 import BeautifulSoup
+
+        content_sha256 = hashlib_content(content)
+        soup = BeautifulSoup(content, "html.parser")
+        title = ""
+        if soup.title and soup.title.string:
+            title = soup.title.string.strip()
+
+        description = ""
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        if meta_desc and meta_desc.get("content"):
+            description = meta_desc["content"].strip()
+
+        body_text = soup.get_text(separator=" ", strip=True)
+        images = [img.get("src", "") for img in soup.find_all("img") if img.get("src")]
+        links = [a.get("href", "") for a in soup.find_all("a", href=True) if a["href"].startswith("http")]
+
+        return {
+            "url": final_url,
+            "title": title,
+            "description": description,
+            "text_length": len(body_text),
+            "text_preview": body_text[:500],
+            "image_count": len(images),
+            "link_count": len(links),
+            "content_sha256": content_sha256,
+            "size": len(content),
+            "status_code": status_code,
+            "content_type": content_type,
+            "_extractor": self.id,
+            "_extractor_version": self.version,
+            "wraps": f"source:{url_original}",
+            "extracted_at": now,
+        }
+
     def _fetch_and_extract(self, url: str, source: AssetSource, t0: float) -> ExtractionResult:
         import httpx
-        from bs4 import BeautifulSoup
 
         transport = httpx.HTTPTransport(
             verify=True,
@@ -171,51 +214,26 @@ class WebExtractor:
             if len(content) > MAX_BODY_SIZE:
                 content = content[:MAX_BODY_SIZE]
 
-            content_sha256 = hashlib_content(content)
             now = datetime.now(UTC).isoformat()
-
-            soup = BeautifulSoup(content, "html.parser")
-            title = ""
-            if soup.title and soup.title.string:
-                title = soup.title.string.strip()
-
-            description = ""
-            meta_desc = soup.find("meta", attrs={"name": "description"})
-            if meta_desc and meta_desc.get("content"):
-                description = meta_desc["content"].strip()
-
-            body_text = soup.get_text(separator=" ", strip=True)
-            images = [img.get("src", "") for img in soup.find_all("img") if img.get("src")]
-            links = [a.get("href", "") for a in soup.find_all("a", href=True) if a["href"].startswith("http")]
-
-            metadata: dict[str, Any] = {
-                "url": final_url,
-                "title": title,
-                "description": description,
-                "text_length": len(body_text),
-                "text_preview": body_text[:500],
-                "image_count": len(images),
-                "link_count": len(links),
-                "content_sha256": content_sha256,
-                "size": len(content),
-                "status_code": response.status_code,
-                "content_type": response.headers.get("content-type", ""),
-                "_extractor": self.id,
-                "_extractor_version": self.version,
-                "wraps": f"source:{url}",
-                "extracted_at": now,
-            }
+            metadata = self._parse_html(
+                content,
+                final_url,
+                url,
+                now,
+                response.status_code,
+                response.headers.get("content-type", ""),
+            )
 
             log.info(
                 "Extracted web page: %s (%d chars, %d images, %d links)",
                 final_url,
-                len(body_text),
-                len(images),
-                len(links),
+                metadata["text_length"],
+                metadata["image_count"],
+                metadata["link_count"],
             )
 
         asset = KnowledgeAsset(
-            asset_id=content_sha256[:16],
+            asset_id=metadata["content_sha256"][:16],
             asset_type=AssetType.API_REFERENCE,
             metadata=metadata,
             source=source,

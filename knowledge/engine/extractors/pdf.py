@@ -52,6 +52,40 @@ class PdfExtractor:
     supported_mime_types: list[str] = _PDF_MIMES
     cost: str = "O(n)"
 
+    def _build_pdf_asset(
+        self,
+        source: AssetSource,
+        path_str: str,
+        content_sha256: str,
+        size: int,
+        now: str,
+    ) -> KnowledgeAsset:
+        metadata: dict[str, Any] = {
+            "size": size,
+            "content_sha256": content_sha256,
+            "_extractor": self.id,
+            "_extractor_version": self.version,
+            "wraps": f"source:{path_str}",
+            "extracted_at": now,
+        }
+
+        if _HAS_FITZ:
+            self._extract_with_fitz(path_str, metadata)
+        else:
+            log.warning("PyMuPDF not available, extracting basic metadata for %s", path_str)
+            metadata["_degraded"] = True
+            metadata["_degraded_reason"] = "PyMuPDF not installed"
+
+        return KnowledgeAsset(
+            asset_id=content_sha256[:16],
+            asset_type=AssetType.PDF,
+            metadata=metadata,
+            source=source,
+            quality=_compute_pdf_quality(metadata),
+            created_at=now,
+            updated_at=now,
+        )
+
     def extract(self, source: AssetSource) -> ExtractionResult:
         t0 = time.monotonic()
         path_str = source.location
@@ -72,31 +106,7 @@ class PdfExtractor:
                 )
 
             now = datetime.now(UTC).isoformat()
-            metadata: dict[str, Any] = {
-                "size": size,
-                "content_sha256": content_sha256,
-                "_extractor": self.id,
-                "_extractor_version": self.version,
-                "wraps": f"source:{path_str}",
-                "extracted_at": now,
-            }
-
-            if _HAS_FITZ:
-                self._extract_with_fitz(path_str, metadata)
-            else:
-                log.warning("PyMuPDF not available, extracting basic metadata for %s", path_str)
-                metadata["_degraded"] = True
-                metadata["_degraded_reason"] = "PyMuPDF not installed"
-
-            asset = KnowledgeAsset(
-                asset_id=content_sha256[:16],
-                asset_type=AssetType.PDF,
-                metadata=metadata,
-                source=source,
-                quality=_compute_pdf_quality(metadata),
-                created_at=now,
-                updated_at=now,
-            )
+            asset = self._build_pdf_asset(source, path_str, content_sha256, size, now)
 
             return ExtractionResult(
                 asset=asset,

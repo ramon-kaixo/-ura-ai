@@ -66,6 +66,22 @@ class VideoExtractor:
     supported_mime_types: list[str] = _VIDEO_MIMES
     cost: str = "O(n)"
 
+    def _enrich_metadata(self, path_str: str, metadata: dict[str, Any]) -> None:
+        """Ampliar metadatos con herramientas disponibles (ffprobe/ffmpeg/opencv/whisper)."""
+        if _HAS_FFPROBE:
+            self._extract_ffprobe(path_str, metadata)
+        else:
+            metadata["_degraded_ffprobe"] = True
+
+        if _HAS_FFMPEG:
+            self._extract_thumbnails(path_str, metadata)
+
+        if _HAS_OPENCV:
+            self._detect_scenes(path_str, metadata)
+
+        if _HAS_WHISPER:
+            self._transcribe_video(path_str, metadata)
+
     def extract(self, source: AssetSource) -> ExtractionResult:
         t0 = time.monotonic()
         path_str = source.location
@@ -96,19 +112,7 @@ class VideoExtractor:
                 "extracted_at": now,
             }
 
-            if _HAS_FFPROBE:
-                self._extract_ffprobe(path_str, metadata)
-            else:
-                metadata["_degraded_ffprobe"] = True
-
-            if _HAS_FFMPEG:
-                self._extract_thumbnails(path_str, metadata)
-
-            if _HAS_OPENCV:
-                self._detect_scenes(path_str, metadata)
-
-            if _HAS_WHISPER:
-                self._transcribe_video(path_str, metadata)
+            self._enrich_metadata(path_str, metadata)
 
             asset = KnowledgeAsset(
                 asset_id=content_sha256[:16],
@@ -131,6 +135,42 @@ class VideoExtractor:
                 errors=[f"Extraction error: {exc}"],
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
+
+    def _probe_format(metadata: dict[str, Any], fmt: dict) -> None:
+        for key, mk in (
+            ("duration", "duration_sec"),
+            ("bit_rate", "bitrate"),
+            ("format_name", "container"),
+            ("size", "size_bytes"),
+        ):
+            val = fmt.get(key)
+            if val is not None:
+                metadata[f"video_{mk}"] = val
+
+    @staticmethod
+    def _probe_streams(metadata: dict[str, Any], streams: list) -> None:
+        for stream in streams:
+            codec_type = stream.get("codec_type")
+            if codec_type == "video":
+                for key, mk in (
+                    ("codec_name", "video_codec"),
+                    ("width", "width"),
+                    ("height", "height"),
+                    ("r_frame_rate", "fps"),
+                    ("bit_rate", "video_bitrate"),
+                ):
+                    val = stream.get(key)
+                    if val is not None:
+                        metadata[f"video_{mk}"] = val
+            elif codec_type == "audio":
+                for key, mk in (
+                    ("codec_name", "audio_codec"),
+                    ("sample_rate", "audio_sample_rate"),
+                    ("channels", "audio_channels"),
+                ):
+                    val = stream.get(key)
+                    if val is not None:
+                        metadata[f"video_{mk}"] = val
 
     @staticmethod
     def _extract_ffprobe(path_str: str, metadata: dict[str, Any]) -> None:
@@ -156,38 +196,8 @@ class VideoExtractor:
             streams = data.get("streams", [])
 
             if fmt:
-                for key, mk in (
-                    ("duration", "duration_sec"),
-                    ("bit_rate", "bitrate"),
-                    ("format_name", "container"),
-                    ("size", "size_bytes"),
-                ):
-                    val = fmt.get(key)
-                    if val is not None:
-                        metadata[f"video_{mk}"] = val
-
-            for stream in streams:
-                codec_type = stream.get("codec_type")
-                if codec_type == "video":
-                    for key, mk in (
-                        ("codec_name", "video_codec"),
-                        ("width", "width"),
-                        ("height", "height"),
-                        ("r_frame_rate", "fps"),
-                        ("bit_rate", "video_bitrate"),
-                    ):
-                        val = stream.get(key)
-                        if val is not None:
-                            metadata[f"video_{mk}"] = val
-                elif codec_type == "audio":
-                    for key, mk in (
-                        ("codec_name", "audio_codec"),
-                        ("sample_rate", "audio_sample_rate"),
-                        ("channels", "audio_channels"),
-                    ):
-                        val = stream.get(key)
-                        if val is not None:
-                            metadata[f"video_{mk}"] = val
+                VideoExtractor._probe_format(metadata, fmt)
+            VideoExtractor._probe_streams(metadata, streams)
 
             log.info("Extracted video metadata for %s", path_str)
 
