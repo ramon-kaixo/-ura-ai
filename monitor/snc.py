@@ -262,7 +262,23 @@ def poll_services(runbook: dict) -> dict:
     state = _state_inicial()
     all_ok = True
 
-    for svc_name, svc_config in runbook.get("commands", {}).items():
+    # Runbook v2 (da4c290b): "commands" pasó a ser lista de comandos y los
+    # servicios reales viven en "scenarios". El polling por servicio espera
+    # dict svc_name -> config; con lista NO se puede pollear: degradar con
+    # aviso en vez de crashear (AttributeError mataba snc.service cada 10s).
+    commands = runbook.get("commands", {})
+    if not isinstance(commands, dict):
+        state["services"]["_runbook_v2"] = {
+            "ok": True,
+            "check": "runbook v2: polling por servicio no disponible (commands=lista)",
+        }
+        state["warnings"] = [
+            *state.get("warnings", []),
+            "runbook v2: 'commands' es lista — SNC no pollea servicios individuales (degradado)",
+        ]
+        return _state_final(state, all_ok)
+
+    for svc_name, svc_config in commands.items():
         # Servicio especial: mac_reachability (multi-path Ethernet→Tailscale)
         if svc_name == "mac_reachability":
             all_ok = _poll_mac_reachability(state, runbook) and all_ok
