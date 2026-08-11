@@ -187,9 +187,15 @@ _conflicto_reserva() {
         echo "ERROR: DONE sin trabajo revisable (diff commit_base..HEAD vacío y árbol limpio)" >&2
         return 1
     fi
-    local IFS=','
-    for entry in $(echo "$commits"); do
-        sha="${entry# }"; sha="${sha%% *}"
+    local IFS=$'\n'
+    # H1 fix (TASK-20260812-003): los mensajes de commit pueden contener comas,
+    # por lo que separar por ',' rompe la lista. Se extraen los SHAs candidatos
+    # (hex 7-40) del campo commits: y se verifica cada uno con git rev-parse
+    # (descarta falsos positivos tipo TASK-20260811-003, que no son commits).
+    for sha in $(echo "$commits" | grep -oE '[0-9a-f]{7,40}' || true); do
+        if ! git -C "$REPO" rev-parse --verify --quiet "$sha"^{commit} >/dev/null 2>&1; then
+            continue
+        fi
         if ! git -C "$REPO" merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then
             echo "ERROR: DONE bloqueado — commit '$sha' no es ancestro de HEAD (historia reescrita tras verificación)" >&2
             return 1
