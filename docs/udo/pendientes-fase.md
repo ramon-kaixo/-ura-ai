@@ -7,9 +7,9 @@ o justificada por Ramón. Cada fila: TASK | pendiente | fecha | estado | resoluc
 test veredicto 02:27:49
 
 #### A MEDIAS (IN_PROGRESS)
-| TASK-20260811-009 | IN_PROGRESS (a medias) | 2026-08-11 | PENDIENTE | |
 
 #### PENDIENTES DE REVISOR
+| TASK-20260811-010 | pendiente revisor | 2026-08-11 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
 
