@@ -42,24 +42,87 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     return None
 
 
+def _headers_sse(provider_name: str, modelo: str, route_reason: str) -> dict:
+    return {
+        "X-Mochila-Provider": provider_name,
+        "X-Mochila-Modelo": modelo,
+        "X-Mochila-Route-Reason": route_reason,
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+    }
+
+
+def _headers_json(provider_name: str, modelo: str, route_reason: str) -> dict:
+    return {
+        "X-Mochila-Provider": provider_name,
+        "X-Mochila-Modelo": modelo,
+        "X-Mochila-Route-Reason": route_reason,
+    }
+
+
+async def _procesar_tool_calls(
+    state,
+    provider,
+    body: ChatRequest,
+    respuesta: dict,
+    provider_name: str,
+    modelo: str,
+    herramientas,
+) -> dict:
+    """Ejecutar tool calls en cadena y devolver la respuesta final con tools."""
+    mensajes_con_tool = list(body.messages)
+    msg = respuesta.get("choices", [{}])[0].get("message", {})
+    tool_calls = msg.get("tool_calls")
+    mensajes_con_tool.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tool_calls})
+    for tc in tool_calls:
+        fid = tc.get("id", tc.get("index", "call_0"))
+        fname = tc.get("function", {}).get("name", "")
+        fargs_raw = tc.get("function", {}).get("arguments", "{}")
+        try:
+            fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
+        except json.JSONDecodeError:
+            fargs = {}
+        resultado = await ejecutar_tool(fname, fargs)
+        mensajes_con_tool.append(
+            {"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)},
+        )
+    respuesta_final = await _chat_no_stream(
+        provider,
+        modelo,
+        mensajes_con_tool,
+        herramientas,
+        body.max_tokens,
+        body.temperature,
+    )
+    if respuesta_final:
+        _procesar_usage(respuesta_final, provider_name, modelo, state.cost_tracker)
+    return respuesta_final
+
+
+def _tools_desde_body(body: ChatRequest) -> list | None:
+    if body.tools is True:
+        return TOOL_SCHEMAS
+    if isinstance(body.tools, list):
+        return body.tools
+    return None
+
+
+def _rutar_y_rechazar(state, body: ChatRequest) -> tuple[str, str, str]:
+    try:
+        ruta = state.router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
+        return ruta.provider, ruta.modelo, ruta.route_reason
+    except NoProviderAvailable as e:
+        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
+
+
 def create_chat_router(state) -> APIRouter:
     router = APIRouter()
 
     @router.post("/v1/chat/completions")
     async def v1_chat_completions(body: ChatRequest):
-        try:
-            ruta = state.router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
-            provider_name, modelo, route_reason = ruta.provider, ruta.modelo, ruta.route_reason
-        except NoProviderAvailable as e:
-            raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
+        provider_name, modelo, route_reason = _rutar_y_rechazar(state, body)
         _rechazar_si_bloqueado(provider_name, state.circuit_breaker, state.rate_limiter)
-
-        if body.tools is True:
-            herramientas = TOOL_SCHEMAS
-        elif isinstance(body.tools, list):
-            herramientas = body.tools
-        else:
-            herramientas = None
+        herramientas = _tools_desde_body(body)
 
         is_opencode = body.force_guardian or "opencode" in body.model.lower()
         guardian = OpenCodeGuardian() if is_opencode else None
@@ -77,13 +140,7 @@ def create_chat_router(state) -> APIRouter:
                     guardian=guardian,
                 ),
                 media_type="text/event-stream",
-                headers={
-                    "X-Mochila-Provider": provider_name,
-                    "X-Mochila-Modelo": modelo,
-                    "X-Mochila-Route-Reason": route_reason,
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                },
+                headers=_headers_sse(provider_name, modelo, route_reason),
             )
 
         provider = state.providers[provider_name]
@@ -96,41 +153,16 @@ def create_chat_router(state) -> APIRouter:
         state.rate_limiter.registrar(provider_name)
         _procesar_usage(respuesta, provider_name, modelo, state.cost_tracker)
         msg = respuesta.get("choices", [{}])[0].get("message", {})
-        tool_calls = msg.get("tool_calls")
-        if tool_calls:
-            mensajes_con_tool = list(body.messages)
-            mensajes_con_tool.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": tool_calls})
-            for tc in tool_calls:
-                fid = tc.get("id", tc.get("index", "call_0"))
-                fname = tc.get("function", {}).get("name", "")
-                fargs_raw = tc.get("function", {}).get("arguments", "{}")
-                try:
-                    fargs = json.loads(fargs_raw) if isinstance(fargs_raw, str) else fargs_raw
-                except json.JSONDecodeError:
-                    fargs = {}
-                resultado = await ejecutar_tool(fname, fargs)
-                mensajes_con_tool.append(
-                    {"role": "tool", "tool_call_id": fid, "content": json.dumps(resultado, ensure_ascii=False)},
-                )
-            respuesta_final = await _chat_no_stream(
-                provider,
-                modelo,
-                mensajes_con_tool,
-                herramientas,
-                body.max_tokens,
-                body.temperature,
+        if msg.get("tool_calls"):
+            respuesta_final = await _procesar_tool_calls(
+                state, provider, body, respuesta, provider_name, modelo, herramientas
             )
             if respuesta_final:
                 respuesta = respuesta_final
-                _procesar_usage(respuesta_final, provider_name, modelo, state.cost_tracker)
 
         return JSONResponse(
             content=respuesta,
-            headers={
-                "X-Mochila-Provider": provider_name,
-                "X-Mochila-Modelo": modelo,
-                "X-Mochila-Route-Reason": route_reason,
-            },
+            headers=_headers_json(provider_name, modelo, route_reason),
         )
 
     return router
