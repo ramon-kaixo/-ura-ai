@@ -1,8 +1,8 @@
-<!-- Engineering Process v1.1 -->
+<!-- Engineering Process v1.2 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.1 (2026-08-08) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.2 (2026-08-11) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
@@ -136,9 +136,26 @@ El objetivo es que el proceso no entorpezca el trabajo simple ni trate a la lige
 
 Esta metodología no depende de: modelo concreto, Qwen, OpenCode Web/Terminal, Ollama ni una máquina concreta. Vive en git; se instala copiando un archivo (AGENTS.md global). Portable por diseño.
 
+## 14. Anti-alucinación: verificación obligatoria antes de afirmar (v1.2)
+
+**Origen**: TASK-20260811-003 — una instancia de OpenCode (TERM, Web en Mac :8091) generó informes detallados de trabajo (plan de 47 problemas, commits, TASK, reservas) que no existían en Git: ningún archivo creado, ningún commit, ningún expediente. La conversación afirmaba con checkmarks; Git desmentía todo. Lección: **creer ≠ hacer; decir ≠ verificar**.
+
+Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS.md.global` §ANTI-ALUCINACIÓN):
+
+1. **Nada se afirma sin evidencia**: toda afirmación comprobable (commit, archivo, tarea, servicio, veredicto) exige el comando de verificación y su salida (`git log --oneline -1`, `ls -la <ruta>`, `systemctl is-active <svc>`). Sin salida → no afirmar.
+2. **"NO LO SÉ" es respuesta válida**: si no sabes, dilo. Prohibido rellenar con plausibilidad no verificada.
+3. **NO VERIFICADO se escribe literalmente**: no presentar conjeturas como hechos; no usar ✅ para trabajo no demostrado.
+4. **Estructura de reporte**: QUÉ SE PIDIÓ · QUÉ SE HIZO (SHA y rutas) · QUÉ NO SE HIZO · QUÉ NO SE VERIFICÓ · PENDIENTES.
+5. **Identidad y trabajo ajeno**: prohibido usar IDs de TASK existentes para trabajo nuevo, atribuirse commits ajenos o cambiar de rol/máquina sin autorización.
+6. **Rutas y máquinas**: verificar `pwd` y `git rev-parse --show-toplevel` antes de afirmar ubicación; ASUS y Mac son repos distintos; un archivo local no sincronizado es "local, pendiente de sync".
+7. **Sincronización**: el trabajo del Mac no existe en ASUS hasta scp/rsync o push a `mac-veredictos` + integración del detector.
+8. **Ante la duda, verifica**: si no puedes ejecutar la verificación → responde NO VERIFICADO.
+9. **No heredar afirmaciones de terceros**: la conversación no es evidencia; solo Git, logs y salidas de comandos lo son.
+
 ## Changelog
 
 | Versión | Fecha | Cambio |
 |---------|-------|--------|
 | 1.0 | 2026-08-08 | Versión inicial (Plan 0 v1.1 aprobado; TASK-20260808-016) |
 | 1.1 | 2026-08-08 | PLAN 1 (TASK-019): A4 reinicio Web, A5 instalación Mac, A3 env check, B1 revisión diferida (ver §9), B4 proporcionalidad |
+| 1.2 | 2026-08-11 | §14 Anti-alucinación: verificación obligatoria antes de afirmar (TASK-20260811-003, TERM fabricaba trabajo inexistente) |
