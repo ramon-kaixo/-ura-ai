@@ -39,6 +39,54 @@ BATCHES: list[list[str]] = [
     ["motor/agents/", "motor/brain/", "motor/memory/", "motor/events/", "motor/cli/"],
 ]
 
+# mutmut 3.7 solo muta source_paths del pyproject (no acepta paths por CLI);
+# BATCHES queda como documentación del equilibrio original. El barrido actual
+# cubre todo source_paths y el cache hace el trabajo incremental.
+
+# Tests que dependen de archivos del árbol completo (config/, scripts/pro,
+# README, .github/, benchmarks de timing) y rompen la colección dentro de
+# mutants/ (mutmut solo copia source_paths + tests).
+TEST_IGNORES: list[str] = [
+    "tests/contracts/test_llm_contract.py",
+    "tests/infra/test_ci_cd.py",
+    "tests/infra/test_documentation.py",
+    "tests/infra/test_f25_b7_hardening.py",
+    "tests/infra/test_infrastructure.py",
+    "tests/infra/test_preflight_system.py",
+    "tests/integration/test_api.py",
+    "tests/integration/test_auditoria_paralela.py",
+    "tests/integration/test_f26_b2_memory.py",
+    "tests/integration/test_git_hooks.py",
+    "tests/integration/test_manage_timers.py",
+    "tests/integration/test_tuneladora_cleanup_integration.py",
+    "tests/integration/test_tuneladora_pipeline_negative.py",
+    "tests/integration/test_vram_guard_integration.py",
+    "tests/legacy/test_unit.py",
+    "tests/nightly/test_f26_b3_hardening.py",
+    "tests/nightly/test_f26_rr1_operational.py",
+    "tests/nightly/test_knowledge_engine.py",
+    "tests/pending/test_audit_conversation.py",
+    "tests/unit/test_agents_ejecutor.py",
+    "tests/unit/test_config.py",
+    "tests/unit/test_core_voice_main_inferencia.py",
+    "tests/unit/test_f25_b4_fact_index.py",
+    "tests/unit/test_guardian_openclaw.py",
+    "tests/unit/test_health_check.py",
+    "tests/unit/test_model_router_cache.py",
+    "tests/unit/test_model_router_cli.py",
+    "tests/unit/test_model_router_metrics.py",
+    "tests/unit/test_model_router_proxy.py",
+    "tests/unit/test_model_router_router.py",
+    "tests/unit/test_model_router_selection.py",
+    "tests/unit/test_router_dashboard.py",
+    "tests/unit/test_router_handler.py",
+    "tests/unit/test_search_engine.py",
+    "tests/unit/test_ura_query.py",
+    "tests/unit/test_vram_guard.py",
+    "tests/unit/test_motor_cmd_ura.py",
+    "tests/unit/test_scripts_check_secrets.py",
+]
+
 
 def _lote_del_dia() -> tuple[int, list[str]]:
     """Índice por día de la semana (0=lunes..6=domingo) → lote rotativo."""
@@ -47,12 +95,30 @@ def _lote_del_dia() -> tuple[int, list[str]]:
 
 
 def _ejecutar_mutmut(lote: list[str], dry: bool) -> int:
-    cmd = [str(MUTMUT), "run", *lote]
+    # mutmut 3.7: los args posicionales de "run" son filtros de NOMBRES de
+    # mutante ("motor.core.config.x_foo__mutmut_1"), NO paths. Un path como
+    # motor/core/ nunca matchea -> AssertionError "Filtered for specific
+    # mutants, but nothing matches". El camino soportado: sin args (muta
+    # source_paths del pyproject) y el cache incremental reutiliza los
+    # mutantes ya ejecutados (barrido progresivo real).
+    cmd = [str(MUTMUT), "run"]
     if dry:
         print("[dry-run] mutmut:", " ".join(cmd))
         return 0
     env = dict(os.environ)
     env["HYPOTHESIS_PROFILE"] = "ci"
+    # Los tests insertan sys.path relativo a scripts/pro (no existe en el
+    # árbol mutado de mutmut); sin PYTHONPATH la colección falla y el lote
+    # muere con "failed to collect stats" (exit 1).
+    env.setdefault("PYTHONPATH", str(REPO / "scripts" / "pro"))
+    # Tests que dependen del árbol completo (config/, scripts/pro, README,
+    # .github/, benchmarks de timing) y rompen la colección dentro de
+    # mutants/ porque mutmut solo copia source_paths + tests. Excluirlos del
+    # baseline mutmut (se siguen ejecutando en la suite pytest normal).
+    env.setdefault(
+        "PYTEST_ADDOPTS",
+        " ".join(f"--ignore={t}" for t in TEST_IGNORES),
+    )
     print("Ejecutando:", " ".join(cmd))
     return subprocess.run(cmd, cwd=str(REPO), env=env, check=False).returncode
 

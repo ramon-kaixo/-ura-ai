@@ -6,5 +6,7 @@ Type=oneshot
 User=ramon
 WorkingDirectory=/home/ramon/URA/ura_ia_1972
 Environment="HYPOTHESIS_PROFILE=ci"
+# El script mutmut_daily.py inyecta PYTHONPATH (scripts/pro) y PYTEST_ADDOPTS
+# (tests que rompen colección en el árbol mutado) por código.
 ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python /home/ramon/URA/ura_ia_1972/scripts/pro/mutmut_daily.py
 TimeoutStartSec=8h
