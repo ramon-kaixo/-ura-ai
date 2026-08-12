@@ -64,3 +64,4 @@
 | 2026-08-12 | docs (lote 2/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | docs (lote 3/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | docs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | deploy/grafana (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
