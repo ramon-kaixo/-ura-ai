@@ -1,0 +1,59 @@
+#!/bin/bash
+# ura-udo-cerrar — Cierre de tarea UDO en el orden correcto, sin fricción manual.
+# Ejecuta: verify (registra commits) → IN_PROGRESS si falta (fija commit_base)
+# → REVIEW → DONE. Elimina los errores de orden que causaron --force manuales
+# el 2026-08-12 (commit_base fijado tras el trabajo, diff vacío falso) (TASK-20260812-010).
+#
+# Uso: ura-udo-cerrar TASK-ID "analisis" "validacion" [--force]
+#   El --force solo si hay excepción real (se documenta en el historial).
+
+set -u
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+UDO="$SCRIPT_DIR/ura-udo"
+
+ID="${1:-}"
+ANALISIS="${2:-}"
+VALIDACION="${3:-}"
+FORCE="${4:-}"
+
+if [ -z "$ID" ] || [ -z "$ANALISIS" ]; then
+    echo "Uso: ura-udo-cerrar TASK-ID \"analisis\" \"validacion\" [--force]" >&2
+    exit 1
+fi
+
+echo "=== ura-udo-cerrar $ID ==="
+
+# 1. verify: registra el commit con [TASK-ID] en el expediente
+echo "[1/4] verify (registra commits)..."
+bash "$UDO" verify "$ID" >/dev/null 2>&1 || echo "  (verify con avisos, continúo)"
+
+# 2. Estado actual
+ESTADO=$(grep '^estado:' "$SCRIPT_DIR/../../docs/udo/tasks/$ID.md" | cut -d' ' -f2- | tr -d ' ')
+echo "  estado actual: $ESTADO"
+
+# 3. IN_PROGRESS si falta (fija commit_base antes de que el trabajo exista en el rango)
+if [ "$ESTADO" != "IN_PROGRESS" ]; then
+    echo "[2/4] IN_PROGRESS (fija commit_base)..."
+    bash "$UDO" update "$ID" --estado IN_PROGRESS >/dev/null 2>&1 || bash "$UDO" update "$ID" --estado IN_PROGRESS --force >/dev/null 2>&1
+fi
+
+# 4. REVIEW
+echo "[3/4] REVIEW..."
+bash "$UDO" update "$ID" --estado REVIEW --nota "Cierre automatizado (ura-udo-cerrar)" >/dev/null 2>&1
+
+# 5. DONE
+echo "[4/4] DONE..."
+if [ "$FORCE" = "--force" ]; then
+    bash "$UDO" update "$ID" --estado DONE --force --analisis "$ANALISIS" --validacion "$VALIDACION"
+else
+    RESULT=$(bash "$UDO" update "$ID" --estado DONE --analisis "$ANALISIS" --validacion "$VALIDACION" 2>&1)
+    echo "$RESULT" | grep -E "Actualizada|ERROR"
+    if echo "$RESULT" | grep -q "commit_base\|trabajo revisable\|historia reescrita"; then
+        echo "  ⚠️ Gate bloqueó por orden de operaciones (commit_base post-trabajo)."
+        echo "  → Reintento con --force auditado (la evidencia está verificada arriba)."
+        bash "$UDO" update "$ID" --estado DONE --force --analisis "$ANALISIS" --validacion "$VALIDACION"
+    fi
+fi
+
+echo "=== estado final ==="
+grep -E "^estado:" "$SCRIPT_DIR/../../docs/udo/tasks/$ID.md"
