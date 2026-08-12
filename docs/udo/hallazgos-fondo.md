@@ -80,3 +80,4 @@
 | 2026-08-12 | core/cleaner (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | core/guardians (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | core/inferencia (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | core/logs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
