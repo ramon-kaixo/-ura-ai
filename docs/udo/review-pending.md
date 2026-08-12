@@ -102,3 +102,17 @@ Las tareas WEB (005, 001, 002, 003, 004) fueron ejecutadas y verificadas por WEB
 | TASK-011 (`b0cacc10`) | ✅ APROBADA (parcial) | ENGINEERING_PROCESS.md v1.8 ✓; com.ura.opencode-term.plist existe ✓; KeepAlive en plist NO VERIFICABLE (runtime de la Mac) |
 
 **Conclusión**: lote revisado y aprobado. 2 puntos NO VERIFICABLES desde ASUS (config Mac + runtime plist) — pendientes de confirmación visual en la Mac, sin impacto en código.
+
+## PENDIENTE DE SYNC A LA MAC (2026-08-13, WEB/ASUS — no hay ruta ASUS→Mac)
+
+La Mac debe incorporar (scp desde ramon@10.164.1.99 o integración mac-veredictos):
+- `scripts/pro/audit_git_secrets.py` (nuevo, TASK-024; requiere solo stdlib)
+- `scripts/pro/run_semgrep_hook.sh` (nuevo, hook pre-commit)
+- `scripts/pro/audit_secrets.py` (fix: reporte restaurado — vaciado en T06)
+- `scripts/pro/refactor_large_functions_v2.py` (pragma rama inalcanzable + 0 cambios funcionales)
+- `tests/unit/test_refactor_large_functions_v2.py` (nuevo, 71 tests)
+- `.github/workflows/ci.yml` (job security: pip-audit + audit_git_secrets --fail)
+- `.pre-commit-config.yaml` (entry semgrep → wrapper)
+- `AGENTS.md` (nota hook semgrep en Build & Test)
+
+Además: `.venv` de la Mac necesita `pip install semgrep pip-audit` para el hook local.
