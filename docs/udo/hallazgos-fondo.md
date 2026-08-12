@@ -52,3 +52,4 @@
 | 2026-08-12 | shared (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | specs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | bitacora (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | scripts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
