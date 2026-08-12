@@ -89,3 +89,16 @@ Las tareas WEB (005, 001, 002, 003, 004) fueron ejecutadas y verificadas por WEB
 - TASK-002: `7fac4cac` — agente revisor-fondo (write/edit/patch=False) + despertador --agent; 2 runs verificados con 0 escrituras.
 - TASK-003: `863bea31` (AGENTS.md 717→543), `4cfc95c9` (gate H1 fix), `c2a0a6ef` (mapa carpetas) — 4 pasos verificados.
 - TASK-004: `07257c7a` — fallback router + 3 tests (9/9 pasan, ruff limpio).
+
+## ACTA REVISION EN BLOQUE — 2026-08-12 (revisor: WEB/ASUS, autorizado por RAMON)
+
+| TASK | Veredicto | Evidencia verificada |
+|------|-----------|----------------------|
+| TASK-001 (`ede049b3`) | ✅ APROBADA | despertador-fondo.sh:117-123 PROHIBIDO ESCRITURA presente; hallazgos-fondo.md tocado |
+| TASK-002 (`7fac4cac`) | ✅ APROBADA (parcial) | AGENTS.md.global +3 líneas protección; config revisor-fondo en opencode.json de la MAC — NO VERIFICABLE desde ASUS (verificar en Mac con `grep revisor-fondo ~/.config/opencode/opencode.json`) |
+| TASK-003 (`863bea31`+`4cfc95c9`+`c2a0a6ef`) | ✅ APROBADA | AGENTS.md 717→543 ✓; REFERENCIA_GX10.md creado ✓; gate H1 usa git rev-parse (ura-udo:193-196) ✓; despertador +mapa carpetas ✓ |
+| TASK-004 (`07257c7a`) | ✅ APROBADA | core/mochila/router.py +5 líneas fallback; test_router_fallback.py 3/3 passed ✓ |
+| TASK-010 (`3d84cef0`) | ✅ APROBADA | AGENTS.md.global v1.8 + com.ura.fondo-wake.plist existen ✓ |
+| TASK-011 (`b0cacc10`) | ✅ APROBADA (parcial) | ENGINEERING_PROCESS.md v1.8 ✓; com.ura.opencode-term.plist existe ✓; KeepAlive en plist NO VERIFICABLE (runtime de la Mac) |
+
+**Conclusión**: lote revisado y aprobado. 2 puntos NO VERIFICABLES desde ASUS (config Mac + runtime plist) — pendientes de confirmación visual en la Mac, sin impacto en código.
