@@ -209,3 +209,59 @@ class WebPipeline:
         results["elapsed_ms"] = (time.monotonic() - t0) * 1000
         results["stage_times"] = {k.value: round(v, 1) for k, v in self._stage_times.items()}
         return results
+
+    def persist(
+        self,
+        documents: list[WebDocument],
+        store: Any,
+    ) -> dict[str, Any]:
+        """Ingesta web → memoria semántica (TASK-20260812-007).
+
+        Conecta los WebDocument del pipeline con el pipeline de fusión F25
+        (build_default_pipeline: normalization → entity_resolution →
+        conflict_detection → source_scoring → merger → delta → selection),
+        proyecta los KnowledgeFact resultantes a SemanticFact (bridge) y los
+        persiste en el SemanticMemoryStore.
+
+        Opcional y degradable: si no se llama, el flujo de WebPipeline.run()
+        no cambia. Si el pipeline de fusión o el bridge fallan, se registra
+        el warning y se devuelve el estado parcial (no se interrumpe nada).
+
+        Args:
+            documents: documentos web ya extraídos por el pipeline.
+            store: SemanticMemoryStore donde persistir los facts.
+
+        Returns:
+            dict con facts almacenados (n) y errores (si hubo).
+        """
+        from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
+        from motor.core.fusion.engine import FusionPipeline
+        from motor.intelligence.memory.semantic import SemanticFact
+
+        if not documents:
+            return {"stored": 0, "errors": []}
+
+        bundle = None
+        try:
+            from motor.core.web.citation.citation import CitationBundle
+
+            bundle = CitationBundle(summary=None, citations=(), documents=documents)  # type: ignore[arg-type]
+            pipeline = FusionPipeline.default()
+            result = pipeline.run(bundle, documents)
+            facts = result.accepted
+        except Exception as exc:
+            log.warning("Fusion pipeline failed during persist: %s", exc)
+            return {"stored": 0, "errors": [str(exc)]}
+
+        stored = 0
+        errors: list[str] = []
+        for kf in facts:
+            try:
+                data = knowledge_fact_to_semantic_fact(kf)
+                sf = SemanticFact(**data)
+                store.store(sf)
+                stored += 1
+            except Exception as exc:
+                errors.append(str(exc))
+        log.info("Persisted %d semantic facts from web ingestion (fusion F25)", stored)
+        return {"stored": stored, "errors": errors}
