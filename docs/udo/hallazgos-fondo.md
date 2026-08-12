@@ -75,3 +75,5 @@
 | 2026-08-12 | motor/tests (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | tests/contracts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | tests/engineering (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+
+| 2026-08-12 | motor/ollama | SATURACION DE OLLAMA (TASK-20260812-021): el modo fondo (TERM cada 15min) mantiene qwen3-coder:30b cargado (25GB VRAM) y compite con la tuneladora por el modelo -> HTTP 503 server busy continuo durante la prueba real del refactor. Impacto: la tuneladora no puede ejecutar refactors cuando el TERM procesa. Alternativas: (1) pausar modo fondo durante tuneladora, (2) OLLAMA_NUM_PARALLEL mayor, (3) separar modelos. | ALTA | propuesto (con plan) | **QUE**: coordinar recursos Ollama entre modo fondo y tuneladora. **POR QUE**: 503 bloquea refactorizacion real. **IMPACTO**: tuneladora_mantenimiento.py + despertador-fondo.sh. **VERIFICACION**: probar refactor con modo fondo pausado. **RIESGO**: bajo, reversible. |
