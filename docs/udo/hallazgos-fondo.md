@@ -58,3 +58,4 @@
 | 2026-08-12 | scripts/pro (lote 2/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | scripts/pro (lote 3/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | scripts/pro (lote 4/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | scripts/pro (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
