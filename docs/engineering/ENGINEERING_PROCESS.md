@@ -1,8 +1,8 @@
-<!-- Engineering Process v1.8 -->
+<!-- Engineering Process v1.9 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.8 (2026-08-11) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.9 (2026-08-12) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
@@ -182,6 +182,20 @@ Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS
 1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un namespace distinto del host real (incidente 2026-08-11: el remount `rw` del usuario no se veía desde el namespace del agente, y viceversa). Ante discrepancia de estado del sistema, verificar `readlink /proc/self/ns/mnt` y pedir al usuario su salida antes de concluir.
 2. **Instalación global en ASUS requiere sudo del humano**: el rootfs de ASUS suele estar RO en el host; el agente no puede escribir en `~/.config/opencode/`. Procedimiento: preparar `sudo cp <repo>/deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md && head -1 ...`, pedir al humano que lo ejecute, verificar (head + grep + diff contra repo). En la Mac se usa `scp` directo.
 3. **Commits en entorno degradado**: si pre-commit falla por rootfs RO (`OSError: Read-only file system` en `~/.cache/pre-commit`), usar `SKIP=semgrep git -c core.hooksPath=/dev/null commit` (solo hooks rotos por el entorno, nunca para saltarse verificaciones del cambio). Ejecutar `ura-engineering-check --env` al inicio de sesión.
+4. **Sincronización ASUS→Mac (v1.8)**: los commits hechos en ASUS NO llegan solos al repo de la Mac. Copiar los archivos afectados con `scp` (rutas exactas) y verificar con `git status`/`git diff` en la Mac. Un `M archivo` en la Mac puede ser el propio cambio recién copiado.
+
+## 18. Automatización de procesos (v1.9) — herramientas operativas
+
+Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegado de comandos, orden de cierre UDO, locks huérfanos, desincronización Mac↔ASUS):
+
+| Herramienta | Qué hace | Uso |
+|-------------|----------|-----|
+| `scripts/pro/deploy-mac.sh` | Despliegue completo a la Mac en 1 comando: AGENTS.md.global + scripts (despertador, health-check) + recarga launchd + reinicio TERM + verificación. Opciones: `--solo-agents`, `--solo-scripts` | `bash scripts/pro/deploy-mac.sh` |
+| `scripts/pro/ura-udo-cerrar TASK-ID "análisis" "validación" [--force]` | Cierra tarea UDO en el orden correcto (verify → IN_PROGRESS si falta → REVIEW → DONE), resolviendo el falso bloqueo por commit_base post-trabajo | `bash scripts/pro/ura-udo-cerrar TASK-XXX "an" "val"` |
+| `deploy/mac/ura-fondo-health.sh [--fix]` | Health-check del sistema de fondo: servidor TERM, watchdog, lock (limpia huérfanos con --fix), último run, progreso, hallazgos, repo | `bash ~/bin/ura-fondo-health.sh --fix` |
+| `deploy/mac/despertador-fondo.sh` | Despertador del modo fondo (launchd com.ura.fondo-wake, cada 30 min): mapa de carpetas, sesión fork, agente revisor-fondo, registro automático de progreso | automático |
+
+**Reglas de uso**: (1) tras tocar `AGENTS.md.global` o scripts de la Mac → `deploy-mac.sh` (no scp sueltos); (2) al cerrar tareas UDO → `ura-udo-cerrar` (no secuencias manuales); (3) ante duda del estado del sistema → `ura-fondo-health.sh` (no grep sueltos de logs); (4) estas herramientas se ejecutan desde ASUS (repo fuente), la Mac las recibe por deploy-mac.sh.
 
 ## Changelog
 
@@ -196,3 +210,4 @@ Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS
 | 1.6 | 2026-08-11 | §17 Entorno y despliegue: lecciones operativas (TASK-20260811-008) |
 | 1.7 | 2026-08-11 | §16 Plan propuesto obligatorio en hallazgos accionables (TASK-20260811-009) |
 | 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
+| 1.9 | 2026-08-12 | §18 Automatización de procesos: deploy-mac.sh, ura-udo-cerrar, ura-fondo-health.sh (TASK-20260812-010) + sync ASUS→Mac (§17.4) |
