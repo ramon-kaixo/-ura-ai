@@ -80,3 +80,4 @@
 | 2026-08-12 | core/cleaner (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | core/guardians (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | core/inferencia (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | deploy/install_opencode_mac.sh:46 | LILDAX_PASSWORD con default hardcodeado real ('***REDACTED***') en HEAD — viola politica de secretos (No hardcoded secrets); si la env no esta en el despliegue, el servicio usa una password publica en el repo | ALTA (no critica: acceso local a lildax) | propuesto (con plan) |
