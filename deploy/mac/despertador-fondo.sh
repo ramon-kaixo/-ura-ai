@@ -70,6 +70,13 @@ if ! curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$URL/" | grep -q 200; 
     exit 0
 fi
 
+# Verificación de actividad: si ya hay un run de fondo en curso (opencode run
+# vivo), NO se envía otra tarea — se respeta el trabajo en marcha.
+if pgrep -f 'opencode run' >/dev/null 2>&1; then
+    echo "[$(date +%H:%M:%S)] TERM ocupado (run en curso) — no envío tarea, reintento en el próximo ciclo" >> "$LOG"
+    exit 0
+fi
+
 # Sesión TERM principal
 SES=$(curl -s --max-time 5 "$URL/api/session" | python3 -c '
 import json, sys
