@@ -36,6 +36,23 @@ except ImportError:  # pragma: no cover
     def registrar_intento(*_a, **_k):  # type: ignore[no-redef]
         return {}
 
+# Contexto de rama (TASK-20260812-021, diseño RAMON: "conocimiento con lógica"):
+# el LLM recibe de dónde viene y hacia dónde va la función, no conocimiento general.
+try:
+    from contexto_rama import construir_contexto_rama as _construir_rama
+except ImportError:  # pragma: no cover
+    def _construir_rama(*_a, **_k):  # type: ignore[no-redef]
+        return ""
+
+
+def _construir_contexto_rama(file_path: str, func_name: str, func_source: str) -> str:
+    """Wrapper que construye el contexto de rama con cache de archivo."""
+    try:
+        fuente = Path(file_path).read_text(encoding="utf-8")
+    except OSError:
+        fuente = ""
+    return _construir_rama(URA_ROOT, file_path, func_name, func_source, fuente)
+
 # Verificación con tests (TASK-20260812-019): si el archivo tiene tests que lo
 # cubren, se verifica antes/después del refactor. Degrada con gracia.
 VERIFICAR_TESTS = os.environ.get("REFACTOR_VERIFY_TESTS", "1") == "1"
@@ -191,41 +208,75 @@ def clean_llm_response(text: str) -> str:
     return text.strip()
 
 
-def build_refactor_prompt(func_name: str, func_source: str, n_lines: int) -> str:
+def _extraer_llamadores(file_path: str, func_name: str, fuente_archivo: str = "") -> str:
+    """Extrae los llamadores de la función (contexto para el LLM).
+
+    Determinista (AST): encuentra dónde se llama a func_name en el archivo y
+    devuelve las líneas de contexto. Así el LLM sabe la firma de uso real.
+    """
+    if not fuente_archivo:
+        try:
+            fuente_archivo = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return ""
+    try:
+        tree = ast.parse(fuente_archivo)
+    except SyntaxError:
+        return ""
+    lineas = fuente_archivo.splitlines()
+    llamadas: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name and node.lineno and node.lineno <= len(lineas):
+            llamadas.append(lineas[node.lineno - 1].strip())
+    if not llamadas:
+        return ""
+    unicas = list(dict.fromkeys(llamadas))[:5]
+    return "\n".join(f"  {c}" for c in unicas)
+
+
+def build_refactor_prompt(
+    func_name: str,
+    func_source: str,
+    n_lines: int,
+    llamadores: str = "",
+    contexto_rama: str = "",
+) -> str:
     firma = _extraer_firma(func_source)
+    contexto_llamadores = (
+        f"\nLLAMADORES DE LA FUNCION (contexto — NO los modifiques):\n{llamadores}\n"
+        if llamadores
+        else ""
+    )
+    contexto_conexiones = (
+        f"\nCONEXIONES DEL CODIGO (de donde viene / hacia donde va — usa esta informacion "
+        f"para no romper nada, pero NO la modifiques):\n{contexto_rama}\n"
+        if contexto_rama
+        else ""
+    )
     return f"""Eres un ingeniero senior de Python con 20 anos de experiencia en refactorizacion.
-Tu especialidad es dividir funciones monoliticas en componentes atomicos sin cambiar el comportamiento.
+Tu especialidad es extraer helpers de funciones monoliticas sin cambiar el comportamiento.
 
 CONTEXTO:
   Funcion: \"{func_name}\" ({n_lines} lineas)
-  FIRMA EXACTA (DEBES CONSERVARLA LITERAL, sin cambiar ni un parametro):
+  FIRMA EXACTA (el sistema la conservara intacta — NO la reescribas):
   {firma}
   Los imports disponibles son los que ya estan en el codigo
+{contexto_llamadores}{contexto_conexiones}
+OBJETIVO (MODO QUIRURGICO):
+  Identifica los bloques de codigo que pueden extraerse como funciones helper.
+  NO reescribas la funcion principal: SOLO crea las helpers nuevas.
 
-OBJETIVO:
-  Divide esta funcion en helpers mas pequenas (MAXIMO 30 lineas cada una)
-  La funcion original refactorizada debe llamar a las helpers que crees
-  Las helpers van al MISMO nivel de indentacion, nunca anidadas
-  Si la funcion ya es simple y no requiere division, devuelvela SIN cambios.
+FORMATO DE RESPUESTA (obligatorio):
+  Devuelve SOLO las funciones helper nuevas, una tras otra.
+  NO incluyas la funcion original, ni explicaciones, ni markdown.
+  Si la funcion no necesita helpers, responde exactamente: PASS
 
 RESTRICCIONES (no negociables):
-  1. NO cambies la logica ni el comportamiento observable
-  2. NO cambies nombres de variables, argumentos, ni imports
-  3. NO anadas ni elimines imports
-  4. NO cambies la firma de la funcion original ni sus argumentos
-  5. Cada helper: nombre descriptivo, sin efectos secundarios
-  6. Incluye TODAS las helpers + la funcion refactorizada
-
-FORMATO DE RESPUESTA:
-  Devuelve SOLO codigo Python. Sin explicaciones. Sin markdown. Sin bloques ```.
-
-VERIFICACION (antes de responder, marca cada punto):
-  [ ] Parentesis, corchetes y llaves balanceados
-  [ ] Indentacion consistente (4 espacios)
-  [ ] Sin bloques vacios (if/for/while/try sin cuerpo)
-  [ ] Sin codigo muerto tras return/raise/break/continue
-  [ ] Todos los nombres de funcion/argumento existen
-  [ ] Las helpers no duplican nombres existentes
+  1. Cada helper: nombre descriptivo, parametros explicitos, sin efectos secundarios
+  2. Las helpers NO usan variables globales de la funcion original (pasarlas por parametro)
+  3. NO uses imports nuevos
+  4. Las helpers van a nivel de modulo (sin indentacion)
+  5. NO dupliques nombres de funciones existentes
 
 [CODIGO]
 {func_source}"""
@@ -394,7 +445,13 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
     errores_frac = 0
     for idx, fragmento in enumerate(fragmentos):
         n_lineas_frac = fragmento.count("\n") + 1
-        prompt = build_refactor_prompt(func_name, fragmento, n_lineas_frac)
+        prompt = build_refactor_prompt(
+            func_name,
+            fragmento,
+            n_lineas_frac,
+            llamadores=_extraer_llamadores(file_path, func_name),
+            contexto_rama=_construir_contexto_rama(file_path, func_name, fragmento),
+        )
         t0 = time.time()
         response = llm(prompt)
         llm_time = round(time.time() - t0, 1)
@@ -405,10 +462,7 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
             errores_frac += 1
             continue
 
-        # 4. LIMPIAR respuesta (TASK-20260812-020): el LLM devuelve código
-        # completo y válido; NO se aplica descompactar con anchors del original
-        # (mezclaba docstrings/comentarios originales dentro del código nuevo,
-        # rompiendo la sintaxis — verificado con los 3 modelos).
+        # 4. LIMPIAR respuesta (TASK-20260812-020): el LLM devuelve SOLO helpers.
         response_limpia = clean_llm_response(response)
         partes_refactorizadas.append(response_limpia)
 
@@ -417,14 +471,43 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
         ERRORS += 1
         return False
 
-    codigo_final = (
-        partes_refactorizadas[0]
-        if len(partes_refactorizadas) == 1
-        else "\n\n".join(partes_refactorizadas)
-    )
+    # Respuesta combinada de todos los fragmentos (solo helpers)
+    codigo_helpers = "\n\n".join(partes_refactorizadas)
 
-    # 4.5 VERIFICAR con tests ANTES de aplicar (TASK-20260812-019):
-    # si el refactor rompe tests que antes pasaban, NO se aplica.
+    # Si el LLM no generó helpers (respondió PASS o solo código), no hay refactor
+    if "PASS" in codigo_helpers.upper() and len(codigo_helpers.strip()) < 20:
+        log("  LLM: no requiere helpers (PASS)")
+        SKIPPED += 1
+        registrar_intento(URA_ROOT, funcion_id, MODEL, "rechazo", "PASS (sin helpers)")
+        return False
+
+    # 4.5 EDICIÓN QUIRÚRGICA con AST (TASK-20260812-021, solución al 100%):
+    # 1º intento: modo "solo helpers". 2º intento: modo diff completo.
+    try:
+        from edicion_ast import aplicar_helpers, diff_quirurgico
+
+        firma_orig = _extraer_firma(func_source)
+        fuente_original = Path(file_path).read_text(encoding="utf-8")
+
+        # Intento 1: modo solo helpers
+        ok_edicion, resultado = aplicar_helpers(fuente_original, codigo_helpers, firma_orig)
+        if not ok_edicion:
+            # Intento 2: el LLM devolvió la función completa — diff quirúrgico
+            log(f"  Modo helpers falló ({resultado[:40]}...) — intentando diff quirúrgico")
+            ok_edicion, resultado = diff_quirurgico(fuente_original, codigo_helpers, firma_orig)
+
+        if not ok_edicion:
+            log(f"  ❌ Edición rechazada (determinista): {resultado}")
+            SKIPPED += 1
+            registrar_intento(URA_ROOT, funcion_id, MODEL, "rechazo", f"edicion: {resultado[:40]}")
+            return False
+        codigo_final = resultado
+    except ImportError:
+        log("  edicion_ast no disponible — usando flujo anterior")
+        codigo_final = codigo_helpers
+
+    # 4.6 VERIFICAR con tests ANTES de aplicar (TASK-20260812-019):
+    # si la edición rompe tests que antes pasaban, NO se aplica.
     if VERIFICAR_TESTS and baseline_tests is not None and baseline_tests["ok"]:
         try:
             veredicto = verificar_con_tests(
@@ -442,11 +525,11 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
         except Exception as e:
             log(f"  Verificación tests no disponible: {e}")
 
-    # 5. Aplicar
+    # 5. Aplicar (escribir el archivo con las helpers insertadas)
     if apply_refactored(file_path, lineno, end_lineno, codigo_final):
         REFACTORED += 1
-        log("  Refactorizado con compactacion")
-        registrar_intento(URA_ROOT, funcion_id, MODEL, "exito", "aplicado")
+        log("  Refactorizado con edicion quirurgica (helpers insertadas, original intacta)")
+        registrar_intento(URA_ROOT, funcion_id, MODEL, "exito", "edicion quirurgica aplicada")
         return True
     ERRORS += 1
     registrar_intento(URA_ROOT, funcion_id, MODEL, "error", "apply_refactored fallo")
