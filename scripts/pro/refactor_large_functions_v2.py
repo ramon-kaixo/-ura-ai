@@ -22,7 +22,7 @@ from pathlib import Path
 # Agregar directorio de scripts al path
 SCRIPT_DIR = Path(__file__).parent
 
-from compactador_espacios import compactar, descompactar
+from compactador_espacios import compactar
 from fraccionador_ast import fraccionar as _fraccionar_ast
 
 # Verificación con tests (TASK-20260812-019): si el archivo tiene tests que lo
@@ -35,8 +35,9 @@ except ImportError:  # pragma: no cover
 
 # Usar model_router (puerto 11435) para enrutamiento inteligente con temperatura por modelo
 # Si no está disponible, cae directo a Ollama (11434)
-OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "http://10.164.1.99:11435"))
-OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
+# Nota (TASK-20260812-020): el router escucha en 127.0.0.1, no en la IP de red local.
+OLLAMA_URL = os.environ.get("OLLAMA_URL", os.environ.get("MODEL_ROUTER_URL", "http://127.0.0.1:11435"))
+OLLAMA_FALLBACK_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 WORKER_ID = int(os.environ.get("REFACTOR_WORKER_ID", "0"))
 WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 
@@ -215,6 +216,19 @@ VERIFICACION (antes de responder, marca cada punto):
 {func_source}"""
 
 
+def _extraer_firma(codigo: str) -> str:
+    """Extrae la firma (def ... :) de la primera función del código."""
+    try:
+        tree = ast.parse(codigo)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                args = [a.arg for a in node.args.args]
+                return f"{node.name}({', '.join(args)})"
+    except SyntaxError:
+        return ""
+    return ""
+
+
 def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str) -> bool:
     path = Path(file_path)
     original = path.read_text(encoding="utf-8")
@@ -225,11 +239,43 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
         log("  Respuesta LLM vacia tras limpiar")
         return False
 
+    # Validar que la firma NO cambió (TASK-20260812-020): el LLM a veces la
+    # altera pese a la restricción, rompiendo los llamadores del archivo.
+    try:
+        firma_original = _extraer_firma("\n".join(lines[lineno - 1 : lineno]))
+        firma_nueva = _extraer_firma(new_code)
+        if firma_original and firma_nueva and firma_original != firma_nueva:
+            log(f"  Firma cambiada: '{firma_original}' -> '{firma_nueva}' — rechazado")
+            return False
+    except Exception as e:
+        log(f"  No se pudo validar firma: {e}")
+
     try:
         compile(new_code, file_path, "exec")
     except SyntaxError as e:
         log(f"  Error sintaxis en respuesta: {e}")
         return False
+
+    # Normalización determinista del DESPUÉS (TASK-20260812-020, diseño RAMON):
+    # aplicar ruff fix+format a la respuesta ANTES de insertarla, para que la
+    # indentación y estilo encajen con el archivo. Sin LLM (determinista).
+    try:
+        tmp = Path("/tmp") / f"_refactor_{os.getpid()}.py"
+        tmp.write_text(new_code, encoding="utf-8")
+        subprocess.run(
+            [str(URA_ROOT / ".venv" / "bin" / "ruff"), "check", "--fix", "--unsafe-fixes", str(tmp)],
+            capture_output=True, timeout=30, check=False,
+        )
+        subprocess.run(
+            [str(URA_ROOT / ".venv" / "bin" / "ruff"), "format", str(tmp)],
+            capture_output=True, timeout=30, check=False,
+        )
+        new_code_normalizado = tmp.read_text(encoding="utf-8")
+        tmp.unlink(missing_ok=True)
+        if new_code_normalizado.strip():
+            new_code = new_code_normalizado
+    except Exception as e:
+        log(f"  Normalizacion ruff no disponible: {e}")
 
     new_lines = new_code.splitlines()
     result = lines[: lineno - 1] + new_lines + lines[end_lineno:]
@@ -238,32 +284,10 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
     try:
         compile(new_content, file_path, "exec")
     except SyntaxError as e:
-        log(f"  Error sintaxis post-reemplazo: {e}")
-        fix_prompt = f"El codigo tiene un error de sintaxis: {e}. Corrigelo SIN cambiar la logica. Codigo:\n```python\n{new_code}\n```\nDevuelve SOLO el codigo corregido."
-        fix_resp = llm(fix_prompt)
-        fix_code = clean_llm_response(fix_resp)
-        if fix_code:
-            fix_lines = fix_code.splitlines()
-            fix_result = lines[: lineno - 1] + fix_lines + lines[end_lineno:]
-            fix_content = "\n".join(fix_result)
-            try:
-                compile(fix_content, file_path, "exec")
-                if not DRY_RUN:
-                    backup = path.with_suffix(".py.bak3")
-                    if not backup.exists():
-                        shutil.copy2(path, backup)
-                    path.write_text(fix_content, encoding="utf-8")
-                    subprocess.run(
-                        ["ruff", "check", "--fix", "--unsafe-fixes", file_path],
-                        capture_output=True,
-                        timeout=30,
-                        check=False,
-                    )
-                    subprocess.run(["ruff", "format", file_path], capture_output=True, timeout=30, check=False)
-                log("  Reparado tras reintento")
-                return True
-            except SyntaxError:
-                log("  Error persiste tras reparacion")
+        # Sin reintento con LLM (determinista): si el reemplazo rompe el
+        # archivo, se rechaza el refactor. El verificador de tests tampoco
+        # llegaría a aplicarse sobre código roto.
+        log(f"  Error sintaxis post-reemplazo: {e} — refactor rechazado (determinista)")
         return False
 
     if DRY_RUN:
@@ -307,7 +331,7 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
         return False
 
     # 2. COMPACTAR (quitar huecos)
-    compactado, anchors, stats = compactar(func_source)
+    compactado, _anchors, stats = compactar(func_source)
     tokens_original = _estimar_tokens(func_source)
     tokens_compactado = _estimar_tokens(compactado)
     reduccion = round((1 - tokens_compactado / tokens_original) * 100, 1) if tokens_original else 0
@@ -355,9 +379,12 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
             errores_frac += 1
             continue
 
-        # 4. DESCOMPACTAR respuesta del fragmento
-        response_descomp = descompactar(response, anchors)
-        partes_refactorizadas.append(response_descomp)
+        # 4. LIMPIAR respuesta (TASK-20260812-020): el LLM devuelve código
+        # completo y válido; NO se aplica descompactar con anchors del original
+        # (mezclaba docstrings/comentarios originales dentro del código nuevo,
+        # rompiendo la sintaxis — verificado con los 3 modelos).
+        response_limpia = clean_llm_response(response)
+        partes_refactorizadas.append(response_limpia)
 
     if errores_frac:
         log(f"  {errores_frac} fragmentos sin respuesta LLM")
