@@ -192,17 +192,21 @@ def clean_llm_response(text: str) -> str:
 
 
 def build_refactor_prompt(func_name: str, func_source: str, n_lines: int) -> str:
+    firma = _extraer_firma(func_source)
     return f"""Eres un ingeniero senior de Python con 20 anos de experiencia en refactorizacion.
 Tu especialidad es dividir funciones monoliticas en componentes atomicos sin cambiar el comportamiento.
 
 CONTEXTO:
   Funcion: \"{func_name}\" ({n_lines} lineas)
+  FIRMA EXACTA (DEBES CONSERVARLA LITERAL, sin cambiar ni un parametro):
+  {firma}
   Los imports disponibles son los que ya estan en el codigo
 
 OBJETIVO:
   Divide esta funcion en helpers mas pequenas (MAXIMO 30 lineas cada una)
   La funcion original refactorizada debe llamar a las helpers que crees
   Las helpers van al MISMO nivel de indentacion, nunca anidadas
+  Si la funcion ya es simple y no requiere division, devuelvela SIN cambios.
 
 RESTRICCIONES (no negociables):
   1. NO cambies la logica ni el comportamiento observable
