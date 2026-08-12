@@ -127,6 +127,10 @@ def is_excluded(path: str) -> bool:
         "/__pycache__/",
         "/.tox/",
         "/node_modules/",
+        "/.sandbox_packages/",  # librerías externas (fastapi, numpy...) — no refactorear
+        "/site-packages/",
+        "/dist-packages/",
+        "/.attic/",
     ]
     return any(e in path for e in excl)
 
