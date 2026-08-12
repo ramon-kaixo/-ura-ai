@@ -77,9 +77,8 @@ def extraer_bloques(func_source: str) -> list[Bloque]:
     func = tree.body[0]
     bloques: list[Bloque] = []
     for node in func.body:
-        # Solo nodos con indentación directa del cuerpo de la función
-        if not hasattr(node, "lineno") or not hasattr(node, "end_lineno"):
-            continue
+        # Py >= 3.8: todos los nodos AST tienen end_lineno (None si sin asignar),
+        # por lo que la comprobación hasattr del diseño original era código muerto.
         if node.end_lineno is None:
             continue
         bloques.append(
@@ -141,16 +140,11 @@ def fraccionar(func_source: str, max_lineas: int = 60) -> list[str]:
         else:
             actual.extend(bloque_con_relleno)
 
-    if actual:
-        fragmentos.append("\n".join(actual))
-
-    # Verificación ligera: los fragmentos intermedios son cuerpos de función
-    # parciales (legítimamente incompletos), así que NO se compilan como unidad
-    # independiente. La garantía de validez viene del fraccionamiento por
-    # bloques AST: cada corte ocurre entre nodos completos, nunca a mitad.
-    # Solo se comprueba que cada fragmento no esté vacío.
-    validos = [f for f in fragmentos if f.strip()]
-    return validos or [func_source]
+    # Invariante: con bloques no vacíos, `actual` se inicializa con el primer
+    # bloque (i == 0, líneas antes de `fin` que incluyen la firma) y nunca
+    # queda vacío, por lo que el último fragmento siempre existe.
+    fragmentos.append("\n".join(actual))
+    return fragmentos
 
 
 def reensamblar(fragmentos: list[str]) -> str:
