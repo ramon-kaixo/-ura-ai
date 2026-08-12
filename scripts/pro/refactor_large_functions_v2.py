@@ -474,6 +474,22 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
     # Respuesta combinada de todos los fragmentos (solo helpers)
     codigo_helpers = "\n\n".join(partes_refactorizadas)
 
+    # Normalización determinista de la respuesta (TASK-20260812-021): ruff
+    # format para estandarizar indentación y quitar residuos de markdown.
+    try:
+        tmp = Path("/tmp") / f"_helpers_{os.getpid()}.py"
+        tmp.write_text(codigo_helpers, encoding="utf-8")
+        subprocess.run(
+            [str(URA_ROOT / ".venv" / "bin" / "ruff"), "format", str(tmp)],
+            capture_output=True, timeout=30, check=False,
+        )
+        norm = tmp.read_text(encoding="utf-8")
+        tmp.unlink(missing_ok=True)
+        if norm.strip():
+            codigo_helpers = norm
+    except Exception as e:
+        log(f"  Normalizacion helpers no disponible: {e}")
+
     # Si el LLM no generó helpers (respondió PASS o solo código), no hay refactor
     if "PASS" in codigo_helpers.upper() and len(codigo_helpers.strip()) < 20:
         log("  LLM: no requiere helpers (PASS)")
