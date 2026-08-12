@@ -43,7 +43,10 @@ cp "$CONFIG_FILE" "$LILDAX_CONFIG_DIR/config.json"
 log "✅ Configuración copiada"
 
 # 5. Establecer contraseña del servicio
-LILDAX_PASSWORD="${LILDAX_PASSWORD:-ura_1972_secure_autonomous}"
+# Fail cerrado: sin fallback hardcodeado (hallazgo C02 SECRETS_AUDIT, TASK-20260812-024).
+# La password debe venir del entorno (p.ej. /etc/ura/secrets.env o ~/.zshrc) y se
+# rota en la Mac si el servicio se instaló antes con el default.
+: "${LILDAX_PASSWORD:?LILDAX_PASSWORD no definida: exportala antes (p.ej. /etc/ura/secrets.env). Abortando para no instalar con password publica.}"
 log "Estableciendo contraseña del servicio..."
 /opt/homebrew/lib/node_modules/@opencode-ai/cli/bin/lildax service password "$LILDAX_PASSWORD" >> "$LOG_FILE" 2>&1
 log "✅ Contraseña establecida"
