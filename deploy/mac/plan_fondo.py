@@ -24,15 +24,39 @@ from pathlib import Path
 
 MAX_ARCHIVOS = 30
 EXCLUIR_DIRS = {
-    ".git", "node_modules", "__pycache__", ".venv", ".tuneladora", ".nervioso",
-    ".opencode", "snapshots", "dist", "build", ".pytest_cache", ".ruff_cache",
-    "mutation-reports", "descarte", "backup", ".sandbox_packages", "build",
-    "site-packages", ".cache", ".local",
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    ".tuneladora",
+    ".nervioso",
+    ".opencode",
+    "snapshots",
+    "dist",
+    "build",
+    ".pytest_cache",
+    ".ruff_cache",
+    "mutation-reports",
+    "descarte",
+    "backup",
+    ".sandbox_packages",
+    "build",
+    "site-packages",
+    ".cache",
+    ".local",
 }
 # Raíces principales: se recorren primero (profundidad 1), en este orden.
 RAICES_PRINCIPALES = [
-    "core", "motor", "agents", "knowledge", "scripts/pro", "monitor",
-    "deploy", "tests", "docs", "mantenimiento",
+    "core",
+    "motor",
+    "agents",
+    "knowledge",
+    "scripts/pro",
+    "monitor",
+    "deploy",
+    "tests",
+    "docs",
+    "mantenimiento",
 ]
 EXT_FUENTE = {".py", ".sh", ".js", ".ts", ".json", ".yaml", ".yml", ".toml", ".md"}
 
@@ -57,18 +81,24 @@ def _carpetas_plan(repo: Path, max_depth: int = 4) -> list[dict]:
         )
         if not archivos:
             continue
-        plan.append({
-            "carpeta": str(rel),
-            "depth": depth,
-            "archivos": [str(p.relative_to(repo)) for p in archivos],
-            "n": len(archivos),
-        })
+        plan.append(
+            {
+                "carpeta": str(rel),
+                "depth": depth,
+                "archivos": [str(p.relative_to(repo)) for p in archivos],
+                "n": len(archivos),
+            }
+        )
     plan.sort(key=lambda x: (x["depth"], x["n"], x["carpeta"]))
     # Raíces principales primero (aunque tengan muchos archivos, se dividen en lotes)
-    plan.sort(key=lambda x: (
-        RAICES_PRINCIPALES.index(x["carpeta"]) if x["carpeta"] in RAICES_PRINCIPALES else 99,
-        x["depth"], x["n"], x["carpeta"],
-    ))
+    plan.sort(
+        key=lambda x: (
+            RAICES_PRINCIPALES.index(x["carpeta"]) if x["carpeta"] in RAICES_PRINCIPALES else 99,
+            x["depth"],
+            x["n"],
+            x["carpeta"],
+        )
+    )
     return plan
 
 
@@ -107,57 +137,23 @@ def main() -> int:
     revisadas = {_normalizar(c) for c in _revisadas(hallazgos)}
 
     plan = _carpetas_plan(repo)
-    for entry in plan:
-        carpeta = entry["carpeta"]
-        if carpeta in revisadas:
-            continue
-        # ¿Carpeta ya en curso con lotes? (carpeta (lote k/N))
-        lotes_existentes = {
-            c for c in revisadas
-            if c.startswith(carpeta + " (lote ") or c == carpeta + " (lote completo)"
-        }
-        if lotes_existentes:
-            continue  # carpeta ya empezada con lotes → la gestionan los lotes
-        archivos = entry["archivos"]
-        n = len(archivos)
-        if n <= MAX_ARCHIVOS:
-            # Lote completo único
-            lote_actual = f"{carpeta} (lote 1/1)"
-            salida = {
-                "carpeta": carpeta,
-                "archivos": archivos,
-                "lote": 1,
-                "total_lotes": 1,
-                "tipo": "carpeta",
-                "completa": True,
-                "marcar_como": f"{carpeta} (lote completo)",
-            }
-            print(json.dumps(salida))
-            return 0
-        # Carpeta grande → primer lote
-        primer = archivos[:MAX_ARCHIVOS]
-        total_lotes = (n + MAX_ARCHIVOS - 1) // MAX_ARCHIVOS
-        salida = {
-            "carpeta": carpeta,
-            "archivos": primer,
-            "lote": 1,
-            "total_lotes": total_lotes,
-            "tipo": "lote",
-            "completa": False,
-            "marcar_como": f"{carpeta} (lote 1/{total_lotes})",
-        }
-        print(json.dumps(salida))
-        return 0
 
-    # Todo revisado → buscar lotes pendientes de carpetas grandes ya iniciadas
+    # Prioridad 1: completar lotes pendientes de carpetas con lotes iniciados.
+    # Se detecta por prefijo de la marca (ej: 'scripts/pro (lote 1/4)' → 'scripts/pro').
     for entry in plan:
         carpeta = entry["carpeta"]
-        if carpeta not in revisadas:
-            continue
         n = len(entry["archivos"])
         if n <= MAX_ARCHIVOS:
             continue
+        # ¿Esta carpeta tiene algún lote iniciado o está completa?
+        marcas_carpeta = {
+            c for c in revisadas
+            if c == carpeta or c.startswith(carpeta + " (lote ") or c == carpeta + " (lote completo)"
+        }
+        if not marcas_carpeta:
+            continue
         total_lotes = (n + MAX_ARCHIVOS - 1) // MAX_ARCHIVOS
+        completo = (f"{carpeta} (lote completo)" in marcas_carpeta)
         for k in range(1, total_lotes + 1):
             marca = f"{carpeta} (lote {k}/{total_lotes})"
             if marca not in revisadas:
@@ -173,6 +169,82 @@ def main() -> int:
                 }
                 print(json.dumps(salida))
                 return 0
+        if not completo:
+            # Todos los lotes k/N registrados pero falta la marca final
+            salida = {
+                "carpeta": carpeta,
+                "archivos": [],
+                "lote": total_lotes + 1,
+                "total_lotes": total_lotes,
+                "tipo": "cierre",
+                "completa": True,
+                "marcar_como": f"{carpeta} (lote completo)",
+            }
+            print(json.dumps(salida))
+            return 0
+
+    # Prioridad 2: raíces principales pendientes (sin lotes iniciados)
+    for entry in plan:
+        carpeta = entry["carpeta"]
+        if carpeta in RAICES_PRINCIPALES and carpeta not in revisadas:
+            archivos = entry["archivos"]
+            n = len(archivos)
+            if n <= MAX_ARCHIVOS:
+                salida = {
+                    "carpeta": carpeta,
+                    "archivos": archivos,
+                    "lote": 1,
+                    "total_lotes": 1,
+                    "tipo": "carpeta",
+                    "completa": True,
+                    "marcar_como": f"{carpeta} (lote completo)",
+                }
+                print(json.dumps(salida))
+                return 0
+            total_lotes = (n + MAX_ARCHIVOS - 1) // MAX_ARCHIVOS
+            salida = {
+                "carpeta": carpeta,
+                "archivos": archivos[:MAX_ARCHIVOS],
+                "lote": 1,
+                "total_lotes": total_lotes,
+                "tipo": "lote",
+                "completa": False,
+                "marcar_como": f"{carpeta} (lote 1/{total_lotes})",
+            }
+            print(json.dumps(salida))
+            return 0
+
+    # Prioridad 3: resto de carpetas pendientes (orden profundidad/tamaño)
+    for entry in plan:
+        carpeta = entry["carpeta"]
+        if carpeta in revisadas:
+            continue
+        archivos = entry["archivos"]
+        n = len(archivos)
+        if n <= MAX_ARCHIVOS:
+            salida = {
+                "carpeta": carpeta,
+                "archivos": archivos,
+                "lote": 1,
+                "total_lotes": 1,
+                "tipo": "carpeta",
+                "completa": True,
+                "marcar_como": f"{carpeta} (lote completo)",
+            }
+            print(json.dumps(salida))
+            return 0
+        total_lotes = (n + MAX_ARCHIVOS - 1) // MAX_ARCHIVOS
+        salida = {
+            "carpeta": carpeta,
+            "archivos": archivos[:MAX_ARCHIVOS],
+            "lote": 1,
+            "total_lotes": total_lotes,
+            "tipo": "lote",
+            "completa": False,
+            "marcar_como": f"{carpeta} (lote 1/{total_lotes})",
+        }
+        print(json.dumps(salida))
+        return 0
 
     print(json.dumps({"carpeta": "", "error": "mapa agotado (todo revisado)"}))
     return 0

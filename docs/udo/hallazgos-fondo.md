@@ -39,5 +39,19 @@
 | 2026-08-12 | motor/intelligence/agents/ | Revisada subcarpeta 'motor/intelligence/agents/'. Contiene implementaciones completas de agentes autónomos como RESEARCHER, PLANNER, EXECUTOR, VALIDATOR, SUPERVISOR, CONSENSUS, REFLECTION y PARALLEL. Se identificó un problema potencial en 'supervisor.py': línea 35 usa 'is_cancelled' como función lambda que se pasa en 'context', pero no hay ninguna verificación si esta función existe o si el contexto contiene realmente una función de cancelación. Esto podrí [MATERIALIZADO 2026-08-12 por WEB: FALSO POSITIVO — supervisor.py:35 usa task.context.get('_cancellation_check', lambda: False); la verificacion existe en la misma linea (default seguro). TERM no leyo el codigo completo.]a causar un error al ejecutar si la función no está definida o es inválida. El plan propuesto es: 1) Verificar si 'is_cancelled' es una función válida antes de usarla en 'supervisor.py'; 2) Asegurar que el contexto tenga todos los elementos necesarios, incluyendo la función de cancelación; 3) Proveer comportamiento por defecto seguro para cuando no se proporciona esta función. |
 | 2026-08-12 | core (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | knowledge (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
-
-| 2026-08-12 | scripts/pro/*.sh | 15 scripts .sh sin referencias en codigo activo (qdrant_health, auto_export_context, filtro_cascada, auditoria_qwen, notify_on_change, server_ctl, evolve, upgrade_pipeline, backup_gx10_configs, etc.) — solo mencionados en docs historicos. Candidatos a codigo muerto. NO eliminados (decision de RAMON requerida, maximo no romper). | BAJA | propuesto (con plan) | **QUE**: auditar cada script contra usos reales (cron, systemd, otros scripts) y archivar los confirmadamente huerfanos en .nervioso/descarte/. **POR QUE**: codigo muerto en scripts/pro/ (146 archivos) aumenta costo de mantenimiento y confusion. **IMPACTO**: scripts/pro/, docs/audit/SCRIPTS_PRO_AUDIT.md. **VERIFICACION**: grep de cada nombre en repo completo tras el cambio; ningun servicio/cron roto. **RIESGO**: bajo si se audita antes; reversible (git). |
+| 2026-08-12 | scripts/pro (lote 1/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | monitor (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | deploy (lote 1/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | tests (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | docs (lote 1/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | mantenimiento (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | configs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | scraping (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | .github (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | data (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | shared (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | specs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | bitacora (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | scripts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | config (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | .attic/auto_reindex (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
