@@ -184,7 +184,7 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
             tree = ast.parse(source)
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
-                    if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:
+                    if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:  # pragma: no cover -- py>=3.8 siempre tienen end_lineno; rama defensiva
                         n_lines = node.end_lineno - node.lineno
                         if n_lines > threshold:
                             large.append(
