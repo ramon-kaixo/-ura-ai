@@ -43,3 +43,4 @@
 | 2026-08-12 | monitor (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | deploy (lote 1/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | tests (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | docs (lote 1/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
