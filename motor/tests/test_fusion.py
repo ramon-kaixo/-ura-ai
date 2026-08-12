@@ -1120,6 +1120,7 @@ class TestExports:
         # también debe eliminarse de __all__ en motor/core/fusion/__init__.py
         expected = {
             "ChangeDetector",
+            "build_default_pipeline",
             "Conflict",
             "ConflictGraph",
             "ConflictResolver",
@@ -1160,3 +1161,35 @@ class TestExports:
             "normalize_identity",
         }
         assert exported == expected, f"Difference: extra={exported - expected}, missing={expected - exported}"
+
+
+class TestDefaultPipelineIntegration:
+    """Integración F25-B4+B5: pipeline por defecto con stages reales (TASK-20260812-006)."""
+
+    def test_build_default_pipeline_order(self) -> None:
+        from motor.core.fusion.engine import build_default_pipeline
+
+        stages = build_default_pipeline()
+        valores = [s.stage for s in stages]
+        assert valores == [
+            FusionStage.NORMALIZATION,
+            FusionStage.ENTITY_RESOLUTION,
+            FusionStage.CONFLICT_DETECTION,
+            FusionStage.SOURCE_SCORING,
+            FusionStage.MERGE,
+            FusionStage.DELTA,
+            FusionStage.SELECTION,
+        ]
+
+    def test_default_classmethod_builds_stages(self) -> None:
+        pipeline = FusionPipeline.default()
+        assert len(pipeline.stages) == 7
+        assert pipeline.stage_times == {}
+
+    def test_default_pipeline_runs_empty(self) -> None:
+        pipeline = FusionPipeline.default()
+        result = pipeline.run(bundle="ignored", documents=[])  # type: ignore[arg-type]
+        assert result.accepted == ()
+        assert result.rejected == ()
+        assert result.conflicts == ()
+        assert isinstance(result.statistics, dict)

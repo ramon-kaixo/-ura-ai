@@ -41,6 +41,35 @@ class FusionStage(StrEnum):
     SELECTION = "selection"
 
 
+def build_default_pipeline() -> list[PipelineStage]:
+    """Pipeline por defecto de fusión de conocimiento (F25-B4+B5, TASK-20260812-006).
+
+    Conecta las etapas implementadas (normalization, entity_resolution,
+    conflict_detection, source_scoring, merger, delta, selection) en el orden
+    del contrato. Antes de esta integración, las etapas existían como clases
+    pero ningún punto de producción las encadenaba.
+    """
+    from motor.core.fusion.stages import (
+        ConflictDetectionStage,
+        EntityResolutionStage,
+        KnowledgeDeltaStage,
+        KnowledgeMergerStage,
+        MemoryCandidateSelectionStage,
+        NormalizationStage,
+        SourceScoringStage,
+    )
+
+    return [
+        NormalizationStage(),
+        EntityResolutionStage(),
+        ConflictDetectionStage(),
+        SourceScoringStage(),
+        KnowledgeMergerStage(),
+        KnowledgeDeltaStage(),
+        MemoryCandidateSelectionStage(),
+    ]
+
+
 class FusionPipeline:
     """Orquestación del pipeline de fusión de conocimiento.
 
@@ -70,6 +99,15 @@ class FusionPipeline:
         self._engine = engine
         if stages is not None:
             self._stages = list(stages)
+
+    @classmethod
+    def default(cls, **kwargs: object) -> FusionPipeline:
+        """Pipeline por defecto: stages completos (F25-B4+B5 integrados).
+
+        Construye la cadena normalization → entity_resolution →
+        conflict_detection → source_scoring → merger → delta → selection.
+        """
+        return cls(stages=build_default_pipeline(), **kwargs)
 
     @property
     def engine(self) -> FusionEngine | None:
