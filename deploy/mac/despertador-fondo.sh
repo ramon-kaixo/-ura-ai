@@ -104,6 +104,17 @@ MSG="MODO FONDO (v1.10): no es una tarea nueva del humano. Entra en modo de revi
 
 cd "$REPO" || exit 1
 "$OC" run --attach "$URL" -s "$SES" --fork --agent revisor-fondo --format json "$MSG" >> "$LOG" 2>&1
+RUN_EXIT=$?
 
-echo "[$(date +%H:%M:%S)] run de fondo terminado (exit=$?)" >> "$LOG"
+echo "[$(date +%H:%M:%S)] run de fondo terminado (exit=$RUN_EXIT)" >> "$LOG"
+
+# Si el run terminó OK pero el TERM no registró la carpeta en Progreso
+# (p.ej. carpeta de shims sin hallazgos), el despertador la marca como
+# revisada para que el mapa avance en el siguiente ciclo.
+if [ "$RUN_EXIT" -eq 0 ] && ! grep -qF "$CANDIDATA" <<< "$(grep -A20 '## Progreso' "$FONDO_FILE" 2>/dev/null || true)"; then
+    FECHA=$(date +%Y-%m-%d)
+    printf '| %s | %s | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |\n' "$FECHA" "$CANDIDATA" >> "$FONDO_FILE"
+    echo "[$(date +%H:%M:%S)] progreso registrado automáticamente: $CANDIDATA" >> "$LOG"
+fi
+
 exit 0
