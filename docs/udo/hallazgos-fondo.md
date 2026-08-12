@@ -55,8 +55,6 @@
 | 2026-08-12 | scripts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | config (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | .attic/auto_reindex (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
-<<<<<<< HEAD
-=======
 | 2026-08-12 | scripts/pro (lote 2/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | scripts/pro (lote 3/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | scripts/pro (lote 4/4) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
@@ -66,6 +64,5 @@
 | 2026-08-12 | docs (lote 2/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | docs (lote 3/3) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | docs (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
->>>>>>> mac-veredictos
-
-| 2026-08-12 | motor/core/fusion/fact_history.py:351 | El TERM formateó este archivo 3 VECES pese a: (1) agente revisor-fondo con write/edit/patch=False, (2) permisos deny en el agente. Causa raíz: los permisos de AGENTE no se aplican a los runs --attach/--fork; solo los permisos GLOBALES de opencode.json. CORREGIDO: denies de ruff/sed/tee movidos a permission global (aplica a todos). Revertido cada vez. | ALTA | corregido | **QUE**: permisos de formateo en permission global (no solo agente). **POR QUE**: el TERM formateaba via bash pese a denies de agente. **IMPACTO**: opencode.json Mac. **VERIFICACION**: grep denies globales + reinicio TERM. **RIESGO**: bajo (solo bloquea formateo/edicion en el servidor TERM). |
+| 2026-08-12 | deploy/grafana (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | deploy/prometheus (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
