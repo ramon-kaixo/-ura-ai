@@ -84,3 +84,4 @@
 | 2026-08-12 | core/sandbox (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | core/seguridad (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | core/utils (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-13 | deploy/docker (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
