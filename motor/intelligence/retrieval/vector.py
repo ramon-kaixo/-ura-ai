@@ -22,6 +22,8 @@ class VectorRetriever:
 
     def search(self, query: str, k: int = 10) -> list[dict[str, Any]]:
         start = time.monotonic()
+        if self._qc is None:
+            return []
         vector = self._qc.generar_embedding(query)
         emb_latency = (time.monotonic() - start) * 1000
 
