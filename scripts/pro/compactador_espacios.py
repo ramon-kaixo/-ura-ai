@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-def compactar(codigo: str) -> tuple:  # noqa: PLR0915
+def compactar(codigo: str) -> tuple:
     lineas = codigo.split("\n")
     compactado = []
     anchors = []
@@ -53,28 +53,27 @@ def compactar(codigo: str) -> tuple:  # noqa: PLR0915
 
         if "#" in stripped:
             partes = stripped.split("#")
+            # Invariante: codigo_parte nunca es vacío aquí — las líneas que
+            # empiezan por "#" ya cayeron en la rama startswith("#") de arriba,
+            # así que el segmento anterior al primer "#" siempre contiene código.
             codigo_parte = "#".join(partes[:-1]).rstrip()
-            if codigo_parte:
-                indentacion = linea[: len(linea) - len(linea.lstrip())]
-                nueva = indentacion + codigo_parte
-                stats["comentarios"] += 1
-                # El código de esta línea va al compactado CON su anchor propio,
-                # y el comentario inline se re-añade después (fix TASK-20260812-017).
-                compactado.append(nueva)
-                anchors.append(
-                    {
-                        "original": num_original,
-                        "compactado": len(compactado),
-                        "tipo": "codigo",
-                        "indentacion": len(indentacion),
-                    },
-                )
-                anchors.append(
-                    {"original": num_original, "tipo": "comentario_inline", "texto": linea},
-                )
-                continue
+            indentacion = linea[: len(linea) - len(linea.lstrip())]
+            nueva = indentacion + codigo_parte
             stats["comentarios"] += 1
-            anchors.append({"original": num_original, "tipo": "comentario", "texto": linea})
+            # El código de esta línea va al compactado CON su anchor propio,
+            # y el comentario inline se re-añade después (fix TASK-20260812-017).
+            compactado.append(nueva)
+            anchors.append(
+                {
+                    "original": num_original,
+                    "compactado": len(compactado),
+                    "tipo": "codigo",
+                    "indentacion": len(indentacion),
+                },
+            )
+            anchors.append(
+                {"original": num_original, "tipo": "comentario_inline", "texto": linea},
+            )
             continue
 
         indentacion = linea[: len(linea) - len(linea.lstrip())]
