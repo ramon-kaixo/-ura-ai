@@ -30,25 +30,40 @@ EXCLUDE_DIRS = frozenset(
         "node_modules",
         ".eggs",
         "*.egg-info",
+        ".sandbox_packages",
+        "mutants",
+        ".attic",
+        ".tuneladora",
     },
 )
 
 SECRET_VAR_PATTERNS = re.compile(
-    r"(_API_KEY|_TOKEN|_SECRET|_PASSWORD|_PASS|_KEY|PASSWORD|SECRET|API_KEY)$",
+    r"(api[_-]?key|apikey|secret|password|passwd|pass|token|auth|credential)$",
     re.IGNORECASE,
 )
 
 KNOWN_SECRET_NAMES: set[str] = set()
 
-HARDCODED_KEY_PATTERN = re.compile(
+# Señal fuerte: prefijos de provedores conocidos (siempre son secretos reales).
+STRONG_KEY_PATTERN = re.compile(
     r"(?P<quote>['\"])"
-    r"(sk-[A-Za-z0-9]{10,}|gsk_[A-Za-z0-9]{10,}|"
-    r"sk-ant-[A-Za-z0-9]{10,}|"
-    r"[A-Za-z0-9_-]{20,})"
+    r"(sk-[A-Za-z0-9]{10,}|gsk_[A-Za-z0-9]{10,}|sk-ant-[A-Za-z0-9]{10,}|"
+    r"ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|"
+    r"xox[bap]-[A-Za-z0-9-]{10,}|AKIA[A-Z0-9]{16,})"
     r"(?P=quote)",
 )
 
-CREDENTIAL_URL_PATTERN = re.compile(r"://[^:]+:[^@]+@")
+# Señal genérica: string alfanumérico largo en línea de asignación con clave
+# de nombre sensible. Menos precisa a propósito (ruido controlado abajo).
+GENERIC_SECRET_PATTERN = re.compile(r"(?P<quote>['\"])([A-Za-z0-9_-]{24,})(?P=quote)")
+
+SENSITIVE_KEYWORDS = ("api_key", "apikey", "token", "password", "secret", "bearer", "_key")
+
+CREDENTIAL_URL_PATTERN = re.compile(r"://[^:/\s]{3,}:[^@\s]{3,}@")
+
+# Autorreferencia del detector: los archivos de auditoría contienen los propios
+# patrones (regex con literales tipo sk-...) y generan falsos positivos.
+AUDIT_SELF_FILES = frozenset({"audit_secrets.py", "audit_git_secrets.py", "test_audit_secrets.py"})
 
 
 class Finding:
@@ -164,11 +179,24 @@ def _check_direct_env_access(
 
 
 def _check_hardcoded_strings(filepath: Path, text: str) -> list[Finding]:
-    """Detecta cadenas que parecen API keys, tokens o passwords hardcodeados."""
+    """Detecta cadenas que parecen API keys, tokens o passwords hardcodeados.
+
+    Heurística refinada (2026-08-13, hallazgo hallazgos-fondo.md):
+    - prefijos de proveedores conocidos (sk-, gsk_, AKIA...) = señal fuerte;
+    - genérica (24+ chars) solo en línea de asignación con variable sensible;
+    - se excluyen líneas de regex (`re.compile`) y los archivos de auditoría
+      (autorreferencia: contienen los propios patrones a modo de reglas);
+    - las URLs exigen usuario y password de longitud real (>=3 chars).
+    """
+    if filepath.name in AUDIT_SELF_FILES:
+        return []
     findings: list[Finding] = []
     for lineno, line in enumerate(text.splitlines(), 1):
-        # URLs con credenciales
-        if CREDENTIAL_URL_PATTERN.search(line):
+        if line.strip().startswith("#"):
+            continue
+        lower_line = line.lower()
+        # URLs con credenciales (no en líneas de regex ni pseudocódigo)
+        if "re.compile" not in lower_line and CREDENTIAL_URL_PATTERN.search(line):
             findings.append(
                 Finding(
                     str(filepath.relative_to(URA_ROOT) if filepath.is_relative_to(URA_ROOT) else filepath),
@@ -179,24 +207,40 @@ def _check_hardcoded_strings(filepath: Path, text: str) -> list[Finding]:
                     line.strip()[:100],
                 ),
             )
-        # Cadenas con API key pattern en contexto sospechoso
-        lower_line = line.lower()
-        is_sensitive_context = any(
-            keyword in lower_line for keyword in ["api_key", "apikey", "token", "password", "secret", "bearer"]
-        )
-        if is_sensitive_context and not line.strip().startswith("#"):
-            for match in HARDCODED_KEY_PATTERN.finditer(line):
-                val = match.group(0)
-                findings.append(
-                    Finding(
-                        str(filepath.relative_to(URA_ROOT) if filepath.is_relative_to(URA_ROOT) else filepath),
-                        lineno,
-                        "hardcoded_secret",
-                        "Posible secreto hardcodeado en contexto sensible",
-                        "critical",
-                        val[:50],
-                    ),
-                )
+        if "re.compile" in lower_line:
+            continue
+        # Señal fuerte: prefijo de proveedor conocido
+        for match in STRONG_KEY_PATTERN.finditer(line):
+            findings.append(
+                Finding(
+                    str(filepath.relative_to(URA_ROOT) if filepath.is_relative_to(URA_ROOT) else filepath),
+                    lineno,
+                    "hardcoded_secret",
+                    "Posible secreto hardcodeado (prefijo de proveedor conocido)",
+                    "critical",
+                    match.group(0)[:50],
+                ),
+            )
+        # Señal genérica: solo en asignación con variable de nombre sensible
+        # y sin señal fuerte ya capturada en la misma línea (evita duplicados).
+        if "=" not in line:
+            continue
+        nombre_var = lower_line.split("=", 1)[0]
+        if not any(keyword in nombre_var for keyword in SENSITIVE_KEYWORDS):
+            continue
+        if STRONG_KEY_PATTERN.search(line):
+            continue
+        for match in GENERIC_SECRET_PATTERN.finditer(line):
+            findings.append(
+                Finding(
+                    str(filepath.relative_to(URA_ROOT) if filepath.is_relative_to(URA_ROOT) else filepath),
+                    lineno,
+                    "hardcoded_secret",
+                    "Posible secreto hardcodeado en asignacion sensible",
+                    "critical",
+                    match.group(0)[:50],
+                ),
+            )
     return findings
 
 
@@ -235,6 +279,7 @@ def _check_hardcoded_vars(filepath: Path, tree: ast.AST) -> list[Finding]:
 def main() -> int:
     args = sys.argv[1:]
     output_json = "--json" in args
+    fail_critical = "--fail-critical" in args
     custom_path = None
     for arg in args:
         if arg.startswith("--path="):
@@ -284,6 +329,9 @@ def main() -> int:
         for f in all_findings:
             snippet = f" | {f.value_snippet}" if f.value_snippet else ""
             print(f"{f.severity.upper():8s} | {f.filepath}:{f.lineno} | {f.type} | {f.description}{snippet}")
+
+    if fail_critical:
+        return 1 if any(f.severity == "critical" for f in all_findings) else 0
 
     return 1 if all_findings else 0
 

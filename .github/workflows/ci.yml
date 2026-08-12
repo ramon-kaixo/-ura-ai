@@ -75,3 +75,5 @@ jobs:
           pip-audit -r requirements.txt
       - name: SAST — secretos en historial git (patrones fuertes)
         run: python3 scripts/pro/audit_git_secrets.py --fail --max-commits 300
+      - name: SAST — secretos hardcodeados en código (fail solo críticos)
+        run: python3 scripts/pro/audit_secrets.py --fail-critical
