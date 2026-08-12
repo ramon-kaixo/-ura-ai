@@ -1,8 +1,8 @@
-<!-- AGENTS.md.global v1.8 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
+<!-- AGENTS.md.global v1.9 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
 <!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
 <!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.8)
+# Metodología Universal de Ingeniería (Engineering Process v1.9)
 
 > **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
 
@@ -57,9 +57,18 @@ PREPARADOR → EJECUTOR → REVISOR → CORRECCIÓN → VALIDACIÓN. El ejecutor
 
 Antes de empezar una sesión: `scripts/pro/ura-engineering-check --env` (rootfs rw/ro, servicios críticos, secretos, disco, git). El entorno degradado se detecta antes de trabajar, no durante. Tras instalar/actualizar la metodología global, **reiniciar los servicios opencode** (config no hot-reload) y verificar — nunca asumir que la Web "ya aplica" la metodología.
 
-## Entorno y despliegue (v1.6) — lecciones operativas verificadas
+## Identidad y tiempo (v1.9) — quién soy y qué hora es
 
-1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un mount namespace distinto del host real. Si el estado del sistema que ves TÚ (montajes ro/rw, permisos) discrepa del que reporta el usuario, NO concluyas aún: verifica `readlink /proc/self/ns/mnt` (mío vs `mnt:[4026531832]` del host) y pide al usuario la salida de su comando antes de diagnosticar. Un remount del host (vía sudo del humano) puede no verse desde mi namespace.
+1. **Siempre identificarse**: al iniciar cualquier interacción o reporte, declarar el agente (`[WEB]` = OpenCode Web en ASUS · `[TERM]` = OpenCode Terminal en Mac) y la máquina (`ASUS` / `MAC`). Nunca asumir que el lector sabe quién escribió.
+2. **Hora local real, no la de la BD**: la hora del sistema se obtiene con `date '+%Y-%m-%d %H:%M:%S %Z'` en la máquina local — NO de los timestamps de la BD de opencode (están en **UTC**, que difiere de la hora local en +2h CEST o según zona). Al citar horas de logs/BD, convertir: `datetime(ts/1000,'unixepoch','localtime')` o añadir el offset de la zona.
+3. **Última interacción**: al reportar, indicar la última hora de interacción humana conocida (cuándo se recibió el último mensaje del usuario o se completó la última tarea), para que el humano vea si el trabajo es reciente.
+4. **Formato de cabecera de reporte**:
+   ```
+   [WEB|TERM] (ASUS|MAC) — YYYY-MM-DD HH:MM:SS Z — última interacción: HH:MM
+   ```
+5. **Zonas horarias**: ASUS y Mac están en la misma zona (CEST/UTC+2). Si un timestamp de la BD parece "pasado", es UTC sin convertir, no un desfase de máquinas (verificado 2026-08-12: ambas máquinas sincronizadas, BD en UTC).
+
+## Entorno y despliegue (v1.6) — lecciones operativas verificadas1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un mount namespace distinto del host real. Si el estado del sistema que ves TÚ (montajes ro/rw, permisos) discrepa del que reporta el usuario, NO concluyas aún: verifica `readlink /proc/self/ns/mnt` (mío vs `mnt:[4026531832]` del host) y pide al usuario la salida de su comando antes de diagnosticar. Un remount del host (vía sudo del humano) puede no verse desde mi namespace.
 2. **Instalación/actualización de config global en ASUS requiere sudo del humano**: el rootfs de ASUS suele estar montado RO en el host; mi namespace no puede escribir en `~/.config/opencode/`. Procedimiento estándar: preparar el comando `sudo cp <repo>/deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md && head -1 ... && grep -c ...`, pedir al humano que lo ejecute y pegue la salida, y verificar después (head + grep + diff contra el repo). En la Mac (rootfs RW) se usa `scp` directo.
 3. **Commits en entorno degradado**: si pre-commit falla por rootfs RO (`OSError: Read-only file system` en `~/.cache/pre-commit` o `~/.cache/opencode`), usar `SKIP=semgrep git -c core.hooksPath=/dev/null commit` (bypass solo de hooks rotos por el entorno, nunca para saltarse verificaciones del propio cambio). Ejecutar `ura-engineering-check --env` al inicio de sesión para conocer el estado antes de commitear.
 4. **Sincronización ASUS→Mac (v1.8)**: los commits hechos en ASUS NO llegan solos al repo de la Mac (sus ramas divergen; la Mac recibe solo lo que integra `mac-veredictos`). Si se modifica código en ASUS, copiar los archivos afectados a la Mac con `scp` (rutas exactas) y verificarlo con `git status`/`git diff` en la Mac — nunca asumir que la Mac está al día por estar en el mismo repo git remoto. Un `M archivo` en la Mac puede ser el propio cambio recién copiado, no necesariamente trabajo ajeno.
@@ -140,6 +149,7 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 - No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
 - Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
 
+<!-- v1.9 — 2026-08-12 — v1.8 + identidad y tiempo: reglas [WEB]/[TERM] + hora local real (no UTC de la BD) + última interacción + cabecera de reporte (TASK-20260812-016: petición RAMON — las horas de los agentes no coincidían con las suyas; causa: BD de opencode en UTC sin conversión) -->
 <!-- v1.8 — 2026-08-11 — v1.7 + despertador real del modo fondo (TASK-20260811-010: carencia C1 detectada en auto-revisión — el modo fondo no se activaba solo porque nadie enviaba turnos; solucionado con deploy/mac/despertador-fondo.sh + launchd com.ura.fondo-wake cada 30min vía opencode run --attach; verificado TERM revisó core/mochila/ con 2 hallazgos) — 2026-08-12 + protección técnica del modo fondo: agente revisor-fondo con write/edit/patch deshabilitados en config (TASK-20260812-002: TERM violó 3x la regla read-only; instrucción textual insuficiente) -->
 <!-- v1.7 — 2026-08-11 — v1.6 + propuesta de plan obligatoria para todo hallazgo accionable del modo fondo (investigar → QUÉ/POR QUÉ/IMPACTO/VERIFICACIÓN/RIESGO → presentar al humano → TASK UDO si se aprueba; estado 'propuesto' hasta decisión) (TASK-20260811-009: petición RAMON sobre comunicación de mejoras) -->
 <!-- v1.6 — 2026-08-11 — v1.5 + lecciones operativas de sesión (TASK-20260811-008: mount namespaces del bash tool pueden diferir del host; instalación config global en ASUS requiere sudo del humano; workaround de commits en rootfs RO) -->

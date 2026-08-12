@@ -45,16 +45,18 @@ EXCLUIR_DIRS = {
     ".cache",
     ".local",
 }
-# Raíces principales: se recorren primero (profundidad 1), en este orden.
+# Raíces principales en orden de prioridad de valor (método árbol: tronco → ramas → hojas).
+# Tronco (núcleo): core, motor, knowledge, scripts/pro, monitor.
+# Ramas: tests, deploy. Hojas (soporte): docs, mantenimiento.
+# Nota: 'agents' no es carpeta raíz (los agentes viven en core/agents, motor/agents).
 RAICES_PRINCIPALES = [
     "core",
     "motor",
-    "agents",
     "knowledge",
     "scripts/pro",
     "monitor",
-    "deploy",
     "tests",
+    "deploy",
     "docs",
     "mantenimiento",
 ]
