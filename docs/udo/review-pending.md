@@ -65,17 +65,17 @@ Las tareas WEB (005, 001, 002, 003, 004) fueron ejecutadas y verificadas por WEB
 
 | TASK | Descripción | Fecha cierre | Ejecutor | Estado revisión | Revisor | Fecha revisión | Veredicto |
 |------|-------------|--------------|----------|-----------------|---------|----------------|-----------|
-| TASK-20260811-005 | AGENTS.md.global v1.3 ANTI-BUCLE | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-006 | AGENTS.md.global v1.4 MODO FONDO | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-007 | AGENTS.md.global v1.5 registro hallazgos | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-008 | AGENTS.md.global v1.6 lecciones operativas | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-009 | AGENTS.md.global v1.7 plan en hallazgos | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-010 | Despertador real modo fondo + v1.8 | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260811-011 | Carencias C2+C3+C5 (cierre --force auditado) | 2026-08-11 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260812-001 | Refuerzo despertador PROHIBIDO ESCRITURA | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260812-002 | Protección técnica agente revisor-fondo | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260812-003 | 4 pasos: fondo avanza, ciclo hallazgos, AGENTS.md 543l, gate H1 | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
-| TASK-20260812-004 | Fallback router (hallazgo aprobado) | 2026-08-12 | WEB | ⏳ PENDIENTE | — | — | — |
+| TASK-20260811-005 | AGENTS.md.global v1.3 ANTI-BUCLE | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-006 | AGENTS.md.global v1.4 MODO FONDO | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-007 | AGENTS.md.global v1.5 registro hallazgos | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-008 | AGENTS.md.global v1.6 lecciones operativas | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-009 | AGENTS.md.global v1.7 plan en hallazgos | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-010 | Despertador real modo fondo + v1.8 | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260811-011 | Carencias C2+C3+C5 (cierre --force auditado) | 2026-08-11 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260812-001 | Refuerzo despertador PROHIBIDO ESCRITURA | 2026-08-12 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260812-002 | Protección técnica agente revisor-fondo | 2026-08-12 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260812-003 | 4 pasos: fondo avanza, ciclo hallazgos, AGENTS.md 543l, gate H1 | 2026-08-12 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
+| TASK-20260812-004 | Fallback router (hallazgo aprobado) | 2026-08-12 | WEB | ✅ REVISADA | WEB | 2026-08-12 | APROBADA |
 
 **Evidencia de trazabilidad (verificación Git, 2026-08-12)**:
 - TASK-005: `50a9a784` + `6b67ec96` — AGENTS.md.global v1.3 con sección ANTI-BUCLE (6 reglas).
