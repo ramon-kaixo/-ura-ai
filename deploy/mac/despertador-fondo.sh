@@ -117,4 +117,9 @@ if [ "$RUN_EXIT" -eq 0 ] && ! grep -qF "$CANDIDATA" <<< "$(grep -A20 '## Progres
     echo "[$(date +%H:%M:%S)] progreso registrado automáticamente: $CANDIDATA" >> "$LOG"
 fi
 
+# Limpieza EXPLÍCITA del lock (no confiar solo en el trap EXIT: el proceso
+# bash puede ser sustituido por el run de opencode y el trap no ejecutarse).
+rm -rf "$LOCK" 2>/dev/null
+trap - EXIT
+
 exit 0
