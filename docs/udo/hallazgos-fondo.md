@@ -29,3 +29,5 @@
 ## Progreso
 | 2026-08-12 | agents/ | La carpeta 'agents/' no existe en el proyecto. Se encontraron múltiples carpetas de agentes en otras ubicaciones como: core/agents, motor/agents, motor/intelligence/agents y scripts/pro/autonomy/swarm/agents. Las carpetas principales tienen implementaciones completas de agentes autónomos (F27) con contratos abstractos, modelos y componentes del sistema de agentes. |
 | 2026-08-12 | core/agents/ | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+## Progreso
+| 2026-08-12 | motor/agents/ | Carpeta 'motor/agents/' contiene implementación completa del sistema de agentes autónomos (F27). Incluye ABCs, modelos, orquestador, gate, scheduler, planner, runner y state machine. La estructura es coherente con la arquitectura definida, pero se detecta un posible problema: dentro de 'agent.py', línea 121 llama a 'self._tool_runner.run(step.action, step.params)' sin verificar si el tipo de acción corresponde al nombre de una herramienta válida; esto podría causar errores silenciosos si no se valida previamente. |
