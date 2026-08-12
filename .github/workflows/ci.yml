@@ -59,3 +59,19 @@ jobs:
         with:
           name: packages
           path: dist/
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: SCA — pip-audit sobre requirements.txt
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+      - name: SAST — secretos en historial git (patrones fuertes)
+        run: python3 scripts/pro/audit_git_secrets.py --fail --max-commits 300

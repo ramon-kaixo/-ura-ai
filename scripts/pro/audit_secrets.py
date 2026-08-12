@@ -10,6 +10,7 @@ Uso:
 """
 
 import ast
+import json
 import os
 import re
 import sys
@@ -258,27 +259,31 @@ def main() -> int:
         all_findings.extend(_check_direct_env_access(py_file, tree, text, known_secrets))
 
     if output_json:
-        pass
+        print(
+            json.dumps(
+                {
+                    "findings": [
+                        f.to_dict() for f in sorted(all_findings, key=lambda x: (x.severity, x.filepath))
+                    ],
+                    "total": len(all_findings),
+                    "by_severity": {
+                        "critical": sum(1 for f in all_findings if f.severity == "critical"),
+                        "high": sum(1 for f in all_findings if f.severity == "high"),
+                        "medium": sum(1 for f in all_findings if f.severity == "medium"),
+                    },
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+    elif not all_findings:
+        print("OK: sin secretos hardcodeados detectados")
+        return 0
     else:
-        if not all_findings:
-            return 0
-
-        critical = [f for f in all_findings if f.severity == "critical"]
-        high = [f for f in all_findings if f.severity == "high"]
-        medium = [f for f in all_findings if f.severity == "medium"]
-
-        if critical:
-            for f in critical:
-                if f.value_snippet:
-                    pass
-
-        if high:
-            for f in high:  # noqa: B007
-                pass
-
-        if medium:
-            for f in medium:  # noqa: B007
-                pass
+        print(f"AVISO: {len(all_findings)} hallazgos de secretos:")
+        for f in all_findings:
+            snippet = f" | {f.value_snippet}" if f.value_snippet else ""
+            print(f"{f.severity.upper():8s} | {f.filepath}:{f.lineno} | {f.type} | {f.description}{snippet}")
 
     return 1 if all_findings else 0
 

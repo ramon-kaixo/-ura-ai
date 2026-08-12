@@ -125,6 +125,7 @@ def main() -> None:
     parser.add_argument("--max-commits", type=int, default=None, help="límite de commits a auditar")
     parser.add_argument("--only", default=None, help="rango git (p.ej. HEAD~20..HEAD)")
     parser.add_argument("--falsos-positivos", action="store_true", help="mostrar líneas solo relacionadas (informe de ruido)")
+    parser.add_argument("--fail", action="store_true", help="exit 1 si hay hallazgos (modo CI)")
     args = parser.parse_args()
 
     if not es_repo_git():
@@ -142,6 +143,8 @@ def main() -> None:
 
     if args.json:
         print(json.dumps(hallazgos, indent=2, ensure_ascii=False))
+        if args.fail and hallazgos:
+            sys.exit(1)
         return
 
     if not hallazgos:
@@ -156,6 +159,8 @@ def main() -> None:
         )
     if len(hallazgos) > 100:
         print(f"  ... y {len(hallazgos) - 100} más")
+    if args.fail:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
