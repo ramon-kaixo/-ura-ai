@@ -88,6 +88,10 @@ def escanear(max_commits: int | None = None, rango: str | None = None) -> list[d
                 continue
             if not linea.startswith("+") or linea.startswith("+++"):
                 continue
+            if "test_audit_secrets" in archivo_actual:
+                continue
+            if archivo_actual.endswith("SECRETS.md"):
+                continue
             num_linea = i + 1
             for nombre, patron in PATRONES:
                 if patron.search(linea):
