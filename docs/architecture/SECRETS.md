@@ -89,6 +89,37 @@ Incluye:
 | SMTP | `URA_SMTP_HOST`, `URA_SMTP_PORT`, `URA_SMTP_USER`, `URA_SMTP_PASS`, `URA_EMAIL_FROM`, `URA_EMAIL_TO` |
 | Red | `ROUTER_PASSWORD`, `VNC_PWD` |
 | Docker | `WEBUI_SECRET_KEY`, `N8N_KEY`, `FRIGATE_RTSP_PASSWORD`, `GRAFANA_PASSWORD` |
+| Lildax | `LILDAX_PASSWORD` |
+
+## Rotación de `LILDAX_PASSWORD` (2026-08-13)
+
+La password de lildax (servicio de OpenCode Web con password) se rotó
+históricamente con un valor por defecto `***REDACTED***` que
+quedó en el historial git (hallazgo `hallazgos-fondo.md:83`, corregido con
+fail cerrado en `deploy/install_opencode_mac.sh:49`). La rotación real del
+servicio activo se hace desde la Mac (no es ejecutable desde ASUS):
+
+1. **Generar la nueva password** (en la Mac o en ASUS):
+   ```bash
+   openssl rand -base64 24
+   ```
+2. **Setearla en la Mac** (la variable debe existir al instalar/actualizar):
+   ```bash
+   export LILDAX_PASSWORD="<nueva_password_generada>"
+   bash deploy/install_opencode_mac.sh   # aplica con: lildax service password "$LILDAX_PASSWORD"
+   ```
+   El script aborta (fail cerrado `:?`) si la variable no está definida.
+3. **Recargar el servicio**: reiniciar la instancia de opencode web que usa
+   lildax (el comando `lildax service password ...` ya actualiza el archivo
+   de password del servicio; si la sesión web sigue activa, reiniciar el
+   proceso de opencode en la Mac para que pida la password nueva).
+4. **Registrar la nueva password en la Mac** en el almacén de secretos
+   (`/etc/ura/secrets.env` en la Mac si existe, o el gestor local que se use).
+   En ASUS, `motor/core/secrets.py` solo la *consume*; la aplicación del
+   valor en el servicio es responsabilidad del despliegue de la Mac.
+
+> El valor NUNCA se escribe en git. `deploy/install_opencode_mac.sh` ya no
+> tiene fallback: sin `LILDAX_PASSWORD` exportada, aborta sin instalar.
 
 ## Configuración
 
