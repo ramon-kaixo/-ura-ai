@@ -196,3 +196,37 @@ class TestPipelineE2E:
         r1 = run()
         r2 = run()
         assert r1 == r2
+
+    def test_persist_ingesta_web_a_memoria(self) -> None:
+        """Ingesta web → memoria semántica vía pipeline fusion F25 (TASK-20260812-007).
+
+        Verifica que persist() conecta WebPipeline → FusionPipeline.default()
+        → bridge → SemanticMemoryStore sin romper y de forma degradable.
+        """
+        from motor.core.web.pipeline import WebPipeline
+        from motor.core.web.registry import Registry
+        from motor.intelligence.memory.semantic import SemanticMemoryStore
+
+        pipeline = WebPipeline(Registry())
+        extractor = HtmlExtractor()
+        docs = [extractor.extract(HTML_PYTHON, "http://example.com/python")]
+
+        # Store en memoria (sin persist_path = sin BD)
+        store = SemanticMemoryStore()
+
+        resultado = pipeline.persist(docs, store)
+        assert "stored" in resultado
+        assert "errors" in resultado
+        assert isinstance(resultado["stored"], int)
+        assert resultado["stored"] >= 0
+
+    def test_persist_vacio_degradable(self) -> None:
+        """Sin documentos → stored=0, sin errores (degradable)."""
+        from motor.core.web.pipeline import WebPipeline
+        from motor.core.web.registry import Registry
+        from motor.intelligence.memory.semantic import SemanticMemoryStore
+
+        pipeline = WebPipeline(Registry())
+        store = SemanticMemoryStore()
+        resultado = pipeline.persist([], store)
+        assert resultado == {"stored": 0, "errors": []}
