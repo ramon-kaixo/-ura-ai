@@ -29,3 +29,4 @@
 ## Progreso
 | 2026-08-12 | agents/ | La carpeta 'agents/' no existe en el proyecto. Se encontraron múltiples carpetas de agentes en otras ubicaciones como: core/agents, motor/agents, motor/intelligence/agents y scripts/pro/autonomy/swarm/agents. Las carpetas principales tienen implementaciones completas de agentes autónomos (F27) con contratos abstractos, modelos y componentes del sistema de agentes. |
 | 2026-08-12 | core/agents/ | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+> **Decisión de diseño (2026-08-12)**: el pipeline F25 (build_default_pipeline) queda como capacidad disponible — NO se conecta a memoria semántica porque `RuleBasedFactExtractor` ya produce SemanticFact (evitar duplicar el flujo de extracción, anti-sobreingeniería). Revisitar cuando exista un consumidor natural (ingesta web → memoria).
