@@ -23,6 +23,15 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent
 
 from compactador_espacios import compactar, descompactar
+from fraccionador_ast import fraccionar as _fraccionar_ast
+
+# Verificación con tests (TASK-20260812-019): si el archivo tiene tests que lo
+# cubren, se verifica antes/después del refactor. Degrada con gracia.
+VERIFICAR_TESTS = os.environ.get("REFACTOR_VERIFY_TESTS", "1") == "1"
+try:
+    from verificador_tests import _tests_para_archivo, ejecutar_tests, verificar_con_tests
+except ImportError:  # pragma: no cover
+    VERIFICAR_TESTS = False
 
 # Usar model_router (puerto 11435) para enrutamiento inteligente con temperatura por modelo
 # Si no está disponible, cae directo a Ollama (11434)
@@ -275,9 +284,9 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
     return True
 
 
-def refactor_one(func: dict) -> bool:
+def refactor_one(func: dict) -> bool:  # noqa: PLR0915
     """Refactoriza una funcion con compactacion."""
-    global REFACTORED, SKIPPED, ERRORS  # noqa: PLW0602, PLW0603
+    global REFACTORED, SKIPPED, ERRORS  # noqa: PLW0603
 
     file_path = func["file"]
     func_name = func["function"]
@@ -308,23 +317,79 @@ def refactor_one(func: dict) -> bool:
     )
     log(f"  Tokens: {tokens_original} -> {tokens_compactado} (-{reduccion}%)")
 
-    # 3. LLM con codigo compacto
-    prompt = build_refactor_prompt(func_name, compactado, stats["lineas_compactado"])
-    t0 = time.time()
-    response = llm(prompt)
-    llm_time = round(time.time() - t0, 1)
-    log(f"  LLM: {llm_time}s, {len(response)} chars")
+    # 2.5 FRACCIONAR por bloques (diseño RAMON, TASK-20260812-019): si la
+    # función compactada excede el contexto óptimo, se parte por bloques
+    # funcionales (AST) para que cada petición LLM sea pequeña.
+    max_ctx = _ajustar_contexto(tokens_compactado)
+    fragmentos = _fraccionar_ast(compactado, max_lineas=max(30, stats["lineas_compactado"] // 2 + 1))
+    if len(fragmentos) > 1:
+        log(f"  Fraccionado en {len(fragmentos)} bloques (contexto optimo ~{max_ctx} tokens)")
 
-    if not response:
-        log("  LLM sin respuesta")
+    # Baseline de tests (antes del refactor)
+    baseline_tests = None
+    if VERIFICAR_TESTS:
+        try:
+            tests_archivo = _tests_para_archivo(file_path)
+            if tests_archivo:
+                baseline_tests = ejecutar_tests(tests_archivo, timeout=30)
+                if baseline_tests["ok"]:
+                    log(f"  Tests baseline OK ({baseline_tests['ejecutados']})")
+                else:
+                    log(f"  Tests baseline con fallos ({baseline_tests['fallidos']}) — no bloqueará")
+        except Exception as e:
+            log(f"  Baseline tests no disponible: {e}")
+
+    # 3. LLM con codigo compacto (por fragmentos)
+    partes_refactorizadas: list[str] = []
+    errores_frac = 0
+    for idx, fragmento in enumerate(fragmentos):
+        n_lineas_frac = fragmento.count("\n") + 1
+        prompt = build_refactor_prompt(func_name, fragmento, n_lineas_frac)
+        t0 = time.time()
+        response = llm(prompt)
+        llm_time = round(time.time() - t0, 1)
+        log(f"  LLM[{idx + 1}/{len(fragmentos)}]: {llm_time}s, {len(response)} chars")
+
+        if not response:
+            log("  LLM sin respuesta en fragmento")
+            errores_frac += 1
+            continue
+
+        # 4. DESCOMPACTAR respuesta del fragmento
+        response_descomp = descompactar(response, anchors)
+        partes_refactorizadas.append(response_descomp)
+
+    if errores_frac:
+        log(f"  {errores_frac} fragmentos sin respuesta LLM")
         ERRORS += 1
         return False
 
-    # 4. DESCOMPACTAR respuesta
-    response_descomp = descompactar(response, anchors)
+    codigo_final = (
+        partes_refactorizadas[0]
+        if len(partes_refactorizadas) == 1
+        else "\n\n".join(partes_refactorizadas)
+    )
+
+    # 4.5 VERIFICAR con tests ANTES de aplicar (TASK-20260812-019):
+    # si el refactor rompe tests que antes pasaban, NO se aplica.
+    if VERIFICAR_TESTS and baseline_tests is not None and baseline_tests["ok"]:
+        try:
+            veredicto = verificar_con_tests(
+                file_path,
+                antes=baseline_tests,
+                nuevo_contenido=codigo_final,
+                timeout=30,
+            )
+            if veredicto["veredicto"] == "rompe":
+                log(f"  ❌ Refactor rechazado: rompe tests ({veredicto.get('regresiones', '')})")
+                SKIPPED += 1
+                return False
+            log(f"  ✅ Verificación tests: {veredicto['veredicto']}")
+        except Exception as e:
+            log(f"  Verificación tests no disponible: {e}")
 
     # 5. Aplicar
-    if apply_refactored(file_path, lineno, end_lineno, response_descomp):
+    if apply_refactored(file_path, lineno, end_lineno, codigo_final):
         REFACTORED += 1
         log("  Refactorizado con compactacion")
         return True
