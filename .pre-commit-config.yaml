@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: semgrep
         name: Semgrep (reglas personalizadas)
-        entry: 'semgrep --config=.semgrep.yml --quiet'
+        entry: 'scripts/pro/run_semgrep_hook.sh'
         language: system
         pass_filenames: false
         always_run: true

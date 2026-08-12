@@ -35,6 +35,7 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Full audit: `python3 /home/ramon/URA/ura_ia_1972/scripts/pro/pipeline_refactor.py --help`
 - Demo: `bash scripts/demo.sh`
 - Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
+- Pre-commit semgrep: hook usa `.venv/bin/semgrep` vía `scripts/pro/run_semgrep_hook.sh` (caches a `${TMPDIR:-/tmp}`); en rootfs RO no hace falta SKIP: `XDG_CACHE_HOME=/tmp/opencode/xdg-cache python3 -m pre_commit run semgrep`
 
 ## Architecture
 - `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `core/qdrant_client.py` (regenerable, proxy hacia motor/)
