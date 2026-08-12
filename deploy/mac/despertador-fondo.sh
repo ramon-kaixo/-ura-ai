@@ -84,23 +84,37 @@ if [ -z "$SES" ]; then
     exit 0
 fi
 
-# Carpeta pendiente: primera del mapa no aparecida en la sección Progreso
-CANDIDATA=""
-REVISADAS=$(grep -oE '^\| [0-9-]{10} \| [^|]+ \|' "$FONDO_FILE" 2>/dev/null | awk -F'|' '{print $3}' | sed 's/^ *//;s/ *$//')
-for c in "${MAPA_CARPETAS[@]}"; do
-    if ! grep -qF "$c" <<< "$REVISADAS" 2>/dev/null; then
-        CANDIDATA="$c"
-        break
-    fi
-done
+# Planificador jerárquico (v2): calcula la siguiente carpeta/lote pendiente
+# con la lista EXACTA de archivos a leer (máx. 30 por turno).
+PLAN=$(python3 "$REPO/deploy/mac/plan_fondo.py" "$REPO" "$FONDO_FILE" 2>/dev/null)
+CANDIDATA=$(echo "$PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("carpeta",""))' 2>/dev/null)
+ARCHIVOS=$(echo "$PLAN" | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin).get("archivos",[])))' 2>/dev/null)
+MARCA=$(echo "$PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("marcar_como",""))' 2>/dev/null)
+TOTAL_LOTES=$(echo "$PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("total_lotes",1))' 2>/dev/null)
+LOTE=$(echo "$PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("lote",1))' 2>/dev/null)
 
 if [ -z "$CANDIDATA" ]; then
-    echo "[$(date +%H:%M:%S)] mapa de carpetas agotado — revisando de nuevo desde el inicio (ciclo 2)" >> "$LOG"
-    CANDIDATA="${MAPA_CARPETAS[0]}"
+    echo "[$(date +%H:%M:%S)] planificador sin carpeta pendiente: $(echo "$PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("error","?"))' 2>/dev/null)" >> "$LOG"
+    exit 0
 fi
-echo "[$(date +%H:%M:%S)] sesión: $SES | carpeta a revisar: $CANDIDATA" >> "$LOG"
+echo "[$(date +%H:%M:%S)] sesión: $SES | carpeta a revisar: $CANDIDATA (lote $LOTE/$TOTAL_LOTES, $([ -n "$ARCHIVOS" ] && echo "$(echo "$ARCHIVOS" | wc -w | tr -d ' ')" || echo 0) archivos)" >> "$LOG"
 
-MSG="MODO FONDO (v1.10): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo. TU CARPETA PARA ESTE TURNO ES EXACTAMENTE: '$CANDIDATA'. Revisa esa carpeta (lee sus archivos con read/grep/glob/ls, recorre subcarpetas). Busca fallos, duplicados, codigo muerto, contradicciones, deuda tecnica. Registra en docs/udo/hallazgos-fondo.md cada hallazgo con estado 'propuesto (con plan)' (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO) y añade '$CANDIDATA' a la seccion ## Progreso (fecha + carpeta + resultado). PROHIBIDO ESCRITURA: write/edit/patch estan deshabilitadas; usa solo lectura. Si la carpeta no existe o no tienes permisos, registralo en Progreso como revisada y termina. Luego termina el turno."
+MSG="MODO FONDO (v2): no es una tarea nueva del humano. Entra en modo de revision autonoma de fondo.
+
+TU TAREA EXACTA PARA ESTE TURNO: revisar la carpeta '$CANDIDATA' (lote $LOTE de $TOTAL_LOTES).
+
+ARCHIVOS QUE DEBES LEER (solo estos, leelos COMPLETOS con read, uno a uno):
+$ARCHIVOS
+
+REGLAS DE EVIDENCIA (obligatorias):
+1. Lee CADA archivo completo antes de opinar. PROHIBIDO reportar 'posibles problemas' sin haber leido el codigo citado.
+2. Un hallazgo solo se registra si citas ruta:linea REAL y el fallo concreto es visible en el codigo leido.
+3. Si algo parece raro pero no puedes confirmarlo con el codigo delante, NO lo reportes: anotalo solo como INFO en el progreso.
+4. Busca: fallos reales, duplicados, codigo muerto, contradicciones, deuda tecnica.
+5. Registra hallazgos con estado 'propuesto (con plan)' (QUE/POR QUE/IMPACTO/VERIFICACION/RIESGO).
+
+PROHIBIDO ESCRITURA: write/edit/patch deshabilitadas; usa solo lectura.
+Al final, añade '$MARCA' a la seccion ## Progreso (fecha + carpeta + resultado). Luego termina el turno."
 
 cd "$REPO" || exit 1
 "$OC" run --attach "$URL" -s "$SES" --fork --agent revisor-fondo --format json "$MSG" >> "$LOG" 2>&1
@@ -108,13 +122,13 @@ RUN_EXIT=$?
 
 echo "[$(date +%H:%M:%S)] run de fondo terminado (exit=$RUN_EXIT)" >> "$LOG"
 
-# Si el run terminó OK pero el TERM no registró la carpeta en Progreso
-# (p.ej. carpeta de shims sin hallazgos), el despertador la marca como
-# revisada para que el mapa avance en el siguiente ciclo.
-if [ "$RUN_EXIT" -eq 0 ] && ! grep -qF "$CANDIDATA" <<< "$(grep -A20 '## Progreso' "$FONDO_FILE" 2>/dev/null || true)"; then
+# Si el run terminó OK pero el TERM no registró la carpeta/lote en Progreso,
+# el despertador la marca como revisada (MARCA incluye el lote) para que el
+# planificador avance en el siguiente ciclo.
+if [ "$RUN_EXIT" -eq 0 ] && [ -n "$MARCA" ] && ! grep -qF "$MARCA" <<< "$(grep -A40 '## Progreso' "$FONDO_FILE" 2>/dev/null || true)"; then
     FECHA=$(date +%Y-%m-%d)
-    printf '| %s | %s | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |\n' "$FECHA" "$CANDIDATA" >> "$FONDO_FILE"
-    echo "[$(date +%H:%M:%S)] progreso registrado automáticamente: $CANDIDATA" >> "$LOG"
+    printf '| %s | %s | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |\n' "$FECHA" "$MARCA" >> "$FONDO_FILE"
+    echo "[$(date +%H:%M:%S)] progreso registrado automáticamente: $MARCA" >> "$LOG"
 fi
 
 # Limpieza EXPLÍCITA del lock (no confiar solo en el trap EXIT: el proceso
