@@ -76,3 +76,4 @@
 | 2026-08-12 | tests/contracts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | tests/engineering (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | tests/legacy (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | tests/load (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
