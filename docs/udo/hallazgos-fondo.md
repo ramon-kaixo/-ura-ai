@@ -71,3 +71,4 @@
 | 2026-08-12 | docs/merge_resolution (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | docs/plugins (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-12 | knowledge/evaluation (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-12 | motor/meta (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
