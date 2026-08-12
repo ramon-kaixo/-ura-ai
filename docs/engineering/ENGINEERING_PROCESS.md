@@ -1,8 +1,8 @@
-<!-- Engineering Process v1.9 -->
+<!-- Engineering Process v1.10 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.9 (2026-08-12) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.10 (2026-08-12) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
@@ -197,6 +197,19 @@ Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegad
 
 **Reglas de uso**: (1) tras tocar `AGENTS.md.global` o scripts de la Mac → `deploy-mac.sh` (no scp sueltos); (2) al cerrar tareas UDO → `ura-udo-cerrar` (no secuencias manuales); (3) ante duda del estado del sistema → `ura-fondo-health.sh` (no grep sueltos de logs); (4) estas herramientas se ejecutan desde ASUS (repo fuente), la Mac las recibe por deploy-mac.sh.
 
+## 19. Identidad y tiempo (v1.9)
+
+- Todo agente se identifica al reportar: `[WEB]` (ASUS) o `[TERM]` (Mac) + máquina + fecha/hora local + última interacción humana conocida.
+- La hora real se obtiene con `date` local — NO de los timestamps de la BD de opencode (están en UTC; desfase +2h CEST). Convertir con `datetime(ts/1000,'unixepoch','localtime')`.
+- Cabecera estándar: `[WEB|TERM] (ASUS|MAC) — YYYY-MM-DD HH:MM:SS Z — última interacción: HH:MM`.
+- Verificado 2026-08-12: ambas máquinas sincronizadas; la confusión de horas venía de leer UTC sin convertir.
+
+## 20. Inventario y método árbol (v1.9)
+
+- `scripts/pro/inventario_ura.py` genera `docs/architecture/INVENTARIO_URA.md`: cada carpeta principal con fecha de creación, última modificación, nº de archivos, propósito, módulos que importa y que la importan (conexiones).
+- **Método árbol de revisión** (usado por el planificador del modo fondo): tronco primero (core, motor, knowledge, scripts/pro, monitor), luego ramas (tests, deploy), al final hojas (docs, mantenimiento). `agents` no es carpeta raíz (vive en core/agents, motor/agents).
+- Regenerar el inventario tras cambios estructurales: `python3 scripts/pro/inventario_ura.py`.
+
 ## Changelog
 
 | Versión | Fecha | Cambio |
@@ -211,3 +224,4 @@ Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegad
 | 1.7 | 2026-08-11 | §16 Plan propuesto obligatorio en hallazgos accionables (TASK-20260811-009) |
 | 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
 | 1.9 | 2026-08-12 | §18 Automatización de procesos: deploy-mac.sh, ura-udo-cerrar, ura-fondo-health.sh (TASK-20260812-010) + sync ASUS→Mac (§17.4) |
+| 1.9 | 2026-08-12 | §19 Identidad y tiempo (TASK-20260812-016): [WEB]/[TERM] + hora local real (no UTC BD) + última interacción; §20 Inventario del sistema (inventario_ura.py → docs/architecture/INVENTARIO_URA.md); planificador método árbol (tronco→ramas→hojas) |
