@@ -97,11 +97,15 @@ class VectorAugmentedRetriever:
         scores: dict[str, float] = {}
 
         for rank, result in enumerate(heuristic):
-            aid = result.asset_id  # type: ignore[union-attr]
+            aid = getattr(result, "asset_id", None)
+            if aid is None:
+                continue
             scores[aid] = 1.0 / (self._rrf_k + rank)
 
         for rank, result in enumerate(vector):
-            aid = result.asset_id
+            aid = getattr(result, "asset_id", None)
+            if aid is None:
+                continue
             if aid in scores:
                 scores[aid] += 1.0 / (self._rrf_k + rank)
             else:
