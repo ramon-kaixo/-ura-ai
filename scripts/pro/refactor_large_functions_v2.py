@@ -25,6 +25,17 @@ SCRIPT_DIR = Path(__file__).parent
 from compactador_espacios import compactar
 from fraccionador_ast import fraccionar as _fraccionar_ast
 
+# Memoria persistente del refactor (TASK-20260812-020, filosofía RAMON:
+# determinismo + memoria + reglas + revisiones).
+try:
+    from memoria_refactor import consultar_funcion, registrar_intento
+except ImportError:  # pragma: no cover
+    def consultar_funcion(*_a, **_k):  # type: ignore[no-redef]
+        return {"estado": "sin_intentar", "intentos": []}
+
+    def registrar_intento(*_a, **_k):  # type: ignore[no-redef]
+        return {}
+
 # Verificación con tests (TASK-20260812-019): si el archivo tiene tests que lo
 # cubren, se verifica antes/después del refactor. Degrada con gracia.
 VERIFICAR_TESTS = os.environ.get("REFACTOR_VERIFY_TESTS", "1") == "1"
@@ -320,6 +331,17 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
 
     log(f"\n  Funcion: {func_name} ({n_lines}L) en {file_path}")
 
+    # Memoria: regla determinista — si la función ya se completó o está
+    # bloqueada para este modelo, no se reintenta (mínimo LLM).
+    funcion_id = f"{file_path}:{func_name}"
+    memoria_func = consultar_funcion(URA_ROOT, funcion_id)
+    if memoria_func.get("estado") == "completada":
+        log(f"  Memoria: {func_name} ya completada — saltando")
+        SKIPPED += 1
+        return False
+    if memoria_func.get("estado") == "necesita_otro_modelo":
+        log(f"  Memoria: {func_name} necesita otro modelo — intentando igual (fallback activo)")
+
     # 1. Extraer codigo original
     try:
         source = Path(file_path).read_text(encoding="utf-8")
@@ -410,6 +432,7 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
             if veredicto["veredicto"] == "rompe":
                 log(f"  ❌ Refactor rechazado: rompe tests ({veredicto.get('regresiones', '')})")
                 SKIPPED += 1
+                registrar_intento(URA_ROOT, funcion_id, MODEL, "rechazo", "rompe tests")
                 return False
             log(f"  ✅ Verificación tests: {veredicto['veredicto']}")
         except Exception as e:
@@ -419,8 +442,10 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
     if apply_refactored(file_path, lineno, end_lineno, codigo_final):
         REFACTORED += 1
         log("  Refactorizado con compactacion")
+        registrar_intento(URA_ROOT, funcion_id, MODEL, "exito", "aplicado")
         return True
     ERRORS += 1
+    registrar_intento(URA_ROOT, funcion_id, MODEL, "error", "apply_refactored fallo")
     return False
 
 
