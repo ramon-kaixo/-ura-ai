@@ -1,8 +1,9 @@
 # Rol: OpenClaw "UraOrquestador" — Supervisor, Planificador y Coordinador
 
-**Estado**: ACTIVO (diseñado 2026-08-13, TASK-20260813-008)
+**Estado**: ACTIVO (diseñado 2026-08-13, TASK-20260813-008) — ✅ configurado y probado (TASK-20260813-011, 2026-08-13)
 **Versión binario**: OpenClaw 2026.6.10 (`/usr/bin/openclaw`)
 **Perfil aislado**: `openclaw --profile orquestador` (estado/config en `~/.openclaw-orquestador/`)
+**Home virtual (rootfs RO)**: `/home/ramon/URA/ura_ia_1972/.openclaw-orq-home/` — ver §9
 
 ---
 
@@ -60,27 +61,54 @@ estado y espera (reglas ANTI-BUCLE del AGENTS global).
 
 ## 5. Primer arranque (pasos de Ramón, ~5 min)
 
+> ✅ **EJECUTADO (2026-08-13)**: la configuración técnica está hecha y probada
+> (ver §9). Lo que queda es decisión humana: instalar el gateway como servicio
+> user (opcional) y usar el perfil vía wrapper.
+
 ```bash
 # 1. Inicializar el perfil (credenciales LLM/canales — interactivo, credenciales
-#    NO van al repo)
-openclaw --profile orquestador configure
+#    NO van al repo) — OPCIONAL: con la config actual el agente ya funciona
+#    (ollama local del GX10, sin credenciales externas)
+openclaw-orquestador.sh configure
 
-# 2. Aplicar política de ejecución restringida (denegar por defecto)
-openclaw --profile orquestador exec-policy set-deny-all
-openclaw --profile orquestador approvals allowlist --agent ura-orquestador \
+# 2. Aplicar política de ejecución restringida (denegar por defecto) — HECHO
+openclaw-orquestador.sh exec-policy preset deny-all
+openclaw-orquestador.sh approvals allowlist --agent main \
   --add "git log --oneline -20"
-# ... (añadir los read-only de la tabla de permisos)
+# ... (añadir los read-only de la tabla de permisos) — HECHO (22 patrones, §9)
 
 # 3. Verificar aislamiento
-openclaw --profile orquestador doctor
+openclaw-orquestador.sh doctor
 
-# 4. Opcional — sandbox duro (repo RO en contenedor)
-openclaw --container sandbox-ura --profile orquestador
+# 4. Probar el agente (embedded, sin gateway)
+openclaw-orquestador.sh agent --local --timeout 120 --agent main -m "Hola"
 ```
 
 > Credenciales del LLM de OpenClaw: mismo patrón que `OPENCODE_WEB_PASS` —
 > fuera del repo, gestionadas por Ramón (o `/etc/ura/secrets.env` con sudo si el
 > perfil soporta env).
+
+## 9. Estado de configuración (TASK-20260813-011, 2026-08-13)
+
+| Ítem | Valor |
+|---|---|
+| Wrapper | `scripts/pro/openclaw-orquestador.sh` (exporta HOME virtual + `--profile orquestador`) |
+| Home virtual | `/home/ramon/URA/ura_ia_1972/.openclaw-orq-home/` (partición rw; el rootfs del home ASUS es RO) |
+| Gateway | puerto `18791`, bind `loopback` — **NO instalado como servicio** (decisión humana; usar embedded `--local` o `gateway install` explícito) |
+| Modelo | `ollama/deepseek-r1:14b` (Ollama GX10 `http://localhost:11434`, api ollama, contextWindow 65536) |
+| Contexto | `agents.defaults.contextTokens=60000` |
+| Exec policy | `preset deny-all` aplicado (security=deny, ask=off, askFallback=deny) |
+| Allowlist | 22 patrones read-only: `/usr/bin/git log|status|grep|show|diff|rev-parse|branch`, `/usr/bin/cat|grep|ls|head|tail|wc|python3`, `/bin/{cat,ls,grep,head,tail,wc}`, `/home/ramon/URA/**/ura-udo` (agente `*`) |
+| Agente | `main` (default), workspace `~/.openclaw/workspace-orquestador` |
+| Prueba | `agent --local -m "Responde solo: OK"` → respuesta `OK` (stopReason=stop) ✓ (2026-08-13) |
+| Plugin inworld | falla al cargar (highlight.js exports) — cosmético, no bloquea |
+
+**Pendiente**: (a) decisión de Ramón sobre servicio user del gateway del perfil
+(`openclaw-orquestador.sh gateway install` crea unidad `openclaw-gateway-orquestador.service`
+— mecanismo nativo del CLI, tipo user, NO es el gateway systemd global prohibido);
+(b) TUI desde la Mac requiere túnel SSH `ssh -L 18791:127.0.0.1:18791 ramon@10.164.1.99`;
+(c) `configure` interactivo para credenciales/canales si se quieren (con ollama local
+no hace falta); (d) sandbox duro opcional (`--container`).
 
 ## 6. Reglas de identidad y trazabilidad
 
