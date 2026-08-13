@@ -85,7 +85,7 @@ class LLMProfiler:
     def __init__(self, *, enabled: bool = True) -> None:
         self._enabled = enabled
         self._lock = threading.Lock()
-        self._snapshots: dict[str, tuple[float, float, tracemalloc.Snapshot]] = {}
+        self._snapshots: dict[str, tuple[float, float, int]] = {}
         self._profiles: list[LLMOperationProfile] = []
         self._max_profiles: int = 1000
 
@@ -111,11 +111,14 @@ class LLMProfiler:
         profile = LLMOperationProfile(provider, operation, model)
         wall_start = time.monotonic()
         cpu_start = time.process_time()
-        snap = tracemalloc.take_snapshot()
+        # get_traced_memory() NO es stop-the-world (a diferencia de take_snapshot):
+        # take_snapshot suspendía el GIL y con 4+ hilos excedía 60s en Python 3.13
+        # (test_monitor_thread_safe, TASK-20260813-006).
+        mem_start = tracemalloc.get_traced_memory()[0]
 
         key = self._key(provider, operation)
         with self._lock:
-            self._snapshots[key] = (wall_start, cpu_start, snap)
+            self._snapshots[key] = (wall_start, cpu_start, mem_start)
             self._profiles.append(profile)
 
         return profile
@@ -130,20 +133,21 @@ class LLMProfiler:
             entry = self._snapshots.pop(key, None)
             if entry is None:
                 return None
-            wall_start, cpu_start, start_snap = entry
+            wall_start, cpu_start, mem_start = entry
             profile = self._profiles[-1]  # El último iniciado para este hilo
 
         wall_end = time.monotonic()
         cpu_end = time.process_time()
-        end_snap = tracemalloc.take_snapshot()
+        mem_end = tracemalloc.get_traced_memory()[0]
 
         profile.wall_time_ms = (wall_end - wall_start) * 1000
         profile.cpu_time_ms = (cpu_end - cpu_start) * 1000
 
-        # Memoria: diff between start and end snapshots
-        stat_diff = end_snap.compare_to(start_snap, "lineno")
-        profile.peak_memory_bytes = sum(s.size for s in stat_diff if s.size > 0)
-        profile.allocations_count = sum(s.count for s in stat_diff if s.count > 0)
+        # Memoria: delta de bytes trazados durante la operación.
+        # allocations_count ya no es computable sin snapshots (stop-the-world):
+        # se mantiene el campo en 0 para preservar el contrato de la API.
+        profile.peak_memory_bytes = max(0, mem_end - mem_start)
+        profile.allocations_count = 0
 
         return profile
 
@@ -178,9 +182,6 @@ class LLMProfiler:
         with self._lock:
             self._snapshots.clear()
             self._profiles.clear()
-            if tracemalloc.is_tracing():
-                tracemalloc.stop()
-                tracemalloc.start()
 
     def close(self) -> None:
         if tracemalloc.is_tracing():
