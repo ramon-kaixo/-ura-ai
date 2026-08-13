@@ -1,7 +1,7 @@
 # URA IA — Makefile de validación
 # Uso: make validate (rápido, desarrollo local) | make validate-full (CI, con cobertura)
 
-.PHONY: validate validate-full test test-fast test-slow lint lint-strict mypy-info radon audit clean
+.PHONY: validate validate-full test test-fast test-slow lint lint-strict mypy-info radon audit clean security dead-code
 
 PYTHON := .venv/bin/python
 PYTEST := $(PYTHON) -m pytest
@@ -13,8 +13,8 @@ RUFF := $(PYTHON) -m ruff
 validate: test-fast lint mypy-info radon verify-hooks test-udo
 	@echo "✅ validate OK"
 
-# === VALIDACIÓN COMPLETA (CI, < 3 min) ===
-validate-full: test lint mypy-info radon test-udo
+# === VALIDACIÓN COMPLETA (CI parity: tests + lint + security, < 5 min) ===
+validate-full: test lint mypy-info radon security test-udo
 	@echo "✅ validate-full OK"
 
 # === TESTS UDO (F5 N2: integrados en validate — bash autónomo, sin pytest) ===
@@ -137,6 +137,26 @@ secrets:
 	@echo "▶ Auditando secrets hardcodeados..."
 	@$(PYTHON) scripts/pro/audit_secrets.py || echo "  ⚠️ Secrets detectados (ver output arriba)"
 	@echo "✅ Auditoría de secrets completada"
+
+
+# === ADUANA LOCAL (paridad con job security del CI, < 1 min, rootfs RO-safe) ===
+security:
+	@echo "▶ ADUANA LOCAL — SAST/SCA (parity CI job security)..."
+	@echo "  [1/4] audit_secrets (hardcodeados, fail si críticos)..."
+	@$(PYTHON) scripts/pro/audit_secrets.py --fail-critical
+	@echo "  [2/4] audit_git_secrets (historial git, fail si hallazgos)..."
+	@$(PYTHON) scripts/pro/audit_git_secrets.py --fail --max-commits 300
+	@echo "  [3/4] pip-audit (SCA requirements.txt, fail si CVEs)..."
+	@XDG_CACHE_HOME=/tmp/opencode/xdg-cache $(PYTHON) -m pip_audit -r requirements.txt --progress-spinner off
+	@echo "  [4/4] semgrep (reglas .semgrep.yml, caches a /tmp)..."
+	@XDG_CACHE_HOME=/tmp/opencode/xdg-cache SEMGREP_SETTINGS_FILE=/tmp/opencode/semgrep-settings.yml SEMGREP_LOG_FILE=/tmp/opencode/semgrep.log .venv/bin/semgrep --config=.semgrep.yml --quiet core/ motor/ knowledge/
+	@echo "✅ ADUANA LOCAL OK (0 hallazgos)"
+
+# === CÓDIGO HUÉRFANO (plan 4.1: vulture, informativo) ===
+dead-code:
+	@echo "▶ vulture (código muerto, min-confidence 70)..."
+	@-$(PYTHON) -m vulture core/ motor/ knowledge/ --min-confidence 70 || true
+	@echo "✅ dead-code completado (revisar output; alta confianza = borrable tras verificación)"
 
 
 # === FIX ===
