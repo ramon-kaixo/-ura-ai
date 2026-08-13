@@ -19,6 +19,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO" || exit 1
 TASKS_DIR="$REPO/docs/udo/tasks"
 PEND="$REPO/docs/udo/pendientes-fase.md"
 NOTIFY="${1:-}"

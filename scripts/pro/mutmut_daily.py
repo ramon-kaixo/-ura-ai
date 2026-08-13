@@ -77,6 +77,7 @@ TEST_IGNORES: list[str] = [
     "tests/unit/test_model_router_metrics.py",
     "tests/unit/test_model_router_proxy.py",
     "tests/unit/test_model_router_router.py",
+    "tests/unit/test_model_router_handler.py",
     "tests/unit/test_model_router_selection.py",
     "tests/unit/test_router_dashboard.py",
     "tests/unit/test_router_handler.py",

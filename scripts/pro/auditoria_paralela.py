@@ -93,6 +93,15 @@ def check_huerfanos() -> dict:
     """6. Scripts de scripts/pro no importados por nadie (excluye Makefile/cron)."""
     makefile = (ROOT / "Makefile").read_text()
     conectados = {Path(m).stem for m in __import__("re").findall(r"scripts/pro/(\w+)\.py", makefile)}
+    # Refs de paradoja: systemd units de deploy/, CI (.github/workflows) y cron.
+    for patron in (r"scripts/pro/(\w+)\.py", r"scripts/pro/(\w+)"):
+        for fuente in ((ROOT / "deploy").rglob("*.service"), (ROOT / ".github").rglob("*.yml"), (ROOT / ".github").rglob("*.yaml")):
+            for fichero in fuente:
+                if fichero.is_file():
+                    try:
+                        conectados.update(Path(m).stem for m in (__import__("re").findall(patron, fichero.read_text())))
+                    except OSError:
+                        continue
     huerfanos: list[str] = []
     for f in sorted((ROOT / "scripts" / "pro").glob("*.py")):
         if f.name in ("__init__.py", "plugin_registry.py", "auditoria_continua.py", "auditoria_paralela.py"):
@@ -103,7 +112,7 @@ def check_huerfanos() -> dict:
         refs = subprocess.run(
             ["grep", "-rl", f"scripts.pro.{stem}", "--include=*.py",
              str(ROOT / "core"), str(ROOT / "motor"), str(ROOT / "knowledge"),
-             str(ROOT / "scripts"), str(ROOT / "tests")],
+             str(ROOT / "scripts"), str(ROOT / "tests"), str(ROOT / ".github")],
             capture_output=True, text=True, timeout=30,
         ).stdout.splitlines()
         refs = [r for r in refs if not r.endswith(f"/{f.name}")]
