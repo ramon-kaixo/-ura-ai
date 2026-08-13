@@ -351,7 +351,5 @@ class FactHistory:
 
         raw_tombstones = data.get("tombstones", {})
         if isinstance(raw_tombstones, list):
-            return {
-                t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)
-            }
+            return {t["version_id"] or f"ts_{i}": FactTombstone(**t) for i, t in enumerate(raw_tombstones)}
         return {tid: FactTombstone(**t) for tid, t in raw_tombstones.items()}
