@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+import sys
 from pathlib import Path
 
 try:
@@ -40,10 +41,12 @@ _TOML_KEY_MAP: dict[str, str] = {
 
 class Configuration:
     def __init__(self) -> None:
-        self.ura_root: Path = Path(os.environ.get("URA_ROOT", Path.home() / "URA" / "ura_ia_1972"))
+        repo_root = Path(__file__).resolve().parents[3]
+        self.ura_root: Path = Path(os.environ.get("URA_ROOT", repo_root))
         self.log_dir: Path = Path(os.environ.get("TUNEL_LOG_DIR", str(self.ura_root / "logs")))
         self.nervioso: Path = self.ura_root / ".nervioso"
-        self.venv_python: str = str(self.ura_root / ".venv" / "bin" / "python3")
+        venv_py = self.ura_root / ".venv" / "bin" / "python3"
+        self.venv_python: str = str(venv_py) if venv_py.exists() else sys.executable
         self.ruff: str = shutil.which("ruff") or os.environ.get("TUNEL_RUFF_PATH", str(self.ura_root / ".venv" / "bin" / "ruff"))
         self.tuneladora_dir: Path = self.ura_root / ".tuneladora"
 

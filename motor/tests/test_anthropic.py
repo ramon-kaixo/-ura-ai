@@ -27,9 +27,16 @@ class TestAnthropicProvider:
         assert AnthropicProvider is not None
 
     def test_anthropic_validate(self) -> None:
-        from motor.core.llm.anthropic import AnthropicProvider
+        import importlib
+        import sys
 
-        result = validate_provider(AnthropicProvider)
+        import motor.core.llm.anthropic as anthropic_mod
+
+        if sys.modules.get("motor.core.llm.anthropic") is not anthropic_mod:
+            sys.modules["motor.core.llm.anthropic"] = anthropic_mod
+        importlib.reload(anthropic_mod)
+
+        result = validate_provider(anthropic_mod.AnthropicProvider)
         assert result.valid, f"Validation errors: {result.errors}"
         assert result.provider_name == "anthropic"
 
