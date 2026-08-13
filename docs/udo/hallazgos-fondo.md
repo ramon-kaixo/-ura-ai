@@ -95,3 +95,4 @@
 | 2026-08-13 | motor/guard (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | core/voice (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | core/debate (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-13 | motor/pipeline (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
