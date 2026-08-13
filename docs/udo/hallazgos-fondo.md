@@ -98,3 +98,4 @@
 | 2026-08-13 | motor/pipeline (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | motor/platform (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | motor/plugin (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-13 | core/interfaces (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
