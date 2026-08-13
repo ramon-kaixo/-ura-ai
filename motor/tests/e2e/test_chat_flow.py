@@ -1,13 +1,13 @@
 """E2E tests for assistant chat flow. Requires Ollama for chat test."""
 
 from __future__ import annotations
-import os
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from motor.assistant.main import app
+from motor.core.secrets import get_secret
 
 HAS_OLLAMA = False
 try:
@@ -38,8 +38,9 @@ def test_metrics_endpoint(client):
 def test_chat_basic(client):
     # Auth requerida cuando URA_API_KEY está definida (AuthMiddleware)
     headers = {}
-    if os.environ.get("URA_API_KEY"):
-        headers["Authorization"] = f"Bearer {os.environ['URA_API_KEY']}"
+    api_key = get_secret("URA_API_KEY", "")
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     r = client.post("/api/v1/chat", json={"message": "hola", "mode": "conversacion"}, headers=headers)
     assert r.status_code == 200
     data = r.json()

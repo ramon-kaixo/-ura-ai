@@ -1,7 +1,8 @@
 """Tests for api.py."""
-import os
 
 import pytest
+
+from motor.core.secrets import get_secret
 
 pytestmark = pytest.mark.slow
 
@@ -15,7 +16,8 @@ from knowledge.engine.api import app, state
 from knowledge.engine.connection import open_db
 from knowledge.engine.migrations import migrate_db
 
-KEY = os.environ.get("URA_API_KEY", "test-key")
+KEY = get_secret("URA_API_KEY", "test-key")
+
 
 @pytest.fixture
 def client():
@@ -31,24 +33,32 @@ def client():
     state.db_path, state._repo = old_db, old_repo
     Path(db_path).unlink(missing_ok=True)
 
+
 def test_health(client):
     assert client.get("/health").status_code == 200
+
 
 def test_status_auth(client):
     assert client.get("/status", headers={"Authorization": "Bearer " + KEY}).status_code == 200
 
+
 def test_rules_auth(client):
     assert client.get("/rules", headers={"Authorization": "Bearer " + KEY}).status_code == 200
+
 
 def test_doc_404_auth(client):
     assert client.get("/documents/000000000000", headers={"Authorization": "Bearer " + KEY}).status_code == 404
 
+
 def test_metrics(client):
     assert client.get("/metrics").status_code == 200
 
+
 def test_status_with_data(client):
     conn = open_db(state.db_path)
-    conn.execute("INSERT INTO kg_nodes (id,type,path,content_sha256,frontmatter,body,updated_at) VALUES ('n1','t','/n1.md','sha','{}','b','2024-01-01')")
+    conn.execute(
+        "INSERT INTO kg_nodes (id,type,path,content_sha256,frontmatter,body,updated_at) VALUES ('n1','t','/n1.md','sha','{}','b','2024-01-01')"
+    )
     conn.execute("INSERT INTO kg_edges (src,dst,relation,metadata) VALUES ('n1','n2','r','{}')")
     conn.commit()
     conn.close()
@@ -57,6 +67,7 @@ def test_status_with_data(client):
     assert r.json()["documents"] == 1
     assert r.json()["relations"] == 1
 
+
 def test_eval_rules_empty(client):
     r = client.post("/rules/eval", headers={"Authorization": "Bearer " + KEY})
     assert r.status_code == 200
@@ -64,9 +75,12 @@ def test_eval_rules_empty(client):
     assert data["total"] == 0
     assert data["findings"] == []
 
+
 def test_doc_found(client):
     conn = open_db(state.db_path)
-    conn.execute("INSERT INTO kg_nodes (id,type,path,content_sha256,frontmatter,body,updated_at) VALUES ('aabbccddeeff','doc','/test.md','sha256','{}','Body','2024-01-01')")
+    conn.execute(
+        "INSERT INTO kg_nodes (id,type,path,content_sha256,frontmatter,body,updated_at) VALUES ('aabbccddeeff','doc','/test.md','sha256','{}','Body','2024-01-01')"
+    )
     conn.commit()
     conn.close()
     r = client.get("/documents/aabbccddeeff", headers={"Authorization": "Bearer " + KEY})

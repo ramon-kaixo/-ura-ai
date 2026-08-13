@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.secrets import get_secret
+
 from .base import Provider, ProviderError
 
 GEMINI_BASE = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
@@ -11,7 +13,7 @@ GEMINI_TIMEOUT = int(os.environ.get("MOCHILA_GEMINI_TIMEOUT", "60"))
 
 
 def _gemini_api_key() -> str:
-    key = os.environ.get("GEMINI_API_KEY", "")
+    key = get_secret("GEMINI_API_KEY", "")
     if key:
         return key
     cred_path = os.path.expanduser("~/.config/opencode/.credentials/gemini.json")  # noqa: PTH111  # mockeado por tests existentes

@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 
 import httpx
 
+from motor.core.secrets import get_secret
+
 from .base import Provider, ProviderError
 
 OPENROUTER_BASE = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
@@ -12,7 +14,7 @@ OPENROUTER_TIMEOUT = int(os.environ.get("MOCHILA_OPENROUTER_TIMEOUT", "60"))
 
 class OpenRouterProvider(Provider):
     def __init__(self) -> None:
-        self.api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        self.api_key = get_secret("OPENROUTER_API_KEY", "")
 
     @property
     def nombre(self) -> str:

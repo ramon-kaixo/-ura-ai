@@ -5,12 +5,14 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from motor.core.secrets import get_secret
+
 
 class AssistantConfig:
     def __init__(self) -> None:
         self.data_dir = os.environ.get("URA_DATA_DIR", str(Path.home() / ".ura"))
         self.db_path = os.environ.get("URA_DB_PATH", str(Path(self.data_dir) / "ura.db"))
-        self.api_key = os.environ.get("URA_API_KEY", "")
+        self.api_key = get_secret("URA_API_KEY", "")
         self.llm_timeout = int(os.environ.get("URA_LLM_TIMEOUT", "30"))
         self.llm_model_fast = os.environ.get("URA_LLM_MODEL_FAST", "qwen2.5:7b")
         self.llm_model_deep = os.environ.get("URA_LLM_MODEL_DEEP", "qwen3:32b-q8_0")
