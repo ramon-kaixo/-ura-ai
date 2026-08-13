@@ -67,8 +67,10 @@ Fuente: mediciones reales del 2026-08-13 (comandos verificados).
 | 3 | Saturación ollama (runner 30b runaway) | DESBLOQUEADO (runner parado, 14b responde); prevención 11437 pendiente sudo |
 | 1 | audit-extra 16 huerfanos | CORREGIDO (checker ampliado a deploy/.github → 13, verificado) |
 | 1 | mutmut-daily colección rota | CORREGIDO (test ignorado) |
-| 9 | 5,3 GB conversaciones | PODADO 5,27GB → 673MB (backup /tmp/opencode) |
+| 9 | 5,3 GB conversaciones | PODADO 5,27GB → 673MB; backup persistente en /home/ramon/.local/share/opencode/opencode.db.bak-20260813 |
 | 4 | kg_nodes vacío | DIAGNOSTICADO, sin tocar (motor, ADR-007) |
 | 6 | router loopback | NO TOCADO (zona detector) |
-| 7 | rootfs RO / cron | Requiere sudo humano (comando preparado) |
+| 7 | rootfs RO / cron | RESUELTO 2026-08-13 20:3x: cron */15 min enviar_revision_web.sh instalado por RAMON (sudo) y verificado (envio real OK, sesion REVISION en Web) |
 | 8 | fases sin cerrar | Pendiente decisión |
+| — | F5 orquestador | VALIDADO 2026-08-13 20:2x: ciclo completo OK (plan real, run afe8ec58) |
+| — | Saturación 30b ollama | ALTA, hallazgo documentado: generaciones largas del 30b (tuneladora/router) bloquean embeddings/chat; propuesta a RAMON (ventana baja / cola prioridad / limitar contexto) — NO TOCADO |
