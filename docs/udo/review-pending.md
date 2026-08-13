@@ -116,3 +116,9 @@ La Mac debe incorporar (scp desde ramon@10.164.1.99 o integración mac-veredicto
 - `AGENTS.md` (nota hook semgrep en Build & Test)
 
 Además: `.venv` de la Mac necesita `pip install semgrep pip-audit` para el hook local.
+
+## REVISIÓN DIFERIDA — LOTE TASK-20260813 (WEB/ASUS, 2026-08-13)
+
+- **TASK-20260813-001** (fix CI de main roto): commits `1f5a42da`, `ec3d97d0`, `67d93bcf`, `45c7a80c`, `192f7854`, `02487296` — pyproject extra dev (ruff==0.15.18), matrix sin 3.10, exclusiones lint (mantenimiento/, deploy/mac), aiohttp en extras, 6 tests benchmark muertos eliminados (scripts en .attic), rename _profile_enabled, reinyección sys.modules en 5 validate, tuneladora portable. CI main VERDE verificado (run 2026-08-13 success). REVISIÓN PENDIENTE (AUTO-REVISIÓN marcada por ura-udo al cerrar sin revisor).
+- **TASK-20260813-002** (deadlock LLMProfiler 3.13): commit `fa910fdd` (merge con cambios staged: profiler.py sin gc.collect en hot path + matrix 3.13). CI main VERDE con test(3.13) success verificado 2026-08-13. REVISIÓN PENDIENTE (AUTO-REVISIÓN).
+- Sync Mac pendiente ampliado: además de lo anterior, `pyproject.toml` (extras dev/aiohttp), `motor/core/llm/profiler.py`, `motor/tests/*` (benchmark/profiler/anthropic/validate), `scripts/pro/tuneladora/config.py`, `docs/udo/review-pending.md`.
