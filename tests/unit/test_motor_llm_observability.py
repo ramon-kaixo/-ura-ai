@@ -7,6 +7,7 @@ y el CircuitBreaker de motor.core.llm.
 from __future__ import annotations
 
 import logging
+import time
 import tracemalloc
 from unittest import mock
 
@@ -380,6 +381,9 @@ class TestMonitor:
     def test_hotspot_detectado(self) -> None:
         m = self._monitor(threshold_ms=1.0)
         m.start_operation("p", "op")
+        # Lentitud real (antes dependía de la latencia artificial de
+        # tracemalloc.take_snapshot, eliminada en TASK-20260813-006).
+        time.sleep(0.005)
         snap = m.finish_operation("p", "op")
         assert snap is not None
         assert snap.is_hotspot is True
