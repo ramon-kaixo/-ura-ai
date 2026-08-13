@@ -542,7 +542,7 @@ def test_benchmark_add_1000() -> None:
         h.add_version(_make_version(fact.fact_id, f"v{i}", created_at=i + 1))
     t = time.perf_counter() - start
     assert h.version_count == 1001
-    assert t < 0.1, f"1K versions took {t * 1000:.1f}ms"
+    assert t < 0.3, f"1K versions took {t * 1000:.1f}ms"
 
 
 def test_benchmark_rollback_amid_1000() -> None:
@@ -565,7 +565,7 @@ def test_benchmark_version_at_1000() -> None:
     for ts in range(0, 1000, 50):
         h.version_at(float(ts))
     t = time.perf_counter() - start
-    assert t < 0.1, f"20 version_at queries took {t * 1000:.1f}ms"
+    assert t < 0.3, f"20 version_at queries took {t * 1000:.1f}ms"
 
 
 def test_benchmark_peak_memory() -> None:

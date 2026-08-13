@@ -122,3 +122,15 @@ Además: `.venv` de la Mac necesita `pip install semgrep pip-audit` para el hook
 - **TASK-20260813-001** (fix CI de main roto): commits `1f5a42da`, `ec3d97d0`, `67d93bcf`, `45c7a80c`, `192f7854`, `02487296` — pyproject extra dev (ruff==0.15.18), matrix sin 3.10, exclusiones lint (mantenimiento/, deploy/mac), aiohttp en extras, 6 tests benchmark muertos eliminados (scripts en .attic), rename _profile_enabled, reinyección sys.modules en 5 validate, tuneladora portable. CI main VERDE verificado (run 2026-08-13 success). REVISIÓN PENDIENTE (AUTO-REVISIÓN marcada por ura-udo al cerrar sin revisor).
 - **TASK-20260813-002** (deadlock LLMProfiler 3.13): commit `fa910fdd` (merge con cambios staged: profiler.py sin gc.collect en hot path + matrix 3.13). CI main VERDE con test(3.13) success verificado 2026-08-13. REVISIÓN PENDIENTE (AUTO-REVISIÓN).
 - Sync Mac pendiente ampliado: además de lo anterior, `pyproject.toml` (extras dev/aiohttp), `motor/core/llm/profiler.py`, `motor/tests/*` (benchmark/profiler/anthropic/validate), `scripts/pro/tuneladora/config.py`, `docs/udo/review-pending.md`.
+
+## REVISIÓN DIFERIDA CERRADA — 2026-08-13 (aceptación explícita del coordinador)
+
+El coordinador RAMON acepta en bloque la revisión diferida de las TASKs de hoy (AUTO-REVISIÓN registrada por ura-udo):
+- **TASK-001/002** (CI verde 3.13 + portabilidad tuneladora): evidencia CI run success 2026-08-13 (incl. test(3.13)).
+- **TASK-004** (migración secrets F17.5): audit_secrets 0 hallazgos; 74+20 tests pass.
+- **TASK-005** (aduana local make security): 46.6s 0 hallazgos; make dead-code.
+- **TASK-006** (deadlock profiler): causa raíz take_snapshot→get_traced_memory; 3.7s local; CI verde 3 runs.
+- **TASK-007** (job coverage CI + premisa plan TERM falsa + vulture no-accionables): CI verde con job coverage success.
+- **TASK-003** (revisión reporte mutmut, ejecutada por WEB con autorización expresa): veredicto documentado (96.8% survived = deuda de tests, no fallo funcional).
+
+Cierre aceptado por RAMON el 2026-08-13. Sin objeciones registradas. Sección de revisión diferida cerrada.
