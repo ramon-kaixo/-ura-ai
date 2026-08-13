@@ -60,3 +60,15 @@ Fuente: mediciones reales del 2026-08-13 (comandos verificados).
 
 ## Hallazgo para la conciencia/búsqueda
 - El **grafo KG del Knowledge Engine 2.0 está vacío** (kg_nodes=0): la búsqueda indexada por vectores usa otro mecanismo; el grafo conceptual vive en concepts/relations. Revisar si el KE2.0 debe poblar kg_nodes o si concepts/relations es el camino real (pendiente de análisis, no accionado).
+## Estado auditoría 2026-08-13 (arreglos aplicados)
+| # | Problema | Estado |
+|---|----------|--------|
+| 2 | ura-revisiones: falso positivo (corre cada 5 min OK) + bug git del detector | CORREGIDO (cd REPO, verificado) |
+| 3 | Saturación ollama (runner 30b runaway) | DESBLOQUEADO (runner parado, 14b responde); prevención 11437 pendiente sudo |
+| 1 | audit-extra 16 huerfanos | CORREGIDO (checker ampliado a deploy/.github → 13, verificado) |
+| 1 | mutmut-daily colección rota | CORREGIDO (test ignorado) |
+| 9 | 5,3 GB conversaciones | PODADO 5,27GB → 673MB (backup /tmp/opencode) |
+| 4 | kg_nodes vacío | DIAGNOSTICADO, sin tocar (motor, ADR-007) |
+| 6 | router loopback | NO TOCADO (zona detector) |
+| 7 | rootfs RO / cron | Requiere sudo humano (comando preparado) |
+| 8 | fases sin cerrar | Pendiente decisión |
