@@ -29,9 +29,12 @@ class TestGeminiProvider:
 
     def test_gemini_validate(self) -> None:
         import importlib
+        import sys
 
         import motor.core.llm.gemini as gemini_mod
 
+        if sys.modules.get("motor.core.llm.gemini") is not gemini_mod:
+            sys.modules["motor.core.llm.gemini"] = gemini_mod
         importlib.reload(gemini_mod)
         result = validate_provider(gemini_mod.GeminiProvider)
         assert result.valid, f"Validation errors: {result.errors}"

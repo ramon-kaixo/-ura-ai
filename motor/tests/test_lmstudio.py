@@ -19,9 +19,12 @@ class TestLMStudioProvider:
 
     def test_lmstudio_validate(self) -> None:
         import importlib
+        import sys
 
         import motor.core.llm.lmstudio as lm_mod
 
+        if sys.modules.get("motor.core.llm.lmstudio") is not lm_mod:
+            sys.modules["motor.core.llm.lmstudio"] = lm_mod
         importlib.reload(lm_mod)
         result = validate_provider(lm_mod.LMStudioProvider)
         assert result.valid, f"Errors: {result.errors}"

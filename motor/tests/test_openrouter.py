@@ -28,9 +28,12 @@ class TestOpenRouterProvider:
 
     def test_openrouter_validate(self) -> None:
         import importlib
+        import sys
 
         import motor.core.llm.openrouter as or_mod
 
+        if sys.modules.get("motor.core.llm.openrouter") is not or_mod:
+            sys.modules["motor.core.llm.openrouter"] = or_mod
         importlib.reload(or_mod)
         result = validate_provider(or_mod.OpenRouterProvider)
         assert result.valid, f"Validation errors: {result.errors}"

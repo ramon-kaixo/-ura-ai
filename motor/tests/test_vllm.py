@@ -31,8 +31,12 @@ class TestVLLMProvider:
             return secrets.get(name, default)
 
         with patch("motor.core.llm.vllm.get_secret", side_effect=mock_get_secret):
+            import sys
+
             import motor.core.llm.vllm as vllm_mod
 
+            if sys.modules.get("motor.core.llm.vllm") is not vllm_mod:
+                sys.modules["motor.core.llm.vllm"] = vllm_mod
             importlib.reload(vllm_mod)
             r = validate_provider(vllm_mod.VLLMProvider)
             assert r.valid, f"VLLMProvider no válido: {r.errors}"
