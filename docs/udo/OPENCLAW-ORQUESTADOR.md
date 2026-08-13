@@ -103,12 +103,10 @@ openclaw-orquestador.sh agent --local --timeout 120 --agent main -m "Hola"
 | Prueba | `agent --local -m "Responde solo: OK"` → respuesta `OK` (stopReason=stop) ✓ (2026-08-13) |
 | Plugin inworld | falla al cargar (highlight.js exports) — cosmético, no bloquea |
 
-**Pendiente**: (a) decisión de Ramón sobre servicio user del gateway del perfil
-(`openclaw-orquestador.sh gateway install` crea unidad `openclaw-gateway-orquestador.service`
-— mecanismo nativo del CLI, tipo user, NO es el gateway systemd global prohibido);
-(b) TUI desde la Mac requiere túnel SSH `ssh -L 18791:127.0.0.1:18791 ramon@10.164.1.99`;
-(c) `configure` interactivo para credenciales/canales si se quieren (con ollama local
-no hace falta); (d) sandbox duro opcional (`--container`).
+**Pendiente**: (a) **DECIDIDO 2026-08-13 (Ramón, "OK")**: gateway del perfil NO se instala
+como servicio — se usa modo embedded `--local` (el plan restringe "sin gateway systemd";
+la TUI es opcional, requiere túnel SSH 18791 solo si Ramón la quiere);
+(b) F5 validación del ciclo con un plan real (pendiente, veredicto humano);
 
 ## 6. Reglas de identidad y trazabilidad
 
