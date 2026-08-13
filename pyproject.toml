@@ -42,6 +42,7 @@ test = [
     "radon>=6.0",
     "xenon>=0.9",
     "hypothesis>=6.0",
+    "aiohttp>=3.9",
 ]
 dev = [
     "pytest>=8.0",
@@ -55,6 +56,7 @@ dev = [
     "radon>=6.0",
     "xenon>=0.9",
     "hypothesis>=6.0",
+    "aiohttp>=3.9",
     "ruff==0.15.18",
 ]
 
