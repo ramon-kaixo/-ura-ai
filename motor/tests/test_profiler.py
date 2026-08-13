@@ -164,13 +164,13 @@ class TestProfilerRouterIntegration:
         reg = ProviderRegistry()
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg)
-        assert not router._profiling_enabled
+        assert not router._profile_enabled
 
     def test_profiler_active_when_enabled(self) -> None:
         reg = ProviderRegistry()
         reg.register("ok", _MockOK(), default=True)
         router = LLMRouter(registry=reg, profiling_enabled=True)
-        assert router._profiling_enabled
+        assert router._profile_enabled
 
     def test_generate_profiles_when_enabled(self) -> None:
         reg = ProviderRegistry()
