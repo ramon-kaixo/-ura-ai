@@ -21,3 +21,6 @@ ese rol.
 ## Estado (bitácora)
 
 - 2026-08-13: workspace creado (TASK-20260813-008). Sin planes todavía.
+- 2026-08-13: plantilla oficial añadida (TASK-20260813-009): `PLANTILLA.md`;
+  plantilla mínima PLAN-YYYYMMDD-SLUG.md + RESUMEN-YYYYMMDD-SLUG.md + reglas
+  (1 plan activo por ronda; orquestador solo escribe aquí; veredicto humano).
