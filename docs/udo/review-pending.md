@@ -134,3 +134,46 @@ El coordinador RAMON acepta en bloque la revisión diferida de las TASKs de hoy 
 - **TASK-003** (revisión reporte mutmut, ejecutada por WEB con autorización expresa): veredicto documentado (96.8% survived = deuda de tests, no fallo funcional).
 
 Cierre aceptado por RAMON el 2026-08-13. Sin objeciones registradas. Sección de revisión diferida cerrada.
+
+---
+
+## REVISIÓN EXTERNA DE CÓDIGO — LOTE 2026-08-13 (para TERM como revisor externo)
+
+**Contexto (petición RAMON 2026-08-13)**: el OpenCode Terminal (Mac) es, por defecto
+(modelo dual UDO), el **revisor de código externo** del trabajo del Web. La protección
+técnica `revisor-fondo` (write/edit/patch=False + bash deny, TASK-20260812-002,
+`7fac4cac`) aplica SOLO al **modo fondo** (exploración autónoma read-only) — NO al rol
+de revisor de código. La revisión de código requiere acceso completo de lectura
+(abrir carpetas, git, grep, tests). Este lote queda preparado para que el TERM lo
+revise en cuanto haya ruta (o manualmente desde la Mac).
+
+### Lote a revisar (TASKs ejecutadas por WEB/ASUS el 2026-08-13, commits en main)
+
+| TASK | Qué se hizo | Commits | Archivos a revisar | Verificación sugerida |
+|------|-------------|---------|--------------------|-----------------------|
+| TASK-20260813-001 | Fix CI main roto: pyproject dev extras, matrix 3.11/3.12, exclusions lint, aiohttp, tuneladora portable, reinyección sys.modules en validate | `1f5a42da` `ec3d97d0` `67d93bcf` `45c7a80c` `192f7854` `02487296` | `pyproject.toml`, `scripts/pro/tuneladora/config.py`, `core/mochila/providers/*validate*`, `motor/tests/*` | `git show 45c7a80c --stat`; `pytest -q` local |
+| TASK-20260813-002 | Deadlock LLMProfiler 3.13: eliminar `gc.collect` del hot path (fix raíz en 006) | `fa910fdd` | `motor/core/llm/profiler.py` | `git show fa910fdd --stat`; CI test(3.13) success |
+| TASK-20260813-003 | Revisión reporte mutmut (7031 mutantes: 96.8% survived) + flaky f25_b6 (tolerancia 0.3s) | `b1365b62` | `tests/unit/test_f25_b6_fact_history.py`, reporte mutmut | 3 corridas consecutivas verdes |
+| TASK-20260813-004 | Migración 7 `direct_env_access` → `motor.core.secrets` (deuda F17.5) | `62279c84` | `core/mochila/providers/` (groq/gemini/deepseek/openrouter), `AssistantConfig`, 2 tests auth condicional | `audit_secrets.py` 0 hallazgos; 74+20 tests |
+| TASK-20260813-005 | Aduana local: `make security` + `make dead-code` + integración validate-full | `5b466710` `b307454e` | `Makefile`, caches /tmp RO-safe | `make security` (~47s) 0 hallazgos |
+| TASK-20260813-006 | LLMProfiler: `take_snapshot` (stop-the-world) → `get_traced_memory` (no bloqueante); test_hotspot con sleep real | `8e2e6196` `7ed1c021` `23c18748` | `motor/core/llm/profiler.py`, `tests/unit/test_motor_llm_observability.py` | `test_monitor_thread_safe` 3.7s; 84 obs tests; CI verde 3 runs |
+| TASK-20260813-007 | Job `coverage` informativo en CI; premisa plan TERM falsa (tests ya existían); vulture = falsos positivos | `2a218e3a` `97228d17` | `.github/workflows/ci.yml`, `tests/unit/test_refactor_large_functions_v2.py` | CI run 31675626936 9/9 jobs success |
+| TASK-20260813-008 | Rol OpenClaw Orquestador (docs + workspace + AGENTS.md) | `98a27876` `80801ae0` | `docs/udo/OPENCLAW-ORQUESTADOR.md`, `docs/udo/plans/README.md`, `AGENTS.md` | doc leído + coherencia con POSTMORTEM 7 (sin gateway systemd) |
+
+### Pendiente de sync ASUS→Mac (el TERM debe incorporarlo; no hay ruta desde ASUS)
+
+`scripts/pro/audit_git_secrets.py`, `scripts/pro/run_semgrep_hook.sh`,
+`scripts/pro/audit_secrets.py` (fix reporte), `scripts/pro/refactor_large_functions_v2.py`,
+`tests/unit/test_refactor_large_functions_v2.py`, `.github/workflows/ci.yml`, `.pre-commit-config.yaml`,
+`AGENTS.md`, `pyproject.toml`, `motor/core/llm/profiler.py`, `Mackefile` → `Makefile`,
+`docs/udo/review-pending.md`, `docs/udo/OPENCLAW-ORQUESTADOR.md`, `docs/udo/plans/`.
+La Mac necesita además `pip install semgrep pip-audit` en su `.venv` para el hook local.
+
+### Procedimiento de revisión (TERM, cuando haya ruta o manual)
+
+1. `git fetch origin main && git log --oneline b1365b62..origin/main` (lote completo).
+2. Por cada TASK: `git show <commit> --stat`, abrir los archivos, ejecutar las
+   verificaciones de la tabla (tests, make security, CI runs referidos).
+3. Emitir veredicto por TASK en una fila de la tabla insertando aquí (revisor: TERM) o
+   como nota en el expediente; registrar discrepancias con `ura-udo verify`.
+4. Registro: `[TERM]` commit con formato `docs(udo): [TERM] veredictos revisor ...` (auto-push).
