@@ -12,7 +12,6 @@ Integración opcional vía LLMRouter(profiling_enabled=True).
 
 from __future__ import annotations
 
-import gc
 import threading
 import time
 import tracemalloc
@@ -112,7 +111,6 @@ class LLMProfiler:
         profile = LLMOperationProfile(provider, operation, model)
         wall_start = time.monotonic()
         cpu_start = time.process_time()
-        gc.collect()
         snap = tracemalloc.take_snapshot()
 
         key = self._key(provider, operation)
@@ -137,7 +135,6 @@ class LLMProfiler:
 
         wall_end = time.monotonic()
         cpu_end = time.process_time()
-        gc.collect()
         end_snap = tracemalloc.take_snapshot()
 
         profile.wall_time_ms = (wall_end - wall_start) * 1000
