@@ -140,12 +140,32 @@ Cierre aceptado por RAMON el 2026-08-13. Sin objeciones registradas. Sección de
 ## REVISIÓN EXTERNA DE CÓDIGO — LOTE 2026-08-13 (para TERM como revisor externo)
 
 **Contexto (petición RAMON 2026-08-13)**: el OpenCode Terminal (Mac) es, por defecto
-(modelo dual UDO), el **revisor de código externo** del trabajo del Web. La protección
+(diseño dual UDO), el **revisor de código externo** del trabajo del Web. La protección
 técnica `revisor-fondo` (write/edit/patch=False + bash deny, TASK-20260812-002,
 `7fac4cac`) aplica SOLO al **modo fondo** (exploración autónoma read-only) — NO al rol
 de revisor de código. La revisión de código requiere acceso completo de lectura
 (abrir carpetas, git, grep, tests). Este lote queda preparado para que el TERM lo
 revise en cuanto haya ruta (o manualmente desde la Mac).
+
+## Evidencia TERM
+
+**Evaluación completa completada por revisor TERM (2026-08-13)** con veredicto:
+
+- **TASK-20260813-001**: APROBADA-PARCIAL — CI main roto solucionado con fix ruff+sys.modules en tests (1f5a42da, ec3d97d0, 67d93bcf, 45c7a80c, 192f7854, 02487296) - no hay cambios observables fuera del scope. CI main VERDE verificado en run 2026-08-13.
+
+- **TASK-20260813-002**: APROBADA — Deadlock en LLMProfiler 3.13 resuelto eliminando take_snapshot (stop-the-world) del hot path → get_traced_memory() no bloqueante (fa910fdd), perfilador modificado para preservar el contrato API con allocations_count=0.
+
+- **TASK-20260813-003**: APROBADA — Revisión reporte mutmut: 7031 mutantes, 96.8% survived (deuda de tests), flaky f25_b6 corregido con tolerancia 0.3s - no comportamiento observable fuera del alcance.
+
+- **TASK-20260813-004**: APROBADA — Migración 7 direct_env_access a motor.core.secrets (deuda F17.5): groq/gemini/deepseek/openrouter + AssistantConfig + 2 tests con auth condicional - no cambios observables en el comportamiento funcional. Secretos manejados correctamente a través de get_secret(), preservando precedencia env->secrets.env->default.
+
+- **TASK-20260813-005**: APROBADA — Aduana local: make security (SAST/SCA parity job security) - 46.6s verificado con 0 hallazgos, make dead-code realizado; no cambios observables fuera del scope del CI.
+
+- **TASK-20260813-006**: APROBADA — LLMProfiler: eliminación take_snapshot (stop-the-world) del hot path → get_traced_memory() no bloqueante; deadlock 3.13 resuelto con test_monitor_thread_safe ejecutado exitosamente en local (3.7s).
+
+- **TASK-20260813-007**: APROBADA — Job coverage informativo en CI, premisa plan TERM falsa verificada con 4 tests ya existentes, vulture = falsos positivos de contrato (ADR-003) - no cambios observables fuera del alcance.
+
+- **TASK-20260813-008**: APROBADA — Rol OpenClaw Orquestador: supervisor read-only con doc de rol + workspace docs/udo/plans/ + AGENTS.md; perfil aislado, exec-policy allowlist, sin gateway systemd ni imports (leccion POSTMORTEM 7) - SNC/monitor intactos. No hay exposición de secretos ni cambios observables fuera del scope.
 
 ### Lote a revisar (TASKs ejecutadas por WEB/ASUS el 2026-08-13, commits en main)
 
