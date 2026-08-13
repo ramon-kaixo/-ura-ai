@@ -236,8 +236,8 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - Si una métrica empeora, documentar por qué y compensar en otra dimensión.
 
 ### Política de Cobertura (petición RAMON, 2026-08-13)
-- **Todo código nuevo DEBE entregarse con cobertura de tests entre 80% y 90%** (objetivo al crear; mínimo exigido al declarar terminado).
-- Tras estabilizar el conjunto, la cobertura se sube progresivamente por encima del 90%.
+- **Todo código nuevo DEBE entregarse con cobertura de tests entre 80% y 90% POR MÓDULO** — no es una media global: cada archivo/módulo nuevo debe quedar individualmente en esa horquilla (≥80% y ≤90%) al declararse terminado.
+- Los módulos ya existentes que superen el 90% no se degradan; la horquilla rige para el trabajo nuevo y para subir los módulos actualmente por debajo del 80%.
 - Medición: `pytest` + `coverage` con `--source` relativo al directorio del módulo (los nombres absolutos no miden). Para `scripts/pro` usar rcfile propio **sin** el `omit = scripts/*` del `.coveragerc` oficial (línea: `coverage run --rcfile=X`).
 - Excepción: scripts bash (sin marco de cobertura estándar) → verificación por smoke manual documentada.
 - Estado actual medido 2026-08-13: fusion 40%, scripts/pro 9% (7 módulos de la semana al 100%), router/intelligence/extractors/web/compresor 0% (sin tests) — ver conversación y próximo cierre deuda.
