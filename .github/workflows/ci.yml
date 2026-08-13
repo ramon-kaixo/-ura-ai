@@ -77,3 +77,14 @@ jobs:
         run: python3 scripts/pro/audit_git_secrets.py --fail --max-commits 300
       - name: SAST — secretos hardcodeados en código (fail solo críticos)
         run: python3 scripts/pro/audit_secrets.py --fail-critical
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      - name: Reporte de cobertura (motor, informativo — sin umbral bloqueante)
+        run: pytest motor/tests/ -q --tb=short --cov=motor --cov-report=term-missing
