@@ -7,16 +7,14 @@ o justificada por Ramón. Cada fila: TASK | pendiente | fecha | estado | resoluc
 test veredicto 02:27:49
 
 #### A MEDIAS (IN_PROGRESS)
-| TASK-20260812-021 | IN_PROGRESS (a medias) | 2026-08-12 | PENDIENTE | |
-| TASK-20260812-023 | IN_PROGRESS (a medias) | 2026-08-12 | PENDIENTE | |
 
 #### PENDIENTES DE REVISOR
 
 #### LISTAS PARA CERRAR (OK revisor)
 
 #### PLANES/FASES SIN CERRAR
-| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Conflict Detection (pendiente) | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-12 | PENDIENTE | |
-| — | plan/fase: Source Scoring (pendiente) | 2026-08-12 | PENDIENTE | |
+| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-13 | PENDIENTE | |
+| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-13 | PENDIENTE | |
+| — | plan/fase: Conflict Detection (pendiente) | 2026-08-13 | PENDIENTE | |
+| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-13 | PENDIENTE | |
+| — | plan/fase: Source Scoring (pendiente) | 2026-08-13 | PENDIENTE | |
