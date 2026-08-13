@@ -20,6 +20,32 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO" || exit 1
+
+# ===== Integración de veredictos del Mac (rama mac-veredictos -> main) =====
+# El Escritorio (Mac) empuja sus OK a la rama mac-veredictos; aquí se integran
+# a main con merge. Corre AL INICIO con el arbol limpio (sin stash): si hay
+# cambios locales sin commitear, la integracion se difiere a la siguiente
+# corrida (evita conflictos UU de pendientes-fase.md con el propio registro).
+if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" != "1" ]; then
+    if git show-ref --verify --quiet refs/heads/mac-veredictos 2>/dev/null; then
+        if ! git diff --quiet; then
+            echo "AVISO: arbol sucio, integracion mac-veredictos diferida"
+        elif git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
+            echo "VEREDICTOS_MAC: rama ya integrada en main"
+        elif git merge-base --is-ancestor HEAD mac-veredictos 2>/dev/null; then
+            if HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --ff-only 2>/dev/null; then
+                echo "VEREDICTOS_MAC: integrados por fast-forward (sin commit extra)"
+            else
+                echo "AVISO: ff de mac-veredictos falló (revisar conflictos)"
+            fi
+        elif HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --no-ff -m "chore(udo): integrar veredictos del Mac (auto-integracion detector)" 2>/dev/null; then
+            echo "VEREDICTOS_MAC: integrados de mac-veredictos a main"
+        else
+            echo "AVISO: merge de mac-veredictos falló (revisar conflictos)"
+        fi
+    fi
+fi
+
 TASKS_DIR="$REPO/docs/udo/tasks"
 PEND="$REPO/docs/udo/pendientes-fase.md"
 NOTIFY="${1:-}"
@@ -155,39 +181,5 @@ notify(' | '.join(msgs), level='warning')
         else
             echo "(estado sin cambios — no se re-notifica)"
         fi
-    fi
-fi
-
-# ===== Integración de veredictos del Mac (rama mac-veredictos -> main) =====
-# El Escritorio (Mac) empuja sus OK a la rama mac-veredictos; aquí se integran
-# a main con merge. Va al FINAL para que el propio registro de pendientes
-# (pendientes-fase.md) quede commiteado antes del merge.
-if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" != "1" ]; then
-    if git show-ref --verify --quiet refs/heads/mac-veredictos; then
-        # Stash los cambios propios del detector (pendientes-fase.md) para
-        # poder mergear con el árbol limpio; luego se restauran.
-        # NOTA: si no hubo cambios locales, stash push falla silenciosamente
-        # (2>/dev/null) y stash pop no tiene nada que restaurar -> exit 1.
-        # Ese exit 1 marcaba el servicio como FAILED aun con trabajo OK.
-        git stash push -u -m "detector-pendientes" docs/udo/pendientes-fase.md >/dev/null 2>&1 || true
-        # Saltar hooks: el rootfs es RO (.cache no escribible) y pytest falla
-        # por PATH sin venv; el mensaje debe cumplir el formato conventional.
-        if git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
-            echo "VEREDICTOS_MAC: rama ya integrada en main"
-        elif git merge-base --is-ancestor HEAD mac-veredictos 2>/dev/null; then
-            # Solo retraso: fast-forward directo sin commit de merge nuevo
-            # (evita alimentar el bucle de merges recíprocos Mac<->ASUS)
-            if HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --ff-only 2>/dev/null; then
-                echo "VEREDICTOS_MAC: integrados por fast-forward (sin commit extra)"
-            else
-                echo "AVISO: ff de mac-veredictos falló (revisar conflictos)"
-            fi
-        elif HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --no-ff -m "chore(udo): integrar veredictos del Mac (auto-integracion detector)" 2>/dev/null; then
-            echo "VEREDICTOS_MAC: integrados de mac-veredictos a main"
-        else
-            echo "AVISO: merge de mac-veredictos falló (revisar conflictos)"
-        fi
-        # pop sin stash previo no es error: no hay nada que restaurar.
-        git stash pop >/dev/null 2>&1 || true
     fi
 fi
