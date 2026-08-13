@@ -92,3 +92,4 @@
 | 2026-08-13 | core/infra (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | deploy/mac (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | docs/pro (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-13 | motor/guard (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
