@@ -169,16 +169,17 @@ revise en cuanto haya ruta (o manualmente desde la Mac).
 
 ### Lote a revisar (TASKs ejecutadas por WEB/ASUS el 2026-08-13, commits en main)
 
-| TASK | Qué se hizo | Commits | Archivos a revisar | Verificación sugerida |
-|------|-------------|---------|--------------------|-----------------------|
-| TASK-20260813-001 | Fix CI main roto: pyproject dev extras, matrix 3.11/3.12, exclusions lint, aiohttp, tuneladora portable, reinyección sys.modules en validate | `1f5a42da` `ec3d97d0` `67d93bcf` `45c7a80c` `192f7854` `02487296` | `pyproject.toml`, `scripts/pro/tuneladora/config.py`, `core/mochila/providers/*validate*`, `motor/tests/*` | `git show 45c7a80c --stat`; `pytest -q` local |
-| TASK-20260813-002 | Deadlock LLMProfiler 3.13: eliminar `gc.collect` del hot path (fix raíz en 006) | `fa910fdd` | `motor/core/llm/profiler.py` | `git show fa910fdd --stat`; CI test(3.13) success |
-| TASK-20260813-003 | Revisión reporte mutmut (7031 mutantes: 96.8% survived) + flaky f25_b6 (tolerancia 0.3s) | `b1365b62` | `tests/unit/test_f25_b6_fact_history.py`, reporte mutmut | 3 corridas consecutivas verdes |
-| TASK-20260813-004 | Migración 7 `direct_env_access` → `motor.core.secrets` (deuda F17.5) | `62279c84` | `core/mochila/providers/` (groq/gemini/deepseek/openrouter), `AssistantConfig`, 2 tests auth condicional | `audit_secrets.py` 0 hallazgos; 74+20 tests |
-| TASK-20260813-005 | Aduana local: `make security` + `make dead-code` + integración validate-full | `5b466710` `b307454e` | `Makefile`, caches /tmp RO-safe | `make security` (~47s) 0 hallazgos |
-| TASK-20260813-006 | LLMProfiler: `take_snapshot` (stop-the-world) → `get_traced_memory` (no bloqueante); test_hotspot con sleep real | `8e2e6196` `7ed1c021` `23c18748` | `motor/core/llm/profiler.py`, `tests/unit/test_motor_llm_observability.py` | `test_monitor_thread_safe` 3.7s; 84 obs tests; CI verde 3 runs |
-| TASK-20260813-007 | Job `coverage` informativo en CI; premisa plan TERM falsa (tests ya existían); vulture = falsos positivos | `2a218e3a` `97228d17` | `.github/workflows/ci.yml`, `tests/unit/test_refactor_large_functions_v2.py` | CI run 31675626936 9/9 jobs success |
-| TASK-20260813-008 | Rol OpenClaw Orquestador (docs + workspace + AGENTS.md) | `98a27876` `80801ae0` | `docs/udo/OPENCLAW-ORQUESTADOR.md`, `docs/udo/plans/README.md`, `AGENTS.md` | doc leído + coherencia con POSTMORTEM 7 (sin gateway systemd) |
+| TASK | Qué se hizo | Commits | Archivos a revisar | Verificación sugerida | Veredicto TERM (2026-08-13) |
+|------|-------------|---------|--------------------|-----------------------|--------------------------|
+| TASK-20260813-001 | Fix CI main roto: pyproject dev extras, matrix 3.11/3.12, exclusions lint, aiohttp, tuneladora portable, reinyección sys.modules en validate | `1f5a42da` `ec3d97d0` `67d93bcf` `45c7a80c` `192f7854` `02487296` | `pyproject.toml`, `scripts/pro/tuneladora/config.py`, `core/mochila/providers/*validate*`, `motor/tests/*` | `git show 45c7a80c --stat`; `pytest -q` local | APROBADA-PARCIAL |
+| TASK-20260813-002 | Deadlock LLMProfiler 3.13: eliminar `gc.collect` del hot path (fix raíz en 006) | `fa910fdd` | `motor/core/llm/profiler.py` | `git show fa910fdd --stat`; CI test(3.13) success | APROBADA |
+| TASK-20260813-003 | Revisión reporte mutmut (7031 mutantes: 96.8% survived) + flaky f25_b6 (tolerancia 0.3s) | `b1365b62` | `tests/unit/test_f25_b6_fact_history.py`, reporte mutmut | 3 corridas consecutivas verdes | APROBADA |
+| TASK-20260813-004 | Migración 7 `direct_env_access` → `motor.core.secrets` (deuda F17.5) | `62279c84` | `core/mochila/providers/` (groq/gemini/deepseek/openrouter), `AssistantConfig`, 2 tests auth condicional | `audit_secrets.py` 0 hallazgos; 74+20 tests | APROBADA |
+| TASK-20260813-005 | Aduana local: `make security` + `make dead-code` + integración validate-full | `5b466710` `b307454e` | `Makefile`, caches /tmp RO-safe | `make security` (~47s) 0 hallazgos | APROBADA |
+| TASK-20260813-006 | LLMProfiler: `take_snapshot` (stop-the-world) → `get_traced_memory` (no bloqueante); test_hotspot con sleep real | `8e2e6196` `7ed1c021` `23c18748` | `motor/core/llm/profiler.py`, `tests/unit/test_motor_llm_observability.py` | `test_monitor_thread_safe` 3.7s; 84 obs tests; CI verde 3 runs | APROBADA |
+| TASK-20260813-007 | Job `coverage` informativo en CI; premisa plan TERM falsa (tests ya existían); vulture = falsos positivos | `2a218e3a` `97228d17` | `.github/workflows/ci.yml`, `tests/unit/test_refactor_large_functions_v2.py` | CI run 31675626936 9/9 jobs success | APROBADA |
+| TASK-20260813-008 | Rol OpenClaw Orquestador (docs + workspace + AGENTS.md) | `98a27876` `80801ae0` | `docs/udo/OPENCLAW-ORQUESTADOR.md`, `docs/udo/plans/README.md`, `AGENTS.md` | doc leído + coherencia con POSTMORTEM 7 (sin gateway systemd) | APROBADA |
+| TASK-20260813-009 | Plan Orquestador OpenClaw F1-F5: F1 RAM ASUS (config Mac→túnel Ollama GX10) + F4 perfil orquestador (deny-all+allowlist) | `bfea7100` `907bff27` | `deploy/opencode_mac_config.jsonc`, `scripts/pro/openclaw-orquestador.sh`, `docs/udo/OPENCLAW-ORQUESTADOR.md` | AUTO-REVISIÓN (sin revisor; autorización expresa RAMON); prueba agente real OK; F2/F3 TERM en commit separado | ⏳ PENDIENTE |
 
 ### Pendiente de sync ASUS→Mac (el TERM debe incorporarlo; no hay ruta desde ASUS)
 
