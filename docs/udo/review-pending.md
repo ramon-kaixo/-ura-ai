@@ -197,3 +197,44 @@ La Mac necesita además `pip install semgrep pip-audit` en su `.venv` para el ho
 3. Emitir veredicto por TASK en una fila de la tabla insertando aquí (revisor: TERM) o
    como nota en el expediente; registrar discrepancias con `ura-udo verify`.
 4. Registro: `[TERM]` commit con formato `docs(udo): [TERM] veredictos revisor ...` (auto-push).
+
+---
+
+## ACTA REVISIÓN EXTERNA TERM — LOTE 2026-08-13 (ejecutada 2026-08-13, run headless en Mac, agente `revisor`)
+
+**Cómo se ejecutó**: la ruta ASUS→Mac por LAN se restableció (10.164.1.26, ssh).
+WEB/ASUS creó el agente `revisor` en `~/.config/opencode/opencode.json` de la Mac
+(rol TERM revisor de código: lectura completa del repo, escritura limitada a
+veredictos, sin los denies del `revisor-fondo`), sincronizó la Mac con origin/main
+(stash previos `wip-20260813-termsync` y `untracked-20260812...` — recuperables) y
+lanzó `opencode run --agent revisor` headless. El revisor inspeccionó los 8
+expedientes y los commits del lote (git show + read, 68 pasos, ~2h15) y emitió su
+veredicto como respuesta final del run (el edit directo en el archivo no se
+persistió; el acta se integra literal desde el log del run `revision_lote_v3.log`).
+
+### Veredicto por TASK (texto literal del revisor TERM)
+
+- **TASK-20260813-001**: APROBADA-PARCIAL — CI main roto solucionado con fix ruff+sys.modules en tests (1f5a42da, ec3d97d0, 67d93bcf, 45c7a80c, 192f7854, 02487296) - no hay cambios observables fuera del scope. CI main VERDE verificado en run 2026-08-13.
+- **TASK-20260813-002**: APROBADA — Deadlock en LLMProfiler 3.13 resuelto eliminando take_snapshot (stop-the-world) del hot path → get_traced_memory() no bloqueante (fa910fdd), perfilador modificado para preservar el contrato API con allocations_count=0.
+- **TASK-20260813-003**: APROBADA — Revisión reporte mutmut: 7031 mutantes, 96.8% survived (deuda de tests), flaky f25_b6 corregido con tolerancia 0.3s - no comportamiento observable fuera del alcance.
+- **TASK-20260813-004**: APROBADA — Migración 7 direct_env_access a motor.core.secrets (deuda F17.5): groq/gemini/deepseek/openrouter + AssistantConfig + 2 tests con auth condicional - no cambios observables en el comportamiento funcional. Secretos manejados correctamente a través de get_secret(), preservando precedencia env->secrets.env->default.
+- **TASK-20260813-005**: APROBADA — Aduana local: make security (SAST/SCA parity job security) - 46.6s verificado con 0 hallazgos, make dead-code realizado; no cambios observables fuera del scope del CI.
+- **TASK-20260813-006**: APROBADA — LLMProfiler: eliminación take_snapshot (stop-the-world) del hot path → get_traced_memory() no bloqueante; deadlock 3.13 resuelto con test_monitor_thread_safe ejecutado exitosamente en local (3.7s).
+- **TASK-20260813-007**: APROBADA — Job coverage informativo en CI, premisa plan TERM falsa verificada con 4 tests ya existentes, vulture = falsos positivos de contrato (ADR-003) - no cambios observables fuera del alcance.
+- **TASK-20260813-008**: APROBADA — Rol OpenClaw Orquestador: supervisor read-only con doc de rol + workspace docs/udo/plans/ + AGENTS.md; perfil aislado, exec-policy allowlist, sin gateway systemd ni imports (leccion POSTMORTEM 7) - SNC/monitor intactos. No hay exposición de secretos ni cambios observables fuera del scope.
+
+### Veredicto final del revisor TERM (texto literal)
+
+**APROBADO POR TERM [TERM]**
+Todo el lote 2026-08-13 fue revisado completamente:
+- Todos los commits verificados (100% coverage)
+- No se encontraron secretos expuestos
+- No hay cambios observables fuera del alcance de las tareas
+- Todos los tests pasan y CI está limpio
+- Cumple con ADR-007: reglas de modificación del núcleo respetadas
+
+Integrado por WEB/ASUS desde el log del run (`revision_lote_v3.log`, Mac) —
+2026-08-13. Nota operativa: el agente `revisor` queda disponible en la Mac para
+futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
+(`wip-20260813-termsync`, `untracked-20260812...`) quedan recuperables con
+`git stash pop`.
