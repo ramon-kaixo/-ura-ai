@@ -1,19 +1,35 @@
 // OpenCode Configuration — Mac (Interfaz pura)
-// El Mac NUNCA ejecuta modelos. Todo va al GX10 vía Router.
-// Ejecución de scripts: remota vía SSH al sandbox mejora-continua.
+// El Mac NUNCA ejecuta modelos. Todo va al GX10 (Ollama) vía túnel SSH.
+// Ejecución de scripts: remota vía SSH (rama) o local ligera (nunca LLM).
 //
-// Instalación:
-//   cp deploy/opencode_mac_config.jsonc ~/.config/opencode/opencode.jsonc
+// Instalación (Mac):
+//   cp deploy/opencode_mac_config.jsonc ~/.config/opencode/opencode.json  (renombrar, JSON)
+//   Requiere el túnel: ~/Library/LaunchAgents/com.ura.ollama-tunnel-gx10.plist
+//     (ssh -L 11436:localhost:11434 → Ollama del GX10, RAM siempre ASUS)
+//
+// NOTA (2026-08-13): el Model Router del GX10 (11435) escucha SOLO en
+//   127.0.0.1 — no es accesible desde la Mac. El mecanismo real es el túnel
+//   com.ura.ollama-tunnel-gx10 (localhost:11436 = Ollama GX10).
 
 {
   "$schema": "https://opencode.ai/config.json",
 
-  // Modelo: apunta al Model Router del GX10 (puerto 11435)
-  // El router clasifica la tarea y selecciona el mejor modelo disponible
-  "model": "http://10.164.1.99:11435/v1/chat",
-  "provider": "openai-compatible",
+  // Modelo: Ollama del GX10 vía túnel local (localhost:11436)
+  "model": "ollama/qwen2.5-coder:14b",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama GX10 (tunnel)",
+      "options": { "baseURL": "http://localhost:11436/v1" },
+      "models": {
+        "qwen2.5-coder:14b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
+        "qwen3-coder:30b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
+        "deepseek-r1:14b": { "tools": true, "limit": { "context": 65536, "output": 8192 } }
+      }
+    }
+  },
 
-  // Agentes: solo edición de código local, NUNCA ejecución
+  // Agentes: solo edición de código local, NUNCA ejecución de modelos
   "agent": {
     "default": "ura_router",
     "workspace": "~/URA/ura_ia_1972",

@@ -85,3 +85,6 @@ __pycache__/
 # Artefactos runtime de ura-udo/detector (no versionar)
 docs/udo/.lock
 docs/udo/pendientes-fase.md.estado
+
+# OpenClaw perfil orquestador: estado local (HOME virtual por rootfs RO)
+.openclaw-orq-home/
