@@ -90,3 +90,4 @@
 | 2026-08-13 | docs/gx10 (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | motor/scripts (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | core/infra (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-13 | deploy/mac (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
