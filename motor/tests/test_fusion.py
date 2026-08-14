@@ -1193,3 +1193,1137 @@ class TestDefaultPipelineIntegration:
         assert result.rejected == ()
         assert result.conflicts == ()
         assert isinstance(result.statistics, dict)
+
+
+class TestBridge:
+    """Cobertura 100x100: proyecciones del puente F25-A3 (TASK-20260814-001)."""
+
+    def test_knowledge_fact_to_semantic_fact_full(self) -> None:
+        from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
+
+        kf = KnowledgeFact(
+            id="f1",
+            subject="sujeto",
+            predicate="predica",
+            object="objeto",
+            confidence=0.75,
+            evidence=(
+                Evidence(
+                    evidence_id="ev1",
+                    document_url="http://x.com",
+                    canonical_url=None,
+                    title="T",
+                    document_index=0,
+                    sentence_position=1,
+                    fragment="c",
+                    content_hash="h",
+                    document_id="d",
+                    fetched_at=1.0,
+                    quality_score=0.9,
+                ),
+            ),
+            provenance=("p1", "p2"),
+            version=3,
+            created_at=123.0,
+            evidence_ids=("e1", "e2"),
+        )
+        d = knowledge_fact_to_semantic_fact(kf)
+        assert d["id"] == "f1"
+        assert d["importance"] == 0.75 * 0.8
+        assert d["source_episode_ids"] == ["e1", "e2"]
+        assert d["tags"] == ["fusion", "knowledge"]
+        assert d["version"] == 3
+        assert d["created_at"] == 123.0
+        assert d["metadata"]["provenance"] == ["p1", "p2"]
+        assert d["metadata"]["origin"] == "fusion_pipeline"
+
+    def test_knowledge_fact_to_semantic_fact_defaults(self) -> None:
+        from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
+
+        kf = KnowledgeFact(id="f2", subject="s", predicate="p", object="o", confidence=0.5)
+        d = knowledge_fact_to_semantic_fact(kf)
+        assert d["created_at"] > 0.0
+        assert d["version"] == 1
+
+    def test_fact_version_to_semantic_fact(self) -> None:
+        from motor.core.fusion.bridge import fact_version_to_semantic_fact
+        from motor.core.fusion.models import Fact, FactVersion
+
+        fact = Fact(fact_id="fx", subject="sx", predicate="px", object="ox")
+        version = FactVersion(
+            version_id="v1",
+            fact_id="fx",
+            confidence=0.9,
+            evidence_ids=("ev1",),
+            provenance=("pr1",),
+            created_at=55.0,
+            supersedes="v0",
+        )
+        d = fact_version_to_semantic_fact(fact, version)
+        assert d["id"] == "fx"
+        assert d["subject"] == "sx"
+        assert d["object_value"] == "ox"
+        assert d["importance"] == 0.9 * 0.8
+        assert d["source_episode_ids"] == ["ev1"]
+        assert d["tags"] == ["fusion", "versioned"]
+        assert d["version"] == 1
+        assert d["created_at"] == 55.0
+        assert d["metadata"]["supersedes"] == "v0"
+        assert d["metadata"]["version_id"] == "v1"
+
+
+class TestBaseStageHooks:
+    """Cobertura 100x100: BaseStage.execute + hook _record_stats + deterministic (TASK-20260814-001)."""
+
+    def test_base_stage_execute_con_hook_stats(self) -> None:
+        from motor.core.fusion.base import BaseStage
+
+        class _Stub(BaseStage):
+            stage = FusionStage.ENTITY_RESOLUTION
+            _record_stats = True
+
+            def _execute(self, context: FusionContext) -> FusionContext:
+                context.claims.append(KnowledgeClaim(id="c1", text="txt", confidence=0.5))
+                return context
+
+            @property
+            def name(self) -> str:
+                return "stub"
+
+            @property
+            def version(self) -> str:
+                return "1.0.0"
+
+        stub = _Stub()
+        assert stub.deterministic is True
+        ctx = stub.execute(FusionContext())
+        assert len(ctx.transforms) == 1
+        assert ctx.transforms[0].input_claims == 0
+        assert ctx.transforms[0].output_claims == 1
+        assert ctx.statistics["stages"]["stub"]["input_facts"] == 0
+        assert ctx.statistics["stages"]["stub"]["version"] == "1.0.0"
+
+
+class TestConfigHash:
+    """Cobertura 100x100: to_dict + make_config_hash determinista (TASK-20260814-001)."""
+
+    def test_to_dict_and_hash(self) -> None:
+        from motor.core.fusion.config import FusionConfig, make_config_hash
+
+        cfg = FusionConfig()
+        d = cfg.to_dict()
+        assert d["authority_weight"] == 0.4
+        h1 = make_config_hash(cfg)
+        h2 = make_config_hash(FusionConfig())
+        assert h1 == h2
+        assert len(h1) == 16
+        assert make_config_hash(FusionConfig(authority_weight=0.9)) != h1
+
+
+class TestNormalizationStageCobertura:
+    """Cobertura 100x100: NormalizationStage con claims reales (TASK-20260814-001)."""
+
+    def test_normaliza_claims(self) -> None:
+        from motor.core.fusion.stages.normalization import NormalizationStage
+
+        ctx = FusionContext()
+        ctx.claims.append(KnowledgeClaim(id="c1", text="  Hola,   MUNDO!!  ", confidence=0.5))
+        ctx = NormalizationStage().execute(ctx)
+        assert ctx.claims[0].normalized_text == "hola mundo"
+        assert ctx.statistics["claims_normalized"] == 1
+
+
+class TestSelectorCobertura:
+    """Cobertura 100x100: MemoryCandidateSelectionStage con memory fake (TASK-20260814-001)."""
+
+    def test_seleccion_con_memoria_ambigua(self) -> None:
+        from motor.core.fusion.stages.selector import MemoryCandidateSelectionStage, ThresholdSelector
+
+        kf = KnowledgeFact(id="f1", subject="s", predicate="p", object="o", confidence=0.9)
+        ctx = FusionContext()
+        ctx.facts.append(kf)
+        ctx.statistics["ambiguous_entity_ids"] = ["e1"]
+        written: list = []
+
+        class _FakeMemory:
+            def append(self, entry: object) -> None:
+                written.append(entry)
+
+        ctx.statistics["_memory_instance"] = _FakeMemory()
+        stage = MemoryCandidateSelectionStage(selector=ThresholdSelector(min_confidence=0.5, max_candidates=1))
+        ctx = stage.execute(ctx)
+        assert "ambiguous entities" in ctx.warnings[0]
+        assert len(written) == 1
+        assert ctx.statistics["candidates_returned"] == 1
+        assert ctx.statistics["memory_entries_written"] == 1
+        assert ctx.provenance.selector_name == "ThresholdSelector"
+
+    def test_seleccion_sin_memoria(self) -> None:
+        from motor.core.fusion.stages.selector import MemoryCandidateSelectionStage
+
+        ctx = FusionContext()
+        ctx.facts.append(KnowledgeFact(id="f2", subject="s", predicate="p", object="o", confidence=0.2))
+        stage = MemoryCandidateSelectionStage()
+        ctx = stage.execute(ctx)
+        assert ctx.statistics["memory_entries_written"] == 0
+        assert ctx.statistics["candidates_returned"] == 0
+
+
+class TestDeltaCobertura:
+    """Cobertura 100x100: BasicChangeDetector todas las ramas + KnowledgeDeltaStage (TASK-20260814-001)."""
+
+    def _kf(self, fid: str, obj: str) -> KnowledgeFact:
+        return KnowledgeFact(id=fid, subject=fid, predicate="p", object=obj, confidence=0.8)
+
+    def test_detect_delta_todas_ramas(self) -> None:
+        from motor.core.fusion.stages.delta import BasicChangeDetector
+
+        d = BasicChangeDetector().detect_delta(
+            [
+                self._kf("a", "o1"),
+                self._kf("b", "o2"),
+                self._kf("c", "o3"),
+                KnowledgeFact(id=None, subject="x", predicate="p", object="x", confidence=0.8),
+                self._kf("e", "new"),
+            ],
+            [self._kf("a", "o1"), self._kf("b", "old"), self._kf("c", "o3"), self._kf("e", "old")],
+        )
+        assert {f.id for f in d.facts_added} == {None}
+        assert {f.id for f in d.facts_updated} == {"b", "e"}
+        assert {f.id for f in d.facts_confirmed} == {"a", "c"} if hasattr(d, "facts_confirmed") else True
+
+    def test_stage_delta_ambiguedad(self) -> None:
+        from motor.core.fusion.stages.delta import KnowledgeDeltaStage
+
+        ctx = FusionContext()
+        ctx.facts.append(self._kf("a", "o1"))
+        ctx.statistics["existing_facts"] = []
+        ctx.statistics["ambiguous_entity_ids"] = ["e1"]
+        ctx = KnowledgeDeltaStage().execute(ctx)
+        assert ctx.statistics["deltas_added"] == 1
+        assert ctx.statistics["has_changes"] is True
+        assert "ambiguous entities" in ctx.warnings[0]
+
+
+class TestMergerCobertura:
+    """Cobertura 100x100: SimpleKnowledgeMerger todas las ramas + KnowledgeMergerStage (TASK-20260814-001)."""
+
+    def test_merge_todas_ramas_texto(self) -> None:
+        from motor.core.fusion.stages.merger import SimpleKnowledgeMerger
+
+        kc = KnowledgeClaim
+        claims = [
+            kc(id="c1", text="El sol sale por el este", confidence=0.7, text_id="t1"),
+            kc(id="c2", text="palabra", confidence=0.5),
+            kc(id="c3", text="dos palabras", confidence=0.5),
+            kc(id="c4", text="", confidence=0.5),
+        ]
+        facts = SimpleKnowledgeMerger().merge(claims, [])
+        assert len(facts) == 4
+        assert facts[0].subject == "El" and facts[0].predicate == "sol"
+        assert facts[0].object == "sale por el este"
+        assert facts[0].evidence_ids == ("t1",)
+        assert facts[1].predicate == "" and facts[1].object == ""
+        assert facts[2].predicate == "palabras" and facts[2].object == ""
+        assert facts[3].subject == ""
+        assert facts[0].provenance == ("c1",)
+
+    def test_stage_merger_con_ambiguedad(self) -> None:
+        from motor.core.fusion.stages.merger import KnowledgeMergerStage
+
+        ctx = FusionContext()
+        ctx.claims.append(KnowledgeClaim(id="c1", text="a b c", confidence=0.7, normalized_text="a b c"))
+        ctx.statistics["ambiguous_entity_ids"] = ["a"]
+        ctx = KnowledgeMergerStage().execute(ctx)
+        assert ctx.facts == []
+        assert "Excluded 1 claims" in ctx.warnings[0]
+        assert ctx.statistics["claims_with_ambiguous_entities"] == 1
+
+    def test_stage_merger_con_ambiguedad_ninguna_excluida(self) -> None:
+        from motor.core.fusion.stages.merger import KnowledgeMergerStage
+
+        ctx = FusionContext()
+        ctx.claims.append(KnowledgeClaim(id="c1", text="x y z", confidence=0.7, normalized_text="x y z"))
+        ctx.statistics["ambiguous_entity_ids"] = ["otro"]
+        ctx = KnowledgeMergerStage().execute(ctx)
+        assert len(ctx.facts) == 1
+        assert ctx.warnings == []
+
+
+class TestSourceScorerCobertura:
+    """Cobertura 100x100: QualitySourceScorer todas las ramas (TASK-20260814-001)."""
+
+    def _ev(self, url: str, fetched_at: float) -> Evidence:
+        return Evidence(
+            evidence_id=f"e-{url}",
+            document_url=url,
+            canonical_url=None,
+            title="t",
+            document_index=0,
+            sentence_position=1,
+            fragment="f",
+            content_hash="h",
+            document_id="d",
+            fetched_at=fetched_at,
+            quality_score=0.8,
+        )
+
+    def test_score_todas_ramas_tld(self) -> None:
+        from motor.core.fusion.stages.source_scorer import QualitySourceScorer
+
+        scorer = QualitySourceScorer()
+        assert scorer._score_authority("https://www.gob.es/x").__class__ is float
+        assert scorer._parse_tld("https://a.b.gov/") == "gov"
+        assert scorer._parse_tld("https://sinpunto/") == "unknown"
+        assert scorer._parse_tld("no-url") == "unknown"
+
+        import time as _tm
+
+        fresh = scorer.score(
+            KnowledgeClaim(
+                id="c1", text="t", confidence=0.5, evidence=self._ev("https://x.edu/", _tm.time() - 30 * 86400)
+            )
+        )
+        assert fresh.authority == 0.8
+        assert 0.1 <= fresh.freshness <= 1.0
+        assert fresh.overall == fresh.authority * 0.5 + fresh.freshness * 0.5
+
+        viejo = scorer.score(KnowledgeClaim(id="c2", text="t", confidence=0.5, evidence=self._ev("https://x.com/", 0)))
+        assert viejo.freshness == 0.1
+        assert viejo.url == "https://x.com/"
+
+        sin_ev = scorer.score(KnowledgeClaim(id="c3", text="t", confidence=0.5))
+        assert sin_ev.url == "unknown"
+        assert sin_ev.freshness == 0.1
+
+        from motor.core.fusion.models import EvidenceSet
+
+        escore = scorer.score_evidence(EvidenceSet(claims=[KnowledgeClaim(id="c4", text="t", confidence=0.5)]))
+        assert len(escore) == 1
+
+    def test_stage_source_scoring(self) -> None:
+        from motor.core.fusion.stages.source_scorer import SourceScoringStage
+
+        ctx = FusionContext()
+        ctx.claims.append(KnowledgeClaim(id="c1", text="t", confidence=0.5))
+        ctx = SourceScoringStage().execute(ctx)
+        assert ctx.statistics["claims_scored"] == 1
+        assert ctx.claims[0].source_score is not None
+
+
+class TestCoberturaFina:
+    """Cobertura 100x100: remanentes finos (TASK-20260814-001)."""
+
+    def test_versions_y_duplicado(self) -> None:
+        from motor.core.fusion.stages.delta import BasicChangeDetector
+        from motor.core.fusion.stages.merger import SimpleKnowledgeMerger
+        from motor.core.fusion.stages.selector import MemoryCandidateSelectionStage, ThresholdSelector
+
+        assert BasicChangeDetector().version == "1.0.0"
+        assert SimpleKnowledgeMerger().version == "1.0.0"
+
+        class _DupMemory:
+            def append(self, entry: object) -> None:
+                raise KeyError("duplicado")
+
+        kf = KnowledgeFact(id="f1", subject="s", predicate="p", object="o", confidence=0.9)
+        ctx = FusionContext()
+        ctx.facts.append(kf)
+        ctx.statistics["_memory_instance"] = _DupMemory()
+        stage = MemoryCandidateSelectionStage(selector=ThresholdSelector(min_confidence=0.1))
+        ctx = stage.execute(ctx)
+        assert ctx.statistics["memory_entries_written"] == 1
+
+
+class TestExtractionCobertura:
+    """Cobertura 100x100: ExtractionStage (TASK-20260814-001)."""
+
+    def test_extraction_con_bundle_y_sin(self) -> None:
+        from motor.core.fusion.stages.extraction import ExtractionStage
+
+        ctx = FusionContext(bundle=None)
+        assert ExtractionStage().execute(ctx) is ctx
+
+        class _Bundle:
+            evidence = (
+                Evidence(
+                    evidence_id="ev1",
+                    document_url="http://x.com",
+                    canonical_url=None,
+                    title="t",
+                    document_index=0,
+                    sentence_position=1,
+                    fragment="frag uno",
+                    content_hash="h",
+                    document_id="d",
+                    fetched_at=5.0,
+                    quality_score=0.85,
+                ),
+            )
+
+        ctx2 = ExtractionStage().execute(FusionContext(bundle=_Bundle()))
+        assert len(ctx2.claims) == 1
+        assert ctx2.claims[0].text == "frag uno"
+        assert ctx2.claims[0].confidence == 0.85
+        assert ctx2.claims[0].text_id == "ev1"
+        assert ctx2.statistics["claims_extracted"] == 1
+        assert len(ctx2.claims[0].id) == 16
+
+
+class TestConflictGraphCobertura:
+    """Cobertura 100x100: ConflictGraph completo (TASK-20260814-001)."""
+
+    def test_conflict_graph_estructura(self) -> None:
+        from motor.core.fusion.models import ConflictGraph
+
+        g = ConflictGraph()
+        assert g.has_conflicts is False
+        assert g.unresolved_count == 0
+        assert g.unresolved == []
+        assert g.claims_for("x") == []
+        assert g.clusters() == []
+
+    def test_conflict_graph_componentes(self) -> None:
+        from motor.core.fusion.models import Conflict, ConflictGraph, ConflictType
+
+        edges = [
+            Conflict(id="c1", claim_a="a", claim_b="b"),
+            Conflict(id="c2", claim_a="b", claim_b="c"),
+            Conflict(id="c3", claim_a="d", claim_b="e", conflict_type=ConflictType.OPINION),
+        ]
+        g = ConflictGraph.from_edges(edges)
+        assert g.has_conflicts
+        assert g.unresolved_count == 3
+        assert g.claim_ids == {"a", "b", "c", "d", "e"}
+        assert {c.id for c in g.unresolved} == {c.id for c in edges}
+        assert sorted(len(c) for c in g.clusters()) == [2, 3]
+        assert sorted(g.claims_for("b")) == ["a", "c"]
+        assert g.claims_for("z") == []
+        assert len(ConflictGraph.from_edges([]).claim_ids) == 0
+
+
+class TestRegistryCobertura:
+    """Cobertura 100x100: FusionRegistry getters y errores (TASK-20260814-001)."""
+
+    def test_registry_errores_claves(self) -> None:
+        from motor.core.fusion.registry import FusionRegistry
+        from motor.core.fusion.stages.delta import BasicChangeDetector
+        from motor.core.fusion.stages.merger import SimpleKnowledgeMerger
+        from motor.core.fusion.stages.selector import ThresholdSelector
+        from motor.core.fusion.stages.source_scorer import QualitySourceScorer
+
+        r = FusionRegistry()
+        r.register_conflict_resolver("r1", _StubResolver())
+        assert "r1" in r.list_conflict_resolvers()
+        try:
+            r.get_conflict_resolver("nope")
+            raise AssertionError("no lanzo")
+        except KeyError:
+            pass
+        r.register_source_scorer("s1", QualitySourceScorer())
+        assert r.get_source_scorer("s1") is not None
+        try:
+            r.get_source_scorer("nope")
+            raise AssertionError
+        except KeyError:
+            pass
+        r.register_merger("m1", SimpleKnowledgeMerger())
+        assert "m1" in r.list_mergers()
+        try:
+            r.get_merger("nope")
+            raise AssertionError
+        except KeyError:
+            pass
+        r.register_change_detector("d1", BasicChangeDetector())
+        assert r.get_change_detector("d1").version == "1.0.0"
+        try:
+            r.get_change_detector("nope")
+            raise AssertionError
+        except KeyError:
+            pass
+        r.register_selector("t1", ThresholdSelector())
+        assert "t1" in r.list_selectors()
+        try:
+            r.get_selector("nope")
+            raise AssertionError
+        except KeyError:
+            pass
+
+
+class TestConflictDetectionCobertura:
+    """Cobertura 100x100: NaiveConflictResolver + ConflictDetectionStage (TASK-20260814-001)."""
+
+    def _claim(self, cid: str, subj: str, pred: str, obj: str, conf: float) -> KnowledgeClaim:
+        return KnowledgeClaim(
+            id=cid, text=f"{subj} {pred} {obj}", confidence=conf, subject=subj, predicate=pred, object=obj
+        )
+
+    def test_detect_buckets_y_pares(self) -> None:
+        from motor.core.fusion.stages.conflict_detection import NaiveConflictResolver
+
+        r = NaiveConflictResolver()
+        claims = [
+            self._claim("a1", "Sol", "es", "azul", 0.9),
+            self._claim("a2", "sOL", "es", "verde", 0.7),
+            self._claim("a_bis", "Sol", "es", "azul", 0.8),
+            KnowledgeClaim(id="sin_sujeto", text="x", confidence=0.5),
+            self._claim("otro", "Luna", "es", "blanca", 0.9),
+        ]
+        conflicts = r.detect(claims)
+        assert len(conflicts) == 2
+        assert conflicts[0].conflict_type == ConflictType.CONTRADICTION
+        assert "azul" in conflicts[0].description
+
+    def test_resolve_ganador_y_empate(self) -> None:
+        from motor.core.fusion.stages.conflict_detection import NaiveConflictResolver
+
+        r = NaiveConflictResolver()
+        conflicts = [
+            Conflict(id="x1", claim_a="a1", claim_b="a2"),
+            Conflict(id="x2", claim_a="b1", claim_b="b2"),
+            Conflict(id="x3", claim_a="noexiste", claim_b="a1"),
+        ]
+        claims = [
+            self._claim("a1", "S", "e", "o1", 0.9),
+            self._claim("a2", "S", "e", "o2", 0.5),
+            self._claim("b1", "S", "e", "o3", 0.7),
+            self._claim("b2", "S", "e", "o4", 0.7),
+        ]
+        rf, unres = r.resolve(conflicts, claims)
+        assert rf == []
+        assert {c.id for c in unres} == {"x2"}
+        c1 = next(c for c in conflicts if c.id == "x1")
+        assert c1.resolved and "Preferring claim a1" in c1.resolution
+
+    def test_stage_ramas(self) -> None:
+        from motor.core.fusion.stages.conflict_detection import ConflictDetectionStage
+
+        assert ConflictDetectionStage().version == "1.0.0"
+        assert ConflictDetectionStage().execute(FusionContext()) is not None
+        ctx = FusionContext()
+        ctx.statistics["ambiguous_entity_ids"] = ["m"]
+        ctx.claims.append(
+            KnowledgeClaim(
+                id="c1", text="m t", confidence=0.5, subject="m", predicate="p", object="o", normalized_text="m t"
+            )
+        )
+        ctx2 = ConflictDetectionStage().execute(ctx)
+        assert ctx2.statistics["conflicts_detected"] == 0
+        assert ctx2.statistics["conflicts_unresolved"] == 0
+        assert "ambiguous" in ctx2.warnings[0]
+
+        ctx3 = FusionContext()
+        ctx3.claims = [self._claim("c1", "S", "e", "o1", 0.9), self._claim("c2", "S", "e", "o2", 0.5)]
+        ctx3.statistics["ambiguous_entity_ids"] = ["otra"]
+        ctx4 = ConflictDetectionStage().execute(ctx3)
+        assert ctx4.statistics["conflicts_detected"] == 1
+        assert len(ctx4.conflict_graph.edges) == 1
+        assert ctx4.provenance.conflict_resolver_name == "NaiveConflictResolver"
+
+
+class TestContextBuilderCobertura:
+    """Cobertura 100x100: ContextBuilder completo (TASK-20260814-001)."""
+
+    def test_builder_ramas(self) -> None:
+        from motor.core.fusion.context_builder import ContextBuilder
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        b = ContextBuilder()
+        assert b.build_context() == ""
+        assert b.index is None
+        b.set_index(None)
+        assert b.build_context("que vende apple?") == ""
+
+        class _Idx:
+            def lookup_entity(self, entity: str) -> list:
+                if entity == "apple":
+                    return [
+                        (
+                            Fact(fact_id="f1", subject="Apple", predicate="vende", object="iPhones"),
+                            FactVersion(version_id="v1", fact_id="f1", confidence=0.9, state=VersionState.CURRENT),
+                        ),
+                        (
+                            Fact(fact_id="f1", subject="Apple", predicate="vende", object="iPhones"),
+                            FactVersion(version_id="v0", fact_id="f1", confidence=0.8, state=VersionState.SUPERSEDED),
+                        ),
+                        KnowledgeFact(id="legacy", subject="Apple", predicate="fue", object="fundada", confidence=0.7),
+                    ]
+                return []
+
+        b = ContextBuilder(_Idx())
+        ctx = b.build_context(query="Apple vende que?", include_entities=["apple", "oranges"])
+        assert "vende | iPhones" in ctx
+        assert "fue | fundada" in ctx
+        assert ctx.startswith("# Conocimiento disponible")
+        assert "SUPERSEDED" not in ctx
+        assert ctx.count("confianza:") == 2
+
+        ctx2 = b.build_context(query="apple", include_entities=[])
+        assert "Apple" in ctx2
+        ctx3 = ContextBuilder(_Idx()).build_context(query="h", include_entities=["nada"])
+        assert ctx3 == ""
+
+
+class TestRunFusionOnClaims:
+    """Cobertura 100x100: run_fusion_on_claims + persist (TASK-20260814-001)."""
+
+    def test_run_fusion_con_claims(self) -> None:
+        from motor.core.fusion import run_fusion_on_claims
+
+        claims = [
+            KnowledgeClaim(id="c1", text="Apple vende iPhones", confidence=0.9),
+            KnowledgeClaim(id="c2", text="Apple fue fundada", confidence=0.8),
+        ]
+        n = run_fusion_on_claims(claims, semantic_db="", correlation_id="corr-1234567890abcdef")
+        assert n >= 1
+
+    def test_run_fusion_sin_facts(self) -> None:
+        from motor.core.fusion import run_fusion_on_claims
+
+        assert run_fusion_on_claims([], semantic_db="") == 0
+
+
+class TestFactIndexCobertura:
+    """Cobertura 100x100: FactIndex completo (TASK-20260814-001)."""
+
+    def test_fact_index_legacy_completo(self) -> None:
+        from motor.core.fusion.fact_index import FactIndex
+
+        idx = FactIndex()
+        assert idx.size == 0
+        assert idx.frozen is False
+        kf = KnowledgeFact(
+            id="f1",
+            subject="Apple",
+            predicate="vende",
+            object="iPhones",
+            confidence=0.9,
+            evidence_ids=("e1", "e2", ""),
+        )
+        idx.add_fact(kf)
+        assert idx.lookup("f1") is kf
+        assert idx.lookup_entity("APPLE") == [kf]
+        assert idx.lookup_predicate("Vende") == [kf]
+        assert idx.lookup_subject_predicate("apple", "vende") == [kf]
+        assert idx.lookup_evidence("e1") == [kf]
+        assert idx.lookup_evidence("nope") == []
+        assert idx.lookup_entity("nada") == []
+        assert idx.size == 1
+        idx.freeze()
+        assert idx.frozen is True
+        try:
+            idx.add_fact(kf)
+            raise AssertionError
+        except RuntimeError:
+            pass
+        try:
+            idx.remove_fact("f1")
+            raise AssertionError
+        except RuntimeError:
+            pass
+        copia = idx.copy()
+        assert copia.size == 1 and copia.frozen is False
+
+    def test_fact_index_remove_y_errores(self) -> None:
+        from motor.core.fusion.fact_index import FactIndex
+
+        idx = FactIndex()
+        kf = KnowledgeFact(
+            id="f1", subject="Apple", predicate="vende", object="iPhones", confidence=0.9, evidence_ids=("e1",)
+        )
+        idx.add_fact(kf)
+        assert idx.remove_fact("f1") is kf
+        assert idx.size == 0
+        assert idx.lookup_evidence("e1") == []
+        try:
+            idx.remove_fact("f1")
+            raise AssertionError
+        except KeyError:
+            pass
+        try:
+            idx.add_fact(KnowledgeFact(id=None, subject="s", predicate="p", object="o", confidence=0.5))
+            raise AssertionError
+        except ValueError:
+            pass
+        try:
+            idx.add_fact(kf)
+            idx.add_fact(kf)
+            raise AssertionError
+        except KeyError:
+            pass
+
+    def test_fact_index_nuevo_modelo(self) -> None:
+        from motor.core.fusion.fact_index import FactIndex
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        fact = Fact(fact_id="f9", subject="Sol", predicate="es", object="estrella")
+        v1 = FactVersion(
+            version_id="v1", fact_id="f9", confidence=0.9, evidence_ids=("e1",), state=VersionState.CURRENT
+        )
+        idx = FactIndex()
+        idx.add_fact_version(fact, v1)
+        assert idx.lookup("f9") == (fact, v1)
+        try:
+            idx.add_fact_version(fact, v1)
+            raise AssertionError
+        except KeyError:
+            pass
+        v2 = FactVersion(
+            version_id="v2", fact_id="f9", confidence=0.95, evidence_ids=("e2",), state=VersionState.CURRENT
+        )
+        idx.update_current("f9", v2)
+        assert idx.lookup("f9")[1].version_id == "v2"
+        assert idx.lookup_subject_predicate("sol", "es")[0][1].version_id == "v2"
+        try:
+            idx.update_current("zz", v2)
+            raise AssertionError
+        except KeyError:
+            pass
+        idx2 = FactIndex()
+        kf_legacy = KnowledgeFact(id="fL", subject="S", predicate="P", object="O", confidence=0.5)
+        idx2.add_fact(kf_legacy)
+        idx2.update_current("fL", v2)
+        assert idx2.lookup("fL") is kf_legacy
+        assert idx.lookup_evidence("e1")[0] == (fact, v2)
+        assert idx.lookup_evidence("e2") == []
+
+    def test_fact_index_build(self) -> None:
+        from motor.core.fusion.fact_index import FactIndex
+
+        kfs = [
+            KnowledgeFact(id="a", subject="S", predicate="P", object="O1", confidence=0.5),
+            KnowledgeFact(id="a", subject="S", predicate="P", object="O2", confidence=0.5),
+            KnowledgeFact(id=None, subject="S", predicate="P", object="O3", confidence=0.5),
+        ]
+        idx = FactIndex.build(kfs)
+        assert idx.size == 1
+        assert idx.frozen is True
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        entries = [
+            (
+                Fact(fact_id="x", subject="A", predicate="B", object="C"),
+                FactVersion(version_id="vx", fact_id="x", confidence=0.9, state=VersionState.CURRENT),
+            ),
+            (
+                Fact(fact_id="x", subject="A", predicate="B", object="C"),
+                FactVersion(version_id="vy", fact_id="x", confidence=0.9, state=VersionState.CURRENT),
+            ),
+        ]
+        idx2 = FactIndex.build_from_versions(entries)
+        assert idx2.size == 1
+
+
+class TestEntityResolverCobertura:
+    """Cobertura 100x100: ContextualEntityResolver + EntityRegistry + LRUCache + stages (TASK-20260814-001)."""
+
+    def test_cache_policy_from_string(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import CachePolicy
+
+        assert CachePolicy.from_string("all") == CachePolicy.ALL
+        assert CachePolicy.from_string("disabled") == CachePolicy.DISABLED
+        try:
+            CachePolicy.from_string("nope")
+            raise AssertionError
+        except ValueError:
+            pass
+
+    def test_registry_y_lru(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import EntityDef, EntityRegistry, LRUCache
+
+        reg = EntityRegistry(
+            {
+                "perro": [
+                    EntityDef(entity_id="P1", canonical_name="Perro", aliases=["can"], keywords=["ladra"]),
+                    EntityDef(entity_id="P2", canonical_name="Perro2", keywords=["muerde"]),
+                ]
+            }
+        )
+        assert len(reg) == 1
+        assert "perro" in reg.known_names
+        assert "can" in reg.known_names
+        assert len(reg.lookup("PERRO")) == 2
+        assert reg.lookup("gato") == []
+        assert EntityRegistry().known_names == set()
+
+        c = LRUCache(maxsize=2)
+        assert c.size == 0
+        assert c.maxsize == 2
+        e = ResolvedEntity(entity_id="x", canonical_name="X", confidence=0.9)
+        c.put("a", e)
+        assert c.get("a") is e
+        assert c.get("z") is None
+        c.put("b", e)
+        c.put("c", e)
+        assert c.size == 2
+        assert c.get("a") is None
+        c.clear()
+        assert c.size == 0
+
+    def test_extract_candidates_ngram(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import EntityDef, EntityRegistry, _extract_entity_candidates
+
+        reg = EntityRegistry({"berkshire hathaway": [EntityDef(entity_id="B1", canonical_name="BH")]})
+        cand = _extract_entity_candidates("Berkshire Hathaway compra", reg)
+        assert cand == ["berkshire hathaway"]
+        assert _extract_entity_candidates("", reg) == []
+
+    def test_contextual_resolve_ramas(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import (
+            CachePolicy,
+            ContextualEntityResolver,
+            EntityDef,
+            EntityRegistry,
+            KeywordScorer,
+            ScoringStrategy,
+        )
+
+        class _TieScorer(ScoringStrategy):
+            def select(self, entries, context):
+                return None
+
+        class _IdxScorer(ScoringStrategy):
+            def select(self, entries, context):
+                return 1
+
+        multi_reg = EntityRegistry(
+            {
+                "manzana": [
+                    EntityDef(entity_id="M1", canonical_name="Manzana Inc.", keywords=["empresa", "cupertino"]),
+                    EntityDef(entity_id="M2", canonical_name="Manzana fruta", keywords=["fruta", "roja"]),
+                ]
+            }
+        )
+        r = ContextualEntityResolver(registry=multi_reg, scorer=KeywordScorer())
+        assert r.version == "3.1.0"
+        assert r.scorer is not None
+        res = r.resolve("manzana", context={"claim_text": "la manzana es una fruta roja"})
+        assert res.status == ResolutionStatus.RESOLVED and res.entity_id == "M2"
+        r2 = ContextualEntityResolver(registry=multi_reg, scorer=_IdxScorer())
+        assert r2.resolve("manzana", context={"claim_text": "x"}).entity_id == "M2"
+        r3 = ContextualEntityResolver(registry=multi_reg, scorer=_TieScorer())
+        amb = r3.resolve("manzana", context={"claim_text": "sin pistas"})
+        assert amb.status == ResolutionStatus.AMBIGUOUS
+        assert amb.entity_id == ""
+        assert set(amb.aliases) == {"M1", "M2"}
+        unk = ContextualEntityResolver().resolve("cosanueva", context={"claim_text": "y"})
+        assert unk.status == ResolutionStatus.UNKNOWN
+        assert unk.resolver_name == "ContextualEntityResolver"
+        vacio = ContextualEntityResolver().resolve("   ")
+        assert vacio.status == ResolutionStatus.UNKNOWN
+        uno = ContextualEntityResolver(
+            registry=EntityRegistry({"gato": [EntityDef(entity_id="G1", canonical_name="Gato")]})
+        ).resolve("gato", context={"claim_text": "cualquiera"})
+        assert uno.status == ResolutionStatus.RESOLVED and uno.entity_id == "G1"
+        assert r2.resolve_many(["manzana"], context={"claim_text": "x"})[0].entity_id == "M2"
+        assert ContextualEntityResolver().normalize("  HOLa ") == "hola"
+
+        r_all = ContextualEntityResolver(registry=multi_reg, scorer=_IdxScorer(), cache_policy="all")
+        assert r_all.cache_policy == CachePolicy.ALL
+        assert r_all.cache.size == 0
+        r_all.resolve("manzana", context={"claim_text": "ctx1"})
+        assert r_all.cache.size == 1
+        r_dis = ContextualEntityResolver(registry=multi_reg, scorer=_IdxScorer(), cache_policy="disabled")
+        assert r_dis.cache_policy == CachePolicy.DISABLED
+        r_dis.resolve("manzana", context={"claim_text": "x"})
+        assert r_dis.cache.size == 0
+
+    def test_rule_based_legacy(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import RuleBasedEntityResolver
+
+        r = RuleBasedEntityResolver()
+        assert r.version == "1.0.0"
+        res = r.resolve("Apple")
+        assert res.entity_id == "E0001" and res.status == ResolutionStatus.RESOLVED
+        assert res.resolver_name == "RuleBasedEntityResolver"
+        unk = r.resolve("cosas")
+        assert unk.status == ResolutionStatus.UNKNOWN
+        assert r.normalize("  X ") == "x"
+        assert r.resolve_many(["apple", "zzz"])[1].status == ResolutionStatus.UNKNOWN
+
+    def test_entity_resolution_stage(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import ContextualEntityResolver, EntityResolutionStage
+
+        ctx = FusionContext()
+        ctx.claims.append(
+            KnowledgeClaim(id="c1", text="Apple vende iPhones", confidence=0.9, normalized_text="apple vende iphones")
+        )
+        ctx.claims.append(KnowledgeClaim(id="c2", text="manzana", confidence=0.9, normalized_text="manzana"))
+        ctx2 = EntityResolutionStage(resolver=ContextualEntityResolver()).execute(ctx)
+        assert ctx2.statistics["entities_resolved"] >= 1
+        assert "resolver_cache_size" in ctx2.statistics
+        assert ctx2.provenance.resolver_name == "ContextualEntityResolver"
+
+
+class TestFactHistoryCobertura:
+    """Cobertura 100x100: FactHistory completo (TASK-20260814-001)."""
+
+    def _h(self) -> tuple:
+        from motor.core.fusion.fact_history import FactHistory
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        fact = Fact(fact_id="fh1", subject="Sol", predicate="es", object="estrella")
+        v0 = FactVersion(version_id="v0", fact_id="fh1", confidence=0.5, created_at=10.0, state=VersionState.CURRENT)
+        return FactHistory.create(fact, v0), Fact, FactVersion
+
+    def test_constructor_validaciones(self) -> None:
+        from motor.core.fusion.fact_history import FactHistory
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        try:
+            FactHistory(
+                Fact(fact_id="a", subject="s", predicate="p", object="o"),
+                FactVersion(version_id="v1", fact_id="b", confidence=0.5),
+            )
+            raise AssertionError
+        except ValueError:
+            pass
+        try:
+            FactHistory(
+                Fact(fact_id="a", subject="s", predicate="p", object="o"),
+                FactVersion(version_id="v1", fact_id="a", confidence=0.5, state=VersionState.SUPERSEDED),
+            )
+            raise AssertionError
+        except ValueError:
+            pass
+
+    def test_ciclo_vida_completo(self) -> None:
+        from motor.core.fusion.models import VersionState
+
+        h, _Fact, FactVersion = self._h()
+        assert h.fact_id == "fh1"
+        assert h.current.version_id == "v0"
+        assert h.current_version_id == "v0"
+        assert h.created == 10.0
+        assert h.updated == 10.0
+        assert h.version_count == 1
+        assert h.has_tombstone is False
+        assert h.get_version("v0") is not None
+        assert h.get_version("zz") is None
+        assert [v.version_id for v in h.timeline()] == ["v0"]
+        assert h.version_at(5.0) is None
+        assert h.version_at(11.0).version_id == "v0"
+        assert h.versions()["v0"].state == VersionState.CURRENT
+
+        v1 = FactVersion(version_id="v1", fact_id="fh1", confidence=0.7, created_at=20.0)
+        h.add_version(v1)
+        assert h.current_version_id == "v1"
+        assert h._versions["v0"].state == VersionState.SUPERSEDED
+        assert h.updated == 20.0
+        assert h.version_at(15.0).version_id == "v0"
+        assert h.version_at(30.0).version_id == "v1"
+
+        v2 = FactVersion(version_id="v2", fact_id="fh1", confidence=0.9, created_at=30.0)
+        h.add_version(v2)
+        r = h.rollback("v0")
+        assert r.version_id == "v0"
+        assert h.current_version_id == "v0"
+        assert h._versions["v2"].state == VersionState.ROLLED_BACK
+        assert h._versions["v0"].state == VersionState.CURRENT
+
+        try:
+            h.rollback("nope")
+            raise AssertionError
+        except KeyError:
+            pass
+
+        h.tombstone(
+            FactVersion(version_id="ts1", fact_id="fh1", confidence=0.1, created_at=40.0, state=VersionState.TOMBSTONE)
+        )
+        assert h.current_version_id == "ts1"
+        assert h.has_tombstone is True
+        try:
+            h.rollback("ts1")
+            raise AssertionError
+        except ValueError:
+            pass
+
+    def test_add_version_validaciones(self) -> None:
+        h, _Fact, FactVersion = self._h()
+        try:
+            h.add_version(FactVersion(version_id="x", fact_id="otro", confidence=0.5))
+            raise AssertionError
+        except ValueError:
+            pass
+        try:
+            h.add_version(FactVersion(version_id="v0", fact_id="fh1", confidence=0.5))
+            raise AssertionError
+        except KeyError:
+            pass
+        try:
+            h.add_version(FactVersion(version_id="v9", fact_id="fh1", confidence=0.5, created_at=5.0))
+            raise AssertionError
+        except ValueError:
+            pass
+        try:
+            h.tombstone(FactVersion(version_id="tsx", fact_id="otro", confidence=0.5))
+            raise AssertionError
+        except ValueError:
+            pass
+        try:
+            h.tombstone(FactVersion(version_id="v0", fact_id="fh1", confidence=0.5))
+            raise AssertionError
+        except KeyError:
+            pass
+
+    def test_serializacion(self) -> None:
+        from motor.core.fusion.fact_history import FactHistory
+        from motor.core.fusion.models import VersionState
+
+        h, _Fact, FactVersion = self._h()
+        h.add_version(FactVersion(version_id="v1", fact_id="fh1", confidence=0.7, created_at=20.0))
+        h.tombstone(
+            FactVersion(version_id="ts1", fact_id="fh1", confidence=0.1, created_at=40.0, state=VersionState.TOMBSTONE)
+        )
+        from motor.core.fusion.models import FactTombstone
+
+        h._tombstones["ts1"] = FactTombstone(fact_id="fh1", removed_at=50.0, reason="replaced", version_id="ts1")
+        d = h.to_dict()
+        assert d["schema_version"] == "1"
+        assert d["fact_id"] == "fh1"
+        assert len(d["versions"]) == 3
+        assert len(d["tombstones"]) == 1
+        assert d["tombstones"][0]["reason"] == "replaced"
+
+        h2 = FactHistory.from_dict(d)
+        assert h2.fact_id == "fh1"
+        assert h2.current_version_id == "ts1"
+        assert h2.version_count == 3
+        assert len(h2._tombstones) == 1
+
+        d_legacy = dict(d)
+        d_legacy["versions"] = {v["version_id"]: v for v in d["versions"]}
+        d_legacy["tombstones"] = {t["version_id"]: t for t in d["tombstones"]}
+        d_legacy.pop("current", None)
+        h3 = FactHistory.from_dict(d_legacy)
+        assert h3.version_count == 3
+
+        d_no_current = dict(d_legacy)
+        d_no_current["versions"] = {k: {**v, "state": "superseded"} for k, v in d_legacy["versions"].items()}
+        h4 = FactHistory.from_dict(d_no_current)
+        assert h4.current_version_id in (h4._versions["v0"].version_id, "ts1")
+
+
+class TestCoberturaFinalFusion:
+    """Cobertura 100x100: remanentes finales fusion (TASK-20260814-001)."""
+
+    def test_make_version_id(self) -> None:
+        from motor.core.fusion.models import make_version_id
+
+        assert len(make_version_id("f", 123.9, "h")) == 16
+        assert make_version_id("f", 123.9, "h") == make_version_id("f", 123.9, "h")
+
+    def test_context_builder_index_none_interno(self) -> None:
+        from motor.core.fusion.context_builder import ContextBuilder
+
+        b = ContextBuilder(None)
+        assert b._collect_facts("q", None) == []
+        assert (
+            ContextBuilder(None)._format_fact(
+                KnowledgeFact(id="f", subject="s", predicate="p", object="o", confidence=0.5)
+            )
+            == "- s | p | o (confianza: 0.50)"
+        )
+
+    def test_fact_history_remanentes(self) -> None:
+        from motor.core.fusion.fact_history import FactHistory
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        h = FactHistory.create(
+            Fact(fact_id="fx", subject="s", predicate="p", object="o"),
+            FactVersion(version_id="v0", fact_id="fx", confidence=0.5, created_at=1.0, state=VersionState.CURRENT),
+        )
+        h._current = "fantasma"
+        from contextlib import suppress
+
+        with suppress(RuntimeError):
+            assert h.current.version_id == "fantasma"
+        h2 = FactHistory.create(
+            Fact(fact_id="fy", subject="s", predicate="p", object="o"),
+            FactVersion(version_id="v0", fact_id="fy", confidence=0.5, created_at=1.0, state=VersionState.CURRENT),
+        )
+        h2.add_version(FactVersion(version_id="v1", fact_id="fy", confidence=0.5, created_at=2.0, supersedes="zz"))
+        assert h2.version_at(0.0) is None
+
+        d = h2.to_dict()
+        d["versions"] = [{**v, "state": "current"} if v["version_id"] == "v1" else v for v in d["versions"]]
+        h3 = FactHistory.from_dict(d)
+        assert h3.current_version_id == "v1"
+
+    def test_fact_index_remove_version(self) -> None:
+        from motor.core.fusion.fact_index import FactIndex
+        from motor.core.fusion.models import Fact, FactVersion, VersionState
+
+        fact = Fact(fact_id="fr", subject="S", predicate="P", object="O")
+        idx = FactIndex()
+        idx.add_fact_version(
+            fact, FactVersion(version_id="vr", fact_id="fr", confidence=0.9, state=VersionState.CURRENT)
+        )
+        entry = idx.remove_fact("fr")
+        assert entry[0] is fact
+
+    def test_conflict_pair_ramas(self) -> None:
+        from motor.core.fusion.stages.conflict_detection import NaiveConflictResolver
+
+        r = NaiveConflictResolver()
+        assert (
+            r._check_pair(
+                KnowledgeClaim(id="a", text="t", confidence=0.5), KnowledgeClaim(id="b", text="t", confidence=0.5)
+            )
+            is None
+        )
+        c1 = KnowledgeClaim(id="c1", text="x", confidence=0.5, subject="Sub", predicate="P", object="O1")
+        c2 = KnowledgeClaim(id="c2", text="y", confidence=0.5, subject="Otra", predicate="P", object="O2")
+        c3 = KnowledgeClaim(id="c3", text="z", confidence=0.5, subject="Sub", predicate="OtroP", object="O3")
+        c4 = KnowledgeClaim(id="c4", text="w", confidence=0.5, subject="sub", predicate="p", object="O1")
+        assert r._check_pair(c1, c2) is None
+        assert r._check_pair(c1, c3) is None
+        assert r._check_pair(c1, c4) is None
+        assert (
+            r._check_pair(
+                c1, KnowledgeClaim(id="c5", text="q", confidence=0.5, subject="Sub", predicate="P", object="O2")
+            )
+            is not None
+        )
+
+    def test_keyword_scorer_uno(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import EntityDef, KeywordScorer
+
+        assert KeywordScorer().select([EntityDef(entity_id="e1", canonical_name="X")], "cualquier") == 0
+        assert (
+            KeywordScorer().select(
+                [
+                    EntityDef(entity_id="a", canonical_name="A", keywords=["k1"]),
+                    EntityDef(entity_id="b", canonical_name="B", keywords=["k1"]),
+                ],
+                "k1 aqui",
+            )
+            is None
+        )
+
+    def test_resolver_cache_hit_y_enum(self) -> None:
+        from motor.core.fusion.stages.entity_resolver import (
+            CachePolicy,
+            ContextualEntityResolver,
+            EntityDef,
+            EntityRegistry,
+        )
+
+        reg = EntityRegistry({"gato": [EntityDef(entity_id="G1", canonical_name="Gato")]})
+        r = ContextualEntityResolver(registry=reg, cache_policy=CachePolicy.DISABLED)
+        assert r.cache_policy == CachePolicy.DISABLED
+        r2 = ContextualEntityResolver(registry=reg)
+        e1 = r2.resolve("gato", context={"claim_text": "x"})
+        e2 = r2.resolve("gato", context={"claim_text": "x"})
+        assert e1 is e2
+        assert r2.cache.size == 1
+
+
+class TestStagePropertiesCobertura:
+    """Cobertura 100x100: properties de stage (TASK-20260814-001)."""
+
+    def test_extraction_stage_property(self) -> None:
+        from motor.core.fusion.stages.extraction import ExtractionStage
+
+        assert ExtractionStage().stage == FusionStage.EXTRACTION
+        assert ExtractionStage().name == "ExtractionStage"

@@ -245,7 +245,7 @@ class WebPipeline:
         try:
             from motor.core.web.citation.citation import CitationBundle
 
-            bundle = CitationBundle(summary=None, citations=(), documents=documents)  # type: ignore[arg-type]
+            bundle = CitationBundle(summary=None, citations=(), evidence=[])
             pipeline = FusionPipeline.default()
             result = pipeline.run(bundle, documents)
             facts = result.accepted
