@@ -128,15 +128,6 @@ class SemanticChunker:
             return [self._make_chunk(doc_id, text, offset, section)]
 
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-        if not paragraphs:
-            return [
-                self._make_chunk(
-                    doc_id,
-                    text[: self._char_limit()],
-                    offset,
-                    section,
-                ),
-            ]
 
         chunks: list[Chunk] = []
         current_texts: list[str] = []

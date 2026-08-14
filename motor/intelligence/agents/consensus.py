@@ -84,14 +84,6 @@ class MajorityVoting(VotingStrategy):
                 total_votes=total,
                 strategy=self.name(),
             )
-        return ConsensusResult(
-            success=False,
-            outcome={},
-            votes=results,
-            vote_counts=vote_counts,
-            total_votes=total,
-            strategy=self.name(),
-        )
 
     def _result_key(self, r: AgentResult) -> str:
         return str(sorted(r.output.items())) if r.output else f"error:{r.error}"
@@ -246,8 +238,6 @@ class WeightedConsensus(VotingStrategy):
             outcome["_tied_keys"] = winners
             return self._sin_consenso(outcome, results, vote_counts, total, weight_details)
 
-        return self._sin_consenso({}, results, vote_counts, total, weight_details)
-
     def _calcular_tally(self, results: list[AgentResult]) -> tuple[dict[str, float], dict[str, float]]:
         tally: dict[str, float] = {}
         weight_details: dict[str, float] = {}
@@ -323,4 +313,4 @@ def _outcome_para(winner_key: str, results: list[AgentResult], agente: Any) -> d
     for r in results:
         if agente._result_key(r) == winner_key:
             return dict(r.output)
-    return {}
+    raise AssertionError("winner key must match a vote result")  # pragma: no cover
