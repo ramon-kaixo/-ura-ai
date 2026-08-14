@@ -575,7 +575,7 @@ class ContextualEntityResolver(EntityResolver):
     ) -> None:
         self._registry = registry if registry is not None else _DEFAULT_REGISTRY
         self._scorer = scorer if scorer is not None else KeywordScorer()
-        if isinstance(cache_policy, str):
+        if not isinstance(cache_policy, CachePolicy):
             self._cache_policy = CachePolicy.from_string(cache_policy)
         else:
             self._cache_policy = cache_policy

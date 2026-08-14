@@ -289,3 +289,18 @@ async def test_modelo_default_qwen(monkeypatch) -> None:
     monkeypatch.setattr("core.memoria.compresor.httpx.AsyncClient", ClienteFake)
     await comprimir_a_ideas("hola")
     assert capturado["json"]["model"] == "qwen2.5-coder:14b"
+
+
+class TestCoberturaCompresorRemanente:
+    """Cobertura 100x100: remanentes compresor (TASK-20260814-001)."""
+
+    def test_json_interno_invalido(self) -> None:
+        from core.memoria.compresor import _parsear_json_ideas
+
+        assert _parsear_json_ideas("texto [no-es-json] resto") is None
+
+    def test_sin_nada(self) -> None:
+        from core.memoria.compresor import _parsear_json_ideas
+
+        assert _parsear_json_ideas("sin corchetes") is None
+        assert _parsear_json_ideas('{"clave": 1}') is None
