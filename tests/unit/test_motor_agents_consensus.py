@@ -262,7 +262,10 @@ class TestWeightedConsensus:
     def test_outcome_para_no_match_returns_empty(self):
         results = [_result("a1", {"ans": 1})]
         strategy = WeightedConsensus()
-        assert _outcome_para("no-existe", results, strategy) == {}
+        # Comportamiento desde TASK-20260814-001 (commit e63fd4d2): rama inalcanzable
+        # por construccion (winner_key siempre en keys(tally)), fail-fast en vez de {} silencioso.
+        with pytest.raises(AssertionError, match="winner key"):
+            _outcome_para("no-existe", results, strategy)
 
 
 class TestHelpers:
