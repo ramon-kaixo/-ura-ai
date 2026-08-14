@@ -39,6 +39,7 @@ from motor.intelligence.memory.forgetting import (
     ProtectionRules,
     TTLForgetPolicy,
 )
+from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.orchestrator import MemoryOrchestrator
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
 from motor.intelligence.memory.retrieval import ContextQuery, ContextResult, ContextResultList, ContextRetriever
@@ -950,3 +951,111 @@ class TestMemoryOrchestrator:
         o = MemoryOrchestrator(st, sm)
         assert o.forget() == {"removed": 0, "dry_run": False}
         assert o.forget(dry_run=True) == {"removed": 0, "dry_run": True}
+
+
+# ── ramas parciales 100x100 (TASK-20260814-001) ─────────────────────────────
+
+
+class TestRamasCompression:
+    def test_summary_record_ids_provistos(self) -> None:
+        s = SummaryRecord(source_episode_ids=["a"], summary="x", id="id1", created_at="2026-01-01T00:00:00+00:00")
+        assert s.id == "id1"
+        assert s.created_at == "2026-01-01T00:00:00+00:00"
+
+    def test_get_summaries_sin_session(self) -> None:
+        st = EpisodeStore()
+        st.store(_episode(payload="uno", ts="2026-06-01T00:00:00+00:00", session="s9"))
+        st.store(_episode(payload="dos", ts="2026-04-01T00:00:00+00:00", session="s10"))
+        c = MemoryCompressor(st, AgeBasedCompression(max_age_days=30))
+        res = c.compress()
+        assert res.summaries_created == 2
+        assert len(c.get_summaries()) == 2
+        assert len(c.get_summaries(session_id="s9")) == 1
+
+
+class TestRamasEpisodic:
+    def test_store_sin_sesion_activa(self) -> None:
+        st = EpisodeStore()
+        eid = st.store(_episode(payload="y", session="solo"))
+        assert eid
+        assert st.get(eid) is not None
+
+    def test_add_episode_sesion_no_activa(self) -> None:
+        sm = SessionMemory()
+        ep = sm.add_episode("no-activa", "contenido")
+        assert ep.id
+        assert sm._active_sessions.get("no-activa") is None
+
+
+class TestRamasExtractor:
+    def test_make_fact_falsy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        rbx = RuleBasedFactExtractor()
+        monkeypatch.setattr(rbx, "_make_fact", lambda *a, **k: None)
+        ep = _episode(payload="El servidor es rapido en produccion")
+        assert rbx.extract(ep) == []
+
+
+class TestRamasForgetting:
+    def test_facto_sin_decision(self) -> None:
+        st, sm, _ = TestForgettingEngine()._setup()
+        sm.store(SemanticFact("u", "es", "v", importance=0.9, confidence=0.9))
+        eng = ForgettingEngine(
+            st,
+            sm,
+            [],
+            policies=[ImportanceForgetPolicy(min_importance=0.5), ConfidenceForgetPolicy()],
+        )
+        res = eng.run()
+        assert res.facts_removed == 0
+
+    def test_policy_sin_decision_loop(self) -> None:
+        st = EpisodeStore()
+        st.store(_episode(payload="nuevo", ts="2026-08-10T00:00:00+00:00"))
+        eng = ForgettingEngine(
+            st,
+            None,
+            [],
+            policies=[TTLForgetPolicy(), ImportanceForgetPolicy(min_importance=0.5)],
+        )
+        res = eng.run()
+        assert res.episodes_removed == 0
+
+
+class TestRamasHybrid:
+    def test_db_path_sin_parent(self) -> None:
+        mem = HybridMemory(db_path=":memory:")
+        conn = mem._get_conn()
+        assert conn is not None
+        mem.close()
+
+
+class TestRamasOrchestrator:
+    def test_consolidate_sin_factos(self) -> None:
+        st = EpisodeStore()
+        sm = SemanticMemoryStore()
+        st.store(_episode(payload="texto sin patrones de extraccion"))
+        o = MemoryOrchestrator(st, sm, extractor=RuleBasedFactExtractor())
+        assert o.consolidate() == 0
+
+
+class TestRamasSemantic:
+    def test_merge_sin_duplicados_previos(self) -> None:
+        f = SemanticFact("a", "b", "c", source_episode_ids=["e1"], tags=["t1"])
+        other = SemanticFact("a", "b", "c", source_episode_ids=["e2"], tags=["t2"])
+        f.merge(other)
+        assert f.source_episode_ids == ["e1", "e2"]
+        assert f.tags == ["t1", "t2"]
+
+    def test_merge_con_duplicados(self) -> None:
+        f = SemanticFact("a", "b", "c", source_episode_ids=["e1", "e2"], tags=["t1", "t2"])
+        other = SemanticFact("a", "b", "c", source_episode_ids=["e2", "e3"], tags=["t2", "t3"])
+        f.merge(other)
+        assert f.source_episode_ids == ["e1", "e2", "e3"]
+        assert f.tags == ["t1", "t2", "t3"]
+
+    def test_clear_all_sin_conn(self) -> None:
+        s = SemanticMemoryStore()
+        s.store(SemanticFact("A", "es", "B"))
+        s.close()
+        assert s.clear_all() == 1
+        assert s.count() == 0

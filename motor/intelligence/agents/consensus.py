@@ -84,6 +84,7 @@ class MajorityVoting(VotingStrategy):
                 total_votes=total,
                 strategy=self.name(),
             )
+        raise AssertionError("unreachable: _mayoria always yields >=1 winner")  # pragma: no cover
 
     def _result_key(self, r: AgentResult) -> str:
         return str(sorted(r.output.items())) if r.output else f"error:{r.error}"
@@ -237,6 +238,7 @@ class WeightedConsensus(VotingStrategy):
             outcome["_tie"] = True
             outcome["_tied_keys"] = winners
             return self._sin_consenso(outcome, results, vote_counts, total, weight_details)
+        raise AssertionError("unreachable: _mayoria always yields >=1 winner")  # pragma: no cover
 
     def _calcular_tally(self, results: list[AgentResult]) -> tuple[dict[str, float], dict[str, float]]:
         tally: dict[str, float] = {}
