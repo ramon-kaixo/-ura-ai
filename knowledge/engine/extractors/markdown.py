@@ -22,6 +22,7 @@ import hashlib
 import re
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 
 import yaml
 
@@ -105,7 +106,7 @@ class MarkdownExtractor:
         path_str = source.location
 
         try:
-            if not _Path(path_str).exists():  # noqa: F821
+            if not Path(path_str).exists():
                 return ExtractionResult(
                     errors=[f"File not found: {path_str}"],
                     duration_ms=(time.monotonic() - t0) * 1000,
