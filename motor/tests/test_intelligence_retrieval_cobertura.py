@@ -124,6 +124,41 @@ class TestSemanticChunker:
         assert c._estimate_tokens("abcdefgh") == 2
         assert c._char_limit() == 512 * 4
 
+    def test_split_sections_con_cuerpo_vacio(self) -> None:
+        c = SemanticChunker()
+        text = "## Titulo A\n\n\n\n## Titulo B\n\nContenido B"
+        sections = c._split_by_headings(text)
+        assert len(sections) >= 2
+        assert any(t and "Titulo B" in t for t, _ in sections)
+
+    def test_split_sections_sin_cuerpo_final(self) -> None:
+        c = SemanticChunker()
+        sections = c._split_by_headings("## Solo titulo")
+        assert len(sections) == 1
+        assert sections[0][0] == "Solo titulo"
+
+    def test_split_sections_parrafos_mezclados(self) -> None:
+        c = SemanticChunker()
+        text = "Preamble\n\n## A\n\n1\n\n## B\n\n2\n\n## C\n\n3"
+        sections = c._split_by_headings(text)
+        assert len(sections) == 4
+        titles = [t for t, _ in sections]
+        assert "" in titles
+        assert all(t in titles for t in ("A", "B", "C"))
+
+    def test_chunk_section_sin_parrafos(self) -> None:
+        c = SemanticChunker(max_tokens=10)
+        chunks = c._chunk_section("   " * 100, "d", "s", 0)
+        assert len(chunks) == 1
+        assert chunks[0].section == "s"
+        assert chunks[0].offset == 0
+
+    def test_overlap_completo(self) -> None:
+        c = SemanticChunker(overlap_tokens=100)
+        paras, tokens = c._overlap_paragraphs(["aa", "bb", "cc"])
+        assert paras == ["aa", "bb", "cc"]
+        assert tokens == 0
+
 
 # ── lexical ─────────────────────────────────────────────────────────────────
 
@@ -131,6 +166,11 @@ class TestSemanticChunker:
 class TestLexicalRetriever:
     def test_dir_no_existe(self, tmp_path: Path) -> None:
         r = LexicalRetriever(tmp_path / "no_existe")
+        assert r.search("algo") == []
+
+    def test_dir_vacio(self, tmp_path: Path) -> None:
+        r = LexicalRetriever(tmp_path)
+        assert r._bm25 is None
         assert r.search("algo") == []
 
     def test_corpus_ok(self, tmp_path: Path) -> None:
@@ -444,6 +484,20 @@ class TestRerankers:
         assert r._parse_score("7.5") == 0.75
         assert r._parse_score("12") == 1.0
         assert r._parse_score("sin numeros") == 0.0
+
+    def test_llm_sin_golden_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        llm = _import_llm()
+        monkeypatch.setattr(llm, "GOLDEN_DIR", tmp_path / "no_existe")
+        monkeypatch.setattr(llm, "generate", lambda *a, **k: "8")
+        r = llm.LLMReranker(model="m")
+        assert r._doc_cache == {}
+        assert r.rerank("q", [{"doc_id": "x", "payload": {"texto": "doc text"}}])[0]["reranker_score"] == 0.8
+
+    def test_ce_sin_golden_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        ce = _import_ce()
+        monkeypatch.setattr(ce, "GOLDEN_DIR", tmp_path / "no_existe")
+        r = ce.CrossEncoderReranker(model_name="fake", device="cpu")
+        assert r._doc_cache == {}
 
 
 def _import_ce() -> types.ModuleType:

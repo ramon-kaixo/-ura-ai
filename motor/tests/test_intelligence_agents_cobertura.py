@@ -29,6 +29,7 @@ from motor.intelligence.agents.consensus import (
 from motor.intelligence.agents.executor import ExecutorAgent
 from motor.intelligence.agents.message import AgentMessage, AgentResult, AgentRole, AgentStatus, AgentTask
 from motor.intelligence.agents.parallel import ParallelExecutor
+from motor.intelligence.agents.planner import PlannerAgent
 from motor.intelligence.agents.reflection import (
     AlwaysRejectStrategy,
     ReflectionAction,
@@ -1033,3 +1034,82 @@ class TestMultiAgentRuntime:
         rt.execute_workflow("execute tres")
         assert rt.get_workflow(first_id) is None
         assert len(rt.list_workflows()) == 2
+
+
+# ---------------------------------------------------------------- planner.py
+
+
+class TestPlannerAgent:
+    def test_run_ok(self) -> None:
+        planner = PlannerAgent(agent_id="p1")
+        task = _task(objective="execute tarea", role=AgentRole.EXECUTOR)
+        res = planner.run(task)
+        assert res.success
+        assert res.output["subtasks"]
+        assert res.output["original_objective"] == "execute tarea"
+        assert planner.status == AgentStatus.IDLE
+
+    def test_run_exception(self) -> None:
+        planner = PlannerAgent()
+
+        class _TaskCon:  # objectivo no string -> .lower() falla
+            pass
+
+        task = AgentTask(objective=_TaskCon(), agent_role=AgentRole.EXECUTOR)
+        res = planner.run(task)
+        assert not res.success
+        assert res.error
+
+    def test_decompose_default_executor(self) -> None:
+        planner = PlannerAgent()
+        subtasks = planner._decompose("hola sin keywords", {})
+        assert len(subtasks) == 1
+        assert subtasks[0]["agent_role"] == AgentRole.EXECUTOR
+
+    def test_decompose_inserts_researcher(self) -> None:
+        planner = PlannerAgent()
+        subtasks = planner._decompose("search this and execute that", {})
+        roles = [s["agent_role"] for s in subtasks]
+        assert roles[0] == AgentRole.RESEARCHER
+        assert AgentRole.EXECUTOR in roles
+
+    def test_decompose_keywords_multiples(self) -> None:
+        planner = PlannerAgent()
+        subtasks = planner._decompose("compute x validate y check z", {})
+        roles = [s["agent_role"] for s in subtasks]
+        assert AgentRole.VALIDATOR in roles
+        assert AgentRole.EXECUTOR in roles
+
+
+# ---------------------------------------------------------------- researcher.py (ramas)
+
+
+class TestResearcherRamas:
+    def test_run_sin_memory_store(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(ResearcherAgent, "_auto_discover", lambda self: None)
+        agent = ResearcherAgent(memory_store=None, context_retriever=_Retriever(episodes=_Episodes()))
+        res = agent.run(_task(objective="x", role=AgentRole.RESEARCHER))
+        assert res.success
+        assert res.output["sources"] == ["episodic_memory"]
+
+    def test_run_sin_context_retriever(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(ResearcherAgent, "_auto_discover", lambda self: None)
+        agent = ResearcherAgent(memory_store=_MemoryStore(facts=[_Fact()]), context_retriever=None)
+        res = agent.run(_task(objective="x", role=AgentRole.RESEARCHER))
+        assert res.success
+        assert res.output["sources"] == ["semantic_memory"]
+
+
+# ---------------------------------------------------------------- consensus.py (ramas)
+
+
+class TestConsensusRamas:
+    def test_outcome_para_no_primera_posicion(self) -> None:
+        results = [
+            _result(output={"w": 2}, error=""),
+            _result(output={"w": 1}, error=""),
+            _result(output={"w": 1}, error=""),
+        ]
+        res = WeightedConsensus().aggregate(results)
+        assert res.success
+        assert res.outcome == {"w": 1}
