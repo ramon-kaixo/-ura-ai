@@ -6,6 +6,13 @@ SQLite en memoria (no requiere Qdrant ni disco).
 
 from __future__ import annotations
 
+import sqlite3
+import types
+from datetime import UTC, datetime
+from typing import Any
+
+import pytest
+
 from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.record import MemoryType
 
@@ -108,3 +115,190 @@ def test_search_ranking():
     results = mem.search("python", k=5)
     assert len(results) >= 1
     assert "python" in results[0].payload.lower()
+
+
+# ── ramas de error / edge ───────────────────────────────────────────────────
+
+
+def _fake_conn(**overrides: Any) -> types.SimpleNamespace:
+    defaults: dict[str, Any] = {
+        "execute": lambda *a, **k: None,
+        "commit": lambda: None,
+        "close": lambda: None,
+        "executescript": lambda *a, **k: None,
+    }
+    defaults.update(overrides)
+    return types.SimpleNamespace(**defaults)
+
+
+def _boom(*a: Any, **k: Any) -> Any:
+    raise sqlite3.Error("boom")
+
+
+def test_context_manager_close_repetido():
+    with HybridMemory(db_path=":memory:") as mem:
+        mem.store(payload="ctx")
+        assert mem.count() == 1
+    mem.close()  # segundo close es no-op
+
+
+def test_close_exception_logueada():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+
+    class FailingConn:
+        def close(self) -> None:
+            raise RuntimeError("close fail")
+
+        def execute(self, *a: Any, **k: Any) -> None:
+            return None  # pragma: no cover
+
+        def commit(self) -> None:
+            return None  # pragma: no cover
+
+    mem._conn = FailingConn()  # type: ignore[assignment]
+    mem.close()
+    assert mem._conn is None
+
+
+def test_clear_error_logueado():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+    mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
+    mem.clear()
+
+
+def test_clear_ok():
+    mem = HybridMemory(db_path=":memory:")
+    mem.store(payload="a")
+    mem.store(payload="b")
+    assert mem.count() == 2
+    mem.clear()
+    assert mem.count() == 0
+
+
+def test_store_error_relanza():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+    mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
+    with pytest.raises(sqlite3.Error):
+        mem.store(payload="fail")
+
+
+class _FakeVectorStore:
+    def __init__(self, fail: bool = False) -> None:
+        self._fail = fail
+
+    def guardar_incidente(self, incident: dict) -> Any:
+        if self._fail:
+            raise RuntimeError("vector down")
+        return None
+
+    def buscar_similares(self, vector: list[float], limite: int = 5) -> Any:
+        if self._fail:
+            raise RuntimeError("vector down")
+        return []
+
+
+def test_vector_store_ok():
+    vs = _FakeVectorStore(fail=False)
+    mem = HybridMemory(vector_store=vs, db_path=":memory:")
+    rid = mem.store(payload="vect", vector=[0.1, 0.2])
+    assert rid
+    assert mem.health()["vector_store_ok"] is True
+
+
+def test_vector_store_fail_degrada():
+    vs = _FakeVectorStore(fail=True)
+    mem = HybridMemory(vector_store=vs, db_path=":memory:")
+    rid = mem.store(payload="vect", vector=[0.1, 0.2])  # no lanza
+    assert rid
+    assert mem.health()["vector_store_ok"] is False
+
+
+def test_search_query_vacia():
+    mem = HybridMemory(db_path=":memory:")
+    mem.store(payload="x")
+    assert mem.search("") == []
+    assert mem.search("   ") == []
+
+
+def test_search_fts_error_degradado():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+
+    def fts_boom(query: str, *args: Any) -> Any:
+        if "MATCH" in query.upper():
+            raise sqlite3.OperationalError("fts syntax error")
+        return None
+
+    mem._conn = _fake_conn(execute=fts_boom)  # type: ignore[assignment]
+    assert mem.search("bad query") == []
+
+
+def test_search_aplica_defaults_filas_invalidas():
+    mem = HybridMemory(db_path=":memory:")
+    conn = mem._get_conn()
+    ts = datetime.now(UTC).isoformat()
+    conn.execute(
+        "INSERT INTO memory_metadata (id, memory_type, created_at, metadata) VALUES (?,?,?,?)",
+        ("r1", "BOGUS", ts, "no-json"),
+    )
+    conn.execute("INSERT INTO memory_fts (id, text, metadata) VALUES (?,?,?)", ("r1", "foo", "no-json"))
+    conn.commit()
+
+    results = mem.search("foo")
+    assert len(results) == 1
+    assert results[0].type == MemoryType.WORKING
+    assert "no-json" not in results[0].metadata
+    assert results[0].metadata.get("access_count") == 0
+
+
+def test_get_excepcion_devuelve_none():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+    mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
+    assert mem.get("cualquier") is None
+
+
+def test_get_aplica_defaults_filas_invalidas():
+    mem = HybridMemory(db_path=":memory:")
+    conn = mem._get_conn()
+    conn.execute(
+        "INSERT INTO memory_metadata (id, memory_type, created_at, metadata) VALUES (?,?,?,?)",
+        ("g1", "RARO", datetime.now(UTC).isoformat(), "[1,2"),
+    )
+    conn.commit()
+    rec = mem.get("g1")
+    assert rec is not None
+    assert rec.type == MemoryType.WORKING
+    assert "no-json" not in rec.metadata
+    assert rec.metadata.get("access_count") == 0
+
+
+def test_delete_error_devuelve_false():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+    mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
+    assert mem.delete("x") is False
+
+
+def test_count_error_devuelve_cero():
+    mem = HybridMemory(db_path=":memory:")
+    mem._get_conn()
+    mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
+    assert mem.count() == 0
+    assert mem.count(MemoryType.WORKING) == 0
+
+
+def test_health_count_error(monkeypatch: pytest.MonkeyPatch):
+    mem = HybridMemory(db_path=":memory:")
+    mem.store(payload="x")
+
+    def boom(*a: Any, **k: Any) -> Any:
+        raise sqlite3.Error("boom")
+
+    monkeypatch.setattr(mem, "count", boom)
+    h = mem.health()
+    assert h["total_records"] == 0
+    assert h["vector_store_ok"] is False
