@@ -66,15 +66,13 @@ class RuleBasedFactExtractor(FactExtractor):
                 groups = m.groups()
                 if fact_type == "relation":
                     results.append((groups[0], "tiene", groups[1], fact_type))
-                elif fact_type == "attribute" and len(groups) >= 2:
-                    results.append(("sistema", groups[0], groups[1], fact_type))
                 elif fact_type == "event":
                     results.append((groups[0], groups[1], groups[2] if len(groups) > 2 else "", fact_type))
                 elif fact_type == "error":
                     results.append(("sistema", "error", groups[0], fact_type))
                 elif fact_type == "statement":
                     results.append((groups[0], "dice", groups[1] if len(groups) > 1 else "", fact_type))
-                else:
-                    results.append((groups[0], "es", groups[1] if len(groups) > 1 else "", fact_type))
+                else:  # attribute
+                    results.append(("sistema", groups[0], groups[1] if len(groups) > 1 else "", fact_type))
 
         return results
