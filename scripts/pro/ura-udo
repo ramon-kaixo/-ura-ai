@@ -419,12 +419,14 @@ case "${1:-}" in
     else
         hist="$nota"
     fi
-    # Pendiente de sincronización automático (TASK-20260815-009): al cerrar
+    # Pendiente de sincronización automático (TASK-20260815-009/011): al cerrar
     # DONE con --force por árbol sucio ajeno, se registra en el expediente
     # (campo pendientes: + historial) para que el responsable commitee sus
     # cambios — evita que el pendiente se pierda al saltarse el gate.
+    # Se excluye SOLO el expediente propio y .seq: los expedientes ajenos
+    # sucios (docs/udo/tasks/TASK-*) también se listan (su TASK es el responsable).
     if [ "$estado" = "DONE" ] && [ -n "$force" ] && [ -n "$est_actual" ]; then
-        sucio_pend=$(git -C "$REPO" status --porcelain | grep -v '^??' | sed 's/^...//' | grep -v '^docs/udo/\(tasks\|\.seq\)' || true)
+        sucio_pend=$(git -C "$REPO" status --porcelain | grep -v '^??' | sed 's/^...//' | grep -v "^docs/udo/tasks/$id.md$" | grep -v '^docs/udo/.seq$' || true)
         if [ -n "$sucio_pend" ]; then
             lista_pend=$(printf '%s' "$sucio_pend" | tr '\n' ';' | sed 's/;$//')
             _set_campo "$id" "pendientes" "${pendientes_val:+$pendientes_val;}SINCRONIZAR ($(date +%Y-%m-%d)): cambios sin commitear al cierre --force: $lista_pend"
