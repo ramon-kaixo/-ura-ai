@@ -110,6 +110,7 @@ TEST_IGNORES: list[str] = [
     "tests/property/",
     "tests/nightly/test_platform_resilience.py",
     "tests/unit/test_moderation_sanitizer_hypothesis.py",
+    "tests/unit/test_rules_hypothesis.py",
     "tests/unit/test_knowledge_metrics_cobertura.py",
     "tests/integration/test_f27_b8_hardening.py",
     "tests/unit/test_agents_healing.py",

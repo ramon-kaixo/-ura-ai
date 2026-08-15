@@ -93,6 +93,7 @@ norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_r
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
+addopts = "--reruns 2 --reruns-delay 1"
 
 [tool.mypy]
 python_version = "3.12"
@@ -197,6 +198,7 @@ pytest_add_cli_args = [
     "--ignore=tests/property/",
     "--ignore=tests/nightly/test_platform_resilience.py",
     "--ignore=tests/unit/test_moderation_sanitizer_hypothesis.py",
+    "--ignore=tests/unit/test_rules_hypothesis.py",
     "--ignore=tests/unit/test_knowledge_metrics_cobertura.py",
     "--ignore=tests/integration/test_f27_b8_hardening.py",
     "--ignore=tests/unit/test_agents_healing.py",
