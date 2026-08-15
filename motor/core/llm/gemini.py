@@ -57,7 +57,7 @@ class GeminiProvider(BaseLLMProvider):
     def _headers(self) -> dict[str, str]:
         return {
             "Content-Type": "application/json",
-            "x-goog-api-key": self._api_key,
+            "x-goog-api-key": self._api_key or "",
         }
 
     def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:

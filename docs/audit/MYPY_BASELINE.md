@@ -43,3 +43,12 @@ Comando: `.venv/bin/mypy <path> --ignore-missing-imports --show-error-codes`
   (consistente con `make mypy-info`).
 - `--ignore-missing-imports`: la mayoría de import-untyped son de
   dependencias sin stubs (qdrant_client, fastapi, pydantic).
+
+## Actualización 2026-08-15 (TASK-20260815-005)
+
+- core/agents (y sus imports): **44 → 0 errores** resueltos:
+  - `motor/core/secrets.py`: overloads en get_secret (default str → str) — arregló 35 errores en providers
+  - `motor/core/llm/anthropic.py`, `gemini.py`: `_headers` con `self._api_key or ""`
+  - `motor/core/llm/base.py`: variable `embed_result` (reutilización de tipo)
+  - `motor/core/llm/_state.py`: `_default: Any` (asignación de providers distintos)
+- Resto del repo: baseline sin cambios (325 → 281 errores pendientes en motor/core, core, knowledge)

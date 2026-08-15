@@ -21,6 +21,7 @@ Uso:
 import os
 import threading
 from pathlib import Path
+from typing import overload
 
 RUTA_SECRETOS = "/etc/ura/secrets.env"
 
@@ -94,6 +95,14 @@ def _clear_cache() -> None:
     global _cached_file_secrets  # noqa: PLW0603
     with _lock:
         _cached_file_secrets = None
+
+
+@overload
+def get_secret(name: str, default: str) -> str: ...
+
+
+@overload
+def get_secret(name: str, default: None = None) -> str | None: ...
 
 
 def get_secret(name: str, default: str | None = None) -> str | None:
