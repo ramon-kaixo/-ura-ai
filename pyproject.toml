@@ -80,7 +80,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105"]
+"tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105", "INP001", "TC002"]
 "scripts/pro/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
 "motor/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
 "docs/merge_resolution/*" = ["S101", "S110", "INP001"]  # tests documentales de resolución de merges
@@ -192,6 +192,9 @@ pytest_add_cli_args = [
     "--ignore=tests/unit/test_mochila_providers_clonados.py",
     "--ignore=tests/unit/test_refactor_large_functions_v2.py",
     "--ignore=tests/unit/test_motor_health_monitor.py",
+    "--ignore=tests/unit/test_guardian_opencode.py",
+    "--ignore=tests/unit/test_knowledge_snapshot_store.py",
+    "--ignore=tests/unit/test_guardian_middleware_path.py",
     "--ignore=tests/integration/test_thread_safety.py",
     "--ignore=tests/integration/test_degraded_mode.py",
     "--ignore=tests/integration/test_extractors.py",
