@@ -38,6 +38,14 @@ class TestNDJSONAuditBackend:
         assert data["action"] == "read"
         assert data["correlation_id"] == "cid"
 
+    def test_close_idempotente_no_rompe_escritura_anterior(self, tmp_path) -> None:
+        b = NDJSONAuditBackend(tmp_path / "audit")
+        b.write(FakeEvent(action="status"))
+        b.close()
+        b.close()  # atexit registra close: debe ser idempotente (supress OSError)
+        data = json.loads((tmp_path / "audit" / "audit.ndjson").read_text())
+        assert data["action"] == "status"
+
     def test_write_sin_lock_fallback(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         monkeypatch.setattr(b, "_acquire_flock", mock.Mock(return_value=False))
