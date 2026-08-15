@@ -109,17 +109,10 @@
 | 2026-08-13 | motor/platform (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | motor/plugin (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-13 | core/interfaces (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
-<<<<<<< HEAD
 | 2026-08-13 | motor/core/fusion/engine.py:89-93 (TASK-20260813-005, plan Aduana 4.1) | vulture --min-confidence 70: 3 variables 100% confidence sin uso (source_scorer, change_detector, entity_resolver) — posible deuda de F25 (pipelines registrados pero no usados) | BAJA (falso positivo) | verificado NO-ACCIONABLE (TASK-20260813-007): params del contrato publico marcados '# Public API — intentionally unused, see ADR-003'; borrar violaria el contrato |
 | 2026-08-13 | motor/core/voice/anker_pipeline.py:83, anker_mac_pipeline.py:64 (TASK-20260813-005) | vulture: variable 'frames' sin uso en el flujo de captura de audio | BAJA | propuesto (con plan: verificar si frames se consume aguas abajo vía atributo; si no, eliminar) |
 | 2026-08-13 | Makefile (TASK-20260813-005, plan Aduana 6.1) | Nuevos targets: make security (SAST/SCA parity CI: audit_secrets --fail-critical + audit_git_secrets --fail + pip-audit + semgrep .semgrep.yml, caches a /tmp RO-safe) en 46.6s verificados + make dead-code (vulture, informativo); security integrado en validate-full | INFO | corregido (verificado 2026-08-13: make security 0 hallazgos 46.6s) |
 | 2026-08-13 | tests/unit/test_f25_b6_fact_history.py::test_benchmark_add_1000 | FALLA bajo carga (make validate completo) pero PASA en aislamiento (1.19s): benchmark timing-dependiente flaky preexistente, sin relación con TASK-005/006 | BAJA | corregido (TASK-20260813-003, autorizacion RAMON): tolerancia 0.1 -> 0.3s (2 benchmarks de f25_b6); 3 corridas verdes ~1.4s; sigue detectando regresiones O(n^2) |
-=======
-## Progreso
-2026-08-13 - docs/engineering (lote completo) - análisis completo, sin hallazgos críticos ni errores estructurales detectables
-## Progreso
-2026-08-13 - docs/engineering (lote completo) - análisis completo, sin hallazgos críticos ni errores estructurales detectables
->>>>>>> mac-veredictos
 | 2026-08-13 | tests/unit/ (plan TERM 2026-08-13 "falta absoluta de tests") | PREMISA FALSA verificada: los 4 componentes citados (compactador_espacios, refactor_large_functions_v2, contexto_rama, memoria_refactor) YA tienen tests commiteados (TASK-20260812-023, cobertura 100% 126/126, commits a90bdcbe/bd68f53a); 129 tests pass en 7.4s. Causa probable: TERM analizo copia Mac sin los commits de ayer (problema de sync conocido) | INFO (plan desactualizado) | corregido (comunicado en reporte; gap real unico del plan: cobertura en CI) |
 | 2026-08-13 | .github/workflows/ci.yml (TASK-20260813-007, plan TERM "auditoria de cobertura") | Gap real del plan: pytest-cov instalado y make test con cov, pero CI sin reporte de cobertura -> nuevo job 'coverage' informativo (pytest motor/tests --cov=motor --cov-report=term-missing, SIN umbral para no romper CI) | MEDIA (mejora de observabilidad) | corregido (verificado 2026-08-13: comando coverage OK local, YAML valido 6 jobs, CI verde pendiente de run) |
 | 2026-08-13 | motor/* (reporte mutmut 2026-08-13_motor_assistant+motor_observability+motor_scanner) | Revision TASK-003: 7031 mutantes (6804 survived 96.8%, 201 error, 26 timeout, 0 killed) -> cobertura de mutacion minima en los modulos con mas supervivientes (qdrant_client 471, ollama 390, openai 246, healing 191, episodic 190). Los 'error' son mutantes no evaluables (entorno). No es fallo funcional; es deuda de tests de mutacion | MEDIA (deuda de tests) | propuesto (con plan: reforzar tests de mutacion por orden de supervivientes, empezando por query_cache/qdrant_client; revisar mutantes 'error' por import rotos) |
@@ -133,3 +126,9 @@
 | 2026-08-15 | scripts/pro/tuneladora/snapshot.py:27 | Degradación silenciosa: delta_snapshot importaba openclaw_firmador (retirado c6d60c8c); save() devolvía None con log en cada ciclo del pipeline. CORREGIDO: port local sin dependencia (TASK-20260815-007, commit 8460168f) | ALTA | corregido |
 | 2026-08-15 | scripts/pro/mutmut_daily.py:73 | Ignore obsoleto de tests/unit/test_guardian_openclaw.py (renombrado a test_guardian_acciones en c6d60c8c). CORREGIDO: entrada eliminada (TASK-20260815-007) | BAJA | corregido |
 | 2026-08-15 | tests/unit/test_web_*_cobertura.py (33 tests, lote web del WEB) | Tests alineados al comportamiento real (TASK-20260815-011): helpers con excepciones-instancia no lanzaban, lambda sin *args, split_sentences exige mayúscula, orden dedup→vacíos, etc. + bug produccion cleaner strip no persistido (ver fila ALTA arriba). 344+ passed lote web, suite cobertura 1582 passed. 2 INFO abiertos: caracteres restringidos no implementados y orden dedup→vacíos (fila propuesto arriba) | MEDIA (deuda de alineación) | corregido |
+
+## Progreso
+
+| fecha | carpeta/módulo revisado | resultado |
+|-------|------------------------|-----------|
+| 2026-08-13 | docs/engineering (lote completo) | análisis completo, sin hallazgos críticos ni errores estructurales detectables |
