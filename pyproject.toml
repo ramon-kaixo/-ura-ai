@@ -132,3 +132,5 @@ auto-trigger-strict = true
 
 [tool.mutmut]
 source_paths = ["motor/core/", "motor/intelligence/", "core/", "knowledge/"]
+tests_dir = ["motor/tests/"]
+also_copy = ["motor/tests/"]
