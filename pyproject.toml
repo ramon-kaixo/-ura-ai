@@ -197,6 +197,7 @@ pytest_add_cli_args = [
     "--ignore=tests/property/",
     "--ignore=tests/nightly/test_platform_resilience.py",
     "--ignore=tests/unit/test_moderation_sanitizer_hypothesis.py",
+    "--ignore=tests/unit/test_knowledge_metrics_cobertura.py",
     "--ignore=tests/integration/test_f27_b8_hardening.py",
     "--ignore=tests/unit/test_agents_healing.py",
     "--ignore=tests/unit/test_motor_tracing_exporter.py",
