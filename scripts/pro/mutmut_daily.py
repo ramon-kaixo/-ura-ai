@@ -98,6 +98,7 @@ TEST_IGNORES: list[str] = [
     "tests/unit/test_auditoria_continua.py",
     "tests/unit/test_verificador_tests.py",
     "tests/unit/test_audit_secrets.py",
+    "tests/unit/test_refactor_large_functions_v2.py",
     "tests/integration/test_extractors.py",
     "tests/unit/test_compactador_espacios.py",
     "tests/integration/test_audit_api.py",
