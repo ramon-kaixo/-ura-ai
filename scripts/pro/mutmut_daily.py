@@ -108,6 +108,7 @@ TEST_IGNORES: list[str] = [
     "tests/unit/test_guardian_opencode.py",
     "tests/unit/test_knowledge_snapshot_store.py",
     "tests/property/",
+    "tests/nightly/test_platform_resilience.py",
     "tests/integration/test_f27_b8_hardening.py",
     "tests/unit/test_agents_healing.py",
     "tests/unit/test_motor_tracing_exporter.py",
