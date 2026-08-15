@@ -83,6 +83,16 @@ Memoria = Git + documentación + decisiones + planes + closeouts. NO dependas de
 
 Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. No ejecutes fases futuras sin autorización. Git y la documentación conservan la evidencia. Nada se declara terminado sin cumplir los mínimos y poder demostrarlo.
 
+## Proactividad y reporte final (v1.10)
+
+El agente NO espera a que el humano pregunte "¿y ahora qué?". Al terminar CUALQUIER trabajo (tarea, plan, revisión, corrección, sesión) cierra siempre con un reporte en 3 bloques:
+
+1. **QUÉ SE HIZO** — acciones + evidencia verificable (SHAs de commits, rutas, salidas de comandos). Separar HECHO (verificado) de DECLARADO (sin verificar).
+2. **QUÉ QUEDA / PENDIENTE** — lo no hecho o bloqueado, con causa y responsable (humano, WEB, TERM...).
+3. **SUGERENCIAS** — propuestas concretas de siguiente paso o mejora, priorizadas por impacto.
+
+Además, al detectar un problema o mejora durante cualquier trabajo, proponerla en el momento (clasificar OBLIGATORIO/NECESARIO/MEJORA) en vez de guardarla en silencio. Esto NO altera el modo fondo read-only ni las reglas UDO de reserva/--force. Nota: convivencia con v1.2 §4 (estructura de reporte): los bloques de la v1.2 se mantienen; "QUEDA" y "SUGERENCIAS" son la extensión proactiva. (TASK-20260815-007: petición RAMON 2026-08-15 — "por qué no eres más proactivo").
+
 ## ANTI-ALUCINACIÓN (v1.2) — reglas obligatorias de verificación
 
 **Principio**: una afirmación de trabajo (commit, archivo creado, tarea hecha, servicio arreglado, veredicto emitido) NO existe hasta que se demuestra con la salida de un comando real. Creer ≠ hacer. Decir ≠ verificar.
@@ -150,6 +160,7 @@ Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. 
 - Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
 
 <!-- v1.9 — 2026-08-12 — v1.8 + identidad y tiempo: reglas [WEB]/[TERM] + hora local real (no UTC de la BD) + última interacción + cabecera de reporte (TASK-20260812-016: petición RAMON — las horas de los agentes no coincidían con las suyas; causa: BD de opencode en UTC sin conversión) -->
+<!-- v1.10 — 2026-08-15 — v1.9 + PROACTIVIDAD y reporte final obligatorio en 3 bloques (HECHO/QUEDA/SUGERENCIAS) (TASK-20260815-007: petición RAMON — "por qué no eres más proactivo", 2026-08-15) -->
 <!-- v1.8 — 2026-08-11 — v1.7 + despertador real del modo fondo (TASK-20260811-010: carencia C1 detectada en auto-revisión — el modo fondo no se activaba solo porque nadie enviaba turnos; solucionado con deploy/mac/despertador-fondo.sh + launchd com.ura.fondo-wake cada 30min vía opencode run --attach; verificado TERM revisó core/mochila/ con 2 hallazgos) — 2026-08-12 + protección técnica del modo fondo: agente revisor-fondo con write/edit/patch deshabilitados en config (TASK-20260812-002: TERM violó 3x la regla read-only; instrucción textual insuficiente) -->
 <!-- v1.7 — 2026-08-11 — v1.6 + propuesta de plan obligatoria para todo hallazgo accionable del modo fondo (investigar → QUÉ/POR QUÉ/IMPACTO/VERIFICACIÓN/RIESGO → presentar al humano → TASK UDO si se aprueba; estado 'propuesto' hasta decisión) (TASK-20260811-009: petición RAMON sobre comunicación de mejoras) -->
 <!-- v1.6 — 2026-08-11 — v1.5 + lecciones operativas de sesión (TASK-20260811-008: mount namespaces del bash tool pueden diferir del host; instalación config global en ASUS requiere sudo del humano; workaround de commits en rootfs RO) -->
