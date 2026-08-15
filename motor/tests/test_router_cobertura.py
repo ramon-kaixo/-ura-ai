@@ -16,6 +16,7 @@ import httpx
 import pytest
 
 from motor.core.llm.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError
+from motor.core.llm.router import strategy as strategy_mod
 
 
 class FakeProv:
@@ -134,7 +135,7 @@ class TestRouterStrategy:
         def boom(*a: Any, **k: Any) -> str:
             raise ConnectionError("red")
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         prov = FakeProv("p1")
         prov.generate = boom  # type: ignore[method-assign]
         result = call_with_retry(
@@ -145,7 +146,7 @@ class TestRouterStrategy:
     def test_call_with_retry_transient_retries_then_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_retry
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         calls = {"n": 0}
 
         def boom(*a: Any, **k: Any) -> str:
@@ -278,7 +279,7 @@ class TestRouterStrategy:
     def test_call_with_retry_embed_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_retry
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
 
         def boom(*a: Any, **k: Any) -> list[list[float]]:
             raise httpx.TimeoutException("t")
@@ -299,7 +300,7 @@ class TestRouterStrategy:
     def test_call_with_fallback_uses_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         p1, p2 = FakeProv("p1"), FakeProv("p2")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         reg = FakeRegistry({"p1": p1, "p2": p2})
@@ -309,7 +310,7 @@ class TestRouterStrategy:
     def test_call_with_fallback_no_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         p1 = FakeProv("p1")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         reg = FakeRegistry({"p1": p1})
@@ -319,7 +320,7 @@ class TestRouterStrategy:
     def test_call_with_fallback_skips_unavailable(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         p1, p2, p3 = FakeProv("p1"), FakeProv("p2"), FakeProv("p3")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         p2.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
@@ -334,7 +335,7 @@ class TestRouterStrategy:
     def test_call_with_fallback_all_fail(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr("motor.core.llm.router.strategy.time.sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
         p1, p2 = FakeProv("p1"), FakeProv("p2")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         p2.generate = lambda prompt, **kw: "Error: boom2"  # type: ignore[method-assign]
