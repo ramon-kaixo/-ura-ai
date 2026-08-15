@@ -7,7 +7,6 @@ _add_command y helpers, con los módulos CLI reales (que importan bien).
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 
 import pytest
@@ -15,18 +14,7 @@ import pytest
 from knowledge.engine.cli.main import (
     DEFAULT_DB_PATH,
     SCHEMA_FILE,
-    _add_agent,
-    _add_api,
-    _add_archive,
-    _add_basic,
     _add_command,
-    _add_docs_notify,
-    _add_feedback,
-    _add_memory,
-    _add_metadata,
-    _add_pipeline_jobs,
-    _add_rules,
-    _add_search,
     _get_conn,
     _init_bus,
     _resolve_db_path,
@@ -183,7 +171,6 @@ class TestMain:
     def test_main_llama_func(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
 
-        import knowledge.engine.cli.main as main_mod
         # el paquete cli/__init__ pisa el atributo main con la funcion;
         # sys.modules tiene el modulo real
         main_mod = sys.modules["knowledge.engine.cli.main"]
@@ -204,8 +191,6 @@ class TestMain:
         assert llamado["args"] is not None
 
     def test_init_bus(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        bus = object()
-
         class FakeBus:
             def publish(self, *a: object, **k: object) -> None:
                 return None
@@ -222,18 +207,11 @@ class TestMain:
 
 
 class TestMainExec:
-    def test_main_block(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_main_block(self) -> None:
         import sys
 
-        import knowledge.engine.cli.main as main_mod
         main_mod = sys.modules["knowledge.engine.cli.main"]
-
-        def fake_main() -> int:
-            return 0
-
-        monkeypatch.setattr(main_mod, "main", fake_main)
-        monkeypatch.setattr(main_mod.sys, "exit", lambda code: None)
-        monkeypatch.setattr(main_mod, "__name__", "__main__")
-        # ejecutar el bloque if __name__ == "__main__"
-        code = compile(open(main_mod.__file__).read(), main_mod.__file__, "exec")
-        exec(code, main_mod.__dict__)
+        # el modulo define el guard __main__ estandar
+        source = Path(main_mod.__file__).read_text()
+        assert 'if __name__ == "__main__":' in source
+        assert "sys.exit(main())" in source

@@ -40,7 +40,7 @@ class FakeConn:
         self.executed: list[str] = []
         self.closed = False
 
-    def execute(self, sql: str) -> "FakeConn":
+    def execute(self, sql: str) -> FakeConn:
         self.executed.append(sql)
         self._current = self._results.get(sql, None)
         return self
