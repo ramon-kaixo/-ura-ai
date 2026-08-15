@@ -1,12 +1,15 @@
-"""SnapshotService — adaptador para openclaw_firmador.delta_snapshot.
+"""SnapshotService — snapshots delta del pipeline de mejora continua.
 
-Desacopla PipelineEngine de la librería concreta.
-Si en el futuro cambia openclaw_firmador, solo se modifica este archivo.
+Genera snapshots con los hashes del sistema_map.json de .nervioso para la
+comparación delta de ciclos. La implementación es local desde el retiro de
+openclaw_firmador (c6d60c8c), sin dependencias externas.
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +17,7 @@ from typing import Any
 class SnapshotService:
     """Servicio de snapshots delta.
 
-    Único punto de acceso a delta_snapshot desde el pipeline.
+    Único punto de acceso a los snapshots delta desde el pipeline.
     """
 
     def __init__(self, nervioso: Path, log_fn: Callable[..., Any] | None = None) -> None:
@@ -22,13 +25,24 @@ class SnapshotService:
         self._log = log_fn or (lambda msg: None)
 
     def save(self, label: str = "ultimo_ciclo") -> Path | None:
-        """Guarda un snapshot delta del estado actual."""
-        try:
-            from openclaw_firmador import delta_snapshot  # type: ignore[import-not-found]
+        """Guarda un snapshot delta del estado actual.
 
-            result = delta_snapshot(label)
-            self._log(f"Delta snapshot guardado: {result}")
-            return Path(result) if result else None
+        Devuelve la ruta del snapshot o None si falla (degradación explícita).
+        """
+        try:
+            index = self._load_index()
+            snapshot = self._snapshot_files(index)
+            delta_dir = self._nervioso / "delta_snapshots"
+            delta_dir.mkdir(parents=True, exist_ok=True)
+            path = delta_dir / f"{label}.json"
+            payload = {
+                "label": label,
+                "files": snapshot,
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+            path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            self._log(f"Delta snapshot guardado: {path}")
+            return path
         except Exception as e:
             self._log(f"Delta snapshot falló: {e}")
             return None
@@ -45,3 +59,25 @@ class SnapshotService:
 
             shutil.rmtree(delta_dir, ignore_errors=True)
             self._log("Snapshots delta limpiados")
+
+    def _load_index(self) -> dict[str, Any]:
+        """Carga el sistema_map.json de .nervioso (vacío si no existe)."""
+        map_file = self._nervioso / "sistema_map.json"
+        if not map_file.exists():
+            return {}
+        return json.loads(map_file.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _snapshot_files(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Hashes de los nodos no ESPEJO/ZOMBIE para la comparación futura."""
+        deps: dict[str, Any] = index.get("dependency_graph", {})
+        return {
+            rel: {
+                "blake2b": node.get("checksum_blake2b_8", ""),
+                "size": node.get("allocation_bytes", 0),
+                "mtime": node.get("posix_timestamps", {}).get("st_mtime", 0),
+            }
+            for rel, node in deps.items()
+            if "ESPEJO" not in node.get("pipeline_state", "")
+            and "ZOMBIE" not in node.get("pipeline_state", "")
+        }

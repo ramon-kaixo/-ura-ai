@@ -1,6 +1,7 @@
 """Tests para llm_fallback, pending_queue, sandbox y snapshot de la tuneladora."""
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -140,29 +141,51 @@ class TestSandbox:
 
 
 class TestSnapshotService:
-    def _fake_mod(self, delta=None, error=None):
-        import sys
-
-        fake = mock.Mock()
-        if error:
-            fake.delta_snapshot.side_effect = error
-        else:
-            fake.delta_snapshot.return_value = delta
-        return mock.patch.dict(sys.modules, {"openclaw_firmador": fake})
+    @staticmethod
+    def _sistema_map(tmp_path: Path) -> None:
+        (tmp_path / "sistema_map.json").write_text(
+            json.dumps(
+                {
+                    "dependency_graph": {
+                        "a.py": {
+                            "pipeline_state": "ACTIVO",
+                            "checksum_blake2b_8": "abc123",
+                            "allocation_bytes": 42,
+                            "posix_timestamps": {"st_mtime": 1700000000},
+                        },
+                        "b.py": {"pipeline_state": "ESPEJO", "checksum_blake2b_8": "zzz"},
+                        "c.py": {"pipeline_state": "ZOMBIE", "checksum_blake2b_8": "yyy"},
+                    }
+                },
+            ),
+            encoding="utf-8",
+        )
 
     def test_save_ok(self, tmp_path: Path) -> None:
         log_calls: list[str] = []
+        self._sistema_map(tmp_path)
         svc = SnapshotService(tmp_path, log_fn=log_calls.append)
-        with self._fake_mod(delta="/tmp/snap.json"):
-            out = svc.save("ciclo")
-        assert out == Path("/tmp/snap.json")
-        assert log_calls
+        out = svc.save("ciclo")
+        assert out == tmp_path / "delta_snapshots" / "ciclo.json"
+        assert out is not None and out.exists()
+        payload = json.loads(out.read_text(encoding="utf-8"))
+        assert payload["label"] == "ciclo"
+        assert set(payload["files"]) == {"a.py"}
+        assert payload["files"]["a.py"]["blake2b"] == "abc123"
+        assert any("guardado" in l for l in log_calls)
+
+    def test_save_sin_mapa(self, tmp_path: Path) -> None:
+        log_calls: list[str] = []
+        svc = SnapshotService(tmp_path, log_fn=log_calls.append)
+        out = svc.save("ciclo")
+        assert out is not None and out.exists()
+        assert json.loads(out.read_text(encoding="utf-8"))["files"] == {}
 
     def test_save_falla(self, tmp_path: Path) -> None:
         log_calls: list[str] = []
+        (tmp_path / "sistema_map.json").write_text("{corrupto", encoding="utf-8")
         svc = SnapshotService(tmp_path, log_fn=log_calls.append)
-        with self._fake_mod(error=RuntimeError("boom")):
-            assert svc.save("ciclo") is None
+        assert svc.save("ciclo") is None
         assert any("falló" in l for l in log_calls)
 
     def test_exists(self, tmp_path: Path) -> None:
