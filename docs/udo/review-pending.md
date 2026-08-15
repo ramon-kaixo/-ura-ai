@@ -220,8 +220,14 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 
 | TASK | Descripción | Fecha cierre | Ejecutor | Estado revisión | Revisor | Fecha revisión | Veredicto |
 |------|-------------|--------------|----------|-----------------|---------|----------------|-----------|
-| TASK-20260815-011 | S1: 33 tests web_cobertura rotos arreglados (11 archivos + fix produccion cleaner.py doc.text=text); S2 auto-SINCRONIZAR ura-udo incluye expedientes ajenos; S3 correccion 6 jobs TASK-005; S4 bandit INFO interno | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
-| TASK-20260815-012 | A1 conflicto merge hallazgos-fondo resuelto (0 marcadores); A2 integracion untracked ajenos (plans/, enviar_revision_web.sh, registry test, .gitignore db+state orquestador); A3 filtro caracteres control en cleaner (+2 tests); A4 AGENTS.md.global v1.12 salida-vacia | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260815-011 | S1: 33 tests web_cobertura rotos arreglados (11 archivos + fix produccion cleaner.py doc.text=text); S2 auto-SINCRONIZAR ura-udo incluye expedientes ajenos; S3 correccion 6 jobs TASK-005; S4 bandit INFO interno | 2026-08-15 | TERM | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-15 | APROBADA |
+| TASK-20260815-012 | A1 conflicto merge hallazgos-fondo resuelto (0 marcadores); A2 integracion untracked ajenos (plans/, enviar_revision_web.sh, registry test, .gitignore db+state orquestador); A3 filtro caracteres control en cleaner (+2 tests); A4 AGENTS.md.global v1.12 salida-vacia | 2026-08-15 | TERM | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-15 | APROBADA |
+
+**Nota de aceptación (v1.1 §9)**: Ramón (coordinador) aceptó explícitamente el lote sin
+revisión independiente el 2026-08-15 ("haz lo pendiente" tras el reporte que enumeraba la
+revisión diferida como pendiente). Queda constancia de que la revisión por el WEB sigue
+disponible si el coordinador la solicita; la evidencia objetiva (SHAs, tests, ruff) está
+registrada en los expedientes.
 
 **Evidencia verificable** (SHAs): `1c5d486b` (S1 web+cleaner), `51b2d3d3` (S2/S3/S4),
 `93b181e1` (expediente 011), `543edd98` (cierre DONE). Verificación sugerida:

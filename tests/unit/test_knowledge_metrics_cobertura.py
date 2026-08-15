@@ -55,6 +55,16 @@ class FakeConn:
         self.closed = True
 
 
+@pytest.fixture(autouse=True)
+def _reset_contadores() -> None:
+    """Resetea los contadores Prometheus globales antes de cada test.
+
+    Elimina la dependencia del orden de ejecución (flaky en suite completa:
+    otro test/handler puede incrementar los contadores antes de los asserts).
+    """
+    _reset_for_testing()
+
+
 class TestRecordCompile:
     def test_default(self) -> None:
         record_compile()
