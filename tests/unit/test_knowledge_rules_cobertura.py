@@ -19,6 +19,7 @@ import pytest
 from knowledge.engine.rules import (
     _ALLOWED_METHODS,
     _MAX_FUNCTION_CALLS,
+    Rule,
     UnsafeExpressionError,
     _eval_ast,
     _eval_method_call,
@@ -172,3 +173,18 @@ class TestEvalAstDefensive:
         node = ast.Call(func=ast.Name(id="evil", ctx=ast.Load()), args=[])
         with pytest.raises(UnsafeExpressionError, match="Función no permitida: evil"):
             _eval_ast(node, {})
+
+
+# ===================================================================
+# Grupo E — Protocol Rule: body no-op ejecutable
+# ===================================================================
+
+
+class TestRuleProtocolBody:
+    def test_protocol_evaluate_body_is_noop(self) -> None:
+        """El body `...` del Protocol Rule.evaluate es un no-op ejecutable.
+
+        Cubre la sentencia de la línea 537 (contrato documentado), que solo
+        se ejecuta si alguien invoca el método del Protocol directamente.
+        """
+        assert Rule.evaluate(object(), {}, {}) is None
