@@ -127,6 +127,8 @@
 | 2026-08-15 | scripts/pro/mutmut_daily.py:73 | Ignore obsoleto de tests/unit/test_guardian_openclaw.py (renombrado a test_guardian_acciones en c6d60c8c). CORREGIDO: entrada eliminada (TASK-20260815-007) | BAJA | corregido |
 | 2026-08-15 | tests/unit/test_web_*_cobertura.py (33 tests, lote web del WEB) | Tests alineados al comportamiento real (TASK-20260815-011): helpers con excepciones-instancia no lanzaban, lambda sin *args, split_sentences exige mayúscula, orden dedup→vacíos, etc. + bug produccion cleaner strip no persistido (ver fila ALTA arriba). 344+ passed lote web, suite cobertura 1582 passed. 2 INFO abiertos: caracteres restringidos no implementados y orden dedup→vacíos (fila propuesto arriba) | MEDIA (deuda de alineación) | corregido |
 
+| 2026-08-15 | tests/unit/test_knowledge_metrics_cobertura.py::TestRecordArchive::test_default (del WEB, TASK-20260815-003) | FLAKY en suite completa (suite 2026-08-15: 1 failed de 5267; aislado 1 passed 0.60s). ResourceWarning unclosed audit.ndjson (~/.ura/audit) — posible colision con otros tests que abren el archivo en paralelo/orden. No relacionado con TASK-012 (no toca metrics) | MEDIA | pendiente (hallazgo atribuible al WEB/lote cobertura) |
+
 ## Progreso
 
 | fecha | carpeta/módulo revisado | resultado |
