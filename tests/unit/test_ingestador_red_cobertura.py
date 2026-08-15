@@ -6,6 +6,7 @@ Complementa test_ingestador_red.py cubriendo las líneas restantes:
   - 225: guard `if __name__ == "__main__"` ejecutado via runpy (sin red real,
     subprocess.run mockeado para que tailscale_ssh no llegue a lanzar SSH).
 """
+
 from __future__ import annotations
 
 import runpy
