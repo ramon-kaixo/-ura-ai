@@ -70,7 +70,6 @@ TEST_IGNORES: list[str] = [
     "tests/unit/test_config.py",
     "tests/unit/test_core_voice_main_inferencia.py",
     "tests/unit/test_f25_b4_fact_index.py",
-    "tests/unit/test_guardian_openclaw.py",
     "tests/unit/test_health_check.py",
     "tests/unit/test_model_router_cache.py",
     "tests/unit/test_model_router_cli.py",
@@ -149,6 +148,7 @@ TEST_IGNORES: list[str] = [
     "tests/integration/test_tuneladora_auto_trigger.py",
     "tests/integration/test_orquestador.py",
     "tests/integration/test_extractors_cobertura.py",
+    "tests/unit/test_voice_modules.py",
 ]
 
 

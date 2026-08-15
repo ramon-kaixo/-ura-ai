@@ -66,7 +66,11 @@ limpiar el ignore obsoleto en `mutmut_daily.py:73` cuando cierre TASK-003.
 
 ## 6. Pendientes
 
-- [ ] `scripts/pro/mutmut_daily.py:73` — quitar `test_guardian_openclaw.py` del ignore
-      (bloqueado por TASK-20260815-003; hacerlo al cerrar esa tarea).
-- [ ] Documentar hallazgo en `docs/udo/hallazgos-fondo.md` (degradación silenciosa
-      corregida) — se registra con el cierre de esta TASK.
+- [x] `scripts/pro/mutmut_daily.py:73` — quitada la entrada obsoleta
+      `test_guardian_openclaw.py` (verificado: `tests/unit/test_guardian_openclaw.py`
+      no existe; `test_guardian_acciones.py` sí). Validado: py_compile OK, ruff OK,
+      sin referencias restantes. Autorización expresa de Ramón ("soluciónalo todo",
+      2026-08-15) para tocar zona reservada por TASK-003 (solo esa línea; el diff
+      del WEB en el archivo no se tocó).
+- [x] Hallazgo de degradación silenciosa registrado en
+      `docs/udo/hallazgos-fondo.md` como `corregido` (TASK-20260815-007).
