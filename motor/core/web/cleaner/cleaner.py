@@ -76,6 +76,7 @@ class DocumentCleaner:
             if not text or len(text.split()) < self._min_words:
                 stats.documents_removed_empty += 1
                 continue
+            doc.text = text
             cleaned.append(doc)
 
         return CleanedResult(documents=cleaned, stats=stats)
