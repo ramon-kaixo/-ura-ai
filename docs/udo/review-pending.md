@@ -213,3 +213,16 @@ Integrado por WEB/ASUS desde el log del run (`revision_lote_v3.log`, Mac) —
 futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 (`wip-20260813-termsync`, `untracked-20260812...`) quedan recuperables con
 `git stash pop`.
+
+---
+
+## Lote 2026-08-15 (ejecución TERM, cierre AUTO-REVISIÓN) — pendiente revisión
+
+| TASK | Descripción | Fecha cierre | Ejecutor | Estado revisión | Revisor | Fecha revisión | Veredicto |
+|------|-------------|--------------|----------|-----------------|---------|----------------|-----------|
+| TASK-20260815-011 | S1: 33 tests web_cobertura rotos arreglados (11 archivos + fix produccion cleaner.py doc.text=text); S2 auto-SINCRONIZAR ura-udo incluye expedientes ajenos; S3 correccion 6 jobs TASK-005; S4 bandit INFO interno | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+
+**Evidencia verificable** (SHAs): `1c5d486b` (S1 web+cleaner), `51b2d3d3` (S2/S3/S4),
+`93b181e1` (expediente 011), `543edd98` (cierre DONE). Verificación sugerida:
+`pytest tests/unit/test_web_*_cobertura.py tests/unit/test_config_manager_cobertura.py -q`
+(desde antes del cierre: 377+ passed lote web, suite `-k cobertura` 1582 passed, ruff 0 errores).
