@@ -56,7 +56,7 @@ class AnthropicProvider(BaseLLMProvider):
 
     def _headers(self) -> dict[str, str]:
         return {
-            "x-api-key": self._api_key,
+            "x-api-key": self._api_key or "",
             "anthropic-version": "2023-06-01",
             "Content-Type": "application/json",
         }

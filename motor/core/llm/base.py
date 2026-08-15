@@ -212,8 +212,8 @@ def _validar_comportamiento(instance: BaseLLMProvider, errors: list[str]) -> Non
         errors.append(f"generate('test') lanzó excepción: {e}")
 
     try:
-        result = instance.embed(["test"])
-        if not isinstance(result, list):
+        embed_result = instance.embed(["test"])
+        if not isinstance(embed_result, list):
             errors.append("embed() no retorna list")
     except Exception as e:
         errors.append(f"embed(['test']) lanzó excepción: {e}")

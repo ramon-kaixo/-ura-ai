@@ -152,6 +152,11 @@ security:
 	@XDG_CACHE_HOME=/tmp/opencode/xdg-cache SEMGREP_SETTINGS_FILE=/tmp/opencode/semgrep-settings.yml SEMGREP_LOG_FILE=/tmp/opencode/semgrep.log .venv/bin/semgrep --config=.semgrep.yml --quiet core/ motor/ knowledge/
 	@echo "✅ ADUANA LOCAL OK (0 hallazgos)"
 
+
+# === BANDIT SAST (paridad hook pre-commit, informativo) ===
+security-bandit:
+	@echo "▶ bandit (SAST motor/, skips B404/B603/B110 - 0 shell=True verificado, except:pass auditado)..."
+	@-$(PYTHON) -m bandit -q -x "*/tests/*" --skip B311,B108,B101,B404,B603,B110 -r motor/ || echo "  bandit: hallazgos (revisar) o no instalado"
 # === CÓDIGO HUÉRFANO (plan 4.1: vulture, informativo) ===
 dead-code:
 	@echo "▶ vulture (código muerto, min-confidence 70)..."
