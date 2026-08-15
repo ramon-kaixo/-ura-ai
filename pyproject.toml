@@ -132,7 +132,7 @@ auto-trigger-strict = true
 
 [tool.mutmut]
 source_paths = ["motor/core/", "motor/intelligence/", "core/", "knowledge/"]
-also_copy = ["motor/tests/"]
+also_copy = ["motor/tests/", "config/"]
 pytest_add_cli_args = [
     "--ignore=tests/contracts/test_llm_contract.py",
     "--ignore=tests/infra/test_ci_cd.py",
