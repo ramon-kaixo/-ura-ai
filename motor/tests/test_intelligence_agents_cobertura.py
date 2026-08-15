@@ -310,6 +310,10 @@ class TestConsensus:
         res = MajorityVoting().aggregate([])
         assert not res.success
         assert res.total_votes == 0
+        assert res.votes == []
+        assert res.vote_counts == {}
+        assert res.outcome == {}
+        assert res.strategy == "majority"
 
     def test_majority_single_winner(self) -> None:
         results = [
@@ -321,6 +325,9 @@ class TestConsensus:
         assert res.success
         assert res.outcome == {"ans": "a"}
         assert res.vote_counts == {"[('ans', 'a')]": 2, "[('ans', 'b')]": 1}
+        assert res.votes == results
+        assert res.total_votes == 3
+        assert res.strategy == "majority"
 
     def test_majority_tie(self) -> None:
         results = [_result(output={"ans": "a"}), _result(output={"ans": "b"})]
@@ -328,33 +335,51 @@ class TestConsensus:
         assert not res.success
         assert res.outcome["_tie"] is True
         assert set(res.outcome["_tied_keys"]) == {"[('ans', 'a')]", "[('ans', 'b')]"}
+        assert res.outcome["ans"] == "a"  # tie_key = winners[0]
+        assert res.votes == results
+        assert res.total_votes == 2
+        assert res.strategy == "majority"
 
     def test_majority_error_keys(self) -> None:
         results = [_result(success=False, output={}, error="e1"), _result(success=False, output={}, error="e2")]
         res = MajorityVoting().aggregate(results)
         assert not res.success
         assert set(res.vote_counts) == {"error:e1", "error:e2"}
+        assert res.votes == results
+        assert res.total_votes == 2
 
     def test_unanimous_empty(self) -> None:
         res = UnanimousVoting().aggregate([])
         assert not res.success
+        assert res.votes == []
+        assert res.vote_counts == {}
+        assert res.outcome == {}
+        assert res.strategy == "unanimous"
 
     def test_unanimous_single(self) -> None:
         res = UnanimousVoting().aggregate([_result(output={"v": 1})])
         assert res.success
         assert res.outcome == {"v": 1}
+        assert res.vote_counts == {"[('v', 1)]": 1}
+        assert res.strategy == "unanimous"
 
     def test_unanimous_all_agree(self) -> None:
         results = [_result(output={"v": 1}), _result(output={"v": 1}), _result(output={"v": 1})]
         res = UnanimousVoting().aggregate(results)
         assert res.success
         assert res.vote_counts == {"[('v', 1)]": 3}
+        assert res.votes == results
+        assert res.total_votes == 3
+        assert res.strategy == "unanimous"
 
     def test_unanimous_disagree(self) -> None:
         results = [_result(output={"v": 1}), _result(output={"v": 2})]
         res = UnanimousVoting().aggregate(results)
         assert not res.success
         assert res.outcome["_unanimous_failed"] is True
+        assert res.vote_counts == {"[('v', 1)]": 1, "[('v', 2)]": 1}
+        assert res.votes == results
+        assert res.strategy == "unanimous"
 
     def test_vote_summary(self) -> None:
         res = MajorityVoting().aggregate([_result(output={"v": 1})])
@@ -405,6 +430,12 @@ class TestConsensus:
         res = WeightedConsensus().aggregate([])
         assert not res.success
         assert res.weighted is True
+        assert res.votes == []
+        assert res.vote_counts == {}
+        assert res.outcome == {}
+        assert res.total_votes == 0
+        assert res.strategy == "weighted"
+        assert res.weight_details is None  # _vacio() no lo setea
 
     def test_weighted_winner(self) -> None:
         results = [_result(output={"w": 1}), _result(output={"w": 1})]
@@ -412,12 +443,23 @@ class TestConsensus:
         assert res.success
         assert res.outcome == {"w": 1}
         assert res.weight_details
+        assert res.votes == results
+        assert res.total_votes == 2
+        assert res.strategy == "weighted"
+        assert res.weighted is True
+        assert res.vote_counts == {"[('w', 1)]": 2.0}
 
     def test_weighted_tie(self) -> None:
         results = [_result(output={"w": 1}), _result(output={"w": 2})]
         res = WeightedConsensus().aggregate(results)
         assert not res.success
         assert res.outcome["_tie"] is True
+        assert set(res.outcome["_tied_keys"]) == {"[('w', 1)]", "[('w', 2)]"}
+        assert res.votes == results
+        assert res.total_votes == 2
+        assert res.weighted is True
+        assert res.weight_details
+        assert res.vote_counts == {"[('w', 1)]": 1.0, "[('w', 2)]": 1.0}
 
     def test_weighted_registry(self) -> None:
         reg = AgentWeightRegistry()

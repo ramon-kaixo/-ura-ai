@@ -830,10 +830,66 @@ class TestRuleBasedFactExtractor:
         facts = r.extract(ep)
         assert facts
         f = facts[0]
-        assert f.subject and f.predicate and f.object_value
+        assert f.subject == "sistema"
+        assert f.predicate == "servidor"
+        assert f.object_value == "rapido"
+        assert f.fact_type == "attribute"
         assert f.source_episode_ids == [ep.id]
         assert f.metadata["session_id"] == "s1"
         assert f.confidence == pytest.approx(0.45)
+        assert f.importance == 0.5
+        assert f.tags == []
+        assert f.key == "sistema|servidor|rapido"
+
+    def test_patron_relation(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="El robot tiene dos brazos"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "relation"
+        assert f.predicate == "tiene"
+        assert f.object_value == "dos brazos"
+
+    def test_patron_event(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="la puerta se abrio lentamente"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "event"
+        assert f.predicate == "abrio"
+
+    def test_patron_error(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="Error: conexion perdida"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "error"
+        assert f.object_value == "conexion perdida"
+
+    def test_patron_statement(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="El sistema dice que todo ok"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "statement"
+        assert f.object_value == "todo ok"
+
+    def test_patron_config(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="Configuracion puerto = 8080"))
+        assert facts
+        assert facts[0].fact_type == "attribute"
+        assert facts[0].object_value == "8080"
+
+    def test_patron_make_fact_con_error(self) -> None:
+        r = RuleBasedFactExtractor()
+        ep = _episode(payload="Error: algo", tags=["t1"], importance=0.8)
+        facts = r.extract(ep)
+        assert facts
+        f = facts[0]
+        assert f.tags == ["t1"]
+        assert f.importance == 0.8
+        assert f.metadata["session_id"] == "s1"
 
     def test_multiples_patrones(self) -> None:
         r = RuleBasedFactExtractor()
