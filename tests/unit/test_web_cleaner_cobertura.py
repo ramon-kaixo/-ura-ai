@@ -112,6 +112,17 @@ class TestDocumentCleaner:
         assert len(result.documents) == 1
         assert result.documents[0].text == "hola   mundo  prueba  texto"
 
+    def test_elimina_caracteres_restringidos(self) -> None:
+        docs = [_doc("https://example.com/a", text="hola \x00mundo \x1fprueba  \x07texto extra")]
+        result = DocumentCleaner().clean(docs)
+        assert len(result.documents) == 1
+        assert result.documents[0].text == "hola mundo prueba  texto extra"
+
+    def test_preserva_tabs_y_saltos_de_linea(self) -> None:
+        docs = [_doc("https://example.com/a", text="linea1\nlinea2\tcolumna")]
+        result = DocumentCleaner().clean(docs)
+        assert result.documents[0].text == "linea1\nlinea2\tcolumna"
+
     def test_min_words_por_defecto_es_tres(self) -> None:
         docs = [_doc("https://example.com/a", text="tres palabras aquí")]
         result = DocumentCleaner().clean(docs)
