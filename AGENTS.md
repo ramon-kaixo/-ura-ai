@@ -27,6 +27,11 @@ cierra siempre con un reporte final en 3 bloques, aunque el usuario no lo pida:
 3. **SUGERENCIAS** — propuestas concretas de siguiente paso o mejora (trabajo nuevo,
    correcciones, decisiones que necesita el humano), priorizadas por impacto. No esperar a
    que el usuario pregunte "¿y ahora qué?".
+   **"Sugerencias" = "mejoras" (petición RAMON 2026-08-15)**: una sugerencia no es solo un
+   paso; incluye también mejoras del proceso, la herramienta o la metodología. El agente NO
+   las va soltando una a una: analiza TODAS las detectadas y las presenta en CONJUNTO
+   (listado único, priorizado), para que el humano decida de una vez. Solo tras la decisión
+   se ejecutan (y cada una con su TASK UDO y análisis de impacto).
 
 Además, el agente debe ser **proactivo**: al detectar un problema o mejora durante cualquier
 trabajo, proponerla en el momento (clasificar: OBLIGATORIO/NECESARIO/MEJORA) en lugar de
