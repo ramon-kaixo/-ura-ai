@@ -73,6 +73,7 @@ class FakeNativeClient:
         self.points: list[SimpleNamespace] = []
         self.scroll_calls = 0
         self.health_ok = True
+        self.recreate_kwargs: list[dict[str, Any]] = []
 
     def get_collections(self) -> None:
         if not self._collections_ok:
@@ -84,6 +85,7 @@ class FakeNativeClient:
 
     def recreate_collection(self, **kw: Any) -> None:
         self._existentes.add(kw.get("collection_name", ""))
+        self.recreate_kwargs.append(kw)
 
     def upsert(self, collection_name: str, points: list[Any]) -> None:
         self.upserted.append((collection_name, points))
@@ -157,6 +159,21 @@ class TestConexionNativa:
         assert COLECCION_INCIDENTES in native._existentes
         assert COLECCION_DOCUMENTOS in native._existentes
         assert COLECCION_TRANSACCIONES in native._existentes
+        recreadas = {kw["collection_name"]: kw for kw in native.recreate_kwargs}
+        assert set(recreadas) == {
+            COLECCION_INCIDENTES,
+            COLECCION_DOCUMENTOS,
+            COLECCION_TRANSACCIONES,
+        }
+        inc = recreadas[COLECCION_INCIDENTES]["vectors_config"]
+        assert inc.size == VECTOR_SIZE
+        assert inc.distance == "Cosine"
+        doc = recreadas[COLECCION_DOCUMENTOS]["vectors_config"]
+        assert doc.size == VECTOR_SIZE_EMBEDDING
+        assert doc.distance == "Cosine"
+        tra = recreadas[COLECCION_TRANSACCIONES]["vectors_config"]
+        assert tra.size == VECTOR_SIZE_EMBEDDING
+        assert tra.distance == "Cosine"
 
     def test_nativo_falla_rest_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient(collections_ok=False)
@@ -165,7 +182,7 @@ class TestConexionNativa:
 
         def fake_get(url: str, timeout: float = 3) -> SimpleNamespace:
             llamadas.append((url, None))
-            if "/collections" in url and "points" not in url:
+            if url.endswith("/collections") and "points" not in url:
                 return SimpleNamespace(status_code=200)
             return SimpleNamespace(status_code=404)
 
@@ -180,6 +197,17 @@ class TestConexionNativa:
         assert c._modo_rest is True
         assert c._cliente is None
         assert len(llamadas) >= 4  # check colecciones + puts
+        puts = {url: json for url, json in llamadas if json is not None}
+        assert len(puts) == 3
+        for url, json in puts.items():
+            assert json["on_disk_payload"] is True
+            assert json["vectors"]["distance"] == "Cosine"
+        inc_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_INCIDENTES}"
+        doc_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_DOCUMENTOS}"
+        tra_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_TRANSACCIONES}"
+        assert puts[inc_url]["vectors"]["size"] == VECTOR_SIZE
+        assert puts[doc_url]["vectors"]["size"] == VECTOR_SIZE_EMBEDDING
+        assert puts[tra_url]["vectors"]["size"] == VECTOR_SIZE_EMBEDDING
 
     def test_ambas_fallan(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient(collections_ok=False)
