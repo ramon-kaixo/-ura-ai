@@ -151,6 +151,7 @@ class TestConexionNativa:
         assert c.disponible is True
         assert c._modo_rest is False
         assert c._cliente is native
+        assert c.embedding_semaphore._value == 1
 
     def test_conecta_nativo_crea_colecciones(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
@@ -199,9 +200,9 @@ class TestConexionNativa:
         assert len(llamadas) >= 4  # check colecciones + puts
         puts = {url: json for url, json in llamadas if json is not None}
         assert len(puts) == 3
-        for url, json in puts.items():
-            assert json["on_disk_payload"] is True
-            assert json["vectors"]["distance"] == "Cosine"
+        for json_body in puts.values():
+            assert json_body["on_disk_payload"] is True
+            assert json_body["vectors"]["distance"] == "Cosine"
         inc_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_INCIDENTES}"
         doc_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_DOCUMENTOS}"
         tra_url = f"http://{_config().qdrant_host}:{_config().qdrant_port}/collections/{COLECCION_TRANSACCIONES}"
@@ -480,10 +481,17 @@ class TestEliminarHealthIncidentes:
         native = FakeNativeClient(collections_ok=False)
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
-        monkeypatch.setattr(httpx, "put", lambda *a, **k: SimpleNamespace(status_code=201))
+        puts: list[dict] = []
+        monkeypatch.setattr(httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1])
         monkeypatch.setattr(httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200))
         c = QdrantClient(_config())
         assert c.guardar_incidente({"ts": "x"}) is True
+        assert len(puts) == 1
+        point = puts[0]["points"][0]
+        assert point["vector"] == [0.0] * VECTOR_SIZE
+        assert point["payload"]["timestamp_inicio"] == "x"
+        assert point["payload"]["schema_version"] == "3.1"
+        assert point["payload"]["origin_node"] == "ASUS"
 
     def test_guardar_incidente_rest_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient(collections_ok=False)
@@ -502,6 +510,11 @@ class TestEliminarHealthIncidentes:
         assert p["hw_ok"] is False
         assert p["exit_code"] == 3
         assert p["origin_node"] == "ASUS"
+        assert p["segfault"] is False
+        assert p["oom_killed"] is False
+        assert p["timestamp_resolucion"] == ""
+        assert p["subtipo"] == ""
+        assert p["resumen"] == ""
         p2 = c._build_payload({})
         assert p2["timestamp_inicio"]  # usa datetime.now
 
@@ -558,6 +571,34 @@ class TestEliminarHealthIncidentes:
         c1 = QdrantClient.instancia(_config())
         c2 = QdrantClient.instancia(_config())
         assert c1 is c2
+        assert isinstance(c1, QdrantClient)
+        assert c1.config.qdrant_host == "127.0.0.1"
+        assert c1.disponible is True
+        QdrantClient._instancia = None
+
+    def test_instancia_singleton_concurrencia(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Dos threads llaman a la vez: solo se crea una instancia (lock + doble uso)."""
+        import threading
+
+        native = FakeNativeClient()
+        _instalar_qdrant_fake(monkeypatch, native)
+        QdrantClient._instancia = None
+        resultados: list[QdrantClient] = []
+        barrier = threading.Barrier(2)
+
+        def worker() -> None:
+            barrier.wait()
+            resultados.append(QdrantClient.instancia(_config()))
+
+        t1 = threading.Thread(target=worker)
+        t2 = threading.Thread(target=worker)
+        t1.start()
+        t2.start()
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+        assert len(resultados) == 2
+        assert resultados[0] is resultados[1]
+        assert isinstance(resultados[0], QdrantClient)
         QdrantClient._instancia = None
 
 
@@ -579,29 +620,41 @@ class TestEmbeddings:
     def test_generar_embedding_async_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
+        recibidos: list[str] = []
+
         async def fake_embed_async(texts, model=None):
+            recibidos.append(texts)
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
         c = QdrantClient(_config())
         out = asyncio.run(c.generar_embedding_async("t"))
         assert out[0] == 0.5
+        assert recibidos == [["t"]]
+        assert c.embedding_semaphore._value == 1
 
     def test_generar_embedding_sync(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
+        recibidos: list[str] = []
+
         async def fake_embed_async(texts, model=None):
+            recibidos.append(texts)
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
         c = QdrantClient(_config())
         out = c.generar_embedding("t")
         assert out[0] == 0.5
+        assert recibidos == [["t"]]
 
     def test_generar_embedding_sync_en_loop(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
+        recibidos: list[str] = []
+
         async def fake_embed_async(texts, model=None):
+            recibidos.append(texts)
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
@@ -612,6 +665,7 @@ class TestEmbeddings:
 
         out = asyncio.run(main())
         assert out[0] == 0.5
+        assert recibidos == [["t"]]
 
     def test_generar_embeddings_batch(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
