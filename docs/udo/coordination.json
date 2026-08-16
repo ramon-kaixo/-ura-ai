@@ -2,7 +2,8 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260816-010"
     ],
     "en_progreso": [],
     "en_revision": [
@@ -82,6 +83,15 @@
       "prioridad": "baja",
       "veredicto": "",
       "nota": "Fase futura: depende de TASK-008 aprobada y de decisión sobre autonomía plena."
+    },
+    "TASK-20260816-010": {
+      "descripcion": "Panel de semáforos + modo análisis de planes",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "veredicto": "",
+      "nota": "Creada y en cola pendientes (2026-08-16T22:21). Se asignará vía dispatcher cuando TASK-008 esté aprobada y fusionada."
     }
   }
 }
