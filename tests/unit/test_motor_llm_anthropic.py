@@ -111,6 +111,29 @@ class TestGenerate:
         assert payload["temperature"] == 0.9
         assert payload["max_tokens"] == 512
         assert post.call_args.kwargs["headers"]["x-api-key"] == "secret-val"
+        assert post.call_args.kwargs["timeout"] == 60
+
+    def test_success_strip_y_usage(self, provider, anthropic_mod) -> None:
+        """Respuesta con espacios se trima; log_call recibe usage tokens."""
+        with (
+            mock.patch.object(anthropic_mod, "log_call") as log_mock,
+            mock.patch.object(
+                anthropic_mod.httpx, "post", return_value=self._response([{"type": "text", "text": "  x  "}])
+            ),
+        ):
+            result = provider.generate("p")
+        assert result == "x"
+        assert log_mock.call_args.kwargs["input_tokens"] == 10
+        assert log_mock.call_args.kwargs["output_tokens"] == 5
+
+    def test_options_custom(self, provider, anthropic_mod) -> None:
+        """Options custom respetan temperature custom y default max_tokens."""
+        with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response()) as post:
+            provider.generate("p", options={"temperature": 0.1, "extra": 1})
+        payload = post.call_args.kwargs["json"]
+        assert payload["temperature"] == 0.1
+        assert payload["max_tokens"] == 512
+        assert payload["extra"] == 1
 
     def test_concatenates_text_blocks(self, provider, anthropic_mod) -> None:
         blocks = [{"type": "text", "text": "hola "}, {"type": "text", "text": "mundo"}]
@@ -180,6 +203,9 @@ class TestHealth:
         assert result["modelos_disponibles"] == ["claude-sonnet", "claude-opus"]
         assert mget.call_args[0][0] == "https://example.com/v1/models"
         assert mget.call_args.kwargs["headers"]["anthropic-version"] == "2023-06-01"
+        assert result["provider"] == "anthropic"
+        assert result["latency_ms"] >= 0
+        assert mget.call_args.kwargs["timeout"] == 5
 
     def test_http_error(self, provider, anthropic_mod) -> None:
         r = mock.Mock()
