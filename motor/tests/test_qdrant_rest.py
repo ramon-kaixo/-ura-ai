@@ -48,6 +48,23 @@ def test_guardar_rest_exitoso():
         url = mock_put.call_args[0][0]
         assert "127.0.0.1:6333" in url
         assert "incidentes" in url
+        body = mock_put.call_args[1]["json"]
+        point = body["points"][0]
+        assert point["payload"]["tipo_incidencia"] == "test"
+        assert point["vector"] == [0.1, 0.2, 0.3]
+        assert isinstance(point["id"], int)
+        assert point["id"] >= 0
+        assert mock_put.call_args[1]["timeout"] == 5
+
+
+def test_guardar_rest_excepcion():
+    config = MockConfig()
+
+    def build_payload(d):
+        return {"timestamp_inicio": "", "impacto_memoria": [0.0] * 7, "tipo_incidencia": "test"}
+
+    with patch("motor.core.qdrant_rest.httpx.put", side_effect=Exception("net")):
+        assert qdrant_rest.guardar_rest(config, {}, build_payload) is False
 
 
 def test_guardar_rest_fallo():
@@ -71,17 +88,41 @@ def test_guardar_documentos_rest():
         assert result == 1
         mock_put.assert_called_once()
         assert "test_collection" in mock_put.call_args[0][0]
+        assert mock_put.call_args[1]["json"] == {"points": puntos}
+        assert mock_put.call_args[1]["timeout"] == 10
+
+
+def test_guardar_documentos_rest_500():
+    config = MockConfig()
+    puntos = [{"id": 1, "vector": [0.1], "payload": {}}]
+    with patch("motor.core.qdrant_rest.httpx.put", return_value=MockResponse(500)):
+        assert qdrant_rest.guardar_documentos_rest(config, puntos, "c") == 0
+
+
+def test_guardar_documentos_rest_excepcion():
+    config = MockConfig()
+    with patch("motor.core.qdrant_rest.httpx.put", side_effect=Exception("net")):
+        assert qdrant_rest.guardar_documentos_rest(config, [{"id": 1}], "c") == 0
 
 
 def test_buscar_similitud_rest():
     config = MockConfig()
     mock_json = {"result": [{"payload": {"text": "test"}, "score": 0.95}]}
 
-    with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(200, mock_json)):
+    with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(200, mock_json)) as mock_post:
         results = qdrant_rest.buscar_similitud_rest(config, [0.1, 0.2], "docs", 5)
         assert len(results) == 1
         assert results[0]["score"] == 0.95
         assert results[0]["payload"]["text"] == "test"
+        assert mock_post.call_args[1]["json"] == {"vector": [0.1, 0.2], "limit": 5}
+        assert "docs" in mock_post.call_args[0][0]
+        assert mock_post.call_args[1]["timeout"] == 5
+
+
+def test_buscar_similitud_rest_excepcion():
+    config = MockConfig()
+    with patch("motor.core.qdrant_rest.httpx.post", side_effect=Exception("net")):
+        assert qdrant_rest.buscar_similitud_rest(config, [0.1], "docs", 5) == []
 
 
 def test_buscar_similitud_rest_vacio():
@@ -101,6 +142,14 @@ def test_eliminar_por_filtro_rest():
         mock_post.assert_called_once()
         body = mock_post.call_args[1]["json"]
         assert body["filter"]["must"][0]["key"] == "source"
+        assert body["filter"]["must"][0]["match"] == {"value": "test"}
+        assert mock_post.call_args[1]["timeout"] == 5
+
+
+def test_eliminar_por_filtro_rest_excepcion():
+    config = MockConfig()
+    with patch("motor.core.qdrant_rest.httpx.post", side_effect=Exception("net")):
+        assert qdrant_rest.eliminar_por_filtro_rest(config, {"a": 1}, "docs") is False
 
 
 def test_eliminar_por_filtro_rest_fallo():
