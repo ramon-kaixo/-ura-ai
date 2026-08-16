@@ -923,6 +923,9 @@ class TestSupervisorAgent:
         res = SupervisorAgent().run(task)
         assert not res.success
         assert res.output["steps"][0]["status"] == "cancelled"
+        assert res.output["steps"][0]["reason"] == "workflow_cancelled"
+        assert res.output["steps"][0]["step"] == "x"
+        assert res.output["total_steps"] == 1
 
     def test_no_agent_skipped(self) -> None:
         task = _task(role=AgentRole.SUPERVISOR)
@@ -946,6 +949,33 @@ class TestSupervisorAgent:
         assert res.success
         assert res.output["steps"][0]["status"] == "completed"
         assert res.output["steps"][0]["attempt"] == 1
+        assert res.output["steps"][0]["agent"] == "a1"
+        assert res.output["steps"][0]["step"] == "hazlo"
+        assert res.output["overall_success"] is True
+
+    def test_subtask_success_segundo_intento(self) -> None:
+        """Primer intento falla, segundo funciona → completed attempt=2, 2 steps."""
+        state = {"runs": 0}
+
+        def flaky(task: AgentTask) -> AgentResult:
+            state["runs"] += 1
+            if state["runs"] == 1:
+                return _result(success=False, error="intento1")
+            return _result(success=True)
+
+        sup = SupervisorAgent()
+        stub = _StubAgent("a1", AgentRole.EXECUTOR)
+        stub.run = flaky  # type: ignore[method-assign]
+        sup.register_agent(stub)
+        task = _task(role=AgentRole.SUPERVISOR)
+        task.context = {"subtasks": [{"objective": "hazlo", "agent_role": AgentRole.EXECUTOR}]}
+        res = sup.run(task)
+        assert not res.success  # overall_success exige TODOS completed; hay un failed en el historial
+        assert len(res.output["steps"]) == 2
+        assert res.output["steps"][0]["status"] == "failed"
+        assert res.output["steps"][0]["error"] == "intento1"
+        assert res.output["steps"][1]["status"] == "completed"
+        assert res.output["steps"][1]["attempt"] == 2
 
     def test_subtask_failure_retries(self) -> None:
         sup = SupervisorAgent()
