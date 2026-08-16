@@ -1,49 +1,44 @@
 {
-  "version": "1.0",
-  "creado": "2026-08-16",
-  "reglas_roles": {
-    "tarea_codigo": {"ejecutor_preferente": "TERM", "revisor": "WEB"},
-    "tarea_revision_analisis": {"ejecutor_preferente": "WEB", "revisor": "TERM"},
-    "alternancia": "Alternar roles entre tareas para repartir trabajo; si un agente está ocupado con una TASK activa, el preferente se mantiene y la alternancia se compensa en la siguiente tarea.",
-    "gates": ["ruff check .", "mypy --no-incremental core motor shared", "pytest -q --tb=short"],
-    "commit_formato": "[TASK-XXXX][ROL] descripcion",
-    "estados": ["propuesta", "en_curso", "en_revision", "aprobado", "cambios_solicitados"],
-    "cierre": "Nunca cerrar una TASK sin aprobación del revisor."
+  "modo": "paralelo",
+  "colas": {
+    "pendientes": ["TASK-20260816-005"],
+    "en_progreso": [],
+    "en_revision": ["TASK-20260816-004", "TASK-20260816-007"],
+    "aprobadas": [],
+    "bloqueadas": ["TASK-20260816-003"]
   },
-  "tareas_activas": [
-    {
-      "task_id": "TASK-20260816-003",
+  "tareas": {
+    "TASK-20260816-003": {
       "descripcion": "Fase 0 (urgente) — limpiar conflictos git y rotar token expuesto",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_curso",
+      "estado": "bloqueada",
+      "prioridad": "alta",
       "nota": "Hotfix y guardarrail hechos; rotación del token pendiente del humano (rootfs RO, sudo)."
     },
-    {
-      "task_id": "TASK-20260816-004",
+    "TASK-20260816-004": {
       "descripcion": "Fase 1 — romper dependencia circular core↔motor",
       "ejecutor": "TERM",
       "revisor": "WEB",
       "estado": "en_revision",
+      "prioridad": "alta",
       "nota": "Auto-revisión TERM APROBADO (no independiente). Pendiente aprobación del humano o revisión WEB. Commits: ee7910ca, 1a84d31e."
     },
-    {
-      "task_id": "TASK-20260816-007",
-      "descripcion": "Implementar protocolo de coordinación ejecutor-revisor (coordination.json + sección AGENTS.md)",
-      "ejecutor": "TERM",
-      "revisor": "WEB",
-      "estado": "en_revision",
-      "nota": "Commit 6981b987 en rama ia/TASK-20260816-007. Diff listo para revisión WEB."
-    }
-  ],
-  "tareas_pendientes": [
-    {
-      "task_id": "TASK-20260816-005",
+    "TASK-20260816-005": {
       "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "propuesta",
-      "razon_asignacion": "Tarea de código → ejecutor TERM. WEB ocupado con TASK-20260815-003 (cobertura, IN_PROGRESS); alternancia se compensará en la siguiente tarea."
+      "estado": "pendiente",
+      "prioridad": "media",
+      "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea."
+    },
+    "TASK-20260816-007": {
+      "descripcion": "Protocolo de coordinación ejecutor-revisor con colas de trabajo y modos secuencial/paralelo",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "en_revision",
+      "prioridad": "alta",
+      "nota": "Commits en rama ia/TASK-20260816-007. Diff listo para revisión TERM."
     }
-  ]
+  }
 }
