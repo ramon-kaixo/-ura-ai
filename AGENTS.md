@@ -640,3 +640,11 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
    - Añade una entrada en el historial de la tarea/plan analizado.
    - Guarda el veredicto en el campo "veredicto".
 4. El modo análisis no reemplaza el protocolo ejecutor-revisor; es una fase previa de validación de propuestas.
+
+## Despertador del auto-dispatcher (TASK-20260816-009)
+
+1. El despertador (scripts/pro/despertador.sh) es solo lector/dispatcher.
+2. No ejecuta codigo ni tareas por si mismo; solo invoca scripts/pro/dispatcher.py.
+3. No asigna si hay conflicto de ramas o archivos: dispatcher.py ya verifica zonas conflictivas y usa flock.
+4. Se lanza via systemd (deploy/ura-despertador.timer) o cron (scripts/pro/crontab_despertador.txt) cada 5 minutos.
+5. Registra la ultima ejecucion en docs/udo/coordination.json (ultima_ejecucion_despertador).
