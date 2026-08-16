@@ -12,14 +12,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 COORD = ROOT / "docs" / "udo" / "coordination.json"
 
 
 def _load_coord() -> dict[str, Any]:
-    with open(COORD, encoding="utf-8") as f:
+    with COORD.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -56,9 +54,7 @@ def test_tareas_en_revision_tienen_evidencia() -> None:
     datos = _load_coord()
     for tid in datos["colas"].get("en_revision", []):
         tarea = datos["tareas"][tid]
-        assert tarea.get("veredicto") or tarea.get("nota"), (
-            f"{tid} en_revision sin veredicto ni nota"
-        )
+        assert tarea.get("veredicto") or tarea.get("nota"), f"{tid} en_revision sin veredicto ni nota"
 
 
 def test_agentes_tienen_estado_y_rol() -> None:

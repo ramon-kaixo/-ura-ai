@@ -56,7 +56,7 @@ def generar_tabla(datos: dict) -> str:
     lineas = [
         "# Panel de salud de planes y tareas",
         "",
-        f"_Generado automáticamente el {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} por `scripts/pro/panel.py`._",
+        f"_Generado automáticamente el {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} por `scripts/pro/panel.py`._",  # noqa: UP017
         "",
         "| Plan/Task | Descripción | Estado | Prioridad | Responsable | Revisor | Últimos gates | Cobertura | Seguridad | Decisión pendiente |",
         "|-----------|-------------|--------|-----------|-------------|---------|---------------|-----------|-----------|--------------------|",
@@ -79,33 +79,35 @@ def generar_tabla(datos: dict) -> str:
             f"{_gate_resumen(t)} | {cobertura} | {seguridad} | {decision} |"
         )
 
-    lineas.extend([
-        "",
-        "## Leyenda",
-        "",
-        "- 🟢 Terminado / Aprobado",
-        "- 🟡 En progreso / En revisión / Cambios solicitados",
-        "- 🔴 Bloqueado",
-        "- ⚪ Pendiente / Sin asignar",
-        "",
-        "## Agentes",
-        "",
-        "| Agente | Estado | Rol actual |",
-        "|--------|--------|------------|",
-    ])
+    lineas.extend(
+        [
+            "",
+            "## Leyenda",
+            "",
+            "- 🟢 Terminado / Aprobado",
+            "- 🟡 En progreso / En revisión / Cambios solicitados",
+            "- 🔴 Bloqueado",
+            "- ⚪ Pendiente / Sin asignar",
+            "",
+            "## Agentes",
+            "",
+            "| Agente | Estado | Rol actual |",
+            "|--------|--------|------------|",
+        ]
+    )
 
     for agente, info in datos.get("agentes", {}).items():
-        lineas.append(
-            f"| {agente} | {info.get('estado', 'desconocido')} | {info.get('rol_actual') or '—'} |"
-        )
+        lineas.append(f"| {agente} | {info.get('estado', 'desconocido')} | {info.get('rol_actual') or '—'} |")
 
-    lineas.extend([
-        "",
-        "## Modo de operación",
-        "",
-        f"`{datos.get('modo', 'secuencial')}`",
-        "",
-    ])
+    lineas.extend(
+        [
+            "",
+            "## Modo de operación",
+            "",
+            f"`{datos.get('modo', 'secuencial')}`",
+            "",
+        ]
+    )
 
     return "\n".join(lineas) + "\n"
 
@@ -117,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        with open(args.coord, encoding="utf-8") as f:
+        with args.coord.open(encoding="utf-8") as f:
             datos = json.load(f)
     except (OSError, ValueError) as e:
         print(f"ERROR: no se pudo leer {args.coord}: {e}", file=sys.stderr)
