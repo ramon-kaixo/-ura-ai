@@ -27,6 +27,9 @@ def test_store_and_search():
     results = mem.search("cielo", k=5)
     assert len(results) == 1
     assert results[0].payload == "El cielo es azul"
+    assert results[0].type == MemoryType.SEMANTIC
+    assert results[0].metadata.get("source") == "test"  # se enriquece con created_at/last_access
+    assert results[0].id == rid
 
 
 def test_search_no_results():
@@ -44,18 +47,22 @@ def test_search_with_type_filter():
     working = mem.search("memory", k=10, memory_type=MemoryType.WORKING)
     assert len(working) == 1
     assert working[0].payload == "working memory"
+    assert working[0].type == MemoryType.WORKING
 
     semantic = mem.search("memory", k=10, memory_type=MemoryType.SEMANTIC)
     assert len(semantic) == 1
     assert semantic[0].payload == "semantic memory"
+    assert semantic[0].type == MemoryType.SEMANTIC
 
 
 def test_get_by_id():
     mem = HybridMemory(db_path=":memory:")
-    rid = mem.store(payload="get me")
+    rid = mem.store(payload="get me", metadata={"k": "v"})
     recovered = mem.get(rid)
     assert recovered is not None
     assert recovered.payload == "get me"
+    assert recovered.metadata.get("k") == "v"  # se enriquece con created_at/last_access
+    assert recovered.id == rid
 
 
 def test_get_nonexistent():
@@ -69,6 +76,8 @@ def test_delete():
     assert mem.count() == 1
     assert mem.delete(rid)
     assert mem.count() == 0
+    assert mem.delete(rid) is False  # rowcount 0
+    assert mem.search("to delete", k=5) == []  # tambien borrado de FTS
 
 
 def test_count():
