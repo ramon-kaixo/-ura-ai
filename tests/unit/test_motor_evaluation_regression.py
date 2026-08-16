@@ -40,6 +40,32 @@ class TestRegressionFinding:
         d = f.to_dict()
         assert d["config"] == "cfg"
         assert "cfg" in repr(f)
+        assert d == {
+            "config": "cfg",
+            "metric": "recall",
+            "baseline": 0.8,
+            "current": 0.6,
+            "change_pct": -25.0,
+            "threshold_pct": -5.0,
+            "direction": "down",
+            "is_regression": True,
+        }
+        assert "🔴" in repr(f)
+
+    def test_redondeo_valores(self) -> None:
+        f = RegressionFinding("c", "mrr", 0.81234, 0.60678, -0.05)
+        assert f.baseline_value == 0.8123
+        assert f.current_value == 0.6068
+        assert f.change_pct == pytest.approx(-25.3, abs=0.1)
+
+    def test_latencia_baja_no_regresion(self) -> None:
+        f = RegressionFinding("c", "latency_p95", 20.0, 15.0, 0.20)
+        assert f.is_regression() is False  # bajó = mejora
+        assert f.direction == "down"
+
+    def test_latencia_subida_dentro_umbral(self) -> None:
+        f = RegressionFinding("c", "latency_p50", 10.0, 10.5, 0.10)
+        assert f.is_regression() is False  # +5% < 10%
 
 
 class TestRegressionReport:
@@ -62,6 +88,15 @@ class TestRegressionReport:
         d = rep.to_dict()
         assert d["total_configs"] == 2
         assert "PASS" in rep.summary()
+        assert "Configs: 2" in rep.summary()
+
+    def test_summary_con_findings(self) -> None:
+        bad = RegressionFinding("c", "mrr", 0.8, 0.5, -0.05)
+        rep = RegressionReport("base", 1.0, [bad], 1, 1)
+        s = rep.summary()
+        assert "FAIL" in s
+        assert "c.mrr" in s
+        assert rep.to_dict()["total_regressions"] == 1
 
 
 class TestRegressionBaseline:
@@ -95,6 +130,33 @@ class TestRegressionBaseline:
         b2 = RegressionBaseline.load(p)
         assert b2.name == "base1"
         assert b2.get("cfg", "recall") == 0.75
+        assert b2._created_at == b._created_at  # type: ignore[attr-defined]
+        assert b2._updated_at == b._updated_at  # type: ignore[attr-defined]
+
+    def test_load_sin_timestamps(self, tmp_path) -> None:
+        p = tmp_path / "b2.json"
+        p.write_text(json.dumps({"baselines": {"cfg.recall": 0.9}}))
+        b = RegressionBaseline.load(p)
+        assert b.name == "loaded"
+        assert b.get("cfg", "recall") == 0.9
+
+    def test_set_results_throughput(self) -> None:
+        b = RegressionBaseline()
+        r = SimpleNamespace(
+            config_name="cfg",
+            metrics={"recall@10": 0.8},
+            latency_stats={"mean_ms": 5.0, "max_ms": 10.0},
+        )
+        b.set_results([r])
+        # throughput = len(self._data) / mean_ms * 1000 (placeholder interno)
+        assert b.get("cfg", "throughput") == pytest.approx(3 / 5 * 1000)
+
+    def test_set_results_sin_latencia(self) -> None:
+        b = RegressionBaseline()
+        r = SimpleNamespace(config_name="cfg", metrics={"recall@10": 0.8}, latency_stats={})
+        b.set_results([r])
+        assert b.get("cfg", "latency_p50") is None
+        assert b.get("cfg", "throughput") is None
 
     def test_to_dict(self) -> None:
         b = RegressionBaseline("n")

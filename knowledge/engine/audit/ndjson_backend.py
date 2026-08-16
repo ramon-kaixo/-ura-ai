@@ -8,6 +8,7 @@ Ingesta atómica: rename() → INSERT → unlink() (nunca pérdida de eventos).
 
 from __future__ import annotations
 
+import atexit
 import contextlib
 import fcntl
 import json
@@ -50,6 +51,7 @@ class NDJSONAuditBackend:
         self._lock_fd = None
         self._file.parent.mkdir(parents=True, exist_ok=True)
         self._handle = self._file.open("a")
+        atexit.register(self.close)  # evita ResourceWarning (archivo abierto de por vida, singleton)
         self._bytes_written = self._file.stat().st_size if self._file.exists() else 0
         self._events_written = 0
         self._last_error = ""

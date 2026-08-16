@@ -39,6 +39,7 @@ from motor.intelligence.memory.forgetting import (
     ProtectionRules,
     TTLForgetPolicy,
 )
+from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.orchestrator import MemoryOrchestrator
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
 from motor.intelligence.memory.retrieval import ContextQuery, ContextResult, ContextResultList, ContextRetriever
@@ -184,14 +185,20 @@ class TestEpisodeStore:
         s = EpisodeStore()
         a = _episode(session="sa", ts="2026-01-01T00:00:00+00:00", payload="a")
         b = _episode(session="sb", ts="2025-01-01T00:00:00+00:00", payload="b")
+        c = _episode(session="sa", ts="2026-06-01T00:00:00+00:00", payload="c")
         s.store(a)
         s.store(b)
-        assert s.get_by_session("sa") == [a]
+        s.store(c)
+        assert s.get_by_session("sa") == [c, a]  # orden timestamp desc
+        assert s.get_by_session("sa", limit=1) == [c]
+        assert s.get_by_session("sa", offset=1) == [a]
         assert s.get_by_session("sa", limit=0, offset=0) == []
         assert s.get_by_time_range("2025-06-01", "2026-06-01") == [a]
-        assert s.get_recent(k=1) == [a]
+        assert s.get_by_time_range("2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00") == [c, a]
+        assert s.get_recent(k=1) == [c]
+        assert s.get_recent(k=2) == [c, a]
         assert s.count("sb") == 1
-        assert s.count() == 2
+        assert s.count() == 3
         assert s.count("nada") == 0
 
     def test_clear_ops(self) -> None:
@@ -209,18 +216,33 @@ class TestEpisodeStore:
         s.store(_episode(ts="2026-06-10T00:00:00+00:00", payload="x2"))
         s.store(_episode(ts="2026-08-01T00:00:00+00:00", payload="x3"))
         assert s.count() == 2
+        restantes = {e.payload for e in s._episodes.values()}
+        assert restantes == {"x2", "x3"}  # el más antiguo (x1) se trima
 
     def test_persistencia_sqlite(self, tmp_path: Path) -> None:
         db = tmp_path / "eps.db"
         s = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
         ep = _episode(payload="hola", tags=["t1"])
         ep.references = ["r1"]
+        ep.source = "custom"
+        ep.importance = 0.9
+        ep.confidence = 0.7
+        ep.ttl = 1234
+        ep.metadata = {"clave": "valor"}
         eid = s.store(ep)
         s.close()
         s2 = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
         e2 = s2.get(eid)
         assert e2 is not None and e2.payload == "hola"
         assert e2.references == ["r1"]
+        assert e2.tags == ["t1"]
+        assert e2.source == "custom"
+        assert e2.importance == 0.9
+        assert e2.confidence == 0.7
+        assert e2.ttl == 1234
+        assert e2.metadata == {"clave": "valor"}
+        assert e2.session_id == "s1"
+        assert s2.count() == 1
         s2.delete(eid)
         s2.close()
         assert sqlite3.connect(str(db)).execute("SELECT COUNT(*) FROM episodes").fetchone()[0] == 0
@@ -268,12 +290,29 @@ class TestSessionMemory:
         sid2 = sm.create_session()
         assert sid != sid2
         assert sm.session_count() == 2
-        ep = sm.add_episode(sid, "payload", source="s", tags=["x"])
+        ep = sm.add_episode(sid, "payload", source="s", tags=["x"], importance=0.8)
+        assert ep.id
+        assert ep.importance == 0.8
         assert sm.get_history(sid) == [ep]
         assert sm.get_recent(k=5)
         assert sm.store.count(sid) == 1
         assert sm.close_session(sid) is True
         assert sm.close_session(sid) is False
+        assert sm.session_count() == 1
+
+    def test_add_episode_sin_sesion_activa(self) -> None:
+        """add_episode con sesión no creada → episodio se guarda igual."""
+        sm = SessionMemory()
+        ep = sm.add_episode("no-existe", "payload")
+        assert ep.id
+        assert sm.store.count("no-existe") == 1
+        assert sm.get_history("no-existe") == [ep]
+
+    def test_create_session_con_id(self) -> None:
+        """create_session con id explícito no genera otro."""
+        sm = SessionMemory()
+        sid = sm.create_session(session_id="fijo")
+        assert sid == "fijo"
         assert sm.session_count() == 1
 
 
@@ -318,19 +357,41 @@ class TestSemanticMemoryStore:
         s = SemanticMemoryStore()
         s.store(SemanticFact("Python", "es", "lenguaje", tags=["prog"], fact_type="relation", importance=0.9))
         s.store(SemanticFact("Gato", "come", "pescado", tags=["animal"], fact_type="event", importance=0.5))
-        assert len(s.search(text="python")) == 1
+        s.store(SemanticFact("python", "es", "snake", fact_type="relation", importance=0.3))
+        assert len(s.search(text="python")) == 2  # case-insensitive, subject y object
         assert len(s.search(tags=["animal"])) == 1
-        assert len(s.search(fact_type="relation")) == 1
+        assert len(s.search(fact_type="relation")) == 2
         assert len(s.search(entity="gato")) == 1
+        assert len(s.search(entity="Python")) == 2  # case-insensitive
         assert len(s.search(text="zzz", k=10)) == 0
+        orden = s.search(text="python")
+        assert orden[0].importance == 0.9  # ordenado por importance desc
+        assert len(s.search(text="python", k=1)) == 1  # límite k
 
     def test_persistencia(self, tmp_path: Path) -> None:
         db = tmp_path / "facts.db"
         s = SemanticMemoryStore(str(db))
-        fid = s.store(SemanticFact("X", "es", "Y", tags=["t"]))
+        f = SemanticFact("X", "es", "Y", tags=["t"], confidence=0.8, importance=0.9)
+        f.source_episode_ids = ["e1", "e2"]
+        f.metadata = {"fuente": "test"}
+        f.version = 3
+        fid = s.store(f)
         s.close()
         s2 = SemanticMemoryStore(str(db))
-        assert s2.get(fid) is not None
+        g = s2.get(fid)
+        assert g is not None
+        assert g.subject == "X"
+        assert g.predicate == "es"
+        assert g.object_value == "Y"
+        assert g.tags == ["t"]
+        assert g.confidence == 0.8
+        assert g.importance == 0.9
+        assert g.source_episode_ids == ["e1", "e2"]
+        assert g.metadata == {"fuente": "test"}
+        assert g.version == 3
+        assert g.fact_type == "relation"
+        assert s2.get_by_key("X", "es", "Y") is g
+        assert s2.count() == 1
         assert s2.clear_all() == 1
         s2.close()
 
@@ -655,8 +716,19 @@ class TestProtection:
         ev = ForgettingEvent("r", "episode", "razon", "ttl", "2026-01-01", 0.5, 3.0)
         d = ev.to_dict()
         assert d["age_days"] == 3.0
+        assert d == {
+            "record_id": "r",
+            "record_type": "episode",
+            "reason": "razon",
+            "policy": "ttl",
+            "timestamp": "2026-01-01",
+            "importance": 0.5,
+            "age_days": 3.0,
+        }
         res = ForgettingResult(episodes_removed=1, facts_removed=2)
         assert res.total_removed == 3
+        assert res.details == []
+        assert res.dry_run is False
 
 
 class TestForgetPolicies:
@@ -705,6 +777,18 @@ class TestForgetPolicies:
         h2 = HybridForgetPolicy(require_all=True)
         ok2, _ = h2.should_forget(_episode(ts=OLD, ttl=1), None)
         assert ok2 is False
+        ok3, reason3 = h2.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        assert ok3 is True
+        assert "ttl" in reason3 and "importance" in reason3 and "confidence" in reason3
+        # con políticas custom: todas deben decidir sí para require_all
+        h3 = HybridForgetPolicy(
+            ttl_policy=TTLForgetPolicy(),
+            importance_policy=ImportanceForgetPolicy(min_importance=1.0, min_age_days=0),
+            confidence_policy=ConfidenceForgetPolicy(min_confidence=1.0),
+            require_all=True,
+        )
+        ok4, _ = h3.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        assert ok4 is True
 
 
 class TestForgettingEngine:
@@ -775,11 +859,14 @@ class TestForgettingEngine:
         assert res.episodes_removed == 1
         stat = eng.stats()
         assert stat["episodes_total"] == 0
+        assert stat["facts_total"] == 0
+        assert stat["policies"] == ["ttl"]
         sch = ForgettingScheduler(eng)
         assert sch.enabled is False
         sch.enable()
         assert sch.enabled is True
         sch.disable()
+        assert sch.enabled is False
         assert sch.run_once(dry_run=True).total_evaluated == 0
 
     def test_store_anulado_no_evita_facts(self) -> None:
@@ -829,10 +916,66 @@ class TestRuleBasedFactExtractor:
         facts = r.extract(ep)
         assert facts
         f = facts[0]
-        assert f.subject and f.predicate and f.object_value
+        assert f.subject == "sistema"
+        assert f.predicate == "servidor"
+        assert f.object_value == "rapido"
+        assert f.fact_type == "attribute"
         assert f.source_episode_ids == [ep.id]
         assert f.metadata["session_id"] == "s1"
         assert f.confidence == pytest.approx(0.45)
+        assert f.importance == 0.5
+        assert f.tags == []
+        assert f.key == "sistema|servidor|rapido"
+
+    def test_patron_relation(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="El robot tiene dos brazos"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "relation"
+        assert f.predicate == "tiene"
+        assert f.object_value == "dos brazos"
+
+    def test_patron_event(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="la puerta se abrio lentamente"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "event"
+        assert f.predicate == "abrio"
+
+    def test_patron_error(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="Error: conexion perdida"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "error"
+        assert f.object_value == "conexion perdida"
+
+    def test_patron_statement(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="El sistema dice que todo ok"))
+        assert facts
+        f = facts[0]
+        assert f.fact_type == "statement"
+        assert f.object_value == "todo ok"
+
+    def test_patron_config(self) -> None:
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="Configuracion puerto = 8080"))
+        assert facts
+        assert facts[0].fact_type == "attribute"
+        assert facts[0].object_value == "8080"
+
+    def test_patron_make_fact_con_error(self) -> None:
+        r = RuleBasedFactExtractor()
+        ep = _episode(payload="Error: algo", tags=["t1"], importance=0.8)
+        facts = r.extract(ep)
+        assert facts
+        f = facts[0]
+        assert f.tags == ["t1"]
+        assert f.importance == 0.8
+        assert f.metadata["session_id"] == "s1"
 
     def test_multiples_patrones(self) -> None:
         r = RuleBasedFactExtractor()
@@ -950,3 +1093,111 @@ class TestMemoryOrchestrator:
         o = MemoryOrchestrator(st, sm)
         assert o.forget() == {"removed": 0, "dry_run": False}
         assert o.forget(dry_run=True) == {"removed": 0, "dry_run": True}
+
+
+# ── ramas parciales 100x100 (TASK-20260814-001) ─────────────────────────────
+
+
+class TestRamasCompression:
+    def test_summary_record_ids_provistos(self) -> None:
+        s = SummaryRecord(source_episode_ids=["a"], summary="x", id="id1", created_at="2026-01-01T00:00:00+00:00")
+        assert s.id == "id1"
+        assert s.created_at == "2026-01-01T00:00:00+00:00"
+
+    def test_get_summaries_sin_session(self) -> None:
+        st = EpisodeStore()
+        st.store(_episode(payload="uno", ts="2026-06-01T00:00:00+00:00", session="s9"))
+        st.store(_episode(payload="dos", ts="2026-04-01T00:00:00+00:00", session="s10"))
+        c = MemoryCompressor(st, AgeBasedCompression(max_age_days=30))
+        res = c.compress()
+        assert res.summaries_created == 2
+        assert len(c.get_summaries()) == 2
+        assert len(c.get_summaries(session_id="s9")) == 1
+
+
+class TestRamasEpisodic:
+    def test_store_sin_sesion_activa(self) -> None:
+        st = EpisodeStore()
+        eid = st.store(_episode(payload="y", session="solo"))
+        assert eid
+        assert st.get(eid) is not None
+
+    def test_add_episode_sesion_no_activa(self) -> None:
+        sm = SessionMemory()
+        ep = sm.add_episode("no-activa", "contenido")
+        assert ep.id
+        assert sm._active_sessions.get("no-activa") is None
+
+
+class TestRamasExtractor:
+    def test_make_fact_falsy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        rbx = RuleBasedFactExtractor()
+        monkeypatch.setattr(rbx, "_make_fact", lambda *a, **k: None)
+        ep = _episode(payload="El servidor es rapido en produccion")
+        assert rbx.extract(ep) == []
+
+
+class TestRamasForgetting:
+    def test_facto_sin_decision(self) -> None:
+        st, sm, _ = TestForgettingEngine()._setup()
+        sm.store(SemanticFact("u", "es", "v", importance=0.9, confidence=0.9))
+        eng = ForgettingEngine(
+            st,
+            sm,
+            [],
+            policies=[ImportanceForgetPolicy(min_importance=0.5), ConfidenceForgetPolicy()],
+        )
+        res = eng.run()
+        assert res.facts_removed == 0
+
+    def test_policy_sin_decision_loop(self) -> None:
+        st = EpisodeStore()
+        st.store(_episode(payload="nuevo", ts="2026-08-10T00:00:00+00:00"))
+        eng = ForgettingEngine(
+            st,
+            None,
+            [],
+            policies=[TTLForgetPolicy(), ImportanceForgetPolicy(min_importance=0.5)],
+        )
+        res = eng.run()
+        assert res.episodes_removed == 0
+
+
+class TestRamasHybrid:
+    def test_db_path_sin_parent(self) -> None:
+        mem = HybridMemory(db_path=":memory:")
+        conn = mem._get_conn()
+        assert conn is not None
+        mem.close()
+
+
+class TestRamasOrchestrator:
+    def test_consolidate_sin_factos(self) -> None:
+        st = EpisodeStore()
+        sm = SemanticMemoryStore()
+        st.store(_episode(payload="texto sin patrones de extraccion"))
+        o = MemoryOrchestrator(st, sm, extractor=RuleBasedFactExtractor())
+        assert o.consolidate() == 0
+
+
+class TestRamasSemantic:
+    def test_merge_sin_duplicados_previos(self) -> None:
+        f = SemanticFact("a", "b", "c", source_episode_ids=["e1"], tags=["t1"])
+        other = SemanticFact("a", "b", "c", source_episode_ids=["e2"], tags=["t2"])
+        f.merge(other)
+        assert f.source_episode_ids == ["e1", "e2"]
+        assert f.tags == ["t1", "t2"]
+
+    def test_merge_con_duplicados(self) -> None:
+        f = SemanticFact("a", "b", "c", source_episode_ids=["e1", "e2"], tags=["t1", "t2"])
+        other = SemanticFact("a", "b", "c", source_episode_ids=["e2", "e3"], tags=["t2", "t3"])
+        f.merge(other)
+        assert f.source_episode_ids == ["e1", "e2", "e3"]
+        assert f.tags == ["t1", "t2", "t3"]
+
+    def test_clear_all_sin_conn(self) -> None:
+        s = SemanticMemoryStore()
+        s.store(SemanticFact("A", "es", "B"))
+        s.close()
+        assert s.clear_all() == 1
+        assert s.count() == 0

@@ -82,6 +82,7 @@ def build_llm_state(config=None) -> LLMState:  # noqa: PLR0915 — ADR-007: núc
         config = UraConfig.load()
 
     provider_name = getattr(config, "llm_provider", "ollama")
+    _default: Any = None
 
     if provider_name == "openai":
         from motor.core.llm.openai import OpenAIProvider

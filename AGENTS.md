@@ -15,6 +15,29 @@
 3. **Ejecutar** y verificar en ASUS (el servidor real)
 4. **NUNCA** dejar código sin sincronizar a ASUS por más de una sesión
 
+## REGLA DE REPORTE FINAL OBLIGATORIO (proactividad, petición RAMON 2026-08-15)
+
+Al terminar **cualquier** trabajo (tarea, plan, revisión, corrección, sesión), el agente
+cierra siempre con un reporte final en 3 bloques, aunque el usuario no lo pida:
+
+1. **QUÉ SE HIZO** — acciones + evidencia verificable (SHAs de commits, rutas, salidas de
+   comandos: pytest/ruff/smoke). Separar HECHO (verificado) de DECLARADO (sin verificar).
+2. **QUÉ QUEDA / PENDIENTE** — todo lo que no se hizo o quedó bloqueado, con la causa y el
+   responsable (p.ej. "pendiente del WEB: ...", "pendiente humano: ...").
+3. **SUGERENCIAS** — propuestas concretas de siguiente paso o mejora (trabajo nuevo,
+   correcciones, decisiones que necesita el humano), priorizadas por impacto. No esperar a
+   que el usuario pregunte "¿y ahora qué?".
+   **"Sugerencias" = "mejoras" (petición RAMON 2026-08-15)**: una sugerencia no es solo un
+   paso; incluye también mejoras del proceso, la herramienta o la metodología. El agente NO
+   las va soltando una a una: analiza TODAS las detectadas y las presenta en CONJUNTO
+   (listado único, priorizado), para que el humano decida de una vez. Solo tras la decisión
+   se ejecutan (y cada una con su TASK UDO y análisis de impacto).
+
+Además, el agente debe ser **proactivo**: al detectar un problema o mejora durante cualquier
+trabajo, proponerla en el momento (clasificar: OBLIGATORIO/NECESARIO/MEJORA) en lugar de
+guardarla en silencio. El modo fondo read-only y las reglas UDO de reserva/--force se
+mantienen intactas.
+
 ## Project Context
 URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
 

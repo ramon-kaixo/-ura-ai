@@ -78,6 +78,16 @@ class TestNotifierEnvio:
         assert args.args[0] == "https://api.telegram.org/bottok/sendMessage"
         assert args.kwargs["json"]["chat_id"] == "123"
         assert args.kwargs["json"]["text"] == "hola"
+        assert args.kwargs["json"]["parse_mode"] == "HTML"
+        assert args.kwargs["timeout"] == 10
+
+    def test_telegram_trunca_4096(self, monkeypatch) -> None:
+        notifier._TELEGRAM_TOKEN = "tok"
+        notifier._TELEGRAM_CHAT_ID = "123"
+        post = mock.Mock(return_value=FakeResp(status_code=200))
+        monkeypatch.setattr(notifier.httpx, "post", post)
+        assert notifier._send_telegram("x" * 5000) is True
+        assert len(post.call_args.kwargs["json"]["text"]) == 4096
 
     def test_telegram_http_error(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "tok"
@@ -101,6 +111,23 @@ class TestNotifierEnvio:
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier._send_pushover("hola") is True
         assert post.call_args.kwargs["json"]["user"] == "u"
+        assert post.call_args.kwargs["json"]["token"] == "t"
+        assert post.call_args.kwargs["json"]["message"] == "hola"
+        assert post.call_args.args[0] == "https://api.pushover.net/1/messages.json"
+
+    def test_pushover_trunca_1024(self, monkeypatch) -> None:
+        notifier._PUSHOVER_USER = "u"
+        notifier._PUSHOVER_TOKEN = "t"
+        post = mock.Mock(return_value=FakeResp(status_code=200))
+        monkeypatch.setattr(notifier.httpx, "post", post)
+        assert notifier._send_pushover("y" * 2000) is True
+        assert len(post.call_args.kwargs["json"]["message"]) == 1024
+
+    def test_pushover_http_error(self, monkeypatch) -> None:
+        notifier._PUSHOVER_USER = "u"
+        notifier._PUSHOVER_TOKEN = "t"
+        monkeypatch.setattr(notifier.httpx, "post", mock.Mock(return_value=FakeResp(status_code=500)))
+        assert notifier._send_pushover("m") is False
 
     def test_pushover_error(self, monkeypatch) -> None:
         notifier._PUSHOVER_USER = "u"
@@ -129,6 +156,37 @@ class TestNotifierEnvio:
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier.notify("m", channels=["telegram"]) is True
         post.assert_called_once()
+
+    def test_notify_level_desconocido(self, monkeypatch) -> None:
+        notifier._TELEGRAM_TOKEN = "t"
+        notifier._TELEGRAM_CHAT_ID = "c"
+        post = mock.Mock(return_value=FakeResp(status_code=200))
+        monkeypatch.setattr(notifier.httpx, "post", post)
+        assert notifier.notify("m", level="debug") is True  # type: ignore[arg-type]
+        text = post.call_args.kwargs["json"]["text"]
+        assert "⚠️" in text  # tag por defecto
+        assert "DEBUG" in text
+        assert text.startswith("⚠️ URA [DEBUG]")
+
+    def test_notify_formato_info(self, monkeypatch) -> None:
+        notifier._TELEGRAM_TOKEN = "t"
+        notifier._TELEGRAM_CHAT_ID = "c"
+        post = mock.Mock(return_value=FakeResp(status_code=200))
+        monkeypatch.setattr(notifier.httpx, "post", post)
+        assert notifier.notify("m", level="info") is True
+        assert post.call_args.kwargs["json"]["text"] == "ℹ️ URA [INFO]: m"  # noqa: RUF001
+
+    def test_notify_pushover_falla_telegram_ok(self, monkeypatch) -> None:
+        notifier._TELEGRAM_TOKEN = "t"
+        notifier._TELEGRAM_CHAT_ID = "c"
+        notifier._PUSHOVER_USER = "u"
+        notifier._PUSHOVER_TOKEN = "p"
+        post = mock.Mock(
+            side_effect=lambda *a, **k: FakeResp(status_code=200 if "telegram" in a[0] else 500)
+        )
+        monkeypatch.setattr(notifier.httpx, "post", post)
+        assert notifier.notify("m") is True  # telegram ok aunque pushover falle
+        assert post.call_count == 2
 
 
 class TestSecretarioCache:

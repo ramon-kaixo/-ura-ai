@@ -91,7 +91,7 @@ class AnkerMacPipeline:
         safe_msg = message.replace("\\", "\\\\").replace('"', '\\"')
         safe_sound = sound if sound in self._ALLOWED_SOUNDS else "Tink"
         script = f'display notification "{safe_msg}" with title "{safe_title}" sound name "{safe_sound}"'
-        subprocess.Popen(
+        subprocess.Popen(  # nosec B607 - osascript buscado en PATH por diseno; args saneados (escape de comillas)
             ["osascript", "-e", script],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

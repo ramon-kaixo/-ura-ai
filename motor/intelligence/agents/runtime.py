@@ -166,5 +166,7 @@ class MultiAgentRuntime:
         for i in range(min(overflow, len(completed))):
             wf_id = completed[i][0]
             # Preserve progress on active workflows
-            if self._workflows[wf_id].get("status") != "running":
+            if (
+                self._workflows[wf_id].get("status") != "running"
+            ):  # pragma: no cover - defensa: completed solo contiene done_statuses
                 del self._workflows[wf_id]
