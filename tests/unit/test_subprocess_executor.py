@@ -66,6 +66,29 @@ class TestSubprocessExecutorSync:
         result = executor.run(["bash", "-c", "echo err_msg >&2; exit 1"])
         assert result.ok is False
         assert "err_msg" in result.error
+        assert result.stderr == "err_msg\n" or "err_msg" in result.stderr
+        assert result.returncode == 1
+        assert result.stdout == ""
+
+    def test_error_truncado_500(self):
+        executor = SubprocessExecutor()
+        result = executor.run(["bash", "-c", "echo 'x'*600 >&2; exit 1"])
+        assert result.ok is False
+        assert len(result.error) <= 500
+        assert list(result.cmd) == ["bash", "-c", "echo 'x'*600 >&2; exit 1"]
+
+    def test_env_pasada(self):
+        executor = SubprocessExecutor()
+        result = executor.run(["bash", "-c", "echo $MY_VAR"], env={"MY_VAR": "hola42"})
+        assert result.ok is True
+        assert "hola42" in result.stdout
+
+    def test_timeout_stderr_vacio(self):
+        executor = SubprocessExecutor()
+        result = executor.run(["sleep", "10"], timeout=1)
+        assert result.timed_out is True
+        assert result.stdout == ""
+        assert result.stderr == result.error
 
 
 class TestSubprocessExecutorAsync:
@@ -106,6 +129,21 @@ class TestSubprocessExecutorAsync:
         assert result.ok is True
         assert "out_async" in result.stdout
         assert "err_async" in result.stderr or "err_async" in result.error
+        assert result.returncode == 0
+
+    @pytest.mark.asyncio
+    async def test_async_env(self):
+        executor = SubprocessExecutor()
+        result = await executor.arun(["bash", "-c", "echo $MY_VAR"], env={"MY_VAR": "async42"})
+        assert result.ok is True
+        assert "async42" in result.stdout
+
+    @pytest.mark.asyncio
+    async def test_async_cmd_vacio(self):
+        executor = SubprocessExecutor()
+        result = await executor.arun([])
+        assert result.ok is False
+        assert result.error
 
 
 class TestSubprocessExecutorIntegration:
