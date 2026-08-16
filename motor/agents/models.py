@@ -9,6 +9,10 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from motor.platform.models import ProtocolEnvelope
 
 # ── IDs deterministas ─────────────────────
 
@@ -198,7 +202,7 @@ class ToolRequest:
     trace_id: str = ""
     causation_id: str = ""
 
-    def to_envelope(self) -> ProtocolEnvelope:  # noqa: F821
+    def to_envelope(self) -> ProtocolEnvelope:
         from motor.platform.models import (
             CausationId,
             CorrelationId,
@@ -254,7 +258,7 @@ class ToolRequest:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolRequest:  # noqa: F821
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolRequest:
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],
@@ -280,7 +284,7 @@ class ToolResult:
     attempt: int = 1
     protocol_version: str = "1.0"
 
-    def to_envelope(self) -> ProtocolEnvelope:  # noqa: F821
+    def to_envelope(self) -> ProtocolEnvelope:
         from motor.platform.models import (
             DeliveryHeader,
             MessageKind,
@@ -334,7 +338,7 @@ class ToolResult:
         )
 
     @classmethod
-    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolResult:  # noqa: F821
+    def from_envelope(cls, envelope: ProtocolEnvelope) -> ToolResult:
         data = json.loads(envelope.payload.decode("utf-8"))
         return cls(
             execution_id=data["execution_id"],

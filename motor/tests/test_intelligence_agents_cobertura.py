@@ -143,7 +143,43 @@ class TestExecutorAgent:
         assert res.success
         assert res.output["objective"] == "execute tarea"
         assert res.output["stdout"] == "ok out"
+        assert res.output["stderr"] == ""
+        assert res.output["returncode"] == 0
         assert res.duration_ms >= 0
+        assert res.task_id == res.task_id
+
+    def test_timeout_custom(self) -> None:
+        """Timeout del input_data se pasa al executor."""
+        recibido: dict = {}
+
+        class _TimeoutExecutor:
+            def run(self, cmd, timeout=30, cwd=None, env=None):
+                recibido["timeout"] = timeout
+                from motor.core.executor import ProcessResult
+
+                return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="x", stderr="")
+
+        agent = ExecutorAgent(executor=_TimeoutExecutor())  # type: ignore[arg-type]
+        task = _task()
+        task.input_data["timeout"] = 99
+        res = agent.run(task)
+        assert res.success
+        assert recibido["timeout"] == 99
+
+    def test_cmd_del_input_data(self) -> None:
+        """El cmd del input_data se pasa al executor."""
+        recibido: dict = {}
+
+        class _CaptureExecutor:
+            def run(self, cmd, timeout=30, cwd=None, env=None):
+                recibido["cmd"] = cmd
+                from motor.core.executor import ProcessResult
+
+                return ProcessResult(ok=True, cmd=cmd, returncode=0, stdout="", stderr="")
+
+        agent = ExecutorAgent(executor=_CaptureExecutor())  # type: ignore[arg-type]
+        agent.run(_task())  # input_data del helper: {"cmd": ["echo", "ok"]}
+        assert recibido["cmd"] == ["echo", "ok"]
 
     def test_allow_failure(self) -> None:
         agent = ExecutorAgent(executor=_FailExecutor())

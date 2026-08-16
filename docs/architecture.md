@@ -107,3 +107,8 @@ graph TB
 | ✅ ura-ssh-guard | active | ? |
 | ❌ ura-watchdog | inactive | ? |
 | ✅ ura-xvfb | active | ? |
+
+## Referencias ADR
+
+- [ADR-001 — Auditoría NDJSON](architecture/ADR-001-ndjson-audit.md): trazabilidad de auditoría con backend NDJSON.
+- [ADR-002 — flock/compile lock](architecture/ADR-002-flock-compile-lock.md): cerrojo de compilación con flock.

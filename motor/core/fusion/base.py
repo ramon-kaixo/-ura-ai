@@ -252,6 +252,8 @@ class ChangeDetector(ABC):
 class MemoryCandidateSelector(ABC):
     """Selecciona Facts candidatos para almacenar en memoria persistente."""
 
+    max_candidates: int
+
     @abstractmethod
     def select(
         self,
