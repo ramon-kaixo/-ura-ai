@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Literal
 import httpx
 
 if TYPE_CHECKING:
-    from core.interfaces import ISecretStore
+    from motor.core.interfaces import ISecretStore
 
 log = logging.getLogger("ura.notifier")
 

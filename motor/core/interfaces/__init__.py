@@ -1,8 +1,10 @@
 """Interfaces abstractas para inversión de dependencias core ↔ motor.
 
-FACHADA (ADR-007): los contratos canónicos viven en motor/core/interfaces/.
-Este paquete reexporta para preservar compatibilidad con `from core.interfaces
-import ...`. No añadir definiciones nuevas aquí; hacerlo en motor/core/interfaces/.
+Contratos canónicos que viven en motor/ (capa inferior) y que core/ reexporta
+como fachada. Permite que core dependa de abstracciones sin que motor tenga
+que importar de core (rompe la dependencia circular).
+
+Ver: docs/architecture/ADR-007-REGLA_NUCLEO.md
 """
 
 from motor.core.interfaces.config import IConfigProvider  # noqa: F401

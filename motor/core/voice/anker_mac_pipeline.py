@@ -20,7 +20,7 @@ import sounddevice as sd
 import torch
 import whisper
 
-from core.utils.anonymizer import sanitize_text
+from motor.core.utils.anonymizer import sanitize_text
 
 
 class AnkerMacPipeline:
