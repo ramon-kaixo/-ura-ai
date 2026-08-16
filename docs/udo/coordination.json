@@ -53,7 +53,7 @@
       "revisor": "WEB",
       "estado": "cerrada",
       "prioridad": "media",
-      "veredicto": "APROBADO/DONE — errores mypy críticos corregidos y revisados",
+      "veredicto": "APROBADO — re-revisión TERM 22:50 (lowercase fuera, uppercase con ADR, test pasa en ASUS)",
       "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea.",
       "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commit edcdb2db integrado."
     },
@@ -90,8 +90,8 @@
       "revisor": "WEB",
       "estado": "en_revision",
       "prioridad": "media",
-      "veredicto": "",
-      "nota": "correcciones aplicadas: flock + borrado duplicado"
+      "veredicto": "APROBADO — revisión TERM 22:50 (flock OK, duplicado fuera, gates OK, schema canónico)",
+      "nota": "Correcciones aplicadas y verificadas: flock en salud_planes.sh (patrón dispatcher), docs/architecture.md eliminado. ruff OK, bash -n OK, pytest 11 passed, json OK, schema colas canónico."
     }
   }
 }
