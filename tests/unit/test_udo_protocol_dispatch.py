@@ -223,8 +223,8 @@ def test_main_archivo_ausente_retorna_1(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 sys.path.insert(0, str(SCRIPTS))
-import dispatcher as dsp  # noqa: E402
-import verify_protocol as vfy  # noqa: E402
+import dispatcher as dsp
+import verify_protocol as vfy
 
 
 def test_asignar_sin_pendientes_devuelve_none() -> None:
