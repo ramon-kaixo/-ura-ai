@@ -27,12 +27,14 @@
         "docs/udo/coordination.json"
       ],
       "commit_base": "cb0595b4",
-      "commits": ["edcdb2db"],
-      "round": 1,
+      "commits": [
+        "edcdb2db"
+      ],
+      "round": 2,
       "pending_actions": [
         "Revision WEB"
       ],
-      "notes": "Tarea creada por coordinador TERM tras mensaje de activacion del protocolo ejecutor-revisor."
+      "notes": "Cambios solicitados aplicados: ADR refs en ARCHITECTURE.md y duplicado eliminado. En revision WEB."
     }
   ],
   "schema": {
@@ -44,11 +46,19 @@
       "reviewer": "WEB|TERM",
       "status": "PLANNED|IN_PROGRESS|REVIEW|DONE|BLOCKED|CONFLICT|CANCELLED",
       "verdict": "APROBADO|APROBADO_CONDICIONAL|CAMBIOS_SOLICITADOS|PENDIENTE",
-      "reserved_paths": ["ruta/relativa/1", "ruta/relativa/2"],
+      "reserved_paths": [
+        "ruta/relativa/1",
+        "ruta/relativa/2"
+      ],
       "commit_base": "SHA",
-      "commits": ["SHA-1", "SHA-2"],
+      "commits": [
+        "SHA-1",
+        "SHA-2"
+      ],
       "round": 1,
-      "pending_actions": ["string"],
+      "pending_actions": [
+        "string"
+      ],
       "notes": "string"
     }
   }
