@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-08-16T19:02:10+02:00",
+  "description": "Registro transitorio de asignaciones ejecutor-revisor para tareas UDO activas. Git es la fuente de verdad; este fichero solo acelera la coordinacion automatica.",
+  "default_executor": "TERM",
+  "default_reviewer": "WEB",
+  "active_tasks": [],
+  "schema": {
+    "task": {
+      "id": "TASK-YYYYMMDD-NNN",
+      "branch": "ia/TASK-YYYYMMDD-NNN",
+      "description": "string",
+      "executor": "WEB|TERM",
+      "reviewer": "WEB|TERM",
+      "status": "PLANNED|IN_PROGRESS|REVIEW|DONE|BLOCKED|CONFLICT|CANCELLED",
+      "reserved_paths": ["ruta/relativa/1", "ruta/relativa/2"],
+      "commit_base": "SHA",
+      "commits": ["SHA-1", "SHA-2"],
+      "round": 1,
+      "pending_actions": ["string"],
+      "notes": "string"
+    }
+  }
+}
