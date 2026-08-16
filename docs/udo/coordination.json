@@ -4,10 +4,10 @@
     "pendientes": [
       "TASK-20260816-009"
     ],
-    "en_progreso": [
+    "en_progreso": [],
+    "en_revision": [
       "TASK-20260816-010"
     ],
-    "en_revision": [],
     "aprobadas": [],
     "bloqueadas": [],
     "cerradas": [
@@ -20,12 +20,12 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "ocupado",
-      "rol_actual": "ejecutor"
-    },
-    "WEB": {
       "estado": "libre",
       "rol_actual": null
+    },
+    "WEB": {
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -88,10 +88,10 @@
       "descripcion": "Panel de semáforos + modo análisis de planes",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "media",
       "veredicto": "",
-      "nota": "En progreso. Implementando panel de semáforos, salud_planes.sh, modo análisis y tests."
+      "nota": "Implementación lista. En revisión WEB. Gates nuevos archivos: ruff OK, pytest 11 passed."
     }
   }
 }
