@@ -1,10 +1,42 @@
 {
   "version": "1.0.0",
-  "updated_at": "2026-08-16T19:02:10+02:00",
+  "updated_at": "2026-08-16T19:28:00+02:00",
   "description": "Registro transitorio de asignaciones ejecutor-revisor para tareas UDO activas. Git es la fuente de verdad; este fichero solo acelera la coordinacion automatica.",
   "default_executor": "TERM",
   "default_reviewer": "WEB",
-  "active_tasks": [],
+  "active_tasks": [
+    {
+      "id": "TASK-20260816-005",
+      "branch": "ia/TASK-20260816-005",
+      "description": "Fase 3 — corregir 5 errores graves de mypy + 2 errores pre-existentes en motor/core/web_search.py",
+      "executor": "TERM",
+      "reviewer": "WEB",
+      "status": "IN_PROGRESS",
+      "verdict": "PENDIENTE",
+      "reserved_paths": [
+        "motor/agents/models.py",
+        "core/model_router/router.py",
+        "motor/memory/snapshot.py",
+        "motor/memory/timeline.py",
+        "motor/core/fusion/base.py",
+        "motor/core/fusion/stages/selector.py",
+        "motor/intelligence/memory/retrieval.py",
+        "motor/intelligence/memory/episodic.py",
+        "motor/core/web_search.py",
+        "docs/udo/tasks/TASK-20260816-005.md",
+        "docs/udo/coordination.json"
+      ],
+      "commit_base": "cb0595b4",
+      "commits": [],
+      "round": 1,
+      "pending_actions": [
+        "Corregir errores mypy",
+        "Ejecutar gates y commitear",
+        "Revision WEB"
+      ],
+      "notes": "Tarea creada por coordinador TERM tras mensaje de activacion del protocolo ejecutor-revisor."
+    }
+  ],
   "schema": {
     "task": {
       "id": "TASK-YYYYMMDD-NNN",
@@ -13,6 +45,7 @@
       "executor": "WEB|TERM",
       "reviewer": "WEB|TERM",
       "status": "PLANNED|IN_PROGRESS|REVIEW|DONE|BLOCKED|CONFLICT|CANCELLED",
+      "verdict": "APROBADO|APROBADO_CONDICIONAL|CAMBIOS_SOLICITADOS|PENDIENTE",
       "reserved_paths": ["ruta/relativa/1", "ruta/relativa/2"],
       "commit_base": "SHA",
       "commits": ["SHA-1", "SHA-2"],
