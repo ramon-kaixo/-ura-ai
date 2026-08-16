@@ -627,3 +627,16 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 2. **Si estás libre y hay tareas pendientes**, consulta `scripts/pro/dispatcher.py --dry-run` y asígnate la de mayor prioridad sin conflicto de zonas.
 3. **No preguntes al humano** si puedes resolver la asignación o el siguiente paso con `coordination.json` y las reglas del protocolo.
 4. **Antes de cerrar una tarea** (marcar como `aprobada`/`done`), ejecuta `python3 scripts/pro/verify_protocol.py`; si falla, corrige antes de cerrar.
+
+## Modo análisis de planes (TASK-20260816-010)
+
+1. Si recibes un mensaje que empieza con "Analiza este plan/proyecto según la metodología URA:", estás en **MODO ANÁLISIS**.
+2. **No ejecutes código**. Solo lee, analiza y emite un informe con:
+   - Puntos buenos
+   - Puntos malos
+   - Mejoras propuestas
+   - Veredicto: **GO / GO CON CAMBIOS / NO-GO**
+3. **Registra el análisis** en "docs/udo/coordination.json":
+   - Añade una entrada en el historial de la tarea/plan analizado.
+   - Guarda el veredicto en el campo "veredicto".
+4. El modo análisis no reemplaza el protocolo ejecutor-revisor; es una fase previa de validación de propuestas.
