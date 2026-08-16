@@ -4,10 +4,10 @@
     "pendientes": [
       "TASK-20260816-011"
     ],
-    "en_progreso": [
+    "en_progreso": [],
+    "en_revision": [
       "TASK-20260816-009"
     ],
-    "en_revision": [],
     "aprobadas": [],
     "bloqueadas": [],
     "cerradas": [
@@ -21,12 +21,12 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "ocupado",
-      "rol_actual": "ejecutor"
-    },
-    "WEB": {
       "estado": "libre",
       "rol_actual": null
+    },
+    "WEB": {
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -80,10 +80,10 @@
       "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
       "ejecutor": null,
       "revisor": "WEB",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "baja",
       "veredicto": "",
-      "nota": "En progreso. Implementando despertador del auto-dispatcher."
+      "nota": "Implementación lista. En revisión WEB. Gates: bash -n OK, ruff OK, json.tool OK."
     },
     "TASK-20260816-010": {
       "descripcion": "Panel de semáforos + modo análisis de planes",
