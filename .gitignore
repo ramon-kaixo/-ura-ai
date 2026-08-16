@@ -22,6 +22,7 @@ perf/
 .mypy_cache/
 .hypothesis/
 .ruff_cache/
+.pytest_cache/
 .sandbox_packages/
 .semgrep_logs/
 .nervioso/
@@ -94,3 +95,11 @@ docs/udo/pendientes-fase.md.estado
 
 # Orquestador: estado local del workspace (no versionar)
 docs/udo/plans/openclaw-workspace-state.json
+
+# --- F4 limpieza estructural (TASK-20260816-012) ---
+# configs/ alejado del árbol (unificado en config/); el archivo físico
+# original es inmutable (chattr +i) hasta limpieza host con sudo
+configs/
+# Artefactos movidos fuera del árbol (destino actual: /var/tmp/ura_artifacts/
+# pendiente de /opt/ura/ cuando el host remonte rw)
+/data/tuneladora_reports

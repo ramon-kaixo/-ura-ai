@@ -6,7 +6,7 @@
 set -e
 
 FECHA=$(date '+%Y%m%d_%H%M%S')
-CONFIG="/home/ramon/URA/ura_ia_1972/configs/ia_committee_config.json"
+CONFIG="/home/ramon/URA/ura_ia_1972/config/ia_committee_config.json"
 REPORTE="/home/ramon/URA/reports/consenso_${FECHA}.json"
 MAC_DEST="~/REVISIONES_IA/consenso_final.md"
 GROQ_KEY=$(grep -r "GROQ_API_KEY" /home/ramon/.config/opencode/ 2>/dev/null | head -1 | awk -F= '{print $2}' | tr -d ' "')
