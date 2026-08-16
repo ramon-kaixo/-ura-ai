@@ -306,6 +306,18 @@ class TestHybridRetriever:
         assert by_id["b"]["vector_score"] == pytest.approx(0.4444, abs=0.01)
         assert by_id["b"]["lexical_score"] == 1.0
         assert by_id["a"]["vector_score"] == 1.0
+        # valores exactos de rank y scores híbridos
+        assert by_id["a"]["lexical_rank"] == 999  # solo vector
+        assert by_id["b"]["vector_rank"] == 1
+        assert by_id["b"]["lexical_rank"] == 0
+        # a: 0.7*1.0 + 0.3*0 = 0.7; b: 0.7*0.4444 + 0.3*1.0 = 0.6111
+        assert by_id["a"]["hybrid_score"] == pytest.approx(0.7)
+        assert by_id["b"]["hybrid_score"] == pytest.approx(0.6111, abs=0.01)
+        # orden por hybrid desc: a > b; k=2 excluye c
+        assert res[0]["doc_id"] == "a"
+        assert res[1]["doc_id"] == "b"
+        assert res[0]["rank"] == 0
+        assert res[1]["rank"] == 1
 
     def test_fusion_con_ceros(self) -> None:
         hr = HybridRetriever(
@@ -403,8 +415,138 @@ class TestRerankers:
         assert res[0]["reranker_model"] == "fake"
         assert res[0]["reranker_score"] == pytest.approx(0.8)
         assert res[0]["rank"] == 0
+        assert res[0]["score"] == pytest.approx(0.8)
+        assert res[0]["reranker_latency_ms"] >= 0
         assert r._loaded is True
         assert r.rerank("q", [{"doc_id": "d1"}])[0]["reranker_score"] == pytest.approx(0.8)
+
+    def test_ce_rerank_multi_batch_y_orden(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """3 candidatos con batch_size=2 → 2 batches, orden por score desc."""
+        ce = _import_ce()
+        monkeypatch.setattr(ce, "GOLDEN_DIR", tmp_path)
+        for i, name in enumerate(("d1", "d2", "d3")):
+            (tmp_path / f"{name}.md").write_text(f"documento {i}", encoding="utf-8")
+
+        scores_iter = iter([[0.3, 0.9], [0.6]])
+
+        class FakeToken:
+            def __call__(self, batch: Any, **kw: Any) -> Any:
+                return _FakeFeatures()
+
+        class FakeModel:
+            def __call__(self, **kw: Any) -> Any:
+                batch_scores = next(scores_iter)
+                return types.SimpleNamespace(
+                    logits=types.SimpleNamespace(
+                        squeeze=lambda *a: types.SimpleNamespace(
+                            cpu=lambda: types.SimpleNamespace(
+                                numpy=lambda: types.SimpleNamespace(tolist=lambda: batch_scores)
+                            )
+                        )
+                    )
+                )
+
+            def to(self, dev: Any) -> Any:
+                return self
+
+            def eval(self) -> Any:
+                return self
+
+        monkeypatch.setattr(ce.torch, "cuda", types.SimpleNamespace(is_available=lambda: False))
+        monkeypatch.setattr(ce.torch, "no_grad", lambda: _CtxMgr())
+        monkeypatch.setattr(ce, "AutoTokenizer", types.SimpleNamespace(from_pretrained=lambda m: FakeToken()))
+        monkeypatch.setattr(
+            ce, "AutoModelForSequenceClassification", types.SimpleNamespace(from_pretrained=lambda m: FakeModel())
+        )
+
+        r = ce.CrossEncoderReranker(model_name="fake", device="cpu", top_k=3, batch_size=2)
+        res = r.rerank("q", [{"doc_id": "d1"}, {"doc_id": "d2"}, {"doc_id": "d3"}])
+        assert len(res) == 3
+        # orden por score desc: d2 (0.9) > d3 (0.6) > d1 (0.3)
+        assert [d["doc_id"] for d in res] == ["d2", "d3", "d1"]
+        assert [d["rank"] for d in res] == [0, 1, 2]
+        assert res[0]["reranker_score"] == pytest.approx(0.9)
+        assert res[2]["reranker_score"] == pytest.approx(0.3)
+
+    def test_ce_top_k_trunca(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """top_k=1 → solo re-rankea 1 candidato."""
+        ce = _import_ce()
+        monkeypatch.setattr(ce, "GOLDEN_DIR", tmp_path)
+        (tmp_path / "d1.md").write_text("x", encoding="utf-8")
+        (tmp_path / "d2.md").write_text("y", encoding="utf-8")
+
+        class FakeToken:
+            def __call__(self, batch: Any, **kw: Any) -> Any:
+                return _FakeFeatures()
+
+        class FakeModel:
+            def __call__(self, **kw: Any) -> Any:
+                return types.SimpleNamespace(
+                    logits=types.SimpleNamespace(
+                        squeeze=lambda *a: types.SimpleNamespace(
+                            cpu=lambda: types.SimpleNamespace(numpy=lambda: types.SimpleNamespace(tolist=lambda: 0.5))
+                        )
+                    )
+                )
+
+            def to(self, dev: Any) -> Any:
+                return self
+
+            def eval(self) -> Any:
+                return self
+
+        monkeypatch.setattr(ce.torch, "cuda", types.SimpleNamespace(is_available=lambda: False))
+        monkeypatch.setattr(ce.torch, "no_grad", lambda: _CtxMgr())
+        monkeypatch.setattr(ce, "AutoTokenizer", types.SimpleNamespace(from_pretrained=lambda m: FakeToken()))
+        monkeypatch.setattr(
+            ce, "AutoModelForSequenceClassification", types.SimpleNamespace(from_pretrained=lambda m: FakeModel())
+        )
+
+        r = ce.CrossEncoderReranker(model_name="fake", device="cpu", top_k=1, batch_size=2)
+        res = r.rerank("q", [{"doc_id": "d1"}, {"doc_id": "d2"}])
+        assert len(res) == 1
+
+    def test_ce_pares_exactos_al_tokenizer(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Verifica que los pares (query, texto) que llegan al tokenizer son exactos."""
+        ce = _import_ce()
+        monkeypatch.setattr(ce, "GOLDEN_DIR", tmp_path)
+        (tmp_path / "d1.md").write_text("contenido real del doc", encoding="utf-8")
+        (tmp_path / "d2.md").write_text("otro contenido", encoding="utf-8")
+
+        batches_recibidos: list[Any] = []
+
+        class FakeToken:
+            def __call__(self, batch: Any, **kw: Any) -> Any:
+                batches_recibidos.append(batch)
+                return _FakeFeatures()
+
+        class FakeModel:
+            def __call__(self, **kw: Any) -> Any:
+                return types.SimpleNamespace(
+                    logits=types.SimpleNamespace(
+                        squeeze=lambda *a: types.SimpleNamespace(
+                            cpu=lambda: types.SimpleNamespace(numpy=lambda: types.SimpleNamespace(tolist=lambda: [0.5, 0.5]))
+                        )
+                    )
+                )
+
+            def to(self, dev: Any) -> Any:
+                return self
+
+            def eval(self) -> Any:
+                return self
+
+        monkeypatch.setattr(ce.torch, "cuda", types.SimpleNamespace(is_available=lambda: False))
+        monkeypatch.setattr(ce.torch, "no_grad", lambda: _CtxMgr())
+        monkeypatch.setattr(ce, "AutoTokenizer", types.SimpleNamespace(from_pretrained=lambda m: FakeToken()))
+        monkeypatch.setattr(
+            ce, "AutoModelForSequenceClassification", types.SimpleNamespace(from_pretrained=lambda m: FakeModel())
+        )
+
+        r = ce.CrossEncoderReranker(model_name="fake", device="cpu", top_k=2, batch_size=2)
+        r.rerank("mi query", [{"doc_id": "d1"}, {"doc_id": "d2"}])
+        assert len(batches_recibidos) == 1
+        assert batches_recibidos[0] == [("mi query", "contenido real del doc"), ("mi query", "otro contenido")]
 
     def test_ce_score_float_aislado(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         ce = _import_ce()

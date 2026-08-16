@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
 
 if TYPE_CHECKING:
-    from core.interfaces import IVectorStore
+    from motor.core.interfaces import IVectorStore
 
 log = logging.getLogger("ura.memory.hybrid")
 

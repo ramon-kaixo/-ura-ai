@@ -16,6 +16,7 @@ from typing import Self
 
 import pytest
 
+import motor.core.web_search as ws_mod
 from core.mochila import tools as tools_mod
 from core.mochila.tools import (
     DEFAULT_ENGINE,
@@ -114,13 +115,13 @@ class FakeClient:
 @pytest.fixture(autouse=True)
 def _reset_tools_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """Aísla el estado global del módulo entre tests."""
-    monkeypatch.setattr(tools_mod, "_last_search", 0.0)
-    monkeypatch.setattr(tools_mod, "WEBSEARCH_INTERVAL", WEBSEARCH_INTERVAL)
-    monkeypatch.setattr(tools_mod, "DEFAULT_ENGINE", DEFAULT_ENGINE)
+    monkeypatch.setattr(ws_mod, "_last_search", 0.0)
+    monkeypatch.setattr(ws_mod, "WEBSEARCH_INTERVAL", WEBSEARCH_INTERVAL)
+    monkeypatch.setattr(ws_mod, "DEFAULT_ENGINE", DEFAULT_ENGINE)
 
 
 def _set_engine(monkeypatch: pytest.MonkeyPatch, engine: str) -> None:
-    monkeypatch.setattr(tools_mod, "DEFAULT_ENGINE", engine)
+    monkeypatch.setattr(ws_mod, "DEFAULT_ENGINE", engine)
 
 
 def _set_client(monkeypatch: pytest.MonkeyPatch, client: FakeClient) -> None:
@@ -418,14 +419,14 @@ async def test_web_search_searxng_ambos_error_devuelve_sx(monkeypatch: pytest.Mo
 async def test_web_search_rate_limit_duerme(monkeypatch: pytest.MonkeyPatch) -> None:
     _set_engine(monkeypatch, "duckduckgo")
     _set_client(monkeypatch, FakeClient(post_resp=FakeResp(text=DDG_HTML)))
-    monkeypatch.setattr(tools_mod, "WEBSEARCH_INTERVAL", 10.0)
-    tools_mod._last_search = time.time()
+    monkeypatch.setattr(ws_mod, "WEBSEARCH_INTERVAL", 10.0)
+    ws_mod._last_search = time.time()
     dormidos: list[float] = []
 
     async def _sleep(delay: float) -> None:
         dormidos.append(delay)
 
-    monkeypatch.setattr(tools_mod.asyncio, "sleep", _sleep)
+    monkeypatch.setattr(ws_mod.asyncio, "sleep", _sleep)
     res = await web_search("hola")
     assert "error" not in res
     assert len(dormidos) == 1
@@ -440,7 +441,7 @@ async def test_web_search_sin_espera_cuando_reciente(monkeypatch: pytest.MonkeyP
     async def _sleep(delay: float) -> None:
         dormidos.append(delay)
 
-    monkeypatch.setattr(tools_mod.asyncio, "sleep", _sleep)
+    monkeypatch.setattr(ws_mod.asyncio, "sleep", _sleep)
     res = await web_search("hola")
     assert "error" not in res
     assert dormidos == []

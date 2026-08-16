@@ -208,6 +208,9 @@ class TestResearcherAgent:
         agent = ResearcherAgent(agent_id="r1", memory_store=_MemoryStore(), context_retriever=_Retriever())
         assert agent.id == "r1"
         assert agent.role == AgentRole.RESEARCHER
+        assert agent.name == "researcher"
+        assert agent.capabilities == ["search", "retrieve", "lookup"]
+        assert agent.status == AgentStatus.IDLE
 
     def test_auto_discover_success(self) -> None:
         agent = ResearcherAgent()
@@ -230,6 +233,10 @@ class TestResearcherAgent:
         assert res.success
         assert res.output["sources"] == ["semantic_memory"]
         assert res.output["semantic_facts"] == [{"text": "facto"}]
+        assert res.output["query"] == "buscar x"
+        assert agent.status == AgentStatus.IDLE
+        assert res.duration_ms >= 0
+        assert res.task_id == res.task_id
 
     def test_episodic_sources(self) -> None:
         agent = ResearcherAgent(memory_store=None, context_retriever=_Retriever(episodes=_Episodes()))
@@ -237,6 +244,7 @@ class TestResearcherAgent:
         assert res.success
         assert res.output["sources"] == ["episodic_memory"]
         assert res.output["episodes"] == {"episodes": [1, 2]}
+        assert res.output["query"] == "buscar x"
 
     def test_no_sources(self) -> None:
         agent = ResearcherAgent(memory_store=_MemoryStore(), context_retriever=_Retriever())
@@ -259,6 +267,10 @@ class TestValidatorAgent:
         res = ValidatorAgent().run(_task())
         assert not res.success
         assert "No result data" in res.output["issues"][0]
+        assert res.output["valid"] is False
+        assert len(res.output["issues"]) == 1
+        assert res.output["issues"] == ["No result data provided"]
+        assert res.duration_ms >= 0
 
     def test_require_success_failure(self) -> None:
         task = _task()
@@ -266,6 +278,7 @@ class TestValidatorAgent:
         res = ValidatorAgent().run(task)
         assert not res.success
         assert "failure" in res.output["issues"][0]
+        assert res.output["issues"] == ["Result indicates failure"]
 
     def test_require_output_missing(self) -> None:
         task = _task()
@@ -273,13 +286,25 @@ class TestValidatorAgent:
         res = ValidatorAgent().run(task)
         assert not res.success
         assert "no output" in res.output["issues"][0]
+        assert res.output["issues"] == ["Result has no output"]
 
     def test_valid(self) -> None:
         task = _task()
         task.input_data = {"result": {"success": True, "output": "x"}, "require_output": True}
-        res = ValidatorAgent().run(task)
+        agent = ValidatorAgent()
+        res = agent.run(task)
         assert res.success
         assert res.output["valid"] is True
+        assert res.output["issues"] == []
+        assert agent.status == AgentStatus.IDLE
+        assert res.task_id == task.id
+
+    def test_init_por_defecto(self) -> None:
+        a = ValidatorAgent()
+        assert a.name == "validator"
+        assert a.role == AgentRole.VALIDATOR
+        assert a.capabilities == ["validate", "check", "verify"]
+        assert a.status == AgentStatus.IDLE
 
     def test_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*args: Any, **kwargs: Any) -> Any:
