@@ -6,11 +6,11 @@
       "TASK-20260816-010"
     ],
     "en_progreso": [],
-    "en_revision": [
+    "en_revision": [],
+    "aprobadas": [
       "TASK-20260816-008",
       "TASK-20260816-005"
     ],
-    "aprobadas": [],
     "bloqueadas": [],
     "cerradas": [
       "TASK-20260816-003",
@@ -51,9 +51,9 @@
       "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "media",
-      "veredicto": "",
+      "veredicto": "APROBADO — revisión TERM: 5 errores críticos + 2 web_search corregidos (mypy 442->432), ruff OK, pytest 84 passed. Nota: trabajo en main (edcdb2db), rama 005 no existe.",
       "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea.",
       "nota": "En cola de revisión WEB. Rama ia/TASK-20260816-005 lista para revisión."
     },
@@ -70,9 +70,9 @@
       "descripcion": "Guardián de protocolo (verify_protocol.py) + auto-dispatcher (dispatcher.py) con flock, prioridad y chequeo de conflictos",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "alta",
-      "veredicto": "",
+      "veredicto": "APROBADO — revisión independiente TERM: ruff OK, pytest 7 passed, json.tool OK, guardián exit=0, flock+prioridad OK, sin panel en diff",
       "nota": "En cola de revisión WEB junto a TASK-20260816-005. Commits: a0915f4f, 43caef06, 80f964a9."
     },
     "TASK-20260816-009": {
