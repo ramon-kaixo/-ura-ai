@@ -611,3 +611,19 @@ Al recibir un mensaje que empiece con `Coordina esta tarea según protocolo ejec
 9. **Si el revisor solicita cambios**, el ejecutor corrige y la tarea vuelve a `en_revision`.
 10. **Nunca cierres una TASK sin aprobación del revisor.**
 11. Si eres solo coordinador (ni ejecutor ni revisor), deja la tarea en `pendientes` y notifica al rol correspondiente.
+
+## Autonomía de agentes (TASK-20260816-008)
+
+Reglas de auto-asignación vía `docs/udo/coordination.json`:
+
+1. **Al iniciar sesión**, actualiza tu estado en `coordination.json` (`agentes` → `estado: libre/ocupado`).
+2. **Si estás libre y hay tareas en `pendientes`**, asígnate la de mayor prioridad que no tenga conflicto de zonas con tareas en curso (usa `scripts/pro/dispatcher.py --dry-run` para ver la asignación propuesta, o asigna manualmente).
+3. **Cambia al rol necesario** (ejecutor o revisor) según la tarea asignada.
+4. **Autonomía acotada**: la auto-asignación de tareas NO exime del análisis de plan ni de los gates antes de tocar código. La regla "un plan NUNCA se ejecuta sin análisis previo" sigue vigente. No preguntes al humano para auto-asignarte una tarea pendiente; sí avísale en el reporte.
+
+## Operación diaria (TASK-20260816-008)
+
+1. **Al iniciar sesión**, actualiza tu estado en `docs/udo/coordination.json` (`agentes.{WEB|TERM}.estado`).
+2. **Si estás libre y hay tareas pendientes**, consulta `scripts/pro/dispatcher.py --dry-run` y asígnate la de mayor prioridad sin conflicto de zonas.
+3. **No preguntes al humano** si puedes resolver la asignación o el siguiente paso con `coordination.json` y las reglas del protocolo.
+4. **Antes de cerrar una tarea** (marcar como `aprobada`/`done`), ejecuta `python3 scripts/pro/verify_protocol.py`; si falla, corrige antes de cerrar.
