@@ -2009,14 +2009,32 @@ class TestEntityResolverCobertura:
         unk = ContextualEntityResolver().resolve("cosanueva", context={"claim_text": "y"})
         assert unk.status == ResolutionStatus.UNKNOWN
         assert unk.resolver_name == "ContextualEntityResolver"
+        assert unk.entity_id == ""
+        assert unk.confidence == 0.0
+        assert unk.resolver_version == "3.1.0"
         vacio = ContextualEntityResolver().resolve("   ")
         assert vacio.status == ResolutionStatus.UNKNOWN
         uno = ContextualEntityResolver(
             registry=EntityRegistry({"gato": [EntityDef(entity_id="G1", canonical_name="Gato")]})
         ).resolve("gato", context={"claim_text": "cualquiera"})
         assert uno.status == ResolutionStatus.RESOLVED and uno.entity_id == "G1"
+        assert uno.confidence == 0.95
+        assert uno.canonical_name == "Gato"
+        assert uno.resolver_name == "ContextualEntityResolver"
         assert r2.resolve_many(["manzana"], context={"claim_text": "x"})[0].entity_id == "M2"
         assert ContextualEntityResolver().normalize("  HOLa ") == "hola"
+
+        # cache DETERMINISTIC_ONLY: entidad única y UNKNOWN se cachean
+        r_det = ContextualEntityResolver(
+            registry=EntityRegistry({"gato": [EntityDef(entity_id="G1", canonical_name="Gato")]})
+        )
+        r_det.resolve("gato", context={"claim_text": "cualquiera"})
+        assert r_det.cache.size == 1  # entrada única → cacheada
+        r_det.resolve("gato", context={"claim_text": "otro contexto distinto"})
+        assert r_det.cache.size == 1  # hit de cache (no depende del contexto)
+        r_unk = ContextualEntityResolver()
+        r_unk.resolve("sinedefinir", context={"claim_text": "y"})
+        assert r_unk.cache.size == 1  # UNKNOWN se cachea
 
         r_all = ContextualEntityResolver(registry=multi_reg, scorer=_IdxScorer(), cache_policy="all")
         assert r_all.cache_policy == CachePolicy.ALL
