@@ -1,5 +1,8 @@
-"""core.utils — Utilidades de saneamiento y anonimización."""
+"""core.utils — Utilidades de saneamiento y anonimización.
 
-from core.utils.anonymizer import sanitize_text
+Fachada: la implementación canónica vive en motor/core/utils/anonymizer.py.
+"""
+
+from motor.core.utils.anonymizer import sanitize_text
 
 __all__ = ["sanitize_text"]
