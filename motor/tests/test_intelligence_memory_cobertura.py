@@ -357,19 +357,41 @@ class TestSemanticMemoryStore:
         s = SemanticMemoryStore()
         s.store(SemanticFact("Python", "es", "lenguaje", tags=["prog"], fact_type="relation", importance=0.9))
         s.store(SemanticFact("Gato", "come", "pescado", tags=["animal"], fact_type="event", importance=0.5))
-        assert len(s.search(text="python")) == 1
+        s.store(SemanticFact("python", "es", "snake", fact_type="relation", importance=0.3))
+        assert len(s.search(text="python")) == 2  # case-insensitive, subject y object
         assert len(s.search(tags=["animal"])) == 1
-        assert len(s.search(fact_type="relation")) == 1
+        assert len(s.search(fact_type="relation")) == 2
         assert len(s.search(entity="gato")) == 1
+        assert len(s.search(entity="Python")) == 2  # case-insensitive
         assert len(s.search(text="zzz", k=10)) == 0
+        orden = s.search(text="python")
+        assert orden[0].importance == 0.9  # ordenado por importance desc
+        assert len(s.search(text="python", k=1)) == 1  # límite k
 
     def test_persistencia(self, tmp_path: Path) -> None:
         db = tmp_path / "facts.db"
         s = SemanticMemoryStore(str(db))
-        fid = s.store(SemanticFact("X", "es", "Y", tags=["t"]))
+        f = SemanticFact("X", "es", "Y", tags=["t"], confidence=0.8, importance=0.9)
+        f.source_episode_ids = ["e1", "e2"]
+        f.metadata = {"fuente": "test"}
+        f.version = 3
+        fid = s.store(f)
         s.close()
         s2 = SemanticMemoryStore(str(db))
-        assert s2.get(fid) is not None
+        g = s2.get(fid)
+        assert g is not None
+        assert g.subject == "X"
+        assert g.predicate == "es"
+        assert g.object_value == "Y"
+        assert g.tags == ["t"]
+        assert g.confidence == 0.8
+        assert g.importance == 0.9
+        assert g.source_episode_ids == ["e1", "e2"]
+        assert g.metadata == {"fuente": "test"}
+        assert g.version == 3
+        assert g.fact_type == "relation"
+        assert s2.get_by_key("X", "es", "Y") is g
+        assert s2.count() == 1
         assert s2.clear_all() == 1
         s2.close()
 
