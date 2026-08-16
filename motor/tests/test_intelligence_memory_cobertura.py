@@ -551,6 +551,45 @@ class TestContextRetriever:
         r = ContextRetriever(st)
         res = r.search(ContextQuery(weights={"semantic": 1.0}))
         assert res.total == 1
+
+    def test_score_valores_exactos(self) -> None:
+        """Verifica normalización y suma ponderada exacta de _score."""
+        st = EpisodeStore()
+        e1 = _episode(session="s", payload="a", ts="2026-08-10T00:00:00+00:00", importance=1.0, confidence=1.0)
+        e2 = _episode(session="s", payload="b", ts="2026-01-01T00:00:00+00:00", importance=0.5, confidence=0.5)
+        st.store(e1)
+        st.store(e2)
+        r = ContextRetriever(st, weights={"semantic": 0.0, "recency": 0.5, "importance": 0.3, "confidence": 0.2})
+        res = r.search(ContextQuery(session_id="s", k=5))
+        by_id = {cr.episode.id: cr for cr in res.results}
+        # e1 (nuevo, imp 1.0, conf 1.0): rec≈1.0 (el más reciente), imp=1.0, conf=1.0
+        c1 = by_id[e1.id]
+        assert c1.importance_score == 1.0
+        assert c1.confidence_score == 1.0
+        assert c1.recency_score > 0.9  # el más reciente → recency alto
+        assert c1.recency_score > by_id[e2.id].recency_score
+        # score = 0.5*rec + 0.3*1 + 0.2*1 → entre 0.5*0.9+0.5 y 1.0
+        assert c1.score > 0.95
+        # e2 (viejo, imp 0.5, conf 0.5): imp=0.5, conf=0.5, rec<1
+        c2 = by_id[e2.id]
+        assert c2.importance_score == 0.5
+        assert c2.confidence_score == 0.5
+        assert c2.recency_score < 1.0
+        assert c1.rank == 0
+        assert c2.rank == 1
+        # explica con todos los componentes
+        assert "rec=" in c1.explanation and "imp=" in c1.explanation and "con=" in c1.explanation
+
+    def test_score_max_cero_no_divide(self) -> None:
+        """importance/confidence 0 → scores normalizados 0 sin división por cero."""
+        st = EpisodeStore()
+        e = _episode(session="s", payload="a", ts="2026-08-10T00:00:00+00:00", importance=0.0, confidence=0.0)
+        st.store(e)
+        r = ContextRetriever(st, weights={"semantic": 0, "recency": 0, "importance": 1.0, "confidence": 0})
+        res = r.search(ContextQuery(session_id="s"))
+        cr = res[0]
+        assert cr.importance_score == 0.0
+        assert cr.score == 0.0
         assert res[0].semantic_score == 0.0
 
     def test_result_list_api(self) -> None:
