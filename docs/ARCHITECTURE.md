@@ -107,3 +107,8 @@ graph TB
 | ✅ ura-ssh-guard | active | ? |
 | ❌ ura-watchdog | inactive | ? |
 | ✅ ura-xvfb | active | ? |
+
+## Decisiones de arquitectura
+
+- Ver ADR-001 para decisiones estratégicas del núcleo.
+- Ver ADR-002 para decisiones de integración y protocolos.
