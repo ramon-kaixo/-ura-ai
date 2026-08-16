@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Guardián de protocolo (verify_protocol.py)"
+python3 scripts/pro/verify_protocol.py
+
 echo "==> Ruff"
 ruff check .
 
