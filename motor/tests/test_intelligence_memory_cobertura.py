@@ -1002,10 +1002,17 @@ class TestLLMFactExtractor:
 
         payload = '[{"subject": "A", "predicate": "es", "object": "B", "type": "relation"}]'
         monkeypatch.setattr(mod, "generate", lambda *a, **k: payload)
-        facts = LLMFactExtractor().extract(_episode(payload="texto"))
+        ep = _episode(payload="texto")
+        facts = LLMFactExtractor().extract(ep)
         assert len(facts) == 1
         assert facts[0].subject == "A" and facts[0].predicate == "es"
         assert facts[0].confidence == pytest.approx(0.4)
+        assert facts[0].object_value == "B"
+        assert facts[0].fact_type == "relation"
+        assert facts[0].source_episode_ids == [ep.id]
+        assert facts[0].tags == list(ep.tags)
+        assert facts[0].metadata == {"session_id": ep.session_id}
+        assert facts[0].importance == ep.importance
 
     def test_extract_error_prefix(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.intelligence.memory.extractor_llm as mod
@@ -1033,8 +1040,12 @@ class TestLLMFactExtractor:
             llm._parse_response('[{"subject": "s", "predicate": "p", "object": "o", "type": "t"}, "no-dict"]', ep)[0]
             is not None
         )
-        assert llm._parse_response('[{"subject": "s", "predicate": "p", "object": "o"}]', ep)[0] is not None
-        assert llm._parse_response('[{"subject": "solo"}]', ep) == []
+        f1 = llm._parse_response('[{"subject": "s", "predicate": "p", "object": "o"}]', ep)[0]
+        assert f1 is not None
+        assert f1.fact_type == "statement"  # default
+        assert f1.predicate == "p"
+        assert llm._parse_response('[{"subject": "s"}]', ep) == []  # sin object → descartado
+        assert llm._parse_response('[{"subject": "", "object": ""}]', ep) == []
 
     def test_fallback_parse(self) -> None:
         llm = LLMFactExtractor()
