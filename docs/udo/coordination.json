@@ -5,11 +5,10 @@
       "TASK-20260816-011",
       "TASK-20260816-013"
     ],
-    "en_progreso": [
-      "TASK-20260816-012"
-    ],
+    "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260816-012"
     ],
     "aprobadas": [],
     "bloqueadas": [],
@@ -24,8 +23,8 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "ocupado",
-      "rol_actual": "ejecutor"
+      "estado": "libre",
+      "rol_actual": null
     },
     "WEB": {
       "estado": "ocupado",
@@ -124,7 +123,7 @@
       "titulo": "F4: Limpieza estructural",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -140,7 +139,7 @@
         "git status limpio",
         "python3 -m json.tool docs/udo/coordination.json"
       ],
-      "nota": "TERM toma posesión. En ejecución."
+      "nota": "Implementación en rama ia/TASK-20260816-012 (cedab909). Pendiente revisión WEB. Pendiente humano: chattr -i + rm del huérfano inmutable."
     },
     "TASK-20260816-013": {
       "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
