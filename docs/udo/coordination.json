@@ -12,7 +12,7 @@
       "executor": "TERM",
       "reviewer": "WEB",
       "status": "REVIEW",
-      "verdict": "PENDIENTE",
+      "verdict": "APROBADO",
       "reserved_paths": [
         "motor/agents/models.py",
         "core/model_router/router.py",
@@ -34,7 +34,7 @@
       "pending_actions": [
         "Revision WEB"
       ],
-      "notes": "Cambios solicitados aplicados: ADR refs en ARCHITECTURE.md y duplicado eliminado. En revision WEB."
+      "notes": "Cambios solicitados aplicados: ADR refs en ARCHITECTURE.md y duplicado eliminado. En revision WEB. Re-revisión TERM 22:50: lowercase eliminado, uppercase con ADR-001/002, test pasa en ASUS, ruff OK."
     }
   ],
   "schema": {
