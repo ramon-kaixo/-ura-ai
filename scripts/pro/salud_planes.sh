@@ -41,8 +41,9 @@ RUFF_RESULT="$(run_ruff)"
 MYPY_RESULT="$(run_mypy)"
 PYTEST_RESULT="$(run_pytest)"
 
-# Actualizar coordination.json con resultados de gates.
+# Actualizar coordination.json con resultados de gates, protegido con flock.
 python3 - "$COORD" "$RUFF_RESULT" "$MYPY_RESULT" "$PYTEST_RESULT" <<'PY'
+import fcntl
 import json
 import sys
 from pathlib import Path
@@ -51,21 +52,26 @@ coord_path = Path(sys.argv[1])
 ruff = sys.argv[2]
 mypy = sys.argv[3]
 pytest = sys.argv[4]
+lock_path = coord_path.with_suffix(".lock")
 
-with coord_path.open(encoding="utf-8") as f:
-    data = json.load(f)
+with lock_path.open("w", encoding="utf-8") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    with coord_path.open(encoding="utf-8") as f:
+        data = json.load(f)
 
-# Guardar gates globales bajo clave "ultimos_gates" en cada tarea activa
-for tid, tarea in data.get("tareas", {}).items():
-    if tarea.get("estado") in {"en_progreso", "en_revision", "aprobada", "pendiente"}:
-        tarea.setdefault("ultimos_gates", {})
-        tarea["ultimos_gates"]["ruff"] = ruff
-        tarea["ultimos_gates"]["mypy"] = mypy
-        tarea["ultimos_gates"]["pytest"] = pytest
+    # Guardar gates globales bajo clave "ultimos_gates" en cada tarea activa
+    for tarea in data.get("tareas", {}).values():
+        if tarea.get("estado") in {"en_progreso", "en_revision", "aprobada", "pendiente"}:
+            tarea.setdefault("ultimos_gates", {})
+            tarea["ultimos_gates"]["ruff"] = ruff
+            tarea["ultimos_gates"]["mypy"] = mypy
+            tarea["ultimos_gates"]["pytest"] = pytest
 
-with coord_path.open("w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2, ensure_ascii=False)
-    f.write("\n")
+    tmp = coord_path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    tmp.replace(coord_path)
 PY
 
 echo " Gates actualizados en $COORD:"
