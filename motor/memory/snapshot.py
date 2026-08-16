@@ -17,7 +17,8 @@ from motor.memory.crypto import decrypt as _decrypt
 from motor.memory.crypto import encrypt as _encrypt
 
 if TYPE_CHECKING:
-    from motor.memory.models import MemoryEntry, MemoryTimeline
+    from motor.memory.models import MemoryEntry
+    from motor.memory.timeline import MemoryTimeline
 
 
 def save_snapshot(timeline: MemoryTimeline, path: str, version: str = "", encryption_key: str = "") -> str:
