@@ -91,7 +91,7 @@
       "estado": "en_revision",
       "prioridad": "media",
       "veredicto": "",
-      "nota": "Cambios solicitados por revisor aplicados: (1) flock añadido a escritura de coordination.json en salud_planes.sh; (2) docs/architecture.md duplicado eliminado; (3) gate de revisión ajustado a ruff check scripts/pro/panel.py && bash -n scripts/pro/salud_planes.sh. Gates: ruff OK, bash -n OK, pytest 11 passed, json.tool OK. Pendiente revisión WEB."
+      "nota": "correcciones aplicadas: flock + borrado duplicado"
     }
   }
 }
