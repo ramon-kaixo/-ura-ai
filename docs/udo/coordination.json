@@ -1,11 +1,15 @@
 {
-  "modo": "paralelo",
+  "modo": "secuencial",
   "colas": {
-    "pendientes": ["TASK-20260816-005"],
-    "en_progreso": [],
+    "pendientes": ["TASK-20260816-005", "TASK-20260816-009"],
+    "en_progreso": ["TASK-20260816-008"],
     "en_revision": [],
     "aprobadas": ["TASK-20260816-004", "TASK-20260816-007"],
     "bloqueadas": ["TASK-20260816-003"]
+  },
+  "agentes": {
+    "TERM": {"estado": "ocupado", "rol_actual": "ejecutor"},
+    "WEB": {"estado": "libre", "rol_actual": null}
   },
   "tareas": {
     "TASK-20260816-003": {
@@ -14,6 +18,7 @@
       "revisor": "WEB",
       "estado": "bloqueada",
       "prioridad": "alta",
+      "veredicto": "",
       "nota": "Hotfix y guardarrail hechos; rotación del token pendiente del humano (rootfs RO, sudo)."
     },
     "TASK-20260816-004": {
@@ -22,7 +27,8 @@
       "revisor": "WEB",
       "estado": "aprobada",
       "prioridad": "alta",
-      "nota": "REVISIÓN INDEPENDIENTE APROBADO: grep vacío, ruff OK, mypy 0 nuevos, pytest 144 passed, cobertura 100%. Commits: ee7910ca, 1a84d31e."
+      "veredicto": "APROBADO — revisión independiente: grep vacío, ruff OK, mypy 0 nuevos, pytest 144 passed, cobertura 100%",
+      "nota": "Commits: ee7910ca, 1a84d31e."
     },
     "TASK-20260816-005": {
       "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
@@ -30,6 +36,7 @@
       "revisor": "WEB",
       "estado": "pendiente",
       "prioridad": "media",
+      "veredicto": "",
       "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea."
     },
     "TASK-20260816-007": {
@@ -38,7 +45,26 @@
       "revisor": "TERM",
       "estado": "aprobada",
       "prioridad": "alta",
-      "nota": "REVISIÓN APROBADO: JSON válido (modo paralelo, 5 colas, 4 tareas), sección AGENTS.md con 11 reglas, 0 Python en diff. Commit edcf7b04."
+      "veredicto": "APROBADO — JSON válido (modo paralelo, 5 colas), sección AGENTS.md con 11 reglas, 0 Python en diff",
+      "nota": "Commit edcf7b04; fusionada a main (56864d1e)."
+    },
+    "TASK-20260816-008": {
+      "descripcion": "Guardián de protocolo (verify_protocol.py) + auto-dispatcher (dispatcher.py) con flock, prioridad y chequeo de conflictos",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_progreso",
+      "prioridad": "alta",
+      "veredicto": "",
+      "nota": "Rama ia/TASK-20260816-008. Correcciones del análisis: una sola TASK, flock, regla de autonomía acotada, campo veredicto, tests ≥80%."
+    },
+    "TASK-20260816-009": {
+      "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
+      "ejecutor": null,
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "baja",
+      "veredicto": "",
+      "nota": "Fase futura: depende de TASK-008 aprobada y de decisión sobre autonomía plena."
     }
   }
 }
