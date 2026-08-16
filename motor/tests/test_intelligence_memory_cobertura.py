@@ -1024,6 +1024,40 @@ class TestRuleBasedFactExtractor:
         assert any(f.fact_type == "error" for f in facts)
         assert any(f.fact_type == "relation" and f.object_value.startswith("dos brazos") for f in facts)
         assert any(f.fact_type == "event" for f in facts)
+
+    def test_find_patterns_tuples_exactos(self) -> None:
+        """Verifica los tuples (subject, predicate, object, type) exactos por patrón."""
+        r = RuleBasedFactExtractor()
+        # attribute: El sistema es X Y → (sistema, X, Y, attribute)... verifica orden real
+        attr = r._find_patterns("El servidor es rapido en produccion")
+        assert ("sistema", "servidor", "rapido", "attribute") in attr
+        # relation: X tiene Y (captura "El robot" con artículo)
+        rel = r._find_patterns("El robot tiene dos brazos")
+        assert ("El robot", "tiene", "dos brazos", "relation") in rel
+        # event: la X se Y Z
+        ev = r._find_patterns("la puerta se abrio lentamente")
+        assert ("puerta", "abrio", "lentamente", "event") in ev
+        # error: Error: X
+        err = r._find_patterns("Error: conexion perdida")
+        assert ("sistema", "error", "conexion perdida", "error") in err
+        # statement: X dice Y (captura "El sistema" con artículo)
+        st = r._find_patterns("El sistema dice que todo ok")
+        assert ("El sistema", "dice", "todo ok", "statement") in st
+        # config: Configuracion X = Y
+        cfg = r._find_patterns("Configuracion puerto = 8080")
+        assert ("sistema", "puerto", "8080", "attribute") in cfg
+        # numérico: X = N
+        num = r._find_patterns("temperatura es 42")
+        assert ("sistema", "temperatura", "42", "attribute") in num
+        # sin coincidencias
+        assert r._find_patterns("hola mundo sin patrones") == []
+
+    def test_extract_multiples_patrones_mismo_texto(self) -> None:
+        """Un texto con 2 patrones → 2 facts."""
+        r = RuleBasedFactExtractor()
+        facts = r.extract(_episode(payload="El servidor es rapido en produccion. Error: caido"))
+        types = sorted(f.fact_type for f in facts)
+        assert types == ["attribute", "error"]
         assert any(f.fact_type == "attribute" for f in facts)
 
     def test_parse_json_invalido(self) -> None:
