@@ -64,7 +64,13 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
 
 
 async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
-    params: dict[str, str | int] = {"q": query, "format": "json", "language": "es,en", "categories": "general", "pageno": 1}
+    params: dict[str, str | int] = {
+        "q": query,
+        "format": "json",
+        "language": "es,en",
+        "categories": "general",
+        "pageno": 1,
+    }
     try:
         async with httpx.AsyncClient(timeout=SEARXNG_TIMEOUT) as client:
             resp = await client.get(f"{SEARXNG_URL}/search", params=params)
