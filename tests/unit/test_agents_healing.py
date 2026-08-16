@@ -90,3 +90,45 @@ class TestSelfHealingLoop:
         sl.ejecutar()
 
         assert sl._fallos_consecutivos == 0
+
+    @patch("motor.core.agents.healing.Conciencia")
+    @patch("motor.core.agents.healing.subprocess.run")
+    def test_escanear_f821_filtra_venv(self, mock_subprocess, mock_conciencia, loop):
+        sl, _, _, _, _ = loop
+        mock_subprocess.return_value.stdout = (
+            '[{"filename": "src/a.py"}, {"filename": "/home/x/.venv/lib/b.py"}, {"filename": "src/c.py"}]'
+        )
+        files = sl._escanear_f821()
+        assert files == {"src/a.py", "src/c.py"}
+        assert all("/.venv/" not in f for f in files)
+
+    @patch("motor.core.agents.healing.Conciencia")
+    @patch("motor.core.agents.healing.subprocess.run")
+    def test_escanear_f821_json_vacio(self, mock_subprocess, mock_conciencia, loop):
+        sl, _, _, _, _ = loop
+        mock_subprocess.return_value.stdout = "[]"
+        assert sl._escanear_f821() == set()
+
+    @patch("motor.core.agents.healing.Conciencia")
+    @patch("motor.core.agents.healing.subprocess.run")
+    def test_cerrar_reporte_detalle(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, _, _, mock_tel = loop
+        mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")
+        mock_tel.return_value.f821_count.return_value = 3
+        mock_tel.return_value.hardware.return_value = {"ram_libre_mb": 777}
+
+        reporte = sl.ejecutar()
+
+        assert reporte["f821_final"] == 3
+        assert reporte["ram_final_mb"] == 777
+        assert "tiempo_total_s" in reporte
+        assert reporte["timestamp"]
+
+    @patch("motor.core.agents.healing.Conciencia")
+    @patch("motor.core.agents.healing.subprocess.run")
+    def test_cerrar_reporte_rollback_suma_fallo(self, mock_subprocess, mock_conciencia, loop):
+        sl, mock_orq, _, _, _ = loop
+        mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")
+        sl._fallos_consecutivos = 2
+        sl._cerrar_reporte({"resultado": "ROLLBACK"}, 0.0, 0)
+        assert sl._fallos_consecutivos == 3

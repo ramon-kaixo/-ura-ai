@@ -91,6 +91,13 @@ repos:
         files: \.py$
         pass_filenames: true
 
+      - id: check-merge-conflict
+        name: Detect git conflict markers
+        entry: bash scripts/pro/check_merge_conflicts.sh
+        language: system
+        pass_filenames: true
+        types: [text]
+
       - id: pytest-delta
         name: Pytest + Hypothesis delta (solo tests relacionados)
         entry: bash scripts/pro/pytest_delta.sh

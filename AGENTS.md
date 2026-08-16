@@ -51,6 +51,27 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Referencias: Plan 0 maestro `docs/architecture/PLAN_0.md`, revisado `docs/architecture/PLAN_0_REVISADO.md`, auditoría `docs/architecture/PLAN_0_AUDITORIA.md`, directiva de clasificación `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`.
 - Lo específico de URA (mecanismo UDO, reglas de fase, arquitectura, seguridad) sigue en las secciones de este AGENTS.md.
 
+## Flujo Ejecutor-Revisor v1.0 (TASK-20260816-005)
+
+**Modelos**: ejecutor = OpenCode Terminal (Kimi), revisor = OpenCode Web (DeepSeek V4 Pro).
+
+**Protocolo**:
+1. El ejecutor crea rama `ia/TASK-XXXX` desde `main` y realiza cambios con commits `tipo(alcance): [TASK-XXXX][TERM] descripción`.
+2. Al terminar, ejecuta los gates y solicita revisión.
+3. El revisor ejecuta los gates y revisa el diff (o PR). Emite informe con errores, propuesta y veredicto: `APROBADO`, `CAMBIOS_SOLICITADOS` o `PENDIENTE`.
+4. Si hay `CAMBIOS_SOLICITADOS`, el ejecutor corrige y repite.
+5. Si `APROBADO`, el humano (o bot autorizado) fusiona a `main`.
+
+**Gates obligatorios** (ver `scripts/pro/revision_gates.sh`):
+- `ruff check .`
+- `mypy --no-incremental core motor shared`
+- `pytest -q --tb=short`
+- Escaneo de secretos
+
+**Trazabilidad**: TASK-ID en cada commit, roles `[TERM]` y `[WEB]`, historial de rondas en el expediente de tarea.
+
+**Excepción**: hotfix de seguridad puede ir directo a `main` con commit auditado `[TASK-XXXX][TERM] HOTFIX`, documentado en el expediente.
+
 ## Build & Test Commands
 - Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`

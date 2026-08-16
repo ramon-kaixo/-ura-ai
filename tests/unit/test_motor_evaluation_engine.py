@@ -56,6 +56,30 @@ class TestEvaluationEngine:
         assert "recall@2" in run.metrics
         assert len(run.per_query) == 2
         assert "mean_ms" in run.latency_stats
+        # q1: relevant {d1,d2}, retrieved [d1,x,d2], top2 [d1,x] → recall=0.5, prec=0.5, mrr=1.0
+        # q2: relevant {d3}, retrieved [d3,y], top2 [d3,y] → recall=1.0, prec=0.5, mrr=1.0
+        assert run.metrics["recall@2"] == 0.75
+        assert run.metrics["precision@2"] == 0.5
+        assert run.metrics["mrr"] == 1.0
+        assert run.per_query[0]["query_id"] == "q1"
+        assert run.per_query[0]["query_text"] == "buscar gpu"
+        assert run.per_query[0]["latency_ms"] >= 0
+        assert run.timestamp > 0
+        assert run.config_name == "r1"
+        assert run.corpus_name == "c1"
+
+    def test_latencia_stats_vacio(self) -> None:
+        from motor.core.evaluation.evaluator import _latencia_stats
+
+        stats = _latencia_stats([])
+        assert stats == {"mean_ms": 0.0, "min_ms": 0.0, "max_ms": 0.0}
+
+    def test_agregar_sin_queries(self) -> None:
+        from motor.core.evaluation.evaluator import _agregar
+
+        agg = _agregar([], [], 5, 1)
+        assert agg["map"] == 0.0
+        assert agg["recall@5"] == 0.0
 
     def test_evaluate_corpus_no_existe(self) -> None:
         e = EvaluationEngine()
@@ -94,6 +118,11 @@ class TestEvaluationEngine:
         assert "best_by_metric" in comp
         assert "r1" in comp["configs"]
         assert "r2" in comp["configs"]
+        assert comp["corpus"] == "c1"
+        assert set(comp["best_by_metric"]) == {"recall@2", "precision@2", "mrr", "ndcg@2", "map"}
+        for info in comp["best_by_metric"].values():
+            assert info["config"] in {"r1", "r2"}
+            assert isinstance(info["value"], float)
 
     def test_get_results_y_save_load(self, tmp_path) -> None:
         e = EvaluationEngine()
@@ -142,6 +171,19 @@ class TestExperiment:
         assert comp["total_configs"] == 2
         assert comp["winner"] in ("bm25", "sem")
         assert len(comp["general_ranking"]) == 2
+        assert comp["experiment"] == "exp1"
+        assert comp["k"] == 2
+        assert comp["total_queries"] == 2
+        assert comp["winner_score"] is not None
+        assert set(comp["rankings"]) == {"recall@2", "precision@2", "mrr", "ndcg@2", "map"}
+        for metric, entries in comp["rankings"].items():
+            assert len(entries) == 2
+            assert entries[0]["config"] in ("bm25", "sem")
+            assert isinstance(entries[0]["value"], float)
+        assert comp["general_ranking"][0]["rank"] == 1
+        assert comp["general_ranking"][0]["config"] == comp["winner"]
+        assert comp["general_ranking"][1]["rank"] == 2
+        assert "elapsed_seconds" in comp
 
     def test_compare_sin_results(self) -> None:
         exp = Experiment("exp1", _corpus())
@@ -165,11 +207,29 @@ class TestExperiment:
         exp.run(k=2)
         d = exp.to_dict()
         assert d["experiment"] == "exp1"
+        assert d["description"] == ""
+        assert d["k"] == 2
+        assert len(d["results"]) == 1
+        assert "comparison" in d
+        assert d["comparison"]["winner"] == "bm25"
         p = tmp_path / "exp.json"
         exp.save(p)
         loaded = Experiment.load(p)
         assert len(loaded["results"]) == 1
         assert loaded["experiment"] == "exp1"
+
+    def test_report_detalle(self) -> None:
+        exp = Experiment("exp1", _corpus())
+        exp.add_config("bm25", _retriever)
+        exp.add_config("sem", lambda q: ["d1", "d2"])
+        exp.run(k=2)
+        rep = exp.report()
+        assert "Consultas: 2" in rep
+        assert "Configuraciones: 2" in rep
+        assert "K: 2" in rep
+        assert "Ranking General" in rep
+        assert "#1" in rep and "#2" in rep
+        assert "bm25" in rep and "sem" in rep
 
 
 class TestExperimentConfig:

@@ -113,6 +113,28 @@ class TestGenerate:
         assert payload["generationConfig"]["temperature"] == 0.9
         assert payload["generationConfig"]["maxOutputTokens"] == 512
         assert post.call_args.kwargs["headers"]["x-goog-api-key"] == "secret-val"
+        assert post.call_args.kwargs["timeout"] == 60
+
+    def test_success_strip_y_usage(self, provider, gemini_mod) -> None:
+        """Respuesta con espacios se trima; log_call recibe usage tokens."""
+        with (
+            mock.patch.object(gemini_mod, "log_call") as log_mock,
+            mock.patch.object(gemini_mod.httpx, "post", return_value=self._response(["  texto  "])) as post,
+        ):
+            result = provider.generate("p")
+        assert result == "texto"
+        assert log_mock.call_args.kwargs["prompt_tokens"] == 5
+        assert log_mock.call_args.kwargs["candidates_tokens"] == 3
+        assert post.call_args.kwargs["json"]["generationConfig"]["temperature"] == 0.9
+
+    def test_options_custom(self, provider, gemini_mod) -> None:
+        """Options custom no sobrescriben defaults de temperature/maxOutputTokens."""
+        with mock.patch.object(gemini_mod.httpx, "post", return_value=self._response(["x"])) as post:
+            provider.generate("p", options={"temperature": 0.1, "extra": 1})
+        cfg = post.call_args.kwargs["json"]["generationConfig"]
+        assert cfg["temperature"] == 0.1  # custom respeta
+        assert cfg["maxOutputTokens"] == 512  # default del provider
+        assert cfg["extra"] == 1
 
     def test_no_candidates(self, provider, gemini_mod) -> None:
         r = mock.Mock()
@@ -210,6 +232,9 @@ class TestHealth:
             "https://generativelanguage.googleapis.com/v1beta/models/mi-modelo"
         )
         assert mget.call_args.kwargs["headers"]["x-goog-api-key"] == "secret-val"
+        assert result["provider"] == "gemini"
+        assert result["latency_ms"] >= 0
+        assert mget.call_args.kwargs["timeout"] == 5
 
     def test_http_error(self, provider, gemini_mod) -> None:
         r = mock.Mock()
@@ -220,6 +245,8 @@ class TestHealth:
             result = provider.health()
         assert result["status"] == "error"
         assert result["detail"] == "server error"
+        assert result["provider"] == "gemini"
+        assert result["latency_ms"] >= 0
 
     def test_exception(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "get", side_effect=httpx.RequestError("conn")):

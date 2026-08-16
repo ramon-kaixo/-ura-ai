@@ -8,8 +8,10 @@ test veredicto 02:27:49
 
 #### A MEDIAS (IN_PROGRESS)
 | TASK-20260815-003 | IN_PROGRESS (a medias) | 2026-08-16 | PENDIENTE | |
+| TASK-20260816-003 | IN_PROGRESS (a medias) | 2026-08-16 | PENDIENTE | |
 
 #### PENDIENTES DE REVISOR
+| TASK-20260816-004 | pendiente revisor | 2026-08-16 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
 

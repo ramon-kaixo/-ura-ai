@@ -430,7 +430,7 @@ def _memory_web(raw: list[str]) -> None:
         return
     import asyncio
 
-    from core.mochila.tools import web_search as _web_search
+    from motor.core.web_search import web_search as _web_search
 
     query = " ".join(raw)
     try:

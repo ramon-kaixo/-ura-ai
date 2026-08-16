@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from motor.core.agents.constants import RUFF, SCRIPTS, URA_ROOT
 
 if TYPE_CHECKING:
-    from core.interfaces import ILLMClient
+    from motor.core.interfaces import ILLMClient
 
 log = logging.getLogger("ura.multi_agent.reparador")
 

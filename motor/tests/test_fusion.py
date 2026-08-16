@@ -2202,12 +2202,26 @@ class TestFactHistoryCobertura:
         assert len(d["versions"]) == 3
         assert len(d["tombstones"]) == 1
         assert d["tombstones"][0]["reason"] == "replaced"
+        # valores exactos de cada versión serializada
+        v_map = {v["version_id"]: v for v in d["versions"]}
+        assert v_map["v0"]["state"] == "superseded"
+        assert v_map["v1"]["state"] == "superseded"  # superseded por ts1
+        assert v_map["ts1"]["state"] == "obsolete"  # VersionState.TOMBSTONE.value
+        assert v_map["v1"]["supersedes"] == "v0"
+        assert v_map["v1"]["confidence"] == 0.7
+        assert v_map["ts1"]["evidence_ids"] == []
+        assert v_map["v0"]["provenance"] == []
+        assert d["current"] == "ts1"
+        assert d["created"] == 10.0
+        assert d["updated"] == 40.0
 
         h2 = FactHistory.from_dict(d)
         assert h2.fact_id == "fh1"
         assert h2.current_version_id == "ts1"
         assert h2.version_count == 3
         assert len(h2._tombstones) == 1
+        # round-trip exacto: to_dict de nuevo es idéntico
+        assert h2.to_dict() == d
 
         d_legacy = dict(d)
         d_legacy["versions"] = {v["version_id"]: v for v in d["versions"]}
