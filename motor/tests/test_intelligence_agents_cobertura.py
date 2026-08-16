@@ -694,11 +694,17 @@ class TestReflection:
         decision = RuleBasedReflectionStrategy().reflect(_result(success=False, error="x"), 0)
         assert decision.action == ReflectionAction.REVISE
         assert decision.metadata["result_error"] == "x"
+        assert decision.confidence == 0.0
+        assert decision.reason == "result_indicates_failure"
+        assert decision.iteration == 0
+        assert decision.metadata["iteration"] == 0
 
     def test_rule_based_accept(self) -> None:
         decision = RuleBasedReflectionStrategy(min_confidence=0.7).reflect(_result(output={"confidence": 0.9}), 0)
         assert decision.action == ReflectionAction.ACCEPT
         assert "above_threshold" in decision.reason
+        assert decision.confidence == 0.9
+        assert decision.metadata == {"confidence": 0.9, "threshold": 0.7}
 
     def test_rule_based_below_threshold(self) -> None:
         decision = RuleBasedReflectionStrategy(min_confidence=0.7).reflect(_result(output={"confidence": 0.5}), 0)
@@ -743,6 +749,13 @@ class TestReflection:
         assert res.success
         assert res.output["stopped_by"] == "accept"
         assert agent.status == AgentStatus.IDLE
+        assert res.output["iterations"] == 0
+        assert res.output["final_decision"]["action"] == "accept"
+        assert res.output["final_decision"]["confidence"] == 0.99
+        assert len(res.output["reflections"]) == 1
+        assert res.duration_ms >= 0
+        assert res.task_id == task.id
+        assert res.agent_id == agent.id
 
     def test_run_no_initial(self) -> None:
         res = ReflectionAgent().run(_task(role=AgentRole.VALIDATOR))
@@ -821,7 +834,11 @@ class TestReflection:
         res = agent.run(task)
         assert res.success
         assert res.output["final"]["_revised"] is True
+        assert res.output["final"]["_revision_reason"] == "fix it"
+        assert res.output["final"]["_revision_iteration"] == 0
         assert res.output["reflections"][0]["action"] == "revise"
+        assert len(res.output["reflections"]) == 2
+        assert res.output["iterations"] == 1
 
     def test_run_exception(self) -> None:
         agent = ReflectionAgent(strategy=_RaisingStrategy())
@@ -830,12 +847,57 @@ class TestReflection:
         res = agent.run(task)
         assert not res.success
         assert "strategy boom" in res.error
+        assert res.output == {}
+        assert res.duration_ms >= 0
+        assert agent.status == AgentStatus.IDLE
 
-    def test_revise_without_output(self) -> None:
+    def test_run_revise_without_output(self) -> None:
         agent = ReflectionAgent()
         revised = agent._revise(_result(success=True), ReflectionDecision(action=ReflectionAction.REVISE))
         assert revised is not None
         assert revised.output["_revised"] is True
+
+    def test_run_revise_stop_historia(self) -> None:
+        """REVISE → STOP: dos iteraciones, historia con metadata completa."""
+        agent = ReflectionAgent(
+            strategy=_SequenceStrategy(
+                [
+                    ReflectionDecision(
+                        action=ReflectionAction.REVISE,
+                        reason="iter0",
+                        iteration=0,
+                        metadata={"m": 1},
+                    ),
+                    ReflectionDecision(
+                        action=ReflectionAction.STOP,
+                        reason="stop now",
+                        iteration=1,
+                        metadata={"m": 2},
+                    ),
+                ],
+            ),
+        )
+        task = _task(role=AgentRole.VALIDATOR)
+        task.input_data = {"initial_result": _result(output={"a": 1})}
+        res = agent.run(task)
+        assert res.success
+        assert res.output["stopped_by"] == "stop"
+        assert res.output["iterations"] == 1
+        assert len(res.output["reflections"]) == 2
+        d0 = res.output["reflections"][0]
+        assert d0 == {
+            "action": "revise",
+            "confidence": 1.0,
+            "reason": "iter0",
+            "iteration": 0,
+            "metadata": {"m": 1},
+        }
+        d1 = res.output["reflections"][1]
+        assert d1["action"] == "stop"
+        assert d1["reason"] == "stop now"
+        assert d1["metadata"] == {"m": 2}
+        assert res.output["final_decision"] == d1
+        assert res.output["reason"] == "stop now"
 
 
 # ---------------------------------------------------------------- supervisor.py
