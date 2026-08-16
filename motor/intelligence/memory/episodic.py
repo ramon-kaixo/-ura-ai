@@ -40,6 +40,7 @@ class Episode:
     references: list[str] = field(default_factory=list)
     ttl: int = ONE_WEEK
     metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: list[float] | None = None
 
     def __post_init__(self) -> None:
         if not self.id:

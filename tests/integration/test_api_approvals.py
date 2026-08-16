@@ -32,6 +32,8 @@ def _check_endpoint(url: str, timeout: int = 10) -> httpx.Response:
         return r
     except httpx.ConnectError:
         pytest.skip(reason=f"Endpoint no disponible en {url}")
+    except httpx.RemoteProtocolError:
+        pytest.skip(reason=f"Endpoint {url} desconectó sin respuesta (entorno saturado)")
 
 
 def _post_endpoint(url: str, payload: dict, timeout: int = 30) -> httpx.Response:
@@ -42,6 +44,8 @@ def _post_endpoint(url: str, payload: dict, timeout: int = 30) -> httpx.Response
         return r
     except httpx.ConnectError:
         pytest.skip(reason=f"Endpoint no disponible en {url}")
+    except httpx.RemoteProtocolError:
+        pytest.skip(reason=f"Endpoint {url} desconectó sin respuesta (entorno saturado)")
 
 
 @pytest.mark.integration

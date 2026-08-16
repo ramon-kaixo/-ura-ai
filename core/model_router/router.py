@@ -44,7 +44,7 @@ except ImportError:
         return decorator
 
 
-from core.config_manager import get_ollama_urls
+from motor.core.config_manager import get_ollama_urls
 
 POWER_MODE: str = "AUTO"
 _URLS: dict | None = None
