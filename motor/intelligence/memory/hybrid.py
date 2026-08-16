@@ -59,7 +59,7 @@ class HybridMemory:
         with self._lock:
             if self._conn is None:
                 parent = Path(self._db_path).parent
-                if parent:
+                if parent:  # pragma: no cover - Path(...).parent siempre es truthy; defensa
                     parent.mkdir(parents=True, exist_ok=True)
                 self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
                 self._conn.execute("PRAGMA journal_mode=WAL")

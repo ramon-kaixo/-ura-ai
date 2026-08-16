@@ -89,7 +89,14 @@ class WebPipeline:
         *,
         min_words: int = 3,
     ) -> CleanedResult:
-        """Limpia y deduplica una lista de documentos."""
+        """Limpia y deduplica una lista de documentos.
+
+        Orden de operaciones: 1) limpieza (normaliza URL, elimina caracteres de
+        control, descarta vacíos/cortos por min_words); 2) deduplicación por URL
+        primero y hash de contenido después. Consecuencia documentada: un doc
+        vacío que comparte URL con otro válido se cuenta como duplicado por URL
+        (documents_removed_duplicate_url), no como vacío.
+        """
         t0 = time.monotonic()
         from motor.core.web.cleaner.cleaner import DocumentCleaner
         from motor.core.web.cleaner.deduplication import DeduplicationEngine

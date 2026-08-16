@@ -209,7 +209,6 @@ class WebhookNotifier:
                 headers["X-Webhook-Secret"] = self._secret
 
             data = json.dumps(payload).encode()
-            last_exc: Exception | None = None
 
             for attempt in range(_MAX_RETRIES):
                 try:
@@ -225,14 +224,11 @@ class WebhookNotifier:
                             continue
                         return False
                 except Exception as e:
-                    last_exc = e
                     if _should_retry(e) and attempt < _MAX_RETRIES - 1:
                         _backoff(attempt)
                         continue
                     raise
 
-            if last_exc:
-                raise last_exc
             return False
         except SSRFError:
             log.warning("Webhook blocked (SSRF): %s", self._url[:60])

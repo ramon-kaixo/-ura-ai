@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -9,6 +10,9 @@ from motor.core.web.cleaner.url_utils import normalize_url
 
 if TYPE_CHECKING:
     from motor.core.web.models import WebDocument
+
+# Caracteres de control no imprimibles (C0/C1), preservando \t \n \r (formato).
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 
 
 @dataclass
@@ -60,6 +64,7 @@ class DocumentCleaner:
     """Limpieza y normalización de documentos.
 
     - Normaliza URLs (fragmentos, esquema, slash final)
+    - Elimina caracteres de control no imprimibles (C0/C1, preserva \\t \\n \\r)
     - Elimina documentos vacíos o con muy poco contenido
     """
 
@@ -72,10 +77,12 @@ class DocumentCleaner:
 
         for doc in documents:
             doc.url = normalize_url(doc.url)
-            text = (doc.text or "").strip()
+            text = _CONTROL_CHARS_RE.sub("", doc.text or "")
+            text = text.strip()
             if not text or len(text.split()) < self._min_words:
                 stats.documents_removed_empty += 1
                 continue
+            doc.text = text
             cleaned.append(doc)
 
         return CleanedResult(documents=cleaned, stats=stats)

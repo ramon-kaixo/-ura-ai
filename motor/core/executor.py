@@ -136,7 +136,9 @@ class SubprocessExecutor(BaseExecutor):
             ok = proc.returncode == 0
             if not ok:
                 log.warning("(async) Comando falló (exit=%d): %s", proc.returncode, " ".join(str(c) for c in cmd))
-            return self._result_success(cmd, proc.returncode or -1, stdout, stderr, elapsed, ok)
+            return self._result_success(
+                cmd, proc.returncode if proc.returncode is not None else -1, stdout, stderr, elapsed, ok
+            )
         except FileNotFoundError:
             elapsed = (time.monotonic() - start) * 1000
             return self._result_failure(cmd, elapsed, f"Command not found: {cmd[0] if cmd else '?'}")

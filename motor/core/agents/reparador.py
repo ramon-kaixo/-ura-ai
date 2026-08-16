@@ -135,7 +135,7 @@ class AgenteReparador:
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=180) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=180) as resp:  # noqa: S310  # nosec B310 - URL fija localhost:8081 controlada, no input de usuario
                 fixed = json.loads(resp.read())["choices"][0]["message"]["content"]
 
             if fixed and "```" in fixed:

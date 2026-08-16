@@ -5,21 +5,18 @@
 # ============================================================
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+    rev: v0.15.18
     hooks:
       - id: ruff
         args: []
         types_or: [python, pyi]
-        files: ^(motor/|tests/|scripts/pro/tuneladora/)
-        exclude: ^(motor/plugin/|motor/core/fusion/|motor/intelligence/)
+        # scope igual a `ruff check .` del CI: extend-exclude del pyproject aplica
       - id: ruff-format
         args: []
         types_or: [python, pyi]
-        files: ^(motor/|tests/|scripts/pro/tuneladora/)
-        exclude: ^(motor/plugin/|motor/core/fusion/|motor/intelligence/)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v2.3.0
     hooks:
       - id: mypy
         args: [--python-version=3.12, --ignore-missing-imports, --explicit-package-bases]
@@ -28,7 +25,7 @@ repos:
         files: ^(core/agents)/.*\.py$
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.3
+    rev: 1.9.4
     hooks:
       - id: bandit
         args: [-q, -x, "*/tests/*", --skip, "B311,B108,B101"]

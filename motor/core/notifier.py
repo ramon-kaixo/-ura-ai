@@ -26,7 +26,7 @@ def _ensure_secrets(store: ISecretStore | None = None) -> None:
     global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID, _PUSHOVER_USER, _PUSHOVER_TOKEN  # noqa: PLW0603
     if _TELEGRAM_TOKEN is not None:
         return
-    _TELEGRAM_TOKEN = ""
+    _TELEGRAM_TOKEN = ""  # nosec B105 - inicializacion de global, no password hardcodeado
     _TELEGRAM_CHAT_ID = ""
     if store is not None:
         _TELEGRAM_TOKEN = store.get_secret("TELEGRAM_TOKEN", "") or ""

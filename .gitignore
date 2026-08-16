@@ -88,3 +88,9 @@ docs/udo/pendientes-fase.md.estado
 
 # OpenClaw perfil orquestador: estado local (HOME virtual por rootfs RO)
 .openclaw-orq-home/
+
+# Working tree root db: SQLite runtime vacío (artefacto de proceso, no versionar)
+/db
+
+# Orquestador: estado local del workspace (no versionar)
+docs/udo/plans/openclaw-workspace-state.json
