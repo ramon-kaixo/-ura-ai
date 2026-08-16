@@ -38,14 +38,14 @@ ZONAS_POR_TAREA: dict[str, set[str]] = {
 
 
 def cargar(ruta: Path) -> dict:
-    with open(ruta, encoding="utf-8") as f:
+    with ruta.open(encoding="utf-8") as f:
         return json.load(f)
 
 
 def guardar(ruta: Path, datos: dict) -> None:
     """Escritura atómica protegida con flock (evita write-write race entre agentes)."""
     tmp = ruta.with_suffix(".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    with tmp.open("w", encoding="utf-8") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         json.dump(datos, f, indent=2, ensure_ascii=False)
         f.write("\n")
@@ -66,28 +66,18 @@ def asignar(datos: dict) -> tuple[str | None, str | None]:
     tareas = datos.get("tareas", {})
     agentes = datos.get("agentes", {})
 
-    pendientes = [
-        tid for tid in colas.get("pendientes", []) if tid in tareas
-    ]
+    pendientes = [tid for tid in colas.get("pendientes", []) if tid in tareas]
     if not pendientes:
         return None, None
 
     pendientes.sort(key=lambda tid: PRIORIDAD_ORDEN.get(tareas[tid].get("prioridad", "baja"), 2))
 
-    ocupados = [
-        tid
-        for tid, t in tareas.items()
-        if t.get("estado") in {"en_progreso", "en_revision"}
-    ]
+    ocupados = [tid for tid, t in tareas.items() if t.get("estado") in {"en_progreso", "en_revision"}]
     zonas_ocupadas: set[str] = set()
     for tid in ocupados:
         zonas_ocupadas |= zonas_conflictivas(tid)
 
-    libres = [
-        nombre
-        for nombre, ag in agentes.items()
-        if ag.get("estado") == "libre"
-    ]
+    libres = [nombre for nombre, ag in agentes.items() if ag.get("estado") == "libre"]
     if not libres:
         return None, None
 
@@ -103,7 +93,7 @@ def asignar(datos: dict) -> tuple[str | None, str | None]:
         if modo == "secuencial":
             candidato = ejecutor if ejecutor in libres else None
         else:
-            candidato = next((ag for ag in libres if ag == ejecutor or ag == revisor), None)
+            candidato = next((ag for ag in libres if ag in (ejecutor, revisor)), None)
         if candidato is None:
             continue
         return tid, candidato
@@ -153,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     tid, agente = asignar(datos)
-    if tid is None:
+    if tid is None or agente is None:
         print("Sin asignación: no hay agentes libres sin conflicto o no hay pendientes.")
         return 0
 

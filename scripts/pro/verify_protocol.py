@@ -29,7 +29,7 @@ CAMPOS_OBLIGATORIOS = {"descripcion", "ejecutor", "revisor", "estado", "priorida
 
 def cargar(ruta: Path) -> dict:
     """Carga coordination.json; lanza ValueError si no es JSON válido."""
-    with open(ruta, encoding="utf-8") as f:
+    with ruta.open(encoding="utf-8") as f:
         return json.load(f)
 
 
