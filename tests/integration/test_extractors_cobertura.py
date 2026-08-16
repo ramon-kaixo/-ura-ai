@@ -329,6 +329,7 @@ class _FakeImg:
 class TestImageCobertura:
     @pytest.fixture(autouse=True)
     def _pil_fake(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import PIL.Image  # noqa: F401 — asegura que PIL.Image existe antes de monkeypatch
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "_HAS_PILLOW", True)
         monkeypatch.setattr(mod, "_HAS_TESSERACT", False)
