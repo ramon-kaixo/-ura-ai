@@ -171,6 +171,19 @@ class TestExperiment:
         assert comp["total_configs"] == 2
         assert comp["winner"] in ("bm25", "sem")
         assert len(comp["general_ranking"]) == 2
+        assert comp["experiment"] == "exp1"
+        assert comp["k"] == 2
+        assert comp["total_queries"] == 2
+        assert comp["winner_score"] is not None
+        assert set(comp["rankings"]) == {"recall@2", "precision@2", "mrr", "ndcg@2", "map"}
+        for metric, entries in comp["rankings"].items():
+            assert len(entries) == 2
+            assert entries[0]["config"] in ("bm25", "sem")
+            assert isinstance(entries[0]["value"], float)
+        assert comp["general_ranking"][0]["rank"] == 1
+        assert comp["general_ranking"][0]["config"] == comp["winner"]
+        assert comp["general_ranking"][1]["rank"] == 2
+        assert "elapsed_seconds" in comp
 
     def test_compare_sin_results(self) -> None:
         exp = Experiment("exp1", _corpus())
@@ -194,11 +207,29 @@ class TestExperiment:
         exp.run(k=2)
         d = exp.to_dict()
         assert d["experiment"] == "exp1"
+        assert d["description"] == ""
+        assert d["k"] == 2
+        assert len(d["results"]) == 1
+        assert "comparison" in d
+        assert d["comparison"]["winner"] == "bm25"
         p = tmp_path / "exp.json"
         exp.save(p)
         loaded = Experiment.load(p)
         assert len(loaded["results"]) == 1
         assert loaded["experiment"] == "exp1"
+
+    def test_report_detalle(self) -> None:
+        exp = Experiment("exp1", _corpus())
+        exp.add_config("bm25", _retriever)
+        exp.add_config("sem", lambda q: ["d1", "d2"])
+        exp.run(k=2)
+        rep = exp.report()
+        assert "Consultas: 2" in rep
+        assert "Configuraciones: 2" in rep
+        assert "K: 2" in rep
+        assert "Ranking General" in rep
+        assert "#1" in rep and "#2" in rep
+        assert "bm25" in rep and "sem" in rep
 
 
 class TestExperimentConfig:
