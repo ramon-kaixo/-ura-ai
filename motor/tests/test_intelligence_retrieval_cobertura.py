@@ -592,6 +592,61 @@ class TestRerankers:
         assert len(res) == 1
         assert res[0]["reranker_score"] == 0.8
         assert res[0]["reranker_model"] == "m"
+        assert res[0]["rank"] == 0
+        assert res[0]["score"] == 0.8
+        assert res[0]["reranker_latency_ms"] >= 0
+
+    def test_llm_parse_score(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        llm = _import_llm()
+        r = llm.LLMReranker(model="m")
+        assert r._parse_score("8") == 0.8
+        assert r._parse_score("10") == 1.0
+        assert r._parse_score("12") == 1.0  # clamp a 1.0
+        assert r._parse_score("5.5") == 0.55
+        assert r._parse_score("sin numeros") == 0.0
+
+    def test_llm_score_error_y_excepcion(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        llm = _import_llm()
+        monkeypatch.setattr(llm, "generate", lambda *a, **k: "Error: modelo caido")
+        assert llm.LLMReranker(model="m")._score("q", "d", "t") == 0.0
+
+        def boom(*a: Any, **k: Any) -> Any:
+            raise RuntimeError("down")
+
+        monkeypatch.setattr(llm, "generate", boom)
+        assert llm.LLMReranker(model="m")._score("q", "d", "t") == 0.0
+
+    def test_llm_prompt_exacto(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Verifica el prompt exacto que llega a generate (mata mutantes de prompt)."""
+        llm = _import_llm()
+        recibidos: dict[str, Any] = {}
+
+        def fake_generate(prompt: str, model: str, options: dict) -> str:
+            recibidos["prompt"] = prompt
+            recibidos["model"] = model
+            recibidos["options"] = options
+            return "7"
+
+        monkeypatch.setattr(llm, "generate", fake_generate)
+        r = llm.LLMReranker(model="m1")
+        assert r._score("mi query", "d1", "texto del doc") == 0.7
+        assert recibidos["prompt"] == "Query: mi query\n\nDocument: texto del doc\n\nRate relevance 0-10. Only respond with a single number."
+        assert recibidos["model"] == "m1"
+        assert recibidos["options"] == {"num_predict": 10}
+
+    def test_llm_texto_trunca_2000(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        llm = _import_llm()
+        recibidos: list[str] = []
+
+        def fake_generate(prompt: str, **k: Any) -> str:
+            recibidos.append(prompt)
+            return "6"
+
+        monkeypatch.setattr(llm, "generate", fake_generate)
+        r = llm.LLMReranker(model="m")
+        assert r._score("q", "d", "x" * 3000) == 0.6
+        assert "x" * 2000 in recibidos[0]
+        assert "x" * 2001 not in recibidos[0]
 
     def test_llm_via_cache(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         llm = _import_llm()
