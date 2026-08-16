@@ -716,8 +716,19 @@ class TestProtection:
         ev = ForgettingEvent("r", "episode", "razon", "ttl", "2026-01-01", 0.5, 3.0)
         d = ev.to_dict()
         assert d["age_days"] == 3.0
+        assert d == {
+            "record_id": "r",
+            "record_type": "episode",
+            "reason": "razon",
+            "policy": "ttl",
+            "timestamp": "2026-01-01",
+            "importance": 0.5,
+            "age_days": 3.0,
+        }
         res = ForgettingResult(episodes_removed=1, facts_removed=2)
         assert res.total_removed == 3
+        assert res.details == []
+        assert res.dry_run is False
 
 
 class TestForgetPolicies:
@@ -766,6 +777,18 @@ class TestForgetPolicies:
         h2 = HybridForgetPolicy(require_all=True)
         ok2, _ = h2.should_forget(_episode(ts=OLD, ttl=1), None)
         assert ok2 is False
+        ok3, reason3 = h2.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        assert ok3 is True
+        assert "ttl" in reason3 and "importance" in reason3 and "confidence" in reason3
+        # con políticas custom: todas deben decidir sí para require_all
+        h3 = HybridForgetPolicy(
+            ttl_policy=TTLForgetPolicy(),
+            importance_policy=ImportanceForgetPolicy(min_importance=1.0, min_age_days=0),
+            confidence_policy=ConfidenceForgetPolicy(min_confidence=1.0),
+            require_all=True,
+        )
+        ok4, _ = h3.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        assert ok4 is True
 
 
 class TestForgettingEngine:
@@ -836,11 +859,14 @@ class TestForgettingEngine:
         assert res.episodes_removed == 1
         stat = eng.stats()
         assert stat["episodes_total"] == 0
+        assert stat["facts_total"] == 0
+        assert stat["policies"] == ["ttl"]
         sch = ForgettingScheduler(eng)
         assert sch.enabled is False
         sch.enable()
         assert sch.enabled is True
         sch.disable()
+        assert sch.enabled is False
         assert sch.run_once(dry_run=True).total_evaluated == 0
 
     def test_store_anulado_no_evita_facts(self) -> None:
