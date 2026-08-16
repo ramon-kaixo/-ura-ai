@@ -2,11 +2,12 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260816-009",
-      "TASK-20260816-010"
+      "TASK-20260816-009"
     ],
     "en_progreso": [],
-    "en_revision": [],
+    "en_revision": [
+      "TASK-20260816-010"
+    ],
     "aprobadas": [],
     "bloqueadas": [],
     "cerradas": [
@@ -23,8 +24,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -52,7 +53,7 @@
       "revisor": "WEB",
       "estado": "cerrada",
       "prioridad": "media",
-      "veredicto": "APROBADO/DONE — errores mypy críticos corregidos y revisados",
+      "veredicto": "APROBADO — re-revisión TERM 22:50 (lowercase fuera, uppercase con ADR, test pasa en ASUS)",
       "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea.",
       "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commit edcdb2db integrado."
     },
@@ -87,10 +88,10 @@
       "descripcion": "Panel de semáforos + modo análisis de planes",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "en_revision",
       "prioridad": "media",
-      "veredicto": "",
-      "nota": "Creada y en cola pendientes (2026-08-16T22:21). Se asignará vía dispatcher cuando TASK-008 esté aprobada y fusionada."
+      "veredicto": "APROBADO — revisión TERM 22:50 (flock OK, duplicado fuera, gates OK, schema canónico)",
+      "nota": "Correcciones aplicadas y verificadas: flock en salud_planes.sh (patrón dispatcher), docs/architecture.md eliminado. ruff OK, bash -n OK, pytest 11 passed, json OK, schema colas canónico."
     }
   }
 }
