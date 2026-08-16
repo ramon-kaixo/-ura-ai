@@ -208,6 +208,9 @@ class TestResearcherAgent:
         agent = ResearcherAgent(agent_id="r1", memory_store=_MemoryStore(), context_retriever=_Retriever())
         assert agent.id == "r1"
         assert agent.role == AgentRole.RESEARCHER
+        assert agent.name == "researcher"
+        assert agent.capabilities == ["search", "retrieve", "lookup"]
+        assert agent.status == AgentStatus.IDLE
 
     def test_auto_discover_success(self) -> None:
         agent = ResearcherAgent()
@@ -230,6 +233,10 @@ class TestResearcherAgent:
         assert res.success
         assert res.output["sources"] == ["semantic_memory"]
         assert res.output["semantic_facts"] == [{"text": "facto"}]
+        assert res.output["query"] == "buscar x"
+        assert agent.status == AgentStatus.IDLE
+        assert res.duration_ms >= 0
+        assert res.task_id == res.task_id
 
     def test_episodic_sources(self) -> None:
         agent = ResearcherAgent(memory_store=None, context_retriever=_Retriever(episodes=_Episodes()))
@@ -237,6 +244,7 @@ class TestResearcherAgent:
         assert res.success
         assert res.output["sources"] == ["episodic_memory"]
         assert res.output["episodes"] == {"episodes": [1, 2]}
+        assert res.output["query"] == "buscar x"
 
     def test_no_sources(self) -> None:
         agent = ResearcherAgent(memory_store=_MemoryStore(), context_retriever=_Retriever())
