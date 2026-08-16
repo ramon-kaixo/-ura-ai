@@ -1144,6 +1144,26 @@ class TestMemoryOrchestrator:
         assert o.forget() == {"removed": 0, "dry_run": False}
         assert o.forget(dry_run=True) == {"removed": 0, "dry_run": True}
 
+    def test_run_all_sin_nada(self) -> None:
+        st = EpisodeStore()
+        sm = SemanticMemoryStore()
+        o = MemoryOrchestrator(st, sm)
+        assert o.run_all() == {"consolidated": 0, "compressed": 0, "forgotten": 0}
+
+    def test_run_all_completo(self) -> None:
+        st = EpisodeStore()
+        sm = SemanticMemoryStore()
+        st.store(_episode(payload="El sistema es rapido y fiable en produccion", ts="2026-08-01T00:00:00+00:00"))
+        comp = MemoryCompressor(st, AgeBasedCompression(max_age_days=30))
+        eng = ForgettingEngine(st, sm, policies=[TTLForgetPolicy()])
+        o = MemoryOrchestrator(st, sm, extractor=RuleBasedFactExtractor(), compressor=comp, forgetting_engine=eng)
+        r = o.run_all(dry_run=True)
+        assert r["consolidated"] >= 1
+        assert r["compressed"] >= 0
+        assert r["forgotten"] >= 0
+        assert set(r) == {"consolidated", "compressed", "forgotten"}
+        assert o.forget(dry_run=True) == {"removed": 0, "dry_run": True}
+
 
 # ── ramas parciales 100x100 (TASK-20260814-001) ─────────────────────────────
 
