@@ -306,6 +306,18 @@ class TestHybridRetriever:
         assert by_id["b"]["vector_score"] == pytest.approx(0.4444, abs=0.01)
         assert by_id["b"]["lexical_score"] == 1.0
         assert by_id["a"]["vector_score"] == 1.0
+        # valores exactos de rank y scores híbridos
+        assert by_id["a"]["lexical_rank"] == 999  # solo vector
+        assert by_id["b"]["vector_rank"] == 1
+        assert by_id["b"]["lexical_rank"] == 0
+        # a: 0.7*1.0 + 0.3*0 = 0.7; b: 0.7*0.4444 + 0.3*1.0 = 0.6111
+        assert by_id["a"]["hybrid_score"] == pytest.approx(0.7)
+        assert by_id["b"]["hybrid_score"] == pytest.approx(0.6111, abs=0.01)
+        # orden por hybrid desc: a > b; k=2 excluye c
+        assert res[0]["doc_id"] == "a"
+        assert res[1]["doc_id"] == "b"
+        assert res[0]["rank"] == 0
+        assert res[1]["rank"] == 1
 
     def test_fusion_con_ceros(self) -> None:
         hr = HybridRetriever(
