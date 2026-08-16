@@ -596,3 +596,18 @@ Antes de iniciar cualquier refactorización compleja, el agente debe consultar e
 ```bash
 $ python3 /home/ramon/URA/ura_ia_1972/scripts/pro/ura-query.py "descripción del cambio"
 ```
+## Protocolo de coordinación automática (TASK-20260816-007)
+
+Al recibir un mensaje que empiece con `Coordina esta tarea según protocolo ejecutor-revisor:`:
+
+1. **Rol**: eres coordinador de esa tarea.
+2. **Revisa `docs/udo/coordination.json`**: tareas activas y colas (`pendientes`, `en_progreso`, `en_revision`, `aprobadas`, `bloqueadas`).
+3. **Modo**: si el mensaje incluye `Modo: secuencial` o `Modo: paralelo`, actualiza el campo `modo` de `coordination.json`.
+4. **Decide ejecutor y revisor** para cada tarea. En **modo secuencial**, TERM ejecuta y WEB revisa. En **modo paralelo**, ambos pueden ejecutar y revisar, alternando roles o según la especialidad.
+5. **Nunca asignes** una tarea a un agente que ya tiene otra en `en_progreso` si hay riesgo de conflicto. Si las tareas tocan archivos distintos, pueden ir en paralelo.
+6. **Anota cada tarea** en la cola correspondiente con `task_id`, `descripcion`, `ejecutor`, `revisor`, `estado`, `prioridad`.
+7. **Si eres ejecutor**: trabaja en rama `ia/TASK-XXXX`, ejecuta gates (`ruff check .`, `mypy --no-incremental core motor shared`, `pytest -q --tb=short`) y commitea con `[TASK-XXXX][ROL]`. Al terminar, mueve la tarea a `en_revision`.
+8. **Si eres revisor**: ejecuta gates, revisa el diff, emite informe con errores, propuesta y veredicto (`APROBADO` / `CAMBIOS_SOLICITADOS`). Actualiza la tarea a `aprobada` o `cambios_solicitados`.
+9. **Si el revisor solicita cambios**, el ejecutor corrige y la tarea vuelve a `en_revision`.
+10. **Nunca cierres una TASK sin aprobación del revisor.**
+11. Si eres solo coordinador (ni ejecutor ni revisor), deja la tarea en `pendientes` y notifica al rol correspondiente.

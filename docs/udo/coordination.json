@@ -1,0 +1,44 @@
+{
+  "modo": "paralelo",
+  "colas": {
+    "pendientes": ["TASK-20260816-005"],
+    "en_progreso": [],
+    "en_revision": [],
+    "aprobadas": ["TASK-20260816-004", "TASK-20260816-007"],
+    "bloqueadas": ["TASK-20260816-003"]
+  },
+  "tareas": {
+    "TASK-20260816-003": {
+      "descripcion": "Fase 0 (urgente) — limpiar conflictos git y rotar token expuesto",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "bloqueada",
+      "prioridad": "alta",
+      "nota": "Hotfix y guardarrail hechos; rotación del token pendiente del humano (rootfs RO, sudo)."
+    },
+    "TASK-20260816-004": {
+      "descripcion": "Fase 1 — romper dependencia circular core↔motor",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "nota": "REVISIÓN INDEPENDIENTE APROBADO: grep vacío, ruff OK, mypy 0 nuevos, pytest 144 passed, cobertura 100%. Commits: ee7910ca, 1a84d31e."
+    },
+    "TASK-20260816-005": {
+      "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea."
+    },
+    "TASK-20260816-007": {
+      "descripcion": "Protocolo de coordinación ejecutor-revisor con colas de trabajo y modos secuencial/paralelo",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "nota": "REVISIÓN APROBADO: JSON válido (modo paralelo, 5 colas, 4 tareas), sección AGENTS.md con 11 reglas, 0 Python en diff. Commit edcf7b04."
+    }
+  }
+}
