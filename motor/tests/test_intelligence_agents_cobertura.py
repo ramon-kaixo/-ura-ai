@@ -630,6 +630,13 @@ class TestParallelExecutor:
         res = p.execute([("a1", _task())], workflow_id="wf-ok")
         assert res.completed == 1
         assert res.success
+        assert res.failed == 0 and res.cancelled == 0 and res.timed_out == 0
+        assert len(res.results) == 1
+        assert res.results[0].success
+        assert res.errors == []
+        assert res.elapsed_ms >= 0
+        assert res.total_tasks == 1
+        assert res.workflow_id == "wf-ok"
 
     def test_failure(self) -> None:
         agent = _StubAgent("a1", AgentRole.EXECUTOR, outcome=_result(success=False, error="nope"))
@@ -637,6 +644,9 @@ class TestParallelExecutor:
         res = p.execute([("a1", _task())], workflow_id="wf-fail")
         assert res.failed == 1
         assert "nope" in res.errors[0]
+        assert res.success is False
+        assert res.completed == 0
+        assert res.results[0].success is False
 
     def test_fail_fast(self) -> None:
         failing = _StubAgent("f", AgentRole.EXECUTOR, outcome=_result(success=False, error="fast-fail"))
