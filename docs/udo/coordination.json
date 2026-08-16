@@ -3,10 +3,11 @@
   "colas": {
     "pendientes": [
       "TASK-20260816-011",
-      "TASK-20260816-012",
       "TASK-20260816-013"
     ],
-    "en_progreso": [],
+    "en_progreso": [
+      "TASK-20260816-012"
+    ],
     "en_revision": [
       "TASK-20260816-009"
     ],
@@ -23,8 +24,8 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "ejecutor"
     },
     "WEB": {
       "estado": "ocupado",
@@ -123,7 +124,7 @@
       "titulo": "F4: Limpieza estructural",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "en_progreso",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -139,7 +140,7 @@
         "git status limpio",
         "python3 -m json.tool docs/udo/coordination.json"
       ],
-      "nota": "Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+      "nota": "TERM toma posesión. En ejecución."
     },
     "TASK-20260816-013": {
       "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
