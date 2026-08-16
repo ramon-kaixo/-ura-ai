@@ -1,15 +1,31 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": ["TASK-20260816-005", "TASK-20260816-009"],
-    "en_progreso": ["TASK-20260816-008"],
-    "en_revision": [],
-    "aprobadas": ["TASK-20260816-004", "TASK-20260816-007"],
-    "bloqueadas": ["TASK-20260816-003"]
+    "pendientes": [
+      "TASK-20260816-005",
+      "TASK-20260816-009"
+    ],
+    "en_progreso": [],
+    "en_revision": [
+      "TASK-20260816-008"
+    ],
+    "aprobadas": [
+      "TASK-20260816-004",
+      "TASK-20260816-007"
+    ],
+    "bloqueadas": [
+      "TASK-20260816-003"
+    ]
   },
   "agentes": {
-    "TERM": {"estado": "ocupado", "rol_actual": "ejecutor"},
-    "WEB": {"estado": "libre", "rol_actual": null}
+    "TERM": {
+      "estado": "libre",
+      "rol_actual": null
+    },
+    "WEB": {
+      "estado": "libre",
+      "rol_actual": null
+    }
   },
   "tareas": {
     "TASK-20260816-003": {
@@ -52,10 +68,10 @@
       "descripcion": "Guardián de protocolo (verify_protocol.py) + auto-dispatcher (dispatcher.py) con flock, prioridad y chequeo de conflictos",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "alta",
       "veredicto": "",
-      "nota": "Rama ia/TASK-20260816-008. Correcciones del análisis: una sola TASK, flock, regla de autonomía acotada, campo veredicto, tests ≥80%."
+      "nota": "Implementación lista. Commits: a0915f4f, 43caef06. Gates nuevos archivos: ruff OK, mypy OK, pytest 7/7. Revisión pendiente por WEB."
     },
     "TASK-20260816-009": {
       "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
