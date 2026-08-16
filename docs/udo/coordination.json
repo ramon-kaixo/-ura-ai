@@ -2,7 +2,9 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260816-011"
+      "TASK-20260816-011",
+      "TASK-20260816-012",
+      "TASK-20260816-013"
     ],
     "en_progreso": [],
     "en_revision": [
@@ -114,6 +116,52 @@
         "F10"
       ],
       "condicion_inicio": "No iniciar hasta que F4 (limpieza estructural) y F5 (calidad continua) estén terminadas, aprobadas y fusionadas a main.",
+      "nota": "Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+    },
+    "TASK-20260816-012": {
+      "descripcion": "F4: Limpieza estructural (caches, config unificada, artefactos fuera del árbol)",
+      "titulo": "F4: Limpieza estructural",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "ALTA",
+      "veredicto": "",
+      "dependencias": [],
+      "alcance": [
+        "eliminar caches y artefactos (.venv, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, .hypothesis, node_modules, .sandbox_packages)",
+        "unificar config/ y configs/ en una sola fuente",
+        "mover backups, audit_reports, data/tuneladora_reports y logs fuera del árbol",
+        "actualizar .gitignore completo"
+      ],
+      "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
+      "gates": [
+        "ruff check .",
+        "git status limpio",
+        "python3 -m json.tool docs/udo/coordination.json"
+      ],
+      "nota": "Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+    },
+    "TASK-20260816-013": {
+      "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
+      "titulo": "F5: Calidad continua",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "ALTA",
+      "veredicto": "",
+      "dependencias": [],
+      "alcance": [
+        "aplicar política de cobertura ≥80% (meta 100x100) en módulos nuevos",
+        "enganchar verify_protocol.py y coverage en revision_gates.sh",
+        "actualizar docs/planes/README.md con panel de semáforos",
+        "revisar y limpiar documentación obsoleta de docs/"
+      ],
+      "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
+      "gates": [
+        "ruff check .",
+        "pytest tests/unit/test_protocol_coordination.py",
+        "python3 scripts/pro/verify_protocol.py"
+      ],
       "nota": "Registro inicial: solo plan en cola. Ninguna fase ejecutada."
     }
   },
