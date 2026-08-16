@@ -59,6 +59,37 @@ class TestBaseLLMProvider:
     def test_default_capabilities(self) -> None:
         assert GoodProvider().capabilities == DEFAULT_PROVIDER_CAPABILITIES
 
+    def test_generate_stream_degradado(self) -> None:
+        """generate_stream sin sobrescribir emite el resultado completo en un fragmento."""
+        p = GoodProvider()
+        chunks = list(p.generate_stream("prompt"))
+        assert chunks == ["ok"]
+        assert isinstance(chunks[0], str)
+
+    def test_chat_generate_convierte_a_prompt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """chat_generate sin tools → prompt plano y resultado OpenAI-shape."""
+        p = GoodProvider()
+        llamado: dict = {}
+
+        def fake_generate(prompt: str, model=None, options=None) -> str:
+            llamado["prompt"] = prompt
+            return "respuesta"
+
+        monkeypatch.setattr(p, "generate", fake_generate)
+        result = p.chat_generate(
+            [{"role": "user", "content": "hola"}, {"role": "assistant", "content": "adiós"}],
+            model="m",
+            options={"temperature": 0.1},
+        )
+        assert llamado["prompt"] == "<user>hola</user>\n<assistant>adiós</assistant>"
+        assert result == {"content": "respuesta", "tool_calls": None, "usage": {}}
+
+    def test_chat_generate_mensajes_vacios(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        p = GoodProvider()
+        monkeypatch.setattr(p, "generate", lambda prompt, model=None, options=None: "x")
+        result = p.chat_generate([])
+        assert result["content"] == "x"
+
     def test_supports_known_bool_true(self) -> None:
         assert GoodProvider().supports("chat") is True
 
