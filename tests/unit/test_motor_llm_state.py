@@ -110,6 +110,22 @@ class TestBuildLlmState:
             state = build_llm_state(config)
         assert state.default_provider is ollama_cls.return_value
         reg.register.assert_any_call("ollama", ollama_cls.return_value, default=True)
+        assert state.embed == ollama_cls.return_value.embed
+        assert state.embed_async == ollama_cls.return_value.embed_async
+        assert state.generate == ollama_cls.return_value.generate
+        assert state.health == ollama_cls.return_value.health
+
+    def test_ollama_registra_opcionales(self) -> None:
+        """Con ollama default, los providers opcionales se registran si importan."""
+        config = SimpleNamespace(llm_provider="ollama")
+        with mock.patch("motor.core.llm.ollama.OllamaProvider") as ollama_cls, mock.patch(
+            "motor.core.llm.registry.registry"
+        ) as reg, mock.patch("motor.core.llm._state._get_optional_providers") as get_opt:
+            fake_cls = mock.Mock()
+            get_opt.return_value = [(fake_cls, "openai")]
+            state = build_llm_state(config)
+        assert state.default_provider is ollama_cls.return_value
+        reg.register.assert_any_call("openai", fake_cls.return_value)
 
     def test_provider_desconocido_usa_ollama(self) -> None:
         config = SimpleNamespace(llm_provider="weirdo")
