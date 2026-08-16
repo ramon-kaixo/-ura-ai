@@ -5,9 +5,7 @@
       "TASK-20260816-009"
     ],
     "en_progreso": [],
-    "en_revision": [
-      "TASK-20260816-010"
-    ],
+    "en_revision": [],
     "aprobadas": [],
     "bloqueadas": [],
     "cerradas": [
@@ -15,7 +13,8 @@
       "TASK-20260816-004",
       "TASK-20260816-007",
       "TASK-20260816-005",
-      "TASK-20260816-008"
+      "TASK-20260816-008",
+      "TASK-20260816-010"
     ]
   },
   "agentes": {
@@ -24,8 +23,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "ocupado",
-      "rol_actual": "revisor"
+      "estado": "libre",
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -88,10 +87,10 @@
       "descripcion": "Panel de semáforos + modo análisis de planes",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "cerrada",
       "prioridad": "media",
-      "veredicto": "APROBADO — revisión TERM 22:50 (flock OK, duplicado fuera, gates OK, schema canónico)",
-      "nota": "Correcciones aplicadas y verificadas: flock en salud_planes.sh (patrón dispatcher), docs/architecture.md eliminado. ruff OK, bash -n OK, pytest 11 passed, json OK, schema colas canónico."
+      "veredicto": "APROBADO/DONE — panel de semáforos + modo análisis integrados",
+      "nota": "Fusionada a main. Tarea cerrada."
     }
   }
 }
