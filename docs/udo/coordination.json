@@ -32,8 +32,8 @@
       "descripcion": "Implementar protocolo de coordinación ejecutor-revisor (coordination.json + sección AGENTS.md)",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_curso",
-      "nota": "Rama ia/TASK-20260816-007. Al terminar pasará a en_revision."
+      "estado": "en_revision",
+      "nota": "Commit 6981b987 en rama ia/TASK-20260816-007. Diff listo para revisión WEB."
     }
   ],
   "tareas_pendientes": [
