@@ -11,7 +11,7 @@
       "description": "Fase 3 — corregir 5 errores graves de mypy + 2 errores pre-existentes en motor/core/web_search.py",
       "executor": "TERM",
       "reviewer": "WEB",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "verdict": "PENDIENTE",
       "reserved_paths": [
         "motor/agents/models.py",
@@ -27,11 +27,9 @@
         "docs/udo/coordination.json"
       ],
       "commit_base": "cb0595b4",
-      "commits": [],
+      "commits": ["edcdb2db"],
       "round": 1,
       "pending_actions": [
-        "Corregir errores mypy",
-        "Ejecutar gates y commitear",
         "Revision WEB"
       ],
       "notes": "Tarea creada por coordinador TERM tras mensaje de activacion del protocolo ejecutor-revisor."
