@@ -316,7 +316,10 @@ class TestDoGet:
         h = _make_handler(path="/v1/models")
         out = _wrap_send(h)
         monkeypatch.setattr("core.model_router.router.rate_limiter", SimpleNamespace(is_allowed=lambda ip: True))
-        monkeypatch.setattr("core.model_router.proxy.proxy_request", lambda *a, **k: (200, {"Content-Type": "application/json"}, b'{"m": []}'))
+        monkeypatch.setattr(
+            "core.model_router.proxy.proxy_request",
+            lambda *a, **k: (200, {"Content-Type": "application/json"}, b'{"m": []}'),
+        )
         h.do_GET()
         assert out[0][0] == 200
 
@@ -392,7 +395,9 @@ class TestDoPost:
         monkeypatch.setattr(RouterHandler, "_get_modelos", classmethod(lambda cls: set()))
         monkeypatch.setattr("core.model_router.model_selection.seleccionar_modelo", lambda t, d: "m1")
         monkeypatch.setattr("core.model_router.proxy._proxy_con_vram", lambda *a, **k: (200, {}, b"{}"))
-        monkeypatch.setattr("core.model_router.cache.prompt_cache", SimpleNamespace(get=lambda *a, **k: None, set=lambda *a, **k: None))
+        monkeypatch.setattr(
+            "core.model_router.cache.prompt_cache", SimpleNamespace(get=lambda *a, **k: None, set=lambda *a, **k: None)
+        )
         h.do_POST()
         assert out[0][0] == 200
 
@@ -585,7 +590,9 @@ class TestDoGetFaltantes:
         h = _make_handler(path="/v1/chat/completions")
         out = _wrap_send(h)
         monkeypatch.setattr("core.model_router.router.rate_limiter", SimpleNamespace(is_allowed=lambda ip: True))
-        monkeypatch.setattr("core.model_router.proxy.proxy_request", lambda *a, **k: (200, {"Content-Type": "application/json"}, b"{}"))
+        monkeypatch.setattr(
+            "core.model_router.proxy.proxy_request", lambda *a, **k: (200, {"Content-Type": "application/json"}, b"{}")
+        )
         h.do_GET()
         assert out[0][0] == 200
 
@@ -732,6 +739,18 @@ class TestZmqHappyPath:
 
 
 class TestRamasFinales:
+    def test_supervisor_auth_falla_403(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """require_auth() True y auth_validate False → 403 (líneas 124-125)."""
+        import core.model_router.router as router_mod
+
+        h = _make_handler()
+        out = _wrap_send(h)
+        monkeypatch.setattr(router_mod, "require_auth", lambda: True)
+        monkeypatch.setattr(router_mod, "auth_validate", lambda k: False)
+        h._handle_supervisor()
+        assert out[0][0] == 403
+        assert "Forbidden" in json.loads(out[0][2])["error"]
+
     def test_supervisor_auth_valida_pasa(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
