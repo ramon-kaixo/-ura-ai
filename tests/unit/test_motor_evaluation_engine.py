@@ -56,6 +56,30 @@ class TestEvaluationEngine:
         assert "recall@2" in run.metrics
         assert len(run.per_query) == 2
         assert "mean_ms" in run.latency_stats
+        # q1: relevant {d1,d2}, retrieved [d1,x,d2], top2 [d1,x] → recall=0.5, prec=0.5, mrr=1.0
+        # q2: relevant {d3}, retrieved [d3,y], top2 [d3,y] → recall=1.0, prec=0.5, mrr=1.0
+        assert run.metrics["recall@2"] == 0.75
+        assert run.metrics["precision@2"] == 0.5
+        assert run.metrics["mrr"] == 1.0
+        assert run.per_query[0]["query_id"] == "q1"
+        assert run.per_query[0]["query_text"] == "buscar gpu"
+        assert run.per_query[0]["latency_ms"] >= 0
+        assert run.timestamp > 0
+        assert run.config_name == "r1"
+        assert run.corpus_name == "c1"
+
+    def test_latencia_stats_vacio(self) -> None:
+        from motor.core.evaluation.evaluator import _latencia_stats
+
+        stats = _latencia_stats([])
+        assert stats == {"mean_ms": 0.0, "min_ms": 0.0, "max_ms": 0.0}
+
+    def test_agregar_sin_queries(self) -> None:
+        from motor.core.evaluation.evaluator import _agregar
+
+        agg = _agregar([], [], 5, 1)
+        assert agg["map"] == 0.0
+        assert agg["recall@5"] == 0.0
 
     def test_evaluate_corpus_no_existe(self) -> None:
         e = EvaluationEngine()
@@ -94,6 +118,11 @@ class TestEvaluationEngine:
         assert "best_by_metric" in comp
         assert "r1" in comp["configs"]
         assert "r2" in comp["configs"]
+        assert comp["corpus"] == "c1"
+        assert set(comp["best_by_metric"]) == {"recall@2", "precision@2", "mrr", "ndcg@2", "map"}
+        for info in comp["best_by_metric"].values():
+            assert info["config"] in {"r1", "r2"}
+            assert isinstance(info["value"], float)
 
     def test_get_results_y_save_load(self, tmp_path) -> None:
         e = EvaluationEngine()
