@@ -76,8 +76,9 @@ def extract_publication_date(text: str) -> str | None:
         match = re.search(pattern, text[:5000])
         if match:
             try:
-                return datetime.strptime(match.group(0), fmt).isoformat()  # noqa: DTZ007
-            except ValueError:
+                sep = next(c for c in match.group(0) if not c.isdigit())
+                return datetime.strptime(match.group(0).replace(sep, "-"), fmt).isoformat()  # noqa: DTZ007
+            except (ValueError, StopIteration):
                 continue
     return None
 
