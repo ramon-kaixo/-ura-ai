@@ -3,8 +3,8 @@
   "colas": {
     "pendientes": ["TASK-20260816-005"],
     "en_progreso": [],
-    "en_revision": ["TASK-20260816-004", "TASK-20260816-007"],
-    "aprobadas": [],
+    "en_revision": [],
+    "aprobadas": ["TASK-20260816-004", "TASK-20260816-007"],
     "bloqueadas": ["TASK-20260816-003"]
   },
   "tareas": {
@@ -20,9 +20,9 @@
       "descripcion": "Fase 1 — romper dependencia circular core↔motor",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "alta",
-      "nota": "Auto-revisión TERM APROBADO (no independiente). Pendiente aprobación del humano o revisión WEB. Commits: ee7910ca, 1a84d31e."
+      "nota": "REVISIÓN INDEPENDIENTE APROBADO: grep vacío, ruff OK, mypy 0 nuevos, pytest 144 passed, cobertura 100%. Commits: ee7910ca, 1a84d31e."
     },
     "TASK-20260816-005": {
       "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
@@ -36,9 +36,9 @@
       "descripcion": "Protocolo de coordinación ejecutor-revisor con colas de trabajo y modos secuencial/paralelo",
       "ejecutor": "WEB",
       "revisor": "TERM",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "alta",
-      "nota": "Commits en rama ia/TASK-20260816-007. Diff listo para revisión TERM."
+      "nota": "REVISIÓN APROBADO: JSON válido (modo paralelo, 5 colas, 4 tareas), sección AGENTS.md con 11 reglas, 0 Python en diff. Commit edcf7b04."
     }
   }
 }
