@@ -1070,6 +1070,10 @@ class TestMultiAgentRuntime:
         rt = MultiAgentRuntime()
         res = rt.execute_workflow("execute tarea")
         assert not res.success
+        assert res.error == ""
+        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"
+        assert res.duration_ms >= 0
+        assert res.agent_id == "runtime"
 
     def test_execute_failing_agent(self) -> None:
         rt = MultiAgentRuntime()
@@ -1077,6 +1081,8 @@ class TestMultiAgentRuntime:
         res = rt.execute_workflow("execute tarea")
         assert not res.success
         assert res.error == ""
+        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"
+        assert res.output["supervisor"]["steps"][-1]["status"] == "failed"
 
     def test_execute_cancelled_initial(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(MultiAgentRuntime, "_is_cancelled", lambda self, wid: True)
@@ -1168,6 +1174,16 @@ class TestMultiAgentRuntime:
         rt.execute_workflow("execute tres")
         assert rt.get_workflow(first_id) is None
         assert len(rt.list_workflows()) == 2
+        # el más antiguo de los restantes es el segundo
+        restantes = rt.list_workflows()
+        assert len(restantes) == 2
+        assert all(w["status"] == "failed" for w in restantes)
+
+    def test_trim_no_excede(self) -> None:
+        rt = MultiAgentRuntime(max_completed_workflows=10)
+        for i in range(5):
+            rt.execute_workflow(f"execute tarea {i}")
+        assert len(rt.list_workflows()) == 5  # sin trim
 
 
 # ---------------------------------------------------------------- planner.py
