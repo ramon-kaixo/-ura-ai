@@ -227,6 +227,15 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 
 **Verificación sugerida lote 013/014**: `pytest tests/unit/test_knowledge_audit_backends.py -q` (23 passed), `pytest tests/unit/test_knowledge_metrics_cobertura.py -q`, suite completa tests/unit (5253 passed, 0 failed, 0 ResourceWarning).
 
+**ACTA VERIFICACIÓN OBJETIVA EN BLOQUE — 2026-08-16 (TERM, re-ejecución)**: pinning
+6/6 SHAs OK (`1c5d486b`, `51b2d3d3`, `fbba56c6`, `bcca0b1a`, `6705cba6`, `96a5af1b`
+existen y son ancestros de HEAD); tests clave re-ejecutados 86 passed (cleaner/pipeline/
+audit_backends/metrics cobertura); ruff 0 errores en 6 archivos tocados; `bash -n ura-udo` OK.
+**NO es revisión independiente** (verificador = ejecutor TERM): las filas ⏳ PENDIENTE
+REVISIÓN de 013/014 siguen abiertas para el WEB o Ramón. Nota: ollama GX10 verificado
+ACTIVE hoy (13 modelos: qwen3-coder 18.6GB, llama3.3 42.5GB, deepseek-r1 9GB) — el hallazgo
+ALTA de saturación de ayer no es reproducible ahora; decisión operativa F5 sigue pendiente de Ramón.
+
 **Nota de aceptación (v1.1 §9)**: Ramón (coordinador) aceptó explícitamente el lote sin
 revisión independiente el 2026-08-15 ("haz lo pendiente" tras el reporte que enumeraba la
 revisión diferida como pendiente). Queda constancia de que la revisión por el WEB sigue
