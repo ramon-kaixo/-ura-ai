@@ -596,3 +596,15 @@ Antes de iniciar cualquier refactorización compleja, el agente debe consultar e
 ```bash
 $ python3 /home/ramon/URA/ura_ia_1972/scripts/pro/ura-query.py "descripción del cambio"
 ```
+## Protocolo de coordinación automática (TASK-20260816-007)
+
+Al recibir un mensaje que empiece con `Coordina esta tarea según protocolo ejecutor-revisor:`:
+
+1. **Rol**: eres coordinador de esa tarea.
+2. **Revisa `docs/udo/coordination.json`**: tareas activas, estados y asignaciones previas.
+3. **Decide ejecutor y revisor**: tarea de código → ejecutor TERM, revisor WEB; tarea de revisión/análisis → ejecutor WEB, revisor TERM. Alterna roles para repartir trabajo.
+4. **Anota la asignación** en `coordination.json` (task_id, descripcion, ejecutor, revisor, estado).
+5. **Si eres ejecutor**: trabaja en rama `ia/TASK-XXXX`, aplica cambios, ejecuta gates (`ruff check .`, `mypy --no-incremental core motor shared`, `pytest -q --tb=short`) y commitea con `[TASK-XXXX][ROL]`. Al terminar, deja el diff para revisión y actualiza estado a `en_revision`.
+6. **Si eres revisor**: ejecuta gates, revisa el diff, emite informe con errores, propuesta y veredicto (`APROBADO` / `CAMBIOS_SOLICITADOS`). Devuelve el informe al ejecutor si hay errores. Actualiza estado a `aprobado` o `cambios_solicitados`.
+7. **Nunca cierres una TASK sin aprobación del revisor.**
+8. Si eres solo coordinador (ni ejecutor ni revisor), deja la tarea en `coordination.json` y notifica al rol correspondiente.

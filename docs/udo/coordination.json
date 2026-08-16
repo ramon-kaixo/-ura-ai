@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "creado": "2026-08-16",
+  "reglas_roles": {
+    "tarea_codigo": {"ejecutor_preferente": "TERM", "revisor": "WEB"},
+    "tarea_revision_analisis": {"ejecutor_preferente": "WEB", "revisor": "TERM"},
+    "alternancia": "Alternar roles entre tareas para repartir trabajo; si un agente está ocupado con una TASK activa, el preferente se mantiene y la alternancia se compensa en la siguiente tarea.",
+    "gates": ["ruff check .", "mypy --no-incremental core motor shared", "pytest -q --tb=short"],
+    "commit_formato": "[TASK-XXXX][ROL] descripcion",
+    "estados": ["propuesta", "en_curso", "en_revision", "aprobado", "cambios_solicitados"],
+    "cierre": "Nunca cerrar una TASK sin aprobación del revisor."
+  },
+  "tareas_activas": [
+    {
+      "task_id": "TASK-20260816-003",
+      "descripcion": "Fase 0 (urgente) — limpiar conflictos git y rotar token expuesto",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_curso",
+      "nota": "Hotfix y guardarrail hechos; rotación del token pendiente del humano (rootfs RO, sudo)."
+    },
+    {
+      "task_id": "TASK-20260816-004",
+      "descripcion": "Fase 1 — romper dependencia circular core↔motor",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_revision",
+      "nota": "Auto-revisión TERM APROBADO (no independiente). Pendiente aprobación del humano o revisión WEB. Commits: ee7910ca, 1a84d31e."
+    },
+    {
+      "task_id": "TASK-20260816-007",
+      "descripcion": "Implementar protocolo de coordinación ejecutor-revisor (coordination.json + sección AGENTS.md)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_curso",
+      "nota": "Rama ia/TASK-20260816-007. Al terminar pasará a en_revision."
+    }
+  ],
+  "tareas_pendientes": [
+    {
+      "task_id": "TASK-20260816-005",
+      "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "propuesta",
+      "razon_asignacion": "Tarea de código → ejecutor TERM. WEB ocupado con TASK-20260815-003 (cobertura, IN_PROGRESS); alternancia se compensará en la siguiente tarea."
+    }
+  ]
+}
