@@ -2,10 +2,11 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260816-009",
+      "TASK-20260816-009"
+    ],
+    "en_progreso": [
       "TASK-20260816-010"
     ],
-    "en_progreso": [],
     "en_revision": [],
     "aprobadas": [],
     "bloqueadas": [],
@@ -19,8 +20,8 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "ejecutor"
     },
     "WEB": {
       "estado": "libre",
@@ -87,10 +88,10 @@
       "descripcion": "Panel de semáforos + modo análisis de planes",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "en_progreso",
       "prioridad": "media",
       "veredicto": "",
-      "nota": "Creada y en cola pendientes (2026-08-16T22:21). Se asignará vía dispatcher cuando TASK-008 esté aprobada y fusionada."
+      "nota": "En progreso. Implementando panel de semáforos, salud_planes.sh, modo análisis y tests."
     }
   }
 }
