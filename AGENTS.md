@@ -621,11 +621,9 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 3. **Cambia al rol necesario** (ejecutor o revisor) según la tarea asignada.
 4. **Autonomía acotada**: la auto-asignación de tareas NO exime del análisis de plan ni de los gates antes de tocar código. La regla "un plan NUNCA se ejecuta sin análisis previo" sigue vigente. No preguntes al humano para auto-asignarte una tarea pendiente; sí avísale en el reporte.
 
-## Operación diaria con herramientas de automatización (TASK-20260816-008)
+## Operación diaria (TASK-20260816-008)
 
 1. **Al iniciar sesión**, actualiza tu estado en `docs/udo/coordination.json` (`agentes.{WEB|TERM}.estado`).
 2. **Si estás libre y hay tareas pendientes**, consulta `scripts/pro/dispatcher.py --dry-run` y asígnate la de mayor prioridad sin conflicto de zonas.
 3. **No preguntes al humano** si puedes resolver la asignación o el siguiente paso con `coordination.json` y las reglas del protocolo.
 4. **Antes de cerrar una tarea** (marcar como `aprobada`/`done`), ejecuta `python3 scripts/pro/verify_protocol.py`; si falla, corrige antes de cerrar.
-5. **Al terminar una tarea**, actualiza `docs/udo/coordination.json` (estado, veredicto, commits, notas) y ejecuta `python3 scripts/pro/panel.py` para regenerar `docs/planes/README.md`.
-6. **Periódicamente** (o tras cualquier cambio de fase), ejecuta `bash scripts/pro/salud_planes.sh` para guardar los resultados reales de los gates en `coordination.json`.
