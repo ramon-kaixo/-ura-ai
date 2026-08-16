@@ -185,14 +185,20 @@ class TestEpisodeStore:
         s = EpisodeStore()
         a = _episode(session="sa", ts="2026-01-01T00:00:00+00:00", payload="a")
         b = _episode(session="sb", ts="2025-01-01T00:00:00+00:00", payload="b")
+        c = _episode(session="sa", ts="2026-06-01T00:00:00+00:00", payload="c")
         s.store(a)
         s.store(b)
-        assert s.get_by_session("sa") == [a]
+        s.store(c)
+        assert s.get_by_session("sa") == [c, a]  # orden timestamp desc
+        assert s.get_by_session("sa", limit=1) == [c]
+        assert s.get_by_session("sa", offset=1) == [a]
         assert s.get_by_session("sa", limit=0, offset=0) == []
         assert s.get_by_time_range("2025-06-01", "2026-06-01") == [a]
-        assert s.get_recent(k=1) == [a]
+        assert s.get_by_time_range("2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00") == [c, a]
+        assert s.get_recent(k=1) == [c]
+        assert s.get_recent(k=2) == [c, a]
         assert s.count("sb") == 1
-        assert s.count() == 2
+        assert s.count() == 3
         assert s.count("nada") == 0
 
     def test_clear_ops(self) -> None:
@@ -210,18 +216,33 @@ class TestEpisodeStore:
         s.store(_episode(ts="2026-06-10T00:00:00+00:00", payload="x2"))
         s.store(_episode(ts="2026-08-01T00:00:00+00:00", payload="x3"))
         assert s.count() == 2
+        restantes = {e.payload for e in s._episodes.values()}
+        assert restantes == {"x2", "x3"}  # el más antiguo (x1) se trima
 
     def test_persistencia_sqlite(self, tmp_path: Path) -> None:
         db = tmp_path / "eps.db"
         s = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
         ep = _episode(payload="hola", tags=["t1"])
         ep.references = ["r1"]
+        ep.source = "custom"
+        ep.importance = 0.9
+        ep.confidence = 0.7
+        ep.ttl = 1234
+        ep.metadata = {"clave": "valor"}
         eid = s.store(ep)
         s.close()
         s2 = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
         e2 = s2.get(eid)
         assert e2 is not None and e2.payload == "hola"
         assert e2.references == ["r1"]
+        assert e2.tags == ["t1"]
+        assert e2.source == "custom"
+        assert e2.importance == 0.9
+        assert e2.confidence == 0.7
+        assert e2.ttl == 1234
+        assert e2.metadata == {"clave": "valor"}
+        assert e2.session_id == "s1"
+        assert s2.count() == 1
         s2.delete(eid)
         s2.close()
         assert sqlite3.connect(str(db)).execute("SELECT COUNT(*) FROM episodes").fetchone()[0] == 0
@@ -269,12 +290,29 @@ class TestSessionMemory:
         sid2 = sm.create_session()
         assert sid != sid2
         assert sm.session_count() == 2
-        ep = sm.add_episode(sid, "payload", source="s", tags=["x"])
+        ep = sm.add_episode(sid, "payload", source="s", tags=["x"], importance=0.8)
+        assert ep.id
+        assert ep.importance == 0.8
         assert sm.get_history(sid) == [ep]
         assert sm.get_recent(k=5)
         assert sm.store.count(sid) == 1
         assert sm.close_session(sid) is True
         assert sm.close_session(sid) is False
+        assert sm.session_count() == 1
+
+    def test_add_episode_sin_sesion_activa(self) -> None:
+        """add_episode con sesión no creada → episodio se guarda igual."""
+        sm = SessionMemory()
+        ep = sm.add_episode("no-existe", "payload")
+        assert ep.id
+        assert sm.store.count("no-existe") == 1
+        assert sm.get_history("no-existe") == [ep]
+
+    def test_create_session_con_id(self) -> None:
+        """create_session con id explícito no genera otro."""
+        sm = SessionMemory()
+        sid = sm.create_session(session_id="fijo")
+        assert sid == "fijo"
         assert sm.session_count() == 1
 
 
