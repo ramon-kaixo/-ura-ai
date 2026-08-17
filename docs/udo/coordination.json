@@ -3,9 +3,7 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [
-      "TASK-20260816-009"
-    ],
+    "en_revision": [],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
@@ -21,7 +19,8 @@
     ],
     "bloqueadas": [
       "TASK-20260816-011",
-      "TASK-20260817-020"
+      "TASK-20260817-020",
+      "TASK-20260816-009"
     ],
     "cerradas": [
       "TASK-20260816-003",
@@ -93,10 +92,10 @@
       "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
       "ejecutor": null,
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "bloqueada",
       "prioridad": "baja",
       "veredicto": "",
-      "nota": "Implementación lista. En revisión WEB. Gates: bash -n OK, ruff OK, json.tool OK."
+      "nota": "Posponer: automatización futura. Se retomará en Bloque E."
     },
     "TASK-20260816-010": {
       "descripcion": "Panel de semáforos + modo análisis de planes",
