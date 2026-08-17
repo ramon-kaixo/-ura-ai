@@ -2,12 +2,12 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260817-016",
-      "TASK-20260817-022"
+      "TASK-20260817-016"
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-022"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -38,7 +38,7 @@
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": null
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -284,9 +284,9 @@
       "prioridad": "ALTA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "en_revision",
       "veredicto": "",
-      "nota": "Detectado 2026-08-17 15:51. Requiere diagnosticar conflictos con mac-veredictos."
+      "nota": "Resuelto 2026-08-17 16:20 (TERM). Merge mac-veredictos ya integrado (4aefed52). Fix: normalizar formato estado: en expedientes 019/020/021 -> detector exit 0, verify_protocol OK. En revision WEB."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
