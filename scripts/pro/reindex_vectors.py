@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from knowledge.engine.asset_store import SQLiteAssetStore
 from knowledge.engine.graphrag import SQLiteGraphRetriever
