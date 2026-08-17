@@ -648,3 +648,10 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 3. No asigna si hay conflicto de ramas o archivos: dispatcher.py ya verifica zonas conflictivas y usa flock.
 4. Se lanza via systemd (deploy/ura-despertador.timer) o cron (scripts/pro/crontab_despertador.txt) cada 5 minutos.
 5. Registra la ultima ejecucion en docs/udo/coordination.json (ultima_ejecucion_despertador).
+
+## Operación en la Mac (lecciones post-C2, TASK-20260818-006 — 2026-08-18)
+
+1. **El detector del TERM regenera `docs/ARCHITECTURE.md` en cada checkout** en la Mac: el archivo aparece siempre como modificado y cualquier operación git (rebase/stash/checkout) puede fallar con "unstaged changes" fantasma. Antes de operar: `git status` para conocer el estado y usar `git rebase --autostash` si procede.
+2. **`scp` con múltiples fuentes** puede colocar el primer archivo en la RAÍZ del destino (no en su ruta relativa). Verificar rutas con `ls`/`git status` tras copiar.
+3. **Nunca `git stash pop` a ciegas** en el repo de la Mac: listar antes con `git stash list` y usar `git stash pop stash@{N}` explícito (hay stashes ajenos del TERM).
+4. La rama de tarea del TERM (ej. `ia/TASK-20260816-005`) es su zona de trabajo activa: no rebasearla/force-pushearla sin autorización expresa del coordinador; su auto-push commitea cada pocos minutos.
