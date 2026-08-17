@@ -2,12 +2,12 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260817-016",
-      "TASK-20260817-017"
+      "TASK-20260817-016"
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-017"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -33,8 +33,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -235,7 +235,7 @@
       "titulo": "Bloque B3: Servicios systemd",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "en_revision",
       "prioridad": "MEDIA",
       "veredicto": "",
       "dependencias": [],
@@ -246,7 +246,7 @@
         "entregable docs/audit/baseline/servicios_B3.md"
       ],
       "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
-      "nota": "Registro inicial."
+      "nota": "B3 completado: informe docs/audit/baseline/B3_servicios_systemd.md (48 servicios: 26 activos, 2 dudosos, 11 legacy, 7 failed + ura-revisiones resuelto). READ-ONLY, acciones solo propuestas."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
