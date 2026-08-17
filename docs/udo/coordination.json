@@ -246,7 +246,7 @@
         "entregable docs/audit/baseline/servicios_B3.md"
       ],
       "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
-      "nota": "REVISOR 2026-08-17: informe B3 corregible — (1) resumen 11→14 legacy; (2) duplicar clasificacion llama-vision/ura-executor (solo dudosos); (3) typo u-backup→ura-backup; (4) ure-al.service NO existe en systemctl ni repo; (5) commit citado 5a1c9175 inexistente (B3 en 60b2c7b6); (6) pendientes-fase.md modificado sin commitear (cambio ajeno). Gates: json OK, verify_protocol OK. Sin cierre: requiere correccion + aprobacion humana."
+      "nota": "REVISOR+TERM 2026-08-17: correcciones aplicadas — resumen 24/2/14/7 coherente (48 únicos), duplicados llama-vision/ura-executor eliminados de ACTIVO, typo ura-backup corregido; ure-al.service registrado UNKNOWN/NO VERIFICADO (sin evidencia en systemd ni repo, no se añade a tabla). Pendiente: aprobación humana Ramón para cierre."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
