@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT))
 
 
 def _check(label: str, ok: bool, detail: str = "") -> dict:
