@@ -15,7 +15,7 @@ COLECCION_SEMANTICA = "ura_docs_semantic"
 
 
 class VectorRetriever:
-    def __init__(self, qdrant_client: QdrantClient, collection: str = COLECCION_SEMANTICA) -> None:
+    def __init__(self, qdrant_client: QdrantClient | None, collection: str = COLECCION_SEMANTICA) -> None:
         self._qc = qdrant_client
         self._collection = collection
         self._client = getattr(qdrant_client, "_cliente", None)

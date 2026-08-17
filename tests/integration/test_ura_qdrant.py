@@ -9,12 +9,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
+from motor.core.config import UraConfig
 from motor.core.qdrant_client import (
     COLECCION_DOCUMENTOS,
     COLECCION_INCIDENTES,
     VECTOR_SIZE,
     QdrantClient,
-    UraConfig,
     URAQdrantClient,
 )
 

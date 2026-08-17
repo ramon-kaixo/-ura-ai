@@ -254,7 +254,7 @@ class SQLiteAssetStore:
             FROM op_assets
             WHERE json_extract(metadata, '$.title') LIKE ?
         """
-        params = [pattern]
+        params: list[object] = [pattern]
         if asset_type:
             sql += " AND asset_type = ?"
             params.append(asset_type.value)

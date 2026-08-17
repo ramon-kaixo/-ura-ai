@@ -286,10 +286,13 @@ class ToolResult:
 
     def to_envelope(self) -> ProtocolEnvelope:
         from motor.platform.models import (
+            CorrelationId,
             DeliveryHeader,
             MessageKind,
             RoutingHeader,
+            SpanId,
             TraceHeader,
+            TraceId,
             VersionHeader,
         )
         from motor.platform.serializer import make_envelope_with_checksum, make_message_id
@@ -329,9 +332,9 @@ class ToolResult:
                 destination="agent",
             ),
             trace=TraceHeader(
-                trace_id=self.execution_id,
-                span_id=self.execution_id,
-                correlation_id=self.execution_id,
+                trace_id=TraceId(self.execution_id),
+                span_id=SpanId(self.execution_id),
+                correlation_id=CorrelationId(self.execution_id),
             ),
             delivery=DeliveryHeader(),
             payload=payload,

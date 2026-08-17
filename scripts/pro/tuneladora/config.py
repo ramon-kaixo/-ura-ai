@@ -11,7 +11,7 @@ from pathlib import Path
 try:
     import tomllib
 except ImportError:
-    tomllib = None  # Python <3.11
+    tomllib = None  # type: ignore[assignment]  # Python <3.11
 
 log = logging.getLogger("tuneladora.config")
 

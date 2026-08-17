@@ -8,7 +8,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event
@@ -135,6 +135,7 @@ async def call_ollama(
     max_tokens: int = 2048,
     llm: ILLMClient | None = None,
 ) -> dict | None:
+    _gen: Callable[..., str]
     if llm is not None:
         _gen = lambda p, **kw: llm.generate(p, **kw)  # noqa: E731
     else:
@@ -171,7 +172,9 @@ def _resultado_seguro(result: object) -> dict | None:
     """Normalizar el resultado de un modelo: excepciones y timeouts a None."""
     if isinstance(result, BaseException):
         return None
-    return result
+    if isinstance(result, dict):
+        return result
+    return None
 
 
 def _decidir_veredicto(

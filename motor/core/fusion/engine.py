@@ -101,13 +101,31 @@ class FusionPipeline:
             self._stages = list(stages)
 
     @classmethod
-    def default(cls, **kwargs: object) -> FusionPipeline:
+    def default(  # noqa: PLR0917
+        cls,
+        engine: FusionEngine | None = None,
+        conflict_resolver: ConflictResolver | None = None,
+        source_scorer: SourceScorer | None = None,
+        merger: KnowledgeMerger | None = None,
+        change_detector: ChangeDetector | None = None,
+        selector: MemoryCandidateSelector | None = None,
+        entity_resolver: EntityResolver | None = None,
+    ) -> FusionPipeline:
         """Pipeline por defecto: stages completos (F25-B4+B5 integrados).
 
         Construye la cadena normalization → entity_resolution →
         conflict_detection → source_scoring → merger → delta → selection.
         """
-        return cls(stages=build_default_pipeline(), **kwargs)
+        return cls(
+            engine=engine,
+            conflict_resolver=conflict_resolver,
+            source_scorer=source_scorer,
+            merger=merger,
+            change_detector=change_detector,
+            selector=selector,
+            entity_resolver=entity_resolver,
+            stages=build_default_pipeline(),
+        )
 
     @property
     def engine(self) -> FusionEngine | None:

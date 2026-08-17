@@ -162,7 +162,7 @@ class _SafeCalculator:
         self._env.update({"abs": abs, "min": min, "max": max, "round": round})
 
     def _eval(self, node: ast.AST) -> float | int:
-        if isinstance(node, ast.Constant):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
             return node.value
         if isinstance(node, ast.UnaryOp):
             return self._eval_unary(node)

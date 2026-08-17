@@ -54,7 +54,7 @@ class Orchestrator:
             diagnostico = Diagnostico(self.config, self.qdrant)
             result.diagnose = diagnostico.run(result.scan)
             t_diag = time.time() - t2
-            hubo_cambios = result.diagnose.causas_raiz or result.scan.diff_total > 0
+            hubo_cambios = bool(result.diagnose.causas_raiz or result.scan.diff_total > 0)
             t3 = time.time()
             result.verify = ejecutar_verificacion(self.config, hubo_cambios=hubo_cambios)
             t_ver = time.time() - t3
