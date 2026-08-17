@@ -1,9 +1,7 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": [
-      "TASK-20260817-016"
-    ],
+    "pendientes": [],
     "en_progreso": [],
     "en_revision": [
       "TASK-20260816-009"
@@ -18,7 +16,8 @@
       "TASK-20260817-023",
       "TASK-20260817-024",
       "TASK-20260816-012",
-      "TASK-20260816-013"
+      "TASK-20260816-013",
+      "TASK-20260817-016"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -221,9 +220,9 @@
       "titulo": "Bloque B2: Artefactos",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
+      "estado": "aprobada",
       "prioridad": "MEDIA",
-      "veredicto": "",
+      "veredicto": "APROBADO",
       "dependencias": [
         "TASK-20260817-015"
       ],
@@ -234,7 +233,7 @@
         "autorización por ítem"
       ],
       "condicion_inicio": "Aprobación TASK-015 + autorización por ítem de Ramón.",
-      "nota": "Registro inicial. Bloqueada: esperar TASK-015 y órdenes por ítem. 2026-08-17 16:30: urgencia añadida — H-04 disco nvme0n1p2 al 100% (545M libres); retirar .tuneladora/build/dist ayudaría."
+      "nota": "Artefactos limpiados: .tuneladora a /opt/ura/artifacts, mutants movido, build/dist/egg-info eliminados. Cerrada por Ramón."
     },
     "TASK-20260817-017": {
       "descripcion": "Bloque B3: inventario formal de servicios systemd y baja documentada (P2-02)",
