@@ -3,7 +3,11 @@
  "colas": {
   "pendientes": [],
   "en_progreso": [],
-  "en_revision": [],
+  "en_revision": [
+   "TASK-20260817-025",
+   "TASK-20260817-027",
+   "TASK-20260817-029"
+  ],
   "aprobadas": [
    "TASK-20260817-014",
    "TASK-20260817-015",
@@ -15,10 +19,7 @@
    "TASK-20260817-024",
    "TASK-20260816-012",
    "TASK-20260816-013",
-   "TASK-20260817-016",
-   "TASK-20260817-025",
-   "TASK-20260817-028",
-   "TASK-20260817-027"
+   "TASK-20260817-016"
   ],
   "bloqueadas": [
    "TASK-20260816-011",
@@ -40,8 +41,8 @@
    "rol_actual": null
   },
   "WEB": {
-   "estado": "libre",
-   "rol_actual": null
+   "estado": "ocupado",
+   "rol_actual": "revisor"
   }
  },
  "tareas": {
@@ -313,10 +314,27 @@
    "descripcion": "Clasificación mypy Bloque C1 (429 errores -> P0/P1/P2/P3)",
    "ejecutor": "TERM",
    "revisor": "WEB",
-   "estado": "aprobada",
+   "estado": "en_revision",
    "prioridad": "MEDIA",
-   "veredicto": "APROBADO",
+   "veredicto": "",
    "nota": "Análisis READ-ONLY 2026-08-17 18:20: 429 errores clasificados (58 P0, 108 P1, 242 P2 tests, 21 P3). Informe: docs/audit/baseline/C1_mypy_classification.md. Arreglo NO ejecutado (requiere TASK + autorización)."
+  },
+  "TASK-20260817-027": {
+   "descripcion": "Bloque C1: corregir errores mypy P0 de producción (58 según C1_mypy_classification.md)",
+   "ejecutor": "TERM",
+   "revisor": "WEB",
+   "estado": "en_revision",
+   "prioridad": "ALTA",
+   "veredicto": "",
+   "nota": "P0 produccion 58->0. Commits: 9d28d1d4, ede02df8. Ruff 0 nuevos, pytest 315 pass (qdrant/agents/memory cobertura), smoke imports OK. Pendiente revision WEB."
+  },
+  "TASK-20260817-029": {
+   "descripcion": "Auditoría de documentación obsoleta (B011)",
+   "ejecutor": "WEB",
+   "revisor": "TERM",
+   "estado": "en_revision",
+   "prioridad": "MEDIA",
+   "nota": "Auditoría de documentación obsoleta (B011) — 19 candidatos propuestos en docs/audit/baseline/B5_docs_obsoletas.md (12 OpenClaw retirado, 4 duplicados EN/ES, 4 fases cerradas). Solo propuesta, sin ejecución."
   },
   "TASK-20260817-028": {
    "descripcion": "Consolidación de backlog de pendientes",
@@ -326,15 +344,6 @@
    "estado": "aprobada",
    "veredicto": "APROBADO",
    "nota": "Backlog generado manualmente tras timeout de OpenCode. Pendiente revisión WEB."
-  },
-  "TASK-20260817-027": {
-   "descripcion": "Correcciones mypy P0 en producción (58->0)",
-   "prioridad": "ALTA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "CAMBIOS_SOLICITADOS",
-   "nota": "Revision WEB (revisor): mypy attr/union prod=0 OK, verify_protocol OK, pre-commit OK. 1 hallazgo: ruff check . en rama = 1 error (PLR0917 episodic.py:362, add_episode, >5 posicionales) reintroducido por ede02df8 al quitar noqa; main=0 errores. Propuesta: params keyword-only (*) tras payload; llamadas existentes compatibles. Verificar: ruff check . + pytest test_intelligence_memory_cobertura + test_episodic_memory."
   }
  },
  "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
