@@ -1,13 +1,19 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": [],
-    "en_progreso": [],
+    "pendientes": [
+      "TASK-20260817-016",
+      "TASK-20260817-017"
+    ],
+    "en_progreso": [
+      "TASK-20260817-015"
+    ],
     "en_revision": [
-      "TASK-20260816-009",
+      "TASK-20260816-009"
+    ],
+    "aprobadas": [
       "TASK-20260817-014"
     ],
-    "aprobadas": [],
     "bloqueadas": [
       "TASK-20260816-011",
       "TASK-20260816-012",
@@ -24,8 +30,8 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "ejecutor"
     },
     "WEB": {
       "estado": "ocupado",
@@ -171,7 +177,7 @@
       "ejecutor": "TERM",
       "revisor": "WEB",
       "aprobador_humano": "RAMON",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "ALTA",
       "veredicto": "APROBADO",
       "dependencias": [],
@@ -184,7 +190,64 @@
       ],
       "modo": "auditoria_readonly",
       "condicion_inicio": "TERM libre + WEB libre, aprobación Ramón implícita en lanzamiento.",
-      "nota": "Cierre A4 aprobado (auto-revisión WEB declarada). Pendientes P1-03/P1-04/P2/P3 en findings.md. Bloque B listo para decisión."
+      "nota": "Bloque A cerrado y aprobado (auto-revisión WEB declarada). Pendientes P1-03/P1-04/P2/P3 pasan a bloques B1/B2/B3."
+    },
+    "TASK-20260817-015": {
+      "descripcion": "Bloque B1: regenerar .venv y verificar gates completos (P1-03)",
+      "titulo": "Bloque B1: Instrumentación (venv + gates)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_progreso",
+      "prioridad": "ALTA",
+      "veredicto": "",
+      "dependencias": [],
+      "alcance": [
+        "crear .venv (base+dev)",
+        "instalar deps",
+        "verificar rf/pip/ruff/mypy/pytest/bandit",
+        "gates: ruff + pytest protocolo",
+        "registro en docs/audit/baseline"
+      ],
+      "condicion_inicio": "Autorización Ramón 2026-08-17 (ejecución inmediata).",
+      "nota": "En ejecución (TERM). Autorización Ramón: ejecutar de inmediato."
+    },
+    "TASK-20260817-016": {
+      "descripcion": "Bloque B2: reubicar/limpiar artefactos y .tuneladora (P1-04, P2-01, P2-04)",
+      "titulo": "Bloque B2: Artefactos",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "MEDIA",
+      "veredicto": "",
+      "dependencias": [
+        "TASK-20260817-015"
+      ],
+      "alcance": [
+        "mover /var/tmp/ura_artifacts a destino estable",
+        "retirada .tuneladora/ 493MB",
+        "retirada build/ dist/ ura.egg-info/ mutants/",
+        "autorización por ítem"
+      ],
+      "condicion_inicio": "Aprobación TASK-015 + autorización por ítem de Ramón.",
+      "nota": "Registro inicial. Bloqueada: esperar TASK-015 y órdenes por ítem."
+    },
+    "TASK-20260817-017": {
+      "descripcion": "Bloque B3: inventario formal de servicios systemd y baja documentada (P2-02)",
+      "titulo": "Bloque B3: Servicios systemd",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "MEDIA",
+      "veredicto": "",
+      "dependencias": [],
+      "alcance": [
+        "inventario de ~22 servicios inactivos",
+        "recomendación por servicio",
+        "baja con autorización por ítem",
+        "entregable docs/audit/baseline/servicios_B3.md"
+      ],
+      "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
+      "nota": "Registro inicial."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
