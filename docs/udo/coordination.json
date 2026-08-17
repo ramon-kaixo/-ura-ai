@@ -6,7 +6,8 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-024"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -39,7 +40,7 @@
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": null
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -297,6 +298,15 @@
       "prioridad": "MEDIA",
       "veredicto": "APROBADO — WEB 2026-08-17 17:03: commit 533cf2cd revisado; bash -n OK; verify OK (19); ciclos 16:57 y 17:02 0/SUCCESS",
       "nota": "Mejora aplicada y verificada 2026-08-17 17:00 (TERM): staged-check + flock + abort-on-fail. En revision WEB. Veredicto WEB: APROBADO (17:03)."
+    },
+    "TASK-20260817-024": {
+      "descripcion": "Auditoría de disco y plan de limpieza profunda",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_revision",
+      "prioridad": "ALTA",
+      "veredicto": "",
+      "nota": "Auditoría READ-ONLY completada 2026-08-17 17:20 (TERM). Informe: docs/audit/baseline/disk_audit_20260817.md. NO borrar nada sin autorización de Ramón. Recuperable estimado: 380-420G (duplicados de modelos LLM + backups antiguos + test.img)."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
