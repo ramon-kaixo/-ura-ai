@@ -3,10 +3,7 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [
-      "TASK-20260817-025",
-      "TASK-20260817-028"
-    ],
+    "en_revision": [],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
@@ -18,7 +15,10 @@
       "TASK-20260817-024",
       "TASK-20260816-012",
       "TASK-20260816-013",
-      "TASK-20260817-016"
+      "TASK-20260817-016",
+      "TASK-20260817-025",
+      "TASK-20260817-028",
+      "TASK-20260817-027"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -40,8 +40,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "ocupado",
-      "rol_actual": "revisor"
+      "estado": "libre",
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -313,9 +313,9 @@
       "descripcion": "Clasificación mypy Bloque C1 (429 errores -> P0/P1/P2/P3)",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "MEDIA",
-      "veredicto": "",
+      "veredicto": "APROBADO",
       "nota": "Análisis READ-ONLY 2026-08-17 18:20: 429 errores clasificados (58 P0, 108 P1, 242 P2 tests, 21 P3). Informe: docs/audit/baseline/C1_mypy_classification.md. Arreglo NO ejecutado (requiere TASK + autorización)."
     },
     "TASK-20260817-028": {
@@ -323,9 +323,18 @@
       "prioridad": "MEDIA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
-      "veredicto": "",
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
       "nota": "Backlog generado manualmente tras timeout de OpenCode. Pendiente revisión WEB."
+    },
+    "TASK-20260817-027": {
+      "descripcion": "Correcciones mypy P0 en producción (58->0)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
+      "nota": "Correcciones P0 aplicadas. Ruff OK, tests 315 pass, smoke 20/20. Commits: ede02df8, 5b6fd87d, 9d28d1d4."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
