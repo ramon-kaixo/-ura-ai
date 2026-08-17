@@ -2,11 +2,10 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [],
-    "en_progreso": [
-      "TASK-20260817-014"
-    ],
+    "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-014"
     ],
     "aprobadas": [],
     "bloqueadas": [
@@ -29,8 +28,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -172,7 +171,7 @@
       "ejecutor": "TERM",
       "revisor": "WEB",
       "aprobador_humano": "RAMON",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -185,7 +184,7 @@
       ],
       "modo": "auditoria_readonly",
       "condicion_inicio": "TERM libre + WEB libre, aprobación Ramón implícita en lanzamiento.",
-      "nota": "Única tarea en en_progreso. TERM en modo auditoría READ-ONLY. TASK-011/012/013 pausadas en bloqueadas."
+      "nota": "Cierre A4 entregado: docs/audit/baseline/ (README + findings). Pendiente veredicto WEB."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
