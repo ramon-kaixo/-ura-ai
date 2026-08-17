@@ -120,8 +120,8 @@ def _timeout_handler(signum, frame) -> Never:
 
 def _ejecutar_en_hilo(func, args, kwargs, timeout: float):
     """Ejecutar función en hilo daemon con timeout: devuelve (result, exception)."""
-    result = [None]
-    exception = [None]
+    result: list[object] = [None]
+    exception: list[BaseException | None] = [None]
     finished = [False]
 
     def target() -> None:

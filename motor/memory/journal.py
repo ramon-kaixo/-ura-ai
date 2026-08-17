@@ -11,7 +11,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, Any
 
 from motor.memory.crypto import decrypt as _decrypt
 from motor.memory.crypto import encrypt as _encrypt
@@ -32,7 +32,7 @@ class Journal:
 
     def __init__(self, path: str = "", encryption_key: str = "") -> None:
         self._path = path
-        self._file: object = None
+        self._file: IO[Any] | None = None
         self._count: int = 0
         self._lock = threading.Lock()
         self._encryption_key = encryption_key
