@@ -363,6 +363,7 @@ class SessionMemory:
         self,
         session_id: str,
         payload: str,
+        *,
         source: str = "",
         importance: float = 0.5,
         confidence: float = 0.5,
