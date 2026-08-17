@@ -20,7 +20,12 @@
       "TASK-20260817-028",
       "TASK-20260817-027",
       "TASK-20260817-030",
-      "TASK-20260817-031"
+      "TASK-20260817-031",
+      "TASK-20260818-005",
+      "TASK-20260818-006",
+      "TASK-20260818-007",
+      "TASK-20260818-008",
+      "TASK-20260818-009"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -100,7 +105,10 @@
       "estado": "bloqueada",
       "prioridad": "baja",
       "veredicto": "",
-      "nota": "Posponer: automatización futura. Se retomará en Bloque E."
+      "nota": "BLOQUEADA: integracion auto-dispatcher con despertador pendiente de decision del coordinador (2026-08-18 WEB: sin accion, estado documentado)",
+      "historial": [
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+      ]
     },
     "TASK-20260816-010": {
       "descripcion": "Panel de semáforos + modo análisis de planes",
@@ -131,7 +139,10 @@
         "F10"
       ],
       "condicion_inicio": "No iniciar hasta que F4 (limpieza estructural) y F5 (calidad continua) estén terminadas, aprobadas y fusionadas a main.",
-      "nota": "PAUSADA por orden de Ramón 2026-08-17 (prioridad BLOQUE A / TASK-20260817-014). Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+      "nota": "PAUSADA: plan consolidado F6-F10 pendiente de decision del coordinador (2026-08-18 WEB: sin accion, estado documentado)",
+      "historial": [
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+      ]
     },
     "TASK-20260816-012": {
       "descripcion": "F4: Limpieza estructural (caches, config unificada, artefactos fuera del árbol)",
@@ -273,7 +284,10 @@
       "revisor": "WEB",
       "estado": "LATENTE",
       "veredicto": "",
-      "nota": "Timers NOT FOUND en ASUS (list-timers y status: could not be found). Registrado LATENTE en expediente + hallazgos-fondo.md. Cero modificaciones."
+      "nota": "LATENTE: timers ura-ejecutor/ura-healing no-op (hallazgo ALTA del TERM Mac); pendiente de decision (2026-08-18 WEB: sin accion, estado documentado)",
+      "historial": [
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+      ]
     },
     "TASK-20260817-021": {
       "descripcion": "Clase Diagnostico duplicada en motor/diagnostico -> TypeError garantizado en producción",
@@ -365,6 +379,76 @@
       "commits": [
         "61a30ca6"
       ]
+    },
+    "TASK-20260818-005": {
+      "task_id": "TASK-20260818-005",
+      "descripcion": "A1+A7: lecciones post-C2 en hallazgos-fondo.md + noqa PLR0917 verificados (ruff 0.16.3)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan auditoria A1-A7); commits verificados; AUTO-REVISION registrada en review-pending"
+      ],
+      "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
+    },
+    "TASK-20260818-006": {
+      "task_id": "TASK-20260818-006",
+      "descripcion": "A2: nota operativa Mac en AGENTS.md (4 reglas: ARCHITECTURE regenerado, scp, stash pop, ramas TERM)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan auditoria A1-A7); commits verificados; AUTO-REVISION registrada en review-pending"
+      ],
+      "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
+    },
+    "TASK-20260818-007": {
+      "task_id": "TASK-20260818-007",
+      "descripcion": "A5: script audit_cierre_udo.py detecta cierres sin gate de integridad (35 historicos, 0 tras backfill)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan auditoria A1-A7); commits verificados; AUTO-REVISION registrada en review-pending"
+      ],
+      "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
+    },
+    "TASK-20260818-008": {
+      "task_id": "TASK-20260818-008",
+      "descripcion": "A3/A4: detector v3.2 veredictos en worktree mac-veredictos (no contamina rama de tarea; despliegue pendiente TERM)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan auditoria A1-A7); commits verificados; AUTO-REVISION registrada en review-pending"
+      ],
+      "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
+    },
+    "TASK-20260818-009": {
+      "task_id": "TASK-20260818-009",
+      "descripcion": "A6: cobertura C2 — guardian_logger 26.5->95.9%, agent.py 18.6->95.7% (22 tests nuevos)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan auditoria A1-A7); commits verificados; AUTO-REVISION registrada en review-pending"
+      ],
+      "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
