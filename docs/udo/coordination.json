@@ -6,8 +6,7 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260816-013"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -18,7 +17,8 @@
       "TASK-20260817-022",
       "TASK-20260817-023",
       "TASK-20260817-024",
-      "TASK-20260816-012"
+      "TASK-20260816-012",
+      "TASK-20260816-013"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -158,9 +158,9 @@
       "titulo": "F5: Calidad continua",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "ALTA",
-      "veredicto": "",
+      "veredicto": "APROBADO",
       "dependencias": [],
       "alcance": [
         "aplicar política de cobertura ≥80% (meta 100x100) en módulos nuevos",
@@ -174,7 +174,7 @@
         "pytest tests/unit/test_protocol_coordination.py",
         "python3 scripts/pro/verify_protocol.py"
       ],
-      "nota": "Ejecutada 2026-08-17 18:10 (TERM): cobertura interfaces 100%/web_search 100%/panel 82%; revision_gates.sh con gate de cobertura; panel regenerado; propuesta docs obsoletas (sin borrar). En revision WEB."
+      "nota": "F5 revisada manualmente por Ramón. Gates: ruff OK, verify_protocol OK, pytest 7 passed. Cambio ajeno en motor/diagnostico descartado."
     },
     "TASK-20260817-014": {
       "descripcion": "Bloque A: Baseline y Auditoría Real de URA v2.1 (A0 Preparación, A1 Inventario, A2 Baseline, A3 Análisis P0-P3, A4 Cierre)",
