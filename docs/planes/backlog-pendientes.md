@@ -17,7 +17,7 @@ Generado el 2026-08-17. Fuentes: docs/audit/baseline, coordination.json, hallazg
 | B011 | Documentación obsoleta (OpenClaw retirado, duplicados EN/ES) | P2 | F5 | PENDIENTE | WEB |
 | B012 | Integrar auto-dispatcher con despertador (TASK-009) | P2 | TASK-009 | BLOQUEADA | TERM |
 | B013 | Plan F6-F10 producción robusta | P2 | TASK-011 | BLOQUEADA | RAMÓN |
-| B014 | Cambios ajenos sin commitear (main.py, qdrant_client.py, episodic.py) | P1 | git status | PENDIENTE | RAMÓN |
+| B014 | Cambios ajenos sin commitear | P1 | git status | RESUELTO (guardados en rama ia/TASK-20260817-B014-ajenos) | RAMÓN |
 | B015 | TASK-025 clasificación mypy en revisión | P2 | TASK-025 | EN_REVISION | WEB |
 | B016 | TASK-027 correcciones mypy alto riesgo en revisión | P1 | TASK-027 | EN_REVISION | WEB |
 
