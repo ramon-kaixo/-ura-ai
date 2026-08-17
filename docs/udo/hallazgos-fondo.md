@@ -190,3 +190,4 @@
 | 2026-08-17 | knowledge/engine/ontology (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | motor/intelligence/reranking (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | docs/architecture/F29_B3_REPORTS (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | motor/core/interfaces (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
