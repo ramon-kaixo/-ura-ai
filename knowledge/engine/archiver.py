@@ -305,7 +305,7 @@ def verify_archive(
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
     manifest_path = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
-    if manifest_path is None or not manifest_path.exists():
+    if manifest_path is None or not Path(manifest_path).exists():
         log.error("Manifest no encontrado: %s", manifest_path)
         return False
 

@@ -21,7 +21,7 @@ def _exif_pillow(ruta: Path) -> dict:
     resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         with Image.open(ruta) as img:
-            exif_data = img._getexif()
+            exif_data = img._getexif()  # type: ignore[attr-defined]
             if not exif_data:
                 return resultado
 

@@ -131,5 +131,5 @@ class ConflictDetectionStage(BaseStage):
         context.statistics["conflicts_detected"] = len(conflicts)
         context.statistics["conflicts_unresolved"] = len(unresolved)
         context.provenance.conflict_resolver_name = "NaiveConflictResolver"
-        context.provenance.conflict_resolver_version = self._resolver.version
+        context.provenance.conflict_resolver_version = getattr(self._resolver, "version", "unknown")
         return context

@@ -93,7 +93,7 @@ class ContextBuilder:
         return result
 
     @staticmethod
-    def _is_current_version(entry: Any, vs: type) -> bool:
+    def _is_current_version(entry: Any, vs: Any) -> bool:
         """Verifica que el entry sea de la versión vigente.
 
         Para (Fact, FactVersion): solo CURRENT.
@@ -101,7 +101,7 @@ class ContextBuilder:
         """
         if isinstance(entry, tuple):
             _, version = entry
-            return getattr(version, "state", None) == vs.CURRENT
+            return getattr(version, "state", None) == getattr(vs, "CURRENT", None)
         return True
 
     @staticmethod

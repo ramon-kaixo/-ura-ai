@@ -43,7 +43,7 @@ def cmd_cross(config: UraConfig, args=None) -> None:
     res = {"ts": datetime.now(UTC).isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if estado_path.exists():
-        res["local"].update(json.loads(estado_path.read_text()))
+        res["local"] = {**res["local"], **json.loads(estado_path.read_text())}
     for name, host in {"alemania": HOST_REMOTO_ALEMANIA}.items():
         try:
             r = _executor.run(
