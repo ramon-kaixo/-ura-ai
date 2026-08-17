@@ -355,11 +355,16 @@
       "estado": "aprobada",
       "prioridad": "alta",
       "modo": "secuencial",
-      "nota": "Correcciones mypy P1 en producción. ruff OK, mypy objetivo 0. Commit 61a30ca6.",
+      "nota": "Correcciones mypy P1 en producción. ruff OK, mypy objetivo 0. Commit 61a30ca6. Cierre administrativo 2026-08-18: expediente creado, AUTO-REVISIÓN en review-pending (gates del revisor no ejecutados).",
       "historial": [
-        "2026-08-17: registrada por WEB (TASK-030 aprobada)"
+        "2026-08-17: registrada por WEB (TASK-030 aprobada)",
+        "2026-08-18: analisis del plan de cierre C2 (PLAN_CIERRE_C2_TASK031_20260817.md) por WEB: GO CON CAMBIOS. Defectos: check1 usa git diff (working tree) en vez de git show; expediente docs/udo/tasks/TASK-20260817-031.md NO existe (ura-udo verify falla); commits no registrados en coordination.json (gate UDO incompleto); falta smoke funcional y tests de modulos tocados. Mejoras: limpiar RUF100 global (120), TASK para test_heartbeat.",
+        "2026-08-18: commits registrados (61a30ca6) con flock; AUTORIZACIÓN EXPRESA humana (coordination.json reservada por TASK-008)"
       ],
-      "veredicto": "APROBADO"
+      "veredicto": "APROBADO",
+      "commits": [
+        "61a30ca6"
+      ]
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
