@@ -6,7 +6,8 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-019"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -33,8 +34,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "libre",
-      "rol_actual": null
+      "estado": "ocupado",
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -247,6 +248,15 @@
       ],
       "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
       "nota": "CERRADA 2026-08-17 — aprobación humana directa de Ramón tras correcciones (recuentos 24/2/14/7, duplicados eliminados, typo ura-backup, ure-al UNKNOWN). B3: 48 servicios inventariados read-only."
+    },
+    "TASK-20260817-019": {
+      "descripcion": "Diagnóstico y reparación de servicios systemd FAILED (203/EXEC)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_revision",
+      "veredicto": "",
+      "nota": "Fase 1 diagnóstico completada: causa = venv roto 04:00-06:00, regenerado 11:01 (B1); maintenance-v2 OK 12:00. Ver B4_servicios_failed.md. Reparación pasiva propuesta (P1)."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
