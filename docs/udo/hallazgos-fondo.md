@@ -193,3 +193,4 @@
 | 2026-08-18 | motor/core/interfaces (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | motor/core/web (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | scripts/pro/reuse (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 1/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
