@@ -3,7 +3,6 @@
   "colas": {
     "pendientes": [
       "TASK-20260817-016",
-      "TASK-20260817-021",
       "TASK-20260817-022"
     ],
     "en_progreso": [],
@@ -14,7 +13,8 @@
       "TASK-20260817-014",
       "TASK-20260817-015",
       "TASK-20260817-017",
-      "TASK-20260817-019"
+      "TASK-20260817-019",
+      "TASK-20260817-021"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -275,9 +275,9 @@
       "prioridad": "CRITICA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pendiente",
-      "veredicto": "",
-      "nota": "Hallazgo crítico del Mac, integrado por WEB. Pendiente de reparación."
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
+      "nota": "Clase Diagnostico consolidada en diagnostico.py. ruff OK, tests 15 passed. Commit 4e93c1ee."
     },
     "TASK-20260817-022": {
       "descripcion": "ura-revisiones falla al intentar fusionar rama mac-veredictos (conflictos)",
