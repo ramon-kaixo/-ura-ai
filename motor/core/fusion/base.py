@@ -52,6 +52,11 @@ class FusionEngine(ABC):
 class ConflictResolver(ABC):
     """Detecta y resuelve conflictos entre Claims."""
 
+    @property
+    def version(self) -> str:
+        """Versión del resolver (default genérico; las implementaciones lo sobreescriben)."""
+        return "naive"
+
     @abstractmethod
     def detect(self, claims: list[KnowledgeClaim]) -> list[Conflict]:
         """Encuentra conflictos entre todos los pares de Claims."""

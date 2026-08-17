@@ -102,8 +102,8 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
         data_copy = dict(data)
         data_copy["header"] = dict(header)
         data_copy["header"]["checksum"] = ""
-        raw: str = json.dumps(data_copy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        computed = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]  # type: ignore[attr-defined]
+        raw_canonical: str = json.dumps(data_copy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        computed = hashlib.sha256(raw_canonical.encode("utf-8")).hexdigest()[:16]  # type: ignore[attr-defined]
         if computed != stored_checksum:
             msg = f"Snapshot checksum mismatch: stored={stored_checksum}, computed={computed}"
             raise ValueError(msg)

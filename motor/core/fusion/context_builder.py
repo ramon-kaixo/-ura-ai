@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.fusion.fact_index import FactIndex
+    from motor.core.fusion.models import VersionState
 
 _DEFAULT_MAX_FACTS = 50
 
@@ -93,7 +94,7 @@ class ContextBuilder:
         return result
 
     @staticmethod
-    def _is_current_version(entry: Any, vs: type) -> bool:
+    def _is_current_version(entry: Any, vs: type[VersionState]) -> bool:
         """Verifica que el entry sea de la versión vigente.
 
         Para (Fact, FactVersion): solo CURRENT.

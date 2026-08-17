@@ -3,7 +3,9 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [],
+    "en_revision": [
+      "TASK-20260817-031"
+    ],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
@@ -345,6 +347,19 @@
       "prioridad": "alta",
       "veredicto": "APROBADO — investigación completada: ningún modelo local ejecuta herramientas (ai-sdk v1.18.18); plan actualizado y estrategia alternativa documentada",
       "nota": "2026-08-17: config verificada coherente (openclaw eliminado, reasoning solo r1/qwen3, default qwen3:32b-q8_0, OLLAMA_CONTEXT_LENGTH=32768). Tests B1-B3: NINGÚN modelo local ejecuta herramientas (qwen3 texto-imita, r1 alucina salida, coder32 bucle JSON). Causa rootfs RO descartada (XDG en /tmp no cambia). Plan actualizado en docs/udo/plans/PLAN_MODELOS_OPENCODE_20260817.md"
+    },
+    "TASK-20260817-031": {
+      "task_id": "TASK-20260817-031",
+      "descripcion": "Bloque C2: corregir errores mypy P1 de produccion (gate arg-type/assignment/return-value/union-attr/attr-defined, sin tests)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "en_revision",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "nota": "AUTO-REVISION: TERM no ejecuta herramientas; WEB verifica con gates",
+      "historial": [
+        "2026-08-17: registrada por WEB (TASK-030 aprobada)"
+      ]
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"

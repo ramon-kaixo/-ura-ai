@@ -75,7 +75,7 @@ class PiperTTSMotor:
 
         try:
             cmd = [
-                PIPER_BIN,
+                str(PIPER_BIN),
                 "--model",
                 self.model_path,
                 "--output-file",
@@ -122,7 +122,7 @@ class PiperTTSMotor:
         if self.pipeline is not None:
             self.pipeline.is_playing_tts = True
         try:
-            cmd = [PIPER_BIN, "--model", self.model_path, "--output-file", output_path]
+            cmd = [str(PIPER_BIN), "--model", self.model_path, "--output-file", output_path]
             proc = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE,

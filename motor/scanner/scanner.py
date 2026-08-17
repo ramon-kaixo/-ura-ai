@@ -7,7 +7,7 @@ import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.core.executor import SubprocessExecutor
 from motor.core.state import ScanResult
@@ -38,7 +38,7 @@ class Scanner:
         self.executor = executor or SubprocessExecutor()
         self.sliding = SlidingWindow()
         self.cal = Calibration(config)
-        self._ventana_previa = {}
+        self._ventana_previa: dict[str, Any] = {}
 
     def _es_fisico(self) -> bool:
         try:
@@ -201,7 +201,7 @@ class Scanner:
         d = {}
         try:
             r = self.executor.run(["ps", "-eo", "args="], timeout=5)
-            vistos = {}
+            vistos: dict[str, Any] = {}
             for line in r.stdout.strip().split("\n"):
                 args = line.strip()
                 if not args:

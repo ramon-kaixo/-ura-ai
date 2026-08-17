@@ -6,7 +6,7 @@ import hashlib
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.core.executor import SubprocessExecutor
 from motor.core.state import DiagnoseResult, ScanResult
@@ -59,7 +59,7 @@ class Diagnostico:
         return r
 
     def _tomar_snapshot_inicial(self) -> dict:
-        snap = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
+        snap: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
         for archivo in RUTAS_CONFIG_OPENCODE:
             p = Path(archivo)
             if p.exists():

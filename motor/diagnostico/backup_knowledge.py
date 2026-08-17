@@ -11,7 +11,7 @@ def backup_incidente(config, incidente: dict | None = None) -> str:
     dest_dir = Path(config.data_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
-    data = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
+    data: dict[str, object] = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
     if incidente:
         data["incidente"] = incidente
     try:

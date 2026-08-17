@@ -25,7 +25,7 @@ BLOCK_SIZE = 480  # 30ms a 16kHz
 
 
 class AnkerDeterministicPipeline:
-    def __init__(self, db_path: str = DB_PATH, model_size: str = DEFAULT_MODEL) -> None:
+    def __init__(self, db_path: str | Path = DB_PATH, model_size: str = DEFAULT_MODEL) -> None:
         self.sample_rate = SAMPLE_RATE
         self.block_size = BLOCK_SIZE
         self.db_path = db_path

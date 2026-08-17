@@ -8,6 +8,7 @@ import threading
 import urllib.error
 import urllib.request
 from collections import defaultdict
+from typing import TypedDict
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +34,14 @@ success_rates: dict[str, dict[str, dict[str, int]]] = defaultdict(lambda: defaul
 success_rates_lock = threading.Lock()
 DEFAULT_MODEL_PARAMS = {"temperature": 0.2, "top_p": 0.9, "num_predict": 4096}
 
-MODELO_ROUTES = {
+
+class _RutaModelo(TypedDict):
+    descripcion: str
+    modelos: list[str]
+    fallback: str
+
+
+MODELO_ROUTES: dict[str, _RutaModelo] = {
     "razonamiento": {
         "descripcion": "Razonamiento profundo y planificacion",
         "modelos": ["qwen3:32b-q8_0", "qwen3:14b", "deepseek-coder:6.7b", "llama3:latest"],
@@ -115,7 +123,7 @@ def clasificar_peticion(messages: list) -> str:
         for patron in patrones:
             if patron in texto_completo:
                 scores[tipo] += 1
-    tipo_max = max(scores, key=scores.get)
+    tipo_max = max(scores, key=lambda k: scores[k])
     return tipo_max if scores[tipo_max] > 0 else DEFAULT_TIPO
 
 

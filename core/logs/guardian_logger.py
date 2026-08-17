@@ -75,37 +75,6 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
             "result_type": record.get("result_type", ""),
         },
     )
-    from core.event_bus import publish
-
-    publish(
-        "alert",
-        {
-            "source": "guardian",
-            "event": record.get("event"),
-            "reason": record.get("reason", "")[:200],
-            "result_type": record.get("result_type", ""),
-        },
-    )
-
-def _save_to_qdrant(record: dict) -> None:
-    from motor.core.config import UraConfig
-    from motor.core.qdrant_client import QdrantClient
-
-    cfg = UraConfig()
-    qc = QdrantClient.instancia(cfg)
-    if qc and qc.disponible:
-        subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
-        qc.guardar_incidente(
-            {
-                "ts": record.get("timestamp", datetime.now(UTC).isoformat()),
-                "tipo": "ServiceFailure",
-                "subtipo": subtipo[:50],
-                "resumen": f"{record.get('event')}: {record.get('reason', '')[:200]}",
-                "pre_state": {"attempts": record.get("attempts", 0), "complexity": record.get("complexity", 0)},
-                "origin_node": "ASUS",
-                "exit_code": -1,
-            }
-        )
 
 def log_event(
     event: str,

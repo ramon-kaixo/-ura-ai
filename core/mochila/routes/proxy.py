@@ -118,7 +118,7 @@ def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None
         file=path,
         reason="vagancy",
         attempts=0,
-        penalty=penalty,
+        penalty=penalty or "",
     )
 
 
