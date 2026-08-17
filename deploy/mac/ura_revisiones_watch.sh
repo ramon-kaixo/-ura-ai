@@ -34,22 +34,23 @@ else
     echo "INTEGRATE_SKIP: main de ASUS ya integrado (sin novedades)"
 fi
 
-# --- 2) Commit de veredictos locales (docs/udo/) ---
+# --- 2) Commit de veredictos locales (docs/udo/) en rama DEDICADA ---
+# v3.2 (TASK-20260818-008): los veredictos se commitean en un worktree de
+# mac-veredictos, NO en la rama actual — evita contaminar la rama de tarea
+# del TERM (divergencias Mac<->ASUS, auto-push fantasma) sin tocar el
+# working tree principal.
+WT="/tmp/mac-veredictos-wt"
 if [ -n "$(git status -s docs/udo/ 2>/dev/null | head -1)" ]; then
-    git add docs/udo/
-    git commit -m "chore(udo): [TERM] veredictos revisor desde Escritorio (auto-push)" 2>/dev/null
-fi
-
-# --- 3) Rama intermedia y push ---
-# Actualizar lease local antes del push (force-with-lease falla si la ref
-# de seguimiento esta vieja: el fetch del paso 1 solo trae main)
-git fetch asus mac-veredictos 2>/dev/null
-# Solo si hay commits nuevos respecto al ultimo push (evita ruido cada 5 min)
-if ! git rev-parse --quiet --verify asus/mac-veredictos >/dev/null 2>&1 \
-   || [ -n "$(git log --oneline asus/mac-veredictos..HEAD 2>/dev/null)" ]; then
-    git branch -f mac-veredictos HEAD 2>/dev/null || git branch mac-veredictos HEAD
-    git push asus mac-veredictos --force-with-lease 2>&1 | tail -1
-    echo "PUSH_VEREDICTOS_OK (rama mac-veredictos)"
+    if [ ! -d "$WT/.git" ]; then
+        git worktree remove --force "$WT" 2>/dev/null
+        git worktree add -f "$WT" mac-veredictos 2>/dev/null || { echo "WORKTREE_FAIL"; exit 1; }
+    fi
+    cp -r docs/udo/. "$WT/docs/udo/"
+    (cd "$WT" && git add docs/udo/ 2>/dev/null \
+        && git commit -m "chore(udo): [TERM] veredictos revisor desde Escritorio (auto-push)" 2>/dev/null \
+        && git fetch asus mac-veredictos 2>/dev/null \
+        && git push asus mac-veredictos --force-with-lease 2>&1 | tail -1 \
+        && echo "PUSH_VEREDICTOS_OK (worktree mac-veredictos)")
 else
     echo "PUSH_SKIP: sin veredictos nuevos que empujar"
 fi
