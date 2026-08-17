@@ -59,6 +59,7 @@ show_history()
 class Logger:
     def warn(self, msg: str) -> None:
         self._write("WARN", msg)
+
     # NO tiene método .warning()
 ```
 

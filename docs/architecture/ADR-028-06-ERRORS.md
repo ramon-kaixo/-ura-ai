@@ -15,14 +15,14 @@ This is the ONLY definition of ErrorEnvelope in the entire protocol. ADR-028-01 
 ```python
 @dataclass(frozen=True)
 class ErrorEnvelope:
-    error_code: str                # See canonical codes below
-    error_message: str             # Human-readable
+    error_code: str  # See canonical codes below
+    error_message: str  # Human-readable
     error_details: dict[str, str]  # Additional context (string key-value)
-    component: str                 # Source component
-    original_message_id: str       # Message that caused this error
-    original_message_type: str     # Type of the original message
-    retryable: bool                # true → may retry
-    retry_delay_ms: int            # Suggested delay before retry
+    component: str  # Source component
+    original_message_id: str  # Message that caused this error
+    original_message_type: str  # Type of the original message
+    retryable: bool  # true → may retry
+    retry_delay_ms: int  # Suggested delay before retry
 ```
 
 ## Canonical Error Codes

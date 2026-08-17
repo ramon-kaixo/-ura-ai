@@ -101,9 +101,11 @@ class VectorItem:
     tipo con nombre, eliminando errores de orden y haciendo el
     contrato autodocumentado.
     """
+
     asset_id: str
     vector: list[float]
     text_preview: str
+
 
 @dataclass
 class VectorResult:
@@ -162,9 +164,7 @@ class OllamaEmbedder:
     URL por defecto: http://localhost:11434/api/embed
     """
 
-    def __init__(self, model: str = "nomic-embed-text",
-                 base_url: str = "http://localhost:11434",
-                 cache_ttl: int = 300):
+    def __init__(self, model: str = "nomic-embed-text", base_url: str = "http://localhost:11434", cache_ttl: int = 300):
         self._model = model
         self._client = httpx.Client(base_url=base_url, timeout=30)
         self._cache: LRUCache[str, list[float]] = LRUCache(ttl=cache_ttl)
@@ -193,9 +193,9 @@ class QdrantVectorStore:
     Colección por defecto: ura_assets (dimensión auto-detectada)
     """
 
-    def __init__(self, collection: str = "ura_assets",
-                 host: str = "localhost", port: int = 6333,
-                 vector_size: int | None = None):
+    def __init__(
+        self, collection: str = "ura_assets", host: str = "localhost", port: int = 6333, vector_size: int | None = None
+    ):
         self._collection = collection
         self._vector_size = vector_size  # None = auto-detect
         self._client = httpx.Client(base_url=f"http://{host}:{port}", timeout=10)
@@ -260,7 +260,13 @@ class VectorAugmentedRetriever:
 
         # 2. Búsqueda vectorial (opcional)
         vector: list[KnowledgeAsset] = []
-        if use_vector and self._embedder and self._embedder.available and self._vector_store and self._vector_store.available:
+        if (
+            use_vector
+            and self._embedder
+            and self._embedder.available
+            and self._vector_store
+            and self._vector_store.available
+        ):
             query_vec = self._embedder.embed_query(query)
             if query_vec:
                 vec_hits = self._vector_store.search(query_vec, top_k=top_k)
@@ -271,13 +277,9 @@ class VectorAugmentedRetriever:
 
     def _resolve_assets(self, results: list[VectorResult]) -> list[KnowledgeAsset]:
         """Resuelve VectorResults a KnowledgeAssets via AssetStore."""
-        return [
-            asset for r in results
-            if (asset := self._asset_store.get_asset(r.asset_id)) is not None
-        ]
+        return [asset for r in results if (asset := self._asset_store.get_asset(r.asset_id)) is not None]
 
-    def _fuse(self, heuristic: list[KnowledgeAsset],
-              vector: list[KnowledgeAsset], top_k: int) -> list[KnowledgeAsset]:
+    def _fuse(self, heuristic: list[KnowledgeAsset], vector: list[KnowledgeAsset], top_k: int) -> list[KnowledgeAsset]:
         """Reciprocal Rank Fusion con k=60."""
         scores: dict[str, float] = {}
         for rank, a in enumerate(heuristic):
@@ -316,9 +318,7 @@ class MetadataExtracted:
 ### 6.2 Suscriptor: _make_vector_index_subscriber()
 
 ```python
-def _make_vector_index_subscriber(store: AssetStore,
-                                   embedder: Embedder,
-                                   vector_store: VectorStore):
+def _make_vector_index_subscriber(store: AssetStore, embedder: Embedder, vector_store: VectorStore):
     def handler(event: MetadataExtracted) -> None:
         if not event.success:
             return
@@ -335,6 +335,7 @@ def _make_vector_index_subscriber(store: AssetStore,
         if vectors:
             item = VectorItem(asset_id=event.asset_id, vector=vectors[0], text_preview=text)
             vector_store.upsert([item])
+
     return handler
 ```
 

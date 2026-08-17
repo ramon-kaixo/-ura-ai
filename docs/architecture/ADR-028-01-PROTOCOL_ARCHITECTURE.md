@@ -15,12 +15,12 @@ ProtocolEnvelope is a container for typed headers. Each header has a single resp
 ```python
 @dataclass(frozen=True)
 class ProtocolEnvelope:
-    version: VersionHeader       # REQUIRED
-    routing: RoutingHeader       # REQUIRED  
-    trace: TraceHeader           # REQUIRED
-    delivery: DeliveryHeader     # REQUIRED
-    security: SecurityHeader     # OPTIONAL (only for ProtocolBoundary)
-    payload: bytes               # opaque, typed via VersionHeader.schema_version
+    version: VersionHeader  # REQUIRED
+    routing: RoutingHeader  # REQUIRED
+    trace: TraceHeader  # REQUIRED
+    delivery: DeliveryHeader  # REQUIRED
+    security: SecurityHeader  # OPTIONAL (only for ProtocolBoundary)
+    payload: bytes  # opaque, typed via VersionHeader.schema_version
 ```
 
 ---
@@ -32,11 +32,11 @@ class ProtocolEnvelope:
 ```python
 @dataclass(frozen=True)
 class VersionHeader:
-    protocol_version: str        # semver "1.0"
-    schema_version: str          # semver "1.0"
-    payload_type: str            # "json" | "msgpack" | "protobuf"
+    protocol_version: str  # semver "1.0"
+    schema_version: str  # semver "1.0"
+    payload_type: str  # "json" | "msgpack" | "protobuf"
     capabilities: tuple[str, ...]  # emitter capabilities
-    reserved: tuple[str, ...]    # future evolution, ignored by old receivers
+    reserved: tuple[str, ...]  # future evolution, ignored by old receivers
 ```
 
 ### RoutingHeader
@@ -44,11 +44,13 @@ class VersionHeader:
 ```python
 @dataclass(frozen=True)
 class RoutingHeader:
-    message_id: str              # SHA-256(protocol_version + schema_version + source + destination + message_type + payload[:64])[:16]
-    message_type: str            # "ToolRequest" | "ToolResult" | ...
-    message_kind: str            # "command" | "query" | "event" | "response" | "error"
-    source: str                  # component name
-    destination: str             # component name
+    message_id: (
+        str  # SHA-256(protocol_version + schema_version + source + destination + message_type + payload[:64])[:16]
+    )
+    message_type: str  # "ToolRequest" | "ToolResult" | ...
+    message_kind: str  # "command" | "query" | "event" | "response" | "error"
+    source: str  # component name
+    destination: str  # component name
 ```
 
 ### TraceHeader
@@ -56,9 +58,9 @@ class RoutingHeader:
 ```python
 @dataclass(frozen=True)
 class TraceHeader:
-    correlation_id: str          # set by root emitter, never changes
-    causation_id: str | None     # message_id that caused this message (None for root)
-    timestamp: float             # wall-clock time (production) OR monotonic counter (testing)
+    correlation_id: str  # set by root emitter, never changes
+    causation_id: str | None  # message_id that caused this message (None for root)
+    timestamp: float  # wall-clock time (production) OR monotonic counter (testing)
 ```
 
 ### DeliveryHeader
@@ -66,12 +68,12 @@ class TraceHeader:
 ```python
 @dataclass(frozen=True)
 class DeliveryHeader:
-    semantics: str               # "at_most_once" | "at_least_once" | "exactly_once"
+    semantics: str  # "at_most_once" | "at_least_once" | "exactly_once"
     idempotency_key: str | None  # required for exactly_once, recommended for at_least_once
     timeout_ms: int
     cancelable: bool
     retry_policy: RetryPolicy | None
-    max_response_bytes: int      # receiver-enforced limit
+    max_response_bytes: int  # receiver-enforced limit
 ```
 
 ### SecurityHeader
@@ -79,7 +81,7 @@ class DeliveryHeader:
 ```python
 @dataclass(frozen=True)
 class SecurityHeader:
-    auth_token: str | None       # Authentication (ProtocolBoundary and up)
+    auth_token: str | None  # Authentication (ProtocolBoundary and up)
     auth_token_type: str | None  # "bearer" | "mtls" | "jwt"
 ```
 
@@ -95,10 +97,12 @@ class ComponentBoundary:
     ProtocolEnvelope used for audit only. Headers may be omitted.
     Payload is a typed object (not bytes)."""
 
+
 class ProtocolBoundary:
     """Serialization required. Authorization enforced here.
     Full ProtocolEnvelope with all mandatory headers.
     SecurityHeader present. Transport is interchangeable."""
+
 
 class TransportBoundary:
     """Same as ProtocolBoundary + authentication + encryption.
@@ -146,7 +150,7 @@ Payload first 64 bytes provide content awareness without circularity. If payload
 ```python
 @dataclass(frozen=True)
 class Metadata:
-    entries: dict[str, str]       # string → string. No nesting. No binary.
+    entries: dict[str, str]  # string → string. No nesting. No binary.
 ```
 
 Metadata appears in ONE place: as an OPTIONAL field in DeliveryHeader. When present, it carries non-functional information (deprecation warnings, processing hints, routing tags).

@@ -188,18 +188,18 @@ Cada ejecución de agente debe producir un `AgentAuditRecord`:
 @dataclass(frozen=True)
 class AgentAuditRecord:
     agent_id: str
-    objective: str                  # objetivo original
-    plan: list[str]                 # pasos planificados
-    tools_used: list[str]           # herramientas invocadas
-    facts_consulted: list[str]      # fact_ids consultados
-    memory_consulted: list[str]     # memory entry_ids consultados
-    decisions: list[dict]           # decisiones intermedias
-    result: str                     # resultado final
-    termination_reason: str         # completed | cancelled | timeout | error
-    duration_ms: float              # duración total
-    cost_units: int                 # coste computacional
-    timestamp: float                # instante de ejecución
-    parent_agent: str | None        # agente padre (si es subagente)
+    objective: str  # objetivo original
+    plan: list[str]  # pasos planificados
+    tools_used: list[str]  # herramientas invocadas
+    facts_consulted: list[str]  # fact_ids consultados
+    memory_consulted: list[str]  # memory entry_ids consultados
+    decisions: list[dict]  # decisiones intermedias
+    result: str  # resultado final
+    termination_reason: str  # completed | cancelled | timeout | error
+    duration_ms: float  # duración total
+    cost_units: int  # coste computacional
+    timestamp: float  # instante de ejecución
+    parent_agent: str | None  # agente padre (si es subagente)
 ```
 
 ### Almacenamiento

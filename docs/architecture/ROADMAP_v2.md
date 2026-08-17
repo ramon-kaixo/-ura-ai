@@ -119,6 +119,7 @@ summary = pipeline.summarize(query, results)
 
 # Registro de proveedores
 from motor.web.searcher.base import BaseSearcher
+
 pipeline.register_searcher("custom", MySearcher())
 ```
 
@@ -273,10 +274,12 @@ motor/knowledge/
 from motor.knowledge import FusionEngine
 
 engine = FusionEngine()
-item = engine.fuse(sources=[
-    {"text": "...", "source": "web", "confidence": 0.9},
-    {"text": "...", "source": "pdf", "confidence": 0.7},
-])
+item = engine.fuse(
+    sources=[
+        {"text": "...", "source": "web", "confidence": 0.9},
+        {"text": "...", "source": "pdf", "confidence": 0.7},
+    ]
+)
 # → KnowledgeItem con texto fusionado, conflictos resueltos, fuentes
 
 engine.resolve_conflicts(item)

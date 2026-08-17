@@ -65,9 +65,9 @@ Cada proveedor declara capacidades vía `capabilities` property. El Router
 puede seleccionar automáticamente el proveedor adecuado:
 
 ```python
-router.select_provider_by_capability("vision")     # → "ollama"
-router.find_providers_by_capability("streaming")    # → ["ollama","openai",...]
-router.generate_with_capability("prompt", "vision") # selección automática
+router.select_provider_by_capability("vision")  # → "ollama"
+router.find_providers_by_capability("streaming")  # → ["ollama","openai",...]
+router.generate_with_capability("prompt", "vision")  # selección automática
 ```
 
 ## Benchmark Final (7 proveedores, 1 iteración)

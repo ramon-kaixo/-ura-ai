@@ -71,9 +71,7 @@ from motor.agents.models import AgentTask, AgentRole
 from motor.agents.scheduler import AgentScheduler
 
 scheduler = AgentScheduler()
-result = scheduler.submit(
-    AgentTask(objective="saludar", agent_role=AgentRole.PLANNER)
-)
+result = scheduler.submit(AgentTask(objective="saludar", agent_role=AgentRole.PLANNER))
 print(result)
 ```
 

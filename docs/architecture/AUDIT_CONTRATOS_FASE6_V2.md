@@ -263,8 +263,7 @@ inyectar un reranker sin cambiar la API pública:
 ```python
 # Futuro (v2):
 class VectorAugmentedRetriever:
-    def __init__(self, graph_retriever, embedder=None,
-                 vector_store=None, reranker=None, rrf_k=60):
+    def __init__(self, graph_retriever, embedder=None, vector_store=None, reranker=None, rrf_k=60):
         self._reranker = reranker
 ```
 
@@ -395,15 +394,17 @@ class Embedder(Protocol):
     @property
     def available(self) -> bool: ...
 
+
 class VectorStore(Protocol):
-    def search(self, query_vector: list[float],
-               top_k: int = 10,
-               filter: Filter | None = None) -> list[VectorResult]: ...
+    def search(
+        self, query_vector: list[float], top_k: int = 10, filter: Filter | None = None
+    ) -> list[VectorResult]: ...
     def upsert(self, items: list[VectorItem]) -> int: ...
     def delete(self, asset_ids: list[str]) -> int: ...
     def count(self) -> int: ...
     @property
     def available(self) -> bool: ...
+
 
 @dataclass
 class VectorItem:
@@ -411,21 +412,24 @@ class VectorItem:
     vector: list[float]
     text_preview: str
 
+
 @dataclass
 class VectorResult:
     asset_id: str
     score: float
     metadata: dict[str, Any] = field(default_factory=dict)
 
+
 class VectorAugmentedRetriever:
-    def __init__(self, graph_retriever: GraphRetriever,
-                 asset_store: AssetStore,
-                 embedder: Embedder | None = None,
-                 vector_store: VectorStore | None = None,
-                 rrf_k: int = 60): ...
-    def retrieve_assets(self, query: str,
-                        top_k: int = 10,
-                        use_vector: bool = False) -> list[KnowledgeAsset]: ...
+    def __init__(
+        self,
+        graph_retriever: GraphRetriever,
+        asset_store: AssetStore,
+        embedder: Embedder | None = None,
+        vector_store: VectorStore | None = None,
+        rrf_k: int = 60,
+    ): ...
+    def retrieve_assets(self, query: str, top_k: int = 10, use_vector: bool = False) -> list[KnowledgeAsset]: ...
 ```
 
 ---

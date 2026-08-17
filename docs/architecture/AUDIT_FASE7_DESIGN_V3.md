@@ -251,7 +251,8 @@ llamada. Sin TOCTOU race.
 **Opción B (SELECT + UPDATE explícito, SQLite ≥ 3.0):**
 ```python
 begin_immediate(conn)  # Wait for other writers. Mutual exclusion.
-row = conn.execute("""
+row = conn.execute(
+    """
     SELECT id, payload FROM op_jobs
     WHERE job_type = 'extraction'
       AND (status = 'pending'
@@ -259,7 +260,9 @@ row = conn.execute("""
                AND started_at < datetime('now', ?)))
     ORDER BY priority DESC, created_at ASC
     LIMIT 1
-""", (MAX_RUNNING_INTERVAL,)).fetchone()
+""",
+    (MAX_RUNNING_INTERVAL,),
+).fetchone()
 if row:
     conn.execute("UPDATE op_jobs SET status = 'running', ... WHERE id = ?", (row["id"],))
     conn.commit()

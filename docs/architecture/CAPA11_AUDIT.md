@@ -37,7 +37,7 @@
 class KnowledgeAsset:
     asset_id: str
     asset_type: AssetType
-    metadata: AssetMetadata        # ← content_sha256 va aquí como metadata["content_sha256"] si aplica
+    metadata: AssetMetadata  # ← content_sha256 va aquí como metadata["content_sha256"] si aplica
     source: AssetSource
     relationships: tuple[AssetRelationship, ...]
     quality: float

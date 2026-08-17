@@ -57,18 +57,19 @@ Long-Term Memory (persistente, indexado)
 ```python
 @dataclass
 class MemoryRecord:
-    id: str                          # UUID único
-    type: MemoryType                 # EPISODIC | SEMANTIC | WORKING
-    timestamp: str                   # ISO 8601
-    source: str                      # agente o componente que lo creó
-    importance: float                # 0.0 (insignificante) - 1.0 (crítico)
-    confidence: float                # 0.0 (incierto) - 1.0 (confirmado)
-    embedding: list[float] | None    # vector 768d (nomic-embed-text)
-    tags: list[str]                  # etiquetas para búsqueda
-    references: list[str]            # IDs de registros relacionados
-    ttl: int | None                  # segundos hasta expiración (None = permanente)
-    metadata: dict                   # metadatos específicos del tipo
-    payload: str                     # contenido textual
+    id: str  # UUID único
+    type: MemoryType  # EPISODIC | SEMANTIC | WORKING
+    timestamp: str  # ISO 8601
+    source: str  # agente o componente que lo creó
+    importance: float  # 0.0 (insignificante) - 1.0 (crítico)
+    confidence: float  # 0.0 (incierto) - 1.0 (confirmado)
+    embedding: list[float] | None  # vector 768d (nomic-embed-text)
+    tags: list[str]  # etiquetas para búsqueda
+    references: list[str]  # IDs de registros relacionados
+    ttl: int | None  # segundos hasta expiración (None = permanente)
+    metadata: dict  # metadatos específicos del tipo
+    payload: str  # contenido textual
+
 
 class MemoryType(Enum):
     WORKING = "working"

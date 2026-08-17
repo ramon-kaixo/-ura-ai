@@ -87,15 +87,18 @@ class EventBus:
 @dataclass(frozen=True)
 class Event:
     """Envoltorio inmutable de un evento."""
+
     topic: str
     payload: EventPayload
     timestamp: str  # ISO 8601
-    source: str     # nombre del plugin o subsistema que emitió
-    id: str         # UUID único para trazabilidad
+    source: str  # nombre del plugin o subsistema que emitió
+    id: str  # UUID único para trazabilidad
+
 
 @dataclass
 class EventPayload:
     """Payload base. Subtipos por tópico heredan de esta clase."""
+
     pass
 ```
 

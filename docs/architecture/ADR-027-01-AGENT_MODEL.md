@@ -40,10 +40,10 @@ Un **agente** es un programa autónomo que:
 class Agent:
     agent_id: str
     capabilities: set[AgentCapability]  # permisos explícitos
-    policy: AgentPolicy                 # límites de autonomía
-    state: AgentState                   # CREATED | PLANNING | READY | ...
+    policy: AgentPolicy  # límites de autonomía
+    state: AgentState  # CREATED | PLANNING | READY | ...
     created_at: float
-    parent_id: str | None               # agente que lo creó (si es subagente)
+    parent_id: str | None  # agente que lo creó (si es subagente)
 ```
 
 Propietario: F27
@@ -54,8 +54,8 @@ Propietario: F27
 @dataclass(frozen=True)
 class AgentTask:
     task_id: str
-    objective: str          # objetivo en lenguaje natural
-    context: AgentContext   # contexto de ejecución
+    objective: str  # objetivo en lenguaje natural
+    context: AgentContext  # contexto de ejecución
     max_steps: int = 10
     created_at: float
 ```
@@ -80,7 +80,7 @@ Propietario: Planner
 @dataclass(frozen=True)
 class PlanStep:
     step_id: str
-    action: str              # "retrieve" | "search" | "fetch" | "tool" | "llm" | "message" | "spawn"
+    action: str  # "retrieve" | "search" | "fetch" | "tool" | "llm" | "message" | "spawn"
     params: dict
     depends_on: tuple[str, ...]  # step_ids que deben completarse antes
 ```
@@ -92,11 +92,11 @@ Propietario: Planner
 ```python
 @dataclass
 class AgentContext:
-    conversation: list[dict]     # historial conversacional
-    knowledge_facts: list[str]   # fact_ids consultados
-    memory_entries: list[str]    # entry_ids de memoria consultados
-    plan: AgentPlan | None       # plan actual
-    execution_state: dict        # estado intermedio de ejecución
+    conversation: list[dict]  # historial conversacional
+    knowledge_facts: list[str]  # fact_ids consultados
+    memory_entries: list[str]  # entry_ids de memoria consultados
+    plan: AgentPlan | None  # plan actual
+    execution_state: dict  # estado intermedio de ejecución
 ```
 
 Propietario: Executor
@@ -109,14 +109,14 @@ class AgentState(StrEnum):
     PLANNING = "planning"
     READY = "ready"
     RUNNING = "running"
-    WAITING = "waiting"               # esperando herramienta/LLM/subagente
-    COMPLETED = "completed"            # éxito
-    FAILED = "failed"                 # error interno del agente
-    CANCELLED = "cancelled"           # cancelación externa
-    TIMEOUT = "timeout"               # excedió límite de tiempo
+    WAITING = "waiting"  # esperando herramienta/LLM/subagente
+    COMPLETED = "completed"  # éxito
+    FAILED = "failed"  # error interno del agente
+    CANCELLED = "cancelled"  # cancelación externa
+    TIMEOUT = "timeout"  # excedió límite de tiempo
     PERMISSION_DENIED = "permission_denied"  # operación sin capability
-    TOOL_ERROR = "tool_error"         # error en herramienta no recuperable
-    LLM_ERROR = "llm_error"          # error en LLM no recuperable
+    TOOL_ERROR = "tool_error"  # error en herramienta no recuperable
+    LLM_ERROR = "llm_error"  # error en LLM no recuperable
 ```
 
 ### AgentResult
@@ -135,9 +135,10 @@ class AgentResult:
     - TOOL_ERROR: error en herramienta (no recuperable)
     - LLM_ERROR: error en llamada a LLM (no recuperable)
     """
+
     agent_id: str
     task_id: str
-    state: AgentState          # COMPLETED | FAILED | CANCELLED | TIMEOUT | PERMISSION_DENIED | TOOL_ERROR | LLM_ERROR
+    state: AgentState  # COMPLETED | FAILED | CANCELLED | TIMEOUT | PERMISSION_DENIED | TOOL_ERROR | LLM_ERROR
     output: str
     steps_completed: int
     duration_ms: float
@@ -183,6 +184,7 @@ class AgentPolicy:
 @dataclass
 class AgentExecution:
     """Estado mutable de una ejecución en curso."""
+
     agent: Agent
     task: AgentTask
     plan: AgentPlan | None
@@ -281,9 +283,7 @@ class CapabilityGate:
 
     def check(self, required: AgentCapability) -> None:
         if required not in self._capabilities:
-            raise PermissionError(
-                f"Agent lacks capability: {required.value}"
-            )
+            raise PermissionError(f"Agent lacks capability: {required.value}")
 
     def execute_tool(self, tool_name: str, params: dict) -> ToolResult:
         self.check(AgentCapability.TOOLS_EXECUTE)

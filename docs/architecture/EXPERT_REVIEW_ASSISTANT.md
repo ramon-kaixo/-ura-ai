@@ -142,10 +142,7 @@ def detect_interruption(self, conversation_id, messages):
         return False
     last = messages[-1]
     second_last = messages[-2]
-    is_interruption = (
-        last.role == "user"
-        and second_last.role == "assistant"
-    )
+    is_interruption = last.role == "user" and second_last.role == "assistant"
 ```
 
 This returns True when the most recent message pair is [assistant, user]. In a synchronous API where responses are generated before the user sends the next message, the message count is always even ([u1, a1, u2, a2]). At the start of `process_user_message()`, `messages[-1]` is the last assistant message — so `messages[-1].role == "assistant"` and this **never** triggers.
@@ -298,10 +295,7 @@ There is no input or output content moderation anywhere in the pipeline. No:
 **File:** `conversation_search.py:54-58`
 
 ```python
-sql = (
-    "SELECT ... WHERE token IN (" + ",".join("?" for _ in tokens) + ") "
-    "GROUP BY ..."
-)
+sql = "SELECT ... WHERE token IN (" + ",".join("?" for _ in tokens) + ") GROUP BY ..."
 ```
 
 While the `IN` clause uses parameterized `?` placeholders (safe), the pattern of string concatenation for SQL is fragile. Any future modification that adds user-controlled data to the string concatenation path creates SQL injection risk.

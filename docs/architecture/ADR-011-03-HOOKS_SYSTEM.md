@@ -44,12 +44,12 @@ Plugin.on_load()
 # Si retorna Event con payload modificado, se usa el modificado.
 
 HOOK_PIPELINE = {
-    "pre_ingest":    "(event) -> Event | None",   # filtrar/modificar docs antes de indexar
-    "post_ingest":   "(event) -> Event | None",   # post-procesar docs indexados
-    "pre_search":    "(event) -> Event | None",   # modificar consulta antes de buscar
-    "post_search":   "(event) -> Event | None",   # filtrar/rerankear resultados
-    "pre_index":     "(event) -> Event | None",   # modificar chunk antes de vectorizar
-    "post_index":    "(event) -> Event | None",   # post-procesar vectores indexados
+    "pre_ingest": "(event) -> Event | None",  # filtrar/modificar docs antes de indexar
+    "post_ingest": "(event) -> Event | None",  # post-procesar docs indexados
+    "pre_search": "(event) -> Event | None",  # modificar consulta antes de buscar
+    "post_search": "(event) -> Event | None",  # filtrar/rerankear resultados
+    "pre_index": "(event) -> Event | None",  # modificar chunk antes de vectorizar
+    "post_index": "(event) -> Event | None",  # post-procesar vectores indexados
 }
 ```
 
@@ -57,10 +57,10 @@ HOOK_PIPELINE = {
 
 ```python
 HOOK_SYSTEM = {
-    "on_startup":    "(event) -> None",            # inicialización
-    "on_shutdown":   "(event) -> None",            # limpieza
-    "on_degraded":   "(event) -> None",            # notificación degradación
-    "on_restore":    "(event) -> Event | None",    # puede cancelar restauración
+    "on_startup": "(event) -> None",  # inicialización
+    "on_shutdown": "(event) -> None",  # limpieza
+    "on_degraded": "(event) -> None",  # notificación degradación
+    "on_restore": "(event) -> Event | None",  # puede cancelar restauración
 }
 ```
 
@@ -68,8 +68,8 @@ HOOK_SYSTEM = {
 
 ```python
 HOOK_CLI = {
-    "pre_command":   "(event) -> Event | None",    # validar/modificar args antes de ejecutar
-    "post_command":  "(event) -> None",            # post-procesar resultado del comando
+    "pre_command": "(event) -> Event | None",  # validar/modificar args antes de ejecutar
+    "post_command": "(event) -> None",  # post-procesar resultado del comando
 }
 ```
 

@@ -63,8 +63,8 @@ Instanciación → registro en Registry → uso via Router → (sin destructor e
 
 ```python
 {
-    "provider": str,      # Nombre del proveedor
-    "status": str,        # "ok" o "error"
+    "provider": str,  # Nombre del proveedor
+    "status": str,  # "ok" o "error"
     "latency_ms": float,  # Tiempo de respuesta
 }
 ```
@@ -91,6 +91,7 @@ Usar `motor.core.secrets` para API keys y tokens:
 ```python
 from motor.core.secrets import get_secret, require_secret
 
+
 class MiProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "miprovedor"
@@ -102,6 +103,7 @@ class MiProvider(BaseLLMProvider):
 
 ```python
 from core.config_manager import CONFIG
+
 
 class MiProvider(BaseLLMProvider):
     def __init__(self) -> None:
@@ -159,27 +161,25 @@ else:
 from typing import Any
 from motor.core.llm.base import BaseLLMProvider
 
+
 class MiProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "miprovedor"
 
-    def generate(self, prompt: str, model: str | None = None,
-                 options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
         try:
             # ... llamada HTTP a la API ...
             return "respuesta"
         except Exception:
             return "Error: No se pudo generar."
 
-    def embed(self, texts: list[str], model: str | None = None
-              ) -> list[list[float]]:
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         try:
             return [[0.0] * 768 for _ in texts]
         except Exception:
             return [[0.0] * 768]
 
-    async def embed_async(self, texts: list[str], model: str | None = None
-                          ) -> list[list[float]]:
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return self.embed(texts, model)
 
     def health(self) -> dict[str, Any]:

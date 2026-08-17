@@ -147,11 +147,11 @@ contiene como mínimo:
 
 ```python
 {
-    "config": {...},           # UraConfig serializado
-    "state": {...},            # DegradedMode.status()
-    "eventbus": EventBus,      # Referencia opcional al bus
-    "dry_run": False,          # Modo simulación
-    "plugin_dir": "/path",     # Directorio del plugin (para assets)
+    "config": {...},  # UraConfig serializado
+    "state": {...},  # DegradedMode.status()
+    "eventbus": EventBus,  # Referencia opcional al bus
+    "dry_run": False,  # Modo simulación
+    "plugin_dir": "/path",  # Directorio del plugin (para assets)
 }
 ```
 

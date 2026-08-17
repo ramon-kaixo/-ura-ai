@@ -52,7 +52,7 @@ El schema version se almacena como metadato en la serialización:
     "versions": {...},
     "tombstones": {...},
     "created": ...,
-    "updated": ...
+    "updated": ...,
 }
 ```
 
@@ -68,6 +68,7 @@ _MIGRATIONS: dict[int, Callable[[dict], dict]] = {
     # 1 → 2: ejemplo de migración futura
     # 2: lambda d: {**d, "new_field": d.get("old_field", default)}
 }
+
 
 def _apply_migrations(data: dict, target_version: int = FACT_HISTORY_SCHEMA_VERSION) -> dict:
     current = data.get("schema_version", 1)

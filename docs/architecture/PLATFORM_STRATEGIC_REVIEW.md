@@ -121,11 +121,11 @@ motor.intelligence (agents + memory runtime)
 ```python
 @dataclass(frozen=True)
 class TraceContext:
-    trace_id: str          # SHA-256(request)[:16]
-    span_id: str           # unique per operation
+    trace_id: str  # SHA-256(request)[:16]
+    span_id: str  # unique per operation
     parent_span_id: str | None
-    service: str           # "fusion" | "memory" | "agent" | "llm"
-    operation: str         # "pipeline.run" | "memory.append" | "agent.run"
+    service: str  # "fusion" | "memory" | "agent" | "llm"
+    operation: str  # "pipeline.run" | "memory.append" | "agent.run"
     start_time: float
     end_time: float | None
     metadata: dict

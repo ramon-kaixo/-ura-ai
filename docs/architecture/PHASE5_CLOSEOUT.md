@@ -176,6 +176,7 @@ superior lo capture como error, no como degradación.
 def _get_whisper_model() -> Any:
     if not hasattr(_get_whisper_model, "model"):
         import whisper
+
         _get_whisper_model.model = whisper.load_model("base")
     return _get_whisper_model.model
 ```

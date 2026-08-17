@@ -68,13 +68,17 @@ cómo se hace|dónde está|cuál es
 class DateTimeTool:
     def execute(self) -> ToolResult:
         from datetime import datetime
+
         now = datetime.now()
-        return ToolResult(True, (
-            f"Fecha: {now.strftime('%d/%m/%Y')}\n"
-            f"Hora: {now.strftime('%H:%M:%S')}\n"
-            f"Día de la semana: {now.strftime('%A')}\n"
-            f"Hora local: {now.strftime('%H:%M')}"
-        ))
+        return ToolResult(
+            True,
+            (
+                f"Fecha: {now.strftime('%d/%m/%Y')}\n"
+                f"Hora: {now.strftime('%H:%M:%S')}\n"
+                f"Día de la semana: {now.strftime('%A')}\n"
+                f"Hora local: {now.strftime('%H:%M')}"
+            ),
+        )
 ```
 
 ### Archivo: `motor/assistant/executor.py` — `ConversationalToolManager.execute()`
@@ -115,6 +119,7 @@ async def feedback(req: FeedbackRequest) -> dict:
         raise HTTPException(404, "Conversación no encontrada")
     # Registrar en evaluator
     from motor.assistant.evaluation import ConversationEvaluator
+
     ev = ConversationEvaluator()
     ev.record_metric(req.conversation_id, "user_rating", float(req.rating), {"comment": req.comment})
     return {"status": "ok", "rating": req.rating}

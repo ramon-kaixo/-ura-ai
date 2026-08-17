@@ -58,13 +58,14 @@ Contenedor raíz. Contiene `MemoryTimeline`, `MemoryPolicy`, `MemoryMetadata`.
 ```python
 @dataclass(frozen=True)
 class MemoryEntry:
-    entry_id: str                     # SHA-256 determinista (CR-08)
-    timestamp: float                  # instante de observación (CR-03)
-    fact_refs: tuple[FactRef, ...]    # referencias, NO Facts (CR-02)
-    source: str                       # qué originó esta entrada
-    event_type: MemoryEventType       # tipo de evento
+    entry_id: str  # SHA-256 determinista (CR-08)
+    timestamp: float  # instante de observación (CR-03)
+    fact_refs: tuple[FactRef, ...]  # referencias, NO Facts (CR-02)
+    source: str  # qué originó esta entrada
+    event_type: MemoryEventType  # tipo de evento
     metadata: MemoryMetadata
-    snapshot: bool = False            # si es un snapshot retenible
+    snapshot: bool = False  # si es un snapshot retenible
+
 
 @dataclass(frozen=True)
 class FactRef:
@@ -80,6 +81,7 @@ class FactRef:
     NO contiene el FactVersion completo (solo referencia).
     Las referencias son inmutables y no actualizables.
     """
+
     fact_id: str
     version_id: str
     subject: str
@@ -217,15 +219,16 @@ MemoryEntry.timestamp representa el **instante de observación**: cuándo F26 ca
 ```python
 SNAPSHOT_SCHEMA_VERSION = 1
 
+
 @dataclass(frozen=True)
 class SnapshotHeader:
     schema_version: int = SNAPSHOT_SCHEMA_VERSION
-    snapshot_version: str       # ej: "v26.1.0-snapshot-001"
-    checksum: str               # SHA-256 del contenido completo
-    creation_time: float        # timestamp de creación del snapshot
-    compatible_from: str        # versión mínima de F26 compatible
-    entry_count: int            # número de entries en este snapshot
-    journal_offset: int         # posición del journal al crear el snapshot
+    snapshot_version: str  # ej: "v26.1.0-snapshot-001"
+    checksum: str  # SHA-256 del contenido completo
+    creation_time: float  # timestamp de creación del snapshot
+    compatible_from: str  # versión mínima de F26 compatible
+    entry_count: int  # número de entries en este snapshot
+    journal_offset: int  # posición del journal al crear el snapshot
 ```
 
 **Migración futura:** Si `SNAPSHOT_SCHEMA_VERSION` cambia, la función `load_snapshot()` aplica transformaciones. No hay migraciones destructivas.

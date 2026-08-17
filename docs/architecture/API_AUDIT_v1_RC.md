@@ -55,7 +55,7 @@ símbolos en `__all__`. Para RC, se podría limpiar con:
 
 ```python
 # En __init__.py, después de todos los imports:
-delattr(sys.modules[__name__], 'module_name')  # por cada submódulo
+delattr(sys.modules[__name__], "module_name")  # por cada submódulo
 ```
 
 Sin embargo, esto no es necesario: `__all__` es el contrato oficial.
