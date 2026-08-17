@@ -159,3 +159,4 @@
 | 2026-08-17 | motor/memory (lote completo) | 4 hallazgos (3 LATENTES cifrado, 1 contradiccion doc/codigo): (1) ALTA crypto.py nonce/salt fijos rompen AES-CTR; (2) ALTA journal.py cifra por linea pero lee archivo completo -> corrupcion; (3) MEDIA save()/load() no propagan encryption_key; (4) MEDIA timeline.py state_at docstring vs implementacion (orden insercion vs entry_id). Cifrado sin uso en produccion (verificado). |
 | 2026-08-17 | docs/external_audits (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | motor/cli (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | core/memoria (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
