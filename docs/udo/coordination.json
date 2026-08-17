@@ -6,8 +6,7 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260816-012"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -17,7 +16,8 @@
       "TASK-20260817-021",
       "TASK-20260817-022",
       "TASK-20260817-023",
-      "TASK-20260817-024"
+      "TASK-20260817-024",
+      "TASK-20260816-012"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -40,7 +40,7 @@
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": "revisor"
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -135,9 +135,9 @@
       "titulo": "F4: Limpieza estructural",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "ALTA",
-      "veredicto": "",
+      "veredicto": "APROBADO — WEB 2026-08-17 17:55: commits f018a4a1 + 33f235bd revisados (rename 100% + gitignore + ruta + coordinación); ruff OK; verify OK (20); árbol limpio",
       "dependencias": [],
       "alcance": [
         "eliminar caches y artefactos (.venv, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, .hypothesis, node_modules, .sandbox_packages)",
@@ -151,7 +151,7 @@
         "git status limpio",
         "python3 -m json.tool docs/udo/coordination.json"
       ],
-      "nota": "Ejecutada 2026-08-17 17:50 (TERM): config consolidado (git mv + fix ruta), .gitignore +.pytest_cache, build/dist/egg-info ya fuera, worktrees OK. mutants/ NO tocado (propuesta: mover a /opt/ura/artifacts/). En revision WEB."
+      "nota": "Ejecutada 2026-08-17 17:50 (TERM): config consolidado (git mv + fix ruta), .gitignore +.pytest_cache, build/dist/egg-info ya fuera, worktrees OK. mutants/ NO tocado (propuesta: mover a /opt/ura/artifacts/). En revision WEB. Veredicto WEB: APROBADO (17:55)."
     },
     "TASK-20260816-013": {
       "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
