@@ -147,7 +147,7 @@ class SubprocessExecutor(BaseExecutor):
             log.exception("(async) Error ejecutando: %s", " ".join(str(c) for c in cmd))
             return self._result_failure(cmd, elapsed, str(e))
 
-    def _result_success(
+    def _result_success(  # noqa: PLR0917
         self,
         cmd: Sequence[str],
         returncode: int,

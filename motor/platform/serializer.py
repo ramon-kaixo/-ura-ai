@@ -319,7 +319,7 @@ def verify_checksum(payload: bytes, expected: str) -> bool:
     return compute_checksum(payload) == expected
 
 
-def make_envelope_with_checksum(
+def make_envelope_with_checksum(  # noqa: PLR0917
     version: VersionHeader,
     routing: RoutingHeader,
     trace: TraceHeader,
@@ -359,7 +359,7 @@ def make_envelope_with_checksum(
     )
 
 
-def make_message_id(
+def make_message_id(  # noqa: PLR0917
     protocol_version: str,
     schema_version: str,
     source: str,

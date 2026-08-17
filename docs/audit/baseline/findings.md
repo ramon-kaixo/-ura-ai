@@ -33,6 +33,13 @@
 |----|-----------|----------|-----------|--------|--------|
 | P3-01 | GPU | GB10 al 94% de utilización en ocioso (48°C) | `nvidia-smi` (A2) | Monitorizar 24h; validar carga llama-vision/qwen3-coder | 🔵 Decisión |
 | P3-02 | `systemd/` local | `ura-ejecutor|healing|telemetry` en árbol; `ura-ejecutor` disabled | `ls systemd/` + `systemctl list-unit-files` (A1) | Decidir aplicar o documentar como obsoletas | 🔵 Decisión |
+| P3-03 | `motor/core/llm/router/strategy.py:100` | `_call_provider` con 12 args posicionales | `ruff --select PLR0917` (B1) | Refactor futuro: dataclass de request (noqa PLR0917 provisional) | 🔵 P3 |
+| P3-04 | `motor/observability/tracing_platform.py:362` | `_emit_span` con 12 args | ídem | Refactor futuro: dataclass span (noqa provisional) | 🔵 P3 |
+| P3-05 | `motor/core/llm/router/strategy.py:220` | `call_with_fallback` con 8 args | ídem | Refactor futuro (noqa provisional) | 🔵 P3 |
+| P3-06 | `motor/intelligence/agents/reflection.py:202` | `_resultado_reflexion` con 8 args | ídem | Refactor futuro (noqa provisional) | 🔵 P3 |
+| P3-07 | `motor/core/web/citation/citation.py:168` | `_register_sentence_origin` con 8 args | ídem | Refactor futuro (noqa provisional) | 🔵 P3 |
+| P3-08 | `motor/core/fusion/engine.py:85` | `__init__` con 8 args | ídem | Refactor futuro: config dataclass (noqa provisional) | 🔵 P3 |
+| P3-09 | `motor/core/llm/monitor.py:42` | `__init__` con 8 args | ídem | Refactor futuro: config dataclass (noqa provisional) | 🔵 P3 |
 
 ## Falsos positivos descartados
 Véase README.md sección correspondiente (4 ítems con evidencia).

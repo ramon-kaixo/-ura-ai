@@ -178,7 +178,7 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
     return system_prompt
 
 
-def _process(
+def _process(  # noqa: PLR0917
     engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = ""
 ) -> tuple:
     conv = engine.get_or_create(cid)

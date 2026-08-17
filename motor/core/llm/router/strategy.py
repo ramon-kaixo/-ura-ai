@@ -33,7 +33,7 @@ def _is_transient_error(exception: Exception) -> bool:
     return False
 
 
-def call_with_retry(
+def call_with_retry(  # noqa: PLR0917
     prov_obj: Any,
     method: str,
     task: str,
@@ -97,7 +97,7 @@ def call_with_retry(
     return _build_error(method, last_error or "unknown")
 
 
-def _call_provider(
+def _call_provider(  # noqa: PLR0917 (P3: candidato a dataclass)
     prov_obj: Any,
     method: str,
     prompt: str,
@@ -135,7 +135,7 @@ def _call_provider(
     return result
 
 
-def _record_success(
+def _record_success(  # noqa: PLR0917
     result: Any,
     method: str,
     provider_name: str,
@@ -183,7 +183,7 @@ def _record_circuit_open(
     return _build_error(method, "circuit_breaker_open")
 
 
-def _record_failure(
+def _record_failure(  # noqa: PLR0917
     provider_name: str,
     task: str,
     latency_ms: float,
@@ -217,7 +217,7 @@ _RETRY_KWARGS = {
 }
 
 
-def call_with_fallback(
+def call_with_fallback(  # noqa: PLR0917 (P3: candidato a dataclass)
     prov_obj: Any,
     method: str,
     task: str,

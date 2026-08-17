@@ -82,7 +82,7 @@ class FusionPipeline:
     via register_stage() sin modificar este código.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917 (P3: candidato a dataclass)
         self,
         engine: FusionEngine | None = None,
         conflict_resolver: ConflictResolver | None = None,  # Public API — intentionally unused, see ADR-003

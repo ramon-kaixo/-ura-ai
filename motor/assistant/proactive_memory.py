@@ -17,7 +17,7 @@ from motor.assistant.config import config
 
 
 class Task:
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         description: str,
         conversation_id: str = "",

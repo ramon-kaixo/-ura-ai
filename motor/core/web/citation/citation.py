@@ -165,7 +165,7 @@ class CitationEngine:
                 traceability_report=report,
             )
 
-    def _register_sentence_origin(
+    def _register_sentence_origin(  # noqa: PLR0917 (P3: candidato a dataclass)
         self,
         sent_idx: int,
         origin: dict,
