@@ -237,7 +237,7 @@
       "revisor": "WEB",
       "estado": "en_revision",
       "prioridad": "MEDIA",
-      "veredicto": "",
+      "veredicto": "CAMBIOS_SOLICITADOS",
       "dependencias": [],
       "alcance": [
         "inventario de ~22 servicios inactivos",
@@ -246,7 +246,7 @@
         "entregable docs/audit/baseline/servicios_B3.md"
       ],
       "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
-      "nota": "B3 completado: informe docs/audit/baseline/B3_servicios_systemd.md (48 servicios: 26 activos, 2 dudosos, 11 legacy, 7 failed + ura-revisiones resuelto). READ-ONLY, acciones solo propuestas."
+      "nota": "REVISOR 2026-08-17: informe B3 corregible — (1) resumen 11→14 legacy; (2) duplicar clasificacion llama-vision/ura-executor (solo dudosos); (3) typo u-backup→ura-backup; (4) ure-al.service NO existe en systemctl ni repo; (5) commit citado 5a1c9175 inexistente (B3 en 60b2c7b6); (6) pendientes-fase.md modificado sin commitear (cambio ajeno). Gates: json OK, verify_protocol OK. Sin cierre: requiere correccion + aprobacion humana."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
