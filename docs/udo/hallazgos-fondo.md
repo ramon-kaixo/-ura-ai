@@ -168,3 +168,5 @@
 | 2026-08-17 | motor/core (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | docs/udo (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | motor/assistant (lote 1/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | motor/assistant (lote 2/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | knowledge/engine (lote 1/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
