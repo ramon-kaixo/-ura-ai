@@ -256,8 +256,8 @@
       "ejecutor": "TERM",
       "revisor": "WEB",
       "estado": "en_revision",
-      "veredicto": "",
-      "nota": "P2 ejecutada 14:54: backup OK, harden OK; audit-extra/consolidate/reindex FAILED (ModuleNotFoundError scripts/knowledge), mutmut OK. mutmut-daily FAILED (.venv/bin/mutmut ausente). 203/EXEC resuelto; nuevos fallos de imports = fase 3. Sigue en_revision (WEB)."
+      "veredicto": "CAMBIOS_SOLICITADOS",
+      "nota": "VEREDICTO REVISOR (2026-08-17): P2 revisada (ccd73eb9). backup OK (exit 0, backup guardado) + harden OK (exit 0). audit-extra/consolidate/reindex FAILED exit 1 (ModuleNotFoundError scripts/knowledge — imports rotos), mutmut-daily FAILED exit 1 (.venv/bin/mutmut ausente). FASE 3 necesaria: corregir sys.path/imports en auditoria_paralela.py, consolidacion.py, reindex_vectors.py + instalar mutmut. Sin cierre: pendiente fase 3 + re-verificación."
     },
     "TASK-20260817-020": {
       "descripcion": "Timers ura-ejecutor/ura-healing no-op (hallazgo ALTA Mac)",
