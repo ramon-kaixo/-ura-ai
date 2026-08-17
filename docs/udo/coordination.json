@@ -5,7 +5,8 @@
   "en_progreso": [],
   "en_revision": [
    "TASK-20260817-025",
-   "TASK-20260817-027"
+   "TASK-20260817-027",
+   "TASK-20260817-029"
   ],
   "aprobadas": [
    "TASK-20260817-014",
@@ -326,6 +327,14 @@
    "prioridad": "ALTA",
    "veredicto": "",
    "nota": "P0 produccion 58->0. Commits: 9d28d1d4, ede02df8. Ruff 0 nuevos, pytest 315 pass (qdrant/agents/memory cobertura), smoke imports OK. Pendiente revision WEB."
+  },
+  "TASK-20260817-029": {
+   "descripcion": "Auditoría de documentación obsoleta (B011)",
+   "ejecutor": "WEB",
+   "revisor": "TERM",
+   "estado": "en_revision",
+   "prioridad": "MEDIA",
+   "nota": "Auditoría de documentación obsoleta (B011) — 19 candidatos propuestos en docs/audit/baseline/B5_docs_obsoletas.md (12 OpenClaw retirado, 4 duplicados EN/ES, 4 fases cerradas). Solo propuesta, sin ejecución."
   }
  },
  "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
