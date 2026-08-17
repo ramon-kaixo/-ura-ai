@@ -19,7 +19,8 @@ GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 def _ensure_log_dir():
     path = Path(GUARDIAN_LOG).parent
     if path and not Path(path).exists():
-        os.makedirs(path, exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
+
 
 def _publish_to_event_bus(record: dict) -> None:
     try:
@@ -34,7 +35,7 @@ def _publish_to_event_bus(record: dict) -> None:
                 "result_type": record.get("result_type", ""),
             },
         )
-    except Exception:
+    except Exception:  # noqa: S110 — degradación controlada: el bus nunca debe romper el log
         pass
 
 def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None:
@@ -62,21 +63,11 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
                     "exit_code": -1,
                 }
             )
-    except Exception:
+    except Exception:  # noqa: S110 — degradación controlada: Qdrant no disponible no debe romper el log
         pass
-    from core.event_bus import publish
 
-    publish(
-        "alert",
-        {
-            "source": "guardian",
-            "event": record.get("event"),
-            "reason": record.get("reason", "")[:200],
-            "result_type": record.get("result_type", ""),
-        },
-    )
 
-def log_event(
+def log_event(  # noqa: PLR0917 — firma pública estable (compatibilidad con callers existentes)
     event: str,
     model: str = "",
     file: str = "",
@@ -105,7 +96,7 @@ def log_event(
     line = json.dumps(record, ensure_ascii=False)
     logger.info("GUARDIAN_EVENT: %s", line)
     try:
-        with open(GUARDIAN_LOG, "a") as f:
+        with open(GUARDIAN_LOG, "a") as f:  # noqa: PTH123 — ruta de runtime (env), no de repositorio
             f.write(line + "\n")
     except OSError as e:
         logger.error("No se pudo escribir %s: %s", GUARDIAN_LOG, e)

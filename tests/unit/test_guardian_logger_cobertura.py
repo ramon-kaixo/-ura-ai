@@ -67,10 +67,9 @@ def test_save_qdrant_no_disponible_no_guarda():
     fake.guardar_incidente.assert_not_called()
 
 
-def test_save_qdrant_excepcion_ignorada(mock_publish):
+def test_save_qdrant_excepcion_ignorada():
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia", side_effect=RuntimeError("qdrant down")):
-        gl._save_to_qdrant({"event": "x"}, config=mock.Mock())
-    mock_publish.assert_called_once()
+        gl._save_to_qdrant({"event": "x"}, config=mock.Mock())  # no debe lanzar
 
 
 def test_log_event_escribe_archivo(tmp_path):
@@ -96,9 +95,9 @@ def test_log_event_error_escritura_loguea(tmp_path, monkeypatch):
 def test_log_event_failure_publica_y_guarda(mock_publish):
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia", return_value=mock.Mock(disponible=True)) as inst:
         gl.log_event("fallo", result_type="failure", attempts=1)
-    # El publish se emite 2 veces en el flujo failure: directo (log_event) y
-    # al final de _save_to_qdrant (fix C2) — redundancia documentada.
-    assert mock_publish.call_count == 2
+    # Publish único (TASK-20260818-012: el duplicado de _save_to_qdrant se eliminó;
+    # log_event publica una sola vez para failure/warning/attempts>=3).
+    mock_publish.assert_called_once()
     inst.assert_called_once()
 
 
