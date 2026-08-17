@@ -179,3 +179,4 @@
 | 2026-08-17 | scripts/pro/hooks (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | scripts/pro/tests (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | core/memoria/extractores (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | knowledge/evaluation/corpus (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
