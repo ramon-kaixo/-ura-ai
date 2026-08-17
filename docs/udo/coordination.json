@@ -232,7 +232,7 @@
         "autorización por ítem"
       ],
       "condicion_inicio": "Aprobación TASK-015 + autorización por ítem de Ramón.",
-      "nota": "Registro inicial. Bloqueada: esperar TASK-015 y órdenes por ítem."
+      "nota": "Registro inicial. Bloqueada: esperar TASK-015 y órdenes por ítem. 2026-08-17 16:30: urgencia añadida — H-04 disco nvme0n1p2 al 100% (545M libres); retirar .tuneladora/build/dist ayudaría."
     },
     "TASK-20260817-017": {
       "descripcion": "Bloque B3: inventario formal de servicios systemd y baja documentada (P2-02)",
