@@ -6,12 +6,12 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260817-017"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
-      "TASK-20260817-015"
+      "TASK-20260817-015",
+      "TASK-20260817-017"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -33,8 +33,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "ocupado",
-      "rol_actual": "revisor"
+      "estado": "libre",
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -235,9 +235,9 @@
       "titulo": "Bloque B3: Servicios systemd",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "MEDIA",
-      "veredicto": "CAMBIOS_SOLICITADOS",
+      "veredicto": "APROBADO",
       "dependencias": [],
       "alcance": [
         "inventario de ~22 servicios inactivos",
@@ -246,7 +246,7 @@
         "entregable docs/audit/baseline/servicios_B3.md"
       ],
       "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
-      "nota": "REVISOR+TERM 2026-08-17: correcciones aplicadas — resumen 24/2/14/7 coherente (48 únicos), duplicados llama-vision/ura-executor eliminados de ACTIVO, typo ura-backup corregido; ure-al.service registrado UNKNOWN/NO VERIFICADO (sin evidencia en systemd ni repo, no se añade a tabla). Pendiente: aprobación humana Ramón para cierre."
+      "nota": "CERRADA 2026-08-17 — aprobación humana directa de Ramón tras correcciones (recuentos 24/2/14/7, duplicados eliminados, typo ura-backup, ure-al UNKNOWN). B3: 48 servicios inventariados read-only."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
