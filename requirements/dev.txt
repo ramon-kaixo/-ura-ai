@@ -6,6 +6,7 @@ pytest>=7.0
 pytest-asyncio>=0.21
 pytest-timeout>=2.0
 pytest-cov>=4.0
+pytest-rerunfailures>=14.0  # exigido por addopts de pyproject.toml (--reruns 2)
 hypothesis>=6.80
 
 # Linting y tipo

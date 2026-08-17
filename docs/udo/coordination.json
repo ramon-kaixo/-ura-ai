@@ -5,11 +5,10 @@
       "TASK-20260817-016",
       "TASK-20260817-017"
     ],
-    "en_progreso": [
-      "TASK-20260817-015"
-    ],
+    "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260817-015"
     ],
     "aprobadas": [
       "TASK-20260817-014"
@@ -30,8 +29,8 @@
   },
   "agentes": {
     "TERM": {
-      "estado": "ocupado",
-      "rol_actual": "ejecutor"
+      "estado": "libre",
+      "rol_actual": null
     },
     "WEB": {
       "estado": "ocupado",
@@ -197,7 +196,7 @@
       "titulo": "Bloque B1: Instrumentación (venv + gates)",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_progreso",
+      "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -209,7 +208,7 @@
         "registro en docs/audit/baseline"
       ],
       "condicion_inicio": "Autorización Ramón 2026-08-17 (ejecución inmediata).",
-      "nota": "En ejecución (TERM). Autorización Ramón: ejecutar de inmediato."
+      "nota": "Ejecutada: venv regenerado, pytest 7 passed, tools OK. Gate ruff pendiente de decisión B1-H1 (300 errores reglas nuevas 0.16.3). Evidencia: docs/audit/baseline/B1_venv_gates.md"
     },
     "TASK-20260817-016": {
       "descripcion": "Bloque B2: reubicar/limpiar artefactos y .tuneladora (P1-04, P2-01, P2-04)",
