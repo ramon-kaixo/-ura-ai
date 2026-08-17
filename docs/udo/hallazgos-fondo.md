@@ -164,3 +164,4 @@
 | 2026-08-17 | motor/brain (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | motor/scanner (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | core/model_router (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | motor/observability (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
