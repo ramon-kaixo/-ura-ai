@@ -225,6 +225,22 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 | TASK-20260815-013 | B1 aceptacion coordinador lote 011+012; B2 fix flaky contadores metrics (fixture autouse reset) + ResourceWarning audit (atexit close); B3 docstring orden dedup | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 | TASK-20260815-014 | C1 test close idempotente audit; C2 INFOs cleaner/pipeline cerrados corregido; C3 router flaky re-verificado 0/2 (pendiente WEB); C4 inventario pendientes | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 | TASK-20260816-002 | Ejecucion autonoma: D1 push bloqueado gate WEB (12 tests integracion ambientales); D2 encomienda revision enviada al Web; D3 anker frames descartado (contrato callback); D4 saturación ollama descartada (verificado ACTIVE); D5 mutmut+complejidad en espera reservas WEB | 2026-08-16 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260817-031 | Bloque C2: 87 errores mypy P1 → 0 (55 archivos, commit 61a30ca6, merge 6eebf4f4). Cierre ajeno 44c9b8ce con veredicto APROBADO sin gates del revisor; verificación funcional y gates ejecutados por WEB 2026-08-18 (ruff 0, mypy 0, smoke pytest 0 fallos nuevos, verify_protocol OK) | 2026-08-17 | WEB | ✅ REVISADA (verificación objetiva en bloque WEB) | WEB (AUTO-REV, evidencia objetiva) | 2026-08-18 | APROBADA |
+| TASK-20260818-001 | Hook pre-commit: ruff 0.15.18→0.16.3 (RUF100 falso positivo con select ALL; hook pasa sobre los 3 archivos con noqa PLR0917). Commit bc056a77 | 2026-08-18 | WEB | ✅ REVISADA (verificación objetiva en bloque WEB) | WEB (AUTO-REV, evidencia objetiva) | 2026-08-18 | APROBADA |
+| TASK-20260818-002 | test_heartbeat actualizado al fix C2: test_error_instancia_inexistente → 2 tests (guarda incidente si disponible; no guarda si no). 22 passed. Commit 309189b3 | 2026-08-18 | WEB | ✅ REVISADA (verificación objetiva en bloque WEB) | WEB (AUTO-REV, evidencia objetiva) | 2026-08-18 | APROBADA |
+| TASK-20260818-003 | Expedientes retroactivos TASK-024/025/027/028/029/030 (faltaban .md; creados desde coordination.json + git log). Commit a93b2d90 | 2026-08-18 | WEB | ✅ REVISADA (verificación objetiva en bloque WEB) | WEB (AUTO-REV, evidencia objetiva) | 2026-08-18 | APROBADA |
+| TASK-20260818-004 | Rama ia/TASK-20260817-031 borrada (origin+local; mergeada en main, sin pérdida). Commit 7b5ba26e | 2026-08-18 | WEB | ✅ REVISADA (verificación objetiva en bloque WEB) | WEB (AUTO-REV, evidencia objetiva) | 2026-08-18 | APROBADA |
+
+**ACTA VERIFICACIÓN OBJETIVA EN BLOQUE — 2026-08-18 (WEB, lote C2 + sugerencias)**: pinning
+9/9 SHAs OK (`61a30ca6`, `6eebf4f4`, `44c9b8ce`, `bc056a77`, `309189b3`, `a93b2d90`,
+`7b5ba26e`, `439d3124`, `61d9679f` existen y son ancestros de HEAD); gates re-ejecutados:
+ruff 0 errores, mypy P1 0, pytest 54 passed (heartbeat/mochila/debate), verify_protocol OK.
+Cierre DONE de TASK-001/002/003/004 con AUTORIZACIÓN EXPRESA (--force) de Ramón 2026-08-18
+(gate de árbol bloqueado por 2 archivos ajenos sin commitear: pendientes-fase.md y
+motor/diagnostico/__init__.py — trabajo de otro agente, no tocados). TASK-031 ya estaba
+aprobada (44c9b8ce); su revisión en bloque queda verificada con esta acta.
+**NO es revisión independiente** (verificador = ejecutor WEB): ratificación de Ramón o TERM
+disponible si se solicita.
 
 **Verificación sugerida lote 013/014**: `pytest tests/unit/test_knowledge_audit_backends.py -q` (23 passed), `pytest tests/unit/test_knowledge_metrics_cobertura.py -q`, suite completa tests/unit (5253 passed, 0 failed, 0 ResourceWarning).
 
