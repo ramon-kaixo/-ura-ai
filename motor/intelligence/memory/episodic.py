@@ -211,8 +211,11 @@ class EpisodeStore:
     ) -> list[Episode]:
         with self._lock:
             ids = list(self._by_session.get(session_id, set()))
-        episodes = [self.get(eid) for eid in ids]
-        episodes = [e for e in episodes if e is not None]
+        raw_episodes = [self.get(eid) for eid in ids]
+        episodes: list[Episode] = []
+        for e in raw_episodes:
+            if e is not None:
+                episodes.append(e)
         episodes.sort(key=lambda e: e.timestamp, reverse=True)
         return episodes[offset : offset + limit]
 
@@ -356,7 +359,7 @@ class SessionMemory:
             }
         return sid
 
-    def add_episode(  # noqa: PLR0917
+    def add_episode(
         self,
         session_id: str,
         payload: str,

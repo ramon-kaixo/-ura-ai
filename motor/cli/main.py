@@ -1,6 +1,8 @@
 import argparse
 import logging
 import sys
+from collections.abc import Callable
+from typing import Any
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -50,7 +52,7 @@ COMMANDS = {
     "bench": cmd_bench,
 }
 
-URA_COMMANDS: dict[str, object] = {
+URA_COMMANDS: dict[str, Callable[..., Any]] = {
     "finalize": cmd_finalize,
     "test": cmd_test,
     "snapshot": cmd_snapshot,
