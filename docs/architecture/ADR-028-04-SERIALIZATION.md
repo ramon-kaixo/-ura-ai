@@ -69,6 +69,7 @@ class ToolRequestPayload:
     tool_name: str
     params: dict
 
+
 # v1.1 (optional field added)
 @dataclass
 class ToolRequestPayload:

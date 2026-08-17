@@ -154,12 +154,12 @@ El dict `context` pasado a `execute()` contiene:
 
 ```python
 {
-    "config": {...},             # UraConfig serializado (solo lectura)
-    "state": {...},              # DegradedMode.status()
-    "eventbus": EventBus,        # Referencia al bus (opcional)
-    "dry_run": False,            # Modo simulación
+    "config": {...},  # UraConfig serializado (solo lectura)
+    "state": {...},  # DegradedMode.status()
+    "eventbus": EventBus,  # Referencia al bus (opcional)
+    "dry_run": False,  # Modo simulación
     "plugin_dir": "/path/to/plugin",  # Directorio del plugin
-    "logger": logging.Logger,    # Logger con nombre del plugin
+    "logger": logging.Logger,  # Logger con nombre del plugin
 }
 ```
 
@@ -174,15 +174,25 @@ El dict `context` pasado a `execute()` contiene:
 ```python
 from motor.events.bus import EventBus
 from motor.events.topics import (
-    SYSTEM_STARTED, SYSTEM_SHUTDOWN,
-    PIPELINE_STARTED, PIPELINE_COMPLETED, PIPELINE_FAILED,
-    PLUGIN_LOADED, PLUGIN_UNLOADED, PLUGIN_ERROR,
+    SYSTEM_STARTED,
+    SYSTEM_SHUTDOWN,
+    PIPELINE_STARTED,
+    PIPELINE_COMPLETED,
+    PIPELINE_FAILED,
+    PLUGIN_LOADED,
+    PLUGIN_UNLOADED,
+    PLUGIN_ERROR,
     CONFIG_CHANGED,
 )
 from motor.events.payloads import (
-    SystemStarted, SystemShutdown,
-    PipelineStarted, PipelineCompleted, PipelineFailed,
-    PluginLoaded, PluginUnloaded, PluginError,
+    SystemStarted,
+    SystemShutdown,
+    PipelineStarted,
+    PipelineCompleted,
+    PipelineFailed,
+    PluginLoaded,
+    PluginUnloaded,
+    PluginError,
     HookEvent,
 )
 
@@ -329,6 +339,7 @@ python3 ura.py plugin uninstall my-plugin
 ```python
 # plugin mínimo
 from motor.plugin.base import PluginBase
+
 
 class MyPlugin(PluginBase):
     def execute(self, context):

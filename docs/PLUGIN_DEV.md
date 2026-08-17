@@ -11,6 +11,7 @@ This guide documents all public interfaces created in F11-F13.
 from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentRole, AgentTask
 
+
 class MyAgent(Agent):
     def __init__(self):
         self.id = "my_agent"
@@ -57,9 +58,14 @@ class AgentResult:
 
 ```python
 from motor.intelligence.agents.consensus import (
-    VotingStrategy, ConsensusResult, MajorityVoting, UnanimousVoting,
-    WeightedConsensus, AgentWeightRegistry
+    VotingStrategy,
+    ConsensusResult,
+    MajorityVoting,
+    UnanimousVoting,
+    WeightedConsensus,
+    AgentWeightRegistry,
 )
+
 
 class MyVotingStrategy(VotingStrategy):
     def name(self) -> str: ...
@@ -71,9 +77,8 @@ class MyVotingStrategy(VotingStrategy):
 ### ReflectionStrategy (ABC)
 
 ```python
-from motor.intelligence.agents.reflection import (
-    ReflectionStrategy, ReflectionDecision, ReflectionAction
-)
+from motor.intelligence.agents.reflection import ReflectionStrategy, ReflectionDecision, ReflectionAction
+
 
 class MyReflectionStrategy(ReflectionStrategy):
     def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision: ...
@@ -113,6 +118,7 @@ record = MemoryRecord(
 ```python
 from motor.intelligence.memory.base import MemoryStore
 
+
 class MyStore(MemoryStore):
     def store(self, record: MemoryRecord) -> str: ...
     def get(self, record_id: str) -> MemoryRecord | None: ...
@@ -144,6 +150,7 @@ store.store(SemanticFact(subject="server", predicate="has", object_value="64GB R
 from motor.intelligence.memory.extractor import FactExtractor
 from motor.intelligence.memory.semantic import SemanticFact
 
+
 class MyExtractor(FactExtractor):
     def extract(self, episode: Episode) -> list[SemanticFact]: ...
 ```
@@ -162,6 +169,7 @@ from motor.intelligence.retrieval.hybrid import HybridRetriever
 
 ```python
 from motor.intelligence.reranking.base import BaseReranker
+
 
 class MyReranker(BaseReranker):
     def rerank(self, query: str, candidates: list[dict]) -> list[dict]: ...
@@ -182,6 +190,7 @@ Built-in implementations:
 ```python
 from motor.intelligence.memory.compression import CompressionPolicy
 
+
 class MyPolicy(CompressionPolicy):
     def should_run(self, store) -> bool: ...
     def select_candidates(self, store) -> list[Episode]: ...
@@ -193,6 +202,7 @@ class MyPolicy(CompressionPolicy):
 
 ```python
 from motor.intelligence.memory.forgetting import ForgettingPolicy, ForgettingContext
+
 
 class MyPolicy(ForgettingPolicy):
     def name(self) -> str: ...

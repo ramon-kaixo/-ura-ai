@@ -67,10 +67,10 @@ description = "URA — Multi-agent desktop assistant"
 [project.scripts]
 ura = "ura:main"
 
-[project.optional-dependencies]
-core = []        # Dependencias mínimas
-all = []         # Dependencias completas (torch, transformers, etc.)
-dev = []         # Dependencias de desarrollo (pytest, ruff, etc.)
+[project.optional - dependencies]
+core = []  # Dependencias mínimas
+all = []  # Dependencias completas (torch, transformers, etc.)
+dev = []  # Dependencias de desarrollo (pytest, ruff, etc.)
 ```
 
 ### 4. Prometheus Exporter

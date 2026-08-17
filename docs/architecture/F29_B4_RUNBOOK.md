@@ -5,6 +5,7 @@
 ### F26 Memory
 ```python
 from motor.memory import Memory
+
 memory = Memory()
 memory.shutdown(timeout=30)  # flush journal + save snapshot
 ```
@@ -12,6 +13,7 @@ memory.shutdown(timeout=30)  # flush journal + save snapshot
 ### F27 Scheduler  
 ```python
 from motor.agents.scheduler import AgentScheduler
+
 scheduler = AgentScheduler()
 results = scheduler.shutdown(timeout=30)  # drain queue, return pending results
 ```
@@ -27,6 +29,7 @@ results = scheduler.shutdown(timeout=30)  # drain queue, return pending results
 Registro de probes (ya implementado en F29 B1):
 ```python
 from motor.platform.health import register_f24_f28_health_probes
+
 register_f24_f28_health_probes()
 ```
 

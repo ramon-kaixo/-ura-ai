@@ -46,7 +46,7 @@ Y carga el perfil correspondiente de `system_config.json`. Si un path hardcodead
 
 La API pública de paths es:
 ```python
-from core.config_manager import get_base_dir   # ~/URA o /home/ramon/URA
+from core.config_manager import get_base_dir  # ~/URA o /home/ramon/URA
 from core.config_manager import get_ollama_url  # http://host:port
 ```
 

@@ -63,9 +63,7 @@ class VectorStore(Protocol):
     def count(self) -> int:
         """Número total de vectores. 0 si no disponible."""
 
-    def list_ids(
-        self, limit: int = 100, offset: str | None = None
-    ) -> tuple[list[str], str | None]:
+    def list_ids(self, limit: int = 100, offset: str | None = None) -> tuple[list[str], str | None]:
         """Enumera asset_ids almacenados, paginados.
         Retorna (ids, next_offset). next_offset=None = última página.
         """
@@ -83,6 +81,7 @@ class VectorItem:
     asset_id: str
     vector: list[float]
     text_preview: str
+
 
 @dataclass
 class VectorResult:

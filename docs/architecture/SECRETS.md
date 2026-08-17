@@ -154,6 +154,7 @@ api_key = os.environ.get("GROQ_API_KEY", "")
 
 # Después
 from motor.core.secrets import get_secret
+
 api_key = get_secret("GROQ_API_KEY", "")
 ```
 
@@ -167,6 +168,7 @@ if not token:
 
 # Después
 from motor.core.secrets import require_secret
+
 token = require_secret("URA_API_KEY")
 ```
 

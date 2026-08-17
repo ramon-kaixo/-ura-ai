@@ -177,6 +177,7 @@ Worker (hilo ppal):
 ```python
 # ExtractionService — métodos NUEVOS (los existentes extract()/extract_path() no cambian)
 
+
 class MetadataExtractionService:
     _worker_thread: threading.Thread | None = None
     _worker_stop: threading.Event = field(default_factory=threading.Event)
@@ -200,8 +201,7 @@ class MetadataExtractionService:
     def get_queue_status(self, job_id: str) -> dict[str, Any]:
         with open_db(self._db_path) as conn:
             row = conn.execute(
-                "SELECT status, error, result_data, started_at, completed_at "
-                "FROM op_jobs WHERE id = ?", (int(job_id),)
+                "SELECT status, error, result_data, started_at, completed_at FROM op_jobs WHERE id = ?", (int(job_id),)
             ).fetchone()
         if not row:
             return {"status": "not_found"}
@@ -214,8 +214,15 @@ class MetadataExtractionService:
         self._worker_stop.clear()
         self._worker_thread = threading.Thread(
             target=_worker_loop,
-            args=(self._db_path, self._registry, self._store, self._worker_stop,
-                  self._running_jobs, self._jobs_lock, self._max_workers),
+            args=(
+                self._db_path,
+                self._registry,
+                self._store,
+                self._worker_stop,
+                self._running_jobs,
+                self._jobs_lock,
+                self._max_workers,
+            ),
             daemon=True,
         )
         self._worker_thread.start()
@@ -233,10 +240,17 @@ class MetadataExtractionService:
         if self._worker_thread:
             self._worker_thread.join(timeout=timeout)
 
+
 # Worker loop como función module-level (pickleable)
-def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetStore,
-                 stop: threading.Event, running_jobs: dict, jobs_lock: threading.Lock,
-                 max_workers: int = 1):
+def _worker_loop(
+    db_path: Path,
+    registry: ExtractorRegistry,
+    store: SQLiteAssetStore,
+    stop: threading.Event,
+    running_jobs: dict,
+    jobs_lock: threading.Lock,
+    max_workers: int = 1,
+):
     """Loop principal del worker. Se ejecuta en un hilo DAEMON del proceso principal.
 
     NOTA: max_workers=1 fijo para el MVP. El loop toma 1 job a la vez.
@@ -259,7 +273,8 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetS
             # Si SQLite < 3.35.0, usar Opción B: SELECT + UPDATE separados
             # dentro de BEGIN IMMEDIATE (serializa escritores).
             try:
-                row = conn.execute("""
+                row = conn.execute(
+                    """
                     UPDATE op_jobs
                     SET status = 'running', started_at = datetime('now')
                     WHERE id IN (
@@ -272,14 +287,17 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetS
                         LIMIT 1
                     )
                     RETURNING id, payload
-                """, (MAX_RUNNING_INTERVAL,)).fetchone()
+                """,
+                    (MAX_RUNNING_INTERVAL,),
+                ).fetchone()
             except sqlite3.OperationalError:
                 # Fallback: SQLite < 3.35.0 sin RETURNING
                 conn.rollback()
                 conn.close()
                 conn = open_db(db_path)
                 begin_immediate(conn, timeout=1.0)
-                c = conn.execute("""
+                c = conn.execute(
+                    """
                     SELECT id, payload FROM op_jobs
                     WHERE job_type = 'extraction'
                       AND (status = 'pending'
@@ -287,7 +305,9 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetS
                                AND started_at < datetime('now', ?)))
                     ORDER BY priority DESC, created_at ASC
                     LIMIT 1
-                """, (MAX_RUNNING_INTERVAL,))
+                """,
+                    (MAX_RUNNING_INTERVAL,),
+                )
                 sel = c.fetchone()
                 if not sel:
                     conn.rollback()
@@ -336,10 +356,10 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetS
 
             # Verificar timeout
             if proc.is_alive():
-                proc.terminate()   # SIGTERM
+                proc.terminate()  # SIGTERM
                 proc.join(timeout=5)
                 if proc.is_alive():
-                    proc.kill()    # SIGKILL
+                    proc.kill()  # SIGKILL
                 _mark_job_failed(db_path, job_id, "timeout after 300s")
                 with jobs_lock:
                     running_jobs.pop(job_id, None)
@@ -354,13 +374,15 @@ def _worker_loop(db_path: Path, registry: ExtractorRegistry, store: SQLiteAssetS
 
             # Publicar evento en el proceso principal (el bus SÍ tiene suscriptores)
             try:
-                get_bus().publish(MetadataExtracted(
-                    asset_id=result["asset_id"],
-                    asset_type=AssetType(result["asset_type"]),
-                    extractor=extractor_id,
-                    success=True,
-                    duration_ms=result["duration_ms"],
-                ))
+                get_bus().publish(
+                    MetadataExtracted(
+                        asset_id=result["asset_id"],
+                        asset_type=AssetType(result["asset_type"]),
+                        extractor=extractor_id,
+                        success=True,
+                        duration_ms=result["duration_ms"],
+                    )
+                )
             except Exception as exc:
                 log.warning("Failed to publish MetadataExtracted for job %s: %s", job_id, exc)
 
@@ -416,8 +438,7 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
         if result.asset and not result.errors:
             saved = store.save_asset(result.asset)
             if saved:
-                _write_job_done(conn, job_id, result.asset.asset_id,
-                                result.asset.asset_type.value, result.duration_ms)
+                _write_job_done(conn, job_id, result.asset.asset_id, result.asset.asset_type.value, result.duration_ms)
             else:
                 _write_job_fail(conn, job_id, "AssetStore.save_asset() returned False")
         else:
@@ -441,13 +462,17 @@ def _extract_in_worker(db_path: Path, job_id: int, location: str, kind: str, ext
 def _write_job_done(conn, job_id, asset_id, asset_type, duration_ms):
     begin_immediate(conn)
     conn.execute(
-        "UPDATE op_jobs SET status = 'done', completed_at = datetime('now'), "
-        "result_data = ? WHERE id = ?",
-        (json.dumps({
-            "asset_id": asset_id,
-            "asset_type": asset_type,
-            "duration_ms": duration_ms,
-        }), job_id),
+        "UPDATE op_jobs SET status = 'done', completed_at = datetime('now'), result_data = ? WHERE id = ?",
+        (
+            json.dumps(
+                {
+                    "asset_id": asset_id,
+                    "asset_type": asset_type,
+                    "duration_ms": duration_ms,
+                }
+            ),
+            job_id,
+        ),
     )
     conn.commit()
 
@@ -477,9 +502,7 @@ def _mark_job_failed(db_path, job_id, error):
 def _read_job_result(db_path, job_id):
     conn = open_db(db_path)
     try:
-        row = conn.execute(
-            "SELECT status, result_data, error FROM op_jobs WHERE id = ?", (job_id,)
-        ).fetchone()
+        row = conn.execute("SELECT status, result_data, error FROM op_jobs WHERE id = ?", (job_id,)).fetchone()
         if not row:
             return None
         result = {"status": row["status"]}
@@ -703,8 +726,7 @@ DROP TRIGGER IF EXISTS op_assets_fts_au;
 
 ```python
 class SQLiteAssetStore:
-    def search_assets(self, query: str, limit: int = 10,
-                      asset_type: AssetType | None = None) -> list[KnowledgeAsset]:
+    def search_assets(self, query: str, limit: int = 10, asset_type: AssetType | None = None) -> list[KnowledgeAsset]:
         """Búsqueda FTS5 sobre assets. Fallback a LIKE si FTS5 no disponible.
 
         La query se sanitiza término a término para prevenir FTS5 syntax injection.
@@ -736,8 +758,9 @@ class SQLiteAssetStore:
             # FTS5 no disponible → fallback LIKE
             return self._search_assets_like(query, limit, asset_type)
 
-    def _search_assets_like(self, query: str, limit: int = 10,
-                            asset_type: AssetType | None = None) -> list[KnowledgeAsset]:
+    def _search_assets_like(
+        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+    ) -> list[KnowledgeAsset]:
         """Fallback LIKE: busca substring en metadata->title."""
         conn = open_db(self._db_path)
         pattern = f"%{query}%"
@@ -758,8 +781,7 @@ class SQLiteAssetStore:
 
 
 class SQLiteMemoryStore:
-    def search(self, query: str, kind: str | None = None,
-               limit: int = 10) -> list[MemoryRecord]:
+    def search(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
         """Búsqueda FTS5 sobre memorias. Fallback a LIKE."""
         if not query or not query.strip():
             return []
@@ -786,8 +808,7 @@ class SQLiteMemoryStore:
         except sqlite3.OperationalError:
             return self._search_like(query, kind, limit)
 
-    def _search_like(self, query: str, kind: str | None = None,
-                     limit: int = 10) -> list[MemoryRecord]:
+    def _search_like(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
         """Fallback LIKE original."""
         conn = open_db(self._db_path)
         pattern = f"%{query}%"
@@ -799,8 +820,7 @@ class SQLiteMemoryStore:
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT * FROM op_memory WHERE title LIKE ? OR content LIKE ? "
-                "ORDER BY created_at DESC LIMIT ?",
+                "SELECT * FROM op_memory WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT ?",
                 (pattern, pattern, limit),
             ).fetchall()
         conn.close()
@@ -912,10 +932,10 @@ quedan como zombies hasta que el padre los `join()` explícitamente o muere.
 _EXTRACTION_SEMAPHORES: dict[str, threading.BoundedSemaphore] = {}
 _MAX_CONCURRENT_PER_EXTRACTOR = 1  # evitar OOM (whisper, etc.)
 
+
 def _get_semaphore(extractor_id: str) -> threading.BoundedSemaphore:
     if extractor_id not in _EXTRACTION_SEMAPHORES:
-        _EXTRACTION_SEMAPHORES[extractor_id] = \
-            threading.BoundedSemaphore(_MAX_CONCURRENT_PER_EXTRACTOR)
+        _EXTRACTION_SEMAPHORES[extractor_id] = threading.BoundedSemaphore(_MAX_CONCURRENT_PER_EXTRACTOR)
     return _EXTRACTION_SEMAPHORES[extractor_id]
 ```
 
@@ -971,24 +991,26 @@ sort por score DESC → top 10
 
 ```python
 class SQLiteGraphRetriever:
-    def retrieve_assets(self, query: str, limit: int = 10,
-                        asset_type: AssetType | None = None) -> list[RetrievalResult]:
+    def retrieve_assets(
+        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+    ) -> list[RetrievalResult]:
         store = self._get_asset_store()
         # ← CAMBIO: usar search_assets() en vez de list_assets()
-        assets = store.search_assets(query=query, limit=limit * 3,
-                                     asset_type=asset_type)
+        assets = store.search_assets(query=query, limit=limit * 3, asset_type=asset_type)
 
         results: list[RetrievalResult] = []
         for a in assets:
             score = _compute_score(query, asset=a)
             title = a.metadata.get("title", "")
-            results.append(RetrievalResult(
-                asset_id=a.asset_id,
-                score=score,
-                title=title,
-                kind=a.asset_type.value,
-                snippet=a.metadata.get("content_sha256", "")[:64],
-            ))
+            results.append(
+                RetrievalResult(
+                    asset_id=a.asset_id,
+                    score=score,
+                    title=title,
+                    kind=a.asset_type.value,
+                    snippet=a.metadata.get("content_sha256", "")[:64],
+                )
+            )
 
         results.sort(key=lambda r: r.score, reverse=True)
         return results[:limit]
@@ -1075,17 +1097,14 @@ FROM op_lineage e,
 def get_upstream(self, asset_id: str) -> list[str]:
     # Ruta primaria: op_lineage_edges (indexado, sin LIKE)
     conn = open_db(self._db_path)
-    rows = conn.execute(
-        "SELECT DISTINCT src FROM op_lineage_edges WHERE dst = ?", (asset_id,)
-    ).fetchall()
+    rows = conn.execute("SELECT DISTINCT src FROM op_lineage_edges WHERE dst = ?", (asset_id,)).fetchall()
     conn.close()
     return [r["src"] for r in rows]
 
+
 def get_downstream(self, asset_id: str) -> list[str]:
     conn = open_db(self._db_path)
-    rows = conn.execute(
-        "SELECT DISTINCT dst FROM op_lineage_edges WHERE src = ?", (asset_id,)
-    ).fetchall()
+    rows = conn.execute("SELECT DISTINCT dst FROM op_lineage_edges WHERE src = ?", (asset_id,)).fetchall()
     conn.close()
     return [r["dst"] for r in rows]
 ```
@@ -1151,8 +1170,9 @@ class AssetStore(Protocol):
     def count(self, asset_type=None) -> int: ...
 
     # NUEVO método (default no-op para compatibilidad)
-    def search_assets(self, query: str, limit: int = 10,
-                      asset_type: AssetType | None = None) -> list[KnowledgeAsset]: ...
+    def search_assets(
+        self, query: str, limit: int = 10, asset_type: AssetType | None = None
+    ) -> list[KnowledgeAsset]: ...
 ```
 
 ### 8.2 LineageStore (migración interna)
@@ -1194,8 +1214,7 @@ class VectorStore(Protocol):
 
 ```python
 class VectorAugmentedRetriever:
-    def reconcile(self, dry_run: bool = True,
-                  batch_size: int = 100) -> dict[str, int]:
+    def reconcile(self, dry_run: bool = True, batch_size: int = 100) -> dict[str, int]:
         """Reconcilia AssetStore con VectorStore en batches."""
 ```
 

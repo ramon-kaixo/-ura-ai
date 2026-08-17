@@ -27,6 +27,7 @@ logging.basicConfig(...)
 ```python
 import ast, sys
 
+
 def check_import_side_effects(tree: ast.AST, filepath: str) -> list[dict]:
     """Busca llamadas prohibidas fuera de funciones/clases."""
     findings = []
@@ -36,13 +37,9 @@ def check_import_side_effects(tree: ast.AST, filepath: str) -> list[dict]:
         if isinstance(node, ast.Call):
             func = _get_call_name(node)
             if func in FORBIDDEN_TOP_LEVEL_CALLS:
-                findings.append({
-                    "type": "import_side_effect",
-                    "file": filepath,
-                    "line": node.lineno,
-                    "call": func,
-                    "level": "P0"
-                })
+                findings.append(
+                    {"type": "import_side_effect", "file": filepath, "line": node.lineno, "call": func, "level": "P0"}
+                )
     return findings
 ```
 
@@ -120,6 +117,7 @@ SINGLETON_ALLOWED = {"SubprocessExecutor", "ProviderRegistry"}
 SINGLETON_PENDING = {"CircuitBreaker", "HybridMemory", "HealthRegistry"}
 SINGLETON_FORBIDDEN = {"QdrantClient", "httpx.AsyncClient", "requests.Session"}
 
+
 def check_global_state(tree: ast.AST, filepath: str) -> list[dict]:
     findings = []
     for node in ast.iter_child_nodes(tree):
@@ -128,13 +126,15 @@ def check_global_state(tree: ast.AST, filepath: str) -> list[dict]:
                 if isinstance(target, ast.Name) and isinstance(node.value, ast.Call):
                     name = _get_call_name(node.value)
                     if name in SINGLETON_FORBIDDEN:
-                        findings.append({
-                            "type": "singleton_forbidden",
-                            "file": filepath,
-                            "line": node.lineno,
-                            "class": name,
-                            "level": "P0"
-                        })
+                        findings.append(
+                            {
+                                "type": "singleton_forbidden",
+                                "file": filepath,
+                                "line": node.lineno,
+                                "class": name,
+                                "level": "P0",
+                            }
+                        )
     return findings
 ```
 
@@ -168,9 +168,18 @@ thread, asyncio, router.route(...), .execute(...)
 ### Implementación
 ```python
 FORBIDDEN_STATE_PATTERNS = [
-    "requests.", "httpx.", "router.route", ".chat(",
-    ".execute(", "await ", "for ", "while ", "thread", "asyncio."
+    "requests.",
+    "httpx.",
+    "router.route",
+    ".chat(",
+    ".execute(",
+    "await ",
+    "for ",
+    "while ",
+    "thread",
+    "asyncio.",
 ]
+
 
 def check_state_file(filepath: str) -> list[dict]:
     findings = []
@@ -179,12 +188,7 @@ def check_state_file(filepath: str) -> list[dict]:
     content = Path(filepath).read_text()
     for pattern in FORBIDDEN_STATE_PATTERNS:
         if pattern in content:
-            findings.append({
-                "type": "state_business_logic",
-                "file": filepath,
-                "pattern": pattern,
-                "level": "FAIL"
-            })
+            findings.append({"type": "state_business_logic", "file": filepath, "pattern": pattern, "level": "FAIL"})
     return findings
 ```
 
@@ -217,13 +221,15 @@ def check_factory_naming(filepath: str, tree: ast.AST) -> list[dict]:
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.FunctionDef):
             if node.name.startswith("build_") and _has_cache_pattern(node):
-                findings.append({
-                    "type": "factory_caching",
-                    "file": filepath,
-                    "function": node.name,
-                    "detail": "build_* no debería cachear",
-                    "level": "WARNING"
-                })
+                findings.append(
+                    {
+                        "type": "factory_caching",
+                        "file": filepath,
+                        "function": node.name,
+                        "detail": "build_* no debería cachear",
+                        "level": "WARNING",
+                    }
+                )
     return findings
 ```
 
@@ -253,17 +259,12 @@ def check_script_imports(filepath: str) -> list[dict]:
         return findings
     if any(p in filepath for p in ["benchmark_", "test_", "soak_", "demo_", "generate_"]):
         return findings  # benchmarks/herramientas exentas
-    
+
     content = Path(filepath).read_text()
     for match in re.finditer(r"^from (motor\.\w+) import|^import (motor\.\w+)", content, re.MULTILINE):
         imported = match.group(1) or match.group(2)
         if not imported.startswith("motor.cli.public_api"):
-            findings.append({
-                "type": "script_import_violation",
-                "file": filepath,
-                "import": imported,
-                "level": "FAIL"
-            })
+            findings.append({"type": "script_import_violation", "file": filepath, "import": imported, "level": "FAIL"})
     return findings
 ```
 
@@ -286,13 +287,13 @@ def check_script_imports(filepath: str) -> list[dict]:
 ### Permitido
 ```python
 from core.interfaces import IConfigProvider  # ✅
-from typing import Protocol                    # ✅
+from typing import Protocol  # ✅
 ```
 
 ### Prohibido
 ```python
 from motor.core.config import UraConfig  # ❌
-from motor.core.llm import generate      # ❌
+from motor.core.llm import generate  # ❌
 ```
 
 ### Excepciones documentadas actuales
@@ -307,10 +308,13 @@ from motor.core.llm import generate      # ❌
 ### Implementación
 ```python
 EXEMPTED_CORE_IMPORTS = {
-    "core/infra/heartbeat.py", "core/model_router/cli.py",
-    "core/auto_reindex.py", "core/json_logger.py",
+    "core/infra/heartbeat.py",
+    "core/model_router/cli.py",
+    "core/auto_reindex.py",
+    "core/json_logger.py",
     "core/memoria/qdrant_store.py",
 }
+
 
 def check_core_imports(filepath: str) -> list[dict]:
     if not filepath.startswith("core/") or filepath in EXEMPTED_CORE_IMPORTS:
@@ -320,12 +324,7 @@ def check_core_imports(filepath: str) -> list[dict]:
     findings = []
     content = Path(filepath).read_text()
     for match in re.finditer(r"^from motor\.|^import motor\.", content, re.MULTILINE):
-        findings.append({
-            "type": "core_import_motor",
-            "file": filepath,
-            "import": match.group(),
-            "level": "FAIL"
-        })
+        findings.append({"type": "core_import_motor", "file": filepath, "import": match.group(), "level": "FAIL"})
     return findings
 ```
 
@@ -346,18 +345,18 @@ def check_compat_shims(tree: ast.AST, filepath: str) -> list[dict]:
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "__getattr__":
             has_warning = any(
-                isinstance(n, ast.Call) and 
-                getattr(n.func, 'attr', None) == 'warn'
-                for n in ast.walk(node)
+                isinstance(n, ast.Call) and getattr(n.func, "attr", None) == "warn" for n in ast.walk(node)
             )
             if not has_warning:
-                findings.append({
-                    "type": "compat_shim_without_warning",
-                    "file": filepath,
-                    "line": node.lineno,
-                    "detail": "__getattr__ sin DeprecationWarning",
-                    "level": "FAIL"
-                })
+                findings.append(
+                    {
+                        "type": "compat_shim_without_warning",
+                        "file": filepath,
+                        "line": node.lineno,
+                        "detail": "__getattr__ sin DeprecationWarning",
+                        "level": "FAIL",
+                    }
+                )
     return findings
 ```
 
@@ -455,6 +454,7 @@ ADR_CHECKS = {
     "AGENTS.md:state": lambda: check_state_files(),
     "AGENTS.md:factories": lambda: check_factory_naming(),
 }
+
 
 def run_adr_checks() -> list[dict]:
     results = []

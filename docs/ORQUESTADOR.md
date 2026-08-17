@@ -29,5 +29,6 @@ python3 scripts/pro/orquestador.py data/tasks/mi-tarea.json
 
 ```python
 from scripts.pro.orquestador import ejecutar_tarea
+
 report = ejecutar_tarea(tarea, fases=["contexto", "planificacion", "commit"])
 ```

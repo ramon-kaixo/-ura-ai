@@ -114,10 +114,10 @@ class AssetType(StrEnum):
 ```python
 class Extractor(Protocol):
     asset_type: AssetType
-    mime_types: list[str]         # ["text/markdown", "video/mp4", …]
+    mime_types: list[str]  # ["text/markdown", "video/mp4", …]
     cost: Literal["O(1)", "O(n)", "O(n²)"]  # coste estimado por asset
-    dependencies: list[str]        # ["opencv-python", "pytesseract", …]
-    modifies_content: bool         # True si transforma el asset (OCR, thumbnail)
+    dependencies: list[str]  # ["opencv-python", "pytesseract", …]
+    modifies_content: bool  # True si transforma el asset (OCR, thumbnail)
 
     def can_handle(self, source: AssetSource) -> bool: ...
     def extract(self, source: AssetSource) -> ExtractionResult: ...
@@ -241,8 +241,8 @@ CREATE INDEX IF NOT EXISTS idx_op_assets_sha ON op_assets(content_sha256);
 
 ```python
 class LineageStore(Protocol):
-    def store_event(self, event: dict) -> None: ...       # OpenLineage event
-    def get_lineage(self, asset_id: str) -> list[dict]: ... # inputs/outputs
+    def store_event(self, event: dict) -> None: ...  # OpenLineage event
+    def get_lineage(self, asset_id: str) -> list[dict]: ...  # inputs/outputs
     def get_downstream(self, asset_id: str) -> list[str]: ...
     def get_upstream(self, asset_id: str) -> list[str]: ...
 ```

@@ -48,8 +48,8 @@ class LLMState:
     generate: Callable
     embed: Callable
 
-def build_llm_state(config: UraConfig | None = None) -> LLMState:
-    ...
+
+def build_llm_state(config: UraConfig | None = None) -> LLMState: ...
 ```
 Resultado: Import 108ms → 3.7ms. `__init__.py` reducido a wrappers + `__getattr__` compat.
 

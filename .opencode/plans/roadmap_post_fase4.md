@@ -79,12 +79,16 @@ class VectorBackend(Protocol):
     def embed(self, texts: list[str]) -> list[list[float]]: ...
     def search(self, query_embedding: list[float], limit: int = 10) -> list[str]: ...
 
+
 class OllamaVectorBackend:
     """Usa Ollama API (nomic-embed-text)."""
+
     def __init__(self, base_url="http://localhost:11434", model="nomic-embed-text"): ...
+
 
 class QdrantVectorBackend:
     """Usa Qdrant como vector store."""
+
     def __init__(self, collection="ura_embeddings", url="http://localhost:6333"): ...
 ```
 

@@ -140,6 +140,7 @@ class ConditionalStage(BaseStage):
     def __init__(self, inner: PipelineStage, condition: Callable[[FusionContext], bool]):
         self._inner = inner
         self._condition = condition
+
     def _execute(self, ctx: FusionContext) -> FusionContext:
         return self._inner.execute(ctx) if self._condition(ctx) else ctx
 ```
@@ -489,6 +490,7 @@ Esto es necesario porque `KnowledgeFact` es frozen y el ID no se conoce hasta de
    class MyStage(BaseStage):
        def __init__(self):
            self.counter = 0  # mutable shared state
+
        def _execute(self, ctx):
            self.counter += 1  # race condition
    ```
@@ -514,12 +516,28 @@ La API pública se define en `motor/core/fusion/__init__.py`:
 
 ```python
 # ABCs
-ChangeDetector, ConflictResolver, EntityResolver, FusionEngine,
+(
+    ChangeDetector,
+    ConflictResolver,
+    EntityResolver,
+    FusionEngine,
+)
 KnowledgeMerger, MemoryCandidateSelector, PipelineStage, SourceScorer
 
 # Modelos (exportados)
-Conflict, ConflictType, EvidenceSet, FusionContext, FusionProvenance,
-FusionResult, KnowledgeClaim, KnowledgeDelta, KnowledgeFact,
+(
+    Conflict,
+    ConflictType,
+    EvidenceSet,
+    FusionContext,
+    FusionProvenance,
+)
+(
+    FusionResult,
+    KnowledgeClaim,
+    KnowledgeDelta,
+    KnowledgeFact,
+)
 ResolutionStatus, ResolvedEntity, SourceScore, StageProvenance
 
 # Funciones
@@ -661,8 +679,8 @@ Tres índices invertidos (tipo posting list):
 ```python
 @dataclass
 class FactIndex:
-    by_entity: dict[str, list[str]]          # entity_id → [fact_ids]
-    by_predicate: dict[str, list[str]]        # predicate → [fact_ids]
+    by_entity: dict[str, list[str]]  # entity_id → [fact_ids]
+    by_predicate: dict[str, list[str]]  # predicate → [fact_ids]
     by_subject_predicate: dict[tuple[str, str], list[str]]  # (subject, predicate) → [fact_ids]
 ```
 
@@ -688,9 +706,7 @@ class FactIndex:
     def index(self, fact: KnowledgeFact) -> None:
         self.by_entity.setdefault(fact.subject.lower(), []).append(fact.id)
         self.by_predicate.setdefault(fact.predicate.lower(), []).append(fact.id)
-        self.by_subject_predicate.setdefault(
-            (fact.subject.lower(), fact.predicate.lower()), []
-        ).append(fact.id)
+        self.by_subject_predicate.setdefault((fact.subject.lower(), fact.predicate.lower()), []).append(fact.id)
 
     def facts_about(self, entity: str) -> list[str]:
         return self.by_entity.get(entity.lower(), [])
@@ -784,6 +800,7 @@ El problema actual no es de código — es de representación del conocimiento. 
 
 ```python
 "Apple bought Beats."
+
 "Apple adquirió Beats Electronics."
 "Apple compra Beats."
 ```

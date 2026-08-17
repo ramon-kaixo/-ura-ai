@@ -50,6 +50,7 @@ Activar con `PROMETHEUS_ENABLED=true` en entorno.
 
 ```python
 from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
 s = TuneladoraScheduler()
 s.add_pipeline("health", interval_minutes=5, auto_execute_safe=True)
 s.add_pipeline("cleanup", interval_minutes=60, auto_execute_safe=True)

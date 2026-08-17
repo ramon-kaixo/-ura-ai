@@ -56,16 +56,18 @@ class AssetType(StrEnum):
     INCIDENT = "incident"
     DECISION = "decision"
 
+
 @dataclass(frozen=True)
 class AssetSource:
-    kind: str          # "github" | "filesystem" | "api" | "upload" | "compile"
-    location: str      # URL, path, o identificador
-    fetched_at: str    # ISO datetime
+    kind: str  # "github" | "filesystem" | "api" | "upload" | "compile"
+    location: str  # URL, path, o identificador
+    fetched_at: str  # ISO datetime
+
 
 @dataclass(frozen=True)
 class AssetRelationship:
     target_id: str
-    relation: str      # "fixes" | "depends_on" | "references" | "generates" | …
+    relation: str  # "fixes" | "depends_on" | "references" | "generates" | …
     metadata: dict[str, Any] = field(default_factory=dict)
 ```
 
@@ -85,12 +87,13 @@ class AssetRelationship:
 ```python
 class Extractor(Protocol):
     """Extrae metadatos de una fuente y produce KnowledgeAssets."""
-    
+
     asset_type: AssetType
     supported_sources: list[str]  # ["github", "filesystem", "api", …]
 
     def can_handle(self, source: AssetSource) -> bool: ...
     def extract(self, source: AssetSource) -> ExtractionResult: ...
+
 
 @dataclass
 class ExtractionResult:
@@ -118,6 +121,7 @@ class ExtractionResult:
 
 ```python
 _EXTRACTORS: dict[AssetType, list[Extractor]] = {}
+
 
 def register_extractor(extractor: Extractor) -> None: ...
 def get_extractors(asset_type: AssetType | None = None) -> list[Extractor]: ...

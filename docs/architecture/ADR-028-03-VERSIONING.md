@@ -92,7 +92,8 @@ NB03. Adding new capability = non-breaking → MINOR++
 ```python
 class Planner(ABC):
     @property
-    def protocol_version(self) -> str: return "1.0"
+    def protocol_version(self) -> str:
+        return "1.0"
 
     @abstractmethod
     def plan(self, task, context=None): ...

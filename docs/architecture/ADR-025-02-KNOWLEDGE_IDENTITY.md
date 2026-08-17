@@ -61,10 +61,11 @@ class Fact:
     - Un Fact no tiene confianza, evidencia ni versión — solo identidad.
     - La identidad de un Fact no cambia nunca.
     """
+
     fact_id: str
-    subject: str       # canónico (post entity resolution)
-    predicate: str     # canónico
-    object: str        # canónico
+    subject: str  # canónico (post entity resolution)
+    predicate: str  # canónico
+    object: str  # canónico
 ```
 
 ### Capa 2 — FactVersion (identidad de la versión)
@@ -80,13 +81,14 @@ class FactVersion:
     - La versión vigente es FactHistory.current, no la de mayor version_id.
     - La identidad de una versión (version_id) no cambia nunca.
     """
+
     version_id: str
     fact_id: str
     confidence: float
     evidence_ids: tuple[str, ...]
     provenance: tuple[str, ...]
     created_at: float
-    supersedes: str | None = None   # version_id que reemplaza (opcional, DAG)
+    supersedes: str | None = None  # version_id que reemplaza (opcional, DAG)
 ```
 
 ### Capa 3 — FactHistory (identidad del historial)
@@ -102,11 +104,12 @@ class FactHistory:
     - La identidad del historial es la de su Fact (fact_id).
     - Si el Fact se elimina (DELETE físico), el FactHistory también se elimina.
     """
+
     fact_id: str
-    current: str                    # version_id vigente
+    current: str  # version_id vigente
     versions: dict[str, FactVersion]  # version_id → FactVersion
-    created: float                  # timestamp de la primera versión
-    updated: float                  # timestamp de la última versión
+    created: float  # timestamp de la primera versión
+    updated: float  # timestamp de la última versión
 ```
 
 ## Consecuencias

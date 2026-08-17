@@ -64,7 +64,7 @@ bus.subscribe(ArchiveCompleted, _make_archive_metrics_handler())
 bus.subscribe(CompileCompleted, _make_compile_archive_handler(...))
 bus.subscribe(CompileCompleted, _make_compile_audit_handler())
 bus.subscribe(CompileCompleted, _make_compile_metrics_handler())
-bus.subscribe(CompileCompleted, _make_lineage_subscriber(db_path))   # ← NUEVO
+bus.subscribe(CompileCompleted, _make_lineage_subscriber(db_path))  # ← NUEVO
 bus.subscribe(SearchPerformed, _make_search_audit_handler())
 bus.subscribe(ArchiveCompleted, _make_archive_metrics_handler())
 ```

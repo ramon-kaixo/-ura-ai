@@ -32,8 +32,8 @@ In a multi-process or multi-node deployment, any component can impersonate any o
 ```python
 @dataclass(frozen=True)
 class ServiceIdentity:
-    service: str        # "fusion" | "memory" | "agents" | "web"
-    instance_id: str    # unique per instance
+    service: str  # "fusion" | "memory" | "agents" | "web"
+    instance_id: str  # unique per instance
     capabilities: frozenset[str]  # what this service can do
     issued_at: float
     expires_at: float | None

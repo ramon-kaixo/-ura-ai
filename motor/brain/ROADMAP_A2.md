@@ -57,6 +57,7 @@ def _should_auto_execute(self, proposal: MaintenanceProposal) -> bool:
         return False  # solo propone, no ejecuta
     return False
 
+
 def propose_and_maybe_execute(self) -> list[dict[str, Any]]:
     """A2: propone y ejecuta automáticamente lo seguro."""
     results = []
@@ -76,17 +77,18 @@ def propose_and_maybe_execute(self) -> list[dict[str, Any]]:
 ```python
 class RiskClassifier:
     """Clasifica propuestas por riesgo basado en tipo de código."""
-    
+
     SAFE_PATTERNS = {"F401", "I001", "W291", "W293", "F841"}
     MEDIUM_PATTERNS = {"F821", "PTH1[012]", "SIM1[05]"}
     CRITICAL_PATTERNS = {"PLR0915", "PLC0414", "B027"}
-    
+
     @classmethod
     def classify(cls, error_code: str) -> str:
         if error_code in cls.SAFE_PATTERNS:
             return "safe"
         for pattern in cls.MEDIUM_PATTERNS:
             import re
+
             if re.match(pattern, error_code):
                 return "medium"
         if error_code in cls.CRITICAL_PATTERNS:
@@ -103,13 +105,15 @@ def _auto_fix_ruff(self, target_file: str, error_codes: list[str]) -> dict[str, 
     codes_to_fix = [c for c in error_codes if c in safe_codes]
     if not codes_to_fix:
         return {"status": "skipped", "reason": "no safe errors"}
-    
+
     select = ",".join(codes_to_fix)
-    result = self._executor.execute({
-        "type": "ruff_fix",
-        "target": target_file,
-        "params": {"select": select},
-    })
+    result = self._executor.execute(
+        {
+            "type": "ruff_fix",
+            "target": target_file,
+            "params": {"select": select},
+        }
+    )
     return result
 ```
 

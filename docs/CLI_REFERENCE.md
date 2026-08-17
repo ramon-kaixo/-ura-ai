@@ -46,9 +46,7 @@ result = runtime.execute_workflow("search for documentation", timeout=30)
 ### Consensus
 
 ```python
-from motor.intelligence.agents.consensus import (
-    VotingEngine, MajorityVoting, WeightedConsensus, AgentWeightRegistry
-)
+from motor.intelligence.agents.consensus import VotingEngine, MajorityVoting, WeightedConsensus, AgentWeightRegistry
 
 engine = VotingEngine()
 engine.strategy = WeightedConsensus(registry)

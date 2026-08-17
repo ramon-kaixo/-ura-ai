@@ -53,10 +53,10 @@ Ya existe en `knowledge/engine/extractors/base.py`. NO se modifica.
 
 ```python
 class Extractor(Protocol):
-    id: str                                    # "pdf", "video", "image", …
-    version: str                               # "1.0.0" (SemVer)
-    supported_mime_types: list[str]             # ["application/pdf", …]
-    cost: str                                  # "O(1)" | "O(n)" | "O(n²)"
+    id: str  # "pdf", "video", "image", …
+    version: str  # "1.0.0" (SemVer)
+    supported_mime_types: list[str]  # ["application/pdf", …]
+    cost: str  # "O(1)" | "O(n)" | "O(n²)"
 
     def extract(self, source: AssetSource) -> ExtractionResult: ...
 ```
@@ -115,13 +115,13 @@ asset_id = hashlib.sha256(content_bytes).hexdigest()[:16]
 
 ```python
 metadata = {
-    "title": str,              # extraído o filename
-    "content_sha256": str,     # SHA-256 completo (no truncado)
-    "size": int,               # bytes
-    "extracted_at": str,       # ISO 8601
-    "_extractor": str,         # id del extractor
-    "_extractor_version": str, # SemVer
-    "wraps": str,              # "source:{path}" | "url:{url}"
+    "title": str,  # extraído o filename
+    "content_sha256": str,  # SHA-256 completo (no truncado)
+    "size": int,  # bytes
+    "extracted_at": str,  # ISO 8601
+    "_extractor": str,  # id del extractor
+    "_extractor_version": str,  # SemVer
+    "wraps": str,  # "source:{path}" | "url:{url}"
 }
 ```
 
@@ -153,6 +153,7 @@ def extract(self, source: AssetSource) -> ExtractionResult:
     except Exception as exc:
         return ExtractionResult(errors=[f"Extraction error: {exc}"])
 
+
 # ExtractionService maneja errores del store:
 saved = store.save_asset(result.asset)
 if not saved:
@@ -179,6 +180,7 @@ if not saved:
 
 ```python
 MAX_EXTRACTION_SIZE = 500 * 1024 * 1024  # 500 MB
+
 
 def _read_stream(self, path: str, chunk_size: int = 64 * 1024) -> Iterator[bytes]:
     size = Path(path).stat().st_size
@@ -242,6 +244,7 @@ Todo extractor que genere archivos temporales (thumbnails, transcripts) debe:
 ```python
 import tempfile
 
+
 class VideoExtractor:
     def extract(self, source):
         tmp_dir = tempfile.mkdtemp(prefix="ura_extract_")
@@ -285,16 +288,16 @@ Los extractores lentos se encolan en `op_extraction_queue` (Fase 7) o se ejecuta
 ```python
 async def extract_background(self, source: AssetSource, extractor_id: str):
     extractor = self._registry.get(extractor_id)
-    result = await asyncio.get_event_loop().run_in_executor(
-        _EXECUTOR, extractor.extract, source
-    )
+    result = await asyncio.get_event_loop().run_in_executor(_EXECUTOR, extractor.extract, source)
     if result.asset:
         self._store.save_asset(result.asset)
-    get_bus().publish(MetadataExtracted(
-        asset_id=result.asset.asset_id if result.asset else "",
-        extractor=extractor_id,
-        success=result.asset is not None,
-    ))
+    get_bus().publish(
+        MetadataExtracted(
+            asset_id=result.asset.asset_id if result.asset else "",
+            extractor=extractor_id,
+            success=result.asset is not None,
+        )
+    )
 ```
 
 ### Limitación conocida: S01 — Threads no cancelables
@@ -439,18 +442,25 @@ WebExtractor es el único extractor que realiza peticiones HTTP a URLs arbitrari
 ```python
 class SSRFError(ValueError):
     """URL rechazada por política SSRF."""
+
     pass
+
 
 class URLSchemeBlocked(SSRFError):
     """Esquema no permitido."""
+
     pass
+
 
 class PrivateIPBlocked(SSRFError):
     """IP privada o no ruteable."""
+
     pass
+
 
 class CloudMetadataBlocked(SSRFError):
     """Posible endpoint de metadata cloud."""
+
     pass
 ```
 
@@ -506,14 +516,13 @@ from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = 100 * 1024 * 1024  # 100 MP
 
+
 def _safe_load(self, path: str) -> Image.Image | None:
     try:
         img = Image.open(path)
         w, h = img.size
         if w > 20_000 or h > 20_000 or w * h > 100_000_000:
-            raise Image.DecompressionBombError(
-                f"Image too large: {w}x{h} = {w*h}px (limit 100MP)"
-            )
+            raise Image.DecompressionBombError(f"Image too large: {w}x{h} = {w * h}px (limit 100MP)")
         img.load()
         return img
     except Image.DecompressionBombError:

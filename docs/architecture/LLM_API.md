@@ -106,8 +106,8 @@ def health() -> dict[str, Any]
 **Retorno:** `dict` con al menos las claves:
 ```python
 {
-    "provider": str,      # Nombre del proveedor ("ollama", "openai", ...)
-    "status": str,        # "ok" o "error"
+    "provider": str,  # Nombre del proveedor ("ollama", "openai", ...)
+    "status": str,  # "ok" o "error"
     "latency_ms": float,  # Tiempo de respuesta en milisegundos
 }
 ```
