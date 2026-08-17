@@ -27,7 +27,7 @@ from motor.assistant.health import get_assistant_health
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 from motor.assistant.models import UserIntent
 from motor.assistant.streaming import StreamEvent
-from motor.observability.tracing_platform import TraceContext
+from motor.observability.tracing_platform import CorrelationId, TraceContext
 
 _MAX_MESSAGE_LENGTH = 100000
 
@@ -94,7 +94,7 @@ async def chat(request: ChatRequest, http_request: Request) -> ChatResponse | St
 
 
 def _registrar_request(request: ChatRequest, correlation_id: str) -> TraceContext:
-    trace = TraceContext(source="assistant_api", destination="llm", correlation_id=correlation_id)
+    trace = TraceContext(source="assistant_api", destination="llm", correlation_id=CorrelationId(correlation_id))
     _log.info(
         "chat request",
         extra={
@@ -115,7 +115,7 @@ def _moderar_input(request: ChatRequest, engine: Any, cid: str, correlation_id: 
     reply = "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada."
     engine.add_message(cid, "user", request.message)
     engine.add_message(cid, "assistant", reply)
-    _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": input_mod.reason})
+    _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": ", ".join(input_mod.categories)})
     return ChatResponse(
         conversation_id=request.conversation_id or cid,
         reply=reply,

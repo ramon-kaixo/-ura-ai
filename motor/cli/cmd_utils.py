@@ -53,5 +53,5 @@ def cmd_qdrant_backup(config: UraConfig, args=None) -> None:
     )
 
 
-def cmd_bench(config: UraConfig = None, args=None) -> None:
+def cmd_bench(config: UraConfig | None = None, args=None) -> None:
     pass

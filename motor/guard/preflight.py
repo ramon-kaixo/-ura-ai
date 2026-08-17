@@ -3,6 +3,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import RUTAS_CONFIG_OPENCODE, UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -15,7 +16,7 @@ _executor = SubprocessExecutor()
 def ejecutar_preflight(config: UraConfig) -> PreflightResult:
     """Ejecuta verificación prevuelo: detecta duplicados y toma snapshot."""
     r = PreflightResult()
-    snap = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
+    snap: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
     dups = _detectar_configs_duplicadas()
     if dups:
         r.ok = False

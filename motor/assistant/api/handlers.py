@@ -193,10 +193,10 @@ def _process(  # noqa: PLR0917
     analysis = engine.process_user_message(cid, message)
     intent = analysis["intent"]
     mode = cast("ConversationMode", analysis["mode"])
-    resolved = analysis["resolved_message"]
-    lang_code = analysis.get("language", "es")
+    resolved = str(analysis["resolved_message"])
+    lang_code = str(analysis.get("language", "es"))
 
-    engine.add_message(cid, "user", resolved)
+    engine.add_message(cid, "user", str(analysis["resolved_message"]))
 
     analysis["_conv"] = conv
     if user_id:

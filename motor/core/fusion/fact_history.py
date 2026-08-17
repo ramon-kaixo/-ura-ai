@@ -96,12 +96,12 @@ class FactHistory:
         recorre supersedes hacia atrás hasta encontrar la primera
         versión con created_at <= timestamp.
         """
-        v = self.current
-        if v.created_at <= timestamp:
+        v: FactVersion | None = self.current
+        if v is None or v.created_at <= timestamp:
             return v
 
         best: FactVersion | None = None
-        while v.supersedes is not None:
+        while v is not None and v.supersedes is not None:
             v = self._versions.get(v.supersedes)
             if v is None:
                 break

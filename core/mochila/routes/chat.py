@@ -68,7 +68,7 @@ async def _procesar_tool_calls(
     provider_name: str,
     modelo: str,
     herramientas,
-) -> dict:
+) -> dict | None:
     """Ejecutar tool calls en cadena y devolver la respuesta final con tools."""
     mensajes_con_tool = list(body.messages)
     msg = respuesta.get("choices", [{}])[0].get("message", {})

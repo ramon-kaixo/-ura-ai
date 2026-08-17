@@ -145,7 +145,7 @@ class AgentOrchestrator(AgentABC):
         start_time: float,
         error: str | None = None,
     ) -> AgentResult:
-        from motor.agents.models import AgentAuditRecord, AgentResult
+        from motor.agents.models import AgentAuditRecord, AgentResult, AuditEvent
 
         duration_ms = (time.time() - start_time) * 1000
 
@@ -178,6 +178,18 @@ class AgentOrchestrator(AgentABC):
             timestamp=time.time(),
         )
 
-        self._audit_logger.log(audit)
+        self._audit_logger.log(
+            AuditEvent(
+                event_type="agent_run",
+                agent_id=audit.agent_id,
+                timestamp=audit.timestamp,
+                data={
+                    "task_id": audit.task_id,
+                    "state": audit.state,
+                    "duration_ms": audit.duration_ms,
+                    "error": audit.error,
+                },
+            )
+        )
         self._executions.pop(execution.agent_id, None)
         return result

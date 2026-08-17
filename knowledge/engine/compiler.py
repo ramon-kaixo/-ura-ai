@@ -109,7 +109,7 @@ def _etapa_scan(
     previous_snapshot: Snapshot | None,
     source_dir: Path,
     compiler_version: str,
-) -> tuple[list[str], Snapshot, list[CompileError], list[CompileError], list[Path], CompileResult | None]:
+) -> tuple[list[SourceObject], Snapshot, list[CompileError], list[CompileError], list[SourceObject], CompileResult | None]:
     # ── Stage 1: DISCOVERING ─────────────────────────────────────────────
     changed, snapshot, scanner_skipped, deleted = scan_incremental(previous_snapshot, source_dir)
 
@@ -132,10 +132,10 @@ def _etapa_scan(
 def _etapa_compilacion(
     meta: CompileMetadata,
     opts: CompileOptions,
-    changed: list[str],
+    changed: list[SourceObject],
     all_errors: list[CompileError],
     all_warnings: list[CompileError],
-    deleted: list[Path],
+    deleted: list[SourceObject],
     snapshot: Snapshot,
     db_path: Path,
     previous_snapshot: Snapshot | None,
@@ -224,18 +224,18 @@ def _compilar_defaults(
 def _ctx_stage(
     meta: CompileMetadata,
     opts: CompileOptions,
+    snapshot: Snapshot | None,
     stage: CompileStage,
-    snapshot: Snapshot | None = None,
-    errors: tuple | None = None,
-    warnings: tuple | None = None,
+    errors: tuple[CompileError, ...] | None = None,
+    warnings: tuple[CompileError, ...] | None = None,
 ) -> CompileContext:
     return CompileContext(
         metadata=meta,
         options=opts,
         snapshot=snapshot,
         stage=stage,
-        errors=errors,
-        warnings=warnings,
+        errors=errors if errors is not None else (),
+        warnings=warnings if warnings is not None else (),
     )
 
 

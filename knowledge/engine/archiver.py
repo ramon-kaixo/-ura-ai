@@ -304,12 +304,12 @@ def verify_archive(
 
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
-    manifest_path = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
-    if manifest_path is None or not manifest_path.exists():
+    manifest_resuelto = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
+    if manifest_resuelto is None or not manifest_resuelto.exists():
         log.error("Manifest no encontrado: %s", manifest_path)
         return False
 
-    manifest = _cargar_manifest_archivo(manifest_path)
+    manifest = _cargar_manifest_archivo(manifest_resuelto)
     if manifest is None:
         return False
 
@@ -360,8 +360,8 @@ def restore_source(
     Requiere que verify_archive() pase primero.
     """
     allowed = archive_dir or _DEFAULT_ARCHIVE_DIR
-    manifest_path = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
-    if manifest_path is None:
+    manifest_resuelto = _resolver_dentro(allowed, Path(manifest_path), "manifest_path")
+    if manifest_resuelto is None:
         msg = f"Path traversal denegado en manifest: {manifest_path}"
         raise ValueError(msg)
 
@@ -369,7 +369,7 @@ def restore_source(
         msg = f"Archive no pasó verificación: {manifest_path}"
         raise ValueError(msg)
 
-    manifest = _cargar_manifest_archivo(manifest_path)
+    manifest = _cargar_manifest_archivo(manifest_resuelto)
     if manifest is None:
         msg = f"Manifest inválido: {manifest_path}"
         raise ValueError(msg)

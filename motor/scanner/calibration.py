@@ -3,6 +3,7 @@ import logging
 import statistics
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger("ura.scanner.calib")
 
@@ -45,7 +46,7 @@ class Calibration:
 
     def learn(self, estado, trends: list | None = None) -> dict:
         """Entrena baseline a partir de un scan y tendencias históricas."""
-        bl = {k: v for k, v in estado.recursos.items() if isinstance(v, (int, float))}
+        bl: dict[str, Any] = {k: v for k, v in estado.recursos.items() if isinstance(v, (int, float))}
         if trends and len(trends) >= 3:
             for metrica, _factor in [("ram_pct", 1.3), ("disk_pct", 1.2), ("load_1m", 2.0)]:
                 vals = [t.get(metrica, 0) for t in trends if isinstance(t.get(metrica), (int, float))]

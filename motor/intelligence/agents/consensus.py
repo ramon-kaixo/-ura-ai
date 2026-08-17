@@ -16,7 +16,7 @@ class ConsensusResult:
     success: bool
     outcome: dict[str, Any]
     votes: list[AgentResult]
-    vote_counts: dict[str, int]
+    vote_counts: dict[str, float]
     total_votes: int
     strategy: str
     weighted: bool = False
@@ -57,7 +57,7 @@ class MajorityVoting(VotingStrategy):
         max_count = max(len(v) for v in tally.values())
         winners = [k for k, v in tally.items() if len(v) == max_count]
 
-        vote_counts = {k: len(v) for k, v in tally.items()}
+        vote_counts = {k: float(len(v)) for k, v in tally.items()}
         total = len(results)
 
         if len(winners) == 1:
@@ -119,7 +119,7 @@ class UnanimousVoting(VotingStrategy):
             key = self._result_key(r)
             tally.setdefault(key, []).append(r)
 
-        vote_counts = {k: len(v) for k, v in tally.items()}
+        vote_counts = {k: float(len(v)) for k, v in tally.items()}
         is_unanimous = len(tally) == 1
 
         if is_unanimous:

@@ -434,9 +434,9 @@ def _sse_bytes(data: dict) -> bytes:
 
 
 def _error_sse(message: str, error_type: str, penalty: dict | None = None) -> bytes:
-    payload = {"error": {"message": message, "type": error_type}}
+    payload: dict[str, object] = {"error": {"message": message, "type": error_type}}
     if penalty:
-        payload["error"]["penalty_context"] = penalty
+        payload["error"] = {"message": message, "type": error_type, "penalty_context": penalty}
     return _sse_bytes(payload)
 
 

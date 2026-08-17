@@ -4,6 +4,7 @@ import socket
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -40,7 +41,7 @@ def cmd_status(config: UraConfig, args=None) -> None:
 
 
 def cmd_cross(config: UraConfig, args=None) -> None:
-    res = {"ts": datetime.now(UTC).isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
+    res: dict[str, Any] = {"ts": datetime.now(UTC).isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if estado_path.exists():
         res["local"].update(json.loads(estado_path.read_text()))
