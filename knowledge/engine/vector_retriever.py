@@ -66,12 +66,15 @@ class VectorAugmentedRetriever:
 
         vector: list[VectorResult] = []
         if use_vector and self._vector_available():
-            try:
-                query_vec = self._embedder.embed_query(query)
-                if query_vec:
-                    vector = self._vector_store.search(query_vec, top_k=limit)
-            except Exception:
-                logger.warning("Vector search failed, using heuristic only", exc_info=True)
+            embedder = self._embedder
+            store = self._vector_store
+            if embedder is not None and store is not None:
+                try:
+                    query_vec = embedder.embed_query(query)
+                    if query_vec:
+                        vector = store.search(query_vec, top_k=limit)
+                except Exception:
+                    logger.warning("Vector search failed, using heuristic only", exc_info=True)
 
         return self._resolve_rrf(heuristic, vector, limit)
 
@@ -199,21 +202,27 @@ class VectorAugmentedRetriever:
             self._upsert_batch(assets_to_embed, text_previews, stats)
 
     def _eliminar_huerfanos(self, delete_candidates: set[str], batch_size: int, stats: dict[str, int]) -> None:
+        store = self._vector_store
+        if store is None:
+            return
         # Eliminar vectores huérfanos
         orphan_ids = sorted(delete_candidates)
         for i in range(0, len(orphan_ids), batch_size):
             batch = orphan_ids[i : i + batch_size]
-            deleted = self._vector_store.delete(batch)
+            deleted = store.delete(batch)
             stats["deleted"] += deleted
 
     def _get_vector_ids(self) -> set[str]:
         """Obtiene IDs de todos los vectores en el store mediante list_ids()."""
+        store = self._vector_store
+        if store is None:
+            return set()
         ids: set[str] = set()
         seen_offsets: set[str] = set()
         try:
             next_offset: str | None = None
             while True:
-                batch, next_offset = self._vector_store.list_ids(
+                batch, next_offset = store.list_ids(
                     limit=100,
                     offset=next_offset,
                 )
@@ -236,8 +245,12 @@ class VectorAugmentedRetriever:
 
     def _upsert_batch(self, assets: list[KnowledgeAsset], text_previews: list[str], stats: dict[str, int]) -> None:
         """Embedde y upsert un batch de assets."""
+        embedder = self._embedder
+        store = self._vector_store
+        if embedder is None or store is None:
+            return
         try:
-            vectors = self._embedder.embed(text_previews)
+            vectors = embedder.embed(text_previews)
         except Exception:
             logger.warning("Embedding raised exception for batch, skipping %d assets", len(assets))
             return
@@ -254,5 +267,5 @@ class VectorAugmentedRetriever:
             if v
         ]
         if items:
-            upserted = self._vector_store.upsert(items)
+            upserted = store.upsert(items)
             stats["upserted"] += upserted
