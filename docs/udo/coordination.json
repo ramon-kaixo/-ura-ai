@@ -6,8 +6,7 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260817-024"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -16,7 +15,8 @@
       "TASK-20260817-019",
       "TASK-20260817-021",
       "TASK-20260817-022",
-      "TASK-20260817-023"
+      "TASK-20260817-023",
+      "TASK-20260817-024"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -303,10 +303,10 @@
       "descripcion": "Auditoría de disco y plan de limpieza profunda",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "ALTA",
-      "veredicto": "",
-      "nota": "Auditoría READ-ONLY completada 2026-08-17 17:20 (TERM). Informe: docs/audit/baseline/disk_audit_20260817.md. NO borrar nada sin autorización de Ramón. Recuperable estimado: 380-420G (duplicados de modelos LLM + backups antiguos + test.img). LIMPIEZA EJECUTADA (autorizada por Ramón, sudo del humano 2026-08-17 17:36): /test.img (10,7G) + backups/pre_mitigacion/*.tar.gz (60,2G). Liberados 70G (963G->893G usados, 52%). Pendiente veredicto WEB."
+      "veredicto": "APROBADO",
+      "nota": "Auditoría de disco completada. Limpieza de bajo riesgo ejecutada (test.img + backups pre_mitigacion). Disco al 52%, 847G libres. Consolidación de modelos queda como bloque futuro."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
