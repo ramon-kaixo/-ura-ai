@@ -1,341 +1,341 @@
 {
- "modo": "secuencial",
- "colas": {
-  "pendientes": [],
-  "en_progreso": [],
-  "en_revision": [],
-  "aprobadas": [
-   "TASK-20260817-014",
-   "TASK-20260817-015",
-   "TASK-20260817-017",
-   "TASK-20260817-019",
-   "TASK-20260817-021",
-   "TASK-20260817-022",
-   "TASK-20260817-023",
-   "TASK-20260817-024",
-   "TASK-20260816-012",
-   "TASK-20260816-013",
-   "TASK-20260817-016",
-   "TASK-20260817-025",
-   "TASK-20260817-028",
-   "TASK-20260817-027"
-  ],
-  "bloqueadas": [
-   "TASK-20260816-011",
-   "TASK-20260817-020",
-   "TASK-20260816-009"
-  ],
-  "cerradas": [
-   "TASK-20260816-003",
-   "TASK-20260816-004",
-   "TASK-20260816-007",
-   "TASK-20260816-005",
-   "TASK-20260816-008",
-   "TASK-20260816-010"
-  ]
- },
- "agentes": {
-  "TERM": {
-   "estado": "libre",
-   "rol_actual": null
+  "modo": "secuencial",
+  "colas": {
+    "pendientes": [],
+    "en_progreso": [],
+    "en_revision": [],
+    "aprobadas": [
+      "TASK-20260817-014",
+      "TASK-20260817-015",
+      "TASK-20260817-017",
+      "TASK-20260817-019",
+      "TASK-20260817-021",
+      "TASK-20260817-022",
+      "TASK-20260817-023",
+      "TASK-20260817-024",
+      "TASK-20260816-012",
+      "TASK-20260816-013",
+      "TASK-20260817-016",
+      "TASK-20260817-025",
+      "TASK-20260817-028",
+      "TASK-20260817-027"
+    ],
+    "bloqueadas": [
+      "TASK-20260816-011",
+      "TASK-20260817-020",
+      "TASK-20260816-009"
+    ],
+    "cerradas": [
+      "TASK-20260816-003",
+      "TASK-20260816-004",
+      "TASK-20260816-007",
+      "TASK-20260816-005",
+      "TASK-20260816-008",
+      "TASK-20260816-010"
+    ]
   },
-  "WEB": {
-   "estado": "libre",
-   "rol_actual": null
-  }
- },
- "tareas": {
-  "TASK-20260816-003": {
-   "descripcion": "Fase 0 (urgente) — limpiar conflictos git y rotar token expuesto",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "cerrada",
-   "prioridad": "alta",
-   "veredicto": "APROBADO/DONE — token rotado y verificado; conflictos git limpios",
-   "nota": "Tarea cerrada formalmente. Hotfix, guardarrail y rotación de token completados."
+  "agentes": {
+    "TERM": {
+      "estado": "libre",
+      "rol_actual": null
+    },
+    "WEB": {
+      "estado": "libre",
+      "rol_actual": null
+    }
   },
-  "TASK-20260816-004": {
-   "descripcion": "Fase 1 — romper dependencia circular core↔motor",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "cerrada",
-   "prioridad": "alta",
-   "veredicto": "APROBADO/DONE — dependencia circular core↔motor rota y revisada",
-   "nota": "Tarea cerrada formalmente. Commits: ee7910ca, 1a84d31e."
+  "tareas": {
+    "TASK-20260816-003": {
+      "descripcion": "Fase 0 (urgente) — limpiar conflictos git y rotar token expuesto",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "cerrada",
+      "prioridad": "alta",
+      "veredicto": "APROBADO/DONE — token rotado y verificado; conflictos git limpios",
+      "nota": "Tarea cerrada formalmente. Hotfix, guardarrail y rotación de token completados."
+    },
+    "TASK-20260816-004": {
+      "descripcion": "Fase 1 — romper dependencia circular core↔motor",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "cerrada",
+      "prioridad": "alta",
+      "veredicto": "APROBADO/DONE — dependencia circular core↔motor rota y revisada",
+      "nota": "Tarea cerrada formalmente. Commits: ee7910ca, 1a84d31e."
+    },
+    "TASK-20260816-005": {
+      "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "cerrada",
+      "prioridad": "media",
+      "veredicto": "APROBADO — re-revisión TERM 22:50 (lowercase fuera, uppercase con ADR, test pasa en ASUS)",
+      "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea.",
+      "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commit edcdb2db integrado."
+    },
+    "TASK-20260816-007": {
+      "descripcion": "Protocolo de coordinación ejecutor-revisor con colas de trabajo y modos secuencial/paralelo",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "cerrada",
+      "prioridad": "alta",
+      "veredicto": "APROBADO/DONE — protocolo de coordinación fusionado a main y revisado",
+      "nota": "Tarea cerrada formalmente. Commit edcf7b04; fusionada a main (56864d1e)."
+    },
+    "TASK-20260816-008": {
+      "descripcion": "Guardián de protocolo (verify_protocol.py) + auto-dispatcher (dispatcher.py) con flock, prioridad y chequeo de conflictos",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "cerrada",
+      "prioridad": "alta",
+      "veredicto": "APROBADO/DONE — guardián + auto-dispatcher integrados en main",
+      "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commits a0915f4f, 43caef06, 80f964a9, 0ac87d83 integrados."
+    },
+    "TASK-20260816-009": {
+      "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
+      "ejecutor": null,
+      "revisor": "WEB",
+      "estado": "bloqueada",
+      "prioridad": "baja",
+      "veredicto": "",
+      "nota": "Posponer: automatización futura. Se retomará en Bloque E."
+    },
+    "TASK-20260816-010": {
+      "descripcion": "Panel de semáforos + modo análisis de planes",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "cerrada",
+      "prioridad": "media",
+      "veredicto": "APROBADO/DONE — panel de semáforos + modo análisis integrados",
+      "nota": "Fusionada a main. Tarea cerrada."
+    },
+    "TASK-20260816-011": {
+      "descripcion": "Plan consolidado F6-F10 — Producción robusta (seguridad secretos, CI/CD, monitoreo, backups, observabilidad de agentes)",
+      "titulo": "Plan consolidado F6-F10",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pausada",
+      "prioridad": "MEDIA",
+      "veredicto": "",
+      "dependencias": [
+        "F4",
+        "F5"
+      ],
+      "alcance": [
+        "F6",
+        "F7",
+        "F8",
+        "F9",
+        "F10"
+      ],
+      "condicion_inicio": "No iniciar hasta que F4 (limpieza estructural) y F5 (calidad continua) estén terminadas, aprobadas y fusionadas a main.",
+      "nota": "PAUSADA por orden de Ramón 2026-08-17 (prioridad BLOQUE A / TASK-20260817-014). Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+    },
+    "TASK-20260816-012": {
+      "descripcion": "F4: Limpieza estructural (caches, config unificada, artefactos fuera del árbol)",
+      "titulo": "F4: Limpieza estructural",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO — WEB 2026-08-17 17:55: commits f018a4a1 + 33f235bd revisados (rename 100% + gitignore + ruta + coordinación); ruff OK; verify OK (20); árbol limpio",
+      "dependencias": [],
+      "alcance": [
+        "eliminar caches y artefactos (.venv, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, .hypothesis, node_modules, .sandbox_packages)",
+        "unificar config/ y configs/ en una sola fuente",
+        "mover backups, audit_reports, data/tuneladora_reports y logs fuera del árbol",
+        "actualizar .gitignore completo"
+      ],
+      "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
+      "gates": [
+        "ruff check .",
+        "git status limpio",
+        "python3 -m json.tool docs/udo/coordination.json"
+      ],
+      "nota": "Ejecutada 2026-08-17 17:50 (TERM): config consolidado (git mv + fix ruta), .gitignore +.pytest_cache, build/dist/egg-info ya fuera, worktrees OK. mutants/ NO tocado (propuesta: mover a /opt/ura/artifacts/). En revision WEB. Veredicto WEB: APROBADO (17:55)."
+    },
+    "TASK-20260816-013": {
+      "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
+      "titulo": "F5: Calidad continua",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO",
+      "dependencias": [],
+      "alcance": [
+        "aplicar política de cobertura ≥80% (meta 100x100) en módulos nuevos",
+        "enganchar verify_protocol.py y coverage en revision_gates.sh",
+        "actualizar docs/planes/README.md con panel de semáforos",
+        "revisar y limpiar documentación obsoleta de docs/"
+      ],
+      "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
+      "gates": [
+        "ruff check .",
+        "pytest tests/unit/test_protocol_coordination.py",
+        "python3 scripts/pro/verify_protocol.py"
+      ],
+      "nota": "F5 revisada manualmente por Ramón. Gates: ruff OK, verify_protocol OK, pytest 7 passed. Cambio ajeno en motor/diagnostico descartado."
+    },
+    "TASK-20260817-014": {
+      "descripcion": "Bloque A: Baseline y Auditoría Real de URA v2.1 (A0 Preparación, A1 Inventario, A2 Baseline, A3 Análisis P0-P3, A4 Cierre)",
+      "titulo": "Bloque A: Baseline y Auditoría Real de URA v2.1",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "aprobador_humano": "RAMON",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO",
+      "dependencias": [],
+      "alcance": [
+        "A0 Preparación",
+        "A1 Inventario técnico",
+        "A2 Baseline operativo/seguridad",
+        "A3 Análisis y priorización",
+        "A4 Cierre"
+      ],
+      "modo": "auditoria_readonly",
+      "condicion_inicio": "TERM libre + WEB libre, aprobación Ramón implícita en lanzamiento.",
+      "nota": "Bloque A cerrado y aprobado (auto-revisión WEB declarada). Pendientes P1-03/P1-04/P2/P3 pasan a bloques B1/B2/B3."
+    },
+    "TASK-20260817-015": {
+      "descripcion": "Bloque B1: regenerar .venv y verificar gates completos (P1-03)",
+      "titulo": "Bloque B1: Instrumentación (venv + gates)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO",
+      "dependencias": [],
+      "alcance": [
+        "crear .venv (base+dev)",
+        "instalar deps",
+        "verificar rf/pip/ruff/mypy/pytest/bandit",
+        "gates: ruff + pytest protocolo",
+        "registro en docs/audit/baseline"
+      ],
+      "condicion_inicio": "Autorización Ramón 2026-08-17 (ejecución inmediata).",
+      "nota": "Cierre: ruff 0 errores (CPY ignorado + noqas PLR0917), pytest 7 passed. P3-03..09 registradas. Autorización Ramón directa."
+    },
+    "TASK-20260817-016": {
+      "descripcion": "Bloque B2: reubicar/limpiar artefactos y .tuneladora (P1-04, P2-01, P2-04)",
+      "titulo": "Bloque B2: Artefactos",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "MEDIA",
+      "veredicto": "APROBADO",
+      "dependencias": [
+        "TASK-20260817-015"
+      ],
+      "alcance": [
+        "mover /var/tmp/ura_artifacts a destino estable",
+        "retirada .tuneladora/ 493MB",
+        "retirada build/ dist/ ura.egg-info/ mutants/",
+        "autorización por ítem"
+      ],
+      "condicion_inicio": "Aprobación TASK-015 + autorización por ítem de Ramón.",
+      "nota": "Artefactos limpiados: .tuneladora a /opt/ura/artifacts, mutants movido, build/dist/egg-info eliminados. Cerrada por Ramón."
+    },
+    "TASK-20260817-017": {
+      "descripcion": "Bloque B3: inventario formal de servicios systemd y baja documentada (P2-02)",
+      "titulo": "Bloque B3: Servicios systemd",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "MEDIA",
+      "veredicto": "APROBADO",
+      "dependencias": [],
+      "alcance": [
+        "inventario de ~22 servicios inactivos",
+        "recomendación por servicio",
+        "baja con autorización por ítem",
+        "entregable docs/audit/baseline/servicios_B3.md"
+      ],
+      "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
+      "nota": "CERRADA 2026-08-17 — aprobación humana directa de Ramón tras correcciones (recuentos 24/2/14/7, duplicados eliminados, typo ura-backup, ure-al UNKNOWN). B3: 48 servicios inventariados read-only."
+    },
+    "TASK-20260817-019": {
+      "descripcion": "Diagnóstico y reparación de servicios systemd FAILED (203/EXEC)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
+      "nota": "6 servicios verificados success en ASUS. Cerrada por Ramón 2026-08-17."
+    },
+    "TASK-20260817-020": {
+      "descripcion": "Timers ura-ejecutor/ura-healing no-op (hallazgo ALTA Mac)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "LATENTE",
+      "veredicto": "",
+      "nota": "Timers NOT FOUND en ASUS (list-timers y status: could not be found). Registrado LATENTE en expediente + hallazgos-fondo.md. Cero modificaciones."
+    },
+    "TASK-20260817-021": {
+      "descripcion": "Clase Diagnostico duplicada en motor/diagnostico -> TypeError garantizado en producción",
+      "prioridad": "CRITICA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
+      "nota": "Clase Diagnostico consolidada en diagnostico.py. ruff OK, tests 15 passed. Commit 4e93c1ee."
+    },
+    "TASK-20260817-022": {
+      "descripcion": "ura-revisiones falla al intentar fusionar rama mac-veredictos (conflictos)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "veredicto": "APROBADO — WEB 2026-08-17 16:23: commit a2fd03c8 revisado; expedientes 019/020/021 con estado: plano; detector exit 0; servicio 16:21:55 0/SUCCESS",
+      "nota": "Resuelto 2026-08-17 16:20 (TERM). Merge mac-veredictos ya integrado (4aefed52). Fix: normalizar formato estado: en expedientes 019/020/021 -> detector exit 0, verify_protocol OK. En revision WEB. Veredicto WEB: APROBADO (16:23)."
+    },
+    "TASK-20260817-023": {
+      "descripcion": "Mejora detector de revisiones (H-03): staged-check + flock + abort-on-fail",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "MEDIA",
+      "veredicto": "APROBADO — WEB 2026-08-17 17:03: commit 533cf2cd revisado; bash -n OK; verify OK (19); ciclos 16:57 y 17:02 0/SUCCESS",
+      "nota": "Mejora aplicada y verificada 2026-08-17 17:00 (TERM): staged-check + flock + abort-on-fail. En revision WEB. Veredicto WEB: APROBADO (17:03)."
+    },
+    "TASK-20260817-024": {
+      "descripcion": "Auditoría de disco y plan de limpieza profunda",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO",
+      "nota": "Auditoría de disco completada. Limpieza de bajo riesgo ejecutada. Disco al 52%, 847G libres. Consolidación de modelos como bloque futuro."
+    },
+    "TASK-20260817-025": {
+      "descripcion": "Clasificación mypy Bloque C1 (429 errores -> P0/P1/P2/P3)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "MEDIA",
+      "veredicto": "APROBADO",
+      "nota": "Análisis READ-ONLY 2026-08-17 18:20: 429 errores clasificados (58 P0, 108 P1, 242 P2 tests, 21 P3). Informe: docs/audit/baseline/C1_mypy_classification.md. Arreglo NO ejecutado (requiere TASK + autorización)."
+    },
+    "TASK-20260817-028": {
+      "descripcion": "Consolidación de backlog de pendientes",
+      "prioridad": "MEDIA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "veredicto": "APROBADO",
+      "nota": "Backlog generado manualmente tras timeout de OpenCode. Pendiente revisión WEB."
+    },
+    "TASK-20260817-027": {
+      "descripcion": "Correcciones mypy P0 en producción y keyword-only",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "aprobada",
+      "prioridad": "ALTA",
+      "veredicto": "APROBADO",
+      "nota": "mypy objetivo 0, ruff OK, tests 153 pass. Correcciones integradas."
+    }
   },
-  "TASK-20260816-005": {
-   "descripcion": "Fase 3 — corregir errores mypy (442 totales; 5 catalogados graves por el WEB + 2 pre-existentes en web_search.py)",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "cerrada",
-   "prioridad": "media",
-   "veredicto": "APROBADO — re-revisión TERM 22:50 (lowercase fuera, uppercase con ADR, test pasa en ASUS)",
-   "razon_asignacion": "Tarea de código → ejecutor TERM. Alternancia se compensará en la siguiente tarea.",
-   "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commit edcdb2db integrado."
-  },
-  "TASK-20260816-007": {
-   "descripcion": "Protocolo de coordinación ejecutor-revisor con colas de trabajo y modos secuencial/paralelo",
-   "ejecutor": "WEB",
-   "revisor": "TERM",
-   "estado": "cerrada",
-   "prioridad": "alta",
-   "veredicto": "APROBADO/DONE — protocolo de coordinación fusionado a main y revisado",
-   "nota": "Tarea cerrada formalmente. Commit edcf7b04; fusionada a main (56864d1e)."
-  },
-  "TASK-20260816-008": {
-   "descripcion": "Guardián de protocolo (verify_protocol.py) + auto-dispatcher (dispatcher.py) con flock, prioridad y chequeo de conflictos",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "cerrada",
-   "prioridad": "alta",
-   "veredicto": "APROBADO/DONE — guardián + auto-dispatcher integrados en main",
-   "nota": "Cerrada tras merge a main (2026-08-16T22:50). Commits a0915f4f, 43caef06, 80f964a9, 0ac87d83 integrados."
-  },
-  "TASK-20260816-009": {
-   "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
-   "ejecutor": null,
-   "revisor": "WEB",
-   "estado": "bloqueada",
-   "prioridad": "baja",
-   "veredicto": "",
-   "nota": "Posponer: automatización futura. Se retomará en Bloque E."
-  },
-  "TASK-20260816-010": {
-   "descripcion": "Panel de semáforos + modo análisis de planes",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "cerrada",
-   "prioridad": "media",
-   "veredicto": "APROBADO/DONE — panel de semáforos + modo análisis integrados",
-   "nota": "Fusionada a main. Tarea cerrada."
-  },
-  "TASK-20260816-011": {
-   "descripcion": "Plan consolidado F6-F10 — Producción robusta (seguridad secretos, CI/CD, monitoreo, backups, observabilidad de agentes)",
-   "titulo": "Plan consolidado F6-F10",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "pausada",
-   "prioridad": "MEDIA",
-   "veredicto": "",
-   "dependencias": [
-    "F4",
-    "F5"
-   ],
-   "alcance": [
-    "F6",
-    "F7",
-    "F8",
-    "F9",
-    "F10"
-   ],
-   "condicion_inicio": "No iniciar hasta que F4 (limpieza estructural) y F5 (calidad continua) estén terminadas, aprobadas y fusionadas a main.",
-   "nota": "PAUSADA por orden de Ramón 2026-08-17 (prioridad BLOQUE A / TASK-20260817-014). Registro inicial: solo plan en cola. Ninguna fase ejecutada."
-  },
-  "TASK-20260816-012": {
-   "descripcion": "F4: Limpieza estructural (caches, config unificada, artefactos fuera del árbol)",
-   "titulo": "F4: Limpieza estructural",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "ALTA",
-   "veredicto": "APROBADO — WEB 2026-08-17 17:55: commits f018a4a1 + 33f235bd revisados (rename 100% + gitignore + ruta + coordinación); ruff OK; verify OK (20); árbol limpio",
-   "dependencias": [],
-   "alcance": [
-    "eliminar caches y artefactos (.venv, __pycache__, .pytest_cache, .mypy_cache, .ruff_cache, .hypothesis, node_modules, .sandbox_packages)",
-    "unificar config/ y configs/ en una sola fuente",
-    "mover backups, audit_reports, data/tuneladora_reports y logs fuera del árbol",
-    "actualizar .gitignore completo"
-   ],
-   "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
-   "gates": [
-    "ruff check .",
-    "git status limpio",
-    "python3 -m json.tool docs/udo/coordination.json"
-   ],
-   "nota": "Ejecutada 2026-08-17 17:50 (TERM): config consolidado (git mv + fix ruta), .gitignore +.pytest_cache, build/dist/egg-info ya fuera, worktrees OK. mutants/ NO tocado (propuesta: mover a /opt/ura/artifacts/). En revision WEB. Veredicto WEB: APROBADO (17:55)."
-  },
-  "TASK-20260816-013": {
-   "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
-   "titulo": "F5: Calidad continua",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "ALTA",
-   "veredicto": "APROBADO",
-   "dependencias": [],
-   "alcance": [
-    "aplicar política de cobertura ≥80% (meta 100x100) en módulos nuevos",
-    "enganchar verify_protocol.py y coverage en revision_gates.sh",
-    "actualizar docs/planes/README.md con panel de semáforos",
-    "revisar y limpiar documentación obsoleta de docs/"
-   ],
-   "condicion_inicio": "Sin dependencias. Ejecutable tras aprobación de plan por RAMON.",
-   "gates": [
-    "ruff check .",
-    "pytest tests/unit/test_protocol_coordination.py",
-    "python3 scripts/pro/verify_protocol.py"
-   ],
-   "nota": "F5 revisada manualmente por Ramón. Gates: ruff OK, verify_protocol OK, pytest 7 passed. Cambio ajeno en motor/diagnostico descartado."
-  },
-  "TASK-20260817-014": {
-   "descripcion": "Bloque A: Baseline y Auditoría Real de URA v2.1 (A0 Preparación, A1 Inventario, A2 Baseline, A3 Análisis P0-P3, A4 Cierre)",
-   "titulo": "Bloque A: Baseline y Auditoría Real de URA v2.1",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "aprobador_humano": "RAMON",
-   "estado": "aprobada",
-   "prioridad": "ALTA",
-   "veredicto": "APROBADO",
-   "dependencias": [],
-   "alcance": [
-    "A0 Preparación",
-    "A1 Inventario técnico",
-    "A2 Baseline operativo/seguridad",
-    "A3 Análisis y priorización",
-    "A4 Cierre"
-   ],
-   "modo": "auditoria_readonly",
-   "condicion_inicio": "TERM libre + WEB libre, aprobación Ramón implícita en lanzamiento.",
-   "nota": "Bloque A cerrado y aprobado (auto-revisión WEB declarada). Pendientes P1-03/P1-04/P2/P3 pasan a bloques B1/B2/B3."
-  },
-  "TASK-20260817-015": {
-   "descripcion": "Bloque B1: regenerar .venv y verificar gates completos (P1-03)",
-   "titulo": "Bloque B1: Instrumentación (venv + gates)",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "ALTA",
-   "veredicto": "APROBADO",
-   "dependencias": [],
-   "alcance": [
-    "crear .venv (base+dev)",
-    "instalar deps",
-    "verificar rf/pip/ruff/mypy/pytest/bandit",
-    "gates: ruff + pytest protocolo",
-    "registro en docs/audit/baseline"
-   ],
-   "condicion_inicio": "Autorización Ramón 2026-08-17 (ejecución inmediata).",
-   "nota": "Cierre: ruff 0 errores (CPY ignorado + noqas PLR0917), pytest 7 passed. P3-03..09 registradas. Autorización Ramón directa."
-  },
-  "TASK-20260817-016": {
-   "descripcion": "Bloque B2: reubicar/limpiar artefactos y .tuneladora (P1-04, P2-01, P2-04)",
-   "titulo": "Bloque B2: Artefactos",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "MEDIA",
-   "veredicto": "APROBADO",
-   "dependencias": [
-    "TASK-20260817-015"
-   ],
-   "alcance": [
-    "mover /var/tmp/ura_artifacts a destino estable",
-    "retirada .tuneladora/ 493MB",
-    "retirada build/ dist/ ura.egg-info/ mutants/",
-    "autorización por ítem"
-   ],
-   "condicion_inicio": "Aprobación TASK-015 + autorización por ítem de Ramón.",
-   "nota": "Artefactos limpiados: .tuneladora a /opt/ura/artifacts, mutants movido, build/dist/egg-info eliminados. Cerrada por Ramón."
-  },
-  "TASK-20260817-017": {
-   "descripcion": "Bloque B3: inventario formal de servicios systemd y baja documentada (P2-02)",
-   "titulo": "Bloque B3: Servicios systemd",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "MEDIA",
-   "veredicto": "APROBADO",
-   "dependencias": [],
-   "alcance": [
-    "inventario de ~22 servicios inactivos",
-    "recomendación por servicio",
-    "baja con autorización por ítem",
-    "entregable docs/audit/baseline/servicios_B3.md"
-   ],
-   "condicion_inicio": "Autorización Ramón para ejecutar inventario; bajas por ítem.",
-   "nota": "CERRADA 2026-08-17 — aprobación humana directa de Ramón tras correcciones (recuentos 24/2/14/7, duplicados eliminados, typo ura-backup, ure-al UNKNOWN). B3: 48 servicios inventariados read-only."
-  },
-  "TASK-20260817-019": {
-   "descripcion": "Diagnóstico y reparación de servicios systemd FAILED (203/EXEC)",
-   "prioridad": "ALTA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "APROBADO",
-   "nota": "6 servicios verificados success en ASUS. Cerrada por Ramón 2026-08-17."
-  },
-  "TASK-20260817-020": {
-   "descripcion": "Timers ura-ejecutor/ura-healing no-op (hallazgo ALTA Mac)",
-   "prioridad": "ALTA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "LATENTE",
-   "veredicto": "",
-   "nota": "Timers NOT FOUND en ASUS (list-timers y status: could not be found). Registrado LATENTE en expediente + hallazgos-fondo.md. Cero modificaciones."
-  },
-  "TASK-20260817-021": {
-   "descripcion": "Clase Diagnostico duplicada en motor/diagnostico -> TypeError garantizado en producción",
-   "prioridad": "CRITICA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "APROBADO",
-   "nota": "Clase Diagnostico consolidada en diagnostico.py. ruff OK, tests 15 passed. Commit 4e93c1ee."
-  },
-  "TASK-20260817-022": {
-   "descripcion": "ura-revisiones falla al intentar fusionar rama mac-veredictos (conflictos)",
-   "prioridad": "ALTA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "APROBADO — WEB 2026-08-17 16:23: commit a2fd03c8 revisado; expedientes 019/020/021 con estado: plano; detector exit 0; servicio 16:21:55 0/SUCCESS",
-   "nota": "Resuelto 2026-08-17 16:20 (TERM). Merge mac-veredictos ya integrado (4aefed52). Fix: normalizar formato estado: en expedientes 019/020/021 -> detector exit 0, verify_protocol OK. En revision WEB. Veredicto WEB: APROBADO (16:23)."
-  },
-  "TASK-20260817-023": {
-   "descripcion": "Mejora detector de revisiones (H-03): staged-check + flock + abort-on-fail",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "MEDIA",
-   "veredicto": "APROBADO — WEB 2026-08-17 17:03: commit 533cf2cd revisado; bash -n OK; verify OK (19); ciclos 16:57 y 17:02 0/SUCCESS",
-   "nota": "Mejora aplicada y verificada 2026-08-17 17:00 (TERM): staged-check + flock + abort-on-fail. En revision WEB. Veredicto WEB: APROBADO (17:03)."
-  },
-  "TASK-20260817-024": {
-   "descripcion": "Auditoría de disco y plan de limpieza profunda",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "ALTA",
-   "veredicto": "APROBADO",
-   "nota": "Auditoría de disco completada. Limpieza de bajo riesgo ejecutada. Disco al 52%, 847G libres. Consolidación de modelos como bloque futuro."
-  },
-  "TASK-20260817-025": {
-   "descripcion": "Clasificación mypy Bloque C1 (429 errores -> P0/P1/P2/P3)",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "prioridad": "MEDIA",
-   "veredicto": "APROBADO",
-   "nota": "Análisis READ-ONLY 2026-08-17 18:20: 429 errores clasificados (58 P0, 108 P1, 242 P2 tests, 21 P3). Informe: docs/audit/baseline/C1_mypy_classification.md. Arreglo NO ejecutado (requiere TASK + autorización)."
-  },
-  "TASK-20260817-028": {
-   "descripcion": "Consolidación de backlog de pendientes",
-   "prioridad": "MEDIA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "APROBADO",
-   "nota": "Backlog generado manualmente tras timeout de OpenCode. Pendiente revisión WEB."
-  },
-  "TASK-20260817-027": {
-   "descripcion": "Correcciones mypy P0 en producción (58->0)",
-   "prioridad": "ALTA",
-   "ejecutor": "TERM",
-   "revisor": "WEB",
-   "estado": "aprobada",
-   "veredicto": "CAMBIOS_SOLICITADOS",
-   "nota": "Revision WEB (revisor): mypy attr/union prod=0 OK, verify_protocol OK, pre-commit OK. 1 hallazgo: ruff check . en rama = 1 error (PLR0917 episodic.py:362, add_episode, >5 posicionales) reintroducido por ede02df8 al quitar noqa; main=0 errores. Propuesta: params keyword-only (*) tras payload; llamadas existentes compatibles. Verificar: ruff check . + pytest test_intelligence_memory_cobertura + test_episodic_memory."
-  }
- },
- "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
+  "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
 }
