@@ -235,6 +235,12 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 | TASK-20260818-007 | A5: script audit_cierre_udo.py (detecta cierres sin gate). Commit 0020dee8 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 | TASK-20260818-008 | A3/A4: detector v3.2 worktree mac-veredictos (despliegue pendiente TERM). Commit d66f3954 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 | TASK-20260818-009 | A6: cobertura guardian_logger 95.9%, agent.py 95.7% (22 tests). Commit d4d88070 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-010 | D1 proceso UDO: backfill 21 expedientes (verify), coordination 30 tareas, review-pending 005-009, expedientes 016/021 corregidos. Commits d1345f99+d8503cd1 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-011 | D2a: detector v3.3 rsync --delete en worktree (P13). Commit 8565c33a | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-012 | D2b: publish único guardian_logger (duplicado eliminado) + noqas; cobertura 95.7%. Commit 656d68a0 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-013 | D2c: hook audit-cierre-udo en pre-commit (informativo). Commit d1345f99 (config dentro de 8565c33a) | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-014 | D3: 8 ramas mergeadas borradas de origin (verificadas con merge-base). Commit 41075538 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-015 | D4: sync Mac 43 archivos (scp verificado por rutas) + main Mac al día. Commit 41075538 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 
 **Ratificación del lote (v1.1 §9)**: Ramón (coordinador) aceptó explícitamente el lote el 2026-08-18 ("haz lo pendiente y las sugerencias" en 3 ocasiones consecutivas, tras el acta de verificación objetiva de abajo). El acta de verificación (2026-08-18, WEB, pinning 9/9 + gates) sigue en vigor como evidencia.
 
