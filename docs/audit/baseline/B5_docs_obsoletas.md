@@ -48,7 +48,7 @@
 
 - **73** archivos con menciones a OpenClaw (barrido `grep -rl openclaw docs/ --include="*.md"`).
 - **69** archivos .md en raíz de `docs/` + ~340 en `docs/architecture/` (muestreo por duplicados de nombre y fecha de último commit).
-- **Candidatos propuestos: 19** (12 A + 4 B + 4 C, sin contar solapamientos A/C).
+- **Candidatos propuestos: 20** (12 A + 4 B + 4 C).
 
 ## Notas
 
