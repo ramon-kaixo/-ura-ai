@@ -21,6 +21,7 @@ htmlcov/
 perf/
 .mypy_cache/
 .hypothesis/
+.pytest_cache/
 .ruff_cache/
 .sandbox_packages/
 .semgrep_logs/
