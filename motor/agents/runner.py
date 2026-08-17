@@ -162,7 +162,7 @@ class AgentToolRunner(ToolRunnerABC):
         if contract is not None:
             max_attempts = 3 if not contract.idempotent else 1
 
-        last_error: Exception | None = None
+        last_error: ToolResult | None = None
 
         for attempt in range(1, max_attempts + 1):
             req = ToolRequest(

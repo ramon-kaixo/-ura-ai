@@ -517,7 +517,8 @@ class Rule(Protocol):
     Las reglas heurísticas deben marcar deterministic=False.
     """
 
-    metadata: RuleMetadata
+    @property
+    def metadata(self) -> RuleMetadata: ...
 
     def evaluate(
         self,
@@ -582,7 +583,7 @@ class BuiltinRule:
 
 # ── Built-in rules R001-R005 (deterministas) ──────────────────────────────
 
-_BUILTIN_RULES: list[BuiltinRule] = [
+_BUILTIN_RULES: list[Rule] = [
     BuiltinRule(
         metadata=RuleMetadata(
             id="R001",

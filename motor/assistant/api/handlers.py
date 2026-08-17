@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Any
+from typing import Any, cast
 
 from fastapi import HTTPException
 
@@ -183,14 +183,16 @@ def _process(  # noqa: PLR0917
 ) -> tuple:
     conv = engine.get_or_create(cid)
     if mode_str:
-        try:
-            conv.state.mode = ConversationMode(mode_str)
-        except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid mode: {mode_str}") from None
+        state = conv.state
+        if state is not None:
+            try:
+                state.mode = ConversationMode(mode_str)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid mode: {mode_str}") from None
 
     analysis = engine.process_user_message(cid, message)
     intent = analysis["intent"]
-    mode = analysis["mode"]
+    mode = cast("ConversationMode", analysis["mode"])
     resolved = analysis["resolved_message"]
     lang_code = analysis.get("language", "es")
 
