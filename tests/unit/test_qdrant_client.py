@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from motor.core.config import UraConfig
 from motor.core.qdrant_client import (
     VECTOR_SIZE,
     QdrantClient,
-    UraConfig,
     generar_sparse_vector,
 )
 

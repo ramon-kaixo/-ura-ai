@@ -68,12 +68,14 @@ class FileExporter(_SpanEventSink):
 
     def __init__(
         self,
-        path: str = Path(tempfile.gettempdir()) / "ura" / "traces",
+        path: str | Path | None = None,
         buffer_size: int = 10000,
         flush_interval: float = 5.0,
         max_file_size: int = 100 * 1024 * 1024,
         drop_policy: str = "drop_head",
     ) -> None:
+        if path is None:
+            path = Path(tempfile.gettempdir()) / "ura" / "traces"
         self._path = path
         self._max_file_size = max_file_size
         self._flush_interval = flush_interval

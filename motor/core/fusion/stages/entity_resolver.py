@@ -571,7 +571,7 @@ class ContextualEntityResolver(EntityResolver):
         registry: EntityRegistry | None = None,
         scorer: ScoringStrategy | None = None,
         cache_maxsize: int = 2048,
-        cache_policy: CachePolicy = CachePolicy.DETERMINISTIC_ONLY,
+        cache_policy: CachePolicy | str = CachePolicy.DETERMINISTIC_ONLY,
     ) -> None:
         self._registry = registry if registry is not None else _DEFAULT_REGISTRY
         self._scorer = scorer if scorer is not None else KeywordScorer()

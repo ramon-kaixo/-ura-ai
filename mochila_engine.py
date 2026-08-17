@@ -8,6 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parent
 MOCHILAS_DIR = BASE_DIR / "04_METADATOS"
@@ -50,13 +51,15 @@ class CB:
         self.f = f
         self.ti = _now()
         self.tf = None
-        self.d = None
+        self.d: float | None = None
         self.ok = False
         self.er = None
-        self.dt = {}
+        self.dt: dict[str, Any] = {}
 
     def fin(self, ok=True, er=None) -> None:
         self.tf = _now()
+        if self.tf is None or self.ti is None:
+            return
         self.d = (datetime.fromisoformat(self.tf) - datetime.fromisoformat(self.ti)).total_seconds() * 1000
         self.ok = ok
         self.er = er

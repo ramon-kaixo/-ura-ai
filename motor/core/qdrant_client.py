@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 import httpx
 
-from motor.core.config import UraConfig
+from motor.core.interfaces.config import IConfigProvider
 from motor.core.llm import embed as llm_embed
 from motor.core.llm import embed_async as llm_embed_async
 from motor.core.state import DegradedMode
@@ -41,7 +41,7 @@ class QdrantClient:
     _instancia: Optional["QdrantClient"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __init__(self, config: UraConfig) -> None:
+    def __init__(self, config: IConfigProvider) -> None:
         self.config = config
         self.disponible = False
         self._cliente: Any = None
@@ -239,7 +239,7 @@ class QdrantClient:
             return 0
         textos = [d[1] for d in docs]
         vectores = self.generar_embeddings_batch(textos)
-        puntos = []
+        puntos: list[dict[str, Any]] = []
         for i, (doc_id, texto, metadata) in enumerate(docs):
             payload = {"texto": texto[:5000], "id": doc_id, **metadata}
             pid = (
@@ -462,7 +462,7 @@ class QdrantClient:
         return []
 
     @classmethod
-    def instancia(cls, config: UraConfig) -> "QdrantClient":
+    def instancia(cls, config: IConfigProvider) -> "QdrantClient":
         """Singleton thread-safe."""
         with cls._lock:
             if cls._instancia is None:

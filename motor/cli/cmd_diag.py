@@ -90,7 +90,7 @@ def cmd_learn(config: UraConfig, args=None) -> None:
             )
 
 
-def cmd_alerta(config: UraConfig = None, args=None) -> None:
+def cmd_alerta(config: UraConfig | None = None, args=None) -> None:
     r = _executor.run(
         [
             "journalctl",

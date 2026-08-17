@@ -9,7 +9,7 @@ class SlidingWindow:
     """Ventana deslizante para detección de flapping en servicios."""
 
     def __init__(self, maxlen: int = 3) -> None:
-        self._buffer = deque(maxlen=maxlen)
+        self._buffer: deque[Any] = deque(maxlen=maxlen)
 
     def add_and_check(self, estado: Any) -> list:
         """Añade un estado y detecta flapping entre las últimas N muestras."""

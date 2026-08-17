@@ -183,3 +183,5 @@
 | 2026-08-17 | motor/assistant/tool_plugins (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | motor/core/utils (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | core/memoria/rastreadores (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | motor/assistant/api (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | motor/core/voice (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |

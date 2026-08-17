@@ -1,6 +1,7 @@
 import json
 import logging
 import socket
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -14,7 +15,7 @@ HOST_DNS = "google.com"
 
 def escanear_red(config: UraConfig) -> dict:
     """Escanea conectividad de red, tailscale y peers."""
-    r = {
+    r: dict[str, Any] = {
         "gateway": "",
         "internet": False,
         "dns_ok": False,

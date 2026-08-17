@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from motor.core.executor import SubprocessExecutor
 from motor.core.secrets import get_secret
@@ -14,7 +15,7 @@ OPCIONES_SSH = ["-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=accept-ne
 
 def escanear_asus(config) -> dict:
     """Escanea servicios y temperatura en el host ASUS remoto."""
-    r = {"ollama": False, "qdrant": False, "whisper": False, "temp_gpu": 0}
+    r: dict[str, Any] = {"ollama": False, "qdrant": False, "whisper": False, "temp_gpu": 0}
     host = config.asus_host
     if not host:
         log.debug("escaneo asus saltado: sin host")

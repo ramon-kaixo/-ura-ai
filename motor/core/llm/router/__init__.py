@@ -18,6 +18,10 @@ from motor.core.llm.router.strategy import _get_cb, call_with_fallback
 from motor.core.llm.router.utils import _classify_error
 
 if TYPE_CHECKING:
+    from motor.core.llm.baseline import PerformanceBaseline
+    from motor.core.llm.detector import HotspotDetector
+    from motor.core.llm.monitor import PerformanceMonitor
+    from motor.core.llm.profiler import LLMProfiler
     from motor.core.llm.registry import ProviderRegistry
 
 log = logging.getLogger(__name__)
@@ -54,6 +58,10 @@ class LLMRouter:
         self._fallback_enabled = fallback_enabled
         self._fallback_max_providers = fallback_max_providers
         self._health_cache_ttl = health_cache_ttl
+        self._monitor: PerformanceMonitor | None = None
+        self._profiler: LLMProfiler | None = None
+        self._detector: HotspotDetector | None = None
+        self._baseline: PerformanceBaseline | None = None
         self._profile_enabled = profiling_enabled
         self._init_profiler(profiling_enabled)
         self._hotspot_threshold_ms = hotspot_threshold_ms

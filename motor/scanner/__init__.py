@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -37,7 +38,7 @@ class Scanner:
         self.config = config
         self.sliding = SlidingWindow()
         self.cal = Calibration(config)
-        self._ventana_previa = {}
+        self._ventana_previa: dict[str, Any] = {}
 
     @staticmethod
     def _es_fisico() -> bool:
@@ -212,7 +213,7 @@ class Scanner:
         d = {}
         try:
             r = _executor.run(["ps", "-eo", "args="], timeout=5)
-            vistos = {}
+            vistos: dict[str, Any] = {}
             for line in r.stdout.strip().split("\n"):
                 args = line.strip()
                 if not args:

@@ -7,6 +7,7 @@ Preparado para sustituir el backend por un vector store en el futuro.
 
 from __future__ import annotations
 
+import builtins
 import contextlib
 import json
 import logging
@@ -64,7 +65,7 @@ class MemoryStore(Protocol):
     def get(self, memory_id: str) -> MemoryRecord | None: ...
     def list(self, kind: str | None = None, limit: int = 100, offset: int = 0) -> list[MemoryRecord]: ...
     def delete(self, memory_id: str) -> bool: ...
-    def search(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]: ...
+    def search(self, query: str, kind: str | None = None, limit: int = 10) -> builtins.list[MemoryRecord]: ...
     def link_asset(self, memory_id: str, asset_id: str) -> bool: ...
     def count(self, kind: str | None = None) -> int: ...
 
@@ -171,7 +172,7 @@ class SQLiteMemoryStore:
                 with contextlib.suppress(Exception):
                     conn.close()
 
-    def search(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
+    def search(self, query: str, kind: str | None = None, limit: int = 10) -> builtins.list[MemoryRecord]:
         """Búsqueda FTS5 sobre memorias. Fallback a LIKE si FTS5 no disponible."""
         if not query or not query.strip():
             return []
@@ -200,7 +201,7 @@ class SQLiteMemoryStore:
         except sqlite3.OperationalError:
             return self._search_like(query, kind, limit)
 
-    def _search_like(self, query: str, kind: str | None = None, limit: int = 10) -> list[MemoryRecord]:
+    def _search_like(self, query: str, kind: str | None = None, limit: int = 10) -> builtins.list[MemoryRecord]:
         """Fallback LIKE original."""
         conn = open_db(self._db_path)
         pattern = f"%{query}%"

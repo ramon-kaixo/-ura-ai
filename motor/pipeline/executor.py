@@ -112,14 +112,14 @@ class PipelineExecutor:
             ok=ok,
             name=name,
             stages=completed,
-            error=error,
+            error=error or "",
             duration_ms=(time.monotonic() - start) * 1000,
         )
 
     def _anunciar_fallo(self, name: str, error: str | None) -> None:
         self._bus.publish(
             PIPELINE_FAILED,
-            PipelineFailed(name=name, error=error),
+            PipelineFailed(name=name, error=error or ""),
             source="pipeline_executor",
         )
 

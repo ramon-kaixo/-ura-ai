@@ -23,7 +23,7 @@ import ast
 import logging
 import operator as _operator
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 log = logging.getLogger("ura.knowledge.rules")
 
@@ -130,7 +130,7 @@ def _eval_method_call(
     if method_name.startswith("__") and method_name.endswith("__"):
         raise UnsafeExpressionError("Dunder methods prohibidos")
     args = [_eval_ast(a, env) for a in node.args]
-    kwargs = {kw.arg: _eval_ast(kw.value, env) for kw in node.keywords}
+    kwargs = {cast(str, kw.arg): _eval_ast(kw.value, env) for kw in node.keywords}
     method = getattr(obj, method_name)
     return method(*args, **kwargs)
 
@@ -343,7 +343,7 @@ def _eval_call(node, env, _op):
     if func_name not in env:
         raise UnsafeExpressionError(f"Función no permitida: {func_name}")
     args = [_eval_ast(a, env) for a in node.args]
-    kwargs = {kw.arg: _eval_ast(kw.value, env) for kw in node.keywords}
+    kwargs = {cast(str, kw.arg): _eval_ast(kw.value, env) for kw in node.keywords}
     return env[func_name](*args, **kwargs)
 
 

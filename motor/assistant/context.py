@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import IntEnum
-from typing import Any
+from typing import Any, cast
 
 from motor.assistant.context_window import ContextWindow
 from motor.assistant.message_store import MessageStore
-from motor.assistant.models import Message
+from motor.assistant.models import Message, MessageRole
 
 
 class ContextLevel(IntEnum):
@@ -155,7 +155,7 @@ class ContextManager:
             role = "system" if item.level == ContextLevel.HISTORICAL else "user"
             messages.append(
                 Message(
-                    role=role,
+                    role=cast("MessageRole", role),
                     content=item.content,
                     metadata={"source": item.source, "level": item.level.name.lower()},
                 )

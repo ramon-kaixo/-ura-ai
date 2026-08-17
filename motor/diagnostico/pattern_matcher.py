@@ -172,7 +172,7 @@ def _incidentes_varios(scan) -> list:
 
 def _calcular_costes_historicos(incidentes: list) -> dict:
     """Cuenta frecuencias de tipos/subtipos de incidentes."""
-    costes = {}
+    costes: dict[str, dict[str, int]] = {}
     for inc in incidentes:
         t = inc.get("tipo", "Unknown")
         sub = inc.get("subtipo", "")
