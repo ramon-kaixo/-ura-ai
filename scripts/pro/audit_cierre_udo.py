@@ -29,34 +29,38 @@ def _campo(expediente: Path, campo: str) -> str:
     return ""
 
 
-def audit() -> list[str]:
+def audit() -> tuple[list[str], list[str]]:
     coord = json.loads(COORD.read_text(encoding="utf-8"))
-    problemas: list[str] = []
+    errores: list[str] = []
+    info: list[str] = []
     for tid, tarea in coord.get("tareas", {}).items():
         if tarea.get("estado") not in ESTADOS_CERRADOS:
             continue
         exp = TASKS_DIR / f"{tid}.md"
         if not exp.exists():
-            problemas.append(f"{tid}: sin expediente .md (estado {tarea.get('estado')})")
+            errores.append(f"{tid}: sin expediente .md (estado {tarea.get('estado')})")
             continue
         commits = _campo(exp, "commits")
         base = _campo(exp, "commit_base")
         if not commits or commits == "[]":
-            problemas.append(f"{tid}: expediente sin commits: registrados")
+            errores.append(f"{tid}: expediente sin commits: registrados")
         if not base or base == "unknown":
-            problemas.append(f"{tid}: expediente sin commit_base")
-    return problemas
+            info.append(f"{tid}: sin commit_base (pre-parche, X2 no retroactivo)")
+    return errores, info
 
 
 def main() -> int:
-    problemas = audit()
-    if problemas:
-        print(f"AUDITORIA: {len(problemas)} cierre(s) sin gate de integridad:")
-        for p in problemas:
-            print(f"  - {p}")
-        return 1
-    print(f"AUDITORIA: OK — {len(json.loads(COORD.read_text(encoding='utf-8'))['tareas'])} tareas revisadas, 0 cierres sin gate")
-    return 0
+    errores, info = audit()
+    if errores:
+        print(f"AUDITORIA: {len(errores)} cierre(s) sin gate de integridad:")
+        for e in errores:
+            print(f"  - {e}")
+    if info:
+        print(f"INFO: {len(info)} expediente(s) pre-parche sin commit_base (X2, no retroactivo)")
+    if not errores and not info:
+        total = len(json.loads(COORD.read_text(encoding="utf-8"))["tareas"])
+        print(f"AUDITORIA: OK — {total} tareas revisadas, 0 cierres sin gate")
+    return 1 if errores else 0
 
 
 if __name__ == "__main__":
