@@ -187,3 +187,4 @@
 | 2026-08-17 | motor/core/voice (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | tests/engineering/planes (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | knowledge/engine/audit (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | knowledge/engine/ontology (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
