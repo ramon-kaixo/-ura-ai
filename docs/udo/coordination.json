@@ -306,7 +306,7 @@
       "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
-      "nota": "Auditoría READ-ONLY completada 2026-08-17 17:20 (TERM). Informe: docs/audit/baseline/disk_audit_20260817.md. NO borrar nada sin autorización de Ramón. Recuperable estimado: 380-420G (duplicados de modelos LLM + backups antiguos + test.img)."
+      "nota": "Auditoría READ-ONLY completada 2026-08-17 17:20 (TERM). Informe: docs/audit/baseline/disk_audit_20260817.md. NO borrar nada sin autorización de Ramón. Recuperable estimado: 380-420G (duplicados de modelos LLM + backups antiguos + test.img). LIMPIEZA EJECUTADA (autorizada por Ramón, sudo del humano 2026-08-17 17:36): /test.img (10,7G) + backups/pre_mitigacion/*.tar.gz (60,2G). Liberados 70G (963G->893G usados, 52%). Pendiente veredicto WEB."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"

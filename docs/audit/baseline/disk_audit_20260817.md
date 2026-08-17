@@ -107,3 +107,17 @@ ningún modelo mientras haya un trabajo activo, nada sin autorización explícit
 - `verify_protocol.py`: OK.
 - Solo se crearon este informe y la entrada en coordination.json (TASK-20260817-024).
 - Ningún archivo fue borrado, movido ni modificado.
+
+## Resultado de limpieza (autorizada por Ramón, ejecutada 2026-08-17 17:36)
+
+| Ítem | Archivo | Tamaño | Estado |
+|------|---------|--------|--------|
+| 1 | `/test.img` | 10,7G | ✅ ELIMINADO (sudo Ramón) |
+| 2 | `/home/ramon/backups/pre_mitigacion/gx10_models_config_20260514_110659.tar.gz` | 60,2G | ✅ ELIMINADO (sudo Ramón) |
+| 2b | `/home/ramon/backups/pre_mitigacion/gx10_etc_20260514_110905.tar.gz` | 45 B | ✅ ELIMINADO (sudo Ramón) |
+
+**Disco tras limpieza**: 963G → **893G usados (52%)**, 847G libres. **Liberados 70G**.
+Rootfs quedó en rw tras el remount del humano (verificar si se desea volver a ro).
+
+**Pendientes del plan (NO autorizados aún)**: ítems 3-10 — duplicados de blobs ollama (172-189G),
+consolidación de GGUF Qwen (66G), tar pre_mitigacion ya resuelto, archives (21G), etc.
