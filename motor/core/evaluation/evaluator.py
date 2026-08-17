@@ -40,7 +40,7 @@ class RetrievalResult:
 class EvaluationRun:
     """Resultado de una ejecución de evaluación."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         corpus_name: str,
         config_name: str,
@@ -219,7 +219,7 @@ class EvaluationEngine:
         self._results.clear()
 
 
-def _evaluar_query(
+def _evaluar_query(  # noqa: PLR0917
     retrieve_fn: object,
     qid: str,
     query: object,

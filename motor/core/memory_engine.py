@@ -153,7 +153,7 @@ def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats
                 log.warning("Error eliminando {rel_path}: {e}")
 
 
-def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:
+def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:  # noqa: PLR0917
     existing = manifest.get("files", {}).get(rel_path, {})
     if existing.get("sha256") == file_hash and not force:
         stats["unchanged"] += 1

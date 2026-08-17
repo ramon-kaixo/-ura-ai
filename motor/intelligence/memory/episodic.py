@@ -356,7 +356,7 @@ class SessionMemory:
             }
         return sid
 
-    def add_episode(
+    def add_episode(  # noqa: PLR0917
         self,
         session_id: str,
         payload: str,

@@ -212,7 +212,7 @@ def _age_seconds(timestamp: str) -> float:
 
 
 class ForgettingEngine:
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         episode_store: EpisodeStore,
         semantic_store: SemanticMemoryStore | None = None,

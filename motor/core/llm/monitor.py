@@ -39,7 +39,7 @@ class PerformanceSnapshot:
         "wall_time_ms",
     )
 
-    def __init__(
+    def __init__(  # noqa: PLR0917 (P3: candidato a dataclass)
         self,
         provider: str,
         operation: str,

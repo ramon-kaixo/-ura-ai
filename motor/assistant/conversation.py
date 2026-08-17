@@ -45,7 +45,7 @@ _REFERENCE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 
 
 class ConversationEngine:
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         message_store: MessageStore | None = None,
         context_window: ContextWindow | None = None,
