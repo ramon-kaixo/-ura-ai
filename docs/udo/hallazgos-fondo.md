@@ -176,3 +176,4 @@
 | 2026-08-17 | motor/tests/e2e (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | motor/tests/tuneladora (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | scripts/pro/autonomy (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | scripts/pro/hooks (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
