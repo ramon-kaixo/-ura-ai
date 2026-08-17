@@ -6,7 +6,8 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260816-012"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -16,12 +17,10 @@
       "TASK-20260817-021",
       "TASK-20260817-022",
       "TASK-20260817-023",
-      "TASK-20260817-024",
       "TASK-20260817-024"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
-      "TASK-20260816-012",
       "TASK-20260816-013",
       "TASK-20260817-020"
     ],
@@ -136,7 +135,7 @@
       "titulo": "F4: Limpieza estructural",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pausada",
+      "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -152,7 +151,7 @@
         "git status limpio",
         "python3 -m json.tool docs/udo/coordination.json"
       ],
-      "nota": "PAUSADA por orden de Ramón 2026-08-17 (prioridad BLOQUE A / TASK-20260817-014). Implementación en rama ia/TASK-20260816-012 (cedab909). Pendiente revisión WEB. Pendiente humano: chattr -i + rm del huérfano inmutable."
+      "nota": "Ejecutada 2026-08-17 17:50 (TERM): config consolidado (git mv + fix ruta), .gitignore +.pytest_cache, build/dist/egg-info ya fuera, worktrees OK. mutants/ NO tocado (propuesta: mover a /opt/ura/artifacts/). En revision WEB."
     },
     "TASK-20260816-013": {
       "descripcion": "F5: Calidad continua (cobertura ≥80%, verify_protocol+coverage en revision_gates.sh, docs saneadas)",
