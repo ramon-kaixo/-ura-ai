@@ -2,17 +2,19 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [
-      "TASK-20260817-016"
+      "TASK-20260817-016",
+      "TASK-20260817-021",
+      "TASK-20260817-022"
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260817-019"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
-      "TASK-20260817-017"
+      "TASK-20260817-017",
+      "TASK-20260817-019"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -35,8 +37,8 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "ocupado",
-      "rol_actual": "revisor"
+      "estado": "libre",
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -255,9 +257,9 @@
       "prioridad": "ALTA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "veredicto": "APROBADO",
-      "nota": "FASE 3 COMPLETADA (TERM): sys.path en auditoria_paralela/consolidacion/reindex_vectors; chmod +x ura-udo; venv += mutmut 3.7.0, pyzmq 27.1.0, pillow 12.3.0. Estado: backup OK, harden OK, audit-extra SUCCESS (8248 tests, 0 err), reindex FINISHED, mutmut SUCCESS (exit 0), consolidate ACTIVATING (ciclo largo en curso, import resuelto). Ruff: 4 errores pre-existentes (0 nuevos). Commit 2d45cf43. VEREDICTO: APROBADO (revisor WEB) — no cerrada."
+      "nota": "6 servicios verificados success en ASUS. Cerrada por Ramón 2026-08-17."
     },
     "TASK-20260817-020": {
       "descripcion": "Timers ura-ejecutor/ura-healing no-op (hallazgo ALTA Mac)",
@@ -267,6 +269,24 @@
       "estado": "LATENTE",
       "veredicto": "",
       "nota": "Timers NOT FOUND en ASUS (list-timers y status: could not be found). Registrado LATENTE en expediente + hallazgos-fondo.md. Cero modificaciones."
+    },
+    "TASK-20260817-021": {
+      "descripcion": "Clase Diagnostico duplicada en motor/diagnostico -> TypeError garantizado en producción",
+      "prioridad": "CRITICA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "veredicto": "",
+      "nota": "Hallazgo crítico del Mac, integrado por WEB. Pendiente de reparación."
+    },
+    "TASK-20260817-022": {
+      "descripcion": "ura-revisiones falla al intentar fusionar rama mac-veredictos (conflictos)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "veredicto": "",
+      "nota": "Detectado 2026-08-17 15:51. Requiere diagnosticar conflictos con mac-veredictos."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
