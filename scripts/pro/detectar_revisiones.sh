@@ -24,24 +24,37 @@ cd "$REPO" || exit 1
 # ===== Integración de veredictos del Mac (rama mac-veredictos -> main) =====
 # El Escritorio (Mac) empuja sus OK a la rama mac-veredictos; aquí se integran
 # a main con merge. Corre AL INICIO con el arbol limpio (sin stash): si hay
-# cambios locales sin commitear, la integracion se difiere a la siguiente
-# corrida (evita conflictos UU de pendientes-fase.md con el propio registro).
+# cambios locales sin commitear (staged o unstaged), la integracion se difiere
+# a la siguiente corrida (evita conflictos UU de pendientes-fase.md con el
+# propio registro y no pisa trabajo en curso de otros agentes). El bloque de
+# merge va protegido con flock (TASK-20260817-023) para evitar solapamientos;
+# si el merge falla por conflicto, se aborta con git merge --abort para no
+# dejar marcadores UU que bloquearian las corridas siguientes.
+MERGE_LOCK="$REPO/.git/detector-merge.lock"
 if command -v git >/dev/null 2>&1 && [ -d "$REPO/.git" ] && [ "${SKIP_MERGE:-}" != "1" ]; then
     if git show-ref --verify --quiet refs/heads/mac-veredictos 2>/dev/null; then
-        if ! git diff --quiet; then
-            echo "AVISO: arbol sucio, integracion mac-veredictos diferida"
-        elif git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
-            echo "VEREDICTOS_MAC: rama ya integrada en main"
-        elif git merge-base --is-ancestor HEAD mac-veredictos 2>/dev/null; then
-            if HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --ff-only 2>/dev/null; then
-                echo "VEREDICTOS_MAC: integrados por fast-forward (sin commit extra)"
+        exec 9>"$MERGE_LOCK" || true
+        if flock -n 9 2>/dev/null; then
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+                echo "AVISO: arbol sucio (staged o unstaged), integracion mac-veredictos diferida"
+            elif git merge-base --is-ancestor mac-veredictos HEAD 2>/dev/null; then
+                echo "VEREDICTOS_MAC: rama ya integrada en main"
+            elif git merge-base --is-ancestor HEAD mac-veredictos 2>/dev/null; then
+                if HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --ff-only 2>/dev/null; then
+                    echo "VEREDICTOS_MAC: integrados por fast-forward (sin commit extra)"
+                else
+                    git merge --abort 2>/dev/null || true
+                    echo "AVISO: ff de mac-veredictos falló (revisar conflictos)"
+                fi
+            elif HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --no-ff -m "chore(udo): integrar veredictos del Mac (auto-integracion detector)" 2>/dev/null; then
+                echo "VEREDICTOS_MAC: integrados de mac-veredictos a main"
             else
-                echo "AVISO: ff de mac-veredictos falló (revisar conflictos)"
+                git merge --abort 2>/dev/null || true
+                echo "AVISO: merge de mac-veredictos falló (revisar conflictos)"
             fi
-        elif HOME=/tmp PRE_COMMIT_HOME=/tmp/opencode/precommit3 SKIP=semgrep,pytest git merge mac-veredictos --no-ff -m "chore(udo): integrar veredictos del Mac (auto-integracion detector)" 2>/dev/null; then
-            echo "VEREDICTOS_MAC: integrados de mac-veredictos a main"
+            flock -u 9 2>/dev/null || true
         else
-            echo "AVISO: merge de mac-veredictos falló (revisar conflictos)"
+            echo "AVISO: lock ocupado, integracion mac-veredictos diferida"
         fi
     fi
 fi
