@@ -3,7 +3,9 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [],
+    "en_revision": [
+      "TASK-20260817-030"
+    ],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
@@ -335,6 +337,15 @@
       "prioridad": "ALTA",
       "veredicto": "APROBADO",
       "nota": "mypy objetivo 0, ruff OK, tests 153 pass. Correcciones integradas."
+    },
+    "TASK-20260817-030": {
+      "descripcion": "Revisar plan modelos/OpenCode, probar ejecución de herramientas con 3 modelos locales y actualizar plan",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "en_revision",
+      "prioridad": "alta",
+      "veredicto": null,
+      "nota": "2026-08-17: config verificada coherente (openclaw eliminado, reasoning solo r1/qwen3, default qwen3:32b-q8_0, OLLAMA_CONTEXT_LENGTH=32768). Tests B1-B3: NINGÚN modelo local ejecuta herramientas (qwen3 texto-imita, r1 alucina salida, coder32 bucle JSON). Causa rootfs RO descartada (XDG en /tmp no cambia). Plan actualizado en docs/udo/plans/PLAN_MODELOS_OPENCODE_20260817.md"
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
