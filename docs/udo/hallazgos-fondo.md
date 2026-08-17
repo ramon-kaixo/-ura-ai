@@ -172,3 +172,4 @@
 | 2026-08-17 | knowledge/engine (lote 1/2) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | docs/architecture (lote 1/11) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-17 | docs/udo/templates (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-17 | knowledge/evaluation/results (lote completo) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
