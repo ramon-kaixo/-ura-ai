@@ -6,15 +6,15 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009",
-      "TASK-20260817-022"
+      "TASK-20260816-009"
     ],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
       "TASK-20260817-017",
       "TASK-20260817-019",
-      "TASK-20260817-021"
+      "TASK-20260817-021",
+      "TASK-20260817-022"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -38,7 +38,7 @@
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": "revisor"
+      "rol_actual": null
     }
   },
   "tareas": {
@@ -284,9 +284,9 @@
       "prioridad": "ALTA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "en_revision",
-      "veredicto": "",
-      "nota": "Resuelto 2026-08-17 16:20 (TERM). Merge mac-veredictos ya integrado (4aefed52). Fix: normalizar formato estado: en expedientes 019/020/021 -> detector exit 0, verify_protocol OK. En revision WEB."
+      "estado": "aprobada",
+      "veredicto": "APROBADO — WEB 2026-08-17 16:23: commit a2fd03c8 revisado; expedientes 019/020/021 con estado: plano; detector exit 0; servicio 16:21:55 0/SUCCESS",
+      "nota": "Resuelto 2026-08-17 16:20 (TERM). Merge mac-veredictos ya integrado (4aefed52). Fix: normalizar formato estado: en expedientes 019/020/021 -> detector exit 0, verify_protocol OK. En revision WEB. Veredicto WEB: APROBADO (16:23)."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
