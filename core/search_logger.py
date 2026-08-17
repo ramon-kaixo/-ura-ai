@@ -13,6 +13,7 @@ import os
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TextIO
 
 log = logging.getLogger("ura.search_logger")
 
@@ -25,7 +26,7 @@ class _NdjsonWriter:
     def __init__(self, log_dir: str | Path) -> None:
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self._file = None
+        self._file: TextIO | None = None
         self._path: Path | None = None
 
     def _ensure_file(self) -> None:
@@ -39,6 +40,8 @@ class _NdjsonWriter:
 
     def write(self, record: dict) -> None:
         self._ensure_file()
+        if self._file is None:
+            return
         line = json.dumps(record, ensure_ascii=False, default=str, sort_keys=True)
         self._file.write(line + "\n")
         self._file.flush()

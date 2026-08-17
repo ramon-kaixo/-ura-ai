@@ -131,7 +131,7 @@ def format_context_for_prompt(context: dict) -> str:
         parts.append(f"  Libre: {vram['free_mb']} MB")
     else:
         parts.append("\n=== VRAM ===")
-        parts.append(f"  {vram.get('error', 'No data')}")
+        parts.append(f"  {(vram or {}).get('error', 'No data')}")
 
     hetzner = context.get("hetzner")
     if hetzner:

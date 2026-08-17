@@ -44,11 +44,11 @@ class RAGContext:
         if not self._available or not query:
             return ""
         try:
-            results = self._store.search(query, kind="knowledge", limit=max_results)
+            results = self._store.search(query, kind="knowledge", limit=max_results) or []
             if not results:
                 return ""
             parts: list[str] = []
-            for r in results:
+            for r in results:  # type: ignore[attr-defined]
                 content = getattr(r, "content", "") or getattr(r, "text", "") or str(r)
                 parts.append(content[:300])
             return "\n---\n".join(parts)

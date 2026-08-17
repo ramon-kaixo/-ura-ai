@@ -20,11 +20,13 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         init_guardian()
-        await state.scheduler.start_loop()
+        if state.scheduler is not None:
+            await state.scheduler.start_loop()
         yield
-        await state.scheduler.stop_loop()
+        if state.scheduler is not None:
+            await state.scheduler.stop_loop()
         for p in state.providers.values():
-            if hasattr(p, "__aenter__"):
+            if hasattr(p, "__aenter__") and hasattr(p, "__aexit__"):
                 await p.__aexit__(None, None, None)
 
     app = FastAPI(title="Mochila Middleware", version="0.7.0", lifespan=lifespan)
