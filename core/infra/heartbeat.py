@@ -68,10 +68,10 @@ def dump_checkpoint() -> None:
 def _save_restart_to_qdrant() -> None:
     try:
         from motor.core.config import UraConfig
-        from motor.core.qdrant_client import instancia
+        from motor.core.qdrant_client import QdrantClient
 
         cfg = UraConfig()
-        qc = instancia(cfg)
+        qc = QdrantClient.instancia(cfg)
         if qc and qc.disponible:
             qc.guardar_incidente(
                 {

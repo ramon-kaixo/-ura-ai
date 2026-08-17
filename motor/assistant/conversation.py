@@ -212,7 +212,7 @@ class ConversationEngine:
             "response_adjustments": adjustments,
         }
 
-    def _contexto_basico(self, user_message: str, conversation_id: str) -> dict[str, object]:
+    def _contexto_basico(self, user_message: str, conversation_id: str) -> dict[str, Any]:
         user_message = self._prompt_sanitizer.sanitize(user_message)
         intent = self.detect_intent(user_message)
         conv = self.get_or_create(conversation_id)
@@ -270,7 +270,7 @@ class ConversationEngine:
             "episodic_context": episodic_context,
         }
 
-    def _contexto_senales(self, user_message: str, conversation_id: str, intent: Any) -> dict[str, object]:
+    def _contexto_senales(self, user_message: str, conversation_id: str, intent: Any) -> dict[str, Any]:
         trend = self._trends.analyze_query(user_message, intent.value)
         sentiment = self._sentiment.detect(user_message, conversation_id)
 
@@ -288,7 +288,7 @@ class ConversationEngine:
             "feedback": feedback,
         }
 
-    def _contexto_auxiliar(self, user_message: str, conversation_id: str) -> dict[str, object]:
+    def _contexto_auxiliar(self, user_message: str, conversation_id: str) -> dict[str, Any]:
         self._handle_task_triggers(user_message, conversation_id)
         rag_text = self._rag.retrieve_sync(user_message) if self._rag.is_available() else ""
         semantic_facts = self._query_semantic_facts(user_message)

@@ -194,7 +194,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_api_search(self, query: str) -> None:
         results = []
         try:
-            from core.search_engine import search as fts_search
+            from motor.core.search_engine import search as fts_search
 
             results = fts_search(query)
         except Exception as e:

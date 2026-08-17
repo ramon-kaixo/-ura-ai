@@ -4,7 +4,8 @@
     "pendientes": [],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260817-025"
+      "TASK-20260817-025",
+      "TASK-20260817-027"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -39,7 +40,7 @@
       "rol_actual": null
     },
     "WEB": {
-      "estado": "libre",
+      "estado": "ocupado",
       "rol_actual": "revisor"
     }
   },
@@ -316,6 +317,15 @@
       "prioridad": "MEDIA",
       "veredicto": "",
       "nota": "Análisis READ-ONLY 2026-08-17 18:20: 429 errores clasificados (58 P0, 108 P1, 242 P2 tests, 21 P3). Informe: docs/audit/baseline/C1_mypy_classification.md. Arreglo NO ejecutado (requiere TASK + autorización)."
+    },
+    "TASK-20260817-027": {
+      "descripcion": "Bloque C1: corregir errores mypy P0 de producción (58 según C1_mypy_classification.md)",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_revision",
+      "prioridad": "ALTA",
+      "veredicto": "",
+      "nota": "Correcciones attr-defined/union-attr aplicadas. Ruff OK, tests 22 passed, errores objetivo reducidos 63->21. Pendiente revisión WEB."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"

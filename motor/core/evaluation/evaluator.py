@@ -220,9 +220,9 @@ class EvaluationEngine:
 
 
 def _evaluar_query(  # noqa: PLR0917
-    retrieve_fn: object,
+    retrieve_fn: Any,
     qid: str,
-    query: object,
+    query: Any,
     k: int,
     relevance_scores: bool,
     latencies: list[float],
