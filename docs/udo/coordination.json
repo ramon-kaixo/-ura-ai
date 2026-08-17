@@ -6,7 +6,8 @@
     ],
     "en_progreso": [],
     "en_revision": [
-      "TASK-20260816-009"
+      "TASK-20260816-009",
+      "TASK-20260816-013"
     ],
     "aprobadas": [
       "TASK-20260817-014",
@@ -21,7 +22,6 @@
     ],
     "bloqueadas": [
       "TASK-20260816-011",
-      "TASK-20260816-013",
       "TASK-20260817-020"
     ],
     "cerradas": [
@@ -40,7 +40,7 @@
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": null
+      "rol_actual": "revisor"
     }
   },
   "tareas": {
@@ -158,7 +158,7 @@
       "titulo": "F5: Calidad continua",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pausada",
+      "estado": "en_revision",
       "prioridad": "ALTA",
       "veredicto": "",
       "dependencias": [],
@@ -174,7 +174,7 @@
         "pytest tests/unit/test_protocol_coordination.py",
         "python3 scripts/pro/verify_protocol.py"
       ],
-      "nota": "PAUSADA por orden de Ramón 2026-08-17 (prioridad BLOQUE A / TASK-20260817-014). Registro inicial: solo plan en cola. Ninguna fase ejecutada."
+      "nota": "Ejecutada 2026-08-17 18:10 (TERM): cobertura interfaces 100%/web_search 100%/panel 82%; revision_gates.sh con gate de cobertura; panel regenerado; propuesta docs obsoletas (sin borrar). En revision WEB."
     },
     "TASK-20260817-014": {
       "descripcion": "Bloque A: Baseline y Auditoría Real de URA v2.1 (A0 Preparación, A1 Inventario, A2 Baseline, A3 Análisis P0-P3, A4 Cierre)",
