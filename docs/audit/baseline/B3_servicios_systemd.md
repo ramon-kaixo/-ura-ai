@@ -10,21 +10,26 @@
 
 | Clasificación | Cantidad |
 |---|---|
-| ACTIVO y necesario | 26 |
+| ACTIVO y necesario | 24 |
 | ACTIVO y dudoso | 2 |
-| INACTIVO y legacy | 11 |
+| INACTIVO y legacy | 14 |
 | FAILED | 7 (+1 resuelto: ura-revisiones) |
+
+> Total: 47 servicios clasificados + ura-revisiones (resuelto) = 48 unidades únicas detectadas.
+
+### Nota: `ure-al.service` (UNKNOWN / NO VERIFICADO)
+
+En una auditoría previa apareció un nombre "ure-al", pero **no se encuentra en systemd ni en el repo**: no existe en `systemctl list-unit-files`, ni en `/etc/systemd/system/`, ni como referencia en `docs/`, `scripts/` o el árbol git. Se registra como **UNKNOWN / NO VERIFICADO** — no se incluye como fallo ni como servicio existente hasta que Ramón aclare el origen del nombre.
 
 ## Tabla de inventario
 
-### ACTIVO y necesario (26)
+### ACTIVO y necesario (24)
 
 | Servicio | Estado | Enabled | Ejecutado | Función | Acción propuesta | Prioridad |
 |---|---|---|---|---|---|---|
 | ollama | active | enabled | siempre | Runtime LLM local | Mantener | — |
 | qdrant | active | enabled | siempre | Vector DB URA | Mantener | — |
 | model-router | active | enabled | siempre | Enrutado de modelos (inteligente) | Mantener | — |
-| llama-vision | active | disabled | siempre | Llama.cpp Vision (Qwen2-VL-7B) | Mantener (decidir enable) | Baja |
 | snc | active | enabled | siempre | Sistema Nervioso Central | Mantener | — |
 | swarm-discovery | active | enabled | siempre | Auto-descubrimiento swarm | Mantener | — |
 | ura-api | active | enabled | siempre | API GX10 + audit gate post-crash | Mantener | — |
@@ -32,7 +37,6 @@
 | ura-audit-api | active | enabled | siempre | Audit API (FastAPI) | Mantener | — |
 | ura-contraste | active | enabled | siempre | Proxy de contraste (Uvicorn) | Mantener | — |
 | ura-detector | active | enabled | siempre | YOLOv8 Detector + ByteTrack | Mantener | — |
-| ura-executor | active | disabled | siempre | Executor API (tareas) | Mantener + decidir enable | Media |
 | ura-mochila | active | enabled | siempre | Router Mochila (FastAPI) | Mantener | — |
 | ura-metrics | active | enabled | siempre | Metrics Server (8888) | Mantener | — |
 | ura-heartbeat | active | enabled | siempre | Reinicio auto si /health falla | Mantener | — |
@@ -55,7 +59,7 @@
 | llama-vision | active | disabled | siempre | Modelo de visión (arrancado manualmente) | Decidir: enable (si se usa) o stop+disable | Baja |
 | ura-executor | active | disabled | siempre | Executor API — arrancado sin enable | Decidir: enable permanente o retirar | Media |
 
-### INACTIVO y legacy (11)
+### INACTIVO y legacy (14)
 
 | Servicio | Estado | Enabled | Ejecutado | Función | Acción propuesta | Prioridad |
 |---|---|---|---|---|---|---|
@@ -94,9 +98,9 @@ Los 7 failed son servicios oneshot `static` con fallo `exit-code` en horas progr
 
 ## Decisiones pendientes (para Ramón, por ítem)
 
-1. **u-backup y u-maintenance-v2 (FAILED)** → reparar: alta prioridad (backup diario y tuneladora de mantenimiento).
+1. **ura-backup y ura-maintenance-v2 (FAILED)** → reparar: alta prioridad (backup diario y tuneladora de mantenimiento).
 2. **5 failed restantes** → auditar o retirar definitivamente (mask).
-3. **11 inactivos legacy** → disable/mask por ítem (nvidia-*, netplan-ovs, ura-maintenance, ura-network...).
+3. **14 inactivos legacy** → disable/mask por ítem (nvidia-*, netplan-ovs, ura-maintenance, ura-network...).
 4. **llama-vision / ura-executor (active+disabled)** → decidir enable o retirar.
 5. **ura-go2rtc / ura-xvfb** → verificar dependencia real antes de tocar.
 
