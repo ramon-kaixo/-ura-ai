@@ -230,6 +230,11 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 | TASK-20260818-002 | test_heartbeat actualizado al fix C2: test_error_instancia_inexistente → 2 tests (guarda incidente si disponible; no guarda si no). 22 passed. Commit 309189b3 | 2026-08-18 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
 | TASK-20260818-003 | Expedientes retroactivos TASK-024/025/027/028/029/030 (faltaban .md; creados desde coordination.json + git log). Commit a93b2d90 | 2026-08-18 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
 | TASK-20260818-004 | Rama ia/TASK-20260817-031 borrada (origin+local; mergeada en main, sin pérdida). Commit 7b5ba26e | 2026-08-18 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
+| TASK-20260818-005 | A1+A7: 4 lecciones post-C2 en hallazgos-fondo.md + noqa PLR0917 verificados con ruff 0.16.3. Commit bc82de0c | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-006 | A2: nota operativa Mac en AGENTS.md (4 reglas). Commit 4d5cde18 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-007 | A5: script audit_cierre_udo.py (detecta cierres sin gate). Commit 0020dee8 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-008 | A3/A4: detector v3.2 worktree mac-veredictos (despliegue pendiente TERM). Commit d66f3954 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260818-009 | A6: cobertura guardian_logger 95.9%, agent.py 95.7% (22 tests). Commit d4d88070 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
 
 **Ratificación del lote (v1.1 §9)**: Ramón (coordinador) aceptó explícitamente el lote el 2026-08-18 ("haz lo pendiente y las sugerencias" en 3 ocasiones consecutivas, tras el acta de verificación objetiva de abajo). El acta de verificación (2026-08-18, WEB, pinning 9/9 + gates) sigue en vigor como evidencia.
 
