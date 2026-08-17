@@ -3,9 +3,7 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [
-      "TASK-20260817-031"
-    ],
+    "en_revision": [],
     "aprobadas": [
       "TASK-20260817-014",
       "TASK-20260817-015",
@@ -21,7 +19,8 @@
       "TASK-20260817-025",
       "TASK-20260817-028",
       "TASK-20260817-027",
-      "TASK-20260817-030"
+      "TASK-20260817-030",
+      "TASK-20260817-031"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -353,13 +352,14 @@
       "descripcion": "Bloque C2: corregir errores mypy P1 de produccion (gate arg-type/assignment/return-value/union-attr/attr-defined, sin tests)",
       "ejecutor": "WEB",
       "revisor": "TERM",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "alta",
       "modo": "secuencial",
-      "nota": "AUTO-REVISION: TERM no ejecuta herramientas; WEB verifica con gates",
+      "nota": "Correcciones mypy P1 en producción. ruff OK, mypy objetivo 0. Commit 61a30ca6.",
       "historial": [
         "2026-08-17: registrada por WEB (TASK-030 aprobada)"
-      ]
+      ],
+      "veredicto": "APROBADO"
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
