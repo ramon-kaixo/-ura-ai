@@ -41,14 +41,14 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
     try:
         if config is None:
             from motor.core.config import UraConfig
-            from motor.core.qdrant_client import instancia
+            from motor.core.qdrant_client import QdrantClient
 
             config = UraConfig()
-            qc = instancia(config)
+            qc = QdrantClient.instancia(config)
         else:
-            from motor.core.qdrant_client import instancia
+            from motor.core.qdrant_client import QdrantClient
 
-            qc = instancia(config)
+            qc = QdrantClient.instancia(config)
         if qc and qc.disponible:
             subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
             qc.guardar_incidente(
@@ -89,10 +89,10 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
 
 def _save_to_qdrant(record: dict) -> None:
     from motor.core.config import UraConfig
-    from core.qdrant_client import instancia
+    from motor.core.qdrant_client import QdrantClient
 
     cfg = UraConfig()
-    qc = instancia(cfg)
+    qc = QdrantClient.instancia(cfg)
     if qc and qc.disponible:
         subtipo = record.get("event", "unknown").replace("_", " ").title().replace(" ", "")
         qc.guardar_incidente(

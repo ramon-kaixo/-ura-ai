@@ -114,7 +114,7 @@ def _error_guardian(penalty: str | None) -> dict:
 def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None:
     log_event(
         "stream_aborted",
-        model=body.get("model", ""),
+        model=(body or {}).get("model", ""),
         file=path,
         reason="vagancy",
         attempts=0,

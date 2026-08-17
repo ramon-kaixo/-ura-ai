@@ -20,7 +20,7 @@ class WeatherPlugin(ToolPlugin):
     async def execute(self, params: dict[str, Any] | None = None) -> ToolResult:
         from motor.assistant.executor import ToolResult
 
-        location = params.get("location", "")
+        location = (params or {}).get("location", "")
         if not location:
             return ToolResult(False, error="Ciudad no especificada")
         try:

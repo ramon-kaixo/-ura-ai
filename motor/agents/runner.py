@@ -162,7 +162,7 @@ class AgentToolRunner(ToolRunnerABC):
         if contract is not None:
             max_attempts = 3 if not contract.idempotent else 1
 
-        last_error: Exception | None = None
+        last_error: ToolResult | None = None
 
         for attempt in range(1, max_attempts + 1):
             req = ToolRequest(
@@ -182,11 +182,13 @@ class AgentToolRunner(ToolRunnerABC):
                 time.sleep(backoff)
                 backoff *= 2
 
+        last_error_msg = last_error.error if last_error is not None else "unknown"
+
         return ToolResult(
             execution_id=request.execution_id,
             tool_name=request.tool_name,
             success=False,
-            error=f"All {max_attempts} attempts failed. Last: {last_error.error}",
+            error=f"All {max_attempts} attempts failed. Last: {last_error_msg}",
             error_type="ToolError",
             attempt=max_attempts,
         )

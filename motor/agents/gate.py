@@ -119,8 +119,9 @@ class AgentCapabilityGate(CapabilityGateABC):
         decision = self._decide(required)
 
         if not decision.granted:
+            code = decision.denial_code.value if decision.denial_code is not None else "UNKNOWN"
             msg = (
-                f"[{decision.denial_code.value}] "
+                f"[{code}] "
                 f"{decision.denial_reason} "
                 f"(capability: {required.value}, agent: {decision.agent_id})"
             )

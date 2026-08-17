@@ -6,7 +6,7 @@ import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 
@@ -44,7 +44,7 @@ class QdrantClient:
     def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.disponible = False
-        self._cliente = None
+        self._cliente: Any = None
         self.embedding_semaphore = asyncio.Semaphore(value=1)
         self._conectar()
 
