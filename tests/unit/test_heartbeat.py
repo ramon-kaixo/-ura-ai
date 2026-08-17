@@ -70,14 +70,35 @@ class TestDumpCheckpoint:
 
 
 class TestSaveRestartQdrant:
-    def test_error_instancia_inexistente(self, monkeypatch) -> None:
-        """BUG REAL: 'from motor.core.qdrant_client import instancia' no existe
-        (solo DegradedMode.instancia()). El ImportError es capturado y logueado —
-        el incidente NUNCA se guarda. Test documenta el comportamiento actual."""
+    def test_guardar_incidente_cuando_disponible(self, monkeypatch) -> None:
+        """Tras el fix del C2, `QdrantClient.instancia` existe y guarda el
+        incidente si el cliente está disponible (el ImportError documentado
+        en el test anterior quedó corregido en motor/core/qdrant_client.py)."""
+        fake = mock.Mock()
+        fake.disponible = True
+        fake.guardar_incidente = mock.Mock()
+        monkeypatch.setattr(
+            "motor.core.qdrant_client.QdrantClient.instancia",
+            mock.Mock(return_value=fake),
+        )
+        logger = mock.Mock()
+        monkeypatch.setattr(hb, "logger", logger)
+        hb._save_restart_to_qdrant()
+        fake.guardar_incidente.assert_called_once()
+        logger.exception.assert_not_called()
+
+    def test_sin_cliente_disponible_no_guarda(self, monkeypatch) -> None:
+        fake = mock.Mock()
+        fake.disponible = False
+        monkeypatch.setattr(
+            "motor.core.qdrant_client.QdrantClient.instancia",
+            mock.Mock(return_value=fake),
+        )
         logger = mock.Mock()
         monkeypatch.setattr(hb, "logger", logger)
         hb._save_restart_to_qdrant()  # no debe lanzar
-        logger.exception.assert_called_once()
+        fake.guardar_incidente.assert_not_called()
+        logger.exception.assert_not_called()
 
 
 class TestRestartService:
