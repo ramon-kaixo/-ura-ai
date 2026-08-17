@@ -63,3 +63,19 @@ para el pronóstico.
 - `journalctl -u ura-maintenance-v2 -n 5` → OK 12:00:01 con venv nuevo
 - `stat .venv/bin/python3` → mtime 2026-08-17 11:01:16
 - Timers: ura-backup 04:00, ura-audit-extra/consolidate/harden/reindex 05:00, ura-mutmut-daily 06:00, mantenidos
+## Actualización P2 — Verificación activa (autorizada Ramón, 2026-08-17 14:54)
+
+`systemctl start` de los 6 servicios con el venv regenerado:
+
+| Servicio | Resultado | Detalle |
+|---|---|---|
+| ura-backup | ✅ OK | Backup guardado en `/home/ramon/URA/backups/assistant/assistant_20260817_125429` |
+| ura-harden | ✅ OK | Finished (degraded ok) |
+| ura-audit-extra | ❌ FAILED exit 1 | `ModuleNotFoundError: No module named 'scripts'` — `auditoria_paralela.py:72` importa `scripts.pro.tuneladora.pipeline.runner` sin path |
+| ura-consolidate | ❌ FAILED exit 1 | `ModuleNotFoundError: No module named 'scripts'` — mismo patrón |
+| ura-reindex | ❌ FAILED exit 1 | `ModuleNotFoundError: No module named 'knowledge'` — import relativo mal |
+| ura-mutmut-daily | ❌ FAILED exit 1 | `FileNotFoundError: .venv/bin/mutmut` — dependencia no instalada en venv nuevo |
+
+**Corrección de pronóstico**: el 203/EXEC (venv) quedó resuelto con la regeneración (alcanzan a arrancar),
+pero **4 de 6 fallan por imports rotos** (`scripts`, `knowledge`) y 1 por dependencia ausente (mutmut).
+Solo 2 de 6 pasan (backup, harden). La reparación real requiere FASE 3 (corregir imports/venv) — **pendiente de autorización**.

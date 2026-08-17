@@ -17,7 +17,8 @@
     "bloqueadas": [
       "TASK-20260816-011",
       "TASK-20260816-012",
-      "TASK-20260816-013"
+      "TASK-20260816-013",
+      "TASK-20260817-020"
     ],
     "cerradas": [
       "TASK-20260816-003",
@@ -256,7 +257,16 @@
       "revisor": "WEB",
       "estado": "en_revision",
       "veredicto": "",
-      "nota": "Fase 1 diagnóstico completada: causa = venv roto 04:00-06:00, regenerado 11:01 (B1); maintenance-v2 OK 12:00. Ver B4_servicios_failed.md. Reparación pasiva propuesta (P1)."
+      "nota": "P2 ejecutada 14:54: backup OK, harden OK; audit-extra/consolidate/reindex FAILED (ModuleNotFoundError scripts/knowledge), mutmut OK. mutmut-daily FAILED (.venv/bin/mutmut ausente). 203/EXEC resuelto; nuevos fallos de imports = fase 3. Sigue en_revision (WEB)."
+    },
+    "TASK-20260817-020": {
+      "descripcion": "Timers ura-ejecutor/ura-healing no-op (hallazgo ALTA Mac)",
+      "prioridad": "ALTA",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "LATENTE",
+      "veredicto": "",
+      "nota": "Timers NOT FOUND en ASUS (list-timers y status: could not be found). Registrado LATENTE en expediente + hallazgos-fondo.md. Cero modificaciones."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
