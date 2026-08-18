@@ -37,7 +37,9 @@
       "TASK-20260816-009",
       "TASK-20260818-017",
       "TASK-20260818-018",
-      "TASK-20260818-019"
+      "TASK-20260818-019",
+      "TASK-20260818-020",
+      "TASK-20260818-021"
     ],
     "bloqueadas": [
       "TASK-20260817-020"
@@ -602,6 +604,34 @@
         "2026-08-18: 4 errores -> 0 en 3 dirs; 2 excludes fantasma eliminados (app/, sandbox/ no existian); health_monitor.py y routes.py sin errores -> fuera del exclude."
       ],
       "nota": "DONE 2026-08-18. Gate ruff cubre: core/, knowledge/, scripts/, motor/agents/, motor/cli/, monitor/, motor/health_monitor.py, motor/assistant/api/routes.py = 8 elementos."
+    },
+    "TASK-20260818-020": {
+      "task_id": "TASK-20260818-020",
+      "descripcion": "F6.1: auditoria seguridad read-only + fixes sin sudo",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (auditoria con evidencia; hallazgo ALTA documentado en PENDIENTES_SUDO.md)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB."
+      ],
+      "nota": "DONE 2026-08-18."
+    },
+    "TASK-20260818-021": {
+      "task_id": "TASK-20260818-021",
+      "descripcion": "F9.1: diagnostico backups — hallazgo ALTA backup Mac roto",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (auditoria con evidencia; hallazgo ALTA documentado en PENDIENTES_SUDO.md)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB."
+      ],
+      "nota": "DONE 2026-08-18."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-18T00:14:10Z"
