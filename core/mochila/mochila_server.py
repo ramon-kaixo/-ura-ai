@@ -312,7 +312,7 @@ def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> 
         )
 
 
-async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:
+async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:  # noqa: PLR0917 — firma pública estable
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -360,7 +360,7 @@ async def _abortaje_guardian_sse(
     ) + b"data: [DONE]\n\n"
 
 
-async def _stream_from_provider(
+async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
     provider_name,
     modelo,
     mensajes,
@@ -577,7 +577,7 @@ def _resolver_herramientas(body: ChatRequest) -> list | None:
     return None
 
 
-def _respuesta_streaming(
+def _respuesta_streaming(  # noqa: PLR0917 — firma pública estable
     provider_name: str,
     modelo: str,
     route_reason: str,

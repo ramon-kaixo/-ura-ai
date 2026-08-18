@@ -7,8 +7,9 @@ import asyncio
 import json
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event

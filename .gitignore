@@ -95,3 +95,4 @@ docs/udo/pendientes-fase.md.estado
 
 # Orquestador: estado local del workspace (no versionar)
 docs/udo/plans/openclaw-workspace-state.json
+docs/udo/coordination.lock

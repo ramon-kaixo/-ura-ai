@@ -19,7 +19,7 @@ class Provider(ABC):
     def timeout(self) -> int: ...
 
     @abstractmethod
-    async def chat(
+    async def chat(  # noqa: PLR0917 — firma pública estable
         self,
         modelo: str,
         mensajes: list,

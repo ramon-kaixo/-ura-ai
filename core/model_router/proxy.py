@@ -156,7 +156,7 @@ def _resolve_ollama_url() -> str:
         return get_urls()["fallback"]
 
 
-async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
     from core.model_router.vram_guard import vram_guard
 
     return await vram_guard.ejecutar_inferencia_segura(
@@ -170,12 +170,12 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
     )
 
 
-async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
+async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
     return await asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
-def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -185,7 +185,7 @@ def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip="")
         return future.result()
 
 
-def proxy_request(
+def proxy_request(  # noqa: PLR0917 — firma pública estable
     path: str,
     body: bytes | None,
     method: str = "POST",
