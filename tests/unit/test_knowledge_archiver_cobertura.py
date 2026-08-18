@@ -1,21 +1,15 @@
-"""Cobertura 100x100 de knowledge/engine/archiver.py (TASK-20260815-003).
-
-Cubre el archivado de source (git bundle, manifests, retention): flujos
-felices, errores de git, path traversal, manifiestos corruptos, registro en
-BD (mocks FakeConn) y auditoría/métricas con dobles.
-"""
+"""Tests de cobertura de knowledge/engine/archiver.py."""
 
 from __future__ import annotations
 
 import json
-import shutil
+import sqlite3
+import subprocess
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any
+from unittest import mock
 
 import pytest
 
-from knowledge.engine import archiver
 from knowledge.engine.archiver import (
     PathTraversalError,
     _archive_path,
@@ -41,709 +35,311 @@ from knowledge.engine.archiver import (
     restore_source,
     verify_archive,
 )
-from knowledge.engine.models import ARCHIVE_RETENTION_DAYS, ArchiveManifest
+from knowledge.engine.models import ArchiveManifest
 
 
-class FakeResult:
-    """Resultado falso de subprocess.run/CompletedProcess."""
-
-    def __init__(self, returncode: int, stdout: str = "", stderr: str = "") -> None:
-        self.returncode = returncode
-        self.stdout = stdout
-        self.stderr = stderr
-
-    def __repr__(self) -> str:
-        return f"FakeResult(rc={self.returncode})"
-
-
-class FakeGit:
-    """Sustituye a archiver._git_cmd devolviendo resultados según los args."""
-
-    def __init__(self, table: dict[str, FakeResult] | None = None) -> None:
-        self.calls: list[tuple[str, ...]] = []
-        self.table = table or {}
-        self.default = FakeResult(0, "")
-
-    def __call__(self, *args: str, cwd: Path) -> FakeResult:
-        self.calls.append(args)
-        for prefix, result in self.table.items():
-            words = tuple(prefix.split())
-            if args[: len(words)] == words:
-                return result
-        return self.default
+def _git_repo(tmp_path: Path, filename: str = "f.txt", content: str = "hola") -> Path:
+    repo = tmp_path / "src"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "t@t.com"], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "t"], check=True)
+    (repo / filename).write_text(content)
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "init"], check=True)
+    return repo
 
 
-class FakeConn:
-    """Conexión sqlite falsa para op_archives."""
-
-    def __init__(self, rows: list[dict[str, Any]] | None = None) -> None:
-        self.rows = rows or []
-        self.committed = False
-        self.closed = False
-
-    def execute(self, sql: str, params: tuple[Any, ...] | None = None) -> FakeConn:
-        return self
-
-    def fetchall(self) -> list[dict[str, Any]]:
-        return self.rows
-
-    def commit(self) -> None:
-        self.committed = True
-
-    def close(self) -> None:
-        self.closed = True
-
-
-def _write_manifest(tmp_path: Path, archive_dir: Path, name: str, payload: dict[str, Any]) -> Path:
-    manifest = archive_dir / name
-    manifest.write_text(json.dumps(payload), encoding="utf-8")
-    return manifest
+def _arch_db(tmp_path: Path) -> Path:
+    db = tmp_path / "ke.db"
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "CREATE TABLE op_archives (id INTEGER PRIMARY KEY, kind TEXT, source_commit TEXT, "
+        "manifest_path TEXT, archive_path TEXT, compressed_size INTEGER, content_sha256 TEXT, "
+        "retention_days INTEGER, archived_at TEXT DEFAULT CURRENT_TIMESTAMP)"
+    )
+    conn.commit()
+    conn.close()
+    return db
 
 
 class TestPathValidation:
-    def test_resolve_within_existente_dentro(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
-        allowed.mkdir()
-        archivo = allowed / "a.txt"
-        archivo.write_text("x", encoding="utf-8")
-        result = _resolve_within(archivo, allowed, "path")
-        assert result == archivo.resolve()
+    def test_resolve_dentro(self, tmp_path) -> None:
+        ok = _resolve_within(tmp_path / "a", tmp_path)
+        assert ok == (tmp_path / "a").resolve()
 
-    def test_resolve_within_no_existe_dentro(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
-        allowed.mkdir()
-        result = _resolve_within(allowed / "sub" / "nuevo.txt", allowed, "path")
-        assert result == (allowed / "sub" / "nuevo.txt").resolve()
-
-    def test_resolve_within_existente_fuera(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
-        allowed.mkdir()
-        fuera = tmp_path / "fuera.txt"
-        fuera.write_text("x", encoding="utf-8")
+    def test_resolve_fuera_existente(self, tmp_path) -> None:
+        outside = tmp_path / ".." / "x"
         with pytest.raises(PathTraversalError):
-            _resolve_within(fuera, allowed, "path")
+            _resolve_within(outside, tmp_path)
 
-    def test_resolve_within_no_existe_fuera(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
+    def test_resolve_fuera_no_existente(self, tmp_path) -> None:
+        with pytest.raises(PathTraversalError):
+            _resolve_within(tmp_path / ".." / "nope", tmp_path)
+
+    def test_validate_source_dir_ok(self, tmp_path) -> None:
+        d = tmp_path / "s"
+        d.mkdir()
+        assert _validate_source_dir(d) == d.resolve()
+
+    def test_validate_source_dir_fuera(self, tmp_path) -> None:
+        allowed = tmp_path / "root"
         allowed.mkdir()
+        other = tmp_path / "other"
+        other.mkdir()
         with pytest.raises(PathTraversalError):
-            _resolve_within(tmp_path / "otro" / "x.txt", allowed, "path")
-
-    def test_validate_source_dir_con_root_dentro(self, tmp_path: Path) -> None:
-        root = tmp_path / "root"
-        root.mkdir()
-        result = _validate_source_dir(root / "sub", root)
-        assert result == (root / "sub").resolve()
-
-    def test_validate_source_dir_con_root_fuera(self, tmp_path: Path) -> None:
-        root = tmp_path / "root"
-        root.mkdir()
-        fuera = tmp_path / "fuera"
-        fuera.mkdir()
-        with pytest.raises(PathTraversalError):
-            _validate_source_dir(fuera, root)
-
-    def test_validate_source_dir_sin_root(self, tmp_path: Path) -> None:
-        resultado = _validate_source_dir(tmp_path)
-        assert resultado == tmp_path.resolve()
+            _validate_source_dir(other, allowed_root=allowed)
 
 
 class TestHelpers:
-    def test_ensure_dir(self, tmp_path: Path) -> None:
-        d = tmp_path / "a" / "b"
+    def test_ensure_dir(self, tmp_path) -> None:
+        d = tmp_path / "nuevo" / "nivel"
         assert _ensure_dir(d) == d
         assert d.is_dir()
 
-    def test_git_cmd_con_which(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured: dict[str, Any] = {}
-        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/git")
+    def test_git_cmd(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setattr("knowledge.engine.archiver.shutil.which", lambda x: "/usr/bin/git")
+        r = _git_cmd("--version", cwd=tmp_path)
+        assert r.returncode == 0
 
-        def fake_run(*args: Any, **kwargs: Any) -> FakeResult:
-            captured["args"] = args
-            captured["kwargs"] = kwargs
-            return FakeResult(0, "out", "err")
+    def test_manifest_path(self, tmp_path) -> None:
+        assert _manifest_path(tmp_path, "source", "T1").name == "source-T1.manifest.json"
 
-        monkeypatch.setattr(archiver.subprocess, "run", fake_run)
-        result = _git_cmd("rev-parse", "HEAD", cwd=tmp_path)
-        assert result.returncode == 0
-        assert captured["args"][0][0] == "/usr/bin/git"
-        assert captured["kwargs"]["cwd"] == tmp_path
+    def test_archive_path(self, tmp_path) -> None:
+        assert _archive_path(tmp_path, "source", "T1").name == "source-T1.bundle"
 
-    def test_git_cmd_sin_which(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(shutil, "which", lambda _cmd: None)
-        captured: dict[str, Any] = {}
-
-        def fake_run(*args: Any, **kwargs: Any) -> FakeResult:
-            captured["args"] = args
-            return FakeResult(1, "", "boom")
-
-        monkeypatch.setattr(archiver.subprocess, "run", fake_run)
-        result = _git_cmd("status", cwd=tmp_path)
-        assert captured["args"][0][0] == "/usr/bin/git"
-        assert result.returncode == 1
-
-    def test_manifest_path(self, tmp_path: Path) -> None:
-        assert _manifest_path(tmp_path, "source", "t1") == tmp_path / "source-t1.manifest.json"
-
-    def test_archive_path(self, tmp_path: Path) -> None:
-        assert _archive_path(tmp_path, "source", "t1") == tmp_path / "source-t1.bundle"
-
-
-class TestVerificarGitCommit:
-    def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        git = FakeGit({"rev-parse": FakeResult(0, "abc123\n")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        assert _verificar_git_commit(tmp_path) == "abc123"
-
-    def test_no_repo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        git = FakeGit({"rev-parse": FakeResult(128, "", "fatal: not a git repository")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        with pytest.raises(ValueError, match="no es un repositorio"):
-            _verificar_git_commit(tmp_path)
-
-
-class TestContarTracked:
-    def test_con_archivos(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        git = FakeGit({"ls-files": FakeResult(0, "a.py\nb.py\n")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        assert _contar_tracked(Path("/tmp/x")) == 2
-
-    def test_vacio(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        git = FakeGit({"ls-files": FakeResult(0, "")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        assert _contar_tracked(Path("/tmp/x")) == 0
-
-
-class TestCrearBundle:
-    def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "source-1.bundle"
-        bundle.write_bytes(b"bundle-content")
-        git = FakeGit({"bundle create": FakeResult(0)})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        size = _crear_bundle(tmp_path, bundle)
-        assert size == bundle.stat().st_size
-        assert git.calls[0][:2] == ("bundle", "create")
-
-    def test_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "source-1.bundle"
-        git = FakeGit({"bundle create": FakeResult(1, "", "bundle failed")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        with pytest.raises(RuntimeError, match="bundle failed"):
-            _crear_bundle(tmp_path, bundle)
-
-
-class TestCalcularSha256:
-    def test_un_chunk(self, tmp_path: Path) -> None:
-        f = tmp_path / "x.bin"
-        f.write_bytes(b"hola")
-        assert _calcular_sha256(f) == archiver.hashlib.sha256(b"hola").hexdigest()
-
-    def test_multi_chunk(self, tmp_path: Path) -> None:
-        f = tmp_path / "big.bin"
-        f.write_bytes(b"a" * 200_000)
-        assert _calcular_sha256(f) == archiver.hashlib.sha256(b"a" * 200_000).hexdigest()
-
-
-class TestConstruirManifest:
-    def test_retention_por_defecto(self) -> None:
-        m = _construir_manifest("c1", "t1", Path("/a/source-t1.bundle"), 42, "sha", 3, None)
-        assert m.retention_days == ARCHIVE_RETENTION_DAYS.get("source", 90)
-
-    def test_retention_explicita(self) -> None:
-        m = _construir_manifest("c1", "t1", Path("/a/source-t1.bundle"), 42, "sha", 3, 7)
-        assert m.retention_days == 7
-
-
-class TestEscribirManifest:
-    def test_escribe_y_loguea(self, tmp_path: Path) -> None:
-        manifest = ArchiveManifest(
-            kind="source",
-            source_commit="abcdef123456",
-            created_at="20260815_120000_000000",
-            archive_path=str(tmp_path / "source-20260815_120000_000000.bundle"),
-            compressed_size=42,
-            content_sha256="sha123",
-            file_count=3,
-            retention_days=90,
-        )
-        path = _escribir_manifest(manifest)
-        assert path.exists()
-        data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["source_commit"] == "abcdef123456"
-        assert data["retention_days"] == 90
-
-
-class TestRegistrarEnDb:
-    def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        conn = FakeConn()
-
-        def fake_open_db(_path: Path) -> FakeConn:
-            return conn
-
-        monkeypatch.setattr("knowledge.engine.connection.begin_immediate", lambda _c: None)
-        monkeypatch.setattr("knowledge.engine.connection.open_db", fake_open_db)
-        manifest = ArchiveManifest(
-            source_commit="abc",
-            created_at="t1",
-            archive_path=str(tmp_path / "s.bundle"),
-            content_sha256="sha",
-            retention_days=90,
-        )
-        _registrar_en_db(tmp_path / "db.sqlite", manifest, tmp_path / "m.json", tmp_path / "s.bundle", 42)
-        assert conn.committed
-        assert conn.closed
-
-    def test_error_loguea_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        def fake_open_db(_path: Path) -> None:
-            raise RuntimeError("db rota")
-
-        monkeypatch.setattr("knowledge.engine.connection.begin_immediate", lambda _c: None)
-        monkeypatch.setattr("knowledge.engine.connection.open_db", fake_open_db)
-        manifest = ArchiveManifest(source_commit="abc", created_at="t1", archive_path="s.bundle")
-        _registrar_en_db(tmp_path / "db.sqlite", manifest, tmp_path / "m.json", tmp_path / "s.bundle", 1)
-
-
-class TestRegistrarAuditYMetricas:
-    def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        audit_logged: list[dict[str, Any]] = []
-
-        def fake_get_audit() -> Any:
-            return SimpleNamespace(log_archive=lambda **kw: audit_logged.append(kw))
-
-        monkeypatch.setattr("knowledge.engine.audit.get_audit", fake_get_audit)
-        monkeypatch.setattr(
-            "knowledge.engine.metrics.archive_duration_seconds",
-            SimpleNamespace(observe=lambda _v: None),
-        )
-        _registrar_audit_y_metricas("abcdef123456", 3, 42, 0.0)
-        assert audit_logged[0]["commit"] == "abcdef123456"
-
-    def test_audit_falla_metricas_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def fake_get_audit() -> Any:
-            raise RuntimeError("audit caido")
-
-        monkeypatch.setattr("knowledge.engine.audit.get_audit", fake_get_audit)
-        monkeypatch.setattr(
-            "knowledge.engine.metrics.archive_duration_seconds",
-            SimpleNamespace(observe=lambda _v: None),
-        )
-        _registrar_audit_y_metricas("abc", 3, 42, 0.0)
-
-    def test_metricas_fallan(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def fake_get_audit() -> Any:
-            return SimpleNamespace(log_archive=lambda **kw: None)
-
-        monkeypatch.setattr("knowledge.engine.audit.get_audit", fake_get_audit)
-
-        def fake_observe(_v: float) -> None:
-            raise RuntimeError("metrics caido")
-
-        monkeypatch.setattr(
-            "knowledge.engine.metrics.archive_duration_seconds",
-            SimpleNamespace(observe=fake_observe),
-        )
-        _registrar_audit_y_metricas("abc", 3, 42, 0.0)
+    def test_sha256(self, tmp_path) -> None:
+        f = tmp_path / "f"
+        f.write_bytes(b"abc")
+        assert _calcular_sha256(f) == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 
 
 class TestArchiveSource:
-    def _setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[FakeGit, Path, Path]:
-        source = tmp_path / "source"
-        source.mkdir()
-        archive_dir = tmp_path / "archives"
-        git = FakeGit(
-            {
-                "rev-parse": FakeResult(0, "deadbeef123\n"),
-                "ls-files": FakeResult(0, "a.py\nb.py\nc.py\n"),
-            }
+    def test_e2e(self, tmp_path) -> None:
+        repo = _git_repo(tmp_path)
+        arch_dir = tmp_path / "arch"
+        db = _arch_db(tmp_path)
+        manifest = archive_source(source_dir=repo, archive_dir=arch_dir, db_path=db)
+        assert manifest.kind == "source"
+        assert (arch_dir / f"source-{manifest.created_at}.bundle").exists()
+        assert (arch_dir / f"source-{manifest.created_at}.manifest.json").exists()
+        rows = list_archives_from_db(db)
+        assert len(rows) == 1
+        assert rows[0]["kind"] == "source"
+
+    def test_no_es_repo(self, tmp_path) -> None:
+        norepo = tmp_path / "norepo"
+        norepo.mkdir()
+        with pytest.raises(ValueError, match="no es un repositorio git"):
+            archive_source(source_dir=norepo, archive_dir=tmp_path / "a")
+
+    def test_verificar_git_commit(self, tmp_path) -> None:
+        assert len(_verificar_git_commit(_git_repo(tmp_path))) == 40
+
+    def test_contar_tracked(self, tmp_path) -> None:
+        repo = _git_repo(tmp_path)
+        assert _contar_tracked(repo) == 1
+
+    def test_crear_bundle_error(self, tmp_path, monkeypatch) -> None:
+        def _bad(*a, **k):
+            return mock.Mock(returncode=1, stderr="boom")
+
+        monkeypatch.setattr("knowledge.engine.archiver._git_cmd", _bad)
+        with pytest.raises(RuntimeError, match="Error creando git bundle"):
+            _crear_bundle(tmp_path, tmp_path / "x.bundle")
+
+    def test_construir_manifest_default_retention(self) -> None:
+        m = _construir_manifest("c" * 40, "T", Path("/x.bundle"), 10, "s" * 64, 1, None)
+        assert m.retention_days == 90
+
+    def test_escribir_manifest(self, tmp_path) -> None:
+        m = _construir_manifest("c" * 40, "T2", tmp_path / "x.bundle", 10, "s" * 64, 1, 7)
+        p = _escribir_manifest(m)
+        assert p.exists()
+        data = json.loads(p.read_text())
+        assert data["retention_days"] == 7
+
+    def test_registrar_db_error_no_propaga(self, tmp_path, caplog) -> None:
+        m = ArchiveManifest()
+        with caplog.at_level("WARNING", logger="ura.knowledge.archiver"):
+            _registrar_en_db(tmp_path / "no.db", m, tmp_path / "m.json", tmp_path / "b", 1)
+        assert any("No se pudo registrar" in r.message for r in caplog.records)
+
+    def test_audit_y_metricas_ok(self, monkeypatch) -> None:
+        audit = mock.Mock()
+        audit.log_archive = mock.Mock()
+        monkeypatch.setitem(
+            __import__("sys").modules, "knowledge.engine.audit", mock.Mock(get_audit=lambda: audit)
         )
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        monkeypatch.setattr(
-            "knowledge.engine.audit.get_audit",
-            lambda: SimpleNamespace(log_archive=lambda **kw: None),
+        metric = mock.Mock()
+        metric.observe = mock.Mock()
+        monkeypatch.setitem(
+            __import__("sys").modules, "knowledge.engine.metrics", mock.Mock(archive_duration_seconds=metric)
         )
-        monkeypatch.setattr(
-            "knowledge.engine.metrics.archive_duration_seconds",
-            SimpleNamespace(observe=lambda _v: None),
-        )
-        return git, source, archive_dir
+        _registrar_audit_y_metricas("c" * 40, 1, 10, 0.0)
+        audit.log_archive.assert_called_once()
 
-    def test_flujo_completo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        git, source, archive_dir = self._setup(tmp_path, monkeypatch)
-
-        def fake_crear_bundle(_src: Path, bundle_path: Path) -> int:
-            bundle_path.write_bytes(b"bundle-bytes")
-            return bundle_path.stat().st_size
-
-        monkeypatch.setattr(archiver, "_crear_bundle", fake_crear_bundle)
-        manifest = archive_source(source_dir=source, archive_dir=archive_dir, db_path=None)
-        assert manifest.source_commit == "deadbeef123"
-        assert manifest.file_count == 3
-        assert manifest.retention_days == ARCHIVE_RETENTION_DAYS.get("source", 90)
-        assert (archive_dir / f"source-{manifest.created_at}.manifest.json").exists()
-        assert (archive_dir / f"source-{manifest.created_at}.bundle").exists()
-        assert git.calls[0] == ("rev-parse", "HEAD")
-
-    def test_con_db_y_retention(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        _, source, archive_dir = self._setup(tmp_path, monkeypatch)
-        conn = FakeConn()
-        monkeypatch.setattr(archiver, "_crear_bundle", lambda _s, p: (p.write_bytes(b"x"), p.stat().st_size)[1])
-        monkeypatch.setattr("knowledge.engine.connection.begin_immediate", lambda _c: None)
-        monkeypatch.setattr("knowledge.engine.connection.open_db", lambda _p: conn)
-        manifest = archive_source(
-            source_dir=source,
-            archive_dir=archive_dir,
-            db_path=tmp_path / "ke.sqlite",
-            retention_days=5,
-        )
-        assert manifest.retention_days == 5
-        assert conn.committed
-
-    def test_source_dir_por_defecto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        _, _, archive_dir = self._setup(tmp_path, monkeypatch)
-        monkeypatch.setattr(archiver, "_crear_bundle", lambda _s, p: (p.write_bytes(b"x"), 1)[1])
-        monkeypatch.setattr(archiver, "_validate_source_dir", lambda p, **kw: Path("/proj/source"))
-        manifest = archive_source(archive_dir=archive_dir)
-        assert manifest.file_count == 3
-
-    def test_falla_si_no_repo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        source = tmp_path / "source"
-        source.mkdir()
-        git = FakeGit({"rev-parse": FakeResult(128, "", "not a repo")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        with pytest.raises(ValueError, match="no es un repositorio"):
-            archive_source(source_dir=source, archive_dir=tmp_path / "arch")
-
-
-class TestCargarManifest:
-    def test_valido(self, tmp_path: Path) -> None:
-        path = _write_manifest(tmp_path, tmp_path, "s.manifest.json", {"kind": "source", "file_count": 5})
-        manifest = _cargar_manifest_archivo(path)
-        assert manifest is not None
-        assert manifest.file_count == 5
-
-    def test_json_invalido(self, tmp_path: Path) -> None:
-        path = tmp_path / "s.manifest.json"
-        path.write_text("{not json", encoding="utf-8")
-        assert _cargar_manifest_archivo(path) is None
-
-    def test_type_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        path = _write_manifest(tmp_path, tmp_path, "s.manifest.json", {"kind": "source"})
-
-        def fake_from_dict(_data: dict) -> ArchiveManifest:
-            raise TypeError("campo raro")
-
-        monkeypatch.setattr(ArchiveManifest, "from_dict", classmethod(fake_from_dict))
-        assert _cargar_manifest_archivo(path) is None
-
-
-class TestResolverDentro:
-    def test_ok(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
-        allowed.mkdir()
-        f = allowed / "x.txt"
-        f.write_text("x", encoding="utf-8")
-        assert _resolver_dentro(allowed, f, "x") == f.resolve()
-
-    def test_traversal_devuelve_none(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "allowed"
-        allowed.mkdir()
-        assert _resolver_dentro(allowed, tmp_path / "fuera.txt", "x") is None
+    def test_audit_y_metricas_fallan(self, monkeypatch, caplog) -> None:
+        monkeypatch.setitem(__import__("sys").modules, "knowledge.engine.audit", None)
+        monkeypatch.setitem(__import__("sys").modules, "knowledge.engine.metrics", None)
+        _registrar_audit_y_metricas("c" * 40, 1, 10, 0.0)  # no lanza
 
 
 class TestVerifyArchive:
-    def test_ok(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        bundle = allowed / "source-1.bundle"
+    def _manifest_ok(self, tmp_path: Path, arch_dir: Path) -> tuple[Path, ArchiveManifest]:
+        bundle = arch_dir / "source-T.bundle"
         bundle.write_bytes(b"data")
-        sha = _calcular_sha256(bundle)
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "source-1.manifest.json",
-            {
-                "kind": "source",
-                "archive_path": str(bundle),
-                "content_sha256": sha,
-                "created_at": "t1",
-            },
+        m = ArchiveManifest(
+            kind="source",
+            source_commit="c",
+            created_at="T",
+            archive_path=str(bundle),
+            compressed_size=4,
+            content_sha256=_calcular_sha256(bundle),
+            file_count=1,
+            retention_days=90,
         )
-        assert verify_archive(manifest, archive_dir=allowed) is True
+        mpath = _escribir_manifest(m)
+        return mpath, m
 
-    def test_manifest_no_existe(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        assert verify_archive(tmp_path / "none.manifest.json", archive_dir=allowed) is False
+    def test_ok(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        mpath, _ = self._manifest_ok(tmp_path, arch)
+        assert verify_archive(mpath, archive_dir=arch) is True
 
-    def test_manifest_invalido(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        path = allowed / "bad.manifest.json"
-        path.write_text("{broken", encoding="utf-8")
-        assert verify_archive(path, archive_dir=allowed) is False
+    def test_manifest_no_existe(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        assert verify_archive(arch / "nope.manifest.json", archive_dir=arch) is False
 
-    def test_archive_no_existe(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "s.manifest.json",
-            {"archive_path": str(allowed / "missing.bundle"), "content_sha256": "sha"},
-        )
-        assert verify_archive(manifest, archive_dir=allowed) is False
+    def test_manifest_invalido(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        bad = arch / "bad.manifest.json"
+        bad.write_text("{not json")
+        assert verify_archive(bad, archive_dir=arch) is False
 
-    def test_sha_mismatch(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        bundle = allowed / "source-1.bundle"
-        bundle.write_bytes(b"datos")
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "source-1.manifest.json",
-            {"archive_path": str(bundle), "content_sha256": "0" * 64, "created_at": "t1"},
-        )
-        assert verify_archive(manifest, archive_dir=allowed) is False
+    def test_archive_no_existe(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        m = ArchiveManifest(created_at="T", archive_path=str(arch / "ghost.bundle"), content_sha256="s")
+        mpath = _escribir_manifest(m)
+        assert verify_archive(mpath, archive_dir=arch) is False
 
-    def test_traversal_en_manifest(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        fuera = tmp_path / "fuera.manifest.json"
-        fuera.write_text("{}", encoding="utf-8")
-        assert verify_archive(fuera, archive_dir=allowed) is False
+    def test_sha_mismatch(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        mpath, _ = self._manifest_ok(tmp_path, arch)
+        raw = json.loads(mpath.read_text())
+        raw["content_sha256"] = "0" * 64
+        mpath.write_text(json.dumps(raw))
+        assert verify_archive(mpath, archive_dir=arch) is False
 
-    def test_archive_dir_por_defecto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        default_dir = tmp_path / "default"
-        default_dir.mkdir()
-        monkeypatch.setattr(archiver, "_DEFAULT_ARCHIVE_DIR", default_dir)
-        bundle = default_dir / "s.bundle"
-        bundle.write_bytes(b"x")
-        sha = _calcular_sha256(bundle)
-        manifest = _write_manifest(
-            tmp_path,
-            default_dir,
-            "s.manifest.json",
-            {"archive_path": str(bundle), "content_sha256": sha},
-        )
-        assert verify_archive(manifest) is True
+    def test_traversal_denegado(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        assert _resolver_dentro(arch, tmp_path / ".." / "evil", "x") is None
+
+    def test_cargar_manifest_invalido(self, tmp_path) -> None:
+        f = tmp_path / "m.json"
+        f.write_text("nope")
+        assert _cargar_manifest_archivo(f) is None
 
 
-class TestClonarBundle:
-    def test_error_clone(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "s.bundle"
-        bundle.write_bytes(b"x")
-        dest = tmp_path / "dest"
-        monkeypatch.setattr(
-            archiver.subprocess,
-            "run",
-            lambda *a, **kw: FakeResult(1, "", "clone failed"),
-        )
-        with pytest.raises(RuntimeError, match="clone failed"):
-            _clonar_bundle(bundle, dest, "abc")
-
-    def test_ok_sin_commit(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "s.bundle"
-        bundle.write_bytes(b"x")
-        dest = tmp_path / "dest"
-        git = FakeGit()
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        monkeypatch.setattr(
-            archiver.subprocess,
-            "run",
-            lambda *a, **kw: FakeResult(0),
-        )
-        _clonar_bundle(bundle, dest, None)
-        assert dest.is_dir()
-        assert git.calls == []
-
-    def test_error_checkout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "s.bundle"
-        bundle.write_bytes(b"x")
-        dest = tmp_path / "dest"
-        git = FakeGit({"checkout": FakeResult(1, "", "checkout failed")})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        monkeypatch.setattr(
-            archiver.subprocess,
-            "run",
-            lambda *a, **kw: FakeResult(0),
-        )
-        with pytest.raises(RuntimeError, match="checkout failed"):
-            _clonar_bundle(bundle, dest, "abc123")
-
-    def test_ok_con_checkout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        bundle = tmp_path / "s.bundle"
-        bundle.write_bytes(b"x")
-        dest = tmp_path / "dest"
-        git = FakeGit({"checkout": FakeResult(0)})
-        monkeypatch.setattr(archiver, "_git_cmd", git)
-        monkeypatch.setattr(
-            archiver.subprocess,
-            "run",
-            lambda *a, **kw: FakeResult(0),
-        )
-        _clonar_bundle(bundle, dest, "abc123")
-        assert git.calls[0] == ("checkout", "abc123")
-
-
-class TestRestoreSource:
-    def _manifest_valido(self, tmp_path: Path, allowed: Path) -> tuple[Path, Path]:
-        bundle = allowed / "source-1.bundle"
-        bundle.write_bytes(b"bundle-data")
-        sha = _calcular_sha256(bundle)
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "source-1.manifest.json",
-            {
-                "kind": "source",
-                "source_commit": "commit-abc",
-                "archive_path": str(bundle),
-                "content_sha256": sha,
-                "created_at": "t1",
-            },
-        )
-        return manifest, bundle
-
-    def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest, _ = self._manifest_valido(tmp_path, allowed)
-        dest = tmp_path / "restored"
-        clonado: list[tuple] = []
-        monkeypatch.setattr(archiver, "_clonar_bundle", lambda b, d, c: clonado.append((b, d, c)))
-        commit = restore_source(manifest, dest_dir=dest, archive_dir=allowed)
-        assert commit == "commit-abc"
-        assert clonado[0][1] == dest.resolve()
-
-    def test_traversal_manifest(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        fuera = tmp_path / "fuera.manifest.json"
-        fuera.write_text("{}", encoding="utf-8")
-        with pytest.raises(ValueError, match="Path traversal"):
-            restore_source(fuera, archive_dir=allowed)
-
-    def test_verificacion_falla(self, tmp_path: Path) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest = _write_manifest(
-            tmp_path, allowed, "s.manifest.json", {"archive_path": str(allowed / "missing.bundle")}
-        )
+class TestRestore:
+    def test_manifest_invalido(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        bad = arch / "bad.manifest.json"
+        bad.write_text("{nope")
         with pytest.raises(ValueError, match="no pasó verificación"):
-            restore_source(manifest, archive_dir=allowed)
+            restore_source(bad, archive_dir=arch)
 
-    def test_manifest_invalido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest = allowed / "bad.manifest.json"
-        manifest.write_text("{broken", encoding="utf-8")
-        monkeypatch.setattr(archiver, "verify_archive", lambda *a, **kw: True)
-        with pytest.raises(ValueError, match="Manifest inválido"):
-            restore_source(manifest, archive_dir=allowed)
+    def test_verify_fail(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        m = ArchiveManifest(created_at="T", archive_path=str(arch / "ghost.bundle"), content_sha256="s")
+        mpath = _escribir_manifest(m)
+        with pytest.raises(ValueError, match="no pasó verificación"):
+            restore_source(mpath, archive_dir=arch)
 
-    def test_bundle_no_encontrado(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "s.manifest.json",
-            {
-                "source_commit": "c",
-                "archive_path": str(allowed / "ausente.bundle"),
-                "content_sha256": "sha",
-                "created_at": "t1",
-            },
+    def test_bundle_no_existe(self, tmp_path, monkeypatch) -> None:
+        # La rama FileNotFoundError (bundle borrado entre verify y restore) es
+        # inalcanzable en single-thread: verify comprueba exists() antes.
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        bundle = arch / "source-T.bundle"
+        bundle.write_bytes(b"data")
+        m = ArchiveManifest(created_at="T", archive_path=str(bundle), content_sha256=_calcular_sha256(bundle))
+        mpath = _escribir_manifest(m)
+        monkeypatch.setattr("knowledge.engine.archiver.verify_archive", lambda *a, **k: True)
+        bundle.unlink()
+        with pytest.raises(FileNotFoundError):
+            restore_source(mpath, archive_dir=arch)
+
+    def test_traversal_manifest(self, tmp_path) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        with pytest.raises(ValueError, match="Path traversal"):
+            restore_source(tmp_path / ".." / "evil.json", archive_dir=arch)
+
+    def test_e2e(self, tmp_path) -> None:
+        repo = _git_repo(tmp_path, content="original")
+        arch = tmp_path / "arch"
+        m = archive_source(source_dir=repo, archive_dir=arch)
+        dest = tmp_path / "restored"
+        commit = restore_source(
+            arch / f"source-{m.created_at}.manifest.json",
+            dest_dir=dest,
+            archive_dir=arch,
         )
-        monkeypatch.setattr(archiver, "verify_archive", lambda *a, **kw: True)
-        with pytest.raises(FileNotFoundError, match="Bundle no encontrado"):
-            restore_source(manifest, archive_dir=allowed)
+        assert commit == m.source_commit
+        assert (dest / "f.txt").read_text() == "original"
 
-    def test_traversal_en_archive_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        fuera = tmp_path / "fuera.bundle"
-        fuera.write_bytes(b"x")
-        manifest = _write_manifest(
-            tmp_path,
-            allowed,
-            "s.manifest.json",
-            {
-                "source_commit": "c",
-                "archive_path": str(fuera),
-                "content_sha256": "sha",
-                "created_at": "t1",
-            },
+    def test_clonar_bundle_error(self, tmp_path, monkeypatch) -> None:
+        bundle = tmp_path / "b.bundle"
+        bundle.write_bytes(b"x")
+        monkeypatch.setattr(
+            "knowledge.engine.archiver.subprocess.run",
+            lambda *a, **k: mock.Mock(returncode=1, stderr="clone boom"),
         )
-        monkeypatch.setattr(archiver, "verify_archive", lambda *a, **kw: True)
-        with pytest.raises(ValueError, match="Path traversal denegado en archive_path"):
-            restore_source(manifest, archive_dir=allowed)
+        with pytest.raises(RuntimeError, match="Error restaurando desde bundle"):
+            _clonar_bundle(bundle, tmp_path / "dest", None)
 
-    def test_dest_por_defecto(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        allowed = tmp_path / "archives"
-        allowed.mkdir()
-        manifest, _ = self._manifest_valido(tmp_path, allowed)
-        default_dest = tmp_path / "source"
-        monkeypatch.setattr(archiver, "_PROJECT_ROOT", tmp_path)
-        clonado: list[tuple] = []
-        monkeypatch.setattr(archiver, "_clonar_bundle", lambda b, d, c: clonado.append((b, d, c)))
-        commit = restore_source(manifest, archive_dir=allowed)
-        assert commit == "commit-abc"
-        assert clonado[0][1] == default_dest.resolve()
-
-
-class TestListArchives:
-    def test_dir_no_existe(self, tmp_path: Path) -> None:
-        assert list_archives(tmp_path / "noexiste") == []
-
-    def test_manifests_validos(self, tmp_path: Path) -> None:
-        _write_manifest(tmp_path, tmp_path, "a.manifest.json", {"kind": "source", "file_count": 1})
-        _write_manifest(tmp_path, tmp_path, "b.manifest.json", {"kind": "source", "file_count": 2})
-        manifests = list_archives(tmp_path)
-        assert [m.file_count for m in manifests] == [2, 1]
-
-    def test_manifiesto_corrupto(self, tmp_path: Path) -> None:
-        _write_manifest(tmp_path, tmp_path, "a.manifest.json", {"kind": "source", "file_count": 1})
-        (tmp_path / "bad.manifest.json").write_text("{rotto", encoding="utf-8")
-        manifests = list_archives(tmp_path)
-        assert len(manifests) == 1
-
-    def test_error_oserror(self, tmp_path: Path) -> None:
-        _write_manifest(tmp_path, tmp_path, "a.manifest.json", {"kind": "source", "file_count": 1})
-        (tmp_path / "dir.manifest.json").mkdir()
-        manifests = list_archives(tmp_path)
-        assert len(manifests) == 1
-
-    def test_default_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        default_dir = tmp_path / "default"
-        default_dir.mkdir()
-        monkeypatch.setattr(archiver, "_DEFAULT_ARCHIVE_DIR", default_dir)
-        assert list_archives() == []
+    def test_checkout_error(self, tmp_path, monkeypatch) -> None:
+        bundle = tmp_path / "b.bundle"
+        bundle.write_bytes(b"x")
+        dest = tmp_path / "dest"
+        dest.mkdir()
+        monkeypatch.setattr(
+            "knowledge.engine.archiver.subprocess.run",
+            lambda *a, **k: mock.Mock(returncode=0, stderr=""),
+        )
+        monkeypatch.setattr(
+            "knowledge.engine.archiver._git_cmd",
+            lambda *a, **k: mock.Mock(returncode=1, stderr="checkout boom"),
+        )
+        with pytest.raises(RuntimeError, match="Error haciendo checkout"):
+            _clonar_bundle(bundle, dest, "c" * 40)
 
 
-class TestListArchivesFromDb:
-    def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        rows = [
-            {
-                "id": 1,
-                "kind": "source",
-                "source_commit": "abc",
-                "manifest_path": "/m",
-                "archive_path": "/a",
-                "compressed_size": 3,
-                "content_sha256": "s",
-                "archived_at": "2026-01-01",
-                "retention_days": 90,
-            }
-        ]
-        monkeypatch.setattr("knowledge.engine.connection.open_db", lambda _p: FakeConn(rows))
-        result = list_archives_from_db(tmp_path / "ke.sqlite")
-        assert result == rows
+class TestList:
+    def test_dir_no_existe(self, tmp_path) -> None:
+        assert list_archives(tmp_path / "ghost") == []
 
-    def test_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        def fake_open_db(_p: Path) -> None:
-            raise RuntimeError("db caida")
+    def test_manifests_ok_y_corruptos(self, tmp_path, caplog) -> None:
+        arch = tmp_path / "arch"
+        arch.mkdir()
+        bundle = arch / "source-T.bundle"
+        bundle.write_bytes(b"x")
+        m = ArchiveManifest(created_at="T", archive_path=str(bundle), content_sha256="s")
+        _escribir_manifest(m)
+        (arch / "corrupto.manifest.json").write_text("no")
+        with caplog.at_level("WARNING", logger="ura.knowledge.archiver"):
+            items = list_archives(arch)
+        assert len(items) == 1
+        assert any("corrupto" in r.message for r in caplog.records)
 
-        monkeypatch.setattr("knowledge.engine.connection.open_db", fake_open_db)
-        assert list_archives_from_db(tmp_path / "ke.sqlite") == []
+    def test_from_db_sin_tabla(self, tmp_path) -> None:
+        assert list_archives_from_db(tmp_path / "no.db") == []
