@@ -35,6 +35,8 @@ else
 fi
 
 # --- 2) Commit de veredictos locales (docs/udo/) en rama DEDICADA ---
+# v3.3 (TASK-20260818-011): rsync --delete sustituye a cp -r — los expedientes
+# borrados en el repo principal tambien se borran en el worktree (cp no borra).
 # v3.2 (TASK-20260818-008): los veredictos se commitean en un worktree de
 # mac-veredictos, NO en la rama actual — evita contaminar la rama de tarea
 # del TERM (divergencias Mac<->ASUS, auto-push fantasma) sin tocar el
@@ -45,8 +47,8 @@ if [ -n "$(git status -s docs/udo/ 2>/dev/null | head -1)" ]; then
         git worktree remove --force "$WT" 2>/dev/null
         git worktree add -f "$WT" mac-veredictos 2>/dev/null || { echo "WORKTREE_FAIL"; exit 1; }
     fi
-    cp -r docs/udo/. "$WT/docs/udo/"
-    (cd "$WT" && git add docs/udo/ 2>/dev/null \
+    rsync -a --delete docs/udo/ "$WT/docs/udo/" 2>/dev/null
+    (cd "$WT" && git add -A docs/udo/ 2>/dev/null \
         && git commit -m "chore(udo): [TERM] veredictos revisor desde Escritorio (auto-push)" 2>/dev/null \
         && git fetch asus mac-veredictos 2>/dev/null \
         && git push asus mac-veredictos --force-with-lease 2>&1 | tail -1 \

@@ -205,3 +205,13 @@
 | 2026-08-18 | Mac (proceso) | **Lección M5**: el detector del TERM en la Mac REGENERA docs/ARCHITECTURE.md en cada checkout (el archivo aparece siempre como modificado, "unstaged changes" fantasma) — cualquier operación git (rebase/stash) falla o aborta. Operar en la Mac exige contar con este archivo regenerado (autostash) o pausa del detector. | MEDIA | lección documentada (2026-08-18) | **QUÉ**: documentar en AGENTS.md (TASK-20260818-006); en operaciones, usar `git rebase --autostash` o verificar el árbol antes. **POR QUÉ**: M5 (3 rebases fallidos). **IMPACTO**: proceso. **VERIFICACIÓN**: n/a. **RIESGO**: nulo. |
 | 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
+| 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
