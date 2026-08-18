@@ -40,7 +40,8 @@
       "TASK-20260818-019",
       "TASK-20260818-020",
       "TASK-20260818-021",
-      "TASK-20260818-022"
+      "TASK-20260818-022",
+      "TASK-20260818-023"
     ],
     "bloqueadas": [
       "TASK-20260817-020"
@@ -645,6 +646,20 @@
       "modo": "secuencial",
       "historial": [
         "2026-08-18: fix IP LAN; /opt desactualizado detectado; timer creado."
+      ],
+      "nota": "DONE 2026-08-18."
+    },
+    "TASK-20260818-023": {
+      "task_id": "TASK-20260818-023",
+      "descripcion": "F9.3: fix backup Mac (SOURCE solo repo, evita 189GB modelos)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (evidencia: Backup completado 309MB; Mac limpia; tuneladora sin FAIL)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: SOURCE_DIR corregido a repo; 10+ dudas investigadas en DUDAS_INVESTIGACION.md."
       ],
       "nota": "DONE 2026-08-18."
     }
