@@ -122,7 +122,7 @@ def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None
     )
 
 
-async def _proxy_stream(
+async def _proxy_stream(  # noqa: PLR0917 — firma pública estable
     request: Request,
     body: dict | None,
     headers: dict[str, str],

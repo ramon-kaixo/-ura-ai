@@ -24,7 +24,7 @@ class OpenRouterProvider(Provider):
     def timeout(self) -> int:
         return OPENROUTER_TIMEOUT
 
-    def _payload_base(
+    def _payload_base(  # noqa: PLR0917 — firma pública estable
         self,
         modelo: str,
         mensajes: list,
@@ -72,7 +72,7 @@ class OpenRouterProvider(Provider):
                     if data:
                         yield json.loads(data)
 
-    async def chat(
+    async def chat(  # noqa: PLR0917 — firma pública estable
         self,
         modelo: str,
         mensajes: list,

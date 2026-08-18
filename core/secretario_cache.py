@@ -82,7 +82,7 @@ class SecretarioCache:
         """Consulta read-only a Qdrant en ASUS vía REST."""
         try:
             url = f"http://{_get_qdrant_host()}:{_get_qdrant_port()}/collections/{coleccion}/points/scroll"
-            req = urllib.request.Request(  # noqa: S310
+            req = urllib.request.Request(
                 url,
                 data=json.dumps({"limit": limit}).encode(),
                 headers={"Content-Type": "application/json"},

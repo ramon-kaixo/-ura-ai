@@ -26,7 +26,7 @@ def _rechazar_si_bloqueado(provider_name: str, circuit_breaker, rate_limiter) ->
         )
 
 
-async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:
+async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:  # noqa: PLR0917 — firma pública estable
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -60,7 +60,7 @@ def _headers_json(provider_name: str, modelo: str, route_reason: str) -> dict:
     }
 
 
-async def _procesar_tool_calls(
+async def _procesar_tool_calls(  # noqa: PLR0917 — firma pública estable
     state,
     provider,
     body: ChatRequest,
