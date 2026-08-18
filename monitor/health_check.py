@@ -60,7 +60,7 @@ def measure_http_latency() -> float:
     try:
         start = time.time()
         url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url)  # noqa: S310
         req.add_header("Connection", "close")
         with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             return (time.time() - start) * 1000

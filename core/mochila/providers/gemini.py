@@ -37,7 +37,7 @@ class GeminiProvider(Provider):
     def timeout(self) -> int:
         return GEMINI_TIMEOUT
 
-    def _payload_base(  # noqa: PLR0917 — firma pública estable
+    def _payload_base(
         self,
         modelo: str,
         mensajes: list,
@@ -85,7 +85,7 @@ class GeminiProvider(Provider):
                     if data:
                         yield json.loads(data)
 
-    async def chat(  # noqa: PLR0917 — firma pública estable
+    async def chat(
         self,
         modelo: str,
         mensajes: list,

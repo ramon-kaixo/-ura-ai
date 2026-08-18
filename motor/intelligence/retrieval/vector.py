@@ -39,7 +39,7 @@ class VectorRetriever:
         )
         qdrant_latency = (time.monotonic() - qdrant_start) * 1000
 
-        results = []
+        results: list[dict] = []
         for h in hits.points if hits else []:
             payload = h.payload or {}
             doc_id = payload.get("source") or payload.get("id", str(h.id))

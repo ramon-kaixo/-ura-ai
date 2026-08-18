@@ -69,7 +69,7 @@ class TestWeatherPlugin:
         resp = mock.Mock()
         resp.status_code = 200
         resp.text = "Sunny +25C"
-        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.AsyncMock(return_value=resp))
+        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.Mock(return_value=resp))
         r = await plugin.execute({"location": "madrid"})
         assert r.success is True
         assert "madrid" in r.output
@@ -79,13 +79,13 @@ class TestWeatherPlugin:
         resp = mock.Mock()
         resp.status_code = 500
         resp.text = ""
-        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.AsyncMock(return_value=resp))
+        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.Mock(return_value=resp))
         r = await plugin.execute({"location": "x"})
         assert r.success is False
 
     @pytest.mark.asyncio
     async def test_excepcion(self, plugin, monkeypatch) -> None:
-        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.AsyncMock(side_effect=OSError("net")))
+        monkeypatch.setattr("motor.assistant.tool_plugins.weather.httpx.get", mock.Mock(side_effect=OSError("net")))
         r = await plugin.execute({"location": "x"})
         assert r.success is False
         assert "net" in r.error

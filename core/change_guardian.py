@@ -79,18 +79,18 @@ class ChangeGuardian:
         self._modified_before = _get_modified_tracked_files()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if exc_type is not None:
             logger.error("Excepción durante '%s': %s", self.description, exc_val)
             self._rollback(reason=f"excepción: {exc_val}")
-            return False
+            return None
 
         passed, error = self._run_tests()
         if passed:
             logger.info("✅ Cambio '%s' validado — tests OK", self.description)
         else:
             self._rollback(reason=error)
-        return False
+        return None
 
     def _run_tests(self) -> tuple[bool, str]:
         try:

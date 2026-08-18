@@ -28,7 +28,7 @@ class AnkerMacPipeline:
         self.sample_rate = 16000
         self.block_size = 480
         self.db_path = Path(base_path) / "config/voice_corrections.db"
-        self.audio_queue = queue.Queue()
+        self.audio_queue: queue.Queue = queue.Queue()
         self.is_playing_tts = False
 
         os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103

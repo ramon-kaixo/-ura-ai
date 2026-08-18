@@ -24,7 +24,7 @@ class WeatherPlugin(ToolPlugin):
         if not location:
             return ToolResult(False, error="Ciudad no especificada")
         try:
-            resp = await httpx.get(
+            resp = httpx.get(
                 f"https://wttr.in/{location}?format=%C+%t+%w+%h",
                 timeout=10,
             )

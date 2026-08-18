@@ -101,6 +101,14 @@ python_version = "3.12"
 ignore_missing_imports = true
 explicit_package_bases = true
 
+[[tool.mypy.overrides]]
+module = "core.mochila.providers.*"
+disable_error_code = ["override"]
+
+[[tool.mypy.overrides]]
+module = "motor.tests.*"
+ignore_errors = true
+
 [tool.tuneladora.shadow]
 layers = [0, 1, 2, 3, 4, 5, 6, 7]
 timeout_layer_0 = 10

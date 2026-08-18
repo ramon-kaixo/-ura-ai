@@ -17,7 +17,7 @@ log = logging.getLogger("mochila.bridge")
 
 async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagina: int = 30000) -> list[dict]:
     """Busca en internet, descarga paginas, las guarda en inbox y las procesa."""
-    resultados = []
+    resultados: list[dict] = []
 
     search_result = await web_search(query, max_resultados)
     if "error" in search_result:
