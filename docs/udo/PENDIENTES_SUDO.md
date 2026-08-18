@@ -275,3 +275,15 @@ Alternativa mas ligera (solo commit, sin ciclo completo) si la tuneladora tarda 
 ```bash
 sudo docker exec sandbox-mejora-continua bash -c "cd /workspace && git add -A && git -c core.hooksPath=/dev/null commit -m 'chore(sandbox): commit de zona de mejora continua [AUTO]' && git push origin main"
 ```
+
+## 17. BLOQUE FINAL (2026-08-18) — lo unico que falta, copiar y pegar
+
+```bash
+# A. Stack monitoreo F8 (nombres -f8, sin conflicto con stack previa)
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus && sudo docker compose up -d
+# B. Sandbox commitea su propia zona (opcion ligera: commit directo sin ciclo tuneladora)
+sudo docker exec sandbox-mejora-continua bash -c "cd /workspace && git add -A && git -c core.hooksPath=/dev/null commit -m 'chore(sandbox): zona de mejora continua [AUTO]' && git push origin main"
+```
+
+Despues avisar al WEB: verificara 9/9 (verificador), cerrara TASK-025 DONE (arbol limpio),
+comprobara los 3 tests de test_knowledge_compiler_cobertura y el siguiente mutmut.
