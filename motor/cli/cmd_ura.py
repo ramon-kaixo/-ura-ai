@@ -162,7 +162,7 @@ def cmd_system(config: UraConfig, args):
     import subprocess as _sp  # nosec
 
     version = "unknown"
-    try:
+    try:  # noqa: SIM105 — versión "unknown" por defecto con degradación controlada
         version = _sp.run(  # nosec
             ["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False
         ).stdout.strip()
@@ -573,7 +573,7 @@ def _audit_imprimir_bloques(blocks: dict) -> None:
             continue
         fails = sum(1 for f in items if f.get("level") in ("FAIL", "P0"))
         warns = sum(1 for f in items if f.get("level") in ("WARNING", "MEDIUM"))
-        icon = "❌" if fails else "⚠️" if warns else "ℹ️"
+        icon = "❌" if fails else "⚠️" if warns else "ℹ️"  # noqa: RUF001 — icono UI estable
         print(f"  [{bid}] {icon} — {len(items)} hallazgos ({fails} FAIL, {warns} WARN)")
         for f in items[:2]:
             if f.get("level") in ("FAIL", "P0", "WARNING", "MEDIUM"):
