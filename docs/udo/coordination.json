@@ -39,7 +39,8 @@
       "TASK-20260818-018",
       "TASK-20260818-019",
       "TASK-20260818-020",
-      "TASK-20260818-021"
+      "TASK-20260818-021",
+      "TASK-20260818-022"
     ],
     "bloqueadas": [
       "TASK-20260817-020"
@@ -630,6 +631,20 @@
       "modo": "secuencial",
       "historial": [
         "2026-08-18: ejecutada por WEB."
+      ],
+      "nota": "DONE 2026-08-18."
+    },
+    "TASK-20260818-022": {
+      "task_id": "TASK-20260818-022",
+      "descripcion": "F9.2: fix backup a Mac (LAN) + timer ura-backup-mac",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (evidencia: rsync copiando a Mac; timer despertador active)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: fix IP LAN; /opt desactualizado detectado; timer creado."
       ],
       "nota": "DONE 2026-08-18."
     }
