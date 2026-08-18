@@ -31,10 +31,20 @@ PATRONES: list[tuple[str, re.Pattern[str]]] = [
     ("telegram_bot", re.compile(r"\d{8,10}:[A-Za-z0-9_-]{30,}")),
     ("private_key_begin", re.compile(r"-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----")),
     ("password_assign", re.compile(r"(?i)(password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{6,}['\"]")),
-    ("api_key_assign", re.compile(r"(?i)(api[_-]?key|apikey|secret[_-]?key|client[_-]?secret)\s*[:=]\s*['\"][A-Za-z0-9_\-\.]{12,}['\"]")),
+    (
+        "api_key_assign",
+        re.compile(
+            r"(?i)(api[_-]?key|apikey|secret[_-]?key|client[_-]?secret)\s*[:=]\s*['\"][A-Za-z0-9_\-\.]{12,}['\"]"
+        ),
+    ),
     ("bearer_token", re.compile(r"(?i)['\"]authorization['\"]\s*:\s*['\"]bearer\s+[A-Za-z0-9._-]{10,}['\"]")),
     ("db_url_creds", re.compile(r"(?i)(postgres|mysql|mongodb)(\+[a-z]+)?://[^:\s/]+:[^@\s/]+@")),
-    ("secret_env_export", re.compile(r"(?i)(export\s+)?[A-Z0-9_]{4,}_(SECRET|PASSWORD|TOKEN|API_KEY|PASSWD|PWD)\s*=\s*['\"][^'\"]{6,}['\"]")),
+    (
+        "secret_env_export",
+        re.compile(
+            r"(?i)(export\s+)?[A-Z0-9_]{4,}_(SECRET|PASSWORD|TOKEN|API_KEY|PASSWD|PWD)\s*=\s*['\"][^'\"]{6,}['\"]"
+        ),
+    ),
 ]
 
 RELACIONADOS = re.compile(r"(?i)secret|password|token|credential|api[_-]?key|private key")
@@ -128,7 +138,9 @@ def main() -> None:
     parser.add_argument("--json", action="store_true", help="salida JSON")
     parser.add_argument("--max-commits", type=int, default=None, help="límite de commits a auditar")
     parser.add_argument("--only", default=None, help="rango git (p.ej. HEAD~20..HEAD)")
-    parser.add_argument("--falsos-positivos", action="store_true", help="mostrar líneas solo relacionadas (informe de ruido)")
+    parser.add_argument(
+        "--falsos-positivos", action="store_true", help="mostrar líneas solo relacionadas (informe de ruido)"
+    )
     parser.add_argument("--fail", action="store_true", help="exit 1 si hay hallazgos (modo CI)")
     args = parser.parse_args()
 
@@ -140,10 +152,7 @@ def main() -> None:
 
     # Filtro de verbosidad: PATRONES son señal fuerte; RELACIONADOS solo con flag
     if args.falsos_positivos:
-        hallazgos = [
-            h for h in hallazgos
-            if h["tipo"] == "password_assign" and RELACIONADOS.search(h["contenido"])
-        ]
+        hallazgos = [h for h in hallazgos if h["tipo"] == "password_assign" and RELACIONADOS.search(h["contenido"])]
 
     if args.json:
         print(json.dumps(hallazgos, indent=2, ensure_ascii=False))
@@ -158,8 +167,7 @@ def main() -> None:
     print(f"AVISO: {len(hallazgos)} posibles secretos en el historial:")
     for h in hallazgos[:100]:
         print(
-            f"  {h['commit'][:8]} | {h['archivo']}:{h['linea']} "
-            f"| {h['tipo']} | {h['contenido'][:60]}",
+            f"  {h['commit'][:8]} | {h['archivo']}:{h['linea']} | {h['tipo']} | {h['contenido'][:60]}",
         )
     if len(hallazgos) > 100:
         print(f"  ... y {len(hallazgos) - 100} más")

@@ -542,6 +542,7 @@ if __name__ == "__main__":
 
 # ── Integración con tuneladora (reporte JSON) ──────────────
 
+
 def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None, n: int = 0) -> dict | None:
     """Lee el reporte JSON de la tuneladora (n=0 el más reciente, n=1 el anterior).
 
@@ -610,13 +611,15 @@ def guardar_alerta_en_memoria(alertas: list[str], store=None) -> int:
 
             store = EpisodeStore()
         for alerta in alertas:
-            store.store(Episode(
-                session_id="auditoria_continua",
-                source="supervisor",
-                payload=alerta,
-                tags=["alerta_supervisor", "auditoria_continua"],
-                metadata={"componente": "auditoria_continua"},
-            ))
+            store.store(
+                Episode(
+                    session_id="auditoria_continua",
+                    source="supervisor",
+                    payload=alerta,
+                    tags=["alerta_supervisor", "auditoria_continua"],
+                    metadata={"componente": "auditoria_continua"},
+                )
+            )
             guardadas += 1
     except Exception as exc:
         log.debug("guardar_alerta_en_memoria falló: %s", exc)

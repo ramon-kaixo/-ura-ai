@@ -2,6 +2,7 @@
 
 v3.0: integra logica de scripts sueltos directamente.
 """
+
 from __future__ import annotations
 
 import json

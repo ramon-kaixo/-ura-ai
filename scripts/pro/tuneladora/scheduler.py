@@ -7,6 +7,7 @@ Uso:
     scheduler.add_pipeline("full_audit", interval_minutes=360, auto_execute_safe=False)
     scheduler.start()
 """
+
 from __future__ import annotations
 
 import asyncio

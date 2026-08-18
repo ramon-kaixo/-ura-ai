@@ -59,8 +59,13 @@ class LongTermMemory:
                 VALUES (?, ?, ?, ?, COALESCE((SELECT created FROM ltm_store WHERE key = ?), ?), ?)
                 """,
                 (
-                    entry.key, json.dumps(entry.value), entry.source,
-                    json.dumps(list(entry.tags)), entry.key, entry.created, now,
+                    entry.key,
+                    json.dumps(entry.value),
+                    entry.source,
+                    json.dumps(list(entry.tags)),
+                    entry.key,
+                    entry.created,
+                    now,
                 ),
             )
             conn.commit()

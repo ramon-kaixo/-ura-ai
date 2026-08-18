@@ -1,4 +1,5 @@
 """InstallerPlugin — instalacion y verificacion del sistema."""
+
 from __future__ import annotations
 
 import shutil
@@ -50,6 +51,7 @@ class InstallerPlugin:
         results: dict[str, Any] = {}
         try:
             import httpx
+
             # GitHub
             r = httpx.get("https://github.com", timeout=5)
             results["github"] = {"ok": r.status_code < 500}  # nosec
@@ -65,7 +67,11 @@ class InstallerPlugin:
         try:
             r = subprocess.run(  # nosec
                 [sys.executable, "-m", "pip", "install", "-e", ".[dev]"],
-                capture_output=True, text=True, timeout=300, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=str(self.repo_root),
+                check=False,
             )
             ok = r.returncode == 0
             if ok:
@@ -83,7 +89,11 @@ class InstallerPlugin:
             # pre-commit install
             r = subprocess.run(  # nosec
                 [sys.executable, "-m", "pre_commit", "install"],
-                capture_output=True, text=True, timeout=30, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.repo_root),
+                check=False,
             )
             results["precommit"] = {"ok": r.returncode == 0, "output": (r.stdout or "")[:200]}
         except Exception as e:
@@ -97,7 +107,11 @@ class InstallerPlugin:
         try:
             r = subprocess.run(  # nosec
                 [sys.executable, "-m", "pytest", "-q", "--no-cov", "motor/tests/tuneladora/"],
-                capture_output=True, text=True, timeout=60, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=str(self.repo_root),
+                check=False,
             )
             passed = "passed" in r.stdout and "failed" not in r.stdout
             results["pytest"] = {"ok": passed, "output": (r.stdout or "")[-200:]}
@@ -107,7 +121,11 @@ class InstallerPlugin:
         try:
             r = subprocess.run(  # nosec
                 [str(self.repo_root / ".venv" / "bin" / "ruff"), "check", "motor/brain/"],
-                capture_output=True, text=True, timeout=30, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.repo_root),
+                check=False,
             )
             results["ruff"] = {"ok": r.returncode == 0, "output": (r.stdout or "")[:200]}
         except Exception as e:

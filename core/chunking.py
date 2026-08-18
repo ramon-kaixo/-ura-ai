@@ -1,4 +1,5 @@
 """Shim temporal — chunking se ha movido a motor.core.chunking."""
+
 import sys
 
 import motor.core.chunking

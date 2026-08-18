@@ -1,4 +1,5 @@
 """Layer 0: Environment Health — disk, RAM, CPU, Ollama, processes."""
+
 from __future__ import annotations
 
 import logging
@@ -43,6 +44,7 @@ def _get_ram_info() -> dict[str, Any]:
     info: dict[str, Any] = {"total_mb": 0, "available_mb": 0, "percent": 0}
     try:
         import psutil
+
         vm = psutil.virtual_memory()
         info["total_mb"] = vm.total // (1024 * 1024)
         info["available_mb"] = vm.available // (1024 * 1024)
@@ -80,8 +82,12 @@ def _ollama_check(ollama_url: str) -> tuple[bool, int]:
 def _git_available(ura_root: Path) -> bool:
     try:
         r = subprocess.run(
-            ["git", "rev-parse", "--git-dir"], capture_output=True, text=True,
-            timeout=5, check=False, cwd=str(ura_root),
+            ["git", "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            cwd=str(ura_root),
         )
         return r.returncode == 0
     except Exception:
