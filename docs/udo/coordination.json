@@ -31,7 +31,8 @@
       "TASK-20260818-012",
       "TASK-20260818-013",
       "TASK-20260818-014",
-      "TASK-20260818-015"
+      "TASK-20260818-015",
+      "TASK-20260818-016"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -539,6 +540,20 @@
         "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
       ],
       "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-016": {
+      "task_id": "TASK-20260818-016",
+      "descripcion": "Revision independiente lote TERM (013/014/002) + neutralizar mac-veredictos + fix FakeImage getexif",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (revision independiente WEB con evidencia; AUTO-REVISION en review-pending)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: revision con pinning 8/8, tests 141+114 passed, fix FakeImage getexif (test), neutralizacion mac-veredictos (rama reseteada a main en ASUS y Mac)"
+      ],
+      "nota": "DONE 2026-08-18. Detector v3.3 desplegado en ~/bin de la Mac y verificado."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"

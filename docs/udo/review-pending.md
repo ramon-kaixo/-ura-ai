@@ -287,3 +287,4 @@ pinning 8/8 SHAs ancestros de HEAD (`1c5d486b`, `51b2d3d3`, `fbba56c6`, `bcca0b1
 (web cobertura, config_manager, audit_backends, metrics, pipeline) + 114 passed
 (imagen_extractor — incluye fix del FakeImage del test: la API del C2 usa
 `getexif()`, el fake aún implementaba `_getexif`). Veredicto: APROBADA.
+| TASK-20260818-016 | Revision independiente lote TERM 013/014/002 (pinning 8/8, 141+114 passed) + fix FakeImage getexif + neutralizacion mac-veredictos contaminada (rama reseteada a main en ASUS y Mac). Commit b6749f10 | 2026-08-18 | WEB | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
