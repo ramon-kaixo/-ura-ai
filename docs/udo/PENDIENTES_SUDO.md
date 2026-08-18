@@ -143,3 +143,15 @@ Verificacion (pasarla al WEB):
 journalctl -u ura-heartbeat --since "2 min ago" | grep -c "Read-only"   # -> 0
 ls -lt /home/ramon/URA/ura_ia_1972/data/auto_dumps/ | head -2          # -> dumps nuevos
 ```
+
+## 9. REINICIAR WATCH DAEMON (tuneladora) — si quedó inactive
+
+El WEB mató el proceso watch_daemon para recargar la v3.1 (debounce+guard); systemd con
+Restart=on-failure NO lo relanza tras SIGTERM. Arrancar de nuevo:
+
+```bash
+sudo systemctl start ura-watch-daemon.service
+```
+
+Verificación: `systemctl is-active ura-watch-daemon.service` -> active; y
+`journalctl -u ura-watch-daemon --since "1 min ago" | grep "Watch daemon v3.1"`.
