@@ -12,14 +12,14 @@
 | `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
 | `opencode` | 8081 | ⏸️ parado | systemd | OpenCode Web Server — unit corregida desplegada (`EnvironmentFile=/etc/ura/secrets.env`, vars ya presentes). Parado: el proceso paralelo mantiene su opencode manual en 8081 (PID en `pts/1`, se re-lanza solo). Arrancar con `systemctl start opencode.service` cuando el manual cierre |
 | `ura-openclaw` | 18789 | ⏸️ **disabled + inactive** (2026-08-08) | systemd | RETIRADO del repo (`c6d60c8c`). Unit borrada + daemon-reload ✅. Pendiente solo: `sudo rm /usr/local/bin/opencode` (wrapper del servicio ya inexistente) — incluido en `scripts/pro/cerrar_pendientes_sistema.sh` |
-| `ura-api` | 8000 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate |
-| `ura-audit-api` | 8080 | ✅ activo | systemd | URA Audit API (FastAPI) |
+| `ura-api` | 9090 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate. (Actualizado 2026-08-18: puerto real 9090, verificado /health 200; la doc anterior decía 8000) |
+| `ura-audit-api` | 5053 | ✅ activo | systemd | URA Audit API (FastAPI). (Actualizado 2026-08-18: puerto real 5053, /docs 200; antes 8080) |
 | `ura-consolidate` | - | ✅ activo | systemd | Consolidación de código (último run SUCCESS 2026-08-07) |
 | `ura-contraste` | 8002 | ✅ activo | systemd | Proxy de Contraste + Telemetría POS (POST /api/v1/telemetry + GET /metrics) |
 | `ura-fix` | - | ❌ fallido | systemd | auto-fix de ruff — `FileNotFoundError: 'ruff'` (PATH sin venv) — pendiente drop-in PATH (Tramo B F7) |
 | `ura-go2rtc` | 1984 | ✅ activo | systemd | go2rtc Camera Stream Proxy |
 | `ura-heartbeat` | - | ✅ activo | systemd | URA Mochila Heartbeat — reinicio automático si /health falla |
-| `ura-metrics` | 8888 | ✅ activo | systemd | URA Metrics Server |
+| `ura-metrics` | 9091 | ✅ activo | systemd | URA Metrics Server. (Actualizado 2026-08-18: puerto real 9091, /metrics 200; antes 8888) |
 | `ura-mkdocs` | - | ✅ activo | systemd | URA MkDocs — Base de Conocimiento y Autopsias |
 | `ura-mochila` | - | ✅ activo | systemd | Servicio Router Mochila - Servidor API FastAPI |
 | `ura-ssh-guard` | - | ✅ activo | systemd | URA SSH Guard |
