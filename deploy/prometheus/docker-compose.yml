@@ -54,6 +54,8 @@ services:
       - '127.0.0.1:9105:9105'
     volumes:
       - ./webhook-alerts.py:/app/webhook-alerts.py:ro
+      - ../../motor:/app/motor:ro
+      - /etc/ura/secrets.env:/etc/ura/secrets.env:ro
     extra_hosts:
       - 'host.docker.internal:host-gateway'
 
