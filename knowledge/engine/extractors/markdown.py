@@ -49,7 +49,7 @@ class MarkdownExtractor:
     supported_mime_types: list[str] = _MD_MIMES
     cost: str = "O(1)"
 
-    def _build_md_asset(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def _build_md_asset(
         self,
         source: AssetSource,
         path_str: str,
@@ -136,7 +136,7 @@ class MarkdownExtractor:
 
 
 def _load_file(path: str) -> bytes:
-    with open(path, "rb") as f:  # noqa: PTH123
+    with open(path, "rb") as f:
         return f.read()
 
 

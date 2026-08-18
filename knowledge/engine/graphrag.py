@@ -123,7 +123,7 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
             if days_ago < max_days:
                 recency = 1.0 - (days_ago / max_days)
                 score += _RANKING_WEIGHTS["recency"] * recency
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
     # Quality
@@ -149,7 +149,7 @@ class GraphRetriever(Protocol):
     def retrieve_lineage(self, asset_id: str) -> list[dict[str, Any]]: ...
     def retrieve_governance(self, asset_id: str) -> list[dict[str, Any]]: ...
     def retrieve_neighbors(self, asset_id: str, depth: int = 2, max_nodes: int = 100) -> list[dict[str, Any]]: ...
-    def build_context(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def build_context(
         self,
         query: str,
         max_assets: int = 10,
@@ -316,7 +316,7 @@ class SQLiteGraphRetriever:
 
         return neighbors
 
-    def build_context(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def build_context(
         self,
         query: str,
         max_assets: int = 10,

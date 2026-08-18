@@ -504,7 +504,7 @@ class RuleBasedEntityResolver(EntityResolver):
     para producción: soporta desambiguación contextual y cache.
     """
 
-    _LEGACY: dict[str, dict[str, str | list[str]]] = {  # noqa: RUF012
+    _LEGACY: dict[str, dict[str, str | list[str]]] = {
         "apple": {"id": "E0001", "name": "Apple", "aliases": ["apple inc.", "apple computer"]},
         "microsoft": {"id": "E0002", "name": "Microsoft", "aliases": ["microsoft corp.", "ms"]},
         "google": {"id": "E0003", "name": "Google", "aliases": ["google inc.", "alphabet"]},

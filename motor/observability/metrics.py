@@ -123,7 +123,7 @@ class _TimerContext:
         self._histogram = histogram
         self._start = 0.0
 
-    def __enter__(self) -> _TimerContext:  # noqa: PYI034
+    def __enter__(self) -> _TimerContext:
         self._start = time.monotonic()
         return self
 

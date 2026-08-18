@@ -83,7 +83,7 @@ def organization(name: str, url: str = "") -> dict:
     return o
 
 
-def dcat_dataset(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def dcat_dataset(
     name: str,
     description: str = "",
     fmt: str = "text/markdown",

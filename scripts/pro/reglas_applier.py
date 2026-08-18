@@ -35,7 +35,7 @@ def detectar_f821_en_codigo(codigo: str, archivo: str) -> list[dict]:
                 ]
             except json.JSONDecodeError:
                 pass
-    except Exception:  # noqa: S110
+    except Exception:
         pass
     return []
 
@@ -52,7 +52,7 @@ def _es_import_estandar(nombre: str) -> dict | None:
         try:
             data = json.loads(config_path.read_text())
             return data.get("imports_estandar", {}).get(nombre)
-        except Exception:  # noqa: S110
+        except Exception:
             pass
     return None
 

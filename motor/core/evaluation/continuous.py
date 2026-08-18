@@ -29,7 +29,7 @@ from motor.core.evaluation.regression import (
 class ContinuousEvaluationResult:
     """Resultado completo de una ejecución de evaluación continua."""
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         experiment_name: str,
         status: str,

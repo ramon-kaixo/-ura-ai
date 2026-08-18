@@ -137,7 +137,7 @@ class PluginBase(ABC):
     def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Ejecuta la lógica del plugin. Retorna un dict con resultados."""
 
-    def rollback(self, context: dict[str, Any] | None = None) -> None:  # noqa: B027  -- intencionadamente no abstracta, opcional
+    def rollback(self, context: dict[str, Any] | None = None) -> None:
         """Llamado cuando un pipeline revierte tras una etapa fallida.
         Opcional — sobrescribir para limpiar recursos.
         """

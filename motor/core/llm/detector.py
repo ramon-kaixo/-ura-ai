@@ -25,7 +25,7 @@ class HotspotRecord:
         "wall_time_ms",
     )
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         provider: str,
         operation: str,
@@ -89,7 +89,7 @@ class HotspotDetector:
         with self._lock:
             self._threshold_ms = value
 
-    def evaluate(  # noqa: PLR0917
+    def evaluate(
         self,
         provider: str,
         operation: str,

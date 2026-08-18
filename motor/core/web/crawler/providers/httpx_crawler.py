@@ -222,7 +222,8 @@ class HttpCrawler(Crawler):
                 if int(cl) > self._max_size:
                     doc.error = f"Content-Length {cl} exceeds max_size {self._max_size}"
                     return doc
-            except ValueError:
+            except ValueError as exc:
+                log.debug("Content-Length invalida, se ignora: %s", exc)
                 pass
         return doc
 

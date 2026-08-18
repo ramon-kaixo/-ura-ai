@@ -45,7 +45,7 @@ def mac_notify(title: str, message: str) -> None:
             capture_output=True,
             check=False,
         )
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
 
@@ -59,7 +59,7 @@ def sync_state() -> dict:
         )
         if LOCAL_STATE.exists():
             return json.loads(LOCAL_STATE.read_text())
-    except Exception:  # noqa: S110
+    except Exception:
         pass
     return {}
 

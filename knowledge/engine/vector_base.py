@@ -53,7 +53,7 @@ class VectorStore(Protocol):
         self,
         query_vector: list[float],
         top_k: int = 10,
-        filter: dict[str, Any] | None = None,  # noqa: A002
+        filter: dict[str, Any] | None = None,
     ) -> list[VectorResult]:
         """Busca vectores similares. Retorna [] si no disponible.
         filter: dict plano {"campo": "valor"} para v1 (equivalencia exacta,

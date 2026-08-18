@@ -31,7 +31,7 @@ class AnkerMacPipeline:
         self.audio_queue: queue.Queue = queue.Queue()
         self.is_playing_tts = False
 
-        os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
+        os.makedirs(Path(self.db_path).parent, exist_ok=True)
         self._init_db()
 
         if torch.backends.mps.is_available():
@@ -57,7 +57,7 @@ class AnkerMacPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-        except Exception:  # noqa: S110
+        except Exception:
             pass
         return None
 

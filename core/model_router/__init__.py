@@ -1,12 +1,12 @@
 """Model Router Enhanced — package completo con submódulos."""
 
-from core.model_router.cache import PromptCache, prompt_cache  # noqa: F401
-from core.model_router.cli import main, verificar_politicas_seguridad_preflight  # noqa: F401
-from core.model_router.dashboard import _dashboard_json, _render_dashboard  # noqa: F401
-from core.model_router.handler import RouterHandler  # noqa: F401
-from core.model_router.metrics import MetricsCollector  # noqa: F401
-from core.model_router.metrics import metrics as metrics_singleton  # noqa: F401
-from core.model_router.model_selection import (  # noqa: F401
+from core.model_router.cache import PromptCache, prompt_cache
+from core.model_router.cli import main, verificar_politicas_seguridad_preflight
+from core.model_router.dashboard import _dashboard_json, _render_dashboard
+from core.model_router.handler import RouterHandler
+from core.model_router.metrics import MetricsCollector
+from core.model_router.metrics import metrics as metrics_singleton
+from core.model_router.model_selection import (
     DEFAULT_MODEL_PARAMS,
     MODELO_ROUTES,
     PATRONES_CLASIFICACION,
@@ -18,7 +18,7 @@ from core.model_router.model_selection import (  # noqa: F401
     obtener_modelos_disponibles,
     seleccionar_modelo,
 )
-from core.model_router.proxy import (  # noqa: F401
+from core.model_router.proxy import (
     _CHARS_PER_TOKEN,
     _CONTEXT_SUMMARY_THRESHOLD,
     _CONTEXT_WARN_THRESHOLD,
@@ -42,7 +42,7 @@ from core.model_router.proxy import (  # noqa: F401
     _update_asus_latency,
     proxy_request,
 )
-from core.model_router.router import (  # noqa: F401
+from core.model_router.router import (
     CACHE_TTL,
     DEFAULT_TIPO,
     FALLBACK_MODEL,
@@ -52,5 +52,5 @@ from core.model_router.router import (  # noqa: F401
     rate_limiter,
     require_auth,
 )
-from core.model_router.vram_guard import ConcurrentVRAMGuard  # noqa: F401
-from core.model_router.vram_guard import vram_guard as vram_guard_singleton  # noqa: F401
+from core.model_router.vram_guard import ConcurrentVRAMGuard
+from core.model_router.vram_guard import vram_guard as vram_guard_singleton

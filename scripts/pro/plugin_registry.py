@@ -31,7 +31,7 @@ def discover_all():
                             plugin_dict["script"] = str(py_file)
                             name = plugin_dict.get("name", py_file.stem)
                             plugins[name] = plugin_dict
-        except Exception:  # noqa: S110
+        except Exception:
             pass
     return plugins
 

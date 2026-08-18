@@ -61,9 +61,9 @@ class ErrorLogger:
         }
 
         try:
-            with open(self.log_path, "a") as f:  # noqa: PTH123
+            with open(self.log_path, "a") as f:
                 f.write(json.dumps(entry) + "\n")
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
         self.rotate_if_needed()
@@ -98,7 +98,7 @@ class ErrorLogger:
                     error_time = datetime.fromisoformat(error["ts"]).timestamp()
                     if error_time > cutoff:
                         return True
-                except Exception:  # noqa: S110
+                except Exception:
                     pass
         return False
 

@@ -65,7 +65,7 @@ def chunk_document(
     return chunks
 
 
-def chunk_text(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def chunk_text(
     text: str,
     doc_id: str = "",
     doc_type: str = "",

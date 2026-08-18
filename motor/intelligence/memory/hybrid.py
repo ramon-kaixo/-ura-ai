@@ -87,7 +87,7 @@ class HybridMemory:
         except Exception:
             log.exception("error clearing hybrid memory")
 
-    def __enter__(self) -> HybridMemory:  # noqa: PYI034
+    def __enter__(self) -> HybridMemory:
         return self
 
     def __exit__(self, *args: object) -> None:

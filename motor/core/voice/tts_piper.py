@@ -54,7 +54,7 @@ class PiperTTSMotor:
                 msg,
             )
 
-        Path(self.model_path).stat().st_size  # noqa: B018
+        Path(self.model_path).stat().st_size
 
     def _find_anker_output_device(self) -> int | None:
         """Busca el índice físico de salida (output) del Anker S500."""
@@ -64,7 +64,7 @@ class PiperTTSMotor:
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
-        except Exception:  # noqa: S110
+        except Exception:
             pass
         return None
 
@@ -97,14 +97,14 @@ class PiperTTSMotor:
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
-        except Exception:  # noqa: S110
+        except Exception:
             pass
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False
             if Path(self.output_wav).exists():
                 with contextlib.suppress(BaseException):
-                    os.remove(self.output_wav)  # noqa: PTH107
+                    os.remove(self.output_wav)
 
     def hablar_asincrono(self, text: str) -> None:
         """Punto de entrada principal sin bloqueo para el orquestador."""

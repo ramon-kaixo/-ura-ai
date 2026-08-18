@@ -84,7 +84,7 @@ class ImplicitFeedback:
             return False
         return prev.lower().strip() == current.lower().strip()
 
-    def _store_signal(  # noqa: PLR0917
+    def _store_signal(
         self,
         conv_id: str,
         signal_type: str,

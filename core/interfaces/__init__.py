@@ -5,8 +5,8 @@ Este paquete reexporta para preservar compatibilidad con `from core.interfaces
 import ...`. No añadir definiciones nuevas aquí; hacerlo en motor/core/interfaces/.
 """
 
-from motor.core.interfaces.config import IConfigProvider  # noqa: F401
-from motor.core.interfaces.executor import IExecutor, IProcessResult  # noqa: F401
-from motor.core.interfaces.llm import ILLMClient  # noqa: F401
-from motor.core.interfaces.repository import IVectorStore  # noqa: F401
-from motor.core.interfaces.secrets import ISecretStore  # noqa: F401
+from motor.core.interfaces.config import IConfigProvider
+from motor.core.interfaces.executor import IExecutor, IProcessResult
+from motor.core.interfaces.llm import ILLMClient
+from motor.core.interfaces.repository import IVectorStore
+from motor.core.interfaces.secrets import ISecretStore

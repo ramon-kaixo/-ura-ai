@@ -82,7 +82,7 @@ class RegressionResult:
         "threshold",
     )
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         provider: str,
         operation: str,

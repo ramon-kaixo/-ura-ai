@@ -199,7 +199,7 @@ class ReflectionAgent(Agent):
             reason="max_iterations",
         )
 
-    def _resultado_reflexion(  # noqa: PLR0917 (P3: candidato a dataclass)
+    def _resultado_reflexion(
         self,
         task: AgentTask,
         current: AgentResult,

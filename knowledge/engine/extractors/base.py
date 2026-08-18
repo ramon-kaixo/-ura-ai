@@ -158,7 +158,7 @@ _REGISTRY: ExtractorRegistry | None = None
 
 def get_registry() -> ExtractorRegistry:
     """Retorna el registro global de extractores."""
-    global _REGISTRY  # noqa: PLW0603
+    global _REGISTRY
     if _REGISTRY is None:
         _REGISTRY = ExtractorRegistry()
     return _REGISTRY

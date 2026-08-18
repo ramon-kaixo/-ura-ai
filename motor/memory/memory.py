@@ -129,7 +129,7 @@ class Memory:
                 ),
                 snapshot=entry_data.get("snapshot", False),
             )
-            try:  # noqa: SIM105
+            try:
                 memory._timeline.append(entry)
             except KeyError:
                 pass  # duplicados tolerados en carga

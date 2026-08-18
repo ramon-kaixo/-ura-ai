@@ -193,7 +193,7 @@ def _calcular_sha256(path: Path) -> str:
     return sha256.hexdigest()
 
 
-def _construir_manifest(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _construir_manifest(
     commit: str,
     timestamp: str,
     bundle_path: Path,
@@ -273,14 +273,14 @@ def _registrar_audit_y_metricas(commit: str, file_count: int, compressed_size: i
             file_count=file_count,
             size_bytes=compressed_size,
         )
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
     try:
         from knowledge.engine.metrics import archive_duration_seconds
 
         archive_duration_seconds.observe(_time.monotonic() - _t0)
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
 

@@ -257,7 +257,7 @@ def _construir_rating(fb: dict[str, Any] | None) -> str:
     return f"\n\n**Rating:** {stars} ({fb['avg_rating']:.1f}/5, {fb['n_ratings']} votes)"
 
 
-def _construir_content(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _construir_content(
     doc_id: str,
     doc_type: str,
     title: str,
@@ -324,7 +324,7 @@ def _escribir_docs(
 def _verificar_enlaces(by_type: dict[str, list[dict[str, Any]]], all_ids_set: set[str]) -> int:
     """Verifica enlaces internos de todo el contenido → total de enlaces rotos."""
     broken_total = 0
-    for doc_type in by_type:  # noqa: PLC0206
+    for doc_type in by_type:
         for doc in by_type[doc_type]:
             broken = _verify_links(doc["content"], all_ids_set)
             if broken:

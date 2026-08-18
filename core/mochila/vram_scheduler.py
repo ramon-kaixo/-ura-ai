@@ -157,7 +157,7 @@ class VRAMAwareScheduler:
                 async with self._lock:
                     self._active.pop(req_id, None)
 
-        asyncio.create_task(_release())  # noqa: RUF006
+        asyncio.create_task(_release())
         return True
 
     async def release(self, req_id: str) -> None:

@@ -18,10 +18,13 @@ Uso:
     token = get_secret("PUSHOVER_APP_TOKEN", default="")
 """
 
+import logging
 import os
 import threading
 from pathlib import Path
 from typing import overload
+
+log = logging.getLogger(__name__)
 
 RUTA_SECRETOS = "/etc/ura/secrets.env"
 
@@ -67,7 +70,7 @@ def _load_file_secrets() -> dict[str, str]:
     líneas en blanco ignoradas. Las comillas simples/dobles
     alrededor del valor se eliminan.
     """
-    global _cached_file_secrets  # noqa: PLW0603
+    global _cached_file_secrets
     if _cached_file_secrets is not None:
         return _cached_file_secrets
     result: dict[str, str] = {}
@@ -83,7 +86,8 @@ def _load_file_secrets() -> dict[str, str]:
                     continue
                 key, _, val = stripped.partition("=")
                 result[key.strip()] = val.strip().strip("'\"")
-        except OSError:
+        except OSError as exc:
+            log.debug("no se pudo leer secrets file: %s", exc)
             pass
     with _lock:
         _cached_file_secrets = result
@@ -92,7 +96,7 @@ def _load_file_secrets() -> dict[str, str]:
 
 def _clear_cache() -> None:
     """Limpia la caché del backend de archivo (útil en tests)."""
-    global _cached_file_secrets  # noqa: PLW0603
+    global _cached_file_secrets
     with _lock:
         _cached_file_secrets = None
 

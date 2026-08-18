@@ -82,7 +82,7 @@ class FusionPipeline:
     via register_stage() sin modificar este código.
     """
 
-    def __init__(  # noqa: PLR0917 (P3: candidato a dataclass)
+    def __init__(
         self,
         engine: FusionEngine | None = None,
         conflict_resolver: ConflictResolver | None = None,  # Public API — intentionally unused, see ADR-003
@@ -101,7 +101,7 @@ class FusionPipeline:
             self._stages = list(stages)
 
     @classmethod
-    def default(  # noqa: PLR0917
+    def default(
         cls,
         engine: FusionEngine | None = None,
         conflict_resolver: ConflictResolver | None = None,
