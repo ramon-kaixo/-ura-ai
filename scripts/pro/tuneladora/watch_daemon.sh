@@ -122,3 +122,4 @@ while read FILE; do
     _ejecutar_pipeline "$FILE"
 
 done < <(inotifywait -m -r -e close_write --format '%w%f' "$REPO/scripts/pro/tuneladora" "$REPO/tests" 2>/dev/null)
+while true; do inotifywait -r -e modify,create,delete ~/URA/ura_ia_1972 --exclude "\.git|__pycache__" && /home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora/pipeline/runner.py; done

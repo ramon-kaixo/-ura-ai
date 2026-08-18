@@ -1,4 +1,5 @@
 """Instala el servicio systemd de la tuneladora."""
+
 from __future__ import annotations
 
 import shutil
@@ -35,7 +36,9 @@ def install_service(user: str = "ramon") -> dict[str, str | bool]:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
         results[name] = "ok" if r.returncode == 0 else r.stderr[:100]
 
-    r = subprocess.run(["systemctl", "status", "ura-tuneladora"], capture_output=True, text=True, timeout=10, check=False)  # nosec B603 B607
+    r = subprocess.run(
+        ["systemctl", "status", "ura-tuneladora"], capture_output=True, text=True, timeout=10, check=False
+    )  # nosec B603 B607
     results["status"] = "active" if "active" in r.stdout else "inactive"
     results["ok"] = results.get("start") == "ok"
 
@@ -44,5 +47,6 @@ def install_service(user: str = "ramon") -> dict[str, str | bool]:
 
 if __name__ == "__main__":
     import json
+
     result = install_service()
     print(json.dumps(result, indent=2))

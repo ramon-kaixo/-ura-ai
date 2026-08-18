@@ -83,7 +83,7 @@ def main() -> None:
 
     from core.model_router.handler import RouterHandler
 
-    server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", ROUTER_PORT), RouterHandler)
     log.info("Escuchando en 127.0.0.1:%s", ROUTER_PORT)
     log.info("Dashboard: http://127.0.0.1:%s/dashboard", ROUTER_PORT)
     log.info("Metricas:  http://127.0.0.1:%s/metrics", ROUTER_PORT)

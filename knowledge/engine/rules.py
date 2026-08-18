@@ -110,9 +110,7 @@ _ALLOWED_METHODS: dict[str, set[str]] = {
 }
 
 
-def _eval_method_call(
-    node: ast.Call, env: dict[str, Any], _op: int | None
-) -> Any:
+def _eval_method_call(node: ast.Call, env: dict[str, Any], _op: int | None) -> Any:
     """Evalúa obj.metodo() solo si está en whitelist."""
     if not isinstance(node.func, ast.Attribute):
         raise UnsafeExpressionError("Solo method calls permitidos")
@@ -120,13 +118,9 @@ def _eval_method_call(
     method_name = node.func.attr
     type_name = type(obj).__name__
     if type_name not in _ALLOWED_METHODS:
-        raise UnsafeExpressionError(
-            f"Tipo no permite method calls: {type_name}"
-        )
+        raise UnsafeExpressionError(f"Tipo no permite method calls: {type_name}")
     if method_name not in _ALLOWED_METHODS[type_name]:
-        raise UnsafeExpressionError(
-            f"Método no permitido: {type_name}.{method_name}"
-        )
+        raise UnsafeExpressionError(f"Método no permitido: {type_name}.{method_name}")
     if method_name.startswith("__") and method_name.endswith("__"):
         raise UnsafeExpressionError("Dunder methods prohibidos")
     args = [_eval_ast(a, env) for a in node.args]
@@ -364,9 +358,7 @@ _NODE_HANDLERS = {
 }
 
 
-def _eval_comprehension(
-    node: ast.ListComp | ast.GeneratorExp, env: dict[str, Any]
-) -> list[Any]:
+def _eval_comprehension(node: ast.ListComp | ast.GeneratorExp, env: dict[str, Any]) -> list[Any]:
     """Evalúa una list comprehension o generator expression."""
 
     def _process(generators, idx, current_env):

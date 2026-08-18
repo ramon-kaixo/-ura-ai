@@ -30,17 +30,20 @@ from fraccionador_ast import fraccionar as _fraccionar_ast
 try:
     from memoria_refactor import consultar_funcion, registrar_intento
 except ImportError:  # pragma: no cover
+
     def consultar_funcion(*_a, **_k):  # type: ignore[no-redef]
         return {"estado": "sin_intentar", "intentos": []}
 
     def registrar_intento(*_a, **_k):  # type: ignore[no-redef]
         return {}
 
+
 # Contexto de rama (TASK-20260812-021, diseño RAMON: "conocimiento con lógica"):
 # el LLM recibe de dónde viene y hacia dónde va la función, no conocimiento general.
 try:
     from contexto_rama import construir_contexto_rama as _construir_rama
 except ImportError:  # pragma: no cover
+
     def _construir_rama(*_a, **_k):  # type: ignore[no-redef]
         return ""
 
@@ -52,6 +55,7 @@ def _construir_contexto_rama(file_path: str, func_name: str, func_source: str) -
     except OSError:
         fuente = ""
     return _construir_rama(URA_ROOT, file_path, func_name, func_source, fuente)
+
 
 # Verificación con tests (TASK-20260812-019): si el archivo tiene tests que lo
 # cubren, se verifica antes/después del refactor. Degrada con gracia.
@@ -184,7 +188,9 @@ def get_large_functions(threshold: int = 80) -> list[dict]:
             tree = ast.parse(source)
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # noqa: SIM102
-                    if hasattr(node, "end_lineno") and node.end_lineno and node.lineno:  # pragma: no cover -- py>=3.8 siempre tienen end_lineno; rama defensiva
+                    if (
+                        hasattr(node, "end_lineno") and node.end_lineno and node.lineno
+                    ):  # pragma: no cover -- py>=3.8 siempre tienen end_lineno; rama defensiva
                         n_lines = node.end_lineno - node.lineno
                         if n_lines > threshold:
                             large.append(
@@ -226,7 +232,13 @@ def _extraer_llamadores(file_path: str, func_name: str, fuente_archivo: str = ""
     lineas = fuente_archivo.splitlines()
     llamadas: list[str] = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name and node.lineno and node.lineno <= len(lineas):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == func_name
+            and node.lineno
+            and node.lineno <= len(lineas)
+        ):
             llamadas.append(lineas[node.lineno - 1].strip())
     if not llamadas:
         return ""
@@ -243,9 +255,7 @@ def build_refactor_prompt(
 ) -> str:
     firma = _extraer_firma(func_source)
     contexto_llamadores = (
-        f"\nLLAMADORES DE LA FUNCION (contexto — NO los modifiques):\n{llamadores}\n"
-        if llamadores
-        else ""
+        f"\nLLAMADORES DE LA FUNCION (contexto — NO los modifiques):\n{llamadores}\n" if llamadores else ""
     )
     contexto_conexiones = (
         f"\nCONEXIONES DEL CODIGO (de donde viene / hacia donde va — usa esta informacion "
@@ -330,11 +340,15 @@ def apply_refactored(file_path: str, lineno: int, end_lineno: int, new_code: str
         tmp.write_text(new_code, encoding="utf-8")
         subprocess.run(
             [str(URA_ROOT / ".venv" / "bin" / "ruff"), "check", "--fix", "--unsafe-fixes", str(tmp)],
-            capture_output=True, timeout=30, check=False,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         subprocess.run(
             [str(URA_ROOT / ".venv" / "bin" / "ruff"), "format", str(tmp)],
-            capture_output=True, timeout=30, check=False,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         new_code_normalizado = tmp.read_text(encoding="utf-8")
         tmp.unlink(missing_ok=True)
@@ -481,7 +495,9 @@ def refactor_one(func: dict) -> bool:  # noqa: PLR0915
         tmp.write_text(codigo_helpers, encoding="utf-8")
         subprocess.run(
             [str(URA_ROOT / ".venv" / "bin" / "ruff"), "format", str(tmp)],
-            capture_output=True, timeout=30, check=False,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         norm = tmp.read_text(encoding="utf-8")
         tmp.unlink(missing_ok=True)

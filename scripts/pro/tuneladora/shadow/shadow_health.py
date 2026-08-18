@@ -1,4 +1,5 @@
 """Shadow Health — orquestador multi-capa de health checks para el pipeline."""
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +30,7 @@ class LayerResult:
     duration_ms: float = 0.0
     error: str = ""
 
+
 ROLLBACK_RULES: dict[int, str] = {
     0: "none",
     1: "full",
@@ -58,22 +60,25 @@ class ShadowHealth:
     def _ensure_diff_cache(self) -> None:
         try:
             r = subprocess.run(
-                ["git", "diff", "--name-only", "HEAD"], capture_output=True, text=True,
-                timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--name-only", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
-            self._diff_files = [
-                f.strip() for f in (r.stdout or "").split("\n")
-                if f.strip().endswith(".py")
-            ]
+            self._diff_files = [f.strip() for f in (r.stdout or "").split("\n") if f.strip().endswith(".py")]
             r2 = subprocess.run(
-                ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
-                timeout=5, check=False, cwd=str(self.cfg.ura_root),
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
             head = r2.stdout.strip() if r2.returncode == 0 else ""
             content = r.stdout or ""
-            self._diff_hash = hashlib.md5(
-                f"{head}:{content}".encode(), usedforsecurity=False
-            ).hexdigest()[:12]
+            self._diff_hash = hashlib.md5(f"{head}:{content}".encode(), usedforsecurity=False).hexdigest()[:12]
         except Exception as exc:
             log.debug("git diff cache failed: %s", exc)
             self._diff_files = []
@@ -85,6 +90,7 @@ class ShadowHealth:
     def _get_or_create_runner(self):
         if self._runner is None:
             from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
+
             self._runner = PipelineRunner(self.cfg, mode="check", files=self._diff_files)
         return self._runner
 
@@ -153,16 +159,25 @@ class ShadowHealth:
         return self._results
 
     def render_json(self) -> str:
-        return json.dumps({
-            "verdict": self._verdict(),
-            "rollback": self._should_rollback(),
-            "duration_ms": self._duration_ms,
-            "layers": [
-                {"layer": r.layer, "name": r.name, "status": r.status,
-                 "duration_ms": r.duration_ms, "error": r.error}
-                for r in self._results
-            ],
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "verdict": self._verdict(),
+                "rollback": self._should_rollback(),
+                "duration_ms": self._duration_ms,
+                "layers": [
+                    {
+                        "layer": r.layer,
+                        "name": r.name,
+                        "status": r.status,
+                        "duration_ms": r.duration_ms,
+                        "error": r.error,
+                    }
+                    for r in self._results
+                ],
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
     def render_text(self) -> str:
         lines = [f"Shadow Health — {self._verdict()}"]
@@ -180,47 +195,63 @@ class ShadowHealth:
 
     def _layer0_env(self) -> LayerResult:
         checks = run_layer0(self.cfg.ura_root, self.cfg.ollama_url)
-        status = "FAIL" if any(c.status == "FAIL" for c in checks) else \
-                 "WARN" if any(c.status == "WARN" for c in checks) else "OK"
+        status = (
+            "FAIL"
+            if any(c.status == "FAIL" for c in checks)
+            else "WARN"
+            if any(c.status == "WARN" for c in checks)
+            else "OK"
+        )
         return LayerResult(0, "env", status, checks=[vars(c) for c in checks])
 
     def _layer1_static(self) -> LayerResult:
         from scripts.pro.tuneladora.pipeline.tools.base import Status as S
+
         if not self._diff_files:
             return LayerResult(1, "static", "SKIP", error="No changed files")
         runner = self._get_or_create_runner()
         results = runner.phase_static()
         statuses = [r.status for r in results]
-        status = "FAIL" if any(s == S.FAIL for s in statuses) else \
-                 "WARN" if any(s == S.WARN for s in statuses) else "OK"
+        status = (
+            "FAIL" if any(s == S.FAIL for s in statuses) else "WARN" if any(s == S.WARN for s in statuses) else "OK"
+        )
         return LayerResult(1, "static", status, checks=[vars(r) for r in results])
 
     def _layer2_runtime(self) -> LayerResult:
         from scripts.pro.tuneladora.pipeline.tools.base import Status as S
+
         if not self._diff_files:
             return LayerResult(2, "runtime", "SKIP", error="No changed files")
         runner = self._get_or_create_runner()
         results = runner.phase_dynamic()
         statuses = [r.status for r in results]
-        status = "FAIL" if any(s == S.FAIL for s in statuses) else \
-                 "WARN" if any(s == S.WARN for s in statuses) else "OK"
+        status = (
+            "FAIL" if any(s == S.FAIL for s in statuses) else "WARN" if any(s == S.WARN for s in statuses) else "OK"
+        )
         return LayerResult(2, "runtime", status, checks=[vars(r) for r in results])
 
     def _layer3_shadow(self) -> LayerResult:
         if not self._diff_files:
             return LayerResult(3, "shadow", "OK", checks=[], error="No changed files")
         shadow_results = run_layer3(self._diff_files, self.cfg.ura_root)
-        status = "FAIL" if any(r.status == "FAIL" for r in shadow_results) else \
-                 "WARN" if any(r.status == "WARN" for r in shadow_results) else "OK"
+        status = (
+            "FAIL"
+            if any(r.status == "FAIL" for r in shadow_results)
+            else "WARN"
+            if any(r.status == "WARN" for r in shadow_results)
+            else "OK"
+        )
         return LayerResult(3, "shadow", status, checks=[vars(r) for r in shadow_results])
 
     def _layer4_chaos(self) -> LayerResult:
         test_path = self.cfg.test_target.rstrip("/") + "/test_tuneladora_pipeline_chaos.py"
         try:
             r = subprocess.run(
-                [sys.executable, "-m", "pytest", test_path,
-                 "--no-cov", "-q"],
-                capture_output=True, text=True, timeout=120, check=False,
+                [sys.executable, "-m", "pytest", test_path, "--no-cov", "-q"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
                 cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0:
@@ -248,8 +279,7 @@ class ShadowHealth:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Shadow Health Checks")
-    parser.add_argument("--layer", type=str, default="all",
-                        help="Layers to run: 0, 1-4, all")
+    parser.add_argument("--layer", type=str, default="all", help="Layers to run: 0, 1-4, all")
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--no-fail-fast", action="store_true", help="Run all layers regardless")
     args = parser.parse_args()

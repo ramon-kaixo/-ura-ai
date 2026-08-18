@@ -115,7 +115,9 @@ def _moderar_input(request: ChatRequest, engine: Any, cid: str, correlation_id: 
     reply = "No puedo procesar esa solicitud. Por favor, haz una pregunta apropiada."
     engine.add_message(cid, "user", request.message)
     engine.add_message(cid, "assistant", reply)
-    _log.warning("moderated input blocked", extra={"correlation_id": correlation_id, "reason": ", ".join(input_mod.categories)})
+    _log.warning(
+        "moderated input blocked", extra={"correlation_id": correlation_id, "reason": ", ".join(input_mod.categories)}
+    )
     return ChatResponse(
         conversation_id=request.conversation_id or cid,
         reply=reply,

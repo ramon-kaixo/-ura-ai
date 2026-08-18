@@ -65,8 +65,16 @@ def _llamadores_externos(repo: Path, func_name: str, modulo: str) -> list[str]:
     """
     if not repo.exists():
         return []
-    excluir = {".git", "node_modules", "__pycache__", ".venv", "site-packages",
-               ".sandbox_packages", ".attic", ".tuneladora"}
+    excluir = {
+        ".git",
+        "node_modules",
+        "__pycache__",
+        ".venv",
+        "site-packages",
+        ".sandbox_packages",
+        ".attic",
+        ".tuneladora",
+    }
     encontrados: list[str] = []
     patron = re.compile(rf"\b{re.escape(func_name)}\s*\(")
     for py in repo.rglob("*.py"):
@@ -115,7 +123,13 @@ def construir_contexto_rama(
         try:
             tree = ast.parse(fuente_archivo)
             for node in ast.walk(tree):
-                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name and node.lineno and node.lineno <= len(lineas):
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == func_name
+                    and node.lineno
+                    and node.lineno <= len(lineas)
+                ):
                     llamadores_locales.append(lineas[node.lineno - 1].strip())
         except SyntaxError:
             pass

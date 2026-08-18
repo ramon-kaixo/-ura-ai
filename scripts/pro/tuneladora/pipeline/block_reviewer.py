@@ -55,7 +55,11 @@ def _do_review(
     diff = _get_diff(cfg.ura_root, head)
     tests_str = "\n".join(tests) if tests else "(none)"
 
-    prompt = REVIEW_PROMPT.replace("{DIFF_HERE}", diff).replace("{TESTS_HERE}", tests_str).replace("{API_DIFF_HERE}", api_diff)
+    prompt = (
+        REVIEW_PROMPT.replace("{DIFF_HERE}", diff)
+        .replace("{TESTS_HERE}", tests_str)
+        .replace("{API_DIFF_HERE}", api_diff)
+    )
 
     report = f"# Revisión bloque {block_name}\n\n"
     try:

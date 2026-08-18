@@ -353,11 +353,16 @@ async def _abortaje_guardian_sse(
     abortar, accumulated_text, penalty = _evaluar_guardian(guardian, chunk, accumulated_text, modelo)
     if not abortar:
         return False, accumulated_text, b""
-    return True, accumulated_text, _error_sse(
-        "STREAM_ABORTED_BY_GUARDIAN",
-        "vagancy_error",
-        penalty=penalty,
-    ) + b"data: [DONE]\n\n"
+    return (
+        True,
+        accumulated_text,
+        _error_sse(
+            "STREAM_ABORTED_BY_GUARDIAN",
+            "vagancy_error",
+            penalty=penalty,
+        )
+        + b"data: [DONE]\n\n",
+    )
 
 
 async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
@@ -393,9 +398,7 @@ async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
                 _procesar_usage(chunk, provider_name, modelo)
                 return
             if is_opencode and guardian:
-                abortar, accumulated_text, sse = await _abortaje_guardian_sse(
-                    guardian, chunk, accumulated_text, modelo
-                )
+                abortar, accumulated_text, sse = await _abortaje_guardian_sse(guardian, chunk, accumulated_text, modelo)
                 if abortar:
                     yield sse
                     return
@@ -423,9 +426,7 @@ async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
 
 def _chunk_es_fin(chunk: dict) -> bool:
     return bool(
-        chunk.get("choices")
-        and chunk["choices"][0].get("delta", {}) == {}
-        and chunk["choices"][0].get("finish_reason")
+        chunk.get("choices") and chunk["choices"][0].get("delta", {}) == {} and chunk["choices"][0].get("finish_reason")
     )
 
 

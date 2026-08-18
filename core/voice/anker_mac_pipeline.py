@@ -1,4 +1,5 @@
 """Shim temporal."""
+
 import sys
 
 import motor.core.voice.anker_mac_pipeline

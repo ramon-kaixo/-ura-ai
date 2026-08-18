@@ -9,6 +9,7 @@ Clasifica scripts/herramientas en:
 Salida: data/inventario_herramientas.json
 Uso: python3 scripts/pro/audit_inventario.py [--json data/inventario_herramientas.json]
 """
+
 from __future__ import annotations
 
 import json
@@ -40,7 +41,11 @@ def _walk_zone(zone: str) -> list[Path]:
     root = ZONAS[zone]
     if not root.exists():
         return []
-    return [p for p in sorted(root.rglob("*")) if p.is_file() and p.suffix in {".py", ".sh", ".service", ".timer", ".json", ".yml", ".yaml", ".conf"}]
+    return [
+        p
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and p.suffix in {".py", ".sh", ".service", ".timer", ".json", ".yml", ".yaml", ".conf"}
+    ]
 
 
 def _is_executable_ref(path: Path, corpus: str) -> bool:
@@ -50,10 +55,7 @@ def _is_executable_ref(path: Path, corpus: str) -> bool:
     if any(re.search(pat, corpus) for pat in (rf"import {stem}\b", rf"from {stem}\b", rf"from \S+ import {stem}\b")):
         return True
     # Referencias a script con ruta o nombre completo
-    return any(
-        re.search(pat, corpus)
-        for pat in (rf"\b{stem}\.py\b", rf"\b{stem}\.sh\b", rf"scripts/pro/{stem}")
-    )
+    return any(re.search(pat, corpus) for pat in (rf"\b{stem}\.py\b", rf"\b{stem}\.sh\b", rf"scripts/pro/{stem}"))
 
 
 def _is_framework(zone: str, path: Path) -> bool:
@@ -84,7 +86,11 @@ def build_corpus() -> str:
             if p.is_file():
                 parts.append(p.read_text(errors="ignore"))
     cron = subprocess.run(
-        ["crontab", "-l"], capture_output=True, text=True, check=False, timeout=15,
+        ["crontab", "-l"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=15,
     )
     if cron.returncode == 0:
         parts.append(cron.stdout)
