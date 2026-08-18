@@ -1,5 +1,8 @@
 import json
+import logging
 from collections.abc import AsyncGenerator
+
+log = logging.getLogger(__name__)
 
 import httpx
 
@@ -21,7 +24,7 @@ class OllamaProvider(Provider):
     def timeout(self) -> int:
         return OLLAMA_TIMEOUT
 
-    async def chat(  # noqa: PLR0917 — firma pública estable
+    async def chat(
         self,
         modelo: str,
         mensajes: list,
@@ -149,7 +152,8 @@ class OllamaProvider(Provider):
                         },
                     },
                 ]
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError) as exc:
+            log.debug("respuesta Ollama no parseable: %s", exc)
             pass
         return None
 

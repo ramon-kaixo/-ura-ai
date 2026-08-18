@@ -30,7 +30,7 @@ def cmd_status(config: UraConfig, args=None) -> None:
     info["procesos_duplicados"] = []
     try:
         r = _executor.run(["ps", "-eo", "comm="], timeout=5)
-        v = {}
+        v: dict[str, int] = {}
         for l in r.stdout.strip().split("\n"):
             c = l.strip()
             if c:

@@ -310,12 +310,12 @@ class WeatherTool:
     async def execute(self, location: str = "") -> ToolResult:
         if not location:
             try:
-                ip = (await httpx.get("https://ipapi.co/json/", timeout=5)).json()
+                ip = (httpx.get("https://ipapi.co/json/", timeout=5)).json()
                 location = ip.get("city", "Madrid")
             except Exception:
                 location = "Madrid"
         try:
-            resp = await httpx.get(
+            resp = httpx.get(
                 f"https://wttr.in/{location}?format=%C+%t+%w+%h",
                 timeout=10,
             )
@@ -329,7 +329,7 @@ class WeatherTool:
 class NewsTool:
     async def execute(self) -> ToolResult:
         try:
-            resp = await httpx.get(
+            resp = httpx.get(
                 "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
                 timeout=10,
             )

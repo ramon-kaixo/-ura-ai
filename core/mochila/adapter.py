@@ -53,7 +53,8 @@ def _extraer_tool_call(content: str) -> list | None:
                     },
                 },
             ]
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError) as exc:
+        log.debug("respuesta del provider no parseable: %s", exc)
         pass
     return None
 

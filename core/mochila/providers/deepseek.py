@@ -24,7 +24,7 @@ class DeepSeekProvider(Provider):
     def timeout(self) -> int:
         return DEEPSEEK_TIMEOUT
 
-    async def chat(  # noqa: PLR0917 — firma pública estable
+    async def chat(
         self,
         modelo: str,
         mensajes: list,

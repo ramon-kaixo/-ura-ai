@@ -8,11 +8,14 @@ EXCEPCIÓN: No se migra a motor.core.llm porque:
 """
 
 import json
+import logging
 from contextlib import suppress
 
 import httpx
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+
+log = logging.getLogger(__name__)
 
 from core.logs.guardian_logger import log_event
 from core.mochila.guardian_opencode import OpenCodeGuardian
@@ -147,6 +150,7 @@ async def _proxy_stream(  # noqa: PLR0917 — firma pública estable
                                 _log_stream_abort(body, path, penalty)
                                 yield json.dumps(_error_guardian(penalty)) + "\n"
                                 return
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as exc:
+                        log.debug("chunk no-JSON en stream %s: %s", path, exc)
                         pass
                 yield line + "\n"

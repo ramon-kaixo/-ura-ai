@@ -185,7 +185,7 @@ def main() -> None:
     config = cargar_config()
 
     if args.verify:
-        _cmd_verify(*args.verify, config)
+        _cmd_verify(args.verify[0], args.verify[1], config)
         return
 
     if args.init:

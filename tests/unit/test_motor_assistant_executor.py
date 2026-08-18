@@ -296,7 +296,7 @@ class TestDateTimeTool:
 class TestWeatherTool:
     def test_sin_location_ipapi(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(
+            m_get = mock.Mock(
                 side_effect=[
                     SimpleNamespace(json=lambda: {"city": "Bilbao"}),
                     SimpleNamespace(status_code=200, text="Bilbao: 15C"),
@@ -311,7 +311,7 @@ class TestWeatherTool:
 
     def test_sin_location_fallback(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(
+            m_get = mock.Mock(
                 side_effect=[
                     OSError("sin red"),
                     SimpleNamespace(status_code=200, text="Madrid: 20C"),
@@ -325,7 +325,7 @@ class TestWeatherTool:
 
     def test_status_error(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(return_value=SimpleNamespace(status_code=500, text=""))
+            m_get = mock.Mock(return_value=SimpleNamespace(status_code=500, text=""))
             with mock.patch("motor.assistant.executor.httpx.get", m_get):
                 r = await WeatherTool().execute("Bilbao")
             assert not r.success and "Error clima" in r.error
@@ -334,7 +334,7 @@ class TestWeatherTool:
 
     def test_exception(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(side_effect=OSError("red caida"))
+            m_get = mock.Mock(side_effect=OSError("red caida"))
             with mock.patch("motor.assistant.executor.httpx.get", m_get):
                 r = await WeatherTool().execute("Bilbao")
             assert not r.success and r.error == "red caida"
@@ -345,7 +345,7 @@ class TestWeatherTool:
 class TestNewsTool:
     def test_ok(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(
+            m_get = mock.Mock(
                 return_value=SimpleNamespace(
                     status_code=200,
                     text="<title>Noticia 1</title><title>Noticia 2</title>",
@@ -359,7 +359,7 @@ class TestNewsTool:
 
     def test_status_error(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(return_value=SimpleNamespace(status_code=404, text=""))
+            m_get = mock.Mock(return_value=SimpleNamespace(status_code=404, text=""))
             with mock.patch("motor.assistant.executor.httpx.get", m_get):
                 r = await NewsTool().execute()
             assert not r.success and "404" in r.error
@@ -368,7 +368,7 @@ class TestNewsTool:
 
     def test_exception(self) -> None:
         async def go() -> None:
-            m_get = mock.AsyncMock(side_effect=OSError("boom"))
+            m_get = mock.Mock(side_effect=OSError("boom"))
             with mock.patch("motor.assistant.executor.httpx.get", m_get):
                 r = await NewsTool().execute()
             assert not r.success and r.error == "boom"
@@ -435,7 +435,7 @@ class TestManager:
         async def go() -> ToolResult:
             with mock.patch(
                 "motor.assistant.executor.httpx.get",
-                mock.AsyncMock(return_value=SimpleNamespace(status_code=200, text="Madrid: 20C")),
+                mock.Mock(return_value=SimpleNamespace(status_code=200, text="Madrid: 20C")),
             ):
                 return await mgr.execute("weather", {"location": "Madrid"})
 
@@ -446,7 +446,7 @@ class TestManager:
         async def go() -> ToolResult:
             with mock.patch(
                 "motor.assistant.executor.httpx.get",
-                mock.AsyncMock(
+                mock.Mock(
                     return_value=SimpleNamespace(status_code=200, text="<title>A</title>")
                 ),
             ):

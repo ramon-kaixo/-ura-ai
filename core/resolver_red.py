@@ -166,7 +166,7 @@ def estado_red() -> dict:
     # Contar
     online = sum(1 for r in resultados.values() if r["ok"])
     offline = sum(1 for r in resultados.values() if not r["ok"])
-    por_ruta = {}
+    por_ruta: dict[str, int] = {}
     for r in resultados.values():
         rt = r["ruta_activa"]
         por_ruta[rt] = por_ruta.get(rt, 0) + 1

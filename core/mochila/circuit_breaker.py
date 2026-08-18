@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 import time
+
+log = logging.getLogger(__name__)
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -56,8 +59,8 @@ class CircuitBreaker:
                             last_success_time=data.get("last_success_time", 0.0),
                             consecutive_failures=data.get("consecutive_failures", 0),
                         )
-            except (json.JSONDecodeError, KeyError, OSError):
-                pass
+            except (json.JSONDecodeError, KeyError, OSError) as exc:
+                log.warning("no se pudo cargar estado del breaker (%s), usando defaults", exc)
 
     def _persistir(self) -> None:
         raw = {p: asdict(h) for p, h in self._health.items()}

@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 import time
+
+log = logging.getLogger(__name__)
 from collections import defaultdict
 from pathlib import Path
 
@@ -19,8 +22,8 @@ class RateLimiter:
             for provider, limit in data.items():
                 if isinstance(limit, int):
                     self._limites[provider] = limit
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
+        except (FileNotFoundError, json.JSONDecodeError) as exc:
+            log.warning("no se pudo cargar estado de limites (%s), usando defaults", exc)
 
     def configurar(self, provider: str, max_requests: int) -> None:
         self._limites[provider] = max_requests

@@ -6,9 +6,9 @@ import logging
 import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed  # noqa: A004
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError, as_completed  # noqa: A004
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.intelligence.agents.message import AgentResult, AgentTask
 
@@ -92,7 +92,7 @@ class ParallelExecutor:
             return result
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as pool:
-            future_map = {}
+            future_map: dict[Future[Any], tuple[str, Any]] = {}
             for agent_id, task in tasks:
                 if self.is_cancelled(wf_id):
                     remaining = len(tasks) - len(future_map)
@@ -120,7 +120,7 @@ class ParallelExecutor:
                             result.errors.append(f"Task {task.id} ({agent_id}): global timeout")
                             continue
 
-                        task_result = future.result(timeout=0)
+                        task_result: Any = future.result(timeout=0)
                         result.results.append(task_result)
                         if task_result.success:
                             result.completed += 1
