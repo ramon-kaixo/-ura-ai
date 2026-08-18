@@ -664,7 +664,7 @@
       "nota": "DONE 2026-08-18."
     }
   },
-  "ultima_ejecucion_despertador": "2026-08-18T20:22:40Z",
+  "ultima_ejecucion_despertador": "2026-08-18T23:23:20Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
@@ -672,6 +672,13 @@
       "veredicto": "NO-GO parcial",
       "resumen": "Diagnostico del plan incorrecto: coordination.json real = 0 aprobadas/0 bloqueadas (plan decia 37/TASK-020); backlog B001=EN_PROGRESO y B002=PENDIENTE (plan decia resueltos); los 96 archivos son del sandbox de mejora (proceso vivo, zona ajena) no del run fallido. Accion stash+add -A+push NO ejecutada: riesgo de romper flujo del sandbox y push de trabajo ajeno no verificado. Precedente: rama ia/TASK-20260817-B014-ajenos ya existe.",
       "pendiente_real": "§15 compose -f8 (sudo humano): cd deploy/prometheus && sudo docker compose up -d; cola del daemon: preflight_system.py en cola"
+    },
+    {
+      "fecha": "2026-08-19",
+      "agente": "WEB",
+      "tarea": "TASK-20260818-029",
+      "veredicto": "OK",
+      "nota": "P1.3: asset_store.py 19.6%->100% y agent.py 41.8%->100% (knowledge/engine/agent.py, 15+23 tests). Fix critico FTS5: migracion v15 (triggers 'delete' rotos en SQLite 3.45.1 -> DELETE por rowid; delete_asset fallaba siempre, REPLACE dejaba huerfanos FTS). Registrado en docs/audit/qa_findings_20260818.md."
     }
   ]
 }
