@@ -17,6 +17,7 @@ test veredicto 02:27:49
 | TASK-20260818-021 | pendiente revisor | 2026-08-18 | PENDIENTE | |
 | TASK-20260818-022 | pendiente revisor | 2026-08-18 | PENDIENTE | |
 | TASK-20260818-025 | pendiente revisor | 2026-08-18 | PENDIENTE | |
+| TASK-20260818-027 | pendiente revisor | 2026-08-18 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
 
