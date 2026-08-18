@@ -22,10 +22,10 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("ura.knowledge.migrations")
 
-SCHEMA_VERSION = 14  # single source of truth — bump al añadir migración
+SCHEMA_VERSION = 15  # single source of truth — bump al añadir migración
 ENGINE_VERSION = "0.3.0"  # versionado semántico del Knowledge Engine
 MINIMUM_SUPPORTED_SCHEMA = 5  # schema mínimo con el que este engine puede operar (migraciones desde v5+)
-MAXIMUM_SUPPORTED_SCHEMA = 14  # schema máximo que este engine entiende
+MAXIMUM_SUPPORTED_SCHEMA = 15  # schema máximo que este engine entiende
 
 
 @dataclass(frozen=True)
@@ -90,6 +90,11 @@ MIGRATIONS: dict[int, Migration] = {
         version=14,
         description="FTS5 op_assets + op_memory + op_lineage_edges + op_jobs.result_data",
         sql_file="v13_to_v14.sql",
+    ),
+    15: Migration(
+        version=15,
+        description="Fix triggers FTS5 ('delete' merge command roto en SQLite 3.45.1) + rebuild indices",
+        sql_file="v14_to_v15.sql",
     ),
 }
 

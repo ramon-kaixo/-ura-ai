@@ -258,13 +258,11 @@ CREATE TRIGGER IF NOT EXISTS op_assets_fts_ai AFTER INSERT ON op_assets BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS op_assets_fts_ad AFTER DELETE ON op_assets BEGIN
-    INSERT INTO op_assets_fts(op_assets_fts, rowid, id, title, body)
-    VALUES ('delete', old.rowid, old.id, '', '');
+    DELETE FROM op_assets_fts WHERE rowid = old.rowid;
 END;
 
 CREATE TRIGGER IF NOT EXISTS op_assets_fts_au AFTER UPDATE ON op_assets BEGIN
-    INSERT INTO op_assets_fts(op_assets_fts, rowid, id, title, body)
-    VALUES ('delete', old.rowid, old.id, '', '');
+    DELETE FROM op_assets_fts WHERE rowid = old.rowid;
     INSERT INTO op_assets_fts(rowid, id, title, body)
     VALUES (new.rowid, new.id,
             json_extract(new.metadata, '$.title'),
@@ -283,13 +281,11 @@ CREATE TRIGGER IF NOT EXISTS op_memory_fts_ai AFTER INSERT ON op_memory BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS op_memory_fts_ad AFTER DELETE ON op_memory BEGIN
-    INSERT INTO op_memory_fts(op_memory_fts, rowid, id, title, content)
-    VALUES ('delete', old.rowid, old.memory_id, '', '');
+    DELETE FROM op_memory_fts WHERE rowid = old.rowid;
 END;
 
 CREATE TRIGGER IF NOT EXISTS op_memory_fts_au AFTER UPDATE ON op_memory BEGIN
-    INSERT INTO op_memory_fts(op_memory_fts, rowid, id, title, content)
-    VALUES ('delete', old.rowid, old.memory_id, '', '');
+    DELETE FROM op_memory_fts WHERE rowid = old.rowid;
     INSERT INTO op_memory_fts(rowid, id, title, content)
     VALUES (new.rowid, new.memory_id, new.title, new.content);
 END;
