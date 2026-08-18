@@ -1,7 +1,7 @@
 services:
   prometheus:
     image: prom/prometheus:v2.53.0
-    container_name: ura-prometheus
+    container_name: ura-prometheus-f8
     restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -12,13 +12,13 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./alert.rules:/etc/prometheus/alert.rules:ro
-      - prometheus-data:/prometheus
+      - prometheus-data-f8:/prometheus
     extra_hosts:
       - 'host.docker.internal:host-gateway'
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: ura-alertmanager
+    container_name: ura-alertmanager-f8
     restart: unless-stopped
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
@@ -31,7 +31,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.1.0
-    container_name: ura-grafana
+    container_name: ura-grafana-f8
     restart: unless-stopped
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -41,14 +41,14 @@ services:
     ports:
       - '127.0.0.1:3001:3000'
     volumes:
-      - grafana-data:/var/lib/grafana
+      - grafana-data-f8:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
 
   webhook-alerts:
     build:
       context: .
       dockerfile: Dockerfile.webhook
-    container_name: ura-alerts-webhook
+    container_name: ura-alerts-webhook-f8
     restart: unless-stopped
     ports:
       - '127.0.0.1:9105:9105'
@@ -59,7 +59,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
-    container_name: ura-node-exporter
+    container_name: ura-node-exporter-f8
     restart: unless-stopped
     command:
       - '--path.rootfs=/host'
@@ -70,5 +70,5 @@ services:
       - /:/host:ro,rslave
 
 volumes:
-  prometheus-data:
-  grafana-data:
+  prometheus-data-f8:
+  grafana-data-f8:

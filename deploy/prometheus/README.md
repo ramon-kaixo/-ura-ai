@@ -13,8 +13,8 @@ Stack de observabilidad del GX10. Configuración versionada en el repo (esta car
 | webhook-alerts | 9105 | Webhook Alertmanager → motor.core.notifier |
 
 Nota: los puertos 9094/3001/9095/9105/9100 están libres y evitan conflictos con:
-ura-api (9090), ura-metrics (9091), ura-detector (9092) y la stack docker
-previa de prometheus/grafana (9093/3000, ya en uso en el host — se deja intacta).
+ura-api (9090), ura-metrics (9091), ura-detector (9092) y la stack docker previa de prometheus/grafana (9093/3000, ya en uso — se deja intacta).
+Los contenedores usan nombres con sufijo -f8 para no chocar con los de la stack previa (ura-grafana/ura-prometheus).
 
 ## Targets scrapeados (verificados 2026-08-18)
 
