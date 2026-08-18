@@ -49,7 +49,7 @@ def _free_disk_gb(path: Path) -> float | None:
     return None
 
 
-def _build_json_report(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _build_json_report(
     episode_id: str,
     verdict: Status,
     msg: str,
@@ -730,7 +730,7 @@ class PipelineRunner:
 
     # ── Run all ──────────────────────────────────────────────
 
-    def run(self) -> Status:  # noqa: PLR0915 — legacy/estable, sin cambio de comportamiento
+    def run(self) -> Status:
         t_start = time.monotonic()
         episode_id = f"tuneladora_{int(t_start)}_{self.mode}"
         all_phase_results: list[list[PhaseResult]] = []
@@ -803,7 +803,7 @@ class PipelineRunner:
             # Plugin registry: fase "post" (solo gate/fix)
             if self.mode in ("gate", "fix"):
                 try:
-                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})  # noqa: F821 — legacy/estable, sin cambio de comportamiento
+                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})
                     log.info("[PLUGIN] post: %s", post_result.get("status"))
                 except Exception as e:
                     log.warning("[PLUGIN] post falló: %s", e)
@@ -890,7 +890,7 @@ class PipelineRunner:
                 return
             import xml.etree.ElementTree as ET
 
-            tree = ET.parse(str(cov_xml))  # noqa: S314 — legacy/estable, sin cambio de comportamiento
+            tree = ET.parse(str(cov_xml))
             root = tree.getroot()
             rate = float(root.attrib.get("line-rate", 0))
             self._telemetry["coverage_global"] = round(rate * 100, 1)

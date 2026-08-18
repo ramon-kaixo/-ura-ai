@@ -67,7 +67,7 @@ AUDIT_SELF_FILES = frozenset({"audit_secrets.py", "audit_git_secrets.py", "test_
 
 
 class Finding:
-    def __init__(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def __init__(
         self,
         filepath: str,
         lineno: int,
