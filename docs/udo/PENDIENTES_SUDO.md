@@ -72,3 +72,22 @@ Nota: si la IP Tailscale de la Mac cambió (100.123.81.101 no responde), el scri
 /opt/ura/scripts/backup_to_mac.sh habrá que actualizarla (también con sudo por rootfs RO).
 El backup local (ura-backup.timer → backup_assistant.py) SÍ está activo; lo que está
 roto es la copia a la Mac (redundancia).
+
+## 5. ACTUALIZAR COPIA DEL BACKUP EN /opt + PROGRAMAR (tras fix IP LAN)
+
+El script instalado en /opt es una copia VIEJA (IP Tailscale 100.123.81.101 obsoleta).
+La versión del repo usa LAN (10.164.1.26) y está VERIFICADA (backup completando OK).
+Además se preparó un timer systemd para programar el backup diario a las 03:00.
+
+```bash
+sudo cp /home/ramon/URA/ura_ia_1972/deploy/backup_to_mac.sh /opt/ura/scripts/backup_to_mac.sh
+sudo cp /home/ramon/URA/ura_ia_1972/deploy/ura-backup-mac.service /etc/systemd/system/
+sudo cp /home/ramon/URA/ura_ia_1972/deploy/ura-backup-mac.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now ura-backup-mac.timer
+```
+
+Verificación:
+```bash
+systemctl is-active ura-backup-mac.timer  # -> active
+tail -3 /home/ramon/URA/logs/backup_to_mac.log  # -> "Backup completado"
+```
