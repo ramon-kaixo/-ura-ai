@@ -35,7 +35,8 @@
       "TASK-20260818-016",
       "TASK-20260816-011",
       "TASK-20260816-009",
-      "TASK-20260818-017"
+      "TASK-20260818-017",
+      "TASK-20260818-018"
     ],
     "bloqueadas": [
       "TASK-20260817-020"
@@ -572,6 +573,20 @@
         "2026-08-18: 35 errores core/ -> 0 (14 auto-fix + 20 noqas PLR0917 en firmas publicas + ISC004 stealth_fetcher). extend-exclude sin core/. Gates verdes."
       ],
       "nota": "DONE 2026-08-18. Primer entregable F7."
+    },
+    "TASK-20260818-018": {
+      "task_id": "TASK-20260818-018",
+      "descripcion": "F7-continuacion: knowledge/ y scripts/ dentro del gate ruff (94->0)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (evidencia: ruff 0 con knowledge/+scripts/ incluidos; 69 tests OK)",
+      "prioridad": "alta",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: 24 (knowledge) + 70 (scripts) errores -> 0. per-file-ignores INP001 para scripts/* (namespace por diseño). extend-exclude sin ambos dirs."
+      ],
+      "nota": "DONE 2026-08-18."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-18T00:14:10Z"
