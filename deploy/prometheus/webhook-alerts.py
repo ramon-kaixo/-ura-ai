@@ -20,7 +20,10 @@ from fastapi.responses import JSONResponse, Response
 
 sys.path.insert(0, str(Path("~/URA/ura_ia_1972").expanduser()))
 
-from motor.core.notifier import notify
+try:
+    from motor.core.notifier import notify
+except ImportError:
+    notify = None  # degradacion: contenedor sin motor/ montado
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("ura-alerts-webhook")
@@ -69,11 +72,15 @@ async def webhook(request: Request) -> JSONResponse:
             msg = f"ALERTA: {summary} (job={job}, instance={instance})"
             level = "warning"
 
-        try:
-            ok = notify(msg, level=level)
-        except Exception as exc:
-            log.warning("notify fallo para %s: %s", alertname, exc)
+        if notify is None:
+            log.warning("notifier no disponible (motor/ no montado): %s", msg)
             ok = False
+        else:
+            try:
+                ok = notify(msg, level=level)
+            except Exception as exc:
+                log.warning("notify fallo para %s: %s", alertname, exc)
+                ok = False
         if ok:
             notified += 1
         else:
