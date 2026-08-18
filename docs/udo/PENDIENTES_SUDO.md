@@ -205,3 +205,26 @@ motor.core.notifier) está integrado en el compose (puerto 9105). Se activa con 
 §10 (docker compose up -d). Sin secretos de notificación degrada con log (probado).
 Para activar notificaciones reales: `sudo docker exec -it ura-alerts-webhook bash`
 y exportar TELEGRAM_TOKEN/TELEGRAM_CHAT_ID o configurar env_file con /etc/ura/secrets.env.
+
+## 10. ARRANCAR STACK DE MONITOREO (F8 — ACTUALIZADO: puertos 9094/3001/9095)
+
+El compose usa puertos libres (9094/3001/9095/9100/9105) — 9092 (ura-detector), 9093/3000
+(stack docker previa de prometheus/grafana) quedan intactos. Mismo comando:
+
+```bash
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus
+sudo docker compose up -d
+```
+
+Verificación: 9094/-/healthy, 3001/api/health, 9095/-/healthy, 9100/metrics, 9105/health.
+
+## 13. REINICIAR URA-HEARTBEAT (cargar umbral VRAM nuevo — P11)
+
+El umbral VRAM_PANIC_MB=64000 está en el código (commit 32b3c980) pero el servicio
+corre con el módulo cargado antes. Aplicar:
+
+```bash
+sudo systemctl restart ura-heartbeat.service
+```
+
+Verificación: journal sin vram_panic falsos con el modelo de refactor cargado.

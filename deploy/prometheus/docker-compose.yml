@@ -8,7 +8,7 @@ services:
       - '--web.listen-address=:9090'
       - '--storage.tsdb.retention.time=30d'
     ports:
-      - '127.0.0.1:9092:9090'
+      - '127.0.0.1:9094:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./alert.rules:/etc/prometheus/alert.rules:ro
@@ -23,7 +23,7 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
     ports:
-      - '127.0.0.1:9093:9093'
+      - '127.0.0.1:9095:9093'
     volumes:
       - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     extra_hosts:
@@ -39,7 +39,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://127.0.0.1:3000
     ports:
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:3001:3000'
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

@@ -120,7 +120,7 @@
       "snc": {
         "port": null,
         "file": "/etc/systemd/system/snc.service",
-        "status": "failed",
+        "status": "active (verificado 2026-08-18)",
         "description": "Sistema Nervioso Central (monitor/snc.py)"
       },
       "ura-contraste": {
@@ -164,12 +164,6 @@
         "file": "/etc/systemd/system/ura-voice.service",
         "status": "active (verificado 2026-08-18)",
         "description": "Voice Agent Pipeline (hardware-dependente)"
-      },
-      "snc": {
-        "port": null,
-        "file": "/etc/systemd/system/snc.service",
-        "status": "active (verificado 2026-08-18)",
-        "description": "Sistema Nervioso Central (monitor/snc.py)"
       },
       "ollama": {
         "port": 11434,
@@ -336,6 +330,10 @@
     "11435": "model-router",
     "11436": "llama-server",
     "22000": "syncthing",
-    "46113": "tailscale (inter-node)"
+    "46113": "tailscale (inter-node)",
+    "9094": "ura-prometheus (nuevo, F8)",
+    "3001": "ura-grafana (nuevo, F8)",
+    "9095": "ura-alertmanager (nuevo, F8)",
+    "9105": "ura-alerts-webhook (nuevo, F8)"
   }
 }
