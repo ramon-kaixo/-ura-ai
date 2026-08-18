@@ -239,7 +239,7 @@ class AgentCapabilityGate(CapabilityGateABC):
         """Genera eventos de auditoría para todas las decisiones."""
         events: list[AuditEvent] = []
         for d in self._decisions:
-            events.append(  # noqa: PERF401
+            events.append(
                 AuditEvent(
                     event_type="capability.check",
                     agent_id=d.agent_id,
