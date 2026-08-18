@@ -18,10 +18,9 @@ route:
 receivers:
   - name: 'webhook-ura'
     webhook_configs:
-      # Endpoint local para integración futura (Telegram/Pushover via core/notifier.py
-      # o n8n). Sin destino configurado: las alertas quedan visibles en el UI de
-      # Alertmanager y listas para conectar un webhook real.
-      - url: 'http://host.docker.internal:5678/webhook/ura-alerts'
+      # Webhook propio (ura-alerts-webhook, 9105) -> Telegram/Pushover via
+      # motor.core.notifier. Si no hay secretos configurados, degrada con log.
+      - url: 'http://webhook-alerts:9105/webhook/ura-alerts'
         send_resolved: true
 
 inhibit_rules:

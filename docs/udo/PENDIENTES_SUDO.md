@@ -192,3 +192,16 @@ sudo systemctl restart ura-audit-api.service
 ```
 
 Verificación: `curl -s http://127.0.0.1:5053/metrics` -> 200 con ura_audit_api_up 1.
+
+NOTA (actualización §11): ya existe versión CORREGIDA y versionada en el repo:
+`deploy/run_audit_api.py` (P5+P9 aplicados). Opción más simple:
+`sudo cp /home/ramon/URA/ura_ia_1972/deploy/run_audit_api.py /home/ramon/bin/run_audit_api.py`
+y reiniciar el servicio. El patch sigue disponible como alternativa.
+
+## 12. WEBHOOK DE ALERTAS (sugerencia 1 ejecutada — requiere compose §10)
+
+El webhook receptor (deploy/prometheus/webhook-alerts.py -> Telegram/Pushover via
+motor.core.notifier) está integrado en el compose (puerto 9105). Se activa con el
+§10 (docker compose up -d). Sin secretos de notificación degrada con log (probado).
+Para activar notificaciones reales: `sudo docker exec -it ura-alerts-webhook bash`
+y exportar TELEGRAM_TOKEN/TELEGRAM_CHAT_ID o configurar env_file con /etc/ura/secrets.env.
