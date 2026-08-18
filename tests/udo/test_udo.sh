@@ -296,6 +296,30 @@ git -C "$REPO_T" add . && git -C "$REPO_T" commit -qm "[$V3][TERM] verificar tru
 URA_REVISOR="TERM" UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" revisar "$V3" --ok "ok real" >/dev/null 2>&1 && ok "V3: OK aceptado si verificación pasa" || bad "V3: OK aceptado si verificación pasa"
 UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" show "$V3" | grep -q "AUTO-REVISIÓN" && ok "V3: auto-revisión marcada (revisor==ejecutor)" || bad "V3: auto-revisión marcada"
 
+# 28. TASK-20260818-029: .seq desactualizado no reusa IDs existentes
+echo "-- 28. Salto de IDs existentes (.seq desactualizado)"
+SEQ_FILE="$UDO_ROOT/.seq"
+S1=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test seq A" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+# Falsifica un .seq desactualizado: el contador apunta a un ID ya creado
+HOY=$(date +%Y%m%d)
+ULTIMO_ID=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" list 2>/dev/null | grep -o "TASK-$HOY-[0-9]*" | sort -u | tail -1)
+NUM_ULTIMO=$(echo "$ULTIMO_ID" | grep -o '[0-9]*$')
+echo "$HOY:$((NUM_ULTIMO - 2))" > "$SEQ_FILE"   # contador regresa 2 IDs
+S2=$(UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Test seq B" | grep -o -m1 'TASK-[0-9-]*' | head -1)
+if [ "$S1" != "$S2" ] && [ -f "$UDO_ROOT/tasks/$S1.md" ] && [ -f "$UDO_ROOT/tasks/$S2.md" ]; then
+    ok "28: salto de ID existente (creados: $S1, $S2)"
+else
+    bad "28: salto de ID existente ($S1 vs $S2)"
+fi
+
+# 29. TASK-20260818-029: IDs únicos bajo creación concurrente (flock)
+echo "-- 29. IDs únicos bajo concurrencia"
+rm -f "$UDO_ROOT/tasks"/*.md
+IDS_CONC=$(for i in 1 2 3 4 5 6 7 8; do UDO_ROOT="$UDO_ROOT" UDO_REPO="$REPO_T" "$UDO" create "Conc $i" >/dev/null 2>&1 & done; wait)
+NUM_CONC=$(ls "$UDO_ROOT/tasks/" | wc -l)
+UNICOS=$(ls "$UDO_ROOT/tasks/" | sort -u | wc -l)
+[ "$NUM_CONC" -eq 8 ] && [ "$UNICOS" -eq 8 ] && ok "29: 8 creates concurrentes -> 8 IDs únicos" || bad "29: concurrencia ($NUM_CONC archivos, $UNICOS únicos)"
+
 
 echo "=============================================="
 echo "RESULTADO: $PASS OK, $FAIL FAIL"

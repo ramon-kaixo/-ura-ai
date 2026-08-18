@@ -273,7 +273,13 @@ case "${1:-}" in
   create)
     [ -n "${2:-}" ] || { _uso; exit 1; }
     _lock
+    # TASK-20260818-029: salto de IDs ya existentes — el .seq puede quedar
+    # desactualizado (divergencia Mac/ASUS o edicion manual), lo que reusaria
+    # un ID de un expediente ya creado. Bajo _lock, avanzar hasta uno libre.
     id="$(_id_nuevo)"
+    while [ -f "$TASKS_DIR/$id.md" ]; do
+        id="$(_id_nuevo)"
+    done
     file="$TASKS_DIR/$id.md"
     {
         echo "---"
