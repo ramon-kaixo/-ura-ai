@@ -25,7 +25,13 @@
       "TASK-20260818-006",
       "TASK-20260818-007",
       "TASK-20260818-008",
-      "TASK-20260818-009"
+      "TASK-20260818-009",
+      "TASK-20260818-010",
+      "TASK-20260818-011",
+      "TASK-20260818-012",
+      "TASK-20260818-013",
+      "TASK-20260818-014",
+      "TASK-20260818-015"
     ],
     "bloqueadas": [
       "TASK-20260816-011",
@@ -449,6 +455,90 @@
       ],
       "nota": "Ejecutada 2026-08-18. Gates: ruff 0, mypy 0, verify_protocol OK.",
       "veredicto": "APROBADO (AUTO-REVISION con evidencia objetiva; ratificacion coordinador pendiente)"
+    },
+    "TASK-20260818-010": {
+      "task_id": "TASK-20260818-010",
+      "descripcion": "D1: proceso UDO (backfill 21 expedientes, coordination, review-pending, notas)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-011": {
+      "task_id": "TASK-20260818-011",
+      "descripcion": "D2a: detector v3.3 rsync --delete en worktree mac-veredictos",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-012": {
+      "task_id": "TASK-20260818-012",
+      "descripcion": "D2b: publish unico guardian_logger + noqas (cobertura 95.7%)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-013": {
+      "task_id": "TASK-20260818-013",
+      "descripcion": "D2c: hook audit-cierre-udo en pre-commit (informativo)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-014": {
+      "task_id": "TASK-20260818-014",
+      "descripcion": "D3: 8 ramas mergeadas borradas de origin",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
+    },
+    "TASK-20260818-015": {
+      "task_id": "TASK-20260818-015",
+      "descripcion": "D4: sync Mac 43 archivos + main Mac al dia",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "veredicto": "APROBADO (AUTO-REVISION con evidencia; ratificacion coordinador pendiente)",
+      "prioridad": "media",
+      "modo": "secuencial",
+      "historial": [
+        "2026-08-18: ejecutada por WEB (plan integral auditoria). Gates verdes. AUTO-REVISION en review-pending."
+      ],
+      "nota": "DONE 2026-08-18 con gate completo (analisis+validacion+pinning)."
     }
   },
   "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
