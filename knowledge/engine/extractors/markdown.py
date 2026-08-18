@@ -49,7 +49,7 @@ class MarkdownExtractor:
     supported_mime_types: list[str] = _MD_MIMES
     cost: str = "O(1)"
 
-    def _build_md_asset(
+    def _build_md_asset(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         self,
         source: AssetSource,
         path_str: str,

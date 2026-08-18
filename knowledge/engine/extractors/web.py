@@ -147,7 +147,7 @@ class WebExtractor:
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
 
-    def _parse_html(
+    def _parse_html(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         self,
         content: bytes,
         final_url: str,

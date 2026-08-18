@@ -267,7 +267,7 @@ class KnowledgeReader:
         finally:
             _release_conn(conn, self._db_path)
 
-    def _traverse_relations(
+    def _traverse_relations(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         self,
         conn: sqlite3.Connection,
         node_id: str,

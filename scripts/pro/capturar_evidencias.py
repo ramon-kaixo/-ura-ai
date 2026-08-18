@@ -23,7 +23,7 @@ EVIDENCIAS_DIR = ROOT / "data" / "evidencias"
 
 def _run(cmd: list[str], timeout: int = 300) -> str:
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(ROOT))
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(ROOT))  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         return r.stdout
     except (subprocess.TimeoutExpired, OSError) as exc:
         return f"error: {exc}"

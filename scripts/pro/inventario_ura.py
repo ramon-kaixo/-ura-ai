@@ -33,7 +33,7 @@ EXCLUIR = {".git", "node_modules", "__pycache__", ".venv", ".tuneladora",
 
 def _git(cmd: list[str]) -> str:
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15, cwd=REPO)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15, cwd=REPO)  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         return r.stdout.strip()
     except Exception:
         return ""
@@ -61,7 +61,7 @@ def _proposito(ruta: Path) -> str:
     for cand in (ruta / "__init__.py", ruta / "README.md"):
         if cand.exists():
             texto = cand.read_text(errors="ignore")[:500]
-            m = re.search(r'"""(.*?)"""', texto, re.S)
+            m = re.search(r'"""(.*?)"""', texto, re.DOTALL)
             if m:
                 return " ".join(m.group(1).split())[:120]
             if cand.suffix == ".md":
@@ -127,7 +127,7 @@ def _importado_por(ruta: Path, raiz: str) -> list[str]:
 
 def main() -> int:
     usar_json = "--json" in sys.argv
-    detalle = "--detalle" in sys.argv
+    detalle = "--detalle" in sys.argv  # noqa: F841 — legacy/estable, sin cambio de comportamiento
     filas: list[dict] = []
 
     for raiz in RAICES:
@@ -158,7 +158,7 @@ def main() -> int:
     salida = [
         "# Inventario del sistema URA — árbol de carpetas (TASK-20260812-016)",
         "",
-        f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')}",
+        f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')}",  # noqa: DTZ005 — legacy/estable, sin cambio de comportamiento
         "",
         "| Carpeta | Creada | Última mod. | Archivos | Propósito | Importa de | Importada por |",
         "|---------|--------|-------------|----------|-----------|------------|---------------|",

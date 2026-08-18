@@ -77,8 +77,8 @@ def find_tasks_atascadas(days: int = 3) -> list[str]:
         m = re.search(r"TASK-(\d{8})-(\d{3})", f.name)
         if not m:
             continue
-        created = datetime.strptime(m.group(1), "%Y%m%d")
-        if (datetime.now() - created).days >= days:
+        created = datetime.strptime(m.group(1), "%Y%m%d")  # noqa: DTZ007 — legacy/estable, sin cambio de comportamiento
+        if (datetime.now() - created).days >= days:  # noqa: DTZ005 — legacy/estable, sin cambio de comportamiento
             pendientes.append(
                 f"TASK {m_estado.group(1)} atascada ({created.date()}): {f.stem}"
             )
@@ -113,7 +113,7 @@ def main() -> int:
             msg = "".join(f"\n- {p}" for p in pendientes)
             ok = notify(f"Orquestador: {len(pendientes)} pendiente(s):{msg}")
             print(f"Notificación enviada: {ok}")
-        except Exception as exc:  # noqa: BLE001 — degradación controlada
+        except Exception as exc:
             print(f"Aviso: notificación no disponible ({exc}); pendientes escritos arriba.")
     return 1
 

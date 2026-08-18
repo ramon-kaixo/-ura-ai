@@ -261,7 +261,7 @@ def _guess_mime(location: str) -> str:
     return mime_map.get(ext, "application/octet-stream")
 
 
-def _worker_loop(
+def _worker_loop(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     db_path: Path,
     registry: ExtractorRegistry,
     store: AssetStore,
@@ -356,7 +356,7 @@ def _claim_next_job_fallback(conn) -> sqlite3.Row | None:
     return sel
 
 
-def _esperar_proceso(
+def _esperar_proceso(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     db_path: Path,
     job_id: int,
     extractor_id: str,

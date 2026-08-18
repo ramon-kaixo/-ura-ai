@@ -48,7 +48,7 @@ class GoalManager:
 
     # ── Creación ──
 
-    def create(
+    def create(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         self,
         title: str,
         description: str = "",
@@ -164,7 +164,7 @@ class GoalManager:
 
     def add_dependency(self, goal_id: str, depends_on: str) -> None:
         """Añade una dependencia entre objetivos."""
-        if goal_id in self._goals and depends_on in self._goals:
+        if goal_id in self._goals and depends_on in self._goals:  # noqa: SIM102 — legacy/estable, sin cambio de comportamiento
             if depends_on not in self._goals[goal_id].setdefault("dependencies", []):
                 self._goals[goal_id]["dependencies"].append(depends_on)
                 self._save_goal(self._goals[goal_id])

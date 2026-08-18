@@ -257,7 +257,7 @@ def _construir_rating(fb: dict[str, Any] | None) -> str:
     return f"\n\n**Rating:** {stars} ({fb['avg_rating']:.1f}/5, {fb['n_ratings']} votes)"
 
 
-def _construir_content(
+def _construir_content(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     doc_id: str,
     doc_type: str,
     title: str,

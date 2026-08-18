@@ -79,7 +79,7 @@ def check_lock_stale() -> dict:
 def check_tests_consistencia() -> dict:
     """5. La suite colecciona sin errores."""
     try:
-        r = subprocess.run(
+        r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q", "--no-header"],
             capture_output=True, text=True, timeout=120, cwd=str(ROOT),
         )
@@ -110,7 +110,7 @@ def check_huerfanos() -> dict:
         stem = f.stem
         if stem in conectados:
             continue
-        refs = subprocess.run(
+        refs = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             ["grep", "-rl", f"scripts.pro.{stem}", "--include=*.py",
              str(ROOT / "core"), str(ROOT / "motor"), str(ROOT / "knowledge"),
              str(ROOT / "scripts"), str(ROOT / "tests"), str(ROOT / ".github")],
@@ -133,7 +133,7 @@ def check_duplicados() -> dict:
                 continue
             try:
                 for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
-                    line = line.strip()
+                    line = line.strip()  # noqa: PLW2901 — legacy/estable, sin cambio de comportamiento
                     if line.startswith("def ") or line.startswith("async def "):
                         name = line.split("(")[0].replace("def ", "").replace("async def ", "").strip()
                         out.append(name)

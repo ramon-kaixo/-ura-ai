@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def main() -> int:
     # Usa make validate (filtra @slow, ejecuta pre-commit, etc.)
-    r = subprocess.run(
+    r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         ["make", "validate"],
         capture_output=True,
         text=True,

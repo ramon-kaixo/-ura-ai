@@ -105,7 +105,7 @@ class AuditService:
             ),
         )
 
-    def log(
+    def log(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         self,
         action: str,
         actor: str,

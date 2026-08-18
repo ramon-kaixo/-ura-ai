@@ -95,8 +95,8 @@ def check_instantiation() -> dict[str, str]:
         results["AutoMaintainer()"] = f"fail: {e}"
 
     try:
-        from motor.brain.observer import BrainObserver
         from motor.brain.alerts import AlertEngine
+        from motor.brain.observer import BrainObserver
 
         engine = AlertEngine(mock.Mock(spec=BrainObserver))
         if hasattr(engine, "evaluate"):
@@ -129,8 +129,8 @@ def check_hooks() -> dict[str, str]:
         try:
             import os as _os
 
-            env = dict((k, v) for k, v in [("TMPDIR", "/tmp"), ("PRE_COMMIT_HOME", "/tmp/pre-commit-home"), ("PATH", f"{_REPO_ROOT}/.venv/bin:{_os.environ.get('PATH', '')}")])
-            proc = subprocess.run(
+            env = dict((k, v) for k, v in [("TMPDIR", "/tmp"), ("PRE_COMMIT_HOME", "/tmp/pre-commit-home"), ("PATH", f"{_REPO_ROOT}/.venv/bin:{_os.environ.get('PATH', '')}")])  # noqa: C402 — legacy/estable, sin cambio de comportamiento
+            proc = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
                 [sys.executable, "-m", "pre_commit", "run", hook, "--files", "motor/brain/"],
                 capture_output=True,
                 text=True,

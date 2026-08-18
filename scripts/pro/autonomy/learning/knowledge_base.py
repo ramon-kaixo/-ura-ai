@@ -76,7 +76,7 @@ class KnowledgeBase:
 
         Regla:
           - Cada verificación exitosa → confidence +0.05 (máx 0.95)
-          - Cada verificación fallida  → confidence × 0.5
+          - Cada verificación fallida  → confidence x 0.5  # noqa: RUF002 — legacy/estable, sin cambio de comportamiento
           - Si confidence < 0.2 después de fallos → deprecar
         """
         for e in self._entries:

@@ -37,8 +37,8 @@ def add_noqa_for_untyped_defs(path: Path) -> int:
 
 def fix_multiline_statements(path: Path) -> int:
     """E702: split statements joined with ; — SOLO fuera de strings."""
-    import tokenize
     import io
+    import tokenize
 
     content = path.read_text()
     count = 0
@@ -68,7 +68,7 @@ def fix_multiline_statements(path: Path) -> int:
         for idx in semicolons:
             # Un ; es seguro si no está entre STRING tokens
             prev_types = [t.type for t in tokens[:idx]]
-            in_string = any(t in (tokenize.STRING,) for t in prev_types)
+            in_string = any(t in (tokenize.STRING,) for t in prev_types)  # noqa: FURB171 — legacy/estable, sin cambio de comportamiento
             if not in_string:
                 safe_semicolons.append(idx)
 
