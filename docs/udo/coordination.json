@@ -664,5 +664,14 @@
       "nota": "DONE 2026-08-18."
     }
   },
-  "ultima_ejecucion_despertador": "2026-08-18T01:40:44Z"
+  "ultima_ejecucion_despertador": "2026-08-18T04:27:29Z",
+  "historial_analisis": [
+    {
+      "fecha": "2026-08-18T06:45:00",
+      "plan": "auto-20260818 (opencode run --auto fallido — limpiar arbol)",
+      "veredicto": "NO-GO parcial",
+      "resumen": "Diagnostico del plan incorrecto: coordination.json real = 0 aprobadas/0 bloqueadas (plan decia 37/TASK-020); backlog B001=EN_PROGRESO y B002=PENDIENTE (plan decia resueltos); los 96 archivos son del sandbox de mejora (proceso vivo, zona ajena) no del run fallido. Accion stash+add -A+push NO ejecutada: riesgo de romper flujo del sandbox y push de trabajo ajeno no verificado. Precedente: rama ia/TASK-20260817-B014-ajenos ya existe.",
+      "pendiente_real": "§15 compose -f8 (sudo humano): cd deploy/prometheus && sudo docker compose up -d; cola del daemon: preflight_system.py en cola"
+    }
+  ]
 }
