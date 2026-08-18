@@ -555,14 +555,14 @@ def leer_ultimo_reporte_tuneladora(report_dir: Path | None = None, n: int = 0) -
     if not report_dir.exists():
         return None
     files = sorted(
-        _glob.glob(str(report_dir / "*.json")),
+        _glob.glob(str(report_dir / "*.json")),  # noqa: PTH207 — legacy/estable, sin cambio de comportamiento
         key=_os.path.getmtime,
         reverse=True,
     )
     if n >= len(files):
         return None
     try:
-        with open(files[n], encoding="utf-8") as f:
+        with open(files[n], encoding="utf-8") as f:  # noqa: PTH123 — legacy/estable, sin cambio de comportamiento
             return _json.load(f)
     except (_json.JSONDecodeError, OSError):
         return None

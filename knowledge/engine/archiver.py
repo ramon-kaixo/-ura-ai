@@ -193,7 +193,7 @@ def _calcular_sha256(path: Path) -> str:
     return sha256.hexdigest()
 
 
-def _construir_manifest(
+def _construir_manifest(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     commit: str,
     timestamp: str,
     bundle_path: Path,

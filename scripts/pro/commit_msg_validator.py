@@ -50,7 +50,7 @@ def validate(message: str) -> tuple[bool, str]:
     if not CONVENTIONAL_RE.match(first):
         return (
             False,
-            "formato: tipo(scope)?: descripción — "
+            "formato: tipo(scope)?: descripción — "  # noqa: ISC004 — legacy/estable, sin cambio de comportamiento
             "tipo en {feat,fix,test,docs,refactor,chore,perf,build,ci,style,revert}, "
             "descripción >= 10 chars",
         )

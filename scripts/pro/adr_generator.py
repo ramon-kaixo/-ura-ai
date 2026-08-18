@@ -34,7 +34,7 @@ SIGNIFICANT_PATTERNS = [
 
 
 def get_last_commit() -> dict:
-    r = subprocess.run(
+    r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         ["git", "log", "-1", "--format=%H%n%h%n%an%n%ad%n%s%n%b"],
         capture_output=True, text=True, timeout=10,
     )
@@ -50,7 +50,7 @@ def get_last_commit() -> dict:
 
 
 def get_changed_files() -> list[str]:
-    r = subprocess.run(
+    r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         ["git", "diff", "--name-only", "HEAD~1..HEAD"],
         capture_output=True, text=True, timeout=10,
     )

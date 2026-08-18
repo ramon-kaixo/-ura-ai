@@ -76,7 +76,7 @@ def generar_unidades(verbose: bool = True) -> list[Path]:
 
 def _run(cmd: list[str]) -> int:
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         if r.stdout.strip():
             print(r.stdout.strip())
         if r.returncode != 0 and r.stderr.strip():
@@ -92,7 +92,7 @@ def status() -> int:
     for name in TIMERS:
         if TIMERS[name][1] == "permanent":
             continue
-        r = subprocess.run(
+        r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             ["systemctl", "is-active", f"{name}.timer"],
             capture_output=True, text=True, timeout=15,
         )

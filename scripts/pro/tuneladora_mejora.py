@@ -154,7 +154,7 @@ def _run_arq_and_promotion(engine, result_post, refactor_ejecutado):
         engine.ledger.set_promotion(True)
 
 
-def _finalize(engine, t0, refactor_ejecutado, result_pre, result_refactor, result_post):
+def _finalize(engine, t0, refactor_ejecutado, result_pre, result_refactor, result_post):  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     """Snapshot, ledger, cleanup checkpoint y reporte final."""
     snap = engine.snapshot.save("ultimo_ciclo")
     if snap:

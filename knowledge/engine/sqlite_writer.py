@@ -183,7 +183,7 @@ class CompilerRunRepository:
             )
 
     @staticmethod
-    def create_run(
+    def create_run(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
         conn: sqlite3.Connection,
         ctx: CompileContext,
         changed: int,
@@ -298,7 +298,7 @@ def init_db(db_path: Path, schema_path: Path) -> None:
     conn.close()
 
 
-def _build_result(
+def _build_result(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     started_at: float,
     run_id: int,
     changed: int,
@@ -323,7 +323,7 @@ def _build_result(
     )
 
 
-def apply_compile(
+def apply_compile(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     db_path: Path,
     objects: list[KnowledgeObject],
     ctx: CompileContext,

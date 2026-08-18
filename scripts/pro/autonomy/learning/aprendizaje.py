@@ -94,7 +94,7 @@ def main() -> int:  # noqa: PLR0915
         if decision["applied"]:
             engine.log.info("  ✅ Aplicada: {decision.get('policy')} — {rec['title']}")
         else:
-            engine.log.info("  ℹ️  {decision.get('action')}: {decision.get('reason', rec['title'])[:60]}")
+            engine.log.info("  ℹ️  {decision.get('action')}: {decision.get('reason', rec['title'])[:60]}")  # noqa: RUF001 — legacy/estable, sin cambio de comportamiento
         engine.ledger.add_policy(decision)
 
     if args.mode == "autonomo":

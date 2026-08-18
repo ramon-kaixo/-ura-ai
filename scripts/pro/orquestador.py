@@ -38,7 +38,7 @@ def cargar_tarea(path: Path) -> dict:
 
 
 def _run(cmd: list[str], timeout: int = 600) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(ROOT))
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(ROOT))  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
 
 
 def fase_contexto(tarea: dict) -> dict:

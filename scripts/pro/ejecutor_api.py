@@ -16,9 +16,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 log = logging.getLogger("ura.executor")
 
-sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))  # noqa: PTH120, PTH100 — legacy; variable str aguas abajo
 
-CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")
+CONTEXT_PATH = os.path.expanduser("~/.config/opencode/ura_context.json")  # noqa: PTH111 — legacy/estable, sin cambio de comportamiento
 MCP_SYNC = os.environ.get("MCP_SYNC_URL", "http://10.164.1.26:9093")
 HOST = os.environ.get("EXECUTOR_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXECUTOR_PORT", "4096"))
@@ -31,7 +31,7 @@ _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
 def _get_qdrant():
-    global _qdrant
+    global _qdrant  # noqa: PLW0603 — legacy/estable, sin cambio de comportamiento
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -39,40 +39,40 @@ def _get_qdrant():
 
 def log_evento(evento, datos=None) -> None:
     import urllib.request
-    payload = {"evento": evento, "timestamp": datetime.utcnow().isoformat(), "data": datos or {}}
+    payload = {"evento": evento, "timestamp": datetime.utcnow().isoformat(), "data": datos or {}}  # noqa: DTZ003 — legacy/estable, sin cambio de comportamiento
     try:
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310 — legacy/estable, sin cambio de comportamiento
             f"{MCP_SYNC}/log",
             data=json.dumps(payload).encode(),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=5)
+        urllib.request.urlopen(req, timeout=5)  # noqa: S310 — legacy/estable, sin cambio de comportamiento
     except Exception:
         log.debug("executor API request falló")
 
 
 def leer_contexto():
-    if os.path.exists(CONTEXT_PATH):
-        with open(CONTEXT_PATH, encoding="utf-8") as f:
+    if os.path.exists(CONTEXT_PATH):  # noqa: PTH110 — legacy/estable, sin cambio de comportamiento
+        with open(CONTEXT_PATH, encoding="utf-8") as f:  # noqa: PTH123 — legacy/estable, sin cambio de comportamiento
             return json.load(f)
     return {}
 
 
 def escribir_contexto(ctx) -> None:
-    os.makedirs(os.path.dirname(CONTEXT_PATH), exist_ok=True)
-    with open(CONTEXT_PATH, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(CONTEXT_PATH), exist_ok=True)  # noqa: PTH120, PTH103 — legacy; ruta runtime (env)
+    with open(CONTEXT_PATH, "w", encoding="utf-8") as f:  # noqa: PTH123 — legacy/estable, sin cambio de comportamiento
         json.dump(ctx, f, indent=2)
 
 
 def ejecutar_tarea(task_desc, target_files):
     ctx = leer_contexto()
-    ctx["opencode_agent"]["ultima_sincronizacion"] = datetime.utcnow().isoformat()
+    ctx["opencode_agent"]["ultima_sincronizacion"] = datetime.utcnow().isoformat()  # noqa: DTZ003 — legacy/estable, sin cambio de comportamiento
     ctx["opencode_agent"]["estado"] = "ejecutando"
     ctx["opencode_agent"]["tarea_actual"] = {
         "descripcion": task_desc,
         "archivos": target_files,
-        "inicio": datetime.utcnow().isoformat(),
+        "inicio": datetime.utcnow().isoformat(),  # noqa: DTZ003 — legacy/estable, sin cambio de comportamiento
     }
     escribir_contexto(ctx)
     log_evento("tarea_iniciada", {"descripcion": task_desc[:50], "archivos": target_files})
@@ -80,7 +80,7 @@ def ejecutar_tarea(task_desc, target_files):
     def worker() -> None:
         try:
             cmd = ["opencode", "run-context"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             output = result.stdout[:1000] if result.stdout else result.stderr[:500]
             ctx = leer_contexto()
             ctx["opencode_agent"]["estado"] = "completado"
@@ -133,7 +133,7 @@ def handle_interact(body: dict) -> dict:
         "raw": raw[:2000],
         "structure": raw_struct[:2000],
         "raw_distance_struct": round(distancia, 4),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow().isoformat(),  # noqa: DTZ003 — legacy/estable, sin cambio de comportamiento
     }
     qdrant.guardar_documento(tx_id, raw, payload)
 

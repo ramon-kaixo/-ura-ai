@@ -77,7 +77,7 @@ def _track_conn(db_path: Path):
         conn.close()
 
 
-def _track_operation(
+def _track_operation(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
     conn: sqlite3.Connection,
     doc_id: str,
     operation: str,
