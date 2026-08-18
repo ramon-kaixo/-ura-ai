@@ -91,3 +91,16 @@ Verificación:
 systemctl is-active ura-backup-mac.timer  # -> active
 tail -3 /home/ramon/URA/logs/backup_to_mac.log  # -> "Backup completado"
 ```
+
+## 6. REINICIAR HEARTBEAT (auto_dumps RO recurrente)
+
+El daemon `ura-heartbeat.service` (PID antiguo) corre en un mount namespace que ve
+`/home/ramon/URA/ura_ia_1972/data/auto_dumps` como RO → los auto_dumps fallan cada ~30s
+([Errno 30] Read-only). El repositorio es RW en el namespace actual (verificado).
+Reiniciar el servicio lo relanza en el namespace correcto:
+
+```bash
+sudo systemctl restart ura-heartbeat.service
+```
+
+Verificación: `journalctl -u ura-heartbeat --since "2 min ago" | grep -c "auto-dump"` → 0 errores.
