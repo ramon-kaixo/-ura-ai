@@ -48,3 +48,27 @@ Marcar aquí y avisar al WEB para verificar y cerrar la cadena de trazabilidad:
 
 - [ ] ura-despertador.timer active
 - [ ] despertador registra `ultima_ejecucion_despertador` reciente en docs/udo/coordination.json
+
+## 4. REPARAR BACKUP A LA MAC (CRÍTICO — roto desde 2026-05-29)
+
+Causa raíz (diagnóstico WEB 2026-08-18): la clave `~/.ssh/id_backup_mac` quedó con
+permisos 755 (world-readable) → ssh la rechaza ("bad permissions") → el backup a la
+Mac falla desde el 29 de mayo. Además: el cron `0 3 * * * backup_to_mac.sh` NO está
+instalado (rootfs RO) y la IP Tailscale del script (100.123.81.101) no responde ping.
+
+```bash
+sudo chmod 600 /home/ramon/.ssh/id_backup_mac
+```
+
+Verificación (tras el chmod, pasarla al WEB):
+
+```bash
+ssh -i ~/.ssh/id_backup_mac -o IdentitiesOnly=yes ramonesnaola@10.164.1.26 "echo CLAVE_OK"
+# y el backup completo:
+bash /opt/ura/scripts/backup_to_mac.sh
+```
+
+Nota: si la IP Tailscale de la Mac cambió (100.123.81.101 no responde), el script en
+/opt/ura/scripts/backup_to_mac.sh habrá que actualizarla (también con sudo por rootfs RO).
+El backup local (ura-backup.timer → backup_assistant.py) SÍ está activo; lo que está
+roto es la copia a la Mac (redundancia).
