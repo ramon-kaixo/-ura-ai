@@ -55,7 +55,7 @@ def check_port(port: int) -> dict:
         if addr_port != port_str:
             continue
         result["in_use"] = True
-        m = re.search(r'users:\(\((.*?)\)\)', line)
+        m = re.search(r"users:\(\((.*?)\)\)", line)
         if m:
             result["process"] = m.group(1)[:80]
         break
@@ -137,6 +137,8 @@ def _ss_ports(output: str) -> list[tuple[str, str]]:
 
 def _audit_services(manifest: dict, issues: list[str]) -> None:
     for name, info in manifest.get("services", {}).get("system", {}).items():
+        if str(info.get("status", "")).startswith("REMOVED"):
+            continue
         svc = check_systemd_service(name)
         if not svc["exists"]:
             issues.append(f"Servicio '{name}' en manifiesto pero NO en systemd")
