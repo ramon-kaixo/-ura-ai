@@ -46,3 +46,13 @@ Registro de dudas encontradas durante la sesión y su investigación/resolución
 
 ## D10 — ¿La tuneladora debe excluirse de corridas durante backups?
 - **Mejora sugerida**: el FAIL se evitó corrigiendo el backup (ahora ligero). Si se reintroduce un backup pesado, coordinar.
+
+## D12 — ¿Por qué el heartbeat (reiniciado) sigue viendo /home RO?
+- **Duda**: tras `sudo systemctl restart ura-heartbeat`, el NUEVO PID (4016525) sigue con
+  [Errno 30] Read-only en data/auto_dumps.
+- **Investigación**: los servicios systemd corren en el namespace del HOST, donde el rootfs
+  esta montado RO (evidencia: /var/spool RO para crontab, heartbeat RO, tuneladora FAIL en
+  bucle por no poder escribir mejoras). Mi entorno (opencode) tiene binds rw propios → por
+  eso YO escribo pero los servicios no.
+- **Resolución**: requiere `sudo mount -o remount,rw /` (PENDIENTES_SUDO §7). El fstab ya
+  tiene rw (AGENTS.md 2026-07-19) pero el arranque actual quedo RO.

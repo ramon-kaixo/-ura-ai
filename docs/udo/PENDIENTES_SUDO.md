@@ -104,3 +104,23 @@ sudo systemctl restart ura-heartbeat.service
 ```
 
 Verificación: `journalctl -u ura-heartbeat --since "2 min ago" | grep -c "auto-dump"` → 0 errores.
+
+## 7. REMOUNT RW DEL ROOTFS (causa raiz de heartbeat RO y tuneladora FAIL)
+
+Diagnóstico WEB 2026-08-18: el host GX10 tiene el rootfs montado RO. Los servicios
+systemd (ura-heartbeat, tuneladora) corren en el namespace del HOST → ven
+/home/ramon/URA/data como RO → auto_dumps fallan (heartbeat) y la tuneladora no
+puede escribir sus mejoras → Pipeline FAILED en bucle (rollback la protege).
+El entorno opencode tiene binds rw propios (por eso YO sí escribo), pero el host no.
+
+```bash
+sudo mount -o remount,rw /
+```
+
+Verificación tras el remount:
+```bash
+sudo -i bash -c "touch /home/ramon/URA/ura_ia_1972/data/auto_dumps/.rw_test && rm /home/ramon/URA/ura_ia_1972/data/auto_dumps/.rw_test && echo HOST_RW_OK"
+journalctl -u ura-heartbeat --since "2 min ago" | grep -c "Read-only"   # -> 0 tras unos min
+# y la tuneladora deberia dejar de fallar:
+journalctl --since "5 min ago" | grep -c "Pipeline FAILED"              # -> 0
+```
