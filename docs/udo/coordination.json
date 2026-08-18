@@ -32,12 +32,12 @@
       "TASK-20260818-013",
       "TASK-20260818-014",
       "TASK-20260818-015",
-      "TASK-20260818-016"
+      "TASK-20260818-016",
+      "TASK-20260816-011",
+      "TASK-20260816-009"
     ],
     "bloqueadas": [
-      "TASK-20260816-011",
-      "TASK-20260817-020",
-      "TASK-20260816-009"
+      "TASK-20260817-020"
     ],
     "cerradas": [
       "TASK-20260816-003",
@@ -109,12 +109,13 @@
       "descripcion": "Integrar auto-dispatcher con el despertador de fondo (asignación automática sin intervención humana)",
       "ejecutor": null,
       "revisor": "WEB",
-      "estado": "bloqueada",
+      "estado": "aprobada",
       "prioridad": "baja",
-      "veredicto": "",
-      "nota": "BLOQUEADA: integracion auto-dispatcher con despertador pendiente de decision del coordinador (2026-08-18 WEB: sin accion, estado documentado)",
+      "veredicto": "APROBADO (revisor WEB 2026-08-18) — artefactos completos y verificados (despertador.sh ejecuta OK, dispatcher flock, AGENTS.md, crontab_despertador.txt, deploy/ura-despertador.service+timer). Pendiente-humano: instalacion systemd (sudo) por rootfs RO",
+      "nota": "APROBADA. Pendiente-humano: sudo cp deploy/ura-despertador.{service,timer} /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now ura-despertador.timer",
       "historial": [
-        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)",
+        "2026-08-18 WEB (revisor): veredicto APROBADO. Comprobado: despertador.sh ejecutado OK (ultima_ejecucion actualizada); crontab del usuario bloqueado por rootfs RO; timer systemd preparado en deploy/ pendiente de sudo humano."
       ]
     },
     "TASK-20260816-010": {
@@ -131,9 +132,9 @@
       "titulo": "Plan consolidado F6-F10",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "pausada",
+      "estado": "aprobada",
       "prioridad": "MEDIA",
-      "veredicto": "",
+      "veredicto": "APROBADO — registro del plan F6-F10 completado (docs/architecture/F6-F10_PLAN_CONSOLIDADO.md, WEB 2026-08-18); ninguna fase ejecutada",
       "dependencias": [
         "F4",
         "F5"
@@ -146,9 +147,10 @@
         "F10"
       ],
       "condicion_inicio": "No iniciar hasta que F4 (limpieza estructural) y F5 (calidad continua) estén terminadas, aprobadas y fusionadas a main.",
-      "nota": "PAUSADA: plan consolidado F6-F10 pendiente de decision del coordinador (2026-08-18 WEB: sin accion, estado documentado)",
+      "nota": "Registro completado. Ejecucion de fases requiere TASK UDO propia con analisis de plan.",
       "historial": [
-        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)",
+        "2026-08-18 WEB: creado el registro consolidado F6-F10 (planificacion); cierre documental."
       ]
     },
     "TASK-20260816-012": {
@@ -289,11 +291,12 @@
       "prioridad": "ALTA",
       "ejecutor": "TERM",
       "revisor": "WEB",
-      "estado": "LATENTE",
-      "veredicto": "",
-      "nota": "LATENTE: timers ura-ejecutor/ura-healing no-op (hallazgo ALTA del TERM Mac); pendiente de decision (2026-08-18 WEB: sin accion, estado documentado)",
+      "estado": "cerrada",
+      "veredicto": "CANCELLED — no procede en ASUS (verificado 2026-08-17/18: no existen timers ura-ejecutor/ura-healing; API corre como ura-api.service activo)",
+      "nota": "CERRADA (no aplica): hallazgo de la Mac no reproducible en ASUS.",
       "historial": [
-        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)"
+        "2026-08-18: estado documentado por WEB en auditoria (sin accion ejecutada)",
+        "2026-08-18 WEB: cierre formal. Verificado de nuevo: sin timers con esos nombres; ura-api.service active running (la API del ejecutor corre por ese medio); ura-ejecutor.service existe pero inactive (legacy, no se toca sin autorizacion)."
       ]
     },
     "TASK-20260817-021": {
@@ -556,5 +559,5 @@
       "nota": "DONE 2026-08-18. Detector v3.3 desplegado en ~/bin de la Mac y verificado."
     }
   },
-  "ultima_ejecucion_despertador": "2026-08-16T21:50:52Z"
+  "ultima_ejecucion_despertador": "2026-08-18T00:14:10Z"
 }
