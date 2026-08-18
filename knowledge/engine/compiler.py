@@ -46,7 +46,7 @@ from knowledge.engine.validator import validate_batch
 log = logging.getLogger("ura.knowledge.compiler")
 
 
-def compile_source(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def compile_source(  # legacy/estable, sin cambio de comportamiento
     source_dir: Path | None = None,
     db_path: Path | None = None,
     compiler_version: str = "0.1.0",
@@ -129,7 +129,7 @@ def _etapa_scan(
     return changed, snapshot, all_errors, all_warnings, deleted, None
 
 
-def _etapa_compilacion(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _etapa_compilacion(  # legacy/estable, sin cambio de comportamiento
     meta: CompileMetadata,
     opts: CompileOptions,
     changed: list[SourceObject],
@@ -221,7 +221,7 @@ def _compilar_defaults(
     return source_dir, db_path
 
 
-def _ctx_stage(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _ctx_stage(  # legacy/estable, sin cambio de comportamiento
     meta: CompileMetadata,
     opts: CompileOptions,
     snapshot: Snapshot | None,
@@ -271,7 +271,7 @@ def _etapa_validacion(
     return validate_batch(objects)
 
 
-def _sync_semantica(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _sync_semantica(  # legacy/estable, sin cambio de comportamiento
     db_path: Path,
     valid_objects: list[KnowledgeObject],
     deleted_ids: list,
@@ -317,7 +317,7 @@ def _auditar(result: CompileResult, correlation_id: str, duration: float) -> Non
             errors=len(result.errors) if hasattr(result, "errors") else 0,
             duration_ms=round(duration * 1000),
         )
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
 

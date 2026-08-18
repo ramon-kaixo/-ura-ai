@@ -59,7 +59,7 @@ class PendingQueue:
     def _ok_or(self) -> bool:
         return self.ok
 
-    def add(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def add(  # legacy/estable, sin cambio de comportamiento
         self,
         archivo: str,
         herramienta: str,
@@ -106,7 +106,7 @@ class PendingQueue:
                 (estado, time.strftime("%Y-%m-%dT%H:%M:%S"), fix_id),
             )
 
-    def record_run(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def record_run(  # legacy/estable, sin cambio de comportamiento
         self,
         mode: str,
         verdict: str,

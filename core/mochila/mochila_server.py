@@ -217,7 +217,7 @@ class VRAMAwareScheduler:
                 async with self._lock:
                     self._active.pop(req_id, None)
 
-        asyncio.create_task(_release())  # noqa: RUF006
+        asyncio.create_task(_release())  # tarea no referenciada: intencional (liberacion async)
         return True
 
     async def release(self, req_id: str) -> None:
@@ -312,7 +312,7 @@ def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> 
         )
 
 
-async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:  # noqa: PLR0917 — firma pública estable
+async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:  # firma publica estable
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -324,7 +324,7 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
         ):
             return chunk
     except ProviderError as e:
-        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")  # noqa: B904
+        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
     return None
 
 
@@ -360,7 +360,7 @@ async def _abortaje_guardian_sse(
     ) + b"data: [DONE]\n\n"
 
 
-async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
+async def _stream_from_provider(  # firma publica estable
     provider_name,
     modelo,
     mensajes,
@@ -498,7 +498,7 @@ async def health():
 
 @app.get("/v1/models")
 async def v1_models():
-    global CACHE_MODELS, CACHE_MODELS_TS  # noqa: PLW0603
+    global CACHE_MODELS, CACHE_MODELS_TS  # cache TTL global de modelos
     if CACHE_MODELS and time.time() - CACHE_MODELS_TS < 60:
         return {"object": "list", "data": CACHE_MODELS}
     models = []
@@ -566,7 +566,7 @@ def _resolver_ruta(body: ChatRequest) -> tuple[str, str, str]:
         ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
         return ruta.provider, ruta.modelo, ruta.route_reason
     except NoProviderAvailable as e:
-        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 def _resolver_herramientas(body: ChatRequest) -> list | None:
@@ -577,7 +577,7 @@ def _resolver_herramientas(body: ChatRequest) -> list | None:
     return None
 
 
-def _respuesta_streaming(  # noqa: PLR0917 — firma pública estable
+def _respuesta_streaming(  # firma publica estable
     provider_name: str,
     modelo: str,
     route_reason: str,
@@ -725,7 +725,7 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
     from pathlib import Path
 
     ruta = Path(body.path)
-    if not ruta.exists():  # noqa: ASYNC240
+    if not ruta.exists():  # sync en runtime limitado (no async-hot-path)
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
     return {"status": "stub", "detail": "pipeline_video no implementado"}
 
