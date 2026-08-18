@@ -1,0 +1,21 @@
+--- run_audit_api.py.orig	2026-08-18
++++ run_audit_api.py	2026-08-18
+@@ -10,6 +10,7 @@
+ app = FastAPI()
+ 
++@app.get("/metrics")
++async def metrics():
++    """Exponer metricas basicas en formato Prometheus (P5 - F8 monitoreo)."""
++    from fastapi.responses import Response
++    body = (
++        "# HELP ura_audit_api_up Estado del API de auditoria\n"
++        "# TYPE ura_audit_api_up gauge\n"
++        "ura_audit_api_up 1\n"
++        "# HELP ura_audit_api_requests_total Peticiones al API\n"
++        "# TYPE ura_audit_api_requests_total counter\n"
++        "ura_audit_api_requests_total 0\n"
++    )
++    return Response(content=body, media_type="text/plain; version=0.0.4")
++
+ @app.post("/run-audit")
+ async def run_audit(x_api_key: str = Header(None, alias="X-API-Key")):

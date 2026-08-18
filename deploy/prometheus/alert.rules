@@ -1,0 +1,54 @@
+groups:
+  - name: URA_Watchdog_Cluster
+    rules:
+      - alert: NodoPerifericoDesconectado
+        expr: (time() - nodo_last_seen_timestamp_seconds) > 90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Urgente: El nodo {{ $labels.node_id }} ha dejado de emitir telemetría"
+
+  - name: URA_Services
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Servicio {{ $labels.job }} caído"
+
+      - alert: ApiLatenciaAlta
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 > 5s en {{ $labels.job }}"
+
+  - name: URA_Nodo
+    rules:
+      - alert: NodoCPUSaturado
+        expr: (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU del nodo > 90% ({{ $labels.instance }})"
+
+      - alert: NodoRAMAlta
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM del nodo > 90%"
+
+      - alert: DiscoLleno
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disco {{ $labels.mountpoint }} con < 10% libre"

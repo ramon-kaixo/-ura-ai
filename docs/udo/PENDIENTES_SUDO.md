@@ -155,3 +155,40 @@ sudo systemctl start ura-watch-daemon.service
 
 Verificación: `systemctl is-active ura-watch-daemon.service` -> active; y
 `journalctl -u ura-watch-daemon --since "1 min ago" | grep "Watch daemon v3.1"`.
+
+## 9. REACTIVAR WATCH DAEMON (actualizado — chmod +x HECHO, daemon v3.2 manual activo)
+
+El chmod +x está aplicado y el daemon corre MANUAL (proceso, guard anti-doble-instancia v3.2).
+Para pasarlo a systemd de forma limpia:
+
+```bash
+pkill -f "watch_daemon.sh"          # mata el manual (el flock se libera)
+sudo systemctl start ura-watch-daemon.service
+```
+
+Verificación: `systemctl is-active ura-watch-daemon.service` -> active y
+`pgrep -cf watch_daemon.sh` -> 1. Si el manual sigue vivo, el start dará "exited"
+(guard anti-duplicación, comportamiento correcto).
+
+## 10. ARRANCAR STACK DE MONITOREO (F8 — prometheus+grafana+alertmanager+node-exporter)
+
+```bash
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus
+sudo docker compose up -d
+```
+
+Verificación: 9092/-/healthy, 3000/api/health, 9093/-/healthy, 9100/metrics.
+Detalle: deploy/prometheus/README.md.
+
+## 11. FIX ura-audit-api (P5 + P9) — archivo en /home/ramon/bin (RO para ramon)
+
+P9: el endpoint /run-audit apunta a /Users/ramonesnaola/bin/run_ura_audit.sh (ruta de la
+Mac — NO existe en GX10). P5: falta /metrics.
+
+```bash
+sudo sed -i 's|/Users/ramonesnaola/bin/run_ura_audit.sh|/home/ramon/bin/run_ura_audit.sh|' /home/ramon/bin/run_audit_api.py
+sudo patch -b /home/ramon/bin/run_audit_api.py < /home/ramon/URA/ura_ia_1972/deploy/patches/audit-api-metrics.patch
+sudo systemctl restart ura-audit-api.service
+```
+
+Verificación: `curl -s http://127.0.0.1:5053/metrics` -> 200 con ura_audit_api_up 1.
