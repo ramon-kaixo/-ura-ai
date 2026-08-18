@@ -161,8 +161,8 @@ class _SafeCalculator:
         self._env = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
         self._env.update({"abs": abs, "min": min, "max": max, "round": round})
 
-    def _eval(self, node: ast.AST) -> float | int:
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+    def _eval(self, node: ast.AST) -> float | int | str:
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, str)):
             return node.value
         if isinstance(node, ast.UnaryOp):
             return self._eval_unary(node)
@@ -176,6 +176,8 @@ class _SafeCalculator:
 
     def _eval_unary(self, node: ast.UnaryOp) -> float | int:
         val = self._eval(node.operand)
+        if not isinstance(val, (int, float)):
+            raise ValueError(f"Operando no numerico: {type(val).__name__}")
         if isinstance(node.op, ast.UAdd):
             return +val
         if isinstance(node.op, ast.USub):
@@ -185,6 +187,8 @@ class _SafeCalculator:
     def _eval_binary(self, node: ast.BinOp) -> float | int:
         lhs = self._eval(node.left)
         rhs = self._eval(node.right)
+        if not isinstance(lhs, (int, float)) or not isinstance(rhs, (int, float)):
+            raise ValueError("Operandos no numericos")
         if isinstance(node.op, ast.Add):
             return lhs + rhs
         if isinstance(node.op, ast.Sub):
