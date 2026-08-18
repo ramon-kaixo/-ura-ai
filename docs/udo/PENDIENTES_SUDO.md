@@ -248,3 +248,15 @@ Después, verificación automática (read-only):
 bash /home/ramon/URA/ura_ia_1972/scripts/pro/verificar_instalaciones_f8.sh
 ```
 Debe dar: 9/9 OK (o los OK de lo aplicado).
+
+## 15. RE-EJECUTAR STACK MONITOREO (conflicto nombres resuelto — container_name -f8)
+
+El primer `docker compose up -d` falló: los contenedores ura-grafana/ura-prometheus
+(de la stack docker previa) ya existían. El compose ahora usa nombres -f8 y
+volúmenes -f8 (coexistencia, la stack previa queda intacta). Re-ejecutar:
+
+```bash
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus && sudo docker compose up -d
+```
+
+Verificación: `bash scripts/pro/verificar_instalaciones_f8.sh` -> 9/9 OK.
