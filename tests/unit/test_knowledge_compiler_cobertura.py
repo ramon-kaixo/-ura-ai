@@ -447,14 +447,14 @@ class TestResolveDeletedIds:
 class TestCtxStage:
     def test_snapshot(self) -> None:
         snap = _snapshot()
-        ctx = _ctx_stage(_metadata(), _options(), CompileStage.PARSING, snap)
+        ctx = _ctx_stage(_metadata(), _options(), snap, CompileStage.PARSING)
         assert ctx.stage == CompileStage.PARSING
         assert ctx.snapshot is snap
 
     def test_errores_warnings(self) -> None:
         errs = (_error(),)
         ctx = _ctx_stage(
-            _metadata(), _options(), CompileStage.WRITING, errors=errs, warnings=()
+            _metadata(), _options(), None, CompileStage.WRITING, errors=errs, warnings=()
         )
         assert ctx.stage == CompileStage.WRITING
         assert ctx.errors == errs
@@ -706,6 +706,6 @@ class TestCompileIncremental:
 
 def test_ctx_compatible() -> None:
     """CompileContext construido por _ctx_stage es inmutable y usable."""
-    ctx = _ctx_stage(_metadata(), _options(), CompileStage.DONE)
+    ctx = _ctx_stage(_metadata(), _options(), None, CompileStage.DONE)
     assert isinstance(ctx, CompileContext)
     assert ctx.options.db_path == DB_PATH
