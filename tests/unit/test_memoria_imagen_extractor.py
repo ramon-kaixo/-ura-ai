@@ -32,7 +32,7 @@ class FakeImage:
     def __exit__(self, *a):
         return False
 
-    def _getexif(self):
+    def getexif(self):
         return self._exif_data
 
     def convert(self, *a, **k):

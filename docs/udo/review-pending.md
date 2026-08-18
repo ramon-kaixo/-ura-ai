@@ -222,9 +222,9 @@ futuros lotes (revisión externa de código, rol [TERM]); los stash de la Mac
 |------|-------------|--------------|----------|-----------------|---------|----------------|-----------|
 | TASK-20260815-011 | S1: 33 tests web_cobertura rotos arreglados (11 archivos + fix produccion cleaner.py doc.text=text); S2 auto-SINCRONIZAR ura-udo incluye expedientes ajenos; S3 correccion 6 jobs TASK-005; S4 bandit INFO interno | 2026-08-15 | TERM | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-15 | APROBADA |
 | TASK-20260815-012 | A1 conflicto merge hallazgos-fondo resuelto (0 marcadores); A2 integracion untracked ajenos (plans/, enviar_revision_web.sh, registry test, .gitignore db+state orquestador); A3 filtro caracteres control en cleaner (+2 tests); A4 AGENTS.md.global v1.12 salida-vacia | 2026-08-15 | TERM | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-15 | APROBADA |
-| TASK-20260815-013 | B1 aceptacion coordinador lote 011+012; B2 fix flaky contadores metrics (fixture autouse reset) + ResourceWarning audit (atexit close); B3 docstring orden dedup | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
-| TASK-20260815-014 | C1 test close idempotente audit; C2 INFOs cleaner/pipeline cerrados corregido; C3 router flaky re-verificado 0/2 (pendiente WEB); C4 inventario pendientes | 2026-08-15 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
-| TASK-20260816-002 | Ejecucion autonoma: D1 push bloqueado gate WEB (12 tests integracion ambientales); D2 encomienda revision enviada al Web; D3 anker frames descartado (contrato callback); D4 saturación ollama descartada (verificado ACTIVE); D5 mutmut+complejidad en espera reservas WEB | 2026-08-16 | TERM | ⏳ PENDIENTE REVISIÓN (AUTO-REVISIÓN) | — | — | — |
+| TASK-20260815-013 | B1 aceptacion coordinador lote 011+012; B2 fix flaky contadores metrics (fixture autouse reset) + ResourceWarning audit (atexit close); B3 docstring orden dedup | 2026-08-15 | TERM | ✅ REVISADA (revisión independiente WEB) | WEB | 2026-08-18 | APROBADA |
+| TASK-20260815-014 | C1 test close idempotente audit; C2 INFOs cleaner/pipeline cerrados corregido; C3 router flaky re-verificado 0/2 (pendiente WEB); C4 inventario pendientes | 2026-08-15 | TERM | ✅ REVISADA (revisión independiente WEB) | WEB | 2026-08-18 | APROBADA |
+| TASK-20260816-002 | Ejecucion autonoma: D1 push bloqueado gate WEB (12 tests integracion ambientales); D2 encomienda revision enviada al Web; D3 anker frames descartado (contrato callback); D4 saturación ollama descartada (verificado ACTIVE); D5 mutmut+complejidad en espera reservas WEB | 2026-08-16 | TERM | ✅ REVISADA (revisión independiente WEB) | WEB | 2026-08-18 | APROBADA |
 | TASK-20260817-031 | Bloque C2: 87 errores mypy P1 → 0 (55 archivos, commit 61a30ca6, merge 6eebf4f4). Cierre ajeno 44c9b8ce con veredicto APROBADO sin gates del revisor; verificación funcional y gates ejecutados por WEB 2026-08-18 (ruff 0, mypy 0, smoke pytest 0 fallos nuevos, verify_protocol OK) | 2026-08-17 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
 | TASK-20260818-001 | Hook pre-commit: ruff 0.15.18→0.16.3 (RUF100 falso positivo con select ALL; hook pasa sobre los 3 archivos con noqa PLR0917). Commit bc056a77 | 2026-08-18 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
 | TASK-20260818-002 | test_heartbeat actualizado al fix C2: test_error_instancia_inexistente → 2 tests (guarda incidente si disponible; no guarda si no). 22 passed. Commit 309189b3 | 2026-08-18 | WEB | ✅ ACEPTADA (aceptación explícita coordinador) | Ramón | 2026-08-18 | APROBADA |
@@ -279,3 +279,11 @@ registrada en los expedientes.
 TASK-012 (SHAs `6a484ba1`, `4bd898c7`, `804509c9`, `fbba56c6`, `7181210a`): verificación
 sugerida `pytest tests/unit/test_web_cleaner_cobertura.py -q` (76 passed lote web) y suite
 completa `tests/unit` (5251 passed, 1 failed = flaky del WEB aislado pasa, 15 skipped).
+
+**ACTA REVISIÓN INDEPENDIENTE — 2026-08-18 (WEB, revisor)**: lote TERM pendiente
+(TASK-20260815-013, -014, TASK-20260816-002) revisado con evidencia objetiva:
+pinning 8/8 SHAs ancestros de HEAD (`1c5d486b`, `51b2d3d3`, `fbba56c6`, `bcca0b1a`,
+`6705cba6`, `96a5af1b`, `4d590537`, `9db9f768`); tests re-ejecutados 141 passed
+(web cobertura, config_manager, audit_backends, metrics, pipeline) + 114 passed
+(imagen_extractor — incluye fix del FakeImage del test: la API del C2 usa
+`getexif()`, el fake aún implementaba `_getexif`). Veredicto: APROBADA.
