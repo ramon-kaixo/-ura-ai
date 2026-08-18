@@ -50,9 +50,11 @@ Registro de dudas encontradas durante la sesión y su investigación/resolución
 ## D12 — ¿Por qué el heartbeat (reiniciado) sigue viendo /home RO?
 - **Duda**: tras `sudo systemctl restart ura-heartbeat`, el NUEVO PID (4016525) sigue con
   [Errno 30] Read-only en data/auto_dumps.
-- **Investigación**: los servicios systemd corren en el namespace del HOST, donde el rootfs
-  esta montado RO (evidencia: /var/spool RO para crontab, heartbeat RO, tuneladora FAIL en
-  bucle por no poder escribir mejoras). Mi entorno (opencode) tiene binds rw propios → por
-  eso YO escribo pero los servicios no.
-- **Resolución**: requiere `sudo mount -o remount,rw /` (PENDIENTES_SUDO §7). El fstab ya
-  tiene rw (AGENTS.md 2026-07-19) pero el arranque actual quedo RO.
+- **Investigación**: el unit ura-heartbeat.service tiene `ProtectSystem=full` +
+  `ProtectHome=read-only` (sandboxing systemd) → el servicio ve /home RO SIEMPRE,
+  independientemente del rootfs (el remount rw §7 no cambió nada, verificado 03:4x).
+  La tuneladora NO estaba rota (1115 éxitos en la última hora; FAIL/rollback es su
+  comportamiento normal de prueba de mejoras).
+- **Resolución (causa real)**: drop-in `ProtectHome=no` en
+  deploy/systemd-overrides/ura-heartbeat-protecthome.conf (PENDIENTES_SUDO §8) —
+  requiere sudo humano para instalar + daemon-reload + restart.
