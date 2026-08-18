@@ -7,8 +7,31 @@ REPO="$HOME/URA/ura_ia_1972"
 TUNELADORA_LOCK="$REPO/.tuneladora/lock"
 PENDING_FILE="$REPO/.tuneladora/.watch_pending"
 PIPELINE="python3 $REPO/scripts/pro/tuneladora/tuneladora_pipeline.py"
-DEBOUNCE_SEC=2
-COOLDOWN_SEC=10
+DEBOUNCE_SEC=6
+COOLDOWN_SEC=15
+
+# v3.1 (2026-08-18, investigacion WEB): debounce 6s + guard de recursos.
+# Hoy (03:0x-03:5x) el watch_daemon disparo decenas de checks en cadena por
+# ediciones masivas de tests/scripts (ruff --fix) + contencion con el backup a la
+# Mac (rsync ~8GB) + vram_pressure_high -> Pipeline FAILED en bucle con rollback.
+# Mejoras: esperar mas a que se estabilicen los cambios (debounce) y NO lanzar el
+# check mientras haya un backup masivo en curso (evita la contencion de I/O).
+
+# Funcion: los recursos estan disponibles para el check?
+_resources_ok() {
+    # Backup a la Mac en curso (rsync masivo) -> encolar, no competir por I/O
+    # Nota: patron [r]sync evita que pgrep se matchee a si mismo.
+    if pgrep -f "[r]sync.*backups_gx10" >/dev/null 2>&1; then
+        echo "[$(date '+%H:%M:%S')] [SKIP] Backup a la Mac en curso — encolando (evita contencion I/O)"
+        return 1
+    fi
+    # Presion de VRAM reciente (guardian) -> encolar
+    if journalctl -u ura-heartbeat --since "2 min ago" --no-pager 2>/dev/null | grep -q "vram_pressure_high"; then
+        echo "[$(date '+%H:%M:%S')] [SKIP] VRAM alta reciente — encolando"
+        return 1
+    fi
+    return 0
+}
 
 # Funcion: verificar si tuneladora esta corriendo (lock valido)
 _tuneladora_activa() {
@@ -74,6 +97,12 @@ while read FILE; do
     sleep "$DEBOUNCE_SEC"
 
     if _tuneladora_activa; then
+        _marcar_pendiente "$FILE"
+        continue
+    fi
+
+    # Guard de recursos: si backup masivo o VRAM alta, encolar (no competir)
+    if ! _resources_ok; then
         _marcar_pendiente "$FILE"
         continue
     fi
