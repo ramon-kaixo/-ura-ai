@@ -287,3 +287,16 @@ sudo docker exec sandbox-mejora-continua bash -c "cd /workspace && git add -A &&
 
 Despues avisar al WEB: verificara 9/9 (verificador), cerrara TASK-025 DONE (arbol limpio),
 comprobara los 3 tests de test_knowledge_compiler_cobertura y el siguiente mutmut.
+
+## 18. BLOQUE FINAL CORREGIDO (webhook crash-loop arreglado en 16065d25)
+
+El webhook no levantaba (9105 caido): importaba motor.core.notifier sin motor en el
+contenedor. Arreglado: motor montado ro + httpx en imagen + secretos montados +
+import degradable. Rebuild + listar sandbox:
+
+```bash
+# A. Rebuild del webhook (recarga el fix)
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus && sudo docker compose up -d --build webhook-alerts
+# B. Averiguar el nombre real del contenedor del sandbox (el de mejora continua):
+sudo docker ps -a --format '{{.Names}}\t{{.Image}}'
+```
