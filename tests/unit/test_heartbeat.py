@@ -145,14 +145,14 @@ class TestVramPressure:
         assert hb.vram_critical_cycles == 0
 
     def test_presion_acumula(self, monkeypatch) -> None:
-        res = SimpleNamespace(returncode=0, stdout="25000\n")
+        res = SimpleNamespace(returncode=0, stdout="70000\n")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
         monkeypatch.setattr(hb, "log_event", mock.Mock())
         hb.check_vram_pressure()
         assert hb.vram_critical_cycles == 1
 
     def test_panico_restart(self, monkeypatch) -> None:
-        res = SimpleNamespace(returncode=0, stdout="25000\n")
+        res = SimpleNamespace(returncode=0, stdout="70000\n")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
         monkeypatch.setattr(hb, "log_event", mock.Mock())
         restart = mock.Mock()
