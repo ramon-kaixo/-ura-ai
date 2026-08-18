@@ -8,7 +8,10 @@ set -euo pipefail
 MAC_USER="ramonesnaola"
 MAC_IP="${TERMINAL_HOST:-10.164.1.26}"
 BACKUP_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/backups_gx10"
-SOURCE_DIR="${ASUS_PATH:-/home/ramon/URA}"
+# FIX 2026-08-18 (TASK WEB): SOURCE era /home/ramon/URA (toda la carpeta) y copiaba
+# 189GB de modelos Ollama + 23GB de archives a la Mac (horas de backup, saturaba I/O).
+# Ahora se respalda SOLO el repo. Los bundles de git (archives/) y modelos NO van a la Mac.
+SOURCE_DIR="${ASUS_PATH:-/home/ramon/URA/ura_ia_1972}"
 LOG_FILE="${ASUS_PATH:-/home/ramon/URA}/logs/backup_to_mac.log"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 BWLIMIT=${URA_BWLIMIT:-10000}  # 10 MB/s default
