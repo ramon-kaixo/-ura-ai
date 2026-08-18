@@ -124,3 +124,22 @@ journalctl -u ura-heartbeat --since "2 min ago" | grep -c "Read-only"   # -> 0 t
 # y la tuneladora deberia dejar de fallar:
 journalctl --since "5 min ago" | grep -c "Pipeline FAILED"              # -> 0
 ```
+
+## 8. FIX HEARTBEAT: drop-in ProtectHome=no (CAUSA REAL de auto_dumps RO)
+
+El unit ura-heartbeat.service tiene `ProtectSystem=full` + `ProtectHome=read-only`
+(sandboxing systemd) -> el servicio SIEMPRE ve /home RO, aunque el rootfs sea rw
+(por eso el remount rw de §7 no cambio nada). Fix limpio con drop-in (no tocar el unit):
+
+```bash
+sudo mkdir -p /etc/systemd/system/ura-heartbeat.service.d
+sudo cp /home/ramon/URA/ura_ia_1972/deploy/systemd-overrides/ura-heartbeat-protecthome.conf /etc/systemd/system/ura-heartbeat.service.d/
+sudo systemctl daemon-reload
+sudo systemctl restart ura-heartbeat.service
+```
+
+Verificacion (pasarla al WEB):
+```bash
+journalctl -u ura-heartbeat --since "2 min ago" | grep -c "Read-only"   # -> 0
+ls -lt /home/ramon/URA/ura_ia_1972/data/auto_dumps/ | head -2          # -> dumps nuevos
+```
