@@ -83,8 +83,8 @@
       "ura-watcher-auditoria": {
         "port": null,
         "file": "/etc/systemd/system/ura-watcher-auditoria.service",
-        "status": "active",
-        "description": "Dispara auditoría al recibir datos"
+        "status": "REMOVED (servicio no existe en el host)",
+        "description": "Dispara auditoría al recibir datos — ELIMINADO del manifiesto"
       },
       "ura-watchdog-buffer": {
         "port": null,
@@ -136,10 +136,10 @@
         "description": "URA Executor API (FastAPI)"
       },
       "ura-detector": {
-        "port": null,
+        "port": 9092,
         "file": "/etc/systemd/system/ura-detector.service",
-        "status": "active (verificado 2026-08-18)",
-        "description": "YOLOv8 Detector + ByteTrack"
+        "status": "active (verificado 2026-08-18; puerto 9092)",
+        "description": "YOLOv8 Detector + ByteTrack (API en 9092)"
       },
       "ura-hetzner-tunnel": {
         "port": null,
@@ -329,6 +329,7 @@
     "9050": "tor (anon)",
     "9090": "ura-api (/opt/ura)",
     "9091": "ura-metrics",
+    "9092": "ura-detector (YOLOv8 API)",
     "9093": "ura-prometheus (Docker, NO VERIFICADO)",
     "11000": "dgx-dashboard (NVIDIA)",
     "11434": "ollama",
