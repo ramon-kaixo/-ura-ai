@@ -110,7 +110,13 @@ def restart_service() -> None:
 
 
 vram_critical_cycles = 0
-VRAM_PANIC_MB = 22000
+# P11 (2026-08-18): umbral subido de 22000 a 64000 MB. La carga normal con el
+# modelo de refactor (qwen2.5-coder:32b en ollama, 50.9GB segun nvidia-smi) +
+# llama-server (6.7GB) superaba 22GB -> falsos vram_panic_restart continuos
+# (restart de mochila fallido por auth, ruido operativo). 64GB cubre la carga
+# observada (~59GB) con margen y mantiene el pánico para saturacion real
+# (2+ modelos grandes simultaneos).
+VRAM_PANIC_MB = 64000
 
 
 def _vram_used_mb() -> int:
