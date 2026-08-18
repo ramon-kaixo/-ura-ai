@@ -6,12 +6,15 @@ Stack de observabilidad del GX10. Configuración versionada en el repo (esta car
 
 | Servicio | Puerto host | Contenido |
 |----------|-------------|-----------|
-| Prometheus | 9092 (host) → 9090 (cont) | Scrape de servicios URA + nodo |
-| Alertmanager | 9093 | Reglas y notificación (webhook n8n preparado) |
-| Grafana | 3000 | Dashboard "URA — Servicios" provisionado |
+| Prometheus | 9094 (host) → 9090 (cont) | Scrape de servicios URA + nodo |
+| Alertmanager | 9095 | Reglas y notificación (webhook propio → Telegram/Pushover) |
+| Grafana | 3001 | Dashboard "URA — Servicios" provisionado |
 | node-exporter | 9100 | Métricas del nodo (CPU/RAM/disco) |
+| webhook-alerts | 9105 | Webhook Alertmanager → motor.core.notifier |
 
-Nota: el puerto 9092 evita el conflicto con ura-api (9090).
+Nota: los puertos 9094/3001/9095/9105/9100 están libres y evitan conflictos con:
+ura-api (9090), ura-metrics (9091), ura-detector (9092) y la stack docker
+previa de prometheus/grafana (9093/3000, ya en uso en el host — se deja intacta).
 
 ## Targets scrapeados (verificados 2026-08-18)
 
@@ -29,10 +32,11 @@ sudo docker compose up -d
 
 Verificación:
 ```bash
-curl -s http://127.0.0.1:9092/-/healthy        # prometheus
-curl -s http://127.0.0.1:3000/api/health        # grafana
-curl -s http://127.0.0.1:9093/-/healthy        # alertmanager
+curl -s http://127.0.0.1:9094/-/healthy        # prometheus
+curl -s http://127.0.0.1:3001/api/health        # grafana
+curl -s http://127.0.0.1:9095/-/healthy        # alertmanager
 curl -s http://127.0.0.1:9100/metrics | head -1 # node-exporter
+curl -s http://127.0.0.1:9105/health            # webhook alertas
 ```
 
 Opcional (permite docker sin sudo al humano): `sudo usermod -aG docker ramon`
