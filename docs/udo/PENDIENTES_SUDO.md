@@ -228,3 +228,23 @@ sudo systemctl restart ura-heartbeat.service
 ```
 
 Verificación: journal sin vram_panic falsos con el modelo de refactor cargado.
+
+## 14. BLOQUE SUDO CONSOLIDADO (2026-08-18) — copiar y ejecutar todo de una vez
+
+```bash
+# 1. Heartbeat: cargar umbral VRAM nuevo (64000) — desbloquea la cola del watch-daemon
+sudo systemctl restart ura-heartbeat.service
+# 2. Stack monitoreo F8 (puertos libres: 9094/3001/9095/9100/9105)
+cd /home/ramon/URA/ura_ia_1972/deploy/prometheus && sudo docker compose up -d
+# 3. Audit-api corregido (P5 /metrics + P9 ruta GX10)
+sudo cp /home/ramon/URA/ura_ia_1972/deploy/run_audit_api.py /home/ramon/bin/run_audit_api.py
+sudo systemctl restart ura-audit-api.service
+# 4. Limpiar residuos (cosmetico — el timer de las 03:00 autolimpia igualmente)
+sudo systemctl reset-failed ura-backup-mac.service
+```
+
+Después, verificación automática (read-only):
+```bash
+bash /home/ramon/URA/ura_ia_1972/scripts/pro/verificar_instalaciones_f8.sh
+```
+Debe dar: 9/9 OK (o los OK de lo aplicado).
