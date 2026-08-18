@@ -44,6 +44,19 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
 
+  webhook-alerts:
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    container_name: ura-alerts-webhook
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:9105:9105'
+    volumes:
+      - ./webhook-alerts.py:/app/webhook-alerts.py:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
   node-exporter:
     image: prom/node-exporter:v1.8.2
     container_name: ura-node-exporter
