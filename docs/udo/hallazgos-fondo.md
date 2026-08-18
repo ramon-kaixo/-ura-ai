@@ -216,3 +216,4 @@
 | 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | scripts/pro (lote 2/5) | Revisada por modo fondo (registro automático del despertador, sin hallazgos accionables). |
 | 2026-08-18 | core/infra/heartbeat.py:113 | P11: VRAM_PANIC_MB=22000 causaba falsos vram_panic_restart con el modelo de refactor cargado (59GB observado: ollama-qwen 50.9GB + llama-server 6.7GB). CORREGIDO 2026-08-18: umbral a 64000MB con justificación en el código. | ALTA | corregido |
+| 2026-08-18 | ura-mutmut-daily.service (06:00) | Mutation testing diario fallo hoy con AssertionError Snapshot vs CompileStage.PARSING (docs/a.md). No recurrente (1 fallo en 3 dias). Plan: observar si se repite mañana 06:00; si persiste, investigar mutante no detectado en F25 fusion | BAJA | propuesto (con plan) |
