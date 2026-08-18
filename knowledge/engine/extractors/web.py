@@ -46,7 +46,7 @@ _HAS_HTTPX = _check_import("httpx", "httpx")
 _HAS_BS4 = _check_import("bs4", "beautifulsoup4")
 
 _ALLOWED_SCHEMES = {"http", "https"}
-_BLOCKED_HOSTS = {"localhost", "localhost.localdomain", "127.0.0.1", "::1", "0.0.0.0"}  # noqa: S104 — blocklist, not bind
+_BLOCKED_HOSTS = {"localhost", "localhost.localdomain", "127.0.0.1", "::1", "0.0.0.0"}
 _BLOCKED_NETWORKS = [
     ipaddress.ip_network("127.0.0.0/8"),
     ipaddress.ip_network("::1/128"),
@@ -147,7 +147,7 @@ class WebExtractor:
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
 
-    def _parse_html(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def _parse_html(
         self,
         content: bytes,
         final_url: str,

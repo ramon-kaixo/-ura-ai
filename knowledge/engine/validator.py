@@ -96,7 +96,7 @@ def _validar_doc_type(
         )
 
 
-def _warn_rango(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _warn_rango(
     warnings: list[CompileError],
     path: str,
     nombre: str,

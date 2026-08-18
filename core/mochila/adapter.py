@@ -82,7 +82,7 @@ class _MotorChatAdapter:
     def timeout(self) -> int:
         return getattr(self._provider, "_timeout", 60)
 
-    async def chat(  # noqa: PLR0917 — firma pública estable
+    async def chat(
         self,
         modelo: str,
         mensajes: list,

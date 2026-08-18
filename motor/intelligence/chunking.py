@@ -3,7 +3,7 @@
 Uso:
     chunker = SemanticChunker(max_tokens=512, overlap_tokens=64)
     chunks = chunker.chunk(document_text, doc_id="doc_001")
-"""  # noqa: INP001
+"""
 
 from __future__ import annotations
 

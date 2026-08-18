@@ -236,7 +236,7 @@ class TraceContext:
 
     _local = threading.local()
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         source: str,
         destination: str,
@@ -359,7 +359,7 @@ class TraceContext:
                 tags=tags or {},
             )
 
-    def _emit_span(  # noqa: PLR0917 (P3: candidato a dataclass)
+    def _emit_span(
         self,
         span_id: str,
         parent: str,

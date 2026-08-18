@@ -58,7 +58,7 @@ async def _emitir_error_sse(
     yield b"data: [DONE]\n\n"
 
 
-async def _stream_from_provider(  # noqa: PLR0917 — firma pública estable
+async def _stream_from_provider(
     provider_name,
     modelo,
     mensajes,

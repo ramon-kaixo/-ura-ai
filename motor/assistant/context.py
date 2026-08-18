@@ -74,7 +74,7 @@ class HistoricalMemoryAdapter:
 
 
 class ContextManager:
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         message_store: MessageStore | None = None,
         context_window: ContextWindow | None = None,

@@ -163,7 +163,7 @@ def apply_ranking_overlay(
         doc_ids = [r["doc_id"] for r in results]
         placeholders = ",".join("?" * len(doc_ids))
         rows = conn.execute(
-            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",  # noqa: S608
+            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",
             doc_ids,
         ).fetchall()
         conn.close()

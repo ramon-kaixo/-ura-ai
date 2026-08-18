@@ -77,7 +77,7 @@ class Orchestrator:
         except Exception as e:
             result.ok = False
             result.error = str(e)
-            log.error("pipeline error: %s", e, exc_info=True)  # noqa: G201
+            log.error("pipeline error: %s", e, exc_info=True)
         self._emit(result)
         return result
 
@@ -100,7 +100,7 @@ class Orchestrator:
         if perf:
             entry["perf"] = perf
         lines = dep / ARCHIVO_TRENDS
-        with open(lines, "a") as f:  # noqa: PTH123
+        with open(lines, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")
 
     def _escribir_side_effects(self, result: PipelineResult) -> None:

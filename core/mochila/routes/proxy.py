@@ -125,7 +125,7 @@ def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None
     )
 
 
-async def _proxy_stream(  # noqa: PLR0917 — firma pública estable
+async def _proxy_stream(
     request: Request,
     body: dict | None,
     headers: dict[str, str],
@@ -134,7 +134,7 @@ async def _proxy_stream(  # noqa: PLR0917 — firma pública estable
     path: str,
 ):
     acc = ""
-    async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:  # noqa: SIM117
+    async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:
         async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
             async for line in resp.aiter_lines():
                 if not line.strip():

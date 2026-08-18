@@ -45,9 +45,9 @@ def _measare_asus_latency() -> float:
 
     try:
         t0 = time.monotonic()
-        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
+        with urllib.request.urlopen(req, timeout=5):
             elapsed = (time.monotonic() - t0) * 1000
             return round(elapsed, 1)
     except Exception:
@@ -55,7 +55,7 @@ def _measare_asus_latency() -> float:
 
 
 def _update_asus_latency() -> None:
-    global _asus_latency_ms, _asus_latency_updated  # noqa: PLW0603
+    global _asus_latency_ms, _asus_latency_updated
     ms = _measare_asus_latency()
     with _asus_latency_lock:
         _asus_latency_ms = ms
@@ -146,9 +146,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=5) as _:
             log.info("ASUS conectado: %s", get_urls()["primary"])
             return get_urls()["primary"]
     except Exception as e:
@@ -156,7 +156,7 @@ def _resolve_ollama_url() -> str:
         return get_urls()["fallback"]
 
 
-async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
+async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     from core.model_router.vram_guard import vram_guard
 
     return await vram_guard.ejecutar_inferencia_segura(
@@ -170,12 +170,12 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
     )
 
 
-async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
+async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
     return await asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
-def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):  # noqa: PLR0917 — firma pública estable
+def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -185,7 +185,7 @@ def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip="")
         return future.result()
 
 
-def proxy_request(  # noqa: PLR0917 — firma pública estable
+def proxy_request(
     path: str,
     body: bytes | None,
     method: str = "POST",
@@ -200,12 +200,12 @@ def proxy_request(  # noqa: PLR0917 — firma pública estable
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = get_urls()["primary"] if resolved_mode == "TURBO" else get_urls()["fallback"]
     url = f"{active_url}{path}"
-    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
+    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)
     req.add_header("Content-Type", "application/json")
 
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=600) as resp:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=600) as resp:
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:

@@ -276,7 +276,7 @@ def _parse_message_kind(rd: dict[str, Any]) -> MessageKind:
         return MessageKind(rd["message_kind"])
     except ValueError:
         msg = f"Unknown message_kind: {rd.get('message_kind', '')}"
-        raise ProtocolException(msg)  # noqa: B904
+        raise ProtocolException(msg)
 
 
 def _parse_security(data: dict[str, Any]) -> SecurityHeader | None:
@@ -319,7 +319,7 @@ def verify_checksum(payload: bytes, expected: str) -> bool:
     return compute_checksum(payload) == expected
 
 
-def make_envelope_with_checksum(  # noqa: PLR0917
+def make_envelope_with_checksum(
     version: VersionHeader,
     routing: RoutingHeader,
     trace: TraceHeader,
@@ -359,7 +359,7 @@ def make_envelope_with_checksum(  # noqa: PLR0917
     )
 
 
-def make_message_id(  # noqa: PLR0917
+def make_message_id(
     protocol_version: str,
     schema_version: str,
     source: str,

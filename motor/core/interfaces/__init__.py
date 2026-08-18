@@ -7,8 +7,8 @@ que importar de core (rompe la dependencia circular).
 Ver: docs/architecture/ADR-007-REGLA_NUCLEO.md
 """
 
-from motor.core.interfaces.config import IConfigProvider  # noqa: F401
-from motor.core.interfaces.executor import IExecutor, IProcessResult  # noqa: F401
-from motor.core.interfaces.llm import ILLMClient  # noqa: F401
-from motor.core.interfaces.repository import IVectorStore  # noqa: F401
-from motor.core.interfaces.secrets import ISecretStore  # noqa: F401
+from motor.core.interfaces.config import IConfigProvider
+from motor.core.interfaces.executor import IExecutor, IProcessResult
+from motor.core.interfaces.llm import ILLMClient
+from motor.core.interfaces.repository import IVectorStore
+from motor.core.interfaces.secrets import ISecretStore

@@ -20,7 +20,7 @@ DEFAULT_TIMEOUT = 30
 
 
 def _random_ua() -> str:
-    return random.choice(USER_AGENTS)  # noqa: S311
+    return random.choice(USER_AGENTS)
 
 
 def _default_headers() -> dict:
@@ -35,7 +35,7 @@ def _default_headers() -> dict:
     }
 
 
-async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:  # noqa: ASYNC109
+async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
     headers = _default_headers()
     try:
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
@@ -48,7 +48,7 @@ async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:  # noqa
         return None
 
 
-async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:  # noqa: ASYNC109
+async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
     try:
         from playwright.async_api import async_playwright
 
@@ -92,7 +92,7 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
         return None
 
 
-async def fetch_with_fallback(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:  # noqa: ASYNC109
+async def fetch_with_fallback(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
     result = await fetch_stealth(url, timeout)
     if result:
         return result

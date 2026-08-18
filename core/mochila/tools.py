@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from motor.core.web_search import (  # noqa: F401  (fachada: definición canónica en motor/core/web_search.py)
+from motor.core.web_search import (
     DEFAULT_ENGINE,
     DUCKDUCKGO_URL,
     SEARXNG_TIMEOUT,
@@ -154,7 +154,7 @@ async def file_read(path: str, max_lines: int = 200) -> dict:
     if not ruta.is_file():
         return {"error": f"No es un archivo: {ruta}", "path": path}
     try:
-        with open(ruta, encoding="utf-8", errors="replace") as f:  # noqa: ASYNC230, PTH123
+        with open(ruta, encoding="utf-8", errors="replace") as f:
             lineas = []
             for i, linea in enumerate(f):
                 if i >= max_lines:

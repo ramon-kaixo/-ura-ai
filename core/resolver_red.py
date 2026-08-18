@@ -59,6 +59,7 @@ def resolver_dns(hostname: str) -> str | None:
         if ip and not ip.startswith("127."):
             return ip
     except socket.gaierror:
+        log.debug("resolucion DNS fallida, se sigue con siguiente IP")
         pass
 
     # 2. MagicDNS via tailscale

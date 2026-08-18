@@ -105,7 +105,7 @@ class AuditService:
             ),
         )
 
-    def log(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def log(
         self,
         action: str,
         actor: str,
@@ -157,7 +157,7 @@ def get_audit() -> AuditService:
     Si no existe y no se puede crear el backend por defecto,
     retorna un AuditService sin backend (no-op).
     """
-    global _AUDIT_INSTANCE  # noqa: PLW0603
+    global _AUDIT_INSTANCE
     if _AUDIT_INSTANCE is not None:
         return _AUDIT_INSTANCE
     with _AUDIT_LOCK:
@@ -175,5 +175,5 @@ def get_audit() -> AuditService:
 
 def set_audit(audit: AuditService) -> None:
     """Establece la instancia global (útil en tests)."""
-    global _AUDIT_INSTANCE  # noqa: PLW0603
+    global _AUDIT_INSTANCE
     _AUDIT_INSTANCE = audit

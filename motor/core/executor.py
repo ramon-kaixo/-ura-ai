@@ -56,7 +56,7 @@ class BaseExecutor(ABC):
     async def arun(
         self,
         cmd: Sequence[str],
-        timeout: int = 30,  # noqa: ASYNC109
+        timeout: int = 30,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
     ) -> ProcessResult: ...
@@ -105,7 +105,7 @@ class SubprocessExecutor(BaseExecutor):
     async def arun(
         self,
         cmd: Sequence[str],
-        timeout: int = 30,  # noqa: ASYNC109
+        timeout: int = 30,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
     ) -> ProcessResult:
@@ -147,7 +147,7 @@ class SubprocessExecutor(BaseExecutor):
             log.exception("(async) Error ejecutando: %s", " ".join(str(c) for c in cmd))
             return self._result_failure(cmd, elapsed, str(e))
 
-    def _result_success(  # noqa: PLR0917
+    def _result_success(
         self,
         cmd: Sequence[str],
         returncode: int,

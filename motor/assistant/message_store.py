@@ -107,7 +107,7 @@ class MessageStore:
                 self._conn.close()
                 self._closed = True
 
-    def __enter__(self) -> MessageStore:  # noqa: PYI034
+    def __enter__(self) -> MessageStore:
         return self
 
     def cleanup_old(self, days: int = 30) -> int:

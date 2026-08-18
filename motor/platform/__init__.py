@@ -1,6 +1,6 @@
 """Platform Protocols (F28) — preserved modules."""
 
-from motor.platform.models import (  # noqa: F401
+from motor.platform.models import (
     CausationId,
     CorrelationId,
     DeliveryHeader,
@@ -17,8 +17,8 @@ from motor.platform.models import (  # noqa: F401
     TraceId,
     VersionHeader,
 )
-from motor.platform.resilience import Backpressure, CircuitBreaker  # noqa: F401
-from motor.platform.serializer import (  # noqa: F401
+from motor.platform.resilience import Backpressure, CircuitBreaker
+from motor.platform.serializer import (
     JsonProtocolDeserializer,
     JsonProtocolSerializer,
     compute_checksum,

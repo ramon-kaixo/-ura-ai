@@ -78,7 +78,7 @@ class MessageId:
         return self.value
 
     @classmethod
-    def make(  # noqa: PLR0917
+    def make(
         cls,
         protocol_version: str,
         schema_version: str,
@@ -272,7 +272,7 @@ class ErrorEnvelope:
     retry_delay_ms: int = 0
 
     @classmethod
-    def from_original(  # noqa: PLR0917
+    def from_original(
         cls,
         original: ProtocolEnvelope,
         error_code: str,

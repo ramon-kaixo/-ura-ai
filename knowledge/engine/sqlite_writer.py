@@ -51,7 +51,7 @@ _SHOULD_CANCEL = False
 
 
 def _install_cancel_handler() -> None:
-    global _SHOULD_CANCEL  # noqa: PLW0603
+    global _SHOULD_CANCEL
     _SHOULD_CANCEL = False
 
     # signal.signal() solo funciona en el hilo principal del intérprete.
@@ -60,7 +60,7 @@ def _install_cancel_handler() -> None:
         return
 
     def _handler(signum: int, _frame: Any) -> None:
-        global _SHOULD_CANCEL  # noqa: PLW0603
+        global _SHOULD_CANCEL
         _SHOULD_CANCEL = True
         log.warning("Compile cancelado por señal %s", signum)
 
@@ -139,11 +139,11 @@ class NodeRepository:
             return
         placeholders = ",".join("?" for _ in doc_ids)
         conn.execute(
-            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",  # noqa: S608
+            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",
             doc_ids + doc_ids,
         )
         conn.execute(
-            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",  # noqa: S608
+            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",
             doc_ids,
         )
 
@@ -183,7 +183,7 @@ class CompilerRunRepository:
             )
 
     @staticmethod
-    def create_run(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+    def create_run(
         conn: sqlite3.Connection,
         ctx: CompileContext,
         changed: int,
@@ -298,7 +298,7 @@ def init_db(db_path: Path, schema_path: Path) -> None:
     conn.close()
 
 
-def _build_result(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def _build_result(
     started_at: float,
     run_id: int,
     changed: int,
@@ -323,7 +323,7 @@ def _build_result(  # noqa: PLR0917 — legacy/estable, sin cambio de comportami
     )
 
 
-def apply_compile(  # noqa: PLR0917 — legacy/estable, sin cambio de comportamiento
+def apply_compile(
     db_path: Path,
     objects: list[KnowledgeObject],
     ctx: CompileContext,

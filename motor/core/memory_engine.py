@@ -36,7 +36,7 @@ _qdrant: QdrantClient | None = None
 
 
 def _get_qdrant() -> QdrantClient:
-    global _qdrant  # noqa: PLW0603
+    global _qdrant
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -44,7 +44,7 @@ def _get_qdrant() -> QdrantClient:
 
 def _sha256(filepath: Path) -> str:
     h = hashlib.sha256()
-    with open(filepath, "rb") as f:  # noqa: PTH123
+    with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -153,7 +153,7 @@ def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats
                 log.warning("Error eliminando {rel_path}: {e}")
 
 
-def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:  # noqa: PLR0917
+def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:
     existing = manifest.get("files", {}).get(rel_path, {})
     if existing.get("sha256") == file_hash and not force:
         stats["unchanged"] += 1

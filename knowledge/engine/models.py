@@ -21,7 +21,7 @@ from typing import final as _final
 
 from knowledge.engine._compat import StrEnum
 from knowledge.engine.migrations import SCHEMA_VERSION
-from knowledge.engine.ontology import (  # noqa: F401 — Capa 11 asset model
+from knowledge.engine.ontology import (
     AssetRelationship,
     AssetSource,
     AssetType,
