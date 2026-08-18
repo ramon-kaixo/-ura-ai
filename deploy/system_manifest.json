@@ -20,11 +20,10 @@
         "description": "Model Router inteligente (system level)"
       },
       "ura-openclaw": {
-        "port": 18789,
+        "port": null,
         "file": "/etc/systemd/system/ura-openclaw.service",
-        "status": "restart-loop (2316 reinicios)",
-        "auth": "Bearer (token propio OpenClaw)",
-        "description": "OpenClaw Gateway Nativo (MCP)"
+        "status": "REMOVED (retirado 2026-08-08 c6d60c8c — OpenClaw retirado del sistema)",
+        "description": "OpenClaw Gateway Nativo (MCP) — ELIMINADO"
       },
       "ura-api": {
         "port": 9090,
@@ -72,7 +71,7 @@
       "ura-watch-daemon": {
         "port": null,
         "file": "/etc/systemd/system/ura-watch-daemon.service",
-        "status": "active",
+        "status": "v3.2 proceso manual PID activo (systemd pendiente sudo start — PENDIENTES_SUDO 9)",
         "description": "Detección cambios .py + pipeline"
       },
       "ura-watcher": {
@@ -127,38 +126,50 @@
       "ura-contraste": {
         "port": 8002,
         "file": "/etc/systemd/system/ura-contraste.service",
-        "status": "failed (start-limit-hit, PartOf=ura-openclaw eliminado)",
-        "description": "Proxy Contraste — PartOf=ura-openclaw removido, necesita restart manual tras reboot"
+        "status": "active (verificado 2026-08-18)",
+        "description": "Proxy Contraste — telemetria + /metrics (prometheus)"
+      },
+      "ura-executor": {
+        "port": 4096,
+        "file": "/etc/systemd/system/ura-executor.service",
+        "status": "active",
+        "description": "URA Executor API (FastAPI)"
       },
       "ura-detector": {
         "port": null,
         "file": "/etc/systemd/system/ura-detector.service",
-        "status": "failed",
+        "status": "active (verificado 2026-08-18)",
         "description": "YOLOv8 Detector + ByteTrack"
       },
       "ura-hetzner-tunnel": {
         "port": null,
         "file": "/etc/systemd/system/ura-hetzner-tunnel.service",
-        "status": "failed",
-        "description": "SSH Tunnel to Hetzner"
+        "status": "REMOVED (servicio inexistente en el host)",
+        "description": "SSH Tunnel to Hetzner — ELIMINADO del manifiesto"
       },
       "ura-maintenance-v2": {
         "port": null,
         "file": "/etc/systemd/system/ura-maintenance-v2.service",
-        "status": "failed",
-        "description": "Tuneladora unificada (timer-driven)"
+        "status": "REMOVED (servicio inexistente; tuneladora mantenimiento por timer)",
+        "description": "Tuneladora unificada (timer-driven) — ELIMINADO del manifiesto"
       },
       "ura-maintenance": {
         "port": null,
         "file": "/etc/systemd/system/ura-maintenance.service",
-        "status": "failed",
-        "description": "Limpieza automatizada (legacy)"
+        "status": "REMOVED (servicio inexistente)",
+        "description": "Limpieza automatizada (legacy) — ELIMINADO del manifiesto"
       },
       "ura-voice": {
         "port": null,
         "file": "/etc/systemd/system/ura-voice.service",
-        "status": "failed",
+        "status": "active (verificado 2026-08-18)",
         "description": "Voice Agent Pipeline (hardware-dependente)"
+      },
+      "snc": {
+        "port": null,
+        "file": "/etc/systemd/system/snc.service",
+        "status": "active (verificado 2026-08-18)",
+        "description": "Sistema Nervioso Central (monitor/snc.py)"
       },
       "ollama": {
         "port": 11434,
@@ -298,8 +309,9 @@
     "631": "cups",
     "1984": "ura-go2rtc (stream proxy)",
     "2222": "dropbear (SSH alternativo)",
-    "3000": "ura-grafana (Docker)",
+    "3000": "ura-grafana (Docker, NO VERIFICADO — docker sin permisos ramon)",
     "3080": "open-webui (Docker)",
+    "4096": "ura-executor",
     "4098": "ura-mochila",
     "5053": "ura-audit-api",
     "5678": "n8n (Docker)",
@@ -307,6 +319,7 @@
     "6333": "ura-qdrant (Docker)",
     "6334": "ura-qdrant (Docker)",
     "6379": "redis (Qdrant/Docker)",
+    "8002": "ura-contraste",
     "8003": "ura-assistant",
     "8081": "opencode",
     "8088": "ura-mkdocs",
@@ -316,12 +329,11 @@
     "9050": "tor (anon)",
     "9090": "ura-api (/opt/ura)",
     "9091": "ura-metrics",
-    "9093": "ura-prometheus (Docker)",
+    "9093": "ura-prometheus (Docker, NO VERIFICADO)",
     "11000": "dgx-dashboard (NVIDIA)",
     "11434": "ollama",
     "11435": "model-router",
     "11436": "llama-server",
-    "18789": "ura-openclaw",
     "22000": "syncthing",
     "46113": "tailscale (inter-node)"
   }

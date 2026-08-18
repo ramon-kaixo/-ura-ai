@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'URA'
+    orgId: 1
+    folder: 'URA'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

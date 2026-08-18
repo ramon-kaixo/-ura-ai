@@ -82,8 +82,20 @@ _ejecutar_pipeline() {
     _procesar_pendiente
 }
 
+# v3.2 (2026-08-18, WEB): guard anti-doble-instancia.
+# El daemon puede arrancarse via systemd (ura-watch-daemon.service) o manual;
+# si ambas vias conviven se lanzarian 2 watchers -> pipeline duplicado.
+# flock: el segundo proceso sale con 0 (exito) para que Restart=on-failure
+# de systemd NO reintente en bucle.
+_LOCK_FD=9
+exec 9>"$REPO/.tuneladora/.watch_daemon.lock"
+if ! flock -n "$_LOCK_FD"; then
+    echo "[$(date '+%H:%M:%S')] Ya hay una instancia de watch_daemon corriendo — saliendo (v3.2 guard)"
+    exit 0
+fi
+
 # PRE-FLIGHT
-echo "[$(date '+%H:%M:%S')] Watch daemon v3.0 iniciado"
+echo "[$(date '+%H:%M:%S')] Watch daemon v3.2 iniciado"
 python3 "$REPO/scripts/pro/tuneladora/preflight_system.py" audit || {
     echo "[$(date '+%H:%M:%S')] PRE-FLIGHT: audit fallo — abortando"
     exit 1
