@@ -226,10 +226,21 @@ def gate_mutmut(modulo: str, umbral_muertos: int, dry: bool = False) -> dict:
     target = modulo.rstrip("/")
     if target not in texto:
         return {"code": 2, "salida": "módulo no está en el reporte mutmut del día (pendiente)", "muertos": None}
-    # supervivencia explícita -> alerta; sin mención de sobrevivientes -> ok
-    if "sobreviviente" in texto.lower() or "surviv" in texto.lower():
-        return {"code": 1, "salida": f"mutantes sobrevivientes reportados para {target}", "muertos": None}
-    return {"code": 0, "salida": "módulo cubierto por el reporte mutmut del día", "muertos": None}
+    # conteo real de sobrevivientes del módulo (formato mutmut: <mod>.<clase>..._mutmut_N: survived)
+    sobrevivientes = []
+    for linea in texto.splitlines():
+        if "survived" in linea and target.replace("/", ".") in linea:
+            sobrevivientes.append(linea.strip())
+    if sobrevivientes:
+        return {
+            "code": 1,
+            "salida": f"{len(sobrevivientes)} mutantes sobrevivientes en {target}: {sobrevivientes[0][:120]}",
+            "muertos": None,
+        }
+    # exit code 1 sin survived explícitos (fallo de lote) -> pendiente, no bloquea
+    if "exit code" in texto and "Exit code: 1" in texto and not sobrevivientes:
+        return {"code": 2, "salida": "reporte mutmut del día con exit 1 sin sobrevivientes (pendiente de revisión)", "muertos": None}
+    return {"code": 0, "salida": "módulo cubierto por el reporte mutmut del día (sin sobrevivientes)", "muertos": None}
 
 
 def gate_calidad(modulo: str) -> dict:
@@ -324,12 +335,17 @@ def procesar_modulo(
         _save_state(data)
         return 1
 
-    # Éxito
+    # Éxito — SOLO si la cobertura final medida >= min (100x100 sin margen)
     g1b = gate_medir(modulo, min_pct)
     est["cobertura_despues"] = g1b["salida"].splitlines()[-1] if g1b["salida"] else None
+    if g1b["code"] != 0:
+        est["estado"] = "alerta"
+        _registrar(data, modulo, "alerta", f"cobertura final < {min_pct}%: {est['cobertura_despues']}")
+        _save_state(data)
+        return 1
     est["estado"] = "verde"
     est["seed"] = seed
-    _registrar(data, modulo, "verde", "los 6 gates pasan")
+    _registrar(data, modulo, "verde", f"cobertura final >= {min_pct}% ({est['cobertura_despues']})")
     _save_state(data)
     return 0
 
@@ -341,11 +357,23 @@ def _emitir_contratos_llm(data: dict) -> None:
     - .nervioso/flaky_tests.json   : tests con reruns (registrados por el gate pytest)
     - docs/udo/coverage-reports/   : reporte markdown (ya generado)
     """
+    out = Path(".nervioso")
     alertas = {
         m: est
         for m, est in data.get("modulos", {}).items()
         if est.get("estado") in ("alerta", "bloqueado")
     }
+    # regresión diaria: módulos que pasaron de verde a alerta/bloqueado vs reporte anterior
+    regresion = []
+    reportes = sorted((REPO / "docs" / "udo" / "coverage-reports").glob("*.md"))
+    if len(reportes) >= 2:
+        anterior = reportes[-2].read_text(errors="ignore")
+        for m, est in data.get("modulos", {}).items():
+            if est.get("estado") in ("alerta", "bloqueado") and m in anterior and "verde" not in anterior.split(m)[1][:200]:
+                regresion.append(m)
+    (out / "regresion_diaria.json").write_text(
+        json.dumps({"fecha": _now(), "modulos_en_regresion": regresion}, ensure_ascii=False, indent=2)
+    )
     flakies = []
     for m, est in data.get("modulos", {}).items():
         for ev in est.get("trazabilidad", []):
