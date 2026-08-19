@@ -19,7 +19,7 @@ def recall_at_k(relevant: set[str], retrieved: list[str], k: int) -> float:
         return 0.0
     retrieved_k = retrieved[:k]
     hits = sum(1 for doc in retrieved_k if doc in relevant)
-    return hits / len(relevant)
+    return min(hits / len(relevant), 1.0)
 
 
 def precision_at_k(relevant: set[str], retrieved: list[str], k: int) -> float:
