@@ -24,6 +24,7 @@ import argparse
 import collections.abc as collections_abc
 import inspect
 import sys
+from dataclasses import MISSING as dataclasses_MISSING
 from dataclasses import is_dataclass
 from datetime import datetime
 from pathlib import Path
@@ -60,13 +61,18 @@ def test_propiedad_{stem}(...):
 
 
 def _module_from_file(ruta: Path) -> tuple[str, str]:
-    """Devuelve (nombre_modulo, stem) a partir de la ruta del archivo."""
+    """Devuelve (nombre_modulo, stem) a partir de la ruta del archivo.
+
+    El stem incluye el paquete padre para evitar colisiones de nombres
+    (p.ej. fusion/models.py vs web/models.py -> fusion_models vs web_models).
+    """
     rel = ruta.resolve().relative_to(REPO)
     parts = list(rel.parts)
     parts[-1] = parts[-1].removesuffix(".py")
     while parts and parts[0] == "scripts":
         parts.pop(0)
-    return ".".join(parts), parts[-1]
+    padre = parts[-2] if len(parts) >= 2 else "mod"
+    return ".".join(parts), f"{padre}_{parts[-1]}"
 
 
 def _load_module(ruta: Path) -> Any:
@@ -81,6 +87,7 @@ def _load_module(ruta: Path) -> Any:
 def _dataclasses(mod: Any) -> list[type]:
     """Dataclasses con fields construibles por st.builds (no callables/frozen con __post_init__)."""
     result = []
+    mod_names = {cls.__name__ for cls in vars(mod).values() if inspect.isclass(cls)}
     for obj in vars(mod).values():
         if not (inspect.isclass(obj) and is_dataclass(obj)):
             continue
@@ -96,6 +103,13 @@ def _dataclasses(mod: Any) -> list[type]:
                 ok = False
                 break
             if get_origin(ftype) is collections_abc.Callable:
+                ok = False
+                break
+            # tipo complejo o foráneo: st.builds no puede construirlo fiablemente
+            if isinstance(ftype, str) and not ftype.isidentifier():
+                ok = False
+                break
+            if isinstance(ftype, type) and ftype.__name__ not in mod_names and ftype not in (str, int, float, bool, bytes):
                 ok = False
                 break
         if ok:
@@ -157,6 +171,8 @@ def _strategy_for(tipo: Any, param_name: str) -> str:
     if isinstance(t, str):
         if any(ch in t for ch in "[.]"):
             return "st.text()"  # tipos anotados complejos (dict[str, Any], threading.Lock...): sin strategy
+        if t in ("int", "float", "str", "bool", "bytes", "None"):
+            return {"int": "st.integers()", "float": "st.floats(allow_nan=False, allow_infinity=False)", "str": "st.text()", "bool": "st.booleans()", "bytes": "st.binary()", "None": "st.none()"}[t]
         return f"st.builds({t}) if isinstance({t}, type) and __import__('dataclasses').is_dataclass({t}) else st.text()"
     return "st.text()"
 
