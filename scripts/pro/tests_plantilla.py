@@ -155,6 +155,8 @@ def _strategy_for(tipo: Any, param_name: str) -> str:
     if isinstance(t, type) and is_dataclass(t):
         return f"st.builds({t.__name__})"
     if isinstance(t, str):
+        if any(ch in t for ch in "[.]"):
+            return "st.text()"  # tipos anotados complejos (dict[str, Any], threading.Lock...): sin strategy
         return f"st.builds({t}) if isinstance({t}, type) and __import__('dataclasses').is_dataclass({t}) else st.text()"
     return "st.text()"
 
@@ -163,6 +165,10 @@ def _arg_basico(p: inspect.Parameter, mod: Any) -> str:
     """Argumento básico para una función: dataclass del módulo -> instancia, si no 0/''."""
     an = p.annotation
     if isinstance(an, str):
+        if "Lock" in an or "lock" in an:
+            return "threading.Lock()"
+        if "dict" in an:
+            return "{}"
         for obj in vars(mod).values():
             if inspect.isclass(obj) and obj.__name__ == an and is_dataclass(obj):
                 return f"{an}()"
@@ -182,10 +188,17 @@ def _generar_smoke(
         first = "object"
     else:
         first = syms.split(", ")[0]
+    needs_threading = any(
+        "Lock" in str(p.annotation) or "lock" in str(p.annotation) for _, params in funciones[:6] for p in params
+    )
     lines = [
         '"""Tests smoke generados por plantilla (determinista, sin LLM)."""',
         "",
         "import pytest",
+    ]
+    if needs_threading:
+        lines.append("import threading")
+    lines += [
         "",
         f"from {mod_name} import {syms}",
         "",
@@ -199,12 +212,12 @@ def _generar_smoke(
     for d in dataclasses:
         lines += [
             f"def test_dataclass_{stem}_{d.__name__}():",
-            f'    """Instanciación con valores por defecto (skip si valida/requiere args)."""',
-            f"    try:",
+            '    """Instanciación con valores por defecto (skip si valida/requiere args)."""',
+            "    try:",
             f"        inst = {d.__name__}()",
-            f"    except (TypeError, ValueError):",
-            f"        pytest.skip('dataclass requiere argumentos o valida en __post_init__')",
-            f"    assert inst is not None",
+            "    except (TypeError, ValueError):",
+            "        pytest.skip('dataclass requiere argumentos o valida en __post_init__')",
+            "    assert inst is not None",
             "",
             "",
         ]
@@ -214,11 +227,11 @@ def _generar_smoke(
             args_basicos = ", ".join(_arg_basico(p, mod) for p in params)
             lines += [
                 f"def test_funcion_{stem}_{nombre}():",
-                f'    """La función no lanza con argumentos básicos."""',
-                f"    try:",
+                '    """La función no lanza con argumentos básicos."""',
+                "    try:",
                 f"        {nombre}({args_basicos})",
-                f"    except (TypeError, ValueError, NotImplementedError):",
-                f"        pytest.skip('no aplicable con argumentos básicos')",
+                "    except (TypeError, ValueError, NotImplementedError):",
+                "        pytest.skip('no aplicable con argumentos básicos')",
                 "",
                 "",
             ]
@@ -256,9 +269,15 @@ def _generar_hypothesis(
         argnames = ", ".join(f"x{i}" for i in range(len(params)))
         if not argnames:
             continue
-        # funciones con args de tipo `type` o sin anotación: hypothesis no puede
-        # generar clases válidas -> solo smoke (no property)
-        if any(p.annotation is type or p.annotation is inspect.Parameter.empty for p in params):
+        # funciones con args de tipo `type`, dict complejo, Lock o sin anotación:
+        # hypothesis no puede generar -> solo smoke (no property)
+        if any(
+            p.annotation is type
+            or p.annotation is inspect.Parameter.empty
+            or "Lock" in str(p.annotation)
+            or "dict" in str(p.annotation)
+            for p in params
+        ):
             continue
         strategies = [_strategy_for(p.annotation, f"x{i}") for i, p in enumerate(params)]
         # tipos datetime/date necesitan import
