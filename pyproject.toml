@@ -87,14 +87,20 @@ ignore = [
 "docs/merge_resolution/*" = ["S101", "S110", "INP001"]  # tests documentales de resolución de merges
 
 [tool.pytest.ini_options]
-markers = ["slow: marks tests as slow", "integration: approval tests against live endpoints"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: approval tests against live endpoints",
+    "unit: tests unitarios aislados",
+    "smoke: tests de import/happy path generados por plantilla",
+    "hypothesis: tests property-based generados por plantilla",
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 norecursedirs = [".hypothesis", ".git", ".venv", "venv", "__pycache__", "audit_reports", ".nervioso", ".sandbox_packages"]
 filterwarnings = ["ignore::DeprecationWarning"]
 timeout = 60
 asyncio_mode = "auto"
-addopts = "--reruns 2 --reruns-delay 1"
+addopts = "--reruns 2 --reruns-delay 1 --strict-markers --instafail"
 
 [tool.mypy]
 python_version = "3.12"

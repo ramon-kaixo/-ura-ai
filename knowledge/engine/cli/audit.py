@@ -9,9 +9,12 @@ def cmd_vacuum(args) -> int:
     if not db_path.exists():
         return 1
     before = db_path.stat().st_size
-    conn = open_db(db_path)
-    conn.execute("VACUUM")
-    conn.close()
+    try:
+        conn = open_db(db_path)
+        conn.execute("VACUUM")
+        conn.close()
+    except Exception:
+        return 1
     after = db_path.stat().st_size
     before - after
     return 0
