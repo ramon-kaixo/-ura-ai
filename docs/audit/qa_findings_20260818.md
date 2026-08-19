@@ -43,3 +43,17 @@
 
 ### Medición global knowledge/engine (sugerencia MEDIA)
 - **79.2%** (7592 stmts, 1579 miss) con la selección de tests de knowledge — 0 módulos <80% en esa selección (los módulos con deps externas — vector_ollama/qdrant, extractors web/video/audio/pdf/image/office — no se miden sin servicios).
+
+## Ronda 8 (2026-08-19): markdown/validator/orchestrator/sqlite_writer
+
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `knowledge/engine/extractors/markdown.py` | 31.0% | **100%** | `test_knowledge_extractors_markdown_cobertura.py` (21) |
+| `knowledge/engine/validator.py` | 34.8% | **100%** | `test_knowledge_validator_cobertura.py` (29) |
+| `knowledge/engine/orchestrator.py` | 30.1% | **94.5%** | `test_knowledge_orchestrator_cobertura.py` (9) |
+| `knowledge/engine/sqlite_writer.py` | 34.4% | **98.4%** | `test_knowledge_sqlite_writer_cobertura.py` (22) |
+
+- orchestrator: 4 líneas sin cubrir = rutas default (apuntan a prod; intencional no ejecutarlas en tests).
+- sqlite_writer: 2 líneas sin cubrir = handler de señal SIGINT/SIGTERM (solo cubribles enviando señal real; el path de rollback por excepción SÍ está cubierto).
+- Validado E2E: apply_compile real con schema completo → kg_nodes + kg_edges + FTS + op_compiler_runs + kg_active_version consistentes; rollback ante fallo (0 escrituras).
+- **Flaky conocido**: `test_f25_b4_fact_index.py::test_benchmark_lookup_10000` falla ~1 de cada 2 suite completas por carga (10K lookups 206ms > 150ms); aislado pasa (1.28s). Ya marcado flaky en `ea7830a4`. Sin relación con este lote.
