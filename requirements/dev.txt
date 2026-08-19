@@ -8,6 +8,9 @@ pytest-timeout>=2.0
 pytest-cov>=4.0
 pytest-rerunfailures>=14.0  # exigido por addopts de pyproject.toml (--reruns 2)
 hypothesis>=6.80
+mutmut>=3.7
+pyzmq>=27.1
+pillow>=12.3
 
 # Linting y tipo
 ruff>=0.15
