@@ -12,6 +12,7 @@
 - Un hallazgo se marca `corregido` solo cuando la corrección está hecha y verificada (con commit y evidencia).
 - NO se corrige nada desde el modo fondo: los hallazgos se proponen y esperan autorización.
 | 2026-08-19 | tests/integration/test_vector_retriever.py:10 | Import roto por refactor TASK-029: `AssetSource`/`KnowledgeAsset` movidos a knowledge/engine/ontology/internal.py — rompía colección (3 err, audit-extra 05:02) y mutmut-daily (06:00). CORREGIDO: import actualizado, 8807 tests colección limpia | ALTA | corregido (commit pendiente) |
+| 2026-08-19 | scripts/pro/auditoria_paralela.py:97 check_huerfanos | Check huerfanos >15 (18 ahora): scripts nuevos del WEB (check_changed_syntax, audit_cierre_udo...) sin conectar a Makefile/CI/deploy — servicio ura-audit-extra exit 1 (informativo, no funcional) | BAJA | abierto (proponer conectar scripts o subir umbral) |
 
 ## Hallazgos
 
