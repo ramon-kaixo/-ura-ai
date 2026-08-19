@@ -167,7 +167,7 @@ def _validar_provider_name(instance: BaseLLMProvider, errors: list[str]) -> str:
 def _validar_metodos(instance: BaseLLMProvider, errors: list[str]) -> None:
     required_methods = ["generate", "embed", "embed_async", "health"]
     for method_name in required_methods:
-        if not hasattr(instance, method_name):
+        if not hasattr(instance, method_name):  # pragma: no cover — ABC garantiza que existen
             errors.append(f"Falta método: {method_name}")
             continue
         method = getattr(instance, method_name)
@@ -226,7 +226,7 @@ def _check_signature(method: Any, expected_params: list[str], optional: list[str
         param_names = list(sig.parameters.keys())
 
         # Excluir self
-        if param_names and param_names[0] == "self":
+        if param_names and param_names[0] == "self":  # pragma: no cover — métodos bound no exponen self
             param_names = param_names[1:]
 
         for ep in expected_params:
