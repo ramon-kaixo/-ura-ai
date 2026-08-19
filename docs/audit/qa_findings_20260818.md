@@ -71,3 +71,17 @@
 - api: ramas 500 cubiertas vía monkeypatch; sin cubrir `_verify_api_key` (código muerto: el middleware `_auth_middleware_inner` hace la verificación real; los endpoints nunca la usan) — candidata a limpieza futura (MEJORA, no bloqueante).
 - **Hallazgo verificado**: en ASUS `URA_API_KEY` está definida → la API arranca con autenticación activada (todos los endpoints exigen Bearer). Correcto para producción; los tests la aíslan con monkeypatch.
 - **Preexistente (no tocado)**: mypy `repository.py:118` (keyword relation_type) y `api.py:173` (arg-type handler starlette) — anteriores a esta ronda.
+
+## Ronda 10 (2026-08-19): lock/jobs/reader + hallazgo formateo masivo
+
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `knowledge/engine/lock.py` | ~40% | **100%** | `test_knowledge_lock_cobertura.py` (6) |
+| `knowledge/engine/jobs.py` | ~35% | **96.6%** | `test_knowledge_jobs_cobertura.py` (22, E2E op_jobs + stale recovery + worker) |
+| `knowledge/engine/reader.py` | ~35% | **100%** | `test_knowledge_reader_cobertura.py` (25, E2E pool/cache/FTS/RRF) |
+
+### Hallazgos de entorno (2026-08-19 05:00)
+- **Formateo masivo ajeno**: 97 archivos (core/, motor/, knowledge/engine/compiler+rules, scripts/pro/) reformateados con ruff format a las 05:00:06 por un run de mantenimiento NO declarado (probablemente tuneladora/mejora continua; logs de mantenimiento vacíos). Diffs = solo wrapping de líneas, sin cambios semánticos. NO deshecho (trabajo legítimo en flujo) y NO tocado.
+- La tuneladora `--mode check` corre periódicamente sobre archivos de tests (observado sobre `test_knowledge_orchestrator_cobertura.py`); inofensivo (solo comprueba).
+- **Preexistente (NO tocado)**: mypy `knowledge/engine/vector_retriever.py:19` — import de `KnowledgeAsset` inexistente en models (arrastrado por imports transitivos de reader). Candidato a limpieza con revisión.
+- mypy de los 3 módulos del lote: 0 errores propios.
