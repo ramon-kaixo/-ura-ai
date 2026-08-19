@@ -82,10 +82,16 @@ class TestGitBranchTool:
         r = GitBranchTool().execute("")
         assert r.success and r.output == "* main"
 
-    def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_error(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("boom")))
-        r = GitBranchTool().execute("repo")
+        (tmp_path / ".git").mkdir()
+        r = GitBranchTool().execute(str(tmp_path))
         assert not r.success and r.error == "boom"
+
+    def test_repo_invalido(self) -> None:
+        """Un repo inexistente se rechaza antes de tocar subprocess."""
+        r = GitBranchTool().execute("/no/existe/repo")
+        assert not r.success and "Repo inválido" in r.error
 
 
 class TestGitCommitTool:

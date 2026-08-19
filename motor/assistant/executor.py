@@ -32,7 +32,17 @@ class GitTool:
     def __init__(self, repo_path: str | None = None):
         self._repo = repo_path or str(Path.cwd())
 
+    def _validar_repo(self) -> str | None:
+        """Valida que el repo exista y sea un directorio git (evita paths arbitrarios)."""
+        rp = Path(self._repo).resolve()
+        if not rp.is_dir() or not (rp / ".git").exists():
+            return f"Repo inválido: {self._repo}"
+        return None
+
     def status(self) -> ToolResult:
+        err = self._validar_repo()
+        if err:
+            return ToolResult(False, error=err)
         try:
             r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "status", "--short"], capture_output=True, text=True, timeout=10, check=False
@@ -42,6 +52,9 @@ class GitTool:
             return ToolResult(False, error=str(e))
 
     def log(self, count: int = 5) -> ToolResult:
+        err = self._validar_repo()
+        if err:
+            return ToolResult(False, error=err)
         try:
             r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "log", f"-{count}", "--oneline"],
@@ -55,6 +68,9 @@ class GitTool:
             return ToolResult(False, error=str(e))
 
     def diff(self) -> ToolResult:
+        err = self._validar_repo()
+        if err:
+            return ToolResult(False, error=err)
         try:
             r = subprocess.run(  # nosec
                 ["git", "-C", self._repo, "diff", "--stat"], capture_output=True, text=True, timeout=10, check=False
@@ -67,6 +83,9 @@ class GitTool:
 class GitBranchTool:
     def execute(self, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
+        rp = Path(path).resolve()
+        if not rp.is_dir() or not (rp / ".git").exists():
+            return ToolResult(False, error=f"Repo inválido: {path}")
         try:
             res = subprocess.run(  # nosec
                 ["git", "-C", path, "branch", "-a"], capture_output=True, text=True, timeout=10, check=False
@@ -79,6 +98,11 @@ class GitBranchTool:
 class GitCommitTool:
     def execute(self, message: str, repo: str = "") -> ToolResult:
         path = repo or str(Path.cwd())
+        rp = Path(path).resolve()
+        if not rp.is_dir() or not (rp / ".git").exists():
+            return ToolResult(False, error=f"Repo inválido: {path}")
+        if not message or not message.strip():
+            return ToolResult(False, error="Mensaje de commit vacío")
         try:
             res = subprocess.run(  # nosec
                 ["git", "-C", path, "commit", "-m", message], capture_output=True, text=True, timeout=10, check=False
