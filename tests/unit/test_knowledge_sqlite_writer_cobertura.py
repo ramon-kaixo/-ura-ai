@@ -294,14 +294,15 @@ def test_install_restore_en_thread() -> None:
     results: dict[str, bool] = {}
 
     def _run() -> None:
+        before = signal.getsignal(signal.SIGINT)
         _install_cancel_handler()
-        results["no_install"] = signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        results["no_change"] = signal.getsignal(signal.SIGINT) is before
         _restore_cancel_handlers(None, None)
 
     t = threading.Thread(target=_run)
     t.start()
     t.join()
-    assert results["no_install"] is True
+    assert results["no_change"] is True
 
 
 def test_begin_immediate_with_retry_ok(db) -> None:
