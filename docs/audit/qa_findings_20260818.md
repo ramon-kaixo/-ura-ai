@@ -57,3 +57,17 @@
 - sqlite_writer: 2 líneas sin cubrir = handler de señal SIGINT/SIGTERM (solo cubribles enviando señal real; el path de rollback por excepción SÍ está cubierto).
 - Validado E2E: apply_compile real con schema completo → kg_nodes + kg_edges + FTS + op_compiler_runs + kg_active_version consistentes; rollback ante fallo (0 escrituras).
 - **Flaky conocido**: `test_f25_b4_fact_index.py::test_benchmark_lookup_10000` falla ~1 de cada 2 suite completas por carga (10K lookups 206ms > 150ms); aislado pasa (1.28s). Ya marcado flaky en `ea7830a4`. Sin relación con este lote.
+
+## Ronda 9 (2026-08-19): eventbus/deduction/archiver + API completa
+
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `knowledge/engine/eventbus.py` | 9.0% | **98.9%** | `test_knowledge_eventbus_cobertura.py` (13) |
+| `knowledge/engine/deduction.py` | 1.0% | **100%** | `test_knowledge_deduction_cobertura.py` (13) |
+| `knowledge/engine/archiver.py` | 7.0% | **97.1%** | `test_knowledge_archiver_cobertura.py` (39, E2E git bundle real) |
+| `knowledge/engine/api.py` | 10.0% | **93.9%** | `test_knowledge_api_cobertura.py` (39, FastAPI TestClient E2E) |
+
+- archiver: 6 líneas sin cubrir = defaults de rutas (apuntan a prod, intencional) + except de audit/metrics.
+- api: ramas 500 cubiertas vía monkeypatch; sin cubrir `_verify_api_key` (código muerto: el middleware `_auth_middleware_inner` hace la verificación real; los endpoints nunca la usan) — candidata a limpieza futura (MEJORA, no bloqueante).
+- **Hallazgo verificado**: en ASUS `URA_API_KEY` está definida → la API arranca con autenticación activada (todos los endpoints exigen Bearer). Correcto para producción; los tests la aíslan con monkeypatch.
+- **Preexistente (no tocado)**: mypy `repository.py:118` (keyword relation_type) y `api.py:173` (arg-type handler starlette) — anteriores a esta ronda.

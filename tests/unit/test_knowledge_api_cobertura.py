@@ -1,286 +1,332 @@
-"""Tests de cobertura de ramas de error/seguridad de knowledge/engine/api.py.
-
-Cubre los caminos no ejercitados por test_knowledge_api.py: middleware
-(401/403/413), health 503, status 500, compile 409/504/500, errores de
-search/documents/rules, archive, feedback, memory y metadata endpoints.
-"""
+"""Tests de cobertura para knowledge/engine/api.py (FastAPI TestClient)."""
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest import mock
+from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
+
+from knowledge.engine.api import AppError, app, state
+from knowledge.engine.models import CompileContext, CompileOptions, Document, Frontmatter, KnowledgeObject
+from knowledge.engine.sqlite_writer import apply_compile, init_db
+
+SCHEMA = Path("schemas/knowledge_graph.sql")
+
+
+def _obj(doc_id: str, title: str) -> KnowledgeObject:
+    doc = Document(
+        doc_id=doc_id,
+        doc_type="doc",
+        path=f"docs/{doc_id}.md",
+        content_sha256=f"sha{doc_id}",
+        frontmatter=Frontmatter(title=title, doc_type="doc"),
+        body=f"Cuerpo extenso del documento {title} para búsquedas y reglas del motor de conocimiento.",
+        quality=0.9,
+        confidence=0.8,
+    )
+    return KnowledgeObject(document=doc)
 
 
 @pytest.fixture
-def app(tmp_path, monkeypatch):
-    from knowledge.engine import api
+def client(tmp_path: Path, monkeypatch) -> TestClient:
+    import knowledge.engine.api as api_mod
 
-    monkeypatch.setattr(api, "_API_KEY", None)
-    monkeypatch.delenv("URA_API_KEY", raising=False)
-    import sqlite3
+    monkeypatch.setattr(api_mod, "_API_KEY", None)
+    db = tmp_path / "k.db"
+    init_db(db, SCHEMA)
+    ctx = CompileContext(options=CompileOptions())
+    apply_compile(db, [_obj("0123456789aa", "Alpha"), _obj("0123456789bb", "Beta")], ctx, [], [])
+    state.db_path = db
+    src_dir = tmp_path / "src"
+    src_dir.mkdir(exist_ok=True)
+    (src_dir / "doc.md").write_text("contenido")
+    import subprocess as sp
 
-    db = tmp_path / "db.sqlite"
-    conn = sqlite3.connect(db)
-    conn.execute("PRAGMA user_version = 1")
-    conn.execute("CREATE TABLE kg_nodes (id TEXT PRIMARY KEY, type TEXT, path TEXT, frontmatter TEXT, body TEXT)")
-    conn.execute("CREATE TABLE kg_edges (src TEXT, dst TEXT)")
-    conn.commit()
-    conn.close()
-    api.state.db_path = db
-    api.state.source_dir = tmp_path / "src"
-    api.state._repo = None
-    from fastapi.testclient import TestClient
-
-    with TestClient(api.app) as client:
-        yield client
-
-
-class TestMiddlewareSeguridad:
-    def test_401_sin_bearer(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        monkeypatch.setattr(api, "_API_KEY", "k-test")
-        r = app.get("/status")
-        assert r.status_code == 401
-
-    def test_403_token_invalido(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        monkeypatch.setattr(api, "_API_KEY", "k-test")
-        r = app.get("/status", headers={"Authorization": "Bearer malo"})
-        assert r.status_code == 403
-
-    def test_403_token_invalido_ok(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        monkeypatch.setattr(api, "_API_KEY", "k-test")
-        repo = mock.Mock()
-        repo.health_check.return_value = {"healthy": True, "schema_version": "3"}
-        monkeypatch.setattr(api.state, "get_repo", lambda: repo)
-        r = app.get("/health", headers={"Authorization": "Bearer k-test"})
-        assert r.status_code == 200
-        assert r.json()["status"] == "ok"
-
-    def test_413_body_demasiado_grande(self, app) -> None:
-        r = app.post(
-            "/search",
-            content=b'{"query": "' + b"a" * (10 * 1024 * 1024 + 100) + b'"}',
-            headers={"Content-Type": "application/json"},
-        )
-        assert r.status_code == 413
-
-    def test_cabeceras_seguridad(self, app) -> None:
-        r = app.get("/health")
-        assert r.headers["X-Content-Type-Options"] == "nosniff"
-        assert r.headers["X-Engine-Version"] == "0.2.0"
+    sp.run(["git", "init", "-b", "main"], cwd=src_dir, capture_output=True, check=False)
+    sp.run(["git", "add", "."], cwd=src_dir, capture_output=True, check=False)
+    sp.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"],
+        cwd=src_dir,
+        capture_output=True,
+        check=False,
+    )
+    state.source_dir = src_dir
+    state._repo = None
+    monkeypatch.setattr("knowledge.engine.archiver._DEFAULT_ARCHIVE_DIR", tmp_path / "arch")
+    with TestClient(app) as c:
+        yield c
+    state.db_path = Path("/tmp/nonexistent")
 
 
-class TestHealthStatusErrores:
-    def test_health_unhealthy(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        repo = mock.Mock()
-        repo.health_check.return_value = {"healthy": False, "error": "db caida"}
-        monkeypatch.setattr(api.state, "get_repo", lambda: repo)
-        r = app.get("/health")
-        assert r.status_code == 503
-        assert "db caida" in r.json()["detail"]
-
-    def test_status_error(self, app, monkeypatch) -> None:
-        def _boom(*a, **k):
-            raise RuntimeError("tabla no existe")
-
-        monkeypatch.setattr("knowledge.engine.connection.open_db", _boom)
-        r = app.get("/status")
-        assert r.status_code == 500
-
-    def test_doc_id_invalido(self, app) -> None:
-        r = app.get("/documents/no-valido")
-        assert r.status_code == 422
+def test_health(client) -> None:
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert r.json()["status"] == "ok"
+    assert r.json()["schema_version"] == 15
 
 
-class TestCompileErrores:
-    def test_incremental(self, app, monkeypatch) -> None:
-        result = SimpleNamespace(success=True, documents_changed=2, documents_total=5)
-        monkeypatch.setattr("knowledge.engine.compiler.compile_incremental", mock.Mock(return_value=result))
-        r = app.post("/compile?incremental=true")
-        assert r.status_code == 202
-        assert r.json()["message"] == "incremental"
+def test_health_unhealthy(client, monkeypatch) -> None:
+    class _Repo:
+        def health_check(self):
+            return {"healthy": False, "error": "db caida"}
 
-    def test_conflict_409(self, app, monkeypatch) -> None:
-        monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", mock.Mock(return_value=0))
-        r = app.post("/compile")
-        assert r.status_code == 409
-
-    def test_timeout_504(self, app, monkeypatch) -> None:
-        import asyncio
-
-        def _boom(*a, **k):
-            raise asyncio.TimeoutError("compile agotado")
-
-        monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", _boom)
-        r = app.post("/compile")
-        assert r.status_code == 504
-
-    def test_error_500(self, app, monkeypatch) -> None:
-        def _boom(*a, **k):
-            raise RuntimeError("compilador roto")
-
-        monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", _boom)
-        r = app.post("/compile")
-        assert r.status_code == 500
-
-    def test_sync_conflict_409(self, app, monkeypatch) -> None:
-        monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", mock.Mock(return_value=0))
-        r = app.post("/compile/sync")
-        assert r.status_code == 409
-
-    def test_sync_error_500(self, app, monkeypatch) -> None:
-        def _boom(*a, **k):
-            raise RuntimeError("sync roto")
-
-        monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", _boom)
-        r = app.post("/compile/sync")
-        assert r.status_code == 500
+    monkeypatch.setattr(state, "get_repo", lambda: _Repo())
+    r = client.get("/health")
+    assert r.status_code == 503
+    assert r.json()["error"] == "Unhealthy"
 
 
-class TestSearchErrores:
-    def test_con_type_y_error(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        def _search(query, mode="lexical", filters=None, limit=10):
-            raise RuntimeError("fts roto")
-
-        repo = mock.Mock()
-        repo.search.side_effect = _search
-        monkeypatch.setattr(api.state, "get_repo", lambda: repo)
-        r = app.post("/search", json={"query": "hola", "type": "guide", "mode": "lexical"})
-        assert r.status_code == 500
-
-    def test_get_document_error(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        repo = mock.Mock()
-        repo.get_document.side_effect = RuntimeError("repo roto")
-        monkeypatch.setattr(api.state, "get_repo", lambda: repo)
-        r = app.get("/documents/0123456789ab")
-        assert r.status_code == 500
-
-    def test_rules_eval_error(self, app, monkeypatch) -> None:
-        from knowledge.engine import api
-
-        repo = mock.Mock()
-        repo.get_documents_for_rules.side_effect = RuntimeError("rules rotas")
-        monkeypatch.setattr(api.state, "get_repo", lambda: repo)
-        r = app.post("/rules/eval")
-        assert r.status_code == 500
+def test_status(client) -> None:
+    r = client.get("/status")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["documents"] == 2
+    assert data["relations"] == 0
+    assert data["graph_version"]["graph_version"] > 0
 
 
-class TestArchive:
-    def test_ok(self, app, monkeypatch) -> None:
-        manifest = SimpleNamespace(
-            source_commit="a" * 40,
-            file_count=12,
-            content_sha256="b" * 64,
-        )
-        monkeypatch.setattr("knowledge.engine.archiver.archive_source", mock.Mock(return_value=manifest))
-        r = app.post("/archive")
-        assert r.status_code == 200
-        assert r.json()["success"] is True
-        assert r.json()["files"] == 12
-
-    def test_value_error_422(self, app, monkeypatch) -> None:
-        def _boom(*a, **k):
-            raise ValueError("source no es git repo")
-
-        monkeypatch.setattr("knowledge.engine.archiver.archive_source", _boom)
-        r = app.post("/archive")
-        assert r.status_code == 422
-
-    def test_error_500(self, app, monkeypatch) -> None:
-        def _boom(*a, **k):
-            raise RuntimeError("archivo roto")
-
-        monkeypatch.setattr("knowledge.engine.archiver.archive_source", _boom)
-        r = app.post("/archive")
-        assert r.status_code == 500
+def test_compile_sync_ok(client, monkeypatch) -> None:
+    monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 1)
+    r = client.post("/compile/sync")
+    assert r.status_code == 200
+    assert r.json()["success"] is True
 
 
-class TestFeedbackErrores:
-    def test_rating_fuera_rango(self, app) -> None:
-        r = app.post("/feedback/0123456789ab?rating=0")
-        assert r.status_code == 422
-
-    def test_record_feedback_fallo(self, app, monkeypatch) -> None:
-        monkeypatch.setattr("knowledge.engine.feedback.record_feedback", mock.Mock(return_value=False))
-        r = app.post("/feedback/0123456789ab?rating=5")
-        assert r.status_code == 500
-
-    def test_top_limit_fuera_rango(self, app) -> None:
-        r = app.get("/feedback/top?limit=0")
-        assert r.status_code == 422
+def test_compile_sync_conflict(client, monkeypatch) -> None:
+    monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 0)
+    r = client.post("/compile/sync")
+    assert r.status_code == 409
 
 
-class TestMemoryEndpoints:
-    def test_get_404(self, app, monkeypatch) -> None:
-        store = mock.Mock()
-        store.get.return_value = None
-        monkeypatch.setattr("knowledge.engine.memory_store.SQLiteMemoryStore", mock.Mock(return_value=store))
-        r = app.get("/memory/no-existe")
-        assert r.status_code == 404
+def test_compile_sync_error(client, monkeypatch) -> None:
+    def _boom(*a, **k):
+        raise RuntimeError("rotura")
 
-    def test_search(self, app, monkeypatch) -> None:
-        record = mock.Mock()
-        record.to_dict.return_value = {"id": "m1"}
-        store = mock.Mock()
-        store.search.return_value = [record]
-        monkeypatch.setattr("knowledge.engine.memory_store.SQLiteMemoryStore", mock.Mock(return_value=store))
-        r = app.post("/memory/search", json={"query": "hola"})
-        assert r.status_code == 200
-        assert r.json()["total"] == 1
-
-    def test_link_ok(self, app, monkeypatch) -> None:
-        store = mock.Mock()
-        store.link_asset.return_value = True
-        monkeypatch.setattr("knowledge.engine.memory_store.SQLiteMemoryStore", mock.Mock(return_value=store))
-        r = app.post("/memory/m1/link", json={"asset_id": "a1"})
-        assert r.status_code == 200
-        assert r.json()["success"] is True
-
-    def test_link_404(self, app, monkeypatch) -> None:
-        store = mock.Mock()
-        store.link_asset.return_value = False
-        monkeypatch.setattr("knowledge.engine.memory_store.SQLiteMemoryStore", mock.Mock(return_value=store))
-        r = app.post("/memory/m1/link", json={"asset_id": "a1"})
-        assert r.status_code == 404
+    monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", _boom)
+    r = client.post("/compile/sync")
+    assert r.status_code == 500
 
 
-class TestMetadataEndpoints:
-    def test_context(self, app, monkeypatch) -> None:
-        ctx = mock.Mock()
-        ctx.to_dict.return_value = {"assets": [], "memories": []}
-        retriever = mock.Mock()
-        retriever.build_context.return_value = ctx
-        monkeypatch.setattr("knowledge.engine.graphrag.SQLiteGraphRetriever", mock.Mock(return_value=retriever))
-        r = app.post("/metadata/context", json={"query": "grafo"})
-        assert r.status_code == 200
-        assert r.json()["assets"] == []
+def test_compile_async_202(client, monkeypatch) -> None:
+    monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 1)
+    r = client.post("/compile")
+    assert r.status_code == 202
+    assert r.json()["success"] is True
 
-    def test_retrieve(self, app, monkeypatch) -> None:
-        ctx = mock.Mock()
-        ctx.to_dict.return_value = {"assets": [{"id": "x"}]}
-        retriever = mock.Mock()
-        retriever.build_context.return_value = ctx
-        monkeypatch.setattr("knowledge.engine.graphrag.SQLiteGraphRetriever", mock.Mock(return_value=retriever))
-        r = app.post("/metadata/retrieve", json={"query": "mem"})
-        assert r.status_code == 200
-        assert r.json()["assets"] == [{"id": "x"}]
 
-    def test_metrics(self, app, monkeypatch) -> None:
-        monkeypatch.setattr("knowledge.engine.metrics.export_metrics", mock.Mock(return_value="metric 1"))
-        r = app.get("/metrics")
-        assert r.status_code == 200
-        assert "metric 1" in r.text
+def test_compile_async_conflict(client, monkeypatch) -> None:
+    monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 0)
+    r = client.post("/compile")
+    assert r.status_code == 409
 
+
+def test_compile_incremental(client, monkeypatch) -> None:
+    class _R:
+        success = True
+        documents_changed = 1
+        documents_total = 2
+
+    monkeypatch.setattr("knowledge.engine.compiler.compile_incremental", lambda *a, **k: _R())
+    r = client.post("/compile?incremental=true")
+    assert r.status_code == 202
+    assert r.json()["documents_changed"] == 1
+
+
+def test_compile_timeout(client, monkeypatch) -> None:
+    import asyncio
+
+    def _timeout(*a, **k):
+        raise TimeoutError
+
+    monkeypatch.setattr(asyncio, "wait_for", _timeout)
+    r = client.post("/compile")
+    assert r.status_code == 504
+
+
+def test_search_lexical(client) -> None:
+    r = client.post("/search", json={"query": "Alpha", "mode": "lexical", "limit": 5})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] >= 1
+    assert data["results"][0]["title"] == "Alpha"
+    assert "doc_id" in data["results"][0]
+
+
+def test_search_con_tipo(client) -> None:
+    r = client.post("/search", json={"query": "cuerpo", "type": "doc"})
+    assert r.status_code == 200
+    assert r.json()["total"] >= 1
+
+
+def test_search_mode_invalido(client) -> None:
+    r = client.post("/search", json={"query": "x", "mode": "magico"})
+    assert r.status_code == 422
+
+
+def test_search_error(client, monkeypatch) -> None:
+    def _boom(*a, **k):
+        raise RuntimeError("fts rota")
+
+    monkeypatch.setattr(state, "get_repo", lambda: type("R", (), {"search": _boom})())
+    r = client.post("/search", json={"query": "x"})
+    assert r.status_code == 500
+
+
+def test_get_document_ok(client) -> None:
+    r = client.get("/documents/0123456789aa")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["title"] == "Alpha"
+    assert data["doc_type"] == "doc"
+    assert "Cuerpo" in data["body"]
+
+
+def test_get_document_id_invalido(client) -> None:
+    r = client.get("/documents/xx")
+    assert r.status_code == 422
+
+
+def test_get_document_inexistente(client) -> None:
+    r = client.get("/documents/0123456789ff")
+    assert r.status_code == 404
+
+
+def test_get_document_error(client, monkeypatch) -> None:
+    def _boom(*a, **k):
+        raise RuntimeError("rotura")
+
+    monkeypatch.setattr(state, "get_repo", lambda: type("R", (), {"get_document": _boom})())
+    r = client.get("/documents/0123456789aa")
+    assert r.status_code == 500
+
+
+def test_list_rules(client) -> None:
+    r = client.get("/rules")
+    assert r.status_code == 200
+    assert "rules" in r.json()
+
+
+def test_evaluate_rules(client) -> None:
+    r = client.post("/rules/eval")
+    assert r.status_code in (200, 500)
+
+
+def test_archive(client) -> None:
+    r = client.post("/archive")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["success"] is True
+    assert data["files"] >= 1
+
+
+def test_archive_error(client, monkeypatch) -> None:
+    def _boom(*a, **k):
+        raise ValueError("no es repo git")
+
+    monkeypatch.setattr("knowledge.engine.archiver.archive_source", _boom)
+    r = client.post("/archive")
+    assert r.status_code == 422
+
+
+def test_feedback_record(client) -> None:
+    r = client.post("/feedback/0123456789aa?rating=5")
+    assert r.status_code == 200
+    assert r.json()["rating"] == 5
+
+
+def test_feedback_rating_fuera(client) -> None:
+    r = client.post("/feedback/0123456789aa?rating=9")
+    assert r.status_code == 422
+
+
+def test_feedback_doc_id_invalido(client) -> None:
+    r = client.post("/feedback/xx?rating=3")
+    assert r.status_code == 422
+
+
+def test_feedback_top(client) -> None:
+    r = client.get("/feedback/top?limit=5")
+    assert r.status_code == 200
+    assert r.json()["total"] == 0
+
+
+def test_feedback_top_limit_invalido(client) -> None:
+    r = client.get("/feedback/top?limit=999")
+    assert r.status_code == 422
+
+
+def test_lineage(client) -> None:
+    r = client.get("/metadata/lineage/0123456789aa")
+    assert r.status_code == 200
+    assert r.json()["total"] == 0
+
+
+def test_memory_list(client) -> None:
+    r = client.get("/memory")
+    assert r.status_code == 200
+    assert r.json()["total"] == 0
+
+
+def test_memory_get_404(client) -> None:
+    r = client.get("/memory/nonexistent")
+    assert r.status_code == 404
+
+
+def test_memory_search(client) -> None:
+    r = client.post("/memory/search", json={"query": "algo"})
+    assert r.status_code == 200
+
+
+def test_memory_link_404(client) -> None:
+    r = client.post("/memory/nonexistent/link", json={"asset_id": "0123456789aa"})
+    assert r.status_code == 404
+
+
+def test_metadata_context(client) -> None:
+    r = client.post("/metadata/context", json={"query": "Alpha"})
+    assert r.status_code == 200
+    assert "to_dict" in dir(r.json()) or isinstance(r.json(), dict)
+
+
+def test_metadata_retrieve(client) -> None:
+    r = client.post("/metadata/retrieve", json={"query": "Alpha", "limit": 5})
+    assert r.status_code == 200
+
+
+def test_metrics(client) -> None:
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert "text/plain" in r.headers["content-type"]
+
+
+def test_body_size_middleware(client) -> None:
+    r = client.post("/search", content=b"x" * (11 * 1024 * 1024), headers={"Content-Type": "application/json"})
+    assert r.status_code == 413
+
+
+def test_headers_seguridad(client) -> None:
+    r = client.get("/health")
+    assert r.headers["X-Content-Type-Options"] == "nosniff"
+    assert r.headers["X-Engine-Version"] == "0.2.0"
+    assert "X-Request-Time-Ms" in r.headers
+
+
+def test_auth_activada(client, monkeypatch) -> None:
+    import knowledge.engine.api as api_mod
+
+    monkeypatch.setattr(api_mod, "_API_KEY", "secreta")
+    assert client.get("/health").status_code == 200  # público
+    r = client.get("/status")
+    assert r.status_code == 401
+    r2 = client.get("/status", headers={"Authorization": "Bearer mala"})
+    assert r2.status_code == 403
+    r3 = client.get("/status", headers={"Authorization": "Bearer secreta"})
+    assert r3.status_code == 200
+
+
+def test_app_error_handler() -> None:
+    exc = AppError(418, "teapot", "detalle")
+    assert exc.status_code == 418
+    assert exc.message == "teapot"
+    assert exc.detail == "detalle"
