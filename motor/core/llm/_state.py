@@ -18,48 +18,20 @@ log = logging.getLogger(__name__)
 
 def _get_optional_providers() -> list[tuple[Any, str]]:
     providers: list[tuple[Any, str]] = []
-    try:
-        from motor.core.llm.openai import OpenAIProvider
-
-        providers.append((OpenAIProvider, "openai"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.anthropic import AnthropicProvider
-
-        providers.append((AnthropicProvider, "anthropic"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.gemini import GeminiProvider
-
-        providers.append((GeminiProvider, "gemini"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.openrouter import OpenRouterProvider
-
-        providers.append((OpenRouterProvider, "openrouter"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.lmstudio import LMStudioProvider
-
-        providers.append((LMStudioProvider, "lmstudio"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.vllm import VLLMProvider
-
-        providers.append((VLLMProvider, "vllm"))
-    except Exception:  # nosec
-        pass
-    try:
-        from motor.core.llm.groq import GroqProvider
-
-        providers.append((GroqProvider, "groq"))
-    except Exception:  # nosec
-        pass
+    for mod_path, cls_name, nombre in (
+        ("motor.core.llm.openai", "OpenAIProvider", "openai"),
+        ("motor.core.llm.anthropic", "AnthropicProvider", "anthropic"),
+        ("motor.core.llm.gemini", "GeminiProvider", "gemini"),
+        ("motor.core.llm.openrouter", "OpenRouterProvider", "openrouter"),
+        ("motor.core.llm.lmstudio", "LMStudioProvider", "lmstudio"),
+        ("motor.core.llm.vllm", "VLLMProvider", "vllm"),
+        ("motor.core.llm.groq", "GroqProvider", "groq"),
+    ):
+        try:
+            providers.append((getattr(__import__(mod_path, fromlist=[cls_name]), cls_name), nombre))
+        except Exception as exc:
+            log.debug("%s not available: %s", nombre, exc)
+    return providers
     return providers
 
 
@@ -73,66 +45,27 @@ class LLMState:
     health: Callable
 
 
-def build_llm_state(config=None) -> LLMState:
-    from motor.core.config import UraConfig
-    from motor.core.llm.ollama import OllamaProvider
-    from motor.core.llm.registry import registry
+_PROVIDER_MODULES: dict[str, tuple[str, str]] = {
+    "openai": ("motor.core.llm.openai", "OpenAIProvider"),
+    "anthropic": ("motor.core.llm.anthropic", "AnthropicProvider"),
+    "gemini": ("motor.core.llm.gemini", "GeminiProvider"),
+    "openrouter": ("motor.core.llm.openrouter", "OpenRouterProvider"),
+    "lmstudio": ("motor.core.llm.lmstudio", "LMStudioProvider"),
+    "vllm": ("motor.core.llm.vllm", "VLLMProvider"),
+    "groq": ("motor.core.llm.groq", "GroqProvider"),
+}
 
-    if config is None:
-        config = UraConfig.load()
 
-    provider_name = getattr(config, "llm_provider", "ollama")
-    _default: Any = None
+def _seleccionar_provider(provider_name: str, registry: Any, OllamaProvider: type) -> Any:
+    """Selecciona y registra el proveedor activo según la configuración."""
+    import importlib
 
-    if provider_name == "openai":
-        from motor.core.llm.openai import OpenAIProvider
-
-        _default = OpenAIProvider()
-        registry.register("openai", _default, default=True)
+    if provider_name in _PROVIDER_MODULES:
+        mod_path, cls_name = _PROVIDER_MODULES[provider_name]
+        _default = getattr(importlib.import_module(mod_path), cls_name)()
+        registry.register(provider_name, _default, default=True)
         registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to openai (from config)")
-    elif provider_name == "anthropic":
-        from motor.core.llm.anthropic import AnthropicProvider
-
-        _default = AnthropicProvider()
-        registry.register("anthropic", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to anthropic (from config)")
-    elif provider_name == "gemini":
-        from motor.core.llm.gemini import GeminiProvider
-
-        _default = GeminiProvider()
-        registry.register("gemini", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to gemini (from config)")
-    elif provider_name == "openrouter":
-        from motor.core.llm.openrouter import OpenRouterProvider
-
-        _default = OpenRouterProvider()
-        registry.register("openrouter", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to openrouter (from config)")
-    elif provider_name == "lmstudio":
-        from motor.core.llm.lmstudio import LMStudioProvider
-
-        _default = LMStudioProvider()
-        registry.register("lmstudio", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to lmstudio (from config)")
-    elif provider_name == "vllm":
-        from motor.core.llm.vllm import VLLMProvider
-
-        _default = VLLMProvider()
-        registry.register("vllm", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to vllm (from config)")
-    elif provider_name == "groq":
-        from motor.core.llm.groq import GroqProvider
-
-        _default = GroqProvider()
-        registry.register("groq", _default, default=True)
-        registry.register("ollama", OllamaProvider())
-        log.info("LLM provider set to groq (from config)")
+        log.info("LLM provider set to %s (from config)", provider_name)
     else:
         _default = OllamaProvider()
         registry.register("ollama", _default, default=True)
@@ -142,6 +75,19 @@ def build_llm_state(config=None) -> LLMState:
                 registry.register(name, cls())
             except Exception as exc:
                 log.debug("%s not available: %s", name, exc)
+    return _default
+
+
+def build_llm_state(config=None) -> LLMState:
+    from motor.core.config import UraConfig
+    from motor.core.llm.ollama import OllamaProvider
+    from motor.core.llm.registry import registry
+
+    if config is None:
+        config = UraConfig.load()
+
+    provider_name = getattr(config, "llm_provider", "ollama")
+    _default = _seleccionar_provider(provider_name, registry, OllamaProvider)
 
     return LLMState(
         registry=registry,
