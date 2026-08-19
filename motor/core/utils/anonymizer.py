@@ -10,6 +10,7 @@ reexporta como fachada para preservar compatibilidad.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 PATTERNS: dict[str, re.Pattern] = {
     "IP_ADDRESS": re.compile(
@@ -39,10 +40,10 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
-        file_path = sys.argv[1]
-        with open(file_path, encoding="utf-8") as f:
+        file_path = Path(sys.argv[1])
+        with Path.open(file_path, encoding="utf-8") as f:
             content = f.read()
-        with open(file_path, "w", encoding="utf-8") as f:
+        with Path.open(file_path, "w", encoding="utf-8") as f:
             f.write(sanitize_text(content))
     else:
         import sys

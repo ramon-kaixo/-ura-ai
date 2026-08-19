@@ -21,6 +21,7 @@ Exit: 0 = generado · 1 = sin patrones aplicables o error.
 from __future__ import annotations
 
 import argparse
+import collections.abc as collections_abc
 import inspect
 import sys
 from dataclasses import is_dataclass
@@ -78,7 +79,28 @@ def _load_module(ruta: Path) -> Any:
 
 
 def _dataclasses(mod: Any) -> list[type]:
-    return [obj for obj in vars(mod).values() if inspect.isclass(obj) and is_dataclass(obj)]
+    """Dataclasses con fields construibles por st.builds (no callables/frozen con __post_init__)."""
+    result = []
+    for obj in vars(mod).values():
+        if not (inspect.isclass(obj) and is_dataclass(obj)):
+            continue
+        if getattr(obj, "__post_init__", None) is not None:
+            continue
+        ok = True
+        for f in obj.__dataclass_fields__.values():
+            if f.type in (type(None), None):
+                ok = False
+                break
+            ftype = f.type
+            if isinstance(ftype, str) and ("Callable" in ftype or "callable" in ftype):
+                ok = False
+                break
+            if get_origin(ftype) is collections_abc.Callable:
+                ok = False
+                break
+        if ok:
+            result.append(obj)
+    return result
 
 
 def _funciones_puras(mod: Any, max_args: int = 4) -> list[tuple[str, list[Any]]]:
@@ -128,6 +150,8 @@ def _strategy_for(tipo: Any, param_name: str) -> str:
         return "st.binary()"
     if t is datetime:
         return "st.datetimes()"
+    if t is type or isinstance(t, type):
+        return "st.one_of(st.none(), st.text())"
     if isinstance(t, type) and is_dataclass(t):
         return f"st.builds({t.__name__})"
     if isinstance(t, str):
@@ -148,7 +172,9 @@ def _arg_basico(p: inspect.Parameter, mod: Any) -> str:
     return "0" if an is int else "''"
 
 
-def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]) -> str:
+def _generar_smoke(
+    mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]
+) -> str:
     """Genera el archivo smoke: import + happy path + exceptions."""
     syms = ", ".join([d.__name__ for d in dataclasses] + [n for n, _ in funciones][:6])
     if not syms:
@@ -185,10 +211,7 @@ def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], 
     for nombre, params in funciones[:6]:
         argnames = ", ".join(f"x{i}" for i in range(len(params)))
         if argnames:
-            args_basicos = ", ".join(
-                _arg_basico(p, mod)
-                for p in params
-            )
+            args_basicos = ", ".join(_arg_basico(p, mod) for p in params)
             lines += [
                 f"def test_funcion_{stem}_{nombre}():",
                 f'    """La función no lanza con argumentos básicos."""',
@@ -202,7 +225,9 @@ def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], 
     return "\n".join(lines)
 
 
-def _generar_hypothesis(mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]) -> str:
+def _generar_hypothesis(
+    mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]
+) -> str:
     """Genera el archivo hypothesis: property tests con @given."""
     syms = [d.__name__ for d in dataclasses] + [n for n, _ in funciones][:6]
     lines = [
@@ -231,6 +256,10 @@ def _generar_hypothesis(mod: Any, mod_name: str, stem: str, dataclasses: list[ty
         argnames = ", ".join(f"x{i}" for i in range(len(params)))
         if not argnames:
             continue
+        # funciones con args de tipo `type` o sin anotación: hypothesis no puede
+        # generar clases válidas -> solo smoke (no property)
+        if any(p.annotation is type or p.annotation is inspect.Parameter.empty for p in params):
+            continue
         strategies = [_strategy_for(p.annotation, f"x{i}") for i, p in enumerate(params)]
         # tipos datetime/date necesitan import
         for strat in strategies:
@@ -243,7 +272,7 @@ def _generar_hypothesis(mod: Any, mod_name: str, stem: str, dataclasses: list[ty
             '    """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""',
             "    try:",
             f"        {nombre}({', '.join(f'x{i}' for i in range(len(params)))})",
-            "    except (ValueError, KeyError, IndexError, ZeroDivisionError):",
+            "    except (ValueError, KeyError, IndexError, ZeroDivisionError, TypeError, AttributeError):",
             "        assume(False)",
             "",
             "",
