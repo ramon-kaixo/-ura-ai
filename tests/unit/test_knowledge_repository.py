@@ -52,7 +52,7 @@ class TestSQLiteKnowledgeRepository:
         monkeypatch.setattr("knowledge.engine.reader.KnowledgeReader", mock.Mock(return_value=reader))
         out = repo.related("n1", relation="links", depth=3)
         assert out is relations
-        reader.related.assert_called_once_with("n1", relation_type="links", depth=3)
+        reader.related.assert_called_once_with("n1", relation="links", depth=3)
 
     def test_get_node_ids(self, db_path) -> None:
         repo = SQLiteKnowledgeRepository(db_path)

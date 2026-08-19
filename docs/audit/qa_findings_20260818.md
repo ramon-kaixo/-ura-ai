@@ -122,3 +122,29 @@ Resultado: suite completa sin exclusiones → **0 fallos por ráfaga** (suite_fu
 - Impacto: 0 consumidores (ningún módulo importa qa_common) → no rompió nada funcional, pero dejaba el árbol con un archivo roto.
 - Acción: restaurada la versión previa (`git checkout`) — evidencia conservada en git. Si el generador reescribe el archivo, volverá a aparecer como modificado; es su zona, no se bloquea.
 - Lección: hay al menos DOS escrituras ajenas activas (05:00 ruff-fix sobre 97 archivos + 05:59 reescritura qa_common) — monitorizar `git status` en cada ronda y verificar sintaxis de los 97 archivos antes de commitear.
+
+## Ronda 13 (2026-08-19): compiler 100% + lección qdrant_sync en tests
+
+### Cobertura de la ronda
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `errors.py` | ~60% | **100%** | test_knowledge_errors_cobertura.py (6) |
+| `subscribers.py` | ~50% | **100%** | test_knowledge_subscribers_cobertura.py (24) |
+| `repository.py` | ~70% | **91%** | test_knowledge_repository_cobertura.py (13) |
+| `compiler.py` | ~40% | **100%** | test_knowledge_compiler_cobertura.py (25) |
+
+### Bug real corregido (con test)
+- **`repository.py:118`**: `relation_type=` → `relation=` — la firma real de `reader.related` es `relation` (único caller con `relation_type` → TypeError en runtime) (`30675207`).
+
+### Lección de infraestructura de tests (importante para futuras rondas)
+- `compiler.py` importa `from knowledge.engine.qdrant_sync import sync_documents` (símbolo del módulo compiler, NO del módulo qdrant_sync). Un monkeypatch sobre `"knowledge.engine.qdrant_sync.sync_documents"` NO surte efecto → los tests E2E llamaban a Qdrant/Ollama REALES (HTTP a 11434) → cuelgues intermitentes de 10+ min según el estado del modelo de embeddings.
+- Fix: monkeypatch sobre `"knowledge.engine.compiler.sync_documents"` (el símbolo tal como lo ve el módulo bajo test).
+- Lección general: antes de escribir tests E2E de un módulo, comprobar DÓNDE se importa la dependencia (módulo consumidor vs proveedor) — el patch debe ir al módulo que la importa.
+- Los `Snapshot` llevan `sources: tuple[SourceObject, ...]` y `taken_at` (no `files`); el scan incremental compara por `id` (= path relativo) + `content_sha256`; para simular "sin cambios" el prev debe contener el archivo actual con su sha real.
+- `CompileResult` requiere `source_commit`, `compiler_version`, `documents_total`, `documents_changed`.
+- Lección pytest: `type("A", (), {"log_compile": fn})` convierte `fn` en método → la firma necesita `self` explícito (`def _log(self, **kw)`) — si no, TypeError silencioso absorbido por el `except: pass` de `_auditar`.
+
+### Estado de cobertura knowledge/engine (13/19 módulos ≥ 90%)
+100%: lock, reader, errors, subscribers, compiler, eventbus, deduction, feedback, validator, api (módulos grandes)
+≥90%: rules (96.2), jobs (96.6), repository (91)
+Pendientes: cli/* (1-7%), graphrag.py (~40%), extractores web/video/audio/pdf/image/office (~0-20%, dependencias externas — con mocks), archiver/governance/lineage/metrics (100% previos), sqlite_writer (100%), parser (~70-90% previo), scanner (~70-90% previo)
