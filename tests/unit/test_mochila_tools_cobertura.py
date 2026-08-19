@@ -19,15 +19,10 @@ import pytest
 import motor.core.web_search as ws_mod
 from core.mochila import tools as tools_mod
 from core.mochila.tools import (
-    DEFAULT_ENGINE,
     PAGEREAD_MAX_SIZE,
     PAGEREAD_TIMEOUT,
-    SEARXNG_TIMEOUT,
     TOOL_HANDLERS,
     TOOL_SCHEMAS,
-    WEBSEARCH_INTERVAL,
-    _buscar_ddg,
-    _buscar_searxng,
     _en_whitelist,
     _extraer_texto,
     crawl_web,
@@ -35,6 +30,13 @@ from core.mochila.tools import (
     file_read,
     page_read,
     web_search,
+)
+from motor.core.web_search import (
+    DEFAULT_ENGINE,
+    SEARXNG_TIMEOUT,
+    WEBSEARCH_INTERVAL,
+    _buscar_ddg,
+    _buscar_searxng,
 )
 
 DDG_HTML = """
