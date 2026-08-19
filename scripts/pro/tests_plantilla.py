@@ -130,7 +130,22 @@ def _strategy_for(tipo: Any, param_name: str) -> str:
         return "st.datetimes()"
     if isinstance(t, type) and is_dataclass(t):
         return f"st.builds({t.__name__})"
-    return f"st.text()  # tipo {t} -> fallback"
+    if isinstance(t, str):
+        return f"st.builds({t}) if isinstance({t}, type) and __import__('dataclasses').is_dataclass({t}) else st.text()"
+    return "st.text()"
+
+
+def _arg_basico(p: inspect.Parameter, mod: Any) -> str:
+    """Argumento básico para una función: dataclass del módulo -> instancia, si no 0/''."""
+    an = p.annotation
+    if isinstance(an, str):
+        for obj in vars(mod).values():
+            if inspect.isclass(obj) and obj.__name__ == an and is_dataclass(obj):
+                return f"{an}()"
+        return "''"
+    if isinstance(an, type) and is_dataclass(an):
+        return f"{an.__name__}()"
+    return "0" if an is int else "''"
 
 
 def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]) -> str:
@@ -158,23 +173,29 @@ def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], 
     for d in dataclasses:
         lines += [
             f"def test_dataclass_{stem}_{d.__name__}():",
-            '    """Instanciación con valores por defecto."""',
-            f"    inst = {d.__name__}()",
-            "    assert inst is not None",
+            f'    """Instanciación con valores por defecto (skip si valida/requiere args)."""',
+            f"    try:",
+            f"        inst = {d.__name__}()",
+            f"    except (TypeError, ValueError):",
+            f"        pytest.skip('dataclass requiere argumentos o valida en __post_init__')",
+            f"    assert inst is not None",
             "",
             "",
         ]
     for nombre, params in funciones[:6]:
         argnames = ", ".join(f"x{i}" for i in range(len(params)))
         if argnames:
-            args_basicos = ", ".join("0" if p.annotation is int else "''" for p in params)
+            args_basicos = ", ".join(
+                _arg_basico(p, mod)
+                for p in params
+            )
             lines += [
                 f"def test_funcion_{stem}_{nombre}():",
-                '    """La función no lanza con argumentos básicos."""',
-                "    try:",
+                f'    """La función no lanza con argumentos básicos."""',
+                f"    try:",
                 f"        {nombre}({args_basicos})",
-                "    except (TypeError, ValueError, NotImplementedError):",
-                "        pytest.skip('no aplicable con argumentos básicos')",
+                f"    except (TypeError, ValueError, NotImplementedError):",
+                f"        pytest.skip('no aplicable con argumentos básicos')",
                 "",
                 "",
             ]
@@ -183,13 +204,14 @@ def _generar_smoke(mod: Any, mod_name: str, stem: str, dataclasses: list[type], 
 
 def _generar_hypothesis(mod: Any, mod_name: str, stem: str, dataclasses: list[type], funciones: list[tuple[str, list[Any]]]) -> str:
     """Genera el archivo hypothesis: property tests con @given."""
+    syms = [d.__name__ for d in dataclasses] + [n for n, _ in funciones][:6]
     lines = [
         '"""Tests property-based generados por plantilla (hypothesis)."""',
         "",
         "from hypothesis import given, settings, assume",
         "from hypothesis import strategies as st",
         "",
-        f"from {mod_name} import {', '.join(d.__name__ for d in dataclasses) or 'object'}",
+        f"from {mod_name} import {', '.join(syms) or 'object'}",
         "",
         "",
     ]

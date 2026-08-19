@@ -52,7 +52,16 @@ def _check(files: list[Path]) -> int:
 def main() -> int:
     if "--all" in sys.argv:
         files = sorted(ROOT.rglob("*.py"))
-        files = [f for f in files if ".venv" not in f.parts and "__pycache__" not in f.parts and "mutants" not in f.parts]
+        files = [
+            f
+            for f in files
+            if ".venv" not in f.parts
+            and "__pycache__" not in f.parts
+            and "mutants" not in f.parts
+            and ".tuneladora" not in f.parts
+            and ".nervioso" not in f.parts
+            and "build" not in f.parts
+        ]
     else:
         files = _changed_py_files()
     if not files:
