@@ -45,3 +45,25 @@ def test_dataclass_models_Citation():
         pytest.skip('dataclass requiere argumentos o valida en __post_init__')
     assert inst is not None
 
+
+
+def test_webdocument_to_dict_ramas():
+    """Cobertura de ramas: campos None en to_dict."""
+    doc = WebDocument(url="https://x.com", title="t", text=None, markdown=None)
+    d = doc.to_dict()
+    assert d["text"] == ""
+    assert d["markdown"] == ""
+
+
+def test_citation_to_dict_truncado():
+    """Cobertura de ramas: truncado a 200 chars."""
+    c = Citation(text="a" * 300, url="https://x.com", title="t", source="s")
+    d = c.to_dict()
+    assert len(d["text"]) == 200
+
+
+def test_searchresult_to_dict():
+    """Cobertura de ramas restantes de SearchResult.to_dict."""
+    sr = SearchResult(title="t", url="u", snippet="s", source="src", published=None, language=None)
+    d = sr.to_dict()
+    assert d["title"] == "t" and d["published"] is None
