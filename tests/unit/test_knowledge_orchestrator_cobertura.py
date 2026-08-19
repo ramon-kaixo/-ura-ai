@@ -18,6 +18,25 @@ from knowledge.engine.orchestrator import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _lock_aislado(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Redirige el compile_lock() default (global del repo) a un path del tmp.
+
+    El default real es .nervioso/compile.lock; usarlo en tests colisiona con
+    otros procesos (tuneladora, servicios) → fallos intermitentes en suite.
+    """
+
+    from knowledge.engine.lock import compile_lock as _real_compile_lock
+
+    def _wrapper(*args, **kwargs):
+        if not args and "lock_path" not in kwargs:
+            args = (tmp_path / "compile.lock",)
+        return _real_compile_lock(*args, **kwargs)
+
+    monkeypatch.setattr("knowledge.engine.lock.compile_lock", _wrapper)
+
+
+
 class _Result:
     def __init__(self, success: bool, changed: int = 1, total: int = 2, errors: list | None = None) -> None:
         self.success = success
