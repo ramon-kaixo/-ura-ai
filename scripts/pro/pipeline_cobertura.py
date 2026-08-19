@@ -334,6 +334,42 @@ def procesar_modulo(
     return 0
 
 
+def _emitir_contratos_llm(data: dict) -> None:
+    """Genera los contratos de entrada para el agente LLM de alarma.
+
+    - .nervioso/llm_proposal.json  : módulos en alerta/bloqueado con contexto
+    - .nervioso/flaky_tests.json   : tests con reruns (registrados por el gate pytest)
+    - docs/udo/coverage-reports/   : reporte markdown (ya generado)
+    """
+    alertas = {
+        m: est
+        for m, est in data.get("modulos", {}).items()
+        if est.get("estado") in ("alerta", "bloqueado")
+    }
+    flakies = []
+    for m, est in data.get("modulos", {}).items():
+        for ev in est.get("trazabilidad", []):
+            det = ev.get("detalle", "")
+            if "pytest" in ev.get("evento", "") and ("rerun" in det.lower() or "flaky" in det.lower()):
+                flakies.append({"modulo": m, "evento": ev.get("evento"), "detalle": det[:300]})
+
+    out = Path(".nervioso")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "llm_proposal.json").write_text(
+        json.dumps(
+            {
+                "generado": _now(),
+                "modulos_alerta": alertas,
+                "instrucciones": "El pipeline determinista ha fallado. Revisa SOLO los tests generados por la plantilla; propón parches quirúrgicos (asserts/casos hypothesis/mocks). NO toques producción. Guarda tu propuesta aquí con veredicto.",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    (out / "flaky_tests.json").write_text(json.dumps(flakies, ensure_ascii=False, indent=2))
+    print(f"Contratos LLM: {out/'llm_proposal.json'} ({len(alertas)} alertas), {out/'flaky_tests.json'} ({len(flakies)} flakies)")
+
+
 def _modulos_pendientes(data: dict) -> list[str]:
     pend = []
     for m in MODULOS_AUTORIZADOS:
@@ -371,7 +407,7 @@ def main(argv: list[str] | None = None) -> int:
             ruta = out / f"{datetime.now(UTC).date().isoformat()}.md"
             ruta.write_text(
                 "# Reporte de cobertura del pipeline\n\n"
-                 "| Módulo | Estado | Intentos | Cobertura antes | Traza última |\n|---|---|---|---|---|\n"
+                "| Módulo | Estado | Intentos | Cobertura antes | Traza última |\n|---|---|---|---|---|\n"
                 + "\n".join(
                     f"| {m} | {est.get('estado','?')} | {est.get('intentos',0)} | {est.get('cobertura_antes','-')} | {est['trazabilidad'][-1]['evento'] if est.get('trazabilidad') else '-'} |"
                     for m, est in sorted(data["modulos"].items())
@@ -379,6 +415,7 @@ def main(argv: list[str] | None = None) -> int:
                 + "\n"
             )
             print(f"Reporte: {ruta}")
+            _emitir_contratos_llm(data)
         return 0
 
     seed = args.seed if args.seed is not None else int(time.time()) % 1000000
