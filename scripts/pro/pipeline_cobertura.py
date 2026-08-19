@@ -268,6 +268,15 @@ def _bloquear(data: dict, modulo: str, motivo: str) -> None:
     _save_state(data)
 
 
+def _generar_plantilla_si_falta(modulo: str, dry: bool) -> dict:
+    """Gate 2: genera la plantilla SOLO si no existe (nunca pisa tests ampliados/LLM)."""
+    if any((REPO / "tests" / "unit").glob(f"test_{Path(modulo).stem}_smoke.py")):
+        return {"code": 0, "salida": "tests de plantilla ya existen (no se regeneran)"}
+    if dry:
+        return {"code": 0, "salida": "[dry-run] plantilla"}
+    return gate_plantilla(modulo, force=False)
+
+
 def procesar_modulo(
     modulo: str,
     min_pct: int,
@@ -293,8 +302,8 @@ def procesar_modulo(
         _save_state(data)
         return 0
 
-    # Gate 2 — generar plantilla
-    g2 = gate_plantilla(modulo, force=True) if not dry else {"code": 0, "salida": "[dry-run] plantilla"}
+    # Gate 2 — generar plantilla SOLO si no existe (nunca pisar tests ampliados/LLM)
+    g2 = _generar_plantilla_si_falta(modulo, dry)
     _registrar(data, modulo, "gate2_plantilla", g2["salida"][-300:])
     if g2["code"] != 0:
         _bloquear(data, modulo, "plantilla no aplicable")
