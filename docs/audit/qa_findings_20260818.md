@@ -92,3 +92,4 @@
 - NO es regresión de TASK-20260818-029 (mi commit `5f721594` solo añade tests knowledge; la suite 16 pasaba completa). Confirmado con git diff: los cambios están en core/ (zona ajena del proceso de mantenimiento).
 - Verificado también: los diffs de tools/anonymizer NO son solo formato — hay eliminaciones de símbolos. Los 97 archivos pueden tener cambios semánticos, no solo wrapping.
 - Decisión: NO tocar core/ (zona ajena); la suite de validación de esta ronda excluye los 2 tests rotos (`--ignore`). Pendiente del mantenimiento/coordinador: revertir o arreglar.
+- Ampliación: el mismo mantenimiento vació `core/interfaces/{repository,executor,config,secret_store,llm_client}.py` de ABCs → 5 tests más rotos en `tests/unit/test_mochila_infra.py::TestInterfaces` (ISecretStore, IVectorStore, IExecutor, IConfigProvider, ILLMClient — ImportError). Total: 7 tests ajenos rotos en suite 18 (5784 passed / 6 failed: 5 infra + 1 propio ya corregido en `1e096a68`).
