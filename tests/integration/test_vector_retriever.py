@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from knowledge.engine.models import AssetSource, KnowledgeAsset
+from knowledge.engine.ontology.internal import AssetSource, KnowledgeAsset
 from knowledge.engine.vector_base import VectorResult
 from knowledge.engine.vector_retriever import VectorAugmentedRetriever
 
