@@ -41,6 +41,9 @@ def test_compile_lock_error_es_exception() -> None:
 
 def test_compile_lock_release_suppress_oserror(tmp_path: Path, monkeypatch) -> None:
     import fcntl
+    import types
+
+    import knowledge.engine.lock as lock_mod
 
     lock_file = tmp_path / "e.lock"
     calls: list[tuple] = []
@@ -51,7 +54,13 @@ def test_compile_lock_release_suppress_oserror(tmp_path: Path, monkeypatch) -> N
             raise OSError("fd ya cerrado")
         return fcntl.flock(fd, op)
 
-    monkeypatch.setattr("knowledge.engine.lock.fcntl.flock", _flock)
+    fake_fcntl = types.SimpleNamespace(
+        flock=_flock,
+        LOCK_EX=fcntl.LOCK_EX,
+        LOCK_NB=fcntl.LOCK_NB,
+        LOCK_UN=fcntl.LOCK_UN,
+    )
+    monkeypatch.setattr(lock_mod, "fcntl", fake_fcntl)
     with compile_lock(lock_file):
         pass
     assert len(calls) >= 2
