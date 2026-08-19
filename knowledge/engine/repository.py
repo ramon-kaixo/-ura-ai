@@ -115,7 +115,7 @@ class SQLiteKnowledgeRepository:
         from knowledge.engine.reader import KnowledgeReader
 
         reader = KnowledgeReader(db_path=self._db_path)
-        return reader.related(doc_id, relation_type=relation, depth=depth)
+        return reader.related(doc_id, relation=relation, depth=depth)
 
     def get_node_ids(self) -> set[str]:
         from knowledge.engine.connection import open_db
