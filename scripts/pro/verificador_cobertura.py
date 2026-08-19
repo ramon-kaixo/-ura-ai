@@ -21,17 +21,21 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 MIN_DEFAULT = 80
 MAX_DEFAULT = 100
 
-_RCFILE = """[run]
+_RCFILE = r"""[run]
 source = {source}
 branch = True
 [report]
 precision = 1
+exclude_lines =
+    if __name__ == "__main__":
+    pragma: no cover
 """
 
 
@@ -56,64 +60,58 @@ def medir_cobertura(
     min_pct: int = MIN_DEFAULT,
     max_pct: int = MAX_DEFAULT,
 ) -> dict[str, float]:
-    """Ejecuta los tests y devuelve {archivo: pct_cover} para los archivos del source."""
+    """Ejecuta los tests y devuelve {archivo: pct_cover} para los archivos del source.
+
+    Usa pytest-cov (no coverage run puro) para que las exclusiones estándar
+    (bloque __main__, pragma: no cover) coincidan con la medición real.
+    """
     if not Path(source).exists() and not _es_archivo(source):
         return {}
     if _es_archivo(source):
         archivo_real = Path(source + ".py") if not source.endswith(".py") else Path(source)
-        src_abs = str(archivo_real.resolve().parent)
+        objetivo = str(archivo_real.resolve())
+        partes = archivo_real.resolve().relative_to(REPO_ROOT.resolve()).with_suffix("").parts
+        modulo = ".".join(partes)
     else:
-        src_abs = str(Path(source).resolve())
-    with tempfile.TemporaryDirectory() as tmp:
-        rcfile = Path(tmp) / "cov.rc"
-        rcfile.write_text(_RCFILE.format(source=src_abs))
-        env = {**os.environ, "COVERAGE_FILE": str(Path(tmp) / ".coverage")}
-        tests_abs = [str(Path(t).resolve()) for t in tests]
-        cmd = [
-            sys.executable,
-            "-m",
-            "coverage",
-            "run",
-            f"--rcfile={rcfile}",
-            "-m",
-            "pytest",
-            "-q",
-            "-p",
-            "no:cacheprovider",
-            "--rootdir",
-            str(Path(source).resolve() if Path(source).is_dir() else Path(source).resolve().parent),
-            *tests_abs,
-        ]
-        subprocess.run(cmd, cwd=tmp, check=False, capture_output=True, text=True, env=env)
-        report = subprocess.run(
-            [sys.executable, "-m", "coverage", "json", f"--rcfile={rcfile}"],
-            cwd=tmp,
-            check=False,
-            capture_output=True,
-            text=True,
-            env=env,
-        )
-        if report.returncode != 0 or not (Path(tmp) / "coverage.json").exists():
-            return {}
-        try:
-            data = json.loads((Path(tmp) / "coverage.json").read_text())
-        except (json.JSONDecodeError, OSError):
-            return {}
-        objetivo_resuelto = (
-            Path(source + ".py").resolve() if not source.endswith(".py") and Path(source + ".py").exists() else Path(source).resolve()
-        )
-        if objetivo_resuelto.is_file():
-            return {
-                name: stats["summary"]["percent_covered"]
-                for name, stats in data["files"].items()
-                if Path(name).resolve() == objetivo_resuelto
-            }
-        prefix = str(objetivo_resuelto)
+        objetivo = str(Path(source).resolve())
+        modulo = objetivo
+    tests_abs = [str(Path(t).resolve()) for t in tests]
+    env = {**os.environ, "COVERAGE_FILE": str(REPO_ROOT / ".coverage_tmp")}
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--cov",
+        modulo,
+        "--cov-branch",
+        "--cov-report",
+        "json",
+        *tests_abs,
+    ]
+    subprocess.run(cmd, cwd=str(REPO_ROOT), check=False, capture_output=True, text=True, env=env)
+    json_path = REPO_ROOT / "coverage.json"
+    if not json_path.exists():
+        return {}
+    try:
+        data = json.loads(json_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
+    objetivo_resuelto = Path(objetivo).resolve()
+    if objetivo_resuelto.is_file():
         return {
             name: stats["summary"]["percent_covered"]
             for name, stats in data["files"].items()
-            if str(Path(name).resolve()).startswith(prefix)
+            if Path(name).resolve() == objetivo_resuelto
         }
+    prefix = str(objetivo_resuelto)
+    return {
+        name: stats["summary"]["percent_covered"]
+        for name, stats in data["files"].items()
+        if str(Path(name).resolve()).startswith(prefix)
+    }
 
 
 def evaluar(
