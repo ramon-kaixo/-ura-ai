@@ -36,6 +36,9 @@ CREATE VIRTUAL TABLE IF NOT EXISTS kg_nodes_fts USING fts5(
 
 -- FTS sync is handled manually in the writer (rebuild/delete_ids).
 -- No triggers: the FTS5 'delete' merge command has issues in SQLite 3.45.1.
+-- NOTA: op_assets_fts/op_memory_fts usan triggers con DELETE por rowid
+-- (migracion v14_to_v15.sql) por el mismo motivo: el comando 'delete' de
+-- FTS5 lanza "SQL logic error" en SQLite 3.45.1.
 
 CREATE TABLE IF NOT EXISTS kg_ontology_nodes (
     id         TEXT PRIMARY KEY,
