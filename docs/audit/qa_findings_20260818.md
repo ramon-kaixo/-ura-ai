@@ -29,3 +29,17 @@
 
 - `knowledge/engine/cli/agent.py` (CLI del agente, 24 líneas) sin tests — fuera del alcance de la orden (módulo objetivo era `knowledge/engine/agent.py`). Candidato P1.3 siguiente.
 - `Agent._audit_coverage` usa `hasattr(reader, "_db_path")` — guard defensivo inalcanzable con `KnowledgeReader` real (siempre tiene `_db_path`).
+## Ronda 7 (2026-08-19): lote feedback/governance/lineage + medición global
+
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `knowledge/engine/feedback.py` | 24.8% | **98.1%** | `test_knowledge_feedback_cobertura.py` (24) |
+| `knowledge/engine/governance_store.py` | 25.0% | **96.1%** | `test_knowledge_governance_cobertura.py` (14) |
+| `knowledge/engine/lineage_store.py` | 20.8% | **95.3%** | `test_knowledge_lineage_cobertura.py` (14) |
+
+### Hallazgo REAL corregido: `_validate_doc_id(None)` crasheaba con TypeError
+- `record_feedback(db, None, 3)` / `get_feedback(db, None)` lanzaban `TypeError: object of type 'NoneType' has no len()` en vez de InvalidDocIdError/False/None (el f-string del mensaje evaluaba `len(None)` antes del raise; el except solo capturaba InvalidDocIdError). Fix: guard `if not doc_id` antes de construir el mensaje. Comportamiento observable restaurado (InvalidDocIdError para vacío/None).
+- Pre-existente: `# noqa: S608` documentado en `apply_ranking_overlay` (placeholders solo contienen `?`, valores por parámetro).
+
+### Medición global knowledge/engine (sugerencia MEDIA)
+- **79.2%** (7592 stmts, 1579 miss) con la selección de tests de knowledge — 0 módulos <80% en esa selección (los módulos con deps externas — vector_ollama/qdrant, extractors web/video/audio/pdf/image/office — no se miden sin servicios).
