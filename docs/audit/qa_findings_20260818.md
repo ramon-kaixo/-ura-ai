@@ -116,3 +116,9 @@ Resultado: suite completa sin exclusiones → **0 fallos por ráfaga** (suite_fu
 - **`rules.py` whitelist AST**: `ast.keyword` NO estaba permitido → toda llamada con kwargs (`min(x, default=…)`) era rechazada a pesar de que `_eval_call`/`_eval_method_call` la soportan → añadido a `_ALLOWED_AST_NODES` (`b03d00fb`).
 - **`vector_retriever.py:19`**: import TYPE_CHECKING de `KnowledgeAsset` desde `models` (no existe) → corregido a `knowledge.engine.ontology`; mypy ahora 0 errores.
 - Lección: el monkeypatch de `fcntl.flock` tocaba el singleton global → recursión; fix con módulo fake (`1e096a68`).
+
+## Hallazgo CRÍTICO (2026-08-19 05:59): qa_common.py vaciado por proceso ajeno
+- `scripts/pro/qa_common.py` (180 líneas) fue reescrito a 3 líneas (comentario + texto suelto, Python INVALIDO) a las **05:59:15** — distinto de la ráfaga de 05:00 → segundo evento de escritura ajeno (probablemente el agente generador de QA: qa_pipeline.py + qa_config.json son su zona; qa_common encaja en el patrón qa_*).
+- Impacto: 0 consumidores (ningún módulo importa qa_common) → no rompió nada funcional, pero dejaba el árbol con un archivo roto.
+- Acción: restaurada la versión previa (`git checkout`) — evidencia conservada en git. Si el generador reescribe el archivo, volverá a aparecer como modificado; es su zona, no se bloquea.
+- Lección: hay al menos DOS escrituras ajenas activas (05:00 ruff-fix sobre 97 archivos + 05:59 reescritura qa_common) — monitorizar `git status` en cada ronda y verificar sintaxis de los 97 archivos antes de commitear.
