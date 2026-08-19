@@ -9,8 +9,8 @@ def cmd_agent_list(args) -> int:
     agents = list_agents()
     if not agents:
         return 0
-    for _a in agents:
-        pass
+    for name in agents:
+        print(name)
     return 0
 
 
@@ -31,6 +31,8 @@ def cmd_agent_run(args) -> int:
     if not findings:
         return 0
 
+    icons = {"INFO": "\u2139\ufe0f", "WARN": "\u26a0\ufe0f", "ERROR": "\u274c"}
     for f in findings:
-        {"INFO": "\u2139\ufe0f", "WARN": "\u26a0\ufe0f", "ERROR": "\u274c"}.get(f.severity, "?")
+        icon = icons.get(f.severity, "?")
+        print(f"{icon} [{f.severity}] {f.title} — {f.description}")
     return 0

@@ -17,33 +17,33 @@ class Embedder(Protocol):
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Convierte textos en vectores. Retorna [] si no disponible."""
-        ...
+        ...  # pragma: no cover
 
     def embed_query(self, text: str) -> list[float]:
         """Embedding optimizado para queries de búsqueda.
         Por defecto: llama a embed([text])[0].
         Modelos asimétricos (bge, instructor) sobrescriben con instrucción específica.
         """
-        ...
+        ...  # pragma: no cover
 
     @property
     def vector_size(self) -> int:
         """Dimensión de los vectores que produce."""
-        ...
+        ...  # pragma: no cover
 
     @property
     def max_input_tokens(self) -> int:
         """Máximo de tokens que el modelo acepta por texto. 0 = desconocido."""
-        ...
+        ...  # pragma: no cover
 
     @property
     def available(self) -> bool:
         """True si el servicio de embeddings está operativo. O(1), sin side-effects."""
-        ...
+        ...  # pragma: no cover
 
     def check_available(self) -> bool:
         """Verifica disponibilidad en tiempo real. HTTP + mutación de estado."""
-        ...
+        ...  # pragma: no cover
 
 
 class VectorStore(Protocol):
@@ -53,13 +53,13 @@ class VectorStore(Protocol):
         self,
         query_vector: list[float],
         top_k: int = 10,
-        filter: dict[str, Any] | None = None,
+        filter: dict[str, Any] | None = None,  # noqa: A002 — nombre de contrato público
     ) -> list[VectorResult]:
         """Busca vectores similares. Retorna [] si no disponible.
         filter: dict plano {"campo": "valor"} para v1 (equivalencia exacta,
         sin operadores lógicos). Cada backend traduce a su sintaxis nativa.
         """
-        ...
+        ...  # pragma: no cover
 
     def list_ids(self, limit: int = 100, offset: str | None = None) -> tuple[list[str], str | None]:
         """Enumera asset_ids almacenados, paginados.
@@ -75,28 +75,28 @@ class VectorStore(Protocol):
             Si el backend no soporta enumeración, retorna ([], None).
 
         """
-        ...
+        ...  # pragma: no cover
 
     def upsert(self, items: list[VectorItem]) -> int:
         """Indexa items en el almacén. Retorna número de insertados."""
-        ...
+        ...  # pragma: no cover
 
     def delete(self, asset_ids: list[str]) -> int:
         """Elimina vectores del almacén por asset_id."""
-        ...
+        ...  # pragma: no cover
 
     def count(self) -> int:
         """Número total de vectores en el almacén. 0 si no disponible."""
-        ...
+        ...  # pragma: no cover
 
     @property
     def available(self) -> bool:
         """True si el almacén vectorial está operativo. O(1), sin side-effects."""
-        ...
+        ...  # pragma: no cover
 
     def check_available(self) -> bool:
         """Verifica disponibilidad en tiempo real. HTTP + mutación de estado."""
-        ...
+        ...  # pragma: no cover
 
 
 @dataclass(frozen=True)
