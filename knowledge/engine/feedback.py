@@ -34,7 +34,10 @@ class InvalidDocIdError(ValueError):
 
 def _validate_doc_id(doc_id: str) -> None:
     """Valida que doc_id sea un hash SHA-256[:12]."""
-    if not doc_id or len(doc_id) != 12:
+    if not doc_id:
+        msg = "doc_id must be 12 hex chars, got 0"
+        raise InvalidDocIdError(msg)
+    if len(doc_id) != 12:
         msg = f"doc_id must be 12 hex chars, got {len(doc_id)}"
         raise InvalidDocIdError(msg)
     if not all(c in _DOC_ID_PATTERN for c in doc_id):
@@ -163,7 +166,7 @@ def apply_ranking_overlay(
         doc_ids = [r["doc_id"] for r in results]
         placeholders = ",".join("?" * len(doc_ids))
         rows = conn.execute(
-            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",
+            f"SELECT doc_id, avg_rating, n_ratings FROM op_feedback_agg WHERE doc_id IN ({placeholders})",  # noqa: S608 — placeholders solo contiene '?', valores por parámetro
             doc_ids,
         ).fetchall()
         conn.close()
