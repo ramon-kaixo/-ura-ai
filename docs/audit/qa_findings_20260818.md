@@ -85,3 +85,10 @@
 - La tuneladora `--mode check` corre periódicamente sobre archivos de tests (observado sobre `test_knowledge_orchestrator_cobertura.py`); inofensivo (solo comprueba).
 - **Preexistente (NO tocado)**: mypy `knowledge/engine/vector_retriever.py:19` — import de `KnowledgeAsset` inexistente en models (arrastrado por imports transitivos de reader). Candidato a limpieza con revisión.
 - mypy de los 3 módulos del lote: 0 errores propios.
+
+### Hallazgo ALTA: el formateo ajeno rompió 2 módulos de tests (05:00)
+- `core/mochila/tools.py`: el mantenimiento eliminó `DEFAULT_ENGINE, DUCKDUCKGO_URL, SEARXNG_TIMEOUT, SEARXNG_URL` del import de `motor.core.web_search` → `tests/unit/test_mochila_tools_cobertura.py` falla en colección (ImportError).
+- `core/utils/anonymizer.py`: similar → `tests/unit/test_utils_anonymizer.py` falla en colección.
+- NO es regresión de TASK-20260818-029 (mi commit `5f721594` solo añade tests knowledge; la suite 16 pasaba completa). Confirmado con git diff: los cambios están en core/ (zona ajena del proceso de mantenimiento).
+- Verificado también: los diffs de tools/anonymizer NO son solo formato — hay eliminaciones de símbolos. Los 97 archivos pueden tener cambios semánticos, no solo wrapping.
+- Decisión: NO tocar core/ (zona ajena); la suite de validación de esta ronda excluye los 2 tests rotos (`--ignore`). Pendiente del mantenimiento/coordinador: revertir o arreglar.
