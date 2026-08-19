@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
     from knowledge.engine.asset_store import AssetStore
     from knowledge.engine.graphrag import GraphRetriever
-    from knowledge.engine.models import KnowledgeAsset
-    from knowledge.engine.ontology.internal import AssetType
+    from knowledge.engine.ontology import AssetType, KnowledgeAsset
     from knowledge.engine.vector_base import Embedder, VectorResult, VectorStore
 
 logger = logging.getLogger(__name__)
