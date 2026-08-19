@@ -56,17 +56,25 @@ def phase_2():
     return run_command(cmd)
 
 def phase_3():
-    """Fase 3: Tests de rendimiento."""
-    print("Fase 3: Tests de rendimiento")
-    # Ejecutar solo tests de benchmarking (simulación)
-    cmd = [sys.executable, "-c", "import time; time.sleep(1); print('Benchmark test completado')"]
+    """Fase 3: Tests de integración y contratos (marcadores integrados)."""
+    print("Fase 3: Tests de integración y contratos")
+    cmd = [
+        sys.executable, "-m", "pytest", "-q",
+        "--tb=short", "-m", "integration",
+        "--ignore=tests/integration/test_llm_contract.py",
+        "--ignore=tests/integration/test_api.py",
+    ]
     return run_command(cmd)
 
 def phase_4():
-    """Fase 4: Benchmark con tests E2E."""
-    print("Fase 4: Benchmark con tests E2E")
-    # Ejecutar solo benchmark E2E (simulación)
-    cmd = [sys.executable, "-c", "print('E2E benchmark test completado')"]
+    """Fase 4: Suite completa + cobertura (nightly, con xdist y orden aleatorio)."""
+    print("Fase 4: Suite completa + cobertura")
+    cmd = [
+        sys.executable, "-m", "pytest", "-q",
+        "--tb=short", "-n", "auto", "--forked",
+        "--randomly-seed=dynamic",
+        "--cov", "--cov-branch", "--cov-report=term-missing:skip-covered",
+    ]
     return run_command(cmd)
 
 def main():
