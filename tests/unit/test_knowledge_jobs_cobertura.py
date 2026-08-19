@@ -23,6 +23,24 @@ from knowledge.engine.sqlite_writer import init_db
 
 SCHEMA = Path("schemas/knowledge_graph.sql")
 
+@pytest.fixture(autouse=True)
+def _lock_aislado(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Redirige el compile_lock() default (global del repo) a un path del tmp.
+
+    El default real es .nervioso/compile.lock; usarlo en tests colisiona con
+    otros procesos (tuneladora, servicios) → fallos intermitentes en suite.
+    """
+
+    from knowledge.engine.lock import compile_lock as _real_compile_lock
+
+    def _wrapper(*args, **kwargs):
+        if not args and "lock_path" not in kwargs:
+            args = (tmp_path / "compile.lock",)
+        return _real_compile_lock(*args, **kwargs)
+
+    monkeypatch.setattr("knowledge.engine.lock.compile_lock", _wrapper)
+
+
 
 @pytest.fixture
 def db(tmp_path: Path) -> Path:
@@ -231,7 +249,7 @@ def test_compile_worker_completa_job(db, tmp_path) -> None:
 
 def test_compile_worker_lock_ocupado(db, tmp_path) -> None:
     jid = _insert_job(db, job_type="compile")
-    with compile_lock():
+    with compile_lock(tmp_path / "compile.lock"):
         assert compile_worker(db, tmp_path) == 0
     assert _job_row(db, jid)["status"] == "pending"
 
