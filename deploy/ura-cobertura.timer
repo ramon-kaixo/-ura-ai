@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Pipeline Cobertura — nightly 02:30 (antes del barrido mutmut 06:00)
+Requires=ura-cobertura.service
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

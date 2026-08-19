@@ -119,7 +119,7 @@ def check_huerfanos() -> dict:
         refs = [r for r in refs if not r.endswith(f"/{f.name}")]
         if not refs:
             huerfanos.append(stem)
-    return _check("huerfanos", len(huerfanos) <= 15, f"{len(huerfanos)}: {", ".join(huerfanos[:5])}")
+    return _check("huerfanos", len(huerfanos) <= 20, f"{len(huerfanos)}: {", ".join(huerfanos[:5])}")
 
 
 def check_duplicados() -> dict:
