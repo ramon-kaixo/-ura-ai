@@ -93,3 +93,26 @@
 - Verificado también: los diffs de tools/anonymizer NO son solo formato — hay eliminaciones de símbolos. Los 97 archivos pueden tener cambios semánticos, no solo wrapping.
 - Decisión: NO tocar core/ (zona ajena); la suite de validación de esta ronda excluye los 2 tests rotos (`--ignore`). Pendiente del mantenimiento/coordinador: revertir o arreglar.
 - Ampliación: el mismo mantenimiento vació `core/interfaces/{repository,executor,config,secret_store,llm_client}.py` de ABCs → 5 tests más rotos en `tests/unit/test_mochila_infra.py::TestInterfaces` (ISecretStore, IVectorStore, IExecutor, IConfigProvider, ILLMClient — ImportError). Total: 7 tests ajenos rotos en suite 18 (5784 passed / 6 failed: 5 infra + 1 propio ya corregido en `1e096a68`).
+
+## Ronda 11 (2026-08-19): reparación ráfaga + rules 96.2% + fixes
+
+### Reparación de la ráfaga de 05:00 (7 tests rotos → 0)
+Causa raíz confirmada: `ruff check --fix` (F401 + formato) sobre 97 archivos — eliminó imports muertos en FACHADAS de compatibilidad y re-exports que tests consumían:
+1. `core/utils/anonymizer.py` (fachada con consumidor REAL en producción `scripts/pro/pipeline_voz.py`) → **restaurada** con `# noqa: F401` (`8077baaf`).
+2. `tests/unit/test_mochila_infra.py` → importa de `core.interfaces` (paquete-fachada oficial) en vez de submódulos vaciados.
+3. `tests/unit/test_mochila_tools_cobertura.py` → importa `DEFAULT_ENGINE`/`SEARXNG_TIMEOUT`/etc. de `motor.core.web_search` (fuente canónica).
+4. Verificado que los demás cambios de la ráfaga son inocuos: `orquestador_check.py` reemplazó `core.notifier.send_message` (¡no existía!) por `notify` (sí existe) — mejora legítima. `core/interfaces/__init__.py` (fachada oficial ADR-007) intacta.
+Resultado: suite completa sin exclusiones → **0 fallos por ráfaga** (suite_full19).
+
+### Cobertura de la ronda
+| Módulo | Antes | Después | Tests |
+|---|---|---|---|
+| `lock.py` | ~40% | **100%** | test_knowledge_lock_cobertura.py (6) |
+| `jobs.py` | ~35% | **96.6%** | test_knowledge_jobs_cobertura.py (22) |
+| `reader.py` | ~35% | **100%** | test_knowledge_reader_cobertura.py (25) |
+| `rules.py` | ~60% | **96.2%** | test_knowledge_rules_cobertura.py (41) |
+
+### Bugs reales corregidos (con tests)
+- **`rules.py` whitelist AST**: `ast.keyword` NO estaba permitido → toda llamada con kwargs (`min(x, default=…)`) era rechazada a pesar de que `_eval_call`/`_eval_method_call` la soportan → añadido a `_ALLOWED_AST_NODES` (`b03d00fb`).
+- **`vector_retriever.py:19`**: import TYPE_CHECKING de `KnowledgeAsset` desde `models` (no existe) → corregido a `knowledge.engine.ontology`; mypy ahora 0 errores.
+- Lección: el monkeypatch de `fcntl.flock` tocaba el singleton global → recursión; fix con módulo fake (`1e096a68`).
