@@ -42,6 +42,14 @@ def _normalize_modulo(ruta: str) -> str:
     return ruta
 
 
+def _es_archivo(source: str) -> bool:
+    """True si source apunta a un archivo .py (con o sin extensión)."""
+    p = Path(source)
+    if p.exists() and p.is_file():
+        return True
+    return not source.endswith(".py") and Path(source + ".py").is_file()
+
+
 def medir_cobertura(
     source: str,
     tests: list[str],
@@ -49,15 +57,18 @@ def medir_cobertura(
     max_pct: int = MAX_DEFAULT,
 ) -> dict[str, float]:
     """Ejecuta los tests y devuelve {archivo: pct_cover} para los archivos del source."""
-    src_abs = str(Path(source).resolve())
-    if not Path(source).exists():
+    if not Path(source).exists() and not _es_archivo(source):
         return {}
-    if Path(source).is_file():
-        src_abs = str(Path(source).resolve().parent)
+    if _es_archivo(source):
+        archivo_real = Path(source + ".py") if not source.endswith(".py") else Path(source)
+        src_abs = str(archivo_real.resolve().parent)
+    else:
+        src_abs = str(Path(source).resolve())
     with tempfile.TemporaryDirectory() as tmp:
         rcfile = Path(tmp) / "cov.rc"
         rcfile.write_text(_RCFILE.format(source=src_abs))
         env = {**os.environ, "COVERAGE_FILE": str(Path(tmp) / ".coverage")}
+        tests_abs = [str(Path(t).resolve()) for t in tests]
         cmd = [
             sys.executable,
             "-m",
@@ -69,7 +80,9 @@ def medir_cobertura(
             "-q",
             "-p",
             "no:cacheprovider",
-            *tests,
+            "--rootdir",
+            str(Path(source).resolve() if Path(source).is_dir() else Path(source).resolve().parent),
+            *tests_abs,
         ]
         subprocess.run(cmd, cwd=tmp, check=False, capture_output=True, text=True, env=env)
         report = subprocess.run(
@@ -86,7 +99,21 @@ def medir_cobertura(
             data = json.loads((Path(tmp) / "coverage.json").read_text())
         except (json.JSONDecodeError, OSError):
             return {}
-        return {name: stats["summary"]["percent_covered"] for name, stats in data["files"].items()}
+        objetivo_resuelto = (
+            Path(source + ".py").resolve() if not source.endswith(".py") and Path(source + ".py").exists() else Path(source).resolve()
+        )
+        if objetivo_resuelto.is_file():
+            return {
+                name: stats["summary"]["percent_covered"]
+                for name, stats in data["files"].items()
+                if Path(name).resolve() == objetivo_resuelto
+            }
+        prefix = str(objetivo_resuelto)
+        return {
+            name: stats["summary"]["percent_covered"]
+            for name, stats in data["files"].items()
+            if str(Path(name).resolve()).startswith(prefix)
+        }
 
 
 def evaluar(
@@ -98,12 +125,30 @@ def evaluar(
     """Devuelve (ok, fuera) con los archivos dentro/fuera de la horquilla."""
     ok: list[str] = []
     fuera: list[str] = []
+    if not cobertura:
+        return [], ["(sin archivos medidos — los tests no cubren el objetivo)"]
     for archivo, pct in sorted(cobertura.items()):
         if pct < min_pct or pct > max_pct:
             fuera.append(f"{archivo}: {pct:.1f}%")
         else:
             ok.append(f"{archivo}: {pct:.1f}%")
     return ok, fuera
+
+
+def evaluar_json(archivo_json: Path, min_pct: int, max_pct: int) -> tuple[list[str], list[str]]:
+    """Evalúa un coverage.json generado por pytest-cov (--cov-report=json).
+
+    Devuelve (ok, fuera) igual que evaluar(), reutilizando la misma horquilla.
+    """
+    try:
+        data = json.loads(archivo_json.read_text())
+    except (json.JSONDecodeError, OSError):
+        return [], [f"(coverage.json ilegible: {archivo_json})"]
+    cobertura = {
+        name: stats["summary"].get("percent_covered", 0.0)
+        for name, stats in data.get("files", {}).items()
+    }
+    return evaluar(cobertura, min_pct, max_pct)
 
 
 def diff_py(base: str) -> list[str]:
@@ -121,7 +166,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max", type=int, default=MAX_DEFAULT)
     parser.add_argument("--ci", action="store_true", help="medir los archivos .py del diff")
     parser.add_argument("--base", default="origin/main")
+    parser.add_argument(
+        "--json",
+        metavar="ARCHIVO",
+        help="evaluar un coverage.json ya generado (pytest-cov --cov-report=json) en vez de ejecutar coverage",
+    )
     args = parser.parse_args(argv)
+
+    if args.json:
+        ok, fuera = evaluar_json(Path(args.json), args.min, args.max)
+        for linea in ok:
+            print(f"OK  {linea}")
+        for linea in fuera:
+            print(f"FAIL {linea}")
+        print(f"RESULTADO: {len(ok)} en horquilla [{args.min}-{args.max}%], {len(fuera)} fuera")
+        return 1 if fuera else 0
 
     if args.ci:
         objetivos = diff_py(args.base)
