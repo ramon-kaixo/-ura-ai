@@ -295,7 +295,7 @@ class ConflictGraph:
             if cid not in visited:
                 comp: set[str] = set()
                 _dfs(cid, comp)
-                if comp:
+                if comp:  # pragma: no cover - _dfs siempre añade el nodo inicial
                     components.append(comp)
 
         return components
