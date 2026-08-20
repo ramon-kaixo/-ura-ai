@@ -115,3 +115,56 @@ class TestSingleton:
     def test_vram_guard_instancia(self) -> None:
         assert isinstance(vram_guard, ConcurrentVRAMGuard)
         assert vram_guard._max_jobs == 1
+
+
+class TestCrossLoop:
+    """Regression: asyncio.run() por peticion crea loops efimeros distintos;
+    el semaforo no debe quedar ligado a un event loop concreto."""
+
+    def test_dos_loops_consecutivos_sin_contencion(self) -> None:
+        g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5.0)
+
+        async def dummy() -> str:
+            return "ok"
+
+        # Loop A (primera peticion)
+        r1 = asyncio.run(g.ejecutar_inferencia_segura(dummy))
+        # Loop B (segunda peticion, loop nuevo)
+        r2 = asyncio.run(g.ejecutar_inferencia_segura(dummy))
+        assert r1 == "ok"
+        assert r2 == "ok"
+
+    def test_dos_loops_con_contencion(self) -> None:
+        g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=2.0)
+
+        def worker(delay: float) -> str:
+            async def tarea() -> str:
+                ok = await g.adquirir_slot_vram("m")
+                if not ok:
+                    return "timeout"
+                try:
+                    await asyncio.sleep(delay)
+                    return "ok"
+                finally:
+                    await g.liberar_slot_vram("m")
+
+            return asyncio.run(tarea())
+
+        import threading
+
+        resultados: list[str] = []
+
+        def t1() -> None:
+            resultados.append(worker(0.1))
+
+        def t2() -> None:
+            resultados.append(worker(0.01))
+
+        h1 = threading.Thread(target=t1)
+        h2 = threading.Thread(target=t2)
+        h1.start()
+        h2.start()
+        h1.join()
+        h2.join()
+        assert sorted(resultados) == ["ok", "ok"]
+        assert g.slots_disponibles == 1
