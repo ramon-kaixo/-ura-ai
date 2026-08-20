@@ -154,6 +154,43 @@ def diff_py(base: str) -> list[str]:
     return [l.strip() for l in out.stdout.splitlines() if l.strip().endswith(".py")]
 
 
+def auto_detectar_tests(objetivo: str) -> list[str]:
+    """Busca tests unitarios existentes para un módulo/archivo.
+
+    Convenciones probadas (pipeline de cobertura + tests manuales):
+      - tests/unit/test_<padre>_<stem>_smoke.py / _hypothesis.py (pipeline)
+      - tests/unit/test_<padre>_<stem>.py (tests manuales)
+      - tests/unit/*cobertura*.py con el nombre del módulo
+    Devuelve lista de rutas relativas; vacía si no encuentra ninguno.
+    """
+    if not objetivo:
+        return []
+    partes = _normalize_modulo(objetivo).replace("\\", "/").split("/")
+    nombre = partes[-1]
+    padre = partes[-2] if len(partes) > 1 else ""
+    tests_dir = REPO_ROOT / "tests" / "unit"
+    if not tests_dir.is_dir():
+        return []
+    candidatos = [
+        f"test_{padre}_{nombre}_smoke.py",
+        f"test_{padre}_{nombre}_hypothesis.py",
+        f"test_{padre}_{nombre}.py",
+        f"test_{padre}_{nombre}_cobertura.py",
+    ]
+    encontrados = [c for c in candidatos if (tests_dir / c).is_file()]
+    if encontrados:
+        return [str(tests_dir / c) for c in encontrados]
+    # fallback: cualquier test_*_cobertura.py que mencione el nombre del módulo
+    for t in sorted(tests_dir.glob("test_*_cobertura.py")):
+        try:
+            contenido = t.read_text(errors="ignore")
+        except OSError:
+            continue
+        if nombre in contenido and objetivo.replace(".py", "").split("/")[-1] in contenido:
+            encontrados.append(t.name)
+    return [str(tests_dir / c) for c in encontrados]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("objetivo", nargs="?", help="archivo, módulo o directorio a medir")
@@ -190,7 +227,11 @@ def main(argv: list[str] | None = None) -> int:
 
     tests = [t for t in args.tests.split(",") if t]
     if not tests:
-        print("AVISO: sin --tests explícitos; coverage con la suite descubierta (puede ser 0%)")
+        tests = auto_detectar_tests(args.objetivo or "")
+        if tests:
+            print(f"AVISO: sin --tests; auto-detectados: {', '.join(Path(t).name for t in tests)}")
+        else:
+            print("AVISO: sin --tests y sin auto-detección; coverage con la suite descubierta (puede ser 0%)")
     cobertura: dict[str, float] = {}
     for objetivo in objetivos:
         cobertura.update(medir_cobertura(_normalize_modulo(objetivo), tests, args.min, args.max))
