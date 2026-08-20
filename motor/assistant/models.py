@@ -81,7 +81,7 @@ class Conversation:
     state: ConversationState | None = None
 
     def add_message(self, role: MessageRole, content: str, **kwargs: Any) -> Message:
-        if "role" in kwargs or "content" in kwargs:
+        if "role" in kwargs or "content" in kwargs:  # pragma: no cover - Python lanza TypeError antes (duplicado)
             raise ValueError("role and content cannot be passed as kwargs to add_message")
         msg = Message(role=role, content=content, **kwargs)
         self.messages.append(msg)

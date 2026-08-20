@@ -158,7 +158,7 @@ class IntentEngine:
             if match:
                 try:
                     entities[name] = match.group(1).strip()
-                except IndexError:
+                except IndexError:  # pragma: no cover - todos los patrones actuales tienen grupo
                     entities[name] = match.group(0).strip()
         return entities
 
