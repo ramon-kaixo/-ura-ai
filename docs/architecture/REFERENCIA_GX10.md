@@ -79,6 +79,7 @@
 - Excepciones intencionales: `monitor/` (SNC — brazo de emergencia, decisión Ramón) y `core/model_router/cli.py`
   (usa `OPENCLAW_GATEWAY_TOKEN` como auth de arranque — ADR-007 semantic freezing).
 - Pendiente Ramón (sudo, 2026-08-08): `systemctl stop + disable` **aplicado** (disabled+inactive) y unit `/etc/systemd/system/ura-openclaw.service` **borrada + daemon-reload** ✅. `/home/ramon/.openclaw/` ya no existe. Queda solo el wrapper `/usr/local/bin/opencode` (gestor start/stop del servicio ya inexistente) — **eliminable con seguridad**: el servicio real `opencode.service` usa ruta absoluta `~/.opencode/bin/opencode` (v1.17.7), no depende del wrapper. Borrar con: `sudo rm /usr/local/bin/opencode`
+- **ACTUALIZACIÓN 2026-08-20**: `~/.openclaw/openclaw.json` RECREADO por Ramón (gateway 18791, modelo ollama/qwen3-coder:30b puerto 11436, DETENIDO). Uso externo vía API — sin imports desde core/motor (se mantiene la regla). Servidor Ollama adicional en 11436 (ollama-models-0326) coexiste con el 11434 de URA (systemd) sin conflicto de puertos. Informes en `revisiones/` e `investigaciones/` (ignorados en git; contexto de opencode vía knowledge.paths). Detalle completo: `docs/udo/hallazgos-fondo.md` (2026-08-20).
 - Si OpenClaw se usara en el futuro: solo como agente externo vía API HTTP :18789, sin imports desde core/motor.
 
 ### URA Contrast Proxy + Telemetría POS (Port 8002)
