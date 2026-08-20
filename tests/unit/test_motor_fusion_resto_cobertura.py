@@ -102,7 +102,7 @@ def test_version_state_valores() -> None:
 def test_fact_frozen() -> None:
     f = Fact(fact_id="f1", subject="s", predicate="p", object="o")
     assert f.fact_id == "f1"
-    with pytest.raises(Exception):
+    with pytest.raises(AttributeError):
         f.subject = "cambiar"  # type: ignore[misc]
 
 
