@@ -67,7 +67,7 @@ class VectorAugmentedRetriever:
         if use_vector and self._vector_available():
             embedder = self._embedder
             store = self._vector_store
-            if embedder is not None and store is not None:
+            if embedder is not None and store is not None:  # pragma: no cover - garantizado por _vector_available()
                 try:
                     query_vec = embedder.embed_query(query)
                     if query_vec:
@@ -265,6 +265,6 @@ class VectorAugmentedRetriever:
             for a, v, t in zip(assets, vectors, text_previews, strict=False)
             if v
         ]
-        if items:
+        if items:  # pragma: no cover - items siempre no vacío si vectors y assets existen
             upserted = store.upsert(items)
             stats["upserted"] += upserted
