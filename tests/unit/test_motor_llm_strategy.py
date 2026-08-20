@@ -169,6 +169,43 @@ class TestCallWithRetry:
         detector.evaluate_from_profile.assert_called_once()
         baseline.record.assert_called_once()
 
+    def test_profiler_sin_detector_ni_baseline(self, monkeypatch) -> None:
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
+        profiler = mock.Mock()
+        profiler.stop.return_value = SimpleNamespace(wall_time_ms=10.0, cpu_time_ms=5.0, peak_memory_bytes=100)
+        r = call_with_retry(prov, "generate", "task", "p", None, cbs, profiler=profiler)
+        assert r == "ok"
+        profiler.start.assert_called_once()
+        profiler.stop.assert_called_once()
+
+    def test_profiler_con_detector_sin_baseline(self, monkeypatch) -> None:
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
+        profiler = mock.Mock()
+        profiler.stop.return_value = SimpleNamespace(wall_time_ms=10.0, cpu_time_ms=5.0, peak_memory_bytes=100)
+        detector = mock.Mock()
+        r = call_with_retry(prov, "generate", "task", "p", None, cbs, profiler=profiler, detector=detector)
+        assert r == "ok"
+        detector.evaluate_from_profile.assert_called_once()
+        baseline_cb = call_with_retry(prov, "generate", "task", "p", None, {"p": FakeCB()}, profiler=profiler, detector=detector, baseline=None)
+        assert baseline_cb == "ok"
+
+    def test_profiler_sin_perfil(self, monkeypatch) -> None:
+        _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
+        profiler = mock.Mock()
+        profiler.stop.return_value = None
+        r = call_with_retry(prov, "generate", "task", "p", None, cbs, profiler=profiler, detector=mock.Mock())
+        assert r == "ok"
+        profiler.start.assert_called_once()
+
+    def test_method_no_generate_no_tokens(self, monkeypatch) -> None:
+        _cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="ok")
+        prov.health.return_value = "ok"
+        r = call_with_retry(prov, "health", "task", "p", None, cbs)
+        assert r == "ok"
+        _args, kw = metrics.records[-1]
+        assert kw["success"] is True
+        assert kw["tokens"] is None  # tokens None para method != generate
+
 
 class TestCallWithFallback:
     def _reg(self, providers: dict):

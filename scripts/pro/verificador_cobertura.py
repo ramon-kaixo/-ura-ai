@@ -189,6 +189,18 @@ def auto_detectar_tests(objetivo: str) -> list[str]:
             encontrados.append(t.name)
     if encontrados:
         return [str(tests_dir / c) for c in encontrados]
+    # fallback 1b: módulos profundos (>=3 partes) — aceptar el test cuyo nombre
+    # contiene el stem y el mayor número de partes del módulo (evita falsos positivos)
+    if len(partes) >= 3:
+        partes_limpio = [p.lstrip("_").removesuffix(".py") for p in partes if p not in ("core", "llm", "web", "scanner", "motor")]
+        for t in sorted(tests_dir.glob("test_*.py")):
+            tstem = t.name.removeprefix("test_").removesuffix(".py")
+            coincidencias = sum(1 for p in partes_limpio if p in tstem)
+            if stem in tstem and coincidencias >= 1:
+                encontrados.append((coincidencias, t.name))
+        if encontrados:
+            encontrados.sort(reverse=True)
+            return [str(tests_dir / c) for _score, c in encontrados[:2]]
     # fallback 2: cualquier test_*_cobertura.py que mencione el nombre del módulo
     for t in sorted(tests_dir.glob("test_*_cobertura.py")):
         try:
