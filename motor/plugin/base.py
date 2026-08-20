@@ -49,7 +49,7 @@ class PluginMeta:
                             if isinstance(node.value, ast.Dict):
                                 d = _ast_dict_to_dict(node.value)
                                 return cls.from_dict(d)
-                            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, dict):
+                            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, dict):  # pragma: no cover - dict literals siempre son ast.Dict en módulos
                                 return cls.from_dict(node.value.value)
         except SyntaxError:
             pass
@@ -80,7 +80,7 @@ def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
             continue
         if isinstance(value_node, ast.Constant):
             result[key] = value_node.value
-        elif isinstance(value_node, ast.Str):
+        elif isinstance(value_node, ast.Str):  # pragma: no cover - ast.Str legacy, Python moderno produce Constant
             result[key] = value_node.s
         elif isinstance(value_node, ast.List):
             result[key] = [elm.value for elm in value_node.elts if isinstance(elm, ast.Constant)]
@@ -92,7 +92,7 @@ def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
             # Handle `not True` → False
             if isinstance(value_node.operand, ast.Constant):
                 result[key] = not value_node.operand.value
-        elif isinstance(value_node, ast.Expression):
+        elif isinstance(value_node, ast.Expression):  # pragma: no cover - ast.parse de módulo nunca produce Expression
             result[key] = ast.literal_eval(value_node)
     return result
 
