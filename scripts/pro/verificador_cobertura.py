@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Verificador de cobertura por módulo (regla RAMON 2026-08-13, meta 100x100).
 
-Cada archivo/módulo nuevo debe tener cobertura de tests >=80% por módulo
-(política AGENTS.md); la meta es llegar a 100x100. Este verificador mide la
-cobertura de uno o varios módulos/archivos Python con pytest + coverage
-(rcfile propio sin omit) y falla si algún archivo queda por debajo del minimo.
+Cada archivo/módulo nuevo debe tener cobertura de tests >=85% por módulo
+(gate escalonado Fase 5: 80 -> 85; meta 100x100 y 90 en la siguiente etapa).
+Este verificador mide la cobertura de uno o varios módulos/archivos Python
+con pytest + coverage (rcfile propio sin omit) y falla si algún archivo
+queda por debajo del minimo.
 
 Uso:
-    verificador_cobertura.py <ruta.py|módulo|dir> [--tests T1,T2] [--min 80]
+    verificador_cobertura.py <ruta.py|módulo|dir> [--tests T1,T2] [--min 85]
     verificador_cobertura.py --ci                    # archivos .py del diff HEAD vs origin/main
     verificador_cobertura.py --ci --base main[]      # archivos del diff contra --base
 
@@ -25,7 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-MIN_DEFAULT = 80
+MIN_DEFAULT = 85
 MAX_DEFAULT = 100
 
 _RCFILE = r"""[run]
@@ -142,10 +143,7 @@ def evaluar_json(archivo_json: Path, min_pct: int, max_pct: int) -> tuple[list[s
         data = json.loads(archivo_json.read_text())
     except (json.JSONDecodeError, OSError):
         return [], [f"(coverage.json ilegible: {archivo_json})"]
-    cobertura = {
-        name: stats["summary"].get("percent_covered", 0.0)
-        for name, stats in data.get("files", {}).items()
-    }
+    cobertura = {name: stats["summary"].get("percent_covered", 0.0) for name, stats in data.get("files", {}).items()}
     return evaluar(cobertura, min_pct, max_pct)
 
 

@@ -29,6 +29,23 @@ with real-time streaming, multi-language support, vector memory, web search, and
                             └──────────┘    └──────────┘    └──────────┘
 ```
 
+### Arquitectura (Mermaid)
+
+```mermaid
+flowchart LR
+    U[User CLI/API] --> R[Runtime]
+    R --> P[Planner]
+    P --> S[Supervisor]
+    S --> A[Agents: exec, research]
+    R --> M[Memory: episodic + semantic]
+    R --> RT[Hybrid Retrieval: Vector + BM25]
+    R --> K[Knowledge Fusion: entities, lineage, FTS5]
+    R --> O[Observability: metrics, tracing, health]
+    A --> T[Tools]
+    T --> B[EventBus]
+    B --> PL[Plugins]
+```
+
 ## Features
 
 - **Multi-Agent Runtime**: Planner, Researcher, Executor, Validator, Supervisor, Reflection
