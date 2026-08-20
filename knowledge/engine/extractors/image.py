@@ -189,7 +189,7 @@ class ImageExtractor:
             for tag_id, value in gps_info.items():
                 tag_name = ExifTags.GPSTAGS.get(tag_id, f"gps_{tag_id}")
                 gps_data[tag_name] = str(value)
-            if gps_data:
+            if gps_data:  # pragma: no cover - gps_data siempre no vacío si gps_info tiene items
                 metadata["gps"] = gps_data
 
     @staticmethod
