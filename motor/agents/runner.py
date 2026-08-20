@@ -229,7 +229,7 @@ class AgentToolRunner(ToolRunnerABC):
 
         duration = (time.time() - start) * 1000
 
-        if cancel_event.is_set():
+        if cancel_event.is_set():  # pragma: no cover - cancel_event nunca se setea (API interna)
             return self._result(
                 request,
                 success=False,

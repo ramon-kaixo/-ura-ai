@@ -40,7 +40,7 @@ class _NdjsonWriter:
 
     def write(self, record: dict) -> None:
         self._ensure_file()
-        if self._file is None:
+        if self._file is None:  # pragma: no cover - _ensure_file siempre abre (defensa)
             return
         line = json.dumps(record, ensure_ascii=False, default=str, sort_keys=True)
         self._file.write(line + "\n")

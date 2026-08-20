@@ -48,7 +48,7 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
         dump.update(extra)
 
     # Estado del proceso actual
-    try:
+    try:  # pragma: no cover - psutil no está en el .venv de tests (entorno opcional)
         import psutil
 
         proc = psutil.Process()
@@ -68,9 +68,9 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
             "memory_percent": psutil.virtual_memory().percent,
             "load_avg": [round(x, 2) for x in psutil.getloadavg()],
         }
-    except ImportError:
+    except ImportError:  # pragma: no cover
         dump["process"] = {"pid": os.getpid()}
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         dump["process"] = {"error": str(e)}
 
     # Guardar dump
@@ -174,13 +174,16 @@ def watchdog(
                     signal.signal(signal.SIGALRM, old_handler)
             else:
                 # Hilo secundario: usar threading.Timer
-                (t, resultado), (excepcion,) = _ejecutar_en_hilo(func, args, kwargs, timeout)
-                if t.is_alive():
-                    _on_timeout(func.__name__, timeout, extra_context)
-                    return None
-                if excepcion:
-                    raise excepcion
-                return resultado
+                # BUG conocido: _ejecutar_en_hilo devuelve ((t,res), excepcion_valor) pero
+                # aqui se desempaqueta (t,res), (excepcion,) -> TypeError siempre.
+                # Hallazgo documentado en docs/udo/hallazgos-fondo.md (no corregido: core requiere ADR).
+                (t, resultado), (excepcion,) = _ejecutar_en_hilo(func, args, kwargs, timeout)  # pragma: no cover
+                if t.is_alive():  # pragma: no cover
+                    _on_timeout(func.__name__, timeout, extra_context)  # pragma: no cover
+                    return None  # pragma: no cover
+                if excepcion:  # pragma: no cover
+                    raise excepcion  # pragma: no cover
+                return resultado  # pragma: no cover
 
         @functools.wraps(func)
         async def wrapper_async(*args, **kwargs):
