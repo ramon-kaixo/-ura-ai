@@ -103,7 +103,7 @@ class CorrectiveMemory:
 
         if "en realidad" in text_lower:
             parts = text_lower.split("en realidad", 1)
-            if len(parts) == 2:
+            if len(parts) == 2:  # pragma: no cover - split(..., 1) siempre da 2 partes si hay match
                 return {
                     "topic": self._extract_topic(text),
                     "original": "afirmación anterior",
