@@ -8,8 +8,27 @@ on:
     tags: ["v*"]
 
 jobs:
+  verify:
+    name: No-regresión (gates previos a publicación)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - name: Ruff lint
+        run: ruff check . --output-format=concise
+      - name: Tests rápidos del núcleo
+        run: pytest motor/tests/ -q --tb=short -k "not e2e"
+      - name: Verificación cobertura módulos del diff (gate 85%)
+        run: python3 scripts/pro/verificador_cobertura.py --ci --base origin/main --min 85
+
   build:
     name: Build wheel
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
