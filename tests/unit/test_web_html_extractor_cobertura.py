@@ -14,6 +14,7 @@ from __future__ import annotations
 from motor.core.web.extractor.providers.html_extractor import (
     HtmlExtractor,
     _clean_html,
+    _HtmlCleaner,
     _parse_attrs,
     _to_webdocument,
     detect_encoding,
@@ -45,6 +46,9 @@ class TestDetectEncoding:
 
     def test_content_type(self) -> None:
         assert detect_encoding(b"<html></html>", content_type="text/html; charset=utf-16") == "utf-16"
+
+    def test_content_type_sin_charset_fallback(self) -> None:
+        assert detect_encoding(b"<html></html>", content_type="text/html") == "utf-8"
 
     def test_fallback_utf8(self) -> None:
         assert detect_encoding(b"<html></html>") == "utf-8"
@@ -138,6 +142,16 @@ class TestCleanHtml:
     def test_data_antes_de_bloque_no_duplica_newline(self) -> None:
         html = "texto<br>"
         assert _clean_html(html) == "texto"
+
+    def test_endtag_skip_sin_apertura_no_decrementa(self) -> None:
+        c = _HtmlCleaner()
+        c.feed("</script>texto")
+        assert c.get_text() == "texto"
+
+    def test_data_vacia_ignorada(self) -> None:
+        c = _HtmlCleaner()
+        c.handle_data("")
+        assert c.get_text() == ""
 
 
 class TestToWebdocument:

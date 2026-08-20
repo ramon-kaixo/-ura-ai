@@ -44,6 +44,10 @@ class TestSplitSentences:
     def test_frase_corta_anexada(self) -> None:
         assert split_sentences("Primera frase. x")[0].endswith("x")
 
+    def test_frase_corta_mayuscula_anexada_a_anterior(self) -> None:
+        # "Y" es corta (< _MIN_SENTENCE_LEN) y va tras frase larga -> se anexa
+        assert split_sentences("Primera frase. Y")[0] == "Primera frase. Y"
+
     def test_vacio_devuelve_vacio(self) -> None:
         assert split_sentences("") == [""]
 
