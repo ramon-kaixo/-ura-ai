@@ -800,15 +800,15 @@ class PipelineRunner:
             p_commit = self.phase_commit()
             all_phase_results.append(p_commit)
 
+            verdict, msg = self.phase_verdict(all_phase_results)
+
             # Plugin registry: fase "post" (solo gate/fix)
             if self.mode in ("gate", "fix"):
                 try:
-                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name if 'verdict' in dir() else "unknown"})
+                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name})
                     log.info("[PLUGIN] post: %s", post_result.get("status"))
                 except Exception as e:
                     log.warning("[PLUGIN] post falló: %s", e)
-
-            verdict, msg = self.phase_verdict(all_phase_results)
 
             # Quality Gate: si REJECTED, el verdict baja a FAIL (antes del rollback)
             if verdict != Status.FAIL:
