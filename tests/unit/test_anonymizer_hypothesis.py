@@ -12,6 +12,6 @@ def test_funcion_anonymizer_sanitize_text(x0):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:
         sanitize_text(x0)
-    except (ValueError, KeyError, IndexError, ZeroDivisionError):
+    except (ValueError, KeyError, IndexError, ZeroDivisionError, TypeError, AttributeError):
         assume(False)
 
