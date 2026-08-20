@@ -37,14 +37,14 @@ Ejecutado por el agente TERM en ASUS. Ver ADR-037 y ADR-038.
 | 7 | ADRs faltantes + README Mermaid | ✅ |
 | 8 | Rendimiento web (ya implementado) + limpiar mutants/ (275M) | ✅ |
 | 9 | ROADMAP/CONTRIBUTING/DRP + documentar backups | ✅ |
+| 10 | Gate 90% + 13/13 módulos en verde (8 a 100%) + fix F821 runner + fix log plugin_registry | ✅ (2026-08-20) |
 
 ## Próximos pasos sugeridos (sin asignar)
 
-1. **Meta 100x100**: subir módulos <80% hacia 100 (fusion/models 79%, bloqueados
-   LLM de Fase 2: strategy.py, citation.py, html_extractor.py, summarizer.py,
-   diff_detector.py, collectors).
-2. **Gate cobertura 90%**: siguiente escalón del verificador (MIN_DEFAULT).
-3. **Revisión diferida** del lote de consolidación (Fases 0-4, 6 commits) por
-   revisor independiente.
-4. **Cerebro/segundo humano**: visión a largo plazo del proyecto (motor/brain +
+1. **Meta 100x100**: subir los 5 módulos restantes del pipeline por debajo de 100
+   (citation 100 → los que no lleguen: verificar estado actual en
+   `.nervioso/cobertura_pipeline.json`; objetivo todos a 100).
+2. **Revisión diferida** del lote de consolidación (Fases 0-9 + 10, 8 commits) por
+   revisor independiente — pendiente del WEB.
+3. **Cerebro/segundo humano**: visión a largo plazo del proyecto (motor/brain +
    plugins), pendiente de diseño.

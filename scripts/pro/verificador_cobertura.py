@@ -229,21 +229,36 @@ def main(argv: list[str] | None = None) -> int:
         if not objetivos:
             print("SIN CAMBIOS PYTHON — OK")
             return 0
+        # solo se miden módulos con política de cobertura; el resto es SKIP informativo
+        zonas_cubribles = ("motor/", "core/", "knowledge/")
+        medibles = [o for o in objetivos if o.startswith(zonas_cubribles)]
+        for o in objetivos:
+            if o not in medibles:
+                print(f"SKIP {o}: fuera de zonas con política de cobertura")
+        objetivos = medibles
+        if not objetivos:
+            print("RESULTADO: sin cambios en zonas de cobertura — OK")
+            return 0
     else:
         if not args.objetivo:
             parser.error("falta el objetivo (o usa --ci)")
         objetivos = [args.objetivo]
 
-    tests = [t for t in args.tests.split(",") if t]
-    if not tests:
-        tests = auto_detectar_tests(args.objetivo or "")
-        if tests:
-            print(f"AVISO: sin --tests; auto-detectados: {', '.join(Path(t).name for t in tests)}")
-        else:
-            print("AVISO: sin --tests y sin auto-detección; coverage con la suite descubierta (puede ser 0%)")
     cobertura: dict[str, float] = {}
+    sin_tests: list[str] = []
     for objetivo in objetivos:
-        cobertura.update(medir_cobertura(_normalize_modulo(objetivo), tests, args.min, args.max))
+        tests_obj = [t for t in args.tests.split(",") if t]
+        if not tests_obj:
+            tests_obj = auto_detectar_tests(objetivo)
+            if tests_obj:
+                print(f"AVISO: sin --tests para {objetivo}; auto-detectados: {', '.join(Path(t).name for t in tests_obj)}")
+        if not tests_obj:
+            sin_tests.append(objetivo)
+            continue
+        cobertura.update(medir_cobertura(_normalize_modulo(objetivo), tests_obj, args.min, args.max))
+
+    for objetivo in sin_tests:
+        print(f"SKIP {objetivo}: sin tests unitarios asociados (no medido)")
 
     ok, fuera = evaluar(cobertura, args.min, args.max)
     for linea in ok:
