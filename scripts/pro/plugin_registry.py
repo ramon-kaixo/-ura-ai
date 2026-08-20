@@ -2,6 +2,7 @@
 """Plugin Registry — Auto-descubrimiento de scripts."""
 
 import ast
+import json
 import subprocess
 import sys
 import time
@@ -12,7 +13,7 @@ SCRIPT_DIR = Path(__file__).parent
 
 
 def log(msg) -> None:
-    datetime.now(UTC).strftime("%H:%M:%S")
+    print(f"{datetime.now(UTC).strftime('%H:%M:%S')}  {msg}")
 
 
 def discover_all():
@@ -55,6 +56,9 @@ def run_phase(phase, context=None, file_path=None):
 
         cmd = [sys.executable, plugin["script"]]
         cmd.extend(plugin.get("args", []))
+
+        if plugin.get("needs_context") and context:
+            cmd.extend(["--context", json.dumps(context, ensure_ascii=False)])
 
         if file_path and plugin.get("needs_file"):
             cmd.append(file_path)

@@ -26,7 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-MIN_DEFAULT = 85
+MIN_DEFAULT = 90
 MAX_DEFAULT = 100
 
 _RCFILE = r"""[run]
@@ -180,7 +180,16 @@ def auto_detectar_tests(objetivo: str) -> list[str]:
     encontrados = [c for c in candidatos if (tests_dir / c).is_file()]
     if encontrados:
         return [str(tests_dir / c) for c in encontrados]
-    # fallback: cualquier test_*_cobertura.py que mencione el nombre del módulo
+    # fallback 1: test_* con las partes del módulo en orden (test_motor_llm_router_providers -> providers)
+    stem = nombre.removesuffix(".py").lstrip("_")
+    padre_stem = padre.lstrip("_")
+    for t in sorted(tests_dir.glob("test_*.py")):
+        tstem = t.name.removeprefix("test_").removesuffix(".py")
+        if stem in tstem and padre_stem in tstem:
+            encontrados.append(t.name)
+    if encontrados:
+        return [str(tests_dir / c) for c in encontrados]
+    # fallback 2: cualquier test_*_cobertura.py que mencione el nombre del módulo
     for t in sorted(tests_dir.glob("test_*_cobertura.py")):
         try:
             contenido = t.read_text(errors="ignore")
