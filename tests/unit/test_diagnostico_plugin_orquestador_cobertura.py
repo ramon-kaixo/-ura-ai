@@ -620,7 +620,7 @@ def test_orquestador_refactorizar(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_orquestador_esperar(monkeypatch: pytest.MonkeyPatch) -> None:
     o = AgenteOrquestador()
     monkeypatch.setattr(o, "_contar_pendientes", lambda: 0)
-    accion, razon = o.decidir({"hardware": {"ram_pct": 10}, "f821": 0}, {})
+    _accion, _razon = o.decidir({"hardware": {"ram_pct": 10}, "f821": 0}, {})
     assert accion == "ESPERAR"
 
 
