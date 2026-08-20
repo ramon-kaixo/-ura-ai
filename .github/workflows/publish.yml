@@ -24,7 +24,7 @@ jobs:
       - name: Tests rápidos del núcleo
         run: pytest motor/tests/ -q --tb=short -k "not e2e"
       - name: Verificación cobertura módulos del diff (gate 85%)
-        run: python3 scripts/pro/verificador_cobertura.py --ci --base origin/main --min 85
+        run: python3 scripts/pro/verificador_cobertura.py --ci --base origin/main --min 90
 
   build:
     name: Build wheel

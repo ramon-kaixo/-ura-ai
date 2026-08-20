@@ -48,6 +48,27 @@ class TestComputeDiff:
         assert count == 1
         assert anomalias == []
 
+    def test_clave_en_prev_no_en_actual_ignorada(self) -> None:
+        prev: dict = {"servicios": {"a": "active"}, "perdido": {"x": 1}}
+        actual: dict = {"servicios": {"a": "active"}}
+        count, anomalias = compute_diff(actual, prev)
+        assert count == 0
+        assert anomalias == []
+
+    def test_mixto_prev_dict_actual_no_dict_ignorado(self) -> None:
+        prev: dict = {"servicios": {"a": "active"}}
+        actual: dict = {"servicios": "caido"}
+        count, anomalias = compute_diff(actual, prev)
+        assert count == 0
+        assert anomalias == []
+
+    def test_mixto_prev_no_dict_actual_dict_ignorado(self) -> None:
+        prev: dict = {"servicios": "active"}
+        actual: dict = {"servicios": {"a": "active"}}
+        count, anomalias = compute_diff(actual, prev)
+        assert count == 0
+        assert anomalias == []
+
 
 class TestEsCritico:
     def test_servicio_inactive(self) -> None:
