@@ -96,3 +96,7 @@ docs/udo/pendientes-fase.md.estado
 # Orquestador: estado local del workspace (no versionar)
 docs/udo/plans/openclaw-workspace-state.json
 docs/udo/coordination.lock
+
+# Informes OpenClaw/revisor automático (fuera de trazabilidad git; contexto opencode)
+/revisiones/
+/investigaciones/
