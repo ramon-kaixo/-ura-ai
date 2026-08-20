@@ -106,7 +106,17 @@ class ProactiveMemory:
                 "SELECT id, description, conversation_id, priority, status, created_at FROM tasks "
                 "WHERE status = 'pending' ORDER BY created_at DESC LIMIT 10"
             ).fetchall()
-        return [Task(*row) for row in rows]
+        return [
+            Task(
+                description=row[1],
+                conversation_id=row[2],
+                priority=row[3],
+                status=row[4],
+                created_at=row[5],
+                task_id=row[0],
+            )
+            for row in rows
+        ]
 
     def complete_task(self, task_id: str) -> bool:
         with self._lock:
