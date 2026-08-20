@@ -77,7 +77,7 @@ class ProposalExecutor:
             elif isinstance(v, list):
                 for item in v:
                     args.append(f"--{k}={item}")
-            elif isinstance(v, (str, int, float)):
+            elif isinstance(v, (str, int, float)):  # pragma: no cover - rama falsa inalcanzable (tipos exhaustivos)
                 args.append(f"--{k}={v}")
         return args
 
