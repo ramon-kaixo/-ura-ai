@@ -16,8 +16,16 @@ RAIZ="$(pwd)"
 PY=".venv/bin/python"
 
 
-TARGETS="core/guardian_disco.py,core/stealth_fetcher.py,core/guardians/ast_sentinel.py,core/path_setup.py,core/mochila/status_endpoint.py,core/mochila/vram_scheduler.py,core/mochila/providers/base.py"
-TEST_FILES="tests/unit/test_ast_sentinel.py tests/unit/test_cold_refactor.py tests/unit/test_core_guardians_mochila_cobertura.py tests/unit/test_guardian_disco.py tests/unit/test_guardian_middleware_path.py tests/unit/test_mochila_adapter_cobertura.py tests/unit/test_mochila_infra.py tests/unit/test_mochila_provider_ollama.py tests/unit/test_mochila_providers_clonados.py tests/unit/test_mochila_providers_openrouter_gemini.py tests/unit/test_mochila_routes_models_status.py tests/unit/test_mochila_vram_scheduler.py tests/unit/test_path_setup.py tests/unit/test_stealth_fetcher.py"
+TARGETS=$($PY -c "
+import tomllib
+d = tomllib.load(open('$PWD/pyproject.toml', 'rb'))
+print(','.join(d['tool']['mutacion']['targets']))
+")
+TEST_FILES=$($PY -c "
+import tomllib
+d = tomllib.load(open('$PWD/pyproject.toml', 'rb'))
+print(' '.join(d['tool']['mutacion']['tests']))
+")
 UMBRAL_ESTADO="$RAIZ/docs/udo/mutation_threshold.json"
 
 OBJETIVO=$($PY -c "
