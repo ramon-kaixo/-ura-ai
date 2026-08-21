@@ -33,6 +33,7 @@ class VRAMAwareScheduler:
         self._hot_models: set = set()
         self._consecutive_smi_errors = 0
         self._lock = asyncio.Lock()
+        self._release_tasks: set[asyncio.Task[None]] = set()
         import httpx as _httpx
 
         self._ollama_client = _httpx.AsyncClient(base_url=OLLAMA_SOCKET)
@@ -71,7 +72,9 @@ class VRAMAwareScheduler:
         }
         base = base_weights.get(model, 512)
         prompt = body.get("prompt", "") or str(body.get("messages", ""))
-        kv_cache_overhead = int((len(prompt) // 4) * 0.002)
+        kv_cache_overhead = int(
+            (len(prompt) // 4) * 0.002
+        )  # gremlin: pardon[equivalent] int() trunca: // y / coinciden para toda longitud real (verificado 0..2M)
         return base + kv_cache_overhead
 
     async def sync_vram(self) -> None:
@@ -157,7 +160,9 @@ class VRAMAwareScheduler:
                 async with self._lock:
                     self._active.pop(req_id, None)
 
-        asyncio.create_task(_release())
+        task = asyncio.create_task(_release())
+        self._release_tasks.add(task)
+        task.add_done_callback(self._release_tasks.discard)
         return True
 
     async def release(self, req_id: str) -> None:
