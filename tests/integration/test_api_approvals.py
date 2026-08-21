@@ -1,4 +1,5 @@
 """Approval tests para endpoints críticos."""
+
 from __future__ import annotations
 
 import json

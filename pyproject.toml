@@ -57,7 +57,7 @@ dev = [
     "xenon>=0.9",
     "hypothesis>=6.0",
     "aiohttp>=3.9",
-    "ruff==0.15.18",
+    "ruff==0.16.4",
 ]
 
 [project.scripts]

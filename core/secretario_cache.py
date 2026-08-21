@@ -88,7 +88,7 @@ class SecretarioCache:
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310 - URL local Qdrant (ASUS)
                 data = json.loads(resp.read().decode())
                 return [p.get("payload", {}) for p in data.get("result", {}).get("points", [])]
         except Exception as e:
