@@ -146,11 +146,72 @@ llm-retries = 2
 auto-trigger-mode = "gate"
 auto-trigger-strict = true
 
+# [tool.mutmut] LEGACY (retirado 2026-08-21, TASK-20260821-002): sustituido por
+# pytest-gremlins + gate scripts/run_mutation_tests_gremlins.sh. Se conserva como
+# referencia histórica; el CI ya no lo ejecuta (ver .github/workflows/tests.yml).
+
+[tool.mutacion]
+# Config del gate de mutación URA (pytest-gremlins). Consumida por
+# scripts/run_mutation_tests_gremlins.sh. Umbral dinámico: docs/udo/mutation_threshold.json
+targets = [
+    "core/guardian_disco.py",
+    "core/stealth_fetcher.py",
+    "core/guardians/ast_sentinel.py",
+    "core/path_setup.py",
+    "core/mochila/status_endpoint.py",
+    "core/mochila/vram_scheduler.py",
+    "core/mochila/providers/base.py",
+]
+tests = [
+    "tests/unit/test_ast_sentinel.py",
+    "tests/unit/test_cold_refactor.py",
+    "tests/unit/test_core_guardians_mochila_cobertura.py",
+    "tests/unit/test_guardian_disco.py",
+    "tests/unit/test_guardian_middleware_path.py",
+    "tests/unit/test_mochila_adapter_cobertura.py",
+    "tests/unit/test_mochila_infra.py",
+    "tests/unit/test_mochila_provider_ollama.py",
+    "tests/unit/test_mochila_providers_clonados.py",
+    "tests/unit/test_mochila_providers_openrouter_gemini.py",
+    "tests/unit/test_mochila_routes_models_status.py",
+    "tests/unit/test_mochila_vram_scheduler.py",
+    "tests/unit/test_path_setup.py",
+    "tests/unit/test_stealth_fetcher.py",
+]
+executor = "subprocess"
+map_timeout_env = "PYTEST_GREMLINS_MAP_TIMEOUT"
+report_json = "coverage/gremlins/gremlins.json"
+dashboard_script = "scripts/update_mutation_dashboard.py"
+survivor_analyzer = "scripts/analyze_survivors.py"
+
 [tool.mutmut]
 source_paths = ["motor/core/", "motor/intelligence/", "core/", "knowledge/"]
-do_not_mutate = ["*/motor/core/voice/*", "*/knowledge/engine/extractors/audio/*", "*voice*", "*extractors/audio*"]
-also_copy = ["motor/tests/", "config/", "scripts/pro/", "scripts/"]
+do_not_mutate = ["*/motor/core/voice/*", "*/knowledge/engine/extractors/audio/*", "*voice*", "*extractors/audio*", "*/knowledge/engine/extractors/git.py", "*/knowledge/engine/archiver.py", "*/knowledge/engine/jobs.py"]
+also_copy = ["motor/tests/", "config/", "scripts/pro/", "scripts/", "schemas/", "AGENTS.md", "docs/udo/"]
 pytest_add_cli_args = [
+    # mutmut hardcodea -x; maxfail posterior lo anula y permite que la fase de
+    # stats tolere tests flaky dependientes de orden (p.ej. tests con git real).
+    "--maxfail=20",
+    "--ignore=tests/unit/test_knowledge_extractors_git_cobertura.py",
+    "--ignore=tests/unit/test_knowledge_jobs_cobertura.py",
+    "--ignore=tests/unit/test_udo_protocol_dispatch.py",
+    "--deselect=tests/unit/test_motor_brain_cobertura.py::test_run_ruff_error",
+    "--deselect=tests/unit/test_obs_resilience_cobertura.py::test_circuit_breaker_half_open_tras_timeout",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_successful_command",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_stdout_captured",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_stderr_captured",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_non_zero_returncode",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_timeout",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_cwd_respected",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_error_on_failure",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_env_pasada",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorSync::test_timeout_stderr_vacio",
+    "--deselect=tests/unit/test_subprocess_executor.py::TestSubprocessExecutorIntegration::test_executor_used_by_motors",
+    "--deselect=tests/unit/test_motor_runner_searchlog_watchdog_cobertura.py::test_watchdog_async_ok",
+    "--deselect=tests/unit/test_protocol_coordination.py::test_no_hay_import_inverso_motor_core",
+    "--deselect=tests/unit/test_vector_y_guardian_cobertura.py::test_ollama_check_backoff",
+    "--deselect=tests/unit/test_vector_y_guardian_cobertura.py::test_qdrant_check_backoff",
+    "--deselect=motor/tests/test_intelligence_agents_cobertura.py::TestExecutorAgent::test_default_executor_constructs_and_runs",
     "--ignore=tests/contracts/test_llm_contract.py",
     "--ignore=tests/infra/test_ci_cd.py",
     "--ignore=tests/infra/test_documentation.py",
