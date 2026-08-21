@@ -28,7 +28,7 @@ qdrant-client>=1.9
 
 # --- Procesamiento de texto ---
 tiktoken>=0.5
-tokenizers>=0.15
+tokenizers>=0.23.1
 
 # --- Búsqueda y ranking ---
 rank-bm25>=0.2
