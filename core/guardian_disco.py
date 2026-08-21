@@ -192,7 +192,7 @@ def main() -> None:
         _cmd_init(config)
         return
 
-    if args.scan or not args.verify:
+    if args.scan or not args.verify:  # pragma: no cover - rama falsa inalcanzable: verify truthy ya retornó en 189
         _cmd_scan(config)
 
 
