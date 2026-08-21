@@ -94,6 +94,7 @@ markers = [
     "unit: tests unitarios aislados",
     "smoke: tests de import/happy path generados por plantilla",
     "hypothesis: tests property-based generados por plantilla",
+    "performance: tests de latencia de endpoints (smoke)",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
