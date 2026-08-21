@@ -172,7 +172,7 @@ def verificar_mapa_cromatico(
 
     rojas_reales = 0
     for nodo in ast.walk(arbol):
-        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):  # noqa: SIM102
             if hasattr(nodo, "end_lineno") and nodo.end_lineno:
                 rojas_reales += 1
         if isinstance(nodo, (ast.For, ast.While, ast.If, ast.Try, ast.With)):

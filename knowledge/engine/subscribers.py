@@ -50,7 +50,7 @@ def subscribe_all(
         vector_store: VectorStore para indexación vectorial (opcional).
 
     """
-    global _SUBSCRIBED
+    global _SUBSCRIBED  # noqa: PLW0603
     if _SUBSCRIBED:
         return
     bus.subscribe(CompileCompleted, _make_compile_archive_handler(db_path, source_dir))

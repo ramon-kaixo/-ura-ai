@@ -56,7 +56,7 @@ class QdrantVectorStore:
         self,
         query_vector: list[float],
         top_k: int = 10,
-        filter: dict[str, Any] | None = None,
+        filter: dict[str, Any] | None = None,  # noqa: A002
     ) -> list[VectorResult]:
         if not self.available:
             return []
@@ -256,7 +256,7 @@ class QdrantVectorStore:
             raise
 
     @staticmethod
-    def _translate_filter(filter: dict[str, Any]) -> dict[str, Any]:
+    def _translate_filter(filter: dict[str, Any]) -> dict[str, Any]:  # noqa: A002
         """Traduce un filter plano al formato Qdrant.
 
         Ej: {"asset_type": "pdf"} → {"must": [{"key": "asset_type", "match": {"value": "pdf"}}]}

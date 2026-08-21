@@ -59,13 +59,13 @@ class SecretarioCache:
             or {"intent": "consulta", "complexity": "simple", "domain": "general", "entities": []},
         }
         try:
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 f"{ASUS_EXEC_URL}/v2/interact",
                 data=json.dumps(payload).encode(),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
                 result = json.loads(resp.read().decode())
         except Exception as e:
             result = {"error": str(e), "validation": {"ok": False, "alert": True}}
@@ -88,7 +88,7 @@ class SecretarioCache:
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
                 data = json.loads(resp.read().decode())
                 return [p.get("payload", {}) for p in data.get("result", {}).get("points", [])]
         except Exception as e:

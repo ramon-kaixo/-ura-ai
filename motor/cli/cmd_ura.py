@@ -124,7 +124,7 @@ def cmd_snapshot(config: UraConfig, args) -> int:
             cwd=str(ROOT),
         ).stdout.strip(),
     }
-    with open(fname, "w") as f:
+    with open(fname, "w") as f:  # noqa: PTH123
         json.dump(snap, f, indent=2)
     return 0
 
@@ -162,11 +162,11 @@ def cmd_system(config: UraConfig, args):
     import subprocess as _sp  # nosec
 
     version = "unknown"
-    try:
+    try:  # noqa: SIM105
         version = _sp.run(  # nosec
             ["git", "describe", "--tags", "--abbrev=0"], capture_output=True, text=True, timeout=5, check=False
         ).stdout.strip()
-    except Exception:  # nosec B110
+    except Exception:  # nosec B110  # noqa: S110
         pass
 
     lines = [
@@ -206,13 +206,13 @@ def cmd_snc(config: UraConfig, args) -> int:
 
     if remote_state.exists():
         try:
-            with open(remote_state) as f:
+            with open(remote_state) as f:  # noqa: PTH123
                 state = json.loads(f.read())
             ts = state.get("timestamp", "?")
             try:
                 age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
-            except Exception:  # nosec B110
+            except Exception:  # nosec B110  # noqa: S110
                 pass
 
             state.get("status", "?")
@@ -224,7 +224,7 @@ def cmd_snc(config: UraConfig, args) -> int:
                 for n in state["repair_attempts"].values():
                     if n > 0:
                         pass
-        except Exception:  # nosec B110
+        except Exception:  # nosec B110  # noqa: S110
             pass
     else:
         pass
@@ -287,7 +287,7 @@ def cmd_metrics(config: UraConfig, args) -> int:
         for line in data.split("\n"):
             if any(k in line for k in ("model_selection", "latency_avg", "cache_hit", "prompt_cache")):
                 pass
-    except Exception:  # nosec B110
+    except Exception:  # nosec B110  # noqa: S110
         pass
     return 0
 
@@ -305,7 +305,7 @@ def cmd_dashboard(config: UraConfig, args) -> int:
             try:
                 age = (datetime.now(UTC) - datetime.fromisoformat(ts)).total_seconds()
                 f"{age:.0f}s" if age < 120 else f"{age / 60:.1f}min"
-            except Exception:  # nosec B110
+            except Exception:  # nosec B110  # noqa: S110
                 pass
             state.get("status", "UNKNOWN")
             for info in state.get("services", {}).values():
@@ -316,7 +316,7 @@ def cmd_dashboard(config: UraConfig, args) -> int:
                 for n in state["repair_attempts"].values():
                     if n > 0:
                         pass
-        except Exception:  # nosec B110
+        except Exception:  # nosec B110  # noqa: S110
             pass
     else:
         pass
@@ -573,7 +573,7 @@ def _audit_imprimir_bloques(blocks: dict) -> None:
             continue
         fails = sum(1 for f in items if f.get("level") in ("FAIL", "P0"))
         warns = sum(1 for f in items if f.get("level") in ("WARNING", "MEDIUM"))
-        icon = "❌" if fails else "⚠️" if warns else "ℹ️"
+        icon = "❌" if fails else "⚠️" if warns else "ℹ️"  # noqa: RUF001
         print(f"  [{bid}] {icon} — {len(items)} hallazgos ({fails} FAIL, {warns} WARN)")
         for f in items[:2]:
             if f.get("level") in ("FAIL", "P0", "WARNING", "MEDIUM"):

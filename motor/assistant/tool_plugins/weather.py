@@ -15,7 +15,7 @@ from motor.assistant.tool_plugin import ToolPlugin
 class WeatherPlugin(ToolPlugin):
     name = "weather"
     description = "Consulta el clima actual de una ciudad"
-    keywords: list[str] = ["clima", "weather", "temperatura", "tiempo"]
+    keywords: list[str] = ["clima", "weather", "temperatura", "tiempo"]  # noqa: RUF012
 
     async def execute(self, params: dict[str, Any] | None = None) -> ToolResult:
         from motor.assistant.executor import ToolResult

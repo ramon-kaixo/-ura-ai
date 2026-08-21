@@ -52,7 +52,7 @@ def cargar_reglas() -> dict:
     if REGLAS_PATH.exists():
         try:
             return json.loads(REGLAS_PATH.read_text())
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return {"reglas": list(PREDEFINED_RULES), "ultima_actualizacion": ""}
 

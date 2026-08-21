@@ -34,9 +34,9 @@ def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
 def _thermal_zones() -> dict:
     """Lee temperaturas de zonas térmicas."""
     zonas = {}
-    for z in sorted(glob.glob(RUTA_THERMAL)):
+    for z in sorted(glob.glob(RUTA_THERMAL)):  # noqa: PTH207
         try:
-            with open(z) as f:
+            with open(z) as f:  # noqa: PTH123
                 temp = f.read().strip()
             zonas[z.split("/")[4]] = round(int(temp) / 1000, 1) if temp else 0
         except (OSError, ValueError) as e:

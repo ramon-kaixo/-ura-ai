@@ -53,7 +53,7 @@ def _load_devices(root: Path) -> dict[str, str]:
         "mac_tailscale": _resolve_host(MAGICDNS_MAC, "100.123.81.101"),
     }
     try:
-        with open(root / "config" / "dispositivos.json") as f:
+        with open(root / "config" / "dispositivos.json") as f:  # noqa: PTH123
             cfg = json.load(f)
         d = cfg.get("dispositivos", {})
         gx10 = d.get("gx10-64c3", {})
@@ -112,7 +112,7 @@ def health_check():
     try:
         usage = os.statvfs("/")
         metrics["disco_libre_gb"] = round((usage.f_frsize * usage.f_bavail) / 1e9, 1)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     alertas = []
     if metrics.get("ram_usada_mb", 0) > 90000:
@@ -127,7 +127,7 @@ def check_ollama():
         rc, out, _ = run(["curl", "-s", "--max-time", "3", f"{OLLAMA_URL}/api/tags"])
         if rc == 0 and "models" in out:
             return json.loads(out).get("models", [])
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return []
 

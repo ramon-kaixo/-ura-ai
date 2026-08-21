@@ -12,7 +12,7 @@ import os
 import queue
 import re
 import sqlite3
-import subprocess
+import subprocess  # nosec B404 - subprocess con listas de args, sin shell
 from pathlib import Path
 
 import numpy as np
@@ -31,7 +31,7 @@ class AnkerMacPipeline:
         self.audio_queue: queue.Queue = queue.Queue()
         self.is_playing_tts = False
 
-        os.makedirs(Path(self.db_path).parent, exist_ok=True)
+        os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
         self._init_db()
 
         if torch.backends.mps.is_available():
@@ -57,7 +57,7 @@ class AnkerMacPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110  # nosec B110 - degradacion controlada (sin audio)
             pass
         return None
 

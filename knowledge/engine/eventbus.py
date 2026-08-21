@@ -167,7 +167,7 @@ _BUS_LOCK = threading.Lock()
 
 def get_bus() -> EventBus:
     """Retorna la instancia global del Event Bus."""
-    global _BUS
+    global _BUS  # noqa: PLW0603
     if _BUS is not None:
         return _BUS
     with _BUS_LOCK:
@@ -179,5 +179,5 @@ def get_bus() -> EventBus:
 
 def set_bus(bus: EventBus) -> None:
     """Establece la instancia global (útil en tests)."""
-    global _BUS
+    global _BUS  # noqa: PLW0603
     _BUS = bus

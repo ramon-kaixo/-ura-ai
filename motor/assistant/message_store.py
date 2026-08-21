@@ -6,7 +6,7 @@ import json
 import sqlite3
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from motor.assistant.config import config
 from motor.assistant.models import Message
@@ -107,7 +107,7 @@ class MessageStore:
                 self._conn.close()
                 self._closed = True
 
-    def __enter__(self) -> MessageStore:
+    def __enter__(self) -> Self:
         return self
 
     def cleanup_old(self, days: int = 30) -> int:

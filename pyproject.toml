@@ -77,6 +77,7 @@ ignore = [
     "TC001", "TC003", "TRY", "EM", "PIE", "RET", "T20", "COM", "Q",
     "S603", "S607", "ASYNC210", "C901", "PLR0912", "PLR0911", "S112",
     "SLF001", "E501", "S108", "CPY",
+    "PLR0917",  # consistente con PLR0913 (demasiados argumentos): firmas legacy estables
 ]
 
 [tool.ruff.lint.per-file-ignores]

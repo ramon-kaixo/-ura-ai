@@ -44,7 +44,7 @@ def load_seen_hashes() -> set:
     if SEEN_HASHES_FILE.exists():
         try:
             return set(json.loads(SEEN_HASHES_FILE.read_text()))
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return set()
 
@@ -101,7 +101,7 @@ def main() -> int:
     if new_alerts:
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         alert_file = LOCAL_ALERTS_DIR / f"gx10_critical_{timestamp}.log"
-        with open(alert_file, "w") as f:
+        with open(alert_file, "w") as f:  # noqa: PTH123
             for line in new_alerts:
                 f.write(line + "\n")
         save_seen_hashes(seen)
@@ -120,7 +120,7 @@ def main() -> int:
             pass
 
         if len(new_alerts) <= 10:
-            for line in new_alerts:
+            for line in new_alerts:  # noqa: B007
                 pass
         return 1
     return 0

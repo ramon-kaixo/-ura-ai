@@ -45,7 +45,7 @@ CONFIG = {**_raw_config.get("global_defaults", {}), **_profile}
 RUNBOOK_PATH = Path(__file__).parent.parent / "deploy" / "emergency_runbook.json"
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-try:
+try:  # noqa: SIM105
     _STATE_DIR.chmod(0o700)
 except OSError:
     pass  # Esperado si ~/.ura/ está en filesystem RO
@@ -189,7 +189,7 @@ def is_command_forbidden(cmd: str, forbidden: list) -> bool:
 
 def repair_service(service_name: str, config: dict, runbook: dict) -> str:
     """Intenta reparar un servicio. Retorna 'ok', 'failed', 'escalated'."""
-    global repair_attempts, openclaw_active
+    global repair_attempts, openclaw_active  # noqa: PLW0602
 
     max_attempts = config.get("max_repair_attempts", runbook.get("retry_policy", {}).get("max_attempts", 3))
     repair_cmds = config.get("repair", [])
@@ -359,7 +359,7 @@ def _poll_servicio(
     runbook: dict,
     all_ok: bool,
 ) -> bool:
-    global openclaw_active
+    global openclaw_active  # noqa: PLW0603
 
     check_cmd = svc_config.get("check", "")
     ok = check_service(check_cmd, runbook.get("forbidden_commands", []))
@@ -402,7 +402,7 @@ def _poll_servicio(
 
 
 def _gestionar_openclaw(all_ok: bool) -> None:
-    global openclaw_active, openclaw_stable_since
+    global openclaw_active, openclaw_stable_since  # noqa: PLW0603
 
     if openclaw_active:
         if all_ok and not openclaw_stable_since:
@@ -436,7 +436,7 @@ def write_state(state: dict) -> None:
     try:
         tmp = STATE_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(state, indent=2))
-        os.replace(str(tmp), str(STATE_FILE))
+        os.replace(str(tmp), str(STATE_FILE))  # noqa: PTH105
     except Exception as e:
         error_logger.log_error(
             context="SNC",
@@ -503,7 +503,7 @@ def check_bucle_cpu(umbral: float = UMBRALES["cpu_bucle_umbral"]) -> list[tuple[
                 continue
             pid = int(parts[1])
             result.append((pid, comm, round(cpu, 1)))
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return result[:10]
 

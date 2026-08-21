@@ -133,9 +133,9 @@ def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
 
     target = url or get_ollama_url()
     try:
-        req = urllib.request.Request(f"{target}/api/tags")
+        req = urllib.request.Request(f"{target}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             data = json.loads(resp.read())
             return {m["name"] for m in data.get("models", [])}
     except Exception as e:

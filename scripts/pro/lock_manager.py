@@ -38,7 +38,7 @@ def acquire_gpu_lock(lock_file: str = LOCK_FILE, timeout: int = 30):
             RuntimeError: Si no se pudo adquirir el lock en `timeout` segundos.
 
     """
-    fp = open(lock_file, "w")
+    fp = open(lock_file, "w")  # noqa: PTH123, SIM115
     start = time.time()
     while True:
         try:
@@ -48,7 +48,7 @@ def acquire_gpu_lock(lock_file: str = LOCK_FILE, timeout: int = 30):
             if time.time() - start > timeout:
                 fp.close()
                 msg = f"No se pudo adquirir el cerrojo {lock_file} en {timeout}s (recurso retenido por otro proceso)"
-                raise RuntimeError(
+                raise RuntimeError(  # noqa: B904
                     msg,
                 )
             time.sleep(1)

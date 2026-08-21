@@ -39,7 +39,7 @@ class RollbackManager:
     def safe_write(self, target_file: str, content: str) -> str:
         tmp_path = target_file + self.temp_suffix
         logger.info("[SECURITY] Escritura segura en temp: {tmp_path}")
-        with open(tmp_path, "w") as f:
+        with open(tmp_path, "w") as f:  # noqa: PTH123
             f.write(content)
         return tmp_path
 
@@ -49,7 +49,7 @@ class RollbackManager:
         logger.warning("[SECURITY] Ejecutando ROLLBACK en: {rel_path}")
 
         if Path(tmp_path).exists():
-            os.remove(tmp_path)
+            os.remove(tmp_path)  # noqa: PTH107
 
         if Path(target_file).exists():
             self._ejecutar_git(["checkout", "HEAD", "--", rel_path])
@@ -64,7 +64,7 @@ class RollbackManager:
 
         logger.info("[SECURITY] Consolidando archivo validado: {rel_path}")
 
-        os.replace(tmp_path, target_file)
+        os.replace(tmp_path, target_file)  # noqa: PTH105
 
         success_add, _ = self._ejecutar_git(["add", rel_path])
         if success_add:

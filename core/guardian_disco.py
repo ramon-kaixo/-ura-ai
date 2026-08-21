@@ -133,7 +133,7 @@ def guardar_historial(cambios: list, total: int) -> None:
         "fantasmas": sum(1 for c in cambios if c["status"] == "FANTASMA"),
     }
     HISTORIAL.parent.mkdir(parents=True, exist_ok=True)
-    with open(HISTORIAL, "a") as f:
+    with open(HISTORIAL, "a") as f:  # noqa: PTH123
         f.write(json.dumps(entry) + "\n")
 
 

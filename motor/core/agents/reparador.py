@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-import subprocess
+import subprocess  # nosec B404 - subprocess con listas de args, sin shell
 import sys
 import urllib.request
 from pathlib import Path
@@ -55,15 +55,15 @@ class AgenteReparador:
 
     def _nivel_1(self, ruta: Path) -> bool:
         try:
-            subprocess.run(
+            subprocess.run(  # nosec B603 - lista de args fija, sin shell
                 [sys.executable, str(SCRIPTS / "auto_reglas.py"), "--aplicar", str(ruta)],
                 capture_output=True,
                 timeout=15,
                 cwd=str(URA_ROOT),
                 check=False,
             )
-            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15, check=False)
-            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10, check=False)
+            subprocess.run([RUFF, "check", "--fix", str(ruta)], capture_output=True, timeout=15, check=False)  # nosec B603
+            subprocess.run([RUFF, "format", str(ruta)], capture_output=True, timeout=10, check=False)  # nosec B603
             compile(ruta.read_text(), str(ruta), "exec")
             return True
         except Exception:
@@ -73,7 +73,7 @@ class AgenteReparador:
     def _nivel_2(self, ruta: Path, modelo: str) -> bool:
         try:
             codigo = ruta.read_text()
-            r = subprocess.run(
+            r = subprocess.run(  # nosec B603 - lista de args fija
                 [RUFF, "check", "--select", "F821", str(ruta)],
                 capture_output=True,
                 text=True,
@@ -135,7 +135,7 @@ class AgenteReparador:
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=180) as resp:  # nosec B310 - URL fija localhost:8081 controlada, no input de usuario
+            with urllib.request.urlopen(req, timeout=180) as resp:  # nosec B310 - URL fija localhost:8081 controlada, no input de usuario  # noqa: S310
                 fixed = json.loads(resp.read())["choices"][0]["message"]["content"]
 
             if fixed and "```" in fixed:

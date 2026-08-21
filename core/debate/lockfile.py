@@ -25,7 +25,7 @@ class DebateLock:
             os.close(self._fd)
             self._fd = None
         if Path(self._path).exists():
-            os.remove(self._path)
+            os.remove(self._path)  # noqa: PTH107
 
     def __enter__(self):
         self.acquire()

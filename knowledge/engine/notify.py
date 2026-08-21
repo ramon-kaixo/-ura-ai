@@ -106,7 +106,7 @@ def _should_retry(exception: Exception) -> bool:
 
 def _backoff(attempt: int) -> None:
     """Backoff exponencial con jitter."""
-    delay = min(_BACKOFF_BASE_S * (2**attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)
+    delay = min(_BACKOFF_BASE_S * (2**attempt) + random.uniform(0, 0.5), _BACKOFF_MAX_S)  # noqa: S311
     time.sleep(delay)
 
 
@@ -133,7 +133,7 @@ def _record_metric(counter_name: str, channel: str, status: str, duration_ms: fl
                 buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
             )
             h.labels(channel=channel).observe(duration_ms / 1000)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
@@ -212,8 +212,8 @@ class WebhookNotifier:
 
             for attempt in range(_MAX_RETRIES):
                 try:
-                    req = Request(self._url, data=data, headers=headers, method="POST")
-                    with urlopen(req, timeout=_TIMEOUT_S) as resp:
+                    req = Request(self._url, data=data, headers=headers, method="POST")  # noqa: S310
+                    with urlopen(req, timeout=_TIMEOUT_S) as resp:  # noqa: S310
                         ok = resp.status < 300
                         _record_metric("sent", "webhook", "ok" if ok else "fail", (time.monotonic() - t0) * 1000)
                         if ok:
@@ -264,8 +264,8 @@ class SlackNotifier:
                 ],
             }
             data = json.dumps(payload).encode()
-            req = Request(self._url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-            with urlopen(req, timeout=_TIMEOUT_S) as resp:
+            req = Request(self._url, data=data, headers={"Content-Type": "application/json"}, method="POST")  # noqa: S310
+            with urlopen(req, timeout=_TIMEOUT_S) as resp:  # noqa: S310
                 ok = resp.status < 300
                 _record_metric("sent", "slack", "ok" if ok else "fail", (time.monotonic() - t0) * 1000)
                 return ok
@@ -360,7 +360,7 @@ class NotificationService:
                 try:
                     if future.result(timeout=_TIMEOUT_S + 5):
                         ok_count += 1
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
         return ok_count
 
@@ -375,7 +375,7 @@ _NOTIFY_INSTANCE: NotificationService | None = None
 
 
 def get_notifier() -> NotificationService:
-    global _NOTIFY_INSTANCE
+    global _NOTIFY_INSTANCE  # noqa: PLW0603
     if _NOTIFY_INSTANCE is not None:
         return _NOTIFY_INSTANCE
     _NOTIFY_INSTANCE = NotificationService()
@@ -386,5 +386,5 @@ def get_notifier() -> NotificationService:
 
 
 def set_notifier(service: NotificationService) -> None:
-    global _NOTIFY_INSTANCE
+    global _NOTIFY_INSTANCE  # noqa: PLW0603
     _NOTIFY_INSTANCE = service

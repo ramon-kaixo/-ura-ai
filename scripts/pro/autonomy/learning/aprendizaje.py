@@ -11,7 +11,7 @@ import sys
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Aprendizaje v4.0")
@@ -94,7 +94,7 @@ def main() -> int:
         if decision["applied"]:
             engine.log.info("  ✅ Aplicada: {decision.get('policy')} — {rec['title']}")
         else:
-            engine.log.info("  ℹ️  {decision.get('action')}: {decision.get('reason', rec['title'])[:60]}")
+            engine.log.info("  ℹ️  {decision.get('action')}: {decision.get('reason', rec['title'])[:60]}")  # noqa: RUF001
         engine.ledger.add_policy(decision)
 
     if args.mode == "autonomo":

@@ -120,7 +120,7 @@ def main() -> None:
     data_root = sys.argv[1]
     items = scan(data_root)
     tmp_path = "/tmp/metadata_raw.json"
-    with open(tmp_path, "w") as f:
+    with open(tmp_path, "w") as f:  # noqa: PTH123
         json.dump(items, f, indent=2, ensure_ascii=False)
 
     sys.exit(0)

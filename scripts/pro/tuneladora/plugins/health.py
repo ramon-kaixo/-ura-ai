@@ -35,7 +35,7 @@ class HealthPlugin:
                         parts = line.split()
                         if len(parts) > 2:
                             results["ram_usada_mb"] = int(parts[2])
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # Zombies

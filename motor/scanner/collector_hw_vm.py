@@ -33,7 +33,7 @@ def _dmesg_errors() -> list:
 def _io_stats() -> dict:
     """Lee estadísticas de IO del disco principal."""
     try:
-        with open("/proc/diskstats") as f:
+        with open("/proc/diskstats") as f:  # noqa: PTH123
             for line in f:
                 parts = line.split()
                 if len(parts) >= 14 and "sda" in parts[2]:

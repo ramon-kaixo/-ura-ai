@@ -25,7 +25,7 @@ from pathlib import Path
 # Paths
 _STATE_DIR = Path.home() / ".ura" / "run"
 _STATE_DIR.mkdir(parents=True, exist_ok=True)
-try:
+try:  # noqa: SIM105
     _STATE_DIR.chmod(0o700)
 except OSError:
     pass  # Esperado si ~/.ura/ está en filesystem RO
@@ -67,7 +67,7 @@ def load_state() -> dict:
     try:
         if STATE_FILE.exists():
             return json.loads(STATE_FILE.read_text())
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return {"status": "UNKNOWN", "services": {}, "openclaw_active": False}
 
@@ -78,8 +78,8 @@ def save_stats() -> None:
         STATS_FILE.parent.mkdir(parents=True, exist_ok=True)
         tmp = STATS_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(stats, indent=2))
-        os.replace(str(tmp), str(STATS_FILE))
-    except Exception:
+        os.replace(str(tmp), str(STATS_FILE))  # noqa: PTH105
+    except Exception:  # noqa: S110
         pass
 
 

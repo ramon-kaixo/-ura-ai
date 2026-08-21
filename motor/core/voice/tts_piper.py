@@ -8,7 +8,7 @@ el altavoz Anker S500 emite la respuesta).
 
 import contextlib
 import os
-import subprocess
+import subprocess  # nosec B404 - subprocess con listas de args, sin shell
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -54,7 +54,7 @@ class PiperTTSMotor:
                 msg,
             )
 
-        Path(self.model_path).stat().st_size
+        Path(self.model_path).stat().st_size  # noqa: B018
 
     def _find_anker_output_device(self) -> int | None:
         """Busca el índice físico de salida (output) del Anker S500."""
@@ -64,7 +64,7 @@ class PiperTTSMotor:
                 name = dev["name"].lower()
                 if "powerconf s500" in name and dev["max_output_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110  # nosec B110 - degradacion controlada (TTS no disponible)
             pass
         return None
 
@@ -81,7 +81,7 @@ class PiperTTSMotor:
                 "--output-file",
                 self.output_wav,
             ]
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # nosec B603 - cmd como lista fija, sin shell
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -97,14 +97,14 @@ class PiperTTSMotor:
             sd.play(data, samplerate=fs, device=self.device_index)
             sd.wait()
 
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         finally:
             if self.pipeline is not None:
                 self.pipeline.is_playing_tts = False
             if Path(self.output_wav).exists():
                 with contextlib.suppress(BaseException):
-                    os.remove(self.output_wav)
+                    os.remove(self.output_wav)  # noqa: PTH107
 
     def hablar_asincrono(self, text: str) -> None:
         """Punto de entrada principal sin bloqueo para el orquestador."""
@@ -123,7 +123,7 @@ class PiperTTSMotor:
             self.pipeline.is_playing_tts = True
         try:
             cmd = [str(PIPER_BIN), "--model", self.model_path, "--output-file", output_path]
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # nosec B603 - cmd como lista fija, sin shell
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,

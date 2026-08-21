@@ -166,7 +166,7 @@ def step_guardian_verify(archivo):
 
 def verificar_consenso_SDA(propuesta_plan: str) -> bool:
     ruta_plan = "/tmp/ura_debate_plan.json"
-    with open(ruta_plan, "w") as f:
+    with open(ruta_plan, "w") as f:  # noqa: PTH123
         json.dump({"plan": propuesta_plan, "author": "pipeline"}, f, ensure_ascii=False)
     cmd = [
         sys.executable,

@@ -16,9 +16,11 @@ def _gemini_api_key() -> str:
     key = get_secret("GEMINI_API_KEY", "")
     if key:
         return key
-    cred_path = os.path.expanduser("~/.config/opencode/.credentials/gemini.json")  # mockeado por tests existentes
+    cred_path = os.path.expanduser(  # noqa: PTH111
+        "~/.config/opencode/.credentials/gemini.json"
+    )  # mockeado por tests existentes
     try:
-        with open(cred_path) as f:  # mockeado por tests existentes
+        with open(cred_path) as f:  # mockeado por tests existentes  # noqa: PTH123
             data = json.load(f)
             return data.get("api_key", "")
     except (FileNotFoundError, json.JSONDecodeError):

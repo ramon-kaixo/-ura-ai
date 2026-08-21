@@ -1,6 +1,6 @@
 from datetime import UTC
 
-#!/usr/bin/env python3
+#!/usr/bin/env python3  # noqa: EXE005
 """plan_validator.py — Inyección de contexto real del sistema en el debate.
 
 Recolecta:
@@ -92,7 +92,7 @@ def load_state_file(path: str) -> dict | None:
     if not Path(path).exists():
         return None
     try:
-        with open(path) as f:
+        with open(path) as f:  # noqa: PTH123
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None

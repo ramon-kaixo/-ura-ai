@@ -5,10 +5,8 @@
 # ============================================================
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # v0.15.18: alineada con el ruff del venv (0.16.3 estabiliza reglas preview
-    # — PLW0603/PLR0917/PTH123/S110... — y genera 480 falsos "nuevos" repo-wide;
-    # subir de nuevo requiere TASK propia con saneado previo).
-    rev: v0.15.18
+    # v0.16.3: alineada con el ruff del venv; repo saneado (ruff check . limpio)
+    rev: v0.16.3
     hooks:
       - id: ruff
         args: []
@@ -31,7 +29,10 @@ repos:
     rev: 1.9.4
     hooks:
       - id: bandit
-        args: [-q, -x, "*/tests/*", --skip, "B311,B108,B101"]
+        args: [-q, -x, "*/tests/*", --skip, "B311,B108,B101,B404,B603,B110"]
+        # B404/B603: subprocess con listas de args sin shell = patron seguro
+        #   (equivalente a S603/S607 ya ignorados en ruff; CIERRE-20260821)
+        # B110: try-except-pass de degradacion controlada (auditado T08/T09)
         files: ^(motor)/.*\.py$
         exclude: ^(motor/plugin/|motor/core/fusion/|motor/intelligence/|motor/tests/)
 

@@ -283,15 +283,15 @@ def _reset_for_testing() -> None:
         if isinstance(collector, Counter | Gauge | Histogram):
             REGISTRY.unregister(collector)
     # Registrar de nuevo
-    global search_requests, search_duration, qdrant_sync_ops
-    global compile_requests, archive_ops, errors_total
-    global db_nodes_total, db_edges_total, db_compile_runs
-    global db_compile_errors, db_pending_sync, db_schema_version
-    global compile_queue_length, archive_queue_length
-    global audit_write_failures
-    global compile_lock_wait_seconds, sqlite_busy_retries_total
-    global job_retry_total, archive_duration_seconds
-    global fusion_requests_total, fusion_facts_total, fusion_duration_seconds
+    global search_requests, search_duration, qdrant_sync_ops  # noqa: PLW0603
+    global compile_requests, archive_ops, errors_total  # noqa: PLW0603
+    global db_nodes_total, db_edges_total, db_compile_runs  # noqa: PLW0603
+    global db_compile_errors, db_pending_sync, db_schema_version  # noqa: PLW0603
+    global compile_queue_length, archive_queue_length  # noqa: PLW0603
+    global audit_write_failures  # noqa: PLW0603
+    global compile_lock_wait_seconds, sqlite_busy_retries_total  # noqa: PLW0603
+    global job_retry_total, archive_duration_seconds  # noqa: PLW0603
+    global fusion_requests_total, fusion_facts_total, fusion_duration_seconds  # noqa: PLW0603
 
     search_requests = Counter("ke_search_requests_total", "", ["mode"])
     search_duration = Histogram("ke_search_duration_seconds", "", ["mode"])

@@ -25,7 +25,7 @@ def _fmt(key: str, val) -> str:
     return f"  {key:35} {val}"
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0915
     import argparse
 
     parser = argparse.ArgumentParser(description="URA Health Dashboard")

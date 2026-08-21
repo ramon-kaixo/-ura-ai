@@ -94,4 +94,4 @@ if __name__ == "__main__":
     import uvicorn
 
     # 0.0.0.0 dentro del contenedor docker (red interna) — S104: caso de uso legitimo
-    uvicorn.run(app, host="0.0.0.0", port=9105)
+    uvicorn.run(app, host="0.0.0.0", port=9105)  # noqa: S104

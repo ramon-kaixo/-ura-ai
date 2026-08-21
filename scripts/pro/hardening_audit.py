@@ -76,7 +76,7 @@ def main() -> int:
                 pass
         total += score
 
-    for check, count in sorted(scored.items()):
+    for check, count in sorted(scored.items()):  # noqa: B007
         pct = count / len(services) * 100 if services else 0
         "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
 

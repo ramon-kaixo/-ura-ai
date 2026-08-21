@@ -62,7 +62,7 @@ def measure_http_latency() -> float:
         url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
         req = urllib.request.Request(url)
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             return (time.time() - start) * 1000
     except Exception:
         return -1
@@ -205,7 +205,7 @@ def main() -> int:
     # Resumen
     if [a for a in all_alerts if "⚠" not in a and "modelo" not in a.lower()]:
         timestamp = datetime.now(UTC).isoformat()
-        with open(ALERT_FILE, "a") as f:
+        with open(ALERT_FILE, "a") as f:  # noqa: PTH123
             f.write(f"[{timestamp}] {'\n'.join(all_alerts)}\n")
     else:
         pass

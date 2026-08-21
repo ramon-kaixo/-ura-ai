@@ -43,7 +43,7 @@ class Journal:
         self._path = path
         mode = "ab" if self._encryption_key else "a"
         enc = None if self._encryption_key else "utf-8"
-        self._file = open(path, mode, encoding=enc)
+        self._file = open(path, mode, encoding=enc)  # noqa: PTH123, SIM115
         self._count = self._count_lines()
 
     def append(self, entry: MemoryEntry) -> None:
@@ -66,7 +66,7 @@ class Journal:
         if not self._path or not Path(self._path).exists():
             return []
         result: list[dict] = []
-        with open(self._path, "rb") as f:
+        with open(self._path, "rb") as f:  # noqa: PTH123
             raw = f.read()
         if not raw:
             return []
@@ -78,7 +78,7 @@ class Journal:
             text = raw.decode("utf-8", errors="replace")
 
         for line in text.split("\n"):
-            line = line.strip()
+            line = line.strip()  # noqa: PLW2901
             if not line:
                 continue
             try:
@@ -92,9 +92,9 @@ class Journal:
             if self._file is not None:
                 self._file.close()
             if self._path and Path(self._path).exists():
-                os.rename(self._path, new_path)
+                os.rename(self._path, new_path)  # noqa: PTH104
             if self._path:
-                self._file = open(
+                self._file = open(  # noqa: PTH123, SIM115
                     self._path,
                     "ab" if self._encryption_key else "a",
                     encoding=None if self._encryption_key else "utf-8",
@@ -164,5 +164,5 @@ class Journal:
     def _count_lines(self) -> int:
         if not self._path or not Path(self._path).exists():
             return 0
-        with open(self._path, encoding="utf-8") as f:
+        with open(self._path, encoding="utf-8") as f:  # noqa: PTH123
             return sum(1 for _ in f)

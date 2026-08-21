@@ -45,9 +45,9 @@ def _measare_asus_latency() -> float:
 
     try:
         t0 = time.monotonic()
-        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
             elapsed = (time.monotonic() - t0) * 1000
             return round(elapsed, 1)
     except Exception:
@@ -55,7 +55,7 @@ def _measare_asus_latency() -> float:
 
 
 def _update_asus_latency() -> None:
-    global _asus_latency_ms, _asus_latency_updated
+    global _asus_latency_ms, _asus_latency_updated  # noqa: PLW0603
     ms = _measare_asus_latency()
     with _asus_latency_lock:
         _asus_latency_ms = ms
@@ -146,9 +146,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")
+        req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", get_urls()["primary"])
             return get_urls()["primary"]
     except Exception as e:
@@ -200,12 +200,12 @@ def proxy_request(
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = get_urls()["primary"] if resolved_mode == "TURBO" else get_urls()["fallback"]
     url = f"{active_url}{path}"
-    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)
+    req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
     req.add_header("Content-Type", "application/json")
 
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=600) as resp:
+        with urllib.request.urlopen(req, timeout=600) as resp:  # noqa: S310
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:

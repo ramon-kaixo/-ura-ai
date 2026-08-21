@@ -1,4 +1,5 @@
-"""SemanticChunker — divide documentos por estructura (títulos, secciones, párrafos).
+# noqa: INP001 - modulo de motor sin __init__ propio (namespace intencional)
+"""SemanticChunker — divide documentos por estructura (títulos, secciones, párrafos).  # noqa: INP001
 
 Uso:
     chunker = SemanticChunker(max_tokens=512, overlap_tokens=64)

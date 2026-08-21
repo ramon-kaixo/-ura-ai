@@ -10,3 +10,12 @@ from motor.core.interfaces.executor import IExecutor, IProcessResult
 from motor.core.interfaces.llm import ILLMClient
 from motor.core.interfaces.repository import IVectorStore
 from motor.core.interfaces.secrets import ISecretStore
+
+__all__ = [
+    "IConfigProvider",
+    "IExecutor",
+    "ILLMClient",
+    "IProcessResult",
+    "ISecretStore",
+    "IVectorStore",
+]

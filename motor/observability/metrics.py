@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any
+from typing import Any, Self
 
 log = logging.getLogger("ura.observability.metrics")
 
@@ -123,7 +123,7 @@ class _TimerContext:
         self._histogram = histogram
         self._start = 0.0
 
-    def __enter__(self) -> _TimerContext:
+    def __enter__(self) -> Self:
         self._start = time.monotonic()
         return self
 

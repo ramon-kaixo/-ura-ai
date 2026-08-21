@@ -22,7 +22,7 @@ _init_lock = threading.Lock()
 
 
 def _get_client() -> QdrantClient:
-    global _client
+    global _client  # noqa: PLW0603
     if _client is not None:
         return _client
     with _init_lock:
@@ -208,5 +208,5 @@ class MemoryPipelineStore:
             log.info("MemoryPipelineStore: %d puntos indexados en '%s'", len(puntos), coleccion)
             return True
         except Exception as e:
-            log.error("MemoryPipelineStore: fallo al guardar en Qdrant: %s", e, exc_info=True)
+            log.error("MemoryPipelineStore: fallo al guardar en Qdrant: %s", e, exc_info=True)  # noqa: G201
             return False

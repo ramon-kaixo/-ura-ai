@@ -54,7 +54,7 @@ def cargar() -> dict:
                 msg = "Not a dict"
                 raise ValueError(msg)
             return data
-        except (json.JSONDecodeError, ValueError, Exception):
+        except (json.JSONDecodeError, ValueError, Exception):  # noqa: S110
             pass
     return _nuevo()
 
@@ -82,7 +82,7 @@ def guardar(data: dict) -> None:
     CONCIENCIA_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp = CONCIENCIA_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + chr(10))
-    with open(str(CONCIENCIA_PATH.with_suffix(".lock")), "w") as lockfile:
+    with open(str(CONCIENCIA_PATH.with_suffix(".lock")), "w") as lockfile:  # noqa: PTH123
         fcntl.flock(lockfile, fcntl.LOCK_EX)
         tmp.replace(CONCIENCIA_PATH)
         fcntl.flock(lockfile, fcntl.LOCK_UN)

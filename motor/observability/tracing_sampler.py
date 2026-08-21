@@ -34,13 +34,13 @@ class Sampler:
         if self.strategy == SamplingStrategy.NEVER:
             return False
         if self.strategy == SamplingStrategy.PROBABILISTIC:
-            return random.random() < self.probability
+            return random.random() < self.probability  # noqa: S311
         if self.strategy == SamplingStrategy.ADAPTIVE:
             if self._recent_errors:
                 rate = sum(self._recent_errors) / len(self._recent_errors)
                 p = self.adaptive_min_p + (self.adaptive_max_p - self.adaptive_min_p) * rate
-                return random.random() < p
-            return random.random() < self.adaptive_min_p
+                return random.random() < p  # noqa: S311
+            return random.random() < self.adaptive_min_p  # noqa: S311
         if self.strategy == SamplingStrategy.PRIORITY:
             tags = tags or {}
             return tags.get("priority", "normal") in ("critical", "high")

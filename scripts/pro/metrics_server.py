@@ -33,7 +33,7 @@ LOG_DIR = Path(
     ),
 )
 TAIL_LINES = int(os.environ.get("METRICS_TAIL_LINES", "1000"))
-HOST = os.environ.get("METRICS_HOST", "0.0.0.0")
+HOST = os.environ.get("METRICS_HOST", "0.0.0.0")  # noqa: S104
 PORT = int(os.environ.get("METRICS_PORT", "9091"))
 
 _health = HealthRegistry()
@@ -90,7 +90,7 @@ def _compute_metrics(lines: list[str]) -> dict:
 
 
 async def handle_metrics(request: web.Request) -> web.Response:
-    files = sorted(LOG_DIR.glob("search_*.ndjson"), reverse=True) if LOG_DIR.exists() else []
+    files = sorted(LOG_DIR.glob("search_*.ndjson"), reverse=True) if LOG_DIR.exists() else []  # noqa: ASYNC240
     log_path = files[0] if files else LOG_DIR / "no_data.ndjson"
 
     proc = await asyncio.create_subprocess_exec(
@@ -271,7 +271,7 @@ _GIT_VERSION = ""
 
 
 def _get_version() -> str:
-    global _GIT_VERSION
+    global _GIT_VERSION  # noqa: PLW0603
     if not _GIT_VERSION:
         try:
             _GIT_VERSION = subprocess.run(

@@ -35,7 +35,7 @@ class _NdjsonWriter:
         if path != self._path:
             if self._file:
                 self._file.close()
-            self._file = open(path, "a", encoding="utf-8")
+            self._file = open(path, "a", encoding="utf-8")  # noqa: PTH123, SIM115
             self._path = path
 
     def write(self, record: dict) -> None:
@@ -56,7 +56,7 @@ class _NdjsonWriter:
 
 
 def _get_writer() -> _NdjsonWriter:
-    global _WRITER
+    global _WRITER  # noqa: PLW0603
     if _WRITER is None:
         _WRITER = _NdjsonWriter(os.environ.get("URA_LOG_DIR", LOG_DIR))
     return _WRITER
@@ -120,7 +120,7 @@ def read_logs(
         try:
             with f.open(encoding="utf-8") as fh:
                 for line in fh:
-                    line = line.strip()
+                    line = line.strip()  # noqa: PLW2901
                     if not line:
                         continue
                     try:
