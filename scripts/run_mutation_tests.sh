@@ -57,6 +57,17 @@ RUN_STATUS=${PIPESTATUS[0]}
 set -e
 
 echo "[mutmut] Resumen del run (exit=$RUN_STATUS):"
+
+# Gate estricto: sin mutant_status.json NO hay veredicto OK posible.
+if [[ ! -f .mutmut-cache/mutant_status.json ]]; then
+    echo "[mutmut] GATE FALLIDO: mutmut exit=$RUN_STATUS y sin .mutmut-cache/mutant_status.json (run interrumpido o error de stats)" >&2
+    exit 1
+fi
+if [[ $RUN_STATUS -ne 0 ]]; then
+    echo "[mutmut] GATE FALLIDO: mutmut run terminó con exit=$RUN_STATUS" >&2
+    exit 1
+fi
+
 if [[ -f .mutmut-cache/mutant_status.json ]]; then
     "$PYTHON" - <<'PYEOF'
 import json
