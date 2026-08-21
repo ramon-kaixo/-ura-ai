@@ -9,23 +9,23 @@ test veredicto 02:27:49
 #### A MEDIAS (IN_PROGRESS)
 
 #### PENDIENTES DE REVISOR
-| TASK-20260816-008 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260816-009 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260816-010 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-020 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-021 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-022 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-025 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-027 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-028 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260818-029 | pendiente revisor | 2026-08-21 | PENDIENTE | |
-| TASK-20260820-004 | pendiente revisor | 2026-08-21 | PENDIENTE | |
+| TASK-20260816-008 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260816-009 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260816-010 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-020 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-021 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-022 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-025 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-027 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-028 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260818-029 | pendiente revisor | 2026-08-22 | PENDIENTE | |
+| TASK-20260820-004 | pendiente revisor | 2026-08-22 | PENDIENTE | |
 
 #### LISTAS PARA CERRAR (OK revisor)
 
 #### PLANES/FASES SIN CERRAR
-| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-21 | PENDIENTE | |
-| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-21 | PENDIENTE | |
-| — | plan/fase: Conflict Detection (pendiente) | 2026-08-21 | PENDIENTE | |
-| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-21 | PENDIENTE | |
-| — | plan/fase: Source Scoring (pendiente) | 2026-08-21 | PENDIENTE | |
+| — | plan/fase: Context Memory: episódica, semántica, compresión, olvido | 2026-08-22 | PENDIENTE | |
+| — | plan/fase: Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Super | 2026-08-22 | PENDIENTE | |
+| — | plan/fase: Conflict Detection (pendiente) | 2026-08-22 | PENDIENTE | |
+| — | plan/fase: Knowledge Merge (pendiente) | 2026-08-22 | PENDIENTE | |
+| — | plan/fase: Source Scoring (pendiente) | 2026-08-22 | PENDIENTE | |

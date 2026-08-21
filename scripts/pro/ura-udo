@@ -227,7 +227,16 @@ _conflicto_reserva() {
     # tiene comando de verificación (verificar:), el gate lo EJECUTA antes de
     # permitir DONE. Así "digo que pasa" se convierte en "la máquina lo
     # comprueba". Si el comando falla, el cierre se bloquea.
-    vcmd=$(grep '^verificar:' "$file" | cut -d' ' -f2- | sed 's/^ //' || true)
+    # Soporta campo simple y bloque YAML multilínea (`verificar: |` con
+    # líneas indentadas 2 espacios) — fix CIERRE-20260821 (3 expedientes
+    # usaban el formato | y rompían el eval).
+    vcmd=$(awk '
+        /^verificar: \|/ { en=1; next }
+        /^verificar:/ && !en { v=$0; sub(/^verificar:[ ]*/, "", v); if (v != "") { print v; exit } next }
+        en && /^  / { print substr($0, 3); next }
+        en { exit }
+    ' "$file" | sed 's/^ *//' || true)
+    [ -z "$vcmd" ] && vcmd=$(grep '^verificar:' "$file" | head -1 | cut -d' ' -f2- | sed 's/^ //' || true)
     if [ -n "$vcmd" ] && [ "$vcmd" != "—" ]; then
         echo "Ejecutando verificación real: $vcmd"
         if ! (cd "$REPO" && eval "$vcmd") > /tmp/udo_verificar_$$.log 2>&1; then
