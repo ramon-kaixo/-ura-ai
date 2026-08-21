@@ -16,7 +16,7 @@ pillow>=12.3
 ruff>=0.15
 mypy>=1.8
 bandit>=1.7
-coverage>=7.0
+coverage>=7.15.2
 
 # Pre-commit
 pre-commit>=3.0
