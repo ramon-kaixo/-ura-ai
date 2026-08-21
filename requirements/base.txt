@@ -34,7 +34,7 @@ tokenizers>=0.15
 rank-bm25>=0.2
 
 # --- Utilidades ---
-python-dotenv>=1.0
+python-dotenv>=1.2.2
 coloredlogs>=15.0
 blake3>=0.3
 prometheus-client>=0.19
